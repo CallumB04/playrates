@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "../../lib/cn";
+import GameCover from "./GameCover";
 
 export interface TileAction {
     key: "view" | "edit" | "add" | "myLog" | "delete";
@@ -92,10 +93,10 @@ const GameTile = ({
 
     const tile = (
         <Link to={`/game/${gameId}`} className={config.linkClassName}>
-            <img
+            <GameCover
+                coverUrl={coverUrl}
+                title={title}
                 className="h-full w-full rounded-md object-cover"
-                src={coverUrl ?? ""}
-                alt={title}
             />
             <div className="absolute left-0 top-0 h-full w-full p-1">
                 {/* Hover menu, lg and above */}

@@ -8,6 +8,8 @@
  * the real import path rather than a parallel one. Safe to re-run: games are
  * upserted on rawg_id.
  */
+// side-effect import: must come first so .env is loaded before env() runs
+import "../src/config/loadEnv.js";
 import { env } from "../src/config/env.js";
 import { supabase } from "../src/config/supabase.js";
 import { createLogger } from "../src/lib/logger.js";

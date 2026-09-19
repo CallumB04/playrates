@@ -21,6 +21,7 @@ import LoadingSpinner from "../../components/LoadingSpinner";
 import ProfilePicture from "../../components/ProfilePicture";
 import UserStatus from "../../components/UserStatus";
 import GameTile, { type TileAction } from "../../components/game/GameTile";
+import GameCover from "../../components/game/GameCover";
 import Pagination from "../../components/ui/Pagination";
 import FriendProfile from "../../components/FriendProfile";
 import RemoveFriendPopup from "./components/RemoveFriendPopup";
@@ -101,6 +102,18 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const targetUserReviews = useMemo(
         () => targetReviewsPage?.data ?? [],
         [targetReviewsPage]
+    );
+
+    // reviews carry only a gameId; the logs already embed the game, so the
+    // covers come from there rather than from a request per review
+    const gameCoverById = useMemo(
+        () =>
+            new Map(
+                targetUserGameLogs
+                    .filter((log) => log.game?.coverUrl)
+                    .map((log) => [log.gameId, log.game!.coverUrl!])
+            ),
+        [targetUserGameLogs]
     );
 
     // friends already carry the other user embedded, so there is no longer a
@@ -612,8 +625,12 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                                     to={`/game/${review.gameId}`}
                                     className="flex h-20 items-center gap-3 rounded-md p-2 transition-colors duration-200 hover:bg-surface-popup-to"
                                 >
-                                    <img
-                                        src={`/PlayRates/assets/game-covers/${review.gameId}.png`}
+                                    <GameCover
+                                        coverUrl={
+                                            gameCoverById.get(review.gameId) ??
+                                            null
+                                        }
+                                        title=""
                                         className="game-cover h-full object-cover"
                                     />
                                     <div className="flex flex-col gap-1">

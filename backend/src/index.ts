@@ -1,3 +1,5 @@
+// side-effect import: must come first so .env is loaded before env() runs
+import "./config/loadEnv.js";
 import { buildApp } from "./app.js";
 import { env } from "./config/env.js";
 import { supabase } from "./config/supabase.js";

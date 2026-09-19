@@ -25,7 +25,17 @@ insert into auth.users (
     raw_app_meta_data,
     raw_user_meta_data,
     created_at,
-    updated_at
+    updated_at,
+    -- GoTrue reads these into non-nullable Go strings, so leaving them NULL
+    -- makes every sign-in fail with "Database error querying schema"
+    confirmation_token,
+    recovery_token,
+    email_change,
+    email_change_token_new,
+    email_change_token_current,
+    phone_change,
+    phone_change_token,
+    reauthentication_token
 )
 values
     (
@@ -39,7 +49,8 @@ values
         '{"provider":"email","providers":["email"]}'::jsonb,
         '{"username":"devuser"}'::jsonb,
         now(),
-        now()
+        now(),
+        '', '', '', '', '', '', '', ''
     ),
     (
         '22222222-2222-2222-2222-222222222222',
@@ -52,7 +63,8 @@ values
         '{"provider":"email","providers":["email"]}'::jsonb,
         '{"username":"friendlyuser"}'::jsonb,
         now(),
-        now()
+        now(),
+        '', '', '', '', '', '', '', ''
     );
 
 -- profiles rows are created by the on_auth_user_created trigger; fill in the

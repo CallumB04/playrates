@@ -15,7 +15,12 @@ create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = ''
+-- An explicit search_path is required for a security definer function, so a
+-- caller cannot shadow the objects it references. It cannot be empty here:
+-- citext lives in the extensions schema, and Postgres resolves the type, its
+-- cast and its = operator through the search path. All three schemas listed
+-- are trusted and not writable by application roles.
+set search_path = pg_catalog, public, extensions
 as $$
 declare
     desired text := nullif(btrim(new.raw_user_meta_data ->> 'username'), '');
