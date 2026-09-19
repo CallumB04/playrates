@@ -141,6 +141,10 @@ Run from the repository root:
 | `npm run lint` | ESLint over frontend and backend |
 | `npm run typecheck` | `tsc --noEmit` over all three packages |
 
+CI runs all of the above on every push and pull request, plus a second job that
+boots a real Postgres and applies every migration and the seed — the two worst
+bugs in this project so far only appeared against a real database.
+
 Workspace-specific ones worth knowing:
 
 | Command | What it does |
@@ -173,16 +177,32 @@ frontend/src/
   styles/tokens.css     the design tokens (light and dark)
 ```
 
-## Theming
+## Design system
 
-Colours are defined once, as CSS custom properties in
-`frontend/src/styles/tokens.css`, and surfaced through semantic Tailwind tokens
-(`surface`, `content`, `brand`, `danger`, and so on). No colour should ever be
-written literally in a component — if a shade doesn't exist yet, add a token.
+Tokens live in `frontend/src/styles/tokens.css` in two layers:
 
-Light and dark are both fully defined. Dark is currently the only one in use:
-`<html class="dark">` is hardcoded in `frontend/index.html`. Adding a theme
-toggle means driving that class from state rather than re-theming anything.
+- **Primitives** — raw colour ramps. Deliberately *not* exposed as Tailwind
+  utilities, so a component cannot pin itself to one shade and break the other
+  theme.
+- **Semantics** — what a colour is for (`surface`, `content`, `border`,
+  `brand`, `danger`, …). This is the only layer components touch.
+
+No colour is ever written literally in a component. If a shade is missing, add
+a semantic token rather than reaching for an arbitrary value.
+
+Light and dark are both fully defined and switchable. `ThemeContext` persists
+the choice, and a small script in `index.html` applies it before first paint so
+there is no flash.
+
+**The design library is at `/admin/design`.** It renders every token and every
+shared component live, with a theme toggle — the fastest way to see the effect
+of a token change, and to check both themes at once. Swatches read their
+resolved value from the DOM, so the page cannot drift out of date with
+`tokens.css`.
+
+> The admin area has no access control yet. It renders static demos and reads
+> no user data, but it should be gated behind an admin role before the app is
+> public.
 
 ## Deployment
 
