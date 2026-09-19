@@ -8,7 +8,7 @@
 create table public.games (
     id bigint generated always as identity primary key,
     rawg_id bigint unique,
-    slug citext not null unique,
+    slug extensions.citext not null unique,
     title text not null,
     description text not null default '',
     cover_url text,

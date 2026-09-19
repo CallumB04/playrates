@@ -10,6 +10,10 @@
 --            accounts. Supabase enables it by default; declared here so a
 --            `db reset` on a bare Postgres still works.
 
+-- NOTE: installed into the extensions schema, which is NOT on the search
+-- path when migrations run against a hosted project (it is on the local
+-- CLI stack, which is why this only shows up remotely). Every reference to
+-- citext below must therefore be written as extensions.citext.
 create extension if not exists citext with schema extensions;
 create extension if not exists pg_trgm with schema extensions;
 create extension if not exists pgcrypto with schema extensions;

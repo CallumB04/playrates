@@ -31,13 +31,13 @@ begin
 
     if candidate !~ '^[A-Za-z0-9_]{3,24}$'
         or exists (
-            select 1 from public.profiles p where p.username = candidate::citext
+            select 1 from public.profiles p where p.username = candidate::extensions.citext
         )
     then
         candidate := fallback;
     end if;
 
-    insert into public.profiles (id, username) values (new.id, candidate::citext);
+    insert into public.profiles (id, username) values (new.id, candidate::extensions.citext);
     return new;
 end;
 $$;

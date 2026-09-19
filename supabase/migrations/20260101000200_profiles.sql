@@ -11,7 +11,7 @@
 
 create table public.profiles (
     id uuid primary key references auth.users (id) on delete cascade,
-    username citext not null,
+    username extensions.citext not null,
     bio text not null default '',
     picture_url text,
     -- replaces the old `online boolean`, which was hardcoded test data. The API
