@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main, refactor]
+  pull_request:
+    branches: [main]
+
+# A new push to the same branch cancels the run already in flight, so CI
+# reports on the latest commit rather than queueing behind stale ones.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, lint, test, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # The frontend and backend both import @playrates/shared from its
+      # built output, so this has to come first.
+      - name: Build shared package
+        run: npm run build -w @playrates/shared
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+        env:
+          # the suite mocks Supabase and MSW intercepts every request,
+          # so these only need to satisfy env parsing
+          VITE_SUPABASE_URL: https://ci.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-anon-key
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://ci.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-anon-key
+
+  migrations:
+    name: Migrations apply to a clean database
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Catches the class of bug that only appears against a real
+      # Postgres: a missing schema qualification, a constraint that
+      # rejects the seed, a trigger that cannot resolve a type.
+      - name: Start local Supabase and apply migrations
+        run: supabase db start
+
+      - name: Verify the seed applies on a reset
+        run: supabase db reset
