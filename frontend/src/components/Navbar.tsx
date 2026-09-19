@@ -29,11 +29,11 @@ const Navbar: React.FC<NavbarProps> = ({
 
     // common styles used on all items in the My Account dropdown menu
     const dropdownItemStyles: string = `opacity-0 group-hover:opacity-100 transition duration-200 
-                                        w-11/12 py-1 text-left hover:bg-[#4a4a4a] hover:cursor-pointer rounded
+                                        w-11/12 py-1 text-left hover:bg-surface-overlay-hover hover:cursor-pointer rounded
                                         flex gap-2 items-center pl-2`;
 
     // common styles used on all items in phone dropdown menu
-    const phoneDropdownItemStyles: string = `w-11/12 py-2 text-left text-lg hover:bg-[#4a4a4a] hover:cursor-pointer
+    const phoneDropdownItemStyles: string = `w-11/12 py-2 text-left text-lg hover:bg-surface-overlay-hover hover:cursor-pointer
                                              rounded-md flex gap-3 items-center pl-2 whitespace-nowrap`;
 
     // Phone dropdown state
@@ -55,11 +55,11 @@ const Navbar: React.FC<NavbarProps> = ({
 
     return (
         <nav
-            className={`fixed left-0 top-0 z-50 h-navbar w-screen bg-navbar px-6 xl:px-8 ${scrollHeight < 50 ? "lg:bg-transparent" : "lg:bg-navbar"} flex items-center justify-center font-lexend transition-colors duration-300 md:justify-between`}
+            className={`fixed left-0 top-0 z-50 h-navbar w-screen bg-surface-chrome px-6 xl:px-8 ${scrollHeight < 50 ? "lg:bg-transparent" : "lg:bg-surface-chrome"} flex items-center justify-center font-lexend transition-colors duration-300 md:justify-between`}
         >
             {/* Site logo, links to home page */}
             <Link to="/" onClick={closePhoneDropdown}>
-                <h2 className="font-lexend text-3xl font-semibold tracking-wide text-text-primary md:text-4xl">
+                <h2 className="font-lexend text-3xl font-semibold tracking-wide text-content md:text-4xl">
                     PlayRates
                 </h2>
             </Link>
@@ -69,22 +69,22 @@ const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => setPhoneDropdownOpen(!phoneDropdownOpen)}
                 className="group absolute right-5 flex flex-col gap-1 p-[6px] hover:cursor-pointer lg:hidden"
             >
-                <div className="h-[2px] w-[22px] bg-text-primary transition-colors group-hover:bg-highlight-primary"></div>
-                <div className="h-[2px] w-[22px] bg-text-primary transition-colors group-hover:bg-highlight-primary"></div>
-                <div className="h-[2px] w-[22px] bg-text-primary transition-colors group-hover:bg-highlight-primary"></div>
+                <div className="h-[2px] w-[22px] bg-content transition-colors group-hover:bg-brand"></div>
+                <div className="h-[2px] w-[22px] bg-content transition-colors group-hover:bg-brand"></div>
+                <div className="h-[2px] w-[22px] bg-content transition-colors group-hover:bg-brand"></div>
             </div>
 
             {/* Phone dropdown menu */}
             <div
-                className={`absolute right-0 top-navbar rounded-l-md bg-dropdown ${phoneDropdownOpen ? "w-9/12" : "w-0"} delay-50 flex max-w-80 flex-col items-center gap-2 overflow-x-hidden overflow-y-scroll py-3 text-text-primary transition-width duration-300 ease-in-out lg:hidden`}
+                className={`absolute right-0 top-navbar rounded-l-md bg-surface-overlay ${phoneDropdownOpen ? "w-9/12" : "w-0"} delay-50 flex max-w-80 flex-col items-center gap-2 overflow-x-hidden overflow-y-scroll py-3 text-content transition-width duration-300 ease-in-out lg:hidden`}
             >
                 <span className="relative">
                     <input
                         type="text"
                         placeholder="Search for game..."
-                        className="h-12 w-[70vw] max-w-[300px] rounded bg-input-primary px-2 pr-9 focus:outline-none"
+                        className="h-12 w-[70vw] max-w-[300px] rounded bg-surface-field px-2 pr-9 focus:outline-none"
                     />
-                    <i className="fas fa-magnifying-glass absolute right-1 top-1/2 -translate-y-1/2 transform p-2 text-input-icon transition-colors hover:cursor-pointer hover:text-highlight-primary"></i>
+                    <i className="fas fa-magnifying-glass absolute right-1 top-1/2 -translate-y-1/2 transform p-2 text-content-muted transition-colors hover:cursor-pointer hover:text-brand"></i>
                 </span>
 
                 <Link
@@ -92,7 +92,7 @@ const Navbar: React.FC<NavbarProps> = ({
                     to="/"
                     onClick={closePhoneDropdown}
                 >
-                    <i className="fas fa-house text-highlight-primary"></i>
+                    <i className="fas fa-house text-brand"></i>
                     <p>Home</p>
                 </Link>
                 {user ? (
@@ -101,7 +101,7 @@ const Navbar: React.FC<NavbarProps> = ({
                         to={`/user/${user?.username}`}
                         onClick={closePhoneDropdown}
                     >
-                        <i className="fa-solid fa-user text-highlight-primary"></i>
+                        <i className="fa-solid fa-user text-brand"></i>
                         <p>My Profile</p>
                     </Link>
                 ) : null}
@@ -110,13 +110,13 @@ const Navbar: React.FC<NavbarProps> = ({
                     to="/library"
                     onClick={closePhoneDropdown}
                 >
-                    <i className="fas fa-magnifying-glass text-highlight-primary"></i>
+                    <i className="fas fa-magnifying-glass text-brand"></i>
                     <p>Browse Games</p>
                 </Link>
 
                 {user ? (
                     <>
-                        <span className="my-1 w-11/12 bg-text-primary pt-[1px]"></span>
+                        <span className="my-1 w-11/12 bg-content pt-[1px]"></span>
 
                         <Link
                             className={`${phoneDropdownItemStyles}`}
@@ -124,7 +124,7 @@ const Navbar: React.FC<NavbarProps> = ({
                             onClick={closePhoneDropdown}
                         >
                             <i
-                                className={`${getIconFromGameStatus("played")} text-highlight-primary`}
+                                className={`${getIconFromGameStatus("played")} text-brand`}
                             ></i>
                             <p>Played</p>
                         </Link>
@@ -134,7 +134,7 @@ const Navbar: React.FC<NavbarProps> = ({
                             onClick={closePhoneDropdown}
                         >
                             <i
-                                className={`${getIconFromGameStatus("playing")} text-highlight-primary`}
+                                className={`${getIconFromGameStatus("playing")} text-brand`}
                             ></i>
                             <p>Playing</p>
                         </Link>
@@ -144,7 +144,7 @@ const Navbar: React.FC<NavbarProps> = ({
                             onClick={closePhoneDropdown}
                         >
                             <i
-                                className={`${getIconFromGameStatus("backlog")} text-highlight-primary`}
+                                className={`${getIconFromGameStatus("backlog")} text-brand`}
                             ></i>
                             <p>Backlog</p>
                         </Link>
@@ -154,19 +154,19 @@ const Navbar: React.FC<NavbarProps> = ({
                             onClick={closePhoneDropdown}
                         >
                             <i
-                                className={`${getIconFromGameStatus("wishlist")} text-highlight-primary`}
+                                className={`${getIconFromGameStatus("wishlist")} text-brand`}
                             ></i>
                             <p>Wishlist</p>
                         </Link>
 
-                        <span className="my-1 w-11/12 bg-text-primary pt-[1px]"></span>
+                        <span className="my-1 w-11/12 bg-content pt-[1px]"></span>
 
                         <Link
                             className={`${phoneDropdownItemStyles}`}
                             to="/settings"
                             onClick={closePhoneDropdown}
                         >
-                            <i className="fa-solid fa-cog text-highlight-primary"></i>
+                            <i className="fa-solid fa-cog text-brand"></i>
                             <p>Settings</p>
                         </Link>
                         <Link
@@ -177,7 +177,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                 signOutUser();
                             }}
                         >
-                            <i className="fa-solid fa-right-from-bracket text-highlight-primary"></i>
+                            <i className="fa-solid fa-right-from-bracket text-brand"></i>
                             <p>Sign Out</p>
                         </Link>
                     </>
@@ -190,7 +190,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                 openLoginForm();
                             }}
                         >
-                            <i className="fas fa-sign-in-alt text-highlight-primary"></i>
+                            <i className="fas fa-sign-in-alt text-brand"></i>
                             <span>Log In</span>
                         </p>
                         <p
@@ -200,7 +200,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                 openSignupForm();
                             }}
                         >
-                            <i className="fas fa-user-plus text-highlight-primary"></i>
+                            <i className="fas fa-user-plus text-brand"></i>
                             <span>Sign Up</span>
                         </p>
                     </>
@@ -208,22 +208,22 @@ const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Navbar items wrapper */}
-            <div className="hidden h-full items-center gap-4 font-lexend font-normal text-text-primary lg:flex">
+            <div className="hidden h-full items-center gap-4 font-lexend font-normal text-content lg:flex">
                 {/* My Account and Dropdown wrapper */}
                 {user ? (
                     <span className="group relative">
                         {/* My Account text */}
                         <span className="flex items-center gap-1 p-2 hover:cursor-pointer group-hover:mt-3 group-hover:pb-5">
-                            <p className="transition duration-75 group-hover:text-highlight-primary">
+                            <p className="transition duration-75 group-hover:text-brand">
                                 My Account
                             </p>
-                            <i className="fa fa-chevron-down text-sm transition duration-75 group-hover:text-highlight-primary"></i>
+                            <i className="fa fa-chevron-down text-sm transition duration-75 group-hover:text-brand"></i>
                         </span>
 
                         {/* Dropdown menu wrapper */}
                         <div className="delay-50 absolute top-[52px] mx-auto h-0 w-60 transition-height duration-[400ms] ease-in-out hover:block hover:cursor-default group-hover:top-navbar group-hover:block group-hover:h-[315px]">
                             {/* Dropdown menu content */}
-                            <div className="flex h-full w-full flex-col items-center gap-[2px] overflow-hidden rounded-b-md bg-dropdown font-normal">
+                            <div className="flex h-full w-full flex-col items-center gap-[2px] overflow-hidden rounded-b-md bg-surface-overlay font-normal">
                                 {/* All dropdown links currently link to a template account for testing
                                 purposes (callum). In the future the links will navigate to the logged in
                                 account's pages. E.G: /user/<username>/played */}
@@ -232,23 +232,23 @@ const Navbar: React.FC<NavbarProps> = ({
                                     className={`${dropdownItemStyles} mt-3 pl-[6px]`}
                                     to="/"
                                 >
-                                    <i className="fas fa-house text-highlight-primary"></i>
+                                    <i className="fas fa-house text-brand"></i>
                                     <p>Home</p>
                                 </Link>
                                 <Link
                                     className={`${dropdownItemStyles} gap-[10px] pl-2`}
                                     to={`/user/${user?.username}`}
                                 >
-                                    <i className="fa-solid fa-user text-highlight-primary"></i>
+                                    <i className="fa-solid fa-user text-brand"></i>
                                     <p>My Profile</p>
                                 </Link>
-                                <span className="my-1 w-11/12 bg-text-primary pt-[1px] opacity-0 transition-opacity duration-200 group-hover:opacity-100"></span>
+                                <span className="my-1 w-11/12 bg-content pt-[1px] opacity-0 transition-opacity duration-200 group-hover:opacity-100"></span>
                                 <Link
                                     className={`${dropdownItemStyles}`}
                                     to={`/user/${user?.username}?type=played`}
                                 >
                                     <i
-                                        className={`${getIconFromGameStatus("played")} text-highlight-primary`}
+                                        className={`${getIconFromGameStatus("played")} text-brand`}
                                     ></i>
                                     <p>Played</p>
                                 </Link>
@@ -257,7 +257,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                     to={`/user/${user?.username}?type=playing`}
                                 >
                                     <i
-                                        className={`${getIconFromGameStatus("playing")} text-highlight-primary`}
+                                        className={`${getIconFromGameStatus("playing")} text-brand`}
                                     ></i>
                                     <p>Playing</p>
                                 </Link>
@@ -266,7 +266,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                     to={`/user/${user?.username}?type=backlog`}
                                 >
                                     <i
-                                        className={`${getIconFromGameStatus("backlog")} text-highlight-primary`}
+                                        className={`${getIconFromGameStatus("backlog")} text-brand`}
                                     ></i>
                                     <p>Backlog</p>
                                 </Link>
@@ -275,16 +275,16 @@ const Navbar: React.FC<NavbarProps> = ({
                                     to={`/user/${user?.username}?type=wishlist`}
                                 >
                                     <i
-                                        className={`${getIconFromGameStatus("wishlist")} text-highlight-primary`}
+                                        className={`${getIconFromGameStatus("wishlist")} text-brand`}
                                     ></i>
                                     <p>Wishlist</p>
                                 </Link>
-                                <span className="my-1 w-11/12 bg-text-primary pt-[1px] opacity-0 transition-opacity duration-200 group-hover:opacity-100"></span>
+                                <span className="my-1 w-11/12 bg-content pt-[1px] opacity-0 transition-opacity duration-200 group-hover:opacity-100"></span>
                                 <Link
                                     className={`${dropdownItemStyles}`}
                                     to="/settings"
                                 >
-                                    <i className="fa-solid fa-cog text-highlight-primary"></i>
+                                    <i className="fa-solid fa-cog text-brand"></i>
                                     <p>Settings</p>
                                 </Link>
                                 <Link
@@ -292,7 +292,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                     to="/"
                                     onClick={signOutUser}
                                 >
-                                    <i className="fa-solid fa-right-from-bracket text-highlight-primary"></i>
+                                    <i className="fa-solid fa-right-from-bracket text-brand"></i>
                                     <p>Sign Out</p>
                                 </Link>
                             </div>
@@ -326,7 +326,7 @@ const Navbar: React.FC<NavbarProps> = ({
                         placeholder="Search for game..."
                         className="search-bar block w-60 lg:w-72"
                     />
-                    <i className="fas fa-magnifying-glass absolute right-1 top-1/2 -translate-y-1/2 transform p-2 text-input-icon transition-colors hover:cursor-pointer hover:text-highlight-primary"></i>
+                    <i className="fas fa-magnifying-glass absolute right-1 top-1/2 -translate-y-1/2 transform p-2 text-content-muted transition-colors hover:cursor-pointer hover:text-brand"></i>
                 </span>
             </div>
         </nav>

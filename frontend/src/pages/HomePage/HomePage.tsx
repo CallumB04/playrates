@@ -13,7 +13,7 @@ import { useUser } from "../../App";
 import { useEffect, useState } from "react";
 
 // common styles for all game section titles in home page
-const gameSectionTitleStyles = `text-text-primary font-lexend font-normal tracking-wide
+const gameSectionTitleStyles = `text-content font-lexend font-normal tracking-wide
                                 text-3xl md:text-4xl 2xl:text-[42px] uppercase mt-16 text-center
                                 [&:not(:first-of-type)]:mt-24 [&:not(:first-of-type)]:2xl:mt-28`;
 
@@ -65,10 +65,10 @@ const HomePage: React.FC<HomePageProps> = ({
         <>
             <div className="my-12 flex flex-wrap gap-y-10 sm:px-2 md:min-h-[50vh] md:px-8 xl:px-20 2xl:mt-20">
                 <div className="w-full lg:w-1/2">
-                    <h1 className="text-center font-lexend text-[64px] font-bold text-text-primary md:text-7xl lg:text-left lg:text-8xl 2xl:text-9xl">
+                    <h1 className="text-center font-lexend text-[64px] font-bold text-content md:text-7xl lg:text-left lg:text-8xl 2xl:text-9xl">
                         PlayRates
                     </h1>
-                    <h2 className="ml-1 mt-1 text-center font-lexend text-xl font-semibold text-text-secondary md:mt-5 lg:text-left lg:text-2xl 2xl:mt-7 2xl:text-3xl">
+                    <h2 className="ml-1 mt-1 text-center font-lexend text-xl font-semibold text-content-secondary md:mt-5 lg:text-left lg:text-2xl 2xl:mt-7 2xl:text-3xl">
                         All of your games in one place...
                     </h2>
 
@@ -88,7 +88,7 @@ const HomePage: React.FC<HomePageProps> = ({
                             >
                                 Log in
                             </p>
-                            <p className="hidden text-xl font-light text-text-primary lg:block 2xl:text-2xl">
+                            <p className="hidden text-xl font-light text-content lg:block 2xl:text-2xl">
                                 or{" "}
                                 <span
                                     onClick={openLoginForm}
@@ -100,7 +100,7 @@ const HomePage: React.FC<HomePageProps> = ({
                             </p>
                         </div>
                     ) : (
-                        <p className="mt-12 text-center font-lexend text-[22px] font-extralight italic text-text-primary md:text-2xl lg:text-left 2xl:mt-20 2xl:text-3xl">
+                        <p className="mt-12 text-center font-lexend text-[22px] font-extralight italic text-content md:text-2xl lg:text-left 2xl:mt-20 2xl:text-3xl">
                             Welcome back{" "}
                             <Link
                                 to={`/user/${user.username}`}
@@ -112,7 +112,7 @@ const HomePage: React.FC<HomePageProps> = ({
                         </p>
                     )}
                 </div>
-                <div className="flex w-full items-center justify-evenly font-lexend text-xl text-text-primary lg:w-1/2 lg:justify-evenly lg:pl-10 lg:text-[22px] 2xl:text-3xl">
+                <div className="flex w-full items-center justify-evenly font-lexend text-xl text-content lg:w-1/2 lg:justify-evenly lg:pl-10 lg:text-[22px] 2xl:text-3xl">
                     <div className="flex flex-col gap-y-1 text-center">
                         <i className="fa-solid fa-user-group text-3xl md:text-[32px] 2xl:text-4xl"></i>
                         <p>{userCount} Users</p>

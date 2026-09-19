@@ -24,10 +24,10 @@ const RemoveFriendPopup: React.FC<RemoveFriendPopupProps> = ({
                 onMouseDown={(event) => event.stopPropagation()}
             >
                 <div className="flex w-full flex-col gap-3">
-                    <h2 className="text-xl text-text-primary">Remove Friend</h2>
-                    <p className="max-w-[40ch] border-t-[1px] border-t-[#cacaca55] pt-3 font-light text-text-secondary">
+                    <h2 className="text-xl text-content">Remove Friend</h2>
+                    <p className="max-w-[40ch] border-t border-t-subtle pt-3 font-light text-content-secondary">
                         Are you sure you want to remove{" "}
-                        <span className="font-normal text-text-primary">
+                        <span className="font-normal text-content">
                             {friendName}
                         </span>{" "}
                         as your friend? This cannot be undone.

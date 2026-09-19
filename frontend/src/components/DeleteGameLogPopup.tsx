@@ -55,10 +55,10 @@ const DeleteGameLogPopup: React.FC<DeleteGameLogPopupProps> = ({
                 onMouseDown={(event) => event.stopPropagation()}
             >
                 <div className="flex w-full flex-col gap-3">
-                    <h2 className="text-xl text-text-primary">Delete Log</h2>
-                    <p className="max-w-[40ch] border-t-[1px] border-t-[#cacaca55] pt-3 font-light text-text-secondary">
+                    <h2 className="text-xl text-content">Delete Log</h2>
+                    <p className="max-w-[40ch] border-t border-t-subtle pt-3 font-light text-content-secondary">
                         Are you sure you want to delete{" "}
-                        <span className="font-normal text-text-primary">
+                        <span className="font-normal text-content">
                             {gameName}
                         </span>{" "}
                         from your profile? This cannot be undone.

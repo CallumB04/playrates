@@ -230,7 +230,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ runNotification }) => {
                             }
                             disabled={!currentUser}
                         />
-                        <p className="font-light text-text-primary">
+                        <p className="font-light text-content">
                             Include already logged games?
                         </p>
                     </span>
@@ -243,14 +243,14 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ runNotification }) => {
                                 setAgeRatingInputValue(e.currentTarget.checked)
                             }
                         />
-                        <p className="font-light text-text-primary">
+                        <p className="font-light text-content">
                             Include 18+ age-rated games?
                         </p>
                     </span>
 
                     {/* Platform dropdown */}
                     <div className="flex flex-col gap-0.5">
-                        <p className="text-sm font-semibold text-text-primary">
+                        <p className="text-sm font-semibold text-content">
                             Platform
                         </p>
                         <select
@@ -275,8 +275,8 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ runNotification }) => {
             {/* Main Container */}
             {gamesLoading || currentUserGameLogsLoading ? (
                 <span className="mx-auto flex h-[85vh] w-max flex-row items-center justify-center gap-6">
-                    <LoadingSpinner size={8} />
-                    <p className="font-lexend text-xl tracking-wide text-text-primary">
+                    <LoadingSpinner size="md" />
+                    <p className="font-lexend text-xl tracking-wide text-content">
                         Loading Games...
                     </p>
                 </span>
@@ -288,7 +288,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ runNotification }) => {
                             <h2 className="card-header-text text-center">
                                 Game Library
                             </h2>
-                            <p className="text-center text-text-secondary">
+                            <p className="text-center text-content-secondary">
                                 You can{" "}
                                 <span className="font-semibold">view</span>,{" "}
                                 <span className="font-semibold">create</span>,
@@ -305,7 +305,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ runNotification }) => {
                                         placeholder="Search for game..."
                                         className="search-bar h-12 w-full"
                                     />
-                                    <i className="fas fa-magnifying-glass absolute right-1 top-1/2 -translate-y-1/2 transform p-2 text-input-icon transition-colors hover:cursor-pointer hover:text-highlight-primary"></i>
+                                    <i className="fas fa-magnifying-glass absolute right-1 top-1/2 -translate-y-1/2 transform p-2 text-content-muted transition-colors hover:cursor-pointer hover:text-brand"></i>
                                 </span>
                                 {/* Filters button */}
                                 <button className="button-outline button-outline-default flex h-12 w-full min-w-36 items-center justify-center gap-3 md:w-max">
@@ -383,7 +383,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ runNotification }) => {
                         <div className="mx-auto mb-4 mt-12 flex w-max items-center justify-center gap-6">
                             {/* Previous Button */}
                             <button
-                                className={`${previousEnabled ? "border-text-primary text-text-primary hover:border-highlight-primary hover:text-highlight-primary" : "border-[#ffffff55] text-[#ffffff55]"} button-outline flex h-10 w-16 items-center justify-center sm:w-28`}
+                                className={`${previousEnabled ? "border-content text-content hover:border-brand hover:text-brand" : "border-content-disabled text-content-disabled"} button-outline flex h-10 w-16 items-center justify-center sm:w-28`}
                                 onClick={() =>
                                     previousEnabled
                                         ? setPageNumber(pageNumber - 1)
@@ -397,13 +397,13 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ runNotification }) => {
                                 )}
                             </button>
                             {/* Page number text */}
-                            <p className="font-lexend text-text-primary sm:text-lg">
+                            <p className="font-lexend text-content sm:text-lg">
                                 Page {pageNumber} of {maxPageNumber}
                             </p>
 
                             {/* Next Button */}
                             <button
-                                className={`button-outline flex h-10 w-16 items-center justify-center sm:w-28 ${nextEnabled ? "border-text-primary text-text-primary hover:border-highlight-primary hover:text-highlight-primary" : "border-[#ffffff55] text-[#ffffff55]"} `}
+                                className={`button-outline flex h-10 w-16 items-center justify-center sm:w-28 ${nextEnabled ? "border-content text-content hover:border-brand hover:text-brand" : "border-content-disabled text-content-disabled"} `}
                                 onClick={() =>
                                     nextEnabled
                                         ? setPageNumber(pageNumber + 1)

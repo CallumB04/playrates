@@ -9,7 +9,7 @@ interface GameSectionProps {
 }
 
 // common styles for loading and error message
-const loadingTextStyles = `text-center text-text-primary text-2xl flex justify-center
+const loadingTextStyles = `text-center text-content text-2xl flex justify-center
                            items-center gap-3 pt-4 pb-20 font-lexend`;
 
 const GameSection: React.FC<GameSectionProps> = ({ games, loading, error }) => {
@@ -20,7 +20,7 @@ const GameSection: React.FC<GameSectionProps> = ({ games, loading, error }) => {
     if (loading) {
         return (
             <span className={loadingTextStyles}>
-                <LoadingSpinner size={5} />
+                <LoadingSpinner size="sm" />
                 <p>Loading Games...</p>
             </span>
         );

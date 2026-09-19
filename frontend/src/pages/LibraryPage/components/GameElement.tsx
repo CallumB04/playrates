@@ -44,14 +44,14 @@ const GameElement: React.FC<GameElementProps> = ({
                     />
                     <div className="absolute left-0 top-0 h-full w-full p-1">
                         {/* Hover menu (lg screens and above) */}
-                        <div className="hidden h-full w-full items-center justify-center rounded-md transition-colors duration-200 group-hover:bg-[#0e0e0ebb] lg:flex">
-                            <p className="relative line-clamp-3 break-words px-1 text-center font-lexend text-lg text-text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100 sm:text-base lg:text-sm 2xl:text-base">
+                        <div className="hidden h-full w-full items-center justify-center rounded-md transition-colors duration-200 group-hover:bg-overlay-tile lg:flex">
+                            <p className="relative line-clamp-3 break-words px-1 text-center font-lexend text-lg text-content opacity-0 transition-opacity duration-200 group-hover:opacity-100 sm:text-base lg:text-sm 2xl:text-base">
                                 {game.title}
                             </p>
                             {/* Ellipsis icon, hover to reveal menu */}
                             {userLoggedIn ? (
                                 <i
-                                    className="fas fa-ellipsis absolute right-0 top-0 pl-2 pr-3 pt-1 text-lg text-text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                                    className="fas fa-ellipsis absolute right-0 top-0 pl-2 pr-3 pt-1 text-lg text-content opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                                     onMouseOver={() => setHoveringIcon(true)}
                                     onMouseOut={() => setHoveringIcon(false)}
                                 ></i>
@@ -68,7 +68,7 @@ const GameElement: React.FC<GameElementProps> = ({
                                 >
                                     {userHasLog ? (
                                         <span
-                                            className="flex h-1/2 w-full items-center justify-center gap-2 rounded-t transition-colors duration-200 hover:text-highlight-primary"
+                                            className="flex h-1/2 w-full items-center justify-center gap-2 rounded-t transition-colors duration-200 hover:text-brand"
                                             onClick={(e) => {
                                                 e.preventDefault(); // prevent Link from triggering
                                                 handleView();
@@ -82,7 +82,7 @@ const GameElement: React.FC<GameElementProps> = ({
                                     )}
 
                                     <span
-                                        className={`flex ${userHasLog ? "h-1/2 border-t-[1px] border-t-[#cacaca44]" : "h-full"} w-full items-center justify-center gap-2 rounded-b transition-colors duration-200 hover:text-highlight-primary`}
+                                        className={`flex ${userHasLog ? "h-1/2 border-t border-t-faint" : "h-full"} w-full items-center justify-center gap-2 rounded-b transition-colors duration-200 hover:text-brand`}
                                         onClick={(e) => {
                                             e.preventDefault(); // prevent Link from triggering
                                             if (userHasLog) {
@@ -107,11 +107,11 @@ const GameElement: React.FC<GameElementProps> = ({
                         {userLoggedIn ? (
                             <div className="relative flex h-full w-full items-end justify-center p-1.5 lg:hidden">
                                 <span
-                                    className={`flex h-1/5 ${userHasLog ? "w-2/3" : "w-1/3"} rounded bg-[#2e2e2edd]`}
+                                    className={`flex h-1/5 ${userHasLog ? "w-2/3" : "w-1/3"} rounded bg-overlay-chip`}
                                 >
                                     {userHasLog ? (
                                         <span
-                                            className="flex h-full w-1/2 items-center justify-center text-text-secondary hover:text-highlight-primary"
+                                            className="flex h-full w-1/2 items-center justify-center text-content-secondary hover:text-brand"
                                             onClick={(e) => {
                                                 e.preventDefault(); // prevent Link from triggering
                                                 handleView();
@@ -127,7 +127,7 @@ const GameElement: React.FC<GameElementProps> = ({
                                     )}
 
                                     <span
-                                        className={`flex h-full ${userHasLog ? "w-1/2" : "w-full"} items-center justify-center text-text-secondary hover:text-highlight-primary`}
+                                        className={`flex h-full ${userHasLog ? "w-1/2" : "w-full"} items-center justify-center text-content-secondary hover:text-brand`}
                                         onClick={(e) => {
                                             e.preventDefault(); // prevent Link from triggering
 

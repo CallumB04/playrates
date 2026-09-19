@@ -248,7 +248,7 @@ const AccountForm: React.FC<FormProps> = ({
             <form
                 onSubmit={handleFormSubmit}
                 onMouseDown={(event) => event.stopPropagation()}
-                className="popup mx-auto flex w-full max-w-[630px] flex-col justify-center px-2 py-12 font-lexend text-text-primary sm:px-12 sm:py-16 md:px-16"
+                className="popup mx-auto flex w-full max-w-[630px] flex-col justify-center px-2 py-12 font-lexend text-content sm:px-12 sm:py-16 md:px-16"
                 ref={formElement}
             >
                 <div className="text-center">
@@ -279,12 +279,12 @@ const AccountForm: React.FC<FormProps> = ({
                             name="username"
                             type="text"
                             placeholder="Username"
-                            className="w-full rounded-lg border-[1px] border-[#f3f3f399] bg-transparent py-[14px] pl-3 focus:border-highlight-primary focus:outline-none sm:rounded-none sm:border-0 sm:border-b-[1px] sm:border-text-primary sm:py-[6px] sm:pl-[2px]"
+                            className="w-full rounded-lg border border-field bg-transparent py-[14px] pl-3 focus:border-brand focus:outline-none sm:rounded-none sm:border-0 sm:border-b sm:border-content sm:py-[6px] sm:pl-[2px]"
                             required
                             ref={usernameInput}
                         />
                         <p
-                            className="hidden pt-3 text-red-500"
+                            className="hidden pt-3 text-danger"
                             ref={usernameErrorText}
                         >
                             {formType === "signup"
@@ -298,12 +298,12 @@ const AccountForm: React.FC<FormProps> = ({
                                 name="email"
                                 type="email"
                                 placeholder="Email"
-                                className="w-full rounded-lg border-[1px] border-[#f3f3f399] bg-transparent py-[14px] pl-3 focus:border-highlight-primary focus:outline-none sm:rounded-none sm:border-0 sm:border-b-[1px] sm:border-text-primary sm:py-[6px] sm:pl-[2px]"
+                                className="w-full rounded-lg border border-field bg-transparent py-[14px] pl-3 focus:border-brand focus:outline-none sm:rounded-none sm:border-0 sm:border-b sm:border-content sm:py-[6px] sm:pl-[2px]"
                                 required
                                 ref={emailInput}
                             />
                             <p
-                                className="hidden pt-3 text-red-500"
+                                className="hidden pt-3 text-danger"
                                 ref={emailErrorText}
                             >
                                 Sorry that email is already being used.
@@ -317,12 +317,12 @@ const AccountForm: React.FC<FormProps> = ({
                             name="password"
                             type={passwordHide ? "password" : "text"}
                             placeholder="Password"
-                            className="w-full rounded-lg border-[1px] border-[#f3f3f399] bg-transparent py-[14px] pl-3 pr-11 focus:border-highlight-primary focus:outline-none sm:rounded-none sm:border-0 sm:border-b-[1px] sm:border-text-primary sm:py-[6px] sm:pl-[2px] sm:pr-10"
+                            className="w-full rounded-lg border border-field bg-transparent py-[14px] pl-3 pr-11 focus:border-brand focus:outline-none sm:rounded-none sm:border-0 sm:border-b sm:border-content sm:py-[6px] sm:pl-[2px] sm:pr-10"
                             required
                             ref={passwordInput}
                         />
                         <p
-                            className="hidden pt-3 text-red-500"
+                            className="hidden pt-3 text-danger"
                             ref={passwordErrorText}
                         >
                             {formType === "signup"
@@ -360,8 +360,8 @@ const AccountForm: React.FC<FormProps> = ({
                 </div>
                 <ClosePopupIcon onClick={closeAccountForm} />
                 {isLoading ? (
-                    <dialog className="flex size-full items-center justify-center rounded-lg bg-[#00000077]">
-                        <LoadingSpinner size={10} />
+                    <dialog className="flex size-full items-center justify-center rounded-lg bg-overlay-loading">
+                        <LoadingSpinner size="lg" />
                     </dialog>
                 ) : (
                     <></>

@@ -16,73 +16,13 @@ import GamePage from "./pages/GamePage/GamePage";
 const UserContext = createContext<UserAccount | null>(null);
 export const useUser = () => useContext(UserContext);
 
-export const getColorFromGameStatus = (status: string) => {
-    switch (status) {
-        case "finished":
-            return {
-                bg: "bg-[#b19cd933]",
-                text: "text-[#b19cd9]",
-            };
-        case "mastered":
-            return {
-                bg: "bg-[#a3e9ff33]",
-                text: "text-[#a3e9ff]",
-            };
-        case "shelved":
-            return {
-                bg: "bg-[#fdfd9633]",
-                text: "text-[#fdfd96]",
-            };
-        case "retired":
-            return {
-                bg: "bg-[#f01e2c33]",
-                text: "text-[#f01e2c]",
-            };
-        case "playing":
-            return {
-                bg: "bg-[#bfe1f633]",
-                text: "text-[#bfe1f6]",
-            };
-        case "backlog":
-            return {
-                bg: "bg-[#ffb34733]",
-                text: "text-[#ffb347]",
-            };
-        case "wishlist":
-            return {
-                bg: "bg-[#d4edbc33]",
-                text: "text-[#d4edbc]",
-            };
-    }
-};
-
-export const getIconFromGameStatus = (status: string) => {
-    switch (status) {
-        case "played":
-            return "fa-regular fa-check-circle";
-        case "playing":
-            return "fa-regular fa-play-circle";
-        case "backlog":
-            return "fa-regular fa-calendar-plus";
-        case "wishlist":
-            return "fa-solid fa-heart";
-    }
-};
-
-// game platforms and their associated font awesome icons
-export const gamePlatforms = [
-    { name: "steam", display: "Steam", icon: "fab fa-steam" },
-    { name: "pc-game-pass", display: "PC Game Pass", icon: "fab fa-xbox" },
-    { name: "xbox", display: "Xbox", icon: "fab fa-xbox" },
-    { name: "playstation", display: "Playstation", icon: "fab fa-playstation" },
-    {
-        name: "nintendo-switch",
-        display: "Nintendo Switch",
-        icon: "fas fa-gamepad",
-    },
-    { name: "other-pc", display: "Other PC", icon: "fas fa-desktop" },
-    { name: "mobile", display: "Mobile", icon: "fas fa-mobile-screen" },
-];
+// re-exported so existing imports from "../../App" keep working; the
+// definitions live in src/constants/
+export {
+    getColorFromGameStatus,
+    getIconFromGameStatus,
+} from "./constants/gameStatus";
+export { gamePlatforms } from "./constants/gamePlatforms";
 
 function App() {
     // user account in state

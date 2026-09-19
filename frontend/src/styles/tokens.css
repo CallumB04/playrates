@@ -1,0 +1,165 @@
+/* ---------------------------------------------------------------------------
+ * Design tokens
+ *
+ * Values are stored as space-separated RGB channels rather than hex, because
+ * that is what lets Tailwind inject an alpha channel:
+ *
+ *     colors.brand = rgb(var(--brand) / <alpha-value>)
+ *     class="bg-brand/20"  ->  rgb(147 51 234 / 0.2)
+ *
+ * Light lives on :root, dark on .dark. `<html>` currently ships with class
+ * "dark" hardcoded — dark is the only theme in use. Light is fully defined so
+ * that adding a toggle later is a one-line change, not a re-theme.
+ *
+ * The brand purple (#9333ea) is identical in both themes and must stay that
+ * way. Only its hover shade flips direction, so that hover always increases
+ * contrast against the surface behind it.
+ * ------------------------------------------------------------------------- */
+
+@layer base {
+    :root {
+        /* -- Brand ------------------------------------------------------- */
+        --brand: 147 51 234; /* #9333ea - locked */
+        --brand-hover: 126 34 206; /* darker on light backgrounds */
+        --brand-contrast: 255 255 255;
+
+        /* -- Surfaces ---------------------------------------------------- */
+        --surface: 244 244 245; /* page background */
+        --surface-raised: 255 255 255; /* .card */
+        --surface-chrome: 255 255 255; /* navbar, footer, hover menus */
+        --surface-overlay: 255 255 255; /* account dropdown */
+        --surface-overlay-hover: 228 228 231;
+        --surface-popup-from: 255 255 255;
+        --surface-popup-to: 244 244 245;
+        --surface-field: 232 232 235; /* inputs, search bars */
+
+        /* -- Content ----------------------------------------------------- */
+        --content: 24 24 27;
+        --content-secondary: 82 82 91;
+        --content-muted: 113 113 122; /* input icons */
+        --content-inverse: 255 255 255;
+        --content-disabled: 24 24 27; /* used at 0.3333 alpha */
+
+        /* -- Borders ----------------------------------------------------- */
+        --border-default: 212 212 216;
+        --border-field: 63 63 70; /* account form inputs */
+
+        /* -- Media wells -------------------------------------------------
+         * Game covers are photographic, so their backdrops and scrims are
+         * theme-invariant: a white scrim over box art would be unreadable.
+         * These are deliberately identical in both themes.
+         * ---------------------------------------------------------------- */
+        --surface-media: 14 14 14;
+        --overlay-chip: 46 46 46;
+        --on-media: 255 255 255;
+        --scrim: 0 0 0;
+
+        /* -- Feedback ---------------------------------------------------- */
+        --danger-subtle: 254 226 226;
+        --danger-muted: 248 113 113;
+        --danger-soft: 239 68 68;
+        --danger: 220 38 38;
+        --danger-strong: 185 28 28;
+
+        --success-subtle: 220 252 231;
+        --success-muted: 74 222 128;
+        --success-soft: 34 197 94;
+        --success: 22 163 74;
+        --success-strong: 21 128 61;
+
+        --warning-subtle: 255 237 213;
+        --warning-muted: 251 146 60;
+        --warning-soft: 249 115 22;
+        --warning: 234 88 12;
+
+        --info: 2 132 199;
+        --accent-gold: 202 138 4; /* trophy / star icons */
+
+        /* -- Game status -------------------------------------------------
+         * The dark palette is a set of pastels. On a white background those
+         * sit around 1.1:1 contrast, so light mode keeps the hue and drops
+         * the lightness. The /20 background tints derive automatically.
+         * ---------------------------------------------------------------- */
+        --status-finished: 109 79 168;
+        --status-mastered: 14 116 144;
+        --status-shelved: 161 98 7;
+        --status-retired: 185 28 28;
+        --status-playing: 29 111 165;
+        --status-backlog: 180 83 9;
+        --status-wishlist: 77 124 15;
+    }
+
+    .dark {
+        /* -- Brand ------------------------------------------------------- */
+        --brand: 147 51 234; /* #9333ea - unchanged */
+        --brand-hover: 168 85 247; /* #a855f7 - lighter on dark */
+        --brand-contrast: 255 255 255;
+
+        /* -- Surfaces ---------------------------------------------------- */
+        --surface: 38 38 38; /* #262626 */
+        --surface-raised: 46 46 46; /* #2e2e2e */
+        --surface-chrome: 35 35 35; /* #232323 */
+        --surface-overlay: 51 51 51; /* #333333 */
+        --surface-overlay-hover: 74 74 74; /* #4a4a4a */
+        --surface-popup-from: 51 51 51; /* #333333 */
+        --surface-popup-to: 56 56 56; /* #383838 */
+        --surface-field: 64 64 64; /* #404040 */
+
+        /* -- Content ----------------------------------------------------- */
+        --content: 243 244 246; /* #f3f4f6 */
+        --content-secondary: 202 202 202; /* #cacaca */
+        --content-muted: 163 163 163; /* #a3a3a3 */
+        --content-inverse: 14 14 14; /* #0e0e0e */
+        --content-disabled: 255 255 255; /* #ffffff at 0.3333 */
+
+        /* -- Borders -----------------------------------------------------
+         * Tailwind's preflight sets every element's border-color to
+         * borderColor.DEFAULT, which ships as gray-200. The desktop "Filters"
+         * button uses .button-outline with no border colour of its own, so it
+         * renders a gray-200 border by accident today. Pinning the dark value
+         * to gray-200 preserves that exactly.
+         * ---------------------------------------------------------------- */
+        --border-default: 229 231 235; /* gray-200 */
+        --border-field: 243 243 243; /* #f3f3f3 at 0.6 */
+
+        /* -- Media wells (identical to light, see above) ------------------ */
+        --surface-media: 14 14 14;
+        --overlay-chip: 46 46 46;
+        --on-media: 255 255 255;
+        --scrim: 0 0 0;
+
+        /* -- Feedback ---------------------------------------------------- */
+        --danger-subtle: 254 202 202; /* red-200 */
+        --danger-muted: 252 165 165; /* red-300 */
+        --danger-soft: 248 113 113; /* red-400 */
+        --danger: 239 68 68; /* red-500 */
+        --danger-strong: 220 38 38; /* red-600 */
+
+        --success-subtle: 187 247 208; /* green-200 */
+        --success-muted: 134 239 172; /* green-300 */
+        --success-soft: 74 222 128; /* green-400 */
+        --success: 34 197 94; /* green-500 */
+        --success-strong: 22 163 74; /* green-600 */
+
+        --warning-subtle: 254 215 170; /* orange-200 */
+        --warning-muted: 253 186 116; /* orange-300 */
+        --warning-soft: 251 146 60; /* orange-400 */
+        --warning: 249 115 22; /* orange-500 */
+
+        --info: 56 189 248;
+        --accent-gold: 253 224 71; /* yellow-300 */
+
+        /* -- Game status ------------------------------------------------- */
+        --status-finished: 177 156 217; /* #b19cd9 */
+        --status-mastered: 163 233 255; /* #a3e9ff */
+        --status-shelved: 253 253 150; /* #fdfd96 */
+        --status-retired: 240 30 44; /* #f01e2c */
+        --status-playing: 191 225 246; /* #bfe1f6 */
+        --status-backlog: 255 179 71; /* #ffb347 */
+        --status-wishlist: 212 237 188; /* #d4edbc */
+    }
+
+    body {
+        @apply bg-surface;
+    }
+}

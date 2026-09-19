@@ -137,14 +137,14 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                 onMouseDown={(event) => event.stopPropagation()}
                 ref={popupElement}
             >
-                <h2 className="border-b-[1px] border-b-[#cacaca55] pb-3 text-xl text-text-primary">
+                <h2 className="border-b border-b-subtle pb-3 text-xl text-content">
                     {editing ? "Edit" : "Create New"} Log
                 </h2>
 
                 <div className="relative flex w-full flex-col gap-4">
-                    <h3 className="max-w-[calc(100%-72px)] text-left text-2xl text-text-primary sm:max-w-full">
+                    <h3 className="max-w-[calc(100%-72px)] text-left text-2xl text-content sm:max-w-full">
                         {game?.title}
-                        <span className="ml-2.5 text-xl font-light text-text-secondary">
+                        <span className="ml-2.5 text-xl font-light text-content-secondary">
                             {game?.releaseDate.slice(0, 4)}
                         </span>
                     </h3>
@@ -164,7 +164,7 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                         <div className="flex flex-grow flex-col gap-3 sm:px-4">
                             <span className="flex gap-3">
                                 <div className="flex h-max flex-col items-start gap-0.5">
-                                    <p className="text-xs font-semibold text-text-primary">
+                                    <p className="text-xs font-semibold text-content">
                                         Status
                                     </p>
                                     <select
@@ -186,7 +186,7 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                                 </div>
                                 {statusInput === "played" ? (
                                     <div className="flex h-max flex-col items-start gap-0.5">
-                                        <p className="text-xs font-semibold text-text-primary">
+                                        <p className="text-xs font-semibold text-content">
                                             Played Status
                                         </p>
                                         <select
@@ -217,7 +217,7 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                                 )}
                                 <div className="flex h-max flex-col items-start gap-0.5">
                                     <span className="flex gap-1.5">
-                                        <p className="text-xs font-semibold text-text-primary">
+                                        <p className="text-xs font-semibold text-content">
                                             Platform
                                         </p>
                                         <i
@@ -227,7 +227,7 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                                                         platform.name ===
                                                         platformInput
                                                 )?.icon
-                                            } text-xs text-text-primary`}
+                                            } text-xs text-content`}
                                         ></i>
                                     </span>
                                     <select
@@ -252,7 +252,7 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                             </span>
                             <span className="flex gap-3">
                                 <div className="flex h-max flex-col items-start gap-0.5">
-                                    <p className="text-xs font-semibold text-text-primary">
+                                    <p className="text-xs font-semibold text-content">
                                         Start
                                     </p>
 
@@ -268,7 +268,7 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                                     />
                                 </div>
                                 <div className="flex h-max flex-col items-start gap-0.5">
-                                    <p className="text-xs font-semibold text-text-primary">
+                                    <p className="text-xs font-semibold text-content">
                                         Finish
                                     </p>
 
@@ -287,10 +287,10 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                             <span className="flex gap-3">
                                 <div className="flex h-max flex-col items-start gap-0.5">
                                     <span className="flex gap-1.5">
-                                        <p className="text-xs font-semibold text-text-primary">
+                                        <p className="text-xs font-semibold text-content">
                                             Achievements
                                         </p>
-                                        <i className="fas fa-trophy text-xs text-yellow-300"></i>
+                                        <i className="fas fa-trophy text-xs text-gold"></i>
                                     </span>
 
                                     <span className="flex gap-1">
@@ -309,7 +309,7 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                                                 )
                                             }
                                         />
-                                        <p className="text-2xl font-extralight text-text-primary">
+                                        <p className="text-2xl font-extralight text-content">
                                             /
                                         </p>
                                         <input
@@ -330,7 +330,7 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                                     </span>
                                 </div>
                                 <div className="flex h-max flex-col items-start gap-0.5">
-                                    <p className="text-xs font-semibold text-text-primary">
+                                    <p className="text-xs font-semibold text-content">
                                         Hours Played
                                     </p>
 
@@ -349,7 +349,7 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                                     />
                                 </div>
                                 <div className="flex h-max flex-col items-start gap-0.5">
-                                    <p className="text-xs font-semibold text-text-primary">
+                                    <p className="text-xs font-semibold text-content">
                                         Hours To Beat
                                     </p>
 
@@ -370,7 +370,7 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                             </span>
                             <span>
                                 <div className="flex flex-col gap-0.5">
-                                    <span className="flex justify-between text-xs font-semibold text-text-primary">
+                                    <span className="flex justify-between text-xs font-semibold text-content">
                                         <p>1</p>
                                         <p>
                                             Rating ({" "}
@@ -418,8 +418,8 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                 <ClosePopupIcon onClick={closePopup} />
 
                 {loadingCreateOrEdit ? (
-                    <dialog className="absolute top-0 flex size-full items-center justify-center rounded-lg bg-[#00000077]">
-                        <LoadingSpinner size={10} />
+                    <dialog className="absolute top-0 flex size-full items-center justify-center rounded-lg bg-overlay-loading">
+                        <LoadingSpinner size="lg" />
                     </dialog>
                 ) : (
                     <></>

@@ -1,8 +1,8 @@
-const socialsStyles = `hover:text-highlight-primary hover:cursor-pointer transition-colors duration-[200ms]`;
+const socialsStyles = `hover:text-brand hover:cursor-pointer transition-colors duration-[200ms]`;
 
 const Footer = () => {
     return (
-        <footer className="font-lexend relative h-72 w-full bg-navbar text-text-secondary md:h-36">
+        <footer className="font-lexend relative h-72 w-full bg-surface-chrome text-content-secondary md:h-36">
             {/* Socials */}
             <div className="mx-auto flex w-full items-center justify-center gap-8 pt-12 text-[33px] md:pt-8 md:text-3xl lg:gap-12">
                 <i className={`fab fa-twitter ${socialsStyles}`}></i>
@@ -17,7 +17,7 @@ const Footer = () => {
                     <span className="font-normal">Callum Burgoyne</span>
                 </p>
                 <p
-                    className="mx-auto w-max rounded-md bg-highlight-primary p-3 px-4 font-semibold transition-colors duration-[200ms] hover:cursor-pointer hover:bg-highlight-hover md:bg-transparent md:p-1 md:hover:bg-transparent md:hover:text-highlight-primary"
+                    className="mx-auto w-max rounded-md bg-brand p-3 px-4 font-semibold transition-colors duration-[200ms] hover:cursor-pointer hover:bg-brand-hover md:bg-transparent md:p-1 md:hover:bg-transparent md:hover:text-brand"
                     onClick={() =>
                         window.scrollTo({ top: 0, behavior: "smooth" })
                     }

@@ -58,14 +58,14 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                 className="popup popup-default flex w-[600px] flex-col gap-6 text-center"
                 onMouseDown={(event) => event.stopPropagation()}
             >
-                <h2 className="border-b-[1px] border-b-[#cacaca55] pb-3 text-xl text-text-primary">
+                <h2 className="border-b border-b-subtle pb-3 text-xl text-content">
                     View Log
                 </h2>
 
                 <div className="relative flex w-full flex-col gap-4">
-                    <h3 className="max-w-[calc(100%-72px)] text-left text-2xl text-text-primary sm:max-w-full">
+                    <h3 className="max-w-[calc(100%-72px)] text-left text-2xl text-content sm:max-w-full">
                         {game?.title}
-                        <span className="ml-2.5 text-xl font-light text-text-secondary">
+                        <span className="ml-2.5 text-xl font-light text-content-secondary">
                             {game?.releaseDate.slice(0, 4)}
                         </span>
                     </h3>
@@ -79,7 +79,7 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                         </div>
                         <div className="flex min-h-32 flex-grow justify-between">
                             <div className="flex flex-col gap-1 text-left sm:pl-4">
-                                <p className="text-text-primary">
+                                <p className="text-content">
                                     Status:{" "}
                                     <span
                                         className={`font-light ${statusColors?.bg} ${statusColors?.text} rounded-full px-1.5 py-0.5`}
@@ -90,7 +90,7 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                                     </span>
                                 </p>
                                 {gamelog?.platform ? (
-                                    <p className="text-text-primary">
+                                    <p className="text-content">
                                         Platform:{" "}
                                         <span className="font-extralight">
                                             {
@@ -115,7 +115,7 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                                     <></>
                                 )}
                                 {gamelog?.startDate ? (
-                                    <p className="text-text-primary">
+                                    <p className="text-content">
                                         Started:{" "}
                                         <span className="font-extralight">
                                             {new Date(gamelog.startDate)
@@ -127,7 +127,7 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                                     <></>
                                 )}
                                 {gamelog?.startDate ? (
-                                    <p className="text-text-primary">
+                                    <p className="text-content">
                                         Finished:{" "}
                                         <span className="font-extralight">
                                             {gamelog.finishDate
@@ -141,7 +141,7 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                                     <></>
                                 )}
                                 {gamelog?.hoursPlayed ? (
-                                    <p className="text-text-primary">
+                                    <p className="text-content">
                                         Time Played:{" "}
                                         <span className="font-extralight">
                                             {gamelog.hoursPlayed}
@@ -155,7 +155,7 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                                     <></>
                                 )}
                                 {gamelog?.hoursToBeat ? (
-                                    <p className="text-text-primary">
+                                    <p className="text-content">
                                         Completed in:{" "}
                                         <span className="font-extralight">
                                             {gamelog.hoursToBeat}
@@ -172,15 +172,15 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
 
                             <div className="flex flex-col justify-end gap-1 pr-4 sm:justify-normal">
                                 <span className="flex items-center justify-start gap-2 text-lg">
-                                    <i className="fas fa-trophy text-yellow-300"></i>
-                                    <p className="font-extralight text-text-primary">
+                                    <i className="fas fa-trophy text-gold"></i>
+                                    <p className="font-extralight text-content">
                                         {gamelog?.achievementsCompleted || 0}/
                                         {gamelog?.achievementsTotal || "?"}
                                     </p>
                                 </span>
                                 <span className="flex items-center justify-start gap-2 text-lg">
-                                    <i className="fas fa-star text-highlight-hover"></i>
-                                    <p className="font-extralight text-text-primary">
+                                    <i className="fas fa-star text-brand-hover"></i>
+                                    <p className="font-extralight text-content">
                                         {gamelog?.rating && gamelog.rating !== 0
                                             ? gamelog.rating
                                             : "?"}

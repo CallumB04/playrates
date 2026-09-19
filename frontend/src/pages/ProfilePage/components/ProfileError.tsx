@@ -8,7 +8,7 @@ const ProfileError = () => {
     return (
         <div className="absolute left-0 top-0 flex h-[calc(100vh-64px)] w-screen items-center justify-center px-4">
             <div className="flex h-full w-full flex-col items-center justify-center gap-y-5 px-4">
-                <h1 className="text-center font-lexend text-xl text-text-primary">
+                <h1 className="text-center font-lexend text-xl text-content">
                     There was an error when fetching this user.
                 </h1>
                 <div className="flex w-full flex-col items-center gap-3 sm:w-max sm:flex-row">

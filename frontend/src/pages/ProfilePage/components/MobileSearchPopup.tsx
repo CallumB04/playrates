@@ -26,8 +26,8 @@ const MobileSearchPopup: React.FC<MobileSearchPopupProps> = ({
                 className="popup popup-default flex w-full max-w-[550px] flex-col gap-3 text-center"
                 onMouseDown={(event) => event.stopPropagation()}
             >
-                <h2 className="text-xl text-text-primary">Search for Game</h2>
-                <div className="flex w-full flex-col gap-4 border-t-[1px] border-t-[#cacaca55] pt-3">
+                <h2 className="text-xl text-content">Search for Game</h2>
+                <div className="flex w-full flex-col gap-4 border-t border-t-subtle pt-3">
                     <input
                         type="text"
                         className="search-bar h-[52px] w-full"

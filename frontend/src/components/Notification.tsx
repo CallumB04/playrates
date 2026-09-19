@@ -10,20 +10,20 @@ const typeToValues = (
     switch (type) {
         case "success":
             return {
-                textColor: "text-green-500",
-                bgColor: "bg-green-200",
+                textColor: "text-success",
+                bgColor: "bg-success-subtle",
                 iconName: "circle-check",
             };
         case "error":
             return {
-                textColor: "text-red-500",
-                bgColor: "bg-red-200",
+                textColor: "text-danger",
+                bgColor: "bg-danger-subtle",
                 iconName: "circle-xmark",
             };
         case "pending":
             return {
-                textColor: "text-orange-500",
-                bgColor: "bg-orange-200",
+                textColor: "text-warning",
+                bgColor: "bg-warning-subtle",
                 iconName: "clock",
             };
     }

@@ -1,37 +1,53 @@
 import { Link } from "react-router-dom";
 import { UserAccount } from "../api";
-import ProfilePicture from "./ProfilePicture";
+import ProfilePicture, { AvatarVariant } from "./ProfilePicture";
+
+/**
+ * Was driven by a raw `profilePictureSize: number` that the component then
+ * compared against 12 to pick its gap and text size. Two named densities make
+ * the relationship between avatar, spacing and type explicit.
+ */
+const DENSITY = {
+    compact: { avatar: "friendRow", gap: "gap-2", text: "text-base" },
+    comfortable: { avatar: "friendRowLarge", gap: "gap-3", text: "text-lg" },
+} as const satisfies Record<
+    string,
+    { avatar: AvatarVariant; gap: string; text: string }
+>;
+
+export type FriendProfileDensity = keyof typeof DENSITY;
 
 interface FriendProfileProps {
     user: UserAccount;
-    closePopup?: () => void; // optional prop if friend profile is within a popup
-    profilePictureSize: number;
+    /** Optional: supplied when the row is rendered inside a popup. */
+    closePopup?: () => void;
+    density: FriendProfileDensity;
 }
 
 const FriendProfile: React.FC<FriendProfileProps> = ({
     user,
     closePopup,
-    profilePictureSize,
+    density,
 }) => {
+    const { avatar, gap, text } = DENSITY[density];
+
     return (
         <Link
             to={`/user/${user.username}`}
-            className={`group relative flex w-full items-center ${profilePictureSize >= 12 ? "gap-3" : "gap-2"} rounded-md px-2 py-1 transition-colors duration-200 hover:bg-popup-end`}
+            className={`group relative flex w-full items-center ${gap} rounded-md px-2 py-1 transition-colors duration-200 hover:bg-surface-popup-to`}
             onClick={closePopup}
         >
             <ProfilePicture
+                variant={avatar}
                 username={user.username}
                 file={user.picture}
-                sizes={[{ value: profilePictureSize, borderSize: 2 }]}
                 link={false}
             />
-            <p
-                className={`font-lexend text-text-primary ${profilePictureSize >= 12 ? "text-lg" : "text-base"}`}
-            >
+            <p className={`font-lexend text-content ${text}`}>
                 {user.username}
             </p>
             <div
-                className={`absolute left-[6px] top-[6px] size-[14px] rounded-full border-[1.5px] border-text-dark ${user.online ? "bg-green-500" : "bg-red-500"} `}
+                className={`absolute left-[6px] top-[6px] size-[14px] rounded-full border-[1.5px] border-content-inverse ${user.online ? "bg-success" : "bg-danger"} `}
                 title={user.online ? "Online" : "Offline"}
             ></div>
         </Link>

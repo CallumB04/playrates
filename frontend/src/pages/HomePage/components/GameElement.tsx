@@ -15,11 +15,11 @@ const GameElement: React.FC<GameElementProps> = ({ game }) => {
         <Link
             to={`/game/${game.id}`}
             key={game.id}
-            className="game-cover group relative flex w-[31%] items-center justify-center bg-[#0e0e0e] font-lexend md:w-[15%]"
+            className="game-cover group relative flex w-[31%] items-center justify-center bg-surface-media font-lexend md:w-[15%]"
         >
             {/* Text displayed if image can't be loaded */}
             <p
-                className={`whitespace-normal break-words text-center text-base font-semibold text-text-primary group-hover:z-20 sm:text-xl md:text-base lg:text-xl 2xl:text-3xl ${imgLoaded ? "opacity-0" : "opacity-100"} px-2 transition-opacity duration-300 group-hover:opacity-100`}
+                className={`whitespace-normal break-words text-center text-base font-semibold text-content group-hover:z-20 sm:text-xl md:text-base lg:text-xl 2xl:text-3xl ${imgLoaded ? "opacity-0" : "opacity-100"} px-2 transition-opacity duration-300 group-hover:opacity-100`}
             >
                 {game.title}
             </p>
@@ -35,7 +35,7 @@ const GameElement: React.FC<GameElementProps> = ({ game }) => {
                 Currently no functionality, will allow users to add games
                 to their account from the home page. */}
             {user ? (
-                <i className="fa-solid fa-plus absolute bottom-[4%] mx-auto hidden h-[13%] w-1/3 items-center justify-center rounded-md bg-[#ffffff22] text-lg text-text-primary opacity-0 transition-all duration-300 hover:bg-[#ffffff33] group-hover:opacity-100 sm:flex md:text-sm lg:text-lg xl:text-xl 2xl:h-[11%] 2xl:w-[30%] 2xl:text-2xl"></i>
+                <i className="fa-solid fa-plus absolute bottom-[4%] mx-auto hidden h-[13%] w-1/3 items-center justify-center rounded-md bg-overlay-chip-light text-lg text-content opacity-0 transition-all duration-300 hover:bg-overlay-chip-light-hover group-hover:opacity-100 sm:flex md:text-sm lg:text-lg xl:text-xl 2xl:h-[11%] 2xl:w-[30%] 2xl:text-2xl"></i>
             ) : (
                 <></>
             )}

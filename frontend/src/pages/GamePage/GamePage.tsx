@@ -122,7 +122,7 @@ const GamePage: React.FC<GamePageProps> = ({
                         />
                         <div className="flex w-full flex-col gap-2">
                             <span
-                                className="relative flex w-full items-center justify-center gap-2 rounded border-2 border-text-secondary px-2.5 py-1.5 text-text-primary"
+                                className="relative flex w-full items-center justify-center gap-2 rounded border-2 border-content-secondary px-2.5 py-1.5 text-content"
                                 onMouseOver={() => setHoveringLogCount(true)}
                                 onMouseOut={() => setHoveringLogCount(false)}
                             >
@@ -173,7 +173,7 @@ const GamePage: React.FC<GamePageProps> = ({
                                     <></>
                                 )}
                             </span>
-                            <span className="flex w-full items-center justify-center gap-2 rounded border-2 border-text-secondary px-2.5 py-1.5 text-text-primary">
+                            <span className="flex w-full items-center justify-center gap-2 rounded border-2 border-content-secondary px-2.5 py-1.5 text-content">
                                 {gameLogs &&
                                 gameLogs.filter((log) => log.rating).length >=
                                     1 ? (
@@ -242,10 +242,10 @@ const GamePage: React.FC<GamePageProps> = ({
                         </div>
                     </div>
                     <div className="flex flex-col gap-1 md:hidden">
-                        <h2 className="text-2xl tracking-wide text-text-primary sm:text-3xl">
+                        <h2 className="text-2xl tracking-wide text-content sm:text-3xl">
                             {game?.title}
                         </h2>
-                        <p className="font-light text-text-secondary sm:text-lg">
+                        <p className="font-light text-content-secondary sm:text-lg">
                             Released on{" "}
                             <span className="font-normal">
                                 {game?.releaseDate &&
@@ -260,10 +260,10 @@ const GamePage: React.FC<GamePageProps> = ({
                 </div>
                 {/* Right column */}
                 <div className="flex w-full flex-col gap-2">
-                    <h2 className="hidden text-4xl tracking-wide text-text-primary md:block">
+                    <h2 className="hidden text-4xl tracking-wide text-content md:block">
                         {game?.title}
                     </h2>
-                    <p className="hidden text-xl font-light text-text-secondary md:block">
+                    <p className="hidden text-xl font-light text-content-secondary md:block">
                         Released on{" "}
                         <span className="font-normal">
                             {game?.releaseDate && game?.releaseDate !== "TBA"
@@ -273,7 +273,7 @@ const GamePage: React.FC<GamePageProps> = ({
                                 : "TBA"}
                         </span>
                     </p>
-                    <p className="line-clamp-[8] text-center text-text-secondary md:mt-5 md:text-left">
+                    <p className="line-clamp-[8] text-center text-content-secondary md:mt-5 md:text-left">
                         {game?.description
                             ? game.description
                             : "This game currently does not have a description..."}
@@ -283,7 +283,7 @@ const GamePage: React.FC<GamePageProps> = ({
                             return (
                                 <GamePlatform
                                     platform={platform}
-                                    textSize="base"
+                                    size="base"
                                     key={platform}
                                 />
                             );
@@ -293,12 +293,12 @@ const GamePage: React.FC<GamePageProps> = ({
                     <div className="mt-12">
                         {/* Header and sorting */}
                         <span className="flex items-center justify-between">
-                            <h2 className="text-2xl text-text-primary">
+                            <h2 className="text-2xl text-content">
                                 Reviews
                             </h2>
-                            <p className="flex gap-1 font-light text-text-primary">
+                            <p className="flex gap-1 font-light text-content">
                                 Sort By:{" "}
-                                <span className="flex items-center gap-1.5 text-highlight-primary">
+                                <span className="flex items-center gap-1.5 text-brand">
                                     <span className="font-normal">
                                         Most Recent
                                     </span>
@@ -314,9 +314,7 @@ const GamePage: React.FC<GamePageProps> = ({
                                         className="flex gap-3"
                                     >
                                         <ProfilePicture
-                                            sizes={[
-                                                { value: 16, borderSize: 2 },
-                                            ]}
+                                            variant="review"
                                             username={review.reviewerName!}
                                             file={
                                                 review.reviewerProfilePicture!
@@ -336,27 +334,27 @@ const GamePage: React.FC<GamePageProps> = ({
                                                         platform={
                                                             review.reviewerGameLogPlatform
                                                         }
-                                                        textSize="xs"
+                                                        size="xs"
                                                     />
                                                 )}
                                             </span>
                                             <span className="flex items-center gap-1 text-sm">
-                                                <p className="font-light text-text-primary">
+                                                <p className="font-light text-content">
                                                     {review.reviewerGameLogRating
                                                         ? review.reviewerGameLogRating
                                                         : "?"}
                                                     /10
                                                 </p>
-                                                <i className="fas fa-star text-highlight-primary"></i>
+                                                <i className="fas fa-star text-brand"></i>
                                             </span>
-                                            <p className="mt-1.5 text-text-secondary">
+                                            <p className="mt-1.5 text-content-secondary">
                                                 {review.text}
                                             </p>
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <h2 className="text-center text-xl text-text-secondary">
+                                <h2 className="text-center text-xl text-content-secondary">
                                     No Reviews found for this game...
                                 </h2>
                             )}

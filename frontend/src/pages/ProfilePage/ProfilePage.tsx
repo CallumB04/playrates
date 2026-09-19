@@ -355,13 +355,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
     const getUserRelationColors = () => {
         switch (userRelation) {
             case "friend":
-                return "text-green-400 hover:text-red-400 border-green-500 hover:border-red-500";
+                return "text-success-soft hover:text-danger-soft border-success hover:border-danger";
             case "request-sent":
-                return "text-orange-300 hover:text-red-400 border-orange-400 hover:border-red-500";
+                return "text-warning-muted hover:text-danger-soft border-warning-soft hover:border-danger";
             case "request-received":
-                return "text-green-300 hover:text-green-500 border-green-400 hover:border-green-600";
+                return "text-success-muted hover:text-success border-success-soft hover:border-success-strong";
             case "":
-                return "text-text-primary hover:text-green-500 border-text-primary hover:border-green-600";
+                return "text-content hover:text-success border-content hover:border-success-strong";
         }
     };
 
@@ -485,8 +485,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
         return (
             <div className="absolute left-0 top-0 flex h-[calc(100vh-64px)] w-screen items-center justify-center">
                 <div className="mx-auto flex h-full w-max flex-row items-center justify-center gap-6">
-                    <LoadingSpinner size={8} />
-                    <p className="font-lexend text-xl tracking-wide text-text-primary">
+                    <LoadingSpinner size="md" />
+                    <p className="font-lexend text-xl tracking-wide text-content">
                         Loading User Profile...
                     </p>
                 </div>
@@ -506,19 +506,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         </h2>
                         <div className="flex flex-col items-center gap-2">
                             <ProfilePicture
-                                sizes={[
-                                    { value: 20, borderSize: 2 },
-                                    {
-                                        value: 28,
-                                        breakpoint: "sm",
-                                        borderSize: 2,
-                                    },
-                                    {
-                                        value: 40,
-                                        breakpoint: "lg",
-                                        borderSize: 3,
-                                    },
-                                ]}
+                                variant="profileHeader"
                                 username={targetUser.username}
                                 file={targetUser.picture}
                                 link={true}
@@ -528,19 +516,15 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                                 status={
                                     targetUser.online ? "online" : "offline"
                                 }
-                                sizes={[
-                                    { value: "sm" },
-                                    { value: "lg", breakpoint: "sm" },
-                                ]}
                             />
                         </div>
                         <div className="flex w-3/5 flex-col gap-6 sm:max-w-full lg:w-full">
                             <div className="flex w-full flex-col gap-3">
-                                <h2 className="overflow-hidden break-all text-left text-xl font-semibold text-text-primary sm:text-2xl">
+                                <h2 className="overflow-hidden break-all text-left text-xl font-semibold text-content sm:text-2xl">
                                     {targetUserUsername}
                                 </h2>
 
-                                <p className="line-clamp-3 text-balance break-words text-left text-sm font-light text-text-secondary sm:text-base lg:line-clamp-5">
+                                <p className="line-clamp-3 text-balance break-words text-left text-sm font-light text-content-secondary sm:text-base lg:line-clamp-5">
                                     {targetUserBio
                                         ? targetUserBio
                                         : "User hasn't added a bio."}
@@ -549,7 +533,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                             <div className="hidden w-full flex-col gap-4 lg:flex">
                                 {currentUser ? (
                                     <button
-                                        className={`button-outline flex w-full items-center justify-center gap-4 ${isMyAccount ? "border-text-primary text-text-primary hover:border-highlight-primary hover:text-highlight-hover" : getUserRelationColors()}`}
+                                        className={`button-outline flex w-full items-center justify-center gap-4 ${isMyAccount ? "border-content text-content hover:border-brand hover:text-brand-hover" : getUserRelationColors()}`}
                                         onMouseOver={() =>
                                             setIsHoveringProfileButton(true)
                                         }
@@ -580,7 +564,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                                     </button>
                                 ) : (
                                     <button
-                                        className="button-outline flex items-center justify-center gap-4 text-lg text-text-primary hover:cursor-pointer hover:border-highlight-primary hover:text-highlight-primary"
+                                        className="button-outline flex items-center justify-center gap-4 text-lg text-content hover:cursor-pointer hover:border-brand hover:text-brand"
                                         onClick={openLoginForm}
                                     >
                                         <p>Login to add</p>
@@ -590,7 +574,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
 
                                 {userRelation === "request-received" ? (
                                     <button
-                                        className="button-outline flex w-full items-center justify-center gap-4 border-red-500 text-lg text-red-400 hover:border-red-600 hover:text-red-500"
+                                        className="button-outline flex w-full items-center justify-center gap-4 border-danger text-lg text-danger-soft hover:border-danger-strong hover:text-danger"
                                         onClick={handleFriendRequestDecline}
                                     >
                                         <p>Decline Request</p>
@@ -609,16 +593,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                             onClick={() => setFriendsPopupVisible(true)}
                         >
                             <i
-                                className={`fas fa-users text-2xl text-text-primary transition-colors duration-200 hover:cursor-pointer group-hover:text-highlight-primary sm:h-max lg:text-[22px]`}
+                                className={`fas fa-users text-2xl text-content transition-colors duration-200 hover:cursor-pointer group-hover:text-brand sm:h-max lg:text-[22px]`}
                             ></i>
-                            <p className="hidden text-xl text-text-primary transition-colors duration-200 group-hover:text-highlight-primary lg:block lg:text-[22px]">
+                            <p className="hidden text-xl text-content transition-colors duration-200 group-hover:text-brand lg:block lg:text-[22px]">
                                 Friends
                             </p>
                         </div>
                         {/* Edit profile icon button (mobile) */}
                         {isMyAccount ? (
                             <i
-                                className="fas fa-pen text-2xl text-text-primary transition-colors duration-200 hover:cursor-pointer hover:text-highlight-primary lg:hidden lg:text-[22px]"
+                                className="fas fa-pen text-2xl text-content transition-colors duration-200 hover:cursor-pointer hover:text-brand lg:hidden lg:text-[22px]"
                                 onClick={() => setEditProfilePopupVisible(true)}
                             ></i>
                         ) : (
@@ -627,8 +611,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         {/* Profile Settings button */}
                         {isMyAccount ? (
                             <div className="group flex gap-3 hover:cursor-pointer lg:items-center">
-                                <i className="fas fa-cog text-2xl text-text-primary transition-colors duration-200 group-hover:text-highlight-primary lg:text-[22px]"></i>
-                                <p className="hidden text-xl text-text-primary transition-colors duration-200 group-hover:text-highlight-primary lg:block lg:text-[22px]">
+                                <i className="fas fa-cog text-2xl text-content transition-colors duration-200 group-hover:text-brand lg:text-[22px]"></i>
+                                <p className="hidden text-xl text-content transition-colors duration-200 group-hover:text-brand lg:block lg:text-[22px]">
                                     Settings
                                 </p>
                             </div>
@@ -638,7 +622,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         {/* Remove friend button (mobile) */}
                         {userRelation === "friend" ? (
                             <i
-                                className={`fas fa-${getUserRelationIcon()} text-2xl text-text-primary transition-colors duration-200 hover:cursor-pointer hover:text-highlight-primary lg:hidden lg:text-[22px]`}
+                                className={`fas fa-${getUserRelationIcon()} text-2xl text-content transition-colors duration-200 hover:cursor-pointer hover:text-brand lg:hidden lg:text-[22px]`}
                                 onClick={executeFriendAction}
                             ></i>
                         ) : (
@@ -650,7 +634,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                 {userRelation !== "friend" && !isMyAccount ? (
                     <div className="flex w-full flex-col gap-3 lg:hidden">
                         {userRelation === "request-received" ? (
-                            <p className="text-center font-lexend text-text-secondary">
+                            <p className="text-center font-lexend text-content-secondary">
                                 This user sent you a friend request!
                             </p>
                         ) : (
@@ -669,7 +653,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                                 </button>
                                 {userRelation === "request-received" ? (
                                     <button
-                                        className="button-outline flex w-1/2 items-center justify-center gap-4 border-red-500 text-lg text-red-400 hover:border-red-600 hover:text-red-500"
+                                        className="button-outline flex w-1/2 items-center justify-center gap-4 border-danger text-lg text-danger-soft hover:border-danger-strong hover:text-danger"
                                         onClick={handleFriendRequestDecline}
                                     >
                                         <p>Decline</p>
@@ -681,7 +665,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                             </div>
                         ) : (
                             <button
-                                className="button-outline flex items-center justify-center gap-4 text-lg text-text-primary hover:cursor-pointer hover:border-highlight-primary hover:text-highlight-primary"
+                                className="button-outline flex items-center justify-center gap-4 text-lg text-content hover:cursor-pointer hover:border-brand hover:text-brand"
                                 onClick={openLoginForm}
                             >
                                 <p>Login to add</p>
@@ -714,7 +698,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                                 title="Filters"
                             ></i>
                             {/* Filters button */}
-                            <button className="hover-text-white button-outline hidden h-11 items-center gap-3 hover:border-highlight-primary md:flex">
+                            <button className="hover-text-white button-outline hidden h-11 items-center gap-3 hover:border-brand md:flex">
                                 <p className="font-lexend">Filters</p>
                                 <i
                                     className="fas fa-filter"
@@ -729,7 +713,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                                     className="search-bar hidden h-11 w-60 md:block xl:w-72"
                                 />
                                 <i
-                                    className="fas fa-magnifying-glass relative text-xl text-text-primary transition-colors hover:cursor-pointer hover:text-highlight-primary md:absolute md:right-1 md:top-1/2 md:-translate-y-1/2 md:transform md:p-2 md:text-base md:text-input-icon"
+                                    className="fas fa-magnifying-glass relative text-xl text-content transition-colors hover:cursor-pointer hover:text-brand md:absolute md:right-1 md:top-1/2 md:-translate-y-1/2 md:transform md:p-2 md:text-base md:text-content-muted"
                                     title="Search"
                                     onClick={() => {
                                         if (windowWidth < 768)
@@ -740,12 +724,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         </div>
                     </div>
                     {/* Game section navigation (played, playing, etc) */}
-                    <div className="mx-auto mt-12 hidden w-max font-lexend text-lg text-text-primary md:flex">
+                    <div className="mx-auto mt-12 hidden w-max font-lexend text-lg text-content md:flex">
                         {["played", "playing", "backlog", "wishlist"].map(
                             (sectionName) => {
                                 return (
                                     <p
-                                        className={`w-36 border-b-4 pb-2 text-center 2xl:w-40 ${activeGamesSection === sectionName ? "border-b-highlight-hover" : "border-b-[#cacaca55] hover:border-b-highlight-primary"} transition-colors hover:cursor-pointer hover:text-highlight-hover`}
+                                        className={`w-36 border-b-4 pb-2 text-center 2xl:w-40 ${activeGamesSection === sectionName ? "border-b-brand-hover" : "border-b-subtle hover:border-b-brand"} transition-colors hover:cursor-pointer hover:text-brand-hover`}
                                         onClick={() =>
                                             setActiveGamesSection(sectionName)
                                         }
@@ -760,13 +744,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                     </div>
                     {/* Game logs */}
                     {isSectionEmpty ? (
-                        <h2 className="mt-16 text-center font-lexend text-2xl text-text-secondary">
+                        <h2 className="mt-16 text-center font-lexend text-2xl text-content-secondary">
                             No games found in {activeGamesSection}...
                         </h2>
                     ) : targetUserGameLogsLoading ? (
                         <span className="mt-16 flex items-center justify-center gap-4">
-                            <LoadingSpinner size={8} />
-                            <p className="font-lexend text-xl tracking-wide text-text-primary">
+                            <LoadingSpinner size="md" />
+                            <p className="font-lexend text-xl tracking-wide text-content">
                                 Loading Game Logs...
                             </p>
                         </span>
@@ -853,7 +837,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                     <div className="mx-auto mb-4 mt-12 flex w-max items-center justify-center gap-6 sm:mb-0 lg:absolute lg:bottom-6 lg:left-1/2 lg:mt-0 lg:-translate-x-1/2 lg:transform">
                         {/* Previous Button */}
                         <button
-                            className={`${previousEnabled ? "border-text-primary text-text-primary hover:border-highlight-primary hover:text-highlight-primary" : "border-[#ffffff55] text-[#ffffff55]"} button-outline flex h-10 w-16 items-center justify-center sm:w-28`}
+                            className={`${previousEnabled ? "border-content text-content hover:border-brand hover:text-brand" : "border-content-disabled text-content-disabled"} button-outline flex h-10 w-16 items-center justify-center sm:w-28`}
                             onClick={() =>
                                 previousEnabled
                                     ? setPageNumber(pageNumber - 1)
@@ -867,13 +851,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                             )}
                         </button>
                         {/* Page number text */}
-                        <p className="font-lexend text-text-primary sm:text-lg">
+                        <p className="font-lexend text-content sm:text-lg">
                             Page {pageNumber} of {maxPageNumber}
                         </p>
 
                         {/* Next Button */}
                         <button
-                            className={`button-outline flex h-10 w-16 items-center justify-center sm:w-28 ${nextEnabled ? "border-text-primary text-text-primary hover:border-highlight-primary hover:text-highlight-primary" : "border-[#ffffff55] text-[#ffffff55]"} `}
+                            className={`button-outline flex h-10 w-16 items-center justify-center sm:w-28 ${nextEnabled ? "border-content text-content hover:border-brand hover:text-brand" : "border-content-disabled text-content-disabled"} `}
                             onClick={() =>
                                 nextEnabled
                                     ? setPageNumber(pageNumber + 1)
@@ -897,7 +881,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                             targetUserFriends.some(
                                 (friend) => friend.status === "friend"
                             ) ? (
-                                <p className="text-center font-lexend font-light text-text-secondary">
+                                <p className="text-center font-lexend font-light text-content-secondary">
                                     <span>
                                         {
                                             targetUserFriendsDetails?.filter(
@@ -918,7 +902,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         {/* List of friends, scrollable on overflow */}
                         {targetUserFriendsLoading ? (
                             <span className="absolute left-0 top-0 flex h-full w-full items-center justify-center">
-                                <LoadingSpinner size={10} />
+                                <LoadingSpinner size="lg" />
                             </span>
                         ) : (
                             <div className="mt-2 flex max-h-[400px] flex-col gap-1 overflow-y-scroll">
@@ -927,7 +911,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                                         <FriendProfile
                                             key={friend.id}
                                             user={friend}
-                                            profilePictureSize={10}
+                                            density="compact"
                                         />
                                     );
                                 })}
@@ -941,14 +925,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                                 <Link
                                     key={review.gameID}
                                     to={`/game/${review.gameID}`}
-                                    className="flex h-20 items-center gap-3 rounded-md p-2 transition-colors duration-200 hover:bg-popup-end"
+                                    className="flex h-20 items-center gap-3 rounded-md p-2 transition-colors duration-200 hover:bg-surface-popup-to"
                                 >
                                     <img
                                         src={`/PlayRates/assets/game-covers/${review.gameID}.png`}
                                         className="game-cover h-full object-cover"
                                     />
                                     <div className="flex flex-col gap-1">
-                                        <span className="flex items-center gap-1 text-xs text-text-primary">
+                                        <span className="flex items-center gap-1 text-xs text-content">
                                             <p className="font-semibold tracking-wider">
                                                 {targetUserGameLogs?.find(
                                                     (log) =>
@@ -956,9 +940,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                                                 )?.rating || "?"}
                                                 /10
                                             </p>
-                                            <i className="fas fa-star text-highlight-primary"></i>
+                                            <i className="fas fa-star text-brand"></i>
                                         </span>
-                                        <p className="line-clamp-2 h-max text-sm text-text-secondary">
+                                        <p className="line-clamp-2 h-max text-sm text-content-secondary">
                                             {review.text}
                                         </p>
                                     </div>

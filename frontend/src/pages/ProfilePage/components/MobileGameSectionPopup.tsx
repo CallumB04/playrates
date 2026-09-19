@@ -23,9 +23,9 @@ const MobileGameSectionPopup: React.FC<MobileGameSectionPopupProps> = ({
                 className="popup popup-default flex w-[min(450px,95vw)] flex-col gap-3 text-center"
                 onMouseDown={(event) => event.stopPropagation()}
             >
-                <h2 className="text-xl text-text-primary">Select Section</h2>
+                <h2 className="text-xl text-content">Select Section</h2>
 
-                <div className="flex w-full flex-col justify-center gap-5 border-t-[1px] border-t-[#cacaca55] pt-3">
+                <div className="flex w-full flex-col justify-center gap-5 border-t border-t-subtle pt-3">
                     {["played", "playing", "backlog", "wishlist"].map(
                         (sectionName) => {
                             return (

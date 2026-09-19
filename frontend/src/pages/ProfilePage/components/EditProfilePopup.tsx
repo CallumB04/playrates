@@ -72,8 +72,8 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                 onMouseDown={(event) => event.stopPropagation()}
             >
                 <div className="flex w-full flex-col gap-3">
-                    <h2 className="text-xl text-text-primary">Edit Profile</h2>
-                    <p className="border-t-[1px] border-t-[#cacaca55] pt-3 font-light text-text-secondary">
+                    <h2 className="text-xl text-content">Edit Profile</h2>
+                    <p className="border-t border-t-subtle pt-3 font-light text-content-secondary">
                         Update your public profile and how others see you!
                     </p>
                 </div>
@@ -85,12 +85,12 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                             onClick={() => fileInput.current?.click()}
                         >
                             <ProfilePicture
-                                sizes={[{ value: 40, borderSize: 3 }]}
+                                variant="editProfile"
                                 username={user.username}
                                 file={user.picture}
                                 link={false}
                             />
-                            <div className="absolute left-0 top-0 flex h-full w-full items-center justify-center rounded-full bg-[#0e0e0e99] font-semibold text-text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                            <div className="absolute left-0 top-0 flex h-full w-full items-center justify-center rounded-full bg-overlay-avatar font-semibold text-content opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                                 Click to Upload
                             </div>
                         </div>
@@ -103,10 +103,10 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     </div>
                     <div className="flex w-full flex-col gap-1">
                         <span className="flex w-full items-end justify-between">
-                            <p className="text-left font-semibold text-text-secondary">
+                            <p className="text-left font-semibold text-content-secondary">
                                 Bio
                             </p>
-                            <p className="text-sm font-light text-text-secondary">
+                            <p className="text-sm font-light text-content-secondary">
                                 Max 160 Characters
                             </p>
                         </span>
@@ -121,10 +121,10 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     </div>
                     <div className="flex w-full flex-col gap-1">
                         <span className="flex w-full items-end justify-between gap-2">
-                            <p className="text-left font-semibold text-text-secondary">
+                            <p className="text-left font-semibold text-content-secondary">
                                 Username Capitalization
                             </p>
-                            <p className="text-right text-sm font-light text-text-secondary">
+                            <p className="text-right text-sm font-light text-content-secondary">
                                 Change in{" "}
                                 <Link
                                     to="/settings"
@@ -143,7 +143,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                             }
                         />
                         {!usernameInputMatches ? (
-                            <p className="text-left font-lexend text-red-500">
+                            <p className="text-left font-lexend text-danger">
                                 Username doesnt match &apos;{username}&apos;,
                                 only change
                                 capitalization.
@@ -170,8 +170,8 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
 
                 <ClosePopupIcon onClick={closePopup} />
                 {loadingUpdate ? (
-                    <div className="absolute left-0 top-0 flex size-full items-center justify-center rounded-lg bg-[#00000077]">
-                        <LoadingSpinner size={10} />
+                    <div className="absolute left-0 top-0 flex size-full items-center justify-center rounded-lg bg-overlay-loading">
+                        <LoadingSpinner size="lg" />
                     </div>
                 ) : (
                     <></>
