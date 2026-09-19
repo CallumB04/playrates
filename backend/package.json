@@ -2,25 +2,47 @@
     "name": "backend",
     "version": "1.0.0",
     "private": true,
-    "main": "server.js",
-    "type": "commonjs",
+    "type": "module",
+    "main": "dist/index.js",
     "scripts": {
-        "dev": "nodemon server.js",
-        "start": "node server.js",
-        "build": "echo \"(no build step yet)\"",
-        "typecheck": "echo \"(no typecheck yet)\"",
-        "lint": "echo \"(no lint yet)\"",
-        "test": "echo \"(no tests yet)\""
+        "dev": "tsx watch src/index.ts",
+        "build": "tsc -p tsconfig.json",
+        "start": "node dist/index.js",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "lint": "eslint .",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "seed:games": "tsx scripts/seedGames.ts",
+        "db:types": "supabase gen types typescript --linked > src/types/database.types.ts"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "description": "PlayRates backend API",
     "dependencies": {
+        "@playrates/shared": "*",
+        "@supabase/supabase-js": "^2.47.10",
         "cors": "^2.8.5",
-        "express": "^4.21.2"
+        "express": "^5.0.1",
+        "express-rate-limit": "^7.5.0",
+        "helmet": "^8.0.0",
+        "jose": "^5.9.6",
+        "pino": "^9.6.0",
+        "pino-http": "^10.3.0",
+        "zod": "^3.24.1"
     },
     "devDependencies": {
-        "nodemon": "^3.1.9"
+        "@eslint/js": "^9.15.0",
+        "@types/cors": "^2.8.17",
+        "@types/express": "^5.0.0",
+        "@types/node": "^22.10.6",
+        "@types/supertest": "^6.0.2",
+        "eslint": "^9.15.0",
+        "globals": "^15.12.0",
+        "supertest": "^7.0.0",
+        "tsx": "^4.19.2",
+        "typescript": "~5.6.2",
+        "typescript-eslint": "^8.15.0",
+        "vitest": "^2.1.8"
     }
 }

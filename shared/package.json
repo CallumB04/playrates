@@ -1,0 +1,30 @@
+{
+    "name": "@playrates/shared",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "lint": "echo \"(no lint config; covered by typecheck)\"",
+        "test": "echo \"(schemas are tested from the backend suite)\""
+    },
+    "dependencies": {
+        "zod": "^3.24.1"
+    },
+    "devDependencies": {
+        "typescript": "~5.6.2"
+    }
+}
