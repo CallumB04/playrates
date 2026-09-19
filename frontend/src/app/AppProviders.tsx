@@ -5,6 +5,7 @@ import { queryClient } from "./queryClient";
 import { NotificationProvider } from "../contexts/NotificationContext";
 import { AuthProvider } from "../contexts/AuthContext";
 import { AccountFormProvider } from "../contexts/AccountFormContext";
+import { ThemeProvider } from "../contexts/ThemeContext";
 import ErrorBoundary from "../components/feedback/ErrorBoundary";
 
 /**
@@ -17,14 +18,18 @@ import ErrorBoundary from "../components/feedback/ErrorBoundary";
  */
 export const AppProviders = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-        <ErrorBoundary>
-            <NotificationProvider>
-                <BrowserRouter>
-                    <AuthProvider>
-                        <AccountFormProvider>{children}</AccountFormProvider>
-                    </AuthProvider>
-                </BrowserRouter>
-            </NotificationProvider>
-        </ErrorBoundary>
+        <ThemeProvider>
+            <ErrorBoundary>
+                <NotificationProvider>
+                    <BrowserRouter>
+                        <AuthProvider>
+                            <AccountFormProvider>
+                                {children}
+                            </AccountFormProvider>
+                        </AuthProvider>
+                    </BrowserRouter>
+                </NotificationProvider>
+            </ErrorBoundary>
+        </ThemeProvider>
     </QueryClientProvider>
 );

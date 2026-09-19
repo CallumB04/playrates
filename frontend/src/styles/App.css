@@ -28,14 +28,16 @@ main {
 
 /* Primary purple button */
 .button-primary {
-    @apply bg-brand text-content hover:bg-brand-hover;
+    @apply bg-brand text-content-on-solid hover:bg-brand-hover;
 }
-/* Secondary white button */
+/* Secondary button: an inverted fill.
+   Uses surface-inverse rather than `bg-content` — content tokens are for text,
+   and borrowing one as a background only happened to work in dark mode. */
 .button-secondary {
-    @apply bg-content text-content-inverse hover:bg-content-secondary;
+    @apply bg-surface-inverse text-content-inverse hover:bg-content-secondary;
 }
 .button-danger {
-    @apply bg-danger-strong text-content hover:bg-danger;
+    @apply bg-danger-strong text-content-on-solid hover:bg-danger;
 }
 /* Button with only outline (Edit profile button, etc) Allowing for custom bg color */
 .button-outline {
