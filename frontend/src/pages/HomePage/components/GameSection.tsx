@@ -1,4 +1,4 @@
-import { Game } from "../../../api";
+import type { Game } from "@playrates/shared";
 import LoadingSpinner from "../../../components/LoadingSpinner.tsx";
 import GameElement from "./GameElement.tsx";
 
@@ -29,7 +29,9 @@ const GameSection: React.FC<GameSectionProps> = ({ games, loading, error }) => {
     return (
         <div className="mx-auto mt-7 flex w-full flex-wrap justify-evenly gap-y-5">
             {/* Mapping over and display games in array */}
-            {games?.map((game) => <GameElement key={game.id} game={game} />)}
+            {games?.map((game) => (
+                <GameElement key={game.id} game={game} />
+            ))}
         </div>
     );
 };

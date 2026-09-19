@@ -1,4 +1,4 @@
-import ClosePopupIcon from "../../../components/ClosePopupIcon";
+import Modal from "../../../components/ui/Modal";
 
 interface RemoveFriendPopupProps {
     closePopup: () => void;
@@ -18,11 +18,8 @@ const RemoveFriendPopup: React.FC<RemoveFriendPopupProps> = ({
     };
 
     return (
-        <dialog className="popup-backdrop" onMouseDown={closePopup}>
-            <div
-                className="popup popup-default flex flex-col gap-6 text-center"
-                onMouseDown={(event) => event.stopPropagation()}
-            >
+        <Modal onClose={closePopup} className="flex flex-col gap-6 text-center">
+            <div className="contents">
                 <div className="flex w-full flex-col gap-3">
                     <h2 className="text-xl text-content">Remove Friend</h2>
                     <p className="max-w-[40ch] border-t border-t-subtle pt-3 font-light text-content-secondary">
@@ -47,10 +44,8 @@ const RemoveFriendPopup: React.FC<RemoveFriendPopupProps> = ({
                         Cancel
                     </button>
                 </div>
-
-                <ClosePopupIcon onClick={closePopup} />
             </div>
-        </dialog>
+        </Modal>
     );
 };
 

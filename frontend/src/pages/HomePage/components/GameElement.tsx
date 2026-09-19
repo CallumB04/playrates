@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Game } from "../../../api";
 import { Link } from "react-router-dom";
-import { useUser } from "../../../App";
+import type { Game } from "@playrates/shared";
+import { useAuth } from "../../../contexts/AuthContext";
 
 interface GameElementProps {
     game: Game;
@@ -9,29 +9,31 @@ interface GameElementProps {
 
 const GameElement: React.FC<GameElementProps> = ({ game }) => {
     const [imgLoaded, setImgLoaded] = useState(true);
-    const user = useUser();
+    const { user } = useAuth();
 
     return (
         <Link
             to={`/game/${game.id}`}
-            key={game.id}
             className="game-cover group relative flex w-[31%] items-center justify-center bg-surface-media font-lexend md:w-[15%]"
         >
-            {/* Text displayed if image can't be loaded */}
+            {/* shown when the cover fails to load */}
             <p
                 className={`whitespace-normal break-words text-center text-base font-semibold text-content group-hover:z-20 sm:text-xl md:text-base lg:text-xl 2xl:text-3xl ${imgLoaded ? "opacity-0" : "opacity-100"} px-2 transition-opacity duration-300 group-hover:opacity-100`}
             >
                 {game.title}
             </p>
-            <img
-                className="absolute left-0 top-0 h-full w-full rounded-md object-cover transition-opacity duration-300 group-hover:opacity-10"
-                src={`/PlayRates/assets/game-covers/${game.id}.png`}
-                onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                    setImgLoaded(false);
-                }}
-            />
-            {/* Quick add button - Plus sign 
+            {game.coverUrl && (
+                <img
+                    className="absolute left-0 top-0 h-full w-full rounded-md object-cover transition-opacity duration-300 group-hover:opacity-10"
+                    src={game.coverUrl}
+                    alt={game.title}
+                    onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        setImgLoaded(false);
+                    }}
+                />
+            )}
+            {/* Quick add button - Plus sign
                 Currently no functionality, will allow users to add games
                 to their account from the home page. */}
             {user ? (

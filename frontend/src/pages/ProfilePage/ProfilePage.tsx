@@ -1,480 +1,247 @@
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { useUser } from "../../App";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import type { GameLogWithGame } from "../../api";
+import { useAuth } from "../../contexts/AuthContext";
+import { useAccountForm } from "../../contexts/AccountFormContext";
+import { useNotify } from "../../contexts/NotificationContext";
+import { useProfile } from "../../hooks/queries/useProfiles";
 import {
-    fetchGameLogsByUserID,
-    fetchUserByID,
-    fetchUserByUsername,
-    GameLog,
-    UserAccount,
-} from "../../api";
-import { useQuery } from "@tanstack/react-query";
+    useUserGameLogs,
+    useMyGameLogs,
+} from "../../hooks/queries/useGameLogs";
+import {
+    useUserFriends,
+    useFriendRelation,
+} from "../../hooks/queries/useFriends";
+import { useUserReviews } from "../../hooks/queries/useReviews";
+import { useWindowSize } from "../../hooks/useWindowSize";
+import { usePagination } from "../../hooks/usePagination";
 import ProfileError from "./components/ProfileError";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import ProfilePicture from "../../components/ProfilePicture";
 import UserStatus from "../../components/UserStatus";
-import { useEffect, useState } from "react";
-import GameElement from "./components/GameElement";
-import {
-    acceptFriendRequest,
-    cancelFriendRequest,
-    declineFriendRequest,
-    fetchFriendsByID,
-    Friend,
-    removeFriend,
-    sendFriendRequest,
-} from "../../api/friends";
-import RemoveFriendPopup from "./components/RemoveFriendPopup";
+import GameTile, { type TileAction } from "../../components/game/GameTile";
+import Pagination from "../../components/ui/Pagination";
 import FriendProfile from "../../components/FriendProfile";
+import RemoveFriendPopup from "./components/RemoveFriendPopup";
 import MobileSearchPopup from "./components/MobileSearchPopup";
 import MobileGameSectionPopup from "./components/MobileGameSectionPopup";
 import FriendsPopup from "./components/FriendsPopup";
 import EditProfilePopup from "./components/EditProfilePopup";
 import ViewGameLogPopup from "../../components/ViewGameLogPopup";
 import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
-import DeleteGameLogPopup from "../../components/DeleteGameLogPopup";
-import { fetchReviewsByUserID, Review } from "../../api/reviews";
+import DeleteGameLogPopup from "../../components/gamelog/DeleteGameLogPopup";
+import {
+    getProfileGamesPerPage,
+    getUserRelationColors,
+    getUserRelationIcon,
+    getUserRelationText,
+} from "./lib/friendRelation";
 
 interface ProfilePageProps {
-    runNotification: (
-        text: string,
-        type: "success" | "error" | "pending"
-    ) => void;
-    openLoginForm: () => void;
+    /** Guaranteed by ProfilePageRoute, so no hook here runs conditionally. */
+    username: string;
 }
 
-const ProfilePage: React.FC<ProfilePageProps> = ({
-    runNotification,
-    openLoginForm,
-}) => {
-    const currentUser = useUser(); // getting the currently logged in user
-    const { targetUsername } = useParams(); // getting user from URL as their username
-    const navigate = useNavigate();
-    const [isMyAccount, setIsMyAccount] = useState<boolean>(false);
+type OpenModal =
+    | { kind: "view"; log: GameLogWithGame }
+    | { kind: "edit"; log: GameLogWithGame }
+    | { kind: "create"; log: GameLogWithGame }
+    | { kind: "delete"; log: GameLogWithGame }
+    | { kind: "removeFriend" }
+    | { kind: "friends" }
+    | { kind: "editProfile" }
+    | { kind: "mobileSearch" }
+    | { kind: "mobileSection" }
+    | null;
 
-    // getting game type and optional log id from url search params
+const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
+    const { user: currentUser } = useAuth();
+    const { openLogin } = useAccountForm();
+    const notify = useNotify();
+    const navigate = useNavigate();
     const location = useLocation();
+    const { width: windowWidth } = useWindowSize();
+
     const urlParams = new URLSearchParams(location.search);
-    const URLGamesSection = urlParams.get("type") || "played"; // getting game section (played, playing, etc) - default to played if no url data
+    const URLGamesSection = urlParams.get("type") || "played";
     const URLGameLog = urlParams.get("log");
 
-    // currently displayed section (played, playing, backlog, etc)
-    const [activeGamesSection, setActiveGamesSection] = useState<string>("");
-    const [isSectionEmpty, setIsSectionEmpty] = useState<boolean>(false);
+    const [activeGamesSection, setActiveGamesSection] =
+        useState<string>(URLGamesSection);
+    const [isHoveringProfileButton, setIsHoveringProfileButton] =
+        useState(false);
+    const [modal, setModal] = useState<OpenModal>(null);
 
-    const [pageNumber, setPageNumber] = useState<number>(1);
-    const [maxPageNumber, setMaxPageNumber] = useState<number>(1); // re-calculates when window width updates, final page number based on games
-    const [gamesPerPage, setGamesPerPage] = useState<number>(50); // updated when window width updates
-    const [previousEnabled, setPreviousEnabled] = useState<boolean>(true); // whether previous button can be pressed (page number > 1)
-    const [nextEnabled, setNextEnabled] = useState<boolean>(true); // whether next button can be pressed (not at final page)
-    const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
-
-    // popup visibilities
-    const [removeUserPopupVisible, setRemoveUserPopupVisible] =
-        useState<boolean>(false);
-    const [mobileSearchPopupVisible, setMobileSearchPopupVisible] =
-        useState<boolean>(false);
-    const [mobileGameSectionPopupVisible, setMobileGameSectionPopupVisible] =
-        useState<boolean>(false);
-    const [friendsPopupVisible, setFriendsPopupVisible] =
-        useState<boolean>(false);
-    const [editProfilePopupVisible, setEditProfilePopupVisible] =
-        useState<boolean>(false);
-
-    const [viewGameLogPopupVisible, setViewGameLogPopupVisible] =
-        useState<boolean>(false);
-    const [editGameLogPopupVisible, setEditGameLogPopupVisible] =
-        useState<boolean>(false);
-    const [createGameLogPopupVisible, setCreateGameLogPopupVisible] =
-        useState<boolean>(false);
-    const [deleteGameLogPopupVisible, setDeleteGameLogPopupVisible] =
-        useState<boolean>(false);
-    const [currentVisibleGameLog, setCurrentVisibleGameLog] =
-        useState<GameLog | null>(null);
-
-    // handling window resizing
-    useEffect(() => {
-        // updates state with window width
-        const handleResize = () => setWindowWidth(window.innerWidth);
-
-        // listening for window resizing and matching it in state
-        window.addEventListener("resize", handleResize);
-
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
-
-    // updating state when window resizes
-    useEffect(() => {
-        // updating games per page when window resizes
-        if (windowWidth >= 1280) {
-            setGamesPerPage(27);
-        } else if (windowWidth >= 1024) {
-            setGamesPerPage(21);
-        } else if (windowWidth >= 768) {
-            setGamesPerPage(28);
-        } else {
-            setGamesPerPage(24);
-        }
-    }, [windowWidth]);
-
-    // update game section if navbar option is clicked within the profile page
-    useEffect(() => {
-        setActiveGamesSection(URLGamesSection);
-    }, [location]);
-
-    // resetting to page 1 when changing sections
-    useEffect(() => {
-        setPageNumber(1);
-    }, [activeGamesSection]);
-
-    // updating next and previous buttons when current or max page number changes
-    useEffect(() => {
-        // disable previous if on first page
-        if (pageNumber === 1) {
-            setPreviousEnabled(false);
-        } else {
-            setPreviousEnabled(true);
-        }
-
-        // disable next if on final page
-        if (pageNumber === maxPageNumber) {
-            setNextEnabled(false);
-        } else {
-            setNextEnabled(true);
-        }
-    }, [pageNumber, maxPageNumber]);
-
-    // if no user in the URL, notify. The error screen is returned after all
-    // hooks have run — returning here would call hooks conditionally.
-    useEffect(() => {
-        if (!targetUsername) {
-            runNotification("No user found in URL", "error");
-        }
-    }, [targetUsername]);
-
-    // fetching user from API
+    // --- data -------------------------------------------------------------
     const {
         data: targetUser,
         error: targetUserError,
         isLoading: targetUserLoading,
-    } = useQuery<UserAccount | undefined>({
-        queryKey: ["targetUser", targetUsername],
-        queryFn: () => fetchUserByUsername(targetUsername!),
-        enabled: !!targetUsername,
-    });
+    } = useProfile(targetUsername);
 
-    // temporary state for bio and username capitalization to display incase of changes, until state refresh
-    const [targetUserBio, setTargetUserBio] = useState<string>("");
-    const [targetUserUsername, setTargetUserUsername] = useState<string>("");
+    const isMyAccount =
+        !!currentUser && currentUser.username === targetUsername;
 
-    useEffect(() => {
-        if (targetUser) {
-            setTargetUserBio(targetUser.bio);
-            setTargetUserUsername(targetUser.username);
-        }
-    }, [targetUser]);
+    const { data: targetLogsPage, isLoading: targetUserGameLogsLoading } =
+        useUserGameLogs(targetUsername);
+    const { data: myLogsPage } = useMyGameLogs();
+    const { data: targetUserFriends, isLoading: targetUserFriendsLoading } =
+        useUserFriends(targetUsername);
+    const { data: targetReviewsPage } = useUserReviews(targetUsername);
 
-    // fetching target users friends from API
+    const targetUserGameLogs = useMemo(
+        () => targetLogsPage?.data ?? [],
+        [targetLogsPage]
+    );
+    const currentUserGameLogs = useMemo(
+        () => myLogsPage?.data ?? [],
+        [myLogsPage]
+    );
+    const targetUserReviews = useMemo(
+        () => targetReviewsPage?.data ?? [],
+        [targetReviewsPage]
+    );
+
+    // friends already carry the other user embedded, so there is no longer a
+    // request per friend to resolve names and avatars
+    const acceptedFriends = useMemo(
+        () => (targetUserFriends ?? []).filter((f) => f.status === "friend"),
+        [targetUserFriends]
+    );
+
     const {
-        data: targetUserFriends,
-        refetch: refetchTargetUserFriends,
-        isLoading: targetUserFriendsLoading,
-    } = useQuery<Friend[] | undefined>({
-        queryKey: ["targetUserFriends", targetUser?.id],
-        queryFn: () => fetchFriendsByID(targetUser!.id),
-        enabled: !!targetUser,
+        relation: userRelation,
+        send,
+        accept,
+        remove,
+    } = useFriendRelation(targetUser?.id);
+
+    // --- game section + pagination ---------------------------------------
+    const sectionLogs = useMemo(
+        () =>
+            targetUserGameLogs.filter(
+                (log) => log.status === activeGamesSection
+            ),
+        [targetUserGameLogs, activeGamesSection]
+    );
+
+    const isSectionEmpty =
+        !targetUserGameLogsLoading && sectionLogs.length === 0;
+
+    const gamesPerPage = getProfileGamesPerPage(windowWidth);
+    const pagination = usePagination({
+        total: sectionLogs.length,
+        perPage: gamesPerPage,
     });
 
-    // fetching target users friends details from API
-    const {
-        data: targetUserFriendsDetails,
-        refetch: refetchTargetUserFriendsDetails,
-        error: targetUserFriendsErrorDetails,
-        isLoading: targetUserFriendsLoadingDetails,
-    } = useQuery<UserAccount[] | undefined>({
-        queryKey: [
-            "targetUserFriendsDetails",
-            targetUserFriends
-                ?.filter((friend) => friend.status === "friend")
-                .map((friend) => friend.id),
-        ],
-        queryFn: async () => {
-            return (
-                Promise.all(
-                    targetUserFriends!
-                        .filter((friend) => friend.status === "friend")
-                        .map((friend) => fetchUserByID(friend.id))
-                ) || []
-            );
-        },
-        enabled: !!targetUserFriends && targetUserFriends.length > 0,
-    });
-
-    // fetching current users friends from API, if logged in
-    const {
-        data: currentUserFriends,
-        refetch: refetchCurrentUserFriends,
-    } = useQuery<Friend[] | undefined>({
-        queryKey: ["currentUserFriends", currentUser?.id],
-        queryFn: () => fetchFriendsByID(currentUser!.id),
-        enabled: !!currentUser,
-    });
-
-    // fetching target users game logs from API
-    const {
-        data: targetUserGameLogs,
-        refetch: refetchTargetUserGameLogs,
-        error: targetUserGameLogsError,
-        isLoading: targetUserGameLogsLoading,
-    } = useQuery<GameLog[] | undefined>({
-        queryKey: ["targetUserGameLogs", targetUser?.id],
-        queryFn: () => fetchGameLogsByUserID(targetUser!.id),
-        enabled: !!targetUser,
-    });
-
-    // fetching current users game logs from API, only if not own page
-    const { data: currentUserGameLogs } = useQuery<GameLog[] | undefined>({
-        queryKey: ["currentUserGameLogs", currentUser?.id],
-        queryFn: () => fetchGameLogsByUserID(currentUser!.id),
-        enabled: !!currentUser && !isMyAccount,
-    });
-
-    // fetching reviews from this user
-    const { data: targetUserReviews } = useQuery<Review[]>({
-        queryKey: ["targetUserReviews", targetUser?.id],
-        queryFn: () => fetchReviewsByUserID(targetUser!.id),
-        enabled: !!targetUser,
-    });
-
-    // opening view log popup if url contains correct params
-    useEffect(() => {
-        if (
-            URLGameLog &&
-            !targetUserGameLogsLoading &&
-            !targetUserGameLogsError
-        ) {
-            const log = targetUserGameLogs?.find(
-                (log) => log.id === Number(URLGameLog)
-            );
-
-            if (log) {
-                setActiveGamesSection(log.status);
-                setCurrentVisibleGameLog(log);
-                setViewGameLogPopupVisible(true);
-            }
-        }
-    }, [URLGameLog, targetUserGameLogsLoading, targetUserGameLogsError]);
+    const visibleLogs = pagination.slice(sectionLogs);
 
     useEffect(() => {
-        if (currentUser?.id === targetUser?.id) {
-            setIsMyAccount(true);
-        } else {
-            setIsMyAccount(false);
-        }
-    }, [currentUser, targetUser]);
+        setActiveGamesSection(URLGamesSection);
+    }, [URLGamesSection]);
 
-    // boolean whether edit profile / add friend button is being hovered
-    const [isHoveringProfileButton, setIsHoveringProfileButton] =
-        useState<boolean>(false);
-
-    // checking user relation (friends, request-sent, etc)... Empty "" if user on own account
-    const [userRelation, setUserRelation] = useState<string>("");
-
-    // updating maximum page number when games per page or section changes
-    // also checking if page is empty for displaying message
+    // deep link: /user/x?log=<gameId> opens that log
     useEffect(() => {
-        if (targetUserGameLogs) {
-            // calculate total amount of games in current open section
-            const overallCount = targetUserGameLogs.filter(
-                (gameLog) => gameLog.status === activeGamesSection
-            ).length;
-
-            // checking if section is empty
-            if (overallCount === 0) {
-                setIsSectionEmpty(true);
-            } else {
-                setIsSectionEmpty(false);
-            }
-
-            const maxPages = Math.floor(overallCount / gamesPerPage) + 1;
-            setMaxPageNumber(maxPages);
-        }
-    }, [gamesPerPage, activeGamesSection, targetUserGameLogs]);
-
-    useEffect(() => {
-        // search if target user in current users friend list
-        const relationship = currentUserFriends?.find(
-            (user) => user.id === targetUser?.id
+        if (!URLGameLog || targetUserGameLogs.length === 0) return;
+        const log = targetUserGameLogs.find(
+            (l) => l.gameId === Number(URLGameLog)
         );
+        if (log) setModal({ kind: "view", log });
+    }, [URLGameLog, targetUserGameLogs]);
 
-        if (relationship) {
-            // setting user relation as status
-            setUserRelation(relationship.status);
-        } else {
-            // emptying user relation if not found in friends list
-            setUserRelation("");
-        }
-    }, [currentUserFriends, targetUserFriends]);
-
-    // function to get icon for button from current and target user relation
-    const getUserRelationIcon = () => {
-        switch (userRelation) {
-            case "friend":
-                return isHoveringProfileButton || windowWidth < 1024
-                    ? "user-xmark"
-                    : "user-group";
-            case "request-sent":
-                return isHoveringProfileButton || windowWidth < 1024
-                    ? "user-xmark"
-                    : "user-clock";
-            case "request-received":
-                return "user-check";
-            case "":
-                return "user-plus";
-        }
-    };
-
-    // function to get text for button from current and target user relation
-    const getUserRelationText = () => {
-        switch (userRelation) {
-            case "friend":
-                return isHoveringProfileButton || windowWidth < 1024
-                    ? "Remove Friend"
-                    : "Friends";
-            case "request-sent":
-                return isHoveringProfileButton || windowWidth < 1024
-                    ? "Cancel Request"
-                    : "Request Sent";
-            case "request-received":
-                return windowWidth < 1024 ? "Accept" : "Accept Request";
-            case "":
-                return "Add Friend";
-        }
-    };
-
-    // function to get text for button from current and target user relation
-    const getUserRelationColors = () => {
-        switch (userRelation) {
-            case "friend":
-                return "text-success-soft hover:text-danger-soft border-success hover:border-danger";
-            case "request-sent":
-                return "text-warning-muted hover:text-danger-soft border-warning-soft hover:border-danger";
-            case "request-received":
-                return "text-success-muted hover:text-success border-success-soft hover:border-success-strong";
-            case "":
-                return "text-content hover:text-success border-content hover:border-success-strong";
-        }
-    };
-
-    // function to determine what api call to make when user clicks profile button...
-    // based on current user relation
-    const executeFriendAction = async () => {
-        let request; // declare empty request variable
-        switch (userRelation) {
-            case "friend":
-                setRemoveUserPopupVisible(true); // display remove friend popup
-                break;
-            case "request-sent":
-                request = await cancelFriendRequest(currentUser!, targetUser!);
-
-                if (request) {
-                    setUserRelation("");
-                    runNotification("Friend Request cancelled", "success");
-                } else {
-                    runNotification(
-                        "Failed to cancel Friend Request, please try again",
-                        "error"
-                    );
-                }
-                break;
-            case "request-received":
-                request = await acceptFriendRequest(currentUser!, targetUser!);
-
-                if (request) {
-                    setUserRelation("friend");
-                    runNotification("Friend Request accepted", "success");
-                } else {
-                    runNotification(
-                        "Failed to accept Friend Request, please try again",
-                        "error"
-                    );
-                }
-
-                // refresh friends data in state
-                refetchCurrentUserFriends();
-                refetchTargetUserFriends();
-                refetchTargetUserFriendsDetails();
-
-                break;
-            case "":
-                request = await sendFriendRequest(currentUser!, targetUser!);
-
-                if (request) {
-                    setUserRelation("request-sent");
-                    runNotification("Friend Request sent", "pending");
-                } else {
-                    runNotification(
-                        "Friend Request failed, please try again",
-                        "error"
-                    );
-                }
-                break;
-        }
-    };
-
-    // function for decline option when received friend request
-    const handleFriendRequestDecline = async () => {
-        const request = await declineFriendRequest(currentUser!, targetUser!);
-
-        if (request) {
-            setUserRelation("");
-            runNotification("Friend Request declined", "success");
-        } else {
-            runNotification(
-                "Failed to decline Friend Request, please try again",
-                "error"
-            );
-        }
-    };
-
-    // function for removing friend, after confirming on popup
-    const handleFriendRemoval = async () => {
-        const request = await removeFriend(currentUser!, targetUser!);
-
-        if (request) {
-            setUserRelation("");
-            runNotification("Friend removed", "success");
-
-            // refresh friends data in state
-            refetchCurrentUserFriends();
-            refetchTargetUserFriends();
-            refetchTargetUserFriendsDetails();
-        } else {
-            runNotification(
-                "Failed to remove Friend, please try again",
-                "error"
-            );
-        }
-    };
-
-    // function ran after successful edit or creation of a log
-    const viewUpdatedLog = (log: GameLog) => {
-        // if created from another persons page, redirect before showing
-        if (!isMyAccount) {
-            navigate(`/user/${currentUser?.username}?log=${log?.id}`);
-        }
-
-        refetchTargetUserGameLogs();
-        setCurrentVisibleGameLog(log);
-        setActiveGamesSection(log.status);
-        setViewGameLogPopupVisible(true);
-    };
-
-    // user doesnt exist / failed to fetch
     useEffect(() => {
-        if (targetUserError) {
-            runNotification("Failed to fetch user data", "error");
+        if (targetUserError) notify("Failed to fetch user data", "error");
+    }, [targetUserError, notify]);
+
+    // --- friend actions ---------------------------------------------------
+    const executeFriendAction = async () => {
+        if (!currentUser) {
+            openLogin();
+            return;
         }
-    }, [targetUserError]);
+
+        try {
+            switch (userRelation) {
+                case "friend":
+                    setModal({ kind: "removeFriend" });
+                    return;
+                case "request-sent":
+                    await remove.mutateAsync();
+                    notify("Friend Request cancelled", "success");
+                    return;
+                case "request-received":
+                    await accept.mutateAsync();
+                    notify("Friend Request accepted", "success");
+                    return;
+                default:
+                    await send.mutateAsync();
+                    notify("Friend Request sent", "success");
+            }
+        } catch {
+            notify("That action failed, please try again", "error");
+        }
+    };
+
+    const declineFriendRequestAction = async () => {
+        try {
+            await remove.mutateAsync();
+            notify("Friend Request declined", "success");
+        } catch {
+            notify("Failed to decline Friend Request", "error");
+        }
+    };
+
+    const buildTileActions = (log: GameLogWithGame): TileAction[] => {
+        const actions: TileAction[] = [
+            {
+                key: "view",
+                label: "View",
+                icon: "fas fa-eye",
+                onSelect: () => setModal({ kind: "view", log }),
+            },
+        ];
+
+        if (!currentUser) return actions;
+
+        const sharesLog =
+            !isMyAccount &&
+            currentUserGameLogs.some((l) => l.gameId === log.gameId);
+
+        if (sharesLog) {
+            actions.push({
+                key: "myLog",
+                label: "My Log",
+                icon: "fas fa-arrow-up-right-from-square",
+                onSelect: () =>
+                    navigate(`/user/${currentUser.username}?log=${log.gameId}`),
+            });
+        } else {
+            actions.push({
+                key: isMyAccount ? "edit" : "add",
+                label: isMyAccount ? "Edit" : "Add",
+                icon: isMyAccount ? "fas fa-pen-to-square" : "fas fa-add",
+                onSelect: () =>
+                    setModal({
+                        kind: isMyAccount ? "edit" : "create",
+                        log,
+                    }),
+            });
+        }
+
+        if (isMyAccount) {
+            actions.push({
+                key: "delete",
+                label: "Delete",
+                icon: "fas fa-trash",
+                tone: "danger",
+                onSelect: () => setModal({ kind: "delete", log }),
+            });
+        }
+
+        return actions;
+    };
+
     // no username in the URL, or the user doesn't exist / failed to fetch
     if (!targetUsername || targetUserError) {
         return <ProfileError />;
@@ -508,7 +275,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                             <ProfilePicture
                                 variant="profileHeader"
                                 username={targetUser.username}
-                                file={targetUser.picture}
+                                file={targetUser.pictureUrl ?? ""}
                                 link={true}
                             />
                             {/* User status (online, offline, etc). Currently using test data for design purposes */}
@@ -521,51 +288,59 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         <div className="flex w-3/5 flex-col gap-6 sm:max-w-full lg:w-full">
                             <div className="flex w-full flex-col gap-3">
                                 <h2 className="overflow-hidden break-all text-left text-xl font-semibold text-content sm:text-2xl">
-                                    {targetUserUsername}
+                                    {targetUser.username}
                                 </h2>
 
                                 <p className="line-clamp-3 text-balance break-words text-left text-sm font-light text-content-secondary sm:text-base lg:line-clamp-5">
-                                    {targetUserBio
-                                        ? targetUserBio
+                                    {targetUser.bio
+                                        ? targetUser.bio
                                         : "User hasn't added a bio."}
                                 </p>
                             </div>
                             <div className="hidden w-full flex-col gap-4 lg:flex">
                                 {currentUser ? (
                                     <button
-                                        className={`button-outline flex w-full items-center justify-center gap-4 ${isMyAccount ? "border-content text-content hover:border-brand hover:text-brand-hover" : getUserRelationColors()}`}
+                                        className={`button-outline flex w-full items-center justify-center gap-4 ${isMyAccount ? "border-content text-content hover:border-brand hover:text-brand-hover" : getUserRelationColors(userRelation)}`}
                                         onMouseOver={() =>
                                             setIsHoveringProfileButton(true)
                                         }
                                         onMouseOut={() =>
                                             setIsHoveringProfileButton(false)
                                         }
-                                        onClick={() =>
-                                            currentUser?.id === targetUser?.id
-                                                ? setEditProfilePopupVisible(
-                                                      true
-                                                  )
-                                                : executeFriendAction()
-                                        }
+                                        onClick={() => {
+                                            if (isMyAccount) {
+                                                setModal({
+                                                    kind: "editProfile",
+                                                });
+                                            } else {
+                                                void executeFriendAction();
+                                            }
+                                        }}
                                     >
                                         <p className="text-lg">
                                             {isMyAccount
                                                 ? "Edit Profile"
-                                                : getUserRelationText()}
+                                                : getUserRelationText(
+                                                      userRelation,
+                                                      isHoveringProfileButton,
+                                                      windowWidth < 1024
+                                                  )}
                                         </p>
                                         <i
                                             className={`fas text-lg fa-${
                                                 currentUser?.id ===
                                                 targetUser?.id
                                                     ? "pen"
-                                                    : getUserRelationIcon()
+                                                    : getUserRelationIcon(
+                                                          userRelation
+                                                      )
                                             }`}
                                         />
                                     </button>
                                 ) : (
                                     <button
                                         className="button-outline flex items-center justify-center gap-4 text-lg text-content hover:cursor-pointer hover:border-brand hover:text-brand"
-                                        onClick={openLoginForm}
+                                        onClick={openLogin}
                                     >
                                         <p>Login to add</p>
                                         <i className="fas fa-right-to-bracket"></i>
@@ -575,7 +350,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                                 {userRelation === "request-received" ? (
                                     <button
                                         className="button-outline flex w-full items-center justify-center gap-4 border-danger text-lg text-danger-soft hover:border-danger-strong hover:text-danger"
-                                        onClick={handleFriendRequestDecline}
+                                        onClick={declineFriendRequestAction}
                                     >
                                         <p>Decline Request</p>
                                         <i className="fas fa-user-xmark"></i>
@@ -590,7 +365,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         {/* Friends list button */}
                         <div
                             className="group flex gap-3 hover:cursor-pointer lg:items-center 2xl:hidden"
-                            onClick={() => setFriendsPopupVisible(true)}
+                            onClick={() => setModal({ kind: "friends" })}
                         >
                             <i
                                 className={`fas fa-users text-2xl text-content transition-colors duration-200 hover:cursor-pointer group-hover:text-brand sm:h-max lg:text-[22px]`}
@@ -603,7 +378,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         {isMyAccount ? (
                             <i
                                 className="fas fa-pen text-2xl text-content transition-colors duration-200 hover:cursor-pointer hover:text-brand lg:hidden lg:text-[22px]"
-                                onClick={() => setEditProfilePopupVisible(true)}
+                                onClick={() =>
+                                    setModal({ kind: "editProfile" })
+                                }
                             ></i>
                         ) : (
                             <></>
@@ -622,7 +399,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         {/* Remove friend button (mobile) */}
                         {userRelation === "friend" ? (
                             <i
-                                className={`fas fa-${getUserRelationIcon()} text-2xl text-content transition-colors duration-200 hover:cursor-pointer hover:text-brand lg:hidden lg:text-[22px]`}
+                                className={`fas fa-${getUserRelationIcon(userRelation)} text-2xl text-content transition-colors duration-200 hover:cursor-pointer hover:text-brand lg:hidden lg:text-[22px]`}
                                 onClick={executeFriendAction}
                             ></i>
                         ) : (
@@ -643,18 +420,24 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         {currentUser ? (
                             <div className="flex w-full gap-4">
                                 <button
-                                    className={`button-outline flex ${userRelation === "request-received" ? "w-1/2" : "w-full"} items-center justify-center gap-4 text-lg ${getUserRelationColors()}`}
+                                    className={`button-outline flex ${userRelation === "request-received" ? "w-1/2" : "w-full"} items-center justify-center gap-4 text-lg ${getUserRelationColors(userRelation)}`}
                                     onClick={executeFriendAction}
                                 >
-                                    <p>{getUserRelationText()}</p>
+                                    <p>
+                                        {getUserRelationText(
+                                            userRelation,
+                                            isHoveringProfileButton,
+                                            windowWidth < 1024
+                                        )}
+                                    </p>
                                     <i
-                                        className={`fas fa-${getUserRelationIcon()}`}
+                                        className={`fas fa-${getUserRelationIcon(userRelation)}`}
                                     />
                                 </button>
                                 {userRelation === "request-received" ? (
                                     <button
                                         className="button-outline flex w-1/2 items-center justify-center gap-4 border-danger text-lg text-danger-soft hover:border-danger-strong hover:text-danger"
-                                        onClick={handleFriendRequestDecline}
+                                        onClick={declineFriendRequestAction}
                                     >
                                         <p>Decline</p>
                                         <i className="fas fa-user-xmark"></i>
@@ -666,7 +449,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         ) : (
                             <button
                                 className="button-outline flex items-center justify-center gap-4 text-lg text-content hover:cursor-pointer hover:border-brand hover:text-brand"
-                                onClick={openLoginForm}
+                                onClick={openLogin}
                             >
                                 <p>Login to add</p>
                                 <i className="fas fa-right-to-bracket"></i>
@@ -689,7 +472,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                                 className="fas fa-list hover-text-white text-xl md:hidden"
                                 title="Game Section"
                                 onClick={() =>
-                                    setMobileGameSectionPopupVisible(true)
+                                    setModal({ kind: "mobileSection" })
                                 }
                             ></i>
                             {/* Filters icon (mobile) */}
@@ -717,7 +500,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                                     title="Search"
                                     onClick={() => {
                                         if (windowWidth < 768)
-                                            setMobileSearchPopupVisible(true);
+                                            setModal({ kind: "mobileSearch" });
                                     }}
                                 ></i>
                             </span>
@@ -756,122 +539,27 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         </span>
                     ) : targetUserGameLogs ? (
                         <div className="mt-6 flex w-full flex-wrap justify-center">
-                            {targetUserGameLogs
-                                .filter(
-                                    (gameLog) =>
-                                        gameLog.status === activeGamesSection
-                                )
-                                .slice(
-                                    (pageNumber - 1) * gamesPerPage,
-                                    gamesPerPage * pageNumber
-                                )
-                                .map((gameLog) => {
-                                    return (
-                                        <GameElement
-                                            key={gameLog.id}
-                                            gameLog={gameLog}
-                                            isMyAccount={isMyAccount}
-                                            userLoggedIn={
-                                                currentUser ? true : false
-                                            }
-                                            currentUserSharesLog={
-                                                isMyAccount
-                                                    ? false
-                                                    : currentUserGameLogs?.some(
-                                                          (log) =>
-                                                              log.id ===
-                                                              gameLog.id
-                                                      ) || false
-                                            }
-                                            handleView={() => {
-                                                setCurrentVisibleGameLog(
-                                                    gameLog
-                                                );
-                                                setViewGameLogPopupVisible(
-                                                    true
-                                                );
-                                            }}
-                                            handleEdit={() => {
-                                                setCurrentVisibleGameLog(
-                                                    gameLog
-                                                );
-                                                setEditGameLogPopupVisible(
-                                                    true
-                                                );
-                                            }}
-                                            handleCreate={() => {
-                                                setCurrentVisibleGameLog(
-                                                    gameLog
-                                                );
-                                                setCreateGameLogPopupVisible(
-                                                    true
-                                                );
-                                            }}
-                                            handleRedirectAndView={() =>
-                                                navigate(
-                                                    `/user/${currentUser?.username}?log=${gameLog.id}`
-                                                )
-                                            }
-                                            handleDelete={() => {
-                                                setCurrentVisibleGameLog(
-                                                    gameLog
-                                                );
-                                                setDeleteGameLogPopupVisible(
-                                                    true
-                                                );
-                                            }}
-                                            popupIsVisible={
-                                                viewGameLogPopupVisible ||
-                                                editGameLogPopupVisible ||
-                                                createGameLogPopupVisible ||
-                                                deleteGameLogPopupVisible
-                                            }
-                                        />
-                                    );
-                                })}
+                            {visibleLogs.map((gameLog) => (
+                                <GameTile
+                                    key={gameLog.id}
+                                    gameId={gameLog.gameId}
+                                    title={gameLog.game?.title ?? ""}
+                                    coverUrl={gameLog.game?.coverUrl ?? null}
+                                    variant="profile"
+                                    showMenu
+                                    actions={buildTileActions(gameLog)}
+                                    popupIsVisible={modal !== null}
+                                />
+                            ))}
                         </div>
                     ) : (
                         <></>
                     )}
-                    {/* Page numbers and page change buttons */}
-                    <div className="mx-auto mb-4 mt-12 flex w-max items-center justify-center gap-6 sm:mb-0 lg:absolute lg:bottom-6 lg:left-1/2 lg:mt-0 lg:-translate-x-1/2 lg:transform">
-                        {/* Previous Button */}
-                        <button
-                            className={`${previousEnabled ? "border-content text-content hover:border-brand hover:text-brand" : "border-content-disabled text-content-disabled"} button-outline flex h-10 w-16 items-center justify-center sm:w-28`}
-                            onClick={() =>
-                                previousEnabled
-                                    ? setPageNumber(pageNumber - 1)
-                                    : null
-                            }
-                        >
-                            {windowWidth >= 640 ? (
-                                "Previous"
-                            ) : (
-                                <i className="fas fa-arrow-left text-lg"></i>
-                            )}
-                        </button>
-                        {/* Page number text */}
-                        <p className="font-lexend text-content sm:text-lg">
-                            Page {pageNumber} of {maxPageNumber}
-                        </p>
-
-                        {/* Next Button */}
-                        <button
-                            className={`button-outline flex h-10 w-16 items-center justify-center sm:w-28 ${nextEnabled ? "border-content text-content hover:border-brand hover:text-brand" : "border-content-disabled text-content-disabled"} `}
-                            onClick={() =>
-                                nextEnabled
-                                    ? setPageNumber(pageNumber + 1)
-                                    : null
-                            }
-                        >
-                            {windowWidth >= 640 ? (
-                                "Next"
-                            ) : (
-                                <i className="fas fa-arrow-right text-lg"></i>
-                            )}
-                        </button>
+                    <div className="lg:absolute lg:bottom-6 lg:left-1/2 lg:-translate-x-1/2 lg:transform">
+                        <Pagination pagination={pagination} />
                     </div>
                 </div>
+
                 {/* Friends / Reviews */}
                 <div className="hidden min-w-[300px] max-w-[300px] flex-col gap-5 2xl:flex">
                     <div className="card relative h-3/5 w-full">
@@ -884,15 +572,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                                 <p className="text-center font-lexend font-light text-content-secondary">
                                     <span>
                                         {
-                                            targetUserFriendsDetails?.filter(
-                                                (friend) => friend.online
+                                            acceptedFriends.filter(
+                                                (f) => f.user.online
                                             ).length
                                         }
                                     </span>
-                                    /
-                                    <span>
-                                        {targetUserFriendsDetails?.length}
-                                    </span>{" "}
+                                    /<span>{acceptedFriends?.length}</span>{" "}
                                     Online
                                 </p>
                             ) : (
@@ -906,11 +591,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                             </span>
                         ) : (
                             <div className="mt-2 flex max-h-[400px] flex-col gap-1 overflow-y-scroll">
-                                {targetUserFriendsDetails?.map((friend) => {
+                                {acceptedFriends?.map((friend) => {
                                     return (
                                         <FriendProfile
-                                            key={friend.id}
-                                            user={friend}
+                                            key={friend.user.id}
+                                            user={friend.user}
                                             density="compact"
                                         />
                                     );
@@ -923,27 +608,24 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         <div className="mt-2 flex h-[248px] flex-col gap-1 overflow-y-scroll">
                             {targetUserReviews?.map((review) => (
                                 <Link
-                                    key={review.gameID}
-                                    to={`/game/${review.gameID}`}
+                                    key={review.id}
+                                    to={`/game/${review.gameId}`}
                                     className="flex h-20 items-center gap-3 rounded-md p-2 transition-colors duration-200 hover:bg-surface-popup-to"
                                 >
                                     <img
-                                        src={`/PlayRates/assets/game-covers/${review.gameID}.png`}
+                                        src={`/PlayRates/assets/game-covers/${review.gameId}.png`}
                                         className="game-cover h-full object-cover"
                                     />
                                     <div className="flex flex-col gap-1">
                                         <span className="flex items-center gap-1 text-xs text-content">
                                             <p className="font-semibold tracking-wider">
-                                                {targetUserGameLogs?.find(
-                                                    (log) =>
-                                                        log.id === review.gameID
-                                                )?.rating || "?"}
+                                                {review.rating ?? "?"}
                                                 /10
                                             </p>
                                             <i className="fas fa-star text-brand"></i>
                                         </span>
                                         <p className="line-clamp-2 h-max text-sm text-content-secondary">
-                                            {review.text}
+                                            {review.body}
                                         </p>
                                     </div>
                                 </Link>
@@ -952,123 +634,104 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                     </div>
                 </div>
                 {/* Popups */}
-                {removeUserPopupVisible ? (
+                {modal?.kind === "removeFriend" && (
                     <RemoveFriendPopup
-                        closePopup={() => setRemoveUserPopupVisible(false)}
-                        confirmRemove={handleFriendRemoval}
+                        closePopup={() => setModal(null)}
+                        confirmRemove={async () => {
+                            try {
+                                await remove.mutateAsync();
+                                notify("Friend removed", "success");
+                            } catch {
+                                notify("Failed to remove friend", "error");
+                            }
+                            setModal(null);
+                        }}
                         friendName={targetUser.username}
                     />
-                ) : (
-                    <></>
-                )}
-                {mobileSearchPopupVisible ? (
-                    <MobileSearchPopup
-                        onSearch={() => console.log("Pressed Search")}
-                        closePopup={() => setMobileSearchPopupVisible(false)}
-                    />
-                ) : (
-                    <></>
-                )}
-                {mobileGameSectionPopupVisible ? (
-                    <MobileGameSectionPopup
-                        selectSection={setActiveGamesSection}
-                        closePopup={() =>
-                            setMobileGameSectionPopupVisible(false)
-                        }
-                        currentActiveSection={activeGamesSection}
-                    />
-                ) : (
-                    <></>
-                )}
-                {friendsPopupVisible ? (
-                    <FriendsPopup
-                        closePopup={() => setFriendsPopupVisible(false)}
-                        friends={targetUserFriendsDetails}
-                        friendsLoading={targetUserFriendsLoadingDetails}
-                        friendsError={targetUserFriendsErrorDetails}
-                    />
-                ) : (
-                    <></>
-                )}
-                {editProfilePopupVisible ? (
-                    <EditProfilePopup
-                        closePopup={() => setEditProfilePopupVisible(false)}
-                        user={targetUser}
-                        bio={targetUserBio}
-                        username={targetUserUsername}
-                        updateUserInfo={(newData: {
-                            bio: string;
-                            username: string;
-                        }) => {
-                            setTargetUserBio(newData.bio);
-                            setTargetUserUsername(newData.username);
-                        }}
-                        runNotification={runNotification}
-                    />
-                ) : (
-                    <></>
                 )}
 
-                {viewGameLogPopupVisible ? (
+                {modal?.kind === "mobileSearch" && (
+                    <MobileSearchPopup
+                        closePopup={() => setModal(null)}
+                        onSearch={() => {}}
+                    />
+                )}
+
+                {modal?.kind === "mobileSection" && (
+                    <MobileGameSectionPopup
+                        closePopup={() => setModal(null)}
+                        currentActiveSection={activeGamesSection}
+                        selectSection={(section) => {
+                            setActiveGamesSection(section);
+                            navigate(
+                                `/user/${targetUser.username}?type=${section}`
+                            );
+                        }}
+                    />
+                )}
+
+                {modal?.kind === "friends" && (
+                    <FriendsPopup
+                        closePopup={() => setModal(null)}
+                        friends={acceptedFriends}
+                        friendsLoading={targetUserFriendsLoading}
+                    />
+                )}
+
+                {modal?.kind === "editProfile" && (
+                    <EditProfilePopup
+                        closePopup={() => setModal(null)}
+                        user={targetUser}
+                    />
+                )}
+
+                {modal?.kind === "view" && (
                     <ViewGameLogPopup
-                        closePopup={() => setViewGameLogPopupVisible(false)}
+                        closePopup={() => setModal(null)}
+                        gamelog={modal.log}
                         isMyAccount={isMyAccount}
-                        userLoggedIn={currentUser ? true : false}
-                        gamelog={currentVisibleGameLog}
-                        openEdit={() => setEditGameLogPopupVisible(true)}
-                        openCreate={() => setCreateGameLogPopupVisible(true)}
-                        currentUserSharesLog={
-                            isMyAccount
-                                ? false
-                                : currentUserGameLogs?.some(
-                                      (log) =>
-                                          log.id === currentVisibleGameLog?.id
-                                  ) || false
+                        userLoggedIn={!!currentUser}
+                        currentUserSharesLog={currentUserGameLogs.some(
+                            (l) => l.gameId === modal.log.gameId
+                        )}
+                        openEdit={() =>
+                            setModal({ kind: "edit", log: modal.log })
+                        }
+                        openCreate={() =>
+                            setModal({ kind: "create", log: modal.log })
                         }
                         redirectAndOpenView={() =>
                             navigate(
-                                `/user/${currentUser?.username}?log=${currentVisibleGameLog?.id}`
+                                `/user/${currentUser?.username}?log=${modal.log.gameId}`
                             )
                         }
-                        profilePage={true}
+                        profilePage
                     />
-                ) : (
-                    <></>
                 )}
-                {createGameLogPopupVisible ? (
+
+                {modal?.kind === "edit" && (
                     <CreateOrEditGameLogPopup
-                        closePopup={() => setCreateGameLogPopupVisible(false)}
+                        closePopup={() => setModal(null)}
+                        gamelog={modal.log}
+                        editing
+                        viewUpdatedLog={() => setModal(null)}
+                    />
+                )}
+
+                {modal?.kind === "create" && (
+                    <CreateOrEditGameLogPopup
+                        closePopup={() => setModal(null)}
+                        gameID={modal.log.gameId}
                         editing={false}
-                        gameID={currentVisibleGameLog?.id}
-                        userID={currentUser!.id}
-                        runNotification={runNotification}
-                        viewUpdatedLog={viewUpdatedLog}
+                        viewUpdatedLog={() => setModal(null)}
                     />
-                ) : (
-                    <></>
                 )}
-                {editGameLogPopupVisible ? (
-                    <CreateOrEditGameLogPopup
-                        closePopup={() => setEditGameLogPopupVisible(false)}
-                        gamelog={currentVisibleGameLog}
-                        editing={true}
-                        userID={currentUser!.id}
-                        runNotification={runNotification}
-                        viewUpdatedLog={viewUpdatedLog}
-                    />
-                ) : (
-                    <></>
-                )}
-                {deleteGameLogPopupVisible ? (
+
+                {modal?.kind === "delete" && (
                     <DeleteGameLogPopup
-                        closePopup={() => setDeleteGameLogPopupVisible(false)}
-                        refreshLogs={refetchTargetUserGameLogs}
-                        runNotification={runNotification}
-                        gameLog={currentVisibleGameLog!}
-                        userID={currentUser!.id}
+                        closePopup={() => setModal(null)}
+                        gameLog={modal.log}
                     />
-                ) : (
-                    <></>
                 )}
             </div>
         );

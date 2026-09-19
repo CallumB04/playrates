@@ -1,30 +1,26 @@
 import { useRef, useState } from "react";
-import { updateUserByID, UserAccount } from "../../../api";
-import ClosePopupIcon from "../../../components/ClosePopupIcon";
+import type { Profile } from "@playrates/shared";
+import { useUpdateProfile } from "../../../hooks/queries/useProfiles";
+import { useNotify } from "../../../contexts/NotificationContext";
+import Modal from "../../../components/ui/Modal";
 import ProfilePicture from "../../../components/ProfilePicture";
 import { Link } from "react-router-dom";
 import LoadingSpinner from "../../../components/LoadingSpinner";
 
 interface EditProfilePopupProps {
     closePopup: () => void;
-    user: UserAccount;
-    bio: string;
-    username: string;
-    updateUserInfo: (newData: { bio: string; username: string }) => void;
-    runNotification: (
-        text: string,
-        type: "success" | "error" | "pending"
-    ) => void;
+    user: Profile;
 }
 
 const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     closePopup,
     user,
-    bio,
-    username,
-    updateUserInfo,
-    runNotification,
 }) => {
+    const notify = useNotify();
+    const updateProfile = useUpdateProfile();
+    const bio = user.bio;
+    const username = user.username;
+
     const [loadingUpdate, setLoadingUpdate] = useState<boolean>(false);
     const [bioInputValue, setBioInputValue] = useState<string>(user.bio);
     const [usernameInputValue, setUsernameInputValue] = useState<string>(
@@ -44,33 +40,29 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
             return;
         }
 
-        const newData = {
-            username: usernameInputValue,
-            bio: bioInputValue,
-        };
-
-        const request = await updateUserByID(user.id, newData);
-
-        if (request) {
+        try {
+            // the mutation seeds the profile caches, so the page updates
+            // without the temporary local copies the old code kept
+            await updateProfile.mutateAsync({
+                username: usernameInputValue,
+                bio: bioInputValue,
+            });
             setUsernameInputMatches(true);
-            updateUserInfo(newData);
-            setLoadingUpdate(false);
-            runNotification("Successfully updated profile", "success");
+            notify("Successfully updated profile", "success");
             closePopup();
-        } else {
-            runNotification(
-                "Error updating profile, please try again",
-                "error"
-            );
+        } catch {
+            notify("Error updating profile, please try again", "error");
+        } finally {
+            setLoadingUpdate(false);
         }
     };
 
     return (
-        <dialog className="popup-backdrop" onMouseDown={closePopup}>
-            <div
-                className="popup popup-default flex w-[550px] flex-col gap-6 text-center"
-                onMouseDown={(event) => event.stopPropagation()}
-            >
+        <Modal
+            onClose={closePopup}
+            className="flex w-[550px] flex-col gap-6 text-center"
+        >
+            <div className="contents">
                 <div className="flex w-full flex-col gap-3">
                     <h2 className="text-xl text-content">Edit Profile</h2>
                     <p className="border-t border-t-subtle pt-3 font-light text-content-secondary">
@@ -87,7 +79,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                             <ProfilePicture
                                 variant="editProfile"
                                 username={user.username}
-                                file={user.picture}
+                                file={user.pictureUrl ?? ""}
                                 link={false}
                             />
                             <div className="absolute left-0 top-0 flex h-full w-full items-center justify-center rounded-full bg-overlay-avatar font-semibold text-content opacity-0 transition-opacity duration-200 group-hover:opacity-100">
@@ -145,8 +137,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                         {!usernameInputMatches ? (
                             <p className="text-left font-lexend text-danger">
                                 Username doesnt match &apos;{username}&apos;,
-                                only change
-                                capitalization.
+                                only change capitalization.
                             </p>
                         ) : (
                             <></>
@@ -168,7 +159,6 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     </button>
                 </div>
 
-                <ClosePopupIcon onClick={closePopup} />
                 {loadingUpdate ? (
                     <div className="absolute left-0 top-0 flex size-full items-center justify-center rounded-lg bg-overlay-loading">
                         <LoadingSpinner size="lg" />
@@ -177,7 +167,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     <></>
                 )}
             </div>
-        </dialog>
+        </Modal>
     );
 };
 

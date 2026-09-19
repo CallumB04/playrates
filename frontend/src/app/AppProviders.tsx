@@ -1,0 +1,30 @@
+import { QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
+import type { ReactNode } from "react";
+import { queryClient } from "./queryClient";
+import { NotificationProvider } from "../contexts/NotificationContext";
+import { AuthProvider } from "../contexts/AuthContext";
+import { AccountFormProvider } from "../contexts/AccountFormContext";
+import ErrorBoundary from "../components/feedback/ErrorBoundary";
+
+/**
+ * Order matters:
+ *  - QueryClientProvider outermost, because AuthProvider loads the profile
+ *    through React Query
+ *  - NotificationProvider above AuthProvider, because auth emits toasts
+ *  - BrowserRouter inside AccountFormProvider, which closes the modal on
+ *    navigation and therefore needs useLocation
+ */
+export const AppProviders = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+        <ErrorBoundary>
+            <NotificationProvider>
+                <BrowserRouter>
+                    <AuthProvider>
+                        <AccountFormProvider>{children}</AccountFormProvider>
+                    </AuthProvider>
+                </BrowserRouter>
+            </NotificationProvider>
+        </ErrorBoundary>
+    </QueryClientProvider>
+);

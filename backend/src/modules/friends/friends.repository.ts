@@ -7,19 +7,19 @@ import type { FriendshipRow } from "../../types/database.types.js";
  * users in any order and this module handles the ordering.
  */
 export const orderPair = (x: string, y: string): [string, string] =>
-    x < y ? [x, y] : [y, x];
+  x < y ? [x, y] : [y, x];
 
 export interface FriendshipWithUsers extends FriendshipRow {
-    user_a?: FriendProfileRow | null;
-    user_b?: FriendProfileRow | null;
+  user_a?: FriendProfileRow | null;
+  user_b?: FriendProfileRow | null;
 }
 
 export interface FriendProfileRow {
-    id: string;
-    username: string;
-    picture_url: string | null;
-    bio: string;
-    last_seen_at: string;
+  id: string;
+  username: string;
+  picture_url: string | null;
+  bio: string;
+  last_seen_at: string;
 }
 
 const SELECT_WITH_USERS = `
@@ -29,75 +29,72 @@ const SELECT_WITH_USERS = `
 `;
 
 export interface FriendsRepository {
-    listForUser(userId: string): Promise<FriendshipWithUsers[]>;
-    find(x: string, y: string): Promise<FriendshipRow | null>;
-    create(
-        requesterId: string,
-        targetId: string
-    ): Promise<FriendshipWithUsers>;
-    accept(x: string, y: string): Promise<FriendshipWithUsers>;
-    remove(x: string, y: string): Promise<void>;
+  listForUser(userId: string): Promise<FriendshipWithUsers[]>;
+  find(x: string, y: string): Promise<FriendshipRow | null>;
+  create(requesterId: string, targetId: string): Promise<FriendshipWithUsers>;
+  accept(x: string, y: string): Promise<FriendshipWithUsers>;
+  remove(x: string, y: string): Promise<void>;
 }
 
 export const createFriendsRepository = (db: Db): FriendsRepository => ({
-    async listForUser(userId) {
-        const { data, error } = await db
-            .from("friendships")
-            .select(SELECT_WITH_USERS)
-            .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`)
-            .order("created_at", { ascending: false });
-        if (error) throw error;
-        return (data ?? []) as FriendshipWithUsers[];
-    },
+  async listForUser(userId) {
+    const { data, error } = await db
+      .from("friendships")
+      .select(SELECT_WITH_USERS)
+      .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as FriendshipWithUsers[];
+  },
 
-    async find(x, y) {
-        const [a, b] = orderPair(x, y);
-        const { data, error } = await db
-            .from("friendships")
-            .select("*")
-            .eq("user_a_id", a)
-            .eq("user_b_id", b)
-            .maybeSingle();
-        if (error) throw error;
-        return (data as FriendshipRow | null) ?? null;
-    },
+  async find(x, y) {
+    const [a, b] = orderPair(x, y);
+    const { data, error } = await db
+      .from("friendships")
+      .select("*")
+      .eq("user_a_id", a)
+      .eq("user_b_id", b)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as FriendshipRow | null) ?? null;
+  },
 
-    async create(requesterId, targetId) {
-        const [a, b] = orderPair(requesterId, targetId);
-        const { data, error } = await db
-            .from("friendships")
-            .insert({
-                user_a_id: a,
-                user_b_id: b,
-                status: "pending",
-                requested_by: requesterId,
-            })
-            .select(SELECT_WITH_USERS)
-            .single();
-        if (error) throw error;
-        return data as FriendshipWithUsers;
-    },
+  async create(requesterId, targetId) {
+    const [a, b] = orderPair(requesterId, targetId);
+    const { data, error } = await db
+      .from("friendships")
+      .insert({
+        user_a_id: a,
+        user_b_id: b,
+        status: "pending",
+        requested_by: requesterId,
+      })
+      .select(SELECT_WITH_USERS)
+      .single();
+    if (error) throw error;
+    return data as FriendshipWithUsers;
+  },
 
-    async accept(x, y) {
-        const [a, b] = orderPair(x, y);
-        const { data, error } = await db
-            .from("friendships")
-            .update({ status: "accepted" })
-            .eq("user_a_id", a)
-            .eq("user_b_id", b)
-            .select(SELECT_WITH_USERS)
-            .single();
-        if (error) throw error;
-        return data as FriendshipWithUsers;
-    },
+  async accept(x, y) {
+    const [a, b] = orderPair(x, y);
+    const { data, error } = await db
+      .from("friendships")
+      .update({ status: "accepted" })
+      .eq("user_a_id", a)
+      .eq("user_b_id", b)
+      .select(SELECT_WITH_USERS)
+      .single();
+    if (error) throw error;
+    return data as FriendshipWithUsers;
+  },
 
-    async remove(x, y) {
-        const [a, b] = orderPair(x, y);
-        const { error } = await db
-            .from("friendships")
-            .delete()
-            .eq("user_a_id", a)
-            .eq("user_b_id", b);
-        if (error) throw error;
-    },
+  async remove(x, y) {
+    const [a, b] = orderPair(x, y);
+    const { error } = await db
+      .from("friendships")
+      .delete()
+      .eq("user_a_id", a)
+      .eq("user_b_id", b);
+    if (error) throw error;
+  },
 });

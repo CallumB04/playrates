@@ -12,14 +12,14 @@ import { env } from "./env.js";
 let client: SupabaseClient | undefined;
 
 export const supabase = (): SupabaseClient => {
-    client ??= createClient(env().SUPABASE_URL, env().SUPABASE_SERVICE_ROLE_KEY, {
-        auth: {
-            // a server has no session to persist or refresh
-            persistSession: false,
-            autoRefreshToken: false,
-        },
-    });
-    return client;
+  client ??= createClient(env().SUPABASE_URL, env().SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      // a server has no session to persist or refresh
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+  return client;
 };
 
 export type Db = SupabaseClient;

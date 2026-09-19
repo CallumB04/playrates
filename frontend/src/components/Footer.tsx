@@ -2,7 +2,7 @@ const socialsStyles = `hover:text-brand hover:cursor-pointer transition-colors d
 
 const Footer = () => {
     return (
-        <footer className="font-lexend relative h-72 w-full bg-surface-chrome text-content-secondary md:h-36">
+        <footer className="relative h-72 w-full bg-surface-chrome font-lexend text-content-secondary md:h-36">
             {/* Socials */}
             <div className="mx-auto flex w-full items-center justify-center gap-8 pt-12 text-[33px] md:pt-8 md:text-3xl lg:gap-12">
                 <i className={`fab fa-twitter ${socialsStyles}`}></i>

@@ -1,63 +1,51 @@
-import { useEffect, useState } from "react";
-import { fetchGameById, Game, GameLog } from "../api";
-import ClosePopupIcon from "./ClosePopupIcon";
-import { gamePlatforms, getColorFromGameStatus } from "../App";
-
-const capitalise = (word: string) => `${word[0].toUpperCase()}${word.slice(1)}`;
+import type { GameLogWithGame } from "../api";
+import { getColorFromGameStatus } from "../constants/gameStatus";
+import { useGame, usePlatforms } from "../hooks/queries/useGames";
+import Modal from "./ui/Modal";
+import { capitalise } from "../lib/format";
 
 interface ViewGameLogPopupProps {
+    /** Non-null: the parent does not render this until it has a log. */
+    gamelog: GameLogWithGame;
     closePopup: () => void;
-    isMyAccount: boolean;
-    userLoggedIn: boolean;
-    gamelog: GameLog | null;
     openEdit: () => void;
     openCreate: () => void;
-    currentUserSharesLog: boolean;
     redirectAndOpenView: () => void;
-    profilePage?: boolean;
+    userLoggedIn: boolean;
+    isMyAccount: boolean;
+    currentUserSharesLog: boolean;
+    profilePage: boolean;
 }
 
 const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
-    closePopup,
-    isMyAccount,
-    userLoggedIn,
     gamelog,
+    closePopup,
     openEdit,
     openCreate,
-    currentUserSharesLog,
     redirectAndOpenView,
+    userLoggedIn,
+    isMyAccount,
+    currentUserSharesLog,
     profilePage,
 }) => {
-    const [game, setGame] = useState<Game | undefined>(undefined);
+    const { data: game } = useGame(gamelog.gameId);
 
-    // fetch game data from ID in game log, and set state when fetched
-    useEffect(() => {
-        const fetchGameFromLog = async () => {
-            const fetchedGame = await fetchGameById(gamelog!.id);
-
-            if (fetchedGame) {
-                setGame(fetchedGame);
-            }
-        };
-
-        fetchGameFromLog();
-    }, []);
-
-    // the status a "played" log displays is its playedStatus (finished, mastered, ...)
+    // a played log displays its playedStatus (finished, mastered, ...)
     const displayedStatus =
-        gamelog?.status === "played" && gamelog.playedStatus
+        gamelog.status === "played" && gamelog.playedStatus
             ? gamelog.playedStatus
-            : gamelog?.status;
-    const statusColors = displayedStatus
-        ? getColorFromGameStatus(displayedStatus)
-        : undefined;
+            : gamelog.status;
+    const statusColors = getColorFromGameStatus(displayedStatus);
+
+    const { data: platforms } = usePlatforms();
+    const platform = (platforms ?? []).find((p) => p.slug === gamelog.platform);
 
     return (
-        <dialog className="popup-backdrop" onMouseDown={closePopup}>
-            <div
-                className="popup popup-default flex w-[600px] flex-col gap-6 text-center"
-                onMouseDown={(event) => event.stopPropagation()}
-            >
+        <Modal
+            onClose={closePopup}
+            className="flex w-[600px] flex-col gap-6 text-center"
+        >
+            <div className="contents">
                 <h2 className="border-b border-b-subtle pb-3 text-xl text-content">
                     View Log
                 </h2>
@@ -66,7 +54,7 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                     <h3 className="max-w-[calc(100%-72px)] text-left text-2xl text-content sm:max-w-full">
                         {game?.title}
                         <span className="ml-2.5 text-xl font-light text-content-secondary">
-                            {game?.releaseDate.slice(0, 4)}
+                            {game?.releaseDate?.slice(0, 4)}
                         </span>
                     </h3>
 
@@ -74,7 +62,8 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                         <div className="absolute right-0 top-0 flex min-h-40 w-16 max-w-[30%] flex-col gap-2 sm:relative sm:w-max">
                             <img
                                 className="w-full rounded-md object-cover"
-                                src={`/PlayRates/assets/game-covers/${game?.id}.png`}
+                                src={game?.coverUrl ?? ""}
+                                alt={game?.title ?? ""}
                             />
                         </div>
                         <div className="flex min-h-32 flex-grow justify-between">
@@ -84,37 +73,25 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                                     <span
                                         className={`font-light ${statusColors?.bg} ${statusColors?.text} rounded-full px-1.5 py-0.5`}
                                     >
-                                        {gamelog?.status === "played"
+                                        {gamelog.status === "played"
                                             ? capitalise(gamelog.playedStatus!)
-                                            : capitalise(gamelog!.status)}
+                                            : capitalise(gamelog.status)}
                                     </span>
                                 </p>
-                                {gamelog?.platform ? (
+                                {gamelog.platform ? (
                                     <p className="text-content">
                                         Platform:{" "}
                                         <span className="font-extralight">
-                                            {
-                                                gamePlatforms.find(
-                                                    (platform) =>
-                                                        platform.name ===
-                                                        gamelog.platform
-                                                )?.display
-                                            }
+                                            {platform?.displayName}
                                         </span>
                                         <i
-                                            className={`${
-                                                gamePlatforms.find(
-                                                    (platform) =>
-                                                        platform.name ===
-                                                        gamelog.platform
-                                                )?.icon
-                                            } ml-1.5`}
+                                            className={`${platform?.iconClass ?? ""} ml-1.5`}
                                         ></i>
                                     </p>
                                 ) : (
                                     <></>
                                 )}
-                                {gamelog?.startDate ? (
+                                {gamelog.startDate ? (
                                     <p className="text-content">
                                         Started:{" "}
                                         <span className="font-extralight">
@@ -126,7 +103,7 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                                 ) : (
                                     <></>
                                 )}
-                                {gamelog?.startDate ? (
+                                {gamelog.startDate ? (
                                     <p className="text-content">
                                         Finished:{" "}
                                         <span className="font-extralight">
@@ -140,7 +117,7 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                                 ) : (
                                     <></>
                                 )}
-                                {gamelog?.hoursPlayed ? (
+                                {gamelog.hoursPlayed ? (
                                     <p className="text-content">
                                         Time Played:{" "}
                                         <span className="font-extralight">
@@ -154,7 +131,7 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                                 ) : (
                                     <></>
                                 )}
-                                {gamelog?.hoursToBeat ? (
+                                {gamelog.hoursToBeat ? (
                                     <p className="text-content">
                                         Completed in:{" "}
                                         <span className="font-extralight">
@@ -174,14 +151,14 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                                 <span className="flex items-center justify-start gap-2 text-lg">
                                     <i className="fas fa-trophy text-gold"></i>
                                     <p className="font-extralight text-content">
-                                        {gamelog?.achievementsCompleted || 0}/
-                                        {gamelog?.achievementsTotal || "?"}
+                                        {gamelog.achievementsCompleted || 0}/
+                                        {gamelog.achievementsTotal || "?"}
                                     </p>
                                 </span>
                                 <span className="flex items-center justify-start gap-2 text-lg">
                                     <i className="fas fa-star text-brand-hover"></i>
                                     <p className="font-extralight text-content">
-                                        {gamelog?.rating && gamelog.rating !== 0
+                                        {gamelog.rating && gamelog.rating !== 0
                                             ? gamelog.rating
                                             : "?"}
                                         /10
@@ -223,10 +200,8 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                         Close
                     </button>
                 </div>
-
-                <ClosePopupIcon onClick={closePopup} />
             </div>
-        </dialog>
+        </Modal>
     );
 };
 

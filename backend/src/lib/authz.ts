@@ -10,9 +10,9 @@ import { AppError } from "./AppError.js";
  * than one route, so putting the check there means it cannot be forgotten.
  */
 export function assertOwner(callerId: string, ownerId: string): void {
-    if (callerId !== ownerId) {
-        throw AppError.forbidden("You do not own this resource");
-    }
+  if (callerId !== ownerId) {
+    throw AppError.forbidden("You do not own this resource");
+  }
 }
 
 /**
@@ -22,8 +22,8 @@ export function assertOwner(callerId: string, ownerId: string): void {
  * served to everyone.
  */
 export function canViewReview(
-    viewerId: string | undefined,
-    review: { isPublic: boolean; authorId: string }
+  viewerId: string | undefined,
+  review: { isPublic: boolean; authorId: string },
 ): boolean {
-    return review.isPublic || viewerId === review.authorId;
+  return review.isPublic || viewerId === review.authorId;
 }

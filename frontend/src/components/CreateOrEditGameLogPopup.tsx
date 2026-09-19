@@ -1,26 +1,21 @@
-import { useEffect, useRef, useState } from "react";
-import {
-    createNewGameLog,
-    editGameLog,
-    fetchGameById,
-    Game,
-    GameLog,
-} from "../api";
-import ClosePopupIcon from "./ClosePopupIcon";
+import { useRef, useState } from "react";
+import type { GameLogInput, GameStatus, PlayedStatus } from "@playrates/shared";
+import type { GameLogWithGame } from "../api";
+import { useGame } from "../hooks/queries/useGames";
+import { useGameLogMutations } from "../hooks/queries/useGameLogs";
+import { usePlatforms } from "../hooks/queries/useGames";
+import { useNotify } from "../contexts/NotificationContext";
+import Modal from "./ui/Modal";
 import LoadingSpinner from "./LoadingSpinner";
-import { gamePlatforms } from "../App";
 
 interface CreateOrEditGameLogPopupProps {
     closePopup: () => void;
-    viewUpdatedLog: (log: GameLog) => void;
-    gamelog?: GameLog | null; // associated game log (if editing)
-    gameID?: number; // if creating, allows for fetching of game
-    editing: boolean; // true: editing, false: creating new
-    userID: number;
-    runNotification: (
-        text: string,
-        type: "success" | "error" | "pending"
-    ) => void;
+    viewUpdatedLog: () => void;
+    /** The existing log, when editing. */
+    gamelog?: GameLogWithGame | null;
+    /** The game to log, when creating. */
+    gameID?: number;
+    editing: boolean;
 }
 
 const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
@@ -29,12 +24,17 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
     gamelog,
     editing,
     gameID,
-    userID,
-    runNotification,
 }) => {
-    const [game, setGame] = useState<Game | undefined>(undefined);
-    const [loadingCreateOrEdit, setLoadingCreateOrEdit] =
-        useState<boolean>(false);
+    const notify = useNotify();
+    const { save } = useGameLogMutations();
+    const { data: platforms } = usePlatforms();
+
+    // React Query rather than a bespoke effect per popup, so the game is
+    // already in cache from the list that opened this
+    const resolvedGameId = gamelog?.gameId ?? gameID;
+    const { data: game } = useGame(resolvedGameId);
+
+    const [loadingCreateOrEdit, setLoadingCreateOrEdit] = useState(false);
 
     // Input values
     const [statusInput, setStatusInput] = useState<string>(
@@ -69,74 +69,53 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
 
     const popupElement = useRef<HTMLDivElement>(null);
 
-    // fetch game data from ID in game log, and set state when fetched
-    useEffect(() => {
-        const fetchGameFromLog = async () => {
-            const gameIdToFetch = gamelog ? gamelog.id : gameID!;
-            const fetchedGame = await fetchGameById(gameIdToFetch);
-
-            if (fetchedGame) {
-                setGame(fetchedGame);
-            }
-        };
-
-        fetchGameFromLog();
-    }, []);
-
     const handleCreateOrEdit = async () => {
+        if (!resolvedGameId) return;
         setLoadingCreateOrEdit(true);
 
-        // create new game log, all optional inputs are only added if present
-        const logData: GameLog = {
-            id: gameID || gameID === 0 ? gameID : gamelog!.id,
-            status: statusInput,
-            playedStatus: playedStatusInput,
+        const input: GameLogInput = {
+            status: statusInput as GameStatus,
+            // the backend nulls this out unless the status is "played"
+            playedStatus: playedStatusInput as PlayedStatus,
             platform: platformInput,
-            ...(startDateInput && { startDate: startDateInput }),
-            ...(finishDateInput && { finishDate: finishDateInput }),
-            ...(completeAchievementsInput && {
-                achievementsCompleted: Number(completeAchievementsInput),
-            }),
-            ...(totalAchievementsInput && {
-                achievementsTotal: Number(totalAchievementsInput),
-            }),
-            ...(hoursPlayedInput && { hoursPlayed: Number(hoursPlayedInput) }),
-            ...(hoursToBeatInput && { hoursToBeat: Number(hoursToBeatInput) }),
+            startDate: startDateInput || null,
+            finishDate: finishDateInput || null,
+            achievementsCompleted: completeAchievementsInput
+                ? Number(completeAchievementsInput)
+                : null,
+            achievementsTotal: totalAchievementsInput
+                ? Number(totalAchievementsInput)
+                : null,
+            hoursPlayed: hoursPlayedInput ? Number(hoursPlayedInput) : null,
+            hoursToBeat: hoursToBeatInput ? Number(hoursToBeatInput) : null,
             rating: Number(ratingInput),
         };
 
-        const request = editing
-            ? await editGameLog(
-                  userID,
-                  gameID || gameID === 0 ? gameID : gamelog!.id,
-                  logData
-              )
-            : await createNewGameLog(userID, logData);
-
-        if (request) {
+        try {
+            // one idempotent upsert; no create-versus-edit branch
+            await save.mutateAsync({ gameId: resolvedGameId, input });
             closePopup();
-            viewUpdatedLog(logData); // refetch game logs, open view popup, etc
-            runNotification(
+            viewUpdatedLog();
+            notify(
                 `Successfully ${editing ? "edited" : "created"} game log`,
                 "success"
             );
-        } else {
-            runNotification(
+        } catch {
+            notify(
                 `Failed to ${editing ? "edit" : "create"} game log`,
                 "error"
             );
+        } finally {
+            setLoadingCreateOrEdit(false);
         }
-
-        setLoadingCreateOrEdit(false);
     };
 
     return (
-        <dialog className="popup-backdrop" onMouseDown={closePopup}>
-            <div
-                className="popup popup-default relative flex w-[600px] flex-col gap-6 text-center"
-                onMouseDown={(event) => event.stopPropagation()}
-                ref={popupElement}
-            >
+        <Modal
+            onClose={closePopup}
+            className="relative flex w-[600px] flex-col gap-6 text-center"
+        >
+            <div ref={popupElement} className="contents">
                 <h2 className="border-b border-b-subtle pb-3 text-xl text-content">
                     {editing ? "Edit" : "Create New"} Log
                 </h2>
@@ -145,7 +124,7 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                     <h3 className="max-w-[calc(100%-72px)] text-left text-2xl text-content sm:max-w-full">
                         {game?.title}
                         <span className="ml-2.5 text-xl font-light text-content-secondary">
-                            {game?.releaseDate.slice(0, 4)}
+                            {game?.releaseDate?.slice(0, 4)}
                         </span>
                     </h3>
 
@@ -155,7 +134,8 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                             <div className="absolute right-0 top-0 flex min-h-40 w-16 max-w-[30%] flex-col gap-2 sm:relative sm:w-max">
                                 <img
                                     className="w-full rounded-md object-cover"
-                                    src={`/PlayRates/assets/game-covers/${game?.id}.png`}
+                                    src={game?.coverUrl ?? ""}
+                                    alt={game?.title ?? ""}
                                 />
                             </div>
                         ) : (
@@ -222,11 +202,11 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                                         </p>
                                         <i
                                             className={`${
-                                                gamePlatforms.find(
+                                                (platforms ?? []).find(
                                                     (platform) =>
-                                                        platform.name ===
+                                                        platform.slug ===
                                                         platformInput
-                                                )?.icon
+                                                )?.iconClass
                                             } text-xs text-content`}
                                         ></i>
                                     </span>
@@ -239,12 +219,12 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                                             )
                                         }
                                     >
-                                        {gamePlatforms.map((platform) => (
+                                        {(platforms ?? []).map((platform) => (
                                             <option
-                                                key={platform.name}
-                                                value={platform.name}
+                                                key={platform.slug}
+                                                value={platform.slug}
                                             >
-                                                {platform.display}
+                                                {platform.displayName}
                                             </option>
                                         ))}
                                     </select>
@@ -415,17 +395,16 @@ const CreateOrEditGameLogPopup: React.FC<CreateOrEditGameLogPopupProps> = ({
                     </button>
                 </div>
 
-                <ClosePopupIcon onClick={closePopup} />
-
+                {/* was a nested <dialog>, which is not a valid loading overlay */}
                 {loadingCreateOrEdit ? (
-                    <dialog className="absolute top-0 flex size-full items-center justify-center rounded-lg bg-overlay-loading">
+                    <div className="absolute top-0 flex size-full items-center justify-center rounded-lg bg-overlay-loading">
                         <LoadingSpinner size="lg" />
-                    </dialog>
+                    </div>
                 ) : (
                     <></>
                 )}
             </div>
-        </dialog>
+        </Modal>
     );
 };
 

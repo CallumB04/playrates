@@ -7,25 +7,25 @@ import { env } from "../config/env.js";
  * undiagnosable.
  */
 export const createLogger = () =>
-    pino({
-        level: env().LOG_LEVEL,
-        ...(env().NODE_ENV === "development"
-            ? {
-                  transport: {
-                      target: "pino/file",
-                      options: { destination: 1 },
-                  },
-              }
-            : {}),
-        redact: {
-            paths: [
-                'req.headers.authorization',
-                'req.headers.cookie',
-                "*.password",
-                "*.access_token",
-            ],
-            remove: true,
-        },
-    });
+  pino({
+    level: env().LOG_LEVEL,
+    ...(env().NODE_ENV === "development"
+      ? {
+          transport: {
+            target: "pino/file",
+            options: { destination: 1 },
+          },
+        }
+      : {}),
+    redact: {
+      paths: [
+        "req.headers.authorization",
+        "req.headers.cookie",
+        "*.password",
+        "*.access_token",
+      ],
+      remove: true,
+    },
+  });
 
 export type Logger = ReturnType<typeof createLogger>;

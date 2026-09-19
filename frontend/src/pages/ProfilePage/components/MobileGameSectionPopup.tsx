@@ -1,4 +1,4 @@
-import ClosePopupIcon from "../../../components/ClosePopupIcon";
+import Modal from "../../../components/ui/Modal";
 
 interface MobileGameSectionPopupProps {
     closePopup: () => void;
@@ -18,11 +18,11 @@ const MobileGameSectionPopup: React.FC<MobileGameSectionPopupProps> = ({
     };
 
     return (
-        <dialog className="popup-backdrop" onMouseDown={closePopup}>
-            <div
-                className="popup popup-default flex w-[min(450px,95vw)] flex-col gap-3 text-center"
-                onMouseDown={(event) => event.stopPropagation()}
-            >
+        <Modal
+            onClose={closePopup}
+            className="flex w-[min(450px,95vw)] flex-col gap-3 text-center"
+        >
+            <div className="contents">
                 <h2 className="text-xl text-content">Select Section</h2>
 
                 <div className="flex w-full flex-col justify-center gap-5 border-t border-t-subtle pt-3">
@@ -49,10 +49,8 @@ const MobileGameSectionPopup: React.FC<MobileGameSectionPopupProps> = ({
                         }
                     )}
                 </div>
-
-                <ClosePopupIcon onClick={closePopup} />
             </div>
-        </dialog>
+        </Modal>
     );
 };
 

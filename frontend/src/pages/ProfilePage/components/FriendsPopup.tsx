@@ -1,29 +1,28 @@
-import { UserAccount } from "../../../api";
-import ClosePopupIcon from "../../../components/ClosePopupIcon";
+import type { FriendEdge } from "@playrates/shared";
+import Modal from "../../../components/ui/Modal";
 import FriendProfile from "../../../components/FriendProfile";
 
 interface FriendsPopupProps {
     closePopup: () => void;
-    friends?: UserAccount[];
+    friends?: FriendEdge[];
     friendsLoading?: boolean;
-    friendsError: Error | null;
 }
 
 const FriendsPopup: React.FC<FriendsPopupProps> = ({ closePopup, friends }) => {
     return (
-        <dialog className="popup-backdrop" onMouseDown={closePopup}>
-            <div
-                className="popup popup-default flex w-full max-w-[550px] flex-col gap-3 text-center"
-                onMouseDown={(event) => event.stopPropagation()}
-            >
+        <Modal
+            onClose={closePopup}
+            className="flex w-full max-w-[550px] flex-col gap-3 text-center"
+        >
+            <div className="contents">
                 <h2 className="text-xl text-content">Friends</h2>
                 <div className="flex max-h-96 w-full flex-col gap-2 overflow-y-scroll border-t border-t-subtle pt-3">
                     {friends && friends?.length > 0 ? (
                         friends?.map((friend) => {
                             return (
                                 <FriendProfile
-                                    key={friend.id}
-                                    user={friend}
+                                    key={friend.user.id}
+                                    user={friend.user}
                                     closePopup={closePopup}
                                     density="comfortable"
                                 />
@@ -39,17 +38,18 @@ const FriendsPopup: React.FC<FriendsPopupProps> = ({ closePopup, friends }) => {
                 {friends && friends?.length > 0 ? (
                     <p className="mt-2 text-center font-light text-content-secondary">
                         <span>
-                            {friends?.filter((friend) => friend.online).length}
+                            {
+                                friends?.filter((friend) => friend.user.online)
+                                    .length
+                            }
                         </span>
                         /<span>{friends?.length}</span> Online
                     </p>
                 ) : (
                     <></>
                 )}
-
-                <ClosePopupIcon onClick={closePopup} />
             </div>
-        </dialog>
+        </Modal>
     );
 };
 

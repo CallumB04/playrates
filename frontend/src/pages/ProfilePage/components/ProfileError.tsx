@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useUser } from "../../../App";
+import { useUser } from "../../../contexts/AuthContext";
 
 // Displayed if no target user in URL or failed to fetch user from API
 const ProfileError = () => {

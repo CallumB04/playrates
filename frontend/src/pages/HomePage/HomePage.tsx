@@ -1,65 +1,53 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import {
-    fetchGameLogs,
-    fetchGames,
-    fetchUsers,
-    Game,
-    GameLog,
-    UserAccount,
-} from "../../api";
 import GameSection from "./components/GameSection";
-import { useUser } from "../../App";
-import { useEffect, useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { useAccountForm } from "../../contexts/AccountFormContext";
+import { useGames, useSiteStats } from "../../hooks/queries/useGames";
 
 // common styles for all game section titles in home page
 const gameSectionTitleStyles = `text-content font-lexend font-normal tracking-wide
                                 text-3xl md:text-4xl 2xl:text-[42px] uppercase mt-16 text-center
                                 [&:not(:first-of-type)]:mt-24 [&:not(:first-of-type)]:2xl:mt-28`;
 
-interface HomePageProps {
-    openSignupForm: () => void;
-    openLoginForm: () => void;
-}
+const HomePage = () => {
+    const { user } = useAuth();
+    const { openLogin, openSignup } = useAccountForm();
 
-const HomePage: React.FC<HomePageProps> = ({
-    openSignupForm,
-    openLoginForm,
-}) => {
-    // fetching user data from react context
-    const user: UserAccount | null = useUser();
-    const [userCount, setUserCount] = useState<number>(0);
+    // one counts endpoint, replacing three whole-table fetches
+    const { data: stats } = useSiteStats();
 
-    // loading user count
-    useEffect(() => {
-        const loadUserCount = async () => {
-            const users = await fetchUsers();
-
-            if (users) {
-                setUserCount(users.length);
-            }
-        };
-
-        loadUserCount();
-    }, []);
-
-    /* Fetching games data using React Query for caching */
-
-    // fetching games from API
     const {
-        data: games,
+        data: gamesPage,
         error: gamesError,
         isLoading: gamesLoading,
-    } = useQuery<Game[]>({
-        queryKey: ["games"],
-        queryFn: fetchGames,
-    });
+    } = useGames({ limit: 100 });
 
-    // fetching gamelogs from API
-    const { data: gameLogs } = useQuery<{ [userID: string]: GameLog[] }>({
-        queryKey: ["gamelogs"],
-        queryFn: fetchGameLogs,
-    });
+    const games = useMemo(() => gamesPage?.data ?? [], [gamesPage]);
+
+    const trending = useMemo(
+        () => games.filter((game) => game.isTrending),
+        [games]
+    );
+
+    const mostPopular = useMemo(() => games.slice(0, 6), [games]);
+
+    /**
+     * Copy before sorting. The old code called games.sort() directly on the
+     * React Query cache array, which mutates it in place — so after the first
+     * render "Most Popular" above was silently showing the newest six too.
+     */
+    const newReleases = useMemo(
+        () =>
+            [...games]
+                .sort(
+                    (a, b) =>
+                        Date.parse(b.releaseDate ?? "") -
+                        Date.parse(a.releaseDate ?? "")
+                )
+                .slice(0, 6),
+        [games]
+    );
 
     return (
         <>
@@ -72,30 +60,31 @@ const HomePage: React.FC<HomePageProps> = ({
                         All of your games in one place...
                     </h2>
 
-                    {/* Signup / login wrapper */}
-
                     {!user ? (
                         <div className="mx-auto mt-12 flex w-full flex-col items-center justify-center gap-5 overflow-x-visible font-lexend md:mt-16 md:gap-3 lg:w-full lg:flex-row lg:justify-start 2xl:mt-20">
-                            <p
-                                onClick={openSignupForm}
+                            <button
+                                type="button"
+                                onClick={openSignup}
                                 className="button-primary w-11/12 max-w-[500px] text-lg lg:w-max xl:text-2xl"
                             >
                                 Get Started
-                            </p>
-                            <p
-                                onClick={openLoginForm}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={openLogin}
                                 className="button-secondary w-11/12 max-w-[500px] text-lg lg:hidden"
                             >
                                 Log in
-                            </p>
+                            </button>
                             <p className="hidden text-xl font-light text-content lg:block 2xl:text-2xl">
                                 or{" "}
-                                <span
-                                    onClick={openLoginForm}
+                                <button
+                                    type="button"
+                                    onClick={openLogin}
                                     className="hover-text-white underline"
                                 >
                                     log in
-                                </span>{" "}
+                                </button>{" "}
                                 if you have an account
                             </p>
                         </div>
@@ -112,35 +101,35 @@ const HomePage: React.FC<HomePageProps> = ({
                         </p>
                     )}
                 </div>
+
                 <div className="flex w-full items-center justify-evenly font-lexend text-xl text-content lg:w-1/2 lg:justify-evenly lg:pl-10 lg:text-[22px] 2xl:text-3xl">
                     <div className="flex flex-col gap-y-1 text-center">
-                        <i className="fa-solid fa-user-group text-3xl md:text-[32px] 2xl:text-4xl"></i>
-                        <p>{userCount} Users</p>
+                        <i
+                            className="fa-solid fa-user-group text-3xl md:text-[32px] 2xl:text-4xl"
+                            aria-hidden="true"
+                        ></i>
+                        <p>{stats?.userCount ?? 0} Users</p>
                     </div>
                     <div className="flex flex-col gap-y-1 text-center">
-                        <i className="fa-solid fa-gamepad text-3xl md:text-[32px] 2xl:text-4xl"></i>
-                        <p>{games?.length || 0} Games</p>
+                        <i
+                            className="fa-solid fa-gamepad text-3xl md:text-[32px] 2xl:text-4xl"
+                            aria-hidden="true"
+                        ></i>
+                        <p>{stats?.gameCount ?? 0} Games</p>
                     </div>
                     <div className="flex flex-col gap-y-1 text-center">
-                        <i className="fa-solid fa-chart-bar text-3xl md:text-[32px] 2xl:text-4xl"></i>
-                        <p>
-                            {gameLogs
-                                ? Object.keys(gameLogs).reduce(
-                                      (acc, userID) =>
-                                          acc + gameLogs[userID].length,
-                                      0
-                                  )
-                                : 0}{" "}
-                            Logs
-                        </p>
+                        <i
+                            className="fa-solid fa-chart-bar text-3xl md:text-[32px] 2xl:text-4xl"
+                            aria-hidden="true"
+                        ></i>
+                        <p>{stats?.logCount ?? 0} Logs</p>
                     </div>
                 </div>
             </div>
 
-            {/* Trending games */}
             <h2 className={gameSectionTitleStyles}>Trending Games</h2>
             <GameSection
-                games={games?.filter((game) => game.trending)}
+                games={trending}
                 loading={gamesLoading}
                 error={gamesError}
             />
@@ -148,21 +137,14 @@ const HomePage: React.FC<HomePageProps> = ({
             {/* Most Popular games (by amount of user listings) */}
             <h2 className={gameSectionTitleStyles}>Most Popular</h2>
             <GameSection
-                games={games?.slice(0, 6)}
+                games={mostPopular}
                 loading={gamesLoading}
                 error={gamesError}
             />
 
-            {/* Newly released games */}
             <h2 className={gameSectionTitleStyles}>New Releases</h2>
             <GameSection
-                games={games
-                    ?.sort(
-                        (a, b) =>
-                            Date.parse(b.releaseDate) -
-                            Date.parse(a.releaseDate)
-                    )
-                    .slice(0, 6)}
+                games={newReleases}
                 loading={gamesLoading}
                 error={gamesError}
             />

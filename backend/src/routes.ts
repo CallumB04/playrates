@@ -7,99 +7,99 @@ import { createGamesService } from "./modules/games/games.service.js";
 import { createGamesRouter } from "./modules/games/games.routes.js";
 import { createGameLogsService } from "./modules/game-logs/gameLogs.service.js";
 import {
-    createMyGameLogsRouter,
-    createUserGameLogsRouter,
+  createMyGameLogsRouter,
+  createUserGameLogsRouter,
 } from "./modules/game-logs/gameLogs.routes.js";
 import { createReviewsService } from "./modules/reviews/reviews.service.js";
 import {
-    createGameReviewsRouter,
-    createMyReviewsRouter,
-    createUserReviewsRouter,
+  createGameReviewsRouter,
+  createMyReviewsRouter,
+  createUserReviewsRouter,
 } from "./modules/reviews/reviews.routes.js";
 import { createFriendsService } from "./modules/friends/friends.service.js";
 import {
-    createMyFriendsRouter,
-    createUserFriendsRouter,
+  createMyFriendsRouter,
+  createUserFriendsRouter,
 } from "./modules/friends/friends.routes.js";
 import { createPlatformsRouter } from "./modules/platforms/platforms.js";
 import { createStatsRouter } from "./modules/stats/stats.js";
 
 interface Deps {
-    repos: Repositories;
-    provider: GamesProvider;
-    requireAuth: RequestHandler;
-    optionalAuth: RequestHandler;
+  repos: Repositories;
+  provider: GamesProvider;
+  requireAuth: RequestHandler;
+  optionalAuth: RequestHandler;
 }
 
 export const buildRoutes = ({
-    repos,
-    provider,
-    requireAuth,
-    optionalAuth,
+  repos,
+  provider,
+  requireAuth,
+  optionalAuth,
 }: Deps): Router => {
-    const router = Router();
+  const router = Router();
 
-    const profiles = createProfilesService(repos.profiles);
-    const games = createGamesService(repos.games, provider);
-    const gameLogs = createGameLogsService(
-        repos.gameLogs,
-        repos.profiles,
-        repos.games
-    );
-    const reviews = createReviewsService(
-        repos.reviews,
-        repos.profiles,
-        repos.games
-    );
-    const friends = createFriendsService(repos.friends, repos.profiles);
+  const profiles = createProfilesService(repos.profiles);
+  const games = createGamesService(repos.games, provider);
+  const gameLogs = createGameLogsService(
+    repos.gameLogs,
+    repos.profiles,
+    repos.games,
+  );
+  const reviews = createReviewsService(
+    repos.reviews,
+    repos.profiles,
+    repos.games,
+  );
+  const friends = createFriendsService(repos.friends, repos.profiles);
 
-    router.use("/platforms", createPlatformsRouter(repos.platforms));
-    router.use(
-        "/stats",
-        createStatsRouter(repos.profiles, repos.games, repos.gameLogs)
-    );
+  router.use("/platforms", createPlatformsRouter(repos.platforms));
+  router.use(
+    "/stats",
+    createStatsRouter(repos.profiles, repos.games, repos.gameLogs),
+  );
 
-    router.use(
-        "/profiles",
-        createProfilesRouter({ service: profiles, requireAuth })
-    );
+  router.use(
+    "/profiles",
+    createProfilesRouter({ service: profiles, requireAuth }),
+  );
 
-    // "me" routes are grouped so the acting user always comes from the token
-    router.use(
-        "/me/game-logs",
-        createMyGameLogsRouter({ service: gameLogs, requireAuth, optionalAuth })
-    );
-    router.use(
-        "/me/reviews",
-        createMyReviewsRouter({ service: reviews, requireAuth, optionalAuth })
-    );
-    router.use(
-        "/me/friends",
-        createMyFriendsRouter({ service: friends, requireAuth, optionalAuth })
-    );
+  // "me" routes are grouped so the acting user always comes from the token
+  router.use(
+    "/me/game-logs",
+    createMyGameLogsRouter({ service: gameLogs, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/me/reviews",
+    createMyReviewsRouter({ service: reviews, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/me/friends",
+    createMyFriendsRouter({ service: friends, requireAuth, optionalAuth }),
+  );
 
-    // per-user public views, addressed by username
-    router.use(
-        "/users/:username/game-logs",
-        createUserGameLogsRouter({ service: gameLogs, requireAuth, optionalAuth })
-    );
-    router.use(
-        "/users/:username/reviews",
-        createUserReviewsRouter({ service: reviews, requireAuth, optionalAuth })
-    );
-    router.use(
-        "/users/:username/friends",
-        createUserFriendsRouter({ service: friends, requireAuth, optionalAuth })
-    );
+  // per-user public views, addressed by username
+  router.use(
+    "/users/:username/game-logs",
+    createUserGameLogsRouter({ service: gameLogs, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/users/:username/reviews",
+    createUserReviewsRouter({ service: reviews, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/users/:username/friends",
+    createUserFriendsRouter({ service: friends, requireAuth, optionalAuth }),
+  );
 
-    router.use(
-        "/games/:gameId/reviews",
-        createGameReviewsRouter({ service: reviews, requireAuth, optionalAuth })
-    );
-    router.use(
-        "/games",
-        createGamesRouter({ service: games, requireAuth, optionalAuth })
-    );
+  router.use(
+    "/games/:gameId/reviews",
+    createGameReviewsRouter({ service: reviews, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/games",
+    createGamesRouter({ service: games, requireAuth, optionalAuth }),
+  );
 
-    return router;
+  return router;
 };

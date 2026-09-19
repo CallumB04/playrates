@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import ClosePopupIcon from "../../../components/ClosePopupIcon";
+import Modal from "../../../components/ui/Modal";
 
 interface MobileSearchPopupProps {
     closePopup: () => void;
@@ -21,11 +21,11 @@ const MobileSearchPopup: React.FC<MobileSearchPopupProps> = ({
     };
 
     return (
-        <dialog className="popup-backdrop" onMouseDown={closePopup}>
-            <div
-                className="popup popup-default flex w-full max-w-[550px] flex-col gap-3 text-center"
-                onMouseDown={(event) => event.stopPropagation()}
-            >
+        <Modal
+            onClose={closePopup}
+            className="flex w-full max-w-[550px] flex-col gap-3 text-center"
+        >
+            <div className="contents">
                 <h2 className="text-xl text-content">Search for Game</h2>
                 <div className="flex w-full flex-col gap-4 border-t border-t-subtle pt-3">
                     <input
@@ -41,10 +41,8 @@ const MobileSearchPopup: React.FC<MobileSearchPopupProps> = ({
                         Search
                     </button>
                 </div>
-
-                <ClosePopupIcon onClick={closePopup} />
             </div>
-        </dialog>
+        </Modal>
     );
 };
 

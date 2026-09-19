@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { UserAccount } from "../api";
+import type { FriendUser } from "@playrates/shared";
 import ProfilePicture, { AvatarVariant } from "./ProfilePicture";
 
 /**
@@ -18,7 +18,7 @@ const DENSITY = {
 export type FriendProfileDensity = keyof typeof DENSITY;
 
 interface FriendProfileProps {
-    user: UserAccount;
+    user: FriendUser;
     /** Optional: supplied when the row is rendered inside a popup. */
     closePopup?: () => void;
     density: FriendProfileDensity;
@@ -40,7 +40,7 @@ const FriendProfile: React.FC<FriendProfileProps> = ({
             <ProfilePicture
                 variant={avatar}
                 username={user.username}
-                file={user.picture}
+                file={user.pictureUrl ?? ""}
                 link={false}
             />
             <p className={`font-lexend text-content ${text}`}>

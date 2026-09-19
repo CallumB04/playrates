@@ -4,9 +4,9 @@ import type { GamesRepository } from "../games/games.repository.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 
 export interface StatsCounts {
-    userCount: number;
-    gameCount: number;
-    logCount: number;
+  userCount: number;
+  gameCount: number;
+  logCount: number;
 }
 
 /**
@@ -15,22 +15,22 @@ export interface StatsCounts {
  * game log. These are three head-only count queries.
  */
 export const createStatsRouter = (
-    profiles: ProfilesRepository,
-    games: GamesRepository,
-    gameLogs: GameLogsRepository
+  profiles: ProfilesRepository,
+  games: GamesRepository,
+  gameLogs: GameLogsRepository,
 ): Router => {
-    const router = Router();
+  const router = Router();
 
-    router.get("/", async (_req, res) => {
-        const [userCount, gameCount, logCount] = await Promise.all([
-            profiles.count(),
-            games.count(),
-            gameLogs.count(),
-        ]);
+  router.get("/", async (_req, res) => {
+    const [userCount, gameCount, logCount] = await Promise.all([
+      profiles.count(),
+      games.count(),
+      gameLogs.count(),
+    ]);
 
-        const body: StatsCounts = { userCount, gameCount, logCount };
-        res.json(body);
-    });
+    const body: StatsCounts = { userCount, gameCount, logCount };
+    res.json(body);
+  });
 
-    return router;
+  return router;
 };
