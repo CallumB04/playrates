@@ -94,11 +94,13 @@ const GameElement: React.FC<GameElementProps> = ({
                                         className={`flex ${isMyAccount ? "h-1/3" : "h-1/2"} w-full items-center justify-center gap-2 rounded-b border-t-[1px] border-t-[#cacaca44] transition-colors duration-200 hover:text-highlight-primary`}
                                         onClick={(e) => {
                                             e.preventDefault(); // prevent Link from triggering
-                                            !currentUserSharesLog
-                                                ? isMyAccount
-                                                    ? handleEdit()
-                                                    : handleCreate()
-                                                : handleRedirectAndView();
+                                            if (currentUserSharesLog) {
+                                                handleRedirectAndView();
+                                            } else if (isMyAccount) {
+                                                handleEdit();
+                                            } else {
+                                                handleCreate();
+                                            }
                                         }}
                                     >
                                         <p>
@@ -154,11 +156,13 @@ const GameElement: React.FC<GameElementProps> = ({
                                     className="flex h-full w-1/2 items-center justify-center text-text-secondary hover:text-highlight-primary"
                                     onClick={(e) => {
                                         e.preventDefault(); // prevent Link from triggering
-                                        !currentUserSharesLog
-                                            ? isMyAccount
-                                                ? handleEdit()
-                                                : handleCreate()
-                                            : handleRedirectAndView();
+                                        if (currentUserSharesLog) {
+                                            handleRedirectAndView();
+                                        } else if (isMyAccount) {
+                                            handleEdit();
+                                        } else {
+                                            handleCreate();
+                                        }
                                     }}
                                 >
                                     <i

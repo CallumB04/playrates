@@ -1,7 +1,6 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useUser } from "../../App";
 import {
-    fetchGameById,
     fetchGameLogsByUserID,
     fetchUserByID,
     fetchUserByUsername,
@@ -144,15 +143,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
         }
     }, [pageNumber, maxPageNumber]);
 
-    // if no user in the URL, returns error
+    // if no user in the URL, notify. The error screen is returned after all
+    // hooks have run — returning here would call hooks conditionally.
     useEffect(() => {
         if (!targetUsername) {
             runNotification("No user found in URL", "error");
         }
     }, [targetUsername]);
-    if (!targetUsername) {
-        return <ProfileError />;
-    }
 
     // fetching user from API
     const {
@@ -161,7 +158,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
         isLoading: targetUserLoading,
     } = useQuery<UserAccount | undefined>({
         queryKey: ["targetUser", targetUsername],
-        queryFn: () => fetchUserByUsername(targetUsername),
+        queryFn: () => fetchUserByUsername(targetUsername!),
+        enabled: !!targetUsername,
     });
 
     // temporary state for bio and username capitalization to display incase of changes, until state refresh
@@ -179,7 +177,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
     const {
         data: targetUserFriends,
         refetch: refetchTargetUserFriends,
-        error: targetUserFriendsError,
         isLoading: targetUserFriendsLoading,
     } = useQuery<Friend[] | undefined>({
         queryKey: ["targetUserFriends", targetUser?.id],
@@ -216,8 +213,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
     const {
         data: currentUserFriends,
         refetch: refetchCurrentUserFriends,
-        error: currentUserFriendsError,
-        isLoading: currentUserFriendsLoading,
     } = useQuery<Friend[] | undefined>({
         queryKey: ["currentUserFriends", currentUser?.id],
         queryFn: () => fetchFriendsByID(currentUser!.id),
@@ -237,23 +232,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
     });
 
     // fetching current users game logs from API, only if not own page
-    const {
-        data: currentUserGameLogs,
-        error: currentUserGameLogsError,
-        isLoading: currentUserGameLogsLoading,
-    } = useQuery<GameLog[] | undefined>({
+    const { data: currentUserGameLogs } = useQuery<GameLog[] | undefined>({
         queryKey: ["currentUserGameLogs", currentUser?.id],
         queryFn: () => fetchGameLogsByUserID(currentUser!.id),
         enabled: !!currentUser && !isMyAccount,
     });
 
     // fetching reviews from this user
-    const {
-        data: targetUserReviews,
-        refetch: refetchTargetUserReviews,
-        error: targetUserReviewsError,
-        isLoading: targetUserReviewsLoading,
-    } = useQuery<Review[]>({
+    const { data: targetUserReviews } = useQuery<Review[]>({
         queryKey: ["targetUserReviews", targetUser?.id],
         queryFn: () => fetchReviewsByUserID(targetUser!.id),
         enabled: !!targetUser,
@@ -489,7 +475,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
             runNotification("Failed to fetch user data", "error");
         }
     }, [targetUserError]);
-    if (targetUserError) {
+    // no username in the URL, or the user doesn't exist / failed to fetch
+    if (!targetUsername || targetUserError) {
         return <ProfileError />;
     }
 
@@ -952,6 +939,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                         <div className="mt-2 flex h-[248px] flex-col gap-1 overflow-y-scroll">
                             {targetUserReviews?.map((review) => (
                                 <Link
+                                    key={review.gameID}
                                     to={`/game/${review.gameID}`}
                                     className="flex h-20 items-center gap-3 rounded-md p-2 transition-colors duration-200 hover:bg-popup-end"
                                 >
@@ -1101,6 +1089,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
             </div>
         );
     }
+
+    // not loading, not errored, but no user came back
+    return <ProfileError />;
 };
 
 export default ProfilePage;

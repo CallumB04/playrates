@@ -90,7 +90,7 @@ function App() {
 
     // signup / login form visibility
     const [accountFormVisible, setAccountFormVisible] =
-        useState<Boolean>(false);
+        useState<boolean>(false);
     const [currentForm, setCurrentForm] = useState<"signup" | "login">(
         "signup"
     );

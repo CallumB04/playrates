@@ -49,11 +49,9 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ runNotification }) => {
     const [currentVisibleGameID, setCurrentVisibleGameID] = useState<number>(0); // for create popup
 
     // fetching all games from API
-    const {
-        data: games,
-        error: gamesError,
-        isLoading: gamesLoading,
-    } = useQuery<Game[] | undefined>({
+    const { data: games, isLoading: gamesLoading } = useQuery<
+        Game[] | undefined
+    >({
         queryKey: ["games"],
         queryFn: () => fetchGames(),
     });
@@ -66,7 +64,6 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ runNotification }) => {
     const {
         data: currentUserGameLogs,
         refetch: refetchCurrentUserGameLogs,
-        error: currentUserGameLogsError,
         isLoading: currentUserGameLogsLoading,
     } = useQuery<GameLog[] | undefined>({
         queryKey: ["currentUserGameLogs", currentUser?.id],
@@ -349,7 +346,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ runNotification }) => {
                                                     currentUserGameLogs?.find(
                                                         (log) =>
                                                             log.id === game.id
-                                                    )!
+                                                    ) ?? null
                                                 );
                                                 setViewGameLogPopupVisible(
                                                     true
@@ -360,7 +357,7 @@ const LibraryPage: React.FC<LibraryPageProps> = ({ runNotification }) => {
                                                     currentUserGameLogs?.find(
                                                         (log) =>
                                                             log.id === game.id
-                                                    )!
+                                                    ) ?? null
                                                 );
                                                 setEditGameLogPopupVisible(
                                                     true

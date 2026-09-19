@@ -43,10 +43,10 @@ const AccountForm: React.FC<FormProps> = ({
     const formBackdrop = useRef<HTMLDialogElement>(null);
 
     // password hidden or show setting
-    const [passwordHide, setPasswordHide] = useState<Boolean>(true);
+    const [passwordHide, setPasswordHide] = useState<boolean>(true);
 
     // whether api is loading - display loading spinner
-    const [isLoading, setIsLoading] = useState<Boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     // username to pass from signup to login
     const [usernameAfterSignup, setUsernameAfterSignup] = useState<string>("");

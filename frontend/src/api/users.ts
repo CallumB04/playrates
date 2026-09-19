@@ -27,7 +27,7 @@ export const fetchUsers = async (): Promise<UserAccount[]> => {
     try {
         const response = await axios.get<UserAccount[]>("/users");
         return response.data;
-    } catch (error) {
+    } catch {
         throw new Error("Error fetching users");
     }
 };
@@ -37,7 +37,7 @@ export const fetchUserByID = async (id: number): Promise<UserAccount> => {
     try {
         const response = await axios.get<UserAccount>(`/users/id/${id}`);
         return response.data;
-    } catch (error) {
+    } catch {
         throw new Error("Error fetching user");
     }
 };
@@ -47,7 +47,7 @@ export const fetchUserByEmail = async (email: string): Promise<UserAccount> => {
     try {
         const response = await axios.get<UserAccount>(`/users/email/${email}`);
         return response.data;
-    } catch (error) {
+    } catch {
         throw new Error("Error fetching user");
     }
 };
@@ -62,7 +62,7 @@ export const fetchUserByUsername = async (
         );
 
         return response.data;
-    } catch (error) {
+    } catch {
         throw new Error("Error fetching user");
     }
 };
@@ -94,7 +94,7 @@ export const addNewUser = async (newUser: UserCreation): Promise<boolean> => {
 // update user in database
 export const updateUserByID = async (
     id: number,
-    newData: any
+    newData: Partial<Pick<UserAccount, "username" | "bio" | "picture">>
 ): Promise<boolean> => {
     try {
         const response = await axios.patch(`/users/update/${id}`, newData);

@@ -21,7 +21,7 @@ export const fetchGameLogs = async () => {
     try {
         const response = await axios.get("/gamelogs");
         return response.data;
-    } catch (error) {
+    } catch {
         throw new Error("Error fetching game logs");
     }
 };
@@ -30,7 +30,7 @@ export const fetchGameLogsByUserID = async (userID: number) => {
     try {
         const response = await axios.get(`/gamelogs/${userID}`);
         return response.data;
-    } catch (error) {
+    } catch {
         throw new Error("Error fetching game logs");
     }
 };

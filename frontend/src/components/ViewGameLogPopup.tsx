@@ -43,6 +43,15 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
         fetchGameFromLog();
     }, []);
 
+    // the status a "played" log displays is its playedStatus (finished, mastered, ...)
+    const displayedStatus =
+        gamelog?.status === "played" && gamelog.playedStatus
+            ? gamelog.playedStatus
+            : gamelog?.status;
+    const statusColors = displayedStatus
+        ? getColorFromGameStatus(displayedStatus)
+        : undefined;
+
     return (
         <dialog className="popup-backdrop" onMouseDown={closePopup}>
             <div
@@ -73,7 +82,7 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                                 <p className="text-text-primary">
                                     Status:{" "}
                                     <span
-                                        className={`font-light ${getColorFromGameStatus(gamelog!.status === "played" && gamelog!.playedStatus ? gamelog?.playedStatus! : gamelog?.status!)?.bg} ${getColorFromGameStatus(gamelog!.status === "played" && gamelog!.playedStatus ? gamelog?.playedStatus! : gamelog?.status!)?.text} rounded-full px-1.5 py-0.5`}
+                                        className={`font-light ${statusColors?.bg} ${statusColors?.text} rounded-full px-1.5 py-0.5`}
                                     >
                                         {gamelog?.status === "played"
                                             ? capitalise(gamelog.playedStatus!)
@@ -189,11 +198,13 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                             className="button-secondary w-full sm:w-1/2"
                             onClick={() => {
                                 closePopup();
-                                currentUserSharesLog && profilePage
-                                    ? redirectAndOpenView()
-                                    : isMyAccount
-                                      ? openEdit()
-                                      : openCreate();
+                                if (currentUserSharesLog && profilePage) {
+                                    redirectAndOpenView();
+                                } else if (isMyAccount) {
+                                    openEdit();
+                                } else {
+                                    openCreate();
+                                }
                             }}
                         >
                             {currentUserSharesLog && profilePage

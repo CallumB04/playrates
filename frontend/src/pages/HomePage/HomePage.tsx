@@ -56,11 +56,7 @@ const HomePage: React.FC<HomePageProps> = ({
     });
 
     // fetching gamelogs from API
-    const {
-        data: gameLogs,
-        error: gameLogsError,
-        isLoading: gameLogsLoading,
-    } = useQuery<{ [userID: string]: GameLog[] }>({
+    const { data: gameLogs } = useQuery<{ [userID: string]: GameLog[] }>({
         queryKey: ["gamelogs"],
         queryFn: fetchGameLogs,
     });

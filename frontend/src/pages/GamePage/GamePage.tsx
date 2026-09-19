@@ -48,8 +48,6 @@ const GamePage: React.FC<GamePageProps> = ({
     const {
         data: overallGameLogs,
         refetch: refetchOverallGameLogs,
-        error: overallGameLogsError,
-        isLoading: overallGameLogsLoading,
     } = useQuery<{ [userID: string]: GameLog[] }>({
         queryKey: ["gamelogs"],
         queryFn: fetchGameLogs,
@@ -59,8 +57,6 @@ const GamePage: React.FC<GamePageProps> = ({
     const {
         data: currentUserGameLogs,
         refetch: refetchCurrentUserGameLogs,
-        error: currentUserGameLogsError,
-        isLoading: currentUserGameLogsLoading,
     } = useQuery<GameLog[] | undefined>({
         queryKey: ["currentUserGameLogs", currentUser?.id],
         queryFn: () => fetchGameLogsByUserID(currentUser!.id),
@@ -68,12 +64,7 @@ const GamePage: React.FC<GamePageProps> = ({
     });
 
     // fetching reviews off this game
-    const {
-        data: gameReviews,
-        refetch: refetchGameReviews,
-        error: gameReviewsError,
-        isLoading: gameReviewsLoading,
-    } = useQuery<Review[]>({
+    const { data: gameReviews } = useQuery<Review[]>({
         queryKey: ["gameReviews", game?.id],
         queryFn: () => fetchReviewsByGameID(game!.id),
         enabled: !!game,
@@ -82,7 +73,7 @@ const GamePage: React.FC<GamePageProps> = ({
     useEffect(() => {
         if (currentUserGameLogs) {
             setCurrentPageGameLog(
-                currentUserGameLogs?.find((log) => log.id === game?.id)!
+                currentUserGameLogs.find((log) => log.id === game?.id) ?? null
             );
         }
     }, [currentUserGameLogs, game]);

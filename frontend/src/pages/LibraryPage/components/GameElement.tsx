@@ -85,9 +85,11 @@ const GameElement: React.FC<GameElementProps> = ({
                                         className={`flex ${userHasLog ? "h-1/2 border-t-[1px] border-t-[#cacaca44]" : "h-full"} w-full items-center justify-center gap-2 rounded-b transition-colors duration-200 hover:text-highlight-primary`}
                                         onClick={(e) => {
                                             e.preventDefault(); // prevent Link from triggering
-                                            userHasLog
-                                                ? handleEdit()
-                                                : handleCreate();
+                                            if (userHasLog) {
+                                                handleEdit();
+                                            } else {
+                                                handleCreate();
+                                            }
                                         }}
                                     >
                                         <p>{userHasLog ? "Edit" : "Add"}</p>
@@ -129,9 +131,11 @@ const GameElement: React.FC<GameElementProps> = ({
                                         onClick={(e) => {
                                             e.preventDefault(); // prevent Link from triggering
 
-                                            userHasLog
-                                                ? handleEdit()
-                                                : handleCreate();
+                                            if (userHasLog) {
+                                                handleEdit();
+                                            } else {
+                                                handleCreate();
+                                            }
                                         }}
                                     >
                                         <i

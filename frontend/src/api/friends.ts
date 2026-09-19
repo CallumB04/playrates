@@ -13,7 +13,7 @@ export const fetchFriends = async () => {
     try {
         const response = await axios.get("/friends");
         return response.data;
-    } catch (error) {
+    } catch {
         throw new Error("Error fetching friends");
     }
 };
@@ -22,7 +22,7 @@ export const fetchFriendsByID = async (id: number): Promise<Friend[]> => {
     try {
         const response = await axios.get<Friend[]>(`/friends/${id}`);
         return response.data;
-    } catch (error) {
+    } catch {
         throw new Error("Error fetching user friends");
     }
 };

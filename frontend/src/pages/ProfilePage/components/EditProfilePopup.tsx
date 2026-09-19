@@ -144,7 +144,8 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                         />
                         {!usernameInputMatches ? (
                             <p className="text-left font-lexend text-red-500">
-                                Username doesnt match '{username}', only change
+                                Username doesnt match &apos;{username}&apos;,
+                                only change
                                 capitalization.
                             </p>
                         ) : (

@@ -20,7 +20,7 @@ export const fetchReviews = async () => {
     try {
         const response = await axios.get("/reviews");
         return response.data;
-    } catch (error) {
+    } catch {
         throw new Error("Error fetching reviews");
     }
 };
@@ -29,7 +29,7 @@ export const fetchReviewsByUserID = async (userID: number) => {
     try {
         const response = await axios.get(`/reviews/user/${userID}`);
         return response.data;
-    } catch (error) {
+    } catch {
         throw new Error("Error fetching reviews");
     }
 };
@@ -38,7 +38,7 @@ export const fetchReviewsByGameID = async (gameID: number) => {
     try {
         const response = await axios.get(`/reviews/game/${gameID}`);
         return response.data;
-    } catch (error) {
+    } catch {
         throw new Error("Error fetching reviews");
     }
 };
