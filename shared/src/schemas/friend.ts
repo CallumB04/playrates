@@ -26,27 +26,20 @@ export const FriendQuerySchema = z.object({
 export interface FriendUser {
   id: string;
   username: string;
-  pictureUrl: string | null;
+  avatarUrl: string | null;
   bio: string;
   online: boolean;
 }
 
-/**
- * The other party is embedded. The old profile page issued one request per
- * friend to resolve names and avatars.
- */
+/** The other party is embedded, so a friend list needs no follow-up requests. */
 export interface FriendEdge {
   status: FriendRelation;
   user: FriendUser;
   createdAt: string;
 }
 
-/**
- * Derives what a relationship looks like from one side of it.
- *
- * Pure and exported because it is the single trickiest piece of logic in the
- * friends feature, and it is worth testing directly.
- */
+/** What a relationship looks like from one side. Exported so it's testable —
+ *  pending means "sent" to one user and "received" to the other. */
 export const relationFor = (
   status: "pending" | "accepted",
   requestedBy: string,

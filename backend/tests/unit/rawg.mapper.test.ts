@@ -104,14 +104,10 @@ describe("RAWG mapper", () => {
     expect(game.releaseDate).toBeNull();
   });
 
-  it("maps playtime onto hoursToBeat", () => {
-    expect(toExternalGame(rawgResponse).hoursToBeat).toBe(46);
+  it("maps playtime onto playtimeHours", () => {
+    expect(toExternalGame(rawgResponse).playtimeHours).toBe(46);
     expect(
-      toExternalGame({ ...rawgResponse, playtime: 0 }).hoursToBeat,
+      toExternalGame({ ...rawgResponse, playtime: 0 }).playtimeHours,
     ).toBeNull();
-  });
-
-  it("keeps the untouched payload for later re-derivation", () => {
-    expect(toExternalGame(rawgResponse).raw).toEqual(rawgResponse);
   });
 });

@@ -45,6 +45,11 @@ export const createProfilesRouter = ({
     },
   );
 
+  router.delete("/me", requireAuth, async (req, res) => {
+    await service.deleteOwn(callerId(req));
+    res.status(204).end();
+  });
+
   router.post("/me/heartbeat", requireAuth, async (req, res) => {
     await service.heartbeat(callerId(req));
     res.status(204).end();

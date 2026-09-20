@@ -1,5 +1,6 @@
 import { Router, type RequestHandler } from "express";
 import type { Repositories } from "./repositories.js";
+import type { AuthAdmin } from "./config/authAdmin.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
 import { createProfilesService } from "./modules/profiles/profiles.service.js";
 import { createProfilesRouter } from "./modules/profiles/profiles.routes.js";
@@ -9,6 +10,7 @@ import { createGameLogsService } from "./modules/game-logs/gameLogs.service.js";
 import {
   createMyGameLogsRouter,
   createUserGameLogsRouter,
+  createUserStatsRouter,
 } from "./modules/game-logs/gameLogs.routes.js";
 import { createReviewsService } from "./modules/reviews/reviews.service.js";
 import {
@@ -22,11 +24,14 @@ import {
   createUserFriendsRouter,
 } from "./modules/friends/friends.routes.js";
 import { createPlatformsRouter } from "./modules/platforms/platforms.js";
+import { createGenresRouter } from "./modules/genres/genres.js";
 import { createStatsRouter } from "./modules/stats/stats.js";
 
 interface Deps {
   repos: Repositories;
   provider: GamesProvider;
+  /** Auth admin lives outside the repository bundle — it is not a table. */
+  authAdmin: AuthAdmin;
   requireAuth: RequestHandler;
   optionalAuth: RequestHandler;
 }
@@ -34,12 +39,13 @@ interface Deps {
 export const buildRoutes = ({
   repos,
   provider,
+  authAdmin,
   requireAuth,
   optionalAuth,
 }: Deps): Router => {
   const router = Router();
 
-  const profiles = createProfilesService(repos.profiles);
+  const profiles = createProfilesService(repos.profiles, authAdmin);
   const games = createGamesService(repos.games, provider);
   const gameLogs = createGameLogsService(
     repos.gameLogs,
@@ -54,6 +60,7 @@ export const buildRoutes = ({
   const friends = createFriendsService(repos.friends, repos.profiles);
 
   router.use("/platforms", createPlatformsRouter(repos.platforms));
+  router.use("/genres", createGenresRouter(repos.genres));
   router.use(
     "/stats",
     createStatsRouter(repos.profiles, repos.games, repos.gameLogs),
@@ -82,6 +89,10 @@ export const buildRoutes = ({
   router.use(
     "/users/:username/game-logs",
     createUserGameLogsRouter({ service: gameLogs, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/users/:username/stats",
+    createUserStatsRouter({ service: gameLogs, requireAuth, optionalAuth }),
   );
   router.use(
     "/users/:username/reviews",

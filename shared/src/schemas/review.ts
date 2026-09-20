@@ -1,9 +1,6 @@
 import { z } from "zod";
+import { PaginationSchema } from "./common.js";
 
-/**
- * The write path the old API never had — reviews were readable but there was
- * no way to create one short of editing reviews.json by hand.
- */
 export const ReviewInputSchema = z
   .object({
     body: z
@@ -17,7 +14,6 @@ export const ReviewInputSchema = z
 
 export type ReviewInput = z.infer<typeof ReviewInputSchema>;
 
-/** Field renames from the old API: text -> body, public -> isPublic. */
 export interface Review {
   id: number;
   gameId: number;
@@ -30,19 +26,32 @@ export interface Review {
 export interface ReviewAuthor {
   id: string;
   username: string;
-  pictureUrl: string | null;
+  avatarUrl: string | null;
   online: boolean;
 }
 
-/**
- * The old response flattened reviewerName / reviewerProfilePicture /
- * reviewerGameLogRating / reviewerGameLogPlatform onto the review. Nesting the
- * author is tidier, and the old code read `reviewer.username` with no null
- * guard, so a single deleted user took down the whole game page.
- */
+/** A review with its author, and the rating from that author's log. */
 export interface ReviewWithAuthor extends Review {
   author: ReviewAuthor;
   /** Joined from the author's log of this game, if they have one. */
   rating: number | null;
   platform: string | null;
 }
+
+/**
+ * Rating sorts read the review_cards view, which pre-joins each author's log
+ * — the rating is not on the reviews table, so ordering by it needs the join
+ * to happen in SQL. Unrated reviews sort last either way.
+ */
+export const REVIEW_SORTS = [
+  "recent",
+  "oldest",
+  "rating-high",
+  "rating-low",
+] as const;
+export const ReviewSortSchema = z.enum(REVIEW_SORTS).default("recent");
+export type ReviewSort = z.infer<typeof ReviewSortSchema>;
+
+export const ReviewQuerySchema = PaginationSchema.extend({
+  sort: ReviewSortSchema,
+});

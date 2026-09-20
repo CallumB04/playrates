@@ -14,6 +14,8 @@ const PG_ERROR_MAP: Record<string, () => AppError> = {
   PGRST116: () => AppError.notFound(),
 };
 
+/** Anything that is not already an AppError becomes one, so the response
+ *  shape is the same regardless of where the failure came from. */
 const normalise = (error: unknown): AppError => {
   if (error instanceof AppError) return error;
 

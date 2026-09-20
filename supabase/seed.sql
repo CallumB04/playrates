@@ -1,17 +1,9 @@
--- ---------------------------------------------------------------------------
--- LOCAL DEVELOPMENT FIXTURES ONLY
+-- Local development fixtures only. `supabase db reset` runs this after the
+-- migrations against the local stack; it never reaches a linked remote project.
 --
--- The Supabase CLI runs this file after migrations on `supabase db reset`,
--- which only ever targets the local stack. It is never applied to a linked
--- remote project, so nothing here can reach production.
---
--- Reference data (the platforms list) is NOT here — it lives in a migration,
--- because it has to exist in every environment.
---
--- For a realistic games catalogue, prefer `npm run seed:games -w backend`,
--- which pulls real titles through the RAWG provider and exercises the same
--- import path the app uses.
--- ---------------------------------------------------------------------------
+-- Reference data like the platforms list is not here — that's in a migration,
+-- because it has to exist everywhere. For a realistic catalogue use
+-- `npm run seed:games -w backend`.
 
 -- Two dev accounts. Password for both: password123
 insert into auth.users (
@@ -79,7 +71,7 @@ where id = '22222222-2222-2222-2222-222222222222';
 
 -- A handful of games so the library and home pages have something to render.
 insert into public.games (
-    rawg_id, slug, title, description, release_date, is_trending, hours_to_beat
+    rawg_id, slug, title, description, release_date, is_trending, playtime_hours
 )
 values
     (3328,  'the-witcher-3-wild-hunt', 'The Witcher 3: Wild Hunt',
@@ -133,3 +125,14 @@ values (
     'accepted',
     '11111111-1111-1111-1111-111111111111'
 );
+
+-- a couple of genres so the join table has something in it locally
+insert into public.game_genres (game_id, genre_slug)
+select g.id, 'action'
+from public.games g
+where g.rawg_id in (3328, 28, 5679);
+
+insert into public.game_genres (game_id, genre_slug)
+select g.id, 'puzzle'
+from public.games g
+where g.rawg_id in (4200, 13536);

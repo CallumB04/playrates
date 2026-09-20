@@ -1,11 +1,8 @@
 import type { Db } from "../../config/supabase.js";
 import type { FriendshipRow } from "../../types/database.types.js";
 
-/**
- * The table stores one canonical row per relationship with user_a_id sorted
- * before user_b_id, so (a,b) and (b,a) cannot both exist. Callers pass the two
- * users in any order and this module handles the ordering.
- */
+/** One row per relationship with user_a_id sorted before user_b_id, so (a,b)
+ *  and (b,a) can't both exist. Callers pass the pair in any order. */
 export const orderPair = (x: string, y: string): [string, string] =>
   x < y ? [x, y] : [y, x];
 
@@ -17,15 +14,15 @@ export interface FriendshipWithUsers extends FriendshipRow {
 export interface FriendProfileRow {
   id: string;
   username: string;
-  picture_url: string | null;
+  avatar_url: string | null;
   bio: string;
   last_seen_at: string;
 }
 
 const SELECT_WITH_USERS = `
     *,
-    user_a:profiles!friendships_user_a_id_fkey(id, username, picture_url, bio, last_seen_at),
-    user_b:profiles!friendships_user_b_id_fkey(id, username, picture_url, bio, last_seen_at)
+    user_a:profiles!friendships_user_a_id_fkey(id, username, avatar_url, bio, last_seen_at),
+    user_b:profiles!friendships_user_b_id_fkey(id, username, avatar_url, bio, last_seen_at)
 `;
 
 export interface FriendsRepository {

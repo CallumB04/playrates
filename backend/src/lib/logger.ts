@@ -1,11 +1,7 @@
 import pino from "pino";
 import { env } from "../config/env.js";
 
-/**
- * The old server logged nothing at all — not even a listen message — and every
- * catch block discarded its error object, so failures in production were
- * undiagnosable.
- */
+/** Errors are logged with their request id, so a report maps to a log line. */
 export const createLogger = () =>
   pino({
     level: env().LOG_LEVEL,

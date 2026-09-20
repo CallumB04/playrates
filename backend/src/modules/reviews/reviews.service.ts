@@ -5,15 +5,15 @@ import type {
   ReviewInput,
   ReviewWithAuthor,
 } from "@playrates/shared";
+import type { ReviewSort } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import { isOnline } from "../profiles/profiles.mapper.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type { GamesRepository } from "../games/games.repository.js";
-import {
-  ratingKey,
-  type ReviewRowJoined,
-  type ReviewsRepository,
+import type {
+  ReviewRowJoined,
+  ReviewsRepository,
 } from "./reviews.repository.js";
 
 const toReview = (row: ReviewRowJoined): Review => ({
@@ -31,46 +31,45 @@ export const createReviewsService = (
   games: GamesRepository,
 ) => {
   /**
-   * Attaches the author and their rating for the game. The old endpoint did
-   * `reviewer.username` with no null guard, so one deleted user returned a
-   * 500 for the entire game page; the foreign key now makes a missing author
-   * impossible, and this still degrades gracefully if one appears.
+   * The view already carries the author and the rating, so this is a pure
+   * mapping — it used to cost a second query per listing. A missing author
+   * falls back to a placeholder: the FK should prevent it, but one bad row
+   * shouldn't take down the listing.
    */
-  const withAuthors = async (
-    rows: ReviewRowJoined[],
-  ): Promise<ReviewWithAuthor[]> => {
-    const ratings = await repo.ratingsFor(
-      rows.map((r) => ({ userId: r.user_id, gameId: r.game_id })),
-    );
-
-    return rows.map((row) => {
-      const log = ratings.get(ratingKey(row.user_id, row.game_id));
-      return {
-        ...toReview(row),
-        author: {
-          id: row.author?.id ?? row.user_id,
-          username: row.author?.username ?? "Unknown user",
-          pictureUrl: row.author?.picture_url ?? null,
-          online: row.author ? isOnline(row.author.last_seen_at) : false,
-        },
-        rating: log?.rating ?? null,
-        platform: log?.platform ?? null,
-      };
-    });
-  };
+  const withAuthors = (rows: ReviewRowJoined[]): ReviewWithAuthor[] =>
+    rows.map((row) => ({
+      ...toReview(row),
+      author: {
+        id: row.user_id,
+        username: row.author_username ?? "Unknown user",
+        avatarUrl: row.author_avatar_url ?? null,
+        online: row.author_last_seen_at
+          ? isOnline(row.author_last_seen_at)
+          : false,
+      },
+      rating: row.rating === null ? null : Number(row.rating),
+      platform: row.platform_slug,
+    }));
 
   return {
     async listByGame(
       gameId: number,
       viewerId: string | undefined,
       pagination: Pagination,
+      sort?: ReviewSort,
     ): Promise<Paginated<ReviewWithAuthor>> {
       const game = await games.findById(gameId);
       if (!game) throw AppError.notFound("Game");
 
       const { from, to } = toRange(pagination);
-      const { rows, total } = await repo.listByGame(gameId, viewerId, from, to);
-      return paginate(await withAuthors(rows), pagination, total);
+      const { rows, total } = await repo.listByGame(
+        gameId,
+        viewerId,
+        from,
+        to,
+        sort,
+      );
+      return paginate(withAuthors(rows), pagination, total);
     },
 
     async listByUsername(
@@ -88,7 +87,7 @@ export const createReviewsService = (
         from,
         to,
       );
-      return paginate(await withAuthors(rows), pagination, total);
+      return paginate(withAuthors(rows), pagination, total);
     },
 
     async getOwn(userId: string, gameId: number): Promise<Review> {
@@ -97,7 +96,6 @@ export const createReviewsService = (
       return toReview(row);
     },
 
-    /** The write path the old API simply did not have. */
     async upsertOwn(
       userId: string,
       gameId: number,

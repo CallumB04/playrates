@@ -2,12 +2,10 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { env } from "./env.js";
 
 /**
- * The service-role client. It bypasses row level security, which is exactly
- * why every table has RLS on with no policies: this process is the only thing
- * that should ever reach them, and all authorization happens in the service
- * layer above.
+ * The service-role client. It bypasses RLS, which is why every table has RLS on
+ * with no policies — this process should be the only thing reaching them.
  *
- * This key must never be sent to a browser or prefixed with VITE_.
+ * Never send this key to a browser or prefix it with VITE_.
  */
 let client: SupabaseClient | undefined;
 

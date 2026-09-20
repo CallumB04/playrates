@@ -6,14 +6,33 @@ import type {
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
+import type { AuthAdmin } from "../../config/authAdmin.js";
 import type { ProfilesRepository } from "./profiles.repository.js";
 import { toProfile } from "./profiles.mapper.js";
 
-export const createProfilesService = (repo: ProfilesRepository) => ({
+export const createProfilesService = (
+  repo: ProfilesRepository,
+  authAdmin: AuthAdmin,
+) => ({
   async getById(id: string): Promise<Profile> {
     const row = await repo.findById(id);
     if (!row) throw AppError.notFound("Profile");
     return toProfile(row);
+  },
+
+  /**
+   * Closes an account for good.
+   *
+   * Deletes the auth user, not the profile. The foreign key runs from
+   * profiles to auth.users, so removing the profile alone would leave a
+   * sign-in that can never get a profile back. Going the other way cascades
+   * through profiles to the user's logs, reviews and friendships.
+   */
+  async deleteOwn(id: string): Promise<void> {
+    // 404 rather than a silent success if it is already gone.
+    const row = await repo.findById(id);
+    if (!row) throw AppError.notFound("Profile");
+    await authAdmin.deleteUser(id);
   },
 
   async getByUsername(username: string): Promise<Profile> {
@@ -43,9 +62,8 @@ export const createProfilesService = (repo: ProfilesRepository) => ({
   },
 
   /**
-   * Only the three editable fields are ever written. The old handler spread
-   * the whole request body over the stored record, so a caller could set
-   * their own id, email or password.
+   * Builds the patch explicitly rather than spreading the request body, so
+   * only these three fields can ever be written.
    */
   async updateOwn(
     callerId: string,
@@ -64,7 +82,7 @@ export const createProfilesService = (repo: ProfilesRepository) => ({
     const patch: Record<string, unknown> = {};
     if (input.username !== undefined) patch.username = input.username;
     if (input.bio !== undefined) patch.bio = input.bio;
-    if (input.pictureUrl !== undefined) patch.picture_url = input.pictureUrl;
+    if (input.avatarUrl !== undefined) patch.avatar_url = input.avatarUrl;
 
     if (Object.keys(patch).length === 0) {
       return this.getById(callerId);

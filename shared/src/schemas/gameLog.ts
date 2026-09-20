@@ -35,13 +35,9 @@ const IsoDateSchema = z
 
 const PlatformSlugSchema = z.string().regex(/^[a-z0-9-]+$/);
 
-/**
- * The cross-field refinements deliberately duplicate the database CHECK
- * constraints. That is not redundancy: zod gives a 422 with a field path the
- * form can highlight, while the constraint guarantees the invariant holds no
- * matter which code path writes the row. Validation for the user, constraints
- * for the truth.
- */
+/** The cross-field refinements duplicate the database CHECKs on purpose: zod
+ *  gives a 422 with a field path the form can highlight, the constraint holds
+ *  whatever writes the row. */
 /** The plain object, kept separate so the PATCH schema can `.partial()` it. */
 const GameLogFieldsSchema = z
   .object({
@@ -58,7 +54,8 @@ const GameLogFieldsSchema = z
   })
   .strict();
 
-/** Cross-field rules, applied to both the full and the partial schema. */
+/** Applied to the full and partial schemas separately — `.partial()` can't be
+ *  called on a schema that already has refinements. */
 const withCrossFieldChecks = <T extends z.ZodTypeAny>(schema: T) =>
   schema
     .refine(
@@ -97,9 +94,8 @@ export const GameLogQuerySchema = z.object({
 });
 
 /**
- * NOTE a breaking change from the old API: `id` is now the log's own id.
- * It used to be the *game* id, because logs had no identity of their own.
- * The game id moved to `gameId`.
+ * `id` is the log's own id and `gameId` is the game it refers to. They are
+ * easy to confuse because both are numbers.
  */
 export interface GameLog {
   id: number;
@@ -117,3 +113,29 @@ export interface GameLog {
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * A log reduced to what a "have I logged this?" lookup needs. Returned
+ * unpaginated, because a partial answer is worse than none — the caller uses
+ * it to decide whether a tile shows "Log it" or "View your log".
+ */
+export interface GameLogSummary {
+  gameId: number;
+  status: GameStatus;
+  playedStatus: PlayedStatus | null;
+  rating: number | null;
+}
+
+/** Totals across a user's whole shelf. Hours in particular cannot be summed
+ *  client-side, because the log list is paginated. */
+export interface UserStats {
+  logCount: number;
+  byStatus: Record<string, number>;
+  hoursPlayed: number;
+  averageRating: number | null;
+  ratingCount: number;
+}
+
+export const UserStatsQuerySchema = z.object({
+  year: z.coerce.number().int().min(1970).max(2200).optional(),
+});

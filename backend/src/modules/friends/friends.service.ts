@@ -15,12 +15,13 @@ import type {
 const toFriendUser = (row: FriendProfileRow) => ({
   id: row.id,
   username: row.username,
-  pictureUrl: row.picture_url,
+  avatarUrl: row.avatar_url,
   bio: row.bio,
   online: isOnline(row.last_seen_at),
 });
 
-/** Projects a canonical row into the edge as `viewerId` sees it. */
+/** Projects a row into the edge as `viewerId` sees it: the embedded user is
+ *  always the other party, and pending reads as sent or received by side. */
 const toEdge = (
   row: FriendshipWithUsers,
   viewerId: string,
@@ -60,10 +61,7 @@ export const createFriendsService = (
     return this.listForUser(profile.id, status);
   },
 
-  /**
-   * The requester is always the authenticated caller. The old API took it
-   * from the request body, so anyone could send a request as anyone.
-   */
+  /** The requester is always the authenticated caller, never a supplied id. */
   async sendRequest(callerId: string, targetId: string): Promise<FriendEdge> {
     if (callerId === targetId) {
       throw new AppError(
@@ -76,8 +74,7 @@ export const createFriendsService = (
     const target = await profiles.findById(targetId);
     if (!target) throw AppError.notFound("Profile");
 
-    // the old route pushed a new pair of rows on every call, so a double
-    // click permanently duplicated the friendship
+    // guards against a double click creating a second pending relationship
     const existing = await repo.find(callerId, targetId);
     if (existing) {
       throw AppError.conflict(
@@ -111,11 +108,8 @@ export const createFriendsService = (
     return edge;
   },
 
-  /**
-   * One endpoint replaces decline, cancel and remove — all three were the
-   * same "destroy the relationship between these two users" operation with
-   * different names and duplicated bodies.
-   */
+  /* Decline, cancel and unfriend are the same operation — which one it reads
+     as depends only on the current status. */
   async removeRelationship(callerId: string, otherId: string): Promise<void> {
     const existing = await repo.find(callerId, otherId);
     if (!existing) throw AppError.notFound("Friendship");

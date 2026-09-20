@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import { authHeader, buildTestApp, USER_A } from "../helpers/buildTestApp.js";
 import { baseSeed, buildGame, buildGameLog } from "../helpers/fixtures.js";
-import type { GamesProvider } from "../../src/providers/games/GamesProvider.js";
+import type {
+  ExternalGame,
+  GamesProvider,
+} from "../../src/providers/games/GamesProvider.js";
 
 const stubProvider = (
   results: Awaited<ReturnType<GamesProvider["search"]>> = [],
@@ -16,7 +19,7 @@ const stubProvider = (
   } as unknown as GamesProvider & { search: ReturnType<typeof vi.fn> };
 };
 
-const externalGame = {
+const externalGame: ExternalGame = {
   externalId: 777,
   slug: "hollow-knight",
   title: "Hollow Knight",
@@ -24,10 +27,13 @@ const externalGame = {
   coverUrl: "https://example.test/hk.jpg",
   releaseDate: "2017-02-24",
   platformSlugs: ["other-pc"],
+  genres: [{ slug: "metroidvania", name: "Metroidvania" }],
   isAdult: false,
-  popularity: 500,
-  hoursToBeat: 27,
-  raw: {},
+  metacritic: 90,
+  rawgRating: 4.5,
+  rawgRatingCount: 4200,
+  rawgAddedCount: 500,
+  playtimeHours: 27,
 };
 
 describe("games", () => {
@@ -89,7 +95,7 @@ describe("games", () => {
     expect(response.body.data).toHaveLength(1);
   });
 
-  /** Was a client-side filter applied after downloading the whole catalogue. */
+  /** Filtering happens in SQL, so the client never holds the full catalogue. */
   it("can exclude games the caller has already logged", async () => {
     const { app } = buildTestApp({
       seed: {
@@ -248,7 +254,7 @@ describe("platforms and stats", () => {
     expect(response.body.data[0].displayName).toBe("Steam");
   });
 
-  /** Replaces three whole-table fetches the home page used to perform. */
+  /** Counts only — the home page should never fetch rows to show a total. */
   it("returns counts without exposing any records", async () => {
     const { app } = buildTestApp({
       seed: { ...baseSeed(), gameLogs: [buildGameLog()] },

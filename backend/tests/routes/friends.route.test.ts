@@ -36,10 +36,7 @@ describe("friends", () => {
     expect(response.body.data[0].user.username).toBe("devuser");
   });
 
-  /**
-   * The old route pushed a new pair of rows on every call with no duplicate
-   * check, so double-clicking "add friend" corrupted both users' lists.
-   */
+  /** A double-clicked "add friend" must not create two relationships. */
   it("rejects a duplicate request instead of creating another row", async () => {
     const { app, state } = buildTestApp({
       seed: { ...baseSeed(), friendships: [buildFriendship()] },
@@ -119,7 +116,7 @@ describe("friends", () => {
     expect(response.status).toBe(404);
   });
 
-  /** One DELETE replaces the old decline, cancel and remove routes. */
+  /** The same DELETE serves decline, cancel and unfriend. */
   it("removes the relationship from both sides", async () => {
     const { app, state } = buildTestApp({
       seed: {

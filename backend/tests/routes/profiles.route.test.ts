@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 import request from "supertest";
-import { authHeader, buildTestApp, USER_A } from "../helpers/buildTestApp.js";
-import { baseSeed } from "../helpers/fixtures.js";
+import {
+  authHeader,
+  buildTestApp,
+  USER_A,
+  USER_B,
+} from "../helpers/buildTestApp.js";
+import {
+  baseSeed,
+  buildFriendship,
+  buildGameLog,
+  buildReview,
+} from "../helpers/fixtures.js";
 
 describe("profiles", () => {
   it("updates the caller's own bio", async () => {
@@ -17,9 +27,8 @@ describe("profiles", () => {
   });
 
   /**
-   * The regression test that matters most in this file. The old handler did
-   * `{ ...user, ...req.body }`, so any extra key in the body was written
-   * straight onto the stored record.
+   * The most important test in this file: an unexpected key in the body must
+   * be rejected outright, never written.
    */
   it("rejects unknown fields instead of writing them", async () => {
     const { app, state } = buildTestApp({ seed: baseSeed() });
@@ -100,5 +109,55 @@ describe("profiles", () => {
 
     expect(taken.body).toEqual({ available: false });
     expect(free.body).toEqual({ available: true });
+  });
+});
+
+describe("closing an account", () => {
+  const seedWithEverything = () => ({
+    ...baseSeed(),
+    gameLogs: [buildGameLog({ id: 1, user_id: USER_A, game_id: 1 })],
+    reviews: [buildReview({ id: 1, user_id: USER_A, game_id: 1 })],
+    friendships: [
+      buildFriendship({ user_a_id: USER_A, user_b_id: USER_B }),
+    ],
+  });
+
+  it("takes the logs, reviews and friendships with it", async () => {
+    const { app, state } = buildTestApp({ seed: seedWithEverything() });
+
+    const response = await request(app)
+      .delete("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(204);
+    expect(state.profiles.find((p) => p.id === USER_A)).toBeUndefined();
+    expect(state.gameLogs).toHaveLength(0);
+    expect(state.reviews).toHaveLength(0);
+    expect(state.friendships).toHaveLength(0);
+  });
+
+  it("leaves everyone else alone", async () => {
+    const { app, state } = buildTestApp({ seed: seedWithEverything() });
+
+    await request(app)
+      .delete("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(state.profiles.find((p) => p.id === USER_B)).toBeDefined();
+  });
+
+  it("requires authentication", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+    expect((await request(app).delete("/api/v1/profiles/me")).status).toBe(401);
+  });
+
+  it("404s when the profile is already gone", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .delete("/api/v1/profiles/me")
+      .set("Authorization", authHeader("00000000-0000-0000-0000-00000000dead"));
+
+    expect(response.status).toBe(404);
   });
 });

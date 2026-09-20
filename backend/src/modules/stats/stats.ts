@@ -10,9 +10,8 @@ export interface StatsCounts {
 }
 
 /**
- * The home page used to render these three numbers by downloading every user
- * (including, at the time, their plaintext passwords), every game and every
- * game log. These are three head-only count queries.
+ * Three head-only count queries, so the home page can show totals without
+ * fetching any rows.
  */
 export const createStatsRouter = (
   profiles: ProfilesRepository,

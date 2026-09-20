@@ -1,8 +1,10 @@
 import type {
   GameLogInput,
   GameLogPatch,
+  GameLogSummary,
   Paginated,
   Pagination,
+  UserStats,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
@@ -40,6 +42,28 @@ export const createGameLogsService = (
     return paginate(rows.map(toGameLogWithGame), pagination, total);
   },
 
+  /** Every game the caller has logged, as a flat list for "have I logged
+   *  this?" lookups that must stay correct past the first page. */
+  async listSummariesForUser(userId: string): Promise<GameLogSummary[]> {
+    const rows = await repo.summariesByUser(userId);
+    return rows.map((row) => ({
+      gameId: row.game_id,
+      status: row.status as GameLogSummary["status"],
+      playedStatus: row.played_status as GameLogSummary["playedStatus"],
+      rating: row.rating === null ? null : Number(row.rating),
+    }));
+  },
+
+  async statsForUsername(username: string, year?: number): Promise<UserStats> {
+    const profile = await profiles.findByUsername(username);
+    if (!profile) throw AppError.notFound("Profile");
+
+    const stats = await repo.statsByUser(profile.id, year);
+    const logCount = Object.values(stats.byStatus).reduce((a, b) => a + b, 0);
+
+    return { logCount, ...stats };
+  },
+
   async getOwn(userId: string, gameId: number): Promise<GameLogWithGame> {
     const row = await repo.findByUserAndGame(userId, gameId);
     if (!row) throw AppError.notFound("Game log");
@@ -47,9 +71,8 @@ export const createGameLogsService = (
   },
 
   /**
-   * Upsert on (user_id, game_id). Making the write idempotent removes the
-   * create-versus-edit branch the client used to carry, and means a retry
-   * cannot produce a duplicate.
+   * Upsert on (user_id, game_id). The write is idempotent, so the client
+   * needs no create-versus-edit branch and a retry cannot duplicate a log.
    */
   async upsertOwn(
     userId: string,

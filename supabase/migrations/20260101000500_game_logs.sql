@@ -1,9 +1,6 @@
--- A user's log of a game: status, rating, hours, achievements.
---
--- The old JSON store keyed logs by user id and used the *game* id as the log's
--- own `id`, so one log per user per game was an implicit rule enforced by
--- nothing. Here that becomes a real unique constraint, and the log gets a
--- surrogate key so reviews can reference it with a single column.
+-- A user's log of a game: status, rating, hours, achievements. One per user per
+-- game. It also carries its own key so other tables can reference a log with a
+-- single column.
 
 create table public.game_logs (
     id bigint generated always as identity primary key,

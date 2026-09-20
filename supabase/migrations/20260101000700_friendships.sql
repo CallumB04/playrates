@@ -1,14 +1,7 @@
--- Friendships and friend requests.
---
--- The old store kept two mirrored rows per relationship, one on each side,
--- written non-atomically. That allowed two failure modes seen in the old code:
--- a half-written friendship if the process died mid-write, and unbounded
--- duplicate rows because "add friend" never checked for an existing edge.
---
--- Here a relationship is exactly one row, with the pair ordered so that
--- (a, b) and (b, a) cannot both exist. Direction is carried by requested_by.
--- The API still returns the per-user shape the frontend expects, via the
--- friend_edges view below.
+-- One row per relationship, with the pair ordered so (a, b) and (b, a) can't
+-- both exist — a half-written friendship is impossible rather than unlikely.
+-- Direction lives in requested_by. The view below expands each row back into
+-- the two directed edges the API serves.
 
 create table public.friendships (
     user_a_id uuid not null references public.profiles (id) on delete cascade,
@@ -31,11 +24,9 @@ create index friendships_user_b_idx on public.friendships (user_b_id);
 create index friendships_accepted_a_idx
     on public.friendships (user_a_id) where status = 'accepted';
 
--- Directed expansion of the canonical rows, so a query can ask "who are this
--- user's friends" without caring which side of the pair they are on.
---
--- security_invoker matters: without it the view would execute as its owner and
--- become a way around row level security.
+-- Lets a query ask "who are this user's friends" without caring which side of
+-- the ordered pair they're on. security_invoker is load-bearing: without it the
+-- view runs as its owner and becomes a way around RLS.
 create view public.friend_edges
 with (security_invoker = true) as
 select

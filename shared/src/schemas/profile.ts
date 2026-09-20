@@ -14,16 +14,13 @@ export const PasswordSchema = z
 
 export const EmailSchema = z.string().trim().toLowerCase().email();
 
-/**
- * `.strict()` is what closes the mass-assignment hole. The old handler did
- * `{ ...user, ...req.body }`, so a caller could overwrite id, email or the
- * password hash by adding keys. Unknown keys are now a 422.
- */
+/** `.strict()` rejects unknown keys with a 422 rather than writing them, so
+ *  only these three fields are ever editable. */
 export const UpdateProfileSchema = z
   .object({
     username: UsernameSchema.optional(),
     bio: z.string().max(160, "Bio must be at most 160 characters").optional(),
-    pictureUrl: z.string().url().max(2048).nullable().optional(),
+    avatarUrl: z.string().url().max(2048).nullable().optional(),
   })
   .strict();
 
@@ -38,7 +35,7 @@ export interface Profile {
   id: string;
   username: string;
   bio: string;
-  pictureUrl: string | null;
+  avatarUrl: string | null;
   /** Derived from last_seen_at, not stored. */
   online: boolean;
   createdAt: string;

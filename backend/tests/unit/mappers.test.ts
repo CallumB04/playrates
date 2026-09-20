@@ -15,13 +15,13 @@ import { buildGame, buildGameLog, buildProfile } from "../helpers/fixtures.js";
 describe("profile mapper", () => {
   it("maps snake_case columns to the camelCase API shape", () => {
     const profile = toProfile(
-      buildProfile({ picture_url: "https://x.test/a.png", bio: "hi" }),
+      buildProfile({ avatar_url: "https://x.test/a.png", bio: "hi" }),
     );
 
     expect(profile).toMatchObject({
       username: "devuser",
       bio: "hi",
-      pictureUrl: "https://x.test/a.png",
+      avatarUrl: "https://x.test/a.png",
     });
   });
 

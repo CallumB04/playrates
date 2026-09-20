@@ -9,7 +9,6 @@ import {
 import { baseSeed, buildGameLog, buildReview } from "../helpers/fixtures.js";
 
 describe("reviews", () => {
-  /** The whole write path is new: the old API had only GET routes. */
   it("creates a review and returns 201", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 
@@ -70,10 +69,7 @@ describe("reviews", () => {
     expect(response.status).toBe(401);
   });
 
-  /**
-   * The `public` flag existed in the old data but was never checked, so
-   * every private review was served to everyone.
-   */
+  /** A private review must never reach anyone but its author. */
   it("hides a private review from anonymous viewers", async () => {
     const { app } = buildTestApp({
       seed: { ...baseSeed(), reviews: [buildReview({ is_public: false })] },
@@ -181,5 +177,76 @@ describe("reviews", () => {
       .send({ body: "ghost game" });
 
     expect(response.status).toBe(404);
+  });
+});
+
+describe("review sorting", () => {
+  /* The rating lives on the author's game_logs row, not on the review — so
+     this is really checking the join happens before pagination. */
+  const seedWithRatings = () => ({
+    ...baseSeed(),
+    reviews: [
+      buildReview({ id: 1, user_id: USER_A, game_id: 1, body: "mid" }),
+      buildReview({ id: 2, user_id: USER_B, game_id: 1, body: "loved it" }),
+    ],
+    gameLogs: [
+      buildGameLog({ id: 1, user_id: USER_A, game_id: 1, rating: 5 }),
+      buildGameLog({ id: 2, user_id: USER_B, game_id: 1, rating: 9.5 }),
+    ],
+  });
+
+  it("orders by the author's rating, highest first", async () => {
+    const { app } = buildTestApp({ seed: seedWithRatings() });
+
+    const response = await request(app).get(
+      "/api/v1/games/1/reviews?sort=rating-high",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.map((r: { rating: number }) => r.rating)).toEqual([
+      9.5, 5,
+    ]);
+  });
+
+  it("orders lowest first on request", async () => {
+    const { app } = buildTestApp({ seed: seedWithRatings() });
+
+    const response = await request(app).get(
+      "/api/v1/games/1/reviews?sort=rating-low",
+    );
+
+    expect(response.body.data.map((r: { rating: number }) => r.rating)).toEqual([
+      5, 9.5,
+    ]);
+  });
+
+  it("sorts unrated reviews last in both directions", async () => {
+    const seed = {
+      ...baseSeed(),
+      reviews: [
+        buildReview({ id: 1, user_id: USER_A, game_id: 1, body: "no log" }),
+        buildReview({ id: 2, user_id: USER_B, game_id: 1, body: "rated" }),
+      ],
+      // Only USER_B has a log, so USER_A's review has no rating at all.
+      gameLogs: [buildGameLog({ id: 2, user_id: USER_B, game_id: 1, rating: 7 })],
+    };
+
+    for (const sort of ["rating-high", "rating-low"]) {
+      const { app } = buildTestApp({ seed });
+      const response = await request(app).get(
+        `/api/v1/games/1/reviews?sort=${sort}`,
+      );
+      expect(
+        response.body.data.map((r: { rating: number | null }) => r.rating),
+        sort,
+      ).toEqual([7, null]);
+    }
+  });
+
+  it("rejects a sort it does not know", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+    expect(
+      (await request(app).get("/api/v1/games/1/reviews?sort=vibes")).status,
+    ).toBe(422);
   });
 });

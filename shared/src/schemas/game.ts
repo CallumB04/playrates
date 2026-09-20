@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { BooleanQuerySchema, PaginationSchema } from "./common.js";
 
-/** Field names changed from the old API: trending -> isTrending, eighteenPlus -> isAdult. */
 export interface Game {
   id: number;
   rawgId: number | null;
@@ -10,11 +9,17 @@ export interface Game {
   description: string;
   coverUrl: string | null;
   releaseDate: string | null;
-  /** Platform slugs. Same shape as the old `platforms: string[]`. */
+  /** Platform slugs, e.g. ["steam", "xbox"]. */
   platforms: string[];
   isAdult: boolean;
   isTrending: boolean;
-  hoursToBeat: number | null;
+  /** RAWG's average playtime in hours, not a time-to-beat estimate. */
+  playtimeHours: number | null;
+  genres: string[];
+  metacritic: number | null;
+  /** RAWG's own 0-5 community score, not a PlayRates rating. */
+  rawgRating: number | null;
+  rawgRatingCount: number | null;
 }
 
 export interface GameStats {
@@ -22,12 +27,34 @@ export interface GameStats {
   byStatus: Record<string, number>;
   averageRating: number | null;
   ratingCount: number;
+  /** Twenty buckets of 0.5, so the rating plate shows a shape, not just a mean. */
+  ratingBuckets: number[];
 }
 
+const IsoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected a YYYY-MM-DD date");
+
 /**
- * Filters the library page used to apply client-side over the whole
- * catalogue. Pushing them into SQL is what lets the catalogue grow past a
- * few dozen games.
+ * How the catalogue is ordered.
+ *
+ * "logged" counts PlayRates logs; "popular" is RAWG's added-to-collection
+ * figure, kept because it is populated across the whole catalogue where our
+ * own count starts at zero for anything nobody has logged yet.
+ */
+export const GAME_SORTS = [
+  "logged",
+  "popular",
+  "title",
+  "released",
+  "rating",
+] as const;
+export const GameSortSchema = z.enum(GAME_SORTS).default("popular");
+export type GameSort = z.infer<typeof GameSortSchema>;
+
+/**
+ * Library filters. These run in SQL rather than in the browser so the page
+ * never has to hold the whole catalogue in memory.
  */
 export const GameQuerySchema = PaginationSchema.extend({
   search: z.string().trim().max(200).optional(),
@@ -35,10 +62,18 @@ export const GameQuerySchema = PaginationSchema.extend({
     .string()
     .regex(/^[a-z0-9-]+$/)
     .optional(),
+  genre: z
+    .string()
+    .regex(/^[a-z0-9-]+$/)
+    .optional(),
   trending: BooleanQuerySchema.optional(),
   includeAdult: BooleanQuerySchema.default(true),
   /** Requires auth: excludes games the caller has already logged. */
   excludeLogged: BooleanQuerySchema.default(false),
+  sort: GameSortSchema,
+  /** Release-date window, so "new releases" can exclude unreleased titles. */
+  releasedAfter: IsoDateSchema.optional(),
+  releasedBefore: IsoDateSchema.optional(),
 });
 
 export type GameQuery = z.infer<typeof GameQuerySchema>;
@@ -58,8 +93,14 @@ export const GameImportSchema = z
 export const PlatformSchema = z.object({
   slug: z.string(),
   displayName: z.string(),
-  iconClass: z.string(),
   sortOrder: z.number(),
 });
 
 export type Platform = z.infer<typeof PlatformSchema>;
+
+export const GenreSchema = z.object({
+  slug: z.string(),
+  name: z.string(),
+});
+
+export type Genre = z.infer<typeof GenreSchema>;

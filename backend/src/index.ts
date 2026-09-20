@@ -3,6 +3,7 @@ import "./config/loadEnv.js";
 import { buildApp } from "./app.js";
 import { env } from "./config/env.js";
 import { supabase } from "./config/supabase.js";
+import { createAuthAdmin } from "./config/authAdmin.js";
 import { createLogger } from "./lib/logger.js";
 import { createRepositories } from "./repositories.js";
 import { verifySupabaseJwt } from "./middleware/requireAuth.js";
@@ -25,9 +26,11 @@ const main = () => {
     );
   }
 
+  const db = supabase();
   const app = buildApp({
-    repos: createRepositories(supabase()),
+    repos: createRepositories(db),
     provider,
+    authAdmin: createAuthAdmin(db),
     verify: verifySupabaseJwt,
     logger,
   });

@@ -21,7 +21,6 @@ export const createPlatformsRepository = (db: Db): PlatformsRepository => ({
 const toPlatform = (row: PlatformRow): Platform => ({
   slug: row.slug,
   displayName: row.display_name,
-  iconClass: row.icon_class,
   sortOrder: row.sort_order,
 });
 

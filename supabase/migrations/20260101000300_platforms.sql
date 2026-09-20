@@ -1,9 +1,6 @@
--- Platforms a game can be played on.
---
--- This is reference data, not fixture data, so it belongs in a migration and
--- ships to every environment. It replaces the hardcoded `gamePlatforms` array
--- in the frontend and gives game_logs.platform_slug a real foreign key, which
--- closes the "platform is any string the client sends" hole.
+-- Platforms a game can be played on. Reference data, so it ships in a migration
+-- rather than the seed. Being a real table gives game_logs.platform_slug a
+-- foreign key instead of an arbitrary string.
 
 create table public.platforms (
     slug text primary key,

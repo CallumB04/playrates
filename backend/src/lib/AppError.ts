@@ -14,10 +14,9 @@ export type ErrorCode =
   | "not_configured";
 
 /**
- * Every error the API returns deliberately, with the status and machine-
- * readable code baked in. `expose` is what keeps internals in: a 5xx logs
- * fully server-side but returns a generic message, so Postgres constraint
- * names and stack traces never reach a client.
+ * Errors the API returns on purpose, with status and code baked in. `expose`
+ * keeps internals in — a 5xx logs in full but returns something generic, so
+ * constraint names and stack traces never reach a client.
  */
 export class AppError extends Error {
   readonly status: number;

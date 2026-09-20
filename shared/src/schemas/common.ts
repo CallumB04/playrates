@@ -1,22 +1,14 @@
 import { z } from "zod";
 
-/**
- * Query parameters arrive as strings, so everything numeric here coerces.
- * The upper bound on `limit` matters: without it a caller can ask for the
- * whole table, which is how the old API behaved by default.
- */
+/** Query params arrive as strings, so numeric fields coerce. The cap on
+ *  `limit` stops a caller pulling a whole table in one request. */
 export const PaginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(25),
 });
 
-/**
- * Boolean query parameter.
- *
- * Deliberately NOT z.coerce.boolean(): that runs Boolean(value), and every
- * non-empty string is truthy, so "false" would parse as true. Query strings
- * are the one place that matters most.
- */
+/** Not z.coerce.boolean() — that runs Boolean(value), and every non-empty
+ *  string is truthy, so "?flag=false" would parse as true. */
 export const BooleanQuerySchema = z
   .union([z.boolean(), z.enum(["true", "false", "1", "0"])])
   .transform((v) => v === true || v === "true" || v === "1");

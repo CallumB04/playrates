@@ -12,7 +12,7 @@ export interface ProfileRow {
   id: string;
   username: string;
   bio: string;
-  picture_url: string | null;
+  avatar_url: string | null;
   last_seen_at: string;
   created_at: string;
   updated_at: string;
@@ -21,7 +21,6 @@ export interface ProfileRow {
 export interface PlatformRow {
   slug: string;
   display_name: string;
-  icon_class: string;
   sort_order: number;
 }
 
@@ -35,10 +34,15 @@ export interface GameRow {
   release_date: string | null;
   is_adult: boolean;
   is_trending: boolean;
-  popularity: number | null;
-  hours_to_beat: number | null;
-  raw: unknown;
+  playtime_hours: number | null;
+  metacritic: number | null;
+  rawg_rating: number | null;
+  rawg_rating_count: number | null;
+  rawg_added_count: number | null;
+  /** PlayRates logs for this game, maintained by a trigger. */
+  log_count: number;
   synced_at: string | null;
+  description_synced_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +50,16 @@ export interface GameRow {
 export interface GamePlatformRow {
   game_id: number;
   platform_slug: string;
+}
+
+export interface GenreRow {
+  slug: string;
+  name: string;
+}
+
+export interface GameGenreRow {
+  game_id: number;
+  genre_slug: string;
 }
 
 export interface GameLogRow {

@@ -1,5 +1,9 @@
 import { AppError } from "../../../lib/AppError.js";
-import type { ExternalGame, GamesProvider } from "../GamesProvider.js";
+import type {
+  ExternalGame,
+  GamePage,
+  GamesProvider,
+} from "../GamesProvider.js";
 import { toExternalGame, type RawgGame } from "./rawg.mapper.js";
 
 const BASE_URL = "https://api.rawg.io/api";
@@ -13,6 +17,8 @@ const MAX_ATTEMPTS = 3;
 const MIN_INTERVAL_MS = 120;
 
 interface RawgListResponse {
+  count?: number;
+  next?: string | null;
   results?: RawgGame[];
 }
 
@@ -20,7 +26,9 @@ export const createRawgProvider = (
   apiKey: string,
   fetchImpl: typeof fetch = fetch,
 ): GamesProvider => {
-  // a serialised, spaced queue; sufficient for a single process
+  // Requests are chained rather than run in parallel, with a minimum gap
+  // between them, so a burst of searches cannot trip RAWG's rate limit.
+  // Single-process only: a second instance would keep its own chain.
   let chain: Promise<unknown> = Promise.resolve();
   let lastCallAt = 0;
 
@@ -86,6 +94,26 @@ export const createRawgProvider = (
         search_precise: "true",
       });
       return (data.results ?? []).map(toExternalGame);
+    },
+
+    /**
+     * One page ordered by how many upstream users track a game. The listing
+     * endpoint returns forty games per request where detail returns one —
+     * 2,500 requests for 100k games instead of 100,000. The cost is the
+     * description, backfilled later only for games someone opens.
+     */
+    async listByPopularity(page, pageSize): Promise<GamePage> {
+      const data = await request<RawgListResponse>("/games", {
+        ordering: "-added",
+        page: String(page),
+        page_size: String(Math.min(pageSize, 40)),
+      });
+
+      return {
+        games: (data.results ?? []).map(toExternalGame),
+        total: data.count ?? 0,
+        hasNext: Boolean(data.next),
+      };
     },
 
     async getById(externalId): Promise<ExternalGame | null> {

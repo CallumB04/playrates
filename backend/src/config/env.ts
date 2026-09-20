@@ -1,17 +1,14 @@
 import { z } from "zod";
 
-/**
- * Parsed once at boot. A missing or malformed variable fails the process
- * immediately with a readable message, rather than surfacing as a confusing
- * runtime error on the first request that happens to need it.
- */
+/** Parsed once at boot so a bad variable kills the process with a readable
+ *  message, instead of surfacing as a weird error on the first request. */
 const EnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
   PORT: z.coerce.number().int().positive().default(3000),
 
-  /** Comma-separated allowlist. The old server used a wildcard CORS policy. */
+  /** Comma-separated list of origins allowed to call this API. */
   CORS_ORIGINS: z
     .string()
     .default("http://localhost:5173")

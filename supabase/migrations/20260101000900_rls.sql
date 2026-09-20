@@ -1,21 +1,12 @@
--- Row level security: enabled everywhere, with no policies. Deny by default.
+-- RLS on everywhere, no policies: deny by default.
 --
--- This is deliberate, and it is the single most important file in the schema.
+-- Supabase exposes PostgREST to anyone holding the anon key, and that key ships
+-- in the frontend bundle. Without this, every table is readable and writable
+-- from devtools.
 --
--- Every Supabase project exposes a public PostgREST endpoint that accepts the
--- anon key — a key that ships inside the frontend bundle and is public by
--- design. Without RLS, every table here would be readable and writable by
--- anyone who opened devtools. That would be a bigger hole than the one this
--- refactor is closing.
---
--- No policies are needed because nothing legitimately talks to these tables
--- with the anon key. All access goes through the Express API using the
--- service-role key, and service_role bypasses RLS. Authorization therefore
--- lives in one place — the backend service layer — where it is testable, and
--- is not duplicated into policies that would silently drift out of sync.
---
--- If the frontend ever needs to read a table directly, that is the moment to
--- add a policy for it. Not before.
+-- No policies needed — all access goes through the Express API on the
+-- service-role key, which bypasses RLS, and authorization lives in the service
+-- layer where it's testable. Add a policy if the frontend ever reads directly.
 
 alter table public.profiles enable row level security;
 alter table public.platforms enable row level security;

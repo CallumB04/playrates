@@ -30,8 +30,8 @@ describe("game logs", () => {
   });
 
   /**
-   * `id` used to BE the game id, because logs had no identity of their own.
-   * This pins the new meaning so the change cannot silently regress.
+   * `id` and `gameId` are both numbers and easy to confuse, so this pins
+   * which is which.
    */
   it("returns the log id in `id` and the game id in `gameId`", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
@@ -151,7 +151,7 @@ describe("game logs", () => {
       .delete("/api/v1/me/game-logs/1")
       .set("Authorization", authHeader(USER_A));
 
-    // the old routes sent JSON with a 204, which Node silently drops
+    // a body sent with a 204 is silently dropped, so assert it is empty
     expect(response.status).toBe(204);
     expect(response.text).toBe("");
     expect(state.gameLogs).toHaveLength(0);

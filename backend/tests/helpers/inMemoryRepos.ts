@@ -1,8 +1,10 @@
 import type { Repositories } from "../../src/repositories.js";
+import type { AuthAdmin } from "../../src/config/authAdmin.js";
 import type {
   FriendshipRow,
   GameLogRow,
   GameRow,
+  GenreRow,
   PlatformRow,
   ProfileRow,
   ReviewRow,
@@ -14,10 +16,7 @@ import type {
   FriendProfileRow,
 } from "../../src/modules/friends/friends.repository.js";
 import { orderPair } from "../../src/modules/friends/friends.repository.js";
-import {
-  ratingKey,
-  type ReviewRowJoined,
-} from "../../src/modules/reviews/reviews.repository.js";
+import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.repository.js";
 
 /**
  * Behaviour-equivalent in-memory repositories.
@@ -35,6 +34,7 @@ export interface SeedData {
   reviews?: ReviewRow[];
   friendships?: FriendshipRow[];
   platforms?: PlatformRow[];
+  genres?: GenreRow[];
 }
 
 export interface InMemoryState {
@@ -45,13 +45,18 @@ export interface InMemoryState {
   reviews: ReviewRow[];
   friendships: FriendshipRow[];
   platforms: PlatformRow[];
+  genres: GenreRow[];
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
 
 export const createInMemoryRepos = (
   seed: SeedData = {},
-): { repos: Repositories; state: InMemoryState } => {
+): {
+  repos: Repositories;
+  state: InMemoryState;
+  authAdmin: AuthAdmin;
+} => {
   const state: InMemoryState = {
     profiles: [...(seed.profiles ?? [])],
     games: [...(seed.games ?? [])],
@@ -60,6 +65,7 @@ export const createInMemoryRepos = (
     reviews: [...(seed.reviews ?? [])],
     friendships: [...(seed.friendships ?? [])],
     platforms: [...(seed.platforms ?? [])],
+    genres: [...(seed.genres ?? [])],
   };
 
   let nextLogId = 1000;
@@ -81,7 +87,7 @@ export const createInMemoryRepos = (
   const asFriendProfile = (p: ProfileRow): FriendProfileRow => ({
     id: p.id,
     username: p.username,
-    picture_url: p.picture_url,
+    avatar_url: p.avatar_url,
     bio: p.bio,
     last_seen_at: p.last_seen_at,
   });
@@ -96,18 +102,20 @@ export const createInMemoryRepos = (
     };
   };
 
+  /* Mirrors the review_cards view: the review with its author and the
+     author's log of that game flattened onto one row. */
   const withAuthor = (r: ReviewRow): ReviewRowJoined => {
     const author = state.profiles.find((p) => p.id === r.user_id);
+    const log = state.gameLogs.find(
+      (l) => l.user_id === r.user_id && l.game_id === r.game_id,
+    );
     return {
       ...r,
-      author: author
-        ? {
-            id: author.id,
-            username: author.username,
-            picture_url: author.picture_url,
-            last_seen_at: author.last_seen_at,
-          }
-        : null,
+      rating: log?.rating ?? null,
+      platform_slug: log?.platform_slug ?? null,
+      author_username: author?.username ?? null,
+      author_avatar_url: author?.avatar_url ?? null,
+      author_last_seen_at: author?.last_seen_at ?? null,
     };
   };
 
@@ -195,7 +203,30 @@ export const createInMemoryRepos = (
           rows = rows.filter((g) => !logged.has(g.id));
         }
 
-        const sorted = [...rows].sort((a, b) => a.title.localeCompare(b.title));
+        if (query.releasedAfter) {
+          rows = rows.filter(
+            (g) => g.release_date !== null && g.release_date >= query.releasedAfter!,
+          );
+        }
+        if (query.releasedBefore) {
+          rows = rows.filter(
+            (g) => g.release_date !== null && g.release_date <= query.releasedBefore!,
+          );
+        }
+
+        // Mirrors the SQL sort map, tiebreaker included.
+        const by = {
+          title: (a: GameRow, b: GameRow) => a.title.localeCompare(b.title),
+          released: (a: GameRow, b: GameRow) =>
+            (b.release_date ?? "").localeCompare(a.release_date ?? ""),
+          rating: (a: GameRow, b: GameRow) =>
+            (b.rawg_rating ?? 0) - (a.rawg_rating ?? 0),
+          popular: (a: GameRow, b: GameRow) =>
+            (b.rawg_added_count ?? 0) - (a.rawg_added_count ?? 0),
+          logged: (a: GameRow, b: GameRow) => b.log_count - a.log_count,
+        } as const;
+        const compare = by[query.sort ?? "popular"];
+        const sorted = [...rows].sort((a, b) => compare(a, b) || a.id - b.id);
         return {
           rows: sorted.slice(from, to + 1).map(withPlatforms),
           total: sorted.length,
@@ -210,10 +241,11 @@ export const createInMemoryRepos = (
       async upsertMany(games) {
         const ids: number[] = [];
         for (const external of games) {
-          let existing = state.games.find(
+          const found = state.games.find(
             (g) => g.rawg_id === external.externalId,
           );
-          if (!existing) {
+          let existing: GameRow;
+          if (!found) {
             existing = {
               id: nextGameId++,
               rawg_id: external.externalId,
@@ -224,15 +256,20 @@ export const createInMemoryRepos = (
               release_date: external.releaseDate,
               is_adult: external.isAdult,
               is_trending: false,
-              popularity: external.popularity,
-              hours_to_beat: external.hoursToBeat,
-              raw: external.raw,
+              playtime_hours: external.playtimeHours,
+              metacritic: external.metacritic,
+              rawg_rating: external.rawgRating,
+              rawg_rating_count: external.rawgRatingCount,
+              rawg_added_count: external.rawgAddedCount,
+              log_count: 0,
               synced_at: now(),
+              description_synced_at: external.description ? now() : null,
               created_at: now(),
               updated_at: now(),
             };
             state.games.push(existing);
           } else {
+            existing = found;
             Object.assign(existing, {
               title: external.title,
               description: external.description,
@@ -242,7 +279,7 @@ export const createInMemoryRepos = (
           }
 
           state.gamePlatforms = state.gamePlatforms.filter(
-            (gp) => gp.game_id !== existing!.id,
+            (gp) => gp.game_id !== existing.id,
           );
           for (const slug of external.platformSlugs) {
             state.gamePlatforms.push({
@@ -253,6 +290,13 @@ export const createInMemoryRepos = (
           ids.push(existing.id);
         }
         return ids;
+      },
+      async setDescription(id, description) {
+        const game = state.games.find((g) => g.id === id);
+        if (game) {
+          game.description = description;
+          game.description_synced_at = now();
+        }
       },
       async statusCounts(gameId) {
         const counts: Record<string, number> = {
@@ -270,11 +314,17 @@ export const createInMemoryRepos = (
         const ratings = state.gameLogs
           .filter((l) => l.game_id === gameId && l.rating !== null)
           .map((l) => Number(l.rating));
-        if (ratings.length === 0) return { average: null, count: 0 };
+        const buckets = new Array<number>(20).fill(0);
+        for (const rating of ratings) {
+          const index = Math.min(19, Math.floor(rating * 2));
+          buckets[index] = (buckets[index] ?? 0) + 1;
+        }
+        if (ratings.length === 0) return { average: null, count: 0, buckets };
         const sum = ratings.reduce((a, b) => a + b, 0);
         return {
           average: Math.round((sum / ratings.length) * 100) / 100,
           count: ratings.length,
+          buckets,
         };
       },
       async count() {
@@ -339,14 +389,77 @@ export const createInMemoryRepos = (
       async count() {
         return state.gameLogs.length;
       },
+      async summariesByUser(userId) {
+        return state.gameLogs
+          .filter((l) => l.user_id === userId)
+          .map((l) => ({
+            game_id: l.game_id,
+            status: l.status,
+            played_status: l.played_status,
+            rating: l.rating,
+          }));
+      },
+      async statsByUser(userId, year) {
+        const rows = state.gameLogs.filter(
+          (l) =>
+            l.user_id === userId &&
+            (year === undefined ||
+              new Date(l.updated_at).getUTCFullYear() === year),
+        );
+
+        const byStatus: Record<string, number> = {
+          played: 0,
+          playing: 0,
+          backlog: 0,
+          wishlist: 0,
+        };
+        let hoursPlayed = 0;
+        let ratingSum = 0;
+        let ratingCount = 0;
+
+        for (const row of rows) {
+          byStatus[row.status] = (byStatus[row.status] ?? 0) + 1;
+          if (row.hours_played !== null) hoursPlayed += Number(row.hours_played);
+          if (row.rating !== null) {
+            ratingSum += Number(row.rating);
+            ratingCount += 1;
+          }
+        }
+
+        return {
+          byStatus,
+          hoursPlayed: Math.round(hoursPlayed * 10) / 10,
+          averageRating:
+            ratingCount === 0
+              ? null
+              : Math.round((ratingSum / ratingCount) * 100) / 100,
+          ratingCount,
+        };
+      },
     },
 
     reviews: {
-      async listByGame(gameId, viewerId, from, to) {
-        const rows = state.reviews.filter(
-          (r) =>
-            r.game_id === gameId && (r.is_public || r.user_id === viewerId),
-        );
+      async listByGame(gameId, viewerId, from, to, sort) {
+        const rows = state.reviews
+          .filter(
+            (r) =>
+              r.game_id === gameId && (r.is_public || r.user_id === viewerId),
+          )
+          .sort((a, b) => {
+            if (sort === "rating-high" || sort === "rating-low") {
+              const ra = withAuthor(a).rating;
+              const rb = withAuthor(b).rating;
+              // Unrated last, whichever direction.
+              if (ra === null || rb === null) {
+                if (ra !== rb) return ra === null ? 1 : -1;
+              } else if (ra !== rb) {
+                return sort === "rating-high" ? rb - ra : ra - rb;
+              }
+              return a.id - b.id;
+            }
+            const delta = a.created_at.localeCompare(b.created_at);
+            return (sort === "oldest" ? delta : -delta) || a.id - b.id;
+          });
         return {
           rows: rows.slice(from, to + 1).map(withAuthor),
           total: rows.length,
@@ -388,24 +501,6 @@ export const createInMemoryRepos = (
       },
       async remove(id) {
         state.reviews = state.reviews.filter((r) => r.id !== id);
-      },
-      async ratingsFor(pairs) {
-        const map = new Map<
-          string,
-          { rating: number | null; platform: string | null }
-        >();
-        for (const { userId, gameId } of pairs) {
-          const log = state.gameLogs.find(
-            (l) => l.user_id === userId && l.game_id === gameId,
-          );
-          if (log) {
-            map.set(ratingKey(userId, gameId), {
-              rating: log.rating === null ? null : Number(log.rating),
-              platform: log.platform_slug,
-            });
-          }
-        }
-        return map;
       },
     },
 
@@ -458,7 +553,30 @@ export const createInMemoryRepos = (
         return [...state.platforms].sort((a, b) => a.sort_order - b.sort_order);
       },
     },
+
+    genres: {
+      async list() {
+        return [...state.genres].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        );
+      },
+    },
   };
 
-  return { repos, state };
+  /* Emulates what Postgres does on delete. Every FK pointing at profiles is
+     ON DELETE CASCADE, so removing the user takes their logs, reviews and
+     friendships with it — a fake that only dropped the profile would let a
+     broken cascade pass the tests. */
+  const authAdmin: AuthAdmin = {
+    async deleteUser(userId) {
+      state.profiles = state.profiles.filter((p) => p.id !== userId);
+      state.gameLogs = state.gameLogs.filter((l) => l.user_id !== userId);
+      state.reviews = state.reviews.filter((r) => r.user_id !== userId);
+      state.friendships = state.friendships.filter(
+        (f) => f.user_a_id !== userId && f.user_b_id !== userId,
+      );
+    },
+  };
+
+  return { repos, state, authAdmin };
 };

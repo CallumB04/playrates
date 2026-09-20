@@ -8,11 +8,13 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 import { makeRequireAuth, type Verifier } from "./middleware/requireAuth.js";
 import { buildRoutes } from "./routes.js";
 import type { Repositories } from "./repositories.js";
+import type { AuthAdmin } from "./config/authAdmin.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
 
 export interface AppDeps {
   repos: Repositories;
   provider: GamesProvider;
+  authAdmin: AuthAdmin;
   /** Injected so tests can authenticate without signing real JWTs. */
   verify: Verifier;
   logger?: Logger;
@@ -25,6 +27,7 @@ export interface AppDeps {
 export const buildApp = ({
   repos,
   provider,
+  authAdmin,
   verify,
   logger = createLogger(),
 }: AppDeps): Express => {
@@ -34,7 +37,7 @@ export const buildApp = ({
   app.use(helmet());
   app.use(
     cors({
-      // an explicit allowlist; the old server used a bare cors() wildcard
+      // explicit allowlist rather than a wildcard
       origin: env().CORS_ORIGINS,
       credentials: false,
     }),
@@ -51,6 +54,7 @@ export const buildApp = ({
     buildRoutes({
       repos,
       provider,
+      authAdmin,
       requireAuth: makeRequireAuth(verify),
       optionalAuth: makeRequireAuth(verify, { optional: true }),
     }),

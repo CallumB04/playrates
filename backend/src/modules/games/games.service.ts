@@ -21,7 +21,28 @@ export const createGamesService = (
   async getById(id: number): Promise<Game> {
     const row = await repo.findById(id);
     if (!row) throw AppError.notFound("Game");
+
+    /* The bulk import reads the listing endpoint, which has no descriptions,
+       so the first person to open a game pays for it once. Not awaited — the
+       page renders now and the description shows on the next load. */
+    if (!row.description_synced_at && row.rawg_id && provider.isConfigured) {
+      void this.backfillDescription(id, row.rawg_id);
+    }
+
     return toGame(row);
+  },
+
+  /** Fetches and stores one game's description. Failures are not fatal. */
+  async backfillDescription(id: number, rawgId: number): Promise<void> {
+    try {
+      const external = await provider.getById(rawgId);
+      if (external?.description) {
+        await repo.setDescription(id, external.description);
+      }
+    } catch {
+      // a missing description is not worth failing a page render over;
+      // the next view will try again
+    }
   },
 
   async list(query: GameQuery, callerId?: string): Promise<Paginated<Game>> {
@@ -54,15 +75,14 @@ export const createGamesService = (
       byStatus,
       averageRating: rating.average,
       ratingCount: rating.count,
+      ratingBuckets: rating.buckets,
     };
   },
 
   /**
-   * Cache-through search.
-   *
-   * The upstream results are written to our own table and then re-read, so
-   * the ids returned are always internal ones. Returning a RAWG id where the
-   * rest of the app expects a game id would be a subtle and nasty bug.
+   * Cache-through search: local first, then the provider, caching what returns.
+   * Upstream results are written and re-read so the ids handed back are always
+   * ours — nothing downstream should see a RAWG id.
    */
   async search(
     term: string,

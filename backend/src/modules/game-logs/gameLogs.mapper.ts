@@ -21,8 +21,7 @@ export interface GameLogWithGame extends GameLog {
 }
 
 export const toGameLog = (row: GameLogRow): GameLog => ({
-  // NOTE: `id` is the log's own id. In the old API this field held the game
-  // id, because logs had no identity of their own.
+  // the log's own id; the game it refers to is `gameId` below
   id: row.id,
   gameId: row.game_id,
   status: row.status as GameStatus,
@@ -58,11 +57,9 @@ export const toGameLogWithGame = (row: GameLogRowWithGame): GameLogWithGame => {
   };
 };
 
-/**
- * playedStatus only means anything for a played game, and the database has a
- * CHECK saying so. The existing frontend sends it regardless of status, so we
- * normalise here rather than rejecting an otherwise valid write.
- */
+/** playedStatus only means anything for a played game and there's a CHECK
+ *  saying so. The frontend sends it regardless, so normalise rather than
+ *  reject an otherwise valid write. */
 export const toGameLogRow = (
   input: Partial<GameLogInput>,
 ): Partial<GameLogRow> => {

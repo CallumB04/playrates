@@ -23,12 +23,13 @@ import {
   createPlatformsRepository,
   type PlatformsRepository,
 } from "./modules/platforms/platforms.js";
+import {
+  createGenresRepository,
+  type GenresRepository,
+} from "./modules/genres/genres.js";
 
-/**
- * Every repository in one bundle. Tests replace this whole object with
- * in-memory equivalents, which is what lets route tests exercise the real
- * middleware, validation and error handling with no database.
- */
+/** Every repository in one bundle. Tests swap the whole object for in-memory
+ *  equivalents and still exercise the real middleware and validation. */
 export interface Repositories {
   profiles: ProfilesRepository;
   games: GamesRepository;
@@ -36,6 +37,7 @@ export interface Repositories {
   reviews: ReviewsRepository;
   friends: FriendsRepository;
   platforms: PlatformsRepository;
+  genres: GenresRepository;
 }
 
 export const createRepositories = (db: Db): Repositories => ({
@@ -45,4 +47,5 @@ export const createRepositories = (db: Db): Repositories => ({
   reviews: createReviewsRepository(db),
   friends: createFriendsRepository(db),
   platforms: createPlatformsRepository(db),
+  genres: createGenresRepository(db),
 });

@@ -15,7 +15,7 @@ export const toProfile = (row: ProfileRow, now = Date.now()): Profile => ({
   id: row.id,
   username: row.username,
   bio: row.bio,
-  pictureUrl: row.picture_url,
+  avatarUrl: row.avatar_url,
   online: isOnline(row.last_seen_at, now),
   createdAt: row.created_at,
 });

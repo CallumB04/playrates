@@ -37,3 +37,8 @@ supabase/.temp
 supabase/.branches
 
 *.rest
+
+# Claude Design mockup exports. The source of truth is the design project;
+# these are working copies and are not kept in the repo.
+*.dc.html
+support.js

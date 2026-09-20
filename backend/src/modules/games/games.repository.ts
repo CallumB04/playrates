@@ -3,7 +3,10 @@ import type { Db } from "../../config/supabase.js";
 import type { ExternalGame } from "../../providers/games/GamesProvider.js";
 import type { GameRowWithPlatforms } from "./games.mapper.js";
 
-const SELECT_WITH_PLATFORMS = "*, game_platforms(platform_slug)";
+export const RATING_BUCKETS = 20;
+
+const SELECT_WITH_RELATIONS =
+  "*, game_platforms(platform_slug), game_genres(genre_slug)";
 
 export interface GameStatsRow {
   status: string;
@@ -24,7 +27,8 @@ export interface GamesRepository {
   statusCounts(gameId: number): Promise<Record<string, number>>;
   ratingSummary(
     gameId: number,
-  ): Promise<{ average: number | null; count: number }>;
+  ): Promise<{ average: number | null; count: number; buckets: number[] }>;
+  setDescription(id: number, description: string): Promise<void>;
   count(): Promise<number>;
 }
 
@@ -32,7 +36,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
   async findById(id) {
     const { data, error } = await db
       .from("games")
-      .select(SELECT_WITH_PLATFORMS)
+      .select(SELECT_WITH_RELATIONS)
       .eq("id", id)
       .maybeSingle();
     if (error) throw error;
@@ -42,7 +46,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
   async findByRawgId(rawgId) {
     const { data, error } = await db
       .from("games")
-      .select(SELECT_WITH_PLATFORMS)
+      .select(SELECT_WITH_RELATIONS)
       .eq("rawg_id", rawgId)
       .maybeSingle();
     if (error) throw error;
@@ -50,9 +54,22 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
   },
 
   async list(query, from, to, excludeLoggedForUser) {
+    /* Genre and platform filter through an aliased inner join rather than
+       collecting ids and passing them to .in(). PostgREST caps a response at
+       1000 rows, so the id list silently truncated — "indie" matched 34,300
+       games and returned 1000 of them. The alias matters too: filtering the
+       embed directly would strip a game's other genres from the response. */
+    const select = [SELECT_WITH_RELATIONS];
+    if (query.genre) {
+      select.push("genre_filter:game_genres!inner(genre_slug)");
+    }
+    if (query.platform) {
+      select.push("platform_filter:game_platforms!inner(platform_slug)");
+    }
+
     let builder = db
       .from("games")
-      .select(SELECT_WITH_PLATFORMS, { count: "exact" });
+      .select(select.join(", "), { count: "exact" });
 
     if (query.search) builder = builder.ilike("title", `%${query.search}%`);
     if (query.trending !== undefined) {
@@ -60,17 +77,12 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     }
     if (!query.includeAdult) builder = builder.eq("is_adult", false);
 
-    // filtering by platform needs the join table, so restrict by id
+    if (query.genre) {
+      builder = builder.eq("genre_filter.genre_slug", query.genre);
+    }
+
     if (query.platform) {
-      const { data: ids, error: idError } = await db
-        .from("game_platforms")
-        .select("game_id")
-        .eq("platform_slug", query.platform);
-      if (idError) throw idError;
-      builder = builder.in(
-        "id",
-        (ids ?? []).map((r) => (r as { game_id: number }).game_id),
-      );
+      builder = builder.eq("platform_filter.platform_slug", query.platform);
     }
 
     // "hide games I have already logged" — was a client-side filter over
@@ -89,37 +101,86 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       }
     }
 
-    const { data, error, count } = await builder.order("title").range(from, to);
+    if (query.releasedAfter) {
+      builder = builder.gte("release_date", query.releasedAfter);
+    }
+    if (query.releasedBefore) {
+      builder = builder.lte("release_date", query.releasedBefore);
+    }
+
+    /* Alphabetical is useless across the whole catalogue — page one is the
+       100 titles that happen to start with punctuation. Tracker count is the
+       closest thing to relevance we have, so it is the default. */
+    const desc = { ascending: false, nullsFirst: false } as const;
+    switch (query.sort) {
+      case "logged":
+        builder = builder.order("log_count", desc);
+        break;
+      case "title":
+        builder = builder.order("title");
+        break;
+      case "released":
+        builder = builder.order("release_date", desc);
+        break;
+      case "rating":
+        builder = builder.order("rawg_rating", desc);
+        break;
+      default:
+        builder = builder.order("rawg_added_count", desc);
+    }
+
+    /* The tiebreaker is not optional. Every sort key above collides — titles
+       repeat, and rawg_added_count is null for most of the catalogue — and
+       Postgres gives no stable order among equal rows. Without this, paging
+       184k rows shows some twice and skips others entirely. */
+    const { data, error, count } = await builder.order("id").range(from, to);
     if (error) throw error;
-    return { rows: (data ?? []) as GameRowWithPlatforms[], total: count ?? 0 };
+    // the select string is built at runtime, so supabase-js cannot infer it
+    return {
+      rows: (data ?? []) as unknown as GameRowWithPlatforms[],
+      total: count ?? 0,
+    };
   },
 
   async searchLocal(term, limit) {
     const { data, error } = await db
       .from("games")
-      .select(SELECT_WITH_PLATFORMS)
+      .select(SELECT_WITH_RELATIONS)
       .ilike("title", `%${term}%`)
-      .order("popularity", { ascending: false, nullsFirst: false })
+      .order("rawg_added_count", { ascending: false, nullsFirst: false })
       .limit(limit);
     if (error) throw error;
     return (data ?? []) as GameRowWithPlatforms[];
   },
 
+  /**
+   * Upserts a batch and replaces their platform and genre links.
+   *
+   * Only writes `description` when there is one — the bulk import reads from
+   * the listing endpoint, which doesn't return descriptions, and blanking a
+   * backfilled one would lose it.
+   */
   async upsertMany(games) {
     if (games.length === 0) return [];
+
+    const now = new Date().toISOString();
 
     const rows = games.map((g) => ({
       rawg_id: g.externalId,
       slug: g.slug,
       title: g.title,
-      description: g.description,
       cover_url: g.coverUrl,
       release_date: g.releaseDate,
       is_adult: g.isAdult,
-      popularity: g.popularity,
-      hours_to_beat: g.hoursToBeat,
-      raw: g.raw,
-      synced_at: new Date().toISOString(),
+      metacritic: g.metacritic,
+      rawg_rating: g.rawgRating,
+      rawg_rating_count: g.rawgRatingCount,
+      rawg_added_count: g.rawgAddedCount,
+      playtime_hours: g.playtimeHours,
+      synced_at: now,
+      ...(g.description
+        ? { description: g.description, description_synced_at: now }
+        : {}),
     }));
 
     const { data, error } = await db
@@ -130,18 +191,32 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
 
     const saved = (data ?? []) as { id: number; rawg_id: number }[];
     const idByRawgId = new Map(saved.map((r) => [r.rawg_id, r.id]));
-
-    // replace the platform links rather than accumulating duplicates
     const gameIds = saved.map((r) => r.id);
-    if (gameIds.length > 0) {
+    if (gameIds.length === 0) return [];
+
+    // any genre RAWG returns that we have not seen before
+    const genres = new Map<string, string>();
+    for (const g of games) {
+      for (const genre of g.genres) genres.set(genre.slug, genre.name);
+    }
+    if (genres.size > 0) {
+      const { error: genreError } = await db.from("genres").upsert(
+        [...genres].map(([slug, name]) => ({ slug, name })),
+        { onConflict: "slug", ignoreDuplicates: true },
+      );
+      if (genreError) throw genreError;
+    }
+
+    // replace the links rather than accumulating duplicates
+    for (const table of ["game_platforms", "game_genres"] as const) {
       const { error: deleteError } = await db
-        .from("game_platforms")
+        .from(table)
         .delete()
         .in("game_id", gameIds);
       if (deleteError) throw deleteError;
     }
 
-    const links = games.flatMap((g) => {
+    const platformLinks = games.flatMap((g) => {
       const gameId = idByRawgId.get(g.externalId);
       if (!gameId) return [];
       return g.platformSlugs.map((slug) => ({
@@ -150,54 +225,90 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       }));
     });
 
-    if (links.length > 0) {
+    const genreLinks = games.flatMap((g) => {
+      const gameId = idByRawgId.get(g.externalId);
+      if (!gameId) return [];
+      return g.genres.map((genre) => ({
+        game_id: gameId,
+        genre_slug: genre.slug,
+      }));
+    });
+
+    if (platformLinks.length > 0) {
       const { error: linkError } = await db
         .from("game_platforms")
-        .insert(links);
+        .insert(platformLinks);
+      if (linkError) throw linkError;
+    }
+
+    if (genreLinks.length > 0) {
+      const { error: linkError } = await db
+        .from("game_genres")
+        .insert(genreLinks);
       if (linkError) throw linkError;
     }
 
     return gameIds;
   },
 
+  /* Both of these aggregate in SQL. They used to pull every matching row and
+     reduce in JS, which PostgREST silently truncated at 1000 — so a popular
+     game reported a capped total and a capped distribution. */
   async statusCounts(gameId) {
     const { data, error } = await db
-      .from("game_logs")
-      .select("status")
-      .eq("game_id", gameId);
+      .rpc("game_status_counts", { p_game_id: gameId })
+      .single();
     if (error) throw error;
 
-    const counts: Record<string, number> = {
-      played: 0,
-      playing: 0,
-      backlog: 0,
-      wishlist: 0,
+    const row = data as {
+      played: number;
+      playing: number;
+      backlog: number;
+      wishlist: number;
     };
-    for (const row of (data ?? []) as { status: string }[]) {
-      counts[row.status] = (counts[row.status] ?? 0) + 1;
-    }
-    return counts;
+    return {
+      played: Number(row.played),
+      playing: Number(row.playing),
+      backlog: Number(row.backlog),
+      wishlist: Number(row.wishlist),
+    };
   },
 
   async ratingSummary(gameId) {
     const { data, error } = await db
-      .from("game_logs")
-      .select("rating")
-      .eq("game_id", gameId)
-      .not("rating", "is", null);
+      .rpc("game_rating_summary", { p_game_id: gameId })
+      .single();
     if (error) throw error;
 
-    const ratings = (data ?? [])
-      .map((r) => (r as { rating: number | null }).rating)
-      .filter((r): r is number => r !== null);
-
-    if (ratings.length === 0) return { average: null, count: 0 };
-
-    const sum = ratings.reduce((acc, r) => acc + Number(r), 0);
-    return {
-      average: Math.round((sum / ratings.length) * 100) / 100,
-      count: ratings.length,
+    const row = data as {
+      average: number | null;
+      total: number;
+      buckets: number[] | null;
     };
+
+    const count = Number(row.total);
+    // Postgres hands back an empty array when nothing is rated; the plate
+    // always wants twenty slots.
+    const buckets = (row.buckets ?? []).map(Number);
+    return {
+      average: count === 0 ? null : Number(row.average),
+      count,
+      buckets:
+        buckets.length === RATING_BUCKETS
+          ? buckets
+          : new Array<number>(RATING_BUCKETS).fill(0),
+    };
+  },
+
+  async setDescription(id, description) {
+    const { error } = await db
+      .from("games")
+      .update({
+        description,
+        description_synced_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+    if (error) throw error;
   },
 
   async count() {

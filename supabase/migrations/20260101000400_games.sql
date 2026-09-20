@@ -1,9 +1,6 @@
--- The games catalogue.
---
--- Games are sourced from RAWG and cached here, so the app never depends on
--- RAWG being up to render a page. `rawg_id` is nullable and unique: a
--- hand-added game has no upstream id, and Postgres allows multiple NULLs in a
--- unique index, so `on conflict (rawg_id)` upserts still work.
+-- Games from RAWG, cached here so a page render never depends on RAWG being up.
+-- rawg_id is nullable and unique: hand-added games have no upstream id, and
+-- Postgres allows multiple NULLs in a unique index so upserts still work.
 
 create table public.games (
     id bigint generated always as identity primary key,
@@ -45,8 +42,8 @@ create trigger games_set_updated_at
     before update on public.games
     for each row execute function public.set_updated_at();
 
--- Replaces `games.platforms text[]`. A join table means we can filter the
--- library by platform in SQL instead of downloading the whole catalogue.
+-- A join table rather than an array column, so the library can filter by
+-- platform in SQL.
 create table public.game_platforms (
     game_id bigint not null references public.games (id) on delete cascade,
     platform_slug text not null references public.platforms (slug) on delete restrict,

@@ -2,6 +2,7 @@ import { Router, type RequestHandler } from "express";
 import {
   GameIdParamSchema,
   PaginationSchema,
+  ReviewQuerySchema,
   ReviewInputSchema,
   UsernameParamSchema,
 } from "@playrates/shared";
@@ -77,11 +78,15 @@ export const createGameReviewsRouter = ({
   router.get(
     "/",
     optionalAuth,
-    validate({ params: GameIdParamSchema, query: PaginationSchema }),
+    validate({ params: GameIdParamSchema, query: ReviewQuerySchema }),
     async (req, res) => {
       const { gameId } = req.valid!.params as { gameId: number };
-      const pagination = req.valid!.query as z.infer<typeof PaginationSchema>;
-      res.json(await service.listByGame(gameId, req.auth?.userId, pagination));
+      const { sort, ...pagination } = req.valid!.query as z.infer<
+        typeof ReviewQuerySchema
+      >;
+      res.json(
+        await service.listByGame(gameId, req.auth?.userId, pagination, sort),
+      );
     },
   );
 

@@ -2,6 +2,7 @@ import type {
   FriendshipRow,
   GameLogRow,
   GameRow,
+  GenreRow,
   PlatformRow,
   ProfileRow,
   ReviewRow,
@@ -17,7 +18,7 @@ export const buildProfile = (
   id: USER_A,
   username: "devuser",
   bio: "",
-  picture_url: null,
+  avatar_url: null,
   // recent, so `online` derives to true unless a test says otherwise
   last_seen_at: NOW,
   created_at: LONG_AGO,
@@ -35,10 +36,14 @@ export const buildGame = (overrides: Partial<GameRow> = {}): GameRow => ({
   release_date: "2015-05-18",
   is_adult: false,
   is_trending: true,
-  popularity: 100,
-  hours_to_beat: 51.5,
-  raw: null,
+  playtime_hours: 51.5,
+  metacritic: 92,
+  rawg_rating: 4.66,
+  rawg_rating_count: 6800,
+  rawg_added_count: 100,
+  log_count: 0,
   synced_at: NOW,
+  description_synced_at: NOW,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,
   ...overrides,
@@ -93,12 +98,17 @@ export const buildPlatform = (
 ): PlatformRow => ({
   slug: "steam",
   display_name: "Steam",
-  icon_class: "fab fa-steam",
   sort_order: 10,
   ...overrides,
 });
 
 /** Two users, one game, one platform — enough for most route tests. */
+export const buildGenre = (overrides: Partial<GenreRow> = {}): GenreRow => ({
+  slug: "action",
+  name: "Action",
+  ...overrides,
+});
+
 export const baseSeed = () => ({
   profiles: [
     buildProfile(),
@@ -107,4 +117,5 @@ export const baseSeed = () => ({
   games: [buildGame()],
   gamePlatforms: [{ game_id: 1, platform_slug: "steam" }],
   platforms: [buildPlatform()],
+  genres: [buildGenre(), buildGenre({ slug: "indie", name: "Indie" })],
 });

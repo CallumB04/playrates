@@ -1,21 +1,15 @@
--- User profiles.
+-- User profiles, keyed by auth.users.id. Supabase Auth owns identity and
+-- credentials; this owns everything PlayRates-specific.
 --
--- Keyed by auth.users.id rather than carrying an id of its own. Supabase Auth
--- owns identity and credentials; this table owns everything PlayRates-specific.
---
--- Deliberately absent:
---   password  -- Supabase Auth owns it. It was previously stored in plaintext
---               and served to anyone who asked.
---   email     -- lives in auth.users. Duplicating it creates a sync problem and
---               an account-enumeration surface.
+-- No password (Auth owns it) and no email (lives in auth.users — copying it
+-- here would mean keeping two copies in sync and would leak who has an account).
 
 create table public.profiles (
     id uuid primary key references auth.users (id) on delete cascade,
     username extensions.citext not null,
     bio text not null default '',
     picture_url text,
-    -- replaces the old `online boolean`, which was hardcoded test data. The API
-    -- derives `online` from this, so the frontend field is unchanged.
+    -- the API derives an `online` flag from this rather than storing one
     last_seen_at timestamptz not null default now(),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),

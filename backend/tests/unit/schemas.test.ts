@@ -115,7 +115,7 @@ describe("profile input", () => {
   });
 
   it("allows clearing the picture", () => {
-    expect(() => UpdateProfileSchema.parse({ pictureUrl: null })).not.toThrow();
+    expect(() => UpdateProfileSchema.parse({ avatarUrl: null })).not.toThrow();
   });
 });
 

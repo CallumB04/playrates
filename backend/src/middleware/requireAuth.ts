@@ -4,14 +4,11 @@ import { env } from "../config/env.js";
 import { AppError } from "../lib/AppError.js";
 
 /**
- * Verifies the Supabase access token locally against the project's published
- * JWKS, rather than calling supabase.auth.getUser() on every request.
- *
- * The trade-off is deliberate: getUser() is a network round-trip per request
- * (30-100ms, and an availability dependency), while a signature check is
- * sub-millisecond. The cost is that a revoked session stays valid until it
- * expires. For a game tracker that is fine; anywhere it isn't, call getUser()
- * on that specific route.
+ * Verifies the access token locally against the project's JWKS instead of
+ * calling supabase.auth.getUser() per request — a signature check is
+ * sub-millisecond where getUser() is a 30-100ms round trip and an availability
+ * dependency. The cost is that a revoked session stays valid until it expires,
+ * which is fine here; call getUser() on any route where it isn't.
  */
 export type Verifier = (token: string) => Promise<JWTPayload>;
 

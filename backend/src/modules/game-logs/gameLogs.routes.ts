@@ -6,6 +6,7 @@ import {
   GameLogQuerySchema,
   PaginationSchema,
   UsernameParamSchema,
+  UserStatsQuerySchema,
 } from "@playrates/shared";
 import type { z } from "zod";
 import { validate } from "../../middleware/validate.js";
@@ -39,6 +40,11 @@ export const createMyGameLogsRouter = ({
       typeof ListQuerySchema
     >;
     res.json(await service.listForUser(callerId(req), status, pagination));
+  });
+
+  /* Before /:gameId, or "ids" is parsed as a game id. */
+  router.get("/ids", async (req, res) => {
+    res.json({ data: await service.listSummariesForUser(callerId(req)) });
   });
 
   router.get(
@@ -81,8 +87,7 @@ export const createMyGameLogsRouter = ({
     async (req, res) => {
       const { gameId } = req.valid!.params as { gameId: number };
       await service.deleteOwn(callerId(req), gameId);
-      // 204 carries no body. The old routes sent JSON with a 204, which
-      // Node silently discards.
+      // 204 carries no body; sending JSON with it is silently discarded
       res.status(204).end();
     },
   );
@@ -107,6 +112,24 @@ export const createUserGameLogsRouter = ({
         typeof ListQuerySchema
       >;
       res.json(await service.listForUsername(username, status, pagination));
+    },
+  );
+
+  return router;
+};
+
+/** Mounted at /users/:username/stats. */
+export const createUserStatsRouter = ({ service, optionalAuth }: Deps): Router => {
+  const router = Router({ mergeParams: true });
+
+  router.get(
+    "/",
+    optionalAuth,
+    validate({ params: UsernameParamSchema, query: UserStatsQuerySchema }),
+    async (req, res) => {
+      const { username } = req.valid!.params as { username: string };
+      const { year } = req.valid!.query as z.infer<typeof UserStatsQuerySchema>;
+      res.json(await service.statsForUsername(username, year));
     },
   );
 

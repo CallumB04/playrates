@@ -1,25 +1,18 @@
--- Guarantees every auth user has a profile row.
+-- Every auth user gets a profile row. A trigger rather than a backend call, so
+-- there's no window where an auth user exists without a profile.
 --
--- Doing this in a trigger rather than from the backend closes the window where
--- a signup succeeds but the follow-up profile request fails, leaving an
--- account with no profile that every downstream query then has to handle.
---
--- The username comes from the signUp() metadata. If it is missing, malformed,
--- or already taken, we fall back to a generated one rather than raising —
--- raising here would abort the auth signup transaction and surface to the
--- client as an opaque 500. The real, validated rename path is
--- PATCH /profiles/me, which returns a proper 409, and the signup form checks
--- availability up front so the fallback is rarely hit.
+-- Username comes from the signUp() metadata. Missing, malformed or taken falls
+-- back to a generated name instead of raising — raising would abort the signup
+-- transaction and reach the client as an opaque 500. PATCH /profiles/me is the
+-- validated rename path, and signup checks availability up front.
 
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
--- An explicit search_path is required for a security definer function, so a
--- caller cannot shadow the objects it references. It cannot be empty here:
--- citext lives in the extensions schema, and Postgres resolves the type, its
--- cast and its = operator through the search path. All three schemas listed
--- are trusted and not writable by application roles.
+-- Security definer functions need an explicit search_path so a caller can't
+-- shadow what they reference. It can't be empty: citext lives in extensions,
+-- and the type, its cast and its = operator all resolve through the path.
 set search_path = pg_catalog, public, extensions
 as $$
 declare

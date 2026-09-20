@@ -5,7 +5,8 @@ import { AppError } from "../../src/lib/AppError.js";
 
 const runHandler = (error: unknown) => {
   const json = vi.fn();
-  const status = vi.fn(() => ({ json }));
+  // Typed params, or the mock's call tuple is [] and calls[0][0] won't index.
+  const status = vi.fn((_code: number) => ({ json }));
   const req = {
     id: "req-1",
     path: "/test",
@@ -18,7 +19,12 @@ const runHandler = (error: unknown) => {
   return {
     status: status.mock.calls[0]?.[0],
     body: json.mock.calls[0]?.[0] as {
-      error: { code: string; message: string; details?: unknown };
+      error: {
+        code: string;
+        message: string;
+        details?: unknown;
+        requestId: string;
+      };
     },
   };
 };
