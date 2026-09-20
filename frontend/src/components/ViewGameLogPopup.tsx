@@ -47,15 +47,15 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
     return (
         <Modal
             onClose={closePopup}
-            className="flex w-[600px] flex-col gap-6 text-center"
+            className="flex w-full max-w-[600px] flex-col gap-5"
         >
             <div className="contents">
-                <h2 className="border-b border-b-subtle pb-3 text-xl text-content">
-                    View Log
+                <h2 className="border-b border-subtle pb-3 text-label text-content-muted">
+                    Your log
                 </h2>
 
                 <div className="relative flex w-full flex-col gap-4">
-                    <h3 className="max-w-[calc(100%-72px)] text-left text-2xl text-content sm:max-w-full">
+                    <h3 className="max-w-[calc(100%-72px)] text-left font-display text-2xl text-content sm:max-w-full">
                         {game?.title}
                         <span className="ml-2.5 text-xl font-light text-content-secondary">
                             {game?.releaseDate?.slice(0, 4)}
@@ -65,7 +65,7 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                     <div className="flex w-full">
                         <div className="absolute top-0 right-0 flex min-h-40 w-16 max-w-[30%] flex-col gap-2 sm:relative sm:w-max">
                             <img
-                                className="w-full rounded-md object-cover"
+                                className="w-full rounded-md object-cover shadow-e2"
                                 src={game?.coverUrl ?? ""}
                                 alt={game?.title ?? ""}
                             />
@@ -180,10 +180,7 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                 <div className="flex w-full flex-col justify-center gap-5 sm:flex-row">
                     {primaryAction && (
                         <button
-                            className={buttonClass(
-                                "secondary",
-                                "w-full sm:w-1/2"
-                            )}
+                            className={buttonClass("secondary", "w-full sm:flex-1")}
                             onClick={() => {
                                 closePopup();
                                 primaryAction.onSelect();
@@ -194,8 +191,8 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                     )}
                     <button
                         className={buttonClass(
-                            "outline",
-                            primaryAction ? "w-full sm:w-1/2" : "w-full"
+                            "ghost",
+                            primaryAction ? "w-full sm:flex-1" : "w-full"
                         )}
                         onClick={closePopup}
                     >
