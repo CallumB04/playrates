@@ -200,7 +200,7 @@ const LibraryPage = () => {
                 </div>
             ) : games.length === 0 ? (
                 <EmptyPlate
-                    eyebrow="Nothing on file"
+                    eyebrow="No matches"
                     title="No titles match those filters"
                     body="Try a broader search, or clear the platform and genre filters — the catalogue holds a hundred thousand games, so something in here fits."
                 />
@@ -244,7 +244,7 @@ const LibraryPage = () => {
                 </div>
             )}
 
-            <div className="flex flex-wrap items-center justify-between gap-4 border-t border-strong pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-t border-subtle pt-5">
                 <PaginationSummary pagination={pagination} />
                 <Pagination
                     pagination={pagination}

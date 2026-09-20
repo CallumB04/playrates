@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import LoadingSpinner from "./LoadingSpinner";
 import ProfilePicture from "./ProfilePicture";
@@ -9,9 +9,12 @@ import UserStatus from "./UserStatus";
    composed at runtime gets purged by Tailwind and the component renders
    unstyled with nothing else failing. */
 describe("LoadingSpinner sizes", () => {
+    /* It is an <svg> now, so className is an SVGAnimatedString rather than a
+       string — getAttribute is the only reading that works for both. */
     const sizeOf = (size: "sm" | "md" | "lg") =>
-        render(<LoadingSpinner size={size} />).container.firstElementChild!
-            .className;
+        render(<LoadingSpinner size={size} />).container.firstElementChild!.getAttribute(
+            "class"
+        )!;
 
     it("emits complete class names per size", () => {
         expect(sizeOf("sm")).toContain("size-4");
@@ -28,8 +31,19 @@ describe("LoadingSpinner sizes", () => {
         }
     });
 
-    it("keeps the brand colour on the spinning edge", () => {
-        expect(sizeOf("md")).toContain("border-t-brand");
+    it("takes its colour from the text colour it inherits", () => {
+        // currentColor, so a spinner inside a brand button is legible without
+        // the caller overriding anything.
+        const { container } = render(<LoadingSpinner size="md" />);
+        expect(container.querySelector("circle")).toHaveAttribute(
+            "stroke",
+            "currentColor"
+        );
+    });
+
+    it("announces itself as a status region", () => {
+        render(<LoadingSpinner size="md" />);
+        expect(screen.getByRole("status")).toHaveAccessibleName("Loading");
     });
 });
 

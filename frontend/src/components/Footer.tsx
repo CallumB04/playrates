@@ -4,7 +4,7 @@
  */
 const Footer = () => (
     <footer className="mx-auto w-full max-w-[1240px] px-5 pb-10 sm:px-8 lg:px-12">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-strong pt-5 text-label text-content-muted">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-subtle pt-5 text-label text-content-muted">
             <p>
                 Created by{" "}
                 <span className="text-content-secondary">Callum Burgoyne</span>

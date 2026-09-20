@@ -105,7 +105,7 @@ const Header = () => {
                         and rule, and a box here would read as a control. */}
                     <form
                         onSubmit={submitSearch}
-                        className="hidden items-center gap-2.5 border-b border-strong pb-1.5 xl:flex xl:w-60"
+                        className="lift hidden items-center gap-2.5 rounded-sm border border-subtle bg-surface-raised px-3 py-2 hover:border-strong focus-within:border-brand focus-within:shadow-glow xl:flex xl:w-64"
                     >
                         <Search
                             size={12}
@@ -120,7 +120,7 @@ const Header = () => {
                             placeholder="Search titles"
                             className="min-w-0 flex-1 bg-transparent text-body-sm text-content placeholder:text-content-muted focus:outline-none"
                         />
-                        <kbd className="border border-strong px-1.5 font-mono text-[10px] text-content-muted">
+                        <kbd className="rounded-xs border border-subtle px-1.5 font-mono text-[10px] text-content-muted">
                             /
                         </kbd>
                     </form>
@@ -160,7 +160,7 @@ const Header = () => {
             </div>
 
             {menuOpen && (
-                <nav className="flex flex-col border border-t-0 border-strong bg-surface-raised lg:hidden">
+                <nav className="flex flex-col rounded-b-lg border border-t-0 border-subtle bg-surface-raised shadow-plate lg:hidden">
                     {links.map((link) => (
                         <NavLink
                             key={link.to}

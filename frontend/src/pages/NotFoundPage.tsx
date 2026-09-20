@@ -19,20 +19,20 @@ const NotFoundPage = () => {
 
     return (
         <div className="flex flex-col gap-10">
-            <section className="flex flex-col items-start gap-6 border border-dashed border-strong bg-surface-sunken px-6 py-10 sm:flex-row sm:items-center sm:px-10">
+            <section className="flex flex-col items-start gap-6 rounded-lg border border-dashed border-strong bg-surface-sunken/60 px-6 py-12 sm:flex-row sm:items-center sm:px-10">
                 <span
                     aria-hidden
-                    className="stamp shrink-0 border-[1.5px] border-danger px-3 py-1.5 text-label text-danger"
+                    className="stamp shrink-0 rounded-sm border-[1.5px] border-danger px-3 py-1.5 text-label text-danger"
                 >
-                    Not on file
+                    404
                 </span>
                 <div>
                     <h1 className="font-display text-title text-content">
-                        That page isn’t in the drawer.
+                        This page has no save file.
                     </h1>
                     <p className="mt-2.5 max-w-[46ch] text-body text-content-secondary">
-                        The link may be old, or the card may have been withdrawn.
-                        The catalogue is still where you left it.
+                        The link may be old, or the page may have moved since it
+                        was shared. Everything else is where you left it.
                     </p>
                     <div className="mt-5 flex flex-wrap gap-3">
                         <Link to="/library" className={buttonClass("primary")}>
@@ -46,7 +46,7 @@ const NotFoundPage = () => {
             </section>
 
             <section>
-                <header className="mb-4 flex items-baseline gap-3 border-b border-strong pb-2.5">
+                <header className="mb-4 flex items-baseline gap-3 border-b border-subtle pb-2.5">
                     <h2 className="font-display text-section text-content">
                         Most logged
                     </h2>

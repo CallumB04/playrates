@@ -1,4 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
+import {
+    Bell,
+    Check,
+    Eye,
+    Plug,
+    SlidersHorizontal,
+    TriangleAlert,
+    UserRound,
+    type LucideIcon,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
@@ -43,7 +53,7 @@ const Row = ({ label, help, pending, children }: RowProps) => (
                     {label}
                 </span>
                 {pending && (
-                    <span className="border border-subtle px-1.5 font-mono text-[9px] uppercase tracking-[.14em] text-content-muted">
+                    <span className="rounded-full border border-subtle px-2 py-0.5 text-[10px] text-content-muted">
                         {PENDING}
                     </span>
                 )}
@@ -58,17 +68,26 @@ const Row = ({ label, help, pending, children }: RowProps) => (
     </div>
 );
 
+/**
+ * Six sections of near-identical rows need something to tell them apart at a
+ * glance — the icon is the fastest way back to the one you were looking for.
+ */
 const Section = ({
     title,
     note,
+    icon: Icon,
     children,
 }: {
     title: string;
     note: string;
+    icon: LucideIcon;
     children: ReactNode;
 }) => (
-    <section className="border border-strong bg-surface-raised shadow-lip">
-        <header className="flex flex-wrap items-baseline gap-3 border-b border-strong px-5 py-4">
+    <section className="overflow-hidden rounded-lg border border-subtle bg-surface-raised shadow-plate">
+        <header className="flex flex-wrap items-center gap-3 border-b border-subtle bg-surface-sunken/40 px-5 py-3.5">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-brand-subtle text-brand">
+                <Icon size={15} aria-hidden />
+            </span>
             <h2 className="font-display text-section text-content">{title}</h2>
             <span className="text-body-sm text-content-muted">{note}</span>
         </header>
@@ -141,7 +160,7 @@ const SettingsPage = () => {
                 </p>
             </header>
 
-            <Section title="Account" note="how you sign in">
+            <Section title="Account" note="how you sign in" icon={UserRound}>
                 <Row
                     label="Username"
                     help={`Your profile lives at /user/${username || "…"}`}
@@ -179,7 +198,7 @@ const SettingsPage = () => {
                 </Row>
             </Section>
 
-            <Section title="Profile" note="what other people see">
+            <Section title="Profile" note="what other people see" icon={Eye}>
                 <Row
                     label="Display bio"
                     help={`Shown under your name · ${bio.length} / 160`}
@@ -217,7 +236,7 @@ const SettingsPage = () => {
                 </Row>
             </Section>
 
-            <Section title="Content" note="what you see">
+            <Section title="Content" note="what you see" icon={SlidersHorizontal}>
                 <Row
                     label="Adult content"
                     help="Set per visit from the catalogue's own filter."
@@ -246,7 +265,7 @@ const SettingsPage = () => {
                 </Row>
             </Section>
 
-            <Section title="Notifications" note="none of this is wired yet">
+            <Section title="Notifications" note="none of this is wired yet" icon={Bell}>
                 <Row
                     label="Weekly digest"
                     help="There is no mail infrastructure behind this."
@@ -266,6 +285,7 @@ const SettingsPage = () => {
             <Section
                 title="Connected platforms"
                 note="no provider integrations yet"
+                icon={Plug}
             >
                 <Row
                     label="Steam"
@@ -278,8 +298,11 @@ const SettingsPage = () => {
                 </Row>
             </Section>
 
-            <section className="border border-danger bg-surface-raised shadow-lip">
-                <header className="flex flex-wrap items-baseline gap-3 border-b border-strong px-5 py-4">
+            <section className="overflow-hidden rounded-lg border border-danger/40 bg-surface-raised shadow-plate">
+                <header className="flex flex-wrap items-center gap-3 border-b border-danger/25 bg-danger-subtle px-5 py-3.5">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-danger/15 text-danger">
+                        <TriangleAlert size={15} aria-hidden />
+                    </span>
                     <h2 className="font-display text-section text-danger">
                         Closing your account
                     </h2>
@@ -322,14 +345,22 @@ const SettingsPage = () => {
                 />
             )}
 
-            <div className="flex flex-wrap items-center justify-end gap-3">
+            <div
+                className={cn(
+                    "sticky bottom-4 z-10 flex flex-wrap items-center justify-end gap-3 rounded-lg border px-4 py-3 transition-[opacity,transform] duration-200",
+                    dirty
+                        ? "border-brand/30 bg-surface-raised/90 shadow-lifted backdrop-blur-md"
+                        : "border-transparent"
+                )}
+            >
                 <span
                     className={cn(
-                        "mr-auto text-label",
-                        dirty ? "text-content-muted" : "text-success"
+                        "mr-auto inline-flex items-center gap-1.5 text-label",
+                        dirty ? "text-content" : "text-success"
                     )}
                 >
-                    {dirty ? "Unsaved changes" : "✓ All changes saved"}
+                    {!dirty && <Check size={13} aria-hidden />}
+                    {dirty ? "Unsaved changes" : "All changes saved"}
                 </span>
                 <Button
                     variant="secondary"

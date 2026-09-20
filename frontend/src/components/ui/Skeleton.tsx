@@ -8,14 +8,14 @@ import { cn } from "../../lib/cn";
 export const Skeleton = ({ className }: { className?: string }) => (
     <span
         aria-hidden="true"
-        className={cn("block bg-surface-sunken", className)}
+        className={cn("block animate-pulse rounded-sm bg-surface-sunken", className)}
     />
 );
 
 /** The 3:4 cover well plus its platform / rating ledger line. */
 export const TileSkeleton = () => (
     <div aria-hidden="true">
-        <div className="aspect-3/4 bg-surface-sunken" />
+        <div className="aspect-3/4 animate-pulse rounded-md bg-surface-sunken" />
         <div className="mt-2 flex items-center gap-1.5">
             <Skeleton className="h-2 w-[34px]" />
             <span className="flex-1" />

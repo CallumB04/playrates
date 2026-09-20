@@ -88,7 +88,7 @@ const GamePage = () => {
     if (isError || !game) {
         return (
             <EmptyPlate
-                eyebrow="Not on file"
+                eyebrow="Not found"
                 title="That game isn't in the catalogue"
                 body="The link may be wrong, or the title may have been removed since it was shared."
             />
@@ -130,7 +130,7 @@ const GamePage = () => {
                         ) : (
                             /* Descriptions are backfilled on first view, so the
                                first visitor always lands on an empty one. */
-                            <p className="mt-3.5 max-w-[52ch] border border-dashed border-strong bg-surface-sunken px-4 py-3 text-body-sm text-content-muted">
+                            <p className="mt-3.5 max-w-[52ch] rounded-md border border-dashed border-strong bg-surface-sunken/60 px-4 py-3 text-body-sm text-content-muted">
                                 No description on file yet. Reload in a moment —
                                 we fetch it the first time someone opens a game.
                             </p>

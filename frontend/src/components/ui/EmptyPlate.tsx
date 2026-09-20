@@ -24,7 +24,7 @@ const EmptyPlate = ({
 }: EmptyPlateProps) => (
     <div
         className={cn(
-            "flex flex-col items-center gap-3 border border-dashed border-strong bg-surface-sunken px-6 py-10 text-center",
+            "flex flex-col items-center gap-3 rounded-lg border border-dashed border-strong bg-surface-sunken/60 px-6 py-12 text-center",
             className
         )}
     >
@@ -48,7 +48,7 @@ export const GhostTile = ({ className }: { className?: string }) => (
     <div
         aria-hidden="true"
         className={cn(
-            "aspect-3/4 border border-dashed border-strong bg-surface-sunken",
+            "aspect-3/4 rounded-md border border-dashed border-strong bg-surface-sunken/60",
             className
         )}
     />

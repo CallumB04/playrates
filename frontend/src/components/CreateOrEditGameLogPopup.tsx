@@ -9,7 +9,7 @@ import Button from "./ui/Button";
 import Chip from "./ui/Chip";
 import Toggle from "./ui/Toggle";
 import Field from "./ui/Field";
-import { Input, NumberInput } from "./ui/Input";
+import { Input, NumberInput, Textarea } from "./ui/Input";
 import RatingRule from "./ui/RatingRule";
 import GameCover from "./game/GameCover";
 import { StatusPlates, PlayedStatusPlates } from "./gamelog/StatusPlates";
@@ -170,7 +170,7 @@ const CreateOrEditGameLogPopup = ({
                     />
                 )}
 
-                <div className="border border-strong bg-surface px-5 py-4">
+                <div className="rounded-md border border-subtle bg-surface-sunken/50 px-5 py-4">
                     <RatingRule
                         value={draft.rating}
                         onChange={(value) => dispatch({ type: "rating", value })}
@@ -352,7 +352,7 @@ const CreateOrEditGameLogPopup = ({
                             </span>
                         </div>
                     </div>
-                    <textarea
+                    <Textarea
                         rows={3}
                         maxLength={5000}
                         aria-label="Review"
@@ -364,7 +364,7 @@ const CreateOrEditGameLogPopup = ({
                                 value: e.target.value,
                             })
                         }
-                        className="min-h-[74px] w-full resize-none border border-strong bg-surface-field px-3.5 py-3 text-sm leading-relaxed text-content placeholder:text-content-muted focus-visible:border-brand focus-visible:outline-none"
+                        className="min-h-[74px] leading-relaxed"
                         placeholder="What stayed with you?"
                     />
                 </div>
@@ -376,7 +376,7 @@ const CreateOrEditGameLogPopup = ({
                 )}
             </div>
 
-            <footer className="flex flex-wrap items-center gap-3 border-t border-strong bg-surface px-6 py-4">
+            <footer className="flex flex-wrap items-center gap-3 border-t border-subtle bg-surface-raised px-6 py-4">
                 {editing && gamelog && (
                     <button
                         type="button"

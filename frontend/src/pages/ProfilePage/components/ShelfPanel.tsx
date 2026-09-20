@@ -80,7 +80,7 @@ const ShelfPanel = ({
                 ) : logs.length === 0 ? (
                     <div className="flex flex-col gap-5">
                         <EmptyPlate
-                            eyebrow="Nothing on file"
+                            eyebrow="Nothing here yet"
                             title={empty.title}
                             body={isMyAccount ? empty.body : "Nothing here yet."}
                         />

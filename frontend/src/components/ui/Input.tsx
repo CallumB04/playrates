@@ -52,16 +52,15 @@ export const Select = forwardRef<
     <span className="relative block">
         <select
             ref={ref}
-            className={cn(
-                "min-h-11 w-full appearance-none border border-strong bg-surface py-2.5 pl-3 pr-9 text-body-sm text-content",
-                "focus-visible:border-brand focus-visible:outline-none",
-                "disabled:border-subtle disabled:text-content-muted",
-                className
+            /* Shares the field base rather than restating it — this had
+               drifted into its own border, background and radius. */
+            className={fieldClass(
+                cn("cursor-pointer appearance-none pr-9", className)
             )}
             {...props}
         />
         <ChevronDown
-            size={13}
+            size={14}
             aria-hidden
             className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-content-muted"
         />

@@ -38,7 +38,7 @@ const Notification = () => {
             aria-live="polite"
             className={cn(
                 "fixed right-1/2 bottom-8 z-50 flex h-max w-max translate-x-1/2 animate-notification items-center gap-3",
-                "border border-strong border-l-[3px] bg-surface-raised px-4 py-3 shadow-toast",
+                "rounded-lg border border-subtle border-l-[3px] bg-surface-raised px-4 py-3 shadow-modal",
                 "sm:right-8 sm:translate-x-0",
                 tone
             )}

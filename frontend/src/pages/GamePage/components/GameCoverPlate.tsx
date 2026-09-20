@@ -110,7 +110,7 @@ const GameCoverPlate = ({
             {facts.length > 0 && (
                 <div className="border-t border-subtle pt-3.5">
                     <h2 className="mb-1.5 text-label text-content-muted">
-                        Ledger
+                        Details
                     </h2>
                     <LedgerList>
                         {facts.map((fact, i) => (

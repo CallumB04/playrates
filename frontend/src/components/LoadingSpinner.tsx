@@ -1,7 +1,8 @@
+import { cn } from "../lib/cn";
+
 /**
  * Complete class strings, never composed from a number — Tailwind only emits
- * what it finds literally in the source. Don't name a utility class in a
- * comment here either; the scanner reads those too.
+ * what it finds literally in the source.
  *
  * "sm" is deliberately not responsive.
  */
@@ -15,12 +16,49 @@ export type SpinnerSize = keyof typeof SPINNER_SIZE;
 
 interface LoadingSpinnerProps {
     size: SpinnerSize;
+    className?: string;
 }
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size }) => (
-    <div
-        className={`${SPINNER_SIZE[size]} animate-spin rounded-full border-2 border-content border-t-brand`}
-    ></div>
+/**
+ * An arc with rounded caps, drawn rather than bordered.
+ *
+ * The old version was a square-capped ring made from a 2px border with one
+ * side coloured — a hard edge spinning against soft surfaces, and the one
+ * component that belonged to no vocabulary at all. This tapers instead: the
+ * stroke fades along its length so the leading end is bright and the tail
+ * falls away, which reads as motion even in a still frame.
+ */
+const LoadingSpinner = ({ size, className }: LoadingSpinnerProps) => (
+    <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        role="status"
+        aria-label="Loading"
+        className={cn("animate-spin", SPINNER_SIZE[size], className)}
+    >
+        <defs>
+            {/* Unique per render would be ideal, but two spinners on one page
+                sharing a gradient is harmless — they are identical. */}
+            <linearGradient id="spinner-taper" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="currentColor" stopOpacity="0" />
+                <stop offset="100%" stopColor="currentColor" stopOpacity="1" />
+            </linearGradient>
+        </defs>
+        <circle
+            cx="12"
+            cy="12"
+            r="9"
+            stroke="currentColor"
+            strokeOpacity="0.12"
+            strokeWidth="2.5"
+        />
+        <path
+            d="M21 12a9 9 0 0 0-9-9"
+            stroke="url(#spinner-taper)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+        />
+    </svg>
 );
 
 export default LoadingSpinner;

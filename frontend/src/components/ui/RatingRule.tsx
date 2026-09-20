@@ -114,7 +114,7 @@ const RatingRule = ({
                     onPointerMove={handlePointerMove}
                     onKeyDown={handleKeyDown}
                     className={cn(
-                        "relative h-11 touch-none overflow-hidden border border-strong bg-surface-sunken sm:h-[22px]",
+                        "relative h-11 touch-none overflow-hidden rounded-sm border border-subtle bg-surface-sunken sm:h-[26px]",
                         "focus-visible:border-brand focus-visible:outline-none",
                         disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
                     )}

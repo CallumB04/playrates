@@ -28,13 +28,13 @@ const Progress = ({ value, label, className }: ProgressProps) => {
             aria-valuemax={determinate ? 100 : undefined}
             aria-valuenow={determinate ? percent : undefined}
             className={cn(
-                "h-2.5 overflow-hidden bg-surface-sunken",
+                "h-2 overflow-hidden rounded-full bg-surface-sunken",
                 className
             )}
         >
             {determinate ? (
                 <span
-                    className="block h-full bg-brand transition-[width] duration-300"
+                    className="block h-full rounded-full bg-brand transition-[width] duration-300"
                     style={{ width: `${percent}%` }}
                 />
             ) : (

@@ -48,7 +48,7 @@ const ReaderNotes = ({
             <TextSkeleton lines={4} />
         ) : reviews.length === 0 ? (
             <EmptyPlate
-                eyebrow="Nothing on file"
+                eyebrow="No notes yet"
                 title="No notes yet"
                 body="Log this game and leave a note — someone deciding whether to start it will read it."
             />
