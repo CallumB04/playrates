@@ -303,13 +303,16 @@ const SettingsPage = () => {
                     /* Always backed, never transparent — a bar that pins
                        itself over the rows below has to be opaque enough to
                        read against them. */
-                    "sticky bottom-4 z-10 flex flex-wrap items-center justify-end gap-3 rounded-lg border bg-surface-raised/85 px-4 py-3 shadow-plate backdrop-blur-md transition-colors duration-200",
+                    "sticky bottom-4 z-10 flex items-center justify-end gap-2 whitespace-nowrap rounded-lg border bg-surface-raised/85 px-3 py-2.5 shadow-plate backdrop-blur-md transition-colors duration-200 sm:gap-3 sm:px-4 sm:py-3",
                     dirty ? "border-brand/30 shadow-lifted" : "border-subtle"
                 )}
             >
                 <span
                     className={cn(
-                        "mr-auto inline-flex items-center gap-1.5 text-label",
+                        /* No room for status and two buttons at 375px. The
+                           brand border already says "unsaved", and the buttons
+                           enabling says it again. */
+                        "mr-auto hidden items-center gap-1.5 whitespace-nowrap text-label sm:inline-flex",
                         dirty ? "text-content" : "text-success"
                     )}
                 >

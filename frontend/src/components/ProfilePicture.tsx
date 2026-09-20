@@ -10,6 +10,8 @@ const AVATAR_VARIANT = {
     editProfile: "size-40 border-3",
     /** Reviewer avatar on the game page. */
     review: "size-16 border-2",
+    /** The header. Borrowing `review` here put a 64px avatar in the nav. */
+    nav: "size-9 border-2",
     /** Friend list in the profile sidebar. */
     friendRow: "size-10 border-2",
     /** Friend list inside the friends popup. */

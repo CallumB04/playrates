@@ -130,7 +130,7 @@ const Header = () => {
                     {user ? (
                         <Link to={`/user/${user.username}`} aria-label="Your profile">
                             <ProfilePicture
-                                variant="review"
+                                variant="nav"
                                 file={user.avatarUrl ?? ""}
                                 username={user.username}
                                 link={false}

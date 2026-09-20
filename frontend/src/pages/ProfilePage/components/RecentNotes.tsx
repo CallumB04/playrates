@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useQueries } from "@tanstack/react-query";
 import type { ReviewWithAuthor } from "@playrates/shared";
 import { fetchGameById, queryKeys } from "../../../api";
+import Panel from "../../../components/ui/Panel";
 import { formatRating, relativeTime } from "../../../lib/format";
 
 interface RecentNotesProps {
@@ -27,11 +28,7 @@ const RecentNotes = ({ reviews }: RecentNotesProps) => {
     });
 
     return (
-        <section>
-            <h2 className="mb-3 text-label text-content-muted">
-                Recent notes
-            </h2>
-
+        <Panel title="Recent notes">
             {shown.length === 0 ? (
                 <p className="text-body-sm text-content-muted">
                     No notes written yet.
@@ -40,7 +37,7 @@ const RecentNotes = ({ reviews }: RecentNotesProps) => {
                 shown.map((review, i) => (
                     <article
                         key={review.id}
-                        className="mb-3.5 border-b border-subtle pb-3.5"
+                        className="border-b border-subtle py-3 first:pt-0 last:border-b-0 last:pb-0"
                     >
                         <div className="flex flex-wrap items-baseline gap-2.5">
                             <Link
@@ -62,7 +59,7 @@ const RecentNotes = ({ reviews }: RecentNotesProps) => {
                     </article>
                 ))
             )}
-        </section>
+        </Panel>
     );
 };
 

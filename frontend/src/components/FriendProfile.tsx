@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { FriendUser } from "@playrates/shared";
 import ProfilePicture, { type AvatarVariant } from "./ProfilePicture";
+import PresenceDot from "./ui/PresenceDot";
 import { cn } from "../lib/cn";
 
 /**
@@ -50,14 +51,7 @@ const FriendProfile = ({
                     file={user.avatarUrl ?? ""}
                     link={false}
                 />
-                {/* One of only two round things in the system. */}
-                <span
-                    className={cn(
-                        "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-surface-raised",
-                        user.online ? "bg-success" : "bg-content-muted"
-                    )}
-                    title={user.online ? "Online" : "Offline"}
-                />
+                <PresenceDot online={user.online} />
             </span>
             <span className={cn("min-w-0 flex-1 truncate text-content", text)}>
                 {user.username}

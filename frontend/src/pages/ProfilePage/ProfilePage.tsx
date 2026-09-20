@@ -250,7 +250,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 }
             />
 
-            <div className="grid gap-8 border-t-[3px] border-double border-t-strong pt-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
                 <RecentNotes reviews={reviewsPage?.data ?? []} />
                 <FriendsLedger
                     friends={acceptedFriends}

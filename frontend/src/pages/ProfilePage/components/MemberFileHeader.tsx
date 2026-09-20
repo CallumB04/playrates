@@ -2,6 +2,7 @@ import type { Profile, UserStats } from "@playrates/shared";
 import type { ReactNode } from "react";
 import ProfilePicture from "../../../components/ProfilePicture";
 import LedgerRow from "../../../components/ui/LedgerRow";
+import PresenceDot from "../../../components/ui/PresenceDot";
 import { formatCount, formatHours, formatMonthYear } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 
@@ -50,13 +51,7 @@ const MemberFileHeader = ({
                             username={profile.username}
                             link={false}
                         />
-                        <span
-                            className={cn(
-                                "absolute -bottom-1.5 -right-1.5 size-4 rounded-full border-[3px] border-surface-raised",
-                                profile.online ? "bg-success" : "bg-content-muted"
-                            )}
-                            title={profile.online ? "Online" : "Offline"}
-                        />
+                        <PresenceDot online={profile.online} size="lg" />
                     </span>
                 </div>
 

@@ -61,8 +61,7 @@ const GamePage = () => {
     );
 
     const facts = useMemo(
-        () =>
-            game ? buildGameFacts(game, platforms ?? [], genres ?? []) : [],
+        () => (game ? buildGameFacts(game, platforms ?? [], genres ?? []) : []),
         [game, platforms, genres]
     );
 
@@ -97,45 +96,46 @@ const GamePage = () => {
 
     return (
         <article className="flex flex-col gap-7">
-            <div className="grid items-start gap-10 lg:grid-cols-[300px_minmax(0,1fr)]">
-                <GameCoverPlate
-                    game={game}
-                    log={log}
-                    isSignedIn={!!user}
-                    facts={facts}
-                    onPrimary={() => (user ? setEditing(true) : openLogin())}
-                    onQuickLog={(status) => void quickLog(status)}
-                    isSaving={save.isPending}
-                />
+            <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-y-8">
+                <div className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
+                    <GameCoverPlate
+                        game={game}
+                        log={log}
+                        isSignedIn={!!user}
+                        facts={facts}
+                        onPrimary={() =>
+                            user ? setEditing(true) : openLogin()
+                        }
+                        onQuickLog={(status) => void quickLog(status)}
+                        isSaving={save.isPending}
+                    />
+                </div>
 
-                <div className="flex min-w-0 flex-col gap-6">
-                    <header>
-                        <p className="flex items-center gap-2.5 text-label text-accent">
-                            <span
-                                aria-hidden
-                                className="h-px w-6 bg-accent"
-                            />
-                            {game.releaseDate
-                                ? `Released ${formatDate(game.releaseDate)}`
-                                : "Release date unknown"}
+                <header className="order-first min-w-0 lg:order-none lg:col-start-2 lg:row-start-1">
+                    <p className="flex items-center gap-2.5 text-label text-accent">
+                        <span aria-hidden className="h-px w-6 bg-accent" />
+                        {game.releaseDate
+                            ? `Released ${formatDate(game.releaseDate)}`
+                            : "Release date unknown"}
+                    </p>
+                    <h1 className="mt-3 font-display text-display text-content">
+                        {game.title}
+                    </h1>
+                </header>
+
+                <div className="flex min-w-0 flex-col gap-6 lg:col-start-2 lg:row-start-2">
+                    {game.description ? (
+                        <p className="max-w-[52ch] text-body text-content-secondary">
+                            {game.description}
                         </p>
-                        <h1 className="mt-3 font-display text-display text-content">
-                            {game.title}
-                        </h1>
-
-                        {game.description ? (
-                            <p className="mt-3.5 max-w-[52ch] text-body text-content-secondary">
-                                {game.description}
-                            </p>
-                        ) : (
-                            /* Descriptions are backfilled on first view, so the
-                               first visitor always lands on an empty one. */
-                            <p className="mt-3.5 max-w-[52ch] rounded-md border border-dashed border-strong bg-surface-sunken/60 px-4 py-3 text-body-sm text-content-muted">
-                                No description yet. Reload in a moment —
-                                we fetch it the first time someone opens a game.
-                            </p>
-                        )}
-                    </header>
+                    ) : (
+                        /* Descriptions are backfilled on first view, so the
+                           first visitor always lands on an empty one. */
+                        <p className="max-w-[52ch] rounded-md border border-dashed border-strong bg-surface-sunken/60 px-4 py-3 text-body-sm text-content-muted">
+                            No description yet. Reload in a moment — we fetch it
+                            the first time someone opens a game.
+                        </p>
+                    )}
 
                     {stats && (
                         <>

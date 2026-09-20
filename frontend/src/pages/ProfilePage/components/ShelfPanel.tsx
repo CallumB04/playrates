@@ -72,7 +72,7 @@ const ShelfPanel = ({
 
             <div className="rounded-b-lg rounded-tr-lg border border-t-0 border-subtle bg-surface-raised p-5 shadow-plate">
                 {isLoading ? (
-                    <div className="grid grid-cols-3 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
+                    <div className="grid grid-cols-2 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
                         {Array.from({ length: Math.min(perPage, 14) }, (_, i) => (
                             <TileSkeleton key={i} />
                         ))}
@@ -86,7 +86,7 @@ const ShelfPanel = ({
                         />
                         {isMyAccount && (
                             // The shelf shows you what it will look like.
-                            <div className="grid grid-cols-3 gap-3.5 sm:grid-cols-5 xl:grid-cols-7">
+                            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-5 xl:grid-cols-7">
                                 <GhostTile />
                                 <GhostTile />
                                 <GhostTile className="hidden sm:block" />
@@ -94,7 +94,7 @@ const ShelfPanel = ({
                         )}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-3 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
+                    <div className="grid grid-cols-2 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
                         {logs.map((log) => (
                             <GameTile
                                 key={log.id}

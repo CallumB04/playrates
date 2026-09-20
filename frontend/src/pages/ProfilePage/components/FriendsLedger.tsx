@@ -1,5 +1,6 @@
 import type { FriendEdge } from "@playrates/shared";
 import FriendProfile from "../../../components/FriendProfile";
+import Panel, { PanelCount } from "../../../components/ui/Panel";
 import { formatCount } from "../../../lib/format";
 
 interface FriendsLedgerProps {
@@ -9,28 +10,32 @@ interface FriendsLedgerProps {
 }
 
 const FriendsLedger = ({ friends, sharedCount }: FriendsLedgerProps) => (
-    <section>
-        <h2 className="mb-3 text-label text-content-muted">
-            Friends · {formatCount(friends.length)}
-            {sharedCount !== undefined &&
-                sharedCount > 0 &&
-                ` · ${formatCount(sharedCount)} shared`}
-        </h2>
-
+    <Panel
+        title={
+            sharedCount !== undefined && sharedCount > 0
+                ? `Friends · ${formatCount(sharedCount)} shared`
+                : "Friends"
+        }
+        trailing={<PanelCount value={formatCount(friends.length)} />}
+        bodyClassName="flex flex-col gap-0.5 p-2"
+    >
         {friends.length === 0 ? (
-            <p className="text-body-sm text-content-muted">No friends yet.</p>
+            <p className="px-2 py-1 text-body-sm text-content-muted">
+                No friends yet.
+            </p>
         ) : (
-            friends.slice(0, 8).map((edge) => (
-                <div key={edge.user.id} className="border-b border-subtle">
+            friends
+                .slice(0, 8)
+                .map((edge) => (
                     <FriendProfile
+                        key={edge.user.id}
                         user={edge.user}
                         density="compact"
                         trailing={edge.user.online ? "Online" : "Offline"}
                     />
-                </div>
-            ))
+                ))
         )}
-    </section>
+    </Panel>
 );
 
 export default FriendsLedger;

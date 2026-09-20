@@ -6,14 +6,12 @@ import { useAccountForm } from "../contexts/AccountFormContext";
 import FriendProfile from "../components/FriendProfile";
 import Button from "../components/ui/Button";
 import EmptyPlate from "../components/ui/EmptyPlate";
+import Panel, { PanelCount } from "../components/ui/Panel";
 import { TextSkeleton } from "../components/ui/Skeleton";
 import { cn } from "../lib/cn";
 import { formatCount, relativeTime } from "../lib/format";
 
-/**
- * A card with a header strip, rather than a heading over a run of underlined
- * rows. `accent` is for the one section that wants something from you.
- */
+/** The shared panel, plus the two-column body a long friend list wants. */
 const Section = ({
     title,
     count,
@@ -24,55 +22,20 @@ const Section = ({
     title: string;
     count: number;
     accent?: boolean;
-    /** Lets a long list use the width of the main column instead of
-     *  running down one side of it. */
     columns?: boolean;
     children: React.ReactNode;
 }) => (
-    <section
-        className={cn(
-            "overflow-hidden rounded-lg border bg-surface-raised shadow-plate",
-            accent ? "border-brand/30" : "border-subtle"
+    <Panel
+        title={title}
+        accent={accent}
+        trailing={<PanelCount value={formatCount(count)} accent={accent} />}
+        bodyClassName={cn(
+            "p-2",
+            columns ? "grid gap-0.5 sm:grid-cols-2" : "flex flex-col gap-0.5"
         )}
     >
-        <header
-            className={cn(
-                "flex items-baseline justify-between gap-3 border-b px-4 py-3",
-                accent
-                    ? "border-brand/20 bg-brand-subtle"
-                    : "border-subtle bg-surface-sunken/40"
-            )}
-        >
-            <h2
-                className={cn(
-                    "font-display text-section",
-                    accent ? "text-brand" : "text-content"
-                )}
-            >
-                {title}
-            </h2>
-            <span
-                className={cn(
-                    "rounded-full px-2 py-0.5 font-mono text-label-sm tabular-nums",
-                    accent
-                        ? "bg-brand/15 text-brand"
-                        : "bg-surface-sunken text-content-muted"
-                )}
-            >
-                {formatCount(count)}
-            </span>
-        </header>
-        <div
-            className={cn(
-                "p-2",
-                columns
-                    ? "grid gap-0.5 sm:grid-cols-2"
-                    : "flex flex-col gap-0.5"
-            )}
-        >
-            {children}
-        </div>
-    </section>
+        {children}
+    </Panel>
 );
 
 const RequestRow = ({ edge }: { edge: FriendEdge }) => {

@@ -53,7 +53,10 @@ const GameCoverPlate = ({
     return (
         <div className="flex flex-col gap-4">
             <div>
-                <div className="relative aspect-3/4 overflow-hidden rounded-lg bg-surface-media shadow-e3">
+                {/* Edge-to-edge on a phone, a 3:4 cover eats the whole first
+                    screen and pushes the title below the fold. It only spans
+                    the column once the column is a column. */}
+                <div className="relative mx-auto aspect-3/4 w-2/3 max-w-[240px] overflow-hidden rounded-lg bg-surface-media shadow-e3 sm:w-1/2 sm:max-w-[280px] lg:w-full lg:max-w-none">
                     <GameCover
                         coverUrl={game.coverUrl}
                         title={game.title}
