@@ -70,7 +70,7 @@ const ShelfPanel = ({
                 trailing={trailing}
             />
 
-            <div className="border border-t-0 border-strong bg-surface-raised p-5">
+            <div className="rounded-b-lg rounded-tr-lg border border-t-0 border-subtle bg-surface-raised p-5 shadow-plate">
                 {isLoading ? (
                     <div className="grid grid-cols-3 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
                         {Array.from({ length: Math.min(perPage, 14) }, (_, i) => (

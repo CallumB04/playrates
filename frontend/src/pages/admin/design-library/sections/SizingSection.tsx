@@ -75,8 +75,8 @@ const SizingSection = () => (
         </Group>
 
         <Group
-            title="Radii — square by default"
-            blurb="Only two curved things exist: the mastered pill and the presence dot. Everything else is square, which is what makes the pill mean something. The rest of the radius namespace is cleared rather than redefined, so a stray rounded-lg resolves to nothing."
+            title="Radii — soft by default"
+            blurb="Soft by default. Controls and chips take the small step, cards and covers the medium one, panels and modals the large. Pills are for things that read as tokens — chips, badges, avatars."
         >
             <div className="flex flex-wrap gap-5">
                 {RADII.map((radius) => (

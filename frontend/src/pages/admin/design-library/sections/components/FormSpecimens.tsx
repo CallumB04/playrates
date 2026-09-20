@@ -33,7 +33,7 @@ const FormSpecimens = () => {
         <>
             <Specimen
                 title="Fields"
-                notes="Recessed by default — a field is something you own, so it's pressed into the paper. Focus is a brand rule and nothing else: no glow, and the deboss survives. Error tints the well rather than adding an icon."
+                notes="A field sits level with the page and lights up when you are in it: the border warms to the brand and a soft bloom appears behind it. Error tints the field rather than adding an icon."
                 meta="Input · NumberInput · Textarea · SearchInput — all forwardRef"
             >
                 <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -61,7 +61,7 @@ const FormSpecimens = () => {
 
             <Specimen
                 title="Select and search"
-                notes="A select is the documented exception to the recess: it's raised, because it opens. Pressed-versus-raised has to keep meaning what it says."
+                notes="Same skin as a field. The chevron is what says it opens, rather than a different elevation."
                 meta="Select · SearchInput"
             >
                 <div className="grid w-full gap-4 sm:grid-cols-2">
@@ -115,7 +115,7 @@ const FormSpecimens = () => {
             <Specimen
                 title="Status plates"
                 stack
-                notes="Segmented, and pressed rather than tinted — the selected plate rises out of the deboss with a status-hue top edge. Selecting a status that cannot carry a substatus clears the substatus rather than dropping it silently at save."
+                notes="Segmented. The selected plate lifts and lights, with a status-hue top edge; the rest sit flat. Selecting a status that cannot carry a substatus clears the substatus rather than dropping it silently at save."
                 meta="StatusPlates · PlayedStatusPlates — aria-pressed per plate"
             >
                 <StatusPlates value={status} onChange={setStatus} />
@@ -130,7 +130,7 @@ const FormSpecimens = () => {
             <Specimen
                 title="Rating setter — 40 detents"
                 stack
-                notes="A tabular numeral is the display; a recessed 40-detent rule is the setter. Glanceable in a grid of forty, thumb-sized on touch, and never a row of quarter-filled stars. The detents are two repeating gradients rather than forty DOM nodes."
+                notes="A tabular numeral is the display; a 40-detent rule is the setter. Glanceable in a grid of forty, thumb-sized on touch, and never a row of quarter-filled stars. The detents are two repeating gradients rather than forty DOM nodes."
                 meta="role=slider · 0–10 in 0.25 steps · ← → ±0.25, PgUp/PgDn ±1, Home/End, Backspace clears"
             >
                 <RatingRule

@@ -66,7 +66,7 @@ const FeedbackSpecimens = () => (
         <Specimen
             title="Loading"
             stack
-            notes="Determinate is a filled well. Indeterminate is a sweep of ticks — the same rule vocabulary rather than a spinner, and it holds still under reduced motion rather than vanishing."
+            notes="Determinate is a filled track. Indeterminate is a sweep of ticks rather than a spinner, and it holds still under reduced motion rather than vanishing."
             meta="Progress value · label · LoadingSpinner size"
         >
             <div className="w-full max-w-md">
@@ -90,7 +90,7 @@ const FeedbackSpecimens = () => (
 
         <Specimen
             title="Skeletons"
-            notes="An empty drawer slot, not a shimmer — the well is pressed in and stays still. Aria-hidden throughout: the region that owns them carries the live status."
+            notes="A quiet placeholder, not a shimmer. Aria-hidden throughout: the region that owns them carries the live status."
             meta="Skeleton · TileSkeleton · TextSkeleton lines"
         >
             <div className="w-28">
@@ -105,7 +105,7 @@ const FeedbackSpecimens = () => (
         <Specimen
             title="Empty states"
             stack
-            notes="Two dashed cards beside one real one — the shelf shows you what it will look like. The charm comes from the writing and the drawer metaphor, not from an illustration."
+            notes="Two dashed slots beside one real cover — the shelf shows you what it will look like once it has something in it. The charm comes from the writing, not from an illustration."
             meta="EmptyPlate eyebrow · title · body · action · GhostTile"
         >
             <EmptyPlate

@@ -16,8 +16,8 @@ const SurfaceSpecimens = () => {
         <>
             <Specimen
                 title="Plates"
-                notes="The signature device. Anything you own is pressed into the paper; anything the system tells you sits on top of it. Pressed-versus-raised is how state reads before colour arrives, which is what makes the whole system survive greyscale."
-                meta='plateClass(state, depth, className) — state="pressed" | "raised" | "flat" · depth="shallow" | "deep"'
+                notes="The signature surface. Everything is a card lit from above — a soft ambient shadow, a tighter key shadow, and a 1px rim of light along the top edge. How far a thing has risen is how important it is, and that reads with the colour removed."
+                meta='plateClass(state, depth, className) — state="raised" | "flat" | "pressed" · depth="shallow" | "deep"'
             >
                 {(
                     [
@@ -38,8 +38,8 @@ const SurfaceSpecimens = () => {
             </Specimen>
 
             <Specimen
-                title="Card with ledger rows"
-                notes="A raised plate holding facts. The pairing of a title, a rule and a run of leader-dot rows is the page's basic unit."
+                title="Card with fact rows"
+                notes="A card holding facts. A title, a hairline and a run of label/figure rows is the page's basic unit."
                 meta="Card · CardHeader · cardClass"
             >
                 <Card className="w-full max-w-sm">
@@ -67,7 +67,7 @@ const SurfaceSpecimens = () => {
 
             <Specimen
                 title="Game cover"
-                notes="Box art is the only saturated thing on a page. The placeholder is a pressed well rather than a broken image — an empty src would re-request the document."
+                notes="Box art is the only saturated thing on a page, so it gets the depth and the chrome stays quiet. The placeholder is a filled well rather than a broken image — an empty src would re-request the document."
                 meta="coverUrl · title · className"
             >
                 <GameCover
@@ -79,7 +79,7 @@ const SurfaceSpecimens = () => {
 
             <Specimen
                 title="Modal"
-                notes="A double rule under the header, an ESC affordance, and the deepest cast shadow in the system. Escape and a backdrop mousedown both close; focus moves in and is restored on the way out."
+                notes="Lifts in on a spring, over a blurred scrim, with the deepest shadow in the system. Escape and a backdrop mousedown both close; focus moves in and is restored on the way out."
                 meta="onClose · labelledBy · showCloseButton · className"
             >
                 <Button onClick={() => setModalOpen(true)}>Open modal</Button>

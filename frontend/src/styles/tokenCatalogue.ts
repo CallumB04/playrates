@@ -80,7 +80,7 @@ export interface SemanticGroup {
 export const SEMANTIC_GROUPS: SemanticGroup[] = [
     {
         title: "Brand",
-        blurb: "Muted mulberry. On cold white the old violet read as light on glass; on oat paper this reads as pigment.",
+        blurb: "Iris. Luminous enough to read as light on a dark ground, and far enough from the hues box art uses that it never competes with the covers.",
         tokens: [
             {
                 name: "brand",
@@ -116,13 +116,13 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
                 name: "content-on-solid",
                 cssVar: "--content-on-solid",
                 description:
-                    "Ink on a brand fill. Flips with the brand — plum by day, lavender at night",
+                    "Ink on a brand fill. Dark on the luminous violet at night, white on the deeper one by day",
             },
         ],
     },
     {
         title: "Accent",
-        blurb: "Amber is a genuine secondary, not a warning. Against cream and plum it is analogous warmth, which frees red to mean only danger.",
+        blurb: "Ember is a genuine secondary, not a warning — which frees red to mean only danger. Used sparingly, for what should feel earned.",
         tokens: [
             {
                 name: "accent",
@@ -143,7 +143,7 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
     },
     {
         title: "Surface",
-        blurb: "Paper, roughly ordered by how far forward it sits. Raised is a plate on the page; sunken is a well pressed into it.",
+        blurb: "Ordered by how far forward a thing sits. Raised is a card lifted off the page; sunken recedes behind it.",
         tokens: [
             {
                 name: "surface",
@@ -153,12 +153,12 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
             {
                 name: "surface-raised",
                 cssVar: "--surface-raised",
-                description: "Plates, cards, the header",
+                description: "Cards, panels, the header",
             },
             {
                 name: "surface-sunken",
                 cssVar: "--surface-sunken",
-                description: "Wells, insets, fields, slider tracks",
+                description: "Recessed areas, fields, slider tracks",
             },
             {
                 name: "surface-hover",
@@ -204,7 +204,7 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
             {
                 name: "content-secondary",
                 cssVar: "--content-secondary",
-                description: "Supporting copy, ledger labels",
+                description: "Supporting copy, field labels",
             },
             {
                 name: "content-muted",
@@ -230,7 +230,7 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
     },
     {
         title: "Rule",
-        blurb: "One hairline and one strong rule is the whole vocabulary. A 3px double rule divides subjects; a hairline divides rows.",
+        blurb: "Translucent, so a rule sits on any surface without banding. Subtle divides rows, strong divides sections — most separation is done by elevation now.",
         tokens: [
             {
                 name: "border (default)",
@@ -261,7 +261,7 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
     },
     {
         title: "Status",
-        blurb: "Four hues for the top-level states. The played substatuses share the played hue and separate by shape, so the eight never collide.",
+        blurb: "Four hues for the top-level states. The played substatuses share the played hue and separate by their mark, so the eight never collide.",
         tokens: [
             {
                 name: "status-played",

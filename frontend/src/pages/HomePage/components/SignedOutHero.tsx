@@ -10,7 +10,7 @@ import { formatCount, formatRating, releaseYear } from "../../../lib/format";
 
 interface SignedOutHeroProps {
     siteStats: SiteStats | undefined;
-    /** The catalogue's most-tracked title, shown with its real figures. */
+    /** The most-logged title, shown with its real community figures. */
     feature: Game | undefined;
     featureStats: GameStats | undefined;
     onStart: () => void;
@@ -27,8 +27,8 @@ const SignedOutHero = ({
             <p className="flex items-center gap-2.5 text-label text-accent">
                 <span aria-hidden className="h-px w-6 bg-accent" />
                 {siteStats
-                    ? `${formatCount(siteStats.gameCount)} titles on file`
-                    : "An accession ledger for games"}
+                    ? `${formatCount(siteStats.gameCount)} games to choose from`
+                    : "A home for everything you play"}
             </p>
 
             <h1 className="mt-3.5 max-w-[16ch] font-display text-hero text-content">
@@ -55,7 +55,7 @@ const SignedOutHero = ({
 
             {/* Sized to content, not equal thirds — a six-figure catalogue
                 count is wider than a third of the column. */}
-            <dl className="mt-8 flex flex-wrap gap-x-10 gap-y-5 border-t border-strong pt-5">
+            <dl className="mt-8 flex flex-wrap gap-x-10 gap-y-5 border-t border-subtle pt-5">
                 {[
                     { label: "Members", value: siteStats?.userCount },
                     { label: "Games catalogued", value: siteStats?.gameCount },
@@ -78,17 +78,17 @@ const SignedOutHero = ({
             </dl>
         </div>
 
-        {/* A card from the drawer. Real figures for a real game rather than a
-            fabricated shelf — the labels are community ones, not personal. */}
-        <aside className="border border-strong bg-surface-sunken p-5">
-            <p className="mb-3.5 text-label text-content-muted">
-                A card from the drawer
+        {/* Real figures for a real game rather than an invented shelf — so the
+            labels are community ones, not personal. */}
+        <aside>
+            <p className="mb-3 text-label text-content-muted">
+                Most logged this week
             </p>
 
             {!feature ? (
                 <TextSkeleton lines={4} />
             ) : (
-                <div className="border border-strong bg-surface-raised p-4 shadow-lip">
+                <div className="rounded-lg border border-subtle bg-surface-raised p-5 shadow-plate">
                     <div className="flex gap-4">
                         <Link
                             to={`/game/${feature.id}`}
@@ -97,32 +97,29 @@ const SignedOutHero = ({
                             <GameCover
                                 coverUrl={feature.coverUrl}
                                 title={feature.title}
-                                className="aspect-3/4 w-full shadow-cover"
+                                className="aspect-3/4 w-full rounded-md shadow-e2"
                             />
                         </Link>
                         <div className="min-w-0">
-                            <p className="text-label-sm text-accent">
-                                Most logged
-                            </p>
                             <Link
                                 to={`/game/${feature.id}`}
-                                className="mt-1 block font-display text-xl leading-tight text-content hover:text-brand"
+                                className="block font-display text-xl leading-tight text-content hover:text-brand"
                             >
                                 {feature.title}
                             </Link>
-                            <p className="mt-2 font-mono text-figure-lg text-brand">
+                            <p className="mt-1.5 font-mono text-figure-lg text-brand">
                                 {formatRating(featureStats?.averageRating)}
+                            </p>
+                            <p className="mt-0.5 text-label-sm text-content-muted">
+                                {formatCount(featureStats?.ratingCount ?? 0)}{" "}
+                                {featureStats?.ratingCount === 1
+                                    ? "rating"
+                                    : "ratings"}
                             </p>
                         </div>
                     </div>
 
-                    <LedgerList className="mt-3.5">
-                        <LedgerRow
-                            label="PlayRates average"
-                            value={`${formatCount(
-                                featureStats?.ratingCount ?? 0
-                            )} ratings`}
-                        />
+                    <LedgerList className="mt-4">
                         <LedgerRow
                             label="Logs kept"
                             value={formatCount(featureStats?.logCount ?? 0)}

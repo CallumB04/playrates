@@ -64,7 +64,7 @@ const ReEntryPlate = ({
     onUpdateLog,
 }: ReEntryPlateProps) => (
     <div className="grid items-stretch gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <section className="flex flex-col gap-5 border border-strong bg-surface-raised p-6 shadow-lip sm:flex-row sm:items-center sm:gap-6">
+        <section className="flex flex-col gap-5 rounded-lg border border-subtle bg-surface-raised p-6 shadow-plate sm:flex-row sm:items-center sm:gap-6">
             {current?.game ? (
                 <Link
                     to={`/game/${current.gameId}`}
@@ -73,7 +73,7 @@ const ReEntryPlate = ({
                     <GameCover
                         coverUrl={current.game.coverUrl}
                         title={current.game.title}
-                        className="aspect-3/4 w-full shadow-cover"
+                        className="aspect-3/4 w-full rounded-md shadow-e2"
                     />
                     <StatusBadge
                         status="playing"
@@ -87,7 +87,7 @@ const ReEntryPlate = ({
             <div className="min-w-0 flex-1">
                 {current ? (
                     <p className="text-label text-status-playing">
-                        ▶ Still playing · last logged{" "}
+                        Still playing · last logged{" "}
                         {relativeTime(current.updatedAt)}
                     </p>
                 ) : (
@@ -118,7 +118,7 @@ const ReEntryPlate = ({
             </div>
         </section>
 
-        <section className="border border-strong bg-surface-raised p-5 shadow-lip">
+        <section className="rounded-lg border border-subtle bg-surface-raised p-5 shadow-plate">
             <h2 className="mb-3 text-label text-content-muted">
                 This year so far
             </h2>

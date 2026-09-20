@@ -22,7 +22,7 @@ const ReaderNotes = ({
     isLoading,
 }: ReaderNotesProps) => (
     <section>
-        <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-3 rule-double pb-2">
+        <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-3 border-b border-subtle pb-2.5">
             <h2 className="font-display text-section text-content">
                 Reader’s notes
             </h2>

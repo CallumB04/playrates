@@ -37,7 +37,7 @@ const DataSpecimens = () => (
         <Specimen
             title="Status badges"
             stack
-            notes="Four hues for the top-level states, four shapes for the substatuses — pill, square, cut corner, plain — plus the word, always. Mastered is a pill because nothing else in the system is round; retired is the only plain outline. Turn this page greyscale and every badge still reads."
+            notes="Four hues for the top-level states, a distinct mark for each of the eight, and the word, always. Shape used to carry this channel, back when everything else was square; with generous radii it stopped differentiating, so the mark carries it alone. Turn this page greyscale and every badge still reads."
             meta="status · size='stamp' | 'base' · onMedia · animateOnChange"
         >
             <div className="flex flex-wrap gap-2">
@@ -87,7 +87,7 @@ const DataSpecimens = () => (
         <Specimen
             title="Ledger rows"
             stack
-            notes="Label left, dotted rule, figure right. Beneath every plate, facts are set this way. The leader is decorative, so a screen reader reads 'Status, Mastered' rather than a run of dots."
+            notes="Label left, figure right, hairline between rows. The spacer is decorative, so a screen reader reads 'Status, Mastered' and nothing else."
             meta="LedgerList + LedgerRow — label · value · rule · size"
         >
             <LedgerList className="w-full max-w-sm">

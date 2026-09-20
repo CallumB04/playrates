@@ -38,11 +38,11 @@ const MemberFileHeader = ({
             <div className="flex justify-end text-label text-content-muted">
                 {/* Ids are uuids, so there is no member number to print —
                     the date is the part that was ever meaningful. */}
-                Opened {formatMonthYear(profile.createdAt)}
+                Member since {formatMonthYear(profile.createdAt)}
             </div>
 
-            <section className="grid items-start gap-6 border border-strong bg-surface-raised p-5 shadow-lip sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-7 sm:p-6">
-                <div className="border border-strong bg-surface-sunken p-2.5">
+            <section className="grid items-start gap-6 rounded-lg border border-subtle bg-surface-raised p-5 shadow-plate sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-7 sm:p-6">
+                <div>
                     <span className="relative block">
                         <ProfilePicture
                             variant="profileHeader"

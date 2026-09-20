@@ -9,9 +9,9 @@
    at these.
    =========================================================================== */
 :root {
-    /* Iris — periwinkle violet. Stays luminous on a dark ground where the
-       old mulberry went muddy; leans blue enough to sit under warm box art
-       without fighting it. */
+    /* Iris — periwinkle violet. Luminous on a dark ground, and far enough
+       from the hues box art reaches for that it never competes with a cover.
+       Chosen against real covers rather than as a swatch. */
     --iris-50: #f3f1ff;
     --iris-100: #e9e5ff;
     --iris-200: #d5ceff;

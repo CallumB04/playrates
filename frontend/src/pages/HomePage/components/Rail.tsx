@@ -39,7 +39,7 @@ const Rail = ({
 
     return (
         <section>
-            <header className="mb-4 flex items-baseline justify-between gap-4 border-b border-strong pb-2.5">
+            <header className="mb-4 flex items-baseline justify-between gap-4 border-b border-subtle pb-2.5">
                 <div className="flex items-baseline gap-3">
                     <h2 className="font-display text-section text-content">
                         {title}

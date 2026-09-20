@@ -1,12 +1,9 @@
 import { useState } from "react";
-import BrandSection from "./sections/BrandSection";
 import ColourSection from "./sections/ColourSection";
 import SizingSection from "./sections/SizingSection";
 import ComponentSection from "./sections/ComponentSection";
 
 const TABS = [
-    // Temporary: comes out once the Vellum brand hue is chosen and wired.
-    { id: "brand", label: "Brand review", Component: BrandSection },
     { id: "colour", label: "Colour", Component: ColourSection },
     { id: "sizing", label: "Sizing & type", Component: SizingSection },
     { id: "components", label: "Components", Component: ComponentSection },
@@ -20,7 +17,7 @@ type TabId = (typeof TABS)[number]["id"];
  * them is a token to fix, not a component to special-case.
  */
 const DesignLibraryPage = () => {
-    const [tab, setTab] = useState<TabId>("brand");
+    const [tab, setTab] = useState<TabId>("colour");
     const Active = TABS.find((t) => t.id === tab)!.Component;
 
     return (
