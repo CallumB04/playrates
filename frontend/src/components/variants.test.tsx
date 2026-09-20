@@ -67,7 +67,59 @@ describe("ProfilePicture variants", () => {
         expect(className).toContain("size-20");
         expect(className).toContain("sm:size-28");
         expect(className).toContain("lg:size-40");
-        expect(className).toContain("lg:border-3");
+    });
+
+    /* The initial has to grow with the box, or it sits as a speck in the
+       middle of a 160px disc. */
+    it("scales the generated initial with the avatar", () => {
+        const { container } = render(
+            <MemoryRouter>
+                <ProfilePicture
+                    variant="profileHeader"
+                    username="devuser"
+                    file=""
+                    link={false}
+                />
+            </MemoryRouter>
+        );
+        const initial = screen.getByText("D");
+        expect(initial.className).toContain("lg:text-6xl");
+        // the hue is derived, so the gradient must be inline
+        const wash = container.querySelector("[style*='linear-gradient']");
+        expect(wash).not.toBeNull();
+    });
+
+    it("gives two usernames different generated hues", () => {
+        const hueOf = (username: string) =>
+            render(
+                <MemoryRouter>
+                    <ProfilePicture
+                        variant="nav"
+                        username={username}
+                        file=""
+                        link={false}
+                    />
+                </MemoryRouter>
+            )
+                .container.querySelector("[style*='linear-gradient']")!
+                .getAttribute("style");
+
+        expect(hueOf("marlowe")).not.toBe(hueOf("tessellate"));
+    });
+
+    it("prefers an uploaded picture over the generated one", () => {
+        render(
+            <MemoryRouter>
+                <ProfilePicture
+                    variant="nav"
+                    username="devuser"
+                    file="https://example.test/a.png"
+                    link={false}
+                />
+            </MemoryRouter>
+        );
+        expect(screen.getByAltText(/devuser/i)).toBeInTheDocument();
+        expect(screen.queryByText("D")).toBeNull();
     });
 
     it("emits a single size for the fixed variants", () => {

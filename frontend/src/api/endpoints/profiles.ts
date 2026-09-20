@@ -29,6 +29,14 @@ export const updateMyProfile = async (
     return data;
 };
 
+/**
+ * Pushes last_seen_at forward. Nothing else writes it, so without this
+ * every account reads as offline five minutes after it signs up.
+ */
+export const sendHeartbeat = async (): Promise<void> => {
+    await api.post("/profiles/me/heartbeat");
+};
+
 /** Irreversible. Cascades to every log, review and friendship. */
 export const deleteMyAccount = async (): Promise<void> => {
     await api.delete("/profiles/me");

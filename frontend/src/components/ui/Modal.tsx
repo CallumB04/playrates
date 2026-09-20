@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import ClosePopupIcon from "../ClosePopupIcon";
+import { useOverlay } from "../../hooks/useOverlay";
 import { cn } from "../../lib/cn";
 
 interface ModalProps {
@@ -30,22 +31,7 @@ const Modal = ({
 }: ModalProps) => {
     const panelRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key === "Escape") onClose();
-        };
-        document.addEventListener("keydown", onKeyDown);
-        return () => document.removeEventListener("keydown", onKeyDown);
-    }, [onClose]);
-
-    // stop the page behind the popup scrolling
-    useEffect(() => {
-        const previous = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-        return () => {
-            document.body.style.overflow = previous;
-        };
-    }, []);
+    useOverlay(onClose);
 
     // move focus into the popup, and back out when it closes
     useEffect(() => {

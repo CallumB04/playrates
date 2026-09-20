@@ -9,7 +9,7 @@ import {
     type ReactNode,
 } from "react";
 import type { Profile } from "@playrates/shared";
-import { fetchMyProfile, queryKeys } from "../api";
+import { fetchMyProfile, queryKeys, sendHeartbeat } from "../api";
 import { supabase } from "../lib/supabase";
 import { useNotify } from "./NotificationContext";
 
@@ -55,6 +55,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             subscription.unsubscribe();
         };
     }, []);
+
+    /* The server marks you online for five minutes after the last beat, and
+       nothing else writes last_seen_at — so beat well inside that window. The
+       first one invalidates the profile caches, because any profile already
+       fetched this session still says offline. */
+    useEffect(() => {
+        if (!session) return;
+        let active = true;
+
+        const beat = (first = false) =>
+            sendHeartbeat()
+                .then(() => {
+                    if (first && active) {
+                        void queryClient.invalidateQueries({
+                            queryKey: ["profiles"],
+                        });
+                    }
+                })
+                .catch(() => {
+                    /* Presence is decoration; a failed beat is not worth a
+                       notification. */
+                });
+
+        void beat(true);
+        const id = setInterval(() => void beat(), 2 * 60_000);
+        return () => {
+            active = false;
+            clearInterval(id);
+        };
+    }, [session, queryClient]);
 
     const { data: user, isLoading: isProfileLoading } = useQuery<Profile>({
         queryKey: queryKeys.profiles.me,
