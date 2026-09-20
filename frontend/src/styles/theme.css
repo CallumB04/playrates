@@ -309,22 +309,22 @@
     /* Type scale. Zilla Slab displays, IBM Plex Sans sets prose, IBM Plex
        Mono carries every figure, label and stamp. One class per step; the
        family is chosen alongside it. */
-    --text-hero: 4.75rem; /* 76 */
+    --text-hero: clamp(2.5rem, 7.5vw, 4.75rem); /* 40 → 76 */
     --text-hero--line-height: 0.98;
     --text-hero--letter-spacing: -0.035em;
     --text-hero--font-weight: 620;
 
-    --text-display: 3.875rem; /* 62 */
+    --text-display: clamp(2.125rem, 6vw, 3.875rem); /* 34 → 62 */
     --text-display--line-height: 1;
     --text-display--letter-spacing: -0.03em;
     --text-display--font-weight: 620;
 
-    --text-title: 2.75rem; /* 44 */
+    --text-title: clamp(1.75rem, 4.5vw, 2.75rem); /* 28 → 44 */
     --text-title--line-height: 1;
     --text-title--letter-spacing: -0.025em;
     --text-title--font-weight: 600;
 
-    --text-section: 1.375rem; /* 22 */
+    --text-section: clamp(1.1875rem, 2.5vw, 1.375rem); /* 19 → 22 */
     --text-section--line-height: 1.15;
     --text-section--letter-spacing: -0.015em;
     --text-section--font-weight: 600;
@@ -337,12 +337,12 @@
     --text-body-sm--line-height: 1.5;
     --text-body-sm--font-weight: 500;
 
-    --text-figure: 3.375rem; /* 54 */
+    --text-figure: clamp(2rem, 5.5vw, 3.375rem); /* 32 → 54 */
     --text-figure--line-height: 0.95;
     --text-figure--letter-spacing: -0.04em;
     --text-figure--font-weight: 600;
 
-    --text-figure-lg: 1.5rem; /* 24 */
+    --text-figure-lg: clamp(1.25rem, 3vw, 1.5rem); /* 20 → 24 */
     --text-figure-lg--line-height: 1;
     --text-figure-lg--letter-spacing: -0.02em;
     --text-figure-lg--font-weight: 600;
@@ -614,6 +614,8 @@
 
     html {
         scroll-behavior: smooth;
+        /* A long title or a wide figure must never scroll the page. */
+        overflow-x: hidden;
     }
 
     body {

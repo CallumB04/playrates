@@ -43,7 +43,7 @@ const MemberFileHeader = ({
 
             <section className="grid items-start gap-6 rounded-lg border border-subtle bg-surface-raised p-5 shadow-plate sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-7 sm:p-6">
                 <div>
-                    <span className="relative block">
+                    <span className="relative inline-block">
                         <ProfilePicture
                             variant="profileHeader"
                             file={profile.avatarUrl ?? ""}

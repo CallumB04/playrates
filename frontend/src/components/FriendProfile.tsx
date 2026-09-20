@@ -43,7 +43,7 @@ const FriendProfile = ({
             )}
             onClick={closePopup}
         >
-            <span className="relative shrink-0">
+            <span className="relative inline-block shrink-0">
                 <ProfilePicture
                     variant={avatar}
                     username={user.username}
