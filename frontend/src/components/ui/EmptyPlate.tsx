@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "../../lib/cn";
 
 interface EmptyPlateProps {
-    /** A mono eyebrow, e.g. "NOTHING ON FILE". */
+    /** A small eyebrow above the title, e.g. "Nothing here yet". */
     eyebrow?: string;
     title: string;
     /** One instruction with an opinion in it. */

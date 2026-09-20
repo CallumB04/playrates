@@ -6,7 +6,7 @@ import { TextSkeleton } from "../../../components/ui/Skeleton";
 import { Select } from "../../../components/ui/Input";
 import { formatCount, formatRating, relativeTime } from "../../../lib/format";
 
-interface ReaderNotesProps {
+interface PlayerNotesProps {
     reviews: ReviewWithAuthor[];
     total: number;
     sort: ReviewSort;
@@ -14,17 +14,17 @@ interface ReaderNotesProps {
     isLoading: boolean;
 }
 
-const ReaderNotes = ({
+const PlayerNotes = ({
     reviews,
     total,
     sort,
     onSortChange,
     isLoading,
-}: ReaderNotesProps) => (
+}: PlayerNotesProps) => (
     <section>
         <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-3 border-b border-subtle pb-2.5">
             <h2 className="font-display text-section text-content">
-                Reader’s notes
+                Player notes
             </h2>
             <div className="flex items-center gap-4">
                 <span className="text-label text-content-muted">
@@ -48,7 +48,7 @@ const ReaderNotes = ({
             <TextSkeleton lines={4} />
         ) : reviews.length === 0 ? (
             <EmptyPlate
-                eyebrow="No notes yet"
+                eyebrow="Nothing here yet"
                 title="No notes yet"
                 body="Log this game and leave a note — someone deciding whether to start it will read it."
             />
@@ -89,4 +89,4 @@ const ReaderNotes = ({
     </section>
 );
 
-export default ReaderNotes;
+export default PlayerNotes;

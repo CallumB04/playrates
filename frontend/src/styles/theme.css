@@ -62,6 +62,11 @@
    =========================================================================== */
 :root,
 .light {
+    /* Native controls follow the theme too. Without this the date picker
+       panel, the select popup and the scrollbars all render light — the
+       select in particular looks correct until you open it. */
+    color-scheme: light;
+
     /* Brand — Iris. A step deeper by day so it holds contrast on paper. */
     --brand: var(--iris-600);
     --brand-deep: var(--iris-700);
@@ -161,6 +166,8 @@
    Night. The default, and the one the palette was built for.
    =========================================================================== */
 .dark {
+    color-scheme: dark;
+
     --brand: var(--iris-500);
     --brand-deep: var(--iris-600);
     --brand-hover: var(--iris-400);
@@ -541,10 +548,6 @@
 
 /* A section break. One hairline is enough now that surfaces carry depth —
    the old 3px double rule was doing the work that elevation does. */
-@utility rule-double {
-    border-bottom: 1px solid var(--border-subtle);
-}
-
 /* Fine diagonal tooth over box art, so a cover reads as printed stock. */
 @utility hatch {
     background-image: repeating-linear-gradient(

@@ -49,7 +49,7 @@ const DeleteAccountModal = ({
         >
             <h2
                 id="delete-account-title"
-                className="rule-double pb-3 font-display text-section text-danger"
+                className="border-b border-subtle pb-3 font-display text-section text-danger"
             >
                 Delete your account
             </h2>

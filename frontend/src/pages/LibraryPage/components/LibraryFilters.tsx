@@ -169,7 +169,7 @@ const LibraryFilters = ({
                 >
                     <h2
                         id="library-filters-title"
-                        className="rule-double pb-3 font-display text-section text-content"
+                        className="border-b border-subtle pb-3 font-display text-section text-content"
                     >
                         Filters
                     </h2>

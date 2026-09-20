@@ -89,7 +89,7 @@ const SurfaceSpecimens = () => {
                         labelledBy="demo-modal-title"
                         className="w-[440px]"
                     >
-                        <div className="flex items-baseline justify-between rule-double pb-3">
+                        <div className="flex items-baseline justify-between border-b border-subtle pb-3">
                             <h2
                                 id="demo-modal-title"
                                 className="font-display text-section text-content"

@@ -129,7 +129,7 @@ const CreateOrEditGameLogPopup = ({
             showCloseButton={false}
             className="w-full max-w-[880px] p-0! sm:p-0!"
         >
-            <header className="flex items-center gap-4 rule-double px-6 py-4">
+            <header className="flex items-center gap-4 border-b border-subtle px-6 py-4">
                 <GameCover
                     coverUrl={game?.coverUrl ?? null}
                     title={game?.title ?? ""}

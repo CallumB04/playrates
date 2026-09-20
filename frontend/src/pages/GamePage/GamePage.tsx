@@ -23,7 +23,7 @@ import { TextSkeleton } from "../../components/ui/Skeleton";
 import GameCoverPlate from "./components/GameCoverPlate";
 import RatingPlate from "./components/RatingPlate";
 import CirculationPlate from "./components/CirculationPlate";
-import ReaderNotes from "./components/ReaderNotes";
+import PlayerNotes from "./components/PlayerNotes";
 import { buildGameFacts } from "./lib/gameFacts";
 import { formatDate } from "../../lib/format";
 
@@ -131,7 +131,7 @@ const GamePage = () => {
                             /* Descriptions are backfilled on first view, so the
                                first visitor always lands on an empty one. */
                             <p className="mt-3.5 max-w-[52ch] rounded-md border border-dashed border-strong bg-surface-sunken/60 px-4 py-3 text-body-sm text-content-muted">
-                                No description on file yet. Reload in a moment —
+                                No description yet. Reload in a moment —
                                 we fetch it the first time someone opens a game.
                             </p>
                         )}
@@ -151,7 +151,7 @@ const GamePage = () => {
                         </>
                     )}
 
-                    <ReaderNotes
+                    <PlayerNotes
                         reviews={reviews?.data ?? []}
                         total={reviews?.meta.total ?? 0}
                         sort={sort}

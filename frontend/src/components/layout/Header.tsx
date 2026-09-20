@@ -78,7 +78,7 @@ const Header = () => {
 
     return (
         <header className="mx-auto w-full max-w-[1240px] px-5 pt-6 sm:px-8 lg:px-12">
-            <div className="flex items-center justify-between gap-6 rule-double pb-3.5">
+            <div className="flex items-center justify-between gap-6 border-b border-subtle pb-3.5">
                 <div className="flex items-baseline gap-8">
                     <Link
                         to="/"

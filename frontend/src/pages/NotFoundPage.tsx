@@ -7,8 +7,8 @@ import { primaryPlatformLabel } from "../lib/platforms";
 import { releaseYear } from "../lib/format";
 
 /**
- * A card withdrawn from the drawer, stamped NOT ON FILE — with the week's
- * most-tracked underneath, so the page is still worth landing on.
+ * A dead end that still earns the visit: the apology, then the week's
+ * most-logged underneath.
  */
 const NotFoundPage = () => {
     const { data: popular, isLoading } = useGames({

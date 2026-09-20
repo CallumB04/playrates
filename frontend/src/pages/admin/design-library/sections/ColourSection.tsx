@@ -71,7 +71,7 @@ const ColourSection = () => (
         </div>
 
         <section className="flex flex-col gap-6">
-            <h2 className="rule-double pb-2 text-label text-content-muted">
+            <h2 className="border-b border-subtle pb-2 text-label text-content-muted">
                 Ramps — raw, not exposed
             </h2>
             {RAMPS.map((ramp) => (
@@ -80,7 +80,7 @@ const ColourSection = () => (
         </section>
 
         <section className="flex flex-col gap-8">
-            <h2 className="rule-double pb-2 text-label text-content-muted">
+            <h2 className="border-b border-subtle pb-2 text-label text-content-muted">
                 Semantic — one set, two mappings
                 <span className="ml-3 normal-case tracking-normal text-content-muted">
                     light · dark
@@ -92,7 +92,7 @@ const ColourSection = () => (
         </section>
 
         <section className="flex flex-col gap-3">
-            <h2 className="rule-double pb-2 text-label text-content-muted">
+            <h2 className="border-b border-subtle pb-2 text-label text-content-muted">
                 Effects
             </h2>
             <EffectTable />

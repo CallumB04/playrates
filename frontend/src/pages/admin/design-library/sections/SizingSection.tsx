@@ -17,7 +17,7 @@ const Group = ({
     children: ReactNode;
 }) => (
     <section className="flex flex-col gap-4">
-        <header className="rule-double pb-2">
+        <header className="border-b border-subtle pb-2">
             <h3 className="text-label text-content-muted">
                 {title}
             </h3>

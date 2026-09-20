@@ -298,6 +298,42 @@ const SettingsPage = () => {
                 </Row>
             </Section>
 
+            <div
+                className={cn(
+                    /* Always backed, never transparent — a bar that pins
+                       itself over the rows below has to be opaque enough to
+                       read against them. */
+                    "sticky bottom-4 z-10 flex flex-wrap items-center justify-end gap-3 rounded-lg border bg-surface-raised/85 px-4 py-3 shadow-plate backdrop-blur-md transition-colors duration-200",
+                    dirty ? "border-brand/30 shadow-lifted" : "border-subtle"
+                )}
+            >
+                <span
+                    className={cn(
+                        "mr-auto inline-flex items-center gap-1.5 text-label",
+                        dirty ? "text-content" : "text-success"
+                    )}
+                >
+                    {!dirty && <Check size={13} aria-hidden />}
+                    {dirty ? "Unsaved changes" : "All changes saved"}
+                </span>
+                <Button
+                    variant="secondary"
+                    disabled={!dirty || update.isPending}
+                    onClick={() => {
+                        setUsername(user.username);
+                        setBio(user.bio ?? "");
+                    }}
+                >
+                    Discard
+                </Button>
+                <Button
+                    disabled={!dirty || update.isPending}
+                    onClick={() => void save()}
+                >
+                    Save changes
+                </Button>
+            </div>
+
             <section className="overflow-hidden rounded-lg border border-danger/40 bg-surface-raised shadow-plate">
                 <header className="flex flex-wrap items-center gap-3 border-b border-danger/25 bg-danger-subtle px-5 py-3.5">
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-danger/15 text-danger">
@@ -345,40 +381,6 @@ const SettingsPage = () => {
                 />
             )}
 
-            <div
-                className={cn(
-                    "sticky bottom-4 z-10 flex flex-wrap items-center justify-end gap-3 rounded-lg border px-4 py-3 transition-[opacity,transform] duration-200",
-                    dirty
-                        ? "border-brand/30 bg-surface-raised/90 shadow-lifted backdrop-blur-md"
-                        : "border-transparent"
-                )}
-            >
-                <span
-                    className={cn(
-                        "mr-auto inline-flex items-center gap-1.5 text-label",
-                        dirty ? "text-content" : "text-success"
-                    )}
-                >
-                    {!dirty && <Check size={13} aria-hidden />}
-                    {dirty ? "Unsaved changes" : "All changes saved"}
-                </span>
-                <Button
-                    variant="secondary"
-                    disabled={!dirty || update.isPending}
-                    onClick={() => {
-                        setUsername(user.username);
-                        setBio(user.bio ?? "");
-                    }}
-                >
-                    Discard
-                </Button>
-                <Button
-                    disabled={!dirty || update.isPending}
-                    onClick={() => void save()}
-                >
-                    Save changes
-                </Button>
-            </div>
         </div>
     );
 };

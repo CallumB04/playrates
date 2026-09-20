@@ -18,11 +18,15 @@ const Section = ({
     title,
     count,
     accent = false,
+    columns = false,
     children,
 }: {
     title: string;
     count: number;
     accent?: boolean;
+    /** Lets a long list use the width of the main column instead of
+     *  running down one side of it. */
+    columns?: boolean;
     children: React.ReactNode;
 }) => (
     <section
@@ -58,37 +62,49 @@ const Section = ({
                 {formatCount(count)}
             </span>
         </header>
-        <div className="flex flex-col gap-0.5 p-2">{children}</div>
+        <div
+            className={cn(
+                "p-2",
+                columns
+                    ? "grid gap-0.5 sm:grid-cols-2"
+                    : "flex flex-col gap-0.5"
+            )}
+        >
+            {children}
+        </div>
     </section>
 );
 
 const RequestRow = ({ edge }: { edge: FriendEdge }) => {
     const { accept, remove, isPending } = useFriendRelation(edge.user.id);
 
+    /* Two lines, not one. The aside is narrow enough that a name, a
+       timestamp and two buttons on one row truncate the only part that
+       identifies who is asking. */
     return (
-        <div className="flex flex-wrap items-center gap-2 rounded-sm px-1 py-1 sm:flex-nowrap sm:gap-3">
-            <div className="min-w-0 flex-1">
-                <FriendProfile user={edge.user} density="compact" />
-            </div>
-            <span className="hidden shrink-0 font-mono text-label-sm text-content-muted lg:block">
-                {relativeTime(edge.createdAt)}
-            </span>
-            <div className="flex shrink-0 gap-2 pl-2">
-                <Button
-                    size="sm"
-                    onClick={() => accept.mutate()}
-                    disabled={isPending}
-                >
-                    Accept
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => remove.mutate()}
-                    disabled={isPending}
-                >
-                    Decline
-                </Button>
+        <div className="flex flex-col gap-1 rounded-sm py-1">
+            <FriendProfile user={edge.user} density="compact" />
+            <div className="flex items-center justify-between gap-3 pl-2">
+                <span className="text-label-sm text-content-muted">
+                    {relativeTime(edge.createdAt)}
+                </span>
+                <div className="flex shrink-0 gap-2">
+                    <Button
+                        size="sm"
+                        onClick={() => accept.mutate()}
+                        disabled={isPending}
+                    >
+                        Accept
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => remove.mutate()}
+                        disabled={isPending}
+                    >
+                        Decline
+                    </Button>
+                </div>
             </div>
         </div>
     );
@@ -155,7 +171,11 @@ const FriendsPage = () => {
                         pending && "lg:grid-cols-[1fr_22rem]"
                     )}
                 >
-                    <Section title="Your friends" count={accepted.length}>
+                    <Section
+                        title="Your friends"
+                        count={accepted.length}
+                        columns={accepted.length > 3}
+                    >
                         {accepted.length === 0 ? (
                             <EmptyPlate
                                 eyebrow="Solo for now"
