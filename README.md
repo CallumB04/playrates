@@ -174,12 +174,13 @@ frontend/src/
   hooks/queries/        React Query wrappers per resource
   components/ui/        Modal, Pagination and other shared primitives
   pages/                one folder per route
-  styles/tokens.css     the design tokens (light and dark)
+  styles/theme.css      Tailwind entry point and the design tokens
 ```
 
 ## Design system
 
-Tokens live in `frontend/src/styles/tokens.css` in two layers:
+Tailwind v4, configured entirely in `frontend/src/styles/theme.css` — there is
+no `tailwind.config.js`. That file holds the tokens in two layers:
 
 - **Primitives** — raw colour ramps. Deliberately *not* exposed as Tailwind
   utilities, so a component cannot pin itself to one shade and break the other
@@ -198,7 +199,7 @@ there is no flash.
 shared component live, with a theme toggle — the fastest way to see the effect
 of a token change, and to check both themes at once. Swatches read their
 resolved value from the DOM, so the page cannot drift out of date with
-`tokens.css`.
+`theme.css`.
 
 > The admin area has no access control yet. It renders static demos and reads
 > no user data, but it should be gated behind an admin role before the app is
