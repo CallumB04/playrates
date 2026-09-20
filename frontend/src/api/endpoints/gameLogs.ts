@@ -3,13 +3,16 @@ import type {
     GameLog,
     GameLogInput,
     GameLogPatch,
+    GameLogSummary,
     Paginated,
+    UserStats,
 } from "@playrates/shared";
 import { api } from "../client";
+import { compactParams } from "./games";
 
 /**
- * List responses embed the game, which is what removes the old pattern of
- * every tile fetching its own game — a 27-tile profile made 27 requests.
+ * List responses embed the game, so a grid of tiles needs no follow-up
+ * request per tile.
  */
 export interface GameLogWithGame extends GameLog {
     game: Pick<
@@ -18,24 +21,54 @@ export interface GameLogWithGame extends GameLog {
     > | null;
 }
 
+export interface GameLogPage {
+    status?: string;
+    page?: number;
+    limit?: number;
+}
+
 export const fetchMyGameLogs = async (
-    status?: string
+    status?: string,
+    page?: GameLogPage
 ): Promise<Paginated<GameLogWithGame>> => {
     const { data } = await api.get<Paginated<GameLogWithGame>>(
         "/me/game-logs",
-        { params: { status, limit: 100 } }
+        { params: compactParams({ status, limit: 25, ...page }) }
     );
     return data;
 };
 
 export const fetchUserGameLogs = async (
     username: string,
-    status?: string
+    status?: string,
+    page?: GameLogPage
 ): Promise<Paginated<GameLogWithGame>> => {
     const { data } = await api.get<Paginated<GameLogWithGame>>(
         `/users/${username}/game-logs`,
-        { params: { status, limit: 100 } }
+        { params: compactParams({ status, limit: 25, ...page }) }
     );
+    return data;
+};
+
+/**
+ * Every game the caller has logged, unpaginated. The "have I logged this?"
+ * lookups on the library, game and profile pages were built from a 100-row
+ * page, so anyone past that saw their own games as unlogged.
+ */
+export const fetchMyGameLogIds = async (): Promise<GameLogSummary[]> => {
+    const { data } = await api.get<{ data: GameLogSummary[] }>(
+        "/me/game-logs/ids"
+    );
+    return data.data;
+};
+
+export const fetchUserStats = async (
+    username: string,
+    year?: number
+): Promise<UserStats> => {
+    const { data } = await api.get<UserStats>(`/users/${username}/stats`, {
+        params: compactParams({ year }),
+    });
     return data;
 };
 

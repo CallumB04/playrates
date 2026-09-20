@@ -21,9 +21,8 @@ interface AccountFormContextValue {
 const AccountFormContext = createContext<AccountFormContextValue | null>(null);
 
 /**
- * Owns the signup/login modal, so `openLoginForm`, `openSignupForm` and
- * `closeAccountForm` no longer have to be threaded through Navbar, HomePage,
- * ProfilePage and GamePage as props.
+ * Owns the signup/login modal. Anything that needs to open it reads this
+ * rather than being handed a callback.
  */
 export const AccountFormProvider = ({ children }: { children: ReactNode }) => {
     const [mode, setMode] = useState<AccountFormMode | null>(null);
@@ -33,7 +32,7 @@ export const AccountFormProvider = ({ children }: { children: ReactNode }) => {
     const openSignup = useCallback(() => setMode("signup"), []);
     const close = useCallback(() => setMode(null), []);
 
-    // close on navigation; the Navbar used to do this itself on every render
+    // navigating away should dismiss the modal
     useEffect(() => {
         setMode(null);
     }, [location.pathname]);

@@ -14,16 +14,13 @@ interface ModalProps {
 }
 
 /**
- * The shared popup shell. The same backdrop + stopPropagation + close-icon
- * pattern was repeated across eleven `<dialog>` elements in nine files.
- *
- * Deliberately NOT a native `<dialog>` with showModal(). The old markup used
- * `<dialog>` as a styled div and never opened it — it only rendered because
- * `.popup-backdrop` sets display:flex over the UA display:none. Calling
- * showModal() would bring in ::backdrop, the top layer and UA centring, all
- * of which would move pixels. This keeps the same DOM and adds the keyboard
- * and focus behaviour that was missing.
+ * Not a native `<dialog>` with showModal() — that brings in ::backdrop, the
+ * top layer and UA centring, all of which move pixels. This keeps the plain
+ * markup and adds the keyboard and focus handling by hand.
  */
+const PANEL =
+    "relative max-h-[90vh] overflow-y-auto border border-strong bg-surface-raised p-4 shadow-modal sm:p-6";
+
 const Modal = ({
     onClose,
     children,
@@ -58,14 +55,17 @@ const Modal = ({
     }, []);
 
     return createPortal(
-        <div className="popup-backdrop" onMouseDown={onClose}>
+        <div
+            className="fixed top-0 left-0 flex h-screen w-screen items-center justify-center bg-overlay-backdrop px-4"
+            onMouseDown={onClose}
+        >
             <div
                 ref={panelRef}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={labelledBy}
                 tabIndex={-1}
-                className={cn("popup popup-default", className)}
+                className={cn(PANEL, className)}
                 onMouseDown={(event) => event.stopPropagation()}
             >
                 {children}

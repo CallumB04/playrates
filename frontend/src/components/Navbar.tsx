@@ -1,3 +1,5 @@
+import { SearchInput } from "./ui/Input";
+import { ChevronDown, Search } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
@@ -8,7 +10,7 @@ import { buildNavItems, NAV_DIVIDER, type NavItem } from "./layout/navItems";
 import NavMenuItem from "./layout/NavMenuItem";
 
 const DESKTOP_ITEM_STYLES = `opacity-0 group-hover:opacity-100 transition duration-200
-                                        w-11/12 py-1 text-left hover:bg-surface-overlay-hover hover:cursor-pointer rounded
+                                        w-11/12 py-1 text-left hover:bg-surface-overlay-hover hover:cursor-pointer rounded-md
                                         flex gap-2 items-center pl-2`;
 
 const MOBILE_ITEM_STYLES = `w-11/12 py-2 text-left text-lg hover:bg-surface-overlay-hover hover:cursor-pointer
@@ -75,10 +77,10 @@ const Navbar = () => {
 
     return (
         <nav
-            className={`fixed left-0 top-0 z-50 h-navbar w-screen bg-surface-chrome px-6 xl:px-8 ${scrollY < 50 ? "lg:bg-transparent" : "lg:bg-surface-chrome"} flex items-center justify-center font-lexend transition-colors duration-300 md:justify-between`}
+            className={`fixed top-0 left-0 z-50 h-navbar w-screen bg-surface-chrome px-6 xl:px-8 ${scrollY < 50 ? "lg:bg-transparent" : "lg:bg-surface-chrome"} flex items-center justify-center font-display transition-colors duration-300 md:justify-between`}
         >
             <Link to="/" onClick={() => setMobileMenuOpen(false)}>
-                <h2 className="font-lexend text-3xl font-semibold tracking-wide text-content md:text-4xl">
+                <h2 className="font-display text-3xl font-semibold tracking-wide text-content md:text-4xl">
                     PlayRates
                 </h2>
             </Link>
@@ -98,38 +100,40 @@ const Navbar = () => {
 
             {/* Phone dropdown */}
             <div
-                className={`absolute right-0 top-navbar rounded-l-md bg-surface-overlay ${mobileMenuOpen ? "w-9/12" : "w-0"} delay-50 flex max-w-80 flex-col items-center gap-2 overflow-x-hidden overflow-y-scroll py-3 text-content transition-width duration-300 ease-in-out lg:hidden`}
+                className={`absolute top-navbar right-0 rounded-l-md bg-surface-overlay ${mobileMenuOpen ? "w-9/12" : "w-0"} transition-width flex max-w-80 flex-col items-center gap-2 overflow-x-hidden overflow-y-scroll py-3 text-content delay-50 duration-300 ease-in-out lg:hidden`}
             >
                 <span className="relative">
                     <input
                         type="text"
                         placeholder="Search for game..."
                         aria-label="Search for a game"
-                        className="h-12 w-[70vw] max-w-[300px] rounded bg-surface-field px-2 pr-9 focus:outline-none"
+                        className="h-12 w-[70vw] max-w-[300px] rounded-md bg-surface-field px-2 pr-9 focus:outline-none"
                     />
-                    <i
-                        className="fas fa-magnifying-glass absolute right-1 top-1/2 -translate-y-1/2 transform p-2 text-content-muted transition-colors hover:cursor-pointer hover:text-brand"
-                        aria-hidden="true"
-                    ></i>
+                    <Search
+                        size={20}
+                        className="absolute top-1/2 right-3 -translate-y-1/2 text-content-muted transition-colors hover:cursor-pointer hover:text-brand"
+                        aria-hidden
+                    />
                 </span>
                 {renderItems("mobile")}
             </div>
 
             {/* Desktop navbar */}
-            <div className="hidden h-full items-center gap-4 font-lexend font-normal text-content lg:flex">
+            <div className="hidden h-full items-center gap-4 font-display font-normal text-content lg:flex">
                 {user ? (
                     <span className="group relative">
-                        <span className="flex items-center gap-1 p-2 hover:cursor-pointer group-hover:mt-3 group-hover:pb-5">
+                        <span className="flex items-center gap-1 p-2 group-hover:mt-3 group-hover:pb-5 hover:cursor-pointer">
                             <p className="transition duration-75 group-hover:text-brand">
                                 My Account
                             </p>
-                            <i
-                                className="fa fa-chevron-down text-sm transition duration-75 group-hover:text-brand"
-                                aria-hidden="true"
-                            ></i>
+                            <ChevronDown
+                                size={16}
+                                className="transition duration-75 group-hover:text-brand"
+                                aria-hidden
+                            />
                         </span>
 
-                        <div className="delay-50 absolute top-[52px] mx-auto h-0 w-60 transition-height duration-[400ms] ease-in-out hover:block hover:cursor-default group-hover:top-navbar group-hover:block group-hover:h-[315px]">
+                        <div className="transition-height absolute top-[52px] mx-auto h-0 w-60 delay-50 duration-[400ms] ease-in-out group-hover:top-navbar group-hover:block group-hover:h-[315px] hover:block hover:cursor-default">
                             <div className="flex h-full w-full flex-col items-center gap-[2px] overflow-hidden rounded-b-md bg-surface-overlay font-normal">
                                 {renderItems("desktop")}
                             </div>
@@ -140,14 +144,14 @@ const Navbar = () => {
                         <button
                             type="button"
                             onClick={openLogin}
-                            className="hover-text-white block p-2"
+                            className="block cursor-pointer p-2 text-content transition-colors duration-200 hover:text-brand"
                         >
                             Log in
                         </button>
                         <button
                             type="button"
                             onClick={openSignup}
-                            className="hover-text-white block p-2"
+                            className="block cursor-pointer p-2 text-content transition-colors duration-200 hover:text-brand"
                         >
                             Sign up
                         </button>
@@ -155,20 +159,22 @@ const Navbar = () => {
                 )}
 
                 <Link to="/library">
-                    <p className="hover-text-white block p-2">Browse Games</p>
+                    <p className="block cursor-pointer p-2 text-content transition-colors duration-200 hover:text-brand">
+                        Browse Games
+                    </p>
                 </Link>
 
                 <span className="relative">
-                    <input
-                        type="text"
+                    <SearchInput
                         placeholder="Search for game..."
                         aria-label="Search for a game"
-                        className="search-bar block w-60 lg:w-72"
+                        className="block w-60 lg:w-72"
                     />
-                    <i
-                        className="fas fa-magnifying-glass absolute right-1 top-1/2 -translate-y-1/2 transform p-2 text-content-muted transition-colors hover:cursor-pointer hover:text-brand"
-                        aria-hidden="true"
-                    ></i>
+                    <Search
+                        size={20}
+                        className="absolute top-1/2 right-3 -translate-y-1/2 text-content-muted transition-colors hover:cursor-pointer hover:text-brand"
+                        aria-hidden
+                    />
                 </span>
             </div>
         </nav>

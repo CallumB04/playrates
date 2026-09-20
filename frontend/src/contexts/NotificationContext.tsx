@@ -33,12 +33,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         null
     );
 
-    /**
-     * The id doubles as a React key on the toast, so two notifications in
-     * quick succession remount the element and restart its CSS animation.
-     * The old code achieved this by setting active to false and scheduling a
-     * setTimeout(..., 0) to set it back.
-     */
+    /* The id doubles as the toast's React key, so a second notification
+       remounts the element and restarts the animation from the top. */
     const notify = useCallback((text: string, type: NotificationType) => {
         setNotification({ id: Date.now(), text, type });
     }, []);
@@ -71,8 +67,5 @@ export const useNotificationState = (): NotificationContextValue => {
     return context;
 };
 
-/**
- * What components actually want. Replaces `runNotification` being threaded
- * through three levels of props into every popup.
- */
+/** What most components want; the full state is only needed by the toast. */
 export const useNotify = () => useNotificationState().notify;

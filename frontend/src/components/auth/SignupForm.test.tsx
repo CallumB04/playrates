@@ -65,11 +65,7 @@ describe("SignupForm", () => {
         expect(onSignedUp).toHaveBeenCalledWith("new@example.test");
     });
 
-    /**
-     * Errors render from state, with a real aria-invalid. The old form toggled
-     * a `hidden` class on a ref'd element, which bypassed React entirely and
-     * announced nothing.
-     */
+    /** The error must be in the DOM and marked up, not just styled in. */
     it("rejects a password under the minimum length, in the DOM", async () => {
         const user = userEvent.setup();
         renderWithProviders(<SignupForm onSignedUp={vi.fn()} />);
@@ -197,7 +193,7 @@ describe("LoginForm", () => {
         expect(screen.getByLabelText("Email")).toHaveValue("new@example.test");
     });
 
-    /** The password is never compared in the browser any more. */
+    /** The password is verified by Supabase; nothing is compared here. */
     it("never fetches a user record while signing in", async () => {
         const user = userEvent.setup();
         renderWithProviders(<LoginForm />);

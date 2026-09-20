@@ -1,3 +1,4 @@
+import { buttonClass } from "../ui/Button";
 import { useState, type FormEvent } from "react";
 import { PasswordSchema, UsernameSchema } from "@playrates/shared";
 import { checkUsernameAvailable } from "../../api";
@@ -103,7 +104,7 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
             <div className="mx-auto w-11/12 space-y-3 pt-6 sm:mx-0 sm:w-full sm:pt-8 md:pt-10">
                 <button
                     type="submit"
-                    className="button-primary w-full sm:rounded"
+                    className={buttonClass("primary", "w-full sm:rounded-md")}
                     disabled={isSubmitting}
                 >
                     Sign up

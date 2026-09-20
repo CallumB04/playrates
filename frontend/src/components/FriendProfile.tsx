@@ -1,15 +1,15 @@
 import { Link } from "react-router-dom";
 import type { FriendUser } from "@playrates/shared";
-import ProfilePicture, { AvatarVariant } from "./ProfilePicture";
+import ProfilePicture, { type AvatarVariant } from "./ProfilePicture";
+import { cn } from "../lib/cn";
 
 /**
- * Was driven by a raw `profilePictureSize: number` that the component then
- * compared against 12 to pick its gap and text size. Two named densities make
- * the relationship between avatar, spacing and type explicit.
+ * Two named densities rather than a size number, so the avatar, spacing and
+ * type stay in step with each other.
  */
 const DENSITY = {
-    compact: { avatar: "friendRow", gap: "gap-2", text: "text-base" },
-    comfortable: { avatar: "friendRowLarge", gap: "gap-3", text: "text-lg" },
+    compact: { avatar: "friendRow", gap: "gap-2.5", text: "text-body-sm" },
+    comfortable: { avatar: "friendRowLarge", gap: "gap-3", text: "text-body" },
 } as const satisfies Record<
     string,
     { avatar: AvatarVariant; gap: string; text: string }
@@ -22,34 +22,51 @@ interface FriendProfileProps {
     /** Optional: supplied when the row is rendered inside a popup. */
     closePopup?: () => void;
     density: FriendProfileDensity;
+    /** A mono figure on the right, e.g. "Friends since 2023". */
+    trailing?: string;
 }
 
-const FriendProfile: React.FC<FriendProfileProps> = ({
+const FriendProfile = ({
     user,
     closePopup,
     density,
-}) => {
+    trailing,
+}: FriendProfileProps) => {
     const { avatar, gap, text } = DENSITY[density];
 
     return (
         <Link
             to={`/user/${user.username}`}
-            className={`group relative flex w-full items-center ${gap} rounded-md px-2 py-1 transition-colors duration-200 hover:bg-surface-popup-to`}
+            className={cn(
+                "plate-press flex w-full items-center px-1.5 py-1.5 hover:bg-surface-hover",
+                gap
+            )}
             onClick={closePopup}
         >
-            <ProfilePicture
-                variant={avatar}
-                username={user.username}
-                file={user.pictureUrl ?? ""}
-                link={false}
-            />
-            <p className={`font-lexend text-content ${text}`}>
+            <span className="relative shrink-0">
+                <ProfilePicture
+                    variant={avatar}
+                    username={user.username}
+                    file={user.avatarUrl ?? ""}
+                    link={false}
+                />
+                {/* One of only two round things in the system. */}
+                <span
+                    className={cn(
+                        "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-surface-raised",
+                        user.online ? "bg-success" : "bg-content-muted"
+                    )}
+                    title={user.online ? "Online" : "Offline"}
+                />
+            </span>
+            <span className={cn("min-w-0 flex-1 truncate text-content", text)}>
                 {user.username}
-            </p>
-            <div
-                className={`absolute left-[6px] top-[6px] size-[14px] rounded-full border-[1.5px] border-content-inverse ${user.online ? "bg-success" : "bg-danger"} `}
-                title={user.online ? "Online" : "Offline"}
-            ></div>
+            </span>
+            {trailing && (
+                <span className="shrink-0 font-mono text-label-sm uppercase text-content-muted">
+                    {trailing}
+                </span>
+            )}
         </Link>
     );
 };

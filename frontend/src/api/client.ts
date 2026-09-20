@@ -3,13 +3,8 @@ import type { ApiErrorBody } from "@playrates/shared";
 import { env } from "../lib/env";
 import { supabase } from "../lib/supabase";
 
-/**
- * Preserves the status code and machine-readable code from the API.
- *
- * The old API layer collapsed every failure into `new Error("Error fetching
- * user")`, so a caller could not tell "this user does not exist" (show the
- * not-found screen) from "the backend is down" (offer a retry).
- */
+/** Carries the status and code through from the API, so a caller can tell
+ *  "does not exist" from "backend is down". */
 export class ApiError extends Error {
     readonly status?: number;
     readonly code?: string;
@@ -45,10 +40,7 @@ export class ApiError extends Error {
     }
 }
 
-/**
- * One instance, created once. The old code set `axios.defaults.baseURL` from
- * five separate modules, so whichever imported last won.
- */
+/** The single client. Endpoint modules import this rather than axios itself. */
 export const api = axios.create({
     baseURL: `${env.apiBaseUrl}/api/v1`,
     timeout: 15_000,

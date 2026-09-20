@@ -5,15 +5,9 @@ import LoadingSpinner from "./LoadingSpinner";
 import ProfilePicture from "./ProfilePicture";
 import UserStatus from "./UserStatus";
 
-/**
- * These assert exact class strings, which is unusual but deliberate.
- *
- * All four of these components used to build their utilities at runtime
- * (`size-${n}`, `${bp}:text-${v}`, ...), which Tailwind cannot see — so they
- * needed a safelist, and the safelist did not actually cover every value
- * passed in. Deleting the safelist is only safe while the class names stay
- * literal, and that is what these tests pin.
- */
+/* Asserting exact class strings is unusual but deliberate: a variant map
+   composed at runtime gets purged by Tailwind and the component renders
+   unstyled with nothing else failing. */
 describe("LoadingSpinner sizes", () => {
     const sizeOf = (size: "sm" | "md" | "lg") =>
         render(<LoadingSpinner size={size} />).container.firstElementChild!

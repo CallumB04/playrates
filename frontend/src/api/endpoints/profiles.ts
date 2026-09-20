@@ -29,6 +29,11 @@ export const updateMyProfile = async (
     return data;
 };
 
+/** Irreversible. Cascades to every log, review and friendship. */
+export const deleteMyAccount = async (): Promise<void> => {
+    await api.delete("/profiles/me");
+};
+
 export const checkUsernameAvailable = async (
     username: string
 ): Promise<boolean> => {

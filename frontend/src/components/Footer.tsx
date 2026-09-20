@@ -1,35 +1,24 @@
-const socialsStyles = `hover:text-brand hover:cursor-pointer transition-colors duration-[200ms]`;
-
-const Footer = () => {
-    return (
-        <footer className="relative h-72 w-full bg-surface-chrome font-lexend text-content-secondary md:h-36">
-            {/* Socials */}
-            <div className="mx-auto flex w-full items-center justify-center gap-8 pt-12 text-[33px] md:pt-8 md:text-3xl lg:gap-12">
-                <i className={`fab fa-twitter ${socialsStyles}`}></i>
-                <i className={`fab fa-instagram ${socialsStyles}`}></i>
-                <i className={`fab fa-facebook ${socialsStyles}`}></i>
-                <i className={`fab fa-discord ${socialsStyles}`}></i>
-            </div>
-            {/* Footer text wrapper */}
-            <div className="absolute bottom-8 flex w-full flex-wrap justify-between gap-y-[22px] px-6 text-center text-[17px] font-light md:bottom-4">
-                <p className="w-full md:w-1/3 md:text-left">
-                    Created by{" "}
-                    <span className="font-normal">Callum Burgoyne</span>
-                </p>
-                <p
-                    className="mx-auto w-max rounded-md bg-brand p-3 px-4 font-semibold transition-colors duration-[200ms] hover:cursor-pointer hover:bg-brand-hover md:bg-transparent md:p-1 md:hover:bg-transparent md:hover:text-brand"
-                    onClick={() =>
-                        window.scrollTo({ top: 0, behavior: "smooth" })
-                    }
-                >
-                    Back to Top
-                </p>
-                <p className="w-full md:w-1/3 md:text-right">
-                    © 2024 PlayRates
-                </p>
-            </div>
-        </footer>
-    );
-};
+/**
+ * A colophon, not a sitemap. The social links have no destinations yet, so
+ * they are rendered as plain marks rather than links that go nowhere.
+ */
+const Footer = () => (
+    <footer className="mx-auto w-full max-w-[1240px] px-5 pb-10 sm:px-8 lg:px-12">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-strong pt-5 font-mono text-label uppercase text-content-muted">
+            <p>
+                Created by{" "}
+                <span className="text-content-secondary">Callum Burgoyne</span>
+            </p>
+            <button
+                type="button"
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                className="plate-press text-content-secondary hover:text-brand"
+            >
+                Back to top
+            </button>
+            <p>© 2024 PlayRates</p>
+        </div>
+    </footer>
+);
 
 export default Footer;

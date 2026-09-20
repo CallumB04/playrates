@@ -1,11 +1,6 @@
 /** Online / offline indicator. */
 
-/**
- * The only call site asks for "sm, then lg from the sm breakpoint up", which
- * the previous API expressed as an array of {value, breakpoint} objects that
- * were concatenated into class names at runtime. A named size keeps the class
- * strings literal so Tailwind can see them.
- */
+/** Named sizes keep the class strings literal so Tailwind can see them. */
 const STATUS_TEXT_SIZE = {
     responsive: "text-sm sm:text-lg",
     sm: "text-sm",
@@ -27,7 +22,7 @@ const UserStatus: React.FC<UserStatusProps> = ({
         <div
             className={`size-2 rounded-full ${status === "online" ? "bg-success" : "bg-danger"} `}
         ></div>
-        <p className={`font-lexend ${STATUS_TEXT_SIZE[size]} text-content`}>
+        <p className={`font-display ${STATUS_TEXT_SIZE[size]} text-content`}>
             {status}
         </p>
     </div>

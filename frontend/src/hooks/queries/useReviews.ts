@@ -1,19 +1,40 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ReviewInput } from "@playrates/shared";
+import {
+    keepPreviousData,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
+import type { ReviewInput, ReviewSort } from "@playrates/shared";
 import {
     deleteReview,
     fetchGameReviews,
+    fetchMyReview,
     fetchUserReviews,
     queryKeys,
     saveReview,
 } from "../../api";
+import { useAuth } from "../../contexts/AuthContext";
 
-export const useGameReviews = (gameId: number | undefined) =>
+export const useGameReviews = (
+    gameId: number | undefined,
+    sort?: ReviewSort
+) =>
     useQuery({
-        queryKey: queryKeys.reviews.byGame(gameId ?? 0),
-        queryFn: () => fetchGameReviews(gameId!),
+        queryKey: queryKeys.reviews.byGame(gameId ?? 0, sort),
+        queryFn: () => fetchGameReviews(gameId!, sort),
         enabled: typeof gameId === "number" && gameId > 0,
+        placeholderData: keepPreviousData,
     });
+
+/** The caller's own review, so the editor can prefill it. */
+export const useMyReview = (gameId: number | undefined) => {
+    const { user } = useAuth();
+    return useQuery({
+        queryKey: queryKeys.reviews.mine(gameId ?? 0),
+        queryFn: () => fetchMyReview(gameId!),
+        enabled: !!user && typeof gameId === "number" && gameId > 0,
+    });
+};
 
 export const useUserReviews = (username: string | undefined) =>
     useQuery({

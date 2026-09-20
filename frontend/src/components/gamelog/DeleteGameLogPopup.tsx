@@ -1,3 +1,4 @@
+import { buttonClass } from "../ui/Button";
 import { useState } from "react";
 import type { GameLogWithGame } from "../../api";
 import { useGameLogMutations } from "../../hooks/queries/useGameLogs";
@@ -47,13 +48,13 @@ const DeleteGameLogPopup = ({
             </p>
             <div className="flex w-full flex-col justify-center gap-5 sm:flex-row">
                 <button
-                    className="button-secondary w-full sm:w-1/2"
+                    className={buttonClass("secondary", "w-full sm:w-1/2")}
                     onClick={closePopup}
                 >
                     Cancel
                 </button>
                 <button
-                    className="button-danger w-full sm:w-1/2"
+                    className={buttonClass("danger", "w-full sm:w-1/2")}
                     onClick={handleDelete}
                     disabled={isDeleting}
                 >

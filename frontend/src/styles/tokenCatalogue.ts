@@ -1,147 +1,192 @@
-/**
- * The catalogue the design library renders.
+/*
+ * What the design library renders. theme.css has the values, this has what
+ * each is for — keep the two in step. tokenCatalogue.test.ts enforces that.
  *
- * Every class string here is written out in full and literally — Tailwind
- * scans source for complete class names, so a composed one would be purged and
- * the swatch would silently render as nothing.
- *
- * Keep this in step with src/styles/tokens.css. It is the human-readable half
- * of the token system: tokens.css says what the values are, this says what
- * each one is *for*.
+ * Swatches read their value back from the DOM rather than duplicating it here,
+ * so a token that drifts shows the drift instead of hiding it.
  */
 
-export interface ColourToken {
+export interface RampStep {
+    step: string;
+    cssVar: string;
+}
+
+export interface Ramp {
+    name: string;
+    note: string;
+    steps: RampStep[];
+}
+
+const ramp = (prefix: string, steps: string[]): RampStep[] =>
+    steps.map((step) => ({ step, cssVar: `--${prefix}-${step}` }));
+
+export const RAMPS: Ramp[] = [
+    {
+        name: "Iris — the brand",
+        note: "periwinkle violet; stays luminous on ink and keeps clear of the art",
+        steps: ramp("iris", [
+            "50",
+            "100",
+            "200",
+            "300",
+            "400",
+            "500",
+            "600",
+            "700",
+            "800",
+            "900",
+            "950",
+        ]),
+    },
+    {
+        name: "Ink — the ground",
+        note: "warm charcoals; not cold grey, which reads cheap beside box art",
+        steps: ramp("ink", [
+            "50",
+            "100",
+            "200",
+            "300",
+            "400",
+            "500",
+            "600",
+            "700",
+            "800",
+            "850",
+            "900",
+            "950",
+        ]),
+    },
+    {
+        name: "Ember — the secondary",
+        note: "warmth, used sparingly for what should feel earned",
+        steps: ramp("ember", ["300", "400", "500", "600"]),
+    },
+];
+
+export interface SemanticToken {
     /** The semantic name, as used in a utility: bg-surface-raised. */
     name: string;
-    /** Full class applied to the swatch. */
-    swatchClass: string;
-    /** The CSS custom property behind it, so the resolved value can be shown. */
+    /** The custom property behind it, so the resolved value can be shown. */
     cssVar: string;
     description: string;
 }
 
-export interface ColourGroup {
+export interface SemanticGroup {
     title: string;
     blurb: string;
-    tokens: ColourToken[];
+    tokens: SemanticToken[];
 }
 
-export const COLOUR_GROUPS: ColourGroup[] = [
+export const SEMANTIC_GROUPS: SemanticGroup[] = [
     {
         title: "Brand",
-        blurb: "The purple identity. `brand` is locked; the others exist so interactive states don't reach for arbitrary shades.",
+        blurb: "Muted mulberry. On cold white the old violet read as light on glass; on oat paper this reads as pigment.",
         tokens: [
             {
                 name: "brand",
-                swatchClass: "bg-brand",
                 cssVar: "--brand",
                 description: "Primary actions, active states, links",
             },
             {
+                name: "brand-deep",
+                cssVar: "--brand-deep",
+                description: "The 1px edge under a brand fill",
+            },
+            {
                 name: "brand-hover",
-                swatchClass: "bg-brand-hover",
                 cssVar: "--brand-hover",
-                description: "Hover. Lighter on dark, darker on light",
+                description: "Hover on a brand fill",
             },
             {
                 name: "brand-active",
-                swatchClass: "bg-brand-active",
                 cssVar: "--brand-active",
                 description: "Pressed state",
             },
             {
                 name: "brand-muted",
-                swatchClass: "bg-brand-muted",
                 cssVar: "--brand-muted",
                 description: "Low-emphasis fills and borders",
             },
             {
                 name: "brand-subtle",
-                swatchClass: "bg-brand-subtle",
                 cssVar: "--brand-subtle",
-                description: "Tinted backgrounds behind brand content",
+                description: "Tinted background behind brand content",
             },
             {
-                name: "brand-contrast",
-                swatchClass: "bg-brand-contrast",
-                cssVar: "--brand-contrast",
-                description: "Text and icons on a solid brand fill",
+                name: "content-on-solid",
+                cssVar: "--content-on-solid",
+                description:
+                    "Ink on a brand fill. Flips with the brand — plum by day, lavender at night",
+            },
+        ],
+    },
+    {
+        title: "Accent",
+        blurb: "Amber is a genuine secondary, not a warning. Against cream and plum it is analogous warmth, which frees red to mean only danger.",
+        tokens: [
+            {
+                name: "accent",
+                cssVar: "--accent",
+                description: "Editorial eyebrows, secondary emphasis",
+            },
+            {
+                name: "accent-quiet",
+                cssVar: "--accent-quiet",
+                description: "Tinted background behind accent content",
+            },
+            {
+                name: "accent-content",
+                cssVar: "--accent-content",
+                description: "Ink on an accent tint",
             },
         ],
     },
     {
         title: "Surface",
-        blurb: "Backgrounds, roughly ordered by how far forward they sit.",
+        blurb: "Paper, roughly ordered by how far forward it sits. Raised is a plate on the page; sunken is a well pressed into it.",
         tokens: [
             {
                 name: "surface",
-                swatchClass: "bg-surface",
                 cssVar: "--surface",
-                description: "Page background",
-            },
-            {
-                name: "surface-sunken",
-                swatchClass: "bg-surface-sunken",
-                cssVar: "--surface-sunken",
-                description: "Wells, insets, slider tracks",
+                description: "Page background — the stock",
             },
             {
                 name: "surface-raised",
-                swatchClass: "bg-surface-raised",
                 cssVar: "--surface-raised",
-                description: "Cards",
+                description: "Plates, cards, the header",
             },
             {
-                name: "surface-chrome",
-                swatchClass: "bg-surface-chrome",
-                cssVar: "--surface-chrome",
-                description: "Navbar and footer",
-            },
-            {
-                name: "surface-overlay",
-                swatchClass: "bg-surface-overlay",
-                cssVar: "--surface-overlay",
-                description: "Dropdowns, popovers, hover menus",
-            },
-            {
-                name: "surface-overlay-hover",
-                swatchClass: "bg-surface-overlay-hover",
-                cssVar: "--surface-overlay-hover",
-                description: "Hovered item inside an overlay",
-            },
-            {
-                name: "surface-field",
-                swatchClass: "bg-surface-field",
-                cssVar: "--surface-field",
-                description: "Inputs, selects, search bars",
+                name: "surface-sunken",
+                cssVar: "--surface-sunken",
+                description: "Wells, insets, fields, slider tracks",
             },
             {
                 name: "surface-hover",
-                swatchClass: "bg-surface-hover",
                 cssVar: "--surface-hover",
                 description: "Hovered list row",
             },
             {
                 name: "surface-active",
-                swatchClass: "bg-surface-active",
                 cssVar: "--surface-active",
                 description: "Pressed list row",
             },
             {
                 name: "surface-selected",
-                swatchClass: "bg-surface-selected",
                 cssVar: "--surface-selected",
                 description: "Selected row or tab",
             },
             {
+                name: "surface-overlay",
+                cssVar: "--surface-overlay",
+                description: "Dropdowns, popovers",
+            },
+            {
                 name: "surface-inverse",
-                swatchClass: "bg-surface-inverse",
                 cssVar: "--surface-inverse",
                 description: "Inverted chips and tooltips",
             },
             {
                 name: "surface-media",
-                swatchClass: "bg-surface-media",
                 cssVar: "--surface-media",
                 description: "Behind cover art. Fixed in both themes",
             },
@@ -149,330 +194,285 @@ export const COLOUR_GROUPS: ColourGroup[] = [
     },
     {
         title: "Content",
-        blurb: "Text and icons. Named for emphasis, not colour.",
+        blurb: "Ink. Named for emphasis, not colour.",
         tokens: [
             {
                 name: "content",
-                swatchClass: "bg-content",
                 cssVar: "--content",
                 description: "Body and headings",
             },
             {
                 name: "content-secondary",
-                swatchClass: "bg-content-secondary",
                 cssVar: "--content-secondary",
-                description: "Supporting copy, captions",
+                description: "Supporting copy, ledger labels",
             },
             {
                 name: "content-muted",
-                swatchClass: "bg-content-muted",
                 cssVar: "--content-muted",
-                description: "Placeholders, input icons",
+                description: "Eyebrows, placeholders, captions",
             },
             {
                 name: "content-disabled",
-                swatchClass: "bg-content-disabled",
-                cssVar: "--content-disabled-base",
+                cssVar: "--content-disabled",
                 description: "Disabled controls (translucent)",
             },
             {
                 name: "content-inverse",
-                swatchClass: "bg-content-inverse",
                 cssVar: "--content-inverse",
                 description: "On an inverted surface",
             },
             {
                 name: "content-on-media",
-                swatchClass: "bg-content-on-media",
                 cssVar: "--on-media",
                 description: "Over cover art. Fixed in both themes",
             },
         ],
     },
     {
-        title: "Border",
-        blurb: "Applied with border-*. `DEFAULT` is what a bare `border` class uses.",
+        title: "Rule",
+        blurb: "One hairline and one strong rule is the whole vocabulary. A 3px double rule divides subjects; a hairline divides rows.",
         tokens: [
             {
-                name: "border-faint",
-                swatchClass: "bg-surface-raised border-4 border-faint",
-                cssVar: "--border-subtle-base",
-                description: "Dividers inside a dense group",
-            },
-            {
-                name: "border-subtle",
-                swatchClass: "bg-surface-raised border-4 border-subtle",
-                cssVar: "--border-subtle-base",
-                description: "Section dividers in popups and cards",
-            },
-            {
                 name: "border (default)",
-                swatchClass: "bg-surface-raised border-4",
                 cssVar: "--border-default",
                 description: "Default for any bordered element",
             },
             {
-                name: "border-strong",
-                swatchClass: "bg-surface-raised border-4 border-strong",
-                cssVar: "--border-strong",
-                description: "Emphasised outline, separators that must read",
+                name: "border-subtle",
+                cssVar: "--border-subtle",
+                description: "Row dividers, ledger hairlines",
             },
             {
-                name: "border-field",
-                swatchClass: "bg-surface-raised border-4 border-field",
-                cssVar: "--border-field",
-                description: "Input outlines",
+                name: "border-faint",
+                cssVar: "--border-faint",
+                description: "Dividers inside a dense group",
+            },
+            {
+                name: "border-strong",
+                cssVar: "--border-strong",
+                description: "Plate edges, leader dots, section rules",
             },
             {
                 name: "border-focus",
-                swatchClass: "bg-surface-raised border-4 border-focus",
                 cssVar: "--border-focus",
-                description: "Focus ring and focused input",
+                description: "Focused field — a brand rule, never a glow",
+            },
+        ],
+    },
+    {
+        title: "Status",
+        blurb: "Four hues for the top-level states. The played substatuses share the played hue and separate by shape, so the eight never collide.",
+        tokens: [
+            {
+                name: "status-played",
+                cssVar: "--status-played",
+                description: "Played, and every substatus of it",
+            },
+            {
+                name: "status-played-quiet",
+                cssVar: "--status-played-quiet",
+                description: "Played chip background",
+            },
+            {
+                name: "status-playing",
+                cssVar: "--status-playing",
+                description: "Playing — amber",
+            },
+            {
+                name: "status-playing-quiet",
+                cssVar: "--status-playing-quiet",
+                description: "Playing chip background",
+            },
+            {
+                name: "status-backlog",
+                cssVar: "--status-backlog",
+                description: "Backlog — teal",
+            },
+            {
+                name: "status-backlog-quiet",
+                cssVar: "--status-backlog-quiet",
+                description: "Backlog chip background",
+            },
+            {
+                name: "status-wishlist",
+                cssVar: "--status-wishlist",
+                description: "Wishlist — rose",
+            },
+            {
+                name: "status-wishlist-quiet",
+                cssVar: "--status-wishlist-quiet",
+                description: "Wishlist chip background",
             },
         ],
     },
     {
         title: "Feedback",
-        blurb: "Four states, same shape each: subtle background, content text, border, then an emphasis ramp.",
+        blurb: "Bases only. The emphasis ramp is mixed toward the theme's own paper and ink, so one formula serves both themes.",
         tokens: [
             {
                 name: "success",
-                swatchClass: "bg-success",
                 cssVar: "--success",
                 description: "Confirmations, online state",
             },
             {
-                name: "success-subtle",
-                swatchClass: "bg-success-subtle",
-                cssVar: "--success-subtle",
-                description: "Background of a success chip",
-            },
-            {
                 name: "danger",
-                swatchClass: "bg-danger",
                 cssVar: "--danger",
                 description: "Destructive actions, errors, offline",
             },
             {
                 name: "danger-subtle",
-                swatchClass: "bg-danger-subtle",
                 cssVar: "--danger-subtle",
-                description: "Background of an error chip",
-            },
-            {
-                name: "warning",
-                swatchClass: "bg-warning",
-                cssVar: "--warning",
-                description: "Pending states, caution",
-            },
-            {
-                name: "warning-subtle",
-                swatchClass: "bg-warning-subtle",
-                cssVar: "--warning-subtle",
-                description: "Background of a warning chip",
+                description: "Background of an errored field",
             },
             {
                 name: "info",
-                swatchClass: "bg-info",
                 cssVar: "--info",
                 description: "Neutral information",
             },
-            {
-                name: "info-subtle",
-                swatchClass: "bg-info-subtle",
-                cssVar: "--info-subtle",
-                description: "Background of an info chip",
-            },
-            {
-                name: "gold",
-                swatchClass: "bg-gold",
-                cssVar: "--accent-gold",
-                description: "Ratings and trophies",
-            },
-        ],
-    },
-    {
-        title: "Game status",
-        blurb: "One per log status. Used as a solid for text and at /20 for the badge background.",
-        tokens: [
-            {
-                name: "status-finished",
-                swatchClass: "bg-status-finished",
-                cssVar: "--status-finished",
-                description: "Played → finished",
-            },
-            {
-                name: "status-mastered",
-                swatchClass: "bg-status-mastered",
-                cssVar: "--status-mastered",
-                description: "Played → mastered",
-            },
-            {
-                name: "status-shelved",
-                swatchClass: "bg-status-shelved",
-                cssVar: "--status-shelved",
-                description: "Played → shelved",
-            },
-            {
-                name: "status-retired",
-                swatchClass: "bg-status-retired",
-                cssVar: "--status-retired",
-                description: "Played → retired",
-            },
-            {
-                name: "status-playing",
-                swatchClass: "bg-status-playing",
-                cssVar: "--status-playing",
-                description: "Currently playing",
-            },
-            {
-                name: "status-backlog",
-                swatchClass: "bg-status-backlog",
-                cssVar: "--status-backlog",
-                description: "In the backlog",
-            },
-            {
-                name: "status-wishlist",
-                swatchClass: "bg-status-wishlist",
-                cssVar: "--status-wishlist",
-                description: "On the wishlist",
-            },
         ],
     },
 ];
 
-/* -------------------------------------------------------------------------
- * Sizing
- * ---------------------------------------------------------------------- */
-
-export interface SizingToken {
+export interface EffectToken {
     name: string;
-    value: string;
+    cssVar: string;
+    note: string;
+    /** A live demo class, so the effect can be seen as well as read. */
     demoClass: string;
-    description: string;
 }
 
-export const RADIUS_TOKENS: SizingToken[] = [
+export const EFFECT_TOKENS: EffectToken[] = [
     {
-        name: "rounded-xs",
-        value: "2px",
-        demoClass: "rounded-xs",
-        description: "Hairline softening",
+        name: "shadow-ambient",
+        cssVar: "--shadow-ambient",
+        note: "the soft far shadow — how far off the page a thing sits",
+        demoClass: "bg-surface-raised shadow-e2",
     },
     {
-        name: "rounded-sm",
-        value: "4px",
-        demoClass: "rounded-sm",
-        description: "Inputs, small chips",
+        name: "shadow-key",
+        cssVar: "--shadow-key",
+        note: "the tighter near shadow, for things that only just lift",
+        demoClass: "bg-surface-raised shadow-e1",
     },
     {
-        name: "rounded (md)",
-        value: "6px",
-        demoClass: "rounded",
-        description: "Default. Cards, covers",
+        name: "rim",
+        cssVar: "--rim",
+        note: "the 1px line of light along a lifted top edge",
+        demoClass: "bg-surface-raised shadow-e1",
     },
     {
-        name: "rounded-lg",
-        value: "8px",
-        demoClass: "rounded-lg",
-        description: "Buttons, popups",
+        name: "glow-brand",
+        cssVar: "--glow-brand",
+        note: "the bloom a hovered thing gathers — light, not paint",
+        demoClass: "bg-surface-raised shadow-glow",
     },
     {
-        name: "rounded-xl",
-        value: "12px",
-        demoClass: "rounded-xl",
-        description: "Large panels",
-    },
-    {
-        name: "rounded-2xl",
-        value: "16px",
-        demoClass: "rounded-2xl",
-        description: "Feature surfaces",
-    },
-    {
-        name: "rounded-full",
-        value: "9999px",
-        demoClass: "rounded-full",
-        description: "Avatars, pills",
+        name: "scrim",
+        cssVar: "--scrim",
+        note: "the wash behind a modal, and its cast shadow",
+        demoClass: "bg-surface-raised shadow-modal",
     },
 ];
 
-export const SHADOW_TOKENS: SizingToken[] = [
-    {
-        name: "shadow-xs",
-        value: "subtle lift",
-        demoClass: "shadow-xs",
-        description: "Barely separated",
-    },
-    {
-        name: "shadow-sm",
-        value: "small",
-        demoClass: "shadow-sm",
-        description: "Chips, inputs",
-    },
-    {
-        name: "shadow (md)",
-        value: "default",
-        demoClass: "shadow",
-        description: "Cards, popups",
-    },
-    {
-        name: "shadow-lg",
-        value: "large",
-        demoClass: "shadow-lg",
-        description: "Dropdowns",
-    },
-    {
-        name: "shadow-xl",
-        value: "x-large",
-        demoClass: "shadow-xl",
-        description: "Modals",
-    },
-];
-
-/** Stacking order, decided once so call sites don't invent numbers. */
-export const Z_INDEX_TOKENS: {
+export interface TypeStep {
     name: string;
-    value: string;
-    description: string;
-}[] = [
-    { name: "z-base", value: "0", description: "Default flow" },
-    { name: "z-raised", value: "10", description: "Lifted within a section" },
-    { name: "z-sticky", value: "20", description: "Sticky headers" },
-    { name: "z-hover-menu", value: "50", description: "Tile hover menus" },
-    { name: "z-navbar", value: "50", description: "Fixed navbar" },
-    { name: "z-backdrop", value: "100", description: "Modal backdrop" },
-    { name: "z-modal", value: "110", description: "Modal panel" },
+    /** The classes that produce it. */
+    utility: string;
+    spec: string;
+    sample: string;
+}
+
+export const TYPE_SCALE: TypeStep[] = [
     {
-        name: "z-toast",
-        value: "200",
-        description: "Notifications, above everything",
+        name: "Hero / 76",
+        utility: "font-display text-hero",
+        spec: "76 / 0.98 / -2.8%",
+        sample: "Keep count",
+    },
+    {
+        name: "Display / 62",
+        utility: "font-display text-display",
+        spec: "62 / 1.00 / -2.2%",
+        sample: "Lanternfall",
+    },
+    {
+        name: "Title / 44",
+        utility: "font-display text-title",
+        spec: "44 / 1.00 / -1.8%",
+        sample: "ashgrove",
+    },
+    {
+        name: "Section / 22",
+        utility: "font-display text-section",
+        spec: "22 / 1.15",
+        sample: "Reader's notes",
+    },
+    {
+        name: "Body / 15.5",
+        utility: "text-body",
+        spec: "15.5 / 1.66 / 62ch",
+        sample: "A lamplighter walks a drowned coast where the tide takes a street each night.",
+    },
+    {
+        name: "Body small / 13.5",
+        utility: "text-body-sm",
+        spec: "13.5 / 1.50",
+        sample: "Hours played, hours to beat, start and finish dates",
+    },
+    {
+        name: "Figure / 54",
+        utility: "font-mono text-figure",
+        spec: "tabular · -4%",
+        sample: "8.25  1,284  46/52",
+    },
+    {
+        name: "Figure row / 19",
+        utility: "font-mono text-figure-row",
+        spec: "tabular",
+        sample: "412   1,284h   9.75",
+    },
+    {
+        name: "Label / 10",
+        utility: "font-mono text-label uppercase",
+        spec: "10 / .22em caps",
+        sample: "PlayRates average · 2,481 ratings",
+    },
+    {
+        name: "Stamp / 8",
+        utility: "font-mono text-stamp uppercase",
+        spec: "8 / .10em caps",
+        sample: "Mastered · Finished · Shelved · Retired",
     },
 ];
 
-/** Tailwind's default type scale, listed so the sizes in use are visible. */
-export const TYPE_TOKENS: { name: string; value: string; demoClass: string }[] =
-    [
-        { name: "text-xs", value: "12px", demoClass: "text-xs" },
-        { name: "text-sm", value: "14px", demoClass: "text-sm" },
-        { name: "text-base", value: "16px", demoClass: "text-base" },
-        { name: "text-lg", value: "18px", demoClass: "text-lg" },
-        { name: "text-xl", value: "20px", demoClass: "text-xl" },
-        { name: "text-2xl", value: "24px", demoClass: "text-2xl" },
-        { name: "text-3xl", value: "30px", demoClass: "text-3xl" },
-        { name: "text-4xl", value: "36px", demoClass: "text-4xl" },
-    ];
+/** The design's 4pt run, mapped onto Tailwind's existing step names. */
+export const SPACING_STEPS: { name: string; px: number }[] = [
+    { name: "0.5", px: 2 },
+    { name: "1", px: 4 },
+    { name: "2", px: 8 },
+    { name: "3", px: 12 },
+    { name: "4", px: 16 },
+    { name: "5", px: 20 },
+    { name: "6", px: 24 },
+    { name: "8", px: 32 },
+    { name: "10", px: 40 },
+    { name: "14", px: 56 },
+];
 
-/** The spacing steps the app actually uses, from Tailwind's 4px scale. */
-export const SPACING_TOKENS: { name: string; value: string; rem: string }[] = [
-    { name: "1", value: "4px", rem: "0.25rem" },
-    { name: "2", value: "8px", rem: "0.5rem" },
-    { name: "3", value: "12px", rem: "0.75rem" },
-    { name: "4", value: "16px", rem: "1rem" },
-    { name: "5", value: "20px", rem: "1.25rem" },
-    { name: "6", value: "24px", rem: "1.5rem" },
-    { name: "8", value: "32px", rem: "2rem" },
-    { name: "12", value: "48px", rem: "3rem" },
-    { name: "16", value: "64px", rem: "4rem" },
-    { name: "navbar", value: "64px", rem: "4rem" },
+export const RADII: { name: string; utility: string; note: string }[] = [
+    { name: "xs", utility: "rounded-xs", note: "6 — inline marks" },
+    { name: "sm", utility: "rounded-sm", note: "10 — controls, chips" },
+    { name: "md", utility: "rounded-md", note: "14 — cards, covers" },
+    { name: "lg", utility: "rounded-lg", note: "18 — panels, modals" },
+    { name: "xl", utility: "rounded-xl", note: "24 — full-bleed surfaces" },
+    { name: "full", utility: "rounded-full", note: "pills and dots" },
+];
+
+export const ELEVATION: { name: string; utility: string; note: string }[] = [
+    { name: "flat", utility: "", note: "no class at all" },
+    { name: "e1", utility: "shadow-e1", note: "only just lifted" },
+    { name: "e2", utility: "shadow-e2", note: "cards and covers" },
+    { name: "e3", utility: "shadow-e3", note: "raised over content" },
+    { name: "modal", utility: "shadow-modal", note: "modals and sheets" },
+    { name: "glow", utility: "shadow-glow", note: "the hover bloom" },
 ];

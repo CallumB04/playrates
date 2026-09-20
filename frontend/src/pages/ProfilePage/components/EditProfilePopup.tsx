@@ -1,3 +1,5 @@
+import { Input, Textarea } from "../../../components/ui/Input";
+import { buttonClass } from "../../../components/ui/Button";
 import { useRef, useState } from "react";
 import type { Profile } from "@playrates/shared";
 import { useUpdateProfile } from "../../../hooks/queries/useProfiles";
@@ -41,8 +43,8 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
         }
 
         try {
-            // the mutation seeds the profile caches, so the page updates
-            // without the temporary local copies the old code kept
+            // the mutation seeds the profile caches, so the page reflects
+            // the change as soon as this resolves
             await updateProfile.mutateAsync({
                 username: usernameInputValue,
                 bio: bioInputValue,
@@ -79,10 +81,10 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                             <ProfilePicture
                                 variant="editProfile"
                                 username={user.username}
-                                file={user.pictureUrl ?? ""}
+                                file={user.avatarUrl ?? ""}
                                 link={false}
                             />
-                            <div className="absolute left-0 top-0 flex h-full w-full items-center justify-center rounded-full bg-overlay-avatar font-semibold text-content opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                            <div className="absolute top-0 left-0 flex h-full w-full items-center justify-center rounded-full bg-overlay-avatar font-semibold text-content opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                                 Click to Upload
                             </div>
                         </div>
@@ -102,14 +104,14 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                                 Max 160 Characters
                             </p>
                         </span>
-                        <textarea
+                        <Textarea
                             defaultValue={bio}
-                            className="multiline-input h-20 w-full"
+                            className="h-20 w-full"
                             maxLength={160}
                             onChange={(e) =>
                                 setBioInputValue(e.currentTarget.value)
                             }
-                        ></textarea>
+                        />
                     </div>
                     <div className="flex w-full flex-col gap-1">
                         <span className="flex w-full items-end justify-between gap-2">
@@ -120,22 +122,22 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                                 Change in{" "}
                                 <Link
                                     to="/settings"
-                                    className="hover-text-white underline"
+                                    className="cursor-pointer text-content underline transition-colors duration-200 hover:text-brand"
                                 >
                                     Settings
                                 </Link>
                             </p>
                         </span>
-                        <input
+                        <Input
                             defaultValue={username}
-                            className="text-input h-12 w-full"
+                            className="h-12 w-full"
                             maxLength={username.length}
                             onChange={(e) =>
                                 setUsernameInputValue(e.currentTarget.value)
                             }
                         />
                         {!usernameInputMatches ? (
-                            <p className="text-left font-lexend text-danger">
+                            <p className="text-left font-display text-danger">
                                 Username doesnt match &apos;{username}&apos;,
                                 only change capitalization.
                             </p>
@@ -146,13 +148,13 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                 </div>
                 <div className="flex w-full flex-col justify-center gap-5 sm:flex-row">
                     <button
-                        className="button-primary w-full sm:w-1/2"
+                        className={buttonClass("primary", "w-full sm:w-1/2")}
                         onClick={handleSave}
                     >
                         Save
                     </button>
                     <button
-                        className="button-outline button-outline-default w-full sm:w-1/2"
+                        className={buttonClass("outline", "w-full sm:w-1/2")}
                         onClick={closePopup}
                     >
                         Cancel
@@ -160,7 +162,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                 </div>
 
                 {loadingUpdate ? (
-                    <div className="absolute left-0 top-0 flex size-full items-center justify-center rounded-lg bg-overlay-loading">
+                    <div className="absolute top-0 left-0 flex size-full items-center justify-center rounded-lg bg-overlay-loading">
                         <LoadingSpinner size="lg" />
                     </div>
                 ) : (

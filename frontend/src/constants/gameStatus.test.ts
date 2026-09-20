@@ -2,46 +2,89 @@ import { describe, expect, it } from "vitest";
 import {
     GAME_STATUSES,
     PLAYED_STATUSES,
-    getColorFromGameStatus,
-    getIconFromGameStatus,
+    STATUS_PRESENTATION,
+    displayStatusFor,
+    isDisplayStatus,
+    statusRadius,
 } from "./gameStatus";
+import { STATUS_MARKS } from "../lib/marks";
+import { getStatusIcon } from "../lib/icons";
 
-describe("game status tokens", () => {
-    /**
-     * These assert the literal class strings on purpose. If someone rebuilds
-     * them by interpolation, Tailwind stops emitting the utilities and the
-     * badges silently lose their colour — this is the test that catches it.
-     */
-    it("returns complete, literal class names for every displayable status", () => {
-        for (const status of [...GAME_STATUSES, ...PLAYED_STATUSES]) {
-            const colors = getColorFromGameStatus(status);
-            // "played" is a grouping status and has no badge of its own
-            if (status === "played") continue;
+const ALL = [...GAME_STATUSES, ...PLAYED_STATUSES];
 
-            expect(colors, `no colours for ${status}`).toBeDefined();
-            expect(colors!.bg).toBe(`bg-status-${status}/20`);
-            expect(colors!.text).toBe(`text-status-${status}`);
+describe("status presentation", () => {
+    it("covers every displayable status", () => {
+        for (const status of ALL) {
+            expect(STATUS_PRESENTATION[status], status).toBeDefined();
+        }
+        expect(Object.keys(STATUS_PRESENTATION)).toHaveLength(ALL.length);
+    });
+
+    // Literal class strings on purpose: an interpolated one is purged by
+    // Tailwind and the badge silently loses its colour.
+    it("uses complete, literal class names", () => {
+        for (const status of ALL) {
+            const { chip, markTone, accent } = STATUS_PRESENTATION[status];
+            expect(chip, status).toMatch(/^border-\S+ bg-\S+ text-\S+$/);
+            expect(markTone, status).toMatch(/^text-\S+$/);
+            expect(accent, status).toMatch(/^bg-\S+$/);
         }
     });
 
-    it("uses a /20 tint, which is the exact alpha the old hex values had", () => {
-        // 0x33 / 0xff === 0.2
-        expect(getColorFromGameStatus("finished")!.bg).toContain("/20");
+    it("always carries a word, so hue is never the only channel", () => {
+        for (const status of ALL) {
+            expect(STATUS_PRESENTATION[status].label, status).not.toBe("");
+        }
     });
 
-    it("returns undefined for an unknown status rather than throwing", () => {
-        expect(getColorFromGameStatus("abandoned")).toBeUndefined();
+    it("points at a mark that exists", () => {
+        for (const status of ALL) {
+            expect(STATUS_MARKS[STATUS_PRESENTATION[status].mark], status)
+                .toBeDefined();
+        }
+    });
+
+    it("reserves the two curved shapes — only mastered is a pill", () => {
+        const pills = ALL.filter(
+            (s) => STATUS_PRESENTATION[s].shape === "pill"
+        );
+        expect(pills).toEqual(["mastered"]);
+        expect(statusRadius("mastered")).toBe("rounded-pill");
+        expect(statusRadius("shelved")).toBe("rounded-cut");
+        expect(statusRadius("finished")).toBe("rounded-plate");
+    });
+});
+
+describe("displayStatusFor", () => {
+    it("prefers the substatus, which is more specific than 'played'", () => {
+        expect(displayStatusFor("played", "mastered")).toBe("mastered");
+    });
+
+    it("falls back to the top-level status when there is no substatus", () => {
+        expect(displayStatusFor("played", null)).toBe("played");
+        expect(displayStatusFor("backlog", null)).toBe("backlog");
+    });
+
+    it("ignores a substatus on a status that cannot have one", () => {
+        expect(displayStatusFor("wishlist", "finished")).toBe("wishlist");
+    });
+});
+
+describe("isDisplayStatus", () => {
+    it("accepts known statuses and rejects anything else", () => {
+        expect(isDisplayStatus("mastered")).toBe(true);
+        expect(isDisplayStatus("abandoned")).toBe(false);
     });
 });
 
 describe("game status icons", () => {
     it("has an icon for each top-level status", () => {
         for (const status of GAME_STATUSES) {
-            expect(getIconFromGameStatus(status), status).toBeTruthy();
+            expect(getStatusIcon(status), status).toBeTruthy();
         }
     });
 
     it("returns undefined for an unknown status", () => {
-        expect(getIconFromGameStatus("nonsense")).toBeUndefined();
+        expect(getStatusIcon("nonsense")).toBeUndefined();
     });
 });

@@ -1,3 +1,4 @@
+import { UserCheck, UserPlus, Users, UserRoundCheck } from "lucide-react";
 import { describe, expect, it } from "vitest";
 import {
     getProfileGamesPerPage,
@@ -9,10 +10,10 @@ import { getLibraryGamesPerPage } from "../../LibraryPage/lib/gamesPerPage";
 
 describe("friend relation button", () => {
     it("has an icon for every relation", () => {
-        expect(getUserRelationIcon("friend")).toBe("user-group");
-        expect(getUserRelationIcon("request-sent")).toBe("user-clock");
-        expect(getUserRelationIcon("request-received")).toBe("user-check");
-        expect(getUserRelationIcon(null)).toBe("user-plus");
+        expect(getUserRelationIcon("friend")).toBe(Users);
+        expect(getUserRelationIcon("request-sent")).toBe(UserRoundCheck);
+        expect(getUserRelationIcon("request-received")).toBe(UserCheck);
+        expect(getUserRelationIcon(null)).toBe(UserPlus);
     });
 
     describe("label", () => {
@@ -77,18 +78,17 @@ describe("games per page", () => {
         expect(getProfileGamesPerPage(767)).toBe(24);
     });
 
-    it("computes the library grid from the viewport", () => {
-        // 1440x900: (1440-400+4)/109 = 9 across, (900-300)/140 = 4 down
-        expect(getLibraryGamesPerPage(1440, 900)).toBe(36);
+    /* Quantised to breakpoints rather than derived from the viewport: with a
+       server-driven page, a continuous count refetches on every frame of a
+       window drag and the page count shifts as you resize. */
+    it("uses a fixed count per breakpoint", () => {
+        expect(getLibraryGamesPerPage(1440)).toBe(28);
+        expect(getLibraryGamesPerPage(1100)).toBe(21);
+        expect(getLibraryGamesPerPage(800)).toBe(18);
+        expect(getLibraryGamesPerPage(500)).toBe(12);
     });
 
-    it("never returns zero for a short viewport", () => {
-        expect(getLibraryGamesPerPage(1200, 320)).toBeGreaterThanOrEqual(1);
-    });
-
-    it("uses fixed counts below the large breakpoint", () => {
-        expect(getLibraryGamesPerPage(500, 800)).toBe(18);
-        expect(getLibraryGamesPerPage(600, 800)).toBe(20);
-        expect(getLibraryGamesPerPage(1000, 800)).toBe(18);
+    it("never returns zero for a narrow viewport", () => {
+        expect(getLibraryGamesPerPage(320)).toBeGreaterThanOrEqual(1);
     });
 });

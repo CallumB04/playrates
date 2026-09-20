@@ -20,7 +20,7 @@ export const buildProfile = (overrides: Partial<Profile> = {}): Profile => ({
     id: "11111111-1111-1111-1111-111111111111",
     username: "devuser",
     bio: "Local development account.",
-    pictureUrl: null,
+    avatarUrl: null,
     online: true,
     createdAt: "2026-01-01T00:00:00.000Z",
     ...overrides,
@@ -37,7 +37,11 @@ export const buildGame = (overrides: Partial<Game> = {}): Game => ({
     platforms: ["steam"],
     isAdult: false,
     isTrending: true,
-    hoursToBeat: 51.5,
+    playtimeHours: 51.5,
+    genres: ["action", "role-playing-games-rpg"],
+    metacritic: 92,
+    rawgRating: 4.66,
+    rawgRatingCount: 6900,
     ...overrides,
 });
 
@@ -81,7 +85,7 @@ export const buildReview = (
     author: {
         id: "11111111-1111-1111-1111-111111111111",
         username: "devuser",
-        pictureUrl: null,
+        avatarUrl: null,
         online: true,
     },
     rating: 9.25,
@@ -96,7 +100,7 @@ export const buildFriendEdge = (
     user: {
         id: "22222222-2222-2222-2222-222222222222",
         username: "frienduser",
-        pictureUrl: null,
+        avatarUrl: null,
         bio: "",
         online: false,
     },
@@ -119,7 +123,6 @@ export const handlers = [
                 {
                     slug: "steam",
                     displayName: "Steam",
-                    iconClass: "fab fa-steam",
                     sortOrder: 10,
                 },
             ],

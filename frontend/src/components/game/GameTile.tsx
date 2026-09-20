@@ -1,193 +1,135 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "../../lib/cn";
+import type { DisplayStatus } from "../../constants/gameStatus";
+import { formatRating } from "../../lib/format";
 import GameCover from "./GameCover";
+import StatusBadge from "../ui/StatusBadge";
 
 export interface TileAction {
-    key: "view" | "edit" | "add" | "myLog" | "delete";
+    key: string;
     label: string;
-    icon: string;
     onSelect: () => void;
-    tone?: "default" | "danger";
+    /** The first action is the loud one; the rest are outlines. */
+    tone?: "primary" | "secondary" | "danger";
 }
-
-type TileVariant = "library" | "profile";
-
-interface VariantConfig {
-    /** Optional wrapper around the link; Library centres its tiles in a cell. */
-    wrapperClassName?: string;
-    linkClassName: string;
-    /** Library uses no max-height on its hover menu, Profile does. */
-    menuHeight: Record<number, string>;
-    rowHeight: Record<number, string>;
-}
-
-const VARIANTS: Record<TileVariant, VariantConfig> = {
-    library: {
-        wrapperClassName: "flex justify-center lg:w-full",
-        linkClassName:
-            "game-cover group relative h-[180px] w-[135px] p-1 lg:h-[140px] lg:w-[105px]",
-        menuHeight: {
-            1: "h-1/4 min-h-8",
-            2: "h-1/2 min-h-16",
-        },
-        rowHeight: { 1: "h-full", 2: "h-1/2" },
-    },
-    profile: {
-        linkClassName:
-            "game-cover group relative w-1/3 p-1 sm:w-1/4 md:w-[14%] xl:w-[11%]",
-        menuHeight: {
-            1: "h-1/4 max-h-12 min-h-8",
-            2: "h-1/2 max-h-20 min-h-16",
-            3: "h-3/4 max-h-28 min-h-24",
-        },
-        rowHeight: { 1: "h-full", 2: "h-1/2", 3: "h-1/3" },
-    },
-};
 
 interface GameTileProps {
     gameId: number;
     title: string;
     coverUrl: string | null;
-    variant: TileVariant;
-    actions: TileAction[];
-    /** Hides the ellipsis entirely; the library does this when logged out. */
-    showMenu: boolean;
-    /** Closes any open hover menu while a popup is on screen. */
-    popupIsVisible: boolean;
+    /** The ledger line under the cover: label left, figure right. */
+    footLabel?: string;
+    /** The viewer's own rating. The brand figure is reserved for these. */
+    rating?: number | null;
+    /** A muted figure for the right of the ledger line when there is no
+     *  rating to show — a release year, say. */
+    footValue?: string;
+    /** Stamped on the cover, rotated, when the viewer has logged it. */
+    status?: DisplayStatus | null;
+    /** A mono line under the title on hover, e.g. "Your log · 8.50 · 31h". */
+    meta?: string;
+    actions?: TileAction[];
 }
 
+const ACTION_TONE = {
+    primary: "bg-brand text-content-on-solid border-brand-deep",
+    secondary:
+        "border-content-on-media/50 text-content-on-media hover:bg-overlay-chip-light",
+    danger: "bg-danger text-content-on-solid border-danger",
+} as const;
+
 /**
- * One tile replacing the near-identical GameElement components that lived
- * under LibraryPage and ProfilePage. They differed only in sizing, the wrapper
- * element, and which actions were available.
+ * The shelf tile. Box art is the only saturated thing on the page, so the tile
+ * is the art plus one ledger line — and the actions only appear over it.
  */
 const GameTile = ({
     gameId,
     title,
     coverUrl,
-    variant,
-    actions,
-    showMenu,
-    popupIsVisible,
-}: GameTileProps) => {
-    const [hoveringIcon, setHoveringIcon] = useState(false);
-    const [hoveringMenu, setHoveringMenu] = useState(false);
+    footLabel,
+    rating,
+    footValue,
+    status,
+    meta,
+    actions = [],
+}: GameTileProps) => (
+    <div className="group/tile">
+        <Link
+            to={`/game/${gameId}`}
+            className="relative block aspect-3/4 overflow-hidden bg-surface-media shadow-cover transition-shadow group-hover/tile:shadow-cover-hover"
+        >
+            <GameCover coverUrl={coverUrl} title={title} className="size-full" />
 
-    useEffect(() => {
-        if (popupIsVisible) {
-            setHoveringIcon(false);
-            setHoveringMenu(false);
-        }
-    }, [popupIsVisible]);
+            {/* Resting state: the title reads off the art itself. */}
+            <span className="absolute inset-x-0 bottom-0 bg-linear-to-t from-overlay-tile to-transparent p-2.5 pt-8 font-display text-[13px] leading-tight text-content-on-media group-hover/tile:opacity-0">
+                {title}
+            </span>
 
-    const config = VARIANTS[variant];
-    const count = actions.length;
-    const menuOpen =
-        (hoveringIcon || hoveringMenu) &&
-        !popupIsVisible &&
-        showMenu &&
-        count > 0;
+            {status && (
+                <StatusBadge
+                    status={status}
+                    size="stamp"
+                    onMedia
+                    className="absolute right-1.5 top-1.5 group-hover/tile:opacity-0"
+                />
+            )}
 
-    const rowHeight = config.rowHeight[count] ?? "h-full";
-
-    const tile = (
-        <Link to={`/game/${gameId}`} className={config.linkClassName}>
-            <GameCover
-                coverUrl={coverUrl}
-                title={title}
-                className="h-full w-full rounded-md object-cover"
-            />
-            <div className="absolute left-0 top-0 h-full w-full p-1">
-                {/* Hover menu, lg and above */}
-                <div className="hidden h-full w-full items-center justify-center rounded-md transition-colors duration-200 group-hover:bg-overlay-tile lg:flex">
-                    <p className="relative line-clamp-3 break-words px-1 text-center font-lexend text-lg text-content opacity-0 transition-opacity duration-200 group-hover:opacity-100 sm:text-base lg:text-sm 2xl:text-base">
-                        {title}
-                    </p>
-
-                    {showMenu && count > 0 && (
-                        <i
-                            className="fas fa-ellipsis absolute right-0 top-0 pl-2 pr-3 pt-1 text-lg text-content opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                            onMouseOver={() => setHoveringIcon(true)}
-                            onMouseOut={() => setHoveringIcon(false)}
-                        ></i>
-                    )}
-
-                    {menuOpen && (
-                        <div
-                            className={cn(
-                                "hover-menu fade-in-left absolute right-8 top-2 w-full min-w-24 text-center text-sm",
-                                config.menuHeight[count],
-                                variant === "profile" && "max-w-28"
-                            )}
-                            onMouseOver={() => setHoveringMenu(true)}
-                            onMouseOut={() => setHoveringMenu(false)}
-                        >
-                            {actions.map((action, index) => (
-                                <span
-                                    key={action.key}
-                                    className={cn(
-                                        "flex w-full items-center justify-center gap-2 transition-colors duration-200",
-                                        rowHeight,
-                                        index === 0 ? "rounded-t" : "rounded-b",
-                                        index > 0 && "border-t border-t-faint",
-                                        action.tone === "danger"
-                                            ? "hover-text-danger"
-                                            : "hover:text-brand"
-                                    )}
-                                    onClick={(e) => {
-                                        e.preventDefault(); // prevent Link from triggering
-                                        action.onSelect();
-                                    }}
-                                >
-                                    <p>{action.label}</p>
-                                    <i className={action.icon}></i>
-                                </span>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* icon bar for smaller devices */}
-                {showMenu && count > 0 && (
-                    <div className="relative flex h-full w-full items-end justify-center p-1.5 lg:hidden">
-                        <span
-                            className={cn(
-                                "flex h-1/5 rounded bg-overlay-chip",
-                                count === 1 ? "w-1/3" : "w-2/3"
-                            )}
-                        >
-                            {actions.map((action) => (
-                                <span
-                                    key={action.key}
-                                    className={cn(
-                                        "flex h-full items-center justify-center text-content-secondary hover:text-brand",
-                                        count === 1 ? "w-full" : `w-1/${count}`
-                                    )}
-                                    style={{ width: `${100 / count}%` }}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        action.onSelect();
-                                    }}
-                                >
-                                    <i
-                                        className={action.icon}
-                                        title={action.label}
-                                    ></i>
-                                </span>
-                            ))}
+            {actions.length > 0 && (
+                <span className="absolute inset-0 flex flex-col gap-1.5 bg-overlay-tile p-2.5 opacity-0 transition-opacity group-hover/tile:opacity-100 focus-within:opacity-100">
+                    <span className="mb-auto block">
+                        <span className="block font-display text-[13px] leading-tight text-content-on-media">
+                            {title}
                         </span>
-                    </div>
-                )}
-            </div>
-        </Link>
-    );
+                        {meta && (
+                            <span className="mt-1 block font-mono text-stamp uppercase text-content-on-media/70">
+                                {meta}
+                            </span>
+                        )}
+                    </span>
 
-    return config.wrapperClassName ? (
-        <div className={config.wrapperClassName}>{tile}</div>
-    ) : (
-        tile
-    );
-};
+                    {actions.map((action) => (
+                        <button
+                            key={action.key}
+                            type="button"
+                            onClick={(event) => {
+                                // The tile is a link; an action is not navigation.
+                                event.preventDefault();
+                                action.onSelect();
+                            }}
+                            className={cn(
+                                "plate-press w-full border px-2 py-1.5 font-mono text-stamp uppercase",
+                                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-on-media",
+                                ACTION_TONE[action.tone ?? "secondary"]
+                            )}
+                        >
+                            {action.label}
+                        </button>
+                    ))}
+                </span>
+            )}
+        </Link>
+
+        {(footLabel || rating !== undefined || footValue) && (
+            <div className="mt-2 flex items-baseline gap-1">
+                <span className="truncate font-mono text-[9px] uppercase text-content-muted">
+                    {footLabel}
+                </span>
+                <span className="leader" aria-hidden="true" />
+                <span
+                    className={cn(
+                        "font-mono text-figure-sm",
+                        rating === null || rating === undefined
+                            ? "text-content-muted"
+                            : "text-brand"
+                    )}
+                >
+                    {rating === undefined
+                        ? (footValue ?? "")
+                        : formatRating(rating)}
+                </span>
+            </div>
+        )}
+    </div>
+);
 
 export default GameTile;

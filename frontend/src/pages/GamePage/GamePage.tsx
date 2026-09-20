@@ -1,306 +1,176 @@
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import type { ReviewSort } from "@playrates/shared";
 import type { GameLogWithGame } from "../../api";
-import { getIconFromGameStatus } from "../../constants/gameStatus";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
-import { useGame, useGameStats } from "../../hooks/queries/useGames";
-import { useMyGameLogs } from "../../hooks/queries/useGameLogs";
+import { useNotify } from "../../contexts/NotificationContext";
+import {
+    useGame,
+    useGameStats,
+    useGenres,
+    usePlatforms,
+} from "../../hooks/queries/useGames";
+import {
+    useGameLogMutations,
+    useMyGameLogIds,
+    useMyGameLogs,
+} from "../../hooks/queries/useGameLogs";
 import { useGameReviews } from "../../hooks/queries/useReviews";
 import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
-import ViewGameLogPopup from "../../components/ViewGameLogPopup";
-import ProfilePicture from "../../components/ProfilePicture";
-import GamePlatform from "../../components/GamePlatform";
-
-type OpenModal = "view" | "edit" | "create" | null;
+import EmptyPlate from "../../components/ui/EmptyPlate";
+import { TextSkeleton } from "../../components/ui/Skeleton";
+import GameCoverPlate from "./components/GameCoverPlate";
+import RatingPlate from "./components/RatingPlate";
+import CirculationPlate from "./components/CirculationPlate";
+import ReaderNotes from "./components/ReaderNotes";
+import { buildGameFacts } from "./lib/gameFacts";
+import { formatDate } from "../../lib/format";
 
 const GamePage = () => {
-    const { user: currentUser } = useAuth();
-    const { openLogin } = useAccountForm();
     const { gameID } = useParams();
-
     const gameId = Number(gameID);
-    // a real query keyed on the id, so navigating between two games refetches.
-    // The old effect had an empty dependency array and kept the stale game.
-    const { data: game } = useGame(
-        Number.isFinite(gameId) ? gameId : undefined
+    const { user } = useAuth();
+    const { openLogin } = useAccountForm();
+    const notify = useNotify();
+
+    const [sort, setSort] = useState<ReviewSort>("recent");
+    const [editing, setEditing] = useState(false);
+
+    const { data: game, isLoading, isError } = useGame(gameId);
+    const { data: stats } = useGameStats(gameId);
+    const { data: platforms } = usePlatforms();
+    const { data: genres } = useGenres();
+    const { data: myLogIds } = useMyGameLogIds();
+    const { data: reviews, isLoading: reviewsLoading } = useGameReviews(
+        gameId,
+        sort
     );
-    const { data: stats } = useGameStats(game?.id);
-    const { data: reviewsPage } = useGameReviews(game?.id);
-    const { data: myLogsPage } = useMyGameLogs();
+    const { save } = useGameLogMutations();
 
-    const [modal, setModal] = useState<OpenModal>(null);
-    const [hoveringLogCount, setHoveringLogCount] = useState(false);
+    const log = useMemo(
+        () => (myLogIds ?? []).find((entry) => entry.gameId === gameId),
+        [myLogIds, gameId]
+    );
 
-    const gameReviews = useMemo(() => reviewsPage?.data ?? [], [reviewsPage]);
+    /* Only needed once the editor opens, so it rides along with the list the
+       page already holds rather than adding a request per view. */
+    const { data: myLogs } = useMyGameLogs(undefined, { limit: 100 });
+    const fullLog: GameLogWithGame | undefined = (myLogs?.data ?? []).find(
+        (entry) => entry.gameId === gameId
+    );
 
-    const currentPageGameLog: GameLogWithGame | null = useMemo(
+    const facts = useMemo(
         () =>
-            (myLogsPage?.data ?? []).find((log) => log.gameId === game?.id) ??
-            null,
-        [myLogsPage, game]
+            game ? buildGameFacts(game, platforms ?? [], genres ?? []) : [],
+        [game, platforms, genres]
     );
 
-    const hasLog = currentPageGameLog !== null;
+    const quickLog = async (status: "backlog" | "wishlist") => {
+        if (!game) return;
+        try {
+            await save.mutateAsync({ gameId, input: { status } });
+            notify(`${game.title} moved to your ${status}`, "success");
+        } catch {
+            notify("Couldn't update your shelf", "error");
+        }
+    };
 
-    /**
-     * The same three-way condition was previously written out four times, for
-     * the class, the handler, the label and the icon.
-     */
-    const logButtonState = !currentUser
-        ? "anonymous"
-        : hasLog
-          ? "logged"
-          : "unlogged";
+    if (isLoading) {
+        return (
+            <div className="grid gap-10 lg:grid-cols-[300px_minmax(0,1fr)]">
+                <div className="aspect-3/4 bg-surface-sunken inset-shadow-press" />
+                <TextSkeleton lines={6} />
+            </div>
+        );
+    }
 
-    const LOG_BUTTON = {
-        anonymous: {
-            className: "button-primary",
-            label: "Log in to Add",
-            icon: "fa-arrow-right-to-bracket",
-            onClick: openLogin,
-        },
-        logged: {
-            className: "button-secondary",
-            label: "View my Log",
-            icon: "fa-eye",
-            onClick: () => setModal("view"),
-        },
-        unlogged: {
-            className: "button-primary",
-            label: "Log this Game",
-            icon: "fa-plus",
-            onClick: () => setModal("create"),
-        },
-    } as const;
-
-    const logButton = LOG_BUTTON[logButtonState];
+    if (isError || !game) {
+        return (
+            <EmptyPlate
+                eyebrow="Not on file"
+                title="That game isn't in the catalogue"
+                body="The link may be wrong, or the title may have been removed since it was shared."
+            />
+        );
+    }
 
     return (
-        <section className="mx-auto mt-8 max-w-[1200px] font-lexend lg:mt-20">
-            <span className="flex flex-col gap-8 md:flex-row">
-                {/* Left column */}
-                <div className="flex gap-4">
-                    <div className="flex w-max flex-col gap-3">
-                        <img
-                            src={game?.coverUrl ?? ""}
-                            alt={game?.title ?? ""}
-                            className="max-h-64 max-w-52 rounded-md md:max-h-80 md:min-w-52 md:max-w-max"
-                        />
-                        <div className="flex w-full flex-col gap-2">
+        <article className="flex flex-col gap-7">
+            <div className="grid items-start gap-10 lg:grid-cols-[300px_minmax(0,1fr)]">
+                <GameCoverPlate
+                    game={game}
+                    log={log}
+                    isSignedIn={!!user}
+                    facts={facts}
+                    onPrimary={() => (user ? setEditing(true) : openLogin())}
+                    onQuickLog={(status) => void quickLog(status)}
+                    isSaving={save.isPending}
+                />
+
+                <div className="flex min-w-0 flex-col gap-6">
+                    <header>
+                        <p className="flex items-center gap-2.5 font-mono text-label uppercase text-accent">
                             <span
-                                className="relative flex w-full items-center justify-center gap-2 rounded border-2 border-content-secondary px-2.5 py-1.5 text-content"
-                                onMouseOver={() => setHoveringLogCount(true)}
-                                onMouseOut={() => setHoveringLogCount(false)}
-                            >
-                                <p>
-                                    {stats?.logCount ?? 0}{" "}
-                                    {stats?.logCount === 1 ? "Log" : "Logs"}
-                                </p>
-                                <i className="fa-solid fa-chart-bar"></i>
-
-                                {/* Log count hover menu */}
-                                {hoveringLogCount ? (
-                                    <div className="hover-menu fade-in-right absolute -right-36 top-0 flex w-max flex-col gap-1 px-3 py-2 shadow-md">
-                                        {[
-                                            "played",
-                                            "playing",
-                                            "backlog",
-                                            "wishlist",
-                                        ].map((status) => (
-                                            <span
-                                                className="flex items-center gap-2 font-light"
-                                                key={status}
-                                            >
-                                                <i
-                                                    className={getIconFromGameStatus(
-                                                        status
-                                                    )}
-                                                ></i>
-                                                <p>
-                                                    {status
-                                                        .slice(0, 1)
-                                                        .toUpperCase() +
-                                                        status.slice(1)}
-                                                    :
-                                                </p>
-                                                <p>
-                                                    {stats?.byStatus[status] ??
-                                                        0}
-                                                </p>
-                                            </span>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <></>
-                                )}
-                            </span>
-                            <span className="flex w-full items-center justify-center gap-2 rounded border-2 border-content-secondary px-2.5 py-1.5 text-content">
-                                {stats?.averageRating !== null &&
-                                stats?.averageRating !== undefined ? (
-                                    <p>{stats.averageRating} Avg. Rating</p>
-                                ) : (
-                                    <p>No Rating</p>
-                                )}
-                                <i className="fa-solid fa-star"></i>
-                            </span>
-                            <button
-                                className={`${logButton.className} flex items-center justify-center gap-3`}
-                                onClick={logButton.onClick}
-                            >
-                                <p>{logButton.label}</p>
-                                <i className={`fa-solid ${logButton.icon}`}></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div className="flex flex-col gap-1 md:hidden">
-                        <h2 className="text-2xl tracking-wide text-content sm:text-3xl">
-                            {game?.title}
-                        </h2>
-                        <p className="font-light text-content-secondary sm:text-lg">
-                            Released on{" "}
-                            <span className="font-normal">
-                                {game?.releaseDate &&
-                                game?.releaseDate !== "TBA"
-                                    ? new Date(game?.releaseDate)
-                                          .toUTCString()
-                                          .slice(5, 16)
-                                    : "TBA"}
-                            </span>
+                                aria-hidden
+                                className="h-px w-6 bg-accent"
+                            />
+                            {game.releaseDate
+                                ? `Released ${formatDate(game.releaseDate)}`
+                                : "Release date unknown"}
                         </p>
-                    </div>
-                </div>
-                {/* Right column */}
-                <div className="flex w-full flex-col gap-2">
-                    <h2 className="hidden text-4xl tracking-wide text-content md:block">
-                        {game?.title}
-                    </h2>
-                    <p className="hidden text-xl font-light text-content-secondary md:block">
-                        Released on{" "}
-                        <span className="font-normal">
-                            {game?.releaseDate && game?.releaseDate !== "TBA"
-                                ? new Date(game?.releaseDate)
-                                      .toUTCString()
-                                      .slice(5, 16)
-                                : "TBA"}
-                        </span>
-                    </p>
-                    <p className="line-clamp-[8] text-center text-content-secondary md:mt-5 md:text-left">
-                        {game?.description
-                            ? game.description
-                            : "This game currently does not have a description..."}
-                    </p>
-                    <span className="mt-2 flex flex-wrap justify-center gap-3 md:justify-start">
-                        {game?.platforms.map((platform) => {
-                            return (
-                                <GamePlatform
-                                    platform={platform}
-                                    size="base"
-                                    key={platform}
-                                />
-                            );
-                        })}
-                    </span>
-                    {/* Reviews Section */}
-                    <div className="mt-12">
-                        {/* Header and sorting */}
-                        <span className="flex items-center justify-between">
-                            <h2 className="text-2xl text-content">Reviews</h2>
-                            <p className="flex gap-1 font-light text-content">
-                                Sort By:{" "}
-                                <span className="flex items-center gap-1.5 text-brand">
-                                    <span className="font-normal">
-                                        Most Recent
-                                    </span>
-                                    <i className="fas fa-chevron-down text-xs"></i>
-                                </span>
+                        <h1 className="mt-3 font-display text-display text-content">
+                            {game.title}
+                        </h1>
+
+                        {game.description ? (
+                            <p className="mt-3.5 max-w-[62ch] text-body text-content-secondary">
+                                {game.description}
                             </p>
-                        </span>
-                        <div className="mt-8 flex flex-col gap-5">
-                            {gameReviews?.length ? (
-                                gameReviews?.map((review) => (
-                                    <div key={review.id} className="flex gap-3">
-                                        <ProfilePicture
-                                            variant="review"
-                                            username={review.author.username}
-                                            file={
-                                                review.author.pictureUrl ?? ""
-                                            }
-                                            link={true}
-                                        />
-                                        <div className="flex flex-col gap-0.5 pt-1">
-                                            <span className="flex items-center gap-2">
-                                                <Link
-                                                    className="hover-text-white text-xl font-semibold"
-                                                    to={`/user/${review.author.username}`}
-                                                >
-                                                    {review.author.username}
-                                                </Link>
-                                                {review.platform && (
-                                                    <GamePlatform
-                                                        platform={
-                                                            review.platform
-                                                        }
-                                                        size="xs"
-                                                    />
-                                                )}
-                                            </span>
-                                            <span className="flex items-center gap-1 text-sm">
-                                                <p className="font-light text-content">
-                                                    {review.rating ?? "?"}
-                                                    /10
-                                                </p>
-                                                <i className="fas fa-star text-brand"></i>
-                                            </span>
-                                            <p className="mt-1.5 text-content-secondary">
-                                                {review.body}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <h2 className="text-center text-xl text-content-secondary">
-                                    No Reviews found for this game...
-                                </h2>
-                            )}
-                        </div>
-                    </div>
+                        ) : (
+                            /* Descriptions are backfilled on first view, so the
+                               first visitor always lands on an empty one. */
+                            <p className="mt-3.5 max-w-[62ch] border border-dashed border-strong bg-surface-sunken px-4 py-3 text-body-sm text-content-muted">
+                                No description on file yet. Reload in a moment —
+                                we fetch it the first time someone opens a game.
+                            </p>
+                        )}
+                    </header>
+
+                    {stats && (
+                        <>
+                            <RatingPlate
+                                average={stats.averageRating}
+                                ratingCount={stats.ratingCount}
+                                buckets={stats.ratingBuckets}
+                            />
+                            <CirculationPlate
+                                byStatus={stats.byStatus}
+                                logCount={stats.logCount}
+                            />
+                        </>
+                    )}
+
+                    <ReaderNotes
+                        reviews={reviews?.data ?? []}
+                        total={reviews?.meta.total ?? 0}
+                        sort={sort}
+                        onSortChange={setSort}
+                        isLoading={reviewsLoading}
+                    />
                 </div>
-            </span>
+            </div>
 
-            {modal === "view" && currentPageGameLog && (
-                <ViewGameLogPopup
-                    closePopup={() => setModal(null)}
-                    isMyAccount={true}
-                    userLoggedIn={!!currentUser}
-                    gamelog={currentPageGameLog}
-                    openEdit={() => setModal("edit")}
-                    openCreate={() => setModal("create")}
-                    currentUserSharesLog={true}
-                    redirectAndOpenView={() => {}}
-                    profilePage={false}
-                />
-            )}
-
-            {modal === "create" && game && (
+            {editing && (
                 <CreateOrEditGameLogPopup
-                    closePopup={() => setModal(null)}
-                    editing={false}
-                    gameID={game.id}
-                    // the mutation invalidates the caches; no manual refetches
-                    viewUpdatedLog={() => setModal("view")}
+                    closePopup={() => setEditing(false)}
+                    viewUpdatedLog={() => setEditing(false)}
+                    gamelog={fullLog ?? null}
+                    gameID={gameId}
+                    editing={!!fullLog}
                 />
             )}
-
-            {modal === "edit" && currentPageGameLog && (
-                <CreateOrEditGameLogPopup
-                    closePopup={() => setModal(null)}
-                    gamelog={currentPageGameLog}
-                    editing={true}
-                    viewUpdatedLog={() => setModal("view")}
-                />
-            )}
-        </section>
+        </article>
     );
 };
 

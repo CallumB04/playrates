@@ -1,8 +1,6 @@
 import type { Profile, FriendEdge } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
 import RemoveFriendPopup from "./RemoveFriendPopup";
-import MobileSearchPopup from "./MobileSearchPopup";
-import MobileGameSectionPopup from "./MobileGameSectionPopup";
 import FriendsPopup from "./FriendsPopup";
 import EditProfilePopup from "./EditProfilePopup";
 import ViewGameLogPopup from "../../../components/ViewGameLogPopup";
@@ -10,10 +8,9 @@ import CreateOrEditGameLogPopup from "../../../components/CreateOrEditGameLogPop
 import DeleteGameLogPopup from "../../../components/gamelog/DeleteGameLogPopup";
 
 /**
- * Which modal, if any, the profile page is showing. A discriminated union
- * rather than a boolean per popup: the old page carried ten separate
- * visibility flags plus a "currently visible log", which allowed states like
- * two popups open at once, and forced non-null assertions at every use.
+ * Which modal the page is showing. A union rather than a flag each, so two
+ * open at once isn't representable, and the ones acting on a game log carry it
+ * rather than reading it from somewhere else.
  */
 export type ProfileModal =
     | { kind: "view"; log: GameLogWithGame }
@@ -23,8 +20,6 @@ export type ProfileModal =
     | { kind: "removeFriend" }
     | { kind: "friends" }
     | { kind: "editProfile" }
-    | { kind: "mobileSearch" }
-    | { kind: "mobileSection" }
     | null;
 
 interface ProfileModalsProps {
@@ -34,11 +29,11 @@ interface ProfileModalsProps {
     isMyAccount: boolean;
     isSignedIn: boolean;
     currentUsername?: string;
-    currentUserGameLogs: GameLogWithGame[];
+    /** Every game the viewer has logged. A complete set, not a page of
+     *  one — a partial answer makes "View my log" disappear at random. */
+    myLogGameIds: Set<number>;
     acceptedFriends: FriendEdge[];
     friendsLoading: boolean;
-    activeGamesSection: string;
-    onSelectSection: (section: string) => void;
     onRemoveFriend: () => Promise<void>;
     navigate: (to: string) => void;
 }
@@ -51,14 +46,35 @@ const ProfileModals = ({
     isMyAccount,
     isSignedIn,
     currentUsername,
-    currentUserGameLogs,
+    myLogGameIds,
     acceptedFriends,
     friendsLoading,
-    activeGamesSection,
-    onSelectSection,
     onRemoveFriend,
     navigate,
 }: ProfileModalsProps) => {
+    /* Three states, computed once: your own log is editable, a game you have
+       also logged links to your copy, anything else you can start. */
+    const viewAction = (log: GameLogWithGame) => {
+        if (!isSignedIn) return undefined;
+        if (isMyAccount) {
+            return {
+                label: "Edit",
+                onSelect: () => setModal({ kind: "edit", log }),
+            };
+        }
+        if (myLogGameIds.has(log.gameId)) {
+            return {
+                label: "View my log",
+                onSelect: () =>
+                    navigate(`/user/${currentUsername}?log=${log.gameId}`),
+            };
+        }
+        return {
+            label: "Add this game",
+            onSelect: () => setModal({ kind: "create", log }),
+        };
+    };
+
     if (!modal) return null;
 
     return (
@@ -68,26 +84,6 @@ const ProfileModals = ({
                     closePopup={() => setModal(null)}
                     confirmRemove={onRemoveFriend}
                     friendName={targetUser.username}
-                />
-            )}
-
-            {modal.kind === "mobileSearch" && (
-                <MobileSearchPopup
-                    closePopup={() => setModal(null)}
-                    onSearch={() => {}}
-                />
-            )}
-
-            {modal.kind === "mobileSection" && (
-                <MobileGameSectionPopup
-                    closePopup={() => setModal(null)}
-                    currentActiveSection={activeGamesSection}
-                    selectSection={(section) => {
-                        onSelectSection(section);
-                        navigate(
-                            `/user/${targetUser.username}?type=${section}`
-                        );
-                    }}
                 />
             )}
 
@@ -110,21 +106,7 @@ const ProfileModals = ({
                 <ViewGameLogPopup
                     closePopup={() => setModal(null)}
                     gamelog={modal.log}
-                    isMyAccount={isMyAccount}
-                    userLoggedIn={isSignedIn}
-                    currentUserSharesLog={currentUserGameLogs.some(
-                        (l) => l.gameId === modal.log.gameId
-                    )}
-                    openEdit={() => setModal({ kind: "edit", log: modal.log })}
-                    openCreate={() =>
-                        setModal({ kind: "create", log: modal.log })
-                    }
-                    redirectAndOpenView={() =>
-                        navigate(
-                            `/user/${currentUsername}?log=${modal.log.gameId}`
-                        )
-                    }
-                    profilePage
+                    primaryAction={viewAction(modal.log)}
                 />
             )}
 

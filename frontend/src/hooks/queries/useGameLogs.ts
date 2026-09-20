@@ -1,33 +1,69 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import type { GameLogInput } from "@playrates/shared";
 import {
     deleteGameLog,
+    fetchMyGameLogIds,
     fetchMyGameLogs,
     fetchUserGameLogs,
+    fetchUserStats,
     queryKeys,
     saveGameLog,
+    type GameLogPage,
 } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 
-export const useMyGameLogs = (status?: string) => {
+export const useMyGameLogs = (status?: string, page?: GameLogPage) => {
     const { user } = useAuth();
     return useQuery({
-        queryKey: queryKeys.gameLogs.mine(status),
-        queryFn: () => fetchMyGameLogs(status),
+        queryKey: queryKeys.gameLogs.mine(status, page?.page),
+        queryFn: () => fetchMyGameLogs(status, page),
         enabled: !!user,
+        placeholderData: keepPreviousData,
     });
 };
 
-export const useUserGameLogs = (username: string, status?: string) =>
+export const useUserGameLogs = (
+    username: string,
+    status?: string,
+    page?: GameLogPage
+) =>
     useQuery({
-        queryKey: queryKeys.gameLogs.byUsername(username, status),
-        queryFn: () => fetchUserGameLogs(username, status),
+        queryKey: queryKeys.gameLogs.byUsername(username, status, page?.page),
+        queryFn: () => fetchUserGameLogs(username, status, page),
+        enabled: !!username,
+        placeholderData: keepPreviousData,
+    });
+
+/**
+ * Every game the caller has logged, as a lookup. Unpaginated on purpose — a
+ * tile asking "have I logged this?" needs a complete answer, and the paged
+ * list gave a wrong one past the first page.
+ */
+export const useMyGameLogIds = () => {
+    const { user } = useAuth();
+    return useQuery({
+        queryKey: queryKeys.gameLogs.mineIds,
+        queryFn: fetchMyGameLogIds,
+        enabled: !!user,
+        staleTime: 60_000,
+    });
+};
+
+export const useUserStats = (username: string, year?: number) =>
+    useQuery({
+        queryKey: queryKeys.userStats(username, year),
+        queryFn: () => fetchUserStats(username, year),
         enabled: !!username,
     });
 
 /**
- * Invalidation replaces the old pattern of passing `refetch` functions down
- * through props and calling two or three of them by hand after every write.
+ * Writes invalidate every query a log affects — the lists, the game's stats
+ * and the site totals — so no caller has to know what else went stale.
  */
 export const useGameLogMutations = () => {
     const queryClient = useQueryClient();

@@ -34,9 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const queryClient = useQueryClient();
     const notify = useNotify();
 
-    // restore an existing session, then track changes.
-    // Replaces reading a raw user id out of localStorage, which meant typing
-    // any id into devtools logged you in as that user.
+    // restore any existing session, then follow it
     useEffect(() => {
         let active = true;
 

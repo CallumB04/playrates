@@ -15,8 +15,7 @@ export const useUpdateProfile = () => {
     return useMutation({
         mutationFn: (input: UpdateProfileInput) => updateMyProfile(input),
         onSuccess: (profile) => {
-            // seed both caches so the page updates without a refetch, which is
-            // what the old "temporary bio/username state" existed to fake
+            // seed both caches so the page updates without waiting on a refetch
             queryClient.setQueryData(queryKeys.profiles.me, profile);
             queryClient.setQueryData(
                 queryKeys.profiles.byUsername(profile.username),

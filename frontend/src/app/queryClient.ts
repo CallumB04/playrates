@@ -2,9 +2,8 @@ import { QueryClient } from "@tanstack/react-query";
 import { ApiError } from "../api";
 
 /**
- * The old client was `new QueryClient()` with no options, so every query
- * retried three times — including 404s, which turned a missing profile into
- * four requests and a long wait before the error screen appeared.
+ * Retries are deliberately off for 4xx: a 404 will not become a 200, and
+ * retrying it only delays the error state the UI wants to show.
  */
 export const queryClient = new QueryClient({
     defaultOptions: {

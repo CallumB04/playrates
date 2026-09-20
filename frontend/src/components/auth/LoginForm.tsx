@@ -1,3 +1,4 @@
+import { buttonClass } from "../ui/Button";
 import { useState, type FormEvent } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
@@ -64,30 +65,15 @@ const LoginForm = ({ initialEmail = "" }: LoginFormProps) => {
             <div className="mx-auto w-11/12 space-y-3 pt-6 sm:mx-0 sm:w-full sm:pt-8 md:pt-10">
                 <button
                     type="submit"
-                    className="button-primary w-full sm:rounded"
+                    className={buttonClass("primary", "w-full")}
                     disabled={isSubmitting}
                 >
                     Log in
                 </button>
-                <div className="flex w-full items-center justify-between">
-                    <div className="flex flex-row items-center gap-x-[6px]">
-                        {/* Supabase persists the session itself, so there is
-                            no separate "remember me" to honour */}
-                        <input
-                            id="remember"
-                            name="remember"
-                            type="checkbox"
-                            defaultChecked
-                            disabled
-                        />
-                        <label htmlFor="remember">Remember me</label>
-                    </div>
-                    <p className="hover-text-purple">Forgot password?</p>
-                </div>
             </div>
 
             {isSubmitting && (
-                <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-overlay-loading">
+                <div className="absolute inset-0 flex items-center justify-center bg-overlay-loading">
                     <LoadingSpinner size="lg" />
                 </div>
             )}

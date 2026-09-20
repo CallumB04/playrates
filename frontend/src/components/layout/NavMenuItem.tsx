@@ -21,15 +21,16 @@ const NavMenuItem = ({
         variant === "desktop" ? item.desktopClassName : item.mobileClassName;
     const className = cn(baseClassName, override);
 
+    const { Icon } = item;
     const content = (
         <>
-            <i className={`${item.icon} text-brand`} aria-hidden="true"></i>
+            <Icon size={16} className="text-brand" aria-hidden />
             <p>{item.label}</p>
         </>
     );
 
-    // Log in / Sign up have no destination, so they are real buttons rather
-    // than the clickable <p> elements they used to be
+    // Log in / Sign up open a modal rather than navigating, so they render
+    // as buttons
     if (!item.to) {
         return (
             <button

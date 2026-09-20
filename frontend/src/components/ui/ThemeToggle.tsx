@@ -1,4 +1,5 @@
 import { useTheme } from "../../contexts/ThemeContext";
+import Toggle from "./Toggle";
 
 interface ThemeToggleProps {
     className?: string;
@@ -6,23 +7,17 @@ interface ThemeToggleProps {
 
 /** Switches the whole app's theme, not just the page it sits on. */
 const ThemeToggle = ({ className }: ThemeToggleProps) => {
-    const { theme, toggleTheme } = useTheme();
-    const isDark = theme === "dark";
+    const { theme, setTheme } = useTheme();
 
     return (
-        <button
-            type="button"
-            onClick={toggleTheme}
-            aria-pressed={isDark}
-            title={`Switch to ${isDark ? "light" : "dark"} mode`}
-            className={`flex items-center gap-2 rounded-lg border border-strong px-3 py-2 font-lexend text-sm text-content transition-colors hover:border-brand hover:text-brand ${className ?? ""}`}
-        >
-            <i
-                className={`fa-solid ${isDark ? "fa-moon" : "fa-sun"}`}
-                aria-hidden="true"
-            ></i>
-            <span>{isDark ? "Dark" : "Light"}</span>
-        </button>
+        <Toggle
+            checked={theme === "dark"}
+            onChange={(dark) => setTheme(dark ? "dark" : "light")}
+            offLabel="Day"
+            label="Night"
+            labelPosition="flanked"
+            className={className}
+        />
     );
 };
 

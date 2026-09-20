@@ -1,31 +1,22 @@
+import { CircleCheck, CircleX, Clock } from "lucide-react";
 import {
     useNotificationState,
     type NotificationType,
 } from "../contexts/NotificationContext";
+import type { IconComponent } from "../lib/icons";
+import { cn } from "../lib/cn";
 
 interface NotificationStyle {
-    textColor: string;
-    bgColor: string;
-    iconName: string;
+    /** The tone rule down the leading edge, and the icon that matches it. */
+    tone: string;
+    Icon: IconComponent;
 }
 
-/** Static map, so the unsafe non-null assertion on the old lookup is gone. */
+/** Static map: every type has an entry, so the lookup cannot miss. */
 const NOTIFICATION_STYLES: Record<NotificationType, NotificationStyle> = {
-    success: {
-        textColor: "text-success",
-        bgColor: "bg-success-subtle",
-        iconName: "circle-check",
-    },
-    error: {
-        textColor: "text-danger",
-        bgColor: "bg-danger-subtle",
-        iconName: "circle-xmark",
-    },
-    pending: {
-        textColor: "text-warning",
-        bgColor: "bg-warning-subtle",
-        iconName: "clock",
-    },
+    success: { tone: "border-l-success text-success", Icon: CircleCheck },
+    error: { tone: "border-l-danger text-danger", Icon: CircleX },
+    pending: { tone: "border-l-status-playing text-status-playing", Icon: Clock },
 };
 
 /**
@@ -37,8 +28,7 @@ const Notification = () => {
 
     if (!notification) return null;
 
-    const { textColor, bgColor, iconName } =
-        NOTIFICATION_STYLES[notification.type];
+    const { tone, Icon } = NOTIFICATION_STYLES[notification.type];
 
     return (
         <p
@@ -46,10 +36,17 @@ const Notification = () => {
             key={notification.id}
             role="status"
             aria-live="polite"
-            className={`${textColor} ${bgColor} notification-fadeout fixed bottom-8 right-1/2 z-50 mx-auto flex h-max w-max translate-x-1/2 flex-row items-center gap-x-2 rounded-md px-4 py-2 font-lexend text-lg sm:right-8 sm:translate-x-0`}
+            className={cn(
+                "fixed right-1/2 bottom-8 z-50 flex h-max w-max translate-x-1/2 animate-notification items-center gap-3",
+                "border border-strong border-l-[3px] bg-surface-raised px-4 py-3 shadow-toast",
+                "sm:right-8 sm:translate-x-0",
+                tone
+            )}
         >
-            <i className={`fa-regular fa-${iconName}`} aria-hidden="true"></i>
-            <span>{notification.text}</span>
+            <Icon size={16} aria-hidden />
+            <span className="text-body-sm font-medium text-content">
+                {notification.text}
+            </span>
         </p>
     );
 };

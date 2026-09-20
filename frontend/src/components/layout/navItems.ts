@@ -1,19 +1,25 @@
 import type { Profile } from "@playrates/shared";
-import { getIconFromGameStatus } from "../../constants/gameStatus";
+import {
+    Home,
+    LogIn,
+    LogOut,
+    Search,
+    Settings,
+    User,
+    UserPlus,
+} from "lucide-react";
+import { getStatusIcon, type IconComponent } from "../../lib/icons";
 
 export type NavMenu = "desktop" | "mobile";
 
 export interface NavItem {
     key: string;
     label: string;
-    icon: string;
+    Icon: IconComponent;
     to?: string;
     action?: "signOut" | "login" | "signup";
-    /**
-     * Which menus this item belongs to. Not every item is in both: "Browse
-     * Games" sits in the mobile menu but is a separate top-level link on
-     * desktop, and login/signup are top-level buttons there too.
-     */
+    /* Which menus this item appears in. Not everything is in both — "Browse
+       Games" and login/signup are top-level on desktop. */
     menus?: NavMenu[];
     /**
      * Per-item spacing overrides, kept per menu so both stay pixel-identical
@@ -28,16 +34,12 @@ export const NAV_DIVIDER = "divider" as const;
 
 export type NavEntry = NavItem | typeof NAV_DIVIDER;
 
-/**
- * The navbar previously wrote its whole link set out twice — once for the
- * desktop dropdown and once for the mobile menu — with different class
- * strings. Both now render from this.
- */
+/** One definition, rendered by both the desktop dropdown and the mobile menu. */
 export const buildNavItems = (user: Profile | null): NavEntry[] => {
     const home: NavItem = {
         key: "home",
         label: "Home",
-        icon: "fas fa-house",
+        Icon: Home,
         to: "/",
         desktopClassName: "mt-3 pl-[6px]",
         mobileClassName: "gap-[11px] pl-[6px]",
@@ -50,21 +52,21 @@ export const buildNavItems = (user: Profile | null): NavEntry[] => {
             {
                 key: "library",
                 label: "Browse Games",
-                icon: "fas fa-magnifying-glass",
+                Icon: Search,
                 to: "/library",
                 menus: ["mobile"],
             },
             {
                 key: "login",
                 label: "Log In",
-                icon: "fas fa-sign-in-alt",
+                Icon: LogIn,
                 action: "login",
                 menus: ["mobile"],
             },
             {
                 key: "signup",
                 label: "Sign Up",
-                icon: "fas fa-user-plus",
+                Icon: UserPlus,
                 action: "signup",
                 menus: ["mobile"],
                 mobileClassName: "gap-[8px]",
@@ -78,7 +80,7 @@ export const buildNavItems = (user: Profile | null): NavEntry[] => {
     ): NavItem => ({
         key: status,
         label,
-        icon: getIconFromGameStatus(status) ?? "",
+        Icon: getStatusIcon(status) ?? Home,
         to: `/user/${user.username}?type=${status}`,
     });
 
@@ -87,7 +89,7 @@ export const buildNavItems = (user: Profile | null): NavEntry[] => {
         {
             key: "profile",
             label: "My Profile",
-            icon: "fa-solid fa-user",
+            Icon: User,
             to: `/user/${user.username}`,
             desktopClassName: "gap-[10px] pl-2",
             mobileClassName: "gap-[14px]",
@@ -95,7 +97,7 @@ export const buildNavItems = (user: Profile | null): NavEntry[] => {
         {
             key: "library",
             label: "Browse Games",
-            icon: "fas fa-magnifying-glass",
+            Icon: Search,
             to: "/library",
             // desktop reaches the library from a top-level nav link instead
             menus: ["mobile"],
@@ -109,13 +111,13 @@ export const buildNavItems = (user: Profile | null): NavEntry[] => {
         {
             key: "settings",
             label: "Settings",
-            icon: "fa-solid fa-cog",
+            Icon: Settings,
             to: "/settings",
         },
         {
             key: "signout",
             label: "Sign Out",
-            icon: "fa-solid fa-right-from-bracket",
+            Icon: LogOut,
             to: "/",
             action: "signOut",
         },

@@ -1,72 +1,111 @@
-import { useWindowSize } from "../../hooks/useWindowSize";
 import type { PaginationState } from "../../hooks/usePagination";
+import { ELLIPSIS, pageRange } from "../../lib/pageRange";
+import { formatCount } from "../../lib/format";
+import { cn } from "../../lib/cn";
 
 interface PaginationProps {
     pagination: PaginationState;
-    /** Ran after a page change, e.g. to scroll back to the top. */
+    /** Fires after any page change, e.g. to scroll back to the top. */
     onChange?: () => void;
+    className?: string;
 }
 
-/**
- * The same block was written out twice, in ProfilePage and LibraryPage,
- * including the disabled styling and the label/arrow swap at sm.
- *
- * Behaviour change: the buttons now carry a real `disabled` attribute. They
- * previously stayed enabled and their handler did nothing, so they were
- * focusable and clickable at the ends of the range.
- */
-const Pagination = ({ pagination, onChange }: PaginationProps) => {
-    const { width } = useWindowSize();
-    const showLabels = width >= 640;
-    const { page, pageCount, canPrev, canNext, prev, next } = pagination;
+const SLOT =
+    "plate-press min-w-[34px] border px-2 py-2 text-center font-mono text-[11.5px] font-medium " +
+    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
-    const enabledStyles =
-        "border-content text-content hover:border-brand hover:text-brand";
-    const disabledStyles = "border-content-disabled text-content-disabled";
+const STEP =
+    "border-strong bg-surface-raised text-content-secondary hover:border-brand " +
+    "active:inset-shadow-press " +
+    "disabled:border-subtle disabled:bg-transparent disabled:text-content-muted disabled:opacity-60";
 
-    const handle = (move: () => void) => () => {
-        move();
+/** "Showing 1–28 of 184,662" — the range this page actually covers. */
+export const PaginationSummary = ({
+    pagination: { page, perPage, total },
+    className,
+}: {
+    pagination: PaginationState;
+    className?: string;
+}) => {
+    if (total === 0) return null;
+    const first = (page - 1) * perPage + 1;
+    const last = Math.min(page * perPage, total);
+    return (
+        <p
+            className={cn(
+                "font-mono text-label uppercase text-content-muted",
+                className
+            )}
+        >
+            Showing {formatCount(first)}–{formatCount(last)} of{" "}
+            {formatCount(total)}
+        </p>
+    );
+};
+
+const Pagination = ({ pagination, onChange, className }: PaginationProps) => {
+    const { page, pageCount, canPrev, canNext, next, prev, setPage } =
+        pagination;
+    if (pageCount <= 1) return null;
+
+    const go = (fn: () => void) => () => {
+        fn();
         onChange?.();
     };
 
     return (
-        <div className="mx-auto mb-4 mt-12 flex w-max items-center justify-center gap-6">
+        <nav aria-label="Pagination" className={cn("flex gap-[3px]", className)}>
             <button
-                className={`${canPrev ? enabledStyles : disabledStyles} button-outline flex h-10 w-16 items-center justify-center sm:w-28`}
-                onClick={handle(prev)}
+                type="button"
+                onClick={go(prev)}
                 disabled={!canPrev}
                 aria-label="Previous page"
+                className={cn(SLOT, STEP)}
             >
-                {showLabels ? (
-                    "Previous"
-                ) : (
-                    <i
-                        className="fas fa-arrow-left text-lg"
-                        aria-hidden="true"
-                    ></i>
-                )}
+                ‹
             </button>
 
-            <p className="font-lexend text-content sm:text-lg">
-                Page {page} of {pageCount}
-            </p>
+            {pageRange(page, pageCount).map((slot, i) =>
+                slot === ELLIPSIS ? (
+                    <span
+                        key={`gap-${i}`}
+                        aria-hidden="true"
+                        className={cn(
+                            SLOT,
+                            "border-transparent text-content-muted"
+                        )}
+                    >
+                        {ELLIPSIS}
+                    </span>
+                ) : (
+                    <button
+                        key={slot}
+                        type="button"
+                        onClick={go(() => setPage(slot))}
+                        aria-label={`Page ${slot}`}
+                        aria-current={slot === page ? "page" : undefined}
+                        className={cn(
+                            SLOT,
+                            slot === page
+                                ? "border-brand-deep bg-brand text-content-on-solid shadow-lip"
+                                : STEP
+                        )}
+                    >
+                        {formatCount(slot)}
+                    </button>
+                )
+            )}
 
             <button
-                className={`button-outline flex h-10 w-16 items-center justify-center sm:w-28 ${canNext ? enabledStyles : disabledStyles} `}
-                onClick={handle(next)}
+                type="button"
+                onClick={go(next)}
                 disabled={!canNext}
                 aria-label="Next page"
+                className={cn(SLOT, STEP)}
             >
-                {showLabels ? (
-                    "Next"
-                ) : (
-                    <i
-                        className="fas fa-arrow-right text-lg"
-                        aria-hidden="true"
-                    ></i>
-                )}
+                ›
             </button>
-        </div>
+        </nav>
     );
 };
 

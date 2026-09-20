@@ -1,3 +1,5 @@
+import { cn } from "../../lib/cn";
+
 interface GameCoverProps {
     coverUrl: string | null;
     title: string;
@@ -5,23 +7,37 @@ interface GameCoverProps {
 }
 
 /**
- * Renders a game's cover, or nothing when there isn't one.
+ * The cover, or a pressed well that holds the same space. Don't render
+ * `<img src="">` — the browser resolves the empty string against the current
+ * document and re-requests the page.
  *
- * Rendering `<img src="">` is not harmless: the browser resolves the empty
- * string against the current document and re-requests the page itself. The
- * placeholder block keeps the tile's layout the same either way.
+ * The hatch is a fine diagonal tooth over the art, so a cover reads as printed
+ * stock rather than a photograph dropped onto paper.
  */
 const GameCover = ({ coverUrl, title, className }: GameCoverProps) => {
     if (!coverUrl) {
         return (
             <div
-                className={`${className ?? ""} bg-surface-media`}
+                className={cn(
+                    "bg-surface-sunken inset-shadow-press",
+                    className
+                )}
                 aria-hidden="true"
-            ></div>
+            />
         );
     }
 
-    return <img src={coverUrl} alt={title} className={className} />;
+    return (
+        <span className={cn("relative block overflow-hidden", className)}>
+            <img
+                src={coverUrl}
+                alt={title}
+                loading="lazy"
+                className="size-full object-cover"
+            />
+            <span className="hatch pointer-events-none absolute inset-0" />
+        </span>
+    );
 };
 
 export default GameCover;

@@ -52,7 +52,7 @@ describe("Modal", () => {
         expect(onClose).toHaveBeenCalledOnce();
     });
 
-    /** The stopPropagation that every popup used to repeat by hand. */
+    /** A click inside the panel must not bubble out and close the modal. */
     it("does not close when the panel itself is pressed", () => {
         const onClose = vi.fn();
         render(
@@ -97,7 +97,7 @@ describe("Modal", () => {
         expect(screen.queryByLabelText(/close/i)).toBeNull();
     });
 
-    it("keeps the popup classes so the styling is unchanged", () => {
+    it("merges the caller's classes onto the panel", () => {
         render(
             <Modal onClose={vi.fn()} className="w-[600px]">
                 <p>content</p>
@@ -105,9 +105,11 @@ describe("Modal", () => {
         );
 
         const dialog = screen.getByRole("dialog");
-        expect(dialog.className).toContain("popup");
-        expect(dialog.className).toContain("popup-default");
+        // The panel keeps its own skin and gains the caller's width.
+        expect(dialog.className).toContain("shadow-modal");
         expect(dialog.className).toContain("w-[600px]");
-        expect(dialog.parentElement!.className).toContain("popup-backdrop");
+        expect(dialog.parentElement!.className).toContain(
+            "bg-overlay-backdrop"
+        );
     });
 });

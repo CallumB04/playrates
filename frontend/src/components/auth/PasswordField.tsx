@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import FormField from "./FormField";
 
 interface PasswordFieldProps {
@@ -19,7 +20,7 @@ const PasswordField = ({ error, autoFocus }: PasswordFieldProps) => {
             required
             autoFocus={autoFocus}
             error={error}
-            className="w-full rounded-lg border border-field bg-transparent py-[14px] pl-3 pr-11 focus:border-brand focus:outline-none sm:rounded-none sm:border-0 sm:border-b sm:border-content sm:py-[6px] sm:pl-[2px] sm:pr-10"
+            className="w-full rounded-lg border border-field bg-transparent py-[14px] pr-11 pl-3 focus:border-brand focus:outline-none sm:rounded-none sm:border-0 sm:border-b sm:border-content sm:py-[6px] sm:pr-10 sm:pl-[2px]"
             adornment={
                 <button
                     type="button"
@@ -27,8 +28,10 @@ const PasswordField = ({ error, autoFocus }: PasswordFieldProps) => {
                     title={visible ? "Hide" : "Show"}
                     aria-label={visible ? "Hide password" : "Show password"}
                     aria-pressed={visible}
-                    className={`fa-regular ${visible ? "fa-eye-slash" : "fa-eye"} absolute ${visible ? "right-[11px]" : "right-3"} hover-text-white top-[14px] mr-1 text-xl sm:top-1 sm:mr-0 sm:text-base`}
-                ></button>
+                    className="absolute top-[14px] right-3 mr-1 cursor-pointer text-content transition-colors duration-200 hover:text-brand sm:top-1 sm:mr-0"
+                >
+                    {visible ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
             }
         />
     );

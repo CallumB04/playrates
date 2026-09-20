@@ -8,11 +8,8 @@ vi.stubEnv("VITE_API_BASE_URL", "http://localhost:3000");
 vi.stubEnv("VITE_SUPABASE_URL", "https://test.supabase.co");
 vi.stubEnv("VITE_SUPABASE_ANON_KEY", "test-anon-key");
 
-/**
- * The API client attaches a token from supabase.auth.getSession(). Stubbing
- * the module keeps tests off the network while still exercising the real
- * interceptor, so the Authorization header is genuinely covered.
- */
+/** Stubbing the supabase module keeps tests off the network while the real
+ *  interceptor still runs, so the Authorization header stays covered. */
 vi.mock("../lib/supabase", () => ({
     supabase: {
         auth: {

@@ -9,12 +9,10 @@ import { ThemeProvider } from "../contexts/ThemeContext";
 import ErrorBoundary from "../components/feedback/ErrorBoundary";
 
 /**
- * Order matters:
- *  - QueryClientProvider outermost, because AuthProvider loads the profile
- *    through React Query
- *  - NotificationProvider above AuthProvider, because auth emits toasts
- *  - BrowserRouter inside AccountFormProvider, which closes the modal on
- *    navigation and therefore needs useLocation
+ * Order matters: QueryClientProvider outermost (AuthProvider loads the profile
+ * through it), NotificationProvider above AuthProvider (auth emits toasts), and
+ * BrowserRouter inside AccountFormProvider, which needs useLocation to close
+ * the modal on navigation.
  */
 export const AppProviders = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>

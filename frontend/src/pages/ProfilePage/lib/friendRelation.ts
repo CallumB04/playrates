@@ -1,23 +1,22 @@
+import { UserCheck, UserPlus, Users, UserRoundCheck } from "lucide-react";
 import type { FriendRelation } from "@playrates/shared";
+import type { IconComponent } from "../../../lib/icons";
 
-/** null means "no relationship yet" — the old code used an empty string. */
+/** null means there is no relationship between the two users yet. */
 export type Relation = FriendRelation | null;
 
-/**
- * Pure presentation helpers for the friend button. Extracted from ProfilePage
- * so they can be tested directly: three branches × hover × breakpoint is a lot
- * of behaviour to have buried in a 1,100-line component.
- */
-export const getUserRelationIcon = (relation: Relation): string => {
+/* Presentation for the friend button, kept out of the page so the label
+   matrix (four relations, each varying by hover and breakpoint) is testable. */
+export const getUserRelationIcon = (relation: Relation): IconComponent => {
     switch (relation) {
         case "friend":
-            return "user-group";
+            return Users;
         case "request-sent":
-            return "user-clock";
+            return UserRoundCheck;
         case "request-received":
-            return "user-check";
+            return UserCheck;
         default:
-            return "user-plus";
+            return UserPlus;
     }
 };
 

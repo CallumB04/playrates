@@ -37,10 +37,7 @@ export const acceptFriendRequest = async (
     return data;
 };
 
-/**
- * Replaces decline, cancel and remove. All three were the same operation —
- * destroy the relationship between these two users — under different names.
- */
+/** Declines, cancels or unfriends, depending on the current status. */
 export const removeFriendship = async (userId: string): Promise<void> => {
     await api.delete(`/me/friends/${userId}`);
 };

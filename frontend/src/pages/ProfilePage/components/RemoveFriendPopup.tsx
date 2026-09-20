@@ -1,3 +1,4 @@
+import { buttonClass } from "../../../components/ui/Button";
 import Modal from "../../../components/ui/Modal";
 
 interface RemoveFriendPopupProps {
@@ -32,13 +33,13 @@ const RemoveFriendPopup: React.FC<RemoveFriendPopupProps> = ({
                 </div>
                 <div className="flex w-full flex-col justify-center gap-5 sm:flex-row">
                     <button
-                        className="button-danger w-full sm:w-1/2"
+                        className={buttonClass("danger", "w-full sm:w-1/2")}
                         onClick={handleConfirm}
                     >
                         Remove
                     </button>
                     <button
-                        className="button-outline button-outline-default w-full sm:w-1/2"
+                        className={buttonClass("outline", "w-full sm:w-1/2")}
                         onClick={closePopup}
                     >
                         Cancel

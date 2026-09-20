@@ -1,18 +1,19 @@
+import { X } from "lucide-react";
+
 interface ClosePopupIconProps {
     onClick: () => void;
 }
 
-/**
- * Was a clickable <i>, so it could not be reached or activated by keyboard
- * and announced as nothing. Same glyph and position, now a real button.
- */
+/** Positioned absolutely by the modal that renders it. */
 const ClosePopupIcon: React.FC<ClosePopupIconProps> = ({ onClick }) => (
     <button
         type="button"
         aria-label="Close"
         onClick={onClick}
-        className="fas fa-xmark hover-text-white absolute right-[14px] top-3 px-1 text-2xl"
-    ></button>
+        className="absolute top-3 right-[14px] cursor-pointer px-1 text-content transition-colors duration-200 hover:text-brand"
+    >
+        <X size={24} />
+    </button>
 );
 
 export default ClosePopupIcon;

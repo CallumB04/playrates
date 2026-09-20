@@ -3,54 +3,71 @@ import { useEffect, useMemo, useState } from "react";
 interface UsePaginationOptions {
     total: number;
     perPage: number;
+    /**
+     * Drive the page from outside — for server-driven lists, where the page
+     * belongs in the URL and `total` is the server's count rather than the
+     * length of what we happen to be holding.
+     */
+    page?: number;
+    onPageChange?: (page: number) => void;
 }
 
 export interface PaginationState {
     page: number;
     pageCount: number;
+    total: number;
+    perPage: number;
     canPrev: boolean;
     canNext: boolean;
     next: () => void;
     prev: () => void;
     setPage: (page: number) => void;
-    /** Slices a list down to the current page. */
+    /** Slices a list down to the current page. Uncontrolled mode only. */
     slice: <T>(items: T[]) => T[];
 }
 
-/**
- * `canPrev` and `canNext` are derived rather than stored. The old pages kept
- * them in two pieces of state kept in sync by an effect.
- *
- * Note the page count formula: ProfilePage used Math.floor(n / perPage) + 1,
- * which produces a phantom empty final page whenever the total divides
- * exactly. LibraryPage already used ceil. This uses ceil for both.
- */
+/** `page` is the only state so the flags can't drift from it. Note the ceil:
+ *  floor(total / perPage) + 1 adds an empty last page on exact division. */
 export const usePagination = ({
     total,
     perPage,
+    page: controlledPage,
+    onPageChange,
 }: UsePaginationOptions): PaginationState => {
-    const [page, setPage] = useState(1);
+    const [internalPage, setInternalPage] = useState(1);
+    const isControlled = controlledPage !== undefined;
 
     const pageCount = Math.max(1, Math.ceil(total / perPage));
+    const rawPage = isControlled ? controlledPage : internalPage;
+    const page = Math.min(Math.max(rawPage, 1), pageCount);
 
-    // clamp when the list shrinks or the viewport changes the page size
+    // Clamp when the list shrinks or the viewport changes the page size. The
+    // controlled case is the owner's to fix — we only report the clamped page.
     useEffect(() => {
-        setPage((current) => Math.min(current, pageCount));
-    }, [pageCount]);
+        if (isControlled) return;
+        setInternalPage((current) => Math.min(current, pageCount));
+    }, [pageCount, isControlled]);
 
-    return useMemo(
-        () => ({
+    return useMemo(() => {
+        const goTo = (next: number) => {
+            const clamped = Math.min(Math.max(next, 1), pageCount);
+            if (clamped === page) return;
+            if (!isControlled) setInternalPage(clamped);
+            onPageChange?.(clamped);
+        };
+
+        return {
             page,
             pageCount,
+            total,
+            perPage,
             canPrev: page > 1,
             canNext: page < pageCount,
-            next: () => setPage((p) => Math.min(p + 1, pageCount)),
-            prev: () => setPage((p) => Math.max(p - 1, 1)),
-            setPage: (next: number) =>
-                setPage(Math.min(Math.max(next, 1), pageCount)),
-            slice: <T>(items: T[]) =>
+            next: () => goTo(page + 1),
+            prev: () => goTo(page - 1),
+            setPage: goTo,
+            slice: <T,>(items: T[]) =>
                 items.slice((page - 1) * perPage, page * perPage),
-        }),
-        [page, pageCount, perPage]
-    );
+        };
+    }, [page, pageCount, perPage, total, isControlled, onPageChange]);
 };

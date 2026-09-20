@@ -1,16 +1,35 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameLogWithGame } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
-import { useGames, usePlatforms } from "../../hooks/queries/useGames";
-import { useMyGameLogs } from "../../hooks/queries/useGameLogs";
+import {
+    useGames,
+    useGenres,
+    usePlatforms,
+} from "../../hooks/queries/useGames";
+import {
+    useGameLogMutations,
+    useMyGameLogIds,
+    useMyGameLogs,
+} from "../../hooks/queries/useGameLogs";
+import { useAccountForm } from "../../contexts/AccountFormContext";
+import { useNotify } from "../../contexts/NotificationContext";
 import { useWindowSize } from "../../hooks/useWindowSize";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { usePagination } from "../../hooks/usePagination";
 import GameTile, { type TileAction } from "../../components/game/GameTile";
-import Pagination from "../../components/ui/Pagination";
+import Pagination, {
+    PaginationSummary,
+} from "../../components/ui/Pagination";
+import { TileSkeleton } from "../../components/ui/Skeleton";
+import EmptyPlate from "../../components/ui/EmptyPlate";
 import ViewGameLogPopup from "../../components/ViewGameLogPopup";
 import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
-import LoadingSpinner from "../../components/LoadingSpinner";
+import LibraryFilters from "./components/LibraryFilters";
 import { getLibraryGamesPerPage } from "./lib/gamesPerPage";
+import { useLibraryQuery } from "./lib/useLibraryQuery";
+import { displayStatusFor } from "../../constants/gameStatus";
+import { primaryPlatformLabel } from "../../lib/platforms";
+import { formatCount, formatRating } from "../../lib/format";
 
 type OpenModal =
     | { kind: "view"; log: GameLogWithGame }
@@ -20,277 +39,235 @@ type OpenModal =
 
 const LibraryPage = () => {
     const { user } = useAuth();
-    const { width, height } = useWindowSize();
-    const { data: platforms } = usePlatforms();
+    const { openLogin } = useAccountForm();
+    const notify = useNotify();
+    const { width } = useWindowSize();
+    const { query, setQuery } = useLibraryQuery();
 
-    // filter values
-    const [includeLogged, setIncludeLogged] = useState(true);
-    const [includeAdult, setIncludeAdult] = useState(false);
-    const [search, setSearch] = useState("");
-    const [platform, setPlatform] = useState("all");
+    const { data: platforms } = usePlatforms();
+    const { data: genres } = useGenres();
+    const { data: myLogIds } = useMyGameLogIds();
+    const { save } = useGameLogMutations();
 
     const [modal, setModal] = useState<OpenModal>(null);
 
-    const { data: gamesPage, isLoading: gamesLoading } = useGames({
-        limit: 100,
-    });
-    const { data: logsPage, isLoading: logsLoading } = useMyGameLogs();
+    /* The input is local so typing is instant; the query trails it. */
+    const [searchDraft, setSearchDraft] = useState(query.search);
+    const debouncedSearch = useDebouncedValue(searchDraft, 300);
 
-    const games = useMemo(() => gamesPage?.data ?? [], [gamesPage]);
-    const logs = useMemo(() => logsPage?.data ?? [], [logsPage]);
+    useEffect(() => {
+        if (debouncedSearch === query.search) return;
+        // replace, so the back button doesn't walk every keystroke.
+        setQuery({ search: debouncedSearch }, { replace: true });
+    }, [debouncedSearch, query.search, setQuery]);
+
+    const perPage = getLibraryGamesPerPage(width);
+
+    const { data: page, isLoading, isPlaceholderData } = useGames({
+        page: query.page,
+        limit: perPage,
+        search: query.search || undefined,
+        platform: query.platform || undefined,
+        genre: query.genre || undefined,
+        sort: query.sort,
+        includeAdult: query.includeAdult,
+        excludeLogged: user ? query.excludeLogged : false,
+    });
+
+    const games = page?.data ?? [];
+    const total = page?.meta.total ?? 0;
+
+    const pagination = usePagination({
+        total,
+        perPage,
+        page: query.page,
+        onPageChange: (next) => setQuery({ page: next }),
+    });
 
     const logByGameId = useMemo(
-        () => new Map(logs.map((log) => [log.gameId, log])),
-        [logs]
+        () => new Map((myLogIds ?? []).map((log) => [log.gameId, log])),
+        [myLogIds]
     );
 
-    const filteredGames = useMemo(
-        () =>
-            games
-                .filter((game) =>
-                    includeLogged ? true : !logByGameId.has(game.id)
-                )
-                .filter((game) =>
-                    search
-                        ? game.title
-                              .toLowerCase()
-                              .includes(search.toLowerCase())
-                        : true
-                )
-                .filter((game) =>
-                    platform === "all"
-                        ? true
-                        : game.platforms.includes(platform)
-                )
-                .filter((game) => (includeAdult ? true : !game.isAdult)),
-        [games, includeLogged, includeAdult, search, platform, logByGameId]
-    );
+    /* The full log is only needed once a modal opens, so it is fetched
+       lazily rather than alongside the grid. */
+    const { data: myLogs } = useMyGameLogs(undefined, { limit: 100 });
+    const fullLog = (gameId: number) =>
+        (myLogs?.data ?? []).find((log) => log.gameId === gameId);
 
-    const gamesPerPage = getLibraryGamesPerPage(width, height);
-    const pagination = usePagination({
-        total: filteredGames.length,
-        perPage: gamesPerPage,
-    });
+    const wishlist = async (gameId: number, title: string) => {
+        try {
+            await save.mutateAsync({ gameId, input: { status: "wishlist" } });
+            notify(`${title} added to your wishlist`, "success");
+        } catch {
+            notify("Couldn't add that to your wishlist", "error");
+        }
+    };
 
-    const visibleGames = pagination.slice(filteredGames);
-
-    const buildActions = (gameId: number): TileAction[] => {
-        if (!user) return [];
-        const log = logByGameId.get(gameId);
-
-        if (log) {
+    const buildActions = (gameId: number, title: string): TileAction[] => {
+        if (!user) {
             return [
                 {
-                    key: "view",
-                    label: "View",
-                    icon: "fas fa-eye",
-                    onSelect: () => setModal({ kind: "view", log }),
+                    key: "signin",
+                    label: "Log in to add",
+                    tone: "primary",
+                    onSelect: openLogin,
+                },
+            ];
+        }
+
+        const log = logByGameId.get(gameId);
+        if (!log) {
+            return [
+                {
+                    key: "log",
+                    label: "Log it",
+                    tone: "primary",
+                    onSelect: () => setModal({ kind: "create", gameId }),
                 },
                 {
-                    key: "edit",
-                    label: "Edit",
-                    icon: "fas fa-pen-to-square",
-                    onSelect: () => setModal({ kind: "edit", log }),
+                    key: "wishlist",
+                    label: "Wishlist",
+                    onSelect: () => void wishlist(gameId, title),
                 },
             ];
         }
 
         return [
             {
-                key: "add",
-                label: "Add",
-                icon: "fas fa-add",
-                onSelect: () => setModal({ kind: "create", gameId }),
+                key: "view",
+                label: "View your log",
+                tone: "primary",
+                onSelect: () => {
+                    const full = fullLog(gameId);
+                    if (full) setModal({ kind: "view", log: full });
+                },
+            },
+            {
+                key: "edit",
+                label: "Edit",
+                onSelect: () => {
+                    const full = fullLog(gameId);
+                    if (full) setModal({ kind: "edit", log: full });
+                },
             },
         ];
     };
 
+    const logMeta = (gameId: number): string | undefined => {
+        const log = logByGameId.get(gameId);
+        if (!log) return undefined;
+        const parts = ["Your log"];
+        if (log.rating !== null) parts.push(formatRating(log.rating));
+        return parts.join(" · ");
+    };
+
+    const showSkeletons = isLoading || (isPlaceholderData && games.length === 0);
+
     return (
-        <section className="flex w-full gap-4">
-            {/* Filters, larger screens */}
-            <aside className="card hidden h-[85vh] min-w-[320px] max-w-[320px] flex-col gap-6 font-lexend lg:flex">
-                <div className="flex w-full flex-col gap-4">
-                    <h2 className="card-header-text">Filters</h2>
-                    <input
-                        type="text"
-                        placeholder="Search for game..."
-                        aria-label="Search for a game"
-                        className="search-bar h-11 w-full"
-                        value={search}
-                        onChange={(e) => setSearch(e.currentTarget.value)}
-                    />
-                </div>
-
-                <div className="flex w-full flex-col gap-4">
-                    <span className="flex gap-2">
-                        <input
-                            id="include-logged"
-                            type="checkbox"
-                            checked={includeLogged}
-                            onChange={(e) =>
-                                setIncludeLogged(e.currentTarget.checked)
-                            }
-                            disabled={!user}
-                        />
-                        <label
-                            htmlFor="include-logged"
-                            className="font-light text-content"
-                        >
-                            Include already logged games?
-                        </label>
-                    </span>
-
-                    <span className="flex gap-2">
-                        <input
-                            id="include-adult"
-                            type="checkbox"
-                            checked={includeAdult}
-                            onChange={(e) =>
-                                setIncludeAdult(e.currentTarget.checked)
-                            }
-                        />
-                        <label
-                            htmlFor="include-adult"
-                            className="font-light text-content"
-                        >
-                            Include 18+ age-rated games?
-                        </label>
-                    </span>
-
-                    <div className="flex flex-col gap-0.5">
-                        <label
-                            htmlFor="platform-filter"
-                            className="text-sm font-semibold text-content"
-                        >
-                            Platform
-                        </label>
-                        <select
-                            id="platform-filter"
-                            className="dropdown-input h-11 w-full"
-                            value={platform}
-                            onChange={(e) => setPlatform(e.currentTarget.value)}
-                        >
-                            <option value="all">All Platforms</option>
-                            {(platforms ?? []).map((p) => (
-                                <option key={p.slug} value={p.slug}>
-                                    {p.displayName}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-            </aside>
-
-            {gamesLoading || logsLoading ? (
-                <span className="mx-auto flex h-[85vh] w-max flex-row items-center justify-center gap-6">
-                    <LoadingSpinner size="md" />
-                    <p className="font-lexend text-xl tracking-wide text-content">
-                        Loading Games...
+        <section className="flex flex-col gap-6">
+            <header className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <h1 className="font-display text-title text-content">
+                        The catalogue
+                    </h1>
+                    <p className="mt-2 font-mono text-label uppercase text-content-muted">
+                        {formatCount(total)} titles
                     </p>
-                </span>
+                </div>
+            </header>
+
+            <LibraryFilters
+                query={query}
+                setQuery={setQuery}
+                searchDraft={searchDraft}
+                onSearchDraft={setSearchDraft}
+                matches={page?.meta.total}
+                platforms={platforms ?? []}
+                genres={genres ?? []}
+                isSignedIn={!!user}
+            />
+
+            {showSkeletons ? (
+                <div className="grid grid-cols-3 gap-x-4 gap-y-5 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
+                    {Array.from({ length: perPage }, (_, i) => (
+                        <TileSkeleton key={i} />
+                    ))}
+                </div>
+            ) : games.length === 0 ? (
+                <EmptyPlate
+                    eyebrow="Nothing on file"
+                    title="No titles match those filters"
+                    body="Try a broader search, or clear the platform and genre filters — the catalogue holds a hundred thousand games, so something in here fits."
+                />
             ) : (
-                <div className="flex w-full flex-col gap-3 lg:h-[85vh]">
-                    <div className="card w-full space-y-4 font-lexend">
-                        <div className="w-full space-y-1">
-                            <h2 className="card-header-text text-center">
-                                Game Library
-                            </h2>
-                            <p className="text-center text-content-secondary">
-                                You can{" "}
-                                <span className="font-semibold">view</span>,{" "}
-                                <span className="font-semibold">create</span>,
-                                and <span className="font-semibold">edit</span>{" "}
-                                your game logs all within this page!
-                            </p>
-                        </div>
-                        {width < 1024 ? (
-                            <span className="flex w-full flex-col gap-3 font-lexend md:flex-row">
-                                <span className="relative h-max w-full">
-                                    {/* now wired to the same filter state the
-                                        sidebar search uses */}
-                                    <input
-                                        type="text"
-                                        placeholder="Search for game..."
-                                        aria-label="Search for a game"
-                                        className="search-bar h-12 w-full"
-                                        value={search}
-                                        onChange={(e) =>
-                                            setSearch(e.currentTarget.value)
-                                        }
-                                    />
-                                    <i
-                                        className="fas fa-magnifying-glass absolute right-1 top-1/2 -translate-y-1/2 transform p-2 text-content-muted transition-colors hover:cursor-pointer hover:text-brand"
-                                        aria-hidden="true"
-                                    ></i>
-                                </span>
-                                <button className="button-outline button-outline-default flex h-12 w-full min-w-36 items-center justify-center gap-3 md:w-max">
-                                    Filters
-                                    <i
-                                        className="fas fa-filter"
-                                        aria-hidden="true"
-                                    ></i>
-                                </button>
-                            </span>
-                        ) : (
-                            <></>
-                        )}
-                    </div>
-
-                    <div className="flex w-full flex-grow flex-col justify-between">
-                        <div className="flex flex-wrap justify-center gap-1 lg:grid lg:grid-cols-[repeat(auto-fill,minmax(105px,1fr))]">
-                            {visibleGames.map((game) => (
-                                <GameTile
-                                    key={game.id}
-                                    gameId={game.id}
-                                    title={game.title}
-                                    coverUrl={game.coverUrl}
-                                    variant="library"
-                                    showMenu={!!user}
-                                    actions={buildActions(game.id)}
-                                    popupIsVisible={modal !== null}
-                                />
-                            ))}
-                        </div>
-
-                        <Pagination
-                            pagination={pagination}
-                            onChange={() => window.scrollTo(0, 0)}
-                        />
-                    </div>
+                <div
+                    className={
+                        isPlaceholderData
+                            ? "grid grid-cols-3 gap-x-4 gap-y-5 opacity-60 transition-opacity md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7"
+                            : "grid grid-cols-3 gap-x-4 gap-y-5 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7"
+                    }
+                >
+                    {games.map((game) => {
+                        const log = logByGameId.get(game.id);
+                        return (
+                            <GameTile
+                                key={game.id}
+                                gameId={game.id}
+                                title={game.title}
+                                coverUrl={game.coverUrl}
+                                footLabel={primaryPlatformLabel(
+                                    game.platforms,
+                                    platforms ?? []
+                                )}
+                                rating={log?.rating ?? null}
+                                status={
+                                    log
+                                        ? displayStatusFor(
+                                              log.status,
+                                              log.playedStatus
+                                          )
+                                        : null
+                                }
+                                meta={logMeta(game.id)}
+                                actions={buildActions(game.id, game.title)}
+                            />
+                        );
+                    })}
                 </div>
             )}
+
+            <div className="flex flex-wrap items-center justify-between gap-4 border-t border-strong pt-4">
+                <PaginationSummary pagination={pagination} />
+                <Pagination
+                    pagination={pagination}
+                    onChange={() => window.scrollTo({ top: 0 })}
+                />
+            </div>
 
             {modal?.kind === "view" && (
                 <ViewGameLogPopup
-                    closePopup={() => setModal(null)}
-                    isMyAccount={true}
-                    userLoggedIn={!!user}
                     gamelog={modal.log}
-                    openEdit={() => setModal({ kind: "edit", log: modal.log })}
-                    openCreate={() =>
-                        setModal({ kind: "create", gameId: modal.log.gameId })
+                    closePopup={() => setModal(null)}
+                    /* This modal only opens from the "View your log" tile
+                       action, which only exists for the viewer's own logs. */
+                    primaryAction={{
+                        label: "Edit",
+                        onSelect: () =>
+                            setModal({ kind: "edit", log: modal.log }),
+                    }}
+                />
+            )}
+
+            {(modal?.kind === "edit" || modal?.kind === "create") && (
+                <CreateOrEditGameLogPopup
+                    closePopup={() => setModal(null)}
+                    viewUpdatedLog={() => setModal(null)}
+                    gamelog={modal.kind === "edit" ? modal.log : null}
+                    gameID={
+                        modal.kind === "create" ? modal.gameId : undefined
                     }
-                    currentUserSharesLog={true}
-                    redirectAndOpenView={() => {}}
-                    profilePage={false}
-                />
-            )}
-
-            {modal?.kind === "create" && (
-                <CreateOrEditGameLogPopup
-                    closePopup={() => setModal(null)}
-                    editing={false}
-                    gameID={modal.gameId}
-                    viewUpdatedLog={() => setModal(null)}
-                />
-            )}
-
-            {modal?.kind === "edit" && (
-                <CreateOrEditGameLogPopup
-                    closePopup={() => setModal(null)}
-                    gamelog={modal.log}
-                    editing={true}
-                    viewUpdatedLog={() => setModal(null)}
+                    editing={modal.kind === "edit"}
                 />
             )}
         </section>

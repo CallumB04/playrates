@@ -1,7 +1,4 @@
-/**
- * Replaces VITE_API_IP, which was a hostname only — protocol and port were
- * hardcoded to http and 3000, which made any HTTPS deployment impossible.
- */
+/** Throws at import time rather than failing on the first request. */
 const required = (name: string, value: string | undefined): string => {
     if (!value) {
         throw new Error(

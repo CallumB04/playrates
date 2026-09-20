@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cn } from "../../../lib/cn";
 
 interface SpecimenProps {
     title: string;
@@ -8,43 +9,44 @@ interface SpecimenProps {
     meta?: string;
     /** Demos that need room to breathe, like a full-width navbar. */
     fullBleed?: boolean;
+    /** Lay the demo out in a column rather than a wrapping row. */
+    stack?: boolean;
     children: ReactNode;
 }
 
-/**
- * A labelled frame around one component demo. Everything in the gallery goes
- * through this so the page stays scannable as components are added.
- */
+/** A labelled frame around one component demo. */
 const Specimen = ({
     title,
     notes,
     meta,
     fullBleed = false,
+    stack = false,
     children,
 }: SpecimenProps) => (
-    <section className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface-raised p-4">
+    <section className="flex flex-col gap-3 border border-strong bg-surface-raised p-4 shadow-lip">
         <header className="flex flex-col gap-1">
-            <h3 className="font-lexend text-base font-semibold text-content">
-                {title}
-            </h3>
+            <h3 className="font-display text-section text-content">{title}</h3>
             {notes && (
-                <p className="max-w-prose text-sm text-content-secondary">
+                <p className="max-w-prose text-body-sm text-content-secondary">
                     {notes}
                 </p>
             )}
         </header>
 
         <div
-            className={
-                fullBleed
-                    ? "relative overflow-hidden rounded-md bg-surface-sunken"
-                    : "flex flex-wrap items-center gap-4 rounded-md bg-surface-sunken p-4"
-            }
+            className={cn(
+                "bg-surface-sunken inset-shadow-field",
+                fullBleed && "relative overflow-hidden",
+                !fullBleed && stack && "flex flex-col gap-4 p-4",
+                !fullBleed && !stack && "flex flex-wrap items-center gap-4 p-4"
+            )}
         >
             {children}
         </div>
 
-        {meta && <p className="font-mono text-xs text-content-muted">{meta}</p>}
+        {meta && (
+            <p className="font-mono text-xs text-content-muted">{meta}</p>
+        )}
     </section>
 );
 

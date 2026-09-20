@@ -51,9 +51,8 @@ describe("query hooks", () => {
     });
 
     /**
-     * The `enabled` guards matter: without them these hooks fire a request for
-     * id 0 or an empty username on first render, which is how the old code
-     * produced spurious 404s.
+     * Without the `enabled` guards these fire a request for id 0 or an empty
+     * username on first render, and get a 404 back.
      */
     it("does not request a game until it has an id", async () => {
         const spy = vi.fn();
@@ -103,7 +102,7 @@ describe("query hooks", () => {
         expect(result.current.error).toMatchObject({ status: 404 });
     });
 
-    /** Game logs embed their game — this is what removed the N+1. */
+    /** The embedded game is what saves a request per tile. */
     it("returns game logs with the game already embedded", async () => {
         const { result } = renderHook(() => useUserGameLogs("devuser"), {
             wrapper: wrapper(),

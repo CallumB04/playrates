@@ -4,15 +4,10 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>PlayRates - Video Game Tracker</title>
-        <link
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-            rel="stylesheet"
-        />
         <script>
-            // Applies the stored theme before first paint. Without this the
-            // page renders in the default theme and then flips, which is a
-            // visible flash. Kept deliberately tiny and dependency-free;
-            // it must agree with DEFAULT_THEME in ThemeContext.tsx.
+            // Apply the stored theme before first paint, otherwise the page
+            // renders in the default theme and visibly flips. Must agree with
+            // DEFAULT_THEME in ThemeContext.tsx.
             (function () {
                 try {
                     var stored = localStorage.getItem("playrates-theme");
@@ -27,6 +22,7 @@
                     document.documentElement.style.colorScheme = theme;
                 } catch (e) {
                     document.documentElement.classList.add("dark");
+                    document.documentElement.style.colorScheme = "dark";
                 }
             })();
         </script>

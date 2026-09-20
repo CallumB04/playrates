@@ -1,11 +1,8 @@
 import { Link } from "react-router-dom";
+import { cn } from "../lib/cn";
 
-/**
- * Each variant is a complete, literal class string. The previous version built
- * its sizing and border-width utilities at runtime, which required a safelist
- * to survive purging. There are only five call sites and each is a deliberate
- * design choice, so naming them is clearer than passing numbers around.
- */
+/* Each variant is a complete literal class string — Tailwind only emits
+   classes it can see in the source. */
 const AVATAR_VARIANT = {
     /** Profile page header — responsive across three breakpoints. */
     profileHeader: "size-20 border-2 sm:size-28 lg:size-40 lg:border-3",
@@ -35,12 +32,18 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
     username,
     link,
 }) => {
-    const className = `profile-picture-wrapper border-content-inverse ${AVATAR_VARIANT[variant]}`;
+    /* Square, like everything else. The presence dot beside it is one of the
+       only two round things in the system, and it needs to stay that way to
+       mean anything. */
+    const className = cn(
+        "aspect-square overflow-hidden border-strong bg-surface-sunken bg-[url('/assets/profile-picture/default.png')] bg-contain inset-shadow-press hover:cursor-pointer hover:bg-[url('/assets/profile-picture/hover.png')]",
+        AVATAR_VARIANT[variant]
+    );
     const image = file ? (
         <img
             src={file}
             alt={`${username}'s profile picture`}
-            className="profile-picture"
+            className="size-full object-cover"
         />
     ) : null;
 

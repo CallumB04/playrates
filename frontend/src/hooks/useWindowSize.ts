@@ -5,11 +5,7 @@ interface WindowSize {
     height: number;
 }
 
-/**
- * One rAF-throttled resize listener, replacing the identical effect that lived
- * in both ProfilePage and LibraryPage and called setState on every pixel of
- * every resize.
- */
+/** rAF-throttled, so a drag-resize does not trigger a render per pixel. */
 export const useWindowSize = (): WindowSize => {
     const [size, setSize] = useState<WindowSize>(() => ({
         width: window.innerWidth,

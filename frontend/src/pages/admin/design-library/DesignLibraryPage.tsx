@@ -1,9 +1,12 @@
 import { useState } from "react";
+import BrandSection from "./sections/BrandSection";
 import ColourSection from "./sections/ColourSection";
 import SizingSection from "./sections/SizingSection";
 import ComponentSection from "./sections/ComponentSection";
 
 const TABS = [
+    // Temporary: comes out once the Vellum brand hue is chosen and wired.
+    { id: "brand", label: "Brand review", Component: BrandSection },
     { id: "colour", label: "Colour", Component: ColourSection },
     { id: "sizing", label: "Sizing & type", Component: SizingSection },
     { id: "components", label: "Components", Component: ComponentSection },
@@ -12,21 +15,18 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"];
 
 /**
- * A live reference for the design system: every semantic token and every
- * global component, rendered by the same code the app ships.
- *
- * Use the theme toggle in the sidebar to check both themes — anything that
- * looks wrong in one of them is a token that needs fixing rather than a
- * component that needs a special case.
+ * Every semantic token and global component, rendered by the code the app
+ * ships. Check both themes with the sidebar toggle — anything wrong in one of
+ * them is a token to fix, not a component to special-case.
  */
 const DesignLibraryPage = () => {
-    const [tab, setTab] = useState<TabId>("colour");
+    const [tab, setTab] = useState<TabId>("brand");
     const Active = TABS.find((t) => t.id === tab)!.Component;
 
     return (
         <div className="flex flex-col gap-6">
             <header className="flex flex-col gap-2">
-                <h2 className="font-lexend text-2xl font-semibold text-content">
+                <h2 className="font-display text-2xl font-semibold text-content">
                     Design library
                 </h2>
                 <p className="max-w-prose text-content-secondary">
@@ -47,7 +47,7 @@ const DesignLibraryPage = () => {
                         role="tab"
                         aria-selected={tab === t.id}
                         onClick={() => setTab(t.id)}
-                        className={`-mb-px border-b-2 px-4 py-2 font-lexend text-sm transition-colors ${
+                        className={`-mb-px border-b-2 px-4 py-2 font-display text-sm transition-colors ${
                             tab === t.id
                                 ? "border-b-brand text-brand"
                                 : "border-b-transparent text-content-secondary hover:text-content"

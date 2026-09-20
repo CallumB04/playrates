@@ -7,11 +7,8 @@ interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
     adornment?: ReactNode;
 }
 
-/**
- * Errors render from state rather than by toggling a `hidden` class on a ref'd
- * element, which is how the old account form did it — that bypassed React
- * entirely and gave screen readers nothing to announce.
- */
+/** aria-invalid and aria-describedby are wired up so screen readers announce
+ *  the error rather than it just appearing. */
 const FormField = ({
     label,
     error,

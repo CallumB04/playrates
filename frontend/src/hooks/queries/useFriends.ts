@@ -28,8 +28,8 @@ export const useUserFriends = (username: string) =>
     });
 
 /**
- * The friend-relationship state machine, previously ~120 lines spread across
- * ProfilePage along with three manual refetch fan-outs after every action.
+ * The friend-relationship state machine. Each action invalidates the friends
+ * queries, so callers do not refetch anything by hand.
  */
 export const useFriendRelation = (targetUserId: string | undefined) => {
     const queryClient = useQueryClient();
@@ -58,7 +58,7 @@ export const useFriendRelation = (targetUserId: string | undefined) => {
         onSuccess: invalidate,
     });
 
-    // decline, cancel and remove are all this one call
+    // declines, cancels or unfriends, depending on the current status
     const remove = useMutation({
         mutationFn: () => removeFriendship(targetUserId!),
         onSuccess: invalidate,

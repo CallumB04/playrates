@@ -10,7 +10,8 @@ import {
 
 export type Theme = "light" | "dark";
 
-/** Dark is the app's default. Kept in one place so the boot script agrees. */
+/** Vellum is built for the dark. Kept in one place so the boot script in
+ *  index.html agrees. */
 export const DEFAULT_THEME: Theme = "dark";
 export const THEME_STORAGE_KEY = "playrates-theme";
 

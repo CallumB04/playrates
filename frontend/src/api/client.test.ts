@@ -12,7 +12,7 @@ describe("api client", () => {
         expect(page.data).toHaveLength(2);
     });
 
-    /** The interceptor is why every endpoint gets auth for free. */
+    /** Set once by the interceptor, so no endpoint passes it explicitly. */
     it("attaches the Supabase access token", async () => {
         let seen: string | null = null;
         server.use(
@@ -47,12 +47,7 @@ describe("api client", () => {
     });
 
     describe("error mapping", () => {
-        /**
-         * The old layer collapsed every failure into
-         * `new Error("Error fetching user")`, so a caller could not tell a
-         * missing record from a broken backend. These pin that it no longer
-         * does.
-         */
+        /** A caller must be able to tell these apart to react correctly. */
         it("preserves the status and code from the API", async () => {
             server.use(
                 http.get(`${API}/profiles/:username`, () =>

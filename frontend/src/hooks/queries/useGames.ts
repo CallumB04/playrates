@@ -1,9 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { Game } from "@playrates/shared";
 import {
     fetchGameById,
     fetchGames,
     fetchGameStats,
+    fetchGenres,
     fetchPlatforms,
     fetchSiteStats,
     queryKeys,
@@ -15,6 +16,9 @@ export const useGames = (filters: GameListFilters = {}) =>
         queryKey: queryKeys.games.list({ ...filters }),
         queryFn: () => fetchGames(filters),
         staleTime: 5 * 60_000,
+        // Hold the previous page while the next loads, so paging doesn't
+        // blank the grid and collapse the page height under the scroll.
+        placeholderData: keepPreviousData,
     });
 
 export const useGame = (id: number | undefined) =>
@@ -36,6 +40,13 @@ export const usePlatforms = () =>
     useQuery({
         queryKey: queryKeys.platforms,
         queryFn: fetchPlatforms,
+        staleTime: Infinity, // reference data
+    });
+
+export const useGenres = () =>
+    useQuery({
+        queryKey: queryKeys.genres,
+        queryFn: fetchGenres,
         staleTime: Infinity, // reference data
     });
 

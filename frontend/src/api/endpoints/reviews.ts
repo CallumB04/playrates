@@ -2,17 +2,39 @@ import type {
     Paginated,
     Review,
     ReviewInput,
+    ReviewSort,
     ReviewWithAuthor,
 } from "@playrates/shared";
+import axios from "axios";
 import { api } from "../client";
+import { compactParams } from "./games";
+
+const isNotFound = (error: unknown): boolean =>
+    axios.isAxiosError(error) && error.response?.status === 404;
 
 export const fetchGameReviews = async (
-    gameId: number
+    gameId: number,
+    sort?: ReviewSort
 ): Promise<Paginated<ReviewWithAuthor>> => {
     const { data } = await api.get<Paginated<ReviewWithAuthor>>(
-        `/games/${gameId}/reviews`
+        `/games/${gameId}/reviews`,
+        { params: compactParams({ sort }) }
     );
     return data;
+};
+
+/** The caller's own review of a game, for prefilling the log editor. */
+export const fetchMyReview = async (
+    gameId: number
+): Promise<Review | null> => {
+    try {
+        const { data } = await api.get<Review>(`/me/reviews/${gameId}`);
+        return data;
+    } catch (error) {
+        // No review yet is the common case, not a failure.
+        if (isNotFound(error)) return null;
+        throw error;
+    }
 };
 
 export const fetchUserReviews = async (
@@ -24,7 +46,6 @@ export const fetchUserReviews = async (
     return data;
 };
 
-/** The write path the old API did not have at all. */
 export const saveReview = async (
     gameId: number,
     input: ReviewInput

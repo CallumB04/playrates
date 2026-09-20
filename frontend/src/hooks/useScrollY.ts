@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 
-/**
- * The Navbar previously registered a scroll listener with an inline arrow and
- * no cleanup, so it leaked on every mount and re-rendered on every scroll
- * event.
- */
+/** rAF-throttled, so a scroll does not trigger a render per event. */
 export const useScrollY = (): number => {
     const [scrollY, setScrollY] = useState(() => window.scrollY);
 

@@ -5,10 +5,8 @@ import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
 
 /**
- * Was a single 374-line component handling both modes with six refs and
- * imperative classList mutations. Splitting the two forms means switching
- * mode unmounts one and mounts the other, which is the reset the old code
- * needed a dedicated effect to perform.
+ * Switching mode unmounts one form and mounts the other, which clears the
+ * previous fields and errors without needing to reset anything by hand.
  */
 const AccountFormModal = () => {
     const { mode, openLogin, openSignup, close } = useAccountForm();
@@ -27,7 +25,7 @@ const AccountFormModal = () => {
         <Modal
             onClose={close}
             labelledBy="account-form-title"
-            className="mx-auto flex w-full max-w-[630px] flex-col justify-center px-2 py-12 font-lexend text-content sm:px-12 sm:py-16 md:px-16"
+            className="mx-auto flex w-full max-w-[630px] flex-col justify-center px-2 py-12 font-display text-content sm:px-12 sm:py-16 md:px-16"
         >
             <div className="text-center">
                 <h2 id="account-form-title" className="text-3xl sm:text-4xl">
@@ -38,7 +36,7 @@ const AccountFormModal = () => {
                     <button
                         type="button"
                         onClick={isSignup ? openLogin : openSignup}
-                        className="hover-text-purple"
+                        className="cursor-pointer text-brand transition-colors duration-200 hover:text-brand-hover"
                     >
                         {isSignup ? "log in" : "Sign up"}
                     </button>

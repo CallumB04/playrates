@@ -1,10 +1,11 @@
+import type { ReactNode } from "react";
 import {
-    RADIUS_TOKENS,
-    SHADOW_TOKENS,
-    SPACING_TOKENS,
-    TYPE_TOKENS,
-    Z_INDEX_TOKENS,
+    ELEVATION,
+    RADII,
+    SPACING_STEPS,
+    TYPE_SCALE,
 } from "../../../../styles/tokenCatalogue";
+import { cn } from "../../../../lib/cn";
 
 const Group = ({
     title,
@@ -13,14 +14,14 @@ const Group = ({
 }: {
     title: string;
     blurb: string;
-    children: React.ReactNode;
+    children: ReactNode;
 }) => (
-    <section className="flex flex-col gap-3">
-        <header>
-            <h3 className="font-lexend text-lg font-semibold text-content">
+    <section className="flex flex-col gap-4">
+        <header className="rule-double pb-2">
+            <h3 className="font-mono text-label uppercase text-content-muted">
                 {title}
             </h3>
-            <p className="max-w-prose text-sm text-content-secondary">
+            <p className="mt-1 max-w-prose text-body-sm text-content-secondary">
                 {blurb}
             </p>
         </header>
@@ -29,28 +30,69 @@ const Group = ({
 );
 
 const SizingSection = () => (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-10">
         <Group
-            title="Radius"
-            blurb="Corner rounding. Driven by --radius-* so the whole app's roundness can be dialled in one place."
+            title="Type scale"
+            blurb="Zilla Slab displays, IBM Plex Sans sets prose, IBM Plex Mono carries every figure, label and stamp. One class per step; the family is chosen alongside it. Tabular figures are set on body, not per component."
         >
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 xl:grid-cols-7">
-                {RADIUS_TOKENS.map((t) => (
-                    <div key={t.name} className="flex flex-col gap-2">
+            {TYPE_SCALE.map((step) => (
+                <div
+                    key={step.name}
+                    className="border-b border-subtle py-2.5"
+                >
+                    <div className="flex items-baseline justify-between gap-4">
+                        <span className="font-mono text-label-sm uppercase text-content-muted">
+                            {step.name}
+                        </span>
+                        <span className="font-mono text-[10px] text-content-muted">
+                            {step.utility} · {step.spec}
+                        </span>
+                    </div>
+                    <p className={cn("mt-1.5 text-content", step.utility)}>
+                        {step.sample}
+                    </p>
+                </div>
+            ))}
+        </Group>
+
+        <Group
+            title="Spacing — 4pt base"
+            blurb="Tailwind's default 0.25rem base already produces the whole run; these are the step names to reach for."
+        >
+            <div className="flex items-end gap-1.5">
+                {SPACING_STEPS.map((step) => (
+                    <div key={step.name} className="text-center">
                         <div
-                            className={`h-16 w-full border-2 border-brand bg-brand-subtle ${t.demoClass}`}
-                        ></div>
-                        <div>
-                            <p className="font-mono text-xs text-content">
-                                {t.name}
-                            </p>
-                            <p className="text-xs text-content-muted">
-                                {t.value}
-                            </p>
-                            <p className="text-xs text-content-secondary">
-                                {t.description}
-                            </p>
-                        </div>
+                            className="h-5 bg-brand opacity-75"
+                            style={{ width: `${step.px}px` }}
+                        />
+                        <p className="mt-1.5 font-mono text-[9px] text-content-muted">
+                            {step.name}
+                        </p>
+                    </div>
+                ))}
+            </div>
+        </Group>
+
+        <Group
+            title="Radii — square by default"
+            blurb="Only two curved things exist: the mastered pill and the presence dot. Everything else is square, which is what makes the pill mean something. The rest of the radius namespace is cleared rather than redefined, so a stray rounded-lg resolves to nothing."
+        >
+            <div className="flex flex-wrap gap-5">
+                {RADII.map((radius) => (
+                    <div key={radius.name} className="text-center">
+                        <div
+                            className={cn(
+                                "h-9 w-11 border border-strong bg-surface-raised",
+                                radius.utility
+                            )}
+                        />
+                        <p className="mt-1.5 font-mono text-[9px] text-content">
+                            {radius.name}
+                        </p>
+                        <p className="font-mono text-[9px] text-content-muted">
+                            {radius.note}
+                        </p>
                     </div>
                 ))}
             </div>
@@ -58,103 +100,23 @@ const SizingSection = () => (
 
         <Group
             title="Elevation"
-            blurb="Shadows are tuned for dark surfaces, where a light-mode shadow would be invisible."
+            blurb="Five steps. e0 is the absence of a class; the inset is how anything you own sits. A pressed plate with a lip composes from two classes, because the shadow and inset-shadow namespaces write different properties."
         >
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 xl:grid-cols-5">
-                {SHADOW_TOKENS.map((t) => (
-                    <div key={t.name} className="flex flex-col gap-2">
+            <div className="flex flex-wrap gap-5">
+                {ELEVATION.map((level) => (
+                    <div key={level.name} className="text-center">
                         <div
-                            className={`h-16 w-full rounded-lg bg-surface-raised ${t.demoClass}`}
-                        ></div>
-                        <div>
-                            <p className="font-mono text-xs text-content">
-                                {t.name}
-                            </p>
-                            <p className="text-xs text-content-secondary">
-                                {t.description}
-                            </p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </Group>
-
-        <Group
-            title="Stacking order"
-            blurb="Named so a new overlay doesn't need a guessed z-index that later collides."
-        >
-            <div className="overflow-x-auto rounded-lg border border-subtle">
-                <table className="w-full text-left text-sm">
-                    <thead className="bg-surface-sunken text-content-secondary">
-                        <tr>
-                            <th className="px-4 py-2 font-medium">Token</th>
-                            <th className="px-4 py-2 font-medium">Value</th>
-                            <th className="px-4 py-2 font-medium">Used for</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {Z_INDEX_TOKENS.map((t) => (
-                            <tr
-                                key={t.name}
-                                className="border-t border-faint text-content"
-                            >
-                                <td className="px-4 py-2 font-mono text-xs">
-                                    {t.name}
-                                </td>
-                                <td className="px-4 py-2 font-mono text-xs text-content-muted">
-                                    {t.value}
-                                </td>
-                                <td className="px-4 py-2 text-content-secondary">
-                                    {t.description}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </Group>
-
-        <Group
-            title="Type scale"
-            blurb="Tailwind's default scale. Lexend throughout; the app sets weight rather than swapping family."
-        >
-            <div className="flex flex-col gap-2">
-                {TYPE_TOKENS.map((t) => (
-                    <div
-                        key={t.name}
-                        className="flex items-baseline gap-4 border-b border-faint pb-2"
-                    >
-                        <span className="w-24 shrink-0 font-mono text-xs text-content-muted">
-                            {t.name}
-                        </span>
-                        <span className="w-12 shrink-0 font-mono text-xs text-content-muted">
-                            {t.value}
-                        </span>
-                        <span className={`text-content ${t.demoClass}`}>
-                            All of your games in one place
-                        </span>
-                    </div>
-                ))}
-            </div>
-        </Group>
-
-        <Group
-            title="Spacing"
-            blurb="Tailwind's 4px scale. `navbar` is the one custom step, so header height is set once."
-        >
-            <div className="flex flex-col gap-1.5">
-                {SPACING_TOKENS.map((t) => (
-                    <div key={t.name} className="flex items-center gap-4">
-                        <span className="w-16 shrink-0 font-mono text-xs text-content-muted">
-                            {t.name}
-                        </span>
-                        <span className="w-16 shrink-0 font-mono text-xs text-content-muted">
-                            {t.value}
-                        </span>
-                        <span
-                            className="h-3 rounded-xs bg-brand"
-                            style={{ width: t.rem }}
-                        ></span>
+                            className={cn(
+                                "h-11 w-[66px] border border-strong bg-surface-raised",
+                                level.utility
+                            )}
+                        />
+                        <p className="mt-2 font-mono text-[9px] text-content">
+                            {level.name}
+                        </p>
+                        <p className="font-mono text-[9px] text-content-muted">
+                            {level.note}
+                        </p>
                     </div>
                 ))}
             </div>
