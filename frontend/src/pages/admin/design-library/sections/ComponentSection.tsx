@@ -22,7 +22,7 @@ const ComponentSection = () => (
     <div className="flex flex-col gap-10">
         {GROUPS.map(({ title, Component }) => (
             <section key={title} className="flex flex-col gap-4">
-                <h2 className="rule-double pb-2 font-mono text-label uppercase text-content-muted">
+                <h2 className="rule-double pb-2 text-label text-content-muted">
                     {title}
                 </h2>
                 <Component />

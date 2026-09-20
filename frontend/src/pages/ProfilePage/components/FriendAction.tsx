@@ -26,7 +26,7 @@ const FriendAction = ({
     onRemove,
 }: FriendActionProps) => {
     const note = (text: string) => (
-        <span className="block text-right font-mono text-label-sm uppercase text-content-muted">
+        <span className="block text-right text-label-sm text-content-muted">
             {text}
         </span>
     );

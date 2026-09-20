@@ -28,7 +28,7 @@ const RecentNotes = ({ reviews }: RecentNotesProps) => {
 
     return (
         <section>
-            <h2 className="mb-3 font-mono text-label uppercase text-content-muted">
+            <h2 className="mb-3 text-label text-content-muted">
                 Recent notes
             </h2>
 
@@ -52,7 +52,7 @@ const RecentNotes = ({ reviews }: RecentNotesProps) => {
                             <span className="font-mono text-[13px] font-semibold text-brand">
                                 {formatRating(review.rating)}
                             </span>
-                            <span className="font-mono text-label-sm uppercase text-content-muted">
+                            <span className="text-label-sm text-content-muted">
                                 {relativeTime(review.createdAt)}
                             </span>
                         </div>

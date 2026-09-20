@@ -29,7 +29,11 @@ import { getLibraryGamesPerPage } from "./lib/gamesPerPage";
 import { useLibraryQuery } from "./lib/useLibraryQuery";
 import { displayStatusFor } from "../../constants/gameStatus";
 import { primaryPlatformLabel } from "../../lib/platforms";
-import { formatCount, formatRating } from "../../lib/format";
+import {
+    formatCount,
+    formatRating,
+    releaseYear,
+} from "../../lib/format";
 
 type OpenModal =
     | { kind: "view"; log: GameLogWithGame }
@@ -171,7 +175,7 @@ const LibraryPage = () => {
                     <h1 className="font-display text-title text-content">
                         The catalogue
                     </h1>
-                    <p className="mt-2 font-mono text-label uppercase text-content-muted">
+                    <p className="mt-2 text-label text-content-muted">
                         {formatCount(total)} titles
                     </p>
                 </div>
@@ -220,7 +224,10 @@ const LibraryPage = () => {
                                     game.platforms,
                                     platforms ?? []
                                 )}
-                                rating={log?.rating ?? null}
+                                /* Only show the brand figure when there is a
+                                   real rating behind it; otherwise the year. */
+                                rating={log ? log.rating : undefined}
+                                footValue={releaseYear(game.releaseDate)}
                                 status={
                                     log
                                         ? displayStatusFor(

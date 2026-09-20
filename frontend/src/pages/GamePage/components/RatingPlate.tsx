@@ -39,7 +39,7 @@ const RatingPlate = ({ average, ratingCount, buckets }: RatingPlateProps) => {
     return (
         <section className="grid items-center gap-6 border border-strong bg-surface-raised px-5 py-5 shadow-lip sm:grid-cols-[186px_minmax(0,1fr)]">
             <div className="sm:border-r sm:border-subtle sm:pr-5">
-                <h2 className="font-mono text-label uppercase text-content-muted">
+                <h2 className="text-label text-content-muted">
                     PlayRates average
                 </h2>
                 <p

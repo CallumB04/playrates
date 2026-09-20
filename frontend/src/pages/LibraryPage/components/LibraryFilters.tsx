@@ -117,7 +117,7 @@ const LibraryFilters = ({
 
     return (
         <>
-            <div className="flex flex-col gap-3.5 border border-strong bg-surface-raised p-4 shadow-lip">
+            <div className="flex flex-col gap-3.5 rounded-lg border border-subtle bg-surface-raised p-4 shadow-plate">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
                     <div className="relative flex-1">
                         <Search
@@ -133,7 +133,7 @@ const LibraryFilters = ({
                             className="pr-28"
                         />
                         {matches !== undefined && (
-                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-mono text-label-sm uppercase text-content-muted">
+                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-label-sm text-content-muted">
                                 {formatCount(matches)} matches
                             </span>
                         )}
@@ -153,7 +153,7 @@ const LibraryFilters = ({
                     </Button>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5 border-t border-subtle pt-3">
+                <div className="flex flex-wrap items-center gap-2 border-t border-subtle pt-3.5">
                     {platformChips}
                     <div className="ml-auto hidden flex-wrap items-center gap-5 lg:flex">
                         {toggles}

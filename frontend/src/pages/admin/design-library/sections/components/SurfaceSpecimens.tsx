@@ -29,7 +29,7 @@ const SurfaceSpecimens = () => {
                 ).map(([state, depth]) => (
                     <div key={`${state}-${depth}`} className="text-center">
                         <Plate state={state} depth={depth} className="size-24" />
-                        <p className="mt-2 font-mono text-label-sm uppercase text-content-muted">
+                        <p className="mt-2 text-label-sm text-content-muted">
                             {state}
                             {depth === "deep" && " deep"}
                         </p>
@@ -96,7 +96,7 @@ const SurfaceSpecimens = () => {
                             >
                                 Delete this log?
                             </h2>
-                            <span className="font-mono text-label-sm uppercase text-content-muted">
+                            <span className="text-label-sm text-content-muted">
                                 Esc
                             </span>
                         </div>

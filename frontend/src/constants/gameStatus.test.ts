@@ -5,7 +5,6 @@ import {
     STATUS_PRESENTATION,
     displayStatusFor,
     isDisplayStatus,
-    statusRadius,
 } from "./gameStatus";
 import { STATUS_MARKS } from "../lib/marks";
 import { getStatusIcon } from "../lib/icons";
@@ -44,14 +43,12 @@ describe("status presentation", () => {
         }
     });
 
-    it("reserves the two curved shapes — only mastered is a pill", () => {
-        const pills = ALL.filter(
-            (s) => STATUS_PRESENTATION[s].shape === "pill"
-        );
-        expect(pills).toEqual(["mastered"]);
-        expect(statusRadius("mastered")).toBe("rounded-pill");
-        expect(statusRadius("shelved")).toBe("rounded-cut");
-        expect(statusRadius("finished")).toBe("rounded-plate");
+    /* Shape used to be the non-colour channel, back when everything else was
+       square. With generous radii throughout it stopped differentiating, so
+       the mark carries it alone — which only works if no two share one. */
+    it("gives every status its own mark", () => {
+        const marks = ALL.map((s) => STATUS_PRESENTATION[s].mark);
+        expect(new Set(marks).size).toBe(ALL.length);
     });
 });
 

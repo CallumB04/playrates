@@ -9,7 +9,7 @@ import ProfilePicture from "../ProfilePicture";
 import { cn } from "../../lib/cn";
 
 const NAV_LINK =
-    "plate-press border-b-2 pb-1 font-mono text-label uppercase transition-colors";
+    "plate-press border-b-2 pb-1 text-label transition-colors";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
@@ -166,7 +166,7 @@ const Header = () => {
                             key={link.to}
                             to={link.to}
                             end={link.end}
-                            className="border-b border-subtle px-4 py-3.5 font-mono text-label uppercase text-content"
+                            className="border-b border-subtle px-4 py-3.5 text-label text-content"
                         >
                             {link.label}
                         </NavLink>

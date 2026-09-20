@@ -11,7 +11,7 @@ interface CirculationPlateProps {
 /** How the shelf holds this game: four rows, hue, bar, count and share. */
 const CirculationPlate = ({ byStatus, logCount }: CirculationPlateProps) => (
     <section>
-        <h2 className="border-b border-strong pb-2 font-mono text-label uppercase text-content-muted">
+        <h2 className="border-b border-strong pb-2 text-label text-content-muted">
             {logCount === 0
                 ? "Not logged yet"
                 : `Logged by ${formatCount(logCount)} · by status`}

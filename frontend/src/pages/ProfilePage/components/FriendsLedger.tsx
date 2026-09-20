@@ -10,7 +10,7 @@ interface FriendsLedgerProps {
 
 const FriendsLedger = ({ friends, sharedCount }: FriendsLedgerProps) => (
     <section>
-        <h2 className="mb-3 font-mono text-label uppercase text-content-muted">
+        <h2 className="mb-3 text-label text-content-muted">
             Friends · {formatCount(friends.length)}
             {sharedCount !== undefined &&
                 sharedCount > 0 &&

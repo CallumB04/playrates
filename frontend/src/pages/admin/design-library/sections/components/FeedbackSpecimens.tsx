@@ -56,7 +56,7 @@ const FeedbackSpecimens = () => (
                             {toast.body}
                         </p>
                     </div>
-                    <span className="font-mono text-label-sm uppercase text-brand">
+                    <span className="text-label-sm text-brand">
                         {toast.action}
                     </span>
                 </div>
@@ -71,13 +71,13 @@ const FeedbackSpecimens = () => (
         >
             <div className="w-full max-w-md">
                 <Progress value={0.42} label="Importing library" />
-                <p className="mt-2 font-mono text-label-sm uppercase text-content-muted">
+                <p className="mt-2 text-label-sm text-content-muted">
                     Determinate — import 42%
                 </p>
             </div>
             <div className="w-full max-w-md">
                 <Progress label="Loading" />
-                <p className="mt-2 font-mono text-label-sm uppercase text-content-muted">
+                <p className="mt-2 text-label-sm text-content-muted">
                     Indeterminate — tick sweep
                 </p>
             </div>

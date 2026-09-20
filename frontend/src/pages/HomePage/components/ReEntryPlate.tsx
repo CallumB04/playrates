@@ -86,12 +86,12 @@ const ReEntryPlate = ({
 
             <div className="min-w-0 flex-1">
                 {current ? (
-                    <p className="font-mono text-label uppercase text-status-playing">
+                    <p className="text-label text-status-playing">
                         ▶ Still playing · last logged{" "}
                         {relativeTime(current.updatedAt)}
                     </p>
                 ) : (
-                    <p className="font-mono text-label uppercase text-content-muted">
+                    <p className="text-label text-content-muted">
                         Nothing on the go
                     </p>
                 )}
@@ -119,7 +119,7 @@ const ReEntryPlate = ({
         </section>
 
         <section className="border border-strong bg-surface-raised p-5 shadow-lip">
-            <h2 className="mb-3 font-mono text-label uppercase text-content-muted">
+            <h2 className="mb-3 text-label text-content-muted">
                 This year so far
             </h2>
             {yearStats ? (

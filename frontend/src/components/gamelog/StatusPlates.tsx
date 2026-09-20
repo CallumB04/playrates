@@ -2,7 +2,6 @@ import {
     GAME_STATUSES,
     PLAYED_STATUSES,
     STATUS_PRESENTATION,
-    statusRadius,
     type GameStatus,
     type PlayedStatus,
 } from "../../constants/gameStatus";
@@ -29,7 +28,7 @@ export const StatusPlates = ({
     onChange: (status: GameStatus) => void;
 }) => (
     <fieldset>
-        <legend className="mb-2.5 font-mono text-label uppercase text-content-muted">
+        <legend className="mb-2.5 text-label text-content-muted">
             Status
         </legend>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -76,7 +75,7 @@ export const PlayedStatusPlates = ({
 }) => (
     <fieldset>
         <legend className="mb-2.5 flex items-baseline gap-2.5">
-            <span className="font-mono text-label uppercase text-content-muted">
+            <span className="text-label text-content-muted">
                 How it ended
             </span>
             <span className="text-xs text-content-muted">
@@ -85,7 +84,8 @@ export const PlayedStatusPlates = ({
         </legend>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {PLAYED_STATUSES.map((status) => {
-                const { label } = STATUS_PRESENTATION[status];
+                const { label, mark } = STATUS_PRESENTATION[status];
+                const Mark = STATUS_MARKS[mark];
                 const selected = status === value;
 
                 return (
@@ -104,16 +104,10 @@ export const PlayedStatusPlates = ({
                         )}
                     >
                         <span className="flex items-center gap-2">
-                            {/* The shape is the channel — a pill for mastered,
-                                a cut corner for shelved, and so on. */}
-                            <span
-                                aria-hidden
+                            <Mark
                                 className={cn(
-                                    "size-2.5 border-[1.5px]",
-                                    statusRadius(status),
-                                    selected
-                                        ? "border-brand bg-brand"
-                                        : "border-content-muted"
+                                    "text-xs",
+                                    selected ? "text-brand" : "text-content-muted"
                                 )}
                             />
                             <span className="text-body-sm font-medium">

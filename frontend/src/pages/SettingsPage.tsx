@@ -136,7 +136,7 @@ const SettingsPage = () => {
         <div className="flex flex-col gap-6">
             <header>
                 <h1 className="font-display text-title text-content">Settings</h1>
-                <p className="mt-2 font-mono text-label uppercase text-content-muted">
+                <p className="mt-2 text-label text-content-muted">
                     {user.username}
                 </p>
             </header>
@@ -325,7 +325,7 @@ const SettingsPage = () => {
             <div className="flex flex-wrap items-center justify-end gap-3">
                 <span
                     className={cn(
-                        "mr-auto font-mono text-label uppercase",
+                        "mr-auto text-label",
                         dirty ? "text-content-muted" : "text-success"
                     )}
                 >

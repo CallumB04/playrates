@@ -125,7 +125,7 @@ const ShelfPanel = ({
 
             {pagination.total > 0 && (
                 <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3">
-                    <p className="font-mono text-label uppercase text-content-muted">
+                    <p className="text-label text-content-muted">
                         Entries{" "}
                         {formatCount((pagination.page - 1) * perPage + 1)}–
                         {formatCount(

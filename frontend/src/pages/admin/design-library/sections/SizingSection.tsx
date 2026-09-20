@@ -18,7 +18,7 @@ const Group = ({
 }) => (
     <section className="flex flex-col gap-4">
         <header className="rule-double pb-2">
-            <h3 className="font-mono text-label uppercase text-content-muted">
+            <h3 className="text-label text-content-muted">
                 {title}
             </h3>
             <p className="mt-1 max-w-prose text-body-sm text-content-secondary">
@@ -41,7 +41,7 @@ const SizingSection = () => (
                     className="border-b border-subtle py-2.5"
                 >
                     <div className="flex items-baseline justify-between gap-4">
-                        <span className="font-mono text-label-sm uppercase text-content-muted">
+                        <span className="text-label-sm text-content-muted">
                             {step.name}
                         </span>
                         <span className="font-mono text-[10px] text-content-muted">

@@ -39,7 +39,7 @@ const Rating = ({ value, size = "row", caption, className }: RatingProps) => {
                 {formatRating(value)}
             </span>
             {caption && (
-                <span className="mt-1.5 font-mono text-label-sm uppercase text-content-muted">
+                <span className="mt-1.5 text-label-sm text-content-muted">
                     {caption}
                 </span>
             )}

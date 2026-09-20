@@ -63,7 +63,7 @@ const FriendProfile = ({
                 {user.username}
             </span>
             {trailing && (
-                <span className="shrink-0 font-mono text-label-sm uppercase text-content-muted">
+                <span className="shrink-0 text-label-sm text-content-muted">
                     {trailing}
                 </span>
             )}

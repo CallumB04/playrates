@@ -55,15 +55,15 @@ const ActionsSpecimens = () => {
             >
                 <div className="grid w-full grid-cols-[110px_1fr_1fr] items-center gap-3">
                     <span />
-                    <span className="font-mono text-label-sm uppercase text-content-muted">
+                    <span className="text-label-sm text-content-muted">
                         Enabled
                     </span>
-                    <span className="font-mono text-label-sm uppercase text-content-muted">
+                    <span className="text-label-sm text-content-muted">
                         Disabled
                     </span>
                     {BUTTON_VARIANTS.map((variant) => (
                         <div key={variant} className="contents">
-                            <span className="font-mono text-label-sm uppercase text-content-secondary">
+                            <span className="text-label-sm text-content-secondary">
                                 {variant}
                             </span>
                             <Button variant={variant}>{LABELS[variant]}</Button>

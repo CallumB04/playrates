@@ -22,7 +22,7 @@ const Chip = ({
         type="button"
         aria-pressed={selected}
         className={cn(
-            "plate-press inline-flex min-h-11 items-center gap-2 border px-2.5 font-mono text-label-sm uppercase sm:min-h-0 sm:py-1.5",
+            "plate-press inline-flex min-h-11 items-center gap-2 border px-2.5 text-label-sm sm:min-h-0 sm:py-1.5",
             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
             selected
                 ? "border-brand-deep bg-brand text-content-on-solid shadow-lip"
@@ -33,7 +33,9 @@ const Chip = ({
         {...props}
     >
         {dotClassName && (
-            <span className={cn("size-[7px] shrink-0", dotClassName)} />
+            <span
+                className={cn("size-1.5 shrink-0 rounded-full", dotClassName)}
+            />
         )}
         {children}
     </button>

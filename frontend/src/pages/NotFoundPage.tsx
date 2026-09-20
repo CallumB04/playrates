@@ -22,7 +22,7 @@ const NotFoundPage = () => {
             <section className="flex flex-col items-start gap-6 border border-dashed border-strong bg-surface-sunken px-6 py-10 sm:flex-row sm:items-center sm:px-10">
                 <span
                     aria-hidden
-                    className="stamp shrink-0 border-[1.5px] border-danger px-3 py-1.5 font-mono text-label uppercase text-danger"
+                    className="stamp shrink-0 border-[1.5px] border-danger px-3 py-1.5 text-label text-danger"
                 >
                     Not on file
                 </span>
@@ -50,7 +50,7 @@ const NotFoundPage = () => {
                     <h2 className="font-display text-section text-content">
                         Most logged
                     </h2>
-                    <span className="font-mono text-label uppercase text-content-muted">
+                    <span className="text-label text-content-muted">
                         while you’re here
                     </span>
                 </header>

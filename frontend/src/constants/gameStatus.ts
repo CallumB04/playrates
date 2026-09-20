@@ -25,22 +25,14 @@ export type PlayedStatus = (typeof PLAYED_STATUSES)[number];
 /** Any status that can be displayed as a badge. */
 export type DisplayStatus = GameStatus | PlayedStatus;
 
-/**
- * Only two curved things exist in the system, and one of them is the mastered
- * pill — which is what makes it mean something.
- */
-export type StatusShape = "square" | "cut" | "pill";
-
-const SHAPE_RADIUS: Record<StatusShape, string> = {
-    square: "rounded-plate",
-    cut: "rounded-cut",
-    pill: "rounded-pill",
-};
-
 export interface StatusPresentation {
     /** Always rendered as real text. Hue is never the only channel. */
     label: string;
-    shape: StatusShape;
+    /**
+     * The non-colour channel. Shape used to do this job, back when the system
+     * was square enough for a pill to mean something; with everything rounded
+     * it stopped differentiating, so the mark carries it alone.
+     */
     mark: StatusMarkName;
     /** Border, background and text, as complete literal classes. */
     chip: string;
@@ -51,14 +43,13 @@ export interface StatusPresentation {
 }
 
 /**
- * Four hues for the top-level states, four shapes for the substatuses — plus
- * the word, always. The substatuses inherit "played" purple and separate by
- * shape, so the eight never collide.
+ * Four hues for the top-level states, plus a distinct mark and the word for
+ * every one of the eight. The played substatuses share the played hue and are
+ * told apart by their mark, so hue is never carrying a distinction alone.
  */
 export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     played: {
         label: "Played",
-        shape: "square",
         mark: "square",
         chip: "border-status-played bg-status-played-quiet text-content",
         markTone: "text-status-played",
@@ -66,7 +57,6 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     },
     playing: {
         label: "Playing",
-        shape: "square",
         mark: "play",
         chip: "border-status-playing bg-status-playing-quiet text-content",
         markTone: "text-status-playing",
@@ -74,7 +64,6 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     },
     backlog: {
         label: "Backlog",
-        shape: "square",
         mark: "outlineSquare",
         chip: "border-status-backlog bg-status-backlog-quiet text-content",
         markTone: "text-status-backlog",
@@ -82,7 +71,6 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     },
     wishlist: {
         label: "Wishlist",
-        shape: "square",
         mark: "diamond",
         chip: "border-status-wishlist bg-status-wishlist-quiet text-content",
         markTone: "text-status-wishlist",
@@ -90,7 +78,6 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     },
     mastered: {
         label: "Mastered",
-        shape: "pill",
         mark: "disc",
         chip: "border-brand bg-brand-subtle text-content",
         markTone: "text-brand",
@@ -98,15 +85,13 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     },
     finished: {
         label: "Finished",
-        shape: "square",
-        mark: "square",
+        mark: "check",
         chip: "border-strong bg-surface-raised text-content",
         markTone: "text-brand",
         accent: "bg-status-finished",
     },
     shelved: {
         label: "Shelved",
-        shape: "cut",
         mark: "ledger",
         chip: "border-strong bg-surface-raised text-content-secondary",
         markTone: "text-content-secondary",
@@ -114,16 +99,12 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     },
     retired: {
         label: "Retired",
-        shape: "square",
         mark: "hollowSquare",
         chip: "border-subtle bg-surface-sunken text-content-secondary",
         markTone: "text-content-muted",
         accent: "bg-status-retired",
     },
 };
-
-export const statusRadius = (status: DisplayStatus): string =>
-    SHAPE_RADIUS[STATUS_PRESENTATION[status].shape];
 
 export const isDisplayStatus = (value: string): value is DisplayStatus =>
     value in STATUS_PRESENTATION;

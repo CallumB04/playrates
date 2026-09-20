@@ -21,7 +21,7 @@ const Section = ({
     <section className="flex flex-col gap-2">
         <header className="flex items-baseline justify-between border-b border-strong pb-2">
             <h2 className="font-display text-section text-content">{title}</h2>
-            <span className="font-mono text-label uppercase text-content-muted">
+            <span className="text-label text-content-muted">
                 {formatCount(count)}
             </span>
         </header>
@@ -37,7 +37,7 @@ const RequestRow = ({ edge }: { edge: FriendEdge }) => {
             <div className="min-w-0 flex-1">
                 <FriendProfile user={edge.user} density="compact" />
             </div>
-            <span className="hidden font-mono text-label-sm uppercase text-content-muted sm:block">
+            <span className="hidden text-label-sm text-content-muted sm:block">
                 {relativeTime(edge.createdAt)}
             </span>
             <div className="flex shrink-0 gap-2">
@@ -90,7 +90,7 @@ const FriendsPage = () => {
         <section className="flex flex-col gap-8">
             <header>
                 <h1 className="font-display text-title text-content">Friends</h1>
-                <p className="mt-2 font-mono text-label uppercase text-content-muted">
+                <p className="mt-2 text-label text-content-muted">
                     {formatCount(accepted.length)} friends
                     {received.length > 0 &&
                         ` · ${formatCount(received.length)} awaiting you`}

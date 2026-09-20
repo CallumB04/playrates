@@ -72,7 +72,7 @@ const GameCoverPlate = ({
                         {game.title}
                     </span>
                 </div>
-                <div className="mt-3 flex items-center justify-between font-mono text-label-sm uppercase text-content-muted">
+                <div className="mt-3 flex items-center justify-between text-label-sm text-content-muted">
                     <span>{game.slug.slice(0, 22)}</span>
                     <span>{releaseYear(game.releaseDate)}</span>
                 </div>
@@ -109,7 +109,7 @@ const GameCoverPlate = ({
 
             {facts.length > 0 && (
                 <div className="border-t border-strong pt-3.5">
-                    <h2 className="mb-1.5 font-mono text-label uppercase text-content-muted">
+                    <h2 className="mb-1.5 text-label text-content-muted">
                         Ledger
                     </h2>
                     <LedgerList>

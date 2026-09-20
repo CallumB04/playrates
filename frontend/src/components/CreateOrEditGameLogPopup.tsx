@@ -136,7 +136,7 @@ const CreateOrEditGameLogPopup = ({
                     className="aspect-3/4 w-13 shrink-0 shadow-cover"
                 />
                 <div className="min-w-0 flex-1">
-                    <p className="font-mono text-label uppercase text-content-muted">
+                    <p className="text-label text-content-muted">
                         Your log
                     </p>
                     <h2
@@ -149,7 +149,7 @@ const CreateOrEditGameLogPopup = ({
                 <button
                     type="button"
                     onClick={closePopup}
-                    className="plate-press shrink-0 border border-strong px-2.5 py-1.5 font-mono text-label-sm uppercase text-content-muted hover:border-brand"
+                    className="plate-press shrink-0 border border-strong px-2.5 py-1.5 text-label-sm text-content-muted hover:border-brand"
                 >
                     Esc
                 </button>
@@ -249,7 +249,7 @@ const CreateOrEditGameLogPopup = ({
 
                 <div className="grid gap-5 lg:grid-cols-2">
                     <fieldset>
-                        <legend className="mb-2 font-mono text-label uppercase text-content-muted">
+                        <legend className="mb-2 text-label text-content-muted">
                             Platform
                         </legend>
                         <div className="flex flex-wrap gap-1.5">
@@ -277,11 +277,11 @@ const CreateOrEditGameLogPopup = ({
 
                     <div>
                         <div className="mb-2 flex items-baseline justify-between gap-3">
-                            <span className="font-mono text-label uppercase text-content-muted">
+                            <span className="text-label text-content-muted">
                                 Achievements
                             </span>
                             {progress !== null && (
-                                <span className="font-mono text-label-sm text-status-played">
+                                <span className="text-label-sm text-status-played">
                                     {formatPercent(progress)} ·{" "}
                                     {draft.achievementsCompleted} of{" "}
                                     {draft.achievementsTotal}
@@ -332,7 +332,7 @@ const CreateOrEditGameLogPopup = ({
 
                 <div>
                     <div className="mb-2 flex flex-wrap items-baseline justify-between gap-3">
-                        <span className="font-mono text-label uppercase text-content-muted">
+                        <span className="text-label text-content-muted">
                             Review — optional
                         </span>
                         <div className="flex items-center gap-3.5">
@@ -347,7 +347,7 @@ const CreateOrEditGameLogPopup = ({
                                 }
                                 label={draft.reviewIsPublic ? "Public" : "Private"}
                             />
-                            <span className="font-mono text-label-sm text-content-muted">
+                            <span className="text-label-sm text-content-muted">
                                 {draft.reviewBody.length} / 5000
                             </span>
                         </div>
@@ -382,7 +382,7 @@ const CreateOrEditGameLogPopup = ({
                         type="button"
                         onClick={() => void handleDelete()}
                         disabled={busy}
-                        className="plate-press font-mono text-label uppercase text-danger hover:underline disabled:opacity-60"
+                        className="plate-press text-label text-danger hover:underline disabled:opacity-60"
                     >
                         Delete this log
                     </button>

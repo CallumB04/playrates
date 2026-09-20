@@ -42,7 +42,7 @@ const Field = ({
             <label
                 htmlFor={id}
                 className={cn(
-                    "mb-2 font-mono text-label-sm uppercase",
+                    "mb-2 text-label-sm",
                     labelHidden && "sr-only",
                     error
                         ? "text-danger"

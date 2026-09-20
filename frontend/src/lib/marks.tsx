@@ -15,6 +15,7 @@ export type StatusMarkName =
     | "outlineSquare"
     | "diamond"
     | "disc"
+    | "check"
     | "ledger"
     | "hollowSquare";
 
@@ -44,6 +45,14 @@ export const STATUS_MARKS: Record<StatusMarkName, IconComponent> = {
     ),
     diamond: mark(<path d="M5 1.2 8.8 5 5 8.8 1.2 5Z" strokeWidth="1.4" />),
     disc: mark(<circle cx="5" cy="5" r="3.5" fill="currentColor" />),
+    check: mark(
+        <path
+            d="M2 5.2 4.2 7.4 8.2 2.9"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    ),
     ledger: mark(
         <g strokeWidth="1.2" strokeLinecap="round">
             <path d="M1.8 2.6h6.4M1.8 5h6.4M1.8 7.4h6.4" />

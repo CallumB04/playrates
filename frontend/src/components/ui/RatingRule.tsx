@@ -135,7 +135,7 @@ const RatingRule = ({
                     />
                 )}
             </div>
-            <div className="flex items-baseline justify-between font-mono text-label-sm uppercase text-content-muted">
+            <div className="flex items-baseline justify-between text-label-sm text-content-muted">
                 <span>{label}</span>
                 <span className="text-figure-sm text-brand">
                     {formatRating(value)}

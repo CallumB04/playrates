@@ -27,7 +27,7 @@ const ReaderNotes = ({
                 Reader’s notes
             </h2>
             <div className="flex items-center gap-4">
-                <span className="font-mono text-label uppercase text-content-muted">
+                <span className="text-label text-content-muted">
                     {formatCount(total)} {total === 1 ? "entry" : "entries"}
                 </span>
                 <Select
@@ -72,7 +72,7 @@ const ReaderNotes = ({
                             >
                                 {review.author.username}
                             </Link>
-                            <span className="font-mono text-label-sm uppercase text-content-muted">
+                            <span className="text-label-sm text-content-muted">
                                 {relativeTime(review.createdAt)}
                             </span>
                         </div>

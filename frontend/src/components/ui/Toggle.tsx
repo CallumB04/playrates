@@ -62,7 +62,7 @@ const Toggle = ({
             {labelPosition === "flanked" && (
                 <span
                     className={cn(
-                        "font-mono text-label-sm uppercase",
+                        "text-label-sm",
                         checked ? "text-content-muted" : "text-content"
                     )}
                 >
@@ -74,7 +74,7 @@ const Toggle = ({
                 <span
                     className={cn(
                         labelPosition === "flanked"
-                            ? "font-mono text-label-sm uppercase"
+                            ? "text-label-sm"
                             : "text-body-sm",
                         labelPosition === "flanked" && !checked
                             ? "text-content-muted"

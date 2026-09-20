@@ -56,12 +56,12 @@ const GameTile = ({
     <div className="group/tile">
         <Link
             to={`/game/${gameId}`}
-            className="relative block aspect-3/4 overflow-hidden bg-surface-media shadow-cover transition-shadow group-hover/tile:shadow-cover-hover"
+            className="lift relative block aspect-3/4 overflow-hidden rounded-md bg-surface-media shadow-cover group-hover/tile:-translate-y-1 group-hover/tile:shadow-cover-hover group-hover/tile:shadow-glow"
         >
             <GameCover coverUrl={coverUrl} title={title} className="size-full" />
 
             {/* Resting state: the title reads off the art itself. */}
-            <span className="absolute inset-x-0 bottom-0 bg-linear-to-t from-overlay-tile to-transparent p-2.5 pt-8 font-display text-[13px] leading-tight text-content-on-media group-hover/tile:opacity-0">
+            <span className="absolute inset-x-0 bottom-0 bg-linear-to-t from-overlay-tile to-transparent p-2.5 pt-10 text-[13px] font-medium leading-tight text-content-on-media transition-opacity group-hover/tile:opacity-0">
                 {title}
             </span>
 
@@ -75,13 +75,13 @@ const GameTile = ({
             )}
 
             {actions.length > 0 && (
-                <span className="absolute inset-0 flex flex-col gap-1.5 bg-overlay-tile p-2.5 opacity-0 transition-opacity group-hover/tile:opacity-100 focus-within:opacity-100">
+                <span className="absolute inset-0 flex flex-col gap-1.5 rounded-md bg-overlay-tile p-2.5 opacity-0 backdrop-blur-[2px] transition-opacity group-hover/tile:opacity-100 focus-within:opacity-100">
                     <span className="mb-auto block">
-                        <span className="block font-display text-[13px] leading-tight text-content-on-media">
+                        <span className="block text-[13px] font-medium leading-tight text-content-on-media">
                             {title}
                         </span>
                         {meta && (
-                            <span className="mt-1 block font-mono text-stamp uppercase text-content-on-media/70">
+                            <span className="mt-1 block text-[10px] text-content-on-media/70">
                                 {meta}
                             </span>
                         )}
@@ -97,7 +97,7 @@ const GameTile = ({
                                 action.onSelect();
                             }}
                             className={cn(
-                                "plate-press w-full border px-2 py-1.5 font-mono text-stamp uppercase",
+                                "plate-press w-full border px-2 py-1.5 text-stamp",
                                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-on-media",
                                 ACTION_TONE[action.tone ?? "secondary"]
                             )}
@@ -111,7 +111,7 @@ const GameTile = ({
 
         {(footLabel || rating !== undefined || footValue) && (
             <div className="mt-2 flex items-baseline gap-1">
-                <span className="truncate font-mono text-[9px] uppercase text-content-muted">
+                <span className="truncate text-[11px] text-content-muted">
                     {footLabel}
                 </span>
                 <span className="leader" aria-hidden="true" />

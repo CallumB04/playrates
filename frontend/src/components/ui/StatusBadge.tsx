@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
     STATUS_PRESENTATION,
-    statusRadius,
     type DisplayStatus,
 } from "../../constants/gameStatus";
 import { STATUS_MARKS } from "../../lib/marks";
@@ -20,16 +19,14 @@ interface StatusBadgeProps {
 }
 
 const SIZE: Record<StatusBadgeSize, string> = {
-    stamp: "gap-1.5 px-1.5 py-1 text-stamp",
-    base: "gap-1.5 px-2.5 py-1.5 text-label-sm",
+    stamp: "gap-1 px-2 py-0.5 text-[10px]",
+    base: "gap-1.5 px-2.5 py-1 text-xs",
 };
 
 /**
- * Eight states told apart by shape, word and hue at once — so the badge still
- * reads with the colour removed, and the word is never the thing that gets
- * dropped. The mark is redundant reinforcement and stays hidden from readers.
- *
- * `rounded-*` in className is unsupported: the shape carries meaning.
+ * Eight states told apart by mark, word and hue at once, so the badge still
+ * reads with the colour removed and the word is never what gets dropped. The
+ * mark is redundant reinforcement and stays hidden from screen readers.
  */
 const StatusBadge = ({
     status,
@@ -56,11 +53,10 @@ const StatusBadge = ({
     return (
         <span
             className={cn(
-                "inline-flex items-center border font-mono uppercase",
+                "inline-flex items-center rounded-full border font-medium",
                 SIZE[size],
-                statusRadius(status),
                 onMedia
-                    ? "border-content-on-media/90 bg-media-scrim text-content-on-media stamp"
+                    ? "border-white/25 bg-media-scrim text-content-on-media backdrop-blur-sm"
                     : chip,
                 stamping && "animate-stamp",
                 className

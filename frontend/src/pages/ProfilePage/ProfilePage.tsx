@@ -239,7 +239,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 isMyAccount={isMyAccount}
                 trailing={
                     !isMyAccount && myLogIds ? (
-                        <span className="font-mono text-label uppercase text-accent">
+                        <span className="text-label text-accent">
                             {formatCount(
                                 logs.filter((l) => myLogGameIds.has(l.gameId))
                                     .length

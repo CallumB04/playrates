@@ -35,7 +35,7 @@ const MemberFileHeader = ({
 
     return (
         <>
-            <div className="flex justify-end font-mono text-label uppercase text-content-muted">
+            <div className="flex justify-end text-label text-content-muted">
                 {/* Ids are uuids, so there is no member number to print —
                     the date is the part that was ever meaningful. */}
                 Opened {formatMonthYear(profile.createdAt)}
@@ -67,7 +67,7 @@ const MemberFileHeader = ({
                         </h1>
                         <span
                             className={cn(
-                                "flex items-center gap-1.5 font-mono text-label uppercase",
+                                "flex items-center gap-1.5 text-label",
                                 profile.online
                                     ? "text-success"
                                     : "text-content-muted"

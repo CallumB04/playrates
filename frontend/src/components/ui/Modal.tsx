@@ -19,7 +19,7 @@ interface ModalProps {
  * markup and adds the keyboard and focus handling by hand.
  */
 const PANEL =
-    "relative max-h-[90vh] overflow-y-auto border border-strong bg-surface-raised p-4 shadow-modal sm:p-6";
+    "relative max-h-[90vh] animate-settle overflow-y-auto rounded-lg border border-subtle bg-surface-raised p-4 shadow-modal sm:p-6";
 
 const Modal = ({
     onClose,
@@ -56,7 +56,7 @@ const Modal = ({
 
     return createPortal(
         <div
-            className="fixed top-0 left-0 flex h-screen w-screen items-center justify-center bg-overlay-backdrop px-4"
+            className="fixed top-0 left-0 flex h-screen w-screen items-center justify-center bg-overlay-backdrop px-4 backdrop-blur-sm"
             onMouseDown={onClose}
         >
             <div

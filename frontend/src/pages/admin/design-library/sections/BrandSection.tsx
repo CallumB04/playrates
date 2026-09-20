@@ -218,7 +218,7 @@ const BrandSection = () => {
                     <button
                         type="button"
                         onClick={() => setSolo(null)}
-                        className="border border-strong px-3 py-1.5 font-mono text-label-sm uppercase text-content-secondary hover:border-brand"
+                        className="border border-strong px-3 py-1.5 text-label-sm text-content-secondary hover:border-brand"
                     >
                         Compare all
                     </button>
@@ -227,7 +227,7 @@ const BrandSection = () => {
                             key={c.key}
                             type="button"
                             onClick={() => setSolo(c.key)}
-                            className="border border-strong px-3 py-1.5 font-mono text-label-sm uppercase text-content-secondary hover:border-brand"
+                            className="border border-strong px-3 py-1.5 text-label-sm text-content-secondary hover:border-brand"
                         >
                             {c.name} alone
                         </button>

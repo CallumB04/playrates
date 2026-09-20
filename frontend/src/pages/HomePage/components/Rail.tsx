@@ -44,7 +44,7 @@ const Rail = ({
                     <h2 className="font-display text-section text-content">
                         {title}
                     </h2>
-                    <span className="font-mono text-label uppercase text-content-muted">
+                    <span className="text-label text-content-muted">
                         {note}
                     </span>
                 </div>

@@ -24,7 +24,7 @@ const SignedOutHero = ({
 }: SignedOutHeroProps) => (
     <div className="grid items-start gap-10 py-3 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-14">
         <div>
-            <p className="flex items-center gap-2.5 font-mono text-label uppercase text-accent">
+            <p className="flex items-center gap-2.5 text-label text-accent">
                 <span aria-hidden className="h-px w-6 bg-accent" />
                 {siteStats
                     ? `${formatCount(siteStats.gameCount)} titles on file`
@@ -62,7 +62,7 @@ const SignedOutHero = ({
                     { label: "Logs kept", value: siteStats?.logCount },
                 ].map((stat) => (
                     <div key={stat.label}>
-                        <dt className="font-mono text-label uppercase text-content-muted">
+                        <dt className="text-label text-content-muted">
                             {stat.label}
                         </dt>
                         <dd className="mt-1.5">
@@ -81,7 +81,7 @@ const SignedOutHero = ({
         {/* A card from the drawer. Real figures for a real game rather than a
             fabricated shelf — the labels are community ones, not personal. */}
         <aside className="border border-strong bg-surface-sunken p-5 inset-shadow-deep">
-            <p className="mb-3.5 font-mono text-label uppercase text-content-muted">
+            <p className="mb-3.5 text-label text-content-muted">
                 A card from the drawer
             </p>
 
@@ -101,7 +101,7 @@ const SignedOutHero = ({
                             />
                         </Link>
                         <div className="min-w-0">
-                            <p className="font-mono text-label-sm uppercase text-accent">
+                            <p className="text-label-sm text-accent">
                                 Most logged
                             </p>
                             <Link

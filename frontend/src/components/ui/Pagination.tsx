@@ -15,8 +15,7 @@ const SLOT =
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
 const STEP =
-    "border-strong bg-surface-raised text-content-secondary hover:border-brand " +
-    "active:inset-shadow-press " +
+    "border-subtle bg-surface-raised text-content-secondary hover:-translate-y-px hover:border-strong hover:text-content " +
     "disabled:border-subtle disabled:bg-transparent disabled:text-content-muted disabled:opacity-60";
 
 /** "Showing 1–28 of 184,662" — the range this page actually covers. */
@@ -33,7 +32,7 @@ export const PaginationSummary = ({
     return (
         <p
             className={cn(
-                "font-mono text-label uppercase text-content-muted",
+                "text-label text-content-muted",
                 className
             )}
         >
@@ -87,7 +86,7 @@ const Pagination = ({ pagination, onChange, className }: PaginationProps) => {
                         className={cn(
                             SLOT,
                             slot === page
-                                ? "border-brand-deep bg-brand text-content-on-solid shadow-lip"
+                                ? "border-brand-deep bg-brand text-content-on-solid shadow-plate"
                                 : STEP
                         )}
                     >

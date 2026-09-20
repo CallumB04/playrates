@@ -29,7 +29,7 @@ const EmptyPlate = ({
         )}
     >
         {eyebrow && (
-            <span className="font-mono text-label uppercase text-content-muted">
+            <span className="text-label text-content-muted">
                 {eyebrow}
             </span>
         )}
