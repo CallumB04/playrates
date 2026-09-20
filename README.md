@@ -179,27 +179,51 @@ frontend/src/
 
 ## Design system
 
+**Vellum — everything is a card, lit from above.** Surfaces float on a dark
+ground, lifted by a soft ambient shadow, a tighter key shadow, and a 1px rim of
+light along the top edge. Hovering brings the light closer. Nothing is pressed
+in; box art is the only saturated thing on a page, and the chrome stays out of
+its way.
+
 Tailwind v4, configured entirely in `frontend/src/styles/theme.css` — there is
 no `tailwind.config.js`. That file holds the tokens in two layers:
 
-- **Primitives** — raw colour ramps. Deliberately *not* exposed as Tailwind
-  utilities, so a component cannot pin itself to one shade and break the other
-  theme.
+- **Primitives** — the raw ramps (`iris`, `ink`, `ember`). Deliberately *not*
+  exposed as Tailwind utilities, so a component cannot pin itself to one shade
+  and break the other theme.
 - **Semantics** — what a colour is for (`surface`, `content`, `border`,
   `brand`, `danger`, …). This is the only layer components touch.
 
 No colour is ever written literally in a component. If a shade is missing, add
 a semantic token rather than reaching for an arbitrary value.
 
-Light and dark are both fully defined and switchable. `ThemeContext` persists
-the choice, and a small script in `index.html` applies it before first paint so
-there is no flash.
+A few rules worth knowing before changing anything:
+
+- **Depth is height, never pressure.** Elevation runs `e1` → `e3`, plus
+  `shadow-modal` and the `shadow-glow` bloom that a hovered thing gathers. The
+  `inset-shadow-*` names survive only as aliases and should not be used.
+- **Type.** One sans (Geist) for headings and body; mono is reserved for real
+  figures — ratings, hours, counts — and never for labels. The display steps
+  are `clamp()`d, so they are fluid by default and no page needs its own
+  responsive overrides.
+- **Status is never carried by colour alone.** Every status has a distinct
+  mark and its word rendered as real text, so a badge still reads in
+  greyscale. Shape used to do this job and no longer does.
+- **Measures are in `ch`, which is the width of the zero glyph.** Geist's is
+  narrow, so a `max-w-[Nch]` renders roughly 27% longer than the number
+  suggests. `--container-measure` is the tuned default.
+
+Dark is the default and the mapping the palette was built for; light is a
+genuine second design rather than an inversion, and needs its own pass when
+tokens change. `ThemeContext` persists the choice, and a small script in
+`index.html` applies it before first paint so there is no flash — the two must
+agree on `DEFAULT_THEME`.
 
 **The design library is at `/admin/design`.** It renders every token and every
-shared component live, with a theme toggle — the fastest way to see the effect
-of a token change, and to check both themes at once. Swatches read their
-resolved value from the DOM, so the page cannot drift out of date with
-`theme.css`.
+shared component live, with a theme toggle. Swatches resolve their value from
+probe elements in both themes at once, so the table reads the same whichever
+theme you are browsing in, and `tokenCatalogue.test.ts` fails if the catalogue
+names a token `theme.css` does not define.
 
 > The admin area has no access control yet. It renders static demos and reads
 > no user data, but it should be gated behind an admin role before the app is
