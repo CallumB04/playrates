@@ -75,10 +75,12 @@
     --accent-quiet: color-mix(in srgb, var(--ember-500) 14%, transparent);
     --accent-content: var(--ember-600);
 
-    /* Surfaces */
-    --surface: #f7f6fa;
+    /* Surfaces. The page sits further from white than it wants to, because a
+       shadow on near-white has almost nothing to fall on — separation has to
+       come from the surfaces themselves as much as from the light. */
+    --surface: #f1eff7;
     --surface-raised: #ffffff;
-    --surface-sunken: #eeecf3;
+    --surface-sunken: #e7e4ef;
     --surface-chrome: var(--surface);
     --surface-overlay: var(--surface-raised);
     --surface-overlay-hover: var(--surface-sunken);
@@ -97,20 +99,20 @@
     --content-disabled: color-mix(in srgb, var(--ink-950) 32%, transparent);
 
     /* Rules. Translucent, so they sit on any surface without banding. */
-    --border-default: color-mix(in srgb, var(--ink-950) 10%, transparent);
-    --border-subtle: color-mix(in srgb, var(--ink-950) 7%, transparent);
-    --border-faint: color-mix(in srgb, var(--ink-950) 5%, transparent);
-    --border-strong: color-mix(in srgb, var(--ink-950) 15%, transparent);
+    --border-default: color-mix(in srgb, var(--ink-950) 12%, transparent);
+    --border-subtle: color-mix(in srgb, var(--ink-950) 9%, transparent);
+    --border-faint: color-mix(in srgb, var(--ink-950) 6%, transparent);
+    --border-strong: color-mix(in srgb, var(--ink-950) 18%, transparent);
     --border-field: var(--border-strong);
     --border-focus: var(--brand);
 
     /* Light, not pressure. These are the colours; the recipes are the
        --shadow-* tokens in the theme block. */
-    --shadow-ambient: rgba(24, 20, 35, 0.13);
-    --shadow-key: rgba(24, 20, 35, 0.09);
+    --shadow-ambient: rgba(24, 20, 45, 0.16);
+    --shadow-key: rgba(24, 20, 45, 0.1);
     --rim: rgba(255, 255, 255, 0.9);
-    --glow-brand: color-mix(in srgb, var(--brand) 32%, transparent);
-    --scrim: rgba(24, 20, 35, 0.4);
+    --glow-brand: color-mix(in srgb, var(--brand) 28%, transparent);
+    --scrim: rgba(24, 20, 45, 0.35);
 
     /* Media wells. Fixed across themes — a scrim over box art reads the same
        either way, and the art is the only saturated thing on a page. */
