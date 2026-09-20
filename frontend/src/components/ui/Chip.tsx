@@ -22,11 +22,11 @@ const Chip = ({
         type="button"
         aria-pressed={selected}
         className={cn(
-            "plate-press inline-flex min-h-11 items-center gap-2 border px-2.5 text-label-sm sm:min-h-0 sm:py-1.5",
+            "lift inline-flex min-h-11 items-center gap-2 rounded-full border px-3.5 text-label-sm sm:min-h-0 sm:py-1.5",
             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
             selected
-                ? "border-brand-deep bg-brand text-content-on-solid shadow-lip"
-                : "border-strong bg-surface text-content-secondary hover:border-brand",
+                ? "border-brand-deep bg-brand text-content-on-solid shadow-plate"
+                : "border-subtle bg-surface-raised text-content-secondary hover:-translate-y-px hover:border-strong hover:text-content",
             className
         )}
         {...props}

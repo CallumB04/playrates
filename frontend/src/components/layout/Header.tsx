@@ -9,7 +9,7 @@ import ProfilePicture from "../ProfilePicture";
 import { cn } from "../../lib/cn";
 
 const NAV_LINK =
-    "plate-press border-b-2 pb-1 text-label transition-colors";
+    "lift border-b-2 pb-1 text-label transition-colors";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
@@ -152,7 +152,7 @@ const Header = () => {
                         onClick={() => setMenuOpen((open) => !open)}
                         aria-expanded={menuOpen}
                         aria-label={menuOpen ? "Close menu" : "Open menu"}
-                        className="plate-press -mr-1 p-1 text-content lg:hidden"
+                        className="lift -mr-1 p-1 text-content lg:hidden"
                     >
                         {menuOpen ? <X size={22} /> : <Menu size={22} />}
                     </button>

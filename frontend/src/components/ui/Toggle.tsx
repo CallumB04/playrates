@@ -29,7 +29,7 @@ const Toggle = ({
     const control = (
         <span
             className={cn(
-                "plate-press flex h-[18px] w-[34px] shrink-0 items-center border p-[2px]",
+                "lift flex h-[20px] w-[36px] shrink-0 items-center rounded-full border p-[2px]",
                 checked
                     ? "justify-end border-brand-deep bg-brand"
                     : "justify-start border-strong bg-surface-sunken"
@@ -37,7 +37,7 @@ const Toggle = ({
         >
             <span
                 className={cn(
-                    "size-3",
+                    "size-3.5 rounded-full",
                     checked ? "bg-content-on-solid" : "bg-content-muted"
                 )}
             />

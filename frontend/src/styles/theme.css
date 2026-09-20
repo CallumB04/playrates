@@ -565,15 +565,6 @@
         transform 200ms var(--ease-spring);
 }
 
-/* Alias, so components read correctly until they are renamed. */
-@utility plate-press {
-    transition:
-        box-shadow 200ms var(--ease-glide),
-        background-color 160ms var(--ease-glide),
-        border-color 160ms var(--ease-glide),
-        transform 200ms var(--ease-spring);
-}
-
 /* Forty detents without forty DOM nodes: minor ticks every 1/40, major every
    1/10. */
 @utility detent-rule {
@@ -724,8 +715,7 @@
         --animate-fade-in-right: none;
     }
 
-    .lift,
-    .plate-press {
+    .lift {
         transition-duration: 1ms;
     }
 }

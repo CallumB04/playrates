@@ -16,7 +16,7 @@ interface RailProps {
 }
 
 const ARROW =
-    "plate-press flex size-7 items-center justify-center border border-strong bg-surface-raised font-mono text-content-secondary " +
+    "lift flex size-8 items-center justify-center rounded-full border border-subtle bg-surface-raised font-mono text-content-secondary " +
     "hover:-translate-y-px hover:border-brand hover:text-content disabled:opacity-40 disabled:hover:translate-y-0" +
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 

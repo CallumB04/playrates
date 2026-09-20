@@ -95,7 +95,7 @@ const GameCoverPlate = ({
                             onClick={() => onQuickLog(quick.status)}
                             disabled={isSaving}
                             className={cn(
-                                "plate-press min-h-10 flex-1 border text-body-sm font-medium",
+                                "lift min-h-10 flex-1 rounded-sm border text-body-sm font-medium",
                                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
                                 "hover:-translate-y-px disabled:opacity-60",
                                 quick.className

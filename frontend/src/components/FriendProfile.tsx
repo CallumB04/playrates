@@ -38,7 +38,7 @@ const FriendProfile = ({
         <Link
             to={`/user/${user.username}`}
             className={cn(
-                "plate-press flex w-full items-center px-1.5 py-1.5 hover:bg-surface-hover",
+                "lift flex w-full items-center rounded-sm px-2 py-2 hover:bg-surface-hover",
                 gap
             )}
             onClick={closePopup}

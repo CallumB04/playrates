@@ -12,7 +12,7 @@ const Footer = () => (
             <button
                 type="button"
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                className="plate-press text-content-secondary hover:text-brand"
+                className="lift text-content-secondary hover:text-brand"
             >
                 Back to top
             </button>

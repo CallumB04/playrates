@@ -149,7 +149,7 @@ const CreateOrEditGameLogPopup = ({
                 <button
                     type="button"
                     onClick={closePopup}
-                    className="plate-press shrink-0 border border-strong px-2.5 py-1.5 text-label-sm text-content-muted hover:border-brand"
+                    className="lift shrink-0 rounded-sm border border-subtle px-2.5 py-1.5 text-label-sm text-content-muted hover:border-strong hover:text-content"
                 >
                     Esc
                 </button>
@@ -382,7 +382,7 @@ const CreateOrEditGameLogPopup = ({
                         type="button"
                         onClick={() => void handleDelete()}
                         disabled={busy}
-                        className="plate-press text-label text-danger hover:underline disabled:opacity-60"
+                        className="lift text-label text-danger hover:underline disabled:opacity-60"
                     >
                         Delete this log
                     </button>

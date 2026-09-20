@@ -11,7 +11,7 @@ interface PaginationProps {
 }
 
 const SLOT =
-    "plate-press min-w-[34px] border px-2 py-2 text-center font-mono text-[11.5px] font-medium " +
+    "lift min-w-[36px] rounded-sm border px-2 py-2 text-center font-mono text-[12px] font-medium " +
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
 const STEP =

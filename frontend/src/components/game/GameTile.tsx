@@ -97,7 +97,7 @@ const GameTile = ({
                                 action.onSelect();
                             }}
                             className={cn(
-                                "plate-press w-full border px-2 py-1.5 text-stamp",
+                                "lift w-full rounded-sm border px-2 py-1.5 text-[11px] font-medium",
                                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-on-media",
                                 ACTION_TONE[action.tone ?? "secondary"]
                             )}
