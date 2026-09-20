@@ -32,11 +32,10 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
     username,
     link,
 }) => {
-    /* Square, like everything else. The presence dot beside it is one of the
-       only two round things in the system, and it needs to stay that way to
-       mean anything. */
+    /* Round. Faces are round everywhere else on the internet, and the square
+       avatar was only ever a consequence of square-by-default. */
     const className = cn(
-        "aspect-square overflow-hidden border-strong bg-surface-sunken bg-[url('/assets/profile-picture/default.png')] bg-contain inset-shadow-press hover:cursor-pointer hover:bg-[url('/assets/profile-picture/hover.png')]",
+        "aspect-square overflow-hidden rounded-full border-subtle bg-surface-sunken bg-[url('/assets/profile-picture/default.png')] bg-contain hover:cursor-pointer hover:bg-[url('/assets/profile-picture/hover.png')]",
         AVATAR_VARIANT[variant]
     );
     const image = file ? (

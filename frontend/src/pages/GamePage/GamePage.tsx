@@ -79,7 +79,7 @@ const GamePage = () => {
     if (isLoading) {
         return (
             <div className="grid gap-10 lg:grid-cols-[300px_minmax(0,1fr)]">
-                <div className="aspect-3/4 bg-surface-sunken inset-shadow-press" />
+                <div className="aspect-3/4 bg-surface-sunken" />
                 <TextSkeleton lines={6} />
             </div>
         );
@@ -124,13 +124,13 @@ const GamePage = () => {
                         </h1>
 
                         {game.description ? (
-                            <p className="mt-3.5 max-w-[62ch] text-body text-content-secondary">
+                            <p className="mt-3.5 max-w-[52ch] text-body text-content-secondary">
                                 {game.description}
                             </p>
                         ) : (
                             /* Descriptions are backfilled on first view, so the
                                first visitor always lands on an empty one. */
-                            <p className="mt-3.5 max-w-[62ch] border border-dashed border-strong bg-surface-sunken px-4 py-3 text-body-sm text-content-muted">
+                            <p className="mt-3.5 max-w-[52ch] border border-dashed border-strong bg-surface-sunken px-4 py-3 text-body-sm text-content-muted">
                                 No description on file yet. Reload in a moment —
                                 we fetch it the first time someone opens a game.
                             </p>

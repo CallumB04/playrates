@@ -35,7 +35,7 @@ const SignedOutHero = ({
                 Keep a record of everything you play.
             </h1>
 
-            <p className="mt-4 max-w-[54ch] text-[17px] leading-relaxed text-content-secondary">
+            <p className="mt-4 max-w-[44ch] text-[17px] leading-relaxed text-content-secondary">
                 Rate to the quarter point, track the hours, and let the backlog
                 be honest with you. Your library is a page worth linking to —
                 not a spreadsheet you hide.
@@ -80,7 +80,7 @@ const SignedOutHero = ({
 
         {/* A card from the drawer. Real figures for a real game rather than a
             fabricated shelf — the labels are community ones, not personal. */}
-        <aside className="border border-strong bg-surface-sunken p-5 inset-shadow-deep">
+        <aside className="border border-strong bg-surface-sunken p-5">
             <p className="mb-3.5 text-label text-content-muted">
                 A card from the drawer
             </p>

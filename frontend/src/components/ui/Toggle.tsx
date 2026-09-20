@@ -32,7 +32,7 @@ const Toggle = ({
                 "plate-press flex h-[18px] w-[34px] shrink-0 items-center border p-[2px]",
                 checked
                     ? "justify-end border-brand-deep bg-brand"
-                    : "justify-start border-strong bg-surface-sunken inset-shadow-field"
+                    : "justify-start border-strong bg-surface-sunken"
             )}
         >
             <span

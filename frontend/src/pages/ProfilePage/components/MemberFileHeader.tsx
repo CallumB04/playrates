@@ -42,7 +42,7 @@ const MemberFileHeader = ({
             </div>
 
             <section className="grid items-start gap-6 border border-strong bg-surface-raised p-5 shadow-lip sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-7 sm:p-6">
-                <div className="border border-strong bg-surface-sunken p-2.5 inset-shadow-deep">
+                <div className="border border-strong bg-surface-sunken p-2.5">
                     <span className="relative block">
                         <ProfilePicture
                             variant="profileHeader"
@@ -87,7 +87,7 @@ const MemberFileHeader = ({
                     </div>
 
                     {profile.bio && (
-                        <p className="mt-2.5 max-w-[58ch] text-sm leading-relaxed text-content-secondary">
+                        <p className="mt-2.5 max-w-[48ch] text-sm leading-relaxed text-content-secondary">
                             {profile.bio}
                         </p>
                     )}

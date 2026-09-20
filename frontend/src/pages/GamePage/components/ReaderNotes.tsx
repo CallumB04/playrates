@@ -76,7 +76,7 @@ const ReaderNotes = ({
                                 {relativeTime(review.createdAt)}
                             </span>
                         </div>
-                        <p className="max-w-[70ch] text-sm leading-relaxed text-content-secondary">
+                        <p className="max-w-[46ch] text-sm leading-relaxed text-content-secondary">
                             {review.body}
                         </p>
                     </div>

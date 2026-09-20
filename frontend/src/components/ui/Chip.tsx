@@ -27,7 +27,6 @@ const Chip = ({
             selected
                 ? "border-brand-deep bg-brand text-content-on-solid shadow-lip"
                 : "border-strong bg-surface text-content-secondary hover:border-brand",
-            "active:inset-shadow-press",
             className
         )}
         {...props}

@@ -11,7 +11,7 @@ interface CirculationPlateProps {
 /** How the shelf holds this game: four rows, hue, bar, count and share. */
 const CirculationPlate = ({ byStatus, logCount }: CirculationPlateProps) => (
     <section>
-        <h2 className="border-b border-strong pb-2 text-label text-content-muted">
+        <h2 className="border-b border-subtle pb-2 text-label text-content-muted">
             {logCount === 0
                 ? "Not logged yet"
                 : `Logged by ${formatCount(logCount)} · by status`}
@@ -32,9 +32,9 @@ const CirculationPlate = ({ byStatus, logCount }: CirculationPlateProps) => (
                     <span className="w-20 shrink-0 text-body-sm font-medium text-content sm:w-24">
                         {label}
                     </span>
-                    <span className="h-2.5 flex-1 bg-surface-sunken inset-shadow-field">
+                    <span className="h-2 flex-1 overflow-hidden rounded-full bg-surface-sunken">
                         <span
-                            className={cn("block h-full", accent)}
+                            className={cn("block h-full rounded-full", accent)}
                             style={{ width: `${share * 100}%` }}
                         />
                     </span>

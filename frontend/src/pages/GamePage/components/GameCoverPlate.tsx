@@ -35,9 +35,9 @@ const QUICK = [
 ];
 
 /**
- * The cover, pressed into the paper. This is the clearest statement of the
- * device on any screen: the thing you own sits in a well, and the actions the
- * system offers sit raised beneath it.
+ * The cover, lifted. It is the largest piece of art on any screen, so it gets
+ * the deepest shadow in the system and nothing framing it — the old version
+ * sat it in a bordered well, which put a picture frame around box art.
  */
 const GameCoverPlate = ({
     game,
@@ -52,8 +52,8 @@ const GameCoverPlate = ({
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="border border-strong bg-surface-sunken p-3.5 inset-shadow-deep shadow-lip">
-                <div className="relative aspect-3/4 overflow-hidden bg-surface-media shadow-cover">
+            <div>
+                <div className="relative aspect-3/4 overflow-hidden rounded-lg bg-surface-media shadow-e3">
                     <GameCover
                         coverUrl={game.coverUrl}
                         title={game.title}
@@ -68,13 +68,13 @@ const GameCoverPlate = ({
                             className="absolute right-3 top-3"
                         />
                     )}
-                    <span className="absolute inset-x-0 bottom-0 bg-linear-to-t from-overlay-tile to-transparent p-4 pt-12 font-display text-2xl leading-tight text-content-on-media">
-                        {game.title}
-                    </span>
+
                 </div>
                 <div className="mt-3 flex items-center justify-between text-label-sm text-content-muted">
-                    <span>{game.slug.slice(0, 22)}</span>
-                    <span>{releaseYear(game.releaseDate)}</span>
+                    <span className="truncate">{game.title}</span>
+                    <span className="shrink-0 font-mono">
+                        {releaseYear(game.releaseDate)}
+                    </span>
                 </div>
             </div>
 
@@ -97,7 +97,7 @@ const GameCoverPlate = ({
                             className={cn(
                                 "plate-press min-h-10 flex-1 border text-body-sm font-medium",
                                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
-                                "active:inset-shadow-press disabled:opacity-60",
+                                "hover:-translate-y-px disabled:opacity-60",
                                 quick.className
                             )}
                         >
@@ -108,7 +108,7 @@ const GameCoverPlate = ({
             )}
 
             {facts.length > 0 && (
-                <div className="border-t border-strong pt-3.5">
+                <div className="border-t border-subtle pt-3.5">
                     <h2 className="mb-1.5 text-label text-content-muted">
                         Ledger
                     </h2>

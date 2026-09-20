@@ -19,7 +19,7 @@ const GameCover = ({ coverUrl, title, className }: GameCoverProps) => {
         return (
             <div
                 className={cn(
-                    "bg-surface-sunken inset-shadow-press",
+                    "bg-surface-sunken",
                     className
                 )}
                 aria-hidden="true"

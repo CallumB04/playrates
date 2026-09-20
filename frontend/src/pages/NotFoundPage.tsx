@@ -30,7 +30,7 @@ const NotFoundPage = () => {
                     <h1 className="font-display text-title text-content">
                         That page isn’t in the drawer.
                     </h1>
-                    <p className="mt-2.5 max-w-[56ch] text-body text-content-secondary">
+                    <p className="mt-2.5 max-w-[46ch] text-body text-content-secondary">
                         The link may be old, or the card may have been withdrawn.
                         The catalogue is still where you left it.
                     </p>

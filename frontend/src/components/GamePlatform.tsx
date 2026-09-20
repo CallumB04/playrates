@@ -26,7 +26,7 @@ const GamePlatform: React.FC<GamePlatformProps> = ({ platform, size }) => {
 
     return (
         <span
-            className={`flex items-center rounded-full border-2 border-content text-content ${wrapper}`}
+            className={`flex items-center rounded-full border border-subtle text-content ${wrapper}`}
         >
             <p>{details?.displayName ?? platform}</p>
             <Icon size={icon} aria-hidden />

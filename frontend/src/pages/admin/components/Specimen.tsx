@@ -35,7 +35,7 @@ const Specimen = ({
 
         <div
             className={cn(
-                "bg-surface-sunken inset-shadow-field",
+                "bg-surface-sunken",
                 fullBleed && "relative overflow-hidden",
                 !fullBleed && stack && "flex flex-col gap-4 p-4",
                 !fullBleed && !stack && "flex flex-wrap items-center gap-4 p-4"

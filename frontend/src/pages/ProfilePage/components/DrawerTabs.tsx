@@ -24,9 +24,9 @@ const ACCENT_BORDER: Record<GameStatus, string> = {
 };
 
 /**
- * Index-drawer tabs. The active one rises out of the deboss; the rest stay
- * pressed in. That is how you read which drawer is open before the colour
- * registers — and each tab pages independently.
+ * Shelf tabs. The open one lifts and lights; the rest sit flat. That is how
+ * you read which is open before the colour registers — and each pages
+ * independently, so three hundred games stay navigable.
  */
 const DrawerTabs = ({ active, counts, onSelect, trailing }: DrawerTabsProps) => (
     <div
@@ -46,12 +46,12 @@ const DrawerTabs = ({ active, counts, onSelect, trailing }: DrawerTabsProps) => 
                     aria-selected={isActive}
                     onClick={() => onSelect(status)}
                     className={cn(
-                        "plate-press flex shrink-0 items-center gap-2 border border-b-0 border-strong border-t-[3px] px-4 pb-2 pt-2.5 font-mono text-[10.5px] uppercase tracking-[.14em]",
+                        "lift flex shrink-0 items-center gap-2 rounded-t-md border border-b-0 border-subtle border-t-[3px] px-4 pb-2.5 pt-2.5 text-label",
                         "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                         ACCENT_BORDER[status],
                         isActive
-                            ? "animate-tab-raise bg-surface-raised text-content"
-                            : "bg-surface-sunken text-content-muted inset-shadow-deep"
+                            ? "bg-surface-raised text-content shadow-e1"
+                            : "bg-transparent text-content-muted hover:text-content"
                     )}
                 >
                     <Mark className={cn("text-[10px]", isActive && markTone)} />
@@ -63,7 +63,7 @@ const DrawerTabs = ({ active, counts, onSelect, trailing }: DrawerTabsProps) => 
             );
         })}
 
-        <span aria-hidden className="h-px flex-1 bg-strong" />
+        <span aria-hidden className="h-px flex-1 bg-subtle" />
         {trailing && <div className="shrink-0 pb-2">{trailing}</div>}
     </div>
 );

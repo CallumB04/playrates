@@ -56,7 +56,7 @@ const RecentNotes = ({ reviews }: RecentNotesProps) => {
                                 {relativeTime(review.createdAt)}
                             </span>
                         </div>
-                        <p className="mt-1.5 max-w-[66ch] text-sm leading-relaxed text-content-secondary">
+                        <p className="mt-1.5 max-w-[44ch] text-sm leading-relaxed text-content-secondary">
                             {review.body}
                         </p>
                     </article>

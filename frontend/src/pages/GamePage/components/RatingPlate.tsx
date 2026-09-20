@@ -37,7 +37,7 @@ const RatingPlate = ({ average, ratingCount, buckets }: RatingPlateProps) => {
         average === null ? -1 : Math.min(buckets.length - 1, Math.floor(average * 2));
 
     return (
-        <section className="grid items-center gap-6 border border-strong bg-surface-raised px-5 py-5 shadow-lip sm:grid-cols-[186px_minmax(0,1fr)]">
+        <section className="grid items-center gap-6 rounded-lg border border-subtle bg-surface-raised px-5 py-5 shadow-plate sm:grid-cols-[186px_minmax(0,1fr)]">
             <div className="sm:border-r sm:border-subtle sm:pr-5">
                 <h2 className="text-label text-content-muted">
                     PlayRates average
@@ -73,7 +73,7 @@ const RatingPlate = ({ average, ratingCount, buckets }: RatingPlateProps) => {
                         <span
                             key={i}
                             className={cn(
-                                "min-h-px flex-1",
+                                "min-h-px flex-1 rounded-t-xs",
                                 i === averageBucket
                                     ? "bg-brand"
                                     : i > averageBucket - 4 && i < averageBucket + 4
@@ -86,7 +86,7 @@ const RatingPlate = ({ average, ratingCount, buckets }: RatingPlateProps) => {
                         />
                     ))}
                 </div>
-                <div className="mt-2 flex justify-between border-t border-strong pt-2 font-mono text-[10px] text-content-muted">
+                <div className="mt-2 flex justify-between border-t border-subtle pt-2 font-mono text-[10px] text-content-muted">
                     {["0", "2.5", "5", "7.5", "10"].map((tick) => (
                         <span key={tick}>{tick}</span>
                     ))}

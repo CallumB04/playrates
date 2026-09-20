@@ -100,7 +100,7 @@ const SizingSection = () => (
 
         <Group
             title="Elevation"
-            blurb="Five steps. e0 is the absence of a class; the inset is how anything you own sits. A pressed plate with a lip composes from two classes, because the shadow and inset-shadow namespaces write different properties."
+            blurb="Five steps, measured in how far a surface has risen off the page. Each is an ambient shadow, a tighter key shadow and a 1px rim of light along the top edge; the glow is what a thing gathers on hover."
         >
             <div className="flex flex-wrap gap-5">
                 {ELEVATION.map((level) => (

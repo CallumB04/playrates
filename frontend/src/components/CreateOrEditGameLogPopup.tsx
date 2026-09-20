@@ -318,7 +318,7 @@ const CreateOrEditGameLogPopup = ({
                                 }
                                 className="w-22"
                             />
-                            <span className="h-2.5 flex-1 bg-surface-sunken inset-shadow-field">
+                            <span className="h-2.5 flex-1 bg-surface-sunken">
                                 <span
                                     className="block h-full bg-brand transition-[width]"
                                     style={{
@@ -364,7 +364,7 @@ const CreateOrEditGameLogPopup = ({
                                 value: e.target.value,
                             })
                         }
-                        className="min-h-[74px] w-full resize-none border border-strong bg-surface-field px-3.5 py-3 text-sm leading-relaxed text-content inset-shadow-field placeholder:text-content-muted focus-visible:border-brand focus-visible:outline-none"
+                        className="min-h-[74px] w-full resize-none border border-strong bg-surface-field px-3.5 py-3 text-sm leading-relaxed text-content placeholder:text-content-muted focus-visible:border-brand focus-visible:outline-none"
                         placeholder="What stayed with you?"
                     />
                 </div>

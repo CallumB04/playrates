@@ -302,7 +302,7 @@
     --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
 
     --spacing-navbar: 4rem;
-    --container-measure: 62ch;
+    --container-measure: 52ch; /* ~65 rendered characters in Geist */
 
     /* Type scale. Zilla Slab displays, IBM Plex Sans sets prose, IBM Plex
        Mono carries every figure, label and stamp. One class per step; the
