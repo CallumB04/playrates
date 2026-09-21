@@ -6,7 +6,11 @@ import {
   USER_A,
   USER_B,
 } from "../helpers/buildTestApp.js";
-import { baseSeed, buildFriendship } from "../helpers/fixtures.js";
+import {
+  baseSeed,
+  buildFriendship,
+  buildGameLog,
+} from "../helpers/fixtures.js";
 
 describe("friends", () => {
   it("sends a friend request", async () => {
@@ -161,6 +165,70 @@ describe("friends", () => {
 
     expect(friends.body.data).toHaveLength(0);
     expect(sent.body.data).toHaveLength(1);
+  });
+
+  describe("activity", () => {
+    it("shows what accepted friends have logged", async () => {
+      const { app } = buildTestApp({
+        seed: {
+          ...baseSeed(),
+          friendships: [buildFriendship({ status: "accepted" })],
+          gameLogs: [
+            buildGameLog({ id: 9, user_id: USER_B, rating: 8.5 }),
+          ],
+        },
+      });
+
+      const response = await request(app)
+        .get("/api/v1/me/friends/activity")
+        .set("Authorization", authHeader(USER_A));
+
+      expect(response.status).toBe(200);
+      expect(response.body.data).toHaveLength(1);
+      expect(response.body.data[0].actor.username).toBe("frienduser");
+      expect(response.body.data[0].rating).toBe(8.5);
+      expect(response.body.data[0].game.title).toBeTruthy();
+    });
+
+    /* A pending request is not a friendship, and its logs are not yours to
+       see in a feed. */
+    it("ignores logs from people who have only been asked", async () => {
+      const { app } = buildTestApp({
+        seed: {
+          ...baseSeed(),
+          friendships: [buildFriendship()],
+          gameLogs: [buildGameLog({ id: 9, user_id: USER_B })],
+        },
+      });
+
+      const response = await request(app)
+        .get("/api/v1/me/friends/activity")
+        .set("Authorization", authHeader(USER_A));
+
+      expect(response.body.data).toHaveLength(0);
+    });
+
+    it("never shows your own logs back to you", async () => {
+      const { app } = buildTestApp({
+        seed: {
+          ...baseSeed(),
+          friendships: [buildFriendship({ status: "accepted" })],
+          gameLogs: [buildGameLog({ id: 9, user_id: USER_A })],
+        },
+      });
+
+      const response = await request(app)
+        .get("/api/v1/me/friends/activity")
+        .set("Authorization", authHeader(USER_A));
+
+      expect(response.body.data).toHaveLength(0);
+    });
+
+    it("requires authentication", async () => {
+      const { app } = buildTestApp({ seed: baseSeed() });
+      const response = await request(app).get("/api/v1/me/friends/activity");
+      expect(response.status).toBe(401);
+    });
   });
 
   it("requires authentication to mutate", async () => {

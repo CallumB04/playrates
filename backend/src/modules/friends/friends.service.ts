@@ -1,9 +1,13 @@
 import {
   relationFor,
+  type FriendActivity,
   type FriendEdge,
   type FriendRelation,
+  type Paginated,
+  type Pagination,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
+import { paginate, toRange } from "../../lib/pagination.js";
 import { isOnline } from "../profiles/profiles.mapper.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type {
@@ -62,6 +66,41 @@ export const createFriendsService = (
   },
 
   /** The requester is always the authenticated caller, never a supplied id. */
+  /** What the people you follow have been logging, newest first. */
+  async activityFor(
+    viewerId: string,
+    pagination: Pagination,
+  ): Promise<Paginated<FriendActivity>> {
+    const { from, to } = toRange(pagination);
+    const { rows, total } = await repo.activityFor(viewerId, from, to);
+
+    return paginate(
+      rows.map((row) => ({
+        logId: row.log_id,
+        actor: {
+          id: row.user_id,
+          username: row.actor_username,
+          avatarUrl: row.actor_avatar_url,
+          bio: "",
+          online: isOnline(row.actor_last_seen_at),
+        },
+        game: {
+          id: row.game_id,
+          title: row.game_title,
+          coverUrl: row.game_cover_url,
+        },
+        status: row.status,
+        playedStatus: row.played_status,
+        rating: row.rating === null ? null : Number(row.rating),
+        hoursPlayed:
+          row.hours_played === null ? null : Number(row.hours_played),
+        at: row.updated_at,
+      })),
+      pagination,
+      total,
+    );
+  },
+
   async sendRequest(callerId: string, targetId: string): Promise<FriendEdge> {
     if (callerId === targetId) {
       throw new AppError(

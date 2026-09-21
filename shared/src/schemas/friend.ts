@@ -38,6 +38,27 @@ export interface FriendEdge {
   createdAt: string;
 }
 
+/**
+ * One thing a friend did, for the home feed.
+ *
+ * A log rather than an event: there is no event table, and a log's updated_at
+ * is the last time the person touched it, which is the thing worth surfacing.
+ */
+export interface FriendActivity {
+  logId: number;
+  actor: FriendUser;
+  game: {
+    id: number;
+    title: string;
+    coverUrl: string | null;
+  };
+  status: string;
+  playedStatus: string | null;
+  rating: number | null;
+  hoursPlayed: number | null;
+  at: string;
+}
+
 /** What a relationship looks like from one side. Exported so it's testable —
  *  pending means "sent" to one user and "received" to the other. */
 export const relationFor = (

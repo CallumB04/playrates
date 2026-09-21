@@ -93,6 +93,18 @@ export const createGameReviewsRouter = ({
   return router;
 };
 
+/** Mounted at /reviews. The site-wide feed. */
+export const createReviewsFeedRouter = ({ service }: Deps): Router => {
+  const router = Router();
+
+  router.get("/", validate({ query: PaginationSchema }), async (req, res) => {
+    const pagination = req.valid!.query as z.infer<typeof PaginationSchema>;
+    res.json(await service.listRecent(pagination));
+  });
+
+  return router;
+};
+
 /** Mounted at /users/:username/reviews. */
 export const createUserReviewsRouter = ({
   service,

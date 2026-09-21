@@ -250,3 +250,65 @@ describe("review sorting", () => {
     ).toBe(422);
   });
 });
+
+describe("reviews feed", () => {
+  it("lists public reviews across every game, newest first", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        reviews: [
+          buildReview({
+            id: 1,
+            body: "older",
+            created_at: "2026-01-01T00:00:00.000Z",
+          }),
+          buildReview({
+            id: 2,
+            user_id: USER_B,
+            body: "newer",
+            created_at: "2026-02-01T00:00:00.000Z",
+          }),
+        ],
+      },
+    });
+
+    const response = await request(app).get("/api/v1/reviews");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.map((r: { body: string }) => r.body)).toEqual([
+      "newer",
+      "older",
+    ]);
+  });
+
+  /* The feed is public, so a private review must not leak into it even
+     though its author can see it on their own profile. */
+  it("leaves private reviews out", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        reviews: [buildReview({ id: 1, is_public: false })],
+      },
+    });
+
+    const response = await request(app).get("/api/v1/reviews");
+    expect(response.body.data).toHaveLength(0);
+  });
+
+  it("carries the game and the hours behind the rating", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        gameLogs: [buildGameLog({ rating: 9, hours_played: 41 })],
+        reviews: [buildReview({ id: 1 })],
+      },
+    });
+
+    const response = await request(app).get("/api/v1/reviews");
+    const [review] = response.body.data;
+
+    expect(review.game.title).toBeTruthy();
+    expect(review.rating).toBe(9);
+    expect(review.hoursPlayed).toBe(41);
+  });
+});

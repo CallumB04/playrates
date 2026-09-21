@@ -25,8 +25,31 @@ const SELECT_WITH_USERS = `
     user_b:profiles!friendships_user_b_id_fkey(id, username, avatar_url, bio, last_seen_at)
 `;
 
+/** A row of the friend_activity view: one friend's log, flattened. */
+export interface FriendActivityRow {
+  log_id: number;
+  user_id: string;
+  game_id: number;
+  status: string;
+  played_status: string | null;
+  rating: number | null;
+  hours_played: number | null;
+  updated_at: string;
+  actor_username: string;
+  actor_avatar_url: string | null;
+  actor_last_seen_at: string;
+  game_title: string;
+  game_cover_url: string | null;
+}
+
 export interface FriendsRepository {
   listForUser(userId: string): Promise<FriendshipWithUsers[]>;
+  /** Recent logs from everyone the viewer is friends with. */
+  activityFor(
+    viewerId: string,
+    from: number,
+    to: number,
+  ): Promise<{ rows: FriendActivityRow[]; total: number }>;
   find(x: string, y: string): Promise<FriendshipRow | null>;
   create(requesterId: string, targetId: string): Promise<FriendshipWithUsers>;
   accept(x: string, y: string): Promise<FriendshipWithUsers>;
@@ -42,6 +65,19 @@ export const createFriendsRepository = (db: Db): FriendsRepository => ({
       .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as FriendshipWithUsers[];
+  },
+
+  async activityFor(viewerId, from, to) {
+    const { data, error, count } = await db
+      .from("friend_activity")
+      .select("*", { count: "exact" })
+      .eq("viewer_id", viewerId)
+      // log_id breaks ties, or deep pages repeat and skip rows.
+      .order("updated_at", { ascending: false })
+      .order("log_id", { ascending: false })
+      .range(from, to);
+    if (error) throw error;
+    return { rows: (data ?? []) as FriendActivityRow[], total: count ?? 0 };
   },
 
   async find(x, y) {

@@ -10,10 +10,14 @@ import type { ReviewRow } from "../../types/database.types.js";
  */
 export interface ReviewRowJoined extends ReviewRow {
   rating: number | null;
+  hours_played: number | null;
   platform_slug: string | null;
   author_username: string | null;
   author_avatar_url: string | null;
   author_last_seen_at: string | null;
+  game_title: string;
+  game_slug: string;
+  game_cover_url: string | null;
 }
 
 const CARDS = "review_cards";
@@ -29,6 +33,11 @@ export interface ReviewsRepository {
   listByUser(
     userId: string,
     viewerId: string | undefined,
+    from: number,
+    to: number,
+  ): Promise<{ rows: ReviewRowJoined[]; total: number }>;
+  /** Public reviews across every game, newest first. */
+  listRecent(
     from: number,
     to: number,
   ): Promise<{ rows: ReviewRowJoined[]; total: number }>;
@@ -81,6 +90,19 @@ export const createReviewsRepository = (db: Db): ReviewsRepository => ({
     const { data, error, count } = await builder
       .order("created_at", { ascending: false })
       .order("id")
+      .range(from, to);
+    if (error) throw error;
+    return { rows: (data ?? []) as ReviewRowJoined[], total: count ?? 0 };
+  },
+
+  async listRecent(from, to) {
+    const { data, error, count } = await db
+      .from(CARDS)
+      .select("*", { count: "exact" })
+      .eq("is_public", true)
+      // id breaks ties, or deep pages repeat and skip rows.
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
       .range(from, to);
     if (error) throw error;
     return { rows: (data ?? []) as ReviewRowJoined[], total: count ?? 0 };

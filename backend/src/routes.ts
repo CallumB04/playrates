@@ -15,6 +15,7 @@ import {
 import { createReviewsService } from "./modules/reviews/reviews.service.js";
 import {
   createGameReviewsRouter,
+  createReviewsFeedRouter,
   createMyReviewsRouter,
   createUserReviewsRouter,
 } from "./modules/reviews/reviews.routes.js";
@@ -104,6 +105,11 @@ export const buildRoutes = ({
   router.use(
     "/users/:username/friends",
     createUserFriendsRouter({ service: friends, requireAuth, optionalAuth }),
+  );
+
+  router.use(
+    "/reviews",
+    createReviewsFeedRouter({ service: reviews, requireAuth, optionalAuth }),
   );
 
   router.use(

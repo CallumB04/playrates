@@ -48,7 +48,13 @@ export const createReviewsService = (
           : false,
       },
       rating: row.rating === null ? null : Number(row.rating),
+      hoursPlayed: row.hours_played === null ? null : Number(row.hours_played),
       platform: row.platform_slug,
+      game: {
+        id: row.game_id,
+        title: row.game_title,
+        coverUrl: row.game_cover_url,
+      },
     }));
 
   return {
@@ -87,6 +93,15 @@ export const createReviewsService = (
         from,
         to,
       );
+      return paginate(withAuthors(rows), pagination, total);
+    },
+
+    /** The site-wide feed. Public reviews only, newest first. */
+    async listRecent(
+      pagination: Pagination,
+    ): Promise<Paginated<ReviewWithAuthor>> {
+      const { from, to } = toRange(pagination);
+      const { rows, total } = await repo.listRecent(from, to);
       return paginate(withAuthors(rows), pagination, total);
     },
 

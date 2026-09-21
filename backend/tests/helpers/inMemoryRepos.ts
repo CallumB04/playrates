@@ -109,13 +109,19 @@ export const createInMemoryRepos = (
     const log = state.gameLogs.find(
       (l) => l.user_id === r.user_id && l.game_id === r.game_id,
     );
+    const game = state.games.find((g) => g.id === r.game_id);
     return {
       ...r,
       rating: log?.rating ?? null,
+      hours_played: log?.hours_played ?? null,
       platform_slug: log?.platform_slug ?? null,
       author_username: author?.username ?? null,
       author_avatar_url: author?.avatar_url ?? null,
       author_last_seen_at: author?.last_seen_at ?? null,
+      // The view inner-joins games, so a row without one cannot exist.
+      game_title: game?.title ?? "",
+      game_slug: game?.slug ?? "",
+      game_cover_url: game?.cover_url ?? null,
     };
   };
 
@@ -442,6 +448,20 @@ export const createInMemoryRepos = (
     },
 
     reviews: {
+      async listRecent(from, to) {
+        const rows = state.reviews
+          .filter((r) => r.is_public)
+          .sort(
+            (a, b) =>
+              Date.parse(b.created_at) - Date.parse(a.created_at) ||
+              b.id - a.id,
+          );
+        return {
+          rows: rows.slice(from, to + 1).map(withAuthor),
+          total: rows.length,
+        };
+      },
+
       async listByGame(gameId, viewerId, from, to, sort) {
         const rows = state.reviews
           .filter(
@@ -508,6 +528,47 @@ export const createInMemoryRepos = (
     },
 
     friends: {
+      async activityFor(viewerId, from, to) {
+        const friendIds = new Set(
+          state.friendships
+            .filter(
+              (f) =>
+                f.status === "accepted" &&
+                (f.user_a_id === viewerId || f.user_b_id === viewerId),
+            )
+            .map((f) => (f.user_a_id === viewerId ? f.user_b_id : f.user_a_id)),
+        );
+
+        const rows = state.gameLogs
+          .filter((l) => friendIds.has(l.user_id))
+          .sort(
+            (a, b) =>
+              Date.parse(b.updated_at) - Date.parse(a.updated_at) ||
+              b.id - a.id,
+          )
+          .map((l) => {
+            const actor = state.profiles.find((p) => p.id === l.user_id);
+            const game = state.games.find((g) => g.id === l.game_id);
+            return {
+              log_id: l.id,
+              user_id: l.user_id,
+              game_id: l.game_id,
+              status: l.status,
+              played_status: l.played_status,
+              rating: l.rating,
+              hours_played: l.hours_played,
+              updated_at: l.updated_at,
+              actor_username: actor?.username ?? "",
+              actor_avatar_url: actor?.avatar_url ?? null,
+              actor_last_seen_at: actor?.last_seen_at ?? "",
+              game_title: game?.title ?? "",
+              game_cover_url: game?.cover_url ?? null,
+            };
+          });
+
+        return { rows: rows.slice(from, to + 1), total: rows.length };
+      },
+
       async listForUser(userId) {
         return state.friendships
           .filter((f) => f.user_a_id === userId || f.user_b_id === userId)

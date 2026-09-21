@@ -30,12 +30,25 @@ export interface ReviewAuthor {
   online: boolean;
 }
 
+/** The game a review is about, so a review can be rendered away from it. */
+export interface ReviewGame {
+  id: number;
+  title: string;
+  coverUrl: string | null;
+}
+
 /** A review with its author, and the rating from that author's log. */
 export interface ReviewWithAuthor extends Review {
   author: ReviewAuthor;
   /** Joined from the author's log of this game, if they have one. */
   rating: number | null;
+  /**
+   * Hours on the clock when the review was written. "9.0" from someone who
+   * put eighty hours in is a different claim from "9.0" after two.
+   */
+  hoursPlayed: number | null;
   platform: string | null;
+  game: ReviewGame;
 }
 
 /**

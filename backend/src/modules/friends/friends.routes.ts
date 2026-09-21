@@ -2,6 +2,7 @@ import { Router, type RequestHandler } from "express";
 import {
   FriendQuerySchema,
   FriendRequestSchema,
+  PaginationSchema,
   UserIdSchema,
   UsernameParamSchema,
 } from "@playrates/shared";
@@ -34,6 +35,18 @@ export const createMyFriendsRouter = ({
     const { status } = req.valid!.query as z.infer<typeof FriendQuerySchema>;
     res.json({ data: await service.listForUser(callerId(req), status) });
   });
+
+  /* Before "/requests": a literal segment can't collide here, but the file
+     already documents that ordering matters and the next reader should not
+     have to re-derive it. */
+  router.get(
+    "/activity",
+    validate({ query: PaginationSchema }),
+    async (req, res) => {
+      const pagination = req.valid!.query as z.infer<typeof PaginationSchema>;
+      res.json(await service.activityFor(callerId(req), pagination));
+    },
+  );
 
   router.post(
     "/requests",
