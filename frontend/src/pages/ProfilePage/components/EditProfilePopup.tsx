@@ -59,9 +59,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
             </h2>
 
             <div className="flex flex-col gap-5 pt-5">
-                {/* No upload control: there is no endpoint behind one, and
-                    the generated avatar is the current design rather than a
-                    placeholder waiting to be replaced. */}
+                {/* No upload control: there is no endpoint behind one. */}
                 <div className="flex items-center gap-4">
                     <ProfilePicture
                         variant="review"
@@ -69,15 +67,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                         file={user.avatarUrl ?? ""}
                         link={false}
                     />
-                    <div>
-                        <p className="text-body-sm text-content">
-                            Your picture
-                        </p>
-                        <p className="mt-0.5 text-label-sm text-content-muted">
-                            Made from your initial, so it changes when your
-                            username does.
-                        </p>
-                    </div>
+                    <p className="text-body-sm text-content">Your picture</p>
                 </div>
 
                 <Field
@@ -100,7 +90,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     label="Username capitalisation"
                     help={
                         <>
-                            Only the capitalisation changes here. Rename in{" "}
+                            Rename in{" "}
                             <Link
                                 to="/settings"
                                 className="text-content underline hover:text-brand"

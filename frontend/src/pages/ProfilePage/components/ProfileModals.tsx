@@ -1,6 +1,7 @@
 import type { Profile, FriendEdge } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
 import RemoveFriendPopup from "./RemoveFriendPopup";
+import CancelRequestPopup from "./CancelRequestPopup";
 import FriendsPopup from "./FriendsPopup";
 import FriendRequestsPopup from "./FriendRequestsPopup";
 import EditProfilePopup from "./EditProfilePopup";
@@ -16,6 +17,7 @@ export type ProfileModal =
     | { kind: "create"; log: GameLogWithGame }
     | { kind: "delete"; log: GameLogWithGame }
     | { kind: "removeFriend" }
+    | { kind: "cancelRequest" }
     | { kind: "friends" }
     | { kind: "friendRequests" }
     | { kind: "editProfile" }
@@ -35,6 +37,7 @@ interface ProfileModalsProps {
     allFriendEdges: FriendEdge[];
     friendsLoading: boolean;
     onRemoveFriend: () => Promise<void>;
+    onCancelRequest: () => Promise<void>;
     navigate: (to: string) => void;
 }
 
@@ -50,6 +53,7 @@ const ProfileModals = ({
     allFriendEdges,
     friendsLoading,
     onRemoveFriend,
+    onCancelRequest,
     navigate,
 }: ProfileModalsProps) => {
     const pendingCount = allFriendEdges.filter(
@@ -91,6 +95,14 @@ const ProfileModals = ({
                 />
             )}
 
+            {modal.kind === "cancelRequest" && (
+                <CancelRequestPopup
+                    closePopup={() => setModal(null)}
+                    confirmCancel={onCancelRequest}
+                    username={targetUser.username}
+                />
+            )}
+
             {modal.kind === "friends" && (
                 <FriendsPopup
                     onClose={() => setModal(null)}
@@ -122,6 +134,7 @@ const ProfileModals = ({
                 <ViewGameLogPopup
                     closePopup={() => setModal(null)}
                     gamelog={modal.log}
+                    ownerUsername={targetUser.username}
                     primaryAction={viewAction(modal.log)}
                 />
             )}

@@ -12,7 +12,6 @@ import { Input, NumberInput, Textarea } from "./ui/Input";
 import RatingMeter from "./ui/RatingMeter";
 import Dropdown from "./ui/Dropdown";
 import { platformOptions } from "../lib/platformIcons";
-import GameCover from "./game/GameCover";
 import { StatusPlates, PlayedStatusPlates } from "./gamelog/StatusPlates";
 import {
     achievementFraction,
@@ -129,11 +128,6 @@ const CreateOrEditGameLogPopup = ({
             className="w-full max-w-[880px] p-0! sm:p-0!"
         >
             <header className="flex items-center gap-4 border-b border-subtle px-6 py-4">
-                <GameCover
-                    coverUrl={game?.coverUrl ?? null}
-                    title={game?.title ?? ""}
-                    className="aspect-3/4 w-13 shrink-0 shadow-cover"
-                />
                 <div className="min-w-0 flex-1">
                     <h2
                         id="log-editor-title"

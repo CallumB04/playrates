@@ -267,6 +267,7 @@ const LibraryPage = () => {
             {modal?.kind === "view" && (
                 <ViewGameLogPopup
                     gamelog={modal.log}
+                    ownerUsername={user?.username}
                     closePopup={() => setModal(null)}
                     // Only reachable from "View your log", so it's always yours.
                     primaryAction={{

@@ -11,6 +11,8 @@ interface FriendActionProps {
     onAdd: () => void;
     onAccept: () => void;
     onRemove: () => void;
+    /** Taking back a request you sent. A different confirmation to unfriending. */
+    onCancel: () => void;
 }
 
 /** All three friend states in one place. */
@@ -21,6 +23,7 @@ const FriendAction = ({
     onAdd,
     onAccept,
     onRemove,
+    onCancel,
 }: FriendActionProps) => {
     const note = (text: string) => (
         <span className="block text-right text-label-sm text-content-muted">
@@ -73,7 +76,7 @@ const FriendAction = ({
                 <Button
                     variant="secondary"
                     size="sm"
-                    onClick={onRemove}
+                    onClick={onCancel}
                     disabled={isPending}
                 >
                     Request sent

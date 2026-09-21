@@ -258,6 +258,9 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                             onRemove={guard(() =>
                                 setModal({ kind: "removeFriend" })
                             )}
+                            onCancel={guard(() =>
+                                setModal({ kind: "cancelRequest" })
+                            )}
                         />
                     )
                 }
@@ -322,6 +325,14 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                     try {
                         await remove.mutateAsync();
                         notify("Friend removed", "success");
+                    } catch {
+                        notify("That action failed, please try again", "error");
+                    }
+                }}
+                onCancelRequest={async () => {
+                    try {
+                        await remove.mutateAsync();
+                        notify("Request cancelled", "success");
                     } catch {
                         notify("That action failed, please try again", "error");
                     }
