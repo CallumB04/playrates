@@ -48,18 +48,34 @@ export const buildGameFacts = (
             value: nameFor(game.genres, genres, (g) => g.name),
         });
     }
+    /* Metacritic, the RAWG community score and average playtime used to sit
+       here. They are somebody else's numbers, and putting them under the
+       cover gave them the same weight as this site's own. They live beside
+       the PlayRates figures in the main column now, labelled as external. */
+
+    return facts;
+};
+
+/**
+ * Figures from elsewhere: Metacritic, RAWG's own community score, and RAWG's
+ * average playtime. Kept apart from this site's numbers and labelled, so a
+ * 4.3/5 from somewhere else is never mistaken for a PlayRates rating.
+ */
+export const buildExternalFacts = (game: Game): Fact[] => {
+    const facts: Fact[] = [];
+
     if (game.metacritic !== null) {
         facts.push({ label: "Metacritic", value: String(game.metacritic) });
     }
     if (game.rawgRating !== null) {
         facts.push({
-            label: "Community",
+            label: "RAWG community",
             value: `${game.rawgRating.toFixed(1)} / 5`,
         });
     }
     if (game.playtimeHours !== null) {
         facts.push({
-            label: "Avg. playtime",
+            label: "Typical playtime",
             value: formatHours(game.playtimeHours),
         });
     }

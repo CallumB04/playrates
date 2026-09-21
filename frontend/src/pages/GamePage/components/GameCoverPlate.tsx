@@ -4,7 +4,10 @@ import GameCover from "../../../components/game/GameCover";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import Button from "../../../components/ui/Button";
 import LedgerRow, { LedgerList } from "../../../components/ui/LedgerRow";
-import { displayStatusFor } from "../../../constants/gameStatus";
+import {
+    STATUS_PRESENTATION,
+    displayStatusFor,
+} from "../../../constants/gameStatus";
 import { releaseYear } from "../../../lib/format";
 import type { Fact } from "../lib/gameFacts";
 import { cn } from "../../../lib/cn";
@@ -19,20 +22,16 @@ interface GameCoverPlateProps {
     isSaving: boolean;
 }
 
-const QUICK = [
-    {
-        status: "backlog" as const,
-        label: "Backlog",
-        className:
-            "border-status-backlog bg-status-backlog-quiet text-status-backlog-content",
-    },
-    {
-        status: "wishlist" as const,
-        label: "Wishlist",
-        className:
-            "border-status-wishlist bg-status-wishlist-quiet text-status-wishlist-content",
-    },
-];
+/* A tinted panel with a word in it reads as a notice, not a control. These
+   get the status icon, a solid fill on hover and a pointer. */
+const QUICK = ["backlog", "wishlist"] as const;
+
+const QUICK_TONE: Record<(typeof QUICK)[number], string> = {
+    backlog:
+        "border-status-backlog/50 text-status-backlog-content hover:bg-status-backlog hover:border-status-backlog hover:text-white",
+    wishlist:
+        "border-status-wishlist/50 text-status-wishlist-content hover:bg-status-wishlist hover:border-status-wishlist hover:text-white",
+};
 
 /**
  * The cover, lifted. It is the largest piece of art on any screen, so it gets
@@ -91,22 +90,28 @@ const GameCoverPlate = ({
 
             {isSignedIn && !log && (
                 <div className="flex gap-2">
-                    {QUICK.map((quick) => (
-                        <button
-                            key={quick.status}
-                            type="button"
-                            onClick={() => onQuickLog(quick.status)}
-                            disabled={isSaving}
-                            className={cn(
-                                "lift min-h-10 flex-1 rounded-sm border text-body-sm font-medium",
-                                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
-                                "hover:-translate-y-px disabled:opacity-60",
-                                quick.className
-                            )}
-                        >
-                            {quick.label}
-                        </button>
-                    ))}
+                    {QUICK.map((status) => {
+                        const { label, icon: Icon } =
+                            STATUS_PRESENTATION[status];
+                        return (
+                            <button
+                                key={status}
+                                type="button"
+                                onClick={() => onQuickLog(status)}
+                                disabled={isSaving}
+                                className={cn(
+                                    "lift inline-flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-sm border bg-surface-raised text-body-sm font-medium",
+                                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
+                                    "hover:-translate-y-px hover:shadow-plate",
+                                    "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0",
+                                    QUICK_TONE[status]
+                                )}
+                            >
+                                <Icon size={15} aria-hidden />
+                                {label}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
 

@@ -24,8 +24,7 @@ import GameCoverPlate from "./components/GameCoverPlate";
 import RatingPlate from "./components/RatingPlate";
 import CirculationPlate from "./components/CirculationPlate";
 import PlayerNotes from "./components/PlayerNotes";
-import { buildGameFacts } from "./lib/gameFacts";
-import { formatDate } from "../../lib/format";
+import { buildExternalFacts, buildGameFacts } from "./lib/gameFacts";
 
 const GamePage = () => {
     const { gameID } = useParams();
@@ -58,6 +57,11 @@ const GamePage = () => {
     const { data: myLogs } = useMyGameLogs(undefined, { limit: 100 });
     const fullLog: GameLogWithGame | undefined = (myLogs?.data ?? []).find(
         (entry) => entry.gameId === gameId
+    );
+
+    const externalFacts = useMemo(
+        () => (game ? buildExternalFacts(game) : []),
+        [game]
     );
 
     const facts = useMemo(
@@ -111,13 +115,7 @@ const GamePage = () => {
                 </div>
 
                 <header className="order-first min-w-0 lg:order-none lg:col-start-2 lg:row-start-1">
-                    <p className="flex items-center gap-2.5 text-label text-accent">
-                        <span aria-hidden className="h-px w-6 bg-accent" />
-                        {game.releaseDate
-                            ? `Released ${formatDate(game.releaseDate)}`
-                            : "Release date unknown"}
-                    </p>
-                    <h1 className="mt-3 font-display text-display text-content">
+                    <h1 className="font-display text-display text-content">
                         {game.title}
                     </h1>
                 </header>
@@ -128,11 +126,8 @@ const GamePage = () => {
                             {game.description}
                         </p>
                     ) : (
-                        /* Descriptions are backfilled on first view, so the
-                           first visitor always lands on an empty one. */
                         <p className="max-w-[52ch] rounded-md border border-dashed border-strong bg-surface-sunken/60 px-4 py-3 text-body-sm text-content-muted">
-                            No description yet. Reload in a moment — we fetch it
-                            the first time someone opens a game.
+                            No description on record for this one yet.
                         </p>
                     )}
 
@@ -148,6 +143,27 @@ const GamePage = () => {
                                 logCount={stats.logCount}
                             />
                         </>
+                    )}
+
+                    {externalFacts.length > 0 && (
+                        /* Somebody else's numbers, named as such and kept
+                           below this site's own so a 4.3/5 is never read as a
+                           PlayRates rating. */
+                        <section className="flex flex-wrap gap-x-8 gap-y-3 rounded-md border border-subtle bg-surface-sunken/40 px-4 py-3">
+                            <h2 className="w-full text-label text-content-muted">
+                                Elsewhere
+                            </h2>
+                            {externalFacts.map((fact) => (
+                                <div key={fact.label}>
+                                    <p className="font-mono text-figure-sm text-content">
+                                        {fact.value}
+                                    </p>
+                                    <p className="text-label-sm text-content-muted">
+                                        {fact.label}
+                                    </p>
+                                </div>
+                            ))}
+                        </section>
                     )}
 
                     <PlayerNotes
