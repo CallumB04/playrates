@@ -42,8 +42,8 @@ export const createGameLogsService = (
     return paginate(rows.map(toGameLogWithGame), pagination, total);
   },
 
-  /** Every game the caller has logged, as a flat list for "have I logged
-   *  this?" lookups that must stay correct past the first page. */
+  /** Every game the caller has logged, unpaginated — "have I logged this?"
+   *  needs an answer that stays right past the first page. */
   async listSummariesForUser(userId: string): Promise<GameLogSummary[]> {
     const rows = await repo.summariesByUser(userId);
     return rows.map((row) => ({
@@ -70,10 +70,8 @@ export const createGameLogsService = (
     return toGameLogWithGame(row);
   },
 
-  /**
-   * Upsert on (user_id, game_id). The write is idempotent, so the client
-   * needs no create-versus-edit branch and a retry cannot duplicate a log.
-   */
+  /** Upsert on (user_id, game_id), so the client needs no create-versus-edit
+   *  branch and a retry can't duplicate a log. */
   async upsertOwn(
     userId: string,
     gameId: number,
@@ -96,8 +94,8 @@ export const createGameLogsService = (
     input: GameLogPatch,
   ): Promise<GameLogWithGame> {
     const existing = await repo.findByUserAndGame(userId, gameId);
-    // 404 rather than 403: a log that is not yours should not be
-    // distinguishable from one that does not exist
+    // 404, not 403: someone else's log shouldn't be distinguishable from one
+    // that doesn't exist
     if (!existing) throw AppError.notFound("Game log");
 
     const patch = toGameLogRow({

@@ -4,16 +4,9 @@ const hexPair = (value: number): string =>
         .padStart(2, "0");
 
 /**
- * Normalises a computed colour to hex.
- *
- * Only ever called on values read back from getComputedStyle, so it can assume
- * a resolved colour rather than a token or an unevaluated color-mix() recipe.
- * Browsers return rgb()/rgba() today and color(srgb …) for wide-gamut values;
- * the scale is taken from the function name rather than guessed from the
- * numbers, because `color(srgb 1 1 1)` is white and `rgb(1 1 1)` is not.
- *
- * Anything unrecognised is returned unchanged — an unexpected readout is
- * debuggable, a missing one is invisible.
+ * Normalises a computed colour to hex. The scale comes from the function name,
+ * not the numbers: `color(srgb 1 1 1)` is white and `rgb(1 1 1)` is not.
+ * Anything unrecognised comes back unchanged so it stays debuggable.
  */
 export const toHex = (value: string): string => {
     const trimmed = value.trim();
@@ -23,7 +16,10 @@ export const toHex = (value: string): string => {
     if (!fn) return trimmed;
 
     const isUnitScale = fn[1]!.toLowerCase() === "color";
-    const parts = fn[2]!.split(/[\s,/]+/).filter(Boolean).map(Number);
+    const parts = fn[2]!
+        .split(/[\s,/]+/)
+        .filter(Boolean)
+        .map(Number);
     if (parts.length < 3 || !parts.slice(0, 3).every(Number.isFinite)) {
         return trimmed;
     }

@@ -6,12 +6,9 @@ type IconProps = SVGProps<SVGSVGElement> & { size?: number | string };
 export type PlatformIcon = ComponentType<IconProps> | LucideIcon;
 
 /**
- * Xbox and Nintendo Switch.
- *
- * Simple Icons carries Steam and PlayStation but dropped these two at the
- * trademark owners' request, so the marks come from Bootstrap Icons (MIT),
- * inlined rather than pulling in the whole set for two glyphs. Used to label
- * each platform beside its own name, which is what the mark is for.
+ * Xbox and Nintendo Switch. Simple Icons dropped both at the trademark owners'
+ * request, so these come from Bootstrap Icons — inlined rather than pulling in
+ * the whole set for two glyphs.
  *
  * Path data: https://github.com/twbs/icons, MIT.
  */
@@ -40,11 +37,8 @@ const SwitchMark = ({ size = 16, ...props }: IconProps) => (
     </svg>
 );
 
-/**
- * Keyed by the platform slugs the API actually returns. An unknown slug falls
- * back to a controller rather than rendering nothing, so a new platform never
- * leaves a hole in a row.
- */
+/** Keyed by the slugs the API returns. An unknown one falls back to a
+ *  controller rather than leaving a hole in a row. */
 const PLATFORM_ICONS: Record<string, PlatformIcon> = {
     steam: SiSteam,
     playstation: SiPlaystation,

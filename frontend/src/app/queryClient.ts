@@ -1,10 +1,8 @@
 import { QueryClient } from "@tanstack/react-query";
 import { ApiError } from "../api";
 
-/**
- * Retries are deliberately off for 4xx: a 404 will not become a 200, and
- * retrying it only delays the error state the UI wants to show.
- */
+/** No retries on 4xx — a 404 won't become a 200, so retrying just delays the
+ *  error the UI wants to show. */
 export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {

@@ -10,18 +10,12 @@ import {
 } from "lucide-react";
 import { SiPlaystation, SiSteam } from "@icons-pack/react-simple-icons";
 
-/**
- * Lucide throughout, except brands — Lucide has no brand set and a generic
- * controller on every console makes the platform badges unreadable, so those
- * come from simple-icons. Which icon means which platform is presentation, so
- * it lives here rather than in the database.
- */
+/** Lucide throughout, except brand marks, which come from simple-icons. */
 export type IconComponent = ComponentType<
     SVGProps<SVGSVGElement> & { size?: number | string }
 >;
 
-/* Nintendo and Xbox were pulled from simple-icons over trademark complaints,
-   so they fall back to a generic controller. Game Pass has no mark either. */
+// Simple Icons dropped Nintendo and Xbox over trademark, so these fall back.
 const PLATFORM_ICONS: Record<string, IconComponent> = {
     steam: SiSteam,
     playstation: SiPlaystation,
@@ -46,4 +40,3 @@ const STATUS_ICONS: Record<string, IconComponent> = {
 
 export const getStatusIcon = (status: string): IconComponent | undefined =>
     STATUS_ICONS[status];
-

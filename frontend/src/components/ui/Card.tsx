@@ -16,13 +16,7 @@ export const CardHeader = ({
     className,
     ...props
 }: HTMLAttributes<HTMLHeadingElement>) => (
-    <h2
-        className={cn(
-            "text-label text-content-muted",
-            className
-        )}
-        {...props}
-    />
+    <h2 className={cn("text-label text-content-muted", className)} {...props} />
 );
 
 export default Card;

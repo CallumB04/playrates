@@ -54,17 +54,13 @@ const GameReviews = ({
 }: GameReviewsProps) => (
     <section>
         <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-3 border-b border-subtle pb-2.5">
-            <h2 className="font-display text-section text-content">
-                Reviews
-            </h2>
+            <h2 className="font-display text-section text-content">Reviews</h2>
             <div className="flex flex-wrap items-center gap-3">
                 <span className="text-label text-content-muted">
                     {formatCount(total)} {total === 1 ? "review" : "reviews"}
                 </span>
                 {onWriteReview && (
-                    /* Only shown when there are already reviews: the empty
-                       state carries its own action, and two of them would be
-                       the same button twice. */
+                    // The empty state carries its own action, so skip it there.
                     <Button size="sm" onClick={onWriteReview}>
                         <PenLine size={14} aria-hidden />
                         {hasLog ? "Edit review" : "Write a review"}
@@ -126,7 +122,10 @@ const GameReviews = ({
                                 {review.author.username}
                             </Link>
                             {reviewStatus(review) && (
-                                <StatusBadge status={reviewStatus(review)!} plain />
+                                <StatusBadge
+                                    status={reviewStatus(review)!}
+                                    plain
+                                />
                             )}
                             {review.hoursPlayed !== null && (
                                 <span className="text-label-sm text-content-muted">

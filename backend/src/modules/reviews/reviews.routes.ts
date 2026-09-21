@@ -117,8 +117,7 @@ export const createReviewsFeedRouter = ({
     },
   );
 
-  /* A toggle rather than separate add and remove: the client does not have
-     to know the current state to act, and a double-tap cannot double-count. */
+  // A toggle, so the client needs no current state and can't double-count.
   router.post(
     "/:reviewId/vote",
     requireAuth,

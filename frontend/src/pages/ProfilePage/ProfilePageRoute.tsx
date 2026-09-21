@@ -4,11 +4,8 @@ import { useNotify } from "../../contexts/NotificationContext";
 import ProfileError from "./components/ProfileError";
 import ProfilePage from "./ProfilePage";
 
-/**
- * Guards the route param so ProfilePage gets a guaranteed username. Has to be
- * its own component — an early return inside ProfilePage would sit above its
- * hooks and change the hook count between renders.
- */
+/** Guards the route param so ProfilePage gets a guaranteed username. Its own
+ *  component, because an early return would change ProfilePage's hook count. */
 const ProfilePageRoute = () => {
     const { targetUsername } = useParams();
     const notify = useNotify();

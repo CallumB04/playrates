@@ -30,8 +30,8 @@ const SIZE: Record<StatusBadgeSize, string> = {
 
 /**
  * Eight states told apart by mark, word and hue at once, so the badge still
- * reads with the colour removed and the word is never what gets dropped. The
- * mark is redundant reinforcement and stays hidden from screen readers.
+ * reads with the colour removed. The mark is redundant, so it stays hidden
+ * from screen readers.
  */
 const StatusBadge = ({
     status,

@@ -14,8 +14,7 @@ export const PasswordSchema = z
 
 export const EmailSchema = z.string().trim().toLowerCase().email();
 
-/** `.strict()` rejects unknown keys with a 422 rather than writing them, so
- *  only these fields are ever editable. */
+/** `.strict()` rejects unknown keys, so only these fields are editable. */
 export const UpdateProfileSchema = z
   .object({
     username: UsernameSchema.optional(),

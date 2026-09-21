@@ -13,10 +13,7 @@ interface FriendActionProps {
     onRemove: () => void;
 }
 
-/**
- * All three friend states in one place. This used to be duplicated across a
- * desktop and a mobile branch, which meant every label lived twice.
- */
+/** All three friend states in one place. */
 const FriendAction = ({
     relation,
     since,
@@ -33,7 +30,9 @@ const FriendAction = ({
 
     if (relation === "friend") {
         return (
-            <div className={cn("flex flex-col gap-2", isPending && "opacity-60")}>
+            <div
+                className={cn("flex flex-col gap-2", isPending && "opacity-60")}
+            >
                 <Button
                     variant="secondary"
                     size="sm"

@@ -20,10 +20,7 @@ export interface AppDeps {
   logger?: Logger;
 }
 
-/**
- * Builds the app but does not listen. Keeping those separate is what lets
- * supertest drive the real stack in-process.
- */
+/** Builds the app but does not listen, so supertest can drive it in-process. */
 export const buildApp = ({
   repos,
   provider,
@@ -61,8 +58,8 @@ export const buildApp = ({
   );
 
   app.use(notFoundHandler);
-  // must be last: Express 5 forwards rejected promises here, which is why
-  // no handler in this codebase needs its own try/catch
+  // must be last: Express 5 forwards rejected promises here, so no handler
+  // needs its own try/catch
   app.use(errorHandler);
 
   return app;

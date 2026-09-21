@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { LogOut, Settings, UserRound } from "lucide-react";
-import {
-    GAME_STATUSES,
-    STATUS_PRESENTATION,
-} from "../../constants/gameStatus";
+import { GAME_STATUSES, STATUS_PRESENTATION } from "../../constants/gameStatus";
 import type { Profile } from "@playrates/shared";
 import ProfilePicture from "../ProfilePicture";
 import { cn } from "../../lib/cn";
@@ -12,12 +9,7 @@ import { cn } from "../../lib/cn";
 const ITEM =
     "flex w-full items-center gap-2.5 rounded-sm px-2.5 py-2.5 text-left text-body-sm leading-none text-content-secondary transition-colors hover:bg-surface-hover hover:text-content";
 
-/**
- * The avatar, and what it opens.
- *
- * Sign out used to live only inside the mobile menu, which is hidden from
- * `lg` up — so on a desktop there was no way to sign out at all.
- */
+/** The avatar, and the account menu behind it. */
 const AccountMenu = ({
     user,
     onSignOut,
@@ -57,8 +49,10 @@ const AccountMenu = ({
                 aria-haspopup="menu"
                 aria-label="Account menu"
                 className={cn(
-                    "lift block rounded-full ring-offset-2 ring-offset-surface transition-shadow",
-                    open ? "ring-2 ring-brand" : "hover:ring-2 hover:ring-subtle"
+                    "block rounded-full ring-offset-2 ring-offset-surface transition-shadow lift",
+                    open
+                        ? "ring-2 ring-brand"
+                        : "hover:ring-2 hover:ring-subtle"
                 )}
             >
                 <ProfilePicture
@@ -72,9 +66,9 @@ const AccountMenu = ({
             {open && (
                 <div
                     role="menu"
-                    className="animate-settle absolute right-0 top-[calc(100%+0.6rem)] z-40 w-56 overflow-hidden rounded-lg border border-subtle bg-surface-raised p-1.5 shadow-modal"
+                    className="absolute top-[calc(100%+0.6rem)] right-0 z-40 w-56 animate-settle overflow-hidden rounded-lg border border-subtle bg-surface-raised p-1.5 shadow-modal"
                 >
-                    <p className="mb-1.5 truncate border-b border-subtle px-2.5 pb-2.5 pt-1.5 text-label text-content-muted">
+                    <p className="mb-1.5 truncate border-b border-subtle px-2.5 pt-1.5 pb-2.5 text-label text-content-muted">
                         {user.username}
                     </p>
                     <Link
@@ -91,8 +85,11 @@ const AccountMenu = ({
                         other three never earned. */}
                     <div className="my-1.5 border-y border-subtle py-1.5">
                         {GAME_STATUSES.map((status) => {
-                            const { label, icon: Icon, markTone } =
-                                STATUS_PRESENTATION[status];
+                            const {
+                                label,
+                                icon: Icon,
+                                markTone,
+                            } = STATUS_PRESENTATION[status];
                             return (
                                 <Link
                                     key={status}

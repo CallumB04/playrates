@@ -7,10 +7,8 @@ const ONLINE_WINDOW_MS = 5 * 60_000;
 export const isOnline = (lastSeenAt: string, now = Date.now()): boolean =>
   now - Date.parse(lastSeenAt) < ONLINE_WINDOW_MS;
 
-/**
- * Rows are snake_case, the API is camelCase. Keeping the translation in one
- * pure function means the shape can be tested without a database.
- */
+/** Rows are snake_case, the API is camelCase. Pure, so it's testable without
+ *  a database. */
 export const toProfile = (row: ProfileRow, now = Date.now()): Profile => ({
   id: row.id,
   username: row.username,

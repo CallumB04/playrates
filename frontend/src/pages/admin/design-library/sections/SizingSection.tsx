@@ -18,9 +18,7 @@ const Group = ({
 }) => (
     <section className="flex flex-col gap-4">
         <header className="border-b border-subtle pb-2">
-            <h3 className="text-label text-content-muted">
-                {title}
-            </h3>
+            <h3 className="text-label text-content-muted">{title}</h3>
             <p className="mt-1 max-w-prose text-body-sm text-content-secondary">
                 {blurb}
             </p>
@@ -36,10 +34,7 @@ const SizingSection = () => (
             blurb="Zilla Slab displays, IBM Plex Sans sets prose, IBM Plex Mono carries every figure, label and stamp. One class per step; the family is chosen alongside it. Tabular figures are set on body, not per component."
         >
             {TYPE_SCALE.map((step) => (
-                <div
-                    key={step.name}
-                    className="border-b border-subtle py-2.5"
-                >
+                <div key={step.name} className="border-b border-subtle py-2.5">
                     <div className="flex items-baseline justify-between gap-4">
                         <span className="text-label-sm text-content-muted">
                             {step.name}

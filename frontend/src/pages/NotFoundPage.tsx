@@ -5,10 +5,7 @@ import { TileSkeleton } from "../components/ui/Skeleton";
 import { useGames, usePlatforms } from "../hooks/queries/useGames";
 import { releaseYear } from "../lib/format";
 
-/**
- * A dead end that still earns the visit: the apology, then the week's
- * most-logged underneath.
- */
+/** The apology, then the week's most-logged underneath. */
 const NotFoundPage = () => {
     const { data: popular, isLoading } = useGames({
         sort: "logged",
@@ -21,7 +18,7 @@ const NotFoundPage = () => {
             <section className="flex flex-col items-start gap-6 rounded-lg border border-dashed border-strong bg-surface-sunken/60 px-6 py-12 sm:flex-row sm:items-center sm:px-10">
                 <span
                     aria-hidden
-                    className="stamp shrink-0 rounded-sm border-[1.5px] border-danger px-3 py-1.5 text-label text-danger"
+                    className="shrink-0 stamp rounded-sm border-[1.5px] border-danger px-3 py-1.5 text-label text-danger"
                 >
                     404
                 </span>

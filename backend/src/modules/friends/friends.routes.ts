@@ -36,9 +36,7 @@ export const createMyFriendsRouter = ({
     res.json({ data: await service.listForUser(callerId(req), status) });
   });
 
-  /* Before "/requests": a literal segment can't collide here, but the file
-     already documents that ordering matters and the next reader should not
-     have to re-derive it. */
+  // Before "/requests", to match the ordering rule the rest of the file follows.
   router.get(
     "/activity",
     validate({ query: PaginationSchema }),
@@ -66,7 +64,7 @@ export const createMyFriendsRouter = ({
     },
   );
 
-  // decline, cancel and remove were three copies of the same logic
+  // decline, cancel and remove are the same operation
   router.delete(
     "/:userId",
     validate({ params: UserIdSchema }),

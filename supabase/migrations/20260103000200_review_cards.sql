@@ -1,15 +1,12 @@
 -- Reviews with their author and the author's rating already attached.
 --
--- Two problems, one view. The rating beside a review lives on that author's
--- game_logs row, and there is no foreign key between reviews and game_logs —
--- PostgREST can only embed and order across declared relationships, so the API
--- fetched a page of reviews and stitched ratings on afterwards. That orders
--- only the rows you happen to be looking at, which is why the sort was
--- date-only. It also cost a second round trip on every listing.
+-- The rating lives on the author's game_logs row and there is no foreign key
+-- between reviews and game_logs, so PostgREST can neither embed nor order on
+-- it. Stitching ratings on after paging can only sort the page you are already
+-- holding, which is why the sort was date-only.
 --
--- The author is joined here rather than embedded because a view carries no
--- foreign keys of its own, so `author:profiles!reviews_user_id_fkey(...)`
--- has nothing to resolve against.
+-- The author is joined rather than embedded: a view carries no foreign keys of
+-- its own, so `author:profiles!reviews_user_id_fkey(...)` resolves to nothing.
 --
 -- Left joins throughout: a review can exist with no log at all, and the
 -- reviews table's own header calls that out as a state the UI handles. An

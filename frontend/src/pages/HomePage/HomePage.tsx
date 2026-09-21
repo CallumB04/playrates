@@ -79,12 +79,10 @@ const HomePage = () => {
     const { data: activity, isLoading: activityLoading } = useFriendActivity(6);
     const { data: reviews, isLoading: reviewsLoading } = useRecentReviews(4);
 
-    /* meta.total, not the length of a page — counting a page would be wrong
-       for anyone with more than a page of logs. */
+    // meta.total, not the length of a page.
     const { data: playing } = useMyGameLogs("playing", { limit: 1 });
     const { data: backlog } = useMyGameLogs("backlog", { limit: 1 });
-    /* Enough to draw a year without paging; the chart is a shape, not a
-       ledger, so the tail beyond this would not change its outline. */
+    // Enough to draw a year without paging. The chart is a shape, not a ledger.
     const { data: played } = useMyGameLogs("played", { limit: 100 });
     const { data: yearStats } = useUserStats(
         user?.username ?? "",
@@ -93,8 +91,7 @@ const HomePage = () => {
 
     const current = playing?.data[0];
 
-    /* Ids only: the rails show whether you have logged something, not what is
-       in the log, so a full fetch per rail would be waste. */
+    // Ids only: the rails show whether you logged something, not what's in it.
     const { data: myLogIds } = useMyGameLogIds();
     const logByGameId = useMemo(
         () => new Map((myLogIds ?? []).map((log) => [log.gameId, log])),
@@ -121,8 +118,7 @@ const HomePage = () => {
         }
     };
 
-    /* Every cover on the page can be logged from where it sits, rather than
-       only from the library. */
+    // Every cover on the page can be logged from where it sits.
     const statusFor = (game: Game) => {
         const log = logByGameId.get(game.id);
         return log ? displayStatusFor(log.status, log.playedStatus) : null;
@@ -140,8 +136,7 @@ const HomePage = () => {
             ];
         }
 
-        /* Already logged: editing it is the only useful action, and
-           offering "add to backlog" would silently overwrite the status. */
+        // Already logged, so "add to backlog" would overwrite the status.
         if (logByGameId.has(game.id)) {
             return [
                 {
@@ -186,9 +181,7 @@ const HomePage = () => {
                     backlogCount={backlog?.meta.total ?? 0}
                     yearLogs={played?.data ?? []}
                     yearStats={yearStats}
-                    onUpdateLog={() =>
-                        current && setLogging(current.gameId)
-                    }
+                    onUpdateLog={() => current && setLogging(current.gameId)}
                 />
             ) : (
                 <SignedOutHero

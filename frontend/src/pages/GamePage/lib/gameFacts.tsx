@@ -23,11 +23,8 @@ const nameFor = <T extends { slug: string }>(
         .join(" · ");
 };
 
-/**
- * The ledger under the cover. Pure, so the rows can be asserted without
- * rendering a page — and rows with nothing behind them are dropped rather
- * than printed as an em dash, because a ledger of blanks reads as broken.
- */
+/** The ledger under the cover. Pure, so the rows are testable without a
+ *  render. Empty rows are dropped rather than printed as a dash. */
 export const buildGameFacts = (
     game: Game,
     platforms: Platform[],
@@ -57,11 +54,7 @@ export const buildGameFacts = (
             value: nameFor(game.genres, genres, (g) => g.name),
         });
     }
-    /* Metacritic, the RAWG community score and average playtime used to sit
-       here. They are somebody else's numbers, and putting them under the
-       cover gave them the same weight as this site's own. They live beside
-       the PlayRates figures in the main column now, labelled as external. */
+    // External scores live in the main column, labelled as external.
 
     return facts;
 };
-

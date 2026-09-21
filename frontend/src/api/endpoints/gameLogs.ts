@@ -10,10 +10,7 @@ import type {
 import { api } from "../client";
 import { compactParams } from "./games";
 
-/**
- * List responses embed the game, so a grid of tiles needs no follow-up
- * request per tile.
- */
+/** The game is embedded, so a grid of tiles needs no request per tile. */
 export interface GameLogWithGame extends GameLog {
     game: Pick<
         Game,
@@ -50,11 +47,8 @@ export const fetchUserGameLogs = async (
     return data;
 };
 
-/**
- * Every game the caller has logged, unpaginated. The "have I logged this?"
- * lookups on the library, game and profile pages were built from a 100-row
- * page, so anyone past that saw their own games as unlogged.
- */
+/** Every game the caller has logged, unpaginated — "have I logged this?"
+ *  needs a complete answer, not a page. */
 export const fetchMyGameLogIds = async (): Promise<GameLogSummary[]> => {
     const { data } = await api.get<{ data: GameLogSummary[] }>(
         "/me/game-logs/ids"

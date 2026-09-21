@@ -1,9 +1,6 @@
 /**
- * Row shapes for the tables defined in supabase/migrations/.
- *
- * Hand-written for now so the repository layer is type-checked before a
- * Supabase project exists. Once one is linked, regenerate from the live schema
- * and this file becomes generated output:
+ * Row shapes for the tables in supabase/migrations/. Hand-written for now;
+ * regenerate from the live schema with:
  *
  *   npm run db:types -w backend
  */

@@ -11,12 +11,8 @@ interface PlatformMarksProps {
 }
 
 /**
- * The platforms a game is on, as marks.
- *
- * "Steam +3" needed a word and a figure to say what four small icons say at
- * a glance, and on a narrow tile that word wrapped onto its own line and
- * pushed the release year out of the row. Marks are fixed width, so the line
- * under a cover is the same height whether a game is on one platform or six.
+ * The platforms a game is on, as marks. Fixed width, so the line under a cover
+ * is the same height for one platform or six.
  */
 const PlatformMarks = ({
     slugs,
@@ -26,9 +22,7 @@ const PlatformMarks = ({
 }: PlatformMarksProps) => {
     if (slugs.length === 0) return null;
 
-    // Follow the catalogue's own order rather than whatever order the game
-    // happens to list them in, so the same platform sits in the same place
-    // across a grid.
+    // Catalogue order, so the same platform sits in the same place in a grid.
     const ordered = platforms
         .filter((p) => slugs.includes(p.slug))
         .map((p) => ({ slug: p.slug, name: p.displayName }));

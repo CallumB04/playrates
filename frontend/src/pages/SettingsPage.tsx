@@ -71,10 +71,7 @@ const Row = ({ label, help, pending, children }: RowProps) => (
     </div>
 );
 
-/**
- * Six sections of near-identical rows need something to tell them apart at a
- * glance — the icon is the fastest way back to the one you were looking for.
- */
+/** The icon is what tells six sections of near-identical rows apart. */
 const Section = ({
     title,
     note,
@@ -111,10 +108,8 @@ const SettingsPage = () => {
     const { data: friends } = useUserFriends(user?.username ?? "");
     const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-    /* The access token stays cryptographically valid until it expires —
-       requireAuth verifies signatures locally and never checks revocation —
-       so sign out immediately rather than leaving a session pointed at an
-       account that no longer exists. */
+    /* requireAuth verifies signatures locally and never checks revocation, so
+       the token outlives the account. Sign out straight away. */
     const remove = useMutation({
         mutationFn: deleteMyAccount,
         onSuccess: async () => {
@@ -128,16 +123,12 @@ const SettingsPage = () => {
     const [bio, setBio] = useState(user?.bio ?? "");
     const [firstName, setFirstName] = useState(user?.firstName ?? "");
 
-    /* Saved on toggle rather than gathered into the Save bar: this one
-       changes what the library will show you, so waiting for a second
-       action to apply it would be strange. */
+    // Saved on toggle: this changes what the library shows you.
     const [showSexual, setShowSexual] = useState(
         user?.showSexualContent ?? false
     );
 
-    /* Saved on blur rather than gathered into a page-wide button. Every
-       field here is one value with one owner, so a second action to apply it
-       only adds a way to lose the change. */
+    // Saved on blur. One value with one owner needs no second action.
     const saveFirstName = () => {
         const next = firstName.trim();
         if (next === (user?.firstName ?? "")) return;
@@ -186,7 +177,9 @@ const SettingsPage = () => {
     return (
         <div className="flex flex-col gap-6">
             <header>
-                <h1 className="font-display text-title text-content">Settings</h1>
+                <h1 className="font-display text-title text-content">
+                    Settings
+                </h1>
                 <p className="mt-2 text-label text-content-muted">
                     {user.username}
                 </p>
@@ -290,7 +283,11 @@ const SettingsPage = () => {
                 </Row>
             </Section>
 
-            <Section title="Content" note="what you see" icon={SlidersHorizontal}>
+            <Section
+                title="Content"
+                note="what you see"
+                icon={SlidersHorizontal}
+            >
                 <Row
                     label="Sexual content"
                     help="Off by default. Games RAWG tags as sexually explicit stay out of the library, search and every rail until you turn this on. Violence is not covered by this setting."
@@ -316,15 +313,17 @@ const SettingsPage = () => {
                             { value: "dark", label: "Night", icon: Moon },
                         ]}
                         value={theme}
-                        onChange={(next) =>
-                            setTheme(next as "light" | "dark")
-                        }
+                        onChange={(next) => setTheme(next as "light" | "dark")}
                         aria-label="Theme"
                     />
                 </Row>
             </Section>
 
-            <Section title="Notifications" note="none of this is wired yet" icon={Bell}>
+            <Section
+                title="Notifications"
+                note="none of this is wired yet"
+                icon={Bell}
+            >
                 <Row
                     label="Weekly digest"
                     help="There is no mail infrastructure behind this."
@@ -372,8 +371,8 @@ const SettingsPage = () => {
                 <div className="flex flex-wrap items-center gap-5 px-5 py-4">
                     <p className="max-w-[60ch] flex-1 text-body-sm text-content-secondary">
                         Your {formatCount(stats?.logCount ?? 0)} logs and
-                        everything attached to them will be deleted. This
-                        cannot be undone.
+                        everything attached to them will be deleted. This cannot
+                        be undone.
                     </p>
                     {/* Export has no backing yet. Left visible and disabled
                         so the page still shows the intended shape. */}
@@ -403,7 +402,6 @@ const SettingsPage = () => {
                     onConfirm={() => remove.mutate()}
                 />
             )}
-
         </div>
     );
 };

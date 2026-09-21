@@ -4,11 +4,9 @@ import { env } from "../config/env.js";
 import { AppError } from "../lib/AppError.js";
 
 /**
- * Verifies the access token locally against the project's JWKS instead of
- * calling supabase.auth.getUser() per request — a signature check is
- * sub-millisecond where getUser() is a 30-100ms round trip and an availability
- * dependency. The cost is that a revoked session stays valid until it expires,
- * which is fine here; call getUser() on any route where it isn't.
+ * Verifies the token locally against the project's JWKS rather than calling
+ * supabase.auth.getUser() per request, which is a 30-100ms round trip. The
+ * cost is that a revoked session stays valid until it expires.
  */
 export type Verifier = (token: string) => Promise<JWTPayload>;
 
@@ -36,10 +34,8 @@ const readBearer = (header?: string): string | null => {
   return scheme?.toLowerCase() === "bearer" && token ? token : null;
 };
 
-/**
- * The verifier is injectable so route tests can authenticate without signing
- * real JWTs, while still exercising the whole middleware chain.
- */
+/** The verifier is injectable, so route tests authenticate without signing
+ *  real JWTs and still run the whole middleware chain. */
 export const makeRequireAuth = (
   verify: Verifier = verifySupabaseJwt,
   { optional = false }: { optional?: boolean } = {},

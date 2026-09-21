@@ -1,9 +1,7 @@
 import { z } from "zod";
 
-/**
- * The status as the *viewer* sees it. Stored as one canonical row plus a
- * requested_by column; these three values are derived per viewer.
- */
+/** The status as the viewer sees it. Stored as one row plus requested_by;
+ *  these three are derived per viewer. */
 export const FRIEND_RELATIONS = [
   "friend",
   "request-sent",
@@ -38,12 +36,8 @@ export interface FriendEdge {
   createdAt: string;
 }
 
-/**
- * One thing a friend did, for the home feed.
- *
- * A log rather than an event: there is no event table, and a log's updated_at
- * is the last time the person touched it, which is the thing worth surfacing.
- */
+/** One thing a friend did, for the home feed. A log rather than an event —
+ *  there's no event table, and updated_at is close enough. */
 export interface FriendActivity {
   logId: number;
   actor: FriendUser;

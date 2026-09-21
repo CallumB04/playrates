@@ -1,13 +1,8 @@
--- "Highest rated" sorts by PlayRates ratings, not RAWG's.
+-- "Highest rated" sorts by PlayRates ratings, not RAWG's 0-5 community score.
 --
--- The sort was ordering on rawg_rating, which is RAWG's own 0-5 community
--- score. Under a heading that says "by the people who logged them" that is
--- simply the wrong list, and it is the same mistake the visible "most tracked"
--- sort made: somebody else's number presented as ours.
---
--- An average cannot be computed per row at query time across 126k games, so it
--- is rolled up onto games the same way log_count already is, by trigger. Rated
--- logs only: a log with no rating is not a zero.
+-- An average can't be computed per row at query time across 126k games, so it
+-- rolls up onto games by trigger, the same way log_count does. Rated logs
+-- only: a log with no rating is not a zero.
 
 set search_path = pg_catalog, public;
 

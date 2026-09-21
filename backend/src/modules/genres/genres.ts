@@ -20,10 +20,9 @@ const toGenre = (row: GenreRow): Genre => ({
   name: row.name,
 });
 
-/* The API exposes genres as slugs on a game, so a filter needs somewhere to
-   read display names from. Seeded rather than discovered, but not a closed set
-   — the importer inserts genres RAWG returns that we have not seen, which is
-   why this is an endpoint rather than a constant in the frontend. */
+/* Games carry genre slugs, so a filter needs somewhere to read display names
+   from. Not a closed set — the importer inserts genres RAWG returns that we
+   haven't seen, which is why it's an endpoint and not a frontend constant. */
 export const createGenresRouter = (repo: GenresRepository): Router => {
   const router = Router();
 

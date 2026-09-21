@@ -29,10 +29,7 @@ export const updateMyProfile = async (
     return data;
 };
 
-/**
- * Pushes last_seen_at forward. Nothing else writes it, so without this
- * every account reads as offline five minutes after it signs up.
- */
+/** Pushes last_seen_at forward. Nothing else writes it. */
 export const sendHeartbeat = async (): Promise<void> => {
     await api.post("/profiles/me/heartbeat");
 };

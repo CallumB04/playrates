@@ -5,9 +5,7 @@ import {
 import StatusBadge from "../../../../../components/ui/StatusBadge";
 import RatingBadge from "../../../../../components/ui/RatingBadge";
 import Figure from "../../../../../components/ui/Figure";
-import LedgerRow, {
-    LedgerList,
-} from "../../../../../components/ui/LedgerRow";
+import LedgerRow, { LedgerList } from "../../../../../components/ui/LedgerRow";
 import GamePlatform from "../../../../../components/GamePlatform";
 import ProfilePicture from "../../../../../components/ProfilePicture";
 import UserStatus from "../../../../../components/UserStatus";

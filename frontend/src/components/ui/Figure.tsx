@@ -14,11 +14,8 @@ const SIZE: Record<FigureSize, string> = {
 const DURATION = 320;
 const easeOut = (t: number): number => 1 - (1 - t) ** 3;
 
-/**
- * Tabular numerals count up when a value changes, so hours and achievement
- * counts visibly accrue. Returns the target immediately under reduced motion —
- * the figure simply swaps.
- */
+/** Counts up when the value changes. Swaps straight to the target under
+ *  reduced motion. */
 export const useFigureRoll = (target: number, enabled: boolean): number => {
     const reduced = usePrefersReducedMotion();
     const [value, setValue] = useState(target);
@@ -71,7 +68,7 @@ const Figure = ({
             // A counting number must never be announced on every frame.
             aria-live="off"
             className={cn(
-                "font-mono tabular-nums text-content",
+                "font-mono text-content tabular-nums",
                 SIZE[size],
                 className
             )}

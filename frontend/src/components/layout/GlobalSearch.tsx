@@ -19,13 +19,8 @@ interface Row {
 }
 
 /**
- * Search across the site, not just titles.
- *
- * The field used to submit to the library with whatever was typed, which
- * meant finding a person was impossible from the one search box on the page.
- * Games and people are separate sections because they are answers to
- * different questions, and mixing them into one ranked list buries whichever
- * kind you were not thinking of.
+ * Search games and people. Two sections rather than one ranked list, so
+ * neither kind gets buried under the other.
  */
 const GlobalSearch = () => {
     const navigate = useNavigate();
@@ -84,9 +79,8 @@ const GlobalSearch = () => {
         return () => document.removeEventListener("mousedown", onPointerDown);
     }, [open]);
 
-    /* Typing past the debounce leaves the previous term's results on screen
-       while the new request is out, so "nothing found" has to wait for the
-       request rather than for the list to be empty. */
+    /* The previous term's results stay on screen while the new request is out,
+       so "nothing found" has to wait for the request, not an empty list. */
     const searching = gamesFetching || peopleFetching;
 
     const gameRows = (games?.data ?? []).slice(0, PER_SECTION);
@@ -176,7 +170,7 @@ const GlobalSearch = () => {
     }) =>
         items.length === 0 ? null : (
             <li>
-                <p className="px-2.5 pb-1 pt-2 text-label text-content-muted">
+                <p className="px-2.5 pt-2 pb-1 text-label text-content-muted">
                     {title}
                 </p>
                 <ul>
@@ -210,7 +204,7 @@ const GlobalSearch = () => {
                         go(`/library?q=${encodeURIComponent(term.trim())}`);
                     }
                 }}
-                className="lift flex items-center gap-2.5 rounded-sm border border-subtle bg-surface-raised px-3 py-2 hover:border-strong focus-within:border-brand focus-within:shadow-glow"
+                className="flex items-center gap-2.5 rounded-sm border border-subtle bg-surface-raised px-3 py-2 lift focus-within:border-brand focus-within:shadow-glow hover:border-strong"
             >
                 <Search
                     size={13}
@@ -245,8 +239,12 @@ const GlobalSearch = () => {
             </form>
 
             {open && enabled && (
-                <ul className="animate-settle absolute left-0 right-0 top-[calc(100%+0.4rem)] z-40 max-h-96 overflow-y-auto rounded-md border border-subtle bg-surface-raised p-1 shadow-modal">
-                    <Section title="Games" from={0} items={rows.slice(0, gameRows.length)} />
+                <ul className="absolute top-[calc(100%+0.4rem)] right-0 left-0 z-40 max-h-96 animate-settle overflow-y-auto rounded-md border border-subtle bg-surface-raised p-1 shadow-modal">
+                    <Section
+                        title="Games"
+                        from={0}
+                        items={rows.slice(0, gameRows.length)}
+                    />
                     <Section
                         title="People"
                         from={gameRows.length}

@@ -16,10 +16,7 @@ interface Deps {
   optionalAuth: RequestHandler;
 }
 
-/**
- * Search is the only route that can reach the upstream provider, so it is the
- * only one that needs a tight limit of its own.
- */
+/** Search is the only route that can reach RAWG, so it gets its own limit. */
 const searchLimiter = rateLimit({
   windowMs: 60_000,
   limit: 30,

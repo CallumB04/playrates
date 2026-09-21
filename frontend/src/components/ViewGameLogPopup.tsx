@@ -20,22 +20,13 @@ interface ViewGameLogPopupProps {
     /** Non-null: the parent does not render this until it has a log. */
     gamelog: GameLogWithGame;
     closePopup: () => void;
-    /**
-     * What the viewer can do about this log — edit their own, jump to their
-     * own log of the same game, or start one. Omitted when signed out, which
-     * leaves Close as the only control.
-     */
+    /** Edit your own, jump to your own log of the same game, or start one.
+     *  Omitted when signed out. */
     primaryAction?: LogPopupAction;
 }
 
 /** A ring, because a fraction is a shape before it is a number. */
-const AchievementRing = ({
-    done,
-    total,
-}: {
-    done: number;
-    total: number;
-}) => {
+const AchievementRing = ({ done, total }: { done: number; total: number }) => {
     const pct = total > 0 ? Math.min(1, done / total) : 0;
     const radius = 34;
     const circumference = 2 * Math.PI * radius;
@@ -84,13 +75,7 @@ const Detail = ({ label, value }: { label: string; value: string }) => (
     </div>
 );
 
-/**
- * Somebody's log, opened.
- *
- * The rating and the achievements are the two things anyone came to see, so
- * they get the top of the popup at size rather than a pair of small figures
- * stacked against the right edge under a list of labelled rows.
- */
+/** Somebody's log. The rating and the achievements lead, at size. */
 const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
     gamelog,
     closePopup,

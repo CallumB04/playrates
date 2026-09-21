@@ -3,9 +3,7 @@ import Plate from "../../../../../components/ui/Plate";
 import Card, { CardHeader } from "../../../../../components/ui/Card";
 import Modal from "../../../../../components/ui/Modal";
 import Button from "../../../../../components/ui/Button";
-import LedgerRow, {
-    LedgerList,
-} from "../../../../../components/ui/LedgerRow";
+import LedgerRow, { LedgerList } from "../../../../../components/ui/LedgerRow";
 import GameCover from "../../../../../components/game/GameCover";
 import Specimen from "../../../components/Specimen";
 
@@ -28,7 +26,11 @@ const SurfaceSpecimens = () => {
                     ] as const
                 ).map(([state, depth]) => (
                     <div key={`${state}-${depth}`} className="text-center">
-                        <Plate state={state} depth={depth} className="size-24" />
+                        <Plate
+                            state={state}
+                            depth={depth}
+                            className="size-24"
+                        />
                         <p className="mt-2 text-label-sm text-content-muted">
                             {state}
                             {depth === "deep" && " deep"}

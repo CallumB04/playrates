@@ -1,9 +1,8 @@
 import { Link } from "react-router-dom";
 import { cn } from "../lib/cn";
 
-/* Each variant is a complete literal class string — Tailwind only emits
-   classes it can see in the source. The initial has to scale with the box,
-   so the two travel together. */
+/* Complete literal class strings — Tailwind only emits what it can see. The
+   initial scales with the box, so the two travel together. */
 const AVATAR_VARIANT = {
     /** Profile page header — responsive across three breakpoints. */
     profileHeader: {
@@ -24,12 +23,7 @@ const AVATAR_VARIANT = {
 
 export type AvatarVariant = keyof typeof AVATAR_VARIANT;
 
-/**
- * A stable hue per username.
- *
- * FNV-1a rather than a sum of char codes, which would give anagrams and most
- * short names the same colour.
- */
+/** A stable hue per username. FNV-1a, so anagrams don't collide. */
 const hueFor = (username: string): number => {
     let hash = 0x811c9dc5;
     for (let i = 0; i < username.length; i += 1) {
@@ -48,12 +42,8 @@ interface ProfilePictureProps {
 }
 
 /**
- * The uploaded picture, or a generated one.
- *
- * The old fallback was a grey stock silhouette served from /assets, identical
- * for everybody — so a friend list read as a column of the same stranger. This
- * derives a hue from the username instead: the same person is the same colour
- * everywhere, and a list of people looks like a list of people.
+ * The uploaded picture, or one generated from the username. The same person
+ * gets the same colour everywhere.
  */
 const ProfilePicture: React.FC<ProfilePictureProps> = ({
     variant,
@@ -64,8 +54,6 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
     const { box, text } = AVATAR_VARIANT[variant];
     const hue = hueFor(username);
 
-    /* Round. Faces are round everywhere else on the internet, and the square
-       avatar was only ever a consequence of square-by-default. */
     const className = cn(
         "relative grid aspect-square shrink-0 place-items-center overflow-hidden rounded-full bg-surface-sunken select-none",
         box
@@ -90,7 +78,7 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
             />
             {/* The same tooth used on box art, so a generated avatar reads as
                 part of the same material. */}
-            <span aria-hidden className="hatch absolute inset-0" />
+            <span aria-hidden className="absolute inset-0 hatch" />
             <span
                 className={cn(
                     "relative font-display font-semibold text-white/95",

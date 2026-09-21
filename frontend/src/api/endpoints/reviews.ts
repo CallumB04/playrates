@@ -45,9 +45,7 @@ export const fetchRecentReviews = async (
 };
 
 /** The caller's own review of a game, for prefilling the log editor. */
-export const fetchMyReview = async (
-    gameId: number
-): Promise<Review | null> => {
+export const fetchMyReview = async (gameId: number): Promise<Review | null> => {
     try {
         const { data } = await api.get<Review>(`/me/reviews/${gameId}`);
         return data;

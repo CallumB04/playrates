@@ -1,4 +1,7 @@
-import { GAME_STATUSES, STATUS_PRESENTATION } from "../../../constants/gameStatus";
+import {
+    GAME_STATUSES,
+    STATUS_PRESENTATION,
+} from "../../../constants/gameStatus";
 import { formatCount, formatPercent } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 
@@ -31,7 +34,11 @@ const CirculationPlate = ({ byStatus, logCount }: CirculationPlateProps) => (
                     key={status}
                     className="flex items-center gap-3.5 border-b border-subtle py-2.5"
                 >
-                    <Mark size={14} aria-hidden className={cn("shrink-0", markTone)} />
+                    <Mark
+                        size={14}
+                        aria-hidden
+                        className={cn("shrink-0", markTone)}
+                    />
                     <span className="w-20 shrink-0 text-body-sm font-medium text-content sm:w-24">
                         {label}
                     </span>

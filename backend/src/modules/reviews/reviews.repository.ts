@@ -4,9 +4,8 @@ import type { ReviewRow } from "../../types/database.types.js";
 
 /**
  * A row of the review_cards view: the review, its author, and the rating from
- * that author's log of the game. The view exists because there is no foreign
- * key from reviews to game_logs, so the rating could not be embedded — or
- * sorted on — from the table alone.
+ * that author's log. The view exists because there is no foreign key from
+ * reviews to game_logs, so the rating can't be embedded or sorted on.
  */
 export interface ReviewRowJoined extends ReviewRow {
   rating: number | null;
@@ -76,8 +75,7 @@ export const createReviewsRepository = (db: Db): ReviewsRepository => ({
       ? builder.or(`is_public.eq.true,user_id.eq.${viewerId}`)
       : builder.eq("is_public", true);
 
-    /* Unrated reviews sort last on both rating directions — they are the
-       absence of an opinion, not the lowest one. */
+    // Unrated sorts last both ways: no opinion isn't the lowest one.
     builder =
       sort === "rating-high"
         ? builder.order("rating", { ascending: false, nullsFirst: false })
@@ -142,7 +140,9 @@ export const createReviewsRepository = (db: Db): ReviewsRepository => ({
       .eq("user_id", userId)
       .in("review_id", reviewIds);
     if (error) throw error;
-    return new Set((data ?? []).map((r) => (r as { review_id: number }).review_id));
+    return new Set(
+      (data ?? []).map((r) => (r as { review_id: number }).review_id),
+    );
   },
 
   async hasVoted(userId, reviewId) {
@@ -194,8 +194,8 @@ export const createReviewsRepository = (db: Db): ReviewsRepository => ({
     return (data as ReviewRowJoined | null) ?? null;
   },
 
-  /* Writes go to the table, then the card is read back — the view is not
-     updatable through a join, and the caller wants the joined shape. */
+  /* Writes go to the table, then the card is read back: the view isn't
+     updatable through a join, and callers want the joined shape. */
   async upsert(userId, gameId, patch) {
     const existing = await this.findByUserAndGame(userId, gameId);
 

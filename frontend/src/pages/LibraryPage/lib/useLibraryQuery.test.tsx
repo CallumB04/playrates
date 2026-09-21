@@ -12,10 +12,9 @@ const wrapper = (initial = "/library") => {
 };
 
 const renderQuery = (initial?: string) =>
-    renderHook(
-        () => ({ ...useLibraryQuery(), location: useLocation() }),
-        { wrapper: wrapper(initial) }
-    );
+    renderHook(() => ({ ...useLibraryQuery(), location: useLocation() }), {
+        wrapper: wrapper(initial),
+    });
 
 describe("useLibraryQuery", () => {
     it("defaults to page one, most-logged, no filters", () => {
@@ -68,7 +67,10 @@ describe("useLibraryQuery", () => {
 
         act(() => result.current.setQuery({ page: 4 }));
 
-        expect(result.current.query).toMatchObject({ page: 4, search: "lantern" });
+        expect(result.current.query).toMatchObject({
+            page: 4,
+            search: "lantern",
+        });
     });
 
     it("falls back to the default sort rather than trusting the URL", () => {
@@ -85,9 +87,15 @@ describe("useLibraryQuery", () => {
     });
 
     it("treats a nonsense page as page one", () => {
-        expect(renderQuery("/library?page=0").result.current.query.page).toBe(1);
-        expect(renderQuery("/library?page=-3").result.current.query.page).toBe(1);
-        expect(renderQuery("/library?page=abc").result.current.query.page).toBe(1);
+        expect(renderQuery("/library?page=0").result.current.query.page).toBe(
+            1
+        );
+        expect(renderQuery("/library?page=-3").result.current.query.page).toBe(
+            1
+        );
+        expect(renderQuery("/library?page=abc").result.current.query.page).toBe(
+            1
+        );
     });
 
     it("round-trips a full filter set through the URL", () => {

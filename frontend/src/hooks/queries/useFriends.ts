@@ -38,10 +38,7 @@ export const useUserFriends = (username: string) =>
         enabled: !!username,
     });
 
-/**
- * The friend-relationship state machine. Each action invalidates the friends
- * queries, so callers do not refetch anything by hand.
- */
+/** Each action invalidates the friends queries, so callers never refetch. */
 export const useFriendRelation = (targetUserId: string | undefined) => {
     const queryClient = useQueryClient();
     const { user } = useAuth();

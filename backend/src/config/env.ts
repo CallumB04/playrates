@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-/** Parsed once at boot so a bad variable kills the process with a readable
- *  message, instead of surfacing as a weird error on the first request. */
+/** Parsed once at boot, so a bad variable fails loudly instead of surfacing
+ *  as a strange error on the first request. */
 const EnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])

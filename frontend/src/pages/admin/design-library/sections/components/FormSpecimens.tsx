@@ -48,7 +48,10 @@ const FormSpecimens = () => {
                         {(a11y) => <Input defaultValue="a grove" {...a11y} />}
                     </Field>
 
-                    <Field label="Disabled" help="Verified accounts can't rename">
+                    <Field
+                        label="Disabled"
+                        help="Verified accounts can't rename"
+                    >
                         {(a11y) => (
                             <Input defaultValue="locked" disabled {...a11y} />
                         )}
@@ -56,7 +59,11 @@ const FormSpecimens = () => {
 
                     <Field label="Number" help="Tabular, unit on the right">
                         {(a11y) => (
-                            <NumberInput defaultValue={52.5} step={0.5} {...a11y} />
+                            <NumberInput
+                                defaultValue={52.5}
+                                step={0.5}
+                                {...a11y}
+                            />
                         )}
                     </Field>
                 </div>
@@ -95,12 +102,9 @@ const FormSpecimens = () => {
                                 <Search
                                     size={14}
                                     aria-hidden
-                                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-content-muted"
+                                    className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-content-muted"
                                 />
-                                <SearchInput
-                                    defaultValue="lantern"
-                                    {...a11y}
-                                />
+                                <SearchInput defaultValue="lantern" {...a11y} />
                             </div>
                         )}
                     </Field>

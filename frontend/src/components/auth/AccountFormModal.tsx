@@ -5,10 +5,8 @@ import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
 import { BRAND_MOTTO, BRAND_NAME } from "../../constants/brand";
 
-/**
- * Switching mode unmounts one form and mounts the other, which clears the
- * previous fields and errors without needing to reset anything by hand.
- */
+/** Switching mode unmounts one form and mounts the other, which clears the
+ *  old fields and errors for free. */
 const AccountFormModal = () => {
     const { mode, openLogin, openSignup, close } = useAccountForm();
     const [emailAfterSignup, setEmailAfterSignup] = useState("");
@@ -31,7 +29,7 @@ const AccountFormModal = () => {
             <header className="relative overflow-hidden border-b border-subtle px-6 py-6">
                 <span
                     aria-hidden
-                    className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-brand/12 blur-3xl"
+                    className="pointer-events-none absolute -top-20 -right-16 size-56 rounded-full bg-brand/12 blur-3xl"
                 />
                 <div className="relative">
                     <p className="font-display text-xl font-bold text-content">
@@ -44,7 +42,9 @@ const AccountFormModal = () => {
                         {isSignup ? "Create your account" : "Welcome back"}
                     </h2>
                     <p className="mt-1 text-body-sm text-content-secondary">
-                        {isSignup ? BRAND_MOTTO : "Log in to pick up where you left off."}
+                        {isSignup
+                            ? BRAND_MOTTO
+                            : "Log in to pick up where you left off."}
                     </p>
                 </div>
             </header>
@@ -62,7 +62,7 @@ const AccountFormModal = () => {
                 <button
                     type="button"
                     onClick={isSignup ? openLogin : openSignup}
-                    className="lift cursor-pointer font-medium text-brand hover:text-brand-hover"
+                    className="cursor-pointer font-medium text-brand lift hover:text-brand-hover"
                 >
                     {isSignup ? "Log in" : "Create an account"}
                 </button>

@@ -12,11 +12,8 @@ interface ToggleProps {
     className?: string;
 }
 
-/**
- * The square switch. Off is a pressed well with a muted knob; on is a brand
- * plate with the knob thrown right — the same press gesture as everything
- * else, so it reads without the colour.
- */
+/** Off is a quiet well with a muted knob; on is a brand plate with the knob
+ *  thrown right, so it reads without the colour. */
 const Toggle = ({
     checked,
     onChange,
@@ -29,7 +26,7 @@ const Toggle = ({
     const control = (
         <span
             className={cn(
-                "lift flex h-[20px] w-[36px] shrink-0 items-center rounded-full border p-[2px]",
+                "flex h-[20px] w-[36px] shrink-0 items-center rounded-full border p-[2px] lift",
                 checked
                     ? "justify-end border-brand-deep bg-brand"
                     : "justify-start border-strong bg-surface-sunken"

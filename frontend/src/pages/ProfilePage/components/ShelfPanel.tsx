@@ -27,8 +27,7 @@ interface ShelfPanelProps {
     trailing?: ReactNode;
 }
 
-/* Every empty shelf sends you somewhere. A dead end that only explains
-   itself is the one screen where a person has nothing to do. */
+// Every empty shelf sends you somewhere.
 const EMPTY_COPY: Record<
     GameStatus,
     { title: string; body: string; cta: string }
@@ -83,15 +82,20 @@ const ShelfPanel = ({
             <div className="mt-3 rounded-lg border border-subtle bg-surface-raised p-5 shadow-plate">
                 {isLoading ? (
                     <div className="grid grid-cols-2 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
-                        {Array.from({ length: Math.min(perPage, 14) }, (_, i) => (
-                            <TileSkeleton key={i} />
-                        ))}
+                        {Array.from(
+                            { length: Math.min(perPage, 14) },
+                            (_, i) => (
+                                <TileSkeleton key={i} />
+                            )
+                        )}
                     </div>
                 ) : logs.length === 0 ? (
                     <div className="flex flex-col gap-5">
                         <EmptyPlate
                             title={empty.title}
-                            body={isMyAccount ? empty.body : "Nothing here yet."}
+                            body={
+                                isMyAccount ? empty.body : "Nothing here yet."
+                            }
                             action={
                                 isMyAccount ? (
                                     <Link
@@ -123,8 +127,7 @@ const ShelfPanel = ({
                                 platformSlugs={log.game?.platforms ?? []}
                                 platforms={platforms}
                                 rating={log.rating}
-                                /* Only the played tab carries a substatus —
-                                   the other tabs already say what they are. */
+                                // Only the played tab carries a substatus.
                                 status={
                                     active === "played"
                                         ? displayStatusFor(
@@ -146,7 +149,10 @@ const ShelfPanel = ({
                         Entries{" "}
                         {formatCount((pagination.page - 1) * perPage + 1)}–
                         {formatCount(
-                            Math.min(pagination.page * perPage, pagination.total)
+                            Math.min(
+                                pagination.page * perPage,
+                                pagination.total
+                            )
                         )}{" "}
                         of {formatCount(pagination.total)}
                     </p>

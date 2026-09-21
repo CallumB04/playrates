@@ -41,7 +41,7 @@ const FriendProfile = ({
         <Link
             to={`/user/${user.username}`}
             className={cn(
-                "lift flex min-w-0 items-center rounded-sm px-2 py-2 hover:bg-surface-hover",
+                "flex min-w-0 items-center rounded-sm px-2 py-2 lift hover:bg-surface-hover",
                 actions ? "flex-1" : "w-full",
                 gap
             )}

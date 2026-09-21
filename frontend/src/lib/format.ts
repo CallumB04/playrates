@@ -26,7 +26,9 @@ export const formatRating = (rating: number | null | undefined): string =>
 export const formatRatingOutOfTen = (
     rating: number | null | undefined
 ): string =>
-    rating === null || rating === undefined ? "—" : `${formatRating(rating)}/10`;
+    rating === null || rating === undefined
+        ? "—"
+        : `${formatRating(rating)}/10`;
 
 /** A count with thousands separators. */
 export const formatCount = (value: number | null | undefined): string =>

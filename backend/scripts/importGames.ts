@@ -6,13 +6,9 @@
  *   npm run import:games -w backend -- --from-page 312
  *   npm run import:games -w backend -- --dry-run
  *
- * The free tier allows 20,000 requests against a ~900,000 game catalogue, so
- * paging all of it costs more than the whole allowance. Taking the top 100,000
- * by tracker count off the listing endpoint costs 2,500.
- *
- * Descriptions aren't in the listing response and aren't fetched here — that
- * would be one request per game. They're backfilled when someone opens a game.
- *
+ * The free tier allows 20,000 requests against ~900,000 games, so the top
+ * 100,000 by tracker count off the listing endpoint costs 2,500. Descriptions
+ * aren't in that response and are backfilled when someone opens a game.
  * Resumable via --from-page, so a crash doesn't spend the budget twice.
  */
 import "../src/config/loadEnv.js";
@@ -28,12 +24,10 @@ const DEFAULT_LIMIT = 100_000;
 /** Stops a bug or a bad argument from eating the whole allowance. */
 const REQUEST_CEILING = 5_000;
 
-/* RAWG times out on the odd page. Over a couple of thousand of them that is
-   near certain, and giving up on the first one throws away the whole run. */
+// RAWG times out on the odd page, which is near certain over a few thousand.
 const MAX_ATTEMPTS = 4;
 
-const sleep = (ms: number) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 interface Options {
   limit: number;
@@ -129,8 +123,7 @@ const main = async () => {
       break;
     }
 
-    // a game with no release date and no tracking activity is almost always
-    // an unreleased placeholder or a duplicate entry
+    // no release date and no tracking activity is a placeholder or a duplicate
     const usable = result.games.filter(
       (g) => g.releaseDate !== null || (g.rawgAddedCount ?? 0) > 0,
     );

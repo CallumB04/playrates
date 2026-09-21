@@ -10,11 +10,8 @@ interface ProgressProps {
 
 const TICKS = 12;
 
-/**
- * Determinate is a filled well. Indeterminate is a sweep of ticks — the same
- * rule vocabulary rather than a spinner, and it holds still under reduced
- * motion rather than disappearing.
- */
+/** Determinate is a filled well; indeterminate is a sweep of ticks that holds
+ *  still under reduced motion. */
 const Progress = ({ value, label, className }: ProgressProps) => {
     const reduced = usePrefersReducedMotion();
     const determinate = value !== undefined;
@@ -44,7 +41,9 @@ const Progress = ({ value, label, className }: ProgressProps) => {
                             key={i}
                             className={cn(
                                 "flex-1",
-                                i > 3 && i < 8 ? "bg-brand" : "bg-surface-sunken",
+                                i > 3 && i < 8
+                                    ? "bg-brand"
+                                    : "bg-surface-sunken",
                                 !reduced && "animate-pulse"
                             )}
                             style={

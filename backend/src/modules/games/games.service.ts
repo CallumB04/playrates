@@ -17,18 +17,15 @@ const LOCAL_RESULT_THRESHOLD = 8;
 export const createGamesService = (
   repo: GamesRepository,
   provider: GamesProvider,
-  /* Only the one lookup is needed, so the games service takes a function
-     rather than the whole profiles repository. */
+  // One lookup, so this takes a function rather than the whole repository.
   viewerPrefs: (userId: string) => Promise<{ showSexualContent: boolean }>,
 ) => ({
   async getById(id: number): Promise<Game> {
     const row = await repo.findById(id);
     if (!row) throw AppError.notFound("Game");
 
-    /* The bulk import reads the listing endpoint, which carries no
-       descriptions, so the first person to open a game pays for one fetch.
-       Awaited: this used to fire and forget, which meant the first visitor
-       was shown a note asking them to reload the page. */
+    /* The bulk import carries no descriptions, so the first person to open a
+       game pays for one fetch. Awaited, or they'd have to reload to see it. */
     if (!row.description_synced_at && row.rawg_id && provider.isConfigured) {
       const description = await this.backfillDescription(id, row.rawg_id);
       if (description) return toGame({ ...row, description });
@@ -38,10 +35,8 @@ export const createGamesService = (
   },
 
   /**
-   * Fetches and stores one game's description, returning it so the caller can
-   * render it on this request rather than the next one. Failures are not
-   * fatal: a missing description is not worth failing a page render over, and
-   * the next view tries again.
+   * Fetches and stores one game's description, returning it so this request can
+   * render it. Failures are not fatal — the next view tries again.
    */
   async backfillDescription(
     id: number,
@@ -65,8 +60,7 @@ export const createGamesService = (
     const pagination: Pagination = { page: query.page, limit: query.limit };
     const { from, to } = toRange(pagination);
 
-    /* Sexual content is hidden unless the viewer has opted in, so a signed
-       out visitor always gets the default. */
+    // Hidden unless the viewer opted in, so signed out always gets the default.
     const showSexualContent = callerId
       ? (await viewerPrefs(callerId)).showSexualContent
       : false;
@@ -107,9 +101,8 @@ export const createGamesService = (
   },
 
   /**
-   * Cache-through search: local first, then the provider, caching what returns.
-   * Upstream results are written and re-read so the ids handed back are always
-   * ours — nothing downstream should see a RAWG id.
+   * Cache-through search: local first, then RAWG, caching what returns. Upstream
+   * results are written and re-read, so the ids handed back are always ours.
    */
   async search(
     term: string,

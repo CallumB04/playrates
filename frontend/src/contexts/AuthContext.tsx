@@ -56,10 +56,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
     }, []);
 
-    /* The server marks you online for five minutes after the last beat, and
-       nothing else writes last_seen_at — so beat well inside that window. The
-       first one invalidates the profile caches, because any profile already
-       fetched this session still says offline. */
+    /* The server marks you online for five minutes after the last beat, so
+       beat well inside that window. The first one clears the profile caches,
+       which still say offline. */
     useEffect(() => {
         if (!session) return;
         let active = true;
@@ -74,8 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     }
                 })
                 .catch(() => {
-                    /* Presence is decoration; a failed beat is not worth a
-                       notification. */
+                    // Presence is decoration; a failed beat is not worth a toast.
                 });
 
         void beat(true);

@@ -31,15 +31,12 @@ export const createReviewsService = (
   games: GamesRepository,
 ) => {
   /**
-   * The view already carries the author and the rating, so this is a pure
-   * mapping — it used to cost a second query per listing. A missing author
-   * falls back to a placeholder: the FK should prevent it, but one bad row
-   * shouldn't take down the listing.
+   * The view carries the author and the rating, so this is a pure mapping. A
+   * missing author falls back to a placeholder — the FK should prevent it, but
+   * one bad row shouldn't take down the listing.
    */
-  /**
-   * Whether the viewer has voted is per-viewer, so it cannot live on the
-   * view. One extra query for the page rather than one per review.
-   */
+  /** Per-viewer, so it can't live on the view. One query for the page rather
+   *  than one per review. */
   const withAuthors = (
     rows: ReviewRowJoined[],
     votedIds: Set<number> = new Set(),
@@ -141,10 +138,8 @@ export const createReviewsService = (
       );
     },
 
-    /**
-     * Toggling is idempotent by primary key: a duplicate vote collides on
-     * (review_id, user_id) rather than counting twice.
-     */
+    /** Idempotent by primary key: a duplicate vote collides on
+     *  (review_id, user_id) rather than counting twice. */
     async toggleVote(
       userId: string,
       reviewId: number,

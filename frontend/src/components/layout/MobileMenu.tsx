@@ -25,13 +25,7 @@ interface MobileMenuProps {
 const ROW =
     "flex items-center justify-between gap-4 rounded-md px-4 py-3.5 text-body text-content-secondary transition-colors hover:bg-surface-hover hover:text-content";
 
-/**
- * The whole screen, not a tray under the masthead.
- *
- * A dropdown that pushes the page down has to share the viewport with the
- * header it came from; this covers it, so there is exactly one thing to read
- * and one way out.
- */
+/** The whole screen, not a tray under the masthead. */
 const MobileMenu = ({
     links,
     user,
@@ -47,7 +41,7 @@ const MobileMenu = ({
             role="dialog"
             aria-modal="true"
             aria-label="Menu"
-            className="animate-settle fixed inset-0 z-50 flex flex-col overflow-y-auto bg-surface lg:hidden"
+            className="fixed inset-0 z-50 flex animate-settle flex-col overflow-y-auto bg-surface lg:hidden"
         >
             <div className="flex items-center justify-between px-5 pt-6 sm:px-8">
                 <span className="font-display text-2xl font-bold text-content">
@@ -57,7 +51,7 @@ const MobileMenu = ({
                     type="button"
                     onClick={onClose}
                     aria-label="Close menu"
-                    className="lift -mr-2 rounded-sm p-2 text-content hover:text-brand"
+                    className="-mr-2 rounded-sm p-2 text-content lift hover:text-brand"
                 >
                     <X size={24} />
                 </button>
@@ -71,7 +65,7 @@ const MobileMenu = ({
                         onClick={onClose}
                         aria-current={link.active ? "page" : undefined}
                         className={cn(
-                            "lift rounded-md px-4 py-3.5 font-display text-2xl transition-colors",
+                            "rounded-md px-4 py-3.5 font-display text-2xl transition-colors lift",
                             link.active
                                 ? "bg-brand-subtle text-brand"
                                 : "text-content hover:bg-surface-hover"

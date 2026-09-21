@@ -1,7 +1,6 @@
 /**
  * The seam between PlayRates and whichever games API is in use. Everything
- * above deals in `ExternalGame` with platform slugs already mapped to ours, so
- * swapping RAWG for IGDB is a new folder under providers/games/.
+ * above deals in `ExternalGame`, so swapping RAWG for IGDB is a new folder.
  */
 export interface ExternalGenre {
   slug: string;
@@ -43,15 +42,13 @@ export interface GamesProvider {
   readonly isConfigured: boolean;
   search(query: string, limit?: number): Promise<ExternalGame[]>;
   getById(externalId: number): Promise<ExternalGame | null>;
-  /**
-   * One page of the catalogue, most-tracked first. Used by the bulk import;
-   * the listing carries everything except the description.
-   */
+  /** One page of the catalogue, most-tracked first. Carries everything except
+   *  the description. */
   listByPopularity(page: number, pageSize: number): Promise<GamePage>;
 }
 
-/** Used when no API key is set. Returns empty results rather than throwing, so
- *  the app runs on its local catalogue and the key stays optional in dev. */
+/** Used when no API key is set. Returns empty results rather than throwing,
+ *  so the app runs on its local catalogue. */
 export const nullGamesProvider: GamesProvider = {
   name: "none",
   isConfigured: false,

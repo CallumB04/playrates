@@ -25,10 +25,7 @@ const isSort = (value: string): value is GameSort =>
 
 /**
  * The library's state lives in the URL, so a filtered page is linkable and the
- * back button walks the filters rather than leaving the page.
- *
- * Values equal to their default are omitted, which keeps a plain /library
- * clean instead of trailing seven redundant params.
+ * back button walks the filters. Defaults are omitted to keep /library clean.
  */
 export const useLibraryQuery = () => {
     const [params, setParams] = useSearchParams();
@@ -47,8 +44,7 @@ export const useLibraryQuery = () => {
 
     const setQuery = useCallback(
         (patch: Partial<LibraryQuery>, options?: { replace?: boolean }) => {
-            // Any filter change invalidates the page you were on, unless the
-            // caller is explicitly the pager.
+            // Any filter change resets to page 1, unless it was the pager.
             const next: LibraryQuery = {
                 ...query,
                 ...patch,

@@ -11,12 +11,8 @@ interface VoteButtonProps {
 }
 
 /**
- * One upvote per person per review.
- *
- * The count is the label rather than a separate figure beside it, so the
- * control is one target on touch. Pressing again withdraws the vote, which is
- * what the server's toggle does — there is no second "undo" affordance to
- * find.
+ * One upvote per person per review. The count is the label, so the whole thing
+ * is one touch target, and pressing again withdraws the vote.
  */
 const VoteButton = ({
     count,
@@ -30,12 +26,10 @@ const VoteButton = ({
         onClick={onToggle}
         disabled={disabled}
         aria-pressed={voted}
-        aria-label={
-            voted ? "Remove your upvote" : "Upvote this review"
-        }
+        aria-label={voted ? "Remove your upvote" : "Upvote this review"}
         title={disabled ? "Sign in to vote" : undefined}
         className={cn(
-            "lift inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-label-sm transition-colors",
+            "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-label-sm transition-colors lift",
             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
             voted
                 ? "border-brand bg-brand-subtle text-brand"

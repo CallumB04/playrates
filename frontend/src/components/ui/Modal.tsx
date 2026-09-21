@@ -15,9 +15,9 @@ interface ModalProps {
 }
 
 /**
- * Not a native `<dialog>` with showModal() — that brings in ::backdrop, the
- * top layer and UA centring, all of which move pixels. This keeps the plain
- * markup and adds the keyboard and focus handling by hand.
+ * Not a native `<dialog>`: showModal() brings ::backdrop, the top layer and UA
+ * centring with it, all of which move pixels. Keyboard and focus are handled
+ * here instead.
  */
 const PANEL =
     "relative max-h-[90vh] animate-settle overflow-y-auto rounded-lg border border-subtle bg-surface-raised p-4 shadow-modal sm:p-6";

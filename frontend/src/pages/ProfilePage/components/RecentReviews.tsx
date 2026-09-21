@@ -22,13 +22,7 @@ interface RecentReviewsProps {
 
 const SHOWN = 4;
 
-/**
- * Somebody's last few reviews.
- *
- * These used to fire one request per review to look up the game's title,
- * because reviews carried a gameId and nothing else. The review_cards view
- * carries the game now, so the fan-out is gone.
- */
+/** Somebody's last few reviews. The view carries the game, so no fan-out. */
 /** The state a review was written in, when its author still has that log. */
 const reviewStatus = (review: ReviewWithAuthor): DisplayStatus | null => {
     if (!review.status || !isDisplayStatus(review.status)) return null;
@@ -42,10 +36,7 @@ const RecentReviews = ({ reviews, isOwner }: RecentReviewsProps) => {
     const shown = reviews.slice(0, SHOWN);
 
     return (
-        <Panel
-            title="Recent reviews"
-            bodyClassName="flex flex-col gap-1 p-2"
-        >
+        <Panel title="Recent reviews" bodyClassName="flex flex-col gap-1 p-2">
             {shown.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
                     <p className="text-body-sm text-content-muted">
@@ -56,7 +47,11 @@ const RecentReviews = ({ reviews, isOwner }: RecentReviewsProps) => {
                     {isOwner && (
                         <Link
                             to="/library"
-                            className={buttonClass("secondary", undefined, "sm")}
+                            className={buttonClass(
+                                "secondary",
+                                undefined,
+                                "sm"
+                            )}
                         >
                             Find a game to review
                         </Link>
@@ -64,12 +59,11 @@ const RecentReviews = ({ reviews, isOwner }: RecentReviewsProps) => {
                 </div>
             ) : (
                 shown.map((review) => (
-                    /* Straight to the review on the game's page, not just to
-                       the game. */
+                    // Straight to the review on the game's page, not just to the game.
                     <Link
                         key={review.id}
                         to={`/game/${review.game.id}#review-${review.id}`}
-                        className="lift flex gap-3 rounded-md p-2 hover:bg-surface-hover"
+                        className="flex gap-3 rounded-md p-2 lift hover:bg-surface-hover"
                     >
                         <GameCover
                             coverUrl={review.game.coverUrl}

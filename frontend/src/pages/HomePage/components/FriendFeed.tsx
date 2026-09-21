@@ -39,7 +39,7 @@ const Row = ({ item }: { item: FriendActivity }) => {
     return (
         <Link
             to={`/game/${item.game.id}`}
-            className="lift flex items-center gap-3 rounded-md px-2 py-2 hover:bg-surface-hover"
+            className="flex items-center gap-3 rounded-md px-2 py-2 lift hover:bg-surface-hover"
         >
             <GameCover
                 coverUrl={item.game.coverUrl}
@@ -84,18 +84,13 @@ const Row = ({ item }: { item: FriendActivity }) => {
                 </span>
             </span>
 
-            {item.rating !== null && (
-                <RatingBadge value={item.rating} />
-            )}
+            {item.rating !== null && <RatingBadge value={item.rating} />}
         </Link>
     );
 };
 
-/**
- * The only part of the home page that changes because someone else did
- * something. It is deliberately a list of sentences rather than a grid of
- * covers, so it reads as people rather than as more library.
- */
+/** A list of sentences rather than a grid of covers, so it reads as people
+ *  rather than as more library. */
 const FriendFeed = ({
     items,
     isLoading,
@@ -113,7 +108,7 @@ const FriendFeed = ({
             </h2>
             <Link
                 to={`/user/${username}`}
-                className="lift text-label text-content-muted hover:text-brand"
+                className="text-label text-content-muted lift hover:text-brand"
             >
                 All friends
             </Link>

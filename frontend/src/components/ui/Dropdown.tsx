@@ -39,16 +39,10 @@ interface DropdownProps {
 }
 
 /**
- * The project's dropdown.
- *
- * A native `<select>` takes the platform's own popup: it cannot show an icon,
- * a hint line, or a tick beside what is chosen, and on most desktops it
- * renders in a font and a metric that belong to nothing else on the page.
- * This keeps the field styling and owns the menu.
- *
- * Keyboard support is therefore explicit, and matches what a select does:
- * arrows move through options, Enter and Space commit, Escape closes, Home
- * and End jump to the ends.
+ * The project's dropdown. A native `<select>` can't show an icon, a hint line
+ * or a tick, so this owns the menu — which means the keyboard handling is
+ * ours too: arrows move, Enter and Space commit, Escape closes, Home and End
+ * jump to the ends.
  */
 const Dropdown = ({
     options,
@@ -89,8 +83,7 @@ const Dropdown = ({
             }
         };
 
-        /* The menu is portalled, so it does not move with the trigger. Track
-           the trigger's box and close on anything that would separate them. */
+        // Portalled, so it doesn't move with the trigger — track and close.
         const track = () => {
             const box = wrapRef.current?.getBoundingClientRect();
             if (box) setRect(box);
@@ -211,9 +204,8 @@ const Dropdown = ({
                         id={listId}
                         role="listbox"
                         aria-activedescendant={`${listId}-${active}`}
-                        /* Fixed and portalled to the body: inside a modal the menu
-                       was clipped by the panel and counted toward its scroll
-                       height, so opening it made the popup scroll. */
+                        /* Fixed and portalled to the body, or a modal clips the
+                           menu and counts it toward its scroll height. */
                         style={{
                             position: "fixed",
                             left: rect.left,

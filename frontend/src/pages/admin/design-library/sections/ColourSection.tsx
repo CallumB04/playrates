@@ -82,7 +82,7 @@ const ColourSection = () => (
         <section className="flex flex-col gap-8">
             <h2 className="border-b border-subtle pb-2 text-label text-content-muted">
                 Semantic — one set, two mappings
-                <span className="ml-3 normal-case tracking-normal text-content-muted">
+                <span className="ml-3 tracking-normal text-content-muted normal-case">
                     light · dark
                 </span>
             </h2>

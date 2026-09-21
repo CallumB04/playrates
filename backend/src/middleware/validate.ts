@@ -8,8 +8,8 @@ interface ValidationShape {
   params?: ZodTypeAny;
 }
 
-/** Parses the request into `req.valid`. Controllers read from there and never
- *  from req.body, which is what keeps unvalidated input out of the services. */
+/** Parses the request into `req.valid`. Controllers read from there, never
+ *  from req.body. */
 export const validate =
   (shape: ValidationShape): RequestHandler =>
   (req, _res, next) => {

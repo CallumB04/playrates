@@ -40,11 +40,7 @@ const LEGAL_PAGES = [
     },
 ];
 
-/**
- * The library was briefly called the catalogue, and lived at /catalogue. A
- * bare redirect would drop the query string, and every filter on that page
- * lives there.
- */
+// /catalogue was the old name. Keep the query string: the filters live there.
 const LibraryRedirect = () => {
     const { search } = useLocation();
     return <Navigate to={{ pathname: "/library", search }} replace />;
@@ -62,10 +58,7 @@ function App() {
                             path="/user/:targetUsername?"
                             element={<ProfilePageRoute />}
                         />
-                        <Route
-                            path="/library"
-                            element={<LibraryPage />}
-                        />
+                        <Route path="/library" element={<LibraryPage />} />
                         {/* The page was briefly called both things. Kept so
                             shared links and bookmarks still land. */}
                         <Route
@@ -73,10 +66,7 @@ function App() {
                             element={<LibraryRedirect />}
                         />
                         <Route path="/game/:gameID" element={<GamePage />} />
-                        <Route
-                            path="/community"
-                            element={<CommunityPage />}
-                        />
+                        <Route path="/community" element={<CommunityPage />} />
                         <Route path="/settings" element={<SettingsPage />} />
 
                         {/* Stubs, so the footer never links into nothing. */}
@@ -98,7 +88,9 @@ function App() {
                         <Route path="/admin" element={<AdminLayout />}>
                             <Route
                                 index
-                                element={<Navigate to="/admin/design" replace />}
+                                element={
+                                    <Navigate to="/admin/design" replace />
+                                }
                             />
                             <Route
                                 path="design"

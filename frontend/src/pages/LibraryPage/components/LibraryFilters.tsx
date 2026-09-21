@@ -100,7 +100,7 @@ const LibraryFilters = ({
                         <Search
                             size={14}
                             aria-hidden
-                            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-content-secondary"
+                            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-content-secondary"
                         />
                         <SearchInput
                             value={searchDraft}
@@ -110,7 +110,7 @@ const LibraryFilters = ({
                             className="pr-28"
                         />
                         {matches !== undefined && (
-                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-label-sm text-content-muted">
+                            <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-label-sm text-content-muted">
                                 {formatCount(matches)} matches
                             </span>
                         )}
@@ -152,7 +152,10 @@ const LibraryFilters = ({
                     <div className="flex flex-col gap-4 pt-4">
                         {selects}
                         {toggles}
-                        <Button onClick={() => setSheetOpen(false)} size="touch">
+                        <Button
+                            onClick={() => setSheetOpen(false)}
+                            size="touch"
+                        >
                             Show results
                         </Button>
                     </div>

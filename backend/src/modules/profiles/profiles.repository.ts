@@ -1,8 +1,8 @@
 import type { Db } from "../../config/supabase.js";
 import type { ProfileRow } from "../../types/database.types.js";
 
-/** The seam that makes route tests fast: swap in an in-memory implementation
- *  and the whole HTTP stack runs with no database. */
+/** Swap in an in-memory implementation and the whole HTTP stack runs with no
+ *  database. */
 export interface ProfilesRepository {
   findById(id: string): Promise<ProfileRow | null>;
   findByUsername(username: string): Promise<ProfileRow | null>;

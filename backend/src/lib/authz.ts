@@ -1,10 +1,8 @@
 import { AppError } from "./AppError.js";
 
 /**
- * The acting user always comes from the verified JWT, never a URL param or
- * request body — otherwise a caller just claims to be someone else.
- *
- * Call these from services, not controllers: a service is reachable from more
+ * The acting user always comes from the verified JWT, never a param or body.
+ * Call these from services, not controllers — a service is reachable from more
  * than one route, so adding a route can't skip the check.
  */
 export function assertOwner(callerId: string, ownerId: string): void {

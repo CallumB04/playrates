@@ -36,13 +36,11 @@ export const readStoredTheme = (): Theme => {
 export const applyTheme = (theme: Theme): void => {
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
-    // lets the browser theme native controls (scrollbars, date pickers,
-    // checkboxes) to match, which CSS variables alone cannot do
+    // themes native controls (scrollbars, date pickers) to match
     root.style.colorScheme = theme;
 };
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-    // initialised from storage rather than a constant, so the first paint
     // matches what the boot script in index.html already applied
     const [theme, setThemeState] = useState<Theme>(readStoredTheme);
 

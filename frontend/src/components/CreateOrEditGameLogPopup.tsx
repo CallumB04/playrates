@@ -33,12 +33,9 @@ interface CreateOrEditGameLogPopupProps {
 }
 
 /**
- * All ten fields on one surface — no scrolling between steps, no wizard.
- *
- * The review is a different resource: the log goes to /me/game-logs and the
- * note to /me/reviews, with no transaction between them. Save writes the log
- * first (that is what you came for) and reports a partial success if the note
- * fails, rather than implying nothing was written.
+ * The log editor. The review is a separate resource with no transaction
+ * between the two, so save writes the log first and reports a partial success
+ * if the review fails.
  */
 const CreateOrEditGameLogPopup = ({
     closePopup,
@@ -60,14 +57,15 @@ const CreateOrEditGameLogPopup = ({
     const [error, setError] = useState<string | null>(null);
     const [hydrated, setHydrated] = useState(false);
 
-    /* Wait for the review before hydrating, or a blank note would overwrite a
-       real one the moment you pressed save. */
+    // Wait for the review, or a blank note overwrites a real one on save.
     useEffect(() => {
         if (hydrated || reviewLoading) return;
         dispatch({
             type: "hydrate",
             log: gamelog ?? null,
-            review: review ? { body: review.body, isPublic: review.isPublic } : null,
+            review: review
+                ? { body: review.body, isPublic: review.isPublic }
+                : null,
         });
         setHydrated(true);
     }, [hydrated, reviewLoading, gamelog, review]);
@@ -102,8 +100,7 @@ const CreateOrEditGameLogPopup = ({
                 await removeReview.mutateAsync(gameId);
             }
         } catch {
-            // The log is already saved — say so rather than implying a
-            // blanket failure and inviting a duplicate submit.
+            // The log did save, so don't imply a blanket failure.
             notify("Entry saved, but your note didn't send", "error");
             viewUpdatedLog();
             return;
@@ -149,7 +146,7 @@ const CreateOrEditGameLogPopup = ({
                     type="button"
                     onClick={closePopup}
                     aria-label="Close"
-                    className="lift shrink-0 rounded-sm p-2 text-content-muted hover:bg-surface-hover hover:text-content"
+                    className="shrink-0 rounded-sm p-2 text-content-muted lift hover:bg-surface-hover hover:text-content"
                 >
                     <X size={20} />
                 </button>
@@ -173,7 +170,9 @@ const CreateOrEditGameLogPopup = ({
                 <div className="rounded-md border border-subtle bg-surface-sunken/50 px-5 py-4">
                     <RatingMeter
                         value={draft.rating}
-                        onChange={(value) => dispatch({ type: "rating", value })}
+                        onChange={(value) =>
+                            dispatch({ type: "rating", value })
+                        }
                         label="Your rating"
                     />
                 </div>
@@ -347,7 +346,9 @@ const CreateOrEditGameLogPopup = ({
                                         value,
                                     })
                                 }
-                                label={draft.reviewIsPublic ? "Public" : "Private"}
+                                label={
+                                    draft.reviewIsPublic ? "Public" : "Private"
+                                }
                             />
                             <span className="text-label-sm text-content-muted">
                                 {draft.reviewBody.length} / 5000
@@ -384,7 +385,7 @@ const CreateOrEditGameLogPopup = ({
                         type="button"
                         onClick={() => void handleDelete()}
                         disabled={busy}
-                        className="lift text-label text-danger hover:underline disabled:opacity-60"
+                        className="text-label text-danger lift hover:underline disabled:opacity-60"
                     >
                         Delete this log
                     </button>

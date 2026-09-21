@@ -3,12 +3,8 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "../../../lib/cn";
 
 /**
- * The description, four lines at a time.
- *
- * RAWG descriptions run to a dozen paragraphs on a big release, which pushed
- * the ratings and the reviews off the first screen. The expander only appears
- * when there is something behind it, so short descriptions are not given a
- * control that does nothing.
+ * The description, four lines at a time. RAWG runs to a dozen paragraphs on a
+ * big release. The expander only appears when there is something behind it.
  */
 const GameDescription = ({ text }: { text: string }) => {
     const [open, setOpen] = useState(false);
@@ -20,8 +16,7 @@ const GameDescription = ({ text }: { text: string }) => {
         if (!el) return;
 
         const measure = () => {
-            // Compared while clamped, so this is the honest question: is there
-            // more text than the four lines currently showing?
+            // Measured while clamped: is there more than the four lines?
             setClipped(el.scrollHeight > el.clientHeight + 1);
         };
 
@@ -48,7 +43,7 @@ const GameDescription = ({ text }: { text: string }) => {
                     type="button"
                     onClick={() => setOpen((v) => !v)}
                     aria-expanded={open}
-                    className="lift mt-2 inline-flex cursor-pointer items-center gap-1 text-label text-brand hover:text-brand-hover"
+                    className="mt-2 inline-flex cursor-pointer items-center gap-1 text-label text-brand lift hover:text-brand-hover"
                 >
                     {open ? "Show less" : "Read the full description"}
                     <ChevronDown

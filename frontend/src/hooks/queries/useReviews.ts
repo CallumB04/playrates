@@ -17,10 +17,7 @@ import {
 } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 
-export const useGameReviews = (
-    gameId: number | undefined,
-    sort?: ReviewSort
-) =>
+export const useGameReviews = (gameId: number | undefined, sort?: ReviewSort) =>
     useQuery({
         queryKey: queryKeys.reviews.byGame(gameId ?? 0, sort),
         queryFn: () => fetchGameReviews(gameId!, sort),
@@ -52,11 +49,8 @@ export const useUserReviews = (username: string | undefined) =>
         enabled: !!username,
     });
 
-/**
- * Voting refetches rather than patching the cache: a review appears in the
- * game list, the site feed and a profile, and keeping three copies in step by
- * hand is how they drift apart.
- */
+/** Refetch rather than patch: the same review sits in the game list, the site
+ *  feed and a profile, and three hand-patched copies drift. */
 export const useReviewVote = () => {
     const client = useQueryClient();
     return useMutation({

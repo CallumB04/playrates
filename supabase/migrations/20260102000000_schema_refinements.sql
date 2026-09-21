@@ -1,9 +1,6 @@
 -- Field naming, presentation concerns, and the columns the bulk RAWG import
--- needs.
---
--- `raw` is dropped: a full RAWG payload is ~11 KB, so 100k games would exceed
--- the whole database allowance. Everything useful is extracted into columns
--- below — anything missed costs an API call to get back.
+-- needs. `raw` is dropped: at ~11 KB a payload, 100k games would exceed the
+-- whole database allowance.
 
 -- ---------------------------------------------------------------------------
 -- Naming
@@ -12,9 +9,8 @@
 alter table public.profiles rename column picture_url to avatar_url;
 alter table public.profiles rename constraint profiles_picture_url to profiles_avatar_url;
 
--- `popularity` held RAWG's ratings_count, which is not what the name suggests.
--- External figures are prefixed so they cannot be confused with a PlayRates
--- rating, which is a different scale and comes from our own users.
+-- `popularity` held RAWG's ratings_count. External figures get the rawg_
+-- prefix so they can't be confused with a PlayRates rating.
 alter table public.games rename column popularity to rawg_rating_count;
 
 -- game_logs.hours_to_beat is the user's own estimate; this column is RAWG's
@@ -26,8 +22,7 @@ alter table public.games rename constraint games_hours_to_beat to games_playtime
 -- Presentation belongs in code
 -- ---------------------------------------------------------------------------
 
--- Which icon represents a platform is a frontend decision, and tying it to a
--- specific icon library means changing library means writing a migration.
+-- Which icon represents a platform is a frontend decision.
 alter table public.platforms drop column icon_class;
 
 -- ---------------------------------------------------------------------------

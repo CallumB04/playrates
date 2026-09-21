@@ -46,14 +46,8 @@ const Stat = ({ label, value }: { label: string; value: string }) => (
 );
 
 /**
- * The signed-in landing.
- *
- * Signed out, the page opens with a claim and real box art. Signed in it
- * opened with a greeting in a white box, which is a worse first screen for
- * the person who actually uses the place. This keeps that structure — a
- * headline, something to press, the shelves within reach — and gives the
- * right-hand side to your own year rather than to six covers you have
- * already seen.
+ * The signed-in landing: a headline, something to press, and your own year
+ * down the right-hand side.
  */
 const ReEntryPlate = ({
     username,
@@ -68,49 +62,55 @@ const ReEntryPlate = ({
     <section className="relative overflow-hidden rounded-lg border border-subtle bg-surface-raised shadow-plate">
         <span
             aria-hidden
-            className="pointer-events-none absolute -right-28 -top-32 size-80 rounded-full bg-brand/12 blur-3xl"
+            className="pointer-events-none absolute -top-32 -right-28 size-80 rounded-full bg-brand/12 blur-3xl"
         />
 
         <div className="relative grid gap-8 px-6 py-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-12 lg:px-8 lg:py-9">
             <div className="flex flex-col justify-between gap-6">
                 <div>
                     <h1 className="font-display text-[34px] leading-tight text-content sm:text-[40px]">
-                    Welcome back, {displayName}
-                </h1>
+                        Welcome back, {displayName}
+                    </h1>
 
-                <p className="mt-2.5 max-w-[46ch] text-body leading-relaxed text-content-secondary">
-                    {formatCount(playingCount)}{" "}
-                    {playingCount === 1 ? "game" : "games"} in progress,{" "}
-                    {formatCount(backlogCount)} in your backlog.
-                </p>
+                    <p className="mt-2.5 max-w-[46ch] text-body leading-relaxed text-content-secondary">
+                        {formatCount(playingCount)}{" "}
+                        {playingCount === 1 ? "game" : "games"} in progress,{" "}
+                        {formatCount(backlogCount)} in your backlog.
+                    </p>
 
-                <div className="mt-6 flex flex-wrap items-center gap-3">
-                    <Link
-                        to="/library"
-                        className={buttonClass("primary", undefined, "lg")}
-                    >
-                        Browse games
-                    </Link>
-                    <Link
-                        to={`/user/${username}`}
-                        className={buttonClass("secondary", undefined, "lg")}
-                    >
-                        Your profile
-                    </Link>
-                </div>
-
+                    <div className="mt-6 flex flex-wrap items-center gap-3">
+                        <Link
+                            to="/library"
+                            className={buttonClass("primary", undefined, "lg")}
+                        >
+                            Browse games
+                        </Link>
+                        <Link
+                            to={`/user/${username}`}
+                            className={buttonClass(
+                                "secondary",
+                                undefined,
+                                "lg"
+                            )}
+                        >
+                            Your profile
+                        </Link>
+                    </div>
                 </div>
 
                 {/* The shelves, one press away. */}
                 <div className="flex flex-wrap gap-2 border-t border-subtle pt-5">
                     {GAME_STATUSES.map((status) => {
-                        const { label, icon: Icon, markTone } =
-                            STATUS_PRESENTATION[status];
+                        const {
+                            label,
+                            icon: Icon,
+                            markTone,
+                        } = STATUS_PRESENTATION[status];
                         return (
                             <Link
                                 key={status}
                                 to={`/user/${username}?type=${status}`}
-                                className="lift inline-flex items-center gap-2 rounded-full border border-subtle px-3.5 py-1.5 text-body-sm text-content-secondary hover:border-strong hover:text-content"
+                                className="inline-flex items-center gap-2 rounded-full border border-subtle px-3.5 py-1.5 text-body-sm text-content-secondary lift hover:border-strong hover:text-content"
                             >
                                 <Icon
                                     size={14}
@@ -129,7 +129,7 @@ const ReEntryPlate = ({
                     <button
                         type="button"
                         onClick={onUpdateLog}
-                        className="lift flex w-full cursor-pointer items-center gap-3.5 rounded-md border border-subtle bg-surface-sunken/40 p-3 text-left hover:border-strong"
+                        className="flex w-full cursor-pointer items-center gap-3.5 rounded-md border border-subtle bg-surface-sunken/40 p-3 text-left lift hover:border-strong"
                     >
                         <span className="relative shrink-0">
                             <GameCover

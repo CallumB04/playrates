@@ -1,8 +1,4 @@
-import type {
-    GameLogInput,
-    GameStatus,
-    PlayedStatus,
-} from "@playrates/shared";
+import type { GameLogInput, GameStatus, PlayedStatus } from "@playrates/shared";
 import type { GameLogWithGame } from "../../api";
 
 export interface LogDraft {
@@ -40,7 +36,11 @@ export type LogAction =
     | { type: "status"; value: GameStatus }
     | { type: "playedStatus"; value: PlayedStatus | null }
     | { type: "rating"; value: number | null }
-    | { type: "hydrate"; log: GameLogWithGame | null; review?: { body: string; isPublic: boolean } | null };
+    | {
+          type: "hydrate";
+          log: GameLogWithGame | null;
+          review?: { body: string; isPublic: boolean } | null;
+      };
 
 const numberOrEmpty = (value: number | null): string =>
     value === null ? "" : String(value);
@@ -51,9 +51,7 @@ export const logReducer = (state: LogDraft, action: LogAction): LogDraft => {
             return {
                 ...state,
                 status: action.value,
-                /* A substatus only means anything on a played log, and the
-                   server nulls it anyway — so it is cleared here rather than
-                   silently dropped on save. */
+                // A substatus only means anything on a played log.
                 playedStatus:
                     action.value === "played" ? state.playedStatus : null,
             };
@@ -118,8 +116,8 @@ export const toGameLogInput = (draft: LogDraft): GameLogInput => ({
     achievementsTotal: toNumber(draft.achievementsTotal),
 });
 
-/** Client-side checks that mirror the database CHECKs, so the form can point
- *  at the offending field rather than surfacing a 422. */
+/** Mirrors the database CHECKs, so the form can point at the bad field
+ *  instead of surfacing a 422. */
 export const validateDraft = (draft: LogDraft): string | null => {
     const completed = toNumber(draft.achievementsCompleted);
     const total = toNumber(draft.achievementsTotal);

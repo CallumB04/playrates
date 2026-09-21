@@ -16,13 +16,8 @@ interface DeleteAccountModalProps {
     onConfirm: () => void;
 }
 
-/**
- * The confirmation gate.
- *
- * Typing the username is the point: it is the difference between a click you
- * can make by accident and one you have to mean. The counts are listed because
- * "your account" is abstract and "412 logs" is not.
- */
+/** Typing the username is the point: it's the difference between a click you
+ *  can make by accident and one you have to mean. */
 const DeleteAccountModal = ({
     username,
     stats,

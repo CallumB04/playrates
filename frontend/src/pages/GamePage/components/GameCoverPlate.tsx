@@ -24,8 +24,8 @@ interface GameCoverPlateProps {
     isSaving: boolean;
 }
 
-/* A tinted panel with a word in it reads as a notice, not a control. These
-   get the status icon, a solid fill on hover and a pointer. */
+// A tinted panel with a word in it reads as a notice, so these get a hover
+// fill and a pointer to say they're buttons.
 const QUICK = ["backlog", "wishlist"] as const;
 
 const QUICK_TONE: Record<(typeof QUICK)[number], string> = {
@@ -35,11 +35,8 @@ const QUICK_TONE: Record<(typeof QUICK)[number], string> = {
         "border-status-wishlist/50 text-status-wishlist-content hover:bg-status-wishlist hover:border-status-wishlist hover:text-white",
 };
 
-/**
- * The cover, lifted. It is the largest piece of art on any screen, so it gets
- * the deepest shadow in the system and nothing framing it — the old version
- * sat it in a bordered well, which put a picture frame around box art.
- */
+/** The cover, lifted. The largest art on any screen, so it gets the deepest
+ *  shadow and nothing framing it. */
 const GameCoverPlate = ({
     game,
     log,
@@ -70,10 +67,9 @@ const GameCoverPlate = ({
                             size="stamp"
                             onMedia
                             animateOnChange
-                            className="absolute right-3 top-3"
+                            className="absolute top-3 right-3"
                         />
                     )}
-
                 </div>
                 <div className="mt-3 flex items-center justify-between text-label-sm text-content-muted">
                     <span className="truncate">{game.title}</span>
@@ -84,9 +80,7 @@ const GameCoverPlate = ({
             </div>
 
             {log && onViewLog ? (
-                /* Viewing leads once a log exists: it is the thing most
-                   people came back for, and editing is one press further in
-                   rather than the only option. */
+                // Viewing leads once a log exists; editing is one press in.
                 <div className="flex flex-col gap-2">
                     <Button size="lg" onClick={onPrimary} disabled={isSaving}>
                         Edit your log
@@ -118,7 +112,7 @@ const GameCoverPlate = ({
                                 onClick={() => onQuickLog(status)}
                                 disabled={isSaving}
                                 className={cn(
-                                    "lift inline-flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-sm border bg-surface-raised text-body-sm font-medium",
+                                    "inline-flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-sm border bg-surface-raised text-body-sm font-medium lift",
                                     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
                                     "hover:-translate-y-px hover:shadow-plate",
                                     "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0",

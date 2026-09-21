@@ -3,8 +3,7 @@ import { ArrowUp } from "lucide-react";
 import { SiGithub } from "@icons-pack/react-simple-icons";
 import { BRAND_MOTTO, BRAND_NAME } from "../constants/brand";
 
-/* The pages a site taking accounts has to have somewhere, and nothing else.
-   A footer that lists every route is a sitemap, which is not what this is. */
+// The pages a site taking accounts needs, and nothing else.
 const LINKS = [
     { to: "/about", label: "About" },
     { to: "/privacy", label: "Privacy" },
@@ -30,7 +29,7 @@ const Footer = () => (
                         <Link
                             key={link.to}
                             to={link.to}
-                            className="lift text-content-secondary hover:text-brand"
+                            className="text-content-secondary lift hover:text-brand"
                         >
                             {link.label}
                         </Link>
@@ -52,7 +51,7 @@ const Footer = () => (
                         href="https://github.com/CallumB04"
                         target="_blank"
                         rel="noreferrer noopener"
-                        className="lift inline-flex items-center gap-1.5 text-content-secondary hover:text-brand"
+                        className="inline-flex items-center gap-1.5 text-content-secondary lift hover:text-brand"
                     >
                         <SiGithub size={14} aria-hidden />
                         Built by Callum Burgoyne
@@ -62,7 +61,7 @@ const Footer = () => (
                         onClick={() =>
                             window.scrollTo({ top: 0, behavior: "smooth" })
                         }
-                        className="lift inline-flex cursor-pointer items-center gap-1.5 text-content-secondary hover:text-brand"
+                        className="inline-flex cursor-pointer items-center gap-1.5 text-content-secondary lift hover:text-brand"
                     >
                         <ArrowUp size={14} aria-hidden />
                         Back to top

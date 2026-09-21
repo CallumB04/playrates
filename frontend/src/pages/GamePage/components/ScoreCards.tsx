@@ -3,11 +3,7 @@ import type { Game, GameStats } from "@playrates/shared";
 import { formatHours, formatPercent } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 
-/**
- * Metacritic's own banding: green from 75, yellow from 50, red below. The
- * colours are the recognisable part of that score, so a card showing one
- * without them is just a number in a box.
- */
+/** Metacritic's own banding: green from 75, yellow from 50, red below. */
 const metacriticTone = (score: number): string => {
     if (score >= 75) return "bg-[#66cc33] text-black";
     if (score >= 50) return "bg-[#ffcc33] text-black";
@@ -55,13 +51,8 @@ const Figure = ({
 );
 
 /**
- * What this game scored, and what playing it actually costs.
- *
- * Metacritic is somebody else's number and is labelled as theirs. Everything
- * beside it is PlayRates' own: the hours people logged, the time they took to
- * finish, and how many of them cleared every achievement. Those used to be
- * RAWG's community score and RAWG's average playtime, printed in the same
- * rows as this site's figures.
+ * What this game scored, and what playing it costs. Metacritic is somebody
+ * else's number and is labelled as theirs; everything beside it is ours.
  */
 const ScoreCards = ({
     game,

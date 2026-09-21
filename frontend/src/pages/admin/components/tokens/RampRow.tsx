@@ -9,9 +9,7 @@ const RampRow = ({ ramp }: { ramp: Ramp }) => {
     return (
         <div>
             <div className="mb-2 flex items-baseline gap-3">
-                <span className="text-label-sm text-content">
-                    {ramp.name}
-                </span>
+                <span className="text-label-sm text-content">{ramp.name}</span>
                 <span className="text-xs text-content-muted">{ramp.note}</span>
             </div>
             <div className="flex gap-1">

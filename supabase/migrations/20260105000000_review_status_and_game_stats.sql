@@ -1,15 +1,12 @@
 -- Reviews carry the state they were written in, and games gain their own
 -- figures rather than borrowing RAWG's.
 --
--- A review is a judgement made at a point: "9.0" from someone who finished a
--- game reads differently from "9.0" from someone who shelved it at four hours.
--- The status and hours were already on the game_logs row the rating comes
--- from; the view just wasn't carrying them.
+-- A 9.0 from someone who finished a game reads differently from a 9.0 from
+-- someone who shelved it at four hours. Both were already on the game_logs row
+-- the rating comes from; the view just wasn't carrying them.
 --
--- game_playrates_stats is this site's answer to the figures that used to be
--- taken from RAWG. Average playtime, average time to beat and the share of
--- players who finished every achievement are all things PlayRates collects and
--- nobody else can report for this audience.
+-- game_playrates_stats replaces the RAWG figures with playtime, time to beat
+-- and achievement completion taken from this site's own logs.
 
 set search_path = pg_catalog, public;
 

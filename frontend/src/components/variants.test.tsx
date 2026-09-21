@@ -12,9 +12,9 @@ describe("LoadingSpinner sizes", () => {
     /* It is an <svg> now, so className is an SVGAnimatedString rather than a
        string — getAttribute is the only reading that works for both. */
     const sizeOf = (size: "sm" | "md" | "lg") =>
-        render(<LoadingSpinner size={size} />).container.firstElementChild!.getAttribute(
-            "class"
-        )!;
+        render(
+            <LoadingSpinner size={size} />
+        ).container.firstElementChild!.getAttribute("class")!;
 
     it("emits complete class names per size", () => {
         expect(sizeOf("sm")).toContain("size-4");

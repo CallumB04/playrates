@@ -1,11 +1,6 @@
 import { cn } from "../lib/cn";
 
-/**
- * Complete class strings, never composed from a number — Tailwind only emits
- * what it finds literally in the source.
- *
- * "sm" is deliberately not responsive.
- */
+/** Complete class strings — Tailwind only emits what it finds literally. */
 const SPINNER_SIZE = {
     sm: "size-4",
     md: "size-7 md:size-8",
@@ -20,13 +15,9 @@ interface LoadingSpinnerProps {
 }
 
 /**
- * An arc with rounded caps, drawn rather than bordered.
- *
- * The old version was a square-capped ring made from a 2px border with one
- * side coloured — a hard edge spinning against soft surfaces, and the one
- * component that belonged to no vocabulary at all. This tapers instead: the
- * stroke fades along its length so the leading end is bright and the tail
- * falls away, which reads as motion even in a still frame.
+ * An arc with rounded caps. The stroke fades along its length so the leading
+ * end is bright and the tail falls away, which reads as motion even in a
+ * still frame.
  */
 const LoadingSpinner = ({ size, className }: LoadingSpinnerProps) => (
     <svg

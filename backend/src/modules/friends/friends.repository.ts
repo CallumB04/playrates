@@ -1,8 +1,8 @@
 import type { Db } from "../../config/supabase.js";
 import type { FriendshipRow } from "../../types/database.types.js";
 
-/** One row per relationship with user_a_id sorted before user_b_id, so (a,b)
- *  and (b,a) can't both exist. Callers pass the pair in any order. */
+/** One row per relationship, user_a_id sorted before user_b_id so (a,b) and
+ *  (b,a) can't both exist. Callers pass the pair in any order. */
 export const orderPair = (x: string, y: string): [string, string] =>
   x < y ? [x, y] : [y, x];
 

@@ -5,8 +5,8 @@ import type { IconComponent } from "../../../lib/icons";
 /** null means there is no relationship between the two users yet. */
 export type Relation = FriendRelation | null;
 
-/* Presentation for the friend button, kept out of the page so the label
-   matrix (four relations, each varying by hover and breakpoint) is testable. */
+/* Kept out of the page so the label matrix — four relations, each varying by
+   hover and breakpoint — is testable. */
 export const getUserRelationIcon = (relation: Relation): IconComponent => {
     switch (relation) {
         case "friend":

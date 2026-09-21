@@ -30,12 +30,7 @@ export const PaginationSummary = ({
     const first = (page - 1) * perPage + 1;
     const last = Math.min(page * perPage, total);
     return (
-        <p
-            className={cn(
-                "text-label text-content-muted",
-                className
-            )}
-        >
+        <p className={cn("text-label text-content-muted", className)}>
             Showing {formatCount(first)}–{formatCount(last)} of{" "}
             {formatCount(total)}
         </p>
@@ -53,7 +48,10 @@ const Pagination = ({ pagination, onChange, className }: PaginationProps) => {
     };
 
     return (
-        <nav aria-label="Pagination" className={cn("flex gap-[3px]", className)}>
+        <nav
+            aria-label="Pagination"
+            className={cn("flex gap-[3px]", className)}
+        >
             <button
                 type="button"
                 onClick={go(prev)}

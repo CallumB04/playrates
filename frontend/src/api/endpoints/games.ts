@@ -21,11 +21,8 @@ export interface GameListFilters {
     limit?: number;
 }
 
-/**
- * Drops empty values before they reach the wire. An empty string fails the
- * slug patterns with a 422, which is exactly what happens the moment someone
- * re-selects "All platforms" after picking one.
- */
+/** Drops empty values: an empty slug fails validation with a 422, which is
+ *  what re-selecting "All platforms" would otherwise send. */
 export const compactParams = <T extends object>(params: T): Partial<T> =>
     Object.fromEntries(
         Object.entries(params).filter(

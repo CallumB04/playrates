@@ -17,12 +17,8 @@ const SIZES = {
 } as const;
 
 /**
- * Five variants across rest, hover, pressed and disabled.
- *
- * The gesture is a lift: on hover the control rises a hair and gathers light;
- * on press it settles back down. That reads as something physical you can
- * touch, where the old system pressed it into the page — and it still works
- * with the colour removed, because the shadow is doing the talking.
+ * Five variants across rest, hover, pressed and disabled. The gesture is a
+ * lift: hover rises and gathers light, press settles back down.
  */
 const VARIANTS = {
     primary:
@@ -59,8 +55,7 @@ const VARIANTS = {
         "disabled:bg-surface-sunken disabled:text-content-muted disabled:border-subtle disabled:shadow-none " +
         "aria-disabled:bg-surface-sunken aria-disabled:text-content-muted aria-disabled:border-subtle aria-disabled:shadow-none",
 
-    /** Shape, weight and the lift only, for controls that pick their own
-     *  colours from state — the friend-request actions, for instance. */
+    /** Shape and lift only, for controls that colour themselves from state. */
     bare: "border font-medium",
 } as const;
 

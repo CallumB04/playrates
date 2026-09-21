@@ -14,8 +14,7 @@ const ADMIN_VIEWS = [
 /**
  * Shell for the admin area.
  *
- * TODO: no access control. There's no role system yet and this reads no user
- * data, but it needs gating before the app goes public.
+ * TODO: no access control. Needs gating before the app goes public.
  */
 const AdminLayout = () => (
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6 font-display lg:flex-row">

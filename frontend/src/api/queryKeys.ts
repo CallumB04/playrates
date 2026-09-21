@@ -1,5 +1,5 @@
-/** Every cache key in one place. Two components asking for the same data must
- *  use the same key or React Query caches it twice. */
+/** Every cache key in one place — two components asking for the same data
+ *  must use the same key, or it gets cached twice. */
 export const queryKeys = {
     stats: ["stats"] as const,
     platforms: ["platforms"] as const,
@@ -22,8 +22,7 @@ export const queryKeys = {
     },
 
     gameLogs: {
-        /* Page is part of the key: without it, two pages of the same status
-           collide in the cache and the second silently shows the first. */
+        // Page is part of the key, or two pages collide in the cache.
         mine: (status?: string, page?: number) =>
             ["gamelogs", "me", status ?? "all", page ?? 1] as const,
         mineIds: ["gamelogs", "me", "ids"] as const,

@@ -2,11 +2,8 @@ import type { ReactNode } from "react";
 import { cn } from "../../lib/cn";
 
 /**
- * A card with a header strip.
- *
- * The plain `Card` is a surface with padding; this is the one that carries a
- * title, so a list has something to sit under. `accent` is for a panel that
- * wants something from you rather than just reporting.
+ * A card with a header strip. `Card` is the plain surface; this is the one
+ * that carries a title. `accent` is for a panel that wants something from you.
  */
 interface PanelProps {
     title: ReactNode;

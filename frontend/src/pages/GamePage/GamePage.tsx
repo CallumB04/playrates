@@ -107,9 +107,7 @@ const GamePage = () => {
                         log={log}
                         isSignedIn={!!user}
                         facts={facts}
-                        onViewLog={
-                            fullLog ? () => setViewing(true) : undefined
-                        }
+                        onViewLog={fullLog ? () => setViewing(true) : undefined}
                         onPrimary={() =>
                             user ? setEditing(true) : openLogin()
                         }
@@ -149,14 +147,11 @@ const GamePage = () => {
                         </>
                     )}
 
-
                     <GameReviews
                         reviews={reviews?.data ?? []}
                         hasLog={!!log}
                         onWriteReview={
-                            user
-                                ? () => setEditing(true)
-                                : () => openLogin()
+                            user ? () => setEditing(true) : () => openLogin()
                         }
                         canVote={!!user}
                         onVote={(reviewId) => vote.mutate(reviewId)}

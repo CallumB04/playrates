@@ -26,13 +26,9 @@ const validate = (value: string): string | null => {
 };
 
 /**
- * The username field, checked as you type and saved on its own.
- *
- * A rename is not a preference: it changes the URL of your profile and every
- * link anyone has to it, and it can fail because somebody else got there
- * first. Gathering it into a page-wide Save with the bio meant finding out
- * after the fact, so this one commits by itself and says whether the name is
- * free before you press anything.
+ * The username field, checked as you type and saved on its own. A rename
+ * changes your profile URL and can fail because someone else got there first,
+ * so it says whether the name is free before you press anything.
  */
 const UsernameRow = ({ current }: { current: string }) => {
     const notify = useNotify();
@@ -90,15 +86,13 @@ const UsernameRow = ({ current }: { current: string }) => {
         checking: "Checking…",
         free: `${value.trim()} is free.`,
         taken: `${value.trim()} is taken.`,
-        invalid:
-            availability.state === "invalid" ? availability.reason : "",
+        invalid: availability.state === "invalid" ? availability.reason : "",
     };
 
     const tone =
         availability.state === "free"
             ? "text-success"
-            : availability.state === "taken" ||
-                availability.state === "invalid"
+            : availability.state === "taken" || availability.state === "invalid"
               ? "text-danger"
               : "text-content-muted";
 
@@ -116,7 +110,7 @@ const UsernameRow = ({ current }: { current: string }) => {
                         }
                         className="pr-9"
                     />
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                    <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2">
                         {availability.state === "checking" && (
                             <LoaderCircle
                                 size={15}
@@ -133,11 +127,7 @@ const UsernameRow = ({ current }: { current: string }) => {
                         )}
                         {(availability.state === "taken" ||
                             availability.state === "invalid") && (
-                            <X
-                                size={15}
-                                aria-hidden
-                                className="text-danger"
-                            />
+                            <X size={15} aria-hidden className="text-danger" />
                         )}
                     </span>
                 </div>

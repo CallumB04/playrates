@@ -36,7 +36,7 @@ const PasswordField = ({
                     title={visible ? "Hide password" : "Show password"}
                     aria-label={visible ? "Hide password" : "Show password"}
                     aria-pressed={visible}
-                    className="lift absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer rounded-sm p-1 text-content-muted hover:text-content"
+                    className="absolute top-1/2 right-2.5 -translate-y-1/2 cursor-pointer rounded-sm p-1 text-content-muted lift hover:text-content"
                 >
                     {visible ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>

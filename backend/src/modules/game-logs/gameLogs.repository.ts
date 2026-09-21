@@ -111,10 +111,9 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
     return count ?? 0;
   },
 
-  /* Four narrow columns rather than the paginated list. The callers only ever
-     ask "have I logged this, and how", and a paginated answer is the wrong
-     shape for that — anyone past the first page saw their own games as
-     unlogged. Small enough to send whole even at several thousand logs. */
+  /* Four narrow columns rather than the paginated list. Callers only ask "have
+     I logged this, and how", which a page can't answer. Small enough to send
+     whole even at several thousand logs. */
   async summariesByUser(userId) {
     const { data, error } = await db
       .from("game_logs")
@@ -168,7 +167,9 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
       byStatus,
       hoursPlayed: Math.round(hoursPlayed * 10) / 10,
       averageRating:
-        ratingCount === 0 ? null : Math.round((ratingSum / ratingCount) * 100) / 100,
+        ratingCount === 0
+          ? null
+          : Math.round((ratingSum / ratingCount) * 100) / 100,
       ratingCount,
     };
   },

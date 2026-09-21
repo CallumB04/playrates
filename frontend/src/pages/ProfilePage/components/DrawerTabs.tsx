@@ -18,7 +18,12 @@ interface DrawerTabsProps {
 /* The active segment gets the rim but no cast shadow. In a 4px gutter the
    shadow darkens the space below the pill, which makes the gap above look
    bigger than the one below even though they're equal. */
-const DrawerTabs = ({ active, counts, onSelect, trailing }: DrawerTabsProps) => (
+const DrawerTabs = ({
+    active,
+    counts,
+    onSelect,
+    trailing,
+}: DrawerTabsProps) => (
     <div className="flex flex-wrap items-center justify-between gap-3">
         <div
             role="tablist"
@@ -26,8 +31,11 @@ const DrawerTabs = ({ active, counts, onSelect, trailing }: DrawerTabsProps) => 
             className="inline-flex max-w-full gap-1 overflow-x-auto rounded-md border border-subtle bg-surface-sunken p-1"
         >
             {GAME_STATUSES.map((status) => {
-                const { label, icon: Icon, markTone } =
-                    STATUS_PRESENTATION[status];
+                const {
+                    label,
+                    icon: Icon,
+                    markTone,
+                } = STATUS_PRESENTATION[status];
                 const isActive = status === active;
 
                 return (
@@ -37,7 +45,7 @@ const DrawerTabs = ({ active, counts, onSelect, trailing }: DrawerTabsProps) => 
                         aria-selected={isActive}
                         onClick={() => onSelect(status)}
                         className={cn(
-                            "lift flex shrink-0 cursor-pointer items-center gap-2 rounded-sm px-3.5 py-2 text-body-sm",
+                            "flex shrink-0 cursor-pointer items-center gap-2 rounded-sm px-3.5 py-2 text-body-sm lift",
                             "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                             isActive
                                 ? "bg-surface-raised font-medium text-content inset-shadow-deep"

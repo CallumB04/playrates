@@ -19,13 +19,8 @@ interface RatingMeterProps {
 }
 
 /**
- * Twenty segments, one per allowed rating.
- *
- * Stars were the obvious move and the wrong one: a half star has to be drawn
- * by clipping a glyph down the middle, which reads as a rendering fault rather
- * than as a half, and ten of them at a usable size take a whole row. A segment
- * either fills or it doesn't, so a half point is a clean unit rather than half
- * an icon, and the same shape shrinks to a legend beside a review.
+ * Twenty segments, one per allowed rating. A segment either fills or it
+ * doesn't, so a half point is a clean unit rather than half a star.
  */
 const RatingMeter = ({
     value,

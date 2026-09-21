@@ -4,8 +4,7 @@
  *   npm run seed:games -w backend
  *   npm run seed:games -w backend -- "hollow knight" "celeste"
  *
- * Goes through the same provider and repository the API uses. Safe to re-run —
- * games upsert on rawg_id.
+ * Safe to re-run: games upsert on rawg_id.
  */
 // side-effect import: must come first so .env is loaded before env() runs
 import "../src/config/loadEnv.js";

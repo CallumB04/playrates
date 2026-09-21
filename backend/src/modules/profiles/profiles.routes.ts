@@ -28,8 +28,8 @@ export const createProfilesRouter = ({
 }: Deps): Router => {
   const router = Router();
 
-  // NOTE: the literal "/me" and "/check-username" routes must be declared
-  // before "/:username", or they would be captured as usernames.
+  // "/me" and "/check-username" must come before "/:username", or they parse
+  // as usernames.
 
   router.get("/me", requireAuth, async (req, res) => {
     res.json(await service.getById(callerId(req)));

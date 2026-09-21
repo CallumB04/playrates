@@ -39,11 +39,8 @@ export const useUserGameLogs = (
         placeholderData: keepPreviousData,
     });
 
-/**
- * Every game the caller has logged, as a lookup. Unpaginated on purpose — a
- * tile asking "have I logged this?" needs a complete answer, and the paged
- * list gave a wrong one past the first page.
- */
+/** Every game the caller has logged, as a lookup. Unpaginated: a tile asking
+ *  "have I logged this?" needs a complete answer. */
 export const useMyGameLogIds = () => {
     const { user } = useAuth();
     return useQuery({
@@ -61,10 +58,8 @@ export const useUserStats = (username: string, year?: number) =>
         enabled: !!username,
     });
 
-/**
- * Writes invalidate every query a log affects — the lists, the game's stats
- * and the site totals — so no caller has to know what else went stale.
- */
+/** Writes invalidate the lists, the game's stats and the site totals, so no
+ *  caller has to know what else went stale. */
 export const useGameLogMutations = () => {
     const queryClient = useQueryClient();
 

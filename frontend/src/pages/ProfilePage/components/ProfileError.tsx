@@ -2,7 +2,7 @@ import { buttonClass } from "../../../components/ui/Button";
 import { Link } from "react-router-dom";
 import { useUser } from "../../../contexts/AuthContext";
 
-// Displayed if no target user in URL or failed to fetch user from API
+// No username in the URL, or the profile fetch failed.
 const ProfileError = () => {
     const user = useUser();
 

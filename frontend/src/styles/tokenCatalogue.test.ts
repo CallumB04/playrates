@@ -31,8 +31,10 @@ describe("token catalogue", () => {
     it("only names ramp steps that theme.css declares", () => {
         for (const ramp of RAMPS) {
             for (const step of ramp.steps) {
-                expect(declares(step.cssVar), `${ramp.name} ${step.cssVar}`)
-                    .toBe(true);
+                expect(
+                    declares(step.cssVar),
+                    `${ramp.name} ${step.cssVar}`
+                ).toBe(true);
             }
         }
     });
@@ -40,8 +42,10 @@ describe("token catalogue", () => {
     it("only names semantic tokens that theme.css declares", () => {
         for (const group of SEMANTIC_GROUPS) {
             for (const token of group.tokens) {
-                expect(declares(token.cssVar), `${group.title} ${token.cssVar}`)
-                    .toBe(true);
+                expect(
+                    declares(token.cssVar),
+                    `${group.title} ${token.cssVar}`
+                ).toBe(true);
             }
         }
     });
@@ -78,7 +82,9 @@ describe("token catalogue", () => {
     });
 
     it("has no duplicate token names across groups", () => {
-        const names = SEMANTIC_GROUPS.flatMap((g) => g.tokens.map((t) => t.name));
+        const names = SEMANTIC_GROUPS.flatMap((g) =>
+            g.tokens.map((t) => t.name)
+        );
         expect(new Set(names).size).toBe(names.length);
     });
 });

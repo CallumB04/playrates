@@ -3,9 +3,7 @@ import Skeleton, {
     TextSkeleton,
     TileSkeleton,
 } from "../../../../../components/ui/Skeleton";
-import EmptyPlate, {
-    GhostTile,
-} from "../../../../../components/ui/EmptyPlate";
+import EmptyPlate, { GhostTile } from "../../../../../components/ui/EmptyPlate";
 import LoadingSpinner from "../../../../../components/LoadingSpinner";
 import Button from "../../../../../components/ui/Button";
 import Specimen from "../../../components/Specimen";
@@ -44,7 +42,7 @@ const FeedbackSpecimens = () => (
                 <div
                     key={toast.title}
                     className={cn(
-                        "flex w-full max-w-md items-center gap-3 border border-strong border-l-[3px] bg-surface-raised px-3.5 py-3 shadow-toast",
+                        "flex w-full max-w-md items-center gap-3 border border-l-[3px] border-strong bg-surface-raised px-3.5 py-3 shadow-toast",
                         toast.tone
                     )}
                 >

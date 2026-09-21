@@ -14,11 +14,7 @@ export interface TileAction {
     onSelect: () => void;
     /** The first action is the loud one; the rest are outlines. */
     tone?: "primary" | "secondary" | "danger";
-    /**
-     * Renders as a square icon button beside its siblings rather than a full
-     * -width row. Backlog and wishlist are one tap each and do not need a
-     * word between them and the cover.
-     */
+    /** Renders as a square icon button rather than a full-width row. */
     icon?: ComponentType<SVGProps<SVGSVGElement> & { size?: number | string }>;
 }
 
@@ -49,22 +45,7 @@ const ACTION_TONE = {
     danger: "bg-danger text-content-on-solid border-danger hover:brightness-110 active:brightness-95",
 } as const;
 
-/**
- * The shelf tile. Box art is the only saturated thing on the page, so the tile
- * is the art plus one line underneath, with the actions over it.
- *
- * The title stays put. It used to fade out on hover and get redrawn inside the
- * action overlay, which meant that on any tile without actions — every tile on
- * the home rails — hovering simply deleted the name of the game.
- */
-/**
- * Optimistic state for the one-tap actions.
- *
- * The write takes a few hundred milliseconds, and an icon that looks
- * unchanged for that long invites a second press — which is a second log, or
- * at best a wasted request. The button fills and locks the moment it is
- * pressed, so the feedback is immediate and the second press cannot land.
- */
+/** The shelf tile: box art, one line underneath, actions over it on hover. */
 const GameTile = ({
     gameId,
     title,
@@ -85,9 +66,6 @@ const GameTile = ({
         <div className="group/tile">
             <Link
                 to={`/game/${gameId}`}
-                /* The cover stays put. Lifting the art while the buttons were
-                   also sliding in gave the tile two movements at once, which
-                   read as the whole thing jumping. */
                 className="relative block aspect-3/4 overflow-hidden rounded-md bg-surface-media shadow-cover transition-shadow duration-500 ease-[var(--ease-glide)] group-hover/tile:shadow-cover-hover"
             >
                 <GameCover
@@ -115,10 +93,8 @@ const GameTile = ({
 
                 <span className="absolute inset-x-0 bottom-0 bg-linear-to-t from-overlay-tile via-overlay-tile/80 to-transparent p-2.5 pt-12">
                     {actions.length > 0 && (
-                        /* Rows going 0fr to 1fr animates an auto height, so
-                           the actions make room rather than popping. The
-                           inner block fades and rises a few pixels on top of
-                           that, which is the part read as motion. */
+                        /* 0fr to 1fr animates an auto height, so the actions
+                           make room rather than popping in. */
                         <span className="mb-0 grid grid-rows-[0fr] transition-[grid-template-rows,margin] duration-500 ease-[var(--ease-glide)] group-focus-within/tile:mb-2 group-focus-within/tile:grid-rows-[1fr] group-hover/tile:mb-2 group-hover/tile:grid-rows-[1fr]">
                             <span className="flex min-h-0 translate-y-1.5 flex-col gap-1.5 overflow-hidden opacity-0 transition-[opacity,transform] duration-500 ease-[var(--ease-glide)] group-focus-within/tile:translate-y-0 group-focus-within/tile:opacity-100 group-hover/tile:translate-y-0 group-hover/tile:opacity-100">
                                 {rows.map((action) => (
@@ -165,7 +141,7 @@ const GameTile = ({
                                                         action.onSelect();
                                                     }}
                                                     className={cn(
-                                                        "lift grid flex-1 place-items-center rounded-sm border py-1.5 transition-colors duration-200",
+                                                        "grid flex-1 place-items-center rounded-sm border py-1.5 transition-colors duration-200 lift",
                                                         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-on-media",
                                                         pressed.has(action.key)
                                                             ? "cursor-default border-brand bg-brand text-content-on-solid"
@@ -214,7 +190,7 @@ const GameTile = ({
                     />
                     <span className="leader" aria-hidden="true" />
                     {rating === undefined ? (
-                        <span className="shrink-0 whitespace-nowrap font-mono text-figure-sm text-content-muted">
+                        <span className="shrink-0 font-mono text-figure-sm whitespace-nowrap text-content-muted">
                             {footValue ?? ""}
                         </span>
                     ) : (

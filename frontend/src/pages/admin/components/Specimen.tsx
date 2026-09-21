@@ -44,9 +44,7 @@ const Specimen = ({
             {children}
         </div>
 
-        {meta && (
-            <p className="font-mono text-xs text-content-muted">{meta}</p>
-        )}
+        {meta && <p className="font-mono text-xs text-content-muted">{meta}</p>}
     </section>
 );
 

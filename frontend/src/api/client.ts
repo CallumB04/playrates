@@ -3,8 +3,7 @@ import type { ApiErrorBody } from "@playrates/shared";
 import { env } from "../lib/env";
 import { supabase } from "../lib/supabase";
 
-/** Carries the status and code through from the API, so a caller can tell
- *  "does not exist" from "backend is down". */
+/** Carries the API's status and code, so callers can tell 404 from 500. */
 export class ApiError extends Error {
     readonly status?: number;
     readonly code?: string;

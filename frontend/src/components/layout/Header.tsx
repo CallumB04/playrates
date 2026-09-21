@@ -9,13 +9,8 @@ import GlobalSearch from "./GlobalSearch";
 import MobileMenu, { type NavItem } from "./MobileMenu";
 import { cn } from "../../lib/cn";
 
-/**
- * Whether a nav link points at where we already are.
- *
- * `NavLink` can't do this one: the Backlog link carries `?type=backlog`, and
- * NavLink matches on pathname only — so it lit up on every profile page,
- * including other people's.
- */
+/** Whether a nav link points at where we already are. NavLink matches on
+ *  pathname only, and some links carry a query string that matters. */
 const isCurrent = (
     to: string,
     exact: boolean,
@@ -35,10 +30,7 @@ const isCurrent = (
     return [...wanted].every(([key, value]) => actual.get(key) === value);
 };
 
-/**
- * Static, not fixed. The page scrolls away from the masthead rather than
- * sliding under a bar.
- */
+/** Static, not fixed — the page scrolls away from the masthead. */
 const Header = () => {
     const { user, signOut } = useAuth();
     const { openLogin, openSignup } = useAccountForm();
@@ -51,9 +43,8 @@ const Header = () => {
         setMenuOpen(false);
     }, [location.pathname, location.search]);
 
-    /* The menu and the button that opens it are both below `lg`. Crossing
-       that line with the menu open would hide it while its scroll lock stayed
-       on, leaving a page that can't scroll and no way to unlock it. */
+    /* Close on the way up past `lg`: the menu hides there, and its scroll lock
+       would stay on with nothing left to turn it off. */
     useEffect(() => {
         if (!menuOpen) return;
         const wide = window.matchMedia("(min-width: 1024px)");
@@ -98,7 +89,7 @@ const Header = () => {
                             type="button"
                             onClick={() => setMenuOpen(true)}
                             aria-label="Open menu"
-                            className="lift -ml-2 rounded-sm p-2 text-content hover:text-brand lg:hidden"
+                            className="-ml-2 rounded-sm p-2 text-content lift hover:text-brand lg:hidden"
                         >
                             <Menu size={22} />
                         </button>
@@ -119,7 +110,7 @@ const Header = () => {
                                         link.active ? "page" : undefined
                                     }
                                     className={cn(
-                                        "lift border-b-2 pb-1 text-label transition-colors",
+                                        "border-b-2 pb-1 text-label transition-colors lift",
                                         link.active
                                             ? "border-b-brand text-content"
                                             : "border-b-transparent text-content-secondary hover:text-content"

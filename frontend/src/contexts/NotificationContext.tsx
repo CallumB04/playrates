@@ -33,8 +33,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         null
     );
 
-    /* The id doubles as the toast's React key, so a second notification
-       remounts the element and restarts the animation from the top. */
+    // The id is the React key, so a new toast restarts the animation.
     const notify = useCallback((text: string, type: NotificationType) => {
         setNotification({ id: Date.now(), text, type });
     }, []);

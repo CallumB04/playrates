@@ -34,10 +34,8 @@ export interface GameStats {
   ratingCount: number;
   /** Twenty buckets of 0.5, so the rating plate shows a shape, not just a mean. */
   ratingBuckets: number[];
-  /**
-   * This site's own figures, as distinct from RAWG's. Null where nobody has
-   * recorded the thing yet, rather than zero, which would read as a finding.
-   */
+  /** This site's own figures. Null where nobody has recorded one yet — zero
+   *  would read as a finding. */
   avgHoursPlayed: number | null;
   avgHoursToBeat: number | null;
   /** Mean achievement completion across logs that recorded any, 0 to 1. */
@@ -49,13 +47,8 @@ const IsoDateSchema = z
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected a YYYY-MM-DD date");
 
 /**
- * How the library is ordered.
- *
- * PlayRates figures only. RAWG's tracker count is still used, but as the
- * hidden tiebreaker underneath "logged" rather than as a sort of its own:
- * almost nothing has been logged here yet, so without it the default order
- * would be a hundred thousand rows of zero sorted by id. Offering it as a
- * visible option made somebody else's numbers look like ours.
+ * How the library is ordered. PlayRates figures only — RAWG's tracker count
+ * is the hidden tiebreaker under "logged", not a sort of its own.
  */
 export const GAME_SORTS = [
   "logged",
@@ -67,10 +60,8 @@ export const GAME_SORTS = [
 export const GameSortSchema = z.enum(GAME_SORTS).default("logged");
 export type GameSort = z.infer<typeof GameSortSchema>;
 
-/**
- * Library filters. These run in SQL rather than in the browser so the page
- * never has to hold the whole catalogue in memory.
- */
+/** Library filters. They run in SQL, so the page never holds the whole
+ *  catalogue in memory. */
 export const GameQuerySchema = PaginationSchema.extend({
   search: z.string().trim().max(200).optional(),
   platform: z

@@ -38,12 +38,7 @@ export type DisplayStatus = GameStatus | PlayedStatus;
 export interface StatusPresentation {
     /** Always rendered as real text. Hue is never the only channel. */
     label: string;
-    /**
-     * The non-colour channel. These were abstract shapes — a square, a
-     * diamond — which told you a state existed without telling you which. An
-     * icon that means the thing carries the same accessibility job and
-     * actually reads.
-     */
+    /** The non-colour channel. No two statuses share one. */
     icon: LucideIcon;
     /** One line on what the state means, for pickers that have room. */
     hint: string;
@@ -53,19 +48,13 @@ export interface StatusPresentation {
     markTone: string;
     /** The solid hue, for bars, tab edges and dots. */
     accent: string;
-    /**
-     * Border and text over box art. The chip hues are tuned for a page
-     * surface and wash out on a photograph, so this is the light end of each
-     * ramp against a blurred scrim.
-     */
+    /** Border and text over box art. The chip hues wash out on a photograph,
+     *  so this is the light end of each ramp against a scrim. */
     onMediaTone: string;
 }
 
-/**
- * Eight states, each with its own hue, icon and word, so no single channel is
- * ever carrying a distinction alone. The played substatuses used to share the
- * brand or a grey, which left the icon doing that job by itself.
- */
+/** Eight states, each with its own hue, icon and word, so no single channel
+ *  ever carries a distinction alone. */
 export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     played: {
         label: "Played",
@@ -144,10 +133,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
 export const isDisplayStatus = (value: string): value is DisplayStatus =>
     value in STATUS_PRESENTATION;
 
-/**
- * The status to show for a log: the substatus is more specific than "played",
- * and only exists when the log is played at all.
- */
+/** The status to show for a log — the substatus wins where there is one. */
 export const displayStatusFor = (
     status: GameStatus,
     playedStatus: PlayedStatus | null | undefined

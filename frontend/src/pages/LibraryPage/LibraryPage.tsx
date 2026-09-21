@@ -17,9 +17,7 @@ import { useWindowSize } from "../../hooks/useWindowSize";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { usePagination } from "../../hooks/usePagination";
 import GameTile, { type TileAction } from "../../components/game/GameTile";
-import Pagination, {
-    PaginationSummary,
-} from "../../components/ui/Pagination";
+import Pagination, { PaginationSummary } from "../../components/ui/Pagination";
 import { TileSkeleton } from "../../components/ui/Skeleton";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import ViewGameLogPopup from "../../components/ViewGameLogPopup";
@@ -69,7 +67,11 @@ const LibraryPage = () => {
 
     const perPage = getLibraryGamesPerPage(width);
 
-    const { data: page, isLoading, isPlaceholderData } = useGames({
+    const {
+        data: page,
+        isLoading,
+        isPlaceholderData,
+    } = useGames({
         page: query.page,
         limit: perPage,
         search: query.search || undefined,
@@ -94,14 +96,12 @@ const LibraryPage = () => {
         [myLogIds]
     );
 
-    /* The full log is only needed once a modal opens, so it is fetched
-       lazily rather than alongside the grid. */
+    // The full log is only needed once a modal opens.
     const { data: myLogs } = useMyGameLogs(undefined, { limit: 100 });
     const fullLog = (gameId: number) =>
         (myLogs?.data ?? []).find((log) => log.gameId === gameId);
 
-    /* One tap, no popup: backlog and wishlist are a single field each, so
-       opening the log editor to set them would be three steps for one. */
+    // One tap, no popup: backlog and wishlist are a single field each.
     const quickAdd = async (
         gameId: number,
         title: string,
@@ -181,7 +181,8 @@ const LibraryPage = () => {
         return parts.join(" · ");
     };
 
-    const showSkeletons = isLoading || (isPlaceholderData && games.length === 0);
+    const showSkeletons =
+        isLoading || (isPlaceholderData && games.length === 0);
 
     return (
         <section className="flex flex-col gap-6">
@@ -236,8 +237,7 @@ const LibraryPage = () => {
                                 coverUrl={game.coverUrl}
                                 platformSlugs={game.platforms}
                                 platforms={platforms ?? []}
-                                /* Only show the brand figure when there is a
-                                   real rating behind it; otherwise the year. */
+                                // Brand figure only with a real rating behind it.
                                 rating={log ? log.rating : undefined}
                                 footValue={releaseYear(game.releaseDate)}
                                 status={
@@ -268,8 +268,7 @@ const LibraryPage = () => {
                 <ViewGameLogPopup
                     gamelog={modal.log}
                     closePopup={() => setModal(null)}
-                    /* This modal only opens from the "View your log" tile
-                       action, which only exists for the viewer's own logs. */
+                    // Only reachable from "View your log", so it's always yours.
                     primaryAction={{
                         label: "Edit",
                         onSelect: () =>
@@ -283,9 +282,7 @@ const LibraryPage = () => {
                     closePopup={() => setModal(null)}
                     viewUpdatedLog={() => setModal(null)}
                     gamelog={modal.kind === "edit" ? modal.log : null}
-                    gameID={
-                        modal.kind === "create" ? modal.gameId : undefined
-                    }
+                    gameID={modal.kind === "create" ? modal.gameId : undefined}
                     editing={modal.kind === "edit"}
                 />
             )}

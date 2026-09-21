@@ -24,13 +24,7 @@ interface MemberFileHeaderProps {
     action: ReactNode;
 }
 
-/**
- * The split of a shelf across the four states, as one bar.
- *
- * Four counts in a row tell you the numbers; they do not tell you the shape
- * of somebody's habits. One stacked bar does both, so whether a person
- * finishes things or hoards them is legible before you read a figure.
- */
+/** The split of a shelf across the four states, as one stacked bar. */
 const ShelfBar = ({
     byStatus,
     total,
@@ -91,13 +85,7 @@ const Figure = ({ label, value }: { label: string; value: string }) => (
     </div>
 );
 
-/**
- * The profile header.
- *
- * The four figures used to be a row of ledger lines under a hairline, which
- * is the same furniture whether a shelf holds three games or four hundred.
- * The bar is the part that says something about the person.
- */
+/** The profile header: four figures and the shelf bar. */
 const MemberFileHeader = ({
     profile,
     stats,

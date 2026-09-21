@@ -12,7 +12,6 @@ const RemoveFriendPopup: React.FC<RemoveFriendPopupProps> = ({
     confirmRemove,
     friendName,
 }) => {
-    // confirm friend removal and close popup
     const handleConfirm = () => {
         confirmRemove();
         closePopup();

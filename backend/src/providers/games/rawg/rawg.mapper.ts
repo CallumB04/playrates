@@ -1,7 +1,7 @@
 import type { ExternalGame } from "../GamesProvider.js";
 
-/** RAWG parent platform ids to our slugs. PC is handled separately — RAWG
- *  models storefronts as `stores`, so Steam is decided by STEAM_STORE_ID. */
+/** RAWG parent platform ids to our slugs. PC is handled separately: RAWG
+ *  models storefronts as `stores`, so Steam comes from STEAM_STORE_ID. */
 const PARENT_PLATFORM_SLUGS: Record<number, string> = {
   2: "playstation",
   3: "xbox",
@@ -14,12 +14,8 @@ const PC_PARENT_PLATFORM_ID = 1;
 const STEAM_STORE_ID = 1;
 
 /**
- * Sexual content, named directly.
- *
- * This used to also include "mature", which is the 17+ rating carried by most
- * large releases, so the flag was really marking violence and hid Kingdom Come
- * and The Witcher along with anything actually explicit. Adults Only is almost
- * exclusively sexual, and RAWG's tags say the rest out loud.
+ * Sexual content, named directly. Deliberately excludes the "mature" ESRB
+ * rating, which most large releases carry and which marks violence.
  */
 const SEXUAL_ESRB_SLUGS = new Set(["adults-only"]);
 
@@ -62,9 +58,8 @@ const stripHtml = (value: string): string =>
     .trim();
 
 /**
- * PC becomes "steam" when sold on Steam and "other-pc" otherwise, so the badge
- * says something more useful than "PC". "pc-game-pass" is never inferred —
- * it's a subscription, not a store, and stays the user's own choice.
+ * PC becomes "steam" when it's sold on Steam and "other-pc" otherwise.
+ * "pc-game-pass" is never inferred — it's a subscription, not a store.
  */
 const toPlatformSlugs = (game: RawgGame): string[] => {
   const slugs = new Set<string>();

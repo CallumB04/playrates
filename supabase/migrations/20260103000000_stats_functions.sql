@@ -1,14 +1,8 @@
 -- Game stats aggregated in SQL rather than in the API process.
 --
--- Both of these used to select every matching game_logs row and reduce them in
--- JavaScript. PostgREST caps a response at 1000 rows (config.toml max_rows), so
--- the moment a game passed a thousand logs the numbers were quietly wrong —
--- same failure the library filter already hit when it collected ids and passed
--- them to .in().
---
--- These are plain aggregates over indexed columns, so the whole table never
--- leaves Postgres. They return a single row, which also keeps them clear of
--- max_rows (it applies to set-returning functions too).
+-- Reducing in JS meant selecting every matching game_logs row, and PostgREST
+-- caps a response at 1000, so any game past a thousand logs reported wrong
+-- numbers. These aggregate over indexed columns and return a single row.
 
 -- Average, count and the 20 half-point buckets the distribution plate draws.
 create or replace function public.game_rating_summary(p_game_id bigint)

@@ -9,16 +9,9 @@ interface EmptyPlateProps {
     className?: string;
 }
 
-/**
- * A dashed slot with a sentence in it. There is no eyebrow: "Nothing here yet"
- * sitting above "No friends yet" said the same thing twice in a smaller font.
- */
-const EmptyPlate = ({
-    title,
-    body,
-    action,
-    className,
-}: EmptyPlateProps) => (
+/** A dashed slot with one sentence in it. No eyebrow — it would repeat the
+ *  sentence in a smaller font. */
+const EmptyPlate = ({ title, body, action, className }: EmptyPlateProps) => (
     <div
         className={cn(
             "flex flex-col items-center gap-3 rounded-lg border border-dashed border-strong bg-surface-sunken/60 px-6 py-12 text-center",

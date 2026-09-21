@@ -18,12 +18,9 @@ const MONTHS = [
 ] as const;
 
 /**
- * Twelve bars, one per month of this year.
- *
- * Built from the logs already on the page rather than from a new aggregate:
- * the figure that matters is the shape of a year, and a shape does not need
- * to be exact to the row. A month with nothing in it still gets a bar so the
- * gaps read as gaps rather than as the chart ending early.
+ * Twelve bars, one per month. Built from the logs already on the page — the
+ * shape of a year doesn't need to be exact to the row. Empty months still get
+ * a bar, so a gap reads as a gap rather than the chart ending early.
  */
 const YearChart = ({ logs }: { logs: GameLogWithGame[] }) => {
     const { counts, peak, total } = useMemo(() => {
@@ -31,8 +28,7 @@ const YearChart = ({ logs }: { logs: GameLogWithGame[] }) => {
         const counts = new Array<number>(12).fill(0);
 
         for (const log of logs) {
-            // finishDate is the honest date for "when did this happen";
-            // updatedAt is when the row was last touched, which is not it.
+            // finishDate, not updatedAt — the latter is just the last edit.
             const when = log.finishDate ?? log.startDate;
             if (!when) continue;
             const date = new Date(when);
@@ -56,12 +52,24 @@ const YearChart = ({ logs }: { logs: GameLogWithGame[] }) => {
                     <div
                         key={i}
                         /* h-full and justify-end: a percentage height needs a
-                           parent with a height to resolve against, and
-                           items-end on the row leaves each column at content
-                           size, which is zero. */
+                           parent with a height, and items-end on the row
+                           leaves each column at content size, which is 0. */
                         className="group/bar flex h-full flex-1 flex-col justify-end"
                         title={`${count} in ${
-                            ["January","February","March","April","May","June","July","August","September","October","November","December"][i]
+                            [
+                                "January",
+                                "February",
+                                "March",
+                                "April",
+                                "May",
+                                "June",
+                                "July",
+                                "August",
+                                "September",
+                                "October",
+                                "November",
+                                "December",
+                            ][i]
                         }`}
                     >
                         <span
@@ -72,10 +80,7 @@ const YearChart = ({ logs }: { logs: GameLogWithGame[] }) => {
                                     : "bg-surface-sunken"
                             )}
                             style={{
-                                height: `${Math.max(
-                                    4,
-                                    (count / peak) * 100
-                                )}%`,
+                                height: `${Math.max(4, (count / peak) * 100)}%`,
                             }}
                         />
                     </div>

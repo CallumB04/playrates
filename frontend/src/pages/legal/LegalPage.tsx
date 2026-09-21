@@ -8,12 +8,9 @@ interface LegalPageProps {
 }
 
 /**
- * A stub with an honest sign on it.
- *
- * These exist because a site that takes accounts needs somewhere for its
- * terms and its privacy policy to live, and the footer should not link into
- * nothing. The copy is deliberately not a draft policy: an invented one that
- * looks finished is worse than a page that says it is not written yet.
+ * A stub with an honest sign on it. A site taking accounts needs somewhere for
+ * its terms to live; an invented policy that looks finished is worse than a
+ * page saying it isn't written yet.
  */
 const LegalPage = ({ title, summary }: LegalPageProps) => (
     <article className="mx-auto flex w-full max-w-[60ch] flex-col gap-5 py-6">
@@ -24,8 +21,8 @@ const LegalPage = ({ title, summary }: LegalPageProps) => (
 
         <div className="rounded-lg border border-dashed border-strong bg-surface-sunken/60 px-5 py-6">
             <p className="text-body-sm text-content-secondary">
-                This page has not been written yet. PlayRates is not open to
-                the public, so there is nothing here that anyone is relying on.
+                This page has not been written yet. PlayRates is not open to the
+                public, so there is nothing here that anyone is relying on.
             </p>
             <p className="mt-3 text-body-sm text-content-secondary">
                 If you need to reach someone in the meantime, the account that

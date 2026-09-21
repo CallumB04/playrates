@@ -10,10 +10,8 @@ const BASE_URL = "https://api.rawg.io/api";
 const TIMEOUT_MS = 8_000;
 const MAX_ATTEMPTS = 3;
 
-/**
- * Minimum gap between outbound calls. RAWG's free tier is generous on volume
- * but unhappy about bursts, and search is the only path that can reach it.
- */
+/** Minimum gap between outbound calls. RAWG's free tier is fine on volume but
+ *  unhappy about bursts. */
 const MIN_INTERVAL_MS = 120;
 
 interface RawgListResponse {
@@ -26,9 +24,8 @@ export const createRawgProvider = (
   apiKey: string,
   fetchImpl: typeof fetch = fetch,
 ): GamesProvider => {
-  // Requests are chained rather than run in parallel, with a minimum gap
-  // between them, so a burst of searches cannot trip RAWG's rate limit.
-  // Single-process only: a second instance would keep its own chain.
+  // Chained with a minimum gap, so a burst of searches can't trip RAWG's rate
+  // limit. Single-process only: a second instance keeps its own chain.
   let chain: Promise<unknown> = Promise.resolve();
   let lastCallAt = 0;
 
@@ -97,10 +94,9 @@ export const createRawgProvider = (
     },
 
     /**
-     * One page ordered by how many upstream users track a game. The listing
-     * endpoint returns forty games per request where detail returns one —
-     * 2,500 requests for 100k games instead of 100,000. The cost is the
-     * description, backfilled later only for games someone opens.
+     * One page ordered by upstream tracker count. The listing endpoint returns
+     * forty games per request where detail returns one, so descriptions are
+     * missing and get backfilled when someone opens a game.
      */
     async listByPopularity(page, pageSize): Promise<GamePage> {
       const data = await request<RawgListResponse>("/games", {

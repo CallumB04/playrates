@@ -53,7 +53,9 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const [params, setParams] = useSearchParams();
 
     const rawType = params.get("type") ?? "played";
-    const activeSection: GameStatus = isGameStatus(rawType) ? rawType : "played";
+    const activeSection: GameStatus = isGameStatus(rawType)
+        ? rawType
+        : "played";
     const page = Math.max(1, Number(params.get("page")) || 1);
     const deepLinkedLog = params.get("log");
 
@@ -69,8 +71,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const isMyAccount =
         !!currentUser && currentUser.username === targetUsername;
 
-    /* Each tab pages independently — three hundred games look navigable
-       because you never page through another drawer to reach them. */
+    // Each tab pages independently.
     const { data: logsPage, isLoading: logsLoading } = useUserGameLogs(
         targetUsername,
         activeSection,
@@ -118,7 +119,6 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
         );
         return acceptedFriends.filter((e) => mine.has(e.user.id)).length;
     }, [isMyAccount, myFriends, acceptedFriends]);
-
 
     const myLogGameIds = useMemo(
         () => new Set((myLogIds ?? []).map((entry) => entry.gameId)),
@@ -229,7 +229,9 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                                 size="sm"
                                 aria-label="Edit profile"
                                 title="Edit profile"
-                                onClick={() => setModal({ kind: "editProfile" })}
+                                onClick={() =>
+                                    setModal({ kind: "editProfile" })
+                                }
                                 className="px-2.5"
                             >
                                 <Pencil size={16} aria-hidden />
@@ -264,8 +266,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
 
             <ShelfPanel
                 active={activeSection}
-                /* Every tab's count, not just the open one — the stats
-                   endpoint already returns the whole breakdown. */
+                // Every tab's count: the stats endpoint returns the whole breakdown.
                 counts={stats?.byStatus ?? { [activeSection]: total }}
                 onSelect={setSection}
                 logs={logs}
@@ -304,12 +305,9 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                             : 0
                     }
                     onOpenFriends={() => setModal({ kind: "friends" })}
-                    onOpenRequests={() =>
-                        setModal({ kind: "friendRequests" })
-                    }
+                    onOpenRequests={() => setModal({ kind: "friendRequests" })}
                 />
             </div>
-
 
             <ProfileModals
                 modal={modal}

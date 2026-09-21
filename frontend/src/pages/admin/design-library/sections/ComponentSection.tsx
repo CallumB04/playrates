@@ -4,12 +4,8 @@ import DataSpecimens from "./components/DataSpecimens";
 import SurfaceSpecimens from "./components/SurfaceSpecimens";
 import FeedbackSpecimens from "./components/FeedbackSpecimens";
 
-/*
- * Live demos rather than screenshots, so this always matches the real
- * components. Anything owning data or routing is shown through its parts.
- *
- * No router in here — this renders inside the app's BrowserRouter.
- */
+/* Live demos, not screenshots, so this always matches the real components.
+   No router in here — it renders inside the app's BrowserRouter. */
 const GROUPS = [
     { title: "Actions", Component: ActionsSpecimens },
     { title: "Forms", Component: FormSpecimens },

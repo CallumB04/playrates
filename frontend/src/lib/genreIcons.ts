@@ -22,16 +22,8 @@ import {
     type LucideIcon,
 } from "lucide-react";
 
-/**
- * A mark per genre, keyed by RAWG's slugs.
- *
- * These were tinted bars, which gave fifteen rows fifteen colours that meant
- * nothing — a reader could only learn that the hue was arbitrary. An icon at
- * least gestures at the thing.
- *
- * An unmapped genre falls back to a controller rather than rendering nothing,
- * so a new one from RAWG never leaves a hole in the grid.
- */
+/** A mark per genre, keyed by RAWG's slugs. An unknown one falls back to a
+ *  controller rather than leaving a hole in the grid. */
 const GENRE_ICONS: Record<string, LucideIcon> = {
     action: Swords,
     adventure: Map,

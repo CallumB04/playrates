@@ -35,9 +35,9 @@ const IsoDateSchema = z
 
 const PlatformSlugSchema = z.string().regex(/^[a-z0-9-]+$/);
 
-/** The cross-field refinements duplicate the database CHECKs on purpose: zod
- *  gives a 422 with a field path the form can highlight, the constraint holds
- *  whatever writes the row. */
+/** These duplicate the database CHECKs on purpose. Zod gives a 422 with a
+ *  field path the form can highlight; the constraint holds regardless of what
+ *  writes the row. */
 /** The plain object, kept separate so the PATCH schema can `.partial()` it. */
 const GameLogFieldsSchema = z
   .object({
@@ -93,10 +93,7 @@ export const GameLogQuerySchema = z.object({
   status: GameStatusSchema.optional(),
 });
 
-/**
- * `id` is the log's own id and `gameId` is the game it refers to. They are
- * easy to confuse because both are numbers.
- */
+/** `id` is the log's own id; `gameId` is the game it refers to. */
 export interface GameLog {
   id: number;
   gameId: number;
@@ -114,11 +111,8 @@ export interface GameLog {
   updatedAt: string;
 }
 
-/**
- * A log reduced to what a "have I logged this?" lookup needs. Returned
- * unpaginated, because a partial answer is worse than none — the caller uses
- * it to decide whether a tile shows "Log it" or "View your log".
- */
+/** A log reduced to what a "have I logged this?" lookup needs. Unpaginated:
+ *  a partial answer makes a tile show the wrong action. */
 export interface GameLogSummary {
   gameId: number;
   status: GameStatus;
@@ -126,8 +120,8 @@ export interface GameLogSummary {
   rating: number | null;
 }
 
-/** Totals across a user's whole shelf. Hours in particular cannot be summed
- *  client-side, because the log list is paginated. */
+/** Totals across a user's whole shelf — the log list is paginated, so these
+ *  can't be summed client-side. */
 export interface UserStats {
   logCount: number;
   byStatus: Record<string, number>;

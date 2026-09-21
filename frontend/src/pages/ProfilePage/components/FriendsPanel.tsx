@@ -32,7 +32,7 @@ const PanelButton = ({
         type="button"
         onClick={onClick}
         className={cn(
-            "lift flex-1 cursor-pointer rounded-sm border px-3 py-2 text-body-sm",
+            "flex-1 cursor-pointer rounded-sm border px-3 py-2 text-body-sm lift",
             accent
                 ? "border-brand/40 text-brand hover:border-brand"
                 : "border-subtle text-content-secondary hover:border-strong hover:text-content"

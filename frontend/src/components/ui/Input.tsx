@@ -5,11 +5,7 @@ import {
 } from "react";
 import { cn } from "../../lib/cn";
 
-/**
- * A field sits level with the page and lights up when you're in it. The
- * border warms to the brand and a soft bloom appears behind it. No recess:
- * nothing in Vellum is pressed into anything.
- */
+/** A field sits level with the page and lights up when you're in it. */
 const FIELD =
     "lift min-h-11 w-full rounded-sm border border-subtle bg-surface-field px-3.5 py-2.5 text-body-sm text-content " +
     "placeholder:text-content-muted hover:border-strong " +

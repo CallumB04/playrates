@@ -2,10 +2,8 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { env } from "./env.js";
 
 /**
- * The service-role client. It bypasses RLS, which is why every table has RLS on
- * with no policies — this process should be the only thing reaching them.
- *
- * Never send this key to a browser or prefix it with VITE_.
+ * The service-role client. It bypasses RLS, which is why every table has RLS
+ * on with no policies. Never send this key to a browser.
  */
 let client: SupabaseClient | undefined;
 

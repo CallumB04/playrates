@@ -3,12 +3,9 @@ export const ELLIPSIS = "…";
 export type PageSlot = number | typeof ELLIPSIS;
 
 /**
- * The page numbers to render, with gaps elided: `1 2 3 … 6595`.
- *
- * `siblings` is how many pages flank the current one. The window is kept at a
- * constant width regardless of where you are in the range, so the control
- * doesn't jump about as you page through — which means clamping the window
- * near both ends rather than just centring it.
+ * The page numbers to render, with gaps elided: `1 2 3 … 6595`. `siblings` is
+ * how many flank the current page. The window keeps a constant width so the
+ * control doesn't jump about, which means clamping it near both ends.
  */
 export const pageRange = (
     page: number,
@@ -21,12 +18,17 @@ export const pageRange = (
         return Array.from({ length: pageCount }, (_, i) => i + 1);
     }
 
-    const start = Math.max(2, Math.min(page - siblings, pageCount - windowSize + 3));
-    const end = Math.min(pageCount - 1, Math.max(page + siblings, windowSize - 2));
+    const start = Math.max(
+        2,
+        Math.min(page - siblings, pageCount - windowSize + 3)
+    );
+    const end = Math.min(
+        pageCount - 1,
+        Math.max(page + siblings, windowSize - 2)
+    );
 
     const slots: PageSlot[] = [1];
-    // A gap of one is not worth eliding — the ellipsis costs the same width as
-    // the number it would replace.
+    // A gap of one isn't worth eliding: the ellipsis is the same width.
     if (start > 3) slots.push(ELLIPSIS);
     else if (start === 3) slots.push(2);
 

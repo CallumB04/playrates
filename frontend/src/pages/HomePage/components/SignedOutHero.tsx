@@ -14,13 +14,11 @@ interface SignedOutHeroProps {
 }
 
 /*
- * Fanned rather than gridded. Six covers at alternating tilts read as a shelf
- * someone keeps; six square-on read as a product grid.
+ * Six covers at alternating tilts, so it reads as a shelf rather than a grid.
  *
- * The tilt and the drop are one inline transform rather than utility classes,
- * because `translate-y-3` and the `-translate-y-1/2` that centres the stack
- * both write the same custom property — whichever Tailwind emitted last won,
- * so one cover ignored the centring entirely and sat apart from the rest.
+ * The tilt and the drop are one inline transform: `translate-y-*` and the
+ * `-translate-y-1/2` that centres the stack write the same custom property,
+ * so as utility classes one would silently win.
  */
 const FAN = [
     { rotate: -6, drop: 6 },
@@ -31,15 +29,7 @@ const FAN = [
     { rotate: 2, drop: -9 },
 ];
 
-/**
- * The pitch.
- *
- * This used to put a card of community figures for one game beside the
- * headline, which said nothing to someone who has never heard of the game and
- * read as a dashboard widget dropped into a landing page. The library is the
- * more honest hero image: it is the actual product, and it is the thing a
- * visitor is deciding whether they want.
- */
+/** The pitch, with real box art as the hero image. */
 const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
     <div className="grid items-center gap-10 py-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-14">
         <div>

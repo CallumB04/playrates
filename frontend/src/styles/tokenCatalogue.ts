@@ -1,10 +1,5 @@
-/*
- * What the design library renders. theme.css has the values, this has what
- * each is for — keep the two in step. tokenCatalogue.test.ts enforces that.
- *
- * Swatches read their value back from the DOM rather than duplicating it here,
- * so a token that drifts shows the drift instead of hiding it.
- */
+/* What the design library renders. theme.css has the values, this has what
+   each is for; tokenCatalogue.test.ts keeps the two in step. */
 
 export interface RampStep {
     step: string;

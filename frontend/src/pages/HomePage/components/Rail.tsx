@@ -18,10 +18,7 @@ interface RailProps {
     actionsFor?: (game: Game) => TileAction[];
     /** The viewer's own status for a game, stamped on the cover. */
     statusFor?: (game: Game) => DisplayStatus | null;
-    /**
-     * The figure under each cover. Defaults to the release year, which says
-     * nothing about why a game is in this particular rail.
-     */
+    /** The figure under each cover. Defaults to the release year. */
     footValueFor?: (game: Game) => string;
 }
 
@@ -31,13 +28,7 @@ const ARROW =
     "disabled:cursor-default disabled:opacity-30 disabled:hover:translate-y-0 disabled:hover:border-subtle " +
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
-/**
- * One shelf of covers.
- *
- * A real overflow row rather than a paged grid: the grid showed a fixed seven
- * tiles into a column count that changed with the viewport, so at most widths
- * the last two wrapped onto a second line underneath.
- */
+/** One shelf of covers. A real overflow row, not a grid that wraps. */
 const Rail = ({
     title,
     note,

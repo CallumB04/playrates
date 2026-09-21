@@ -4,12 +4,8 @@ import { genreIcon } from "../../../lib/genreIcons";
 import type { Genre } from "@playrates/shared";
 import { cn } from "../../../lib/cn";
 
-/**
- * Somewhere to go that is not a cover.
- *
- * The rails all answer "what is popular"; this answers "what am I in the mood
- * for", which is the other half of how people actually pick a game.
- */
+/** The rails answer "what's popular". This answers "what am I in the mood
+ *  for", which is the other half of picking a game. */
 const GenreGrid = ({ genres }: { genres: Genre[] }) => {
     if (genres.length === 0) return null;
 

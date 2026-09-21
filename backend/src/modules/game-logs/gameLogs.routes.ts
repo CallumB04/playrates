@@ -119,7 +119,10 @@ export const createUserGameLogsRouter = ({
 };
 
 /** Mounted at /users/:username/stats. */
-export const createUserStatsRouter = ({ service, optionalAuth }: Deps): Router => {
+export const createUserStatsRouter = ({
+  service,
+  optionalAuth,
+}: Deps): Router => {
   const router = Router({ mergeParams: true });
 
   router.get(

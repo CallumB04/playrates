@@ -3,11 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 interface UsePaginationOptions {
     total: number;
     perPage: number;
-    /**
-     * Drive the page from outside — for server-driven lists, where the page
-     * belongs in the URL and `total` is the server's count rather than the
-     * length of what we happen to be holding.
-     */
+    /** Drive the page from outside, for server-driven lists where it lives in
+     *  the URL and `total` is the server's count. */
     page?: number;
     onPageChange?: (page: number) => void;
 }
@@ -26,8 +23,8 @@ export interface PaginationState {
     slice: <T>(items: T[]) => T[];
 }
 
-/** `page` is the only state so the flags can't drift from it. Note the ceil:
- *  floor(total / perPage) + 1 adds an empty last page on exact division. */
+/** `page` is the only state, so the flags can't drift from it. Ceil, not
+ *  floor + 1 — that adds an empty last page when the total divides exactly. */
 export const usePagination = ({
     total,
     perPage,
@@ -41,8 +38,8 @@ export const usePagination = ({
     const rawPage = isControlled ? controlledPage : internalPage;
     const page = Math.min(Math.max(rawPage, 1), pageCount);
 
-    // Clamp when the list shrinks or the viewport changes the page size. The
-    // controlled case is the owner's to fix — we only report the clamped page.
+    // Clamp when the list shrinks. Controlled mode only reports it; the owner
+    // decides whether to move.
     useEffect(() => {
         if (isControlled) return;
         setInternalPage((current) => Math.min(current, pageCount));
@@ -66,7 +63,7 @@ export const usePagination = ({
             next: () => goTo(page + 1),
             prev: () => goTo(page - 1),
             setPage: goTo,
-            slice: <T,>(items: T[]) =>
+            slice: <T>(items: T[]) =>
                 items.slice((page - 1) * perPage, page * perPage),
         };
     }, [page, pageCount, perPage, total, isControlled, onPageChange]);

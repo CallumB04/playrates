@@ -2,11 +2,8 @@ import type { HTMLAttributes } from "react";
 import { cn } from "../../lib/cn";
 
 /**
- * The signature surface.
- *
- * Everything is a card lit from above: a soft ambient shadow, a tighter key
- * shadow, and a 1px rim of light along the top edge. Depth is how far a thing
- * has risen off the page, never how far it has been pushed into it.
+ * The signature surface: a soft ambient shadow, a tighter key shadow, and a
+ * 1px rim of light along the top edge.
  */
 export type PlateState = "raised" | "flat" | "pressed";
 export type PlateDepth = "shallow" | "deep";
@@ -14,9 +11,7 @@ export type PlateDepth = "shallow" | "deep";
 const STATE: Record<PlateState, string> = {
     raised: "bg-surface-raised border-subtle shadow-plate",
     flat: "bg-surface-raised border-subtle",
-    /* Kept for callers that still ask for it. In Vellum a "pressed" surface
-       is simply one that has not risen — it recedes by sitting flat and
-       losing its rim, not by being stamped in. */
+    // A "pressed" surface just sits flat without its rim.
     pressed: "bg-surface-sunken border-subtle",
 };
 

@@ -1,14 +1,14 @@
 import { cn } from "../../lib/cn";
 
-/**
- * A skeleton is an empty drawer slot, not a shimmer — the well is pressed in
- * and stays still. Aria-hidden throughout: a loading placeholder has nothing
- * to announce, and the region that owns it carries the live status.
- */
+/** Still, not shimmering. Aria-hidden throughout — the region that owns the
+ *  placeholder carries the live status. */
 export const Skeleton = ({ className }: { className?: string }) => (
     <span
         aria-hidden="true"
-        className={cn("block animate-pulse rounded-sm bg-surface-sunken", className)}
+        className={cn(
+            "block animate-pulse rounded-sm bg-surface-sunken",
+            className
+        )}
     />
 );
 
@@ -30,7 +30,10 @@ export const TextSkeleton = ({ lines = 3 }: { lines?: number }) => {
     return (
         <div aria-hidden="true" className="flex flex-col gap-2">
             {Array.from({ length: lines }, (_, i) => (
-                <Skeleton key={i} className={cn("h-3", widths[i % widths.length])} />
+                <Skeleton
+                    key={i}
+                    className={cn("h-3", widths[i % widths.length])}
+                />
             ))}
         </div>
     );

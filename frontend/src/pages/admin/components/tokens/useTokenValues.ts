@@ -7,15 +7,12 @@ export interface TokenValue {
 }
 
 /**
- * Resolves custom properties in both themes at once, by probing an off-screen
- * `.light` and `.dark` scope.
+ * Resolves custom properties in both themes at once, by probing off-screen
+ * `.light` and `.dark` scopes.
  *
- * Two things make this the right approach rather than reading the custom
- * property directly. A custom property's computed value is the *unevaluated*
- * text, so `color-mix(…)` and chains of `var()` come back as recipes; assigning
- * it to a real colour property makes the browser resolve them for us. And
- * probing both scopes means the table reads the same whichever theme you happen
- * to be browsing in — which is the whole point of a two-mapping token system.
+ * A custom property's computed value is the unevaluated text, so `color-mix()`
+ * and chains of `var()` come back as recipes — assigning to a real colour
+ * property makes the browser resolve them.
  */
 export const useTokenValues = (
     cssVars: readonly string[]

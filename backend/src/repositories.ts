@@ -28,8 +28,8 @@ import {
   type GenresRepository,
 } from "./modules/genres/genres.js";
 
-/** Every repository in one bundle. Tests swap the whole object for in-memory
- *  equivalents and still exercise the real middleware and validation. */
+/** Every repository in one bundle. Tests swap the whole object and still run
+ *  the real middleware and validation. */
 export interface Repositories {
   profiles: ProfilesRepository;
   games: GamesRepository;

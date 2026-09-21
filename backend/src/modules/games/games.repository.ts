@@ -37,12 +37,8 @@ export interface GamesRepository {
     avgCompletion: number | null;
     achievementTrackedCount: number;
   }>;
-  /**
-   * Writes what the detail endpoint knows that the bulk listing didn't.
-   * Content tags ride along because the sexual-content flag was historically
-   * derived from ESRB alone and has to be recomputed per game; doing it here
-   * means a game reclassifies the first time anyone opens it.
-   */
+  /** Writes what the detail endpoint knows that the bulk listing didn't. The
+   *  content tags ride along so the sexual-content flag re-derives per game. */
   refreshFromExternal(
     id: number,
     fields: {
@@ -76,11 +72,9 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
   },
 
   async list(query, from, to, excludeLoggedForUser, showSexualContent) {
-    /* Genre and platform filter through an aliased inner join rather than
-       collecting ids and passing them to .in(). PostgREST caps a response at
-       1000 rows, so the id list silently truncated — "indie" matched 34,300
-       games and returned 1000 of them. The alias matters too: filtering the
-       embed directly would strip a game's other genres from the response. */
+    /* Genre and platform filter through an aliased inner join. Collecting ids
+       and passing them to .in() truncates at PostgREST's 1000-row cap, and
+       filtering the embed directly strips a game's other genres. */
     const select = [SELECT_WITH_RELATIONS];
     if (query.genre) {
       select.push("genre_filter:game_genres!inner(genre_slug)");
@@ -109,8 +103,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       builder = builder.eq("platform_filter.platform_slug", query.platform);
     }
 
-    // "hide games I have already logged" — was a client-side filter over
-    // the whole catalogue
+    // "hide games I have already logged"
     if (excludeLoggedForUser) {
       const { data: logged, error: logError } = await db
         .from("game_logs")
@@ -132,16 +125,11 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       builder = builder.lte("release_date", query.releasedBefore);
     }
 
-    /* Alphabetical is useless across the whole library: page one is the 100
-       titles that happen to start with punctuation. Log count is the default,
-       because this site's own figures are the ones that should order it.
-
-       RAWG's tracker count sits underneath as a hidden second key rather than
-       as a sort of its own. Almost nothing here has been logged yet, so on
-       log_count alone the default order is a hundred thousand rows of zero
-       broken only by id — which is to say, arbitrary. It is not offered in
-       the UI: somebody else's popularity figure presented as a sort option
-       reads as ours. */
+    /* Log count is the default: this site's own figures should order it.
+       RAWG's tracker count sits underneath as a hidden second key, because
+       almost nothing is logged yet and log_count alone leaves a hundred
+       thousand rows of zero ordered by id. It isn't offered as a sort of its
+       own — somebody else's popularity figure would read as ours. */
     const desc = { ascending: false, nullsFirst: false } as const;
     switch (query.sort) {
       case "title":
@@ -151,12 +139,9 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
         builder = builder.order("release_date", desc);
         break;
       case "rating":
-        /* This site's ratings, not RAWG's 0-5 community score. The count is
-           a second key so one lone 10.0 does not outrank a game fifty people
-           settled at 9.2. */
-        builder = builder
-          .order("avg_rating", desc)
-          .order("rating_count", desc);
+        /* Our ratings, not RAWG's 0-5 score. The count is a second key so one
+           lone 10.0 doesn't outrank a game fifty people settled at 9.2. */
+        builder = builder.order("avg_rating", desc).order("rating_count", desc);
         break;
       case "metacritic":
         builder = builder.order("metacritic", desc);
@@ -167,10 +152,9 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
           .order("rawg_added_count", desc);
     }
 
-    /* The tiebreaker is not optional. Every sort key above collides — titles
-       repeat, and rawg_added_count is null for most of the catalogue — and
-       Postgres gives no stable order among equal rows. Without this, paging
-       184k rows shows some twice and skips others entirely. */
+    /* The tiebreaker is not optional. Every sort key above collides, and
+       Postgres gives no stable order among equal rows — so deep paging would
+       show some rows twice and skip others. */
     const { data, error, count } = await builder.order("id").range(from, to);
     if (error) throw error;
     // the select string is built at runtime, so supabase-js cannot infer it
@@ -192,10 +176,8 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
   },
 
   /**
-   * Upserts a batch and replaces their platform and genre links.
-   *
-   * Only writes `description` when there is one — the bulk import reads from
-   * the listing endpoint, which doesn't return descriptions, and blanking a
+   * Upserts a batch and replaces their platform and genre links. Only writes
+   * `description` when there is one: the bulk import has none, and blanking a
    * backfilled one would lose it.
    */
   async upsertMany(games) {
@@ -290,9 +272,8 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     return gameIds;
   },
 
-  /* Both of these aggregate in SQL. They used to pull every matching row and
-     reduce in JS, which PostgREST silently truncated at 1000 — so a popular
-     game reported a capped total and a capped distribution. */
+  /* Both aggregate in SQL. Reducing in JS means pulling every row, which
+     PostgREST truncates at 1000. */
   async statusCounts(gameId) {
     const { data, error } = await db
       .rpc("game_status_counts", { p_game_id: gameId })
@@ -350,8 +331,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     };
 
     const count = Number(row.total);
-    // Postgres hands back an empty array when nothing is rated; the plate
-    // always wants twenty slots.
+    // Postgres returns an empty array when nothing is rated; the plate wants 20.
     const buckets = (row.buckets ?? []).map(Number);
     return {
       average: count === 0 ? null : Number(row.average),

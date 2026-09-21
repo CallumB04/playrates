@@ -9,10 +9,7 @@ export interface StatsCounts {
   logCount: number;
 }
 
-/**
- * Three head-only count queries, so the home page can show totals without
- * fetching any rows.
- */
+/** Head-only counts, so the home page shows totals without fetching rows. */
 export const createStatsRouter = (
   profiles: ProfilesRepository,
   games: GamesRepository,

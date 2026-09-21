@@ -17,12 +17,8 @@ interface EditProfilePopupProps {
 const BIO_LIMIT = 160;
 
 /**
- * The profile editor.
- *
- * Only two things are editable here, and the username is limited to changing
- * its capitalisation: a real rename has to check availability, which belongs
- * in Settings beside the rest of the account. The field says so rather than
- * failing after the fact, which is what it used to do.
+ * The profile editor. The username only changes capitalisation here — a real
+ * rename has to check availability, so it lives in Settings.
  */
 const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     closePopup,
@@ -34,15 +30,13 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     const [bio, setBio] = useState(user.bio);
     const [username, setUsername] = useState(user.username);
 
-    const sameLetters =
-        username.toLowerCase() === user.username.toLowerCase();
+    const sameLetters = username.toLowerCase() === user.username.toLowerCase();
     const dirty = bio !== user.bio || username !== user.username;
 
     const save = async () => {
         if (!sameLetters) return;
         try {
-            // the mutation seeds the profile caches, so the page reflects
-            // the change as soon as this resolves
+            // the mutation seeds the profile caches, so the page updates straight away
             await updateProfile.mutateAsync({ username, bio });
             notify("Profile updated", "success");
             closePopup();

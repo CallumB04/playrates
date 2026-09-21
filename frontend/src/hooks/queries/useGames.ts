@@ -16,8 +16,7 @@ export const useGames = (filters: GameListFilters = {}) =>
         queryKey: queryKeys.games.list({ ...filters }),
         queryFn: () => fetchGames(filters),
         staleTime: 5 * 60_000,
-        // Hold the previous page while the next loads, so paging doesn't
-        // blank the grid and collapse the page height under the scroll.
+        // Hold the previous page while the next loads, or the grid blanks.
         placeholderData: keepPreviousData,
     });
 

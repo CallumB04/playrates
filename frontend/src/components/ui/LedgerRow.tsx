@@ -16,11 +16,8 @@ const SIZE = {
 } as const;
 
 /**
- * Label left, dotted rule, figure right. Beneath every plate, facts are set
- * this way — it is the other half of the signature device.
- *
- * The leader is decorative, so a screen reader reads "Status, Mastered"
- * rather than announcing a run of dots.
+ * Label left, dotted rule, figure right. The leader is decorative, so a screen
+ * reader hears "Status, Mastered" rather than a run of dots.
  */
 const LedgerRow = ({
     label,
@@ -39,7 +36,12 @@ const LedgerRow = ({
                 className
             )}
         >
-            <dt className={cn("whitespace-nowrap text-content-secondary", s.label)}>
+            <dt
+                className={cn(
+                    "whitespace-nowrap text-content-secondary",
+                    s.label
+                )}
+            >
                 {label}
             </dt>
             <span className="leader" aria-hidden="true" />

@@ -16,13 +16,13 @@ interface NotificationStyle {
 const NOTIFICATION_STYLES: Record<NotificationType, NotificationStyle> = {
     success: { tone: "border-l-success text-success", Icon: CircleCheck },
     error: { tone: "border-l-danger text-danger", Icon: CircleX },
-    pending: { tone: "border-l-status-playing text-status-playing", Icon: Clock },
+    pending: {
+        tone: "border-l-status-playing text-status-playing",
+        Icon: Clock,
+    },
 };
 
-/**
- * Reads from context instead of taking text and type as props, which removes
- * `runNotification` from nine component signatures.
- */
+/** Reads from context, so no component has to thread a callback through. */
 const Notification = () => {
     const { notification } = useNotificationState();
 
@@ -38,7 +38,7 @@ const Notification = () => {
             aria-live="polite"
             className={cn(
                 "fixed right-1/2 bottom-8 z-50 flex h-max w-max translate-x-1/2 animate-notification items-center gap-3",
-                "rounded-lg border border-subtle border-l-[3px] bg-surface-raised px-4 py-3 shadow-modal",
+                "rounded-lg border border-l-[3px] border-subtle bg-surface-raised px-4 py-3 shadow-modal",
                 "sm:right-8 sm:translate-x-0",
                 tone
             )}

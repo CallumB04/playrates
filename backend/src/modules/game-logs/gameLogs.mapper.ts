@@ -57,9 +57,8 @@ export const toGameLogWithGame = (row: GameLogRowWithGame): GameLogWithGame => {
   };
 };
 
-/** playedStatus only means anything for a played game and there's a CHECK
- *  saying so. The frontend sends it regardless, so normalise rather than
- *  reject an otherwise valid write. */
+/** playedStatus only means anything on a played log, and a CHECK enforces it.
+ *  Normalise rather than reject an otherwise valid write. */
 export const toGameLogRow = (
   input: Partial<GameLogInput>,
 ): Partial<GameLogRow> => {

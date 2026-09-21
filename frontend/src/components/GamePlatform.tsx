@@ -1,10 +1,7 @@
 import { usePlatforms } from "../hooks/queries/useGames";
 import { getPlatformIcon } from "../lib/icons";
 
-/**
- * Two sizes, each a complete class string. Tailwind only emits classes it
- * finds literally in the source, so these cannot be composed at runtime.
- */
+/** Complete class strings — Tailwind only emits what it finds literally. */
 const PLATFORM_SIZE = {
     xs: { wrapper: "gap-1.5 px-1.5 h-6 text-xs", icon: 12 },
     base: { wrapper: "gap-2 px-2.5 py-0.5 text-base", icon: 16 },

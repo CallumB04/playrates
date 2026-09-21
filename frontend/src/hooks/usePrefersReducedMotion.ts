@@ -14,10 +14,7 @@ const getSnapshot = (): boolean =>
         ? window.matchMedia(QUERY).matches
         : false;
 
-/**
- * The CSS half of the motion spec is handled by a media block in theme.css.
- * This is for the two animations driven from JS — the figure roll and the
- * indeterminate sweep — which CSS cannot opt out of on their behalf.
- */
+/** theme.css covers the CSS animations. This is for the two driven from JS:
+ *  the figure roll and the indeterminate sweep. */
 export const usePrefersReducedMotion = (): boolean =>
     useSyncExternalStore(subscribe, getSnapshot, () => false);

@@ -21,12 +21,9 @@ export const createProfilesService = (
   },
 
   /**
-   * Closes an account for good.
-   *
-   * Deletes the auth user, not the profile. The foreign key runs from
-   * profiles to auth.users, so removing the profile alone would leave a
-   * sign-in that can never get a profile back. Going the other way cascades
-   * through profiles to the user's logs, reviews and friendships.
+   * Closes an account for good. Deletes the auth user, not the profile — the
+   * foreign key runs from profiles to auth.users, so going this way cascades
+   * through to the logs, reviews and friendships.
    */
   async deleteOwn(id: string): Promise<void> {
     // 404 rather than a silent success if it is already gone.
@@ -61,10 +58,8 @@ export const createProfilesService = (
     return !(await repo.usernameExists(username, excludingId));
   },
 
-  /**
-   * Builds the patch explicitly rather than spreading the request body, so
-   * only these three fields can ever be written.
-   */
+  /** Built explicitly rather than spread from the body, so only these fields
+   *  can ever be written. */
   async updateOwn(
     callerId: string,
     input: UpdateProfileInput,

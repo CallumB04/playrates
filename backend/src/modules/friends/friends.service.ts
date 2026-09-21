@@ -24,8 +24,8 @@ const toFriendUser = (row: FriendProfileRow) => ({
   online: isOnline(row.last_seen_at),
 });
 
-/** Projects a row into the edge as `viewerId` sees it: the embedded user is
- *  always the other party, and pending reads as sent or received by side. */
+/** The edge as `viewerId` sees it — the embedded user is always the other
+ *  party, and pending reads as sent or received depending on the side. */
 const toEdge = (
   row: FriendshipWithUsers,
   viewerId: string,
@@ -147,8 +147,7 @@ export const createFriendsService = (
     return edge;
   },
 
-  /* Decline, cancel and unfriend are the same operation — which one it reads
-     as depends only on the current status. */
+  // Decline, cancel and unfriend are the same operation.
   async removeRelationship(callerId: string, otherId: string): Promise<void> {
     const existing = await repo.find(callerId, otherId);
     if (!existing) throw AppError.notFound("Friendship");

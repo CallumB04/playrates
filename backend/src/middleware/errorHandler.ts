@@ -1,10 +1,8 @@
 import type { ErrorRequestHandler, RequestHandler } from "express";
 import { AppError } from "../lib/AppError.js";
 
-/**
- * Postgres / PostgREST error codes translated once, here, so no service has to
- * hand-roll "is this a duplicate key?".
- */
+/** Postgres and PostgREST codes translated once, so no service has to
+ *  hand-roll "is this a duplicate key?". */
 const PG_ERROR_MAP: Record<string, () => AppError> = {
   "23505": () =>
     AppError.conflict("already_exists", "That resource already exists"),
@@ -14,8 +12,8 @@ const PG_ERROR_MAP: Record<string, () => AppError> = {
   PGRST116: () => AppError.notFound(),
 };
 
-/** Anything that is not already an AppError becomes one, so the response
- *  shape is the same regardless of where the failure came from. */
+/** Anything that isn't already an AppError becomes one, so every response has
+ *  the same shape. */
 const normalise = (error: unknown): AppError => {
   if (error instanceof AppError) return error;
 

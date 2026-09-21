@@ -8,11 +8,8 @@ const Chip = ({ value }: { value: string }) => (
     />
 );
 
-/**
- * One row per token, showing both mappings at once. Reading the values out of
- * probe elements rather than the active theme is the point — otherwise you can
- * only ever check the theme you happen to be in.
- */
+/** One row per token, both themes at once — probes rather than the active
+ *  theme, so you can check the one you are not in. */
 const SemanticTable = ({ group }: { group: SemanticGroup }) => {
     const values = useTokenValues(group.tokens.map((t) => t.cssVar));
 

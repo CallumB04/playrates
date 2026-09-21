@@ -19,11 +19,9 @@ interface FieldProps {
 }
 
 /**
- * The label / help / error triad, with the label's colour keyed to state —
- * muted at rest, brand on focus, danger on error.
- *
- * A render prop rather than cloneElement, so the a11y wiring is explicit at
- * the call site and typed rather than injected invisibly.
+ * Label, help and error, with the label colour keyed to state. A render prop
+ * rather than cloneElement, so the a11y wiring is typed and visible at the
+ * call site.
  */
 const Field = ({
     label,

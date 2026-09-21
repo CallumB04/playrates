@@ -72,11 +72,9 @@ const Row = ({ review }: { review: ReviewWithAuthor }) => {
     );
 };
 
-/**
- * Recent notes from across the site. The hours are shown next to the rating
- * because they change what it means: a nine after eighty hours is a different
- * claim from a nine after two.
- */
+/** Recent reviews from across the site. The hours sit next to the rating
+ *  because a nine after eighty hours is a different claim from a nine after
+ *  two. */
 const ReviewFeed = ({
     reviews,
     isLoading,

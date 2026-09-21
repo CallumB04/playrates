@@ -153,7 +153,9 @@ describe("achievementFraction", () => {
     });
 
     it("is null without both halves, and never divides by zero", () => {
-        expect(achievementFraction(draft({ achievementsTotal: "52" }))).toBeNull();
+        expect(
+            achievementFraction(draft({ achievementsTotal: "52" }))
+        ).toBeNull();
         expect(
             achievementFraction(
                 draft({ achievementsCompleted: "5", achievementsTotal: "0" })

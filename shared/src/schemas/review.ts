@@ -43,10 +43,8 @@ export interface ReviewWithAuthor extends Review {
   author: ReviewAuthor;
   /** Joined from the author's log of this game, if they have one. */
   rating: number | null;
-  /**
-   * Hours on the clock when the review was written. "9.0" from someone who
-   * put eighty hours in is a different claim from "9.0" after two.
-   */
+  /** Hours on the clock when the review was written — a 9.0 after eighty hours
+   *  is a different claim from a 9.0 after two. */
   hoursPlayed: number | null;
   /** The state the review was written in, from the author's log. */
   status: string | null;
@@ -59,9 +57,8 @@ export interface ReviewWithAuthor extends Review {
 }
 
 /**
- * Rating sorts read the review_cards view, which pre-joins each author's log
- * — the rating is not on the reviews table, so ordering by it needs the join
- * to happen in SQL. Unrated reviews sort last either way.
+ * Rating sorts read the review_cards view: the rating isn't on the reviews
+ * table, so ordering by it needs the join in SQL. Unrated sorts last.
  */
 export const REVIEW_SORTS = [
   "recent",

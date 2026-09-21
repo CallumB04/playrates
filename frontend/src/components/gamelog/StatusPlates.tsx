@@ -8,9 +8,8 @@ import {
 } from "../../constants/gameStatus";
 import { cn } from "../../lib/cn";
 
-/* Selected fills with its own hue and lifts. Unselected is quiet but still
-   legible — the old resting state was muted text on a sunken panel, which
-   made four live controls look like four disabled ones. */
+/* Selected fills with its own hue and lifts. Unselected stays quiet but has
+   to read as live, not disabled. */
 const TILE: Record<GameStatus, { on: string; ring: string }> = {
     played: {
         on: "border-status-played bg-status-played-quiet text-content",
