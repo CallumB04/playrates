@@ -83,6 +83,9 @@ export const createProfilesService = (
     if (input.username !== undefined) patch.username = input.username;
     if (input.bio !== undefined) patch.bio = input.bio;
     if (input.avatarUrl !== undefined) patch.avatar_url = input.avatarUrl;
+    if (input.showSexualContent !== undefined) {
+      patch.show_sexual_content = input.showSexualContent;
+    }
 
     if (Object.keys(patch).length === 0) {
       return this.getById(callerId);

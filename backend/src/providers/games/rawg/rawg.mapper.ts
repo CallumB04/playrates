@@ -13,8 +13,26 @@ const PARENT_PLATFORM_SLUGS: Record<number, string> = {
 const PC_PARENT_PLATFORM_ID = 1;
 const STEAM_STORE_ID = 1;
 
-/** ESRB ratings that mark a game as 18+. */
-const ADULT_ESRB_SLUGS = new Set(["adults-only", "mature"]);
+/**
+ * Sexual content, named directly.
+ *
+ * This used to also include "mature", which is the 17+ rating carried by most
+ * large releases, so the flag was really marking violence and hid Kingdom Come
+ * and The Witcher along with anything actually explicit. Adults Only is almost
+ * exclusively sexual, and RAWG's tags say the rest out loud.
+ */
+const SEXUAL_ESRB_SLUGS = new Set(["adults-only"]);
+
+const SEXUAL_TAG_SLUGS = new Set([
+  "nsfw",
+  "sexual-content",
+  "adult",
+  "hentai",
+  "erotic",
+  "eroge",
+  "pornographic",
+  "dating-sim",
+]);
 
 export interface RawgGame {
   id: number;
@@ -33,6 +51,7 @@ export interface RawgGame {
   parent_platforms?: { platform: { id: number; slug: string } }[] | null;
   stores?: { store: { id: number; slug: string } }[] | null;
   genres?: { id: number; name: string; slug: string }[] | null;
+  tags?: { id: number; name: string; slug: string }[] | null;
 }
 
 /** Some RAWG endpoints return the description as HTML. */
@@ -70,6 +89,7 @@ const toPlatformSlugs = (game: RawgGame): string[] => {
 
 export const toExternalGame = (game: RawgGame): ExternalGame => {
   const description = game.description_raw ?? game.description ?? "";
+  const tagSlugs = (game.tags ?? []).map((t) => t.slug);
 
   return {
     externalId: game.id,
@@ -84,7 +104,10 @@ export const toExternalGame = (game: RawgGame): ExternalGame => {
       slug: g.slug,
       name: g.name,
     })),
-    isAdult: ADULT_ESRB_SLUGS.has(game.esrb_rating?.slug ?? ""),
+    contentTags: tagSlugs,
+    hasSexualContent:
+      SEXUAL_ESRB_SLUGS.has(game.esrb_rating?.slug ?? "") ||
+      tagSlugs.some((slug) => SEXUAL_TAG_SLUGS.has(slug)),
     metacritic: game.metacritic ?? null,
     rawgRating: game.rating ?? null,
     rawgRatingCount: game.ratings_count ?? null,

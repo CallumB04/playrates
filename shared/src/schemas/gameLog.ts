@@ -20,13 +20,13 @@ export const PlayedStatusSchema = z.enum(PLAYED_STATUSES);
 export type GameStatus = z.infer<typeof GameStatusSchema>;
 export type PlayedStatus = z.infer<typeof PlayedStatusSchema>;
 
-/** 0-10 in steps of 0.25, mirroring the CHECK constraint on game_logs. */
+/** 0-10 in steps of 0.5, mirroring the CHECK constraint on game_logs. */
 const RatingSchema = z
   .number()
   .min(0)
   .max(10)
-  .refine((n) => Number.isInteger(n * 4), {
-    message: "Rating must be a multiple of 0.25",
+  .refine((n) => Number.isInteger(n * 2), {
+    message: "Rating must be a multiple of 0.5",
   });
 
 const IsoDateSchema = z

@@ -46,7 +46,10 @@ export const buildRoutes = ({
   const router = Router();
 
   const profiles = createProfilesService(repos.profiles, authAdmin);
-  const games = createGamesService(repos.games, provider);
+  const games = createGamesService(repos.games, provider, async (userId) => {
+    const row = await repos.profiles.findById(userId);
+    return { showSexualContent: row?.show_sexual_content ?? false };
+  });
   const gameLogs = createGameLogsService(
     repos.gameLogs,
     repos.profiles,

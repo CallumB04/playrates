@@ -21,7 +21,7 @@ export const toGame = (row: GameRowWithRelations): Game => ({
   releaseDate: row.release_date,
   platforms: (row.game_platforms ?? []).map((p) => p.platform_slug),
   genres: (row.game_genres ?? []).map((g) => g.genre_slug),
-  isAdult: row.is_adult,
+  hasSexualContent: row.has_sexual_content,
   isTrending: row.is_trending,
   playtimeHours: num(row.playtime_hours),
   metacritic: row.metacritic,

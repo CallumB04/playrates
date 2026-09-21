@@ -75,26 +75,59 @@ describe("RAWG mapper", () => {
     expect(game.platformSlugs).toEqual([]);
   });
 
-  it("treats mature and adults-only ratings as adult", () => {
-    expect(toExternalGame(rawgResponse).isAdult).toBe(true);
+  it("treats adults-only as sexual content", () => {
     expect(
       toExternalGame({
         ...rawgResponse,
         esrb_rating: { id: 5, slug: "adults-only", name: "Adults Only" },
-      }).isAdult,
+      }).hasSexualContent,
     ).toBe(true);
   });
 
-  it("treats other ratings, and no rating, as not adult", () => {
+  /* Mature is the 17+ rating on most large releases. Treating it as sexual
+     content hid Kingdom Come and The Witcher, which is the whole reason this
+     stopped keying off ESRB alone. */
+  it("does not treat mature as sexual content", () => {
+    expect(
+      toExternalGame({
+        ...rawgResponse,
+        esrb_rating: { id: 4, slug: "mature", name: "Mature" },
+      }).hasSexualContent,
+    ).toBe(false);
+  });
+
+  it("reads sexual content off RAWG's tags", () => {
+    expect(
+      toExternalGame({
+        ...rawgResponse,
+        esrb_rating: null,
+        tags: [
+          { id: 1, name: "Indie", slug: "indie" },
+          { id: 2, name: "NSFW", slug: "nsfw" },
+        ],
+      }).hasSexualContent,
+    ).toBe(true);
+  });
+
+  it("keeps the tag slugs, so the flag can be re-derived", () => {
+    expect(
+      toExternalGame({
+        ...rawgResponse,
+        tags: [{ id: 1, name: "Indie", slug: "indie" }],
+      }).contentTags,
+    ).toEqual(["indie"]);
+  });
+
+  it("treats other ratings, and no rating, as not sexual content", () => {
     expect(
       toExternalGame({
         ...rawgResponse,
         esrb_rating: { id: 3, slug: "teen", name: "Teen" },
-      }).isAdult,
+      }).hasSexualContent,
     ).toBe(false);
-    expect(toExternalGame({ ...rawgResponse, esrb_rating: null }).isAdult).toBe(
-      false,
-    );
+    expect(
+      toExternalGame({ ...rawgResponse, esrb_rating: null }).hasSexualContent,
+    ).toBe(false);
   });
 
   it("normalises an empty release date to null", () => {

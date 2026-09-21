@@ -110,13 +110,13 @@ describe("game mapper", () => {
     expect(game.platforms).toEqual([]);
   });
 
-  it("renames trending and eighteenPlus to the new field names", () => {
+  it("maps the trending and sexual-content flags", () => {
     const game = toGame({
-      ...buildGame({ is_trending: true, is_adult: true }),
+      ...buildGame({ is_trending: true, has_sexual_content: true }),
     });
 
     expect(game.isTrending).toBe(true);
-    expect(game.isAdult).toBe(true);
+    expect(game.hasSexualContent).toBe(true);
   });
 });
 

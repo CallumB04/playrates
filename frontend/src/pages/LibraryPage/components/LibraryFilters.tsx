@@ -77,11 +77,6 @@ const LibraryFilters = ({
                 // The server can only exclude logs it can attribute.
                 disabled={!isSignedIn}
             />
-            <Toggle
-                checked={query.includeAdult}
-                onChange={(includeAdult) => setQuery({ includeAdult })}
-                label="Show adult content"
-            />
         </>
     );
 

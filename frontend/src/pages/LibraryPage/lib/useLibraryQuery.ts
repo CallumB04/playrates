@@ -7,7 +7,6 @@ export interface LibraryQuery {
     search: string;
     platform: string;
     genre: string;
-    includeAdult: boolean;
     excludeLogged: boolean;
     sort: GameSort;
 }
@@ -17,7 +16,6 @@ const DEFAULTS: LibraryQuery = {
     search: "",
     platform: "",
     genre: "",
-    includeAdult: false,
     excludeLogged: false,
     sort: "popular",
 };
@@ -42,7 +40,6 @@ export const useLibraryQuery = () => {
             search: params.get("q") ?? DEFAULTS.search,
             platform: params.get("platform") ?? DEFAULTS.platform,
             genre: params.get("genre") ?? DEFAULTS.genre,
-            includeAdult: params.get("adult") === "1",
             excludeLogged: params.get("hideLogged") === "1",
             sort: isSort(sort) ? sort : DEFAULTS.sort,
         };
@@ -63,7 +60,6 @@ export const useLibraryQuery = () => {
             if (next.search) params.set("q", next.search);
             if (next.platform) params.set("platform", next.platform);
             if (next.genre) params.set("genre", next.genre);
-            if (next.includeAdult) params.set("adult", "1");
             if (next.excludeLogged) params.set("hideLogged", "1");
             if (next.sort !== DEFAULTS.sort) params.set("sort", next.sort);
 

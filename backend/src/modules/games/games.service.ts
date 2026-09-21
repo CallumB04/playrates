@@ -17,31 +17,47 @@ const LOCAL_RESULT_THRESHOLD = 8;
 export const createGamesService = (
   repo: GamesRepository,
   provider: GamesProvider,
+  /* Only the one lookup is needed, so the games service takes a function
+     rather than the whole profiles repository. */
+  viewerPrefs: (userId: string) => Promise<{ showSexualContent: boolean }>,
 ) => ({
   async getById(id: number): Promise<Game> {
     const row = await repo.findById(id);
     if (!row) throw AppError.notFound("Game");
 
-    /* The bulk import reads the listing endpoint, which has no descriptions,
-       so the first person to open a game pays for it once. Not awaited — the
-       page renders now and the description shows on the next load. */
+    /* The bulk import reads the listing endpoint, which carries no
+       descriptions, so the first person to open a game pays for one fetch.
+       Awaited: this used to fire and forget, which meant the first visitor
+       was shown a note asking them to reload the page. */
     if (!row.description_synced_at && row.rawg_id && provider.isConfigured) {
-      void this.backfillDescription(id, row.rawg_id);
+      const description = await this.backfillDescription(id, row.rawg_id);
+      if (description) return toGame({ ...row, description });
     }
 
     return toGame(row);
   },
 
-  /** Fetches and stores one game's description. Failures are not fatal. */
-  async backfillDescription(id: number, rawgId: number): Promise<void> {
+  /**
+   * Fetches and stores one game's description, returning it so the caller can
+   * render it on this request rather than the next one. Failures are not
+   * fatal: a missing description is not worth failing a page render over, and
+   * the next view tries again.
+   */
+  async backfillDescription(
+    id: number,
+    rawgId: number,
+  ): Promise<string | null> {
     try {
       const external = await provider.getById(rawgId);
-      if (external?.description) {
-        await repo.setDescription(id, external.description);
-      }
+      if (!external?.description) return null;
+      await repo.refreshFromExternal(id, {
+        description: external.description,
+        contentTags: external.contentTags,
+        hasSexualContent: external.hasSexualContent,
+      });
+      return external.description;
     } catch {
-      // a missing description is not worth failing a page render over;
-      // the next view will try again
+      return null;
     }
   },
 
@@ -49,11 +65,18 @@ export const createGamesService = (
     const pagination: Pagination = { page: query.page, limit: query.limit };
     const { from, to } = toRange(pagination);
 
+    /* Sexual content is hidden unless the viewer has opted in, so a signed
+       out visitor always gets the default. */
+    const showSexualContent = callerId
+      ? (await viewerPrefs(callerId)).showSexualContent
+      : false;
+
     const { rows, total } = await repo.list(
       query,
       from,
       to,
       query.excludeLogged ? callerId : undefined,
+      showSexualContent,
     );
 
     return paginate(rows.map(toGame), pagination, total);

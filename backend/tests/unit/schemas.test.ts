@@ -31,8 +31,8 @@ describe("boolean query parameters", () => {
   });
 
   it("applies through the games query schema", () => {
-    const parsed = GameQuerySchema.parse({ includeAdult: "false" });
-    expect(parsed.includeAdult).toBe(false);
+    const parsed = GameQuerySchema.parse({ excludeLogged: "true" });
+    expect(parsed.excludeLogged).toBe(true);
   });
 });
 
@@ -52,18 +52,22 @@ describe("pagination", () => {
 });
 
 describe("game log input", () => {
-  it("accepts a rating on the 0.25 step", () => {
-    for (const rating of [0, 0.25, 6.25, 8.75, 10]) {
+  it("accepts a rating on the 0.5 step", () => {
+    for (const rating of [0, 0.5, 6.5, 8.5, 10]) {
       expect(() =>
         GameLogInputSchema.parse({ status: "played", rating }),
       ).not.toThrow();
     }
   });
 
+  /* Quarter points were the old scale. They are now off-step, which is what
+     the migration rounded the existing logs onto. */
   it("rejects a rating off the step", () => {
-    expect(() =>
-      GameLogInputSchema.parse({ status: "played", rating: 6.3 }),
-    ).toThrow();
+    for (const rating of [6.3, 6.25, 8.75]) {
+      expect(() =>
+        GameLogInputSchema.parse({ status: "played", rating }),
+      ).toThrow();
+    }
   });
 
   it("rejects a rating outside 0-10", () => {

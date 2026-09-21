@@ -173,7 +173,7 @@ export const createInMemoryRepos = (
         const game = state.games.find((g) => g.rawg_id === rawgId);
         return game ? withPlatforms(game) : null;
       },
-      async list(query, from, to, excludeLoggedForUser) {
+      async list(query, from, to, excludeLoggedForUser, showSexualContent) {
         let rows = state.games;
 
         if (query.search) {
@@ -183,8 +183,8 @@ export const createInMemoryRepos = (
         if (query.trending !== undefined) {
           rows = rows.filter((g) => g.is_trending === query.trending);
         }
-        if (!query.includeAdult) {
-          rows = rows.filter((g) => !g.is_adult);
+        if (!showSexualContent) {
+          rows = rows.filter((g) => !g.has_sexual_content);
         }
         if (query.platform) {
           const ids = new Set(
@@ -254,7 +254,8 @@ export const createInMemoryRepos = (
               description: external.description,
               cover_url: external.coverUrl,
               release_date: external.releaseDate,
-              is_adult: external.isAdult,
+              has_sexual_content: external.hasSexualContent,
+              content_tags: external.contentTags,
               is_trending: false,
               playtime_hours: external.playtimeHours,
               metacritic: external.metacritic,
@@ -291,10 +292,12 @@ export const createInMemoryRepos = (
         }
         return ids;
       },
-      async setDescription(id, description) {
+      async refreshFromExternal(id, fields) {
         const game = state.games.find((g) => g.id === id);
         if (game) {
-          game.description = description;
+          game.description = fields.description;
+          game.content_tags = fields.contentTags;
+          game.has_sexual_content = fields.hasSexualContent;
           game.description_synced_at = now();
         }
       },

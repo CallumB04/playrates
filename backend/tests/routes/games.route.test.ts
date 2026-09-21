@@ -28,7 +28,8 @@ const externalGame: ExternalGame = {
   releaseDate: "2017-02-24",
   platformSlugs: ["other-pc"],
   genres: [{ slug: "metroidvania", name: "Metroidvania" }],
-  isAdult: false,
+  hasSexualContent: false,
+  contentTags: [],
   metacritic: 90,
   rawgRating: 4.5,
   rawgRatingCount: 4200,
@@ -86,7 +87,10 @@ describe("games", () => {
     const { app } = buildTestApp({
       seed: {
         ...baseSeed(),
-        games: [buildGame(), buildGame({ id: 2, is_adult: true, rawg_id: 9 })],
+        games: [
+          buildGame(),
+          buildGame({ id: 2, has_sexual_content: true, rawg_id: 9 }),
+        ],
       },
     });
 

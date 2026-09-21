@@ -13,7 +13,6 @@ export interface GameListFilters {
     platform?: string;
     genre?: string;
     trending?: boolean;
-    includeAdult?: boolean;
     excludeLogged?: boolean;
     sort?: GameSort;
     releasedAfter?: string;

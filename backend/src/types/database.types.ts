@@ -14,6 +14,8 @@ export interface ProfileRow {
   bio: string;
   avatar_url: string | null;
   last_seen_at: string;
+  /** Opt-in. Off filters games flagged has_sexual_content out of listings. */
+  show_sexual_content: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -32,7 +34,9 @@ export interface GameRow {
   description: string;
   cover_url: string | null;
   release_date: string | null;
-  is_adult: boolean;
+  has_sexual_content: boolean;
+  /** RAWG tag slugs, kept so the flag can be re-derived in place. */
+  content_tags: string[];
   is_trending: boolean;
   playtime_hours: number | null;
   metacritic: number | null;

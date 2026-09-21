@@ -21,6 +21,8 @@ export interface GamesRepository {
     from: number,
     to: number,
     excludeLoggedForUser?: string,
+    /** Opt-in, read from the caller's profile. Off hides flagged games. */
+    showSexualContent?: boolean,
   ): Promise<{ rows: GameRowWithPlatforms[]; total: number }>;
   searchLocal(term: string, limit: number): Promise<GameRowWithPlatforms[]>;
   upsertMany(games: ExternalGame[]): Promise<number[]>;
@@ -28,7 +30,20 @@ export interface GamesRepository {
   ratingSummary(
     gameId: number,
   ): Promise<{ average: number | null; count: number; buckets: number[] }>;
-  setDescription(id: number, description: string): Promise<void>;
+  /**
+   * Writes what the detail endpoint knows that the bulk listing didn't.
+   * Content tags ride along because the sexual-content flag was historically
+   * derived from ESRB alone and has to be recomputed per game; doing it here
+   * means a game reclassifies the first time anyone opens it.
+   */
+  refreshFromExternal(
+    id: number,
+    fields: {
+      description: string;
+      contentTags: string[];
+      hasSexualContent: boolean;
+    },
+  ): Promise<void>;
   count(): Promise<number>;
 }
 
@@ -53,7 +68,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     return (data as GameRowWithPlatforms | null) ?? null;
   },
 
-  async list(query, from, to, excludeLoggedForUser) {
+  async list(query, from, to, excludeLoggedForUser, showSexualContent) {
     /* Genre and platform filter through an aliased inner join rather than
        collecting ids and passing them to .in(). PostgREST caps a response at
        1000 rows, so the id list silently truncated — "indie" matched 34,300
@@ -75,7 +90,9 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     if (query.trending !== undefined) {
       builder = builder.eq("is_trending", query.trending);
     }
-    if (!query.includeAdult) builder = builder.eq("is_adult", false);
+    if (!showSexualContent) {
+      builder = builder.eq("has_sexual_content", false);
+    }
 
     if (query.genre) {
       builder = builder.eq("genre_filter.genre_slug", query.genre);
@@ -171,7 +188,8 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       title: g.title,
       cover_url: g.coverUrl,
       release_date: g.releaseDate,
-      is_adult: g.isAdult,
+      has_sexual_content: g.hasSexualContent,
+      content_tags: g.contentTags,
       metacritic: g.metacritic,
       rawg_rating: g.rawgRating,
       rawg_rating_count: g.rawgRatingCount,
@@ -300,11 +318,13 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     };
   },
 
-  async setDescription(id, description) {
+  async refreshFromExternal(id, fields) {
     const { error } = await db
       .from("games")
       .update({
-        description,
+        description: fields.description,
+        content_tags: fields.contentTags,
+        has_sexual_content: fields.hasSexualContent,
         description_synced_at: new Date().toISOString(),
       })
       .eq("id", id);

@@ -26,7 +26,6 @@ describe("useLibraryQuery", () => {
             search: "",
             platform: "",
             genre: "",
-            includeAdult: false,
             excludeLogged: false,
             sort: "popular",
         });
@@ -34,7 +33,7 @@ describe("useLibraryQuery", () => {
 
     it("reads every filter back out of the URL", () => {
         const { result } = renderQuery(
-            "/library?page=3&q=lantern&platform=steam&genre=indie&adult=1&hideLogged=1&sort=title"
+            "/library?page=3&q=lantern&platform=steam&genre=indie&hideLogged=1&sort=title"
         );
 
         expect(result.current.query).toEqual({
@@ -42,7 +41,6 @@ describe("useLibraryQuery", () => {
             search: "lantern",
             platform: "steam",
             genre: "indie",
-            includeAdult: true,
             excludeLogged: true,
             sort: "title",
         });
@@ -92,7 +90,6 @@ describe("useLibraryQuery", () => {
                 search: "lantern",
                 platform: "steam",
                 genre: "indie",
-                includeAdult: true,
                 excludeLogged: true,
                 sort: "released",
             })
@@ -103,7 +100,6 @@ describe("useLibraryQuery", () => {
             search: "lantern",
             platform: "steam",
             genre: "indie",
-            includeAdult: true,
             excludeLogged: true,
             sort: "released",
         });

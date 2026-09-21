@@ -20,6 +20,7 @@ export const buildProfile = (
   bio: "",
   avatar_url: null,
   // recent, so `online` derives to true unless a test says otherwise
+  show_sexual_content: false,
   last_seen_at: NOW,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,
@@ -34,7 +35,8 @@ export const buildGame = (overrides: Partial<GameRow> = {}): GameRow => ({
   description: "An open world RPG.",
   cover_url: "https://example.test/cover.jpg",
   release_date: "2015-05-18",
-  is_adult: false,
+  content_tags: [],
+  has_sexual_content: false,
   is_trending: true,
   playtime_hours: 51.5,
   metacritic: 92,

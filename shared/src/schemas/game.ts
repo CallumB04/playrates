@@ -11,7 +11,7 @@ export interface Game {
   releaseDate: string | null;
   /** Platform slugs, e.g. ["steam", "xbox"]. */
   platforms: string[];
-  isAdult: boolean;
+  hasSexualContent: boolean;
   isTrending: boolean;
   /** RAWG's average playtime in hours, not a time-to-beat estimate. */
   playtimeHours: number | null;
@@ -67,7 +67,6 @@ export const GameQuerySchema = PaginationSchema.extend({
     .regex(/^[a-z0-9-]+$/)
     .optional(),
   trending: BooleanQuerySchema.optional(),
-  includeAdult: BooleanQuerySchema.default(true),
   /** Requires auth: excludes games the caller has already logged. */
   excludeLogged: BooleanQuerySchema.default(false),
   sort: GameSortSchema,

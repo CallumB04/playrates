@@ -41,9 +41,9 @@ describe("api client", () => {
             })
         );
 
-        await fetchGames({ search: "portal", includeAdult: false });
+        await fetchGames({ search: "portal", excludeLogged: true });
         expect(url).toContain("search=portal");
-        expect(url).toContain("includeAdult=false");
+        expect(url).toContain("excludeLogged=true");
     });
 
     describe("error mapping", () => {
@@ -98,7 +98,7 @@ describe("api client", () => {
                                 message: "Request validation failed",
                                 details: {
                                     rating: [
-                                        "Rating must be a multiple of 0.25",
+                                        "Rating must be a multiple of 0.5",
                                     ],
                                 },
                             },
@@ -114,7 +114,7 @@ describe("api client", () => {
 
             expect(error.isValidation).toBe(true);
             expect(error.details).toEqual({
-                rating: ["Rating must be a multiple of 0.25"],
+                rating: ["Rating must be a multiple of 0.5"],
             });
         });
 

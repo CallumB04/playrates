@@ -15,12 +15,14 @@ export const PasswordSchema = z
 export const EmailSchema = z.string().trim().toLowerCase().email();
 
 /** `.strict()` rejects unknown keys with a 422 rather than writing them, so
- *  only these three fields are ever editable. */
+ *  only these fields are ever editable. */
 export const UpdateProfileSchema = z
   .object({
     username: UsernameSchema.optional(),
     bio: z.string().max(160, "Bio must be at most 160 characters").optional(),
     avatarUrl: z.string().url().max(2048).nullable().optional(),
+    /** Opt-in. Off keeps sexually explicit games out of every listing. */
+    showSexualContent: z.boolean().optional(),
   })
   .strict();
 
@@ -38,5 +40,6 @@ export interface Profile {
   avatarUrl: string | null;
   /** Derived from last_seen_at, not stored. */
   online: boolean;
+  showSexualContent: boolean;
   createdAt: string;
 }

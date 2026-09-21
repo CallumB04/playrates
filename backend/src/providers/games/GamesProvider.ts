@@ -20,7 +20,8 @@ export interface ExternalGame {
   /** Already translated to PlayRates platform slugs. */
   platformSlugs: string[];
   genres: ExternalGenre[];
-  isAdult: boolean;
+  hasSexualContent: boolean;
+  contentTags: string[];
   metacritic: number | null;
   rawgRating: number | null;
   rawgRatingCount: number | null;

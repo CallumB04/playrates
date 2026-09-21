@@ -125,9 +125,30 @@ const SettingsPage = () => {
     const [username, setUsername] = useState(user?.username ?? "");
     const [bio, setBio] = useState(user?.bio ?? "");
 
+    /* Saved on toggle rather than gathered into the Save bar: this one
+       changes what the catalogue will show you, so waiting for a second
+       action to apply it would be strange. */
+    const [showSexual, setShowSexual] = useState(
+        user?.showSexualContent ?? false
+    );
+
+    const saveSexualContent = (next: boolean) => {
+        setShowSexual(next);
+        update.mutate(
+            { showSexualContent: next },
+            {
+                onError: () => {
+                    setShowSexual(!next);
+                    notify("Couldn't save that setting", "error");
+                },
+            }
+        );
+    };
+
     useEffect(() => {
         setUsername(user?.username ?? "");
         setBio(user?.bio ?? "");
+        setShowSexual(user?.showSexualContent ?? false);
     }, [user]);
 
     if (!user) {
@@ -237,11 +258,15 @@ const SettingsPage = () => {
 
             <Section title="Content" note="what you see" icon={SlidersHorizontal}>
                 <Row
-                    label="Adult content"
-                    help="Set per visit from the catalogue's own filter."
-                    pending
+                    label="Sexual content"
+                    help="Off by default. Games RAWG tags as sexually explicit stay out of the catalogue, search and every rail until you turn this on. Violence is not covered by this setting."
                 >
-                    <Toggle checked={false} onChange={() => {}} label="Hidden" />
+                    <Toggle
+                        checked={showSexual}
+                        onChange={saveSexualContent}
+                        label={showSexual ? "Shown" : "Hidden"}
+                        disabled={update.isPending}
+                    />
                 </Row>
                 <Row
                     label="Hide logged games"

@@ -74,7 +74,6 @@ const LibraryPage = () => {
         platform: query.platform || undefined,
         genre: query.genre || undefined,
         sort: query.sort,
-        includeAdult: query.includeAdult,
         excludeLogged: user ? query.excludeLogged : false,
     });
 
