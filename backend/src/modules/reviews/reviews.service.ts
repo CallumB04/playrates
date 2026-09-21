@@ -36,12 +36,20 @@ export const createReviewsService = (
    * falls back to a placeholder: the FK should prevent it, but one bad row
    * shouldn't take down the listing.
    */
-  const withAuthors = (rows: ReviewRowJoined[]): ReviewWithAuthor[] =>
+  /**
+   * Whether the viewer has voted is per-viewer, so it cannot live on the
+   * view. One extra query for the page rather than one per review.
+   */
+  const withAuthors = (
+    rows: ReviewRowJoined[],
+    votedIds: Set<number> = new Set(),
+  ): ReviewWithAuthor[] =>
     rows.map((row) => ({
       ...toReview(row),
       author: {
         id: row.user_id,
         username: row.author_username ?? "Unknown user",
+        firstName: row.author_first_name,
         avatarUrl: row.author_avatar_url ?? null,
         online: row.author_last_seen_at
           ? isOnline(row.author_last_seen_at)
@@ -57,7 +65,20 @@ export const createReviewsService = (
         title: row.game_title,
         coverUrl: row.game_cover_url,
       },
+      voteCount: Number(row.vote_count ?? 0),
+      votedByViewer: votedIds.has(row.id),
     }));
+
+  const votesFor = async (
+    viewerId: string | undefined,
+    rows: ReviewRowJoined[],
+  ): Promise<Set<number>> => {
+    if (!viewerId || rows.length === 0) return new Set();
+    return repo.votedReviewIds(
+      viewerId,
+      rows.map((r) => r.id),
+    );
+  };
 
   return {
     async listByGame(
@@ -77,7 +98,11 @@ export const createReviewsService = (
         to,
         sort,
       );
-      return paginate(withAuthors(rows), pagination, total);
+      return paginate(
+        withAuthors(rows, await votesFor(viewerId, rows)),
+        pagination,
+        total,
+      );
     },
 
     async listByUsername(
@@ -95,16 +120,46 @@ export const createReviewsService = (
         from,
         to,
       );
-      return paginate(withAuthors(rows), pagination, total);
+      return paginate(
+        withAuthors(rows, await votesFor(viewerId, rows)),
+        pagination,
+        total,
+      );
     },
 
     /** The site-wide feed. Public reviews only, newest first. */
     async listRecent(
       pagination: Pagination,
+      viewerId?: string,
     ): Promise<Paginated<ReviewWithAuthor>> {
       const { from, to } = toRange(pagination);
       const { rows, total } = await repo.listRecent(from, to);
-      return paginate(withAuthors(rows), pagination, total);
+      return paginate(
+        withAuthors(rows, await votesFor(viewerId, rows)),
+        pagination,
+        total,
+      );
+    },
+
+    /**
+     * Toggling is idempotent by primary key: a duplicate vote collides on
+     * (review_id, user_id) rather than counting twice.
+     */
+    async toggleVote(
+      userId: string,
+      reviewId: number,
+    ): Promise<{ voteCount: number; votedByViewer: boolean }> {
+      const review = await repo.findById(reviewId);
+      if (!review) throw AppError.notFound("Review");
+
+      const voted = await repo.hasVoted(userId, reviewId);
+      if (voted) await repo.removeVote(userId, reviewId);
+      else await repo.addVote(userId, reviewId);
+
+      return {
+        voteCount: await repo.voteCount(reviewId),
+        votedByViewer: !voted,
+      };
     },
 
     async getOwn(userId: string, gameId: number): Promise<Review> {

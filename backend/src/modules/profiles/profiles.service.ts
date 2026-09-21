@@ -86,6 +86,10 @@ export const createProfilesService = (
     if (input.showSexualContent !== undefined) {
       patch.show_sexual_content = input.showSexualContent;
     }
+    if (input.firstName !== undefined) {
+      // An empty string is a clear, not a name.
+      patch.first_name = input.firstName || null;
+    }
 
     if (Object.keys(patch).length === 0) {
       return this.getById(callerId);

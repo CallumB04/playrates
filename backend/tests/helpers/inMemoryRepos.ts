@@ -43,6 +43,7 @@ export interface InMemoryState {
   gamePlatforms: { game_id: number; platform_slug: string }[];
   gameLogs: GameLogRow[];
   reviews: ReviewRow[];
+  reviewVotes: { review_id: number; user_id: string }[];
   friendships: FriendshipRow[];
   platforms: PlatformRow[];
   genres: GenreRow[];
@@ -63,6 +64,7 @@ export const createInMemoryRepos = (
     gamePlatforms: [...(seed.gamePlatforms ?? [])],
     gameLogs: [...(seed.gameLogs ?? [])],
     reviews: [...(seed.reviews ?? [])],
+    reviewVotes: [],
     friendships: [...(seed.friendships ?? [])],
     platforms: [...(seed.platforms ?? [])],
     genres: [...(seed.genres ?? [])],
@@ -118,6 +120,8 @@ export const createInMemoryRepos = (
       played_status: log?.played_status ?? null,
       platform_slug: log?.platform_slug ?? null,
       author_username: author?.username ?? null,
+      author_first_name: author?.first_name ?? null,
+      vote_count: state.reviewVotes.filter((v) => v.review_id === r.id).length,
       author_avatar_url: author?.avatar_url ?? null,
       author_last_seen_at: author?.last_seen_at ?? null,
       // The view inner-joins games, so a row without one cannot exist.
@@ -483,6 +487,47 @@ export const createInMemoryRepos = (
     },
 
     reviews: {
+      async findById(id) {
+        const row = state.reviews.find((r) => r.id === id);
+        return row ? withAuthor(row) : null;
+      },
+
+      async votedReviewIds(userId, reviewIds) {
+        return new Set(
+          state.reviewVotes
+            .filter(
+              (v) => v.user_id === userId && reviewIds.includes(v.review_id),
+            )
+            .map((v) => v.review_id),
+        );
+      },
+
+      async hasVoted(userId, reviewId) {
+        return state.reviewVotes.some(
+          (v) => v.user_id === userId && v.review_id === reviewId,
+        );
+      },
+
+      async addVote(userId, reviewId) {
+        // Primary key is (review_id, user_id), so a second vote is a no-op.
+        const exists = state.reviewVotes.some(
+          (v) => v.user_id === userId && v.review_id === reviewId,
+        );
+        if (!exists) {
+          state.reviewVotes.push({ review_id: reviewId, user_id: userId });
+        }
+      },
+
+      async removeVote(userId, reviewId) {
+        state.reviewVotes = state.reviewVotes.filter(
+          (v) => !(v.user_id === userId && v.review_id === reviewId),
+        );
+      },
+
+      async voteCount(reviewId) {
+        return state.reviewVotes.filter((v) => v.review_id === reviewId).length;
+      },
+
       async listRecent(from, to) {
         const rows = state.reviews
           .filter((r) => r.is_public)

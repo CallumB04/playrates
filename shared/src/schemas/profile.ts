@@ -23,6 +23,8 @@ export const UpdateProfileSchema = z
     avatarUrl: z.string().url().max(2048).nullable().optional(),
     /** Opt-in. Off keeps sexually explicit games out of every listing. */
     showSexualContent: z.boolean().optional(),
+    /** Optional display name. Empty string clears it. */
+    firstName: z.string().trim().max(40).nullable().optional(),
   })
   .strict();
 
@@ -36,6 +38,8 @@ export const CheckUsernameSchema = z.object({
 export interface Profile {
   id: string;
   username: string;
+  /** Optional. Greetings use this before falling back to the username. */
+  firstName: string | null;
   bio: string;
   avatarUrl: string | null;
   /** Derived from last_seen_at, not stored. */

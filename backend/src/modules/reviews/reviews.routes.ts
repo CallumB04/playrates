@@ -1,4 +1,5 @@
 import { Router, type RequestHandler } from "express";
+import { z as zod } from "zod";
 import {
   GameIdParamSchema,
   PaginationSchema,
@@ -10,6 +11,11 @@ import type { z } from "zod";
 import { validate } from "../../middleware/validate.js";
 import { AppError } from "../../lib/AppError.js";
 import type { ReviewsService } from "./reviews.service.js";
+
+/** Route params are strings; the id has to be coerced before it is used. */
+const ReviewIdParamSchema = zod.object({
+  reviewId: zod.coerce.number().int().positive(),
+});
 
 interface Deps {
   service: ReviewsService;
@@ -93,14 +99,35 @@ export const createGameReviewsRouter = ({
   return router;
 };
 
-/** Mounted at /reviews. The site-wide feed. */
-export const createReviewsFeedRouter = ({ service }: Deps): Router => {
+/** Mounted at /reviews. The site-wide feed, and voting. */
+export const createReviewsFeedRouter = ({
+  service,
+  requireAuth,
+  optionalAuth,
+}: Deps): Router => {
   const router = Router();
 
-  router.get("/", validate({ query: PaginationSchema }), async (req, res) => {
-    const pagination = req.valid!.query as z.infer<typeof PaginationSchema>;
-    res.json(await service.listRecent(pagination));
-  });
+  router.get(
+    "/",
+    optionalAuth,
+    validate({ query: PaginationSchema }),
+    async (req, res) => {
+      const pagination = req.valid!.query as z.infer<typeof PaginationSchema>;
+      res.json(await service.listRecent(pagination, req.auth?.userId));
+    },
+  );
+
+  /* A toggle rather than separate add and remove: the client does not have
+     to know the current state to act, and a double-tap cannot double-count. */
+  router.post(
+    "/:reviewId/vote",
+    requireAuth,
+    validate({ params: ReviewIdParamSchema }),
+    async (req, res) => {
+      const { reviewId } = req.valid!.params as { reviewId: number };
+      res.json(await service.toggleVote(callerId(req), reviewId));
+    },
+  );
 
   return router;
 };

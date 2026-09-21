@@ -15,6 +15,8 @@ export interface ReviewRowJoined extends ReviewRow {
   played_status: string | null;
   platform_slug: string | null;
   author_username: string | null;
+  author_first_name: string | null;
+  vote_count: number;
   author_avatar_url: string | null;
   author_last_seen_at: string | null;
   game_title: string;
@@ -53,6 +55,13 @@ export interface ReviewsRepository {
     patch: { body: string; is_public: boolean },
   ): Promise<{ row: ReviewRowJoined; created: boolean }>;
   remove(id: number): Promise<void>;
+  findById(id: number): Promise<ReviewRowJoined | null>;
+  /** Which of these reviews the viewer has already voted on. */
+  votedReviewIds(userId: string, reviewIds: number[]): Promise<Set<number>>;
+  hasVoted(userId: string, reviewId: number): Promise<boolean>;
+  addVote(userId: string, reviewId: number): Promise<void>;
+  removeVote(userId: string, reviewId: number): Promise<void>;
+  voteCount(reviewId: number): Promise<number>;
 }
 
 export const createReviewsRepository = (db: Db): ReviewsRepository => ({
@@ -74,7 +83,13 @@ export const createReviewsRepository = (db: Db): ReviewsRepository => ({
         ? builder.order("rating", { ascending: false, nullsFirst: false })
         : sort === "rating-low"
           ? builder.order("rating", { ascending: true, nullsFirst: false })
-          : builder.order("created_at", { ascending: sort === "oldest" });
+          : sort === "helpful"
+            ? // Ties broken by recency, so a wall of zero-vote reviews is
+              // still in a sensible order rather than by id.
+              builder
+                .order("vote_count", { ascending: false })
+                .order("created_at", { ascending: false })
+            : builder.order("created_at", { ascending: sort === "oldest" });
 
     const { data, error, count } = await builder.order("id").range(from, to);
     if (error) throw error;
@@ -108,6 +123,64 @@ export const createReviewsRepository = (db: Db): ReviewsRepository => ({
       .range(from, to);
     if (error) throw error;
     return { rows: (data ?? []) as ReviewRowJoined[], total: count ?? 0 };
+  },
+
+  async findById(id) {
+    const { data, error } = await db
+      .from(CARDS)
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as ReviewRowJoined | null) ?? null;
+  },
+
+  async votedReviewIds(userId, reviewIds) {
+    const { data, error } = await db
+      .from("review_votes")
+      .select("review_id")
+      .eq("user_id", userId)
+      .in("review_id", reviewIds);
+    if (error) throw error;
+    return new Set((data ?? []).map((r) => (r as { review_id: number }).review_id));
+  },
+
+  async hasVoted(userId, reviewId) {
+    const { count, error } = await db
+      .from("review_votes")
+      .select("review_id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("review_id", reviewId);
+    if (error) throw error;
+    return (count ?? 0) > 0;
+  },
+
+  async addVote(userId, reviewId) {
+    const { error } = await db
+      .from("review_votes")
+      .upsert(
+        { user_id: userId, review_id: reviewId },
+        { onConflict: "review_id,user_id" },
+      );
+    if (error) throw error;
+  },
+
+  async removeVote(userId, reviewId) {
+    const { error } = await db
+      .from("review_votes")
+      .delete()
+      .eq("user_id", userId)
+      .eq("review_id", reviewId);
+    if (error) throw error;
+  },
+
+  async voteCount(reviewId) {
+    const { count, error } = await db
+      .from("review_votes")
+      .select("review_id", { count: "exact", head: true })
+      .eq("review_id", reviewId);
+    if (error) throw error;
+    return count ?? 0;
   },
 
   async findByUserAndGame(userId, gameId) {

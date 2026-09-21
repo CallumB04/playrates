@@ -26,6 +26,7 @@ export interface Review {
 export interface ReviewAuthor {
   id: string;
   username: string;
+  firstName: string | null;
   avatarUrl: string | null;
   online: boolean;
 }
@@ -52,6 +53,9 @@ export interface ReviewWithAuthor extends Review {
   playedStatus: string | null;
   platform: string | null;
   game: ReviewGame;
+  voteCount: number;
+  /** Whether the viewer has upvoted it. False when signed out. */
+  votedByViewer: boolean;
 }
 
 /**
@@ -62,6 +66,7 @@ export interface ReviewWithAuthor extends Review {
 export const REVIEW_SORTS = [
   "recent",
   "oldest",
+  "helpful",
   "rating-high",
   "rating-low",
 ] as const;

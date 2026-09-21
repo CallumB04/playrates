@@ -14,6 +14,7 @@ export const isOnline = (lastSeenAt: string, now = Date.now()): boolean =>
 export const toProfile = (row: ProfileRow, now = Date.now()): Profile => ({
   id: row.id,
   username: row.username,
+  firstName: row.first_name,
   bio: row.bio,
   avatarUrl: row.avatar_url,
   online: isOnline(row.last_seen_at, now),

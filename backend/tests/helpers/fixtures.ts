@@ -21,6 +21,7 @@ export const buildProfile = (
   avatar_url: null,
   // recent, so `online` derives to true unless a test says otherwise
   show_sexual_content: false,
+  first_name: null,
   last_seen_at: NOW,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,

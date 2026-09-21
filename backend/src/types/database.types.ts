@@ -16,6 +16,7 @@ export interface ProfileRow {
   last_seen_at: string;
   /** Opt-in. Off filters games flagged has_sexual_content out of listings. */
   show_sexual_content: boolean;
+  first_name: string | null;
   created_at: string;
   updated_at: string;
 }
