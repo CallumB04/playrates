@@ -67,7 +67,7 @@ const GameReviews = ({
                        the same button twice. */
                     <Button size="sm" onClick={onWriteReview}>
                         <PenLine size={14} aria-hidden />
-                        {hasLog ? "Edit your review" : "Write a review"}
+                        {hasLog ? "Edit review" : "Write a review"}
                     </Button>
                 )}
                 <Dropdown
@@ -99,7 +99,7 @@ const GameReviews = ({
                 action={
                     onWriteReview ? (
                         <Button onClick={onWriteReview}>
-                            {hasLog ? "Edit your log" : "Log this game"}
+                            {hasLog ? "Add review" : "Log this game"}
                         </Button>
                     ) : undefined
                 }

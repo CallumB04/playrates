@@ -38,8 +38,7 @@ const StatusBadge = ({
         label,
         icon: Mark,
         chip,
-        markTone,
-        accent,
+        onMediaTone,
     } = STATUS_PRESENTATION[status];
 
     const previous = useRef(status);
@@ -61,8 +60,8 @@ const StatusBadge = ({
                 SIZE[size],
                 onMedia
                     ? cn(
-                          accent,
-                          "border-transparent text-white shadow-cover"
+                          onMediaTone,
+                          "bg-media-scrim shadow-cover backdrop-blur-sm"
                       )
                     : chip,
                 stamping && "animate-stamp",
@@ -72,7 +71,7 @@ const StatusBadge = ({
             <Mark
                 size={size === "stamp" ? 11 : 13}
                 aria-hidden
-                className={cn("shrink-0", onMedia ? undefined : markTone)}
+                className="shrink-0"
             />
             {label}
         </span>

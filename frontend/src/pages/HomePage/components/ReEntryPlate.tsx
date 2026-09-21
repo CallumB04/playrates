@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
+import { Pencil } from "lucide-react";
 import type { UserStats } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
-import Button, { buttonClass } from "../../../components/ui/Button";
+import { buttonClass } from "../../../components/ui/Button";
 import GameCover from "../../../components/game/GameCover";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import RatingBadge from "../../../components/ui/RatingBadge";
@@ -71,8 +72,9 @@ const ReEntryPlate = ({
         />
 
         <div className="relative grid gap-8 px-6 py-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-12 lg:px-8 lg:py-9">
-            <div className="flex flex-col">
-                <h1 className="font-display text-[34px] leading-tight text-content sm:text-[40px]">
+            <div className="flex flex-col justify-between gap-6">
+                <div>
+                    <h1 className="font-display text-[34px] leading-tight text-content sm:text-[40px]">
                     Welcome back, {displayName}
                 </h1>
 
@@ -83,22 +85,12 @@ const ReEntryPlate = ({
                 </p>
 
                 <div className="mt-6 flex flex-wrap items-center gap-3">
-                    {current ? (
-                        <Button size="lg" onClick={onUpdateLog}>
-                            Update your log
-                        </Button>
-                    ) : (
-                        <Link
-                            to="/library"
-                            className={buttonClass(
-                                "primary",
-                                undefined,
-                                "lg"
-                            )}
-                        >
-                            Find something to play
-                        </Link>
-                    )}
+                    <Link
+                        to="/library"
+                        className={buttonClass("primary", undefined, "lg")}
+                    >
+                        Browse games
+                    </Link>
                     <Link
                         to={`/user/${username}`}
                         className={buttonClass("secondary", undefined, "lg")}
@@ -107,8 +99,10 @@ const ReEntryPlate = ({
                     </Link>
                 </div>
 
+                </div>
+
                 {/* The shelves, one press away. */}
-                <div className="mt-7 flex flex-wrap gap-2 border-t border-subtle pt-5">
+                <div className="flex flex-wrap gap-2 border-t border-subtle pt-5">
                     {GAME_STATUSES.map((status) => {
                         const { label, icon: Icon, markTone } =
                             STATUS_PRESENTATION[status];
@@ -132,9 +126,10 @@ const ReEntryPlate = ({
 
             <div className="flex flex-col gap-5">
                 {current?.game && (
-                    <Link
-                        to={`/game/${current.gameId}`}
-                        className="lift flex items-center gap-3.5 rounded-md border border-subtle bg-surface-sunken/40 p-3 hover:border-strong"
+                    <button
+                        type="button"
+                        onClick={onUpdateLog}
+                        className="lift flex w-full cursor-pointer items-center gap-3.5 rounded-md border border-subtle bg-surface-sunken/40 p-3 text-left hover:border-strong"
                     >
                         <span className="relative shrink-0">
                             <GameCover
@@ -157,7 +152,12 @@ const ReEntryPlate = ({
                         {current.rating !== null && (
                             <RatingBadge value={current.rating} bare />
                         )}
-                    </Link>
+                        <Pencil
+                            size={15}
+                            aria-hidden
+                            className="shrink-0 text-content-muted"
+                        />
+                    </button>
                 )}
 
                 <div>

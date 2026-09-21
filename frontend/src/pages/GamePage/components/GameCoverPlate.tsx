@@ -88,15 +88,16 @@ const GameCoverPlate = ({
                    people came back for, and editing is one press further in
                    rather than the only option. */
                 <div className="flex flex-col gap-2">
-                    <Button size="lg" onClick={onViewLog} disabled={isSaving}>
-                        View your log
+                    <Button size="lg" onClick={onPrimary} disabled={isSaving}>
+                        Edit your log
                     </Button>
                     <Button
                         variant="secondary"
-                        onClick={onPrimary}
+                        size="lg"
+                        onClick={onViewLog}
                         disabled={isSaving}
                     >
-                        Edit your log
+                        View your log
                     </Button>
                 </div>
             ) : (

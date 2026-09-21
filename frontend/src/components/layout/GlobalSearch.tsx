@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { LoaderCircle, Search } from "lucide-react";
 import { queryKeys, searchGames, searchProfiles } from "../../api";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import GameCover from "../game/GameCover";
@@ -39,14 +39,14 @@ const GlobalSearch = () => {
     const debounced = useDebouncedValue(term.trim(), 250);
     const enabled = debounced.length >= 2;
 
-    const { data: games } = useQuery({
+    const { data: games, isFetching: gamesFetching } = useQuery({
         queryKey: queryKeys.games.search(debounced),
         queryFn: () => searchGames(debounced, PER_SECTION),
         enabled,
         staleTime: 30_000,
     });
 
-    const { data: people } = useQuery({
+    const { data: people, isFetching: peopleFetching } = useQuery({
         queryKey: queryKeys.profiles.search(debounced),
         queryFn: () => searchProfiles(debounced),
         enabled,
@@ -83,6 +83,11 @@ const GlobalSearch = () => {
         document.addEventListener("mousedown", onPointerDown);
         return () => document.removeEventListener("mousedown", onPointerDown);
     }, [open]);
+
+    /* Typing past the debounce leaves the previous term's results on screen
+       while the new request is out, so "nothing found" has to wait for the
+       request rather than for the list to be empty. */
+    const searching = gamesFetching || peopleFetching;
 
     const gameRows = (games?.data ?? []).slice(0, PER_SECTION);
     const peopleRows = (people?.data ?? []).slice(0, PER_SECTION);
@@ -226,9 +231,17 @@ const GlobalSearch = () => {
                     placeholder="Search games and people"
                     className="min-w-0 flex-1 bg-transparent text-body-sm text-content placeholder:text-content-muted focus:outline-none"
                 />
-                <kbd className="rounded-xs border border-subtle px-1.5 font-mono text-[10px] text-content-muted">
-                    /
-                </kbd>
+                {searching ? (
+                    <LoaderCircle
+                        size={13}
+                        aria-hidden
+                        className="shrink-0 animate-spin text-content-muted"
+                    />
+                ) : (
+                    <kbd className="rounded-xs border border-subtle px-1.5 font-mono text-[10px] text-content-muted">
+                        /
+                    </kbd>
+                )}
             </form>
 
             {open && enabled && (
@@ -240,7 +253,16 @@ const GlobalSearch = () => {
                         items={rows.slice(gameRows.length)}
                     />
 
-                    {rows.length === 0 ? (
+                    {searching && rows.length === 0 ? (
+                        <li className="flex items-center gap-2 px-2.5 py-3 text-body-sm text-content-muted">
+                            <LoaderCircle
+                                size={14}
+                                aria-hidden
+                                className="animate-spin"
+                            />
+                            Searching…
+                        </li>
+                    ) : rows.length === 0 ? (
                         <li className="px-2.5 py-3 text-body-sm text-content-muted">
                             Nothing found for “{debounced}”.
                         </li>
