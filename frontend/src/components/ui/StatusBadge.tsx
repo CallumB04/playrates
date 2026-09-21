@@ -10,6 +10,12 @@ export type StatusBadgeSize = "stamp" | "base";
 interface StatusBadgeProps {
     status: DisplayStatus;
     size?: StatusBadgeSize;
+    /**
+     * Drops the rule and the fill, leaving the mark and the word in the
+     * status hue. For rows that are already a list of small things, where a
+     * pill turns one more piece of metadata into a component.
+     */
+    plain?: boolean;
     /** The rotated, scrim-backed treatment that sits on box art. */
     onMedia?: boolean;
     /** Play the 90ms stamp once when the status actually changes. */
@@ -30,6 +36,7 @@ const SIZE: Record<StatusBadgeSize, string> = {
 const StatusBadge = ({
     status,
     size = "base",
+    plain = false,
     onMedia = false,
     animateOnChange = false,
     className,
@@ -38,6 +45,7 @@ const StatusBadge = ({
         label,
         icon: Mark,
         chip,
+        markTone,
         onMediaTone,
     } = STATUS_PRESENTATION[status];
 
@@ -56,14 +64,19 @@ const StatusBadge = ({
     return (
         <span
             className={cn(
-                "inline-flex items-center rounded-full border font-medium",
-                SIZE[size],
-                onMedia
-                    ? cn(
-                          onMediaTone,
-                          "bg-media-scrim shadow-cover backdrop-blur-sm"
-                      )
-                    : chip,
+                "inline-flex items-center font-medium",
+                plain
+                    ? cn("gap-1.5 text-xs", markTone)
+                    : cn(
+                          "rounded-full border",
+                          SIZE[size],
+                          onMedia
+                              ? cn(
+                                    onMediaTone,
+                                    "bg-media-scrim shadow-cover backdrop-blur-sm"
+                                )
+                              : chip
+                      ),
                 stamping && "animate-stamp",
                 className
             )}

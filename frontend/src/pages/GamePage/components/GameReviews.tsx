@@ -126,7 +126,7 @@ const GameReviews = ({
                                 {review.author.username}
                             </Link>
                             {reviewStatus(review) && (
-                                <StatusBadge status={reviewStatus(review)!} />
+                                <StatusBadge status={reviewStatus(review)!} plain />
                             )}
                             {review.hoursPlayed !== null && (
                                 <span className="text-label-sm text-content-muted">
