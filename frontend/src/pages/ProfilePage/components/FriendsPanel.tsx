@@ -52,7 +52,7 @@ const FriendsPanel = ({
                     to="/library"
                     className={buttonClass("secondary", undefined, "sm")}
                 >
-                    Find people by their games
+                    Browse the library
                 </Link>
             </div>
         ) : (

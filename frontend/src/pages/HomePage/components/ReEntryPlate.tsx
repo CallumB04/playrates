@@ -30,21 +30,15 @@ interface ReEntryPlateProps {
     onUpdateLog: () => void;
 }
 
-/** The figure leads. The label is there to say what it is, not to compete. */
-const Stat = ({
-    label,
-    value,
-    tone,
-}: {
-    label: string;
-    value: string;
-    tone: string;
-}) => (
-    <div className="border-l-2 pl-3" style={{ borderColor: tone }}>
-        <p className="font-mono text-[26px] leading-none text-content">
+/** The figure leads. The label says what it is; it does not compete. */
+const Stat = ({ label, value }: { label: string; value: string }) => (
+    <div className="min-w-0">
+        <p className="truncate font-mono text-[26px] leading-none text-content">
             {value}
         </p>
-        <p className="mt-1.5 text-label-sm text-content-muted">{label}</p>
+        <p className="mt-1.5 truncate text-label-sm text-content-muted">
+            {label}
+        </p>
     </div>
 );
 
@@ -80,24 +74,9 @@ const ReEntryPlate = ({
                 </h1>
 
                 <p className="mt-2.5 max-w-[46ch] text-body leading-relaxed text-content-secondary">
-                    {current?.game ? (
-                        <>
-                            You left off in{" "}
-                            <span className="text-content">
-                                {current.game.title}
-                            </span>
-                            {current.hoursPlayed !== null && (
-                                <> at {formatHours(current.hoursPlayed)}</>
-                            )}
-                            . {formatCount(backlogCount)} more waiting.
-                        </>
-                    ) : (
-                        <>
-                            {formatCount(playingCount)} on the go,{" "}
-                            {formatCount(backlogCount)} waiting. Pick something
-                            and the rest of this page fills in.
-                        </>
-                    )}
+                    {formatCount(playingCount)}{" "}
+                    {playingCount === 1 ? "game" : "games"} in progress,{" "}
+                    {formatCount(backlogCount)} in your backlog.
                 </p>
 
                 <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -167,7 +146,9 @@ const ReEntryPlate = ({
                                 {current.game.title}
                             </span>
                             <span className="block text-label-sm text-content-muted">
-                                Last logged {relativeTime(current.updatedAt)}
+                                Updated {relativeTime(current.updatedAt)}
+                                {current.hoursPlayed !== null &&
+                                    ` · ${formatHours(current.hoursPlayed)}`}
                             </span>
                         </span>
                         {current.rating !== null && (
@@ -176,8 +157,8 @@ const ReEntryPlate = ({
                     </Link>
                 )}
 
-                <div className="rounded-md border border-subtle bg-surface-sunken/40 p-4">
-                    <div className="mb-4 flex items-baseline justify-between gap-3">
+                <div>
+                    <div className="mb-3 flex items-baseline justify-between gap-3">
                         <h2 className="text-label text-content-muted">
                             Your {new Date().getFullYear()}
                         </h2>
@@ -188,23 +169,22 @@ const ReEntryPlate = ({
 
                     <YearChart logs={yearLogs} />
 
-                    <div className="mt-5 grid grid-cols-3 gap-3">
+                    {/* Equal columns, so three figures of different lengths
+                        still line up. */}
+                    <div className="mt-5 grid grid-cols-3 gap-4 border-t border-subtle pt-4">
                         <Stat
                             label="Hours"
                             value={formatHours(yearStats?.hoursPlayed ?? 0)}
-                            tone="var(--color-brand)"
                         />
                         <Stat
-                            label="Avg rating"
+                            label="Average rating"
                             value={formatRating(
                                 yearStats?.averageRating ?? null
                             )}
-                            tone="var(--color-status-wishlist)"
                         />
                         <Stat
                             label="Rated"
                             value={formatCount(yearStats?.ratingCount ?? 0)}
-                            tone="var(--color-status-backlog)"
                         />
                     </div>
                 </div>

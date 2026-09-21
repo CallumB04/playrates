@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Game, Platform } from "@playrates/shared";
 import GameTile, { type TileAction } from "../../../components/game/GameTile";
 import { TileSkeleton } from "../../../components/ui/Skeleton";
-import { primaryPlatformLabel } from "../../../lib/platforms";
 import { releaseYear } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 
@@ -132,10 +131,8 @@ const Rail = ({
                                 gameId={(game as Game).id}
                                 title={(game as Game).title}
                                 coverUrl={(game as Game).coverUrl}
-                                footLabel={primaryPlatformLabel(
-                                    (game as Game).platforms,
-                                    platforms
-                                )}
+                                platformSlugs={(game as Game).platforms}
+                                platforms={platforms}
                                 /* A community average isn't on Game, and the
                                    brand figure is reserved for real PlayRates
                                    ratings, so the year goes here instead. */

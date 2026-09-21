@@ -32,7 +32,7 @@ const RecentReviews = ({ reviews, isOwner }: RecentReviewsProps) => {
                 <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
                     <p className="text-body-sm text-content-muted">
                         {isOwner
-                            ? "You haven't written a review yet."
+                            ? "No reviews yet."
                             : "No reviews written yet."}
                     </p>
                     {isOwner && (

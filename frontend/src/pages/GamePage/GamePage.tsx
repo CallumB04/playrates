@@ -88,8 +88,8 @@ const GamePage = () => {
     if (isError || !game) {
         return (
             <EmptyPlate
-                title="That game isn't in the library"
-                body="The link may be wrong, or the title may have been removed since it was shared."
+                title="Game not found"
+                body="The link may be out of date, or the game may have been removed."
             />
         );
     }

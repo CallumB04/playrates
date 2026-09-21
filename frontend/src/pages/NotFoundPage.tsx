@@ -3,7 +3,6 @@ import { buttonClass } from "../components/ui/Button";
 import GameTile from "../components/game/GameTile";
 import { TileSkeleton } from "../components/ui/Skeleton";
 import { useGames, usePlatforms } from "../hooks/queries/useGames";
-import { primaryPlatformLabel } from "../lib/platforms";
 import { releaseYear } from "../lib/format";
 
 /**
@@ -28,11 +27,10 @@ const NotFoundPage = () => {
                 </span>
                 <div>
                     <h1 className="font-display text-title text-content">
-                        This page has no save file.
+                        Page not found
                     </h1>
                     <p className="mt-2.5 max-w-[46ch] text-body text-content-secondary">
-                        The link may be old, or the page may have moved since it
-                        was shared. Everything else is where you left it.
+                        The link may be out of date, or the page may have moved.
                     </p>
                     <div className="mt-5 flex flex-wrap gap-3">
                         <Link to="/library" className={buttonClass("primary")}>
@@ -65,10 +63,8 @@ const NotFoundPage = () => {
                                   gameId={game.id}
                                   title={game.title}
                                   coverUrl={game.coverUrl}
-                                  footLabel={primaryPlatformLabel(
-                                      game.platforms,
-                                      platforms ?? []
-                                  )}
+                                  platformSlugs={game.platforms}
+                                  platforms={platforms ?? []}
                                   footValue={releaseYear(game.releaseDate)}
                               />
                           ))}

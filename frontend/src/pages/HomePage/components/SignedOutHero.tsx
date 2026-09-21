@@ -41,9 +41,8 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
             </h1>
 
             <p className="mt-4 max-w-[46ch] text-[17px] leading-relaxed text-content-secondary">
-                Rate to the half point, track the hours, and let the backlog be
-                honest with you. Your library is a page worth linking to, not a
-                spreadsheet you hide.
+                Rate what you play, track your hours, and keep your backlog
+                in one place. Your library is a page you can share.
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -68,8 +67,7 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
                 <span className="font-mono text-content">
                     {formatCount(siteStats?.logCount ?? 0)}
                 </span>{" "}
-                {siteStats?.logCount === 1 ? "log" : "logs"} kept so far. Free,
-                and yours to export.
+                {siteStats?.logCount === 1 ? "log" : "logs"} so far.
             </p>
         </div>
 

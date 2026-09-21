@@ -34,6 +34,9 @@ const Card = ({
     </div>
 );
 
+/** A figure with nothing behind it yet. */
+const EMPTY = "–";
+
 const Figure = ({
     icon: Icon,
     value,
@@ -70,17 +73,11 @@ const ScoreCards = ({
     game: Game;
     stats: GameStats | undefined;
 }) => {
-    const hasOwn =
-        stats &&
-        (stats.avgHoursPlayed !== null ||
-            stats.avgHoursToBeat !== null ||
-            stats.completionRate !== null);
-
-    if (game.metacritic === null && !hasOwn) return null;
+    const logCount = stats?.logCount ?? 0;
 
     return (
         <section className="grid gap-3 sm:grid-cols-2">
-            {game.metacritic !== null && (
+            {game.metacritic !== null ? (
                 <Card label="Metacritic" hint="Critic score">
                     <div className="flex items-center gap-3">
                         <span
@@ -100,38 +97,53 @@ const ScoreCards = ({
                         </p>
                     </div>
                 </Card>
-            )}
-
-            {hasOwn && (
-                <Card
-                    label="On PlayRates"
-                    hint={`${stats.logCount} ${stats.logCount === 1 ? "log" : "logs"}`}
-                >
-                    <div className="flex flex-wrap gap-x-7 gap-y-3">
-                        {stats.avgHoursPlayed !== null && (
-                            <Figure
-                                icon={Clock}
-                                value={formatHours(stats.avgHoursPlayed)}
-                                caption="Average played"
-                            />
-                        )}
-                        {stats.avgHoursToBeat !== null && (
-                            <Figure
-                                icon={Hourglass}
-                                value={formatHours(stats.avgHoursToBeat)}
-                                caption="Average to beat"
-                            />
-                        )}
-                        {stats.completionRate !== null && (
-                            <Figure
-                                icon={Trophy}
-                                value={formatPercent(stats.completionRate)}
-                                caption="Got every achievement"
-                            />
-                        )}
+            ) : (
+                <Card label="Metacritic" hint="Critic score">
+                    <div className="flex items-center gap-3">
+                        <span className="grid size-14 shrink-0 place-items-center rounded-sm bg-surface-sunken font-mono text-2xl text-content-muted">
+                            {EMPTY}
+                        </span>
+                        <p className="text-body-sm text-content-muted">
+                            No critic score
+                        </p>
                     </div>
                 </Card>
             )}
+
+            <Card
+                label="On PlayRates"
+                hint={`${logCount} ${logCount === 1 ? "log" : "logs"}`}
+            >
+                <div className="flex flex-wrap gap-x-7 gap-y-3">
+                    <Figure
+                        icon={Clock}
+                        value={
+                            stats?.avgHoursPlayed != null
+                                ? formatHours(stats.avgHoursPlayed)
+                                : EMPTY
+                        }
+                        caption="Average played"
+                    />
+                    <Figure
+                        icon={Hourglass}
+                        value={
+                            stats?.avgHoursToBeat != null
+                                ? formatHours(stats.avgHoursToBeat)
+                                : EMPTY
+                        }
+                        caption="Average to beat"
+                    />
+                    <Figure
+                        icon={Trophy}
+                        value={
+                            stats?.completionRate != null
+                                ? formatPercent(stats.completionRate)
+                                : EMPTY
+                        }
+                        caption="All achievements"
+                    />
+                </div>
+            </Card>
         </section>
     );
 };

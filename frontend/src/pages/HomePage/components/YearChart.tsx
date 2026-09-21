@@ -55,7 +55,11 @@ const YearChart = ({ logs }: { logs: GameLogWithGame[] }) => {
                 {counts.map((count, i) => (
                     <div
                         key={i}
-                        className="group/bar flex flex-1 flex-col items-center gap-1.5"
+                        /* h-full and justify-end: a percentage height needs a
+                           parent with a height to resolve against, and
+                           items-end on the row leaves each column at content
+                           size, which is zero. */
+                        className="group/bar flex h-full flex-1 flex-col justify-end"
                         title={`${count} in ${
                             ["January","February","March","April","May","June","July","August","September","October","November","December"][i]
                         }`}

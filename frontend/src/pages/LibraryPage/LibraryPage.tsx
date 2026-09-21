@@ -31,7 +31,6 @@ import {
     STATUS_PRESENTATION,
     displayStatusFor,
 } from "../../constants/gameStatus";
-import { primaryPlatformLabel } from "../../lib/platforms";
 import {
     formatCount,
     formatRating,
@@ -217,7 +216,7 @@ const LibraryPage = () => {
             ) : games.length === 0 ? (
                 <EmptyPlate
                     title="No titles match those filters"
-                    body="Try a broader search, or clear the platform and genre filters. There are tens of thousands of games in here, so something will fit."
+                    body="Try a broader search, or clear the platform and genre filters."
                 />
             ) : (
                 <div
@@ -235,10 +234,8 @@ const LibraryPage = () => {
                                 gameId={game.id}
                                 title={game.title}
                                 coverUrl={game.coverUrl}
-                                footLabel={primaryPlatformLabel(
-                                    game.platforms,
-                                    platforms ?? []
-                                )}
+                                platformSlugs={game.platforms}
+                                platforms={platforms ?? []}
                                 /* Only show the brand figure when there is a
                                    real rating behind it; otherwise the year. */
                                 rating={log ? log.rating : undefined}

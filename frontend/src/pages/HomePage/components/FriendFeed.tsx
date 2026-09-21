@@ -124,7 +124,7 @@ const FriendFeed = ({
                 <TextSkeleton lines={4} />
             ) : items.length === 0 ? (
                 <p className="rounded-md border border-dashed border-strong bg-surface-sunken/40 px-4 py-6 text-center text-body-sm text-content-muted">
-                    Nothing yet. Add a few friends and their logs show up here.
+                    No activity yet. Logs from your friends appear here.
                 </p>
             ) : (
                 items.map((item) => <Row key={item.logId} item={item} />)

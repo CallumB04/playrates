@@ -68,7 +68,7 @@ const ReviewFeed = ({
                 <TextSkeleton lines={5} />
             ) : reviews.length === 0 ? (
                 <p className="rounded-md border border-dashed border-strong bg-surface-sunken/40 px-4 py-6 text-center text-body-sm text-content-muted">
-                    No reviews yet. Be the first to write one.
+                    No reviews yet.
                 </p>
             ) : (
                 reviews.map((review) => <Row key={review.id} review={review} />)

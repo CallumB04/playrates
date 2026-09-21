@@ -3,7 +3,9 @@ import type { ComponentType, SVGProps } from "react";
 import { cn } from "../../lib/cn";
 import type { DisplayStatus } from "../../constants/gameStatus";
 import { formatRating } from "../../lib/format";
+import type { Platform } from "@playrates/shared";
 import GameCover from "./GameCover";
+import PlatformMarks from "./PlatformMarks";
 import StatusBadge from "../ui/StatusBadge";
 
 export interface TileAction {
@@ -24,8 +26,9 @@ interface GameTileProps {
     gameId: number;
     title: string;
     coverUrl: string | null;
-    /** The line under the cover: label left, figure right. */
-    footLabel?: string;
+    /** Platform marks on the left of the line under the cover. */
+    platformSlugs?: string[];
+    platforms?: Platform[];
     /** The viewer's own rating. The brand figure is reserved for these. */
     rating?: number | null;
     /** A muted figure for the right of the line when there is no rating to
@@ -58,7 +61,8 @@ const GameTile = ({
     gameId,
     title,
     coverUrl,
-    footLabel,
+    platformSlugs,
+    platforms,
     rating,
     footValue,
     status,
@@ -72,7 +76,10 @@ const GameTile = ({
         <div className="group/tile">
             <Link
                 to={`/game/${gameId}`}
-                className="relative block aspect-3/4 overflow-hidden rounded-md bg-surface-media shadow-cover duration-500 lift group-hover/tile:-translate-y-0.5 group-hover/tile:shadow-cover-hover"
+                /* The cover stays put. Lifting the art while the buttons were
+                   also sliding in gave the tile two movements at once, which
+                   read as the whole thing jumping. */
+                className="relative block aspect-3/4 overflow-hidden rounded-md bg-surface-media shadow-cover transition-shadow duration-500 ease-[var(--ease-glide)] group-hover/tile:shadow-cover-hover"
             >
                 <GameCover
                     coverUrl={coverUrl}
@@ -171,11 +178,13 @@ const GameTile = ({
                 </span>
             </Link>
 
-            {(footLabel || rating !== undefined || footValue) && (
-                <div className="mt-2 flex items-baseline gap-1">
-                    <span className="truncate text-[11px] text-content-muted">
-                        {footLabel}
-                    </span>
+            {(platformSlugs || rating !== undefined || footValue) && (
+                <div className="mt-2 flex items-center gap-1">
+                    <PlatformMarks
+                        slugs={platformSlugs ?? []}
+                        platforms={platforms ?? []}
+                        className="shrink-0 text-content-muted"
+                    />
                     <span className="leader" aria-hidden="true" />
                     <span
                         className={cn(

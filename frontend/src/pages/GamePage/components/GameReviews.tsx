@@ -68,7 +68,7 @@ const GameReviews = ({
         ) : reviews.length === 0 ? (
             <EmptyPlate
                 title="No reviews yet"
-                body="Log this game and write one. Someone deciding whether to start it will read it."
+                body="Log this game to write the first one."
             />
         ) : (
             reviews.map((review) => (

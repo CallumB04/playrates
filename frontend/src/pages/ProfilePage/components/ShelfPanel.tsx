@@ -10,7 +10,6 @@ import { TileSkeleton } from "../../../components/ui/Skeleton";
 import EmptyPlate, { GhostTile } from "../../../components/ui/EmptyPlate";
 import DrawerTabs from "./DrawerTabs";
 import { displayStatusFor } from "../../../constants/gameStatus";
-import { primaryPlatformLabel } from "../../../lib/platforms";
 import { formatCount } from "../../../lib/format";
 import type { ReactNode } from "react";
 
@@ -35,23 +34,23 @@ const EMPTY_COPY: Record<
     { title: string; body: string; cta: string }
 > = {
     played: {
-        title: "Nothing played yet",
-        body: "Log the last game you finished, even if that was years ago. A shelf is more useful honest than current.",
+        title: "No played games yet",
+        body: "Games you mark as played appear here.",
         cta: "Find a game to log",
     },
     playing: {
-        title: "Nothing on the go",
-        body: "Mark a game as playing and it shows up here, with the hours as you add them.",
-        cta: "Find something to start",
+        title: "Nothing in progress",
+        body: "Games you mark as playing appear here.",
+        cta: "Find a game to log",
     },
     backlog: {
-        title: "The backlog is empty",
-        body: "Enviable. Add the games you mean to get to and this becomes the list you actually work through.",
+        title: "Your backlog is empty",
+        body: "Games you add to your backlog appear here.",
         cta: "Browse the library",
     },
     wishlist: {
-        title: "Nothing on the wishlist",
-        body: "Wishlist a game from the library and it waits here until you pick it up.",
+        title: "Your wishlist is empty",
+        body: "Games you add to your wishlist appear here.",
         cta: "Browse the library",
     },
 };
@@ -121,10 +120,8 @@ const ShelfPanel = ({
                                 gameId={log.gameId}
                                 title={log.game?.title ?? "Unknown game"}
                                 coverUrl={log.game?.coverUrl ?? null}
-                                footLabel={primaryPlatformLabel(
-                                    log.game?.platforms ?? [],
-                                    platforms
-                                )}
+                                platformSlugs={log.game?.platforms ?? []}
+                                platforms={platforms}
                                 rating={log.rating}
                                 /* Only the played tab carries a substatus —
                                    the other tabs already say what they are. */
