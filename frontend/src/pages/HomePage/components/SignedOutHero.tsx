@@ -75,13 +75,13 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
 
         <div
             aria-hidden
-            className="relative hidden h-[300px] lg:block xl:h-[340px]"
+            className="relative isolate hidden h-[260px] lg:block xl:h-[290px]"
         >
             {covers.slice(0, 6).map((game, i) => (
                 <span
                     key={game.id}
                     className={cn(
-                        "absolute top-1/2 w-[148px] -translate-y-1/2 xl:w-[164px]",
+                        "absolute top-1/2 w-[126px] -translate-y-1/2 xl:w-[140px]",
                         TILT[i]
                     )}
                     style={{ left: `${i * 15}%`, zIndex: i }}

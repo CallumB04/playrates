@@ -42,7 +42,7 @@ const Modal = ({
 
     return createPortal(
         <div
-            className="fixed top-0 left-0 flex h-screen w-screen items-center justify-center bg-overlay-backdrop px-4 backdrop-blur-sm"
+            className="fixed top-0 left-0 z-50 flex h-screen w-screen items-center justify-center bg-overlay-backdrop px-4 backdrop-blur-sm"
             onMouseDown={onClose}
         >
             <div
