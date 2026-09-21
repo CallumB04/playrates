@@ -94,7 +94,8 @@ cross join (values ('steam'), ('playstation'), ('xbox')) as p (slug)
 where g.rawg_id in (3328, 4200, 5286, 13536, 5679, 28);
 
 -- One logged game with a rating and a public review, so the profile and game
--- pages have populated states to look at.
+-- pages have populated states to look at. Ratings are half points, as
+-- game_logs_rating requires.
 insert into public.game_logs (
     user_id, game_id, status, played_status, rating, hours_played, platform_slug
 )
@@ -103,7 +104,7 @@ select
     id,
     'played',
     'finished',
-    9.25,
+    9.5,
     60.5,
     'steam'
 from public.games where rawg_id = 3328;
