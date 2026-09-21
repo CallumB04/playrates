@@ -5,6 +5,7 @@ import Footer from "./components/Footer";
 import Notification from "./components/Notification";
 import AccountFormModal from "./components/auth/AccountFormModal";
 import HomePage from "./pages/HomePage/HomePage";
+import LegalPage from "./pages/legal/LegalPage";
 import ProfilePageRoute from "./pages/ProfilePage/ProfilePageRoute";
 import LibraryPage from "./pages/LibraryPage/LibraryPage";
 import GamePage from "./pages/GamePage/GamePage";
@@ -18,6 +19,29 @@ import DesignLibraryPage from "./pages/admin/design-library/DesignLibraryPage";
  * The catalogue used to live at /library. A bare redirect would drop the
  * query string, and every shared link carries its filters there.
  */
+const LEGAL_PAGES = [
+    {
+        path: "/about",
+        title: "About PlayRates",
+        summary: "What this is, who built it, and why it exists.",
+    },
+    {
+        path: "/privacy",
+        title: "Privacy",
+        summary: "What we store about you, and what we do with it.",
+    },
+    {
+        path: "/terms",
+        title: "Terms",
+        summary: "The rules for keeping an account here.",
+    },
+    {
+        path: "/contact",
+        title: "Contact",
+        summary: "How to reach someone about the site.",
+    },
+];
+
 const CatalogueRedirect = () => {
     const { search } = useLocation();
     return <Navigate to={{ pathname: "/catalogue", search }} replace />;
@@ -47,6 +71,20 @@ function App() {
                         />
                         <Route path="/game/:gameID" element={<GamePage />} />
                         <Route path="/settings" element={<SettingsPage />} />
+
+                        {/* Stubs, so the footer never links into nothing. */}
+                        {LEGAL_PAGES.map((page) => (
+                            <Route
+                                key={page.path}
+                                path={page.path}
+                                element={
+                                    <LegalPage
+                                        title={page.title}
+                                        summary={page.summary}
+                                    />
+                                }
+                            />
+                        ))}
 
                         {/* Admin area. Built for several views; the design
                             library is the first. */}

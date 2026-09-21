@@ -1,11 +1,14 @@
-import { getPlatformIcon } from "../lib/icons";
 import { Star, Trophy } from "lucide-react";
-import { buttonClass } from "./ui/Button";
 import type { GameLogWithGame } from "../api";
 import { displayStatusFor } from "../constants/gameStatus";
-import StatusBadge from "./ui/StatusBadge";
 import { useGame, usePlatforms } from "../hooks/queries/useGames";
+import { platformIcon } from "../lib/platformIcons";
+import { formatDate, formatHours, formatRating } from "../lib/format";
+import { cn } from "../lib/cn";
 import Modal from "./ui/Modal";
+import Button, { buttonClass } from "./ui/Button";
+import StatusBadge from "./ui/StatusBadge";
+import GameCover from "./game/GameCover";
 
 export interface LogPopupAction {
     label: string;
@@ -20,186 +23,249 @@ interface ViewGameLogPopupProps {
      * What the viewer can do about this log — edit their own, jump to their
      * own log of the same game, or start one. Omitted when signed out, which
      * leaves Close as the only control.
-     *
-     * The caller decides: it used to be six props reconstructing the same
-     * three-way branch here, twice over, and two of them were always no-ops.
      */
     primaryAction?: LogPopupAction;
 }
 
+/** A ring, because a fraction is a shape before it is a number. */
+const AchievementRing = ({
+    done,
+    total,
+}: {
+    done: number;
+    total: number;
+}) => {
+    const pct = total > 0 ? Math.min(1, done / total) : 0;
+    const radius = 34;
+    const circumference = 2 * Math.PI * radius;
+
+    return (
+        <div className="relative grid size-24 place-items-center">
+            <svg viewBox="0 0 80 80" className="size-full -rotate-90">
+                <circle
+                    cx="40"
+                    cy="40"
+                    r={radius}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="7"
+                    className="text-surface-sunken"
+                />
+                <circle
+                    cx="40"
+                    cy="40"
+                    r={radius}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="7"
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={circumference * (1 - pct)}
+                    className={cn(
+                        "text-gold transition-[stroke-dashoffset] duration-700 ease-[var(--ease-glide)]",
+                        pct === 1 && "text-brand"
+                    )}
+                />
+            </svg>
+            <span className="absolute text-center">
+                <span className="block font-mono text-figure-lg text-content">
+                    {Math.round(pct * 100)}%
+                </span>
+            </span>
+        </div>
+    );
+};
+
+const Detail = ({ label, value }: { label: string; value: string }) => (
+    <div>
+        <p className="text-label-sm text-content-muted">{label}</p>
+        <p className="mt-0.5 font-mono text-body-sm text-content">{value}</p>
+    </div>
+);
+
+/**
+ * Somebody's log, opened.
+ *
+ * The rating and the achievements are the two things anyone came to see, so
+ * they get the top of the popup at size rather than a pair of small figures
+ * stacked against the right edge under a list of labelled rows.
+ */
 const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
     gamelog,
     closePopup,
     primaryAction,
 }) => {
     const { data: game } = useGame(gamelog.gameId);
-
-    // a played log displays its playedStatus (finished, mastered, ...)
-    const displayedStatus = displayStatusFor(
-        gamelog.status,
-        gamelog.playedStatus
-    );
-
     const { data: platforms } = usePlatforms();
+
+    const status = displayStatusFor(gamelog.status, gamelog.playedStatus);
     const platform = (platforms ?? []).find((p) => p.slug === gamelog.platform);
-    const PlatformIcon = getPlatformIcon(gamelog.platform ?? "");
+    const PlatformIcon = platformIcon(gamelog.platform ?? "");
+
+    const rating = gamelog.rating;
+    const achievementsTotal = gamelog.achievementsTotal ?? 0;
+    const achievementsDone = gamelog.achievementsCompleted ?? 0;
+
+    const details = [
+        gamelog.startDate && {
+            label: "Started",
+            value: formatDate(gamelog.startDate),
+        },
+        gamelog.finishDate && {
+            label: "Finished",
+            value: formatDate(gamelog.finishDate),
+        },
+        gamelog.hoursPlayed !== null && {
+            label: "Hours played",
+            value: formatHours(gamelog.hoursPlayed),
+        },
+        gamelog.hoursToBeat !== null && {
+            label: "Hours to beat",
+            value: formatHours(gamelog.hoursToBeat),
+        },
+    ].filter(Boolean) as { label: string; value: string }[];
 
     return (
         <Modal
             onClose={closePopup}
-            className="flex w-full max-w-[600px] flex-col gap-5"
+            labelledBy="view-log-title"
+            className="w-full max-w-[560px] p-0! sm:p-0!"
         >
-            <div className="contents">
-                <h2 className="border-b border-subtle pb-3 text-label text-content-muted">
-                    Your log
-                </h2>
-
-                <div className="relative flex w-full flex-col gap-4">
-                    <h3 className="max-w-[calc(100%-72px)] text-left font-display text-2xl text-content sm:max-w-full">
-                        {game?.title}
-                        <span className="ml-2.5 text-xl font-light text-content-secondary">
-                            {game?.releaseDate?.slice(0, 4)}
-                        </span>
-                    </h3>
-
-                    <div className="flex w-full">
-                        <div className="absolute top-0 right-0 flex min-h-40 w-16 max-w-[30%] flex-col gap-2 sm:relative sm:w-max">
-                            <img
-                                className="w-full rounded-md object-cover shadow-e2"
-                                src={game?.coverUrl ?? ""}
-                                alt={game?.title ?? ""}
-                            />
-                        </div>
-                        <div className="flex min-h-32 flex-grow justify-between">
-                            <div className="flex flex-col gap-1 text-left sm:pl-4">
-                                <p className="flex items-center gap-2 text-content">
-                                    Status:{" "}
-                                    <StatusBadge status={displayedStatus} />
-                                </p>
-                                {gamelog.platform ? (
-                                    <p className="text-content">
-                                        Platform:{" "}
-                                        <span className="font-extralight">
-                                            {platform?.displayName}
-                                        </span>
-                                        <PlatformIcon
-                                            size={14}
-                                            className="ml-1.5 inline"
-                                            aria-hidden
-                                        />
-                                    </p>
-                                ) : (
-                                    <></>
-                                )}
-                                {gamelog.startDate ? (
-                                    <p className="text-content">
-                                        Started:{" "}
-                                        <span className="font-extralight">
-                                            {new Date(gamelog.startDate)
-                                                .toDateString()
-                                                .slice(4)}
-                                        </span>
-                                    </p>
-                                ) : (
-                                    <></>
-                                )}
-                                {gamelog.startDate ? (
-                                    <p className="text-content">
-                                        Finished:{" "}
-                                        <span className="font-extralight">
-                                            {gamelog.finishDate
-                                                ? new Date(gamelog.finishDate)
-                                                      .toDateString()
-                                                      .slice(4)
-                                                : "N/A"}
-                                        </span>
-                                    </p>
-                                ) : (
-                                    <></>
-                                )}
-                                {gamelog.hoursPlayed ? (
-                                    <p className="text-content">
-                                        Time Played:{" "}
-                                        <span className="font-extralight">
-                                            {gamelog.hoursPlayed}
-                                            <span className="text-sm">
-                                                {" "}
-                                                hours
-                                            </span>
-                                        </span>
-                                    </p>
-                                ) : (
-                                    <></>
-                                )}
-                                {gamelog.hoursToBeat ? (
-                                    <p className="text-content">
-                                        Completed in:{" "}
-                                        <span className="font-extralight">
-                                            {gamelog.hoursToBeat}
-                                            <span className="text-sm">
-                                                {" "}
-                                                hours
-                                            </span>
-                                        </span>
-                                    </p>
-                                ) : (
-                                    <></>
-                                )}
-                            </div>
-
-                            <div className="flex flex-col justify-end gap-1 pr-4 sm:justify-normal">
-                                <span className="flex items-center justify-start gap-2 text-lg">
-                                    <Trophy
-                                        size={16}
-                                        className="text-gold"
-                                        aria-hidden
-                                    />
-                                    <p className="font-extralight text-content">
-                                        {gamelog.achievementsCompleted || 0}/
-                                        {gamelog.achievementsTotal || "?"}
-                                    </p>
-                                </span>
-                                <span className="flex items-center justify-start gap-2 text-lg">
-                                    <Star
-                                        size={16}
-                                        className="text-brand-hover"
-                                        aria-hidden
-                                    />
-                                    <p className="font-extralight text-content">
-                                        {gamelog.rating && gamelog.rating !== 0
-                                            ? gamelog.rating
-                                            : "?"}
-                                        /10
-                                    </p>
-                                </span>
-                            </div>
-                        </div>
+            <header className="flex items-center gap-4 border-b border-subtle px-5 py-4">
+                <GameCover
+                    coverUrl={game?.coverUrl ?? null}
+                    title={game?.title ?? ""}
+                    className="aspect-3/4 w-12 shrink-0 overflow-hidden rounded-xs shadow-cover"
+                />
+                <div className="min-w-0 flex-1">
+                    <h2
+                        id="view-log-title"
+                        className="truncate font-display text-xl leading-tight text-content"
+                    >
+                        {game?.title ?? "…"}
+                    </h2>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                        <StatusBadge status={status} />
+                        {platform && (
+                            <span className="inline-flex items-center gap-1.5 text-label-sm text-content-muted">
+                                <PlatformIcon size={13} aria-hidden />
+                                {platform.displayName}
+                            </span>
+                        )}
                     </div>
                 </div>
+            </header>
 
-                <div className="flex w-full flex-col justify-center gap-5 sm:flex-row">
-                    {primaryAction && (
-                        <button
-                            className={buttonClass("secondary", "w-full sm:flex-1")}
-                            onClick={() => {
-                                closePopup();
-                                primaryAction.onSelect();
-                            }}
-                        >
-                            {primaryAction.label}
-                        </button>
-                    )}
-                    <button
-                        className={buttonClass(
-                            "ghost",
-                            primaryAction ? "w-full sm:flex-1" : "w-full"
+            {/* The two headline figures, at size. */}
+            <div className="grid gap-3 px-5 py-5 sm:grid-cols-2">
+                <div className="flex flex-col items-center justify-center gap-1 rounded-md border border-subtle bg-surface-sunken/50 px-4 py-5">
+                    <span className="flex items-center gap-1.5 text-label text-content-muted">
+                        <Star size={13} aria-hidden /> Rating
+                    </span>
+                    <span
+                        className={cn(
+                            "font-mono text-[40px] leading-none",
+                            rating === null ? "text-content-muted" : "text-brand"
                         )}
-                        onClick={closePopup}
                     >
-                        Close
-                    </button>
+                        {rating === null ? "—" : formatRating(rating)}
+                    </span>
+                    {rating !== null && (
+                        <span
+                            aria-hidden
+                            className="mt-1.5 flex gap-0.5 text-brand"
+                        >
+                            {Array.from({ length: 5 }, (_, i) => {
+                                const fill = Math.max(
+                                    0,
+                                    Math.min(1, rating / 2 - i)
+                                );
+                                return (
+                                    <span
+                                        key={i}
+                                        className="relative block size-3.5"
+                                    >
+                                        <Star
+                                            className="absolute inset-0 size-full text-border-strong"
+                                            strokeWidth={1.5}
+                                        />
+                                        {fill > 0 && (
+                                            <span
+                                                className="absolute inset-y-0 left-0 overflow-hidden"
+                                                style={{
+                                                    width: `${fill * 100}%`,
+                                                }}
+                                            >
+                                                <Star
+                                                    className="absolute inset-y-0 left-0 h-full w-auto fill-brand text-brand"
+                                                    strokeWidth={1.5}
+                                                />
+                                            </span>
+                                        )}
+                                    </span>
+                                );
+                            })}
+                        </span>
+                    )}
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-1.5 rounded-md border border-subtle bg-surface-sunken/50 px-4 py-5">
+                    <span className="flex items-center gap-1.5 text-label text-content-muted">
+                        <Trophy size={13} aria-hidden /> Achievements
+                    </span>
+                    {achievementsTotal > 0 ? (
+                        <>
+                            <AchievementRing
+                                done={achievementsDone}
+                                total={achievementsTotal}
+                            />
+                            <span className="font-mono text-label-sm text-content-secondary">
+                                {achievementsDone} of {achievementsTotal}
+                            </span>
+                        </>
+                    ) : (
+                        <span className="py-7 font-mono text-[40px] leading-none text-content-muted">
+                            —
+                        </span>
+                    )}
                 </div>
             </div>
+
+            {details.length > 0 && (
+                <div className="grid grid-cols-2 gap-4 border-t border-subtle px-5 py-4 sm:grid-cols-4">
+                    {details.map((detail) => (
+                        <Detail
+                            key={detail.label}
+                            label={detail.label}
+                            value={detail.value}
+                        />
+                    ))}
+                </div>
+            )}
+
+            <footer className="flex flex-wrap gap-3 border-t border-subtle bg-surface-raised px-5 py-4">
+                {primaryAction && (
+                    <Button
+                        className="flex-1"
+                        onClick={() => {
+                            closePopup();
+                            primaryAction.onSelect();
+                        }}
+                    >
+                        {primaryAction.label}
+                    </Button>
+                )}
+                <button
+                    type="button"
+                    className={buttonClass(
+                        "secondary",
+                        primaryAction ? "flex-1" : "w-full"
+                    )}
+                    onClick={closePopup}
+                >
+                    Close
+                </button>
+            </footer>
         </Modal>
     );
 };

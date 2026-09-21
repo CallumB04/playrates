@@ -105,7 +105,9 @@ const RatingStars = ({
                 onKeyDown={onKeyDown}
                 onPointerLeave={() => setHover(null)}
                 className={cn(
-                    "flex w-full gap-0.5 rounded-sm py-1",
+                    /* Fixed-size stars, not flex-1: stretched across a panel
+                       they became 50px each and dominated the form. */
+                    "flex flex-wrap gap-1 rounded-sm py-1",
                     "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand",
                     disabled && "pointer-events-none opacity-60"
                 )}
@@ -117,8 +119,8 @@ const RatingStars = ({
                     const fill = Math.max(0, Math.min(1, shown - i));
 
                     return (
-                        <span key={whole} className="relative flex-1">
-                            <span className="relative block aspect-square w-full">
+                        <span key={whole} className="relative size-8 shrink-0 sm:size-9">
+                            <span className="relative block size-full">
                                 <Star
                                     aria-hidden
                                     className="absolute inset-0 size-full text-border-strong"
