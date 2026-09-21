@@ -1,142 +1,99 @@
 import { Link } from "react-router-dom";
-import type { Game, GameStats } from "@playrates/shared";
+import type { Game } from "@playrates/shared";
 import Button, { buttonClass } from "../../../components/ui/Button";
-import LedgerRow, { LedgerList } from "../../../components/ui/LedgerRow";
 import GameCover from "../../../components/game/GameCover";
-import Figure from "../../../components/ui/Figure";
-import { TextSkeleton } from "../../../components/ui/Skeleton";
 import type { SiteStats } from "../../../api";
-import { formatCount, formatRating, releaseYear } from "../../../lib/format";
+import { formatCount } from "../../../lib/format";
+import { cn } from "../../../lib/cn";
 
 interface SignedOutHeroProps {
     siteStats: SiteStats | undefined;
-    /** The most-logged title, shown with its real community figures. */
-    feature: Game | undefined;
-    featureStats: GameStats | undefined;
+    /** Real box art, used as the hero image. */
+    covers: Game[];
     onStart: () => void;
 }
 
-const SignedOutHero = ({
-    siteStats,
-    feature,
-    featureStats,
-    onStart,
-}: SignedOutHeroProps) => (
-    <div className="grid items-start gap-10 py-3 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-14">
-        <div>
-            <p className="flex items-center gap-2.5 text-label text-accent">
-                <span aria-hidden className="h-px w-6 bg-accent" />
-                {siteStats
-                    ? `${formatCount(siteStats.gameCount)} games to choose from`
-                    : "A home for everything you play"}
-            </p>
+/* Fanned rather than gridded. Six covers at alternating tilts read as a shelf
+   someone keeps; six covers square-on read as a product grid. */
+const TILT = [
+    "-rotate-6 translate-y-3",
+    "rotate-3 -translate-y-2",
+    "-rotate-2 translate-y-4",
+    "rotate-6 -translate-y-1",
+    "-rotate-3 translate-y-2",
+    "rotate-2 -translate-y-3",
+];
 
-            <h1 className="mt-3.5 max-w-[16ch] font-display text-hero text-content">
+/**
+ * The pitch.
+ *
+ * This used to put a card of community figures for one game beside the
+ * headline, which said nothing to someone who has never heard of the game and
+ * read as a dashboard widget dropped into a landing page. The catalogue is the
+ * more honest hero image: it is the actual product, and it is the thing a
+ * visitor is deciding whether they want.
+ */
+const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
+    <div className="grid items-center gap-10 py-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-14">
+        <div>
+            <h1 className="max-w-[16ch] font-display text-hero text-content">
                 Keep a record of everything you play.
             </h1>
 
-            <p className="mt-4 max-w-[44ch] text-[17px] leading-relaxed text-content-secondary">
+            <p className="mt-4 max-w-[46ch] text-[17px] leading-relaxed text-content-secondary">
                 Rate to the half point, track the hours, and let the backlog be
                 honest with you. Your library is a page worth linking to, not a
                 spreadsheet you hide.
             </p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-4">
+            <div className="mt-7 flex flex-wrap items-center gap-3">
                 <Button size="lg" onClick={onStart}>
                     Start your library
                 </Button>
                 <Link
                     to="/library"
-                    className={buttonClass("ghost", undefined, "lg")}
+                    className={buttonClass("secondary", undefined, "lg")}
                 >
                     Browse the catalogue
                 </Link>
             </div>
 
-            {/* Sized to content, not equal thirds — a six-figure catalogue
-                count is wider than a third of the column. */}
-            <dl className="mt-8 flex flex-wrap gap-x-10 gap-y-5 border-t border-subtle pt-5">
-                {[
-                    { label: "Members", value: siteStats?.userCount },
-                    { label: "Games catalogued", value: siteStats?.gameCount },
-                    { label: "Logs kept", value: siteStats?.logCount },
-                ].map((stat) => (
-                    <div key={stat.label}>
-                        <dt className="text-label text-content-muted">
-                            {stat.label}
-                        </dt>
-                        <dd className="mt-1.5">
-                            <Figure
-                                value={stat.value ?? 0}
-                                size="display"
-                                roll
-                                className="text-content"
-                            />
-                        </dd>
-                    </div>
-                ))}
-            </dl>
+            {/* One sentence, not a dashboard. Three figures in a definition
+                list is a stats widget; this is a claim about the place. */}
+            <p className="mt-6 text-body-sm text-content-muted">
+                <span className="font-mono text-content">
+                    {formatCount(siteStats?.gameCount ?? 0)}
+                </span>{" "}
+                games catalogued, and{" "}
+                <span className="font-mono text-content">
+                    {formatCount(siteStats?.logCount ?? 0)}
+                </span>{" "}
+                {siteStats?.logCount === 1 ? "log" : "logs"} kept so far. Free,
+                and yours to export.
+            </p>
         </div>
 
-        {/* Real figures for a real game rather than an invented shelf — so the
-            labels are community ones, not personal. */}
-        <aside>
-            <p className="mb-3 text-label text-content-muted">
-                Most logged this week
-            </p>
-
-            {!feature ? (
-                <TextSkeleton lines={4} />
-            ) : (
-                <div className="rounded-lg border border-subtle bg-surface-raised p-5 shadow-plate">
-                    <div className="flex gap-4">
-                        <Link
-                            to={`/game/${feature.id}`}
-                            className="w-[88px] shrink-0"
-                        >
-                            <GameCover
-                                coverUrl={feature.coverUrl}
-                                title={feature.title}
-                                className="aspect-3/4 w-full rounded-md shadow-e2"
-                            />
-                        </Link>
-                        <div className="min-w-0">
-                            <Link
-                                to={`/game/${feature.id}`}
-                                className="block font-display text-xl leading-tight text-content hover:text-brand"
-                            >
-                                {feature.title}
-                            </Link>
-                            <p className="mt-1.5 font-mono text-figure-lg text-brand">
-                                {formatRating(featureStats?.averageRating)}
-                            </p>
-                            <p className="mt-0.5 text-label-sm text-content-muted">
-                                {formatCount(featureStats?.ratingCount ?? 0)}{" "}
-                                {featureStats?.ratingCount === 1
-                                    ? "rating"
-                                    : "ratings"}
-                            </p>
-                        </div>
-                    </div>
-
-                    <LedgerList className="mt-4">
-                        <LedgerRow
-                            label="Logs kept"
-                            value={formatCount(featureStats?.logCount ?? 0)}
-                        />
-                        <LedgerRow
-                            label="Released"
-                            value={releaseYear(feature.releaseDate)}
-                        />
-                        <LedgerRow
-                            label="Platforms"
-                            value={String(feature.platforms.length)}
-                            rule={false}
-                        />
-                    </LedgerList>
-                </div>
-            )}
-        </aside>
+        <div
+            aria-hidden
+            className="relative hidden h-[300px] lg:block xl:h-[340px]"
+        >
+            {covers.slice(0, 6).map((game, i) => (
+                <span
+                    key={game.id}
+                    className={cn(
+                        "absolute top-1/2 w-[148px] -translate-y-1/2 xl:w-[164px]",
+                        TILT[i]
+                    )}
+                    style={{ left: `${i * 15}%`, zIndex: i }}
+                >
+                    <GameCover
+                        coverUrl={game.coverUrl}
+                        title={game.title}
+                        className="aspect-3/4 w-full overflow-hidden rounded-md shadow-lifted"
+                    />
+                </span>
+            ))}
+        </div>
     </div>
 );
 

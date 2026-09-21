@@ -9,6 +9,7 @@ import {
     deleteReview,
     fetchGameReviews,
     fetchMyReview,
+    fetchRecentReviews,
     fetchUserReviews,
     queryKeys,
     saveReview,
@@ -27,6 +28,13 @@ export const useGameReviews = (
     });
 
 /** The caller's own review, so the editor can prefill it. */
+export const useRecentReviews = (limit: number) =>
+    useQuery({
+        queryKey: queryKeys.reviews.recent,
+        queryFn: () => fetchRecentReviews(limit),
+        staleTime: 60_000,
+    });
+
 export const useMyReview = (gameId: number | undefined) => {
     const { user } = useAuth();
     return useQuery({

@@ -89,8 +89,14 @@ export const buildReview = (
         avatarUrl: null,
         online: true,
     },
-    rating: 9.25,
+    rating: 9.5,
+    hoursPlayed: 41,
     platform: "steam",
+    game: {
+        id: 1,
+        title: "The Witcher 3: Wild Hunt",
+        coverUrl: "https://example.test/witcher.jpg",
+    },
     ...overrides,
 });
 

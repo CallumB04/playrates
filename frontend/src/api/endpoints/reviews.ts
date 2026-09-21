@@ -23,6 +23,16 @@ export const fetchGameReviews = async (
     return data;
 };
 
+/** Public reviews from across the site, newest first. */
+export const fetchRecentReviews = async (
+    limit: number
+): Promise<Paginated<ReviewWithAuthor>> => {
+    const { data } = await api.get<Paginated<ReviewWithAuthor>>("/reviews", {
+        params: { limit },
+    });
+    return data;
+};
+
 /** The caller's own review of a game, for prefilling the log editor. */
 export const fetchMyReview = async (
     gameId: number

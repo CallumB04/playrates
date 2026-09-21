@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import type { FriendRelation } from "@playrates/shared";
 import {
     acceptFriendRequest,
+    fetchFriendActivity,
     fetchMyFriends,
     fetchUserFriends,
     queryKeys,
@@ -17,6 +18,16 @@ export const useMyFriends = () => {
         queryKey: queryKeys.friends.mine,
         queryFn: () => fetchMyFriends(),
         enabled: !!user,
+    });
+};
+
+export const useFriendActivity = (limit: number) => {
+    const { user } = useAuth();
+    return useQuery({
+        queryKey: queryKeys.friends.activity,
+        queryFn: () => fetchFriendActivity(limit),
+        enabled: !!user,
+        staleTime: 60_000,
     });
 };
 

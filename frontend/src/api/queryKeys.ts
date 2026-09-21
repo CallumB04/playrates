@@ -35,6 +35,7 @@ export const queryKeys = {
         ["userStats", username, year ?? "all"] as const,
 
     reviews: {
+        recent: ["reviews", "recent"] as const,
         byGame: (gameId: number, sort?: string) =>
             ["reviews", "game", gameId, sort ?? "recent"] as const,
         mine: (gameId: number) => ["reviews", "me", gameId] as const,
@@ -44,6 +45,7 @@ export const queryKeys = {
 
     friends: {
         mine: ["friends", "me"] as const,
+        activity: ["friends", "me", "activity"] as const,
         byUsername: (username: string) => ["friends", username] as const,
     },
 } as const;

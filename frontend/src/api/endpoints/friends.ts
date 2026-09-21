@@ -1,4 +1,9 @@
-import type { FriendEdge, FriendRelation } from "@playrates/shared";
+import type {
+    FriendActivity,
+    FriendEdge,
+    FriendRelation,
+    Paginated,
+} from "@playrates/shared";
 import { api } from "../client";
 
 export const fetchMyFriends = async (
@@ -8,6 +13,17 @@ export const fetchMyFriends = async (
         params: { status },
     });
     return data.data;
+};
+
+/** What the people you are friends with have been logging. */
+export const fetchFriendActivity = async (
+    limit: number
+): Promise<Paginated<FriendActivity>> => {
+    const { data } = await api.get<Paginated<FriendActivity>>(
+        "/me/friends/activity",
+        { params: { limit } }
+    );
+    return data;
 };
 
 export const fetchUserFriends = async (

@@ -1,22 +1,26 @@
 import { useMemo, useState } from "react";
+import type { Game } from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import {
     useGames,
-    useGameStats,
+    useGenres,
     usePlatforms,
     useSiteStats,
 } from "../../hooks/queries/useGames";
-import {
-    useMyGameLogs,
-    useUserStats,
-} from "../../hooks/queries/useGameLogs";
+import { useMyGameLogs, useUserStats } from "../../hooks/queries/useGameLogs";
+import { useFriendActivity } from "../../hooks/queries/useFriends";
+import { useRecentReviews } from "../../hooks/queries/useReviews";
 import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
+import type { TileAction } from "../../components/game/GameTile";
 import SignedOutHero from "./components/SignedOutHero";
 import ReEntryPlate from "./components/ReEntryPlate";
 import Rail from "./components/Rail";
+import GenreGrid from "./components/GenreGrid";
+import FriendFeed from "./components/FriendFeed";
+import ReviewFeed from "./components/ReviewFeed";
 
-const RAIL_SIZE = 28;
+const RAIL_SIZE = 24;
 
 /** The last 90 days, so "new releases" excludes unreleased TBA titles. */
 const releaseWindow = () => {
@@ -29,11 +33,12 @@ const releaseWindow = () => {
 
 const HomePage = () => {
     const { user } = useAuth();
-    const { openSignup } = useAccountForm();
-    const [editingLog, setEditingLog] = useState(false);
+    const { openSignup, openLogin } = useAccountForm();
+    const [logging, setLogging] = useState<number | null>(null);
 
     const { data: siteStats } = useSiteStats();
     const { data: platforms } = usePlatforms();
+    const { data: genres } = useGenres();
 
     const window = useMemo(releaseWindow, []);
 
@@ -50,26 +55,45 @@ const HomePage = () => {
         limit: RAIL_SIZE,
         ...window,
     });
+    const { data: acclaimed, isLoading: acclaimedLoading } = useGames({
+        sort: "rating",
+        limit: RAIL_SIZE,
+    });
 
-    /* The signed-out card features the most-tracked title, with its real
-       community figures rather than an invented personal log. */
-    const feature = popular?.data[0];
-    const { data: featureStats } = useGameStats(user ? undefined : feature?.id);
+    const { data: activity, isLoading: activityLoading } = useFriendActivity(6);
+    const { data: reviews, isLoading: reviewsLoading } = useRecentReviews(4);
 
     /* meta.total, not the length of a page — counting a page would be wrong
        for anyone with more than a page of logs. */
     const { data: playing } = useMyGameLogs("playing", { limit: 1 });
     const { data: backlog } = useMyGameLogs("backlog", { limit: 1 });
-    const { data: currentPage } = useMyGameLogs("playing", { limit: 1 });
     const { data: yearStats } = useUserStats(
         user?.username ?? "",
         new Date().getFullYear()
     );
 
-    const current = currentPage?.data[0];
+    const current = playing?.data[0];
+
+    /* Every cover on the page can be logged from where it sits, rather than
+       only from the catalogue. */
+    const actionsFor = (game: Game): TileAction[] => [
+        user
+            ? {
+                  key: "log",
+                  label: "Log it",
+                  tone: "primary",
+                  onSelect: () => setLogging(game.id),
+              }
+            : {
+                  key: "signin",
+                  label: "Log in to add",
+                  tone: "primary",
+                  onSelect: openLogin,
+              },
+    ];
 
     return (
-        <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-11">
             {user ? (
                 <ReEntryPlate
                     username={user.username}
@@ -77,13 +101,14 @@ const HomePage = () => {
                     playingCount={playing?.meta.total ?? 0}
                     backlogCount={backlog?.meta.total ?? 0}
                     yearStats={yearStats}
-                    onUpdateLog={() => setEditingLog(true)}
+                    onUpdateLog={() =>
+                        current && setLogging(current.gameId)
+                    }
                 />
             ) : (
                 <SignedOutHero
                     siteStats={siteStats}
-                    feature={feature}
-                    featureStats={featureStats}
+                    covers={trending?.data ?? []}
                     onStart={openSignup}
                 />
             )}
@@ -94,29 +119,63 @@ const HomePage = () => {
                 games={trending?.data ?? []}
                 platforms={platforms ?? []}
                 isLoading={trendingLoading}
+                actionsFor={actionsFor}
             />
+
+            {/* Two feeds side by side: what people you know are doing, and
+                what everyone else is saying. Both are the only parts of the
+                page that change because of someone other than you. */}
+            <div className="grid items-start gap-6 lg:grid-cols-2">
+                {user && (
+                    <FriendFeed
+                        items={activity?.data ?? []}
+                        isLoading={activityLoading}
+                    />
+                )}
+                <ReviewFeed
+                    reviews={reviews?.data ?? []}
+                    isLoading={reviewsLoading}
+                />
+            </div>
+
             <Rail
                 title="Most logged"
                 note="all time, by PlayRates logs"
                 games={popular?.data ?? []}
                 platforms={platforms ?? []}
                 isLoading={popularLoading}
+                actionsFor={actionsFor}
             />
+
+            <Rail
+                title="Highest rated"
+                note="by the people who logged them"
+                games={acclaimed?.data ?? []}
+                platforms={platforms ?? []}
+                isLoading={acclaimedLoading}
+                actionsFor={actionsFor}
+            />
+
+            <GenreGrid genres={genres ?? []} />
+
             <Rail
                 title="New releases"
                 note="out in the last 90 days"
                 games={fresh?.data ?? []}
                 platforms={platforms ?? []}
                 isLoading={freshLoading}
+                actionsFor={actionsFor}
             />
 
-            {editingLog && current && (
+            {logging !== null && (
                 <CreateOrEditGameLogPopup
-                    closePopup={() => setEditingLog(false)}
-                    viewUpdatedLog={() => setEditingLog(false)}
-                    gamelog={current}
-                    gameID={current.gameId}
-                    editing
+                    closePopup={() => setLogging(null)}
+                    viewUpdatedLog={() => setLogging(null)}
+                    gamelog={
+                        current && current.gameId === logging ? current : null
+                    }
+                    gameID={logging}
+                    editing={!!current && current.gameId === logging}
                 />
             )}
         </div>
