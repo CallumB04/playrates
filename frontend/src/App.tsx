@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Header from "./components/layout/Header";
 import PageShell from "./components/layout/PageShell";
 import Footer from "./components/Footer";
@@ -15,6 +15,15 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import DesignLibraryPage from "./pages/admin/design-library/DesignLibraryPage";
 
 /** Layout shell and route table. State lives in the providers. */
+/**
+ * The catalogue used to live at /library. A bare redirect would drop the
+ * query string, and every shared link carries its filters there.
+ */
+const CatalogueRedirect = () => {
+    const { search } = useLocation();
+    return <Navigate to={{ pathname: "/catalogue", search }} replace />;
+};
+
 function App() {
     return (
         <div className="flex min-h-screen flex-col">
@@ -27,7 +36,16 @@ function App() {
                             path="/user/:targetUsername?"
                             element={<ProfilePageRoute />}
                         />
-                        <Route path="/library" element={<LibraryPage />} />
+                        <Route
+                            path="/catalogue"
+                            element={<LibraryPage />}
+                        />
+                        {/* The page was called both things. Kept so shared
+                            links and bookmarks still land. */}
+                        <Route
+                            path="/library"
+                            element={<CatalogueRedirect />}
+                        />
                         <Route path="/game/:gameID" element={<GamePage />} />
                         <Route path="/friends" element={<FriendsPage />} />
                         <Route path="/settings" element={<SettingsPage />} />

@@ -51,7 +51,7 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
                     Start your library
                 </Button>
                 <Link
-                    to="/library"
+                    to="/catalogue"
                     className={buttonClass("secondary", undefined, "lg")}
                 >
                     Browse the catalogue

@@ -172,7 +172,7 @@ const LibraryPage = () => {
             <header className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <h1 className="font-display text-title text-content">
-                        The catalogue
+                        Catalogue
                     </h1>
                     <p className="mt-2 text-label text-content-muted">
                         {formatCount(total)} titles

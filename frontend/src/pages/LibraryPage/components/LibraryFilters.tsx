@@ -4,7 +4,6 @@ import Button from "../../../components/ui/Button";
 import Modal from "../../../components/ui/Modal";
 import type { Genre, Platform } from "@playrates/shared";
 import { SearchInput, Select } from "../../../components/ui/Input";
-import Chip from "../../../components/ui/Chip";
 import Toggle from "../../../components/ui/Toggle";
 import { formatCount } from "../../../lib/format";
 import type { LibraryQuery } from "../lib/useLibraryQuery";
@@ -36,10 +35,24 @@ const LibraryFilters = ({
     const selects = (
         <>
             <Select
+                value={query.platform}
+                onChange={(e) => setQuery({ platform: e.target.value })}
+                aria-label="Filter by platform"
+                className="lg:w-44"
+            >
+                <option value="">All platforms</option>
+                {platforms.map((platform) => (
+                    <option key={platform.slug} value={platform.slug}>
+                        {platform.displayName}
+                    </option>
+                ))}
+            </Select>
+
+            <Select
                 value={query.genre}
                 onChange={(e) => setQuery({ genre: e.target.value })}
                 aria-label="Filter by genre"
-                className="lg:w-48"
+                className="lg:w-44"
             >
                 <option value="">All genres</option>
                 {genres.map((genre) => (
@@ -55,7 +68,7 @@ const LibraryFilters = ({
                     setQuery({ sort: e.target.value as LibraryQuery["sort"] })
                 }
                 aria-label="Sort the catalogue"
-                className="lg:w-48"
+                className="lg:w-44"
             >
                 <option value="logged">Most logged</option>
                 {/* RAWG's collection figure. Kept alongside ours because it
@@ -77,36 +90,6 @@ const LibraryFilters = ({
                 // The server can only exclude logs it can attribute.
                 disabled={!isSignedIn}
             />
-        </>
-    );
-
-    const platformChips = (
-        <>
-            <Chip
-                selected={query.platform === ""}
-                onClick={() => setQuery({ platform: "" })}
-                dotClassName={
-                    query.platform === ""
-                        ? "bg-content-on-solid"
-                        : "bg-content-muted"
-                }
-            >
-                All
-            </Chip>
-            {platforms.map((platform) => (
-                <Chip
-                    key={platform.slug}
-                    selected={query.platform === platform.slug}
-                    onClick={() => setQuery({ platform: platform.slug })}
-                    dotClassName={
-                        query.platform === platform.slug
-                            ? "bg-content-on-solid"
-                            : "bg-content-muted"
-                    }
-                >
-                    {platform.displayName}
-                </Chip>
-            ))}
         </>
     );
 
@@ -148,11 +131,10 @@ const LibraryFilters = ({
                     </Button>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 border-t border-subtle pt-3.5">
-                    {platformChips}
-                    <div className="ml-auto hidden flex-wrap items-center gap-5 lg:flex">
-                        {toggles}
-                    </div>
+                {/* Its own line. The one toggle sitting at the end of a row
+                    of platform chips read as another chip. */}
+                <div className="hidden items-center gap-5 border-t border-subtle pt-3.5 lg:flex">
+                    {toggles}
                 </div>
             </div>
 

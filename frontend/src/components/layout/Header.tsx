@@ -98,7 +98,7 @@ const Header = () => {
         user
             ? [
                   { to: "/", label: "Home", exact: true },
-                  { to: "/library", label: "Library", exact: false },
+                  { to: "/catalogue", label: "Catalogue", exact: false },
                   {
                       to: `/user/${user.username}?type=backlog`,
                       label: "Backlog",
@@ -108,7 +108,7 @@ const Header = () => {
               ]
             : [
                   { to: "/", label: "Home", exact: true },
-                  { to: "/library", label: "Library", exact: false },
+                  { to: "/catalogue", label: "Catalogue", exact: false },
               ]
     ).map(({ to, label, exact }) => ({
         to,

@@ -35,7 +35,7 @@ const NotFoundPage = () => {
                         was shared. Everything else is where you left it.
                     </p>
                     <div className="mt-5 flex flex-wrap gap-3">
-                        <Link to="/library" className={buttonClass("primary")}>
+                        <Link to="/catalogue" className={buttonClass("primary")}>
                             Browse the catalogue
                         </Link>
                         <Link to="/" className={buttonClass("ghost")}>
