@@ -145,7 +145,7 @@ const GameReviews = ({
                         </p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                        <RatingBadge value={review.rating} size="md" />
+                        <RatingBadge value={review.rating} size="row" />
                         <VoteButton
                             count={review.voteCount}
                             voted={review.votedByViewer}

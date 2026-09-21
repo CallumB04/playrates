@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
@@ -33,10 +33,18 @@ const isCurrent = (
 /** Static, not fixed — the page scrolls away from the masthead. */
 const Header = () => {
     const { user, signOut } = useAuth();
+    const navigate = useNavigate();
     const { openLogin, openSignup } = useAccountForm();
     const location = useLocation();
 
     const [menuOpen, setMenuOpen] = useState(false);
+
+    /* Home, not wherever you were: signing out on a settings page or somebody's
+       profile leaves you looking at something you can no longer load. */
+    const handleSignOut = () => {
+        void signOut();
+        navigate("/");
+    };
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -128,7 +136,7 @@ const Header = () => {
                         {user ? (
                             <AccountMenu
                                 user={user}
-                                onSignOut={() => void signOut()}
+                                onSignOut={handleSignOut}
                             />
                         ) : (
                             <div className="hidden items-center gap-3 sm:flex">
@@ -155,7 +163,7 @@ const Header = () => {
                     onClose={() => setMenuOpen(false)}
                     onSignIn={openLogin}
                     onSignUp={openSignup}
-                    onSignOut={() => void signOut()}
+                    onSignOut={handleSignOut}
                 />
             )}
         </>

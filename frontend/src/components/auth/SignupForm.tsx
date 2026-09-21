@@ -82,7 +82,7 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
                 name="username"
                 type="text"
                 placeholder="yourname"
-                help="Letters, numbers and underscores. This is your profile's address."
+                help="This is your profile's address."
                 autoComplete="username"
                 required
                 autoFocus

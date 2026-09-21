@@ -47,7 +47,7 @@ const Row = ({ review }: { review: ReviewWithAuthor }) => {
                     </span>
                 </span>
                 {review.rating !== null && (
-                    <RatingBadge value={review.rating} />
+                    <RatingBadge value={review.rating} size="row" />
                 )}
             </span>
 

@@ -228,9 +228,7 @@ const HomePage = () => {
                 statusFor={statusFor}
                 footValueFor={(game) =>
                     game.avgRating !== null
-                        ? `${formatRatingOutOfTen(game.avgRating)} · ${formatCount(
-                              game.ratingCount
-                          )}`
+                        ? formatRatingOutOfTen(game.avgRating)
                         : releaseYear(game.releaseDate)
                 }
             />

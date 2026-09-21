@@ -45,7 +45,12 @@ const LedgerRow = ({
                 {label}
             </dt>
             <span className="leader" aria-hidden="true" />
-            <dd className={cn("font-mono font-medium text-content", s.value)}>
+            <dd
+                className={cn(
+                    "min-w-0 font-mono font-medium text-content",
+                    s.value
+                )}
+            >
                 {value}
             </dd>
         </div>

@@ -199,7 +199,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                     isMyAccount ? (
                         <>
                             <Button
-                                variant="secondary"
+                                variant="outline"
                                 size="sm"
                                 aria-label={
                                     theme === "dark"
@@ -216,37 +216,36 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                                         theme === "dark" ? "light" : "dark"
                                     )
                                 }
-                                className="px-2.5"
                             >
                                 {theme === "dark" ? (
-                                    <Sun size={16} aria-hidden />
+                                    <Sun size={15} aria-hidden />
                                 ) : (
-                                    <Moon size={16} aria-hidden />
+                                    <Moon size={15} aria-hidden />
                                 )}
+                                <span className="hidden sm:inline">
+                                    {theme === "dark" ? "Day" : "Night"}
+                                </span>
                             </Button>
                             <Button
-                                variant="secondary"
+                                variant="outline"
                                 size="sm"
-                                aria-label="Edit profile"
-                                title="Edit profile"
                                 onClick={() =>
                                     setModal({ kind: "editProfile" })
                                 }
-                                className="px-2.5"
                             >
-                                <Pencil size={16} aria-hidden />
+                                <Pencil size={15} aria-hidden />
+                                <span className="hidden sm:inline">
+                                    Edit profile
+                                </span>
                             </Button>
                             <Link
                                 to="/settings"
-                                aria-label="Settings"
-                                title="Settings"
-                                className={buttonClass(
-                                    "secondary",
-                                    "px-2.5",
-                                    "sm"
-                                )}
+                                className={buttonClass("outline", undefined, "sm")}
                             >
-                                <Settings size={16} aria-hidden />
+                                <Settings size={15} aria-hidden />
+                                <span className="hidden sm:inline">
+                                    Settings
+                                </span>
                             </Link>
                         </>
                     ) : (

@@ -123,7 +123,7 @@ const FriendRequestsPopup = ({
                     <>
                         {received.length > 0 && (
                             <Section
-                                title="Waiting on you"
+                                title="Requests received"
                                 count={received.length}
                             >
                                 {received.map((edge) => (
@@ -137,7 +137,7 @@ const FriendRequestsPopup = ({
                         )}
 
                         {sent.length > 0 && (
-                            <Section title="You asked them" count={sent.length}>
+                            <Section title="Requests sent" count={sent.length}>
                                 {sent.map((edge) => (
                                     <SentRow
                                         key={edge.user.id}

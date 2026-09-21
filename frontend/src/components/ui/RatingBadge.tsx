@@ -1,10 +1,11 @@
 import { formatRating } from "../../lib/format";
 import { cn } from "../../lib/cn";
 
-type BadgeSize = "sm" | "md" | "lg";
+type BadgeSize = "sm" | "row" | "md" | "lg";
 
 const SIZE: Record<BadgeSize, string> = {
     sm: "text-figure-sm",
+    row: "text-figure-row",
     md: "text-figure-lg",
     lg: "text-figure",
 };
