@@ -14,6 +14,10 @@ export interface ProfileRow {
   /** Opt-in. Off filters games flagged has_sexual_content out of listings. */
   show_sexual_content: boolean;
   first_name: string | null;
+  /** IANA zone name. Timestamps render in this; date-only columns do not. */
+  timezone: string;
+  /** When true, this profile reads as offline to everyone. */
+  hide_online: boolean;
   created_at: string;
   updated_at: string;
 }

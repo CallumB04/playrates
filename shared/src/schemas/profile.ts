@@ -14,6 +14,21 @@ export const PasswordSchema = z
 
 export const EmailSchema = z.string().trim().toLowerCase().email();
 
+/** Checked against the runtime's own zone list: the column has no constraint,
+ *  because a CHECK cannot hold the subquery pg_timezone_names would need. */
+export const TimeZoneSchema = z
+  .string()
+  .trim()
+  .max(64)
+  .refine((zone) => {
+    try {
+      new Intl.DateTimeFormat("en-GB", { timeZone: zone });
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Unknown time zone");
+
 /** `.strict()` rejects unknown keys, so only these fields are editable. */
 export const UpdateProfileSchema = z
   .object({
@@ -24,6 +39,9 @@ export const UpdateProfileSchema = z
     showSexualContent: z.boolean().optional(),
     /** Optional display name. Empty string clears it. */
     firstName: z.string().trim().max(40).nullable().optional(),
+    timezone: TimeZoneSchema.optional(),
+    /** Opt-out, so the default is the permissive one. */
+    hideOnline: z.boolean().optional(),
   })
   .strict();
 
@@ -44,5 +62,8 @@ export interface Profile {
   /** Derived from last_seen_at, not stored. */
   online: boolean;
   showSexualContent: boolean;
+  /** IANA zone name. Timestamps render in this; dates you picked do not move. */
+  timezone: string;
+  hideOnline: boolean;
   createdAt: string;
 }

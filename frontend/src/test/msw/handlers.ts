@@ -22,6 +22,8 @@ export const buildProfile = (overrides: Partial<Profile> = {}): Profile => ({
     firstName: null,
     bio: "Local development account.",
     showSexualContent: false,
+    timezone: "UTC",
+    hideOnline: false,
     avatarUrl: null,
     online: true,
     createdAt: "2026-01-01T00:00:00.000Z",

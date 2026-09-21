@@ -240,7 +240,11 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                             </Button>
                             <Link
                                 to="/settings"
-                                className={buttonClass("outline", undefined, "sm")}
+                                className={buttonClass(
+                                    "outline",
+                                    undefined,
+                                    "sm"
+                                )}
                             >
                                 <Settings size={15} aria-hidden />
                                 <span className="hidden sm:inline">

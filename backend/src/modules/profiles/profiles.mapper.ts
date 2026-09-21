@@ -15,7 +15,10 @@ export const toProfile = (row: ProfileRow, now = Date.now()): Profile => ({
   firstName: row.first_name,
   bio: row.bio,
   avatarUrl: row.avatar_url,
-  online: isOnline(row.last_seen_at, now),
+  // Opting out hides presence from everyone, the owner included.
+  online: !row.hide_online && isOnline(row.last_seen_at, now),
   showSexualContent: row.show_sexual_content,
+  timezone: row.timezone,
+  hideOnline: row.hide_online,
   createdAt: row.created_at,
 });

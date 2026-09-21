@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
     capitalise,
     formatCount,
@@ -12,8 +12,44 @@ import {
     formatReleaseShort,
     relativeTime,
     releaseYear,
+    setDisplayTimeZone,
+    timeZones,
 } from "./format";
 import { cn } from "./cn";
+
+afterEach(() => setDisplayTimeZone("UTC"));
+
+describe("the display time zone", () => {
+    it("renders a timestamp in the zone that was set", () => {
+        const lateUtc = "2026-02-11T23:30:00Z";
+
+        setDisplayTimeZone("UTC");
+        expect(formatDate(lateUtc)).toBe("11 Feb 2026");
+
+        setDisplayTimeZone("Australia/Sydney");
+        expect(formatDate(lateUtc)).toBe("12 Feb 2026");
+    });
+
+    it("leaves a date-only value where it was picked", () => {
+        // A finish date is a day, not an instant, so no zone may move it.
+        setDisplayTimeZone("Pacific/Kiritimati");
+        expect(formatDate("2026-02-11")).toBe("11 Feb 2026");
+
+        setDisplayTimeZone("Pacific/Midway");
+        expect(formatDate("2026-02-11")).toBe("11 Feb 2026");
+    });
+
+    it("carries the zone into the month-and-year line too", () => {
+        setDisplayTimeZone("Pacific/Auckland");
+        expect(formatMonthYear("2021-06-30T23:00:00Z")).toBe("July 2021");
+    });
+
+    it("lists zones the runtime can actually format with", () => {
+        const zones = timeZones();
+        expect(zones.length).toBeGreaterThan(0);
+        expect(zones).toContain("Europe/London");
+    });
+});
 
 describe("capitalise", () => {
     it("uppercases the first character", () => {

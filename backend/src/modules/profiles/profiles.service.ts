@@ -85,6 +85,8 @@ export const createProfilesService = (
       // An empty string is a clear, not a name.
       patch.first_name = input.firstName || null;
     }
+    if (input.timezone !== undefined) patch.timezone = input.timezone;
+    if (input.hideOnline !== undefined) patch.hide_online = input.hideOnline;
 
     if (Object.keys(patch).length === 0) {
       return this.getById(callerId);
