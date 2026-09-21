@@ -4,6 +4,7 @@ import Button, { buttonClass } from "../../../components/ui/Button";
 import GameCover from "../../../components/game/GameCover";
 import type { SiteStats } from "../../../api";
 import { formatCount } from "../../../lib/format";
+import { BRAND_MOTTO, BRAND_NAME } from "../../../constants/brand";
 import { cn } from "../../../lib/cn";
 
 interface SignedOutHeroProps {
@@ -36,11 +37,15 @@ const TILT = [
 const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
     <div className="grid items-center gap-10 py-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-14">
         <div>
-            <h1 className="max-w-[16ch] font-display text-hero text-content">
-                Keep a record of everything you play.
+            <h1 className="font-display text-hero text-content">
+                {BRAND_NAME}
             </h1>
 
-            <p className="mt-4 max-w-[46ch] text-[17px] leading-relaxed text-content-secondary">
+            <p className="mt-3 max-w-[20ch] font-display text-[26px] leading-snug text-content-secondary sm:text-[30px]">
+                {BRAND_MOTTO}
+            </p>
+
+            <p className="mt-5 max-w-[46ch] text-[17px] leading-relaxed text-content-secondary">
                 Rate what you play, track your hours, and keep your backlog
                 in one place. Your library is a page you can share.
             </p>

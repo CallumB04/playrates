@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowUp } from "lucide-react";
 import { SiGithub } from "@icons-pack/react-simple-icons";
+import { BRAND_MOTTO, BRAND_NAME } from "../constants/brand";
 
 /* The pages a site taking accounts has to have somewhere, and nothing else.
    A footer that lists every route is a sitemap, which is not what this is. */
@@ -17,10 +18,10 @@ const Footer = () => (
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <p className="font-display text-xl font-bold text-content">
-                        PlayRates
+                        {BRAND_NAME}
                     </p>
                     <p className="mt-1 max-w-[38ch] text-body-sm text-content-secondary">
-                        Keep a record of everything you play.
+                        {BRAND_MOTTO}
                     </p>
                 </div>
 
