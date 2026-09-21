@@ -101,15 +101,18 @@ const Row = ({ item }: { item: FriendActivity }) => {
 const FriendFeed = ({
     items,
     isLoading,
+    username,
 }: {
     items: FriendActivity[];
     isLoading: boolean;
+    /** Friends live on your profile now, not on a page of their own. */
+    username: string;
 }) => (
     <Panel
         title="Friend activity"
         trailing={
             <Link
-                to="/friends"
+                to={`/user/${username}`}
                 className="text-label text-content-muted hover:text-brand"
             >
                 All friends

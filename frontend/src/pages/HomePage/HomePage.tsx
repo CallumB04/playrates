@@ -130,6 +130,7 @@ const HomePage = () => {
                     <FriendFeed
                         items={activity?.data ?? []}
                         isLoading={activityLoading}
+                        username={user.username}
                     />
                 )}
                 <ReviewFeed

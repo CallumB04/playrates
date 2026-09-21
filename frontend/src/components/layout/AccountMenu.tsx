@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { LogOut, Settings, UserRound } from "lucide-react";
+import {
+    GAME_STATUSES,
+    STATUS_PRESENTATION,
+} from "../../constants/gameStatus";
 import type { Profile } from "@playrates/shared";
 import ProfilePicture from "../ProfilePicture";
 import { cn } from "../../lib/cn";
@@ -81,6 +85,33 @@ const AccountMenu = ({
                     >
                         <UserRound size={15} aria-hidden /> Your profile
                     </Link>
+
+                    {/* The shelves. Backlog used to be a top-level nav item,
+                        which gave one of the four states a promotion the
+                        other three never earned. */}
+                    <div className="my-1 border-y border-subtle py-1">
+                        {GAME_STATUSES.map((status) => {
+                            const { label, icon: Icon, markTone } =
+                                STATUS_PRESENTATION[status];
+                            return (
+                                <Link
+                                    key={status}
+                                    to={`/user/${user.username}?type=${status}`}
+                                    onClick={() => setOpen(false)}
+                                    className={ITEM}
+                                    role="menuitem"
+                                >
+                                    <Icon
+                                        size={15}
+                                        aria-hidden
+                                        className={cn("shrink-0", markTone)}
+                                    />
+                                    {label}
+                                </Link>
+                            );
+                        })}
+                    </div>
+
                     <Link
                         to="/settings"
                         onClick={() => setOpen(false)}
@@ -96,7 +127,7 @@ const AccountMenu = ({
                             setOpen(false);
                             onSignOut();
                         }}
-                        className={cn(ITEM, "w-full border-t border-subtle")}
+                        className={cn(ITEM, "w-full cursor-pointer border-t border-subtle")}
                     >
                         <LogOut size={15} aria-hidden /> Sign out
                     </button>

@@ -1,9 +1,11 @@
+import { Link } from "react-router-dom";
 import type { GameLogWithGame } from "../../../api";
 import type { Platform } from "@playrates/shared";
 import type { GameStatus } from "../../../constants/gameStatus";
 import type { PaginationState } from "../../../hooks/usePagination";
 import GameTile, { type TileAction } from "../../../components/game/GameTile";
 import Pagination from "../../../components/ui/Pagination";
+import { buttonClass } from "../../../components/ui/Button";
 import { TileSkeleton } from "../../../components/ui/Skeleton";
 import EmptyPlate, { GhostTile } from "../../../components/ui/EmptyPlate";
 import DrawerTabs from "./DrawerTabs";
@@ -26,22 +28,31 @@ interface ShelfPanelProps {
     trailing?: ReactNode;
 }
 
-const EMPTY_COPY: Record<GameStatus, { title: string; body: string }> = {
+/* Every empty shelf sends you somewhere. A dead end that only explains
+   itself is the one screen where a person has nothing to do. */
+const EMPTY_COPY: Record<
+    GameStatus,
+    { title: string; body: string; cta: string }
+> = {
     played: {
         title: "Nothing played yet",
         body: "Log the last game you finished, even if that was years ago. A shelf is more useful honest than current.",
+        cta: "Find a game to log",
     },
     playing: {
         title: "Nothing on the go",
         body: "Mark a game as playing and it shows up here, with the hours as you add them.",
+        cta: "Find something to start",
     },
     backlog: {
         title: "The backlog is empty",
         body: "Enviable. Add the games you mean to get to and this becomes the list you actually work through.",
+        cta: "Browse the catalogue",
     },
     wishlist: {
         title: "Nothing on the wishlist",
         body: "Wishlist a game from the catalogue and it waits here until you pick it up.",
+        cta: "Browse the catalogue",
     },
 };
 
@@ -70,7 +81,7 @@ const ShelfPanel = ({
                 trailing={trailing}
             />
 
-            <div className="rounded-b-lg rounded-tr-lg border border-t-0 border-subtle bg-surface-raised p-5 shadow-plate">
+            <div className="mt-3 rounded-lg border border-subtle bg-surface-raised p-5 shadow-plate">
                 {isLoading ? (
                     <div className="grid grid-cols-2 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
                         {Array.from({ length: Math.min(perPage, 14) }, (_, i) => (
@@ -82,6 +93,16 @@ const ShelfPanel = ({
                         <EmptyPlate
                             title={empty.title}
                             body={isMyAccount ? empty.body : "Nothing here yet."}
+                            action={
+                                isMyAccount ? (
+                                    <Link
+                                        to="/catalogue"
+                                        className={buttonClass("primary")}
+                                    >
+                                        {empty.cta}
+                                    </Link>
+                                ) : undefined
+                            }
                         />
                         {isMyAccount && (
                             // The shelf shows you what it will look like.

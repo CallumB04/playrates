@@ -32,7 +32,8 @@ interface ProfileModalsProps {
     /** Every game the viewer has logged. A complete set, not a page of
      *  one — a partial answer makes "View my log" disappear at random. */
     myLogGameIds: Set<number>;
-    acceptedFriends: FriendEdge[];
+    /** Every edge, so the popup can show and answer requests. */
+    allFriendEdges: FriendEdge[];
     friendsLoading: boolean;
     onRemoveFriend: () => Promise<void>;
     navigate: (to: string) => void;
@@ -47,7 +48,7 @@ const ProfileModals = ({
     isSignedIn,
     currentUsername,
     myLogGameIds,
-    acceptedFriends,
+    allFriendEdges,
     friendsLoading,
     onRemoveFriend,
     navigate,
@@ -89,9 +90,10 @@ const ProfileModals = ({
 
             {modal.kind === "friends" && (
                 <FriendsPopup
-                    closePopup={() => setModal(null)}
-                    friends={acceptedFriends}
-                    friendsLoading={friendsLoading}
+                    onClose={() => setModal(null)}
+                    edges={allFriendEdges}
+                    isLoading={friendsLoading}
+                    canRespond={isMyAccount}
                 />
             )}
 

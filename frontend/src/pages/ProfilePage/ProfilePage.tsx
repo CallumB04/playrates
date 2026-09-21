@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Pencil, Settings } from "lucide-react";
 import type { GameLogWithGame } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
@@ -24,8 +25,8 @@ import ProfileError from "./components/ProfileError";
 import MemberFileHeader from "./components/MemberFileHeader";
 import FriendAction from "./components/FriendAction";
 import ShelfPanel from "./components/ShelfPanel";
-import RecentNotes from "./components/RecentNotes";
-import FriendsLedger from "./components/FriendsLedger";
+import RecentReviews from "./components/RecentReviews";
+import FriendsPanel from "./components/FriendsPanel";
 import ProfileModals, { type ProfileModal } from "./components/ProfileModals";
 import { TextSkeleton } from "../../components/ui/Skeleton";
 import type { TileAction } from "../../components/game/GameTile";
@@ -194,21 +195,30 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 friendCount={acceptedFriends.length}
                 action={
                     isMyAccount ? (
-                        <div className="flex gap-2">
+                        <>
                             <Button
                                 variant="secondary"
                                 size="sm"
+                                aria-label="Edit profile"
+                                title="Edit profile"
                                 onClick={() => setModal({ kind: "editProfile" })}
+                                className="px-2.5"
                             >
-                                Edit profile
+                                <Pencil size={16} aria-hidden />
                             </Button>
                             <Link
                                 to="/settings"
-                                className={buttonClass("ghost", undefined, "sm")}
+                                aria-label="Settings"
+                                title="Settings"
+                                className={buttonClass(
+                                    "secondary",
+                                    "px-2.5",
+                                    "sm"
+                                )}
                             >
-                                Settings
+                                <Settings size={16} aria-hidden />
                             </Link>
-                        </div>
+                        </>
                     ) : (
                         <FriendAction
                             relation={relation}
@@ -250,13 +260,25 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 }
             />
 
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-                <RecentNotes reviews={reviewsPage?.data ?? []} />
-                <FriendsLedger
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+                <RecentReviews
+                    reviews={reviewsPage?.data ?? []}
+                    isOwner={isMyAccount}
+                />
+                <FriendsPanel
                     friends={acceptedFriends}
                     sharedCount={sharedFriendCount}
+                    pendingCount={
+                        isMyAccount
+                            ? (friends ?? []).filter(
+                                  (e) => e.status === "request-received"
+                              ).length
+                            : 0
+                    }
+                    onOpenAll={() => setModal({ kind: "friends" })}
                 />
             </div>
+
 
             <ProfileModals
                 modal={modal}
@@ -266,7 +288,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 isSignedIn={!!currentUser}
                 currentUsername={currentUser?.username}
                 myLogGameIds={myLogGameIds}
-                acceptedFriends={acceptedFriends}
+                allFriendEdges={friends ?? []}
                 friendsLoading={friendsLoading}
                 onRemoveFriend={async () => {
                     try {

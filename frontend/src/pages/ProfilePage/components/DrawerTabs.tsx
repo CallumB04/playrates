@@ -11,58 +11,65 @@ interface DrawerTabsProps {
     active: GameStatus;
     counts: Partial<Record<GameStatus, number>>;
     onSelect: (status: GameStatus) => void;
-    /** Sits at the right end of the rule, e.g. "14 games in common". */
+    /** Sits to the right of the control, e.g. "14 games in common". */
     trailing?: ReactNode;
 }
 
-const ACCENT_BORDER: Record<GameStatus, string> = {
-    played: "border-t-status-played",
-    playing: "border-t-status-playing",
-    backlog: "border-t-status-backlog",
-    wishlist: "border-t-status-wishlist",
-};
-
 /**
- * Shelf tabs. The open one lifts and lights; the rest sit flat. That is how
- * you read which is open before the colour registers — and each pages
- * independently, so three hundred games stay navigable.
+ * A segmented control.
+ *
+ * These were four separate folder tabs with gaps between them, sitting on a
+ * rule that ran off to the right — four objects pretending to be one control.
+ * One track with four segments reads as a single choice, which is what it is.
  */
 const DrawerTabs = ({ active, counts, onSelect, trailing }: DrawerTabsProps) => (
-    <div
-        role="tablist"
-        aria-label="Shelf sections"
-        className="flex items-end gap-1.5 overflow-x-auto"
-    >
-        {GAME_STATUSES.map((status) => {
-            const { label, icon: Mark, markTone } = STATUS_PRESENTATION[status];
-            const isActive = status === active;
+    <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+            role="tablist"
+            aria-label="Shelf sections"
+            className="inline-flex max-w-full gap-1 overflow-x-auto rounded-md border border-subtle bg-surface-sunken p-1"
+        >
+            {GAME_STATUSES.map((status) => {
+                const { label, icon: Icon, markTone } =
+                    STATUS_PRESENTATION[status];
+                const isActive = status === active;
 
-            return (
-                <button
-                    key={status}
-                    role="tab"
-                    aria-selected={isActive}
-                    onClick={() => onSelect(status)}
-                    className={cn(
-                        "lift flex shrink-0 items-center gap-2 rounded-t-md border border-b-0 border-subtle border-t-[3px] px-4 pb-2.5 pt-2.5 text-label",
-                        "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
-                        ACCENT_BORDER[status],
-                        isActive
-                            ? "bg-surface-raised text-content shadow-e1"
-                            : "bg-transparent text-content-muted hover:text-content"
-                    )}
-                >
-                    <Mark size={14} aria-hidden className={cn("shrink-0", isActive && markTone)} />
-                    {label}
-                    <span className="opacity-65">
-                        {formatCount(counts[status] ?? 0)}
-                    </span>
-                </button>
-            );
-        })}
+                return (
+                    <button
+                        key={status}
+                        role="tab"
+                        aria-selected={isActive}
+                        onClick={() => onSelect(status)}
+                        className={cn(
+                            "lift flex shrink-0 cursor-pointer items-center gap-2 rounded-sm px-3.5 py-2 text-body-sm",
+                            "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
+                            isActive
+                                ? "bg-surface-raised font-medium text-content shadow-lip"
+                                : "text-content-secondary hover:text-content"
+                        )}
+                    >
+                        <Icon
+                            size={14}
+                            aria-hidden
+                            className={cn("shrink-0", isActive && markTone)}
+                        />
+                        {label}
+                        <span
+                            className={cn(
+                                "rounded-full px-1.5 font-mono text-label-sm tabular-nums",
+                                isActive
+                                    ? "bg-surface-sunken text-content-secondary"
+                                    : "text-content-muted"
+                            )}
+                        >
+                            {formatCount(counts[status] ?? 0)}
+                        </span>
+                    </button>
+                );
+            })}
+        </div>
 
-        <span aria-hidden className="h-px flex-1 bg-subtle" />
-        {trailing && <div className="shrink-0 pb-2">{trailing}</div>}
+        {trailing}
     </div>
 );
 

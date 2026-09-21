@@ -8,7 +8,6 @@ import HomePage from "./pages/HomePage/HomePage";
 import ProfilePageRoute from "./pages/ProfilePage/ProfilePageRoute";
 import LibraryPage from "./pages/LibraryPage/LibraryPage";
 import GamePage from "./pages/GamePage/GamePage";
-import FriendsPage from "./pages/FriendsPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -47,7 +46,6 @@ function App() {
                             element={<CatalogueRedirect />}
                         />
                         <Route path="/game/:gameID" element={<GamePage />} />
-                        <Route path="/friends" element={<FriendsPage />} />
                         <Route path="/settings" element={<SettingsPage />} />
 
                         {/* Admin area. Built for several views; the design

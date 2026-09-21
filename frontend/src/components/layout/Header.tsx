@@ -99,12 +99,6 @@ const Header = () => {
             ? [
                   { to: "/", label: "Home", exact: true },
                   { to: "/catalogue", label: "Catalogue", exact: false },
-                  {
-                      to: `/user/${user.username}?type=backlog`,
-                      label: "Backlog",
-                      exact: false,
-                  },
-                  { to: "/friends", label: "Friends", exact: false },
               ]
             : [
                   { to: "/", label: "Home", exact: true },
