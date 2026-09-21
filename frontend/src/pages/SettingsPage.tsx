@@ -1,7 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
     Bell,
-    Check,
     Eye,
     Moon,
     Plug,
@@ -27,6 +26,7 @@ import Button from "../components/ui/Button";
 import Toggle from "../components/ui/Toggle";
 import EmptyPlate from "../components/ui/EmptyPlate";
 import { Input, Textarea } from "../components/ui/Input";
+import UsernameRow from "./settings/UsernameRow";
 import Dropdown from "../components/ui/Dropdown";
 import { formatCount } from "../lib/format";
 import { cn } from "../lib/cn";
@@ -125,7 +125,6 @@ const SettingsPage = () => {
         onError: () => notify("Couldn't delete your account", "error"),
     });
 
-    const [username, setUsername] = useState(user?.username ?? "");
     const [bio, setBio] = useState(user?.bio ?? "");
 
     /* Saved on toggle rather than gathered into the Save bar: this one
@@ -134,6 +133,17 @@ const SettingsPage = () => {
     const [showSexual, setShowSexual] = useState(
         user?.showSexualContent ?? false
     );
+
+    /* Saved on blur rather than gathered into a page-wide button. Every
+       field here is one value with one owner, so a second action to apply it
+       only adds a way to lose the change. */
+    const saveBio = () => {
+        if (bio === (user?.bio ?? "")) return;
+        update.mutate(
+            { bio },
+            { onError: () => notify("Couldn't save your bio", "error") }
+        );
+    };
 
     const saveSexualContent = (next: boolean) => {
         setShowSexual(next);
@@ -149,7 +159,6 @@ const SettingsPage = () => {
     };
 
     useEffect(() => {
-        setUsername(user?.username ?? "");
         setBio(user?.bio ?? "");
         setShowSexual(user?.showSexualContent ?? false);
     }, [user]);
@@ -163,17 +172,6 @@ const SettingsPage = () => {
         );
     }
 
-    const dirty = username !== user.username || bio !== (user.bio ?? "");
-
-    const save = async () => {
-        try {
-            await update.mutateAsync({ username, bio });
-            notify("Settings saved", "success");
-        } catch {
-            notify("Couldn't save those changes", "error");
-        }
-    };
-
     return (
         <div className="flex flex-col gap-6">
             <header>
@@ -186,13 +184,9 @@ const SettingsPage = () => {
             <Section title="Account" note="how you sign in" icon={UserRound}>
                 <Row
                     label="Username"
-                    help={`Your profile lives at /user/${username || "…"}`}
+                    help="Changing this changes your profile's address, so every link anyone has to it."
                 >
-                    <Input
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        aria-label="Username"
-                    />
+                    <UsernameRow current={user.username} />
                 </Row>
                 <Row
                     label="Email"
@@ -232,13 +226,15 @@ const SettingsPage = () => {
             <Section title="Profile" note="what other people see" icon={Eye}>
                 <Row
                     label="Display bio"
-                    help={`Shown under your name · ${bio.length} / 160`}
+                    help={`Shown under your name. ${bio.length} of 160 characters. Saves when you click away.`}
                 >
                     <Textarea
                         rows={3}
                         value={bio}
                         maxLength={160}
+                        placeholder="Mostly RPGs and anything with a grappling hook."
                         onChange={(e) => setBio(e.target.value)}
+                        onBlur={saveBio}
                         aria-label="Bio"
                     />
                 </Row>
@@ -336,45 +332,6 @@ const SettingsPage = () => {
                     </Button>
                 </Row>
             </Section>
-
-            <div
-                className={cn(
-                    /* Always backed, never transparent — a bar that pins
-                       itself over the rows below has to be opaque enough to
-                       read against them. */
-                    "sticky bottom-4 z-10 flex items-center justify-end gap-2 whitespace-nowrap rounded-lg border bg-surface-raised/85 px-3 py-2.5 shadow-plate backdrop-blur-md transition-colors duration-200 sm:gap-3 sm:px-4 sm:py-3",
-                    dirty ? "border-brand/30 shadow-lifted" : "border-subtle"
-                )}
-            >
-                <span
-                    className={cn(
-                        /* No room for status and two buttons at 375px. The
-                           brand border already says "unsaved", and the buttons
-                           enabling says it again. */
-                        "mr-auto hidden items-center gap-1.5 whitespace-nowrap text-label sm:inline-flex",
-                        dirty ? "text-content" : "text-success"
-                    )}
-                >
-                    {!dirty && <Check size={13} aria-hidden />}
-                    {dirty ? "Unsaved changes" : "All changes saved"}
-                </span>
-                <Button
-                    variant="secondary"
-                    disabled={!dirty || update.isPending}
-                    onClick={() => {
-                        setUsername(user.username);
-                        setBio(user.bio ?? "");
-                    }}
-                >
-                    Discard
-                </Button>
-                <Button
-                    disabled={!dirty || update.isPending}
-                    onClick={() => void save()}
-                >
-                    Save changes
-                </Button>
-            </div>
 
             <section className="overflow-hidden rounded-lg border border-danger/40 bg-surface-raised shadow-plate">
                 <header className="flex flex-wrap items-center gap-3 border-b border-danger/25 bg-danger-subtle px-5 py-3.5">

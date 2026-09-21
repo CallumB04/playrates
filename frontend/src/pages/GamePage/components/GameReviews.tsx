@@ -4,9 +4,18 @@ import ProfilePicture from "../../../components/ProfilePicture";
 import EmptyPlate from "../../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import Dropdown from "../../../components/ui/Dropdown";
-import { formatCount, formatRating, relativeTime } from "../../../lib/format";
+import StatusBadge from "../../../components/ui/StatusBadge";
+import RatingBadge from "../../../components/ui/RatingBadge";
+import {
+    displayStatusFor,
+    isDisplayStatus,
+    type DisplayStatus,
+    type GameStatus,
+    type PlayedStatus,
+} from "../../../constants/gameStatus";
+import { formatCount, formatHours, relativeTime } from "../../../lib/format";
 
-interface PlayerNotesProps {
+interface GameReviewsProps {
     reviews: ReviewWithAuthor[];
     total: number;
     sort: ReviewSort;
@@ -14,21 +23,30 @@ interface PlayerNotesProps {
     isLoading: boolean;
 }
 
-const PlayerNotes = ({
+/** The state a review was written in, when its author still has that log. */
+const reviewStatus = (review: ReviewWithAuthor): DisplayStatus | null => {
+    if (!review.status || !isDisplayStatus(review.status)) return null;
+    return displayStatusFor(
+        review.status as GameStatus,
+        review.playedStatus as PlayedStatus | null
+    );
+};
+
+const GameReviews = ({
     reviews,
     total,
     sort,
     onSortChange,
     isLoading,
-}: PlayerNotesProps) => (
+}: GameReviewsProps) => (
     <section>
         <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-3 border-b border-subtle pb-2.5">
             <h2 className="font-display text-section text-content">
-                Player notes
+                Reviews
             </h2>
             <div className="flex items-center gap-4">
                 <span className="text-label text-content-muted">
-                    {formatCount(total)} {total === 1 ? "entry" : "entries"}
+                    {formatCount(total)} {total === 1 ? "review" : "reviews"}
                 </span>
                 <Dropdown
                     options={[
@@ -39,7 +57,7 @@ const PlayerNotes = ({
                     ]}
                     value={sort}
                     onChange={(next) => onSortChange(next as ReviewSort)}
-                    aria-label="Sort notes"
+                    aria-label="Sort reviews"
                     className="w-40"
                 />
             </div>
@@ -49,14 +67,15 @@ const PlayerNotes = ({
             <TextSkeleton lines={4} />
         ) : reviews.length === 0 ? (
             <EmptyPlate
-                title="No notes yet"
-                body="Log this game and leave a note. Someone deciding whether to start it will read it."
+                title="No reviews yet"
+                body="Log this game and write one. Someone deciding whether to start it will read it."
             />
         ) : (
             reviews.map((review) => (
                 <article
                     key={review.id}
-                    className="grid grid-cols-[38px_minmax(0,1fr)_64px] gap-4 border-b border-subtle py-4"
+                    id={`review-${review.id}`}
+                    className="grid grid-cols-[38px_minmax(0,1fr)_auto] gap-4 border-b border-subtle py-4 last:border-b-0 target:bg-brand-subtle"
                 >
                     <ProfilePicture
                         variant="friendRow"
@@ -72,6 +91,14 @@ const PlayerNotes = ({
                             >
                                 {review.author.username}
                             </Link>
+                            {reviewStatus(review) && (
+                                <StatusBadge status={reviewStatus(review)!} />
+                            )}
+                            {review.hoursPlayed !== null && (
+                                <span className="font-mono text-label-sm text-content-muted">
+                                    {formatHours(review.hoursPlayed)} in
+                                </span>
+                            )}
                             <span className="text-label-sm text-content-muted">
                                 {relativeTime(review.createdAt)}
                             </span>
@@ -80,13 +107,11 @@ const PlayerNotes = ({
                             {review.body}
                         </p>
                     </div>
-                    <span className="text-right font-mono text-figure-lg text-brand">
-                        {formatRating(review.rating)}
-                    </span>
+                    <RatingBadge value={review.rating} size="md" />
                 </article>
             ))
         )}
     </section>
 );
 
-export default PlayerNotes;
+export default GameReviews;

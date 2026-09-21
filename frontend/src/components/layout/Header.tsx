@@ -99,10 +99,20 @@ const Header = () => {
             ? [
                   { to: "/", label: "Home", exact: true },
                   { to: "/library", label: "Library", exact: false },
+                  {
+                      to: "/community",
+                      label: "Community",
+                      exact: false,
+                  },
               ]
             : [
                   { to: "/", label: "Home", exact: true },
                   { to: "/library", label: "Library", exact: false },
+                  {
+                      to: "/community",
+                      label: "Community",
+                      exact: false,
+                  },
               ]
     ).map(({ to, label, exact }) => ({
         to,

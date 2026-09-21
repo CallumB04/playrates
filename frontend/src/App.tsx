@@ -5,6 +5,7 @@ import Footer from "./components/Footer";
 import Notification from "./components/Notification";
 import AccountFormModal from "./components/auth/AccountFormModal";
 import HomePage from "./pages/HomePage/HomePage";
+import CommunityPage from "./pages/CommunityPage";
 import LegalPage from "./pages/legal/LegalPage";
 import ProfilePageRoute from "./pages/ProfilePage/ProfilePageRoute";
 import LibraryPage from "./pages/LibraryPage/LibraryPage";
@@ -72,6 +73,10 @@ function App() {
                             element={<LibraryRedirect />}
                         />
                         <Route path="/game/:gameID" element={<GamePage />} />
+                        <Route
+                            path="/community"
+                            element={<CommunityPage />}
+                        />
                         <Route path="/settings" element={<SettingsPage />} />
 
                         {/* Stubs, so the footer never links into nothing. */}

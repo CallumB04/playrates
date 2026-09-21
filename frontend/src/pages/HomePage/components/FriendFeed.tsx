@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import type { FriendActivity } from "@playrates/shared";
 import ProfilePicture from "../../../components/ProfilePicture";
-import Panel from "../../../components/ui/Panel";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import GameCover from "../../../components/game/GameCover";
 import {
@@ -11,7 +10,8 @@ import {
     type GameStatus,
     type PlayedStatus,
 } from "../../../constants/gameStatus";
-import { formatRating, relativeTime } from "../../../lib/format";
+import RatingBadge from "../../../components/ui/RatingBadge";
+import { relativeTime } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 
 /** What the actor did, as a sentence rather than a status word. */
@@ -85,9 +85,7 @@ const Row = ({ item }: { item: FriendActivity }) => {
             </span>
 
             {item.rating !== null && (
-                <span className="shrink-0 font-mono text-figure-sm text-brand">
-                    {formatRating(item.rating)}
-                </span>
+                <RatingBadge value={item.rating} bare />
             )}
         </Link>
     );
@@ -108,28 +106,31 @@ const FriendFeed = ({
     /** Friends live on your profile now, not on a page of their own. */
     username: string;
 }) => (
-    <Panel
-        title="Friend activity"
-        trailing={
+    <section>
+        <header className="mb-3 flex items-baseline justify-between gap-4">
+            <h2 className="font-display text-section text-content">
+                Friend activity
+            </h2>
             <Link
                 to={`/user/${username}`}
-                className="text-label text-content-muted hover:text-brand"
+                className="lift text-label text-content-muted hover:text-brand"
             >
                 All friends
             </Link>
-        }
-        bodyClassName="flex flex-col gap-0.5 p-2"
-    >
-        {isLoading ? (
-            <TextSkeleton lines={4} />
-        ) : items.length === 0 ? (
-            <p className="px-2 py-6 text-center text-body-sm text-content-muted">
-                Nothing yet. Add a few friends and their logs show up here.
-            </p>
-        ) : (
-            items.map((item) => <Row key={item.logId} item={item} />)
-        )}
-    </Panel>
+        </header>
+
+        <div className="flex flex-col gap-0.5">
+            {isLoading ? (
+                <TextSkeleton lines={4} />
+            ) : items.length === 0 ? (
+                <p className="rounded-md border border-dashed border-strong bg-surface-sunken/40 px-4 py-6 text-center text-body-sm text-content-muted">
+                    Nothing yet. Add a few friends and their logs show up here.
+                </p>
+            ) : (
+                items.map((item) => <Row key={item.logId} item={item} />)
+            )}
+        </div>
+    </section>
 );
 
 export default FriendFeed;

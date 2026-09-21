@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import type { Genre } from "@playrates/shared";
 import { cn } from "../../../lib/cn";
 
@@ -26,7 +27,7 @@ const GenreGrid = ({ genres }: { genres: Genre[] }) => {
 
     return (
         <section>
-            <h2 className="mb-4 font-display text-section text-content">
+            <h2 className="mb-3 font-display text-section text-content">
                 Browse by genre
             </h2>
 
@@ -38,34 +39,30 @@ const GenreGrid = ({ genres }: { genres: Genre[] }) => {
                             key={genre.slug}
                             to={`/library?genre=${genre.slug}`}
                             className={cn(
-                                "lift relative overflow-hidden rounded-md border border-subtle px-3.5 py-4",
-                                "hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-plate",
+                                "lift group/genre relative flex items-center gap-2.5 overflow-hidden rounded-md border border-subtle bg-surface-raised px-3.5 py-3",
+                                "hover:-translate-y-0.5 hover:border-strong hover:shadow-plate",
                                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                             )}
                         >
+                            {/* A hue bar, not a hue card. The washed tiles were
+                                the only thing on the page made of colour rather
+                                than of surface and rule, so they read as
+                                imported from a different site. */}
                             <span
                                 aria-hidden
-                                className="absolute inset-0 opacity-90"
+                                className="h-7 w-1 shrink-0 rounded-full transition-[height] duration-300 group-hover/genre:h-9"
                                 style={{
-                                    backgroundImage: `linear-gradient(135deg, hsl(${hue} 62% 96%), hsl(${
-                                        (hue + 40) % 360
-                                    } 58% 90%))`,
+                                    backgroundColor: `hsl(${hue} 65% 55%)`,
                                 }}
                             />
-                            {/* The dark theme needs its own wash: the pale one
-                                above would blow a hole in the page. */}
-                            <span
-                                aria-hidden
-                                className="absolute inset-0 hidden opacity-70 dark:block"
-                                style={{
-                                    backgroundImage: `linear-gradient(135deg, hsl(${hue} 42% 22%), hsl(${
-                                        (hue + 40) % 360
-                                    } 38% 14%))`,
-                                }}
-                            />
-                            <span className="relative block truncate text-body-sm font-medium text-content">
+                            <span className="min-w-0 flex-1 truncate text-body-sm font-medium text-content">
                                 {genre.name}
                             </span>
+                            <ChevronRight
+                                size={14}
+                                aria-hidden
+                                className="shrink-0 text-content-muted transition-transform duration-300 group-hover/genre:translate-x-0.5"
+                            />
                         </Link>
                     );
                 })}

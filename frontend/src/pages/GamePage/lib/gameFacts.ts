@@ -1,5 +1,5 @@
 import type { Game, Genre, Platform } from "@playrates/shared";
-import { formatDate, formatHours } from "../../../lib/format";
+import { formatDate } from "../../../lib/format";
 
 export interface Fact {
     label: string;
@@ -56,29 +56,3 @@ export const buildGameFacts = (
     return facts;
 };
 
-/**
- * Figures from elsewhere: Metacritic, RAWG's own community score, and RAWG's
- * average playtime. Kept apart from this site's numbers and labelled, so a
- * 4.3/5 from somewhere else is never mistaken for a PlayRates rating.
- */
-export const buildExternalFacts = (game: Game): Fact[] => {
-    const facts: Fact[] = [];
-
-    if (game.metacritic !== null) {
-        facts.push({ label: "Metacritic", value: String(game.metacritic) });
-    }
-    if (game.rawgRating !== null) {
-        facts.push({
-            label: "RAWG community",
-            value: `${game.rawgRating.toFixed(1)} / 5`,
-        });
-    }
-    if (game.playtimeHours !== null) {
-        facts.push({
-            label: "Typical playtime",
-            value: formatHours(game.playtimeHours),
-        });
-    }
-
-    return facts;
-};

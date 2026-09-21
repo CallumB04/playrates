@@ -27,7 +27,10 @@ import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup"
 import LibraryFilters from "./components/LibraryFilters";
 import { getLibraryGamesPerPage } from "./lib/gamesPerPage";
 import { useLibraryQuery } from "./lib/useLibraryQuery";
-import { displayStatusFor } from "../../constants/gameStatus";
+import {
+    STATUS_PRESENTATION,
+    displayStatusFor,
+} from "../../constants/gameStatus";
 import { primaryPlatformLabel } from "../../lib/platforms";
 import {
     formatCount,
@@ -98,12 +101,19 @@ const LibraryPage = () => {
     const fullLog = (gameId: number) =>
         (myLogs?.data ?? []).find((log) => log.gameId === gameId);
 
-    const wishlist = async (gameId: number, title: string) => {
+    /* One tap, no popup: backlog and wishlist are a single field each, so
+       opening the log editor to set them would be three steps for one. */
+    const quickAdd = async (
+        gameId: number,
+        title: string,
+        status: "backlog" | "wishlist"
+    ) => {
+        const { label } = STATUS_PRESENTATION[status];
         try {
-            await save.mutateAsync({ gameId, input: { status: "wishlist" } });
-            notify(`${title} added to your wishlist`, "success");
+            await save.mutateAsync({ gameId, input: { status } });
+            notify(`${title} added to your ${label.toLowerCase()}`, "success");
         } catch {
-            notify("Couldn't add that to your wishlist", "error");
+            notify(`Couldn't add that to your ${label.toLowerCase()}`, "error");
         }
     };
 
@@ -124,14 +134,21 @@ const LibraryPage = () => {
             return [
                 {
                     key: "log",
-                    label: "Log it",
+                    label: "Create log",
                     tone: "primary",
                     onSelect: () => setModal({ kind: "create", gameId }),
                 },
                 {
+                    key: "backlog",
+                    label: "Add to backlog",
+                    icon: STATUS_PRESENTATION.backlog.icon,
+                    onSelect: () => void quickAdd(gameId, title, "backlog"),
+                },
+                {
                     key: "wishlist",
-                    label: "Wishlist",
-                    onSelect: () => void wishlist(gameId, title),
+                    label: "Add to wishlist",
+                    icon: STATUS_PRESENTATION.wishlist.icon,
+                    onSelect: () => void quickAdd(gameId, title, "wishlist"),
                 },
             ];
         }

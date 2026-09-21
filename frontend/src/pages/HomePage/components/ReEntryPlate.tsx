@@ -1,17 +1,17 @@
 import { Link } from "react-router-dom";
-import { Clock, Gamepad2, Star, TrendingUp } from "lucide-react";
 import type { UserStats } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
 import Button, { buttonClass } from "../../../components/ui/Button";
 import GameCover from "../../../components/game/GameCover";
 import StatusBadge from "../../../components/ui/StatusBadge";
+import RatingBadge from "../../../components/ui/RatingBadge";
+import YearChart from "./YearChart";
 import {
     GAME_STATUSES,
     STATUS_PRESENTATION,
 } from "../../../constants/gameStatus";
 import {
     formatCount,
-    formatFraction,
     formatHours,
     formatRating,
     relativeTime,
@@ -22,207 +22,195 @@ interface ReEntryPlateProps {
     username: string;
     /** The most recently touched "playing" log, if there is one. */
     current: GameLogWithGame | undefined;
+    /** This year's logs, for the chart. */
+    yearLogs: GameLogWithGame[];
     playingCount: number;
     backlogCount: number;
     yearStats: UserStats | undefined;
     onUpdateLog: () => void;
 }
 
-/** The sentence under the welcome, built only from figures that exist. */
-const buildSummary = (
-    current: GameLogWithGame | undefined,
-    playing: number,
-    backlog: number
-): string => {
-    const parts: string[] = [];
-
-    if (current?.game) {
-        const hours = current.hoursPlayed;
-        if (hours !== null) {
-            parts.push(
-                `You're ${formatHours(hours)} into ${current.game.title}`
-            );
-        } else {
-            parts.push(`You've got ${current.game.title} on the go`);
-        }
-        if (current.achievementsTotal) {
-            parts.push(
-                `with ${formatFraction(
-                    current.achievementsCompleted,
-                    current.achievementsTotal
-                )} achievements`
-            );
-        }
-    }
-
-    parts.push(
-        `${formatCount(playing)} on the go and ${formatCount(backlog)} waiting`
-    );
-    return `${parts.join(", ")}.`;
-};
-
-/** A figure with a face on it, rather than a row in a ledger. */
+/** The figure leads. The label is there to say what it is, not to compete. */
 const Stat = ({
-    icon: Icon,
     label,
     value,
     tone,
 }: {
-    icon: typeof Clock;
     label: string;
     value: string;
     tone: string;
 }) => (
-    <div className="rounded-md border border-subtle bg-surface-raised px-3.5 py-3">
-        <span
-            className={cn(
-                "flex size-7 items-center justify-center rounded-full",
-                tone
-            )}
-        >
-            <Icon size={14} aria-hidden />
-        </span>
-        <p className="mt-2.5 font-mono text-figure-lg text-content">{value}</p>
-        <p className="text-label-sm text-content-muted">{label}</p>
+    <div className="border-l-2 pl-3" style={{ borderColor: tone }}>
+        <p className="font-mono text-[26px] leading-none text-content">
+            {value}
+        </p>
+        <p className="mt-1.5 text-label-sm text-content-muted">{label}</p>
     </div>
 );
 
 /**
- * The signed-in welcome.
+ * The signed-in landing.
  *
- * This was two flat cards: a greeting, and a four-row ledger of this year's
- * figures with nothing to press. The shelf links are the point — the fastest
- * thing most people want from a home page is back into their own backlog.
+ * Signed out, the page opens with a claim and real box art. Signed in it
+ * opened with a greeting in a white box, which is a worse first screen for
+ * the person who actually uses the place. This keeps that structure — a
+ * headline, something to press, the shelves within reach — and gives the
+ * right-hand side to your own year rather than to six covers you have
+ * already seen.
  */
 const ReEntryPlate = ({
     username,
     current,
+    yearLogs,
     playingCount,
     backlogCount,
     yearStats,
     onUpdateLog,
 }: ReEntryPlateProps) => (
-    <div className="flex flex-col gap-5">
-        <section className="relative overflow-hidden rounded-lg border border-subtle bg-surface-raised p-6 shadow-plate">
-            {/* A wash of brand behind the greeting, so the first thing on the
-                page is not a white rectangle. */}
-            <span
-                aria-hidden
-                className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-brand/10 blur-3xl"
-            />
+    <section className="relative overflow-hidden rounded-lg border border-subtle bg-surface-raised shadow-plate">
+        <span
+            aria-hidden
+            className="pointer-events-none absolute -right-28 -top-32 size-80 rounded-full bg-brand/12 blur-3xl"
+        />
 
-            <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
-                {current?.game && (
-                    <Link
-                        to={`/game/${current.gameId}`}
-                        className="lift relative w-28 shrink-0 self-start hover:-translate-y-1"
-                    >
-                        <GameCover
-                            coverUrl={current.game.coverUrl}
-                            title={current.game.title}
-                            className="aspect-3/4 w-full overflow-hidden rounded-md shadow-lifted"
-                        />
-                        <StatusBadge
-                            status="playing"
-                            size="stamp"
-                            onMedia
-                            className="absolute right-1.5 top-1.5"
-                        />
-                    </Link>
-                )}
+        <div className="relative grid gap-8 px-6 py-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-12 lg:px-8 lg:py-9">
+            <div className="flex flex-col">
+                <h1 className="font-display text-[34px] leading-tight text-content sm:text-[40px]">
+                    Welcome back, {username}
+                </h1>
 
-                <div className="min-w-0 flex-1">
-                    {current && (
-                        <p className="text-label text-status-playing">
-                            Still playing, last logged{" "}
-                            {relativeTime(current.updatedAt)}
-                        </p>
+                <p className="mt-2.5 max-w-[46ch] text-body leading-relaxed text-content-secondary">
+                    {current?.game ? (
+                        <>
+                            You left off in{" "}
+                            <span className="text-content">
+                                {current.game.title}
+                            </span>
+                            {current.hoursPlayed !== null && (
+                                <> at {formatHours(current.hoursPlayed)}</>
+                            )}
+                            . {formatCount(backlogCount)} more waiting.
+                        </>
+                    ) : (
+                        <>
+                            {formatCount(playingCount)} on the go,{" "}
+                            {formatCount(backlogCount)} waiting. Pick something
+                            and the rest of this page fills in.
+                        </>
                     )}
+                </p>
 
-                    <h1 className="mt-1.5 font-display text-[36px] leading-tight text-content">
-                        Welcome back, {username}
-                    </h1>
-
-                    <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-content-secondary">
-                        {buildSummary(current, playingCount, backlogCount)}
-                    </p>
-
-                    <div className="mt-5 flex flex-wrap gap-2.5">
-                        {current ? (
-                            <Button onClick={onUpdateLog}>
-                                Update your log
-                            </Button>
-                        ) : (
-                            <Link to="/library" className={buttonClass("primary")}>
-                                Find something to play
-                            </Link>
-                        )}
+                <div className="mt-6 flex flex-wrap items-center gap-3">
+                    {current ? (
+                        <Button size="lg" onClick={onUpdateLog}>
+                            Update your log
+                        </Button>
+                    ) : (
                         <Link
-                            to={`/user/${username}?type=backlog`}
-                            className={buttonClass("secondary")}
+                            to="/library"
+                            className={buttonClass(
+                                "primary",
+                                undefined,
+                                "lg"
+                            )}
                         >
-                            Open your backlog
+                            Find something to play
                         </Link>
-                    </div>
+                    )}
+                    <Link
+                        to={`/user/${username}`}
+                        className={buttonClass("secondary", undefined, "lg")}
+                    >
+                        Your profile
+                    </Link>
+                </div>
+
+                {/* The shelves, one press away. */}
+                <div className="mt-7 flex flex-wrap gap-2 border-t border-subtle pt-5">
+                    {GAME_STATUSES.map((status) => {
+                        const { label, icon: Icon, markTone } =
+                            STATUS_PRESENTATION[status];
+                        return (
+                            <Link
+                                key={status}
+                                to={`/user/${username}?type=${status}`}
+                                className="lift inline-flex items-center gap-2 rounded-full border border-subtle px-3.5 py-1.5 text-body-sm text-content-secondary hover:border-strong hover:text-content"
+                            >
+                                <Icon
+                                    size={14}
+                                    aria-hidden
+                                    className={cn("shrink-0", markTone)}
+                                />
+                                {label}
+                            </Link>
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* Straight into a shelf. Four links that were previously only
-                reachable by going to a profile and finding the tabs. */}
-            <div className="relative mt-6 flex flex-wrap gap-2 border-t border-subtle pt-4">
-                {GAME_STATUSES.map((status) => {
-                    const { label, icon: Icon, markTone } =
-                        STATUS_PRESENTATION[status];
-                    return (
-                        <Link
-                            key={status}
-                            to={`/user/${username}?type=${status}`}
-                            className="lift inline-flex items-center gap-2 rounded-full border border-subtle px-3.5 py-1.5 text-body-sm text-content-secondary hover:border-strong hover:text-content"
-                        >
-                            <Icon
-                                size={14}
-                                aria-hidden
-                                className={cn("shrink-0", markTone)}
+            <div className="flex flex-col gap-5">
+                {current?.game && (
+                    <Link
+                        to={`/game/${current.gameId}`}
+                        className="lift flex items-center gap-3.5 rounded-md border border-subtle bg-surface-sunken/40 p-3 hover:border-strong"
+                    >
+                        <span className="relative shrink-0">
+                            <GameCover
+                                coverUrl={current.game.coverUrl}
+                                title={current.game.title}
+                                className="aspect-3/4 w-14 overflow-hidden rounded-xs shadow-cover"
                             />
-                            {label}
-                        </Link>
-                    );
-                })}
-            </div>
-        </section>
+                        </span>
+                        <span className="min-w-0 flex-1">
+                            <StatusBadge status="playing" />
+                            <span className="mt-1.5 block truncate text-body-sm font-medium text-content">
+                                {current.game.title}
+                            </span>
+                            <span className="block text-label-sm text-content-muted">
+                                Last logged {relativeTime(current.updatedAt)}
+                            </span>
+                        </span>
+                        {current.rating !== null && (
+                            <RatingBadge value={current.rating} bare />
+                        )}
+                    </Link>
+                )}
 
-        <section>
-            <h2 className="mb-3 font-display text-section text-content">
-                This year so far
-            </h2>
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-                <Stat
-                    icon={Gamepad2}
-                    label="Games logged"
-                    value={formatCount(yearStats?.logCount ?? 0)}
-                    tone="bg-brand-subtle text-brand"
-                />
-                <Stat
-                    icon={Clock}
-                    label="Hours played"
-                    value={formatHours(yearStats?.hoursPlayed ?? 0)}
-                    tone="bg-status-playing-quiet text-status-playing"
-                />
-                <Stat
-                    icon={Star}
-                    label="Average rating"
-                    value={formatRating(yearStats?.averageRating ?? null)}
-                    tone="bg-status-wishlist-quiet text-status-wishlist"
-                />
-                <Stat
-                    icon={TrendingUp}
-                    label="Games rated"
-                    value={formatCount(yearStats?.ratingCount ?? 0)}
-                    tone="bg-status-backlog-quiet text-status-backlog"
-                />
+                <div className="rounded-md border border-subtle bg-surface-sunken/40 p-4">
+                    <div className="mb-4 flex items-baseline justify-between gap-3">
+                        <h2 className="text-label text-content-muted">
+                            Your {new Date().getFullYear()}
+                        </h2>
+                        <span className="font-mono text-label-sm text-content-muted">
+                            {formatCount(yearStats?.logCount ?? 0)} logged
+                        </span>
+                    </div>
+
+                    <YearChart logs={yearLogs} />
+
+                    <div className="mt-5 grid grid-cols-3 gap-3">
+                        <Stat
+                            label="Hours"
+                            value={formatHours(yearStats?.hoursPlayed ?? 0)}
+                            tone="var(--color-brand)"
+                        />
+                        <Stat
+                            label="Avg rating"
+                            value={formatRating(
+                                yearStats?.averageRating ?? null
+                            )}
+                            tone="var(--color-status-wishlist)"
+                        />
+                        <Stat
+                            label="Rated"
+                            value={formatCount(yearStats?.ratingCount ?? 0)}
+                            tone="var(--color-status-backlog)"
+                        />
+                    </div>
+                </div>
             </div>
-        </section>
-    </div>
+        </div>
+    </section>
 );
 
 export default ReEntryPlate;

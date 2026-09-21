@@ -23,8 +23,10 @@ import { TextSkeleton } from "../../components/ui/Skeleton";
 import GameCoverPlate from "./components/GameCoverPlate";
 import RatingPlate from "./components/RatingPlate";
 import CirculationPlate from "./components/CirculationPlate";
-import PlayerNotes from "./components/PlayerNotes";
-import { buildExternalFacts, buildGameFacts } from "./lib/gameFacts";
+import GameReviews from "./components/GameReviews";
+import { buildGameFacts } from "./lib/gameFacts";
+import ScoreCards from "./components/ScoreCards";
+import GameDescription from "./components/GameDescription";
 
 const GamePage = () => {
     const { gameID } = useParams();
@@ -57,11 +59,6 @@ const GamePage = () => {
     const { data: myLogs } = useMyGameLogs(undefined, { limit: 100 });
     const fullLog: GameLogWithGame | undefined = (myLogs?.data ?? []).find(
         (entry) => entry.gameId === gameId
-    );
-
-    const externalFacts = useMemo(
-        () => (game ? buildExternalFacts(game) : []),
-        [game]
     );
 
     const facts = useMemo(
@@ -122,14 +119,14 @@ const GamePage = () => {
 
                 <div className="flex min-w-0 flex-col gap-6 lg:col-start-2 lg:row-start-2">
                     {game.description ? (
-                        <p className="max-w-[52ch] text-body text-content-secondary">
-                            {game.description}
-                        </p>
+                        <GameDescription text={game.description} />
                     ) : (
-                        <p className="max-w-[52ch] rounded-md border border-dashed border-strong bg-surface-sunken/60 px-4 py-3 text-body-sm text-content-muted">
+                        <p className="rounded-md border border-dashed border-strong bg-surface-sunken/60 px-4 py-3 text-body-sm text-content-muted">
                             No description on record for this one yet.
                         </p>
                     )}
+
+                    <ScoreCards game={game} stats={stats} />
 
                     {stats && (
                         <>
@@ -145,28 +142,8 @@ const GamePage = () => {
                         </>
                     )}
 
-                    {externalFacts.length > 0 && (
-                        /* Somebody else's numbers, named as such and kept
-                           below this site's own so a 4.3/5 is never read as a
-                           PlayRates rating. */
-                        <section className="flex flex-wrap gap-x-8 gap-y-3 rounded-md border border-subtle bg-surface-sunken/40 px-4 py-3">
-                            <h2 className="w-full text-label text-content-muted">
-                                Elsewhere
-                            </h2>
-                            {externalFacts.map((fact) => (
-                                <div key={fact.label}>
-                                    <p className="font-mono text-figure-sm text-content">
-                                        {fact.value}
-                                    </p>
-                                    <p className="text-label-sm text-content-muted">
-                                        {fact.label}
-                                    </p>
-                                </div>
-                            ))}
-                        </section>
-                    )}
 
-                    <PlayerNotes
+                    <GameReviews
                         reviews={reviews?.data ?? []}
                         total={reviews?.meta.total ?? 0}
                         sort={sort}

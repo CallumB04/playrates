@@ -12,6 +12,9 @@ import { useMyGameLogs, useUserStats } from "../../hooks/queries/useGameLogs";
 import { useFriendActivity } from "../../hooks/queries/useFriends";
 import { useRecentReviews } from "../../hooks/queries/useReviews";
 import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
+import { useGameLogMutations } from "../../hooks/queries/useGameLogs";
+import { useNotify } from "../../contexts/NotificationContext";
+import { STATUS_PRESENTATION } from "../../constants/gameStatus";
 import type { TileAction } from "../../components/game/GameTile";
 import SignedOutHero from "./components/SignedOutHero";
 import ReEntryPlate from "./components/ReEntryPlate";
@@ -67,6 +70,9 @@ const HomePage = () => {
        for anyone with more than a page of logs. */
     const { data: playing } = useMyGameLogs("playing", { limit: 1 });
     const { data: backlog } = useMyGameLogs("backlog", { limit: 1 });
+    /* Enough to draw a year without paging; the chart is a shape, not a
+       ledger, so the tail beyond this would not change its outline. */
+    const { data: played } = useMyGameLogs("played", { limit: 100 });
     const { data: yearStats } = useUserStats(
         user?.username ?? "",
         new Date().getFullYear()
@@ -74,23 +80,61 @@ const HomePage = () => {
 
     const current = playing?.data[0];
 
+    const { save } = useGameLogMutations();
+    const notify = useNotify();
+
+    /* One tap, no popup: these are a single field each. */
+    const quickAdd = async (game: Game, status: "backlog" | "wishlist") => {
+        const { label } = STATUS_PRESENTATION[status];
+        try {
+            await save.mutateAsync({
+                gameId: game.id,
+                input: { status },
+            });
+            notify(
+                `${game.title} added to your ${label.toLowerCase()}`,
+                "success"
+            );
+        } catch {
+            notify(`Couldn't add that to your ${label.toLowerCase()}`, "error");
+        }
+    };
+
     /* Every cover on the page can be logged from where it sits, rather than
        only from the library. */
-    const actionsFor = (game: Game): TileAction[] => [
-        user
-            ? {
-                  key: "log",
-                  label: "Log it",
-                  tone: "primary",
-                  onSelect: () => setLogging(game.id),
-              }
-            : {
-                  key: "signin",
-                  label: "Log in to add",
-                  tone: "primary",
-                  onSelect: openLogin,
-              },
-    ];
+    const actionsFor = (game: Game): TileAction[] => {
+        if (!user) {
+            return [
+                {
+                    key: "signin",
+                    label: "Log in to add",
+                    tone: "primary",
+                    onSelect: openLogin,
+                },
+            ];
+        }
+
+        return [
+            {
+                key: "log",
+                label: "Create log",
+                tone: "primary",
+                onSelect: () => setLogging(game.id),
+            },
+            {
+                key: "backlog",
+                label: "Add to backlog",
+                icon: STATUS_PRESENTATION.backlog.icon,
+                onSelect: () => void quickAdd(game, "backlog"),
+            },
+            {
+                key: "wishlist",
+                label: "Add to wishlist",
+                icon: STATUS_PRESENTATION.wishlist.icon,
+                onSelect: () => void quickAdd(game, "wishlist"),
+            },
+        ];
+    };
 
     return (
         <div className="flex flex-col gap-11">
@@ -100,6 +144,7 @@ const HomePage = () => {
                     current={current}
                     playingCount={playing?.meta.total ?? 0}
                     backlogCount={backlog?.meta.total ?? 0}
+                    yearLogs={played?.data ?? []}
                     yearStats={yearStats}
                     onUpdateLog={() =>
                         current && setLogging(current.gameId)
@@ -122,22 +167,13 @@ const HomePage = () => {
                 actionsFor={actionsFor}
             />
 
-            {/* Two feeds side by side: what people you know are doing, and
-                what everyone else is saying. Both are the only parts of the
-                page that change because of someone other than you. */}
-            <div className="grid items-start gap-6 lg:grid-cols-2">
-                {user && (
-                    <FriendFeed
-                        items={activity?.data ?? []}
-                        isLoading={activityLoading}
-                        username={user.username}
-                    />
-                )}
-                <ReviewFeed
-                    reviews={reviews?.data ?? []}
-                    isLoading={reviewsLoading}
+            {user && (
+                <FriendFeed
+                    items={activity?.data ?? []}
+                    isLoading={activityLoading}
+                    username={user.username}
                 />
-            </div>
+            )}
 
             <Rail
                 title="Most logged"
@@ -155,6 +191,11 @@ const HomePage = () => {
                 platforms={platforms ?? []}
                 isLoading={acclaimedLoading}
                 actionsFor={actionsFor}
+            />
+
+            <ReviewFeed
+                reviews={reviews?.data ?? []}
+                isLoading={reviewsLoading}
             />
 
             <GenreGrid genres={genres ?? []} />

@@ -10,7 +10,7 @@ import ProfilePicture from "../ProfilePicture";
 import { cn } from "../../lib/cn";
 
 const ITEM =
-    "flex items-center gap-2.5 px-3 py-2.5 text-body-sm text-content-secondary transition-colors hover:bg-surface-hover hover:text-content";
+    "flex w-full items-center gap-2.5 rounded-sm px-2.5 py-2 text-left text-body-sm leading-none text-content-secondary transition-colors hover:bg-surface-hover hover:text-content";
 
 /**
  * The avatar, and what it opens.
@@ -72,9 +72,9 @@ const AccountMenu = ({
             {open && (
                 <div
                     role="menu"
-                    className="animate-settle absolute right-0 top-[calc(100%+0.6rem)] z-40 w-56 overflow-hidden rounded-lg border border-subtle bg-surface-raised py-1 shadow-modal"
+                    className="animate-settle absolute right-0 top-[calc(100%+0.6rem)] z-40 w-56 overflow-hidden rounded-lg border border-subtle bg-surface-raised p-1.5 shadow-modal"
                 >
-                    <p className="truncate border-b border-subtle px-3 pb-2.5 pt-1.5 text-label text-content-muted">
+                    <p className="truncate border-b border-subtle px-2.5 pb-2 pt-1 text-label text-content-muted">
                         {user.username}
                     </p>
                     <Link
@@ -89,7 +89,7 @@ const AccountMenu = ({
                     {/* The shelves. Backlog used to be a top-level nav item,
                         which gave one of the four states a promotion the
                         other three never earned. */}
-                    <div className="my-1 border-y border-subtle py-1">
+                    <div className="my-1.5 border-y border-subtle py-1.5">
                         {GAME_STATUSES.map((status) => {
                             const { label, icon: Icon, markTone } =
                                 STATUS_PRESENTATION[status];
@@ -127,7 +127,10 @@ const AccountMenu = ({
                             setOpen(false);
                             onSignOut();
                         }}
-                        className={cn(ITEM, "w-full cursor-pointer border-t border-subtle")}
+                        className={cn(
+                            ITEM,
+                            "cursor-pointer text-danger hover:bg-danger-subtle hover:text-danger"
+                        )}
                     >
                         <LogOut size={15} aria-hidden /> Sign out
                     </button>

@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import type { ReviewWithAuthor } from "@playrates/shared";
 import ProfilePicture from "../../../components/ProfilePicture";
-import Panel from "../../../components/ui/Panel";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
-import { formatHours, formatRating, relativeTime } from "../../../lib/format";
+import RatingBadge from "../../../components/ui/RatingBadge";
+import { formatHours, relativeTime } from "../../../lib/format";
 
 const Row = ({ review }: { review: ReviewWithAuthor }) => (
     <Link
@@ -27,9 +27,7 @@ const Row = ({ review }: { review: ReviewWithAuthor }) => (
                 </span>
             </span>
             {review.rating !== null && (
-                <span className="shrink-0 font-mono text-figure-sm text-brand">
-                    {formatRating(review.rating)}
-                </span>
+                <RatingBadge value={review.rating} bare />
             )}
         </span>
 
@@ -60,19 +58,23 @@ const ReviewFeed = ({
     reviews: ReviewWithAuthor[];
     isLoading: boolean;
 }) => (
-    <Panel title="What people are saying" bodyClassName="flex flex-col p-1.5">
-        {isLoading ? (
-            <div className="p-2">
+    <section>
+        <h2 className="mb-3 font-display text-section text-content">
+            What people are saying
+        </h2>
+
+        <div className="flex flex-col">
+            {isLoading ? (
                 <TextSkeleton lines={5} />
-            </div>
-        ) : reviews.length === 0 ? (
-            <p className="px-2 py-6 text-center text-body-sm text-content-muted">
-                No reviews yet. Be the first to write one.
-            </p>
-        ) : (
-            reviews.map((review) => <Row key={review.id} review={review} />)
-        )}
-    </Panel>
+            ) : reviews.length === 0 ? (
+                <p className="rounded-md border border-dashed border-strong bg-surface-sunken/40 px-4 py-6 text-center text-body-sm text-content-muted">
+                    No reviews yet. Be the first to write one.
+                </p>
+            ) : (
+                reviews.map((review) => <Row key={review.id} review={review} />)
+            )}
+        </div>
+    </section>
 );
 
 export default ReviewFeed;
