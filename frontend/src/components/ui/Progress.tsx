@@ -1,0 +1,62 @@
+import { cn } from "../../lib/cn";
+import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
+
+interface ProgressProps {
+    /** 0–1. Omit for the indeterminate tick sweep. */
+    value?: number;
+    label: string;
+    className?: string;
+}
+
+const TICKS = 12;
+
+/** Determinate is a filled well; indeterminate is a sweep of ticks that holds
+ *  still under reduced motion. */
+const Progress = ({ value, label, className }: ProgressProps) => {
+    const reduced = usePrefersReducedMotion();
+    const determinate = value !== undefined;
+    const percent = Math.round(Math.min(1, Math.max(0, value ?? 0)) * 100);
+
+    return (
+        <div
+            role="progressbar"
+            aria-label={label}
+            aria-valuemin={determinate ? 0 : undefined}
+            aria-valuemax={determinate ? 100 : undefined}
+            aria-valuenow={determinate ? percent : undefined}
+            className={cn(
+                "h-2 overflow-hidden rounded-full bg-surface-sunken",
+                className
+            )}
+        >
+            {determinate ? (
+                <span
+                    className="block h-full rounded-full bg-brand transition-[width] duration-300"
+                    style={{ width: `${percent}%` }}
+                />
+            ) : (
+                <span className="flex h-full gap-1">
+                    {Array.from({ length: TICKS }, (_, i) => (
+                        <span
+                            key={i}
+                            className={cn(
+                                "flex-1",
+                                i > 3 && i < 8
+                                    ? "bg-brand"
+                                    : "bg-surface-sunken",
+                                !reduced && "animate-pulse"
+                            )}
+                            style={
+                                reduced
+                                    ? undefined
+                                    : { animationDelay: `${i * 60}ms` }
+                            }
+                        />
+                    ))}
+                </span>
+            )}
+        </div>
+    );
+};
+
+export default Progress;

@@ -1,221 +1,159 @@
-import { useEffect, useState } from "react";
-import { fetchGameById, Game, GameLog } from "../api";
-import ClosePopupIcon from "./ClosePopupIcon";
-import { gamePlatforms, getColorFromGameStatus } from "../App";
+import type { ReactNode } from "react";
+import type { GameLogWithGame } from "../api";
+import { displayStatusFor } from "../constants/gameStatus";
+import { useGame, usePlatforms } from "../hooks/queries/useGames";
+import { useGameReviews } from "../hooks/queries/useReviews";
+import { platformIcon } from "../lib/platformIcons";
+import RatingBadge from "./ui/RatingBadge";
+import LedgerRow, { LedgerList } from "./ui/LedgerRow";
+import AchievementRing from "./gamelog/AchievementRing";
+import { formatDate, formatHours } from "../lib/format";
+import Modal from "./ui/Modal";
+import Button, { buttonClass } from "./ui/Button";
+import StatusBadge from "./ui/StatusBadge";
 
-const capitalise = (word: string) => `${word[0].toUpperCase()}${word.slice(1)}`;
-
-interface ViewGameLogPopupProps {
-    closePopup: () => void;
-    isMyAccount: boolean;
-    userLoggedIn: boolean;
-    gamelog: GameLog | null;
-    openEdit: () => void;
-    openCreate: () => void;
-    currentUserSharesLog: boolean;
-    redirectAndOpenView: () => void;
-    profilePage?: boolean;
+export interface LogPopupAction {
+    label: string;
+    onSelect: () => void;
 }
 
-const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
-    closePopup,
-    isMyAccount,
-    userLoggedIn,
+interface ViewGameLogPopupProps {
+    /** Non-null: the parent does not render this until it has a log. */
+    gamelog: GameLogWithGame;
+    /** Whose log this is, so their review can be picked out of the game's. */
+    ownerUsername?: string;
+    closePopup: () => void;
+    /** Edit your own, jump to your own log of the same game, or start one.
+     *  Omitted when signed out. */
+    primaryAction?: LogPopupAction;
+}
+
+/** Somebody's log: the facts as a ledger, with the achievement ring beside them. */
+const ViewGameLogPopup = ({
     gamelog,
-    openEdit,
-    openCreate,
-    currentUserSharesLog,
-    redirectAndOpenView,
-    profilePage,
-}) => {
-    const [game, setGame] = useState<Game | undefined>(undefined);
+    ownerUsername,
+    closePopup,
+    primaryAction,
+}: ViewGameLogPopupProps) => {
+    const { data: game } = useGame(gamelog.gameId);
+    const { data: platforms } = usePlatforms();
+    const { data: reviews } = useGameReviews(
+        ownerUsername ? gamelog.gameId : undefined
+    );
 
-    // fetch game data from ID in game log, and set state when fetched
-    useEffect(() => {
-        const fetchGameFromLog = async () => {
-            const fetchedGame = await fetchGameById(gamelog!.id);
+    const status = displayStatusFor(gamelog.status, gamelog.playedStatus);
+    const platform = (platforms ?? []).find((p) => p.slug === gamelog.platform);
+    const PlatformIcon = platformIcon(gamelog.platform ?? "");
 
-            if (fetchedGame) {
-                setGame(fetchedGame);
-            }
-        };
+    const review = (reviews?.data ?? []).find(
+        (r) => r.author.username === ownerUsername
+    );
 
-        fetchGameFromLog();
-    }, []);
+    const achievementsTotal = gamelog.achievementsTotal ?? 0;
+    const achievementsDone = gamelog.achievementsCompleted ?? 0;
+
+    const facts = [
+        { label: "Rating", value: <RatingBadge value={gamelog.rating} /> },
+        gamelog.hoursPlayed !== null && {
+            label: "Hours played",
+            value: formatHours(gamelog.hoursPlayed),
+        },
+        gamelog.hoursToBeat !== null && {
+            label: "Time to beat",
+            value: formatHours(gamelog.hoursToBeat),
+        },
+        gamelog.startDate && {
+            label: "Started",
+            value: formatDate(gamelog.startDate),
+        },
+        gamelog.finishDate && {
+            label: "Finished",
+            value: formatDate(gamelog.finishDate),
+        },
+    ].filter(Boolean) as { label: string; value: ReactNode }[];
 
     return (
-        <dialog className="popup-backdrop" onMouseDown={closePopup}>
-            <div
-                className="popup popup-default flex w-[600px] flex-col gap-6 text-center"
-                onMouseDown={(event) => event.stopPropagation()}
-            >
-                <h2 className="border-b-[1px] border-b-[#cacaca55] pb-3 text-xl text-text-primary">
-                    View Log
+        <Modal
+            onClose={closePopup}
+            labelledBy="view-log-title"
+            className="w-full max-w-[520px] p-0! sm:p-0!"
+        >
+            <header className="border-b border-subtle px-5 py-4 pr-12">
+                <h2
+                    id="view-log-title"
+                    className="font-display text-section leading-tight text-content"
+                >
+                    {game?.title ?? "…"}
                 </h2>
-
-                <div className="relative flex w-full flex-col gap-4">
-                    <h3 className="max-w-[calc(100%-72px)] text-left text-2xl text-text-primary sm:max-w-full">
-                        {game?.title}
-                        <span className="ml-2.5 text-xl font-light text-text-secondary">
-                            {game?.releaseDate.slice(0, 4)}
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-label-sm text-content-muted">
+                    <StatusBadge status={status} plain />
+                    {platform && (
+                        <span className="inline-flex items-center gap-1.5">
+                            <PlatformIcon size={13} aria-hidden />
+                            {platform.displayName}
                         </span>
-                    </h3>
-
-                    <div className="flex w-full">
-                        <div className="absolute right-0 top-0 flex min-h-40 w-16 max-w-[30%] flex-col gap-2 sm:relative sm:w-max">
-                            <img
-                                className="w-full rounded-md object-cover"
-                                src={`/PlayRates/assets/game-covers/${game?.id}.png`}
-                            />
-                        </div>
-                        <div className="flex min-h-32 flex-grow justify-between">
-                            <div className="flex flex-col gap-1 text-left sm:pl-4">
-                                <p className="text-text-primary">
-                                    Status:{" "}
-                                    <span
-                                        className={`font-light ${getColorFromGameStatus(gamelog!.status === "played" && gamelog!.playedStatus ? gamelog?.playedStatus! : gamelog?.status!)?.bg} ${getColorFromGameStatus(gamelog!.status === "played" && gamelog!.playedStatus ? gamelog?.playedStatus! : gamelog?.status!)?.text} rounded-full px-1.5 py-0.5`}
-                                    >
-                                        {gamelog?.status === "played"
-                                            ? capitalise(gamelog.playedStatus!)
-                                            : capitalise(gamelog!.status)}
-                                    </span>
-                                </p>
-                                {gamelog?.platform ? (
-                                    <p className="text-text-primary">
-                                        Platform:{" "}
-                                        <span className="font-extralight">
-                                            {
-                                                gamePlatforms.find(
-                                                    (platform) =>
-                                                        platform.name ===
-                                                        gamelog.platform
-                                                )?.display
-                                            }
-                                        </span>
-                                        <i
-                                            className={`${
-                                                gamePlatforms.find(
-                                                    (platform) =>
-                                                        platform.name ===
-                                                        gamelog.platform
-                                                )?.icon
-                                            } ml-1.5`}
-                                        ></i>
-                                    </p>
-                                ) : (
-                                    <></>
-                                )}
-                                {gamelog?.startDate ? (
-                                    <p className="text-text-primary">
-                                        Started:{" "}
-                                        <span className="font-extralight">
-                                            {new Date(gamelog.startDate)
-                                                .toDateString()
-                                                .slice(4)}
-                                        </span>
-                                    </p>
-                                ) : (
-                                    <></>
-                                )}
-                                {gamelog?.startDate ? (
-                                    <p className="text-text-primary">
-                                        Finished:{" "}
-                                        <span className="font-extralight">
-                                            {gamelog.finishDate
-                                                ? new Date(gamelog.finishDate)
-                                                      .toDateString()
-                                                      .slice(4)
-                                                : "N/A"}
-                                        </span>
-                                    </p>
-                                ) : (
-                                    <></>
-                                )}
-                                {gamelog?.hoursPlayed ? (
-                                    <p className="text-text-primary">
-                                        Time Played:{" "}
-                                        <span className="font-extralight">
-                                            {gamelog.hoursPlayed}
-                                            <span className="text-sm">
-                                                {" "}
-                                                hours
-                                            </span>
-                                        </span>
-                                    </p>
-                                ) : (
-                                    <></>
-                                )}
-                                {gamelog?.hoursToBeat ? (
-                                    <p className="text-text-primary">
-                                        Completed in:{" "}
-                                        <span className="font-extralight">
-                                            {gamelog.hoursToBeat}
-                                            <span className="text-sm">
-                                                {" "}
-                                                hours
-                                            </span>
-                                        </span>
-                                    </p>
-                                ) : (
-                                    <></>
-                                )}
-                            </div>
-
-                            <div className="flex flex-col justify-end gap-1 pr-4 sm:justify-normal">
-                                <span className="flex items-center justify-start gap-2 text-lg">
-                                    <i className="fas fa-trophy text-yellow-300"></i>
-                                    <p className="font-extralight text-text-primary">
-                                        {gamelog?.achievementsCompleted || 0}/
-                                        {gamelog?.achievementsTotal || "?"}
-                                    </p>
-                                </span>
-                                <span className="flex items-center justify-start gap-2 text-lg">
-                                    <i className="fas fa-star text-highlight-hover"></i>
-                                    <p className="font-extralight text-text-primary">
-                                        {gamelog?.rating && gamelog.rating !== 0
-                                            ? gamelog.rating
-                                            : "?"}
-                                        /10
-                                    </p>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex w-full flex-col justify-center gap-5 sm:flex-row">
-                    {userLoggedIn ? (
-                        <button
-                            className="button-secondary w-full sm:w-1/2"
-                            onClick={() => {
-                                closePopup();
-                                currentUserSharesLog && profilePage
-                                    ? redirectAndOpenView()
-                                    : isMyAccount
-                                      ? openEdit()
-                                      : openCreate();
-                            }}
-                        >
-                            {currentUserSharesLog && profilePage
-                                ? "View My Log"
-                                : isMyAccount
-                                  ? "Edit"
-                                  : "Add This Game"}
-                        </button>
-                    ) : (
-                        <></>
                     )}
-                    <button
-                        className={`button-outline button-outline-default w-full ${userLoggedIn ? "sm:w-1/2" : ""}`}
-                        onClick={closePopup}
-                    >
-                        Close
-                    </button>
                 </div>
+            </header>
 
-                <ClosePopupIcon onClick={closePopup} />
+            <div className="flex flex-wrap items-center gap-6 px-5 py-5">
+                {achievementsTotal > 0 && (
+                    <div className="flex flex-col items-center gap-1.5">
+                        <AchievementRing
+                            done={achievementsDone}
+                            total={achievementsTotal}
+                        />
+                        <span className="font-mono text-label-sm text-content-muted">
+                            {achievementsDone} of {achievementsTotal}
+                        </span>
+                    </div>
+                )}
+
+                <LedgerList className="min-w-[210px] flex-1">
+                    {facts.map((fact, i) => (
+                        <LedgerRow
+                            key={fact.label}
+                            label={fact.label}
+                            value={fact.value}
+                            rule={i < facts.length - 1}
+                        />
+                    ))}
+                </LedgerList>
             </div>
-        </dialog>
+
+            {review && (
+                <div className="border-t border-subtle px-5 py-4">
+                    <h3 className="text-label text-content-muted">Review</h3>
+                    <p className="mt-1.5 text-body-sm leading-relaxed whitespace-pre-line text-content-secondary">
+                        {review.body}
+                    </p>
+                </div>
+            )}
+
+            <footer className="flex flex-wrap gap-3 border-t border-subtle px-5 py-4">
+                {primaryAction && (
+                    <Button
+                        className="flex-1"
+                        onClick={() => {
+                            closePopup();
+                            primaryAction.onSelect();
+                        }}
+                    >
+                        {primaryAction.label}
+                    </Button>
+                )}
+                <button
+                    type="button"
+                    className={buttonClass(
+                        "secondary",
+                        primaryAction ? "flex-1" : "w-full"
+                    )}
+                    onClick={closePopup}
+                >
+                    Close
+                </button>
+            </footer>
+        </Modal>
     );
 };
 

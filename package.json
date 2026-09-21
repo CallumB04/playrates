@@ -2,10 +2,21 @@
     "name": "playrates",
     "version": "1.0.0",
     "description": "PlayRates is a Video Game Tracking website.",
-    "main": "index.js",
+    "private": true,
+    "type": "commonjs",
+    "workspaces": [
+        "shared",
+        "frontend",
+        "backend"
+    ],
     "scripts": {
-        "setup": "npm install && npm install --prefix frontend && npm install --prefix backend",
-        "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\""
+        "dev": "concurrently -n frontend,backend -c cyan,magenta \"npm run dev -w frontend\" \"npm run dev -w backend\"",
+        "build": "npm run build -w @playrates/shared && npm run build -w frontend && npm run build -w backend",
+        "lint": "npm run lint -w frontend && npm run lint -w backend",
+        "typecheck": "npm run typecheck -w @playrates/shared && npm run typecheck -w frontend && npm run typecheck -w backend",
+        "test": "npm run test -w frontend && npm run test -w backend",
+        "test:coverage": "npm run test:coverage -w frontend && npm run test:coverage -w backend",
+        "seed:games": "npm run seed:games -w backend"
     },
     "repository": {
         "type": "git",
@@ -14,7 +25,6 @@
     "keywords": [],
     "author": "",
     "license": "ISC",
-    "type": "commonjs",
     "bugs": {
         "url": "https://github.com/CallumB04/playrates/issues"
     },

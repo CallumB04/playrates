@@ -1,0 +1,392 @@
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+    Bell,
+    Eye,
+    Monitor,
+    Moon,
+    Plug,
+    SlidersHorizontal,
+    Sun,
+    TriangleAlert,
+    UserRound,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { useAuth } from "../contexts/AuthContext";
+import { useAccountForm } from "../contexts/AccountFormContext";
+import { useNotify } from "../contexts/NotificationContext";
+import { useTheme } from "../contexts/ThemeContext";
+import { useUpdateProfile } from "../hooks/queries/useProfiles";
+import { useUserStats } from "../hooks/queries/useGameLogs";
+import { useUserReviews } from "../hooks/queries/useReviews";
+import { useUserFriends } from "../hooks/queries/useFriends";
+import { deleteMyAccount } from "../api";
+import DeleteAccountModal from "./settings/DeleteAccountModal";
+import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
+import Button from "../components/ui/Button";
+import Toggle from "../components/ui/Toggle";
+import EmptyPlate from "../components/ui/EmptyPlate";
+import { Input, Textarea } from "../components/ui/Input";
+import UsernameRow from "./settings/UsernameRow";
+import Dropdown from "../components/ui/Dropdown";
+import SegmentedChoice from "../components/ui/SegmentedChoice";
+import { effectiveTimeZone, formatCount, timeZones } from "../lib/format";
+import { cn } from "../lib/cn";
+
+const SECTIONS: SettingsSection[] = [
+    { id: "account", label: "Account", icon: UserRound },
+    { id: "profile", label: "Profile", icon: Eye },
+    { id: "content", label: "Content", icon: SlidersHorizontal },
+    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "connections", label: "Connections", icon: Plug },
+    { id: "account-closure", label: "Close account", icon: TriangleAlert },
+];
+
+interface RowProps {
+    label: string;
+    /** Only where the control alone doesn't say it. Most rows need none. */
+    help?: ReactNode;
+    /** Rendered, disabled and labelled, so the page shows the shape of the thing. */
+    soon?: boolean;
+    children: ReactNode;
+}
+
+const Row = ({ label, help, soon, children }: RowProps) => (
+    <div className="grid items-center gap-3 border-b border-subtle px-5 py-4 last:border-b-0 sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)] sm:gap-8">
+        <div>
+            <div className="flex flex-wrap items-baseline gap-2">
+                <span
+                    className={cn(
+                        "text-body-sm font-medium",
+                        soon ? "text-content-muted" : "text-content"
+                    )}
+                >
+                    {label}
+                </span>
+                {soon && (
+                    <span className="rounded-full border border-subtle px-2 py-0.5 text-[10px] text-content-muted">
+                        Coming soon
+                    </span>
+                )}
+            </div>
+            {help && (
+                <p className="mt-1 max-w-[46ch] text-xs leading-relaxed text-content-muted">
+                    {help}
+                </p>
+            )}
+        </div>
+        <div className={cn(soon && "pointer-events-none opacity-50")}>
+            {children}
+        </div>
+    </div>
+);
+
+const Panel = ({ children }: { children: ReactNode }) => (
+    <section className="overflow-hidden rounded-lg border border-subtle bg-surface-raised shadow-plate">
+        {children}
+    </section>
+);
+
+const SettingsPage = () => {
+    const { user, session, signOut } = useAuth();
+    const { openLogin } = useAccountForm();
+    const { preference, setPreference } = useTheme();
+    const notify = useNotify();
+    const update = useUpdateProfile();
+    const navigate = useNavigate();
+    const { data: stats } = useUserStats(user?.username ?? "");
+    const { data: reviews } = useUserReviews(user?.username);
+    const { data: friends } = useUserFriends(user?.username ?? "");
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
+    const [section, setSection] = useState("account");
+
+    /* requireAuth verifies signatures locally and never checks revocation, so
+       the token outlives the account. Sign out straight away. */
+    const remove = useMutation({
+        mutationFn: deleteMyAccount,
+        onSuccess: async () => {
+            await signOut();
+            navigate("/");
+            notify("Your account has been deleted", "success");
+        },
+        onError: () => notify("Couldn't delete your account", "error"),
+    });
+
+    const [bio, setBio] = useState(user?.bio ?? "");
+    const [firstName, setFirstName] = useState(user?.firstName ?? "");
+    const [showSexual, setShowSexual] = useState(
+        user?.showSexualContent ?? false
+    );
+    const [hideOnline, setHideOnline] = useState(user?.hideOnline ?? false);
+
+    useEffect(() => {
+        setBio(user?.bio ?? "");
+        setFirstName(user?.firstName ?? "");
+        setShowSexual(user?.showSexualContent ?? false);
+        setHideOnline(user?.hideOnline ?? false);
+    }, [user]);
+
+    const zone = effectiveTimeZone(user?.timezone);
+
+    const zones = useMemo(() => {
+        // The current zone is always offered, even if this runtime omits it.
+        const names = new Set(timeZones());
+        names.add(zone);
+        return [...names].sort().map((name) => ({
+            value: name,
+            label: name.replace(/_/g, " "),
+        }));
+    }, [zone]);
+
+    // Saved on blur. One value with one owner needs no second action.
+    const saveText = (
+        patch: { firstName: string } | { bio: string },
+        unchanged: boolean,
+        message: string
+    ) => {
+        if (unchanged) return;
+        update.mutate(patch, { onError: () => notify(message, "error") });
+    };
+
+    /* Toggles save immediately and roll back on failure, so the control never
+       shows a state the server did not accept. */
+    const saveToggle = <T,>(
+        patch: Record<string, T>,
+        next: T,
+        setLocal: (value: T) => void,
+        previous: T
+    ) => {
+        setLocal(next);
+        update.mutate(patch, {
+            onError: () => {
+                setLocal(previous);
+                notify("Couldn't save that setting", "error");
+            },
+        });
+    };
+
+    if (!user) {
+        return (
+            <EmptyPlate
+                title="Sign in to change your settings"
+                action={<Button onClick={openLogin}>Sign in</Button>}
+            />
+        );
+    }
+
+    const panels: Record<string, ReactNode> = {
+        account: (
+            <Panel>
+                <Row label="Username">
+                    <UsernameRow current={user.username} />
+                </Row>
+                <Row label="First name">
+                    <Input
+                        value={firstName}
+                        maxLength={40}
+                        placeholder="Optional"
+                        onChange={(e) => setFirstName(e.target.value)}
+                        onBlur={() =>
+                            saveText(
+                                { firstName: firstName.trim() },
+                                firstName.trim() === (user.firstName ?? ""),
+                                "Couldn't save your name"
+                            )
+                        }
+                        aria-label="First name"
+                    />
+                </Row>
+                <Row label="Change email" soon>
+                    <Input
+                        value={session?.user.email ?? ""}
+                        readOnly
+                        aria-label="Email"
+                    />
+                </Row>
+                <Row label="Reset password" soon>
+                    <Button variant="secondary" size="sm">
+                        Send a reset link
+                    </Button>
+                </Row>
+                <Row label="Time zone" help="Dates and times render in this.">
+                    <Dropdown
+                        searchable
+                        options={zones}
+                        value={zone}
+                        onChange={(next) =>
+                            update.mutate(
+                                { timezone: next },
+                                {
+                                    onError: () =>
+                                        notify(
+                                            "Couldn't save your time zone",
+                                            "error"
+                                        ),
+                                }
+                            )
+                        }
+                        aria-label="Time zone"
+                    />
+                </Row>
+            </Panel>
+        ),
+
+        profile: (
+            <Panel>
+                <Row label="Bio" help={`${bio.length} of 160 characters`}>
+                    <Textarea
+                        rows={3}
+                        value={bio}
+                        maxLength={160}
+                        placeholder="Mostly RPGs and anything with a grappling hook."
+                        onChange={(e) => setBio(e.target.value)}
+                        onBlur={() =>
+                            saveText(
+                                { bio },
+                                bio === (user.bio ?? ""),
+                                "Couldn't save your bio"
+                            )
+                        }
+                        aria-label="Bio"
+                    />
+                </Row>
+                <Row
+                    label="Hide online status"
+                    help="Your profile reads as offline to everyone."
+                >
+                    <Toggle
+                        checked={hideOnline}
+                        onChange={(next) =>
+                            saveToggle(
+                                { hideOnline: next },
+                                next,
+                                setHideOnline,
+                                hideOnline
+                            )
+                        }
+                        label={hideOnline ? "On" : "Off"}
+                        disabled={update.isPending}
+                    />
+                </Row>
+            </Panel>
+        ),
+
+        content: (
+            <Panel>
+                <Row
+                    label="Sexual content"
+                    help="Games tagged as sexually explicit stay out of the library, search and every rail. Violence is not covered by this."
+                >
+                    <Toggle
+                        checked={showSexual}
+                        onChange={(next) =>
+                            saveToggle(
+                                { showSexualContent: next },
+                                next,
+                                setShowSexual,
+                                showSexual
+                            )
+                        }
+                        label={showSexual ? "On" : "Off"}
+                        disabled={update.isPending}
+                    />
+                </Row>
+                <Row label="Theme">
+                    <SegmentedChoice
+                        label="Theme"
+                        segments={[
+                            { value: "light", label: "Light", icon: Sun },
+                            { value: "dark", label: "Dark", icon: Moon },
+                            {
+                                value: "system",
+                                label: "System",
+                                icon: Monitor,
+                            },
+                        ]}
+                        value={preference}
+                        onChange={setPreference}
+                    />
+                </Row>
+            </Panel>
+        ),
+
+        notifications: (
+            <Panel>
+                <Row label="Friend requests" soon>
+                    <Toggle checked={false} onChange={() => {}} label="Off" />
+                </Row>
+            </Panel>
+        ),
+
+        connections: (
+            <Panel>
+                <Row label="Steam" soon>
+                    <Button variant="secondary" size="sm">
+                        Connect
+                    </Button>
+                </Row>
+            </Panel>
+        ),
+
+        "account-closure": (
+            <section className="overflow-hidden rounded-lg border border-danger/40 bg-surface-raised shadow-plate">
+                <div className="flex flex-wrap items-center gap-5 px-5 py-5">
+                    <p className="max-w-[60ch] flex-1 text-body-sm text-content-secondary">
+                        Your {formatCount(stats?.logCount ?? 0)} logs and
+                        everything attached to them will be deleted. This cannot
+                        be undone.
+                    </p>
+                    {/* Export has no backing yet, but the shape is real. */}
+                    <Button variant="secondary" size="sm" disabled>
+                        Export my data
+                    </Button>
+                    <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => setConfirmingDelete(true)}
+                    >
+                        Delete account
+                    </Button>
+                </div>
+            </section>
+        ),
+    };
+
+    return (
+        <div className="flex flex-col gap-6">
+            <header>
+                <h1 className="font-display text-title text-content">
+                    Settings
+                </h1>
+                <p className="mt-2 text-label text-content-muted">
+                    {user.username}
+                </p>
+            </header>
+
+            <div className="grid items-start gap-6 lg:grid-cols-[200px_minmax(0,1fr)]">
+                <SettingsNav
+                    sections={SECTIONS}
+                    active={section}
+                    onSelect={setSection}
+                />
+                {panels[section]}
+            </div>
+
+            {confirmingDelete && (
+                <DeleteAccountModal
+                    username={user.username}
+                    stats={stats}
+                    reviewCount={reviews?.meta.total}
+                    friendCount={
+                        friends?.filter((e) => e.status === "friend").length
+                    }
+                    isDeleting={remove.isPending}
+                    onCancel={() => setConfirmingDelete(false)}
+                    onConfirm={() => remove.mutate()}
+                />
+            )}
+        </div>
+    );
+};
+
+export default SettingsPage;

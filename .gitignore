@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+coverage
 
 # Editor directories and files
 .vscode/*
@@ -23,8 +24,21 @@ dist-ssr
 *.sln
 *.sw?
 
-
+# Legacy JSON "database" from before the Supabase migration
 /backend/data
+
+# Environment files — .env.example is committed, real .env files are not
 .env
+.env.*
+!.env.example
+
+# Supabase CLI local state
+supabase/.temp
+supabase/.branches
+
 *.rest
-*.png
+
+# Claude Design mockup exports. The source of truth is the design project;
+# these are working copies and are not kept in the repo.
+*.dc.html
+support.js

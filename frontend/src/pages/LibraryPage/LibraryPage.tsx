@@ -1,465 +1,291 @@
-import { useQuery } from "@tanstack/react-query";
-import { fetchGameLogsByUserID, fetchGames, Game, GameLog } from "../../api";
-import { gamePlatforms, useUser } from "../../App";
-import GameElement from "./components/GameElement";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { GameLogWithGame } from "../../api";
+import { useAuth } from "../../contexts/AuthContext";
+import {
+    useGames,
+    useGenres,
+    usePlatforms,
+} from "../../hooks/queries/useGames";
+import {
+    useGameLogMutations,
+    useMyGameLogIds,
+    useMyGameLogs,
+} from "../../hooks/queries/useGameLogs";
+import { useAccountForm } from "../../contexts/AccountFormContext";
+import { useNotify } from "../../contexts/NotificationContext";
+import { useWindowSize } from "../../hooks/useWindowSize";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { usePagination } from "../../hooks/usePagination";
+import GameTile, { type TileAction } from "../../components/game/GameTile";
+import Pagination, { PaginationSummary } from "../../components/ui/Pagination";
+import { TileSkeleton } from "../../components/ui/Skeleton";
+import EmptyPlate from "../../components/ui/EmptyPlate";
 import ViewGameLogPopup from "../../components/ViewGameLogPopup";
 import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
-import LoadingSpinner from "../../components/LoadingSpinner";
+import LibraryFilters from "./components/LibraryFilters";
+import { getLibraryGamesPerPage } from "./lib/gamesPerPage";
+import { useLibraryQuery } from "./lib/useLibraryQuery";
+import {
+    STATUS_PRESENTATION,
+    displayStatusFor,
+} from "../../constants/gameStatus";
+import {
+    formatCount,
+    formatRatingOutOfTen,
+    releaseYear,
+} from "../../lib/format";
 
-interface LibraryPageProps {
-    runNotification: (
-        text: string,
-        type: "success" | "error" | "pending"
-    ) => void;
-}
+type OpenModal =
+    | { kind: "view"; log: GameLogWithGame }
+    | { kind: "edit"; log: GameLogWithGame }
+    | { kind: "create"; gameId: number }
+    | null;
 
-const LibraryPage: React.FC<LibraryPageProps> = ({ runNotification }) => {
-    const currentUser = useUser();
+const LibraryPage = () => {
+    const { user } = useAuth();
+    const { openLogin } = useAccountForm();
+    const notify = useNotify();
+    const { width } = useWindowSize();
+    const { query, setQuery } = useLibraryQuery();
 
-    const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
-    const [windowHeight, setWindowHeight] = useState<number>(
-        window.innerHeight
-    );
-    const [gamesPerPage, setGamesPerPage] = useState<number>(0);
-    const [pageNumber, setPageNumber] = useState<number>(1);
-    const [maxPageNumber, setMaxPageNumber] = useState<number>(1); // re-calculates when window width updates, final page number based on games
-    const [previousEnabled, setPreviousEnabled] = useState<boolean>(true); // whether previous button can be pressed (page number > 1)
-    const [nextEnabled, setNextEnabled] = useState<boolean>(true); // whether next button can be pressed (not at final page)
+    const { data: platforms } = usePlatforms();
+    const { data: genres } = useGenres();
+    const { data: myLogIds } = useMyGameLogIds();
+    const { save } = useGameLogMutations();
 
-    // filter values
-    const [existingLogInputValue, setExistingLogInputValue] =
-        useState<boolean>(true);
-    const [ageRatingInputValue, setAgeRatingInputValue] =
-        useState<boolean>(false);
-    const [filterSearchBarValue, setFilterSearchBarValue] =
-        useState<string>("");
-    const [platformsDropdownValue, setPlatformsDropdownValue] =
-        useState<string>("all");
+    const [modal, setModal] = useState<OpenModal>(null);
 
-    // game log popup visiblilities
-    const [viewGameLogPopupVisible, setViewGameLogPopupVisible] =
-        useState<boolean>(false);
-    const [editGameLogPopupVisible, setEditGameLogPopupVisible] =
-        useState<boolean>(false);
-    const [createGameLogPopupVisible, setCreateGameLogPopupVisible] =
-        useState<boolean>(false);
-    const [currentVisibleGameLog, setCurrentVisibleGameLog] =
-        useState<GameLog | null>(null);
-    const [currentVisibleGameID, setCurrentVisibleGameID] = useState<number>(0); // for create popup
+    /* The input is local so typing is instant; the query trails it. */
+    const [searchDraft, setSearchDraft] = useState(query.search);
+    const debouncedSearch = useDebouncedValue(searchDraft, 300);
 
-    // fetching all games from API
+    useEffect(() => {
+        if (debouncedSearch === query.search) return;
+        // replace, so the back button doesn't walk every keystroke.
+        setQuery({ search: debouncedSearch }, { replace: true });
+    }, [debouncedSearch, query.search, setQuery]);
+
+    const perPage = getLibraryGamesPerPage(width);
+
     const {
-        data: games,
-        error: gamesError,
-        isLoading: gamesLoading,
-    } = useQuery<Game[] | undefined>({
-        queryKey: ["games"],
-        queryFn: () => fetchGames(),
+        data: page,
+        isLoading,
+        isPlaceholderData,
+    } = useGames({
+        page: query.page,
+        limit: perPage,
+        search: query.search || undefined,
+        platform: query.platform || undefined,
+        genre: query.genre || undefined,
+        sort: query.sort,
+        excludeLogged: user ? query.excludeLogged : false,
     });
 
-    const [filteredGames, setFilteredGames] = useState<Game[] | undefined>(
-        games
-    );
+    const games = page?.data ?? [];
+    const total = page?.meta.total ?? 0;
 
-    // fetching current users game logs from API, if logged in
-    const {
-        data: currentUserGameLogs,
-        refetch: refetchCurrentUserGameLogs,
-        error: currentUserGameLogsError,
-        isLoading: currentUserGameLogsLoading,
-    } = useQuery<GameLog[] | undefined>({
-        queryKey: ["currentUserGameLogs", currentUser?.id],
-        queryFn: () => fetchGameLogsByUserID(currentUser!.id),
-        enabled: !!currentUser,
+    const pagination = usePagination({
+        total,
+        perPage,
+        page: query.page,
+        onPageChange: (next) => setQuery({ page: next }),
     });
 
-    // handling filter updates
-    useEffect(() => {
-        setFilteredGames(
-            games
-                ?.filter((game) =>
-                    existingLogInputValue
-                        ? true
-                        : !currentUserGameLogs?.some(
-                              (log) => log.id === game.id
-                          )
-                )
-                .filter((game) =>
-                    filterSearchBarValue
-                        ? game.title
-                              .toLowerCase()
-                              .includes(filterSearchBarValue.toLowerCase())
-                        : true
-                )
-                .filter((game) =>
-                    platformsDropdownValue === "all"
-                        ? true
-                        : game.platforms.includes(platformsDropdownValue)
-                )
-                .filter((game) =>
-                    ageRatingInputValue ? true : !game.eighteenPlus
-                )
-        );
-    }, [
-        games,
-        existingLogInputValue,
-        ageRatingInputValue,
-        filterSearchBarValue,
-        platformsDropdownValue,
-    ]);
+    const logByGameId = useMemo(
+        () => new Map((myLogIds ?? []).map((log) => [log.gameId, log])),
+        [myLogIds]
+    );
 
-    // handling window resizing
-    useEffect(() => {
-        // updates state with window width and height
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-            setWindowHeight(window.innerHeight);
-        };
+    // The full log is only needed once a modal opens.
+    const { data: myLogs } = useMyGameLogs(undefined, { limit: 100 });
+    const fullLog = (gameId: number) =>
+        (myLogs?.data ?? []).find((log) => log.gameId === gameId);
 
-        // listening for window resizing and matching it in state
-        window.addEventListener("resize", handleResize);
-
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
-
-    // handling game container when page is resized
-    useEffect(() => {
-        /* handling max games per page */
-
-        // larger screens
-        if (windowWidth >= 1024) {
-            // 4 -> gap inbetween game cards
-            // 105 -> width of game cards
-            // 64 -> left and right padding on page (32 each)
-            // 320 -> width of filters card
-            // 16 -> gap between filters card and game container
-            const gamesPerRow = Math.floor(
-                (windowWidth - (64 + 320 + 16) + 4) / (105 + 4)
-            );
-            // 140 -> height of game cards
-            // 160 -> page top and bottom padding (80 each)
-            // 128 -> height of header card
-            // 12 -> gap between header card and games container
-            const rowsCount = Math.floor(
-                (windowHeight - (160 + 128 + 12)) / 140
-            );
-
-            setGamesPerPage(gamesPerRow * rowsCount);
+    // One tap, no popup: backlog and wishlist are a single field each.
+    const quickAdd = async (
+        gameId: number,
+        title: string,
+        status: "backlog" | "wishlist"
+    ) => {
+        const { label } = STATUS_PRESENTATION[status];
+        try {
+            await save.mutateAsync({ gameId, input: { status } });
+            notify(`${title} added to your ${label.toLowerCase()}`, "success");
+        } catch {
+            notify(`Couldn't add that to your ${label.toLowerCase()}`, "error");
         }
-        // smaller / mobile screens
-        else {
-            if (windowWidth < 584) setGamesPerPage(18);
-            else if (windowWidth < 755) setGamesPerPage(20);
-            else if (windowWidth < 894) setGamesPerPage(20);
-            else if (windowWidth < 1024) setGamesPerPage(18);
-        }
-    }, [windowWidth, windowHeight]);
-
-    // ensure window resize doesnt put current page over max page number
-    useEffect(() => {
-        if (pageNumber > maxPageNumber) {
-            setPageNumber(maxPageNumber);
-        }
-    }, [maxPageNumber]);
-
-    // updating next and previous buttons when current or max page number changes
-    useEffect(() => {
-        // disable previous if on first page
-        if (pageNumber <= 1) {
-            setPreviousEnabled(false);
-        } else {
-            setPreviousEnabled(true);
-        }
-
-        // disable next if on final page
-        if (pageNumber === maxPageNumber) {
-            setNextEnabled(false);
-        } else {
-            setNextEnabled(true);
-        }
-
-        if (maxPageNumber === 1) {
-            setPageNumber(1);
-        }
-
-        // scroll to top of page whenever page number changes
-        window.scrollTo(0, 0);
-    }, [pageNumber, maxPageNumber]);
-
-    // updating maximum page number when games per page or section changes
-    // also checking if page is empty for displaying message
-    useEffect(() => {
-        if (filteredGames) {
-            const maxPages = Math.ceil(filteredGames.length / gamesPerPage);
-            setMaxPageNumber(maxPages);
-        }
-    }, [gamesPerPage, filteredGames]);
-
-    // function ran after successful edit or creation of a log
-    const viewUpdatedLog = (log: GameLog) => {
-        refetchCurrentUserGameLogs();
-        setCurrentVisibleGameLog(log);
-        setViewGameLogPopupVisible(true);
     };
 
+    const buildActions = (gameId: number, title: string): TileAction[] => {
+        if (!user) {
+            return [
+                {
+                    key: "signin",
+                    label: "Log in to add",
+                    tone: "primary",
+                    onSelect: openLogin,
+                },
+            ];
+        }
+
+        const log = logByGameId.get(gameId);
+        if (!log) {
+            return [
+                {
+                    key: "log",
+                    label: "Create log",
+                    tone: "primary",
+                    onSelect: () => setModal({ kind: "create", gameId }),
+                },
+                {
+                    key: "backlog",
+                    label: "Add to backlog",
+                    icon: STATUS_PRESENTATION.backlog.icon,
+                    onSelect: () => void quickAdd(gameId, title, "backlog"),
+                },
+                {
+                    key: "wishlist",
+                    label: "Add to wishlist",
+                    icon: STATUS_PRESENTATION.wishlist.icon,
+                    onSelect: () => void quickAdd(gameId, title, "wishlist"),
+                },
+            ];
+        }
+
+        return [
+            {
+                key: "view",
+                label: "View your log",
+                tone: "primary",
+                onSelect: () => {
+                    const full = fullLog(gameId);
+                    if (full) setModal({ kind: "view", log: full });
+                },
+            },
+            {
+                key: "edit",
+                label: "Edit",
+                onSelect: () => {
+                    const full = fullLog(gameId);
+                    if (full) setModal({ kind: "edit", log: full });
+                },
+            },
+        ];
+    };
+
+    const logMeta = (gameId: number): string | undefined => {
+        const log = logByGameId.get(gameId);
+        if (!log) return undefined;
+        const parts = ["Your log"];
+        if (log.rating !== null) parts.push(formatRatingOutOfTen(log.rating));
+        return parts.join(" · ");
+    };
+
+    const showSkeletons =
+        isLoading || (isPlaceholderData && games.length === 0);
+
     return (
-        <section className="flex w-full gap-4">
-            {/* Filters Menu (for larger screens) */}
-            <aside className="card hidden h-[85vh] min-w-[320px] max-w-[320px] flex-col gap-6 font-lexend lg:flex">
-                <div className="flex w-full flex-col gap-4">
-                    <h2 className="card-header-text">Filters</h2>
-                    {/* Search bar */}
-                    <input
-                        type="text"
-                        placeholder="Search for game..."
-                        className="search-bar h-11 w-full"
-                        onChange={(e) =>
-                            setFilterSearchBarValue(e.currentTarget.value)
-                        }
-                    />
-                </div>
-
-                <div className="flex w-full flex-col gap-4">
-                    {/* Existing log checkbox */}
-                    <span className="flex gap-2">
-                        <input
-                            type="checkbox"
-                            defaultChecked
-                            onChange={(e) =>
-                                setExistingLogInputValue(
-                                    e.currentTarget.checked
-                                )
-                            }
-                            disabled={!currentUser}
-                        />
-                        <p className="font-light text-text-primary">
-                            Include already logged games?
-                        </p>
-                    </span>
-
-                    {/* 18+ age rating checkbox */}
-                    <span className="flex gap-2">
-                        <input
-                            type="checkbox"
-                            onChange={(e) =>
-                                setAgeRatingInputValue(e.currentTarget.checked)
-                            }
-                        />
-                        <p className="font-light text-text-primary">
-                            Include 18+ age-rated games?
-                        </p>
-                    </span>
-
-                    {/* Platform dropdown */}
-                    <div className="flex flex-col gap-0.5">
-                        <p className="text-sm font-semibold text-text-primary">
-                            Platform
-                        </p>
-                        <select
-                            className="dropdown-input h-11 w-full"
-                            onChange={(e) =>
-                                setPlatformsDropdownValue(e.currentTarget.value)
-                            }
-                        >
-                            <option value="all">All Platforms</option>
-                            {gamePlatforms.map((platform) => (
-                                <option
-                                    key={platform.name}
-                                    value={platform.name}
-                                >
-                                    {platform.display}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-            </aside>
-            {/* Main Container */}
-            {gamesLoading || currentUserGameLogsLoading ? (
-                <span className="mx-auto flex h-[85vh] w-max flex-row items-center justify-center gap-6">
-                    <LoadingSpinner size={8} />
-                    <p className="font-lexend text-xl tracking-wide text-text-primary">
-                        Loading Games...
+        <section className="flex flex-col gap-6">
+            <header className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <h1 className="font-display text-title text-content">
+                        Library
+                    </h1>
+                    <p className="mt-2 text-label text-content-muted">
+                        {formatCount(total)} titles
                     </p>
-                </span>
+                </div>
+            </header>
+
+            <LibraryFilters
+                query={query}
+                setQuery={setQuery}
+                searchDraft={searchDraft}
+                onSearchDraft={setSearchDraft}
+                matches={page?.meta.total}
+                platforms={platforms ?? []}
+                genres={genres ?? []}
+                isSignedIn={!!user}
+            />
+
+            {showSkeletons ? (
+                <div className="grid grid-cols-3 gap-x-4 gap-y-5 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
+                    {Array.from({ length: perPage }, (_, i) => (
+                        <TileSkeleton key={i} />
+                    ))}
+                </div>
+            ) : games.length === 0 ? (
+                <EmptyPlate
+                    title="No titles match those filters"
+                    body="Try a broader search, or clear the platform and genre filters."
+                />
             ) : (
-                <div className="flex w-full flex-col gap-3 lg:h-[85vh]">
-                    {/* Header Card */}
-                    <div className="card w-full space-y-4 font-lexend">
-                        <div className="w-full space-y-1">
-                            <h2 className="card-header-text text-center">
-                                Game Library
-                            </h2>
-                            <p className="text-center text-text-secondary">
-                                You can{" "}
-                                <span className="font-semibold">view</span>,{" "}
-                                <span className="font-semibold">create</span>,
-                                and <span className="font-semibold">edit</span>{" "}
-                                your game logs all within this page!
-                            </p>
-                        </div>
-                        {windowWidth < 1024 ? (
-                            <span className="flex w-full flex-col gap-3 font-lexend md:flex-row">
-                                {/* Search bar */}
-                                <span className="relative h-max w-full">
-                                    <input
-                                        type="text"
-                                        placeholder="Search for game..."
-                                        className="search-bar h-12 w-full"
-                                    />
-                                    <i className="fas fa-magnifying-glass absolute right-1 top-1/2 -translate-y-1/2 transform p-2 text-input-icon transition-colors hover:cursor-pointer hover:text-highlight-primary"></i>
-                                </span>
-                                {/* Filters button */}
-                                <button className="button-outline button-outline-default flex h-12 w-full min-w-36 items-center justify-center gap-3 md:w-max">
-                                    Filters
-                                    <i className="fas fa-filter"></i>
-                                </button>
-                            </span>
-                        ) : (
-                            <></>
-                        )}
-                    </div>
-
-                    {/* Games */}
-                    <div className="flex w-full flex-grow flex-col justify-between">
-                        <div className="flex flex-wrap justify-center gap-1 lg:grid lg:grid-cols-[repeat(auto-fill,minmax(105px,1fr))]">
-                            {filteredGames
-                                ?.slice(
-                                    (pageNumber - 1) * gamesPerPage,
-                                    gamesPerPage * pageNumber
-                                )
-                                .map((game) => {
-                                    return (
-                                        <GameElement
-                                            key={game.id}
-                                            game={game}
-                                            userLoggedIn={
-                                                currentUser ? true : false
-                                            }
-                                            userHasLog={
-                                                currentUserGameLogs?.some(
-                                                    (log) => log.id === game.id
-                                                )
-                                                    ? true
-                                                    : false
-                                            }
-                                            handleView={() => {
-                                                setCurrentVisibleGameLog(
-                                                    currentUserGameLogs?.find(
-                                                        (log) =>
-                                                            log.id === game.id
-                                                    )!
-                                                );
-                                                setViewGameLogPopupVisible(
-                                                    true
-                                                );
-                                            }}
-                                            handleEdit={() => {
-                                                setCurrentVisibleGameLog(
-                                                    currentUserGameLogs?.find(
-                                                        (log) =>
-                                                            log.id === game.id
-                                                    )!
-                                                );
-                                                setEditGameLogPopupVisible(
-                                                    true
-                                                );
-                                            }}
-                                            handleCreate={() => {
-                                                setCurrentVisibleGameID(
-                                                    game.id
-                                                );
-                                                setCreateGameLogPopupVisible(
-                                                    true
-                                                );
-                                            }}
-                                            popupIsVisible={
-                                                viewGameLogPopupVisible ||
-                                                editGameLogPopupVisible ||
-                                                createGameLogPopupVisible
-                                            }
-                                        />
-                                    );
-                                })}
-                        </div>
-                        <div className="mx-auto mb-4 mt-12 flex w-max items-center justify-center gap-6">
-                            {/* Previous Button */}
-                            <button
-                                className={`${previousEnabled ? "border-text-primary text-text-primary hover:border-highlight-primary hover:text-highlight-primary" : "border-[#ffffff55] text-[#ffffff55]"} button-outline flex h-10 w-16 items-center justify-center sm:w-28`}
-                                onClick={() =>
-                                    previousEnabled
-                                        ? setPageNumber(pageNumber - 1)
+                <div
+                    className={
+                        isPlaceholderData
+                            ? "grid grid-cols-3 gap-x-4 gap-y-5 opacity-60 transition-opacity md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7"
+                            : "grid grid-cols-3 gap-x-4 gap-y-5 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7"
+                    }
+                >
+                    {games.map((game) => {
+                        const log = logByGameId.get(game.id);
+                        return (
+                            <GameTile
+                                key={game.id}
+                                gameId={game.id}
+                                title={game.title}
+                                coverUrl={game.coverUrl}
+                                platformSlugs={game.platforms}
+                                platforms={platforms ?? []}
+                                // Brand figure only with a real rating behind it.
+                                rating={log ? log.rating : undefined}
+                                footValue={releaseYear(game.releaseDate)}
+                                status={
+                                    log
+                                        ? displayStatusFor(
+                                              log.status,
+                                              log.playedStatus
+                                          )
                                         : null
                                 }
-                            >
-                                {windowWidth >= 640 ? (
-                                    "Previous"
-                                ) : (
-                                    <i className="fas fa-arrow-left text-lg"></i>
-                                )}
-                            </button>
-                            {/* Page number text */}
-                            <p className="font-lexend text-text-primary sm:text-lg">
-                                Page {pageNumber} of {maxPageNumber}
-                            </p>
-
-                            {/* Next Button */}
-                            <button
-                                className={`button-outline flex h-10 w-16 items-center justify-center sm:w-28 ${nextEnabled ? "border-text-primary text-text-primary hover:border-highlight-primary hover:text-highlight-primary" : "border-[#ffffff55] text-[#ffffff55]"} `}
-                                onClick={() =>
-                                    nextEnabled
-                                        ? setPageNumber(pageNumber + 1)
-                                        : null
-                                }
-                            >
-                                {windowWidth >= 640 ? (
-                                    "Next"
-                                ) : (
-                                    <i className="fas fa-arrow-right text-lg"></i>
-                                )}
-                            </button>
-                        </div>
-                    </div>
+                                meta={logMeta(game.id)}
+                                actions={buildActions(game.id, game.title)}
+                            />
+                        );
+                    })}
                 </div>
             )}
-            {viewGameLogPopupVisible ? (
+
+            <div className="flex flex-wrap items-center justify-between gap-4 border-t border-subtle pt-5">
+                <PaginationSummary pagination={pagination} />
+                <Pagination
+                    pagination={pagination}
+                    onChange={() => window.scrollTo({ top: 0 })}
+                />
+            </div>
+
+            {modal?.kind === "view" && (
                 <ViewGameLogPopup
-                    closePopup={() => setViewGameLogPopupVisible(false)}
-                    isMyAccount={true}
-                    userLoggedIn={currentUser ? true : false}
-                    gamelog={currentVisibleGameLog}
-                    openEdit={() => setEditGameLogPopupVisible(true)}
-                    openCreate={() => setCreateGameLogPopupVisible(true)}
-                    currentUserSharesLog={true}
-                    redirectAndOpenView={() => {}}
+                    gamelog={modal.log}
+                    ownerUsername={user?.username}
+                    closePopup={() => setModal(null)}
+                    // Only reachable from "View your log", so it's always yours.
+                    primaryAction={{
+                        label: "Edit",
+                        onSelect: () =>
+                            setModal({ kind: "edit", log: modal.log }),
+                    }}
                 />
-            ) : (
-                <></>
             )}
-            {createGameLogPopupVisible ? (
+
+            {(modal?.kind === "edit" || modal?.kind === "create") && (
                 <CreateOrEditGameLogPopup
-                    closePopup={() => setCreateGameLogPopupVisible(false)}
-                    editing={false}
-                    gameID={currentVisibleGameID}
-                    userID={currentUser!.id}
-                    runNotification={runNotification}
-                    viewUpdatedLog={viewUpdatedLog}
+                    closePopup={() => setModal(null)}
+                    viewUpdatedLog={() => setModal(null)}
+                    gamelog={modal.kind === "edit" ? modal.log : null}
+                    gameID={modal.kind === "create" ? modal.gameId : undefined}
+                    editing={modal.kind === "edit"}
                 />
-            ) : (
-                <></>
-            )}
-            {editGameLogPopupVisible ? (
-                <CreateOrEditGameLogPopup
-                    closePopup={() => setEditGameLogPopupVisible(false)}
-                    gamelog={currentVisibleGameLog}
-                    editing={true}
-                    userID={currentUser!.id}
-                    runNotification={runNotification}
-                    viewUpdatedLog={viewUpdatedLog}
-                />
-            ) : (
-                <></>
             )}
         </section>
     );

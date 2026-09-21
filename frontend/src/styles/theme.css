@@ -1,0 +1,728 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ===========================================================================
+   Vellum.
+
+   Palette. Not used directly in components — the semantic tokens below point
+   at these.
+   =========================================================================== */
+:root {
+    /* Iris — periwinkle violet. Luminous on a dark ground, and far enough
+       from the hues box art reaches for that it never competes with a cover.
+       Chosen against real covers rather than as a swatch. */
+    --iris-50: #f3f1ff;
+    --iris-100: #e9e5ff;
+    --iris-200: #d5ceff;
+    --iris-300: #b8abff;
+    --iris-400: #9a83ff;
+    --iris-500: #7c5cff;
+    --iris-600: #6a44f0;
+    --iris-700: #5733d4;
+    --iris-800: #4429a6;
+    --iris-900: #2e1c70;
+    --iris-950: #1b1045;
+
+    /* Ember — warm secondary. Used sparingly, for the moments that should
+       feel earned rather than informational. */
+    --ember-300: #ffc08a;
+    --ember-400: #ff9f5a;
+    --ember-500: #ff8438;
+    --ember-600: #ed6a1c;
+
+    /* Ink — warm charcoals. Not pure grey (cold and cheap next to art) and
+       not violet-grey (it tints everything). */
+    --ink-50: #f9f8fc;
+    --ink-100: #efedf4;
+    --ink-200: #dcd8e4;
+    --ink-300: #bdb7c7;
+    --ink-400: #948da3;
+    --ink-500: #6b6577;
+    --ink-600: #46414f;
+    --ink-700: #322e3a;
+    --ink-800: #24212a;
+    --ink-850: #1d1b22;
+    --ink-900: #17151a;
+    --ink-950: #0f0e12;
+
+    --white: #ffffff;
+    --black: #000000;
+}
+
+/* ===========================================================================
+   Vellum — everything is a card, lit from above.
+
+   Night is the default and the one tuned first: box art is saturated, and it
+   sits better on ink than on paper. `.light` is a real scope so the design
+   library can show both mappings at once.
+
+   Nothing here is pressed in. Depth comes from a soft ambient shadow, a
+   tighter key shadow, and a 1px rim of light along the top edge.
+   =========================================================================== */
+:root,
+.light {
+    /* Native controls follow the theme too. Without this the date picker
+       panel, the select popup and the scrollbars all render light — the
+       select in particular looks correct until you open it. */
+    color-scheme: light;
+
+    /* Brand — Iris. A step deeper by day so it holds contrast on paper. */
+    --brand: var(--iris-600);
+    --brand-deep: var(--iris-700);
+    --brand-hover: var(--iris-700);
+    --brand-active: var(--iris-800);
+    --brand-muted: var(--iris-300);
+    --brand-subtle: color-mix(in srgb, var(--iris-500) 12%, transparent);
+
+    /* Accent — Ember. Sparingly, for what should feel earned. */
+    --accent: var(--ember-600);
+    --accent-quiet: color-mix(in srgb, var(--ember-500) 14%, transparent);
+    --accent-content: var(--ember-600);
+
+    /* Surfaces. The page sits further from white than it wants to, because a
+       shadow on near-white has almost nothing to fall on — separation has to
+       come from the surfaces themselves as much as from the light. */
+    --surface: #f1eff7;
+    --surface-raised: #fdfcff;
+    --surface-sunken: #e7e4ef;
+    --surface-chrome: var(--surface);
+    --surface-overlay: var(--surface-raised);
+    --surface-overlay-hover: var(--surface-sunken);
+    --surface-field: var(--surface-raised);
+    --surface-hover: color-mix(in srgb, var(--ink-950) 4%, transparent);
+    --surface-active: color-mix(in srgb, var(--ink-950) 7%, transparent);
+    --surface-selected: var(--brand-subtle);
+    --surface-inverse: var(--ink-900);
+
+    /* Text */
+    --content: var(--ink-950);
+    --content-secondary: var(--ink-600);
+    --content-muted: var(--ink-500);
+    --content-inverse: var(--ink-50);
+    --content-on-solid: #ffffff;
+    --content-disabled: color-mix(in srgb, var(--ink-950) 32%, transparent);
+
+    /* Rules. Translucent, so they sit on any surface without banding. */
+    --border-default: color-mix(in srgb, var(--ink-950) 12%, transparent);
+    --border-subtle: color-mix(in srgb, var(--ink-950) 12%, transparent);
+    --border-faint: color-mix(in srgb, var(--ink-950) 6%, transparent);
+    --border-strong: color-mix(in srgb, var(--ink-950) 18%, transparent);
+    --border-field: var(--border-strong);
+    --border-focus: var(--brand);
+
+    /* Light, not pressure. These are the colours; the recipes are the
+       --shadow-* tokens in the theme block. */
+    --shadow-ambient: rgba(24, 20, 45, 0.16);
+    --shadow-key: rgba(24, 20, 45, 0.1);
+    --rim: rgba(255, 255, 255, 0.9);
+    --glow-brand: color-mix(in srgb, var(--brand) 28%, transparent);
+    --scrim: rgba(24, 20, 45, 0.35);
+
+    /* Media wells. Fixed across themes — a scrim over box art reads the same
+       either way, and the art is the only saturated thing on a page. */
+    --surface-media: var(--ink-900);
+    --on-media: #ffffff;
+    --media-scrim: rgba(12, 10, 18, 0.45);
+    --overlay-backdrop: rgba(12, 10, 18, 0.55);
+    --overlay-loading: color-mix(in srgb, var(--ink-950) 55%, transparent);
+    --overlay-tile: rgba(12, 10, 18, 0.82);
+    --overlay-avatar: color-mix(in srgb, var(--ink-950) 60%, transparent);
+    --overlay-chip: rgba(12, 10, 18, 0.8);
+    --overlay-chip-light: color-mix(in srgb, #ffffff 15%, transparent);
+    --overlay-chip-light-hover: color-mix(in srgb, #ffffff 24%, transparent);
+
+    /* Statuses. Four hues; the played substatuses share the played hue and
+       are told apart by their mark. */
+    --status-played: var(--brand);
+    --status-played-quiet: var(--brand-subtle);
+    --status-played-content: var(--brand);
+    --status-playing: #f97316;
+    --status-playing-quiet: color-mix(in srgb, #f97316 16%, transparent);
+    --status-playing-content: #c2410c;
+    --status-backlog: #0e7490;
+    --status-backlog-quiet: color-mix(in srgb, #06b6d4 14%, transparent);
+    --status-backlog-content: #155e75;
+    --status-wishlist: #be185d;
+    --status-wishlist-quiet: color-mix(in srgb, #ec4899 13%, transparent);
+    --status-wishlist-content: #9d174d;
+
+    /* Each played substatus carries its own hue. They shared the brand and
+       a grey, which left the icon doing the whole job of telling finished
+       from retired. Gold for mastered because a trophy is gold everywhere;
+       slate for shelved because "set aside" is not a warning; red for
+       retired because giving up on something is the one negative state. */
+    --status-finished: var(--brand);
+    --status-mastered: #b8860b;
+    --status-mastered-quiet: color-mix(in srgb, #d4a017 16%, transparent);
+    --status-shelved: #64748b;
+    --status-shelved-quiet: color-mix(in srgb, #64748b 14%, transparent);
+    --status-retired: #b91c1c;
+    --status-retired-quiet: color-mix(in srgb, #dc2626 12%, transparent);
+
+    /* Feedback bases. The emphasis ramp below is mixed from these toward the
+       theme's own surface and ink, so one formula serves both. */
+    --success: #15803d;
+    --danger: #dc2626;
+    --danger-subtle: color-mix(in srgb, #ef4444 12%, transparent);
+    --info: #0369a1;
+    --warning: var(--ember-600);
+    --gold: var(--ember-500);
+}
+
+/* ===========================================================================
+   Night. The default, and the one the palette was built for.
+   =========================================================================== */
+.dark {
+    color-scheme: dark;
+
+    --brand: var(--iris-500);
+    --brand-deep: var(--iris-600);
+    --brand-hover: var(--iris-400);
+    --brand-active: var(--iris-300);
+    --brand-muted: var(--iris-700);
+    --brand-subtle: color-mix(in srgb, var(--iris-500) 18%, transparent);
+
+    --accent: var(--ember-400);
+    --accent-quiet: color-mix(in srgb, var(--ember-500) 18%, transparent);
+    --accent-content: var(--ember-300);
+
+    --surface: var(--ink-950);
+    --surface-raised: var(--ink-900);
+    --surface-sunken: var(--ink-850);
+    --surface-chrome: var(--surface);
+    --surface-overlay: var(--ink-850);
+    --surface-overlay-hover: var(--ink-800);
+    --surface-field: var(--ink-850);
+    --surface-hover: color-mix(in srgb, #ffffff 5%, transparent);
+    --surface-active: color-mix(in srgb, #ffffff 9%, transparent);
+    --surface-selected: var(--brand-subtle);
+    --surface-inverse: var(--ink-50);
+
+    --content: var(--ink-50);
+    --content-secondary: var(--ink-300);
+    --content-muted: var(--ink-400);
+    --content-inverse: var(--ink-950);
+    /* Dark ink on a luminous violet, not white on it. */
+    --content-on-solid: var(--ink-950);
+    --content-disabled: color-mix(in srgb, var(--ink-50) 30%, transparent);
+
+    --border-default: color-mix(in srgb, #ffffff 8%, transparent);
+    --border-subtle: color-mix(in srgb, #ffffff 6%, transparent);
+    --border-faint: color-mix(in srgb, #ffffff 4%, transparent);
+    --border-strong: color-mix(in srgb, #ffffff 13%, transparent);
+    --border-field: var(--border-strong);
+    --border-focus: var(--brand);
+
+    --shadow-ambient: rgba(0, 0, 0, 0.55);
+    --shadow-key: rgba(0, 0, 0, 0.4);
+    --rim: rgba(255, 255, 255, 0.07);
+    --glow-brand: color-mix(in srgb, var(--brand) 55%, transparent);
+    --scrim: rgba(0, 0, 0, 0.65);
+
+    --status-playing: var(--ember-500);
+    --status-playing-quiet: color-mix(in srgb, var(--ember-500) 20%, transparent);
+    --status-playing-content: var(--ember-300);
+    --status-backlog: #4fd1e0;
+    --status-backlog-quiet: color-mix(in srgb, #22d3ee 18%, transparent);
+    --status-backlog-content: #a5f3fc;
+    --status-wishlist: #ff8ab5;
+    --status-wishlist-quiet: color-mix(in srgb, #ec4899 20%, transparent);
+    --status-wishlist-content: #fbcfe8;
+
+    --status-mastered: #e8b530;
+    --status-mastered-quiet: color-mix(in srgb, #e8b530 20%, transparent);
+    --status-shelved: #94a3b8;
+    --status-shelved-quiet: color-mix(in srgb, #94a3b8 18%, transparent);
+    --status-retired: #f87171;
+    --status-retired-quiet: color-mix(in srgb, #ef4444 18%, transparent);
+
+    --success: #4ade80;
+    --danger: #ff6b6b;
+    --danger-subtle: color-mix(in srgb, #ef4444 20%, transparent);
+    --info: #56ccf2;
+    --warning: var(--ember-400);
+    --gold: var(--ember-300);
+}
+
+/* Feedback emphasis ramp, derived so it holds in both themes.
+   subtle = chip background, content = text on it, then muted/soft/strong. */
+:root {
+    --success-subtle: color-mix(
+        in srgb,
+        var(--success) 14%,
+        var(--surface-raised)
+    );
+    --success-content: var(--success);
+    --success-border: color-mix(
+        in srgb,
+        var(--success) 45%,
+        var(--surface-raised)
+    );
+    --success-muted: color-mix(
+        in srgb,
+        var(--success) 55%,
+        var(--surface-raised)
+    );
+    --success-soft: color-mix(
+        in srgb,
+        var(--success) 75%,
+        var(--surface-raised)
+    );
+    --success-strong: color-mix(in srgb, var(--success) 85%, var(--content));
+
+    --danger-content: var(--danger);
+    --danger-border: color-mix(
+        in srgb,
+        var(--danger) 45%,
+        var(--surface-raised)
+    );
+    --danger-muted: color-mix(in srgb, var(--danger) 55%, var(--surface-raised));
+    --danger-soft: color-mix(in srgb, var(--danger) 75%, var(--surface-raised));
+    --danger-strong: color-mix(in srgb, var(--danger) 85%, var(--content));
+    --danger-tint: color-mix(in srgb, var(--danger) 13%, transparent);
+
+    --warning-subtle: color-mix(
+        in srgb,
+        var(--warning) 14%,
+        var(--surface-raised)
+    );
+    --warning-content: var(--warning);
+    --warning-border: color-mix(
+        in srgb,
+        var(--warning) 45%,
+        var(--surface-raised)
+    );
+    --warning-muted: color-mix(
+        in srgb,
+        var(--warning) 55%,
+        var(--surface-raised)
+    );
+    --warning-soft: color-mix(
+        in srgb,
+        var(--warning) 75%,
+        var(--surface-raised)
+    );
+    --warning-strong: color-mix(in srgb, var(--warning) 85%, var(--content));
+
+    --info-subtle: color-mix(in srgb, var(--info) 14%, var(--surface-raised));
+    --info-content: var(--info);
+    --info-border: color-mix(in srgb, var(--info) 45%, var(--surface-raised));
+    --info-muted: color-mix(in srgb, var(--info) 55%, var(--surface-raised));
+    --info-soft: color-mix(in srgb, var(--info) 75%, var(--surface-raised));
+    --info-strong: color-mix(in srgb, var(--info) 85%, var(--content));
+}
+
+/* ===========================================================================
+   What Tailwind turns into utilities. `inline` keeps the var reference in
+   the utility, so swapping .dark re-resolves it at runtime.
+   =========================================================================== */
+@theme inline {
+    /* One sans does headings and body. Mono is reserved for real figures —
+       ratings, hours, counts — not decoration. Self-hosted, so there is no
+       Google Fonts round trip before first paint. */
+    --font-display: "Geist Variable", system-ui, -apple-system, sans-serif;
+    --font-sans: "Geist Variable", system-ui, -apple-system, sans-serif;
+    --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
+
+    --spacing-navbar: 4rem;
+    --container-measure: 52ch; /* ~65 rendered characters in Geist */
+
+    /* Type scale. Zilla Slab displays, IBM Plex Sans sets prose, IBM Plex
+       Mono carries every figure, label and stamp. One class per step; the
+       family is chosen alongside it. */
+    --text-hero: clamp(2.5rem, 7.5vw, 4.75rem); /* 40 → 76 */
+    --text-hero--line-height: 0.98;
+    --text-hero--letter-spacing: -0.035em;
+    --text-hero--font-weight: 620;
+
+    --text-display: clamp(2.125rem, 6vw, 3.875rem); /* 34 → 62 */
+    --text-display--line-height: 1;
+    --text-display--letter-spacing: -0.03em;
+    --text-display--font-weight: 620;
+
+    --text-title: clamp(1.75rem, 4.5vw, 2.75rem); /* 28 → 44 */
+    --text-title--line-height: 1;
+    --text-title--letter-spacing: -0.025em;
+    --text-title--font-weight: 600;
+
+    --text-section: clamp(1.1875rem, 2.5vw, 1.375rem); /* 19 → 22 */
+    --text-section--line-height: 1.15;
+    --text-section--letter-spacing: -0.015em;
+    --text-section--font-weight: 600;
+
+    --text-body: 0.96875rem; /* 15.5 */
+    --text-body--line-height: 1.66;
+    --text-body--font-weight: 400;
+
+    --text-body-sm: 0.84375rem; /* 13.5 */
+    --text-body-sm--line-height: 1.5;
+    --text-body-sm--font-weight: 500;
+
+    --text-figure: clamp(2rem, 5.5vw, 3.375rem); /* 32 → 54 */
+    --text-figure--line-height: 0.95;
+    --text-figure--letter-spacing: -0.04em;
+    --text-figure--font-weight: 600;
+
+    --text-figure-lg: clamp(1.25rem, 3vw, 1.5rem); /* 20 → 24 */
+    --text-figure-lg--line-height: 1;
+    --text-figure-lg--letter-spacing: -0.02em;
+    --text-figure-lg--font-weight: 600;
+
+    --text-figure-row: 1.1875rem; /* 19 */
+    --text-figure-row--line-height: 1;
+    --text-figure-row--letter-spacing: -0.02em;
+    --text-figure-row--font-weight: 600;
+
+    --text-figure-sm: 0.78125rem; /* 12.5 — the tile rating */
+    --text-figure-sm--line-height: 1;
+    --text-figure-sm--font-weight: 600;
+
+    /* Labels are sentence-case sans now, so they need size and weight to
+       register rather than letterspaced caps. */
+    --text-label: 0.75rem; /* 12 */
+    --text-label--line-height: 1.4;
+    --text-label--font-weight: 500;
+
+    --text-label-sm: 0.6875rem; /* 11 */
+    --text-label-sm--line-height: 1.4;
+    --text-label-sm--font-weight: 500;
+
+    --text-stamp: 0.625rem; /* 10 */
+    --text-stamp--line-height: 1.2;
+    --text-stamp--font-weight: 500;
+
+    /* Soft by default. The old system was square so that shape could carry
+       meaning; now the marks do that job, and everything gets a radius. */
+    --radius-*: initial;
+    --radius-xs: 6px;
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+    --radius-full: 9999px;
+    /* Kept as aliases while components migrate off shape-as-meaning. */
+    --radius-plate: 10px;
+    --radius-cut: 10px;
+    --radius-pill: 9999px;
+
+    /* Elevation. Nothing is pressed in — a card is lifted by a soft ambient
+       shadow, a tighter key shadow, and a 1px rim of light along its top
+       edge. Hover adds the bloom on top rather than replacing anything. */
+    --shadow-*: initial;
+    --inset-shadow-*: initial;
+    --shadow-e1: 0 1px 0 var(--rim) inset, 0 1px 2px var(--shadow-key);
+    --shadow-e2:
+        0 1px 0 var(--rim) inset, 0 1px 2px -1px var(--shadow-key),
+        0 8px 20px -10px var(--shadow-ambient);
+    --shadow-e3:
+        0 1px 0 var(--rim) inset, 0 2px 4px -2px var(--shadow-key),
+        0 16px 36px -14px var(--shadow-ambient);
+    --shadow-modal: 0 32px 64px -16px var(--scrim);
+    --shadow-glow: 0 0 32px -8px var(--glow-brand);
+    --shadow-cover: 0 8px 24px -10px var(--shadow-ambient);
+    --shadow-cover-hover: 0 14px 34px -10px var(--shadow-ambient);
+    --shadow-toast: 0 16px 40px -12px var(--shadow-ambient);
+
+    /* Same ambient depth as e2 without the inset rim. A light line drawn
+       inside the top edge reads as light on a pale surface and as a seam on a
+       saturated one, which is what the "gap" across every primary button was. */
+    --shadow-solid: 0 8px 20px -8px var(--shadow-ambient);
+
+    --shadow-lip: var(--shadow-e1);
+    --shadow-plate: var(--shadow-e2);
+    --shadow-lifted: var(--shadow-e3);
+    --shadow-sheet: 0 -16px 40px -12px var(--scrim);
+    --inset-shadow-field: inset 0 1px 0 var(--rim);
+    --inset-shadow-press: inset 0 2px 4px var(--shadow-key);
+    --inset-shadow-deep: inset 0 1px 0 var(--rim);
+    --inset-shadow-hard: inset 0 2px 4px var(--shadow-key);
+
+    /* Motion. Things settle rather than snap — a slight overshoot on arrival
+       is what reads as soft. Enter and exit glide; only arrivals overshoot. */
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-glide: cubic-bezier(0.22, 1, 0.36, 1);
+    --animate-settle: settle 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    --animate-rise: rise 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    --animate-stamp: stamp 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    --animate-tab-raise: tab-raise 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    --animate-tick-sweep: tick-sweep 1.1s steps(12, end) infinite;
+    --animate-fade-in-left: fade-in-left 160ms cubic-bezier(0.22, 1, 0.36, 1);
+    --animate-fade-in-right: fade-in-right 160ms cubic-bezier(0.22, 1, 0.36, 1);
+    --animate-notification: notification 7.1s forwards;
+
+    --color-brand: var(--brand);
+    --color-brand-deep: var(--brand-deep);
+    --color-brand-hover: var(--brand-hover);
+    --color-brand-active: var(--brand-active);
+    --color-brand-muted: var(--brand-muted);
+    --color-brand-subtle: var(--brand-subtle);
+
+    --color-accent: var(--accent);
+    --color-accent-quiet: var(--accent-quiet);
+    --color-accent-content: var(--accent-content);
+
+    --color-surface: var(--surface);
+    --color-surface-raised: var(--surface-raised);
+    --color-surface-sunken: var(--surface-sunken);
+    --color-surface-chrome: var(--surface-chrome);
+    --color-surface-overlay: var(--surface-overlay);
+    --color-surface-overlay-hover: var(--surface-overlay-hover);
+    --color-surface-field: var(--surface-field);
+    --color-surface-hover: var(--surface-hover);
+    --color-surface-active: var(--surface-active);
+    --color-surface-selected: var(--surface-selected);
+    --color-surface-inverse: var(--surface-inverse);
+    --color-surface-media: var(--surface-media);
+
+    --color-content: var(--content);
+    --color-content-secondary: var(--content-secondary);
+    --color-content-muted: var(--content-muted);
+    --color-content-inverse: var(--content-inverse);
+    --color-content-on-solid: var(--content-on-solid);
+    --color-content-on-media: var(--on-media);
+    --color-content-disabled: var(--content-disabled);
+
+    --color-media-scrim: var(--media-scrim);
+    --color-overlay-backdrop: var(--overlay-backdrop);
+    --color-overlay-loading: var(--overlay-loading);
+    --color-overlay-tile: var(--overlay-tile);
+    --color-overlay-avatar: var(--overlay-avatar);
+    --color-overlay-chip: var(--overlay-chip);
+    --color-overlay-chip-light: var(--overlay-chip-light);
+    --color-overlay-chip-light-hover: var(--overlay-chip-light-hover);
+
+    --color-danger-subtle: var(--danger-subtle);
+    --color-danger-content: var(--danger-content);
+    --color-danger-border: var(--danger-border);
+    --color-danger-muted: var(--danger-muted);
+    --color-danger-soft: var(--danger-soft);
+    --color-danger: var(--danger);
+    --color-danger-strong: var(--danger-strong);
+    --color-danger-tint: var(--danger-tint);
+
+    --color-success-subtle: var(--success-subtle);
+    --color-success-content: var(--success-content);
+    --color-success-border: var(--success-border);
+    --color-success-muted: var(--success-muted);
+    --color-success-soft: var(--success-soft);
+    --color-success: var(--success);
+    --color-success-strong: var(--success-strong);
+
+    --color-warning-subtle: var(--warning-subtle);
+    --color-warning-content: var(--warning-content);
+    --color-warning-border: var(--warning-border);
+    --color-warning-muted: var(--warning-muted);
+    --color-warning-soft: var(--warning-soft);
+    --color-warning: var(--warning);
+    --color-warning-strong: var(--warning-strong);
+
+    --color-info-subtle: var(--info-subtle);
+    --color-info-content: var(--info-content);
+    --color-info-border: var(--info-border);
+    --color-info-muted: var(--info-muted);
+    --color-info-soft: var(--info-soft);
+    --color-info: var(--info);
+    --color-info-strong: var(--info-strong);
+
+    --color-gold: var(--gold);
+
+    --color-status-played: var(--status-played);
+    --color-status-played-quiet: var(--status-played-quiet);
+    --color-status-played-content: var(--status-played-content);
+    --color-status-playing: var(--status-playing);
+    --color-status-playing-quiet: var(--status-playing-quiet);
+    --color-status-playing-content: var(--status-playing-content);
+    --color-status-backlog: var(--status-backlog);
+    --color-status-backlog-quiet: var(--status-backlog-quiet);
+    --color-status-backlog-content: var(--status-backlog-content);
+    --color-status-wishlist: var(--status-wishlist);
+    --color-status-wishlist-quiet: var(--status-wishlist-quiet);
+    --color-status-wishlist-content: var(--status-wishlist-content);
+    --color-status-mastered: var(--status-mastered);
+    --color-status-mastered-quiet: var(--status-mastered-quiet);
+    --color-status-finished: var(--status-finished);
+    --color-status-shelved: var(--status-shelved);
+    --color-status-shelved-quiet: var(--status-shelved-quiet);
+    --color-status-retired-quiet: var(--status-retired-quiet);
+    --color-status-retired: var(--status-retired);
+}
+
+/* Border colours. Bare names so the class reads `border-strong`, and the
+   per-side variants like `border-t-subtle` come for free. */
+@theme inline {
+    --color-subtle: var(--border-subtle);
+    --color-faint: var(--border-faint);
+    --color-strong: var(--border-strong);
+    --color-field: var(--border-field);
+    --color-focus: var(--border-focus);
+}
+
+/* ===========================================================================
+   The idioms. These are the design's signature devices, defined once rather
+   than retyped in a dozen components.
+   =========================================================================== */
+
+/* A quiet spacer between a label and its figure. It used to be a dotted
+   leader line, which belonged to the ledger this design no longer is. */
+@utility leader {
+    flex: 1;
+    min-width: 0.75rem;
+}
+
+/* A section break. One hairline is enough now that surfaces carry depth —
+   the old 3px double rule was doing the work that elevation does. */
+/* Fine diagonal tooth over box art, so a cover reads as printed stock. */
+@utility hatch {
+    background-image: repeating-linear-gradient(
+        115deg,
+        rgba(255, 255, 255, 0.055) 0 2px,
+        transparent 2px 9px
+    );
+}
+
+/* The lift. Every stateful control shares this one gesture: it rises a hair
+   and the light comes closer on hover, and settles back on press. Replaces
+   the plate press, which pushed things into the page. */
+@utility lift {
+    transition:
+        box-shadow 320ms var(--ease-glide),
+        background-color 240ms var(--ease-glide),
+        border-color 240ms var(--ease-glide),
+        color 240ms var(--ease-glide),
+        opacity 240ms var(--ease-glide),
+        transform 320ms var(--ease-glide);
+}
+
+/* A stamp lands slightly off-square, the way a real one does. */
+@utility stamp {
+    transform: rotate(-4deg);
+}
+
+@layer base {
+    /* v4 defaults borders to currentColor; we want a real colour when only
+       a width is set. */
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--border-default);
+    }
+
+    html {
+        scroll-behavior: smooth;
+        /* A long title or a wide figure must never scroll the page. */
+        overflow-x: hidden;
+    }
+
+    body {
+        background-color: var(--surface);
+        color: var(--content);
+        font-family: var(--font-sans);
+        /* Every number in the product is a ledger figure. */
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+@keyframes stamp {
+    from {
+        transform: scale(0.92);
+        opacity: 0;
+    }
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+/* Arrival, with the overshoot the spring curve provides. */
+@keyframes settle {
+    from {
+        transform: translateY(6px);
+        opacity: 0;
+    }
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+@keyframes rise {
+    from {
+        transform: translateY(3px);
+        opacity: 0;
+    }
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+@keyframes tab-raise {
+    from {
+        transform: translateY(1px);
+    }
+    to {
+        transform: none;
+    }
+}
+
+@keyframes tick-sweep {
+    from {
+        background-position-x: 0%;
+    }
+    to {
+        background-position-x: 100%;
+    }
+}
+
+@keyframes fade-in-left {
+    from {
+        opacity: 0;
+        transform: translateX(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fade-in-right {
+    from {
+        opacity: 0;
+        transform: translateX(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes notification {
+    0%,
+    100% {
+        opacity: 0;
+    }
+    8%,
+    80% {
+        opacity: 1;
+    }
+}
+
+/* Targeted, never blanket. A global animation-duration reset would complete
+   the notification envelope instantly and make every toast invisible. */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --animate-stamp: none;
+        --animate-settle: none;
+        --animate-rise: none;
+        --animate-tab-raise: none;
+        --animate-fade-in-left: none;
+        --animate-fade-in-right: none;
+    }
+
+    .lift {
+        transition-duration: 1ms;
+    }
+}

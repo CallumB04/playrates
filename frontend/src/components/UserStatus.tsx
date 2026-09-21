@@ -1,32 +1,31 @@
-/* User status, such as Online, Offline */
+/** Online / offline indicator. */
 
-interface Size {
-    value: string;
-    breakpoint?: string; // e.g: sm, md, lg. no breakpoint = default size
-}
+/** Named sizes keep the class strings literal so Tailwind can see them. */
+const STATUS_TEXT_SIZE = {
+    responsive: "text-sm sm:text-lg",
+    sm: "text-sm",
+    lg: "text-lg",
+} as const;
+
+export type UserStatusSize = keyof typeof STATUS_TEXT_SIZE;
 
 interface UserStatusProps {
     status: "online" | "offline";
-    sizes: Size[];
+    size?: UserStatusSize;
 }
 
-const UserStatus: React.FC<UserStatusProps> = ({ status, sizes }) => {
-    return (
-        <div className="flex items-center gap-2">
-            <div
-                className={`size-2 rounded-full ${status === "online" ? "bg-green-500" : "bg-red-500"} `}
-            ></div>
-            <p
-                className={`font-lexend ${sizes
-                    .map((size) => {
-                        return `${size.breakpoint ? size.breakpoint + ":" : ""}text-${size.value}`;
-                    })
-                    .join(" ")} text-text-primary`}
-            >
-                {status}
-            </p>
-        </div>
-    );
-};
+const UserStatus: React.FC<UserStatusProps> = ({
+    status,
+    size = "responsive",
+}) => (
+    <div className="flex items-center gap-2">
+        <div
+            className={`size-2 rounded-full ${status === "online" ? "bg-success" : "bg-danger"} `}
+        ></div>
+        <p className={`font-display ${STATUS_TEXT_SIZE[size]} text-content`}>
+            {status}
+        </p>
+    </div>
+);
 
 export default UserStatus;

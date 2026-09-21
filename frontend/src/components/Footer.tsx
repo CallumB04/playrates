@@ -1,35 +1,75 @@
-const socialsStyles = `hover:text-highlight-primary hover:cursor-pointer transition-colors duration-[200ms]`;
+import { Link } from "react-router-dom";
+import { ArrowUp } from "lucide-react";
+import { SiGithub } from "@icons-pack/react-simple-icons";
+import { BRAND_MOTTO, BRAND_NAME } from "../constants/brand";
 
-const Footer = () => {
-    return (
-        <footer className="font-lexend relative h-72 w-full bg-navbar text-text-secondary md:h-36">
-            {/* Socials */}
-            <div className="mx-auto flex w-full items-center justify-center gap-8 pt-12 text-[33px] md:pt-8 md:text-3xl lg:gap-12">
-                <i className={`fab fa-twitter ${socialsStyles}`}></i>
-                <i className={`fab fa-instagram ${socialsStyles}`}></i>
-                <i className={`fab fa-facebook ${socialsStyles}`}></i>
-                <i className={`fab fa-discord ${socialsStyles}`}></i>
+// The pages a site taking accounts needs, and nothing else.
+const LINKS = [
+    { to: "/about", label: "About" },
+    { to: "/privacy", label: "Privacy" },
+    { to: "/terms", label: "Terms" },
+    { to: "/contact", label: "Contact" },
+];
+
+const Footer = () => (
+    <footer className="mx-auto mt-6 w-full max-w-[1240px] px-5 pb-10 sm:px-8 lg:px-12">
+        <div className="rounded-lg border border-subtle bg-surface-raised px-5 py-5 shadow-plate sm:px-6">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p className="font-display text-xl font-bold text-content">
+                        {BRAND_NAME}
+                    </p>
+                    <p className="mt-1 max-w-[38ch] text-body-sm text-content-secondary">
+                        {BRAND_MOTTO}
+                    </p>
+                </div>
+
+                <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-body-sm">
+                    {LINKS.map((link) => (
+                        <Link
+                            key={link.to}
+                            to={link.to}
+                            className="text-content-secondary lift hover:text-brand"
+                        >
+                            {link.label}
+                        </Link>
+                    ))}
+                </nav>
             </div>
-            {/* Footer text wrapper */}
-            <div className="absolute bottom-8 flex w-full flex-wrap justify-between gap-y-[22px] px-6 text-center text-[17px] font-light md:bottom-4">
-                <p className="w-full md:w-1/3 md:text-left">
-                    Created by{" "}
-                    <span className="font-normal">Callum Burgoyne</span>
+
+            <div className="mt-5 flex flex-col gap-3 border-t border-subtle pt-4 text-label text-content-muted sm:flex-row sm:items-center sm:justify-between">
+                <p className="flex flex-wrap items-center gap-x-2">
+                    <span>© 2026 PlayRates</span>
+                    <span aria-hidden>·</span>
+                    {/* RAWG's terms require attribution wherever their data is
+                        shown, and it is shown on every page of this site. */}
+                    <span>Game data from RAWG</span>
                 </p>
-                <p
-                    className="mx-auto w-max rounded-md bg-highlight-primary p-3 px-4 font-semibold transition-colors duration-[200ms] hover:cursor-pointer hover:bg-highlight-hover md:bg-transparent md:p-1 md:hover:bg-transparent md:hover:text-highlight-primary"
-                    onClick={() =>
-                        window.scrollTo({ top: 0, behavior: "smooth" })
-                    }
-                >
-                    Back to Top
-                </p>
-                <p className="w-full md:w-1/3 md:text-right">
-                    © 2024 PlayRates
-                </p>
+
+                <div className="flex items-center gap-4">
+                    <a
+                        href="https://github.com/CallumB04"
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="inline-flex items-center gap-1.5 text-content-secondary lift hover:text-brand"
+                    >
+                        <SiGithub size={14} aria-hidden />
+                        Built by Callum Burgoyne
+                    </a>
+                    <button
+                        type="button"
+                        onClick={() =>
+                            window.scrollTo({ top: 0, behavior: "smooth" })
+                        }
+                        className="inline-flex cursor-pointer items-center gap-1.5 text-content-secondary lift hover:text-brand"
+                    >
+                        <ArrowUp size={14} aria-hidden />
+                        Back to top
+                    </button>
+                </div>
             </div>
-        </footer>
-    );
-};
+        </div>
+    </footer>
+);
 
 export default Footer;

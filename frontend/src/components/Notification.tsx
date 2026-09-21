@@ -1,43 +1,52 @@
-interface NotificationProps {
-    text: string;
-    type: "success" | "error" | "pending";
+import { CircleCheck, CircleX, Clock } from "lucide-react";
+import {
+    useNotificationState,
+    type NotificationType,
+} from "../contexts/NotificationContext";
+import type { IconComponent } from "../lib/icons";
+import { cn } from "../lib/cn";
+
+interface NotificationStyle {
+    /** The tone rule down the leading edge, and the icon that matches it. */
+    tone: string;
+    Icon: IconComponent;
 }
 
-// function to return text color, bg color and icon to match the notification type
-const typeToValues = (
-    type: string
-): { textColor: string; bgColor: string; iconName: string } | undefined => {
-    switch (type) {
-        case "success":
-            return {
-                textColor: "text-green-500",
-                bgColor: "bg-green-200",
-                iconName: "circle-check",
-            };
-        case "error":
-            return {
-                textColor: "text-red-500",
-                bgColor: "bg-red-200",
-                iconName: "circle-xmark",
-            };
-        case "pending":
-            return {
-                textColor: "text-orange-500",
-                bgColor: "bg-orange-200",
-                iconName: "clock",
-            };
-    }
+/** Static map: every type has an entry, so the lookup cannot miss. */
+const NOTIFICATION_STYLES: Record<NotificationType, NotificationStyle> = {
+    success: { tone: "border-l-success text-success", Icon: CircleCheck },
+    error: { tone: "border-l-danger text-danger", Icon: CircleX },
+    pending: {
+        tone: "border-l-status-playing text-status-playing",
+        Icon: Clock,
+    },
 };
 
-const Notification: React.FC<NotificationProps> = ({ text, type }) => {
-    const { textColor, bgColor, iconName } = typeToValues(type)!;
+/** Reads from context, so no component has to thread a callback through. */
+const Notification = () => {
+    const { notification } = useNotificationState();
+
+    if (!notification) return null;
+
+    const { tone, Icon } = NOTIFICATION_STYLES[notification.type];
 
     return (
         <p
-            className={`${textColor} ${bgColor} notification-fadeout fixed bottom-8 right-1/2 z-50 mx-auto flex h-max w-max translate-x-1/2 flex-row items-center gap-x-2 rounded-md px-4 py-2 font-lexend text-lg sm:right-8 sm:translate-x-0`}
+            // the id as key remounts the element, restarting the CSS animation
+            key={notification.id}
+            role="status"
+            aria-live="polite"
+            className={cn(
+                "fixed right-1/2 bottom-8 z-50 flex h-max w-max translate-x-1/2 animate-notification items-center gap-3",
+                "rounded-lg border border-l-[3px] border-subtle bg-surface-raised px-4 py-3 shadow-modal",
+                "sm:right-8 sm:translate-x-0",
+                tone
+            )}
         >
-            <i className={`fa-regular fa-${iconName}`}></i>
-            <span>{text}</span>
+            <Icon size={16} aria-hidden />
+            <span className="text-body-sm font-medium text-content">
+                {notification.text}
+            </span>
         </p>
     );
 };

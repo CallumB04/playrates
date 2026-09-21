@@ -1,0 +1,13 @@
+{
+    // The build config only covers src/, so nothing was typechecking the test
+    // helpers — and they drifted out of sync with the schema without CI
+    // noticing. Vitest doesn't typecheck either, so this is the only thing
+    // that catches it.
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "noEmit": true,
+        "rootDir": ".",
+        "types": ["node"]
+    },
+    "include": ["src", "tests", "scripts"]
+}

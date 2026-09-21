@@ -1,29 +1,32 @@
-import { gamePlatforms } from "../App";
+import { usePlatforms } from "../hooks/queries/useGames";
+import { getPlatformIcon } from "../lib/icons";
+
+/** Complete class strings — Tailwind only emits what it finds literally. */
+const PLATFORM_SIZE = {
+    xs: { wrapper: "gap-1.5 px-1.5 h-6 text-xs", icon: 12 },
+    base: { wrapper: "gap-2 px-2.5 py-0.5 text-base", icon: 16 },
+} as const;
+
+export type GamePlatformSize = keyof typeof PLATFORM_SIZE;
 
 interface GamePlatformProps {
     platform: string;
-    textSize: string;
+    size: GamePlatformSize;
 }
 
-const GamePlatform: React.FC<GamePlatformProps> = ({ platform, textSize }) => {
+/** The platform badge. Names come from the API, icons from the icon registry. */
+const GamePlatform: React.FC<GamePlatformProps> = ({ platform, size }) => {
+    const { data: platforms } = usePlatforms();
+    const details = (platforms ?? []).find((p) => p.slug === platform);
+    const Icon = getPlatformIcon(platform);
+    const { wrapper, icon } = PLATFORM_SIZE[size];
+
     return (
         <span
-            className={`flex items-center gap-${textSize === "xs" ? "1.5" : "2"} rounded-full border-2 border-text-primary px-${textSize === "xs" ? "1.5" : "2.5"} ${textSize !== "xs" && "py-0.5"} ${textSize === "xs" && "h-6"} text-text-primary text-${textSize}`}
+            className={`flex items-center rounded-full border border-subtle text-content ${wrapper}`}
         >
-            <p>
-                {
-                    gamePlatforms.find(
-                        (gamePlatform) => gamePlatform.name === platform
-                    )?.display
-                }
-            </p>
-            <i
-                className={
-                    gamePlatforms.find(
-                        (gamePlatform) => gamePlatform.name === platform
-                    )?.icon
-                }
-            ></i>
+            <p>{details?.displayName ?? platform}</p>
+            <Icon size={icon} aria-hidden />
         </span>
     );
 };

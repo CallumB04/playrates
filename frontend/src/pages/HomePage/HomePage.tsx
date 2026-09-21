@@ -1,176 +1,276 @@
-import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import type { Game } from "@playrates/shared";
 import {
-    fetchGameLogs,
-    fetchGames,
-    fetchUsers,
-    Game,
-    GameLog,
-    UserAccount,
-} from "../../api";
-import GameSection from "./components/GameSection";
-import { useUser } from "../../App";
-import { useEffect, useState } from "react";
+    formatCount,
+    formatRatingOutOfTen,
+    formatReleaseShort,
+    releaseYear,
+} from "../../lib/format";
+import { useAuth } from "../../contexts/AuthContext";
+import { useAccountForm } from "../../contexts/AccountFormContext";
+import {
+    useGames,
+    useGenres,
+    usePlatforms,
+    useSiteStats,
+} from "../../hooks/queries/useGames";
+import {
+    useMyGameLogIds,
+    useMyGameLogs,
+    useUserStats,
+} from "../../hooks/queries/useGameLogs";
+import { useFriendActivity } from "../../hooks/queries/useFriends";
+import { useRecentReviews } from "../../hooks/queries/useReviews";
+import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
+import { useGameLogMutations } from "../../hooks/queries/useGameLogs";
+import { useNotify } from "../../contexts/NotificationContext";
+import {
+    STATUS_PRESENTATION,
+    displayStatusFor,
+} from "../../constants/gameStatus";
+import type { TileAction } from "../../components/game/GameTile";
+import SignedOutHero from "./components/SignedOutHero";
+import ReEntryPlate from "./components/ReEntryPlate";
+import Rail from "./components/Rail";
+import GenreGrid from "./components/GenreGrid";
+import FriendFeed from "./components/FriendFeed";
+import ReviewFeed from "./components/ReviewFeed";
 
-// common styles for all game section titles in home page
-const gameSectionTitleStyles = `text-text-primary font-lexend font-normal tracking-wide
-                                text-3xl md:text-4xl 2xl:text-[42px] uppercase mt-16 text-center
-                                [&:not(:first-of-type)]:mt-24 [&:not(:first-of-type)]:2xl:mt-28`;
+const RAIL_SIZE = 24;
 
-interface HomePageProps {
-    openSignupForm: () => void;
-    openLoginForm: () => void;
-}
+/** The last 90 days, so "new releases" excludes unreleased TBA titles. */
+const releaseWindow = () => {
+    const now = new Date();
+    const from = new Date(now);
+    from.setDate(from.getDate() - 90);
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    return { releasedAfter: iso(from), releasedBefore: iso(now) };
+};
 
-const HomePage: React.FC<HomePageProps> = ({
-    openSignupForm,
-    openLoginForm,
-}) => {
-    // fetching user data from react context
-    const user: UserAccount | null = useUser();
-    const [userCount, setUserCount] = useState<number>(0);
+const HomePage = () => {
+    const { user } = useAuth();
+    const { openSignup, openLogin } = useAccountForm();
+    const [logging, setLogging] = useState<number | null>(null);
 
-    // loading user count
-    useEffect(() => {
-        const loadUserCount = async () => {
-            const users = await fetchUsers();
+    const { data: siteStats } = useSiteStats();
+    const { data: platforms } = usePlatforms();
+    const { data: genres } = useGenres();
 
-            if (users) {
-                setUserCount(users.length);
-            }
-        };
+    const window = useMemo(releaseWindow, []);
 
-        loadUserCount();
-    }, []);
-
-    /* Fetching games data using React Query for caching */
-
-    // fetching games from API
-    const {
-        data: games,
-        error: gamesError,
-        isLoading: gamesLoading,
-    } = useQuery<Game[]>({
-        queryKey: ["games"],
-        queryFn: fetchGames,
+    const { data: trending, isLoading: trendingLoading } = useGames({
+        trending: true,
+        limit: RAIL_SIZE,
+    });
+    const { data: popular, isLoading: popularLoading } = useGames({
+        sort: "logged",
+        limit: RAIL_SIZE,
+    });
+    const { data: fresh, isLoading: freshLoading } = useGames({
+        sort: "released",
+        limit: RAIL_SIZE,
+        ...window,
+    });
+    const { data: acclaimed, isLoading: acclaimedLoading } = useGames({
+        sort: "rating",
+        limit: RAIL_SIZE,
     });
 
-    // fetching gamelogs from API
-    const {
-        data: gameLogs,
-        error: gameLogsError,
-        isLoading: gameLogsLoading,
-    } = useQuery<{ [userID: string]: GameLog[] }>({
-        queryKey: ["gamelogs"],
-        queryFn: fetchGameLogs,
-    });
+    const { data: activity, isLoading: activityLoading } = useFriendActivity(6);
+    const { data: reviews, isLoading: reviewsLoading } = useRecentReviews(4);
+
+    // meta.total, not the length of a page.
+    const { data: playing } = useMyGameLogs("playing", { limit: 1 });
+    const { data: backlog } = useMyGameLogs("backlog", { limit: 1 });
+    // Enough to draw a year without paging. The chart is a shape, not a ledger.
+    const { data: played } = useMyGameLogs("played", { limit: 100 });
+    const { data: yearStats } = useUserStats(
+        user?.username ?? "",
+        new Date().getFullYear()
+    );
+
+    const current = playing?.data[0];
+
+    // Ids only: the rails show whether you logged something, not what's in it.
+    const { data: myLogIds } = useMyGameLogIds();
+    const logByGameId = useMemo(
+        () => new Map((myLogIds ?? []).map((log) => [log.gameId, log])),
+        [myLogIds]
+    );
+
+    const { save } = useGameLogMutations();
+    const notify = useNotify();
+
+    /* One tap, no popup: these are a single field each. */
+    const quickAdd = async (game: Game, status: "backlog" | "wishlist") => {
+        const { label } = STATUS_PRESENTATION[status];
+        try {
+            await save.mutateAsync({
+                gameId: game.id,
+                input: { status },
+            });
+            notify(
+                `${game.title} added to your ${label.toLowerCase()}`,
+                "success"
+            );
+        } catch {
+            notify(`Couldn't add that to your ${label.toLowerCase()}`, "error");
+        }
+    };
+
+    // Every cover on the page can be logged from where it sits.
+    const statusFor = (game: Game) => {
+        const log = logByGameId.get(game.id);
+        return log ? displayStatusFor(log.status, log.playedStatus) : null;
+    };
+
+    const actionsFor = (game: Game): TileAction[] => {
+        if (!user) {
+            return [
+                {
+                    key: "signin",
+                    label: "Log in to add",
+                    tone: "primary",
+                    onSelect: openLogin,
+                },
+            ];
+        }
+
+        // Already logged, so "add to backlog" would overwrite the status.
+        if (logByGameId.has(game.id)) {
+            return [
+                {
+                    key: "edit",
+                    label: "Edit your log",
+                    tone: "primary",
+                    onSelect: () => setLogging(game.id),
+                },
+            ];
+        }
+
+        return [
+            {
+                key: "log",
+                label: "Create log",
+                tone: "primary",
+                onSelect: () => setLogging(game.id),
+            },
+            {
+                key: "backlog",
+                label: "Add to backlog",
+                icon: STATUS_PRESENTATION.backlog.icon,
+                onSelect: () => void quickAdd(game, "backlog"),
+            },
+            {
+                key: "wishlist",
+                label: "Add to wishlist",
+                icon: STATUS_PRESENTATION.wishlist.icon,
+                onSelect: () => void quickAdd(game, "wishlist"),
+            },
+        ];
+    };
 
     return (
-        <>
-            <div className="my-12 flex flex-wrap gap-y-10 sm:px-2 md:min-h-[50vh] md:px-8 xl:px-20 2xl:mt-20">
-                <div className="w-full lg:w-1/2">
-                    <h1 className="text-center font-lexend text-[64px] font-bold text-text-primary md:text-7xl lg:text-left lg:text-8xl 2xl:text-9xl">
-                        PlayRates
-                    </h1>
-                    <h2 className="ml-1 mt-1 text-center font-lexend text-xl font-semibold text-text-secondary md:mt-5 lg:text-left lg:text-2xl 2xl:mt-7 2xl:text-3xl">
-                        All of your games in one place...
-                    </h2>
+        <div className="flex flex-col gap-11">
+            {user ? (
+                <ReEntryPlate
+                    username={user.username}
+                    displayName={user.firstName || user.username}
+                    current={current}
+                    playingCount={playing?.meta.total ?? 0}
+                    backlogCount={backlog?.meta.total ?? 0}
+                    yearLogs={played?.data ?? []}
+                    yearStats={yearStats}
+                    onUpdateLog={() => current && setLogging(current.gameId)}
+                />
+            ) : (
+                <SignedOutHero
+                    siteStats={siteStats}
+                    covers={trending?.data ?? []}
+                    onStart={openSignup}
+                />
+            )}
 
-                    {/* Signup / login wrapper */}
-
-                    {!user ? (
-                        <div className="mx-auto mt-12 flex w-full flex-col items-center justify-center gap-5 overflow-x-visible font-lexend md:mt-16 md:gap-3 lg:w-full lg:flex-row lg:justify-start 2xl:mt-20">
-                            <p
-                                onClick={openSignupForm}
-                                className="button-primary w-11/12 max-w-[500px] text-lg lg:w-max xl:text-2xl"
-                            >
-                                Get Started
-                            </p>
-                            <p
-                                onClick={openLoginForm}
-                                className="button-secondary w-11/12 max-w-[500px] text-lg lg:hidden"
-                            >
-                                Log in
-                            </p>
-                            <p className="hidden text-xl font-light text-text-primary lg:block 2xl:text-2xl">
-                                or{" "}
-                                <span
-                                    onClick={openLoginForm}
-                                    className="hover-text-white underline"
-                                >
-                                    log in
-                                </span>{" "}
-                                if you have an account
-                            </p>
-                        </div>
-                    ) : (
-                        <p className="mt-12 text-center font-lexend text-[22px] font-extralight italic text-text-primary md:text-2xl lg:text-left 2xl:mt-20 2xl:text-3xl">
-                            Welcome back{" "}
-                            <Link
-                                to={`/user/${user.username}`}
-                                className="hover-text-white font-normal"
-                            >
-                                {user.username}
-                            </Link>
-                            !
-                        </p>
-                    )}
-                </div>
-                <div className="flex w-full items-center justify-evenly font-lexend text-xl text-text-primary lg:w-1/2 lg:justify-evenly lg:pl-10 lg:text-[22px] 2xl:text-3xl">
-                    <div className="flex flex-col gap-y-1 text-center">
-                        <i className="fa-solid fa-user-group text-3xl md:text-[32px] 2xl:text-4xl"></i>
-                        <p>{userCount} Users</p>
-                    </div>
-                    <div className="flex flex-col gap-y-1 text-center">
-                        <i className="fa-solid fa-gamepad text-3xl md:text-[32px] 2xl:text-4xl"></i>
-                        <p>{games?.length || 0} Games</p>
-                    </div>
-                    <div className="flex flex-col gap-y-1 text-center">
-                        <i className="fa-solid fa-chart-bar text-3xl md:text-[32px] 2xl:text-4xl"></i>
-                        <p>
-                            {gameLogs
-                                ? Object.keys(gameLogs).reduce(
-                                      (acc, userID) =>
-                                          acc + gameLogs[userID].length,
-                                      0
-                                  )
-                                : 0}{" "}
-                            Logs
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Trending games */}
-            <h2 className={gameSectionTitleStyles}>Trending Games</h2>
-            <GameSection
-                games={games?.filter((game) => game.trending)}
-                loading={gamesLoading}
-                error={gamesError}
+            <Rail
+                title="Trending"
+                note="what people are opening this week"
+                games={trending?.data ?? []}
+                platforms={platforms ?? []}
+                isLoading={trendingLoading}
+                actionsFor={actionsFor}
+                statusFor={statusFor}
             />
 
-            {/* Most Popular games (by amount of user listings) */}
-            <h2 className={gameSectionTitleStyles}>Most Popular</h2>
-            <GameSection
-                games={games?.slice(0, 6)}
-                loading={gamesLoading}
-                error={gamesError}
+            <Rail
+                title="Most logged"
+                note="all time, by PlayRates logs"
+                games={popular?.data ?? []}
+                platforms={platforms ?? []}
+                isLoading={popularLoading}
+                actionsFor={actionsFor}
+                statusFor={statusFor}
+                footValueFor={(game) =>
+                    game.logCount > 0
+                        ? `${formatCount(game.logCount)} ${
+                              game.logCount === 1 ? "log" : "logs"
+                          }`
+                        : releaseYear(game.releaseDate)
+                }
             />
 
-            {/* Newly released games */}
-            <h2 className={gameSectionTitleStyles}>New Releases</h2>
-            <GameSection
-                games={games
-                    ?.sort(
-                        (a, b) =>
-                            Date.parse(b.releaseDate) -
-                            Date.parse(a.releaseDate)
-                    )
-                    .slice(0, 6)}
-                loading={gamesLoading}
-                error={gamesError}
+            <Rail
+                title="Highest rated"
+                note="by the people who logged them"
+                games={acclaimed?.data ?? []}
+                platforms={platforms ?? []}
+                isLoading={acclaimedLoading}
+                actionsFor={actionsFor}
+                statusFor={statusFor}
+                footValueFor={(game) =>
+                    game.avgRating !== null
+                        ? formatRatingOutOfTen(game.avgRating)
+                        : releaseYear(game.releaseDate)
+                }
             />
-        </>
+
+            <ReviewFeed
+                reviews={reviews?.data ?? []}
+                isLoading={reviewsLoading}
+            />
+
+            {user && (
+                <FriendFeed
+                    items={activity?.data ?? []}
+                    isLoading={activityLoading}
+                    username={user.username}
+                />
+            )}
+
+            <GenreGrid genres={genres ?? []} />
+
+            <Rail
+                title="New releases"
+                note="out in the last 90 days"
+                games={fresh?.data ?? []}
+                platforms={platforms ?? []}
+                isLoading={freshLoading}
+                actionsFor={actionsFor}
+                statusFor={statusFor}
+                footValueFor={(game) => formatReleaseShort(game.releaseDate)}
+            />
+
+            {logging !== null && (
+                <CreateOrEditGameLogPopup
+                    closePopup={() => setLogging(null)}
+                    viewUpdatedLog={() => setLogging(null)}
+                    gamelog={
+                        current && current.gameId === logging ? current : null
+                    }
+                    gameID={logging}
+                    editing={!!current && current.gameId === logging}
+                />
+            )}
+        </div>
     );
 };
 

@@ -1,4 +1,4 @@
-import ClosePopupIcon from "../../../components/ClosePopupIcon";
+import ConfirmPopup from "../../../components/ui/ConfirmPopup";
 
 interface RemoveFriendPopupProps {
     closePopup: () => void;
@@ -6,52 +6,28 @@ interface RemoveFriendPopupProps {
     friendName: string;
 }
 
-const RemoveFriendPopup: React.FC<RemoveFriendPopupProps> = ({
+const RemoveFriendPopup = ({
     closePopup,
     confirmRemove,
     friendName,
-}) => {
-    // confirm friend removal and close popup
-    const handleConfirm = () => {
-        confirmRemove();
-        closePopup();
-    };
-
-    return (
-        <dialog className="popup-backdrop" onMouseDown={closePopup}>
-            <div
-                className="popup popup-default flex flex-col gap-6 text-center"
-                onMouseDown={(event) => event.stopPropagation()}
-            >
-                <div className="flex w-full flex-col gap-3">
-                    <h2 className="text-xl text-text-primary">Remove Friend</h2>
-                    <p className="max-w-[40ch] border-t-[1px] border-t-[#cacaca55] pt-3 font-light text-text-secondary">
-                        Are you sure you want to remove{" "}
-                        <span className="font-normal text-text-primary">
-                            {friendName}
-                        </span>{" "}
-                        as your friend? This cannot be undone.
-                    </p>
-                </div>
-                <div className="flex w-full flex-col justify-center gap-5 sm:flex-row">
-                    <button
-                        className="button-danger w-full sm:w-1/2"
-                        onClick={handleConfirm}
-                    >
-                        Remove
-                    </button>
-                    <button
-                        className="button-outline button-outline-default w-full sm:w-1/2"
-                        onClick={closePopup}
-                    >
-                        Cancel
-                    </button>
-                </div>
-
-                <ClosePopupIcon onClick={closePopup} />
-            </div>
-        </dialog>
-    );
-};
+}: RemoveFriendPopupProps) => (
+    <ConfirmPopup
+        title="Remove friend"
+        confirmLabel="Remove"
+        body={
+            <>
+                You and{" "}
+                <span className="font-medium text-content">{friendName}</span>{" "}
+                will stop seeing each other&rsquo;s activity. You can send a new
+                request later.
+            </>
+        }
+        onConfirm={() => {
+            void confirmRemove();
+            closePopup();
+        }}
+        onClose={closePopup}
+    />
+);
 
 export default RemoveFriendPopup;
