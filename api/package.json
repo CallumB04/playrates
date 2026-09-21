@@ -1,4 +1,4 @@
 {
-    "//": "Not a workspace. This marks the function as ESM, like the backend it imports — without it Vercel inherits the root's commonjs and import.meta.url comes back empty.",
+    "//": "Not a workspace. This marks the function as ESM, like the backend it imports — the repo root is commonjs, which would make TypeScript reject the import and a bundler emit require() calls.",
     "type": "module"
 }
