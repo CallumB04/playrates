@@ -41,8 +41,10 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
                 {BRAND_NAME}
             </h1>
 
-            <p className="mt-4 max-w-[46ch] text-[17px] leading-relaxed text-content-secondary">
-                {BRAND_MOTTO}
+            <p className="mt-4 max-w-[48ch] text-[17px] leading-relaxed text-content-secondary">
+                <span className="text-content">{BRAND_MOTTO}.</span> Log what
+                you play, rate it out of ten, and keep your backlog, wishlist
+                and history in one place. Free, and yours to export.
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
