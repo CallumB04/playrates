@@ -162,14 +162,15 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                     <span className="flex items-center gap-1.5 text-label text-content-muted">
                         <Star size={13} aria-hidden /> Rating
                     </span>
-                    <span
-                        className={cn(
-                            "font-mono text-[40px] leading-none",
-                            rating === null ? "text-content-muted" : "text-brand"
-                        )}
-                    >
-                        {rating === null ? "—" : formatRating(rating)}
-                    </span>
+                    {rating === null ? (
+                        <span className="py-3 text-body-sm text-content-muted">
+                            Not rated
+                        </span>
+                    ) : (
+                        <span className="font-mono text-[40px] leading-none text-brand">
+                            {formatRating(rating)}
+                        </span>
+                    )}
                     {rating !== null && (
                         <span
                             aria-hidden
@@ -224,8 +225,8 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                             </span>
                         </>
                     ) : (
-                        <span className="py-7 font-mono text-[40px] leading-none text-content-muted">
-                            —
+                        <span className="py-9 text-body-sm text-content-muted">
+                            None tracked
                         </span>
                     )}
                 </div>
