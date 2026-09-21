@@ -41,13 +41,8 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
                 {BRAND_NAME}
             </h1>
 
-            <p className="mt-3 max-w-[20ch] font-display text-[26px] leading-snug text-content-secondary sm:text-[30px]">
+            <p className="mt-4 max-w-[46ch] text-[17px] leading-relaxed text-content-secondary">
                 {BRAND_MOTTO}
-            </p>
-
-            <p className="mt-5 max-w-[46ch] text-[17px] leading-relaxed text-content-secondary">
-                Rate what you play, track your hours, and keep your backlog
-                in one place. Your library is a page you can share.
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
