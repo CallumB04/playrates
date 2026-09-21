@@ -82,7 +82,8 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const { data: friends, isLoading: friendsLoading } =
         useUserFriends(targetUsername);
     const { data: myFriends } = useMyFriends();
-    const { data: reviewsPage } = useUserReviews(targetUsername);
+    const { data: reviewsPage, isLoading: reviewsLoading } =
+        useUserReviews(targetUsername);
     const { data: myLogIds } = useMyGameLogIds();
 
     const logs = useMemo(() => logsPage?.data ?? [], [logsPage]);
@@ -205,7 +206,9 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 profile={targetUser}
                 stats={stats}
                 reviewCount={reviewsPage?.meta.total}
-                friendCount={acceptedFriends.length}
+                friendCount={
+                    friendsLoading ? undefined : acceptedFriends.length
+                }
                 action={
                     isMyAccount ? (
                         <>
@@ -303,10 +306,12 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
                 <RecentReviews
                     reviews={reviewsPage?.data ?? []}
+                    isLoading={reviewsLoading}
                     isOwner={isMyAccount}
                 />
                 <FriendsPanel
                     friends={acceptedFriends}
+                    isLoading={friendsLoading}
                     sharedCount={sharedFriendCount}
                     pendingCount={
                         isMyAccount

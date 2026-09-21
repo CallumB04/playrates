@@ -2,6 +2,7 @@ import type { Profile, UserStats } from "@playrates/shared";
 import type { ReactNode } from "react";
 import ProfilePicture from "../../../components/ProfilePicture";
 import PresenceDot from "../../../components/ui/PresenceDot";
+import Skeleton from "../../../components/ui/Skeleton";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import {
     GAME_STATUSES,
@@ -74,10 +75,24 @@ const ShelfBar = ({
     );
 };
 
-const Figure = ({ label, value }: { label: string; value: ReactNode }) => (
+/* A figure nobody has fetched yet is not zero, and not an em dash either —
+   both read as an answer. */
+const Figure = ({
+    label,
+    value,
+    loading,
+}: {
+    label: string;
+    value: ReactNode;
+    loading: boolean;
+}) => (
     <div>
-        <p className="font-mono text-figure-lg text-content">{value}</p>
-        <p className="text-label-sm text-content-muted">{label}</p>
+        {loading ? (
+            <Skeleton className="h-[19px] w-14" />
+        ) : (
+            <p className="font-mono text-figure-lg text-content">{value}</p>
+        )}
+        <p className="mt-1 text-label-sm text-content-muted">{label}</p>
     </div>
 );
 
@@ -157,10 +172,12 @@ const MemberFileHeader = ({
                     <div className="flex flex-wrap gap-x-7 gap-y-4">
                         <Figure
                             label="Hours played"
+                            loading={!stats}
                             value={formatHours(stats?.hoursPlayed)}
                         />
                         <Figure
                             label="Average rating"
+                            loading={!stats}
                             value={
                                 <RatingBadge
                                     value={stats?.averageRating ?? null}
@@ -170,10 +187,12 @@ const MemberFileHeader = ({
                         />
                         <Figure
                             label="Reviews"
+                            loading={reviewCount === undefined}
                             value={formatCount(reviewCount)}
                         />
                         <Figure
                             label="Friends"
+                            loading={friendCount === undefined}
                             value={formatCount(friendCount)}
                         />
                     </div>

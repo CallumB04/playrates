@@ -5,6 +5,7 @@ import GameCover from "../../../components/game/GameCover";
 import { buttonClass } from "../../../components/ui/Button";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import StatusBadge from "../../../components/ui/StatusBadge";
+import { TextSkeleton } from "../../../components/ui/Skeleton";
 import {
     displayStatusFor,
     isDisplayStatus,
@@ -16,6 +17,7 @@ import { formatHours, relativeTime } from "../../../lib/format";
 
 interface RecentReviewsProps {
     reviews: ReviewWithAuthor[];
+    isLoading: boolean;
     /** Own profile gets a prompt to write one; a visitor does not. */
     isOwner: boolean;
 }
@@ -32,12 +34,18 @@ const reviewStatus = (review: ReviewWithAuthor): DisplayStatus | null => {
     );
 };
 
-const RecentReviews = ({ reviews, isOwner }: RecentReviewsProps) => {
+const RecentReviews = ({ reviews, isLoading, isOwner }: RecentReviewsProps) => {
     const shown = reviews.slice(0, SHOWN);
 
     return (
         <Panel title="Recent reviews" bodyClassName="flex flex-col gap-1 p-2">
-            {shown.length === 0 ? (
+            {/* An unfetched list is not an empty one, so it does not get the
+                empty state's sentence. */}
+            {isLoading ? (
+                <div className="px-2 py-3">
+                    <TextSkeleton lines={5} />
+                </div>
+            ) : shown.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
                     <p className="text-body-sm text-content-muted">
                         {isOwner

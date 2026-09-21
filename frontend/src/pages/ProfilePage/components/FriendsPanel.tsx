@@ -4,6 +4,7 @@ import type { FriendEdge } from "@playrates/shared";
 import FriendProfile from "../../../components/FriendProfile";
 import Panel, { PanelCount } from "../../../components/ui/Panel";
 import { buttonClass } from "../../../components/ui/Button";
+import { TextSkeleton } from "../../../components/ui/Skeleton";
 import { formatCount } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 
@@ -13,6 +14,7 @@ interface FriendsPanelProps {
     sharedCount?: number;
     /** Requests waiting on the owner. Only ever passed on your own profile. */
     pendingCount?: number;
+    isLoading: boolean;
     onOpenFriends: () => void;
     onOpenRequests: () => void;
 }
@@ -47,15 +49,24 @@ const FriendsPanel = ({
     friends,
     sharedCount,
     pendingCount = 0,
+    isLoading,
     onOpenFriends,
     onOpenRequests,
 }: FriendsPanelProps) => (
     <Panel
         title="Friends"
-        trailing={<PanelCount value={formatCount(friends.length)} />}
+        trailing={
+            isLoading ? undefined : (
+                <PanelCount value={formatCount(friends.length)} />
+            )
+        }
         bodyClassName="flex flex-col gap-0.5 p-2"
     >
-        {friends.length === 0 ? (
+        {isLoading ? (
+            <div className="px-2 py-3">
+                <TextSkeleton lines={4} />
+            </div>
+        ) : friends.length === 0 ? (
             <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
                 <p className="text-body-sm text-content-muted">
                     No friends yet.
@@ -85,7 +96,7 @@ const FriendsPanel = ({
             </>
         )}
 
-        {(friends.length > 0 || pendingCount > 0) && (
+        {!isLoading && (friends.length > 0 || pendingCount > 0) && (
             <div className="mt-1 flex gap-2">
                 {friends.length > 0 && (
                     <PanelButton onClick={onOpenFriends}>
