@@ -204,15 +204,18 @@ const GameTile = ({
 
             {(platformSlugs || rating !== undefined || footValue) && (
                 <div className="mt-2 flex items-center gap-1">
+                    {/* Three, not four: the figure beside them is the
+                        reason the tile is in this rail, so it gets the room. */}
                     <PlatformMarks
                         slugs={platformSlugs ?? []}
                         platforms={platforms ?? []}
+                        max={3}
                         className="shrink-0 text-content-muted"
                     />
                     <span className="leader" aria-hidden="true" />
                     <span
                         className={cn(
-                            "font-mono text-figure-sm",
+                            "shrink-0 whitespace-nowrap font-mono text-figure-sm",
                             rating === null || rating === undefined
                                 ? "text-content-muted"
                                 : "text-brand"

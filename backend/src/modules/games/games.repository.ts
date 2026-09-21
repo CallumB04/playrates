@@ -151,7 +151,12 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
         builder = builder.order("release_date", desc);
         break;
       case "rating":
-        builder = builder.order("rawg_rating", desc);
+        /* This site's ratings, not RAWG's 0-5 community score. The count is
+           a second key so one lone 10.0 does not outrank a game fifty people
+           settled at 9.2. */
+        builder = builder
+          .order("avg_rating", desc)
+          .order("rating_count", desc);
         break;
       case "metacritic":
         builder = builder.order("metacritic", desc);

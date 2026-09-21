@@ -18,6 +18,11 @@ interface RailProps {
     actionsFor?: (game: Game) => TileAction[];
     /** The viewer's own status for a game, stamped on the cover. */
     statusFor?: (game: Game) => DisplayStatus | null;
+    /**
+     * The figure under each cover. Defaults to the release year, which says
+     * nothing about why a game is in this particular rail.
+     */
+    footValueFor?: (game: Game) => string;
 }
 
 const ARROW =
@@ -41,6 +46,7 @@ const Rail = ({
     isLoading,
     actionsFor,
     statusFor,
+    footValueFor,
 }: RailProps) => {
     const trackRef = useRef<HTMLDivElement>(null);
     const [edges, setEdges] = useState({ start: true, end: false });
@@ -137,12 +143,10 @@ const Rail = ({
                                 coverUrl={(game as Game).coverUrl}
                                 platformSlugs={(game as Game).platforms}
                                 platforms={platforms}
-                                /* A community average isn't on Game, and the
-                                   brand figure is reserved for real PlayRates
-                                   ratings, so the year goes here instead. */
-                                footValue={releaseYear(
-                                    (game as Game).releaseDate
-                                )}
+                                footValue={
+                                    footValueFor?.(game as Game) ??
+                                    releaseYear((game as Game).releaseDate)
+                                }
                                 status={statusFor?.(game as Game)}
                                 actions={actionsFor?.(game as Game)}
                             />

@@ -46,6 +46,9 @@ export interface GameRow {
   rawg_added_count: number | null;
   /** PlayRates logs for this game, maintained by a trigger. */
   log_count: number;
+  /** Mean PlayRates rating, also maintained by a trigger. */
+  avg_rating: number | null;
+  rating_count: number;
   synced_at: string | null;
   description_synced_at: string | null;
   created_at: string;

@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
 import type { Game } from "@playrates/shared";
+import {
+    formatCount,
+    formatRating,
+    formatReleaseShort,
+    releaseYear,
+} from "../../lib/format";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import {
@@ -210,6 +216,13 @@ const HomePage = () => {
                 isLoading={popularLoading}
                 actionsFor={actionsFor}
                 statusFor={statusFor}
+                footValueFor={(game) =>
+                    game.logCount > 0
+                        ? `${formatCount(game.logCount)} ${
+                              game.logCount === 1 ? "log" : "logs"
+                          }`
+                        : releaseYear(game.releaseDate)
+                }
             />
 
             <Rail
@@ -220,6 +233,13 @@ const HomePage = () => {
                 isLoading={acclaimedLoading}
                 actionsFor={actionsFor}
                 statusFor={statusFor}
+                footValueFor={(game) =>
+                    game.avgRating !== null
+                        ? `${formatRating(game.avgRating)} · ${formatCount(
+                              game.ratingCount
+                          )}`
+                        : releaseYear(game.releaseDate)
+                }
             />
 
             <ReviewFeed
@@ -245,6 +265,7 @@ const HomePage = () => {
                 isLoading={freshLoading}
                 actionsFor={actionsFor}
                 statusFor={statusFor}
+                footValueFor={(game) => formatReleaseShort(game.releaseDate)}
             />
 
             {logging !== null && (

@@ -3,6 +3,18 @@ export const capitalise = (value: string): string =>
     value.length === 0 ? value : value[0]!.toUpperCase() + value.slice(1);
 
 /** The year from an ISO date, or an em dash when there isn't one. */
+/** "12 Mar 26" — enough to place a new release without spelling the year. */
+export const formatReleaseShort = (
+    isoDate: string | null | undefined
+): string => {
+    if (!isoDate) return "TBA";
+    const date = new Date(isoDate);
+    return date.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+    });
+};
+
 export const releaseYear = (isoDate: string | null | undefined): string =>
     isoDate ? isoDate.slice(0, 4) : "—";
 

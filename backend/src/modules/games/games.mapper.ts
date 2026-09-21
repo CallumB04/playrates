@@ -27,6 +27,9 @@ export const toGame = (row: GameRowWithRelations): Game => ({
   metacritic: row.metacritic,
   rawgRating: num(row.rawg_rating),
   rawgRatingCount: row.rawg_rating_count,
+  logCount: row.log_count,
+  avgRating: num(row.avg_rating),
+  ratingCount: row.rating_count,
 });
 
 /** Kept for the existing import name. */

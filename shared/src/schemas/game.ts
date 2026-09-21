@@ -19,6 +19,11 @@ export interface Game {
   metacritic: number | null;
   /** RAWG's own 0-5 community score, not a PlayRates rating. */
   rawgRating: number | null;
+  /** PlayRates logs for this game. */
+  logCount: number;
+  /** Mean PlayRates rating, and how many it is made of. */
+  avgRating: number | null;
+  ratingCount: number;
   rawgRatingCount: number | null;
 }
 

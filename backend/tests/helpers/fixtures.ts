@@ -45,6 +45,8 @@ export const buildGame = (overrides: Partial<GameRow> = {}): GameRow => ({
   rawg_rating_count: 6800,
   rawg_added_count: 100,
   log_count: 0,
+  avg_rating: null,
+  rating_count: 0,
   synced_at: NOW,
   description_synced_at: NOW,
   created_at: LONG_AGO,

@@ -232,7 +232,8 @@ export const createInMemoryRepos = (
           released: (a: GameRow, b: GameRow) =>
             (b.release_date ?? "").localeCompare(a.release_date ?? ""),
           rating: (a: GameRow, b: GameRow) =>
-            (b.rawg_rating ?? 0) - (a.rawg_rating ?? 0),
+            (b.avg_rating ?? -1) - (a.avg_rating ?? -1) ||
+            b.rating_count - a.rating_count,
           metacritic: (a: GameRow, b: GameRow) =>
             (b.metacritic ?? -1) - (a.metacritic ?? -1),
           // RAWG's tracker count is the hidden second key, not a sort.
@@ -278,6 +279,8 @@ export const createInMemoryRepos = (
               rawg_rating_count: external.rawgRatingCount,
               rawg_added_count: external.rawgAddedCount,
               log_count: 0,
+              avg_rating: null,
+              rating_count: 0,
               synced_at: now(),
               description_synced_at: external.description ? now() : null,
               created_at: now(),

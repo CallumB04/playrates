@@ -330,6 +330,71 @@ describe("most-logged sort", () => {
         expect(response.status).toBe(422);
     });
 
+    /* This is the bug the sort had: it ordered on RAWG's own 0-5 community
+       score under a heading that says "by the people who logged them". */
+    it("sorts by PlayRates ratings, not RAWG's community score", async () => {
+        const { app } = buildTestApp({
+            seed: {
+                ...baseSeed(),
+                games: [
+                    buildGame({
+                        id: 1,
+                        title: "Loved here",
+                        avg_rating: 9.5,
+                        rating_count: 40,
+                        rawg_rating: 1.2,
+                    }),
+                    buildGame({
+                        id: 2,
+                        title: "Loved elsewhere",
+                        avg_rating: 4,
+                        rating_count: 40,
+                        rawg_rating: 4.9,
+                    }),
+                ],
+                gamePlatforms: [],
+            },
+        });
+
+        const response = await request(app).get("/api/v1/games?sort=rating");
+
+        expect(response.body.data.map((g: { title: string }) => g.title)).toEqual([
+            "Loved here",
+            "Loved elsewhere",
+        ]);
+    });
+
+    /* One person's 10 should not outrank a game fifty people settled at 9.2. */
+    it("breaks a rating tie on how many ratings are behind it", async () => {
+        const { app } = buildTestApp({
+            seed: {
+                ...baseSeed(),
+                games: [
+                    buildGame({
+                        id: 1,
+                        title: "One vote",
+                        avg_rating: 9,
+                        rating_count: 1,
+                    }),
+                    buildGame({
+                        id: 2,
+                        title: "Fifty votes",
+                        avg_rating: 9,
+                        rating_count: 50,
+                    }),
+                ],
+                gamePlatforms: [],
+            },
+        });
+
+        const response = await request(app).get("/api/v1/games?sort=rating");
+
+        expect(response.body.data.map((g: { title: string }) => g.title)).toEqual([
+            "Fifty votes",
+            "One vote",
+        ]);
+    });
+
     it("sorts by Metacritic, with unscored games last", async () => {
         const { app } = buildTestApp({
             seed: {
