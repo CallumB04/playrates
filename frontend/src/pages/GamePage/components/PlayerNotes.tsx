@@ -48,9 +48,8 @@ const PlayerNotes = ({
             <TextSkeleton lines={4} />
         ) : reviews.length === 0 ? (
             <EmptyPlate
-                eyebrow="Nothing here yet"
                 title="No notes yet"
-                body="Log this game and leave a note — someone deciding whether to start it will read it."
+                body="Log this game and leave a note. Someone deciding whether to start it will read it."
             />
         ) : (
             reviews.map((review) => (

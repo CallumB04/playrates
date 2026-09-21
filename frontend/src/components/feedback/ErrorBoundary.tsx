@@ -32,7 +32,7 @@ class ErrorBoundary extends Component<Props, State> {
                 <h1 className="text-2xl text-content">Something went wrong</h1>
                 <p className="max-w-prose text-content-secondary">
                     An unexpected error stopped the page from rendering. Try
-                    reloading — if it keeps happening, the details are in the
+                    reloading. If it keeps happening, the details are in the
                     browser console.
                 </p>
                 <Button onClick={() => window.location.reload()}>

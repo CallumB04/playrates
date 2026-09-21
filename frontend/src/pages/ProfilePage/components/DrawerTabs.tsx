@@ -4,7 +4,6 @@ import {
     STATUS_PRESENTATION,
     type GameStatus,
 } from "../../../constants/gameStatus";
-import { STATUS_MARKS } from "../../../lib/marks";
 import { formatCount } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 
@@ -35,8 +34,7 @@ const DrawerTabs = ({ active, counts, onSelect, trailing }: DrawerTabsProps) => 
         className="flex items-end gap-1.5 overflow-x-auto"
     >
         {GAME_STATUSES.map((status) => {
-            const { label, mark, markTone } = STATUS_PRESENTATION[status];
-            const Mark = STATUS_MARKS[mark];
+            const { label, icon: Mark, markTone } = STATUS_PRESENTATION[status];
             const isActive = status === active;
 
             return (
@@ -54,7 +52,7 @@ const DrawerTabs = ({ active, counts, onSelect, trailing }: DrawerTabsProps) => 
                             : "bg-transparent text-content-muted hover:text-content"
                     )}
                 >
-                    <Mark className={cn("text-[10px]", isActive && markTone)} />
+                    <Mark size={14} aria-hidden className={cn("shrink-0", isActive && markTone)} />
                     {label}
                     <span className="opacity-65">
                         {formatCount(counts[status] ?? 0)}

@@ -36,9 +36,9 @@ const SignedOutHero = ({
             </h1>
 
             <p className="mt-4 max-w-[44ch] text-[17px] leading-relaxed text-content-secondary">
-                Rate to the quarter point, track the hours, and let the backlog
-                be honest with you. Your library is a page worth linking to —
-                not a spreadsheet you hide.
+                Rate to the half point, track the hours, and let the backlog be
+                honest with you. Your library is a page worth linking to, not a
+                spreadsheet you hide.
             </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-4">

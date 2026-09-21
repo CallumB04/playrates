@@ -84,7 +84,7 @@
        shadow on near-white has almost nothing to fall on — separation has to
        come from the surfaces themselves as much as from the light. */
     --surface: #f1eff7;
-    --surface-raised: #ffffff;
+    --surface-raised: #fdfcff;
     --surface-sunken: #e7e4ef;
     --surface-chrome: var(--surface);
     --surface-overlay: var(--surface-raised);
@@ -105,7 +105,7 @@
 
     /* Rules. Translucent, so they sit on any surface without banding. */
     --border-default: color-mix(in srgb, var(--ink-950) 12%, transparent);
-    --border-subtle: color-mix(in srgb, var(--ink-950) 9%, transparent);
+    --border-subtle: color-mix(in srgb, var(--ink-950) 12%, transparent);
     --border-faint: color-mix(in srgb, var(--ink-950) 6%, transparent);
     --border-strong: color-mix(in srgb, var(--ink-950) 18%, transparent);
     --border-field: var(--border-strong);
@@ -137,9 +137,9 @@
     --status-played: var(--brand);
     --status-played-quiet: var(--brand-subtle);
     --status-played-content: var(--brand);
-    --status-playing: #c2410c;
-    --status-playing-quiet: color-mix(in srgb, #f97316 14%, transparent);
-    --status-playing-content: #9a3412;
+    --status-playing: #f97316;
+    --status-playing-quiet: color-mix(in srgb, #f97316 16%, transparent);
+    --status-playing-content: #c2410c;
     --status-backlog: #0e7490;
     --status-backlog-quiet: color-mix(in srgb, #06b6d4 14%, transparent);
     --status-backlog-content: #155e75;
@@ -212,7 +212,7 @@
     --glow-brand: color-mix(in srgb, var(--brand) 55%, transparent);
     --scrim: rgba(0, 0, 0, 0.65);
 
-    --status-playing: var(--ember-400);
+    --status-playing: var(--ember-500);
     --status-playing-quiet: color-mix(in srgb, var(--ember-500) 20%, transparent);
     --status-playing-content: var(--ember-300);
     --status-backlog: #4fd1e0;
@@ -397,17 +397,23 @@
     --shadow-*: initial;
     --inset-shadow-*: initial;
     --shadow-e1: 0 1px 0 var(--rim) inset, 0 1px 2px var(--shadow-key);
-    --shadow-e2: 0 1px 0 var(--rim) inset, 0 8px 24px -8px var(--shadow-ambient);
+    --shadow-e2:
+        0 1px 0 var(--rim) inset, 0 1px 2px -1px var(--shadow-key),
+        0 8px 20px -10px var(--shadow-ambient);
     --shadow-e3:
-        0 1px 0 var(--rim) inset, 0 16px 40px -12px var(--shadow-ambient);
+        0 1px 0 var(--rim) inset, 0 2px 4px -2px var(--shadow-key),
+        0 16px 36px -14px var(--shadow-ambient);
     --shadow-modal: 0 32px 64px -16px var(--scrim);
     --shadow-glow: 0 0 32px -8px var(--glow-brand);
     --shadow-cover: 0 8px 24px -10px var(--shadow-ambient);
     --shadow-cover-hover: 0 14px 34px -10px var(--shadow-ambient);
     --shadow-toast: 0 16px 40px -12px var(--shadow-ambient);
 
-    /* Legacy names, re-pointed so components read correctly before they are
-       rewritten. The pressed look is gone from all of them. */
+    /* Same ambient depth as e2 without the inset rim. A light line drawn
+       inside the top edge reads as light on a pale surface and as a seam on a
+       saturated one, which is what the "gap" across every primary button was. */
+    --shadow-solid: 0 8px 20px -8px var(--shadow-ambient);
+
     --shadow-lip: var(--shadow-e1);
     --shadow-plate: var(--shadow-e2);
     --shadow-lifted: var(--shadow-e3);
@@ -562,10 +568,12 @@
    the plate press, which pushed things into the page. */
 @utility lift {
     transition:
-        box-shadow 200ms var(--ease-glide),
-        background-color 160ms var(--ease-glide),
-        border-color 160ms var(--ease-glide),
-        transform 200ms var(--ease-spring);
+        box-shadow 320ms var(--ease-glide),
+        background-color 240ms var(--ease-glide),
+        border-color 240ms var(--ease-glide),
+        color 240ms var(--ease-glide),
+        opacity 240ms var(--ease-glide),
+        transform 320ms var(--ease-glide);
 }
 
 /* Forty detents without forty DOM nodes: minor ticks every 1/40, major every

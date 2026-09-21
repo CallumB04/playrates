@@ -20,6 +20,7 @@ import {
     toGameLogInput,
     validateDraft,
 } from "./gamelog/logEditorReducer";
+import { X } from "lucide-react";
 import { formatPercent } from "../lib/format";
 
 interface CreateOrEditGameLogPopupProps {
@@ -136,12 +137,9 @@ const CreateOrEditGameLogPopup = ({
                     className="aspect-3/4 w-13 shrink-0 shadow-cover"
                 />
                 <div className="min-w-0 flex-1">
-                    <p className="text-label text-content-muted">
-                        Your log
-                    </p>
                     <h2
                         id="log-editor-title"
-                        className="mt-0.5 font-display text-[28px] leading-tight text-content"
+                        className="font-display text-[28px] leading-tight text-content"
                     >
                         {game?.title ?? "…"}
                     </h2>
@@ -149,9 +147,10 @@ const CreateOrEditGameLogPopup = ({
                 <button
                     type="button"
                     onClick={closePopup}
-                    className="lift shrink-0 rounded-sm border border-subtle px-2.5 py-1.5 text-label-sm text-content-muted hover:border-strong hover:text-content"
+                    aria-label="Close"
+                    className="lift shrink-0 rounded-sm p-2 text-content-muted hover:bg-surface-hover hover:text-content"
                 >
-                    Esc
+                    <X size={20} />
                 </button>
             </header>
 
@@ -333,7 +332,7 @@ const CreateOrEditGameLogPopup = ({
                 <div>
                     <div className="mb-2 flex flex-wrap items-baseline justify-between gap-3">
                         <span className="text-label text-content-muted">
-                            Review — optional
+                            Review (optional)
                         </span>
                         <div className="flex items-center gap-3.5">
                             <Toggle

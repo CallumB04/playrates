@@ -2,8 +2,6 @@ import type { ReactNode } from "react";
 import { cn } from "../../lib/cn";
 
 interface EmptyPlateProps {
-    /** A small eyebrow above the title, e.g. "Nothing here yet". */
-    eyebrow?: string;
     title: string;
     /** One instruction with an opinion in it. */
     body?: ReactNode;
@@ -12,11 +10,10 @@ interface EmptyPlateProps {
 }
 
 /**
- * The charm comes from the writing and the drawer metaphor, not from an
- * illustration — so this is a dashed slot with a sentence in it.
+ * A dashed slot with a sentence in it. There is no eyebrow: "Nothing here yet"
+ * sitting above "No friends yet" said the same thing twice in a smaller font.
  */
 const EmptyPlate = ({
-    eyebrow,
     title,
     body,
     action,
@@ -28,11 +25,6 @@ const EmptyPlate = ({
             className
         )}
     >
-        {eyebrow && (
-            <span className="text-label text-content-muted">
-                {eyebrow}
-            </span>
-        )}
         <h3 className="font-display text-section text-content">{title}</h3>
         {body && (
             <p className="max-w-[44ch] text-body-sm text-content-secondary">

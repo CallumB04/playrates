@@ -97,7 +97,6 @@ const FriendsPage = () => {
     if (!user) {
         return (
             <EmptyPlate
-                eyebrow="Members only"
                 title="Sign in to see your friends"
                 body="Friendships are per-account, so there is nothing to show until you are signed in."
                 action={<Button onClick={openLogin}>Sign in</Button>}
@@ -141,9 +140,8 @@ const FriendsPage = () => {
                     >
                         {accepted.length === 0 ? (
                             <EmptyPlate
-                                eyebrow="Solo for now"
                                 title="No friends yet"
-                                body="Open someone's profile and send a request — a library is more interesting next to someone else's."
+                                body="Open someone's profile and send a request. A library is more interesting next to someone else's."
                             />
                         ) : (
                             accepted.map((edge) => (

@@ -133,7 +133,6 @@ const SettingsPage = () => {
     if (!user) {
         return (
             <EmptyPlate
-                eyebrow="Members only"
                 title="Sign in to change your settings"
                 action={<Button onClick={openLogin}>Sign in</Button>}
             />
@@ -213,7 +212,7 @@ const SettingsPage = () => {
                 </Row>
                 <Row
                     label="Default platform"
-                    help="No stored preference — the log editor remembers nothing yet."
+                    help="No stored preference. The log editor remembers nothing yet."
                     pending
                 >
                     <Select aria-label="Default platform">
@@ -251,7 +250,7 @@ const SettingsPage = () => {
                 >
                     <Toggle checked onChange={() => {}} label="On" />
                 </Row>
-                <Row label="Theme" help="Day, night — saved to this browser.">
+                <Row label="Theme" help="Day or night. Saved to this browser.">
                     <Select
                         value={theme}
                         onChange={(e) =>

@@ -6,7 +6,6 @@ import {
     displayStatusFor,
     isDisplayStatus,
 } from "./gameStatus";
-import { STATUS_MARKS } from "../lib/marks";
 import { getStatusIcon } from "../lib/icons";
 
 const ALL = [...GAME_STATUSES, ...PLAYED_STATUSES];
@@ -36,19 +35,19 @@ describe("status presentation", () => {
         }
     });
 
-    it("points at a mark that exists", () => {
+    it("carries an icon and a hint for every status", () => {
         for (const status of ALL) {
-            expect(STATUS_MARKS[STATUS_PRESENTATION[status].mark], status)
-                .toBeDefined();
+            expect(STATUS_PRESENTATION[status].icon, status).toBeDefined();
+            expect(STATUS_PRESENTATION[status].hint, status).not.toBe("");
         }
     });
 
-    /* Shape used to be the non-colour channel, back when everything else was
-       square. With generous radii throughout it stopped differentiating, so
-       the mark carries it alone — which only works if no two share one. */
-    it("gives every status its own mark", () => {
-        const marks = ALL.map((s) => STATUS_PRESENTATION[s].mark);
-        expect(new Set(marks).size).toBe(ALL.length);
+    /* The icon is the non-colour channel. Shape used to do this job, back when
+       everything was square enough for a pill to mean something. It only works
+       if no two statuses share an icon. */
+    it("gives every status its own icon", () => {
+        const icons = ALL.map((s) => STATUS_PRESENTATION[s].icon);
+        expect(new Set(icons).size).toBe(ALL.length);
     });
 });
 

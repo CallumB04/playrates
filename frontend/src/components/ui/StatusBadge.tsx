@@ -3,7 +3,6 @@ import {
     STATUS_PRESENTATION,
     type DisplayStatus,
 } from "../../constants/gameStatus";
-import { STATUS_MARKS } from "../../lib/marks";
 import { cn } from "../../lib/cn";
 
 export type StatusBadgeSize = "stamp" | "base";
@@ -35,8 +34,7 @@ const StatusBadge = ({
     animateOnChange = false,
     className,
 }: StatusBadgeProps) => {
-    const { label, mark, chip, markTone } = STATUS_PRESENTATION[status];
-    const Mark = STATUS_MARKS[mark];
+    const { label, icon: Mark, chip, markTone } = STATUS_PRESENTATION[status];
 
     const previous = useRef(status);
     const [stamping, setStamping] = useState(false);
@@ -62,7 +60,7 @@ const StatusBadge = ({
                 className
             )}
         >
-            <Mark className={cn("shrink-0", onMedia ? undefined : markTone)} />
+            <Mark size={13} aria-hidden className={cn("shrink-0", onMedia ? undefined : markTone)} />
             {label}
         </span>
     );

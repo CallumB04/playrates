@@ -1,5 +1,4 @@
 import { GAME_STATUSES, STATUS_PRESENTATION } from "../../../constants/gameStatus";
-import { STATUS_MARKS } from "../../../lib/marks";
 import { formatCount, formatPercent } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 
@@ -18,8 +17,12 @@ const CirculationPlate = ({ byStatus, logCount }: CirculationPlateProps) => (
         </h2>
 
         {GAME_STATUSES.map((status) => {
-            const { label, mark, markTone, accent } = STATUS_PRESENTATION[status];
-            const Mark = STATUS_MARKS[mark];
+            const {
+                label,
+                icon: Mark,
+                markTone,
+                accent,
+            } = STATUS_PRESENTATION[status];
             const count = byStatus[status] ?? 0;
             const share = logCount === 0 ? 0 : count / logCount;
 
@@ -28,7 +31,7 @@ const CirculationPlate = ({ byStatus, logCount }: CirculationPlateProps) => (
                     key={status}
                     className="flex items-center gap-3.5 border-b border-subtle py-2.5"
                 >
-                    <Mark className={cn("w-4 shrink-0 text-[11px]", markTone)} />
+                    <Mark size={14} aria-hidden className={cn("shrink-0", markTone)} />
                     <span className="w-20 shrink-0 text-body-sm font-medium text-content sm:w-24">
                         {label}
                     </span>

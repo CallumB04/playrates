@@ -26,9 +26,9 @@ const SIZES = {
  */
 const VARIANTS = {
     primary:
-        "font-semibold text-content-on-solid bg-brand border-brand-deep shadow-plate " +
+        "font-semibold text-content-on-solid bg-brand border-brand-deep shadow-solid " +
         "hover:-translate-y-px hover:bg-brand-hover hover:shadow-glow " +
-        "active:translate-y-0 active:bg-brand-active active:shadow-lip " +
+        "active:translate-y-0 active:bg-brand-active active:shadow-none " +
         "disabled:bg-surface-sunken disabled:text-content-muted disabled:border-subtle disabled:shadow-none " +
         "aria-disabled:bg-surface-sunken aria-disabled:text-content-muted aria-disabled:border-subtle aria-disabled:shadow-none",
 
@@ -53,9 +53,9 @@ const VARIANTS = {
         "disabled:text-content-muted aria-disabled:text-content-muted",
 
     danger:
-        "font-semibold text-content-on-solid bg-danger border-danger shadow-plate " +
+        "font-semibold text-content-on-solid bg-danger border-danger shadow-solid " +
         "hover:-translate-y-px hover:shadow-lifted " +
-        "active:translate-y-0 active:shadow-lip " +
+        "active:translate-y-0 active:shadow-none " +
         "disabled:bg-surface-sunken disabled:text-content-muted disabled:border-subtle disabled:shadow-none " +
         "aria-disabled:bg-surface-sunken aria-disabled:text-content-muted aria-disabled:border-subtle aria-disabled:shadow-none",
 

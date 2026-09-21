@@ -109,7 +109,6 @@ const FeedbackSpecimens = () => (
             meta="EmptyPlate eyebrow · title · body · action · GhostTile"
         >
             <EmptyPlate
-                eyebrow="Nothing on file"
                 title="Your shelf is empty"
                 body="Log the last game you finished — even if that was years ago. The shelf is more useful when it's honest than when it's current."
                 action={<Button>Log a game</Button>}

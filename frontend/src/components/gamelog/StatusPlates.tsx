@@ -2,23 +2,66 @@ import {
     GAME_STATUSES,
     PLAYED_STATUSES,
     STATUS_PRESENTATION,
+    type DisplayStatus,
     type GameStatus,
     type PlayedStatus,
 } from "../../constants/gameStatus";
-import { STATUS_MARKS } from "../../lib/marks";
 import { cn } from "../../lib/cn";
 
-const ACCENT_BORDER: Record<GameStatus, string> = {
-    played: "border-t-status-played",
-    playing: "border-t-status-playing",
-    backlog: "border-t-status-backlog",
-    wishlist: "border-t-status-wishlist",
+/* Selected fills with its own hue and lifts. Unselected is quiet but still
+   legible — the old resting state was muted text on a sunken panel, which
+   made four live controls look like four disabled ones. */
+const TILE: Record<GameStatus, { on: string; ring: string }> = {
+    played: {
+        on: "border-status-played bg-status-played-quiet text-content",
+        ring: "focus-visible:outline-status-played",
+    },
+    playing: {
+        on: "border-status-playing bg-status-playing-quiet text-content",
+        ring: "focus-visible:outline-status-playing",
+    },
+    backlog: {
+        on: "border-status-backlog bg-status-backlog-quiet text-content",
+        ring: "focus-visible:outline-status-backlog",
+    },
+    wishlist: {
+        on: "border-status-wishlist bg-status-wishlist-quiet text-content",
+        ring: "focus-visible:outline-status-wishlist",
+    },
 };
 
-/* Selected rises and gathers light; unselected simply hasn't risen. The
-   shadow carries the state, so it survives the colour being removed. */
-const RESTING = "bg-surface-sunken text-content-muted border-subtle";
-const SELECTED = "bg-surface-raised text-content border-strong shadow-plate";
+const RESTING =
+    "border-subtle bg-surface-raised text-content-secondary hover:border-strong hover:text-content";
+
+const BASE =
+    "lift group relative flex flex-col items-center justify-center gap-2 rounded-md border px-3 py-4 text-center focus-visible:outline-2 focus-visible:outline-offset-2";
+
+/** The disc behind the icon. Filled when chosen, so the row has a focal point. */
+const Disc = ({
+    status,
+    selected,
+    size = 38,
+}: {
+    status: DisplayStatus;
+    selected: boolean;
+    size?: number;
+}) => {
+    const { icon: Icon, markTone, accent } = STATUS_PRESENTATION[status];
+    return (
+        <span
+            style={{ width: size, height: size }}
+            className={cn(
+                "grid place-items-center rounded-full transition-colors duration-200",
+                selected
+                    ? cn(accent, "text-white shadow-glow")
+                    : "bg-surface-sunken text-content-muted group-hover:bg-surface-hover",
+                !selected && markTone
+            )}
+        >
+            <Icon size={size * 0.45} strokeWidth={2.2} aria-hidden />
+        </span>
+    );
+};
 
 export const StatusPlates = ({
     value,
@@ -28,13 +71,10 @@ export const StatusPlates = ({
     onChange: (status: GameStatus) => void;
 }) => (
     <fieldset>
-        <legend className="mb-2.5 text-label text-content-muted">
-            Status
-        </legend>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <legend className="mb-2.5 text-label text-content-muted">Status</legend>
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {GAME_STATUSES.map((status) => {
-                const { label, mark, markTone } = STATUS_PRESENTATION[status];
-                const Mark = STATUS_MARKS[mark];
+                const { label, hint } = STATUS_PRESENTATION[status];
                 const selected = status === value;
 
                 return (
@@ -44,27 +84,26 @@ export const StatusPlates = ({
                         aria-pressed={selected}
                         onClick={() => onChange(status)}
                         className={cn(
-                            "lift flex min-h-12 items-center justify-center gap-2 rounded-sm border border-t-[3px] px-3 text-body-sm font-medium",
-                            "hover:-translate-y-px focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
-                            ACCENT_BORDER[status],
-                            selected ? SELECTED : RESTING
+                            BASE,
+                            TILE[status].ring,
+                            selected
+                                ? cn(TILE[status].on, "shadow-plate")
+                                : RESTING
                         )}
                     >
-                        <Mark className={cn("text-xs", selected && markTone)} />
-                        {label}
+                        <Disc status={status} selected={selected} />
+                        <span className="text-body-sm font-medium">
+                            {label}
+                        </span>
+                        <span className="text-[11px] leading-none text-content-muted">
+                            {hint}
+                        </span>
                     </button>
                 );
             })}
         </div>
     </fieldset>
 );
-
-const SUB_COPY: Record<PlayedStatus, string> = {
-    finished: "Saw the credits",
-    mastered: "Every achievement",
-    shelved: "Might come back",
-    retired: "Done with it",
-};
 
 export const PlayedStatusPlates = ({
     value,
@@ -75,17 +114,11 @@ export const PlayedStatusPlates = ({
 }) => (
     <fieldset>
         <legend className="mb-2.5 flex items-baseline gap-2.5">
-            <span className="text-label text-content-muted">
-                How it ended
-            </span>
-            <span className="text-xs text-content-muted">
-                shown only when played
-            </span>
+            <span className="text-label text-content-muted">How it ended</span>
         </legend>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {PLAYED_STATUSES.map((status) => {
-                const { label, mark } = STATUS_PRESENTATION[status];
-                const Mark = STATUS_MARKS[mark];
+                const { label, hint } = STATUS_PRESENTATION[status];
                 const selected = status === value;
 
                 return (
@@ -93,29 +126,22 @@ export const PlayedStatusPlates = ({
                         key={status}
                         type="button"
                         aria-pressed={selected}
-                        // Pressing the selected plate clears it.
+                        // Pressing the selected tile clears it.
                         onClick={() => onChange(selected ? null : status)}
                         className={cn(
-                            "lift flex min-h-12 flex-col gap-1 rounded-sm border px-3 py-2.5 text-left",
-                            "hover:-translate-y-px focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
+                            BASE,
+                            "gap-1.5 py-3.5 focus-visible:outline-brand",
                             selected
                                 ? "border-brand bg-brand-subtle text-content shadow-plate"
                                 : RESTING
                         )}
                     >
-                        <span className="flex items-center gap-2">
-                            <Mark
-                                className={cn(
-                                    "text-xs",
-                                    selected ? "text-brand" : "text-content-muted"
-                                )}
-                            />
-                            <span className="text-body-sm font-medium">
-                                {label}
-                            </span>
+                        <Disc status={status} selected={selected} size={32} />
+                        <span className="text-body-sm font-medium">
+                            {label}
                         </span>
-                        <span className="text-[11px] leading-snug text-content-muted">
-                            {SUB_COPY[status]}
+                        <span className="text-[11px] leading-none text-content-muted">
+                            {hint}
                         </span>
                     </button>
                 );

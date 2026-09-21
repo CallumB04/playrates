@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Game, Platform } from "@playrates/shared";
-import GameTile from "../../../components/game/GameTile";
+import GameTile, { type TileAction } from "../../../components/game/GameTile";
 import { TileSkeleton } from "../../../components/ui/Skeleton";
 import { primaryPlatformLabel } from "../../../lib/platforms";
 import { releaseYear } from "../../../lib/format";
@@ -8,21 +9,27 @@ import { cn } from "../../../lib/cn";
 
 interface RailProps {
     title: string;
-    note: string;
+    /** Only when it says something the title doesn't. */
+    note?: string;
     games: Game[];
     platforms: Platform[];
     isLoading: boolean;
-    perPage?: number;
+    /** Builds the hover action for a tile, e.g. "Log it". */
+    actionsFor?: (game: Game) => TileAction[];
 }
 
 const ARROW =
-    "lift flex size-8 items-center justify-center rounded-full border border-subtle bg-surface-raised font-mono text-content-secondary " +
-    "hover:-translate-y-px hover:border-brand hover:text-content disabled:opacity-40 disabled:hover:translate-y-0" +
+    "lift flex size-8 cursor-pointer items-center justify-center rounded-full border border-subtle bg-surface-raised text-content-secondary " +
+    "hover:-translate-y-px hover:border-brand hover:text-content " +
+    "disabled:cursor-default disabled:opacity-30 disabled:hover:translate-y-0 disabled:hover:border-subtle " +
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
 /**
- * One shelf of covers with real paging. The rail fetches more than it shows so
- * the arrows move through a set rather than pretending to.
+ * One shelf of covers.
+ *
+ * A real overflow row rather than a paged grid: the grid showed a fixed seven
+ * tiles into a column count that changed with the viewport, so at most widths
+ * the last two wrapped onto a second line underneath.
  */
 const Rail = ({
     title,
@@ -30,67 +37,116 @@ const Rail = ({
     games,
     platforms,
     isLoading,
-    perPage = 7,
+    actionsFor,
 }: RailProps) => {
-    const [offset, setOffset] = useState(0);
-    const visible = games.slice(offset, offset + perPage);
-    const canPrev = offset > 0;
-    const canNext = offset + perPage < games.length;
+    const trackRef = useRef<HTMLDivElement>(null);
+    const [edges, setEdges] = useState({ start: true, end: false });
+
+    const measure = useCallback(() => {
+        const el = trackRef.current;
+        if (!el) return;
+        const max = el.scrollWidth - el.clientWidth;
+        setEdges({
+            start: el.scrollLeft <= 1,
+            // 1px of slack: fractional widths never land exactly on the end.
+            end: el.scrollLeft >= max - 1,
+        });
+    }, []);
+
+    useEffect(() => {
+        measure();
+        const el = trackRef.current;
+        if (!el) return;
+        const observer = new ResizeObserver(measure);
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [measure, games.length]);
+
+    /* A page is whatever is currently on screen, less one tile of context. */
+    const nudge = (direction: 1 | -1) => {
+        const el = trackRef.current;
+        if (!el) return;
+        el.scrollBy({
+            left: direction * Math.max(el.clientWidth - 140, 160),
+            behavior: "smooth",
+        });
+    };
 
     return (
         <section>
-            <header className="mb-4 flex items-baseline justify-between gap-4 border-b border-subtle pb-2.5">
+            <header className="mb-4 flex items-baseline justify-between gap-4">
                 <div className="flex items-baseline gap-3">
                     <h2 className="font-display text-section text-content">
                         {title}
                     </h2>
-                    <span className="text-label text-content-muted">
-                        {note}
-                    </span>
+                    {note && (
+                        <span className="hidden text-label text-content-muted sm:inline">
+                            {note}
+                        </span>
+                    )}
                 </div>
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
-                        aria-label={`Previous ${title}`}
-                        disabled={!canPrev}
-                        onClick={() => setOffset((o) => Math.max(0, o - perPage))}
-                        className={cn(ARROW)}
+                        aria-label={`Scroll ${title} back`}
+                        disabled={edges.start}
+                        onClick={() => nudge(-1)}
+                        className={ARROW}
                     >
-                        ‹
+                        <ChevronLeft size={16} />
                     </button>
                     <button
                         type="button"
-                        aria-label={`More ${title}`}
-                        disabled={!canNext}
-                        onClick={() => setOffset((o) => o + perPage)}
-                        className={cn(ARROW)}
+                        aria-label={`Scroll ${title} forward`}
+                        disabled={edges.end}
+                        onClick={() => nudge(1)}
+                        className={ARROW}
                     >
-                        ›
+                        <ChevronRight size={16} />
                     </button>
                 </div>
             </header>
 
-            <div className="grid grid-cols-3 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
-                {isLoading
-                    ? Array.from({ length: perPage }, (_, i) => (
-                          <TileSkeleton key={i} />
-                      ))
-                    : visible.map((game) => (
-                          <GameTile
-                              key={game.id}
-                              gameId={game.id}
-                              title={game.title}
-                              coverUrl={game.coverUrl}
-                              footLabel={primaryPlatformLabel(
-                                  game.platforms,
-                                  platforms
-                              )}
-                              /* A community average isn't on Game, and the
-                                 brand figure is reserved for real PlayRates
-                                 ratings — so the year goes here instead. */
-                              footValue={releaseYear(game.releaseDate)}
-                          />
-                      ))}
+            <div
+                ref={trackRef}
+                onScroll={measure}
+                className={cn(
+                    "flex snap-x snap-mandatory gap-3.5 overflow-x-auto pb-2",
+                    // The lift moves tiles up; without room they clip.
+                    "-mt-1 pt-1",
+                    "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                )}
+            >
+                {(isLoading
+                    ? Array.from({ length: 7 }, (_, i) => ({ id: -i - 1 }))
+                    : games
+                ).map((game) => (
+                    <div
+                        key={game.id}
+                        className="w-[136px] shrink-0 snap-start sm:w-[150px] lg:w-[164px]"
+                    >
+                        {isLoading ? (
+                            <TileSkeleton />
+                        ) : (
+                            <GameTile
+                                gameId={(game as Game).id}
+                                title={(game as Game).title}
+                                coverUrl={(game as Game).coverUrl}
+                                footLabel={primaryPlatformLabel(
+                                    (game as Game).platforms,
+                                    platforms
+                                )}
+                                /* A community average isn't on Game, and the
+                                   brand figure is reserved for real PlayRates
+                                   ratings, so the year goes here instead. */
+                                footValue={releaseYear(
+                                    (game as Game).releaseDate
+                                )}
+                                actions={actionsFor?.(game as Game)}
+                            />
+                        )}
+                    </div>
+                ))}
             </div>
         </section>
     );

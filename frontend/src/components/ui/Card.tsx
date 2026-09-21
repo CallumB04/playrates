@@ -11,7 +11,7 @@ const Card = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => (
     <div className={cardClass(className)} {...props} />
 );
 
-/** The small mono eyebrow at the top of a card. */
+/** A card's title. Cards carry a title, and a description only when one earns its place. */
 export const CardHeader = ({
     className,
     ...props

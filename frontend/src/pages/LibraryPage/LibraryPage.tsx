@@ -200,9 +200,8 @@ const LibraryPage = () => {
                 </div>
             ) : games.length === 0 ? (
                 <EmptyPlate
-                    eyebrow="No matches"
                     title="No titles match those filters"
-                    body="Try a broader search, or clear the platform and genre filters — the catalogue holds a hundred thousand games, so something in here fits."
+                    body="Try a broader search, or clear the platform and genre filters. The catalogue holds a hundred thousand games, so something in here fits."
                 />
             ) : (
                 <div

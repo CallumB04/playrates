@@ -29,7 +29,7 @@ interface ShelfPanelProps {
 const EMPTY_COPY: Record<GameStatus, { title: string; body: string }> = {
     played: {
         title: "Nothing played yet",
-        body: "Log the last game you finished — even if that was years ago. The shelf is more useful honest than current.",
+        body: "Log the last game you finished, even if that was years ago. A shelf is more useful honest than current.",
     },
     playing: {
         title: "Nothing on the go",
@@ -80,7 +80,6 @@ const ShelfPanel = ({
                 ) : logs.length === 0 ? (
                     <div className="flex flex-col gap-5">
                         <EmptyPlate
-                            eyebrow="Nothing here yet"
                             title={empty.title}
                             body={isMyAccount ? empty.body : "Nothing here yet."}
                         />

@@ -87,7 +87,6 @@ const GamePage = () => {
     if (isError || !game) {
         return (
             <EmptyPlate
-                eyebrow="Not found"
                 title="That game isn't in the catalogue"
                 body="The link may be wrong, or the title may have been removed since it was shared."
             />
