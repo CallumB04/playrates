@@ -30,6 +30,13 @@ export interface GamesRepository {
   ratingSummary(
     gameId: number,
   ): Promise<{ average: number | null; count: number; buckets: number[] }>;
+  /** This site's own figures for a game, as distinct from RAWG's. */
+  playratesStats(gameId: number): Promise<{
+    avgHoursPlayed: number | null;
+    avgHoursToBeat: number | null;
+    completionistCount: number;
+    achievementTrackedCount: number;
+  }>;
   /**
    * Writes what the detail endpoint knows that the bulk listing didn't.
    * Content tags ride along because the sexual-content flag was historically
@@ -125,14 +132,18 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       builder = builder.lte("release_date", query.releasedBefore);
     }
 
-    /* Alphabetical is useless across the whole catalogue — page one is the
-       100 titles that happen to start with punctuation. Tracker count is the
-       closest thing to relevance we have, so it is the default. */
+    /* Alphabetical is useless across the whole library: page one is the 100
+       titles that happen to start with punctuation. Log count is the default,
+       because this site's own figures are the ones that should order it.
+
+       RAWG's tracker count sits underneath as a hidden second key rather than
+       as a sort of its own. Almost nothing here has been logged yet, so on
+       log_count alone the default order is a hundred thousand rows of zero
+       broken only by id — which is to say, arbitrary. It is not offered in
+       the UI: somebody else's popularity figure presented as a sort option
+       reads as ours. */
     const desc = { ascending: false, nullsFirst: false } as const;
     switch (query.sort) {
-      case "logged":
-        builder = builder.order("log_count", desc);
-        break;
       case "title":
         builder = builder.order("title");
         break;
@@ -142,8 +153,13 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       case "rating":
         builder = builder.order("rawg_rating", desc);
         break;
+      case "metacritic":
+        builder = builder.order("metacritic", desc);
+        break;
       default:
-        builder = builder.order("rawg_added_count", desc);
+        builder = builder
+          .order("log_count", desc)
+          .order("rawg_added_count", desc);
     }
 
     /* The tiebreaker is not optional. Every sort key above collides — titles
@@ -289,6 +305,29 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       playing: Number(row.playing),
       backlog: Number(row.backlog),
       wishlist: Number(row.wishlist),
+    };
+  },
+
+  async playratesStats(gameId) {
+    const { data, error } = await db
+      .rpc("game_playrates_stats", { p_game_id: gameId })
+      .single();
+    if (error) throw error;
+
+    const row = data as {
+      avg_hours_played: number | null;
+      avg_hours_to_beat: number | null;
+      completionist_count: number;
+      achievement_tracked_count: number;
+    };
+
+    return {
+      avgHoursPlayed:
+        row.avg_hours_played === null ? null : Number(row.avg_hours_played),
+      avgHoursToBeat:
+        row.avg_hours_to_beat === null ? null : Number(row.avg_hours_to_beat),
+      completionistCount: Number(row.completionist_count),
+      achievementTrackedCount: Number(row.achievement_tracked_count),
     };
   },
 

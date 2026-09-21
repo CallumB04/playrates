@@ -114,6 +114,8 @@ export const createInMemoryRepos = (
       ...r,
       rating: log?.rating ?? null,
       hours_played: log?.hours_played ?? null,
+      status: log?.status ?? null,
+      played_status: log?.played_status ?? null,
       platform_slug: log?.platform_slug ?? null,
       author_username: author?.username ?? null,
       author_avatar_url: author?.avatar_url ?? null,
@@ -227,11 +229,14 @@ export const createInMemoryRepos = (
             (b.release_date ?? "").localeCompare(a.release_date ?? ""),
           rating: (a: GameRow, b: GameRow) =>
             (b.rawg_rating ?? 0) - (a.rawg_rating ?? 0),
-          popular: (a: GameRow, b: GameRow) =>
+          metacritic: (a: GameRow, b: GameRow) =>
+            (b.metacritic ?? -1) - (a.metacritic ?? -1),
+          // RAWG's tracker count is the hidden second key, not a sort.
+          logged: (a: GameRow, b: GameRow) =>
+            b.log_count - a.log_count ||
             (b.rawg_added_count ?? 0) - (a.rawg_added_count ?? 0),
-          logged: (a: GameRow, b: GameRow) => b.log_count - a.log_count,
         } as const;
-        const compare = by[query.sort ?? "popular"];
+        const compare = by[query.sort ?? "logged"];
         const sorted = [...rows].sort((a, b) => compare(a, b) || a.id - b.id);
         return {
           rows: sorted.slice(from, to + 1).map(withPlatforms),
@@ -307,6 +312,29 @@ export const createInMemoryRepos = (
           game.description_synced_at = now();
         }
       },
+      async playratesStats(gameId) {
+        const logs = state.gameLogs.filter((l) => l.game_id === gameId);
+        const mean = (values: (number | null)[]) => {
+          const present = values.filter((v): v is number => v !== null);
+          if (present.length === 0) return null;
+          return (
+            Math.round(
+              (present.reduce((a, b) => a + b, 0) / present.length) * 10,
+            ) / 10
+          );
+        };
+        const tracked = logs.filter((l) => (l.achievements_total ?? 0) > 0);
+        return {
+          avgHoursPlayed: mean(logs.map((l) => l.hours_played)),
+          avgHoursToBeat: mean(logs.map((l) => l.hours_to_beat)),
+          completionistCount: tracked.filter(
+            (l) =>
+              (l.achievements_completed ?? 0) >= (l.achievements_total ?? 0),
+          ).length,
+          achievementTrackedCount: tracked.length,
+        };
+      },
+
       async statusCounts(gameId) {
         const counts: Record<string, number> = {
           played: 0,

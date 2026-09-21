@@ -86,9 +86,10 @@ export const createGamesService = (
     // confirm the game exists so a bad id is a 404, not empty stats
     await this.getById(gameId);
 
-    const [byStatus, rating] = await Promise.all([
+    const [byStatus, rating, own] = await Promise.all([
       repo.statusCounts(gameId),
       repo.ratingSummary(gameId),
+      repo.playratesStats(gameId),
     ]);
 
     const logCount = Object.values(byStatus).reduce((a, b) => a + b, 0);
@@ -99,6 +100,15 @@ export const createGamesService = (
       averageRating: rating.average,
       ratingCount: rating.count,
       ratingBuckets: rating.buckets,
+      avgHoursPlayed: own.avgHoursPlayed,
+      avgHoursToBeat: own.avgHoursToBeat,
+      completionistCount: own.completionistCount,
+      /* Null rather than zero when nobody has recorded achievements: 0% is a
+         finding, and "nobody has said" is not one. */
+      completionRate:
+        own.achievementTrackedCount === 0
+          ? null
+          : own.completionistCount / own.achievementTrackedCount,
     };
   },
 

@@ -91,6 +91,8 @@ export const buildReview = (
     },
     rating: 9.5,
     hoursPlayed: 41,
+    status: "played",
+    playedStatus: "finished",
     platform: "steam",
     game: {
         id: 1,

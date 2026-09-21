@@ -22,14 +22,12 @@ interface LibraryFiltersProps {
     isSignedIn: boolean;
 }
 
-/* The hints earn their place here: "Most logged" and "Most tracked" are two
-   different counts and the labels alone do not say which is whose. */
 const SORT_OPTIONS = [
-    { value: "logged", label: "Most logged", hint: "By PlayRates logs" },
-    { value: "popular", label: "Most tracked", hint: "By RAWG collections" },
-    { value: "title", label: "A to Z" },
-    { value: "released", label: "Newest" },
+    { value: "logged", label: "Most logged" },
     { value: "rating", label: "Highest rated" },
+    { value: "metacritic", label: "Metacritic score" },
+    { value: "released", label: "Newest" },
+    { value: "title", label: "A to Z" },
 ];
 
 const LibraryFilters = ({

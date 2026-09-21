@@ -11,6 +11,8 @@ import type { ReviewRow } from "../../types/database.types.js";
 export interface ReviewRowJoined extends ReviewRow {
   rating: number | null;
   hours_played: number | null;
+  status: string | null;
+  played_status: string | null;
   platform_slug: string | null;
   author_username: string | null;
   author_avatar_url: string | null;

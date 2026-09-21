@@ -9,7 +9,7 @@ import Button from "./ui/Button";
 import Toggle from "./ui/Toggle";
 import Field from "./ui/Field";
 import { Input, NumberInput, Textarea } from "./ui/Input";
-import RatingStars from "./ui/RatingStars";
+import RatingMeter from "./ui/RatingMeter";
 import Dropdown from "./ui/Dropdown";
 import { platformOptions } from "../lib/platformIcons";
 import GameCover from "./game/GameCover";
@@ -171,7 +171,7 @@ const CreateOrEditGameLogPopup = ({
                 )}
 
                 <div className="rounded-md border border-subtle bg-surface-sunken/50 px-5 py-4">
-                    <RatingStars
+                    <RatingMeter
                         value={draft.rating}
                         onChange={(value) => dispatch({ type: "rating", value })}
                         label="Your rating"

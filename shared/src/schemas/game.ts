@@ -29,6 +29,15 @@ export interface GameStats {
   ratingCount: number;
   /** Twenty buckets of 0.5, so the rating plate shows a shape, not just a mean. */
   ratingBuckets: number[];
+  /**
+   * This site's own figures, as distinct from RAWG's. Null where nobody has
+   * recorded the thing yet, rather than zero, which would read as a finding.
+   */
+  avgHoursPlayed: number | null;
+  avgHoursToBeat: number | null;
+  /** Share of logs that recorded achievements and completed all of them. */
+  completionRate: number | null;
+  completionistCount: number;
 }
 
 const IsoDateSchema = z
@@ -36,20 +45,22 @@ const IsoDateSchema = z
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected a YYYY-MM-DD date");
 
 /**
- * How the catalogue is ordered.
+ * How the library is ordered.
  *
- * "logged" counts PlayRates logs; "popular" is RAWG's added-to-collection
- * figure, kept because it is populated across the whole catalogue where our
- * own count starts at zero for anything nobody has logged yet.
+ * PlayRates figures only. RAWG's tracker count is still used, but as the
+ * hidden tiebreaker underneath "logged" rather than as a sort of its own:
+ * almost nothing has been logged here yet, so without it the default order
+ * would be a hundred thousand rows of zero sorted by id. Offering it as a
+ * visible option made somebody else's numbers look like ours.
  */
 export const GAME_SORTS = [
   "logged",
-  "popular",
   "title",
   "released",
   "rating",
+  "metacritic",
 ] as const;
-export const GameSortSchema = z.enum(GAME_SORTS).default("popular");
+export const GameSortSchema = z.enum(GAME_SORTS).default("logged");
 export type GameSort = z.infer<typeof GameSortSchema>;
 
 /**

@@ -17,7 +17,7 @@ const DEFAULTS: LibraryQuery = {
     platform: "",
     genre: "",
     excludeLogged: false,
-    sort: "popular",
+    sort: "logged",
 };
 
 const isSort = (value: string): value is GameSort =>

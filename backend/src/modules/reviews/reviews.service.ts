@@ -49,6 +49,8 @@ export const createReviewsService = (
       },
       rating: row.rating === null ? null : Number(row.rating),
       hoursPlayed: row.hours_played === null ? null : Number(row.hours_played),
+      status: row.status,
+      playedStatus: row.played_status,
       platform: row.platform_slug,
       game: {
         id: row.game_id,

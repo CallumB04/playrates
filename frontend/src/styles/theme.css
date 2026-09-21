@@ -147,10 +147,18 @@
     --status-wishlist-quiet: color-mix(in srgb, #ec4899 13%, transparent);
     --status-wishlist-content: #9d174d;
 
-    --status-mastered: var(--brand);
+    /* Each played substatus carries its own hue. They shared the brand and
+       a grey, which left the icon doing the whole job of telling finished
+       from retired. Gold for mastered because a trophy is gold everywhere;
+       slate for shelved because "set aside" is not a warning; red for
+       retired because giving up on something is the one negative state. */
     --status-finished: var(--brand);
-    --status-shelved: var(--content-secondary);
-    --status-retired: var(--content-muted);
+    --status-mastered: #b8860b;
+    --status-mastered-quiet: color-mix(in srgb, #d4a017 16%, transparent);
+    --status-shelved: #64748b;
+    --status-shelved-quiet: color-mix(in srgb, #64748b 14%, transparent);
+    --status-retired: #b91c1c;
+    --status-retired-quiet: color-mix(in srgb, #dc2626 12%, transparent);
 
     /* Feedback bases. The emphasis ramp below is mixed from these toward the
        theme's own surface and ink, so one formula serves both. */
@@ -221,6 +229,13 @@
     --status-wishlist: #ff8ab5;
     --status-wishlist-quiet: color-mix(in srgb, #ec4899 20%, transparent);
     --status-wishlist-content: #fbcfe8;
+
+    --status-mastered: #e8b530;
+    --status-mastered-quiet: color-mix(in srgb, #e8b530 20%, transparent);
+    --status-shelved: #94a3b8;
+    --status-shelved-quiet: color-mix(in srgb, #94a3b8 18%, transparent);
+    --status-retired: #f87171;
+    --status-retired-quiet: color-mix(in srgb, #ef4444 18%, transparent);
 
     --success: #4ade80;
     --danger: #ff6b6b;
@@ -525,8 +540,11 @@
     --color-status-wishlist-quiet: var(--status-wishlist-quiet);
     --color-status-wishlist-content: var(--status-wishlist-content);
     --color-status-mastered: var(--status-mastered);
+    --color-status-mastered-quiet: var(--status-mastered-quiet);
     --color-status-finished: var(--status-finished);
     --color-status-shelved: var(--status-shelved);
+    --color-status-shelved-quiet: var(--status-shelved-quiet);
+    --color-status-retired-quiet: var(--status-retired-quiet);
     --color-status-retired: var(--status-retired);
 }
 

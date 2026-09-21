@@ -56,9 +56,9 @@ export interface StatusPresentation {
 }
 
 /**
- * Four hues for the top-level states, plus a distinct icon and the word for
- * every one of the eight. The played substatuses share the played hue and are
- * told apart by their icon, so hue is never carrying a distinction alone.
+ * Eight states, each with its own hue, icon and word, so no single channel is
+ * ever carrying a distinction alone. The played substatuses used to share the
+ * brand or a grey, which left the icon doing that job by itself.
  */
 export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     played: {
@@ -93,36 +93,36 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
         markTone: "text-status-wishlist",
         accent: "bg-status-wishlist",
     },
-    mastered: {
-        label: "Mastered",
-        icon: Trophy,
-        hint: "Every achievement",
-        chip: "border-brand bg-brand-subtle text-content",
-        markTone: "text-brand",
-        accent: "bg-status-mastered",
-    },
     finished: {
         label: "Finished",
         icon: Flag,
         hint: "Saw the credits",
-        chip: "border-strong bg-surface-raised text-content",
-        markTone: "text-brand",
+        chip: "border-status-finished bg-brand-subtle text-content",
+        markTone: "text-status-finished",
         accent: "bg-status-finished",
+    },
+    mastered: {
+        label: "Mastered",
+        icon: Trophy,
+        hint: "Every achievement",
+        chip: "border-status-mastered bg-status-mastered-quiet text-content",
+        markTone: "text-status-mastered",
+        accent: "bg-status-mastered",
     },
     shelved: {
         label: "Shelved",
         icon: Pause,
         hint: "Might come back",
-        chip: "border-strong bg-surface-raised text-content-secondary",
-        markTone: "text-content-secondary",
+        chip: "border-status-shelved bg-status-shelved-quiet text-content",
+        markTone: "text-status-shelved",
         accent: "bg-status-shelved",
     },
     retired: {
         label: "Retired",
         icon: Archive,
         hint: "Not going back",
-        chip: "border-subtle bg-surface-sunken text-content-secondary",
-        markTone: "text-content-muted",
+        chip: "border-status-retired bg-status-retired-quiet text-content",
+        markTone: "text-status-retired",
         accent: "bg-status-retired",
     },
 };

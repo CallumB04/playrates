@@ -34,13 +34,13 @@ const RESTING =
     "border-subtle bg-surface-raised text-content-secondary hover:border-strong hover:text-content";
 
 const BASE =
-    "lift group relative flex flex-col items-center justify-center gap-2 rounded-md border px-3 py-4 text-center focus-visible:outline-2 focus-visible:outline-offset-2";
+    "lift group relative flex items-center gap-2.5 rounded-md border px-3 py-2.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2";
 
 /** The disc behind the icon. Filled when chosen, so the row has a focal point. */
 const Disc = ({
     status,
     selected,
-    size = 38,
+    size = 30,
 }: {
     status: DisplayStatus;
     selected: boolean;
@@ -92,11 +92,13 @@ export const StatusPlates = ({
                         )}
                     >
                         <Disc status={status} selected={selected} />
-                        <span className="text-body-sm font-medium">
-                            {label}
-                        </span>
-                        <span className="text-[11px] leading-none text-content-muted">
-                            {hint}
+                        <span className="min-w-0">
+                            <span className="block text-body-sm font-medium">
+                                {label}
+                            </span>
+                            <span className="block truncate text-[11px] leading-tight text-content-muted">
+                                {hint}
+                            </span>
                         </span>
                     </button>
                 );
@@ -130,18 +132,20 @@ export const PlayedStatusPlates = ({
                         onClick={() => onChange(selected ? null : status)}
                         className={cn(
                             BASE,
-                            "gap-1.5 py-3.5 focus-visible:outline-brand",
+                            "focus-visible:outline-brand",
                             selected
                                 ? "border-brand bg-brand-subtle text-content shadow-plate"
                                 : RESTING
                         )}
                     >
-                        <Disc status={status} selected={selected} size={32} />
-                        <span className="text-body-sm font-medium">
-                            {label}
-                        </span>
-                        <span className="text-[11px] leading-none text-content-muted">
-                            {hint}
+                        <Disc status={status} selected={selected} />
+                        <span className="min-w-0">
+                            <span className="block text-body-sm font-medium">
+                                {label}
+                            </span>
+                            <span className="block truncate text-[11px] leading-tight text-content-muted">
+                                {hint}
+                            </span>
                         </span>
                     </button>
                 );

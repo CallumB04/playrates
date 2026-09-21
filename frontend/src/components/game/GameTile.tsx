@@ -61,7 +61,7 @@ const GameTile = ({
     <div className="group/tile">
         <Link
             to={`/game/${gameId}`}
-            className="lift relative block aspect-3/4 overflow-hidden rounded-md bg-surface-media shadow-cover group-hover/tile:-translate-y-1 group-hover/tile:shadow-cover-hover group-hover/tile:shadow-glow"
+            className="lift relative block aspect-3/4 overflow-hidden rounded-md bg-surface-media shadow-cover duration-500 group-hover/tile:-translate-y-0.5 group-hover/tile:shadow-cover-hover"
         >
             <GameCover coverUrl={coverUrl} title={title} className="size-full" />
 
@@ -69,7 +69,7 @@ const GameTile = ({
             {actions.length > 0 && (
                 <span
                     aria-hidden
-                    className="absolute inset-0 bg-overlay-tile opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100 group-focus-within/tile:opacity-100"
+                    className="absolute inset-0 bg-overlay-tile opacity-0 transition-opacity duration-500 ease-[var(--ease-glide)] group-hover/tile:opacity-100 group-focus-within/tile:opacity-100"
                 />
             )}
 
@@ -86,7 +86,7 @@ const GameTile = ({
                 {actions.length > 0 && (
                     /* Rows going 0fr to 1fr animates an auto height, so the
                        actions push in rather than popping. */
-                    <span className="mb-0 grid grid-rows-[0fr] transition-[grid-template-rows,margin] duration-300 ease-[var(--ease-glide)] group-hover/tile:mb-2 group-hover/tile:grid-rows-[1fr] group-focus-within/tile:mb-2 group-focus-within/tile:grid-rows-[1fr]">
+                    <span className="mb-0 grid grid-rows-[0fr] transition-[grid-template-rows,margin] duration-500 ease-[var(--ease-glide)] group-hover/tile:mb-2 group-hover/tile:grid-rows-[1fr] group-focus-within/tile:mb-2 group-focus-within/tile:grid-rows-[1fr]">
                         <span className="flex min-h-0 flex-col gap-1.5 overflow-hidden">
                             {actions.map((action) => (
                                 <button

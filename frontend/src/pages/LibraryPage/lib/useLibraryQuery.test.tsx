@@ -18,7 +18,7 @@ const renderQuery = (initial?: string) =>
     );
 
 describe("useLibraryQuery", () => {
-    it("defaults to page one, most-tracked, no filters", () => {
+    it("defaults to page one, most-logged, no filters", () => {
         const { result } = renderQuery();
 
         expect(result.current.query).toEqual({
@@ -27,7 +27,7 @@ describe("useLibraryQuery", () => {
             platform: "",
             genre: "",
             excludeLogged: false,
-            sort: "popular",
+            sort: "logged",
         });
     });
 
@@ -73,7 +73,15 @@ describe("useLibraryQuery", () => {
 
     it("falls back to the default sort rather than trusting the URL", () => {
         const { result } = renderQuery("/library?sort=vibes");
-        expect(result.current.query.sort).toBe("popular");
+        expect(result.current.query.sort).toBe("logged");
+    });
+
+    /* "popular" was RAWG's tracker count, offered as a sort of its own. It is
+       the hidden tiebreaker under "logged" now, so an old link falls back
+       rather than 422ing on the request. */
+    it("falls back when an old RAWG sort is in the URL", () => {
+        const { result } = renderQuery("/library?sort=popular");
+        expect(result.current.query.sort).toBe("logged");
     });
 
     it("treats a nonsense page as page one", () => {

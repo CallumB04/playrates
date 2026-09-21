@@ -15,7 +15,8 @@ import {
     StatusPlates,
     PlayedStatusPlates,
 } from "../../../../../components/gamelog/StatusPlates";
-import RatingStars from "../../../../../components/ui/RatingStars";
+import RatingMeter from "../../../../../components/ui/RatingMeter";
+import RatingBadge from "../../../../../components/ui/RatingBadge";
 import Dropdown from "../../../../../components/ui/Dropdown";
 import { platformOptions } from "../../../../../lib/platformIcons";
 import Specimen from "../../../components/Specimen";
@@ -143,14 +144,21 @@ const FormSpecimens = () => {
             <Specimen
                 title="Rating setter"
                 stack
-                notes="Ten stars, each half-clickable, landing on exactly the twenty values the column allows. The figure tracks the pointer, so you can see what you are about to pick before you pick it — the rule this replaced only showed the value once you had committed to a position."
+                notes="Twenty segments, one per allowed value. Stars were tried and dropped: a half star has to be drawn by clipping a glyph down the middle, which reads as a rendering fault rather than a half. A segment either fills or it does not. The badge below is the same vocabulary at display size, so a rating looks like itself wherever it appears."
                 meta="role=slider · 0 to 10 in 0.5 steps · arrows ±0.5, PgUp/PgDn ±1, Home/End, Backspace clears"
             >
-                <RatingStars
-                    value={rating}
-                    onChange={setRating}
-                    label="Your rating"
-                />
+                <div className="flex w-full flex-col gap-5">
+                    <RatingMeter
+                        value={rating}
+                        onChange={setRating}
+                        label="Your rating"
+                    />
+                    <div className="flex items-end gap-6 border-t border-subtle pt-4">
+                        <RatingBadge value={rating} />
+                        <RatingBadge value={rating} size="md" />
+                        <RatingBadge value={rating} bare />
+                    </div>
+                </div>
             </Specimen>
         </>
     );

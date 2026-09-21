@@ -47,6 +47,9 @@ export interface ReviewWithAuthor extends Review {
    * put eighty hours in is a different claim from "9.0" after two.
    */
   hoursPlayed: number | null;
+  /** The state the review was written in, from the author's log. */
+  status: string | null;
+  playedStatus: string | null;
   platform: string | null;
   game: ReviewGame;
 }

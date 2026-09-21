@@ -240,15 +240,62 @@ describe("most-logged sort", () => {
         });
 
         const logged = await request(app).get("/api/v1/games?sort=logged");
-        const popular = await request(app).get("/api/v1/games?sort=popular");
 
         expect(logged.body.data.map((g: { title: string }) => g.title)).toEqual([
             "Logged",
             "Tracked",
         ]);
-        expect(popular.body.data.map((g: { title: string }) => g.title)).toEqual([
-            "Tracked",
+    });
+
+    /* RAWG's tracker count orders everything with no logs yet, which is
+       almost the whole library. It is not a sort anyone can ask for. */
+    it("falls back to the tracker count only where logs tie", async () => {
+        const { app } = buildTestApp({
+            seed: {
+                ...baseSeed(),
+                games: [
+                    buildGame({ id: 1, title: "Quiet", rawg_added_count: 10, log_count: 0 }),
+                    buildGame({ id: 2, title: "Known", rawg_added_count: 9000, log_count: 0 }),
+                    buildGame({ id: 3, title: "Logged", rawg_added_count: 1, log_count: 5 }),
+                ],
+                gamePlatforms: [],
+            },
+        });
+
+        const response = await request(app).get("/api/v1/games?sort=logged");
+
+        expect(response.body.data.map((g: { title: string }) => g.title)).toEqual([
             "Logged",
+            "Known",
+            "Quiet",
+        ]);
+    });
+
+    it("rejects the old RAWG sort rather than quietly serving it", async () => {
+        const { app } = buildTestApp({ seed: baseSeed() });
+        const response = await request(app).get("/api/v1/games?sort=popular");
+        expect(response.status).toBe(422);
+    });
+
+    it("sorts by Metacritic, with unscored games last", async () => {
+        const { app } = buildTestApp({
+            seed: {
+                ...baseSeed(),
+                games: [
+                    buildGame({ id: 1, title: "Unscored", metacritic: null }),
+                    buildGame({ id: 2, title: "Good", metacritic: 78 }),
+                    buildGame({ id: 3, title: "Great", metacritic: 95 }),
+                ],
+                gamePlatforms: [],
+            },
+        });
+
+        const response = await request(app).get("/api/v1/games?sort=metacritic");
+
+        expect(response.body.data.map((g: { title: string }) => g.title)).toEqual([
+            "Great",
+            "Good",
+            "Unscored",
         ]);
     });
 

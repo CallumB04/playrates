@@ -35,7 +35,7 @@ const Panel = ({
     >
         <header
             className={cn(
-                "flex items-center justify-between gap-3 border-b px-4 py-3",
+                "flex items-center justify-between gap-3 border-b px-4 py-2.5",
                 accent
                     ? "border-brand/20 bg-brand-subtle"
                     : "border-subtle bg-surface-sunken/40"
@@ -43,7 +43,7 @@ const Panel = ({
         >
             <h2
                 className={cn(
-                    "font-display text-section",
+                    "font-display text-base font-semibold",
                     accent ? "text-brand" : "text-content"
                 )}
             >
