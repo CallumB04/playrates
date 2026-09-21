@@ -75,7 +75,7 @@ const HomePage = () => {
     const current = playing?.data[0];
 
     /* Every cover on the page can be logged from where it sits, rather than
-       only from the catalogue. */
+       only from the library. */
     const actionsFor = (game: Game): TileAction[] => [
         user
             ? {

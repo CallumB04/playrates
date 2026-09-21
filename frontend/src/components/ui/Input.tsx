@@ -1,14 +1,12 @@
 import {
     forwardRef,
     type InputHTMLAttributes,
-    type SelectHTMLAttributes,
     type TextareaHTMLAttributes,
 } from "react";
-import { ChevronDown } from "lucide-react";
 import { cn } from "../../lib/cn";
 
 /**
- * A field sits level with the page and lights up when you're in it — the
+ * A field sits level with the page and lights up when you're in it. The
  * border warms to the brand and a soft bloom appears behind it. No recess:
  * nothing in Vellum is pressed into anything.
  */
@@ -45,29 +43,6 @@ export const NumberInput = forwardRef<
 NumberInput.displayName = "NumberInput";
 
 /** Same skin as a field; the chevron is what says it opens. */
-export const Select = forwardRef<
-    HTMLSelectElement,
-    SelectHTMLAttributes<HTMLSelectElement>
->(({ className, ...props }, ref) => (
-    <span className="relative block">
-        <select
-            ref={ref}
-            /* Shares the field base rather than restating it — this had
-               drifted into its own border, background and radius. */
-            className={fieldClass(
-                cn("cursor-pointer appearance-none pr-9", className)
-            )}
-            {...props}
-        />
-        <ChevronDown
-            size={14}
-            aria-hidden
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-content-muted"
-        />
-    </span>
-));
-Select.displayName = "Select";
-
 export const Textarea = forwardRef<
     HTMLTextAreaElement,
     TextareaHTMLAttributes<HTMLTextAreaElement>

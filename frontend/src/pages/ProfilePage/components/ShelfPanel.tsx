@@ -47,12 +47,12 @@ const EMPTY_COPY: Record<
     backlog: {
         title: "The backlog is empty",
         body: "Enviable. Add the games you mean to get to and this becomes the list you actually work through.",
-        cta: "Browse the catalogue",
+        cta: "Browse the library",
     },
     wishlist: {
         title: "Nothing on the wishlist",
-        body: "Wishlist a game from the catalogue and it waits here until you pick it up.",
-        cta: "Browse the catalogue",
+        body: "Wishlist a game from the library and it waits here until you pick it up.",
+        cta: "Browse the library",
     },
 };
 
@@ -96,7 +96,7 @@ const ShelfPanel = ({
                             action={
                                 isMyAccount ? (
                                     <Link
-                                        to="/catalogue"
+                                        to="/library"
                                         className={buttonClass("primary")}
                                     >
                                         {empty.cta}

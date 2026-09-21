@@ -62,3 +62,16 @@ const PLATFORM_ICONS: Record<string, PlatformIcon> = {
 
 export const platformIcon = (slug: string): PlatformIcon =>
     PLATFORM_ICONS[slug] ?? Gamepad2;
+
+/** Platform options for a Dropdown, with the brand mark on each. */
+export const platformOptions = (
+    platforms: { slug: string; displayName: string }[],
+    emptyLabel?: string
+) => [
+    ...(emptyLabel ? [{ value: "", label: emptyLabel }] : []),
+    ...platforms.map((platform) => ({
+        value: platform.slug,
+        label: platform.displayName,
+        icon: platformIcon(platform.slug),
+    })),
+];

@@ -37,7 +37,7 @@ const RecentReviews = ({ reviews, isOwner }: RecentReviewsProps) => {
                     </p>
                     {isOwner && (
                         <Link
-                            to="/catalogue"
+                            to="/library"
                             className={buttonClass("secondary", undefined, "sm")}
                         >
                             Find a game to review

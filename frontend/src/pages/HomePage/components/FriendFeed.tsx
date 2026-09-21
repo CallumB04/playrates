@@ -96,7 +96,7 @@ const Row = ({ item }: { item: FriendActivity }) => {
 /**
  * The only part of the home page that changes because someone else did
  * something. It is deliberately a list of sentences rather than a grid of
- * covers, so it reads as people rather than as more catalogue.
+ * covers, so it reads as people rather than as more library.
  */
 const FriendFeed = ({
     items,

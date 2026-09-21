@@ -153,7 +153,7 @@ const ReEntryPlate = ({
                                 Update your log
                             </Button>
                         ) : (
-                            <Link to="/catalogue" className={buttonClass("primary")}>
+                            <Link to="/library" className={buttonClass("primary")}>
                                 Find something to play
                             </Link>
                         )}

@@ -8,7 +8,6 @@ import {
     Input,
     NumberInput,
     SearchInput,
-    Select,
     Textarea,
 } from "../../../../../components/ui/Input";
 import Field from "../../../../../components/ui/Field";
@@ -17,10 +16,13 @@ import {
     PlayedStatusPlates,
 } from "../../../../../components/gamelog/StatusPlates";
 import RatingStars from "../../../../../components/ui/RatingStars";
+import Dropdown from "../../../../../components/ui/Dropdown";
+import { platformOptions } from "../../../../../lib/platformIcons";
 import Specimen from "../../../components/Specimen";
 
 const FormSpecimens = () => {
-    const [rating, setRating] = useState<number | null>(8.25);
+    const [rating, setRating] = useState<number | null>(8.5);
+    const [platform, setPlatform] = useState("");
     const [status, setStatus] = useState<GameStatus>("played");
     const [playedStatus, setPlayedStatus] = useState<PlayedStatus | null>(
         "mastered"
@@ -60,18 +62,29 @@ const FormSpecimens = () => {
             </Specimen>
 
             <Specimen
-                title="Select and search"
-                notes="Same skin as a field. The chevron is what says it opens, rather than a different elevation."
-                meta="Select · SearchInput"
+                title="Dropdown and search"
+                notes="A native select takes the platform's own popup: no icon, no hint line, no tick beside what is chosen, and a font that belongs to nothing else on the page. This keeps the field skin and owns the menu. Arrows move, Enter commits, Escape closes."
+                meta="Dropdown · SearchInput"
             >
                 <div className="grid w-full gap-4 sm:grid-cols-2">
-                    <Field label="Select" help="Raised, not recessed — it opens">
+                    <Field label="Dropdown" help="Icons, hints and a tick">
                         {(a11y) => (
-                            <Select defaultValue="all" {...a11y}>
-                                <option value="all">All platforms</option>
-                                <option value="steam">Steam</option>
-                                <option value="xbox">Xbox</option>
-                            </Select>
+                            <Dropdown
+                                options={platformOptions(
+                                    [
+                                        { slug: "steam", displayName: "Steam" },
+                                        { slug: "xbox", displayName: "Xbox" },
+                                        {
+                                            slug: "playstation",
+                                            displayName: "Playstation",
+                                        },
+                                    ],
+                                    "All platforms"
+                                )}
+                                value={platform}
+                                onChange={setPlatform}
+                                {...a11y}
+                            />
                         )}
                     </Field>
 

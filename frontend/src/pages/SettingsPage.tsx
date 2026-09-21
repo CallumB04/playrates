@@ -3,8 +3,10 @@ import {
     Bell,
     Check,
     Eye,
+    Moon,
     Plug,
     SlidersHorizontal,
+    Sun,
     TriangleAlert,
     UserRound,
     type LucideIcon,
@@ -24,7 +26,8 @@ import DeleteAccountModal from "./settings/DeleteAccountModal";
 import Button from "../components/ui/Button";
 import Toggle from "../components/ui/Toggle";
 import EmptyPlate from "../components/ui/EmptyPlate";
-import { Input, Select, Textarea } from "../components/ui/Input";
+import { Input, Textarea } from "../components/ui/Input";
+import Dropdown from "../components/ui/Dropdown";
 import { formatCount } from "../lib/format";
 import { cn } from "../lib/cn";
 
@@ -126,7 +129,7 @@ const SettingsPage = () => {
     const [bio, setBio] = useState(user?.bio ?? "");
 
     /* Saved on toggle rather than gathered into the Save bar: this one
-       changes what the catalogue will show you, so waiting for a second
+       changes what the library will show you, so waiting for a second
        action to apply it would be strange. */
     const [showSexual, setShowSexual] = useState(
         user?.showSexualContent ?? false
@@ -212,9 +215,17 @@ const SettingsPage = () => {
                     help="Logs are stamped with a date only, so there is no zone to set."
                     pending
                 >
-                    <Select aria-label="Time zone">
-                        <option>Europe/London</option>
-                    </Select>
+                    <Dropdown
+                        options={[
+                            {
+                                value: "Europe/London",
+                                label: "Europe/London",
+                            },
+                        ]}
+                        value="Europe/London"
+                        onChange={() => {}}
+                        aria-label="Time zone"
+                    />
                 </Row>
             </Section>
 
@@ -236,9 +247,12 @@ const SettingsPage = () => {
                     help="No stored preference. The log editor remembers nothing yet."
                     pending
                 >
-                    <Select aria-label="Default platform">
-                        <option>Steam</option>
-                    </Select>
+                    <Dropdown
+                        options={[{ value: "steam", label: "Steam" }]}
+                        value="steam"
+                        onChange={() => {}}
+                        aria-label="Default platform"
+                    />
                 </Row>
                 <Row
                     label="Show presence"
@@ -259,7 +273,7 @@ const SettingsPage = () => {
             <Section title="Content" note="what you see" icon={SlidersHorizontal}>
                 <Row
                     label="Sexual content"
-                    help="Off by default. Games RAWG tags as sexually explicit stay out of the catalogue, search and every rail until you turn this on. Violence is not covered by this setting."
+                    help="Off by default. Games RAWG tags as sexually explicit stay out of the library, search and every rail until you turn this on. Violence is not covered by this setting."
                 >
                     <Toggle
                         checked={showSexual}
@@ -270,22 +284,23 @@ const SettingsPage = () => {
                 </Row>
                 <Row
                     label="Hide logged games"
-                    help="Set per visit from the catalogue's own filter."
+                    help="Set per visit from the library's own filter."
                     pending
                 >
                     <Toggle checked onChange={() => {}} label="On" />
                 </Row>
                 <Row label="Theme" help="Day or night. Saved to this browser.">
-                    <Select
+                    <Dropdown
+                        options={[
+                            { value: "light", label: "Day", icon: Sun },
+                            { value: "dark", label: "Night", icon: Moon },
+                        ]}
                         value={theme}
-                        onChange={(e) =>
-                            setTheme(e.target.value as "light" | "dark")
+                        onChange={(next) =>
+                            setTheme(next as "light" | "dark")
                         }
                         aria-label="Theme"
-                    >
-                        <option value="light">Day</option>
-                        <option value="dark">Night</option>
-                    </Select>
+                    />
                 </Row>
             </Section>
 

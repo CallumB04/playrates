@@ -36,7 +36,7 @@ const GenreGrid = ({ genres }: { genres: Genre[] }) => {
                     return (
                         <Link
                             key={genre.slug}
-                            to={`/catalogue?genre=${genre.slug}`}
+                            to={`/library?genre=${genre.slug}`}
                             className={cn(
                                 "lift relative overflow-hidden rounded-md border border-subtle px-3.5 py-4",
                                 "hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-plate",

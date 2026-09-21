@@ -10,7 +10,8 @@ import Toggle from "./ui/Toggle";
 import Field from "./ui/Field";
 import { Input, NumberInput, Textarea } from "./ui/Input";
 import RatingStars from "./ui/RatingStars";
-import PlatformPicker from "./ui/PlatformPicker";
+import Dropdown from "./ui/Dropdown";
+import { platformOptions } from "../lib/platformIcons";
 import GameCover from "./game/GameCover";
 import { StatusPlates, PlayedStatusPlates } from "./gamelog/StatusPlates";
 import {
@@ -256,9 +257,13 @@ const CreateOrEditGameLogPopup = ({
                         >
                             Platform
                         </span>
-                        <PlatformPicker
-                            platforms={platforms ?? []}
+                        <Dropdown
+                            options={platformOptions(
+                                platforms ?? [],
+                                "Not set"
+                            )}
                             value={draft.platform}
+                            placeholder="Not set"
                             aria-labelledby="log-platform-label"
                             onChange={(value) =>
                                 dispatch({

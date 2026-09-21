@@ -3,7 +3,9 @@ import { ListFilter, Search } from "lucide-react";
 import Button from "../../../components/ui/Button";
 import Modal from "../../../components/ui/Modal";
 import type { Genre, Platform } from "@playrates/shared";
-import { SearchInput, Select } from "../../../components/ui/Input";
+import { SearchInput } from "../../../components/ui/Input";
+import Dropdown from "../../../components/ui/Dropdown";
+import { platformOptions } from "../../../lib/platformIcons";
 import Toggle from "../../../components/ui/Toggle";
 import { formatCount } from "../../../lib/format";
 import type { LibraryQuery } from "../lib/useLibraryQuery";
@@ -20,6 +22,16 @@ interface LibraryFiltersProps {
     isSignedIn: boolean;
 }
 
+/* The hints earn their place here: "Most logged" and "Most tracked" are two
+   different counts and the labels alone do not say which is whose. */
+const SORT_OPTIONS = [
+    { value: "logged", label: "Most logged", hint: "By PlayRates logs" },
+    { value: "popular", label: "Most tracked", hint: "By RAWG collections" },
+    { value: "title", label: "A to Z" },
+    { value: "released", label: "Newest" },
+    { value: "rating", label: "Highest rated" },
+];
+
 const LibraryFilters = ({
     query,
     setQuery,
@@ -34,50 +46,39 @@ const LibraryFilters = ({
 
     const selects = (
         <>
-            <Select
+            <Dropdown
+                options={platformOptions(platforms, "All platforms")}
                 value={query.platform}
-                onChange={(e) => setQuery({ platform: e.target.value })}
+                onChange={(platform) => setQuery({ platform })}
+                placeholder="All platforms"
                 aria-label="Filter by platform"
                 className="lg:w-44"
-            >
-                <option value="">All platforms</option>
-                {platforms.map((platform) => (
-                    <option key={platform.slug} value={platform.slug}>
-                        {platform.displayName}
-                    </option>
-                ))}
-            </Select>
+            />
 
-            <Select
+            <Dropdown
+                options={[
+                    { value: "", label: "All genres" },
+                    ...genres.map((genre) => ({
+                        value: genre.slug,
+                        label: genre.name,
+                    })),
+                ]}
                 value={query.genre}
-                onChange={(e) => setQuery({ genre: e.target.value })}
+                onChange={(genre) => setQuery({ genre })}
+                placeholder="All genres"
                 aria-label="Filter by genre"
                 className="lg:w-44"
-            >
-                <option value="">All genres</option>
-                {genres.map((genre) => (
-                    <option key={genre.slug} value={genre.slug}>
-                        {genre.name}
-                    </option>
-                ))}
-            </Select>
+            />
 
-            <Select
+            <Dropdown
+                options={SORT_OPTIONS}
                 value={query.sort}
-                onChange={(e) =>
-                    setQuery({ sort: e.target.value as LibraryQuery["sort"] })
+                onChange={(sort) =>
+                    setQuery({ sort: sort as LibraryQuery["sort"] })
                 }
-                aria-label="Sort the catalogue"
-                className="lg:w-44"
-            >
-                <option value="logged">Most logged</option>
-                {/* RAWG's collection figure. Kept alongside ours because it
-                    covers the whole catalogue, where our count starts at 0. */}
-                <option value="popular">Most tracked</option>
-                <option value="title">A–Z</option>
-                <option value="released">Newest</option>
-                <option value="rating">Highest rated</option>
-            </Select>
+                aria-label="Sort the library"
+                className="lg:w-48"
+            />
         </>
     );
 
@@ -106,7 +107,7 @@ const LibraryFilters = ({
                         <SearchInput
                             value={searchDraft}
                             onChange={(e) => onSearchDraft(e.target.value)}
-                            aria-label="Search the catalogue"
+                            aria-label="Search the library"
                             placeholder="Search titles"
                             className="pr-28"
                         />

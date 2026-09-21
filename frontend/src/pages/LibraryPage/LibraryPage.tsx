@@ -172,7 +172,7 @@ const LibraryPage = () => {
             <header className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <h1 className="font-display text-title text-content">
-                        Catalogue
+                        Library
                     </h1>
                     <p className="mt-2 text-label text-content-muted">
                         {formatCount(total)} titles
@@ -200,7 +200,7 @@ const LibraryPage = () => {
             ) : games.length === 0 ? (
                 <EmptyPlate
                     title="No titles match those filters"
-                    body="Try a broader search, or clear the platform and genre filters. The catalogue holds a hundred thousand games, so something in here fits."
+                    body="Try a broader search, or clear the platform and genre filters. There are tens of thousands of games in here, so something will fit."
                 />
             ) : (
                 <div

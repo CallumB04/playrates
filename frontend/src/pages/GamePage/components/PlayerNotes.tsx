@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import ProfilePicture from "../../../components/ProfilePicture";
 import EmptyPlate from "../../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
-import { Select } from "../../../components/ui/Input";
+import Dropdown from "../../../components/ui/Dropdown";
 import { formatCount, formatRating, relativeTime } from "../../../lib/format";
 
 interface PlayerNotesProps {
@@ -30,17 +30,18 @@ const PlayerNotes = ({
                 <span className="text-label text-content-muted">
                     {formatCount(total)} {total === 1 ? "entry" : "entries"}
                 </span>
-                <Select
+                <Dropdown
+                    options={[
+                        { value: "recent", label: "Most recent" },
+                        { value: "oldest", label: "Oldest first" },
+                        { value: "rating-high", label: "Highest rated" },
+                        { value: "rating-low", label: "Lowest rated" },
+                    ]}
                     value={sort}
-                    onChange={(e) => onSortChange(e.target.value as ReviewSort)}
+                    onChange={(next) => onSortChange(next as ReviewSort)}
                     aria-label="Sort notes"
-                    className="min-h-9 w-40 py-1.5 text-xs"
-                >
-                    <option value="recent">Most recent</option>
-                    <option value="oldest">Oldest first</option>
-                    <option value="rating-high">Highest rated</option>
-                    <option value="rating-low">Lowest rated</option>
-                </Select>
+                    className="w-40"
+                />
             </div>
         </div>
 

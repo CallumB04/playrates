@@ -98,11 +98,11 @@ const Header = () => {
         user
             ? [
                   { to: "/", label: "Home", exact: true },
-                  { to: "/catalogue", label: "Catalogue", exact: false },
+                  { to: "/library", label: "Library", exact: false },
               ]
             : [
                   { to: "/", label: "Home", exact: true },
-                  { to: "/catalogue", label: "Catalogue", exact: false },
+                  { to: "/library", label: "Library", exact: false },
               ]
     ).map(({ to, label, exact }) => ({
         to,

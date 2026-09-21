@@ -1,6 +1,5 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Camera } from "lucide-react";
 import type { Profile } from "@playrates/shared";
 import { useUpdateProfile } from "../../../hooks/queries/useProfiles";
 import { useNotify } from "../../../contexts/NotificationContext";
@@ -31,7 +30,6 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
 }) => {
     const notify = useNotify();
     const updateProfile = useUpdateProfile();
-    const fileInput = useRef<HTMLInputElement>(null);
 
     const [bio, setBio] = useState(user.bio);
     const [username, setUsername] = useState(user.username);
@@ -67,39 +65,25 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
             </h2>
 
             <div className="flex flex-col gap-5 pt-5">
+                {/* No upload control: there is no endpoint behind one, and
+                    the generated avatar is the current design rather than a
+                    placeholder waiting to be replaced. */}
                 <div className="flex items-center gap-4">
-                    <button
-                        type="button"
-                        onClick={() => fileInput.current?.click()}
-                        className="group relative shrink-0 cursor-pointer rounded-full"
-                        aria-label="Change your picture"
-                    >
-                        <ProfilePicture
-                            variant="review"
-                            username={user.username}
-                            file={user.avatarUrl ?? ""}
-                            link={false}
-                        />
-                        <span className="absolute inset-0 grid place-items-center rounded-full bg-overlay-avatar text-content-on-media opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                            <Camera size={18} aria-hidden />
-                        </span>
-                    </button>
+                    <ProfilePicture
+                        variant="review"
+                        username={user.username}
+                        file={user.avatarUrl ?? ""}
+                        link={false}
+                    />
                     <div>
                         <p className="text-body-sm text-content">
                             Your picture
                         </p>
-                        {/* No upload endpoint yet. Saying so beats a control
-                            that silently does nothing. */}
                         <p className="mt-0.5 text-label-sm text-content-muted">
-                            Uploads are not wired up yet.
+                            Made from your initial, so it changes when your
+                            username does.
                         </p>
                     </div>
-                    <input
-                        type="file"
-                        accept="image/png, image/jpeg"
-                        ref={fileInput}
-                        className="hidden"
-                    />
                 </div>
 
                 <Field

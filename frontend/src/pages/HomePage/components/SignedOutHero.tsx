@@ -29,7 +29,7 @@ const TILT = [
  *
  * This used to put a card of community figures for one game beside the
  * headline, which said nothing to someone who has never heard of the game and
- * read as a dashboard widget dropped into a landing page. The catalogue is the
+ * read as a dashboard widget dropped into a landing page. The library is the
  * more honest hero image: it is the actual product, and it is the thing a
  * visitor is deciding whether they want.
  */
@@ -51,10 +51,10 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
                     Start your library
                 </Button>
                 <Link
-                    to="/catalogue"
+                    to="/library"
                     className={buttonClass("secondary", undefined, "lg")}
                 >
-                    Browse the catalogue
+                    Browse the library
                 </Link>
             </div>
 
@@ -64,7 +64,7 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
                 <span className="font-mono text-content">
                     {formatCount(siteStats?.gameCount ?? 0)}
                 </span>{" "}
-                games catalogued, and{" "}
+                games in the library, and{" "}
                 <span className="font-mono text-content">
                     {formatCount(siteStats?.logCount ?? 0)}
                 </span>{" "}

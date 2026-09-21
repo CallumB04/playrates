@@ -15,10 +15,7 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import DesignLibraryPage from "./pages/admin/design-library/DesignLibraryPage";
 
 /** Layout shell and route table. State lives in the providers. */
-/**
- * The catalogue used to live at /library. A bare redirect would drop the
- * query string, and every shared link carries its filters there.
- */
+
 const LEGAL_PAGES = [
     {
         path: "/about",
@@ -42,9 +39,14 @@ const LEGAL_PAGES = [
     },
 ];
 
-const CatalogueRedirect = () => {
+/**
+ * The library was briefly called the catalogue, and lived at /catalogue. A
+ * bare redirect would drop the query string, and every filter on that page
+ * lives there.
+ */
+const LibraryRedirect = () => {
     const { search } = useLocation();
-    return <Navigate to={{ pathname: "/catalogue", search }} replace />;
+    return <Navigate to={{ pathname: "/library", search }} replace />;
 };
 
 function App() {
@@ -60,14 +62,14 @@ function App() {
                             element={<ProfilePageRoute />}
                         />
                         <Route
-                            path="/catalogue"
+                            path="/library"
                             element={<LibraryPage />}
                         />
-                        {/* The page was called both things. Kept so shared
-                            links and bookmarks still land. */}
+                        {/* The page was briefly called both things. Kept so
+                            shared links and bookmarks still land. */}
                         <Route
-                            path="/library"
-                            element={<CatalogueRedirect />}
+                            path="/catalogue"
+                            element={<LibraryRedirect />}
                         />
                         <Route path="/game/:gameID" element={<GamePage />} />
                         <Route path="/settings" element={<SettingsPage />} />
