@@ -143,4 +143,57 @@ describe("RAWG mapper", () => {
       toExternalGame({ ...rawgResponse, playtime: 0 }).playtimeHours,
     ).toBeNull();
   });
+
+  it("maps genres to slug and name pairs", () => {
+    const game = toExternalGame({
+      ...rawgResponse,
+      genres: [
+        { id: 4, slug: "action", name: "Action" },
+        { id: 5, slug: "rpg", name: "RPG" },
+      ],
+    });
+
+    expect(game.genres).toEqual([
+      { slug: "action", name: "Action" },
+      { slug: "rpg", name: "RPG" },
+    ]);
+  });
+
+  it("copes with a listing row that carries none of the optional fields", () => {
+    const game = toExternalGame({
+      id: 1,
+      slug: "bare",
+      name: "Bare",
+    });
+
+    expect(game).toMatchObject({
+      externalId: 1,
+      description: "",
+      coverUrl: null,
+      releaseDate: null,
+      platformSlugs: [],
+      genres: [],
+      contentTags: [],
+      hasSexualContent: false,
+      metacritic: null,
+      rawgRating: null,
+      rawgRatingCount: null,
+      rawgAddedCount: null,
+      playtimeHours: null,
+    });
+  });
+
+  it("carries the external figures through under their own names", () => {
+    const game = toExternalGame({ ...rawgResponse, metacritic: 92, added: 21 });
+
+    expect(game.metacritic).toBe(92);
+    expect(game.rawgRating).toBe(4.66);
+    expect(game.rawgRatingCount).toBe(6532);
+    expect(game.rawgAddedCount).toBe(21);
+  });
+
+  it("leaves a description of only markup empty rather than whitespace", () => {
+    const game = toExternalGame({ ...rawgResponse, description: "<p></p>" });
+    expect(game.description).toBe("");
+  });
 });

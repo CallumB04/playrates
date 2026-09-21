@@ -2,9 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
     capitalise,
     formatCount,
+    formatDate,
     formatFraction,
     formatHours,
+    formatMonthYear,
+    formatPercent,
     formatRating,
+    formatRatingOutOfTen,
+    formatReleaseShort,
     relativeTime,
     releaseYear,
 } from "./format";
@@ -48,6 +53,31 @@ describe("formatRating", () => {
     });
 });
 
+describe("formatRatingOutOfTen", () => {
+    it("carries the scale with the figure", () => {
+        expect(formatRatingOutOfTen(8.25)).toBe("8.25/10");
+        expect(formatRatingOutOfTen(10)).toBe("10.00/10");
+        expect(formatRatingOutOfTen(0)).toBe("0.00/10");
+    });
+
+    it("renders a bare em dash rather than an unrated /10", () => {
+        expect(formatRatingOutOfTen(null)).toBe("—");
+        expect(formatRatingOutOfTen(undefined)).toBe("—");
+    });
+});
+
+describe("formatReleaseShort", () => {
+    it("gives the day and month", () => {
+        expect(formatReleaseShort("2026-03-12")).toBe("12 Mar");
+    });
+
+    it("says TBA when there is no date", () => {
+        expect(formatReleaseShort(null)).toBe("TBA");
+        expect(formatReleaseShort(undefined)).toBe("TBA");
+        expect(formatReleaseShort("")).toBe("TBA");
+    });
+});
+
 describe("formatHours", () => {
     it("trims a pointless trailing zero", () => {
         expect(formatHours(52)).toBe("52h");
@@ -78,6 +108,39 @@ describe("formatCount", () => {
         expect(formatCount(184662)).toBe("184,662");
         expect(formatCount(0)).toBe("0");
     });
+
+    it("renders an em dash when the count is unknown", () => {
+        expect(formatCount(null)).toBe("—");
+        expect(formatCount(undefined)).toBe("—");
+    });
+});
+
+describe("formatPercent", () => {
+    it("rounds to whole percent", () => {
+        expect(formatPercent(0)).toBe("0%");
+        expect(formatPercent(0.305)).toBe("31%");
+        expect(formatPercent(1)).toBe("100%");
+    });
+});
+
+describe("formatMonthYear", () => {
+    it("spells the month for a member-since line", () => {
+        expect(formatMonthYear("2021-07-04T09:00:00Z")).toBe("July 2021");
+    });
+
+    it("renders an em dash when there is no date", () => {
+        expect(formatMonthYear(null)).toBe("—");
+    });
+});
+
+describe("formatDate", () => {
+    it("renders a short absolute date", () => {
+        expect(formatDate("2026-02-11T00:00:00Z")).toBe("11 Feb 2026");
+    });
+
+    it("renders an em dash when there is no date", () => {
+        expect(formatDate(undefined)).toBe("—");
+    });
 });
 
 describe("relativeTime", () => {
@@ -94,6 +157,15 @@ describe("relativeTime", () => {
     it("falls back to an absolute date past a month", () => {
         expect(relativeTime("2026-02-11T12:00:00Z", now)).toBe("11 Feb 2026");
     });
+
+    it("treats the 29-day boundary as relative and the 30th as absolute", () => {
+        expect(relativeTime("2026-08-23T12:00:00Z", now)).toBe("28 days ago");
+        expect(relativeTime("2026-08-21T12:00:00Z", now)).toBe("21 Aug 2026");
+    });
+
+    it("renders an em dash when there is no timestamp", () => {
+        expect(relativeTime(null, now)).toBe("—");
+    });
 });
 
 describe("cn", () => {
@@ -103,5 +175,13 @@ describe("cn", () => {
 
     it("drops falsy values, so conditionals do not leak 'false' into class", () => {
         expect(cn("a", false, null, undefined, "b")).toBe("a b");
+    });
+
+    it("drops the empty string rather than doubling a space", () => {
+        expect(cn("a", "", "b")).toBe("a b");
+    });
+
+    it("returns an empty string when nothing survives", () => {
+        expect(cn(false, undefined)).toBe("");
     });
 });

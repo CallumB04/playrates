@@ -15,6 +15,7 @@
         "lint": "npm run lint -w frontend && npm run lint -w backend",
         "typecheck": "npm run typecheck -w @playrates/shared && npm run typecheck -w frontend && npm run typecheck -w backend",
         "test": "npm run test -w frontend && npm run test -w backend",
+        "test:coverage": "npm run test:coverage -w frontend && npm run test:coverage -w backend",
         "seed:games": "npm run seed:games -w backend"
     },
     "repository": {

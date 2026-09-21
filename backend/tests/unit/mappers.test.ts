@@ -6,6 +6,7 @@ import {
 import {
   toGameLog,
   toGameLogRow,
+  toGameLogWithGame,
 } from "../../src/modules/game-logs/gameLogs.mapper.js";
 import { toGame } from "../../src/modules/games/games.mapper.js";
 import { orderPair } from "../../src/modules/friends/friends.repository.js";
@@ -91,6 +92,93 @@ describe("game log mapper", () => {
     const row = toGameLogRow({ rating: null });
 
     expect(row.rating).toBeNull();
+  });
+
+  it("clears every optional field it is handed a null for", () => {
+    const row = toGameLogRow({
+      hoursPlayed: null,
+      hoursToBeat: null,
+      startDate: null,
+      finishDate: null,
+      platform: null,
+      achievementsTotal: null,
+      achievementsCompleted: null,
+    });
+
+    expect(row).toEqual({
+      hours_played: null,
+      hours_to_beat: null,
+      start_date: null,
+      finish_date: null,
+      platform_slug: null,
+      achievements_total: null,
+      achievements_completed: null,
+    });
+  });
+
+  it("carries every optional field through when it has a value", () => {
+    const row = toGameLogRow({
+      hoursPlayed: 52.5,
+      hoursToBeat: 40,
+      startDate: "2026-01-02",
+      finishDate: "2026-02-11",
+      platform: "steam",
+      achievementsTotal: 52,
+      achievementsCompleted: 46,
+    });
+
+    expect(row).toEqual({
+      hours_played: 52.5,
+      hours_to_beat: 40,
+      start_date: "2026-01-02",
+      finish_date: "2026-02-11",
+      platform_slug: "steam",
+      achievements_total: 52,
+      achievements_completed: 46,
+    });
+  });
+
+  it("clears playedStatus when the status moves away from played", () => {
+    expect(toGameLogRow({ status: "backlog" }).played_status).toBeNull();
+  });
+
+  it("leaves playedStatus alone when neither field is in the patch", () => {
+    expect(toGameLogRow({ rating: 8 })).not.toHaveProperty("played_status");
+  });
+
+  it("reads nulls off a bare row rather than guessing at defaults", () => {
+    const log = toGameLog(
+      buildGameLog({
+        rating: null,
+        hours_played: null,
+        hours_to_beat: null,
+        played_status: null,
+      }),
+    );
+
+    expect(log.rating).toBeNull();
+    expect(log.hoursPlayed).toBeNull();
+    expect(log.hoursToBeat).toBeNull();
+    expect(log.playedStatus).toBeNull();
+  });
+});
+
+describe("game log with embedded game", () => {
+  it("carries the game, so a tile needs no follow-up request", () => {
+    const log = toGameLogWithGame({
+      ...buildGameLog({ game_id: 7 }),
+      game: { ...buildGame({ id: 7, title: "Hollow Knight" }) },
+    });
+
+    expect(log.game?.id).toBe(7);
+    expect(log.game?.title).toBe("Hollow Knight");
+  });
+
+  it("leaves the game null when the join found nothing", () => {
+    expect(toGameLogWithGame(buildGameLog()).game).toBeNull();
+    expect(
+      toGameLogWithGame({ ...buildGameLog(), game: null }).game,
+    ).toBeNull();
   });
 });
 

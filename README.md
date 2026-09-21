@@ -138,6 +138,7 @@ Run from the repository root:
 | `npm run dev` | Frontend and backend together |
 | `npm run build` | Builds all three packages |
 | `npm test` | Runs both test suites |
+| `npm run test:coverage` | The same suites with coverage thresholds enforced |
 | `npm run lint` | ESLint over frontend and backend |
 | `npm run typecheck` | `tsc --noEmit` over all three packages |
 
@@ -145,11 +146,19 @@ CI runs all of the above on every push and pull request, plus a second job that
 boots a real Postgres and applies every migration and the seed — the two worst
 bugs in this project so far only appeared against a real database.
 
+Coverage is scoped, not global: each `vitest.config.ts` lists the pure helpers,
+reducers, mappers and middleware that unit tests are meant to cover, and fails
+under 95% statements / 90% branches. Components and repositories are left out
+because the route and behaviour tests already exercise them, and folding them
+in would move the number without saying anything. CI runs `test:coverage`, so a
+new helper cannot land without tests.
+
 Workspace-specific ones worth knowing:
 
 | Command | What it does |
 | --- | --- |
 | `npm run test:watch -w backend` | Backend tests in watch mode |
+| `npm run test:coverage -w frontend` | Coverage for one workspace |
 | `npm run seed:games -w backend` | Import games from RAWG |
 | `npm run db:types -w backend` | Regenerate DB types from the linked project |
 

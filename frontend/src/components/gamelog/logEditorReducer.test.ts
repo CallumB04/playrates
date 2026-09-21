@@ -28,6 +28,92 @@ describe("logReducer", () => {
         expect(next.playedStatus).toBe("mastered");
     });
 
+    it("sets the substatus on its own", () => {
+        const next = logReducer(draft({ status: "played" }), {
+            type: "playedStatus",
+            value: "shelved",
+        });
+        expect(next.playedStatus).toBe("shelved");
+    });
+
+    it("sets and clears the rating", () => {
+        const rated = logReducer(emptyDraft, { type: "rating", value: 7.5 });
+        expect(rated.rating).toBe(7.5);
+        expect(logReducer(rated, { type: "rating", value: null }).rating).toBeNull();
+    });
+
+    it("sets one text field without disturbing the rest", () => {
+        const next = logReducer(draft({ hoursPlayed: "12" }), {
+            type: "set",
+            field: "platform",
+            value: "steam",
+        });
+        expect(next.platform).toBe("steam");
+        expect(next.hoursPlayed).toBe("12");
+    });
+
+    it("returns a new object rather than mutating the draft", () => {
+        const before = draft({ status: "played", playedStatus: "mastered" });
+        const next = logReducer(before, { type: "status", value: "backlog" });
+        expect(next).not.toBe(before);
+        expect(before.playedStatus).toBe("mastered");
+    });
+
+    it("hydrates a blank draft when there is no log, keeping the review", () => {
+        const next = logReducer(draft({ status: "played", rating: 9 }), {
+            type: "hydrate",
+            log: null,
+            review: { body: "Half-written.", isPublic: false },
+        });
+
+        expect(next.status).toBe(emptyDraft.status);
+        expect(next.rating).toBeNull();
+        expect(next.reviewBody).toBe("Half-written.");
+        expect(next.reviewIsPublic).toBe(false);
+    });
+
+    it("defaults a new review to public when there is none to hydrate", () => {
+        const next = logReducer(emptyDraft, { type: "hydrate", log: null });
+        expect(next.reviewBody).toBe("");
+        expect(next.reviewIsPublic).toBe(true);
+    });
+
+    it("hydrates a log whose optional fields are all empty", () => {
+        const next = logReducer(emptyDraft, {
+            type: "hydrate",
+            log: {
+                id: 2,
+                gameId: 9,
+                status: "backlog",
+                playedStatus: null,
+                rating: null,
+                hoursPlayed: null,
+                hoursToBeat: null,
+                startDate: null,
+                finishDate: null,
+                platform: null,
+                achievementsTotal: null,
+                achievementsCompleted: null,
+                createdAt: "2026-01-01T00:00:00Z",
+                updatedAt: "2026-01-01T00:00:00Z",
+                game: null,
+            },
+        });
+
+        expect(next).toMatchObject({
+            status: "backlog",
+            playedStatus: null,
+            rating: null,
+            hoursPlayed: "",
+            hoursToBeat: "",
+            startDate: "",
+            finishDate: "",
+            platform: "",
+            achievementsTotal: "",
+            achievementsCompleted: "",
+        });
+    });
+
     it("hydrates from an existing log and its review", () => {
         const next = logReducer(emptyDraft, {
             type: "hydrate",

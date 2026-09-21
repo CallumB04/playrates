@@ -24,4 +24,17 @@ describe("toHex", () => {
         expect(toHex("transparent")).toBe("transparent");
         expect(toHex("oklch(0.7 0.1 300)")).toBe("oklch(0.7 0.1 300)");
     });
+
+    it("returns a too-short or unparseable colour unchanged", () => {
+        expect(toHex("rgb(12, 34)")).toBe("rgb(12, 34)");
+        expect(toHex("rgb(a, b, c)")).toBe("rgb(a, b, c)");
+    });
+
+    it("clamps channels that fall outside the byte range", () => {
+        expect(toHex("rgb(-20, 300, 128)")).toBe("#00ff80");
+    });
+
+    it("ignores case in the function name", () => {
+        expect(toHex("RGB(124, 58, 140)")).toBe("#7c3a8c");
+    });
 });

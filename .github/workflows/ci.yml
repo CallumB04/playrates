@@ -39,8 +39,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Coverage, not a bare run: the thresholds in each vitest config are what
+      # stop a new helper landing without tests.
       - name: Test
-        run: npm test
+        run: npm run test:coverage
         env:
           # the suite mocks Supabase and MSW intercepts every request,
           # so these only need to satisfy env parsing
