@@ -34,9 +34,6 @@ const Card = ({
     </div>
 );
 
-/** A figure with nothing behind it yet. */
-const EMPTY = "–";
-
 const Figure = ({
     icon: Icon,
     value,
@@ -101,7 +98,7 @@ const ScoreCards = ({
                 <Card label="Metacritic" hint="Critic score">
                     <div className="flex items-center gap-3">
                         <span className="grid size-14 shrink-0 place-items-center rounded-sm bg-surface-sunken font-mono text-2xl text-content-muted">
-                            {EMPTY}
+                            –
                         </span>
                         <p className="text-body-sm text-content-muted">
                             No critic score
@@ -117,30 +114,18 @@ const ScoreCards = ({
                 <div className="grid w-full grid-cols-3 gap-3">
                     <Figure
                         icon={Clock}
-                        value={
-                            stats?.avgHoursPlayed != null
-                                ? formatHours(stats.avgHoursPlayed)
-                                : EMPTY
-                        }
+                        value={formatHours(stats?.avgHoursPlayed ?? 0)}
                         caption="Average played"
                     />
                     <Figure
                         icon={Hourglass}
-                        value={
-                            stats?.avgHoursToBeat != null
-                                ? formatHours(stats.avgHoursToBeat)
-                                : EMPTY
-                        }
+                        value={formatHours(stats?.avgHoursToBeat ?? 0)}
                         caption="Average to beat"
                     />
                     <Figure
                         icon={Trophy}
-                        value={
-                            stats?.completionRate != null
-                                ? formatPercent(stats.completionRate)
-                                : EMPTY
-                        }
-                        caption="All achievements"
+                        value={formatPercent(stats?.avgCompletion ?? 0)}
+                        caption="Average completion"
                     />
                 </div>
             </Card>

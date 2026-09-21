@@ -102,13 +102,7 @@ export const createGamesService = (
       ratingBuckets: rating.buckets,
       avgHoursPlayed: own.avgHoursPlayed,
       avgHoursToBeat: own.avgHoursToBeat,
-      completionistCount: own.completionistCount,
-      /* Null rather than zero when nobody has recorded achievements: 0% is a
-         finding, and "nobody has said" is not one. */
-      completionRate:
-        own.achievementTrackedCount === 0
-          ? null
-          : own.completionistCount / own.achievementTrackedCount,
+      avgCompletion: own.avgCompletion,
     };
   },
 

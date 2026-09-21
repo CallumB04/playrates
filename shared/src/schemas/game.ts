@@ -35,9 +35,8 @@ export interface GameStats {
    */
   avgHoursPlayed: number | null;
   avgHoursToBeat: number | null;
-  /** Share of logs that recorded achievements and completed all of them. */
-  completionRate: number | null;
-  completionistCount: number;
+  /** Mean achievement completion across logs that recorded any, 0 to 1. */
+  avgCompletion: number | null;
 }
 
 const IsoDateSchema = z

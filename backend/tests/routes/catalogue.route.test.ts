@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import request from "supertest";
-import { authHeader, buildTestApp, USER_A } from "../helpers/buildTestApp.js";
+import {
+  authHeader,
+  buildTestApp,
+  USER_A,
+  USER_B,
+} from "../helpers/buildTestApp.js";
 import { baseSeed, buildGame, buildGameLog } from "../helpers/fixtures.js";
 
 describe("genres", () => {
@@ -223,6 +228,54 @@ describe("rating buckets", () => {
         expect(response.body.ratingBuckets[19]).toBe(2); // 9.5 and 10.0
         expect(response.body.ratingBuckets[8]).toBe(1); // 4.0
   });
+
+    /* A log with no achievement data is not a player who failed to complete
+       them, so it must not drag the mean toward zero. */
+    it("averages completion over logs that track it, ignoring those that don't", async () => {
+        const { app } = buildTestApp({
+            seed: {
+                ...baseSeed(),
+                gameLogs: [
+                    buildGameLog({
+                        id: 1,
+                        achievements_completed: 10,
+                        achievements_total: 20,
+                    }),
+                    buildGameLog({
+                        id: 2,
+                        user_id: USER_B,
+                        achievements_completed: null,
+                        achievements_total: null,
+                    }),
+                ],
+            },
+        });
+
+        const response = await request(app).get("/api/v1/games/1/stats");
+
+        expect(response.body.avgCompletion).toBeCloseTo(0.5);
+    });
+
+    /* achievements_completed has no constraint tying it to the total, so one
+       bad row could otherwise push the average past 100%. */
+    it("clamps a log that claims more achievements than exist", async () => {
+        const { app } = buildTestApp({
+            seed: {
+                ...baseSeed(),
+                gameLogs: [
+                    buildGameLog({
+                        id: 1,
+                        achievements_completed: 500,
+                        achievements_total: 20,
+                    }),
+                ],
+            },
+        });
+
+        const response = await request(app).get("/api/v1/games/1/stats");
+
+        expect(response.body.avgCompletion).toBe(1);
+    });
 });
 
 describe("most-logged sort", () => {

@@ -34,7 +34,7 @@ export interface GamesRepository {
   playratesStats(gameId: number): Promise<{
     avgHoursPlayed: number | null;
     avgHoursToBeat: number | null;
-    completionistCount: number;
+    avgCompletion: number | null;
     achievementTrackedCount: number;
   }>;
   /**
@@ -317,7 +317,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     const row = data as {
       avg_hours_played: number | null;
       avg_hours_to_beat: number | null;
-      completionist_count: number;
+      avg_completion: number | null;
       achievement_tracked_count: number;
     };
 
@@ -326,7 +326,8 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
         row.avg_hours_played === null ? null : Number(row.avg_hours_played),
       avgHoursToBeat:
         row.avg_hours_to_beat === null ? null : Number(row.avg_hours_to_beat),
-      completionistCount: Number(row.completionist_count),
+      avgCompletion:
+        row.avg_completion === null ? null : Number(row.avg_completion),
       achievementTrackedCount: Number(row.achievement_tracked_count),
     };
   },

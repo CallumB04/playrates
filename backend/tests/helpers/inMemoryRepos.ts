@@ -324,13 +324,20 @@ export const createInMemoryRepos = (
           );
         };
         const tracked = logs.filter((l) => (l.achievements_total ?? 0) > 0);
+        // Clamped per log, like the SQL: completed is not constrained to total.
+        const completions = tracked.map((l) =>
+          Math.min(
+            1,
+            (l.achievements_completed ?? 0) / (l.achievements_total ?? 1),
+          ),
+        );
         return {
           avgHoursPlayed: mean(logs.map((l) => l.hours_played)),
           avgHoursToBeat: mean(logs.map((l) => l.hours_to_beat)),
-          completionistCount: tracked.filter(
-            (l) =>
-              (l.achievements_completed ?? 0) >= (l.achievements_total ?? 0),
-          ).length,
+          avgCompletion:
+            completions.length === 0
+              ? null
+              : completions.reduce((a, b) => a + b, 0) / completions.length,
           achievementTrackedCount: tracked.length,
         };
       },
