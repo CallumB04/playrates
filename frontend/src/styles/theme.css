@@ -576,28 +576,6 @@
         transform 320ms var(--ease-glide);
 }
 
-/* Forty detents without forty DOM nodes: minor ticks every 1/40, major every
-   1/10. */
-@utility detent-rule {
-    background-repeat: repeat-x, repeat-x;
-    background-position:
-        bottom left,
-        bottom left;
-    background-size:
-        calc(100% / 10) 100%,
-        calc(100% / 40) 9px;
-    background-image: repeating-linear-gradient(
-            to right,
-            var(--border-strong) 0 1px,
-            transparent 1px 100%
-        ),
-        repeating-linear-gradient(
-            to right,
-            var(--border-default) 0 1px,
-            transparent 1px 100%
-        );
-}
-
 /* A stamp lands slightly off-square, the way a real one does. */
 @utility stamp {
     transform: rotate(-4deg);

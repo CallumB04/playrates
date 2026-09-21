@@ -16,7 +16,7 @@ import {
     StatusPlates,
     PlayedStatusPlates,
 } from "../../../../../components/gamelog/StatusPlates";
-import RatingRule from "../../../../../components/ui/RatingRule";
+import RatingStars from "../../../../../components/ui/RatingStars";
 import Specimen from "../../../components/Specimen";
 
 const FormSpecimens = () => {
@@ -128,12 +128,12 @@ const FormSpecimens = () => {
             </Specimen>
 
             <Specimen
-                title="Rating setter — 40 detents"
+                title="Rating setter"
                 stack
-                notes="A tabular numeral is the display; a 40-detent rule is the setter. Glanceable in a grid of forty, thumb-sized on touch, and never a row of quarter-filled stars. The detents are two repeating gradients rather than forty DOM nodes."
-                meta="role=slider · 0–10 in 0.25 steps · ← → ±0.25, PgUp/PgDn ±1, Home/End, Backspace clears"
+                notes="Ten stars, each half-clickable, landing on exactly the twenty values the column allows. The figure tracks the pointer, so you can see what you are about to pick before you pick it — the rule this replaced only showed the value once you had committed to a position."
+                meta="role=slider · 0 to 10 in 0.5 steps · arrows ±0.5, PgUp/PgDn ±1, Home/End, Backspace clears"
             >
-                <RatingRule
+                <RatingStars
                     value={rating}
                     onChange={setRating}
                     label="Your rating"

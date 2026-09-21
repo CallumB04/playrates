@@ -6,11 +6,11 @@ import { useMyReview, useReviewMutations } from "../hooks/queries/useReviews";
 import { useNotify } from "../contexts/NotificationContext";
 import Modal from "./ui/Modal";
 import Button from "./ui/Button";
-import Chip from "./ui/Chip";
 import Toggle from "./ui/Toggle";
 import Field from "./ui/Field";
 import { Input, NumberInput, Textarea } from "./ui/Input";
-import RatingRule from "./ui/RatingRule";
+import RatingStars from "./ui/RatingStars";
+import PlatformPicker from "./ui/PlatformPicker";
 import GameCover from "./game/GameCover";
 import { StatusPlates, PlayedStatusPlates } from "./gamelog/StatusPlates";
 import {
@@ -170,7 +170,7 @@ const CreateOrEditGameLogPopup = ({
                 )}
 
                 <div className="rounded-md border border-subtle bg-surface-sunken/50 px-5 py-4">
-                    <RatingRule
+                    <RatingStars
                         value={draft.rating}
                         onChange={(value) => dispatch({ type: "rating", value })}
                         label="Your rating"
@@ -183,6 +183,7 @@ const CreateOrEditGameLogPopup = ({
                             <NumberInput
                                 step={0.5}
                                 min={0}
+                                placeholder="0"
                                 value={draft.hoursPlayed}
                                 onChange={(e) =>
                                     dispatch({
@@ -200,6 +201,7 @@ const CreateOrEditGameLogPopup = ({
                             <NumberInput
                                 step={0.5}
                                 min={0}
+                                placeholder="0"
                                 value={draft.hoursToBeat}
                                 onChange={(e) =>
                                     dispatch({
@@ -247,32 +249,26 @@ const CreateOrEditGameLogPopup = ({
                 </div>
 
                 <div className="grid gap-5 lg:grid-cols-2">
-                    <fieldset>
-                        <legend className="mb-2 text-label text-content-muted">
+                    <div>
+                        <span
+                            id="log-platform-label"
+                            className="mb-2 block text-label text-content-muted"
+                        >
                             Platform
-                        </legend>
-                        <div className="flex flex-wrap gap-1.5">
-                            {(platforms ?? []).map((platform) => (
-                                <Chip
-                                    key={platform.slug}
-                                    selected={draft.platform === platform.slug}
-                                    onClick={() =>
-                                        dispatch({
-                                            type: "set",
-                                            field: "platform",
-                                            // tapping the selected chip clears it
-                                            value:
-                                                draft.platform === platform.slug
-                                                    ? ""
-                                                    : platform.slug,
-                                        })
-                                    }
-                                >
-                                    {platform.displayName}
-                                </Chip>
-                            ))}
-                        </div>
-                    </fieldset>
+                        </span>
+                        <PlatformPicker
+                            platforms={platforms ?? []}
+                            value={draft.platform}
+                            aria-labelledby="log-platform-label"
+                            onChange={(value) =>
+                                dispatch({
+                                    type: "set",
+                                    field: "platform",
+                                    value,
+                                })
+                            }
+                        />
+                    </div>
 
                     <div>
                         <div className="mb-2 flex items-baseline justify-between gap-3">
@@ -291,6 +287,7 @@ const CreateOrEditGameLogPopup = ({
                             <NumberInput
                                 min={0}
                                 aria-label="Achievements completed"
+                                placeholder="0"
                                 value={draft.achievementsCompleted}
                                 onChange={(e) =>
                                     dispatch({
@@ -307,6 +304,7 @@ const CreateOrEditGameLogPopup = ({
                             <NumberInput
                                 min={0}
                                 aria-label="Achievements total"
+                                placeholder="0"
                                 value={draft.achievementsTotal}
                                 onChange={(e) =>
                                     dispatch({
