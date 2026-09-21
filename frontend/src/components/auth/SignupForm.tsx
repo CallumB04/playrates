@@ -81,7 +81,7 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
                 label="Username"
                 name="username"
                 type="text"
-                placeholder="calbgyn"
+                placeholder="yourname"
                 help="Letters, numbers and underscores. This is your profile's address."
                 autoComplete="username"
                 required

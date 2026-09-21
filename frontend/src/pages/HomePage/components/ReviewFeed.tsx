@@ -3,52 +3,74 @@ import type { ReviewWithAuthor } from "@playrates/shared";
 import ProfilePicture from "../../../components/ProfilePicture";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import RatingBadge from "../../../components/ui/RatingBadge";
+import StatusBadge from "../../../components/ui/StatusBadge";
+import {
+    displayStatusFor,
+    isDisplayStatus,
+    type DisplayStatus,
+    type GameStatus,
+    type PlayedStatus,
+} from "../../../constants/gameStatus";
 import { formatHours, relativeTime } from "../../../lib/format";
 
-const Row = ({ review }: { review: ReviewWithAuthor }) => (
-    <Link
-        to={`/game/${review.game.id}#review-${review.id}`}
-        className="lift block rounded-md px-2.5 py-2.5 hover:bg-surface-hover"
-    >
-        <span className="flex items-center gap-2">
-            <ProfilePicture
-                variant="nav"
-                file={review.author.avatarUrl ?? ""}
-                username={review.author.username}
-                link={false}
-            />
-            <span className="min-w-0 flex-1 truncate text-body-sm text-content-secondary">
-                <span className="font-medium text-content">
-                    {review.author.username}
-                </span>{" "}
-                on{" "}
-                <span className="font-medium text-content">
-                    {review.game.title}
-                </span>
-            </span>
-            {review.rating !== null && (
-                <RatingBadge value={review.rating} bare />
-            )}
-        </span>
+/** The state a review was written in, when its author still has that log. */
+const reviewStatus = (review: ReviewWithAuthor): DisplayStatus | null => {
+    if (!review.status || !isDisplayStatus(review.status)) return null;
+    return displayStatusFor(
+        review.status as GameStatus,
+        review.playedStatus as PlayedStatus | null
+    );
+};
 
-        <p className="mt-1.5 line-clamp-3 text-body-sm leading-relaxed text-content-secondary">
-            {review.body}
-        </p>
+const Row = ({ review }: { review: ReviewWithAuthor }) => {
+    const status = reviewStatus(review);
 
-        <span className="mt-1.5 flex items-center gap-2 text-label-sm text-content-muted">
-            {review.hoursPlayed !== null && (
-                <span>
-                    Reviewed at{" "}
-                    <span className="font-mono">
-                        {formatHours(review.hoursPlayed)}
+    return (
+        <Link
+            to={`/game/${review.game.id}#review-${review.id}`}
+            className="block rounded-md px-2.5 py-2.5 lift hover:bg-surface-hover"
+        >
+            <span className="flex items-center gap-2">
+                <ProfilePicture
+                    variant="nav"
+                    file={review.author.avatarUrl ?? ""}
+                    username={review.author.username}
+                    link={false}
+                />
+                <span className="min-w-0 flex-1 truncate text-body-sm text-content-secondary">
+                    <span className="font-medium text-content">
+                        {review.author.username}
                     </span>{" "}
-                    played
+                    on{" "}
+                    <span className="font-medium text-content">
+                        {review.game.title}
+                    </span>
                 </span>
-            )}
-            <span>{relativeTime(review.createdAt)}</span>
-        </span>
-    </Link>
-);
+                {review.rating !== null && (
+                    <RatingBadge value={review.rating} bare />
+                )}
+            </span>
+
+            <p className="mt-1.5 line-clamp-3 text-body-sm leading-relaxed text-content-secondary">
+                {review.body}
+            </p>
+
+            <span className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label-sm text-content-muted">
+                {status && <StatusBadge status={status} plain />}
+                {review.hoursPlayed !== null && (
+                    <span>
+                        Reviewed at{" "}
+                        <span className="font-mono">
+                            {formatHours(review.hoursPlayed)}
+                        </span>{" "}
+                        played
+                    </span>
+                )}
+                <span>{relativeTime(review.createdAt)}</span>
+            </span>
+        </Link>
+    );
+};
 
 /**
  * Recent notes from across the site. The hours are shown next to the rating

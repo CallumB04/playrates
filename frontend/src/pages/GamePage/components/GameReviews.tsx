@@ -118,7 +118,7 @@ const GameReviews = ({
                         link={false}
                     />
                     <div className="min-w-0">
-                        <div className="mb-1.5 flex flex-wrap items-baseline gap-2.5">
+                        <div className="mb-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
                             <Link
                                 to={`/user/${review.author.username}`}
                                 className="text-body-sm font-semibold text-content hover:text-brand"
