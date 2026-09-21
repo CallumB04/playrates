@@ -1,9 +1,11 @@
+import type { ReactNode } from "react";
 import type { Game, Genre, Platform } from "@playrates/shared";
+import PlatformMarks from "../../../components/game/PlatformMarks";
 import { formatDate } from "../../../lib/format";
 
 export interface Fact {
     label: string;
-    value: string;
+    value: ReactNode;
 }
 
 const nameFor = <T extends { slug: string }>(
@@ -39,7 +41,14 @@ export const buildGameFacts = (
     if (game.platforms.length > 0) {
         facts.push({
             label: "Platforms",
-            value: nameFor(game.platforms, platforms, (p) => p.displayName),
+            value: (
+                <PlatformMarks
+                    slugs={game.platforms}
+                    platforms={platforms}
+                    max={6}
+                    className="justify-end text-content"
+                />
+            ),
         });
     }
     if (game.genres.length > 0) {

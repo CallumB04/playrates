@@ -23,14 +23,14 @@ const Card = ({
     hint?: string;
     children: React.ReactNode;
 }) => (
-    <div className="flex flex-col gap-2 rounded-md border border-subtle bg-surface-raised px-4 py-3.5">
-        <div className="flex items-baseline justify-between gap-2">
+    <div className="flex flex-col rounded-md border border-subtle bg-surface-raised px-4 py-3.5">
+        <div className="mb-3 flex items-baseline justify-between gap-2">
             <span className="text-label text-content-muted">{label}</span>
             {hint && (
                 <span className="text-label-sm text-content-muted">{hint}</span>
             )}
         </div>
-        {children}
+        <div className="flex flex-1 items-center">{children}</div>
     </div>
 );
 
@@ -46,14 +46,14 @@ const Figure = ({
     value: string;
     caption: string;
 }) => (
-    <div className="flex items-center gap-2.5">
-        <Icon size={16} aria-hidden className="shrink-0 text-content-muted" />
-        <div>
-            <p className="font-mono text-figure-lg leading-none text-content">
-                {value}
-            </p>
-            <p className="mt-1 text-label-sm text-content-muted">{caption}</p>
-        </div>
+    <div className="min-w-0">
+        <Icon size={14} aria-hidden className="text-content-muted" />
+        <p className="mt-1.5 truncate font-mono text-figure-lg leading-none text-content">
+            {value}
+        </p>
+        <p className="mt-1 truncate text-label-sm text-content-muted">
+            {caption}
+        </p>
     </div>
 );
 
@@ -76,7 +76,7 @@ const ScoreCards = ({
     const logCount = stats?.logCount ?? 0;
 
     return (
-        <section className="grid gap-3 sm:grid-cols-2">
+        <section className="grid items-stretch gap-3 sm:grid-cols-2">
             {game.metacritic !== null ? (
                 <Card label="Metacritic" hint="Critic score">
                     <div className="flex items-center gap-3">
@@ -114,7 +114,7 @@ const ScoreCards = ({
                 label="On PlayRates"
                 hint={`${logCount} ${logCount === 1 ? "log" : "logs"}`}
             >
-                <div className="flex flex-wrap gap-x-7 gap-y-3">
+                <div className="grid w-full grid-cols-3 gap-3">
                     <Figure
                         icon={Clock}
                         value={
