@@ -13,13 +13,19 @@ interface FriendRequestsPopupProps {
     onClose: () => void;
 }
 
-const ReceivedRow = ({ edge }: { edge: FriendEdge }) => {
+interface RowProps {
+    edge: FriendEdge;
+    onClose: () => void;
+}
+
+const ReceivedRow = ({ edge, onClose }: RowProps) => {
     const { accept, remove, isPending } = useFriendRelation(edge.user.id);
 
     return (
         <FriendProfile
             user={edge.user}
             density="compact"
+            closePopup={onClose}
             actions={
                 <>
                     <Button
@@ -44,13 +50,14 @@ const ReceivedRow = ({ edge }: { edge: FriendEdge }) => {
 };
 
 // Nothing to accept on a request you sent, so the only action is taking it back.
-const SentRow = ({ edge }: { edge: FriendEdge }) => {
+const SentRow = ({ edge, onClose }: RowProps) => {
     const { remove, isPending } = useFriendRelation(edge.user.id);
 
     return (
         <FriendProfile
             user={edge.user}
             density="compact"
+            closePopup={onClose}
             actions={
                 <Button
                     variant="ghost"
@@ -123,6 +130,7 @@ const FriendRequestsPopup = ({
                                     <ReceivedRow
                                         key={edge.user.id}
                                         edge={edge}
+                                        onClose={onClose}
                                     />
                                 ))}
                             </Section>
@@ -131,7 +139,11 @@ const FriendRequestsPopup = ({
                         {sent.length > 0 && (
                             <Section title="You asked them" count={sent.length}>
                                 {sent.map((edge) => (
-                                    <SentRow key={edge.user.id} edge={edge} />
+                                    <SentRow
+                                        key={edge.user.id}
+                                        edge={edge}
+                                        onClose={onClose}
+                                    />
                                 ))}
                             </Section>
                         )}

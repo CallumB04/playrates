@@ -39,7 +39,9 @@ describe("logReducer", () => {
     it("sets and clears the rating", () => {
         const rated = logReducer(emptyDraft, { type: "rating", value: 7.5 });
         expect(rated.rating).toBe(7.5);
-        expect(logReducer(rated, { type: "rating", value: null }).rating).toBeNull();
+        expect(
+            logReducer(rated, { type: "rating", value: null }).rating
+        ).toBeNull();
     });
 
     it("sets one text field without disturbing the rest", () => {

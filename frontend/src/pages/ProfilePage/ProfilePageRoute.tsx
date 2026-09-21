@@ -16,7 +16,9 @@ const ProfilePageRoute = () => {
 
     if (!targetUsername) return <ProfileError />;
 
-    return <ProfilePage username={targetUsername} />;
+    /* Keyed, so landing on another profile is a fresh page rather than the
+       same one with the previous user's modal still open over it. */
+    return <ProfilePage key={targetUsername} username={targetUsername} />;
 };
 
 export default ProfilePageRoute;

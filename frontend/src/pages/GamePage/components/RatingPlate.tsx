@@ -33,12 +33,12 @@ const RatingPlate = ({ average, ratingCount, buckets }: RatingPlateProps) => {
     const median = medianOf(buckets);
 
     return (
-        <section className="grid items-center gap-6 rounded-lg border border-subtle bg-surface-raised px-5 py-5 shadow-plate sm:grid-cols-[186px_minmax(0,1fr)]">
-            <div className="sm:border-r sm:border-subtle sm:pr-5">
+        <section className="grid items-center gap-6 rounded-lg border border-subtle bg-surface-raised px-5 py-5 shadow-plate sm:grid-cols-[auto_minmax(0,1fr)]">
+            <div className="sm:border-r sm:border-subtle sm:pr-6">
                 <h2 className="text-label text-content-muted">
                     PlayRates average
                 </h2>
-                <p className="mt-2">
+                <p className="mt-2 whitespace-nowrap">
                     <RatingBadge value={average} size="lg" />
                 </p>
                 <p className="mt-1.5 text-body-sm text-content-muted">

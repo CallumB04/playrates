@@ -2,17 +2,13 @@ import type { Profile, UserStats } from "@playrates/shared";
 import type { ReactNode } from "react";
 import ProfilePicture from "../../../components/ProfilePicture";
 import PresenceDot from "../../../components/ui/PresenceDot";
+import RatingBadge from "../../../components/ui/RatingBadge";
 import {
     GAME_STATUSES,
     STATUS_PRESENTATION,
     type GameStatus,
 } from "../../../constants/gameStatus";
-import {
-    formatCount,
-    formatHours,
-    formatMonthYear,
-    formatRatingOutOfTen,
-} from "../../../lib/format";
+import { formatCount, formatHours, formatMonthYear } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 
 interface MemberFileHeaderProps {
@@ -78,7 +74,7 @@ const ShelfBar = ({
     );
 };
 
-const Figure = ({ label, value }: { label: string; value: string }) => (
+const Figure = ({ label, value }: { label: string; value: ReactNode }) => (
     <div>
         <p className="font-mono text-figure-lg text-content">{value}</p>
         <p className="text-label-sm text-content-muted">{label}</p>
@@ -165,7 +161,12 @@ const MemberFileHeader = ({
                         />
                         <Figure
                             label="Average rating"
-                            value={formatRatingOutOfTen(stats?.averageRating)}
+                            value={
+                                <RatingBadge
+                                    value={stats?.averageRating ?? null}
+                                    size="md"
+                                />
+                            }
                         />
                         <Figure
                             label="Reviews"

@@ -17,7 +17,8 @@ interface RatingBadgeProps {
 
 /**
  * A rating, wherever one is shown. The "/10" carries the scale so the figure
- * needs no meter beside it to be read.
+ * needs no meter beside it to be read. An unrated thing keeps the shape and
+ * drops the colour, so a column of them still lines up.
  */
 const RatingBadge = ({ value, size = "sm", className }: RatingBadgeProps) => (
     <span
@@ -28,14 +29,8 @@ const RatingBadge = ({ value, size = "sm", className }: RatingBadgeProps) => (
             className
         )}
     >
-        {value === null ? (
-            "Not rated"
-        ) : (
-            <>
-                {formatRating(value)}
-                <span className="text-[0.72em] text-content-muted">/10</span>
-            </>
-        )}
+        {formatRating(value)}
+        <span className="text-[0.72em] text-content-muted">/10</span>
     </span>
 );
 

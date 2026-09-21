@@ -42,7 +42,11 @@ describe("useFigureRoll", () => {
         /* performance too, or the hook's start time and the rAF callback
            timestamp sit on two different clocks. */
         vi.useFakeTimers({
-            toFake: ["requestAnimationFrame", "cancelAnimationFrame", "performance"],
+            toFake: [
+                "requestAnimationFrame",
+                "cancelAnimationFrame",
+                "performance",
+            ],
         });
         window.matchMedia = matchMedia(false);
     });

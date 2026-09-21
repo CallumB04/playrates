@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Pencil } from "lucide-react";
 import type { UserStats } from "@playrates/shared";
@@ -11,12 +12,7 @@ import {
     GAME_STATUSES,
     STATUS_PRESENTATION,
 } from "../../../constants/gameStatus";
-import {
-    formatCount,
-    formatHours,
-    formatRatingOutOfTen,
-    relativeTime,
-} from "../../../lib/format";
+import { formatCount, formatHours, relativeTime } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 
 interface ReEntryPlateProps {
@@ -34,7 +30,7 @@ interface ReEntryPlateProps {
 }
 
 /** The figure leads. The label says what it is; it does not compete. */
-const Stat = ({ label, value }: { label: string; value: string }) => (
+const Stat = ({ label, value }: { label: string; value: ReactNode }) => (
     <div className="min-w-0">
         <p className="truncate font-mono text-[26px] leading-none text-content">
             {value}
@@ -181,9 +177,12 @@ const ReEntryPlate = ({
                         />
                         <Stat
                             label="Average rating"
-                            value={formatRatingOutOfTen(
-                                yearStats?.averageRating
-                            )}
+                            value={
+                                <RatingBadge
+                                    value={yearStats?.averageRating ?? null}
+                                    className="text-[26px]"
+                                />
+                            }
                         />
                         <Stat
                             label="Rated"

@@ -1,4 +1,5 @@
 import { useState, type KeyboardEvent } from "react";
+import RatingBadge from "./RatingBadge";
 import { formatRating } from "../../lib/format";
 import { cn } from "../../lib/cn";
 
@@ -73,16 +74,11 @@ const RatingMeter = ({
         <div className={cn("flex flex-col gap-2.5", className)}>
             <div className="flex items-baseline justify-between gap-4">
                 <span className="text-label text-content-muted">{label}</span>
-                <span
-                    className={cn(
-                        "font-mono text-figure-lg tabular-nums",
-                        shown > 0 ? "text-brand" : "text-content-muted"
-                    )}
-                >
-                    {hover !== null || value !== null
-                        ? formatRating(shown)
-                        : "Not rated"}
-                </span>
+                <RatingBadge
+                    value={hover ?? value}
+                    size="md"
+                    className="shrink-0"
+                />
             </div>
 
             <div
