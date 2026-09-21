@@ -14,7 +14,7 @@ import {
 import {
     formatCount,
     formatHours,
-    formatRating,
+    formatRatingOutOfTen,
     relativeTime,
 } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
@@ -150,7 +150,7 @@ const ReEntryPlate = ({
                             </span>
                         </span>
                         {current.rating !== null && (
-                            <RatingBadge value={current.rating} bare />
+                            <RatingBadge value={current.rating} />
                         )}
                         <Pencil
                             size={15}
@@ -181,8 +181,8 @@ const ReEntryPlate = ({
                         />
                         <Stat
                             label="Average rating"
-                            value={formatRating(
-                                yearStats?.averageRating ?? null
+                            value={formatRatingOutOfTen(
+                                yearStats?.averageRating
                             )}
                         />
                         <Stat

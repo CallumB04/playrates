@@ -83,7 +83,7 @@ const RecentReviews = ({ reviews, isOwner }: RecentReviewsProps) => {
                                     {review.game.title}
                                 </span>
                                 {review.rating !== null && (
-                                    <RatingBadge value={review.rating} bare />
+                                    <RatingBadge value={review.rating} />
                                 )}
                             </span>
 

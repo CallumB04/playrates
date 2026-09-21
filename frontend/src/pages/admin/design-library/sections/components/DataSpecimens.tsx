@@ -3,7 +3,7 @@ import {
     PLAYED_STATUSES,
 } from "../../../../../constants/gameStatus";
 import StatusBadge from "../../../../../components/ui/StatusBadge";
-import Rating from "../../../../../components/ui/Rating";
+import RatingBadge from "../../../../../components/ui/RatingBadge";
 import Figure from "../../../../../components/ui/Figure";
 import LedgerRow, {
     LedgerList,
@@ -64,14 +64,13 @@ const DataSpecimens = () => (
 
         <Specimen
             title="Rating"
-            notes="Four sizes, one system. The brand figure is reserved for real PlayRates ratings — an unrated thing shows a muted em dash rather than borrowing the colour."
-            meta='size="display" | "row" | "inline" | "tile" · caption'
+            notes="The figure carries its own scale, so no meter is needed beside it. Brand ink is reserved for real PlayRates ratings; an unrated thing stays muted."
+            meta='value · size="sm" | "md" | "lg"'
         >
-            <Rating value={8.25} size="display" caption="Display" />
-            <Rating value={8.25} size="row" caption="Row" />
-            <Rating value={8.25} size="inline" caption="Inline" />
-            <Rating value={8.25} size="tile" caption="Tile" />
-            <Rating value={null} size="row" caption="Unrated" />
+            <RatingBadge value={8.25} size="lg" />
+            <RatingBadge value={8.25} size="md" />
+            <RatingBadge value={8.25} />
+            <RatingBadge value={null} />
         </Specimen>
 
         <Specimen

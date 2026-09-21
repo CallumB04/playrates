@@ -11,7 +11,7 @@ import {
     formatCount,
     formatHours,
     formatMonthYear,
-    formatRating,
+    formatRatingOutOfTen,
 } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 
@@ -177,7 +177,7 @@ const MemberFileHeader = ({
                         />
                         <Figure
                             label="Average rating"
-                            value={formatRating(stats?.averageRating ?? null)}
+                            value={formatRatingOutOfTen(stats?.averageRating)}
                         />
                         <Figure
                             label="Reviews"

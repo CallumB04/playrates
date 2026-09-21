@@ -18,12 +18,15 @@ export const formatReleaseShort = (
 export const releaseYear = (isoDate: string | null | undefined): string =>
     isoDate ? isoDate.slice(0, 4) : "—";
 
-/**
- * A 0–10 rating as a ledger figure. Always two decimals so a column of them
- * aligns under tabular figures — "9" beside "8.25" reads as a typo.
- */
+/** Always two decimals, so a column of ratings lines up. */
 export const formatRating = (rating: number | null | undefined): string =>
     rating === null || rating === undefined ? "—" : rating.toFixed(2);
+
+/** "8.25/10", for plain-text spots that can't use RatingBadge. */
+export const formatRatingOutOfTen = (
+    rating: number | null | undefined
+): string =>
+    rating === null || rating === undefined ? "—" : `${formatRating(rating)}/10`;
 
 /** A count with thousands separators. */
 export const formatCount = (value: number | null | undefined): string =>

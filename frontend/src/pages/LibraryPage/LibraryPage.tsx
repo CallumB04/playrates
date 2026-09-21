@@ -33,7 +33,7 @@ import {
 } from "../../constants/gameStatus";
 import {
     formatCount,
-    formatRating,
+    formatRatingOutOfTen,
     releaseYear,
 } from "../../lib/format";
 
@@ -177,7 +177,7 @@ const LibraryPage = () => {
         const log = logByGameId.get(gameId);
         if (!log) return undefined;
         const parts = ["Your log"];
-        if (log.rating !== null) parts.push(formatRating(log.rating));
+        if (log.rating !== null) parts.push(formatRatingOutOfTen(log.rating));
         return parts.join(" · ");
     };
 

@@ -15,13 +15,9 @@ interface DrawerTabsProps {
     trailing?: ReactNode;
 }
 
-/**
- * A segmented control.
- *
- * These were four separate folder tabs with gaps between them, sitting on a
- * rule that ran off to the right — four objects pretending to be one control.
- * One track with four segments reads as a single choice, which is what it is.
- */
+/* The active segment gets the rim but no cast shadow. In a 4px gutter the
+   shadow darkens the space below the pill, which makes the gap above look
+   bigger than the one below even though they're equal. */
 const DrawerTabs = ({ active, counts, onSelect, trailing }: DrawerTabsProps) => (
     <div className="flex flex-wrap items-center justify-between gap-3">
         <div
@@ -44,7 +40,7 @@ const DrawerTabs = ({ active, counts, onSelect, trailing }: DrawerTabsProps) => 
                             "lift flex shrink-0 cursor-pointer items-center gap-2 rounded-sm px-3.5 py-2 text-body-sm",
                             "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                             isActive
-                                ? "bg-surface-raised font-medium text-content shadow-lip"
+                                ? "bg-surface-raised font-medium text-content inset-shadow-deep"
                                 : "text-content-secondary hover:text-content"
                         )}
                     >

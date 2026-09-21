@@ -2,16 +2,14 @@ import type { Profile, FriendEdge } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
 import RemoveFriendPopup from "./RemoveFriendPopup";
 import FriendsPopup from "./FriendsPopup";
+import FriendRequestsPopup from "./FriendRequestsPopup";
 import EditProfilePopup from "./EditProfilePopup";
 import ViewGameLogPopup from "../../../components/ViewGameLogPopup";
 import CreateOrEditGameLogPopup from "../../../components/CreateOrEditGameLogPopup";
 import DeleteGameLogPopup from "../../../components/gamelog/DeleteGameLogPopup";
 
-/**
- * Which modal the page is showing. A union rather than a flag each, so two
- * open at once isn't representable, and the ones acting on a game log carry it
- * rather than reading it from somewhere else.
- */
+/* A union rather than a flag each, so two open at once isn't representable.
+   The ones acting on a game log carry it rather than looking it up again. */
 export type ProfileModal =
     | { kind: "view"; log: GameLogWithGame }
     | { kind: "edit"; log: GameLogWithGame }
@@ -19,6 +17,7 @@ export type ProfileModal =
     | { kind: "delete"; log: GameLogWithGame }
     | { kind: "removeFriend" }
     | { kind: "friends" }
+    | { kind: "friendRequests" }
     | { kind: "editProfile" }
     | null;
 
@@ -29,10 +28,10 @@ interface ProfileModalsProps {
     isMyAccount: boolean;
     isSignedIn: boolean;
     currentUsername?: string;
-    /** Every game the viewer has logged. A complete set, not a page of
-     *  one — a partial answer makes "View my log" disappear at random. */
+    /** Every game the viewer has logged. A page of them makes "View my log"
+     *  disappear at random. */
     myLogGameIds: Set<number>;
-    /** Every edge, so the popup can show and answer requests. */
+    /** Every edge, so the popups can show friends and requests. */
     allFriendEdges: FriendEdge[];
     friendsLoading: boolean;
     onRemoveFriend: () => Promise<void>;
@@ -53,8 +52,12 @@ const ProfileModals = ({
     onRemoveFriend,
     navigate,
 }: ProfileModalsProps) => {
-    /* Three states, computed once: your own log is editable, a game you have
-       also logged links to your copy, anything else you can start. */
+    const pendingCount = allFriendEdges.filter(
+        (e) => e.status === "request-received"
+    ).length;
+
+    /* Three states: your own log is editable, a game you have also logged
+       links to your copy, anything else you can start. */
     const viewAction = (log: GameLogWithGame) => {
         if (!isSignedIn) return undefined;
         if (isMyAccount) {
@@ -91,9 +94,20 @@ const ProfileModals = ({
             {modal.kind === "friends" && (
                 <FriendsPopup
                     onClose={() => setModal(null)}
+                    friends={allFriendEdges.filter(
+                        (e) => e.status === "friend"
+                    )}
+                    isLoading={friendsLoading}
+                    pendingCount={isMyAccount ? pendingCount : 0}
+                    onViewRequests={() => setModal({ kind: "friendRequests" })}
+                />
+            )}
+
+            {modal.kind === "friendRequests" && (
+                <FriendRequestsPopup
+                    onClose={() => setModal(null)}
                     edges={allFriendEdges}
                     isLoading={friendsLoading}
-                    canRespond={isMyAccount}
                 />
             )}
 

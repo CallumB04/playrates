@@ -156,7 +156,7 @@ const FormSpecimens = () => {
                     <div className="flex items-end gap-6 border-t border-subtle pt-4">
                         <RatingBadge value={rating} />
                         <RatingBadge value={rating} size="md" />
-                        <RatingBadge value={rating} bare />
+                        <RatingBadge value={rating} size="lg" />
                     </div>
                 </div>
             </Specimen>

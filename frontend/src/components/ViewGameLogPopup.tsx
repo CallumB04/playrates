@@ -3,7 +3,8 @@ import type { GameLogWithGame } from "../api";
 import { displayStatusFor } from "../constants/gameStatus";
 import { useGame, usePlatforms } from "../hooks/queries/useGames";
 import { platformIcon } from "../lib/platformIcons";
-import { formatDate, formatHours, formatRating } from "../lib/format";
+import RatingBadge from "./ui/RatingBadge";
+import { formatDate, formatHours } from "../lib/format";
 import { cn } from "../lib/cn";
 import Modal from "./ui/Modal";
 import Button, { buttonClass } from "./ui/Button";
@@ -162,52 +163,9 @@ const ViewGameLogPopup: React.FC<ViewGameLogPopupProps> = ({
                     <span className="flex items-center gap-1.5 text-label text-content-muted">
                         <Star size={13} aria-hidden /> Rating
                     </span>
-                    {rating === null ? (
-                        <span className="py-3 text-body-sm text-content-muted">
-                            Not rated
-                        </span>
-                    ) : (
-                        <span className="font-mono text-[40px] leading-none text-brand">
-                            {formatRating(rating)}
-                        </span>
-                    )}
-                    {rating !== null && (
-                        <span
-                            aria-hidden
-                            className="mt-1.5 flex gap-0.5 text-brand"
-                        >
-                            {Array.from({ length: 5 }, (_, i) => {
-                                const fill = Math.max(
-                                    0,
-                                    Math.min(1, rating / 2 - i)
-                                );
-                                return (
-                                    <span
-                                        key={i}
-                                        className="relative block size-3.5"
-                                    >
-                                        <Star
-                                            className="absolute inset-0 size-full text-border-strong"
-                                            strokeWidth={1.5}
-                                        />
-                                        {fill > 0 && (
-                                            <span
-                                                className="absolute inset-y-0 left-0 overflow-hidden"
-                                                style={{
-                                                    width: `${fill * 100}%`,
-                                                }}
-                                            >
-                                                <Star
-                                                    className="absolute inset-y-0 left-0 h-full w-auto fill-brand text-brand"
-                                                    strokeWidth={1.5}
-                                                />
-                                            </span>
-                                        )}
-                                    </span>
-                                );
-                            })}
-                        </span>
-                    )}
+                    <span className="py-2">
+                        <RatingBadge value={rating} size="lg" />
+                    </span>
                 </div>
 
                 <div className="flex flex-col items-center justify-center gap-1.5 rounded-md border border-subtle bg-surface-sunken/50 px-4 py-5">

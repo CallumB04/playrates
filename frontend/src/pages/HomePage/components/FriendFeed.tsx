@@ -85,7 +85,7 @@ const Row = ({ item }: { item: FriendActivity }) => {
             </span>
 
             {item.rating !== null && (
-                <RatingBadge value={item.rating} bare />
+                <RatingBadge value={item.rating} />
             )}
         </Link>
     );

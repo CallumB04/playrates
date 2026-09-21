@@ -2,11 +2,11 @@ import { Link } from "react-router-dom";
 import { useState, type ComponentType, type SVGProps } from "react";
 import { cn } from "../../lib/cn";
 import type { DisplayStatus } from "../../constants/gameStatus";
-import { formatRating } from "../../lib/format";
 import type { Platform } from "@playrates/shared";
 import GameCover from "./GameCover";
 import PlatformMarks from "./PlatformMarks";
 import StatusBadge from "../ui/StatusBadge";
+import RatingBadge from "../ui/RatingBadge";
 
 export interface TileAction {
     key: string;
@@ -213,18 +213,16 @@ const GameTile = ({
                         className="shrink-0 text-content-muted"
                     />
                     <span className="leader" aria-hidden="true" />
-                    <span
-                        className={cn(
-                            "shrink-0 whitespace-nowrap font-mono text-figure-sm",
-                            rating === null || rating === undefined
-                                ? "text-content-muted"
-                                : "text-brand"
-                        )}
-                    >
-                        {rating === undefined
-                            ? (footValue ?? "")
-                            : formatRating(rating)}
-                    </span>
+                    {rating === undefined ? (
+                        <span className="shrink-0 whitespace-nowrap font-mono text-figure-sm text-content-muted">
+                            {footValue ?? ""}
+                        </span>
+                    ) : (
+                        <RatingBadge
+                            value={rating}
+                            className="shrink-0 whitespace-nowrap"
+                        />
+                    )}
                 </div>
             )}
         </div>

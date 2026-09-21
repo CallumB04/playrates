@@ -1,13 +1,12 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { FriendUser } from "@playrates/shared";
 import ProfilePicture, { type AvatarVariant } from "./ProfilePicture";
 import PresenceDot from "./ui/PresenceDot";
 import { cn } from "../lib/cn";
 
-/**
- * Two named densities rather than a size number, so the avatar, spacing and
- * type stay in step with each other.
- */
+/* Named densities rather than a size number, so the avatar, spacing and type
+   stay in step. */
 const DENSITY = {
     compact: { avatar: "friendRow", gap: "gap-2.5", text: "text-body-sm" },
     comfortable: { avatar: "friendRowLarge", gap: "gap-3", text: "text-body" },
@@ -23,8 +22,10 @@ interface FriendProfileProps {
     /** Optional: supplied when the row is rendered inside a popup. */
     closePopup?: () => void;
     density: FriendProfileDensity;
-    /** A mono figure on the right, e.g. "Friends since 2023". */
+    /** A caption on the right, e.g. "Online". */
     trailing?: string;
+    /** Buttons on the same row. Kept outside the link — no nested controls. */
+    actions?: ReactNode;
 }
 
 const FriendProfile = ({
@@ -32,14 +33,16 @@ const FriendProfile = ({
     closePopup,
     density,
     trailing,
+    actions,
 }: FriendProfileProps) => {
     const { avatar, gap, text } = DENSITY[density];
 
-    return (
+    const link = (
         <Link
             to={`/user/${user.username}`}
             className={cn(
-                "lift flex w-full items-center rounded-sm px-2 py-2 hover:bg-surface-hover",
+                "lift flex min-w-0 items-center rounded-sm px-2 py-2 hover:bg-surface-hover",
+                actions ? "flex-1" : "w-full",
                 gap
             )}
             onClick={closePopup}
@@ -62,6 +65,17 @@ const FriendProfile = ({
                 </span>
             )}
         </Link>
+    );
+
+    if (!actions) return link;
+
+    return (
+        <div className="flex w-full items-center gap-2">
+            {link}
+            <span className="flex shrink-0 items-center gap-2 pr-1">
+                {actions}
+            </span>
+        </div>
     );
 };
 

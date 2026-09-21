@@ -303,7 +303,10 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                               ).length
                             : 0
                     }
-                    onOpenAll={() => setModal({ kind: "friends" })}
+                    onOpenFriends={() => setModal({ kind: "friends" })}
+                    onOpenRequests={() =>
+                        setModal({ kind: "friendRequests" })
+                    }
                 />
             </div>
 

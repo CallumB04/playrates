@@ -1,9 +1,11 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { FriendEdge } from "@playrates/shared";
 import FriendProfile from "../../../components/FriendProfile";
 import Panel, { PanelCount } from "../../../components/ui/Panel";
 import { buttonClass } from "../../../components/ui/Button";
 import { formatCount } from "../../../lib/format";
+import { cn } from "../../../lib/cn";
 
 interface FriendsPanelProps {
     friends: FriendEdge[];
@@ -11,36 +13,46 @@ interface FriendsPanelProps {
     sharedCount?: number;
     /** Requests waiting on the owner. Only ever passed on your own profile. */
     pendingCount?: number;
-    onOpenAll: () => void;
+    onOpenFriends: () => void;
+    onOpenRequests: () => void;
 }
 
 const SHOWN = 6;
 
-/**
- * The friends summary.
- *
- * Friends had a page of their own, reachable from the navbar, which is a lot
- * of furniture for a list most people check occasionally. It lives on the
- * profile it belongs to, with everything else behind one button.
- */
+const PanelButton = ({
+    onClick,
+    accent = false,
+    children,
+}: {
+    onClick: () => void;
+    accent?: boolean;
+    children: ReactNode;
+}) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+            "lift flex-1 cursor-pointer rounded-sm border px-3 py-2 text-body-sm",
+            accent
+                ? "border-brand/40 text-brand hover:border-brand"
+                : "border-subtle text-content-secondary hover:border-strong hover:text-content"
+        )}
+    >
+        {children}
+    </button>
+);
+
+/** The friends summary. The full list and any requests open from here. */
 const FriendsPanel = ({
     friends,
     sharedCount,
     pendingCount = 0,
-    onOpenAll,
+    onOpenFriends,
+    onOpenRequests,
 }: FriendsPanelProps) => (
     <Panel
         title="Friends"
-        trailing={
-            <span className="flex items-center gap-2">
-                {pendingCount > 0 && (
-                    <span className="rounded-full bg-brand px-2 py-0.5 font-mono text-label-sm text-content-on-solid">
-                        {formatCount(pendingCount)} waiting
-                    </span>
-                )}
-                <PanelCount value={formatCount(friends.length)} />
-            </span>
-        }
+        trailing={<PanelCount value={formatCount(friends.length)} />}
         bodyClassName="flex flex-col gap-0.5 p-2"
     >
         {friends.length === 0 ? (
@@ -73,16 +85,20 @@ const FriendsPanel = ({
             </>
         )}
 
-        {(friends.length > SHOWN || pendingCount > 0) && (
-            <button
-                type="button"
-                onClick={onOpenAll}
-                className="lift mt-1 w-full cursor-pointer rounded-sm border border-subtle px-3 py-2 text-body-sm text-content-secondary hover:border-strong hover:text-content"
-            >
-                {pendingCount > 0
-                    ? `See all and answer ${formatCount(pendingCount)}`
-                    : `See all ${formatCount(friends.length)}`}
-            </button>
+        {(friends.length > 0 || pendingCount > 0) && (
+            <div className="mt-1 flex gap-2">
+                {friends.length > 0 && (
+                    <PanelButton onClick={onOpenFriends}>
+                        See all {formatCount(friends.length)}
+                    </PanelButton>
+                )}
+                {pendingCount > 0 && (
+                    <PanelButton onClick={onOpenRequests} accent>
+                        {formatCount(pendingCount)} request
+                        {pendingCount === 1 ? "" : "s"}
+                    </PanelButton>
+                )}
+            </div>
         )}
     </Panel>
 );

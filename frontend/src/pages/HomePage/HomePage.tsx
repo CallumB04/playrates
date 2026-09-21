@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { Game } from "@playrates/shared";
 import {
     formatCount,
-    formatRating,
+    formatRatingOutOfTen,
     formatReleaseShort,
     releaseYear,
 } from "../../lib/format";
@@ -235,7 +235,7 @@ const HomePage = () => {
                 statusFor={statusFor}
                 footValueFor={(game) =>
                     game.avgRating !== null
-                        ? `${formatRating(game.avgRating)} · ${formatCount(
+                        ? `${formatRatingOutOfTen(game.avgRating)} · ${formatCount(
                               game.ratingCount
                           )}`
                         : releaseYear(game.releaseDate)
