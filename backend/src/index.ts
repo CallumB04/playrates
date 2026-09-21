@@ -1,39 +1,10 @@
-// side-effect import: must come first so .env is loaded before env() runs
-import "./config/loadEnv.js";
-import { buildApp } from "./app.js";
-import { env } from "./config/env.js";
-import { supabase } from "./config/supabase.js";
-import { createAuthAdmin } from "./config/authAdmin.js";
 import { createLogger } from "./lib/logger.js";
-import { createRepositories } from "./repositories.js";
-import { verifySupabaseJwt } from "./middleware/requireAuth.js";
-import { nullGamesProvider } from "./providers/games/GamesProvider.js";
-import { createRawgProvider } from "./providers/games/rawg/rawg.provider.js";
+import { createServerApp } from "./server.js";
 
 const logger = createLogger();
 
 const main = () => {
-  // parsed here so a bad config fails at boot with a readable message
-  const config = env();
-
-  const provider = config.RAWG_API_KEY
-    ? createRawgProvider(config.RAWG_API_KEY)
-    : nullGamesProvider;
-
-  if (!provider.isConfigured) {
-    logger.warn(
-      "RAWG_API_KEY is not set - game search will only use the local catalogue",
-    );
-  }
-
-  const db = supabase();
-  const app = buildApp({
-    repos: createRepositories(db),
-    provider,
-    authAdmin: createAuthAdmin(db),
-    verify: verifySupabaseJwt,
-    logger,
-  });
+  const { app, config } = createServerApp();
 
   const server = app.listen(config.PORT, () => {
     logger.info(

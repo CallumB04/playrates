@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "lib": ["ES2022"],
+        "strict": true,
+        "noEmit": true,
+        "verbatimModuleSyntax": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "types": ["node"]
+    },
+    /* The backend's Request augmentation is ambient, so it is not reached by
+       following imports the way every other file is. */
+    "include": [".", "../backend/src/types"]
+}
