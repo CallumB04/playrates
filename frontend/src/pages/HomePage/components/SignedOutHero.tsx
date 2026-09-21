@@ -5,7 +5,6 @@ import GameCover from "../../../components/game/GameCover";
 import type { SiteStats } from "../../../api";
 import { formatCount } from "../../../lib/format";
 import { BRAND_MOTTO, BRAND_NAME } from "../../../constants/brand";
-import { cn } from "../../../lib/cn";
 
 interface SignedOutHeroProps {
     siteStats: SiteStats | undefined;
@@ -14,15 +13,22 @@ interface SignedOutHeroProps {
     onStart: () => void;
 }
 
-/* Fanned rather than gridded. Six covers at alternating tilts read as a shelf
-   someone keeps; six covers square-on read as a product grid. */
-const TILT = [
-    "-rotate-6 translate-y-3",
-    "rotate-3 -translate-y-2",
-    "-rotate-2 translate-y-4",
-    "rotate-6 -translate-y-1",
-    "-rotate-3 translate-y-2",
-    "rotate-2 -translate-y-3",
+/*
+ * Fanned rather than gridded. Six covers at alternating tilts read as a shelf
+ * someone keeps; six square-on read as a product grid.
+ *
+ * The tilt and the drop are one inline transform rather than utility classes,
+ * because `translate-y-3` and the `-translate-y-1/2` that centres the stack
+ * both write the same custom property — whichever Tailwind emitted last won,
+ * so one cover ignored the centring entirely and sat apart from the rest.
+ */
+const FAN = [
+    { rotate: -6, drop: 6 },
+    { rotate: 3, drop: -8 },
+    { rotate: -2, drop: 9 },
+    { rotate: 6, drop: -6 },
+    { rotate: -3, drop: 4 },
+    { rotate: 2, drop: -9 },
 ];
 
 /**
@@ -80,11 +86,12 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
             {covers.slice(0, 6).map((game, i) => (
                 <span
                     key={game.id}
-                    className={cn(
-                        "absolute top-1/2 w-[126px] -translate-y-1/2 xl:w-[140px]",
-                        TILT[i]
-                    )}
-                    style={{ left: `${i * 15}%`, zIndex: i }}
+                    className="absolute top-1/2 w-[126px] xl:w-[140px]"
+                    style={{
+                        left: `${i * 15}%`,
+                        zIndex: i,
+                        transform: `translateY(calc(-50% + ${FAN[i]!.drop}px)) rotate(${FAN[i]!.rotate}deg)`,
+                    }}
                 >
                     <GameCover
                         coverUrl={game.coverUrl}
