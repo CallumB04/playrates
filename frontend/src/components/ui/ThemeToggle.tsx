@@ -7,12 +7,12 @@ interface ThemeToggleProps {
 
 /** Switches the whole app's theme, not just the page it sits on. */
 const ThemeToggle = ({ className }: ThemeToggleProps) => {
-    const { theme, setTheme } = useTheme();
+    const { theme, setPreference } = useTheme();
 
     return (
         <Toggle
             checked={theme === "dark"}
-            onChange={(dark) => setTheme(dark ? "dark" : "light")}
+            onChange={(dark) => setPreference(dark ? "dark" : "light")}
             offLabel="Day"
             label="Night"
             labelPosition="flanked"

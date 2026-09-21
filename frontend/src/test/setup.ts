@@ -26,6 +26,9 @@ vi.mock("../lib/supabase", () => ({
     },
 }));
 
+// jsdom has no layout, so nothing can be scrolled into view
+Element.prototype.scrollIntoView ??= vi.fn();
+
 // jsdom implements neither, and both are used by the hooks
 if (!window.matchMedia) {
     window.matchMedia = ((query: string) => ({

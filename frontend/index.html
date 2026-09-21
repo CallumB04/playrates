@@ -7,14 +7,19 @@
         <script>
             // Apply the stored theme before first paint, otherwise the page
             // renders in the default theme and visibly flips. Must agree with
-            // DEFAULT_THEME in ThemeContext.tsx.
+            // ThemeContext.tsx: same key, same default, same "system" rule.
             (function () {
                 try {
                     var stored = localStorage.getItem("playrates-theme");
                     var theme =
                         stored === "light" || stored === "dark"
                             ? stored
-                            : "dark";
+                            : stored === "system" &&
+                                window.matchMedia(
+                                    "(prefers-color-scheme: light)"
+                                ).matches
+                              ? "light"
+                              : "dark";
                     document.documentElement.classList.toggle(
                         "dark",
                         theme === "dark"

@@ -45,7 +45,7 @@ const isGameStatus = (value: string): value is GameStatus =>
 
 const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const { user: currentUser } = useAuth();
-    const { theme, setTheme } = useTheme();
+    const { theme, toggleTheme } = useTheme();
     const { openLogin } = useAccountForm();
     const notify = useNotify();
     const navigate = useNavigate();
@@ -211,11 +211,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                                         ? "Switch to day"
                                         : "Switch to night"
                                 }
-                                onClick={() =>
-                                    setTheme(
-                                        theme === "dark" ? "light" : "dark"
-                                    )
-                                }
+                                onClick={toggleTheme}
                             >
                                 {theme === "dark" ? (
                                     <Sun size={15} aria-hidden />

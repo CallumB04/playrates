@@ -8,7 +8,7 @@ import {
     type SVGProps,
 } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Search } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { fieldClass } from "./Input";
 
@@ -32,6 +32,8 @@ interface DropdownProps {
     className?: string;
     /** Width of the popover. Defaults to the trigger's width. */
     menuClassName?: string;
+    /** Adds a filter field to the menu. For lists too long to scan. */
+    searchable?: boolean;
     disabled?: boolean;
     id?: string;
     "aria-label"?: string;
@@ -51,24 +53,56 @@ const Dropdown = ({
     placeholder = "Select",
     className,
     menuClassName,
+    searchable = false,
     disabled = false,
     id,
     ...aria
 }: DropdownProps) => {
     const [open, setOpen] = useState(false);
     const [active, setActive] = useState(0);
+    const [query, setQuery] = useState("");
     const [rect, setRect] = useState<DOMRect | null>(null);
     const wrapRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<HTMLUListElement>(null);
+    const searchRef = useRef<HTMLInputElement>(null);
+    const focused = useRef(false);
     const listId = useId();
 
-    const selectedIndex = options.findIndex((o) => o.value === value);
-    const selected = selectedIndex >= 0 ? options[selectedIndex] : undefined;
+    const selected = options.find((o) => o.value === value);
+
+    /* Arrowing and committing act on what is on screen, so every index below
+       is into the filtered list rather than the full one. */
+    const needle = query.trim().toLowerCase();
+    const shown = needle
+        ? options.filter((o) => o.label.toLowerCase().includes(needle))
+        : options;
+
+    const selectedIndex = shown.findIndex((o) => o.value === value);
 
     // Opening lands on what is already chosen, not on the first option.
     useEffect(() => {
-        if (open) setActive(selectedIndex >= 0 ? selectedIndex : 0);
-    }, [open, selectedIndex]);
+        if (!open) {
+            focused.current = false;
+            return setQuery("");
+        }
+        setActive(selectedIndex >= 0 ? selectedIndex : 0);
+        // Only on open: re-running on every keystroke would fight the filter.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open]);
+
+    /* The menu is portalled and waits on the trigger's box, so the field does
+       not exist on the render that opened it. Once per opening: `rect` is
+       replaced on every scroll, which would otherwise steal focus back. */
+    useEffect(() => {
+        if (!open || !rect || focused.current) return;
+        focused.current = true;
+        searchRef.current?.focus();
+    }, [open, rect]);
+
+    // A narrowing filter can leave the highlight past the end of the list.
+    useEffect(() => {
+        setActive((i) => Math.min(i, Math.max(0, shown.length - 1)));
+    }, [shown.length]);
 
     useEffect(() => {
         if (!open) return;
@@ -103,17 +137,21 @@ const Dropdown = ({
     // Keep the highlighted option in view when arrowing past the fold.
     useEffect(() => {
         if (!open) return;
-        listRef.current?.children[active]?.scrollIntoView({ block: "nearest" });
-    }, [open, active]);
+        // The search field, when there is one, is the list's first child.
+        const offset = searchable ? 1 : 0;
+        listRef.current?.children[active + offset]?.scrollIntoView({
+            block: "nearest",
+        });
+    }, [open, active, searchable]);
 
     const commit = (index: number) => {
-        const option = options[index];
+        const option = shown[index];
         if (!option) return;
         onChange(option.value);
         setOpen(false);
     };
 
-    const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
         if (disabled) return;
 
         if (!open) {
@@ -127,7 +165,7 @@ const Dropdown = ({
         switch (event.key) {
             case "ArrowDown":
                 event.preventDefault();
-                return setActive((i) => Math.min(options.length - 1, i + 1));
+                return setActive((i) => Math.min(shown.length - 1, i + 1));
             case "ArrowUp":
                 event.preventDefault();
                 return setActive((i) => Math.max(0, i - 1));
@@ -136,9 +174,13 @@ const Dropdown = ({
                 return setActive(0);
             case "End":
                 event.preventDefault();
-                return setActive(options.length - 1);
+                return setActive(shown.length - 1);
             case "Enter":
+                event.preventDefault();
+                return commit(active);
             case " ":
+                // A space is a character while typing a filter.
+                if (searchable) return;
                 event.preventDefault();
                 return commit(active);
             case "Escape":
@@ -221,7 +263,35 @@ const Dropdown = ({
                             menuClassName
                         )}
                     >
-                        {options.map((option, index) => {
+                        {searchable && (
+                            <li className="sticky top-0 z-10 mb-1 flex items-center gap-2 rounded-sm bg-surface-raised px-2.5 py-1.5">
+                                <Search
+                                    size={13}
+                                    aria-hidden
+                                    className="shrink-0 text-content-muted"
+                                />
+                                <input
+                                    ref={searchRef}
+                                    value={query}
+                                    onChange={(e) => {
+                                        setQuery(e.target.value);
+                                        setActive(0);
+                                    }}
+                                    onKeyDown={onKeyDown}
+                                    placeholder="Search"
+                                    aria-label="Filter options"
+                                    className="min-w-0 flex-1 bg-transparent text-body-sm text-content placeholder:text-content-muted focus:outline-none"
+                                />
+                            </li>
+                        )}
+
+                        {shown.length === 0 && (
+                            <li className="px-2.5 py-3 text-body-sm text-content-muted">
+                                Nothing matches “{query}”.
+                            </li>
+                        )}
+
+                        {shown.map((option, index) => {
                             const Icon = option.icon;
                             const isSelected = option.value === value;
                             const isActive = index === active;

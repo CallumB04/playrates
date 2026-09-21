@@ -1,6 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { browserTimeZone, setDisplayTimeZone } from "../lib/format";
+import { effectiveTimeZone, setDisplayTimeZone } from "../lib/format";
 import {
     createContext,
     useContext,
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     /* Dates render in the profile's zone. Signed out falls back to the
        browser's, which is the honest guess for someone with no preference. */
     useEffect(() => {
-        setDisplayTimeZone(user?.timezone || browserTimeZone());
+        setDisplayTimeZone(effectiveTimeZone(user?.timezone));
     }, [user?.timezone]);
 
     const value = useMemo<AuthContextValue>(

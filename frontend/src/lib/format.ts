@@ -15,9 +15,20 @@ export const setDisplayTimeZone = (zone: string): void => {
 
 export const displayTimeZone = (): string => displayZone;
 
-/** The zone the browser is in, as the default for someone who has never set one. */
-export const browserTimeZone = (): string =>
-    Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+/* Where a zone cannot be worked out at all. A real place rather than UTC, so
+   the offsets and the daylight-saving jumps are somebody's. */
+const FALLBACK_ZONE = "Europe/London";
+
+/** The zone the browser reports, for someone who has never chosen one. */
+export const browserTimeZone = (): string => {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return zone && zone !== "UTC" ? zone : FALLBACK_ZONE;
+};
+
+/** "UTC" is the column default, which means nobody has chosen yet — so the
+ *  browser's own zone stands in until they do. */
+export const effectiveTimeZone = (stored: string | undefined): string =>
+    stored && stored !== "UTC" ? stored : browserTimeZone();
 
 /** Every zone the runtime knows. supportedValuesOf is ES2022 and the app
  *  compiles to ES2020, so it is reached through a narrow cast. */

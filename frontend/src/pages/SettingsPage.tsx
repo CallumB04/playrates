@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
     Bell,
     Eye,
+    Monitor,
     Moon,
     Plug,
     SlidersHorizontal,
@@ -28,7 +29,8 @@ import EmptyPlate from "../components/ui/EmptyPlate";
 import { Input, Textarea } from "../components/ui/Input";
 import UsernameRow from "./settings/UsernameRow";
 import Dropdown from "../components/ui/Dropdown";
-import { browserTimeZone, formatCount, timeZones } from "../lib/format";
+import SegmentedChoice from "../components/ui/SegmentedChoice";
+import { effectiveTimeZone, formatCount, timeZones } from "../lib/format";
 import { cn } from "../lib/cn";
 
 const SECTIONS: SettingsSection[] = [
@@ -50,7 +52,7 @@ interface RowProps {
 }
 
 const Row = ({ label, help, soon, children }: RowProps) => (
-    <div className="grid gap-3 border-b border-subtle px-5 py-4 last:border-b-0 sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)] sm:gap-8">
+    <div className="grid items-center gap-3 border-b border-subtle px-5 py-4 last:border-b-0 sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)] sm:gap-8">
         <div>
             <div className="flex flex-wrap items-baseline gap-2">
                 <span
@@ -88,7 +90,7 @@ const Panel = ({ children }: { children: ReactNode }) => (
 const SettingsPage = () => {
     const { user, session, signOut } = useAuth();
     const { openLogin } = useAccountForm();
-    const { theme, setTheme } = useTheme();
+    const { preference, setPreference } = useTheme();
     const notify = useNotify();
     const update = useUpdateProfile();
     const navigate = useNavigate();
@@ -124,14 +126,17 @@ const SettingsPage = () => {
         setHideOnline(user?.hideOnline ?? false);
     }, [user]);
 
-    const zones = useMemo(
-        () =>
-            timeZones().map((zone) => ({
-                value: zone,
-                label: zone.replace(/_/g, " "),
-            })),
-        []
-    );
+    const zone = effectiveTimeZone(user?.timezone);
+
+    const zones = useMemo(() => {
+        // The current zone is always offered, even if this runtime omits it.
+        const names = new Set(timeZones());
+        names.add(zone);
+        return [...names].sort().map((name) => ({
+            value: name,
+            label: name.replace(/_/g, " "),
+        }));
+    }, [zone]);
 
     // Saved on blur. One value with one owner needs no second action.
     const saveText = (
@@ -191,22 +196,23 @@ const SettingsPage = () => {
                         aria-label="First name"
                     />
                 </Row>
-                <Row label="Email" soon>
+                <Row label="Change email" soon>
                     <Input
                         value={session?.user.email ?? ""}
                         readOnly
                         aria-label="Email"
                     />
                 </Row>
-                <Row label="Password" soon>
+                <Row label="Reset password" soon>
                     <Button variant="secondary" size="sm">
                         Send a reset link
                     </Button>
                 </Row>
                 <Row label="Time zone" help="Dates and times render in this.">
                     <Dropdown
+                        searchable
                         options={zones}
-                        value={user.timezone || browserTimeZone()}
+                        value={zone}
                         onChange={(next) =>
                             update.mutate(
                                 { timezone: next },
@@ -258,7 +264,7 @@ const SettingsPage = () => {
                                 hideOnline
                             )
                         }
-                        label={hideOnline ? "Hidden" : "Visible"}
+                        label={hideOnline ? "On" : "Off"}
                         disabled={update.isPending}
                     />
                 </Row>
@@ -281,19 +287,24 @@ const SettingsPage = () => {
                                 showSexual
                             )
                         }
-                        label={showSexual ? "Shown" : "Hidden"}
+                        label={showSexual ? "On" : "Off"}
                         disabled={update.isPending}
                     />
                 </Row>
                 <Row label="Theme">
-                    <Dropdown
-                        options={[
-                            { value: "light", label: "Day", icon: Sun },
-                            { value: "dark", label: "Night", icon: Moon },
+                    <SegmentedChoice
+                        label="Theme"
+                        segments={[
+                            { value: "light", label: "Light", icon: Sun },
+                            { value: "dark", label: "Dark", icon: Moon },
+                            {
+                                value: "system",
+                                label: "System",
+                                icon: Monitor,
+                            },
                         ]}
-                        value={theme}
-                        onChange={(next) => setTheme(next as "light" | "dark")}
-                        aria-label="Theme"
+                        value={preference}
+                        onChange={setPreference}
                     />
                 </Row>
             </Panel>
