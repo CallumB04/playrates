@@ -3,6 +3,7 @@ import { useAccountForm } from "../../contexts/AccountFormContext";
 import Modal from "../ui/Modal";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
+import { BRAND_MOTTO, BRAND_NAME } from "../../constants/brand";
 
 /**
  * Switching mode unmounts one form and mounts the other, which clears the
@@ -25,29 +26,47 @@ const AccountFormModal = () => {
         <Modal
             onClose={close}
             labelledBy="account-form-title"
-            className="mx-auto flex w-full max-w-[630px] flex-col justify-center px-2 py-12 font-display text-content sm:px-12 sm:py-16 md:px-16"
+            className="w-full max-w-[440px] p-0! sm:p-0!"
         >
-            <div className="text-center">
-                <h2 id="account-form-title" className="text-3xl sm:text-4xl">
-                    {isSignup ? "Sign up for PlayRates" : "Log in to PlayRates"}
-                </h2>
-                <p className="mt-2 sm:text-lg">
-                    {isSignup ? "Create a free account or" : "Not a member?"}{" "}
-                    <button
-                        type="button"
-                        onClick={isSignup ? openLogin : openSignup}
-                        className="cursor-pointer text-brand transition-colors duration-200 hover:text-brand-hover"
+            <header className="relative overflow-hidden border-b border-subtle px-6 py-6">
+                <span
+                    aria-hidden
+                    className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-brand/12 blur-3xl"
+                />
+                <div className="relative">
+                    <p className="font-display text-xl font-bold text-content">
+                        {BRAND_NAME}
+                    </p>
+                    <h2
+                        id="account-form-title"
+                        className="mt-3 font-display text-section text-content"
                     >
-                        {isSignup ? "log in" : "Sign up"}
-                    </button>
-                </p>
+                        {isSignup ? "Create your account" : "Welcome back"}
+                    </h2>
+                    <p className="mt-1 text-body-sm text-content-secondary">
+                        {isSignup ? BRAND_MOTTO : "Log in to pick up where you left off."}
+                    </p>
+                </div>
+            </header>
+
+            <div className="px-6 py-6">
+                {isSignup ? (
+                    <SignupForm onSignedUp={handleSignedUp} />
+                ) : (
+                    <LoginForm initialEmail={emailAfterSignup} />
+                )}
             </div>
 
-            {isSignup ? (
-                <SignupForm onSignedUp={handleSignedUp} />
-            ) : (
-                <LoginForm initialEmail={emailAfterSignup} />
-            )}
+            <footer className="border-t border-subtle bg-surface-sunken/40 px-6 py-4 text-center text-body-sm text-content-secondary">
+                {isSignup ? "Already have an account?" : "New here?"}{" "}
+                <button
+                    type="button"
+                    onClick={isSignup ? openLogin : openSignup}
+                    className="lift cursor-pointer font-medium text-brand hover:text-brand-hover"
+                >
+                    {isSignup ? "Log in" : "Create an account"}
+                </button>
+            </footer>
         </Modal>
     );
 };

@@ -8,6 +8,7 @@ import StatusBadge from "../../../components/ui/StatusBadge";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import VoteButton from "../../../components/ui/VoteButton";
 import Button from "../../../components/ui/Button";
+import { PenLine } from "lucide-react";
 import {
     displayStatusFor,
     isDisplayStatus,
@@ -56,10 +57,19 @@ const GameReviews = ({
             <h2 className="font-display text-section text-content">
                 Reviews
             </h2>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
                 <span className="text-label text-content-muted">
                     {formatCount(total)} {total === 1 ? "review" : "reviews"}
                 </span>
+                {onWriteReview && (
+                    /* Only shown when there are already reviews: the empty
+                       state carries its own action, and two of them would be
+                       the same button twice. */
+                    <Button size="sm" onClick={onWriteReview}>
+                        <PenLine size={14} aria-hidden />
+                        {hasLog ? "Edit your review" : "Write a review"}
+                    </Button>
+                )}
                 <Dropdown
                     options={[
                         { value: "recent", label: "Most recent" },

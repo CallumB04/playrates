@@ -3,34 +3,42 @@ import { Eye, EyeOff } from "lucide-react";
 import FormField from "./FormField";
 
 interface PasswordFieldProps {
+    label?: string;
     error?: string;
+    help?: string;
+    autoComplete?: string;
     autoFocus?: boolean;
 }
 
-const PasswordField = ({ error, autoFocus }: PasswordFieldProps) => {
+const PasswordField = ({
+    label = "Password",
+    error,
+    help,
+    autoComplete = "current-password",
+    autoFocus,
+}: PasswordFieldProps) => {
     const [visible, setVisible] = useState(false);
 
     return (
         <FormField
-            label="Password"
+            label={label}
             name="password"
             type={visible ? "text" : "password"}
-            placeholder="Password"
-            autoComplete="current-password"
+            autoComplete={autoComplete}
             required
             autoFocus={autoFocus}
             error={error}
-            className="w-full rounded-lg border border-field bg-transparent py-[14px] pr-11 pl-3 focus:border-brand focus:outline-none sm:rounded-none sm:border-0 sm:border-b sm:border-content sm:py-[6px] sm:pr-10 sm:pl-[2px]"
+            help={help}
             adornment={
                 <button
                     type="button"
                     onClick={() => setVisible((v) => !v)}
-                    title={visible ? "Hide" : "Show"}
+                    title={visible ? "Hide password" : "Show password"}
                     aria-label={visible ? "Hide password" : "Show password"}
                     aria-pressed={visible}
-                    className="absolute top-[14px] right-3 mr-1 cursor-pointer text-content transition-colors duration-200 hover:text-brand sm:top-1 sm:mr-0"
+                    className="lift absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer rounded-sm p-1 text-content-muted hover:text-content"
                 >
-                    {visible ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {visible ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
             }
         />

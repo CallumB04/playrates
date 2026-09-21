@@ -53,7 +53,7 @@ describe("SignupForm", () => {
             email: "New@Example.test",
             password: "longenough1",
         });
-        await user.click(screen.getByRole("button", { name: "Sign up" }));
+        await user.click(screen.getByRole("button", { name: "Create account" }));
 
         await waitFor(() => expect(signUp).toHaveBeenCalledOnce());
         // the email is normalised before it reaches Supabase
@@ -75,7 +75,7 @@ describe("SignupForm", () => {
             email: "new@example.test",
             password: "short",
         });
-        await user.click(screen.getByRole("button", { name: "Sign up" }));
+        await user.click(screen.getByRole("button", { name: "Create account" }));
 
         expect(
             await screen.findByText(/at least 8 characters/i)
@@ -96,7 +96,7 @@ describe("SignupForm", () => {
             email: "new@example.test",
             password: "longenough1",
         });
-        await user.click(screen.getByRole("button", { name: "Sign up" }));
+        await user.click(screen.getByRole("button", { name: "Create account" }));
 
         expect(
             await screen.findByText(/letters, numbers and underscores/i)
@@ -114,7 +114,7 @@ describe("SignupForm", () => {
             email: "new@example.test",
             password: "longenough1",
         });
-        await user.click(screen.getByRole("button", { name: "Sign up" }));
+        await user.click(screen.getByRole("button", { name: "Create account" }));
 
         expect(
             await screen.findByText(/username is taken/i)
@@ -132,7 +132,7 @@ describe("SignupForm", () => {
             email: "taken@example.test",
             password: "longenough1",
         });
-        await user.click(screen.getByRole("button", { name: "Sign up" }));
+        await user.click(screen.getByRole("button", { name: "Create account" }));
 
         expect(
             await screen.findByText(/already registered/i)
@@ -155,7 +155,7 @@ describe("SignupForm", () => {
             email: "new@example.test",
             password: "longenough1",
         });
-        await user.click(screen.getByRole("button", { name: "Sign up" }));
+        await user.click(screen.getByRole("button", { name: "Create account" }));
 
         await waitFor(() => expect(called).toBe(true));
     });

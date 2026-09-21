@@ -1,4 +1,4 @@
-import { buttonClass } from "../ui/Button";
+import Button from "../ui/Button";
 import { useState, type FormEvent } from "react";
 import { PasswordSchema, UsernameSchema } from "@playrates/shared";
 import { checkUsernameAvailable } from "../../api";
@@ -6,7 +6,6 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import FormField from "./FormField";
 import PasswordField from "./PasswordField";
-import LoadingSpinner from "../LoadingSpinner";
 
 interface SignupFormProps {
     onSignedUp: (email: string) => void;
@@ -77,45 +76,36 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="contents">
-            <div className="mx-auto w-11/12 space-y-6 pt-12 sm:mx-0 sm:w-full sm:space-y-8">
-                <FormField
-                    label="Username"
-                    name="username"
-                    type="text"
-                    placeholder="Username"
-                    autoComplete="username"
-                    required
-                    autoFocus
-                    error={errors.username}
-                />
-                <FormField
-                    label="Email"
-                    name="email"
-                    type="email"
-                    placeholder="Email"
-                    autoComplete="email"
-                    required
-                    error={errors.email}
-                />
-                <PasswordField error={errors.password} />
-            </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <FormField
+                label="Username"
+                name="username"
+                type="text"
+                placeholder="calbgyn"
+                help="Letters, numbers and underscores. This is your profile's address."
+                autoComplete="username"
+                required
+                autoFocus
+                error={errors.username}
+            />
+            <FormField
+                label="Email"
+                name="email"
+                type="email"
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+                error={errors.email}
+            />
+            <PasswordField
+                autoComplete="new-password"
+                help="At least 8 characters."
+                error={errors.password}
+            />
 
-            <div className="mx-auto w-11/12 space-y-3 pt-6 sm:mx-0 sm:w-full sm:pt-8 md:pt-10">
-                <button
-                    type="submit"
-                    className={buttonClass("primary", "w-full sm:rounded-md")}
-                    disabled={isSubmitting}
-                >
-                    Sign up
-                </button>
-            </div>
-
-            {isSubmitting && (
-                <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-overlay-loading">
-                    <LoadingSpinner size="lg" />
-                </div>
-            )}
+            <Button type="submit" size="lg" disabled={isSubmitting}>
+                {isSubmitting ? "Creating your account…" : "Create account"}
+            </Button>
         </form>
     );
 };

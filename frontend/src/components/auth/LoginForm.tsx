@@ -1,11 +1,10 @@
-import { buttonClass } from "../ui/Button";
 import { useState, type FormEvent } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useNotify } from "../../contexts/NotificationContext";
+import Button from "../ui/Button";
 import FormField from "./FormField";
 import PasswordField from "./PasswordField";
-import LoadingSpinner from "../LoadingSpinner";
 
 interface LoginFormProps {
     /** Carried over when the user has just signed up. */
@@ -47,36 +46,24 @@ const LoginForm = ({ initialEmail = "" }: LoginFormProps) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="contents">
-            <div className="mx-auto w-11/12 space-y-6 pt-12 sm:mx-0 sm:w-full sm:space-y-8">
-                <FormField
-                    label="Email"
-                    name="email"
-                    type="email"
-                    placeholder="Email"
-                    autoComplete="email"
-                    defaultValue={initialEmail}
-                    required
-                    autoFocus
-                />
-                <PasswordField error={formError} />
-            </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <FormField
+                label="Email"
+                name="email"
+                type="email"
+                placeholder="you@example.com"
+                autoComplete="email"
+                defaultValue={initialEmail}
+                required
+                autoFocus
+            />
+            <PasswordField error={formError} />
 
-            <div className="mx-auto w-11/12 space-y-3 pt-6 sm:mx-0 sm:w-full sm:pt-8 md:pt-10">
-                <button
-                    type="submit"
-                    className={buttonClass("primary", "w-full")}
-                    disabled={isSubmitting}
-                >
-                    Log in
-                </button>
-            </div>
-
-            {isSubmitting && (
-                <div className="absolute inset-0 flex items-center justify-center bg-overlay-loading">
-                    <LoadingSpinner size="lg" />
-                </div>
-            )}
+            {/* The button carries the pending state rather than a spinner
+                covering the panel, which hid the fields you were correcting. */}
+            <Button type="submit" size="lg" disabled={isSubmitting}>
+                {isSubmitting ? "Logging in…" : "Log in"}
+            </Button>
         </form>
     );
 };
