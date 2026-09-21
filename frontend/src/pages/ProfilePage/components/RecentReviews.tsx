@@ -3,7 +3,8 @@ import type { ReviewWithAuthor } from "@playrates/shared";
 import Panel from "../../../components/ui/Panel";
 import GameCover from "../../../components/game/GameCover";
 import { buttonClass } from "../../../components/ui/Button";
-import { formatHours, formatRating, relativeTime } from "../../../lib/format";
+import RatingBadge from "../../../components/ui/RatingBadge";
+import { formatHours, relativeTime } from "../../../lib/format";
 
 interface RecentReviewsProps {
     reviews: ReviewWithAuthor[];
@@ -65,9 +66,7 @@ const RecentReviews = ({ reviews, isOwner }: RecentReviewsProps) => {
                                     {review.game.title}
                                 </span>
                                 {review.rating !== null && (
-                                    <span className="font-mono text-[13px] font-semibold text-brand">
-                                        {formatRating(review.rating)}
-                                    </span>
+                                    <RatingBadge value={review.rating} bare />
                                 )}
                             </span>
 
@@ -79,8 +78,12 @@ const RecentReviews = ({ reviews, isOwner }: RecentReviewsProps) => {
                                 {/* The hours are what the rating was worth at
                                     the time it was written. */}
                                 {review.hoursPlayed !== null && (
-                                    <span className="font-mono">
-                                        {formatHours(review.hoursPlayed)} played
+                                    <span>
+                                        Reviewed at{" "}
+                                        <span className="font-mono">
+                                            {formatHours(review.hoursPlayed)}
+                                        </span>{" "}
+                                        played
                                     </span>
                                 )}
                                 <span>{relativeTime(review.createdAt)}</span>

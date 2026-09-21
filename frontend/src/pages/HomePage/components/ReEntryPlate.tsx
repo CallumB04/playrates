@@ -20,6 +20,8 @@ import { cn } from "../../../lib/cn";
 
 interface ReEntryPlateProps {
     username: string;
+    /** First name where they have set one, username otherwise. */
+    displayName: string;
     /** The most recently touched "playing" log, if there is one. */
     current: GameLogWithGame | undefined;
     /** This year's logs, for the chart. */
@@ -54,6 +56,7 @@ const Stat = ({ label, value }: { label: string; value: string }) => (
  */
 const ReEntryPlate = ({
     username,
+    displayName,
     current,
     yearLogs,
     playingCount,
@@ -70,7 +73,7 @@ const ReEntryPlate = ({
         <div className="relative grid gap-8 px-6 py-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-12 lg:px-8 lg:py-9">
             <div className="flex flex-col">
                 <h1 className="font-display text-[34px] leading-tight text-content sm:text-[40px]">
-                    Welcome back, {username}
+                    Welcome back, {displayName}
                 </h1>
 
                 <p className="mt-2.5 max-w-[46ch] text-body leading-relaxed text-content-secondary">

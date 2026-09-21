@@ -3,37 +3,46 @@ import { MessagesSquare } from "lucide-react";
 import { buttonClass } from "../components/ui/Button";
 
 const CommunityPage = () => (
-    <div className="flex min-h-[55vh] items-center justify-center py-8">
-        <section className="relative w-full max-w-lg overflow-hidden rounded-lg border border-subtle bg-surface-raised px-6 py-10 text-center shadow-plate sm:px-10">
-            <span
-                aria-hidden
-                className="pointer-events-none absolute -right-16 -top-20 size-56 rounded-full bg-brand/12 blur-3xl"
-            />
+    <section className="relative overflow-hidden rounded-lg border border-subtle bg-surface-raised px-6 py-10 shadow-plate sm:px-10 sm:py-12">
+        <span
+            aria-hidden
+            className="pointer-events-none absolute -right-24 -top-28 size-80 rounded-full bg-brand/12 blur-3xl"
+        />
 
-            <div className="relative flex flex-col items-center">
-                <span className="grid size-12 place-items-center rounded-full bg-brand-subtle text-brand">
-                    <MessagesSquare size={22} aria-hidden />
+        <div className="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:gap-8">
+            <span className="grid size-14 shrink-0 place-items-center rounded-lg bg-brand-subtle text-brand">
+                <MessagesSquare size={26} aria-hidden />
+            </span>
+
+            <div className="min-w-0 flex-1">
+                {/* A dotted rule and a word, rather than a pill that looks
+                    like a status chip on a page with no statuses. */}
+                <span className="flex items-center gap-2.5 text-label text-brand">
+                    In development
+                    <span
+                        aria-hidden
+                        className="h-px w-10 bg-brand/40 sm:w-16"
+                    />
                 </span>
 
-                <span className="mt-5 inline-flex items-center rounded-full border border-brand/30 bg-brand-subtle px-3 py-1 text-label text-brand">
-                    Coming soon
-                </span>
-
-                <h1 className="mt-4 font-display text-title text-content">
+                <h1 className="mt-2.5 font-display text-title text-content">
                     Community
                 </h1>
 
-                <p className="mt-2.5 max-w-[40ch] text-body leading-relaxed text-content-secondary">
+                <p className="mt-2 max-w-[54ch] text-body leading-relaxed text-content-secondary">
                     Threads for genres, games and platforms. A place to talk
                     about what you play, not just log it.
                 </p>
-
-                <Link to="/library" className={buttonClass("primary", "mt-6")}>
-                    Browse the library
-                </Link>
             </div>
-        </section>
-    </div>
+
+            <Link
+                to="/library"
+                className={buttonClass("secondary", "shrink-0")}
+            >
+                Browse the library
+            </Link>
+        </div>
+    </section>
 );
 
 export default CommunityPage;

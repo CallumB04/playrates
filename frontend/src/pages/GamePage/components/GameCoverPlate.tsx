@@ -18,6 +18,8 @@ interface GameCoverPlateProps {
     isSignedIn: boolean;
     facts: Fact[];
     onPrimary: () => void;
+    /** Only passed when the viewer has a log to look at. */
+    onViewLog?: () => void;
     onQuickLog: (status: "backlog" | "wishlist") => void;
     isSaving: boolean;
 }
@@ -44,6 +46,7 @@ const GameCoverPlate = ({
     isSignedIn,
     facts,
     onPrimary,
+    onViewLog,
     onQuickLog,
     isSaving,
 }: GameCoverPlateProps) => {
@@ -80,13 +83,27 @@ const GameCoverPlate = ({
                 </div>
             </div>
 
-            <Button size="lg" onClick={onPrimary} disabled={isSaving}>
-                {!isSignedIn
-                    ? "Log in to add"
-                    : log
-                      ? "Edit your log"
-                      : "Log this game"}
-            </Button>
+            {log && onViewLog ? (
+                /* Viewing leads once a log exists: it is the thing most
+                   people came back for, and editing is one press further in
+                   rather than the only option. */
+                <div className="flex flex-col gap-2">
+                    <Button size="lg" onClick={onViewLog} disabled={isSaving}>
+                        View your log
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        onClick={onPrimary}
+                        disabled={isSaving}
+                    >
+                        Edit your log
+                    </Button>
+                </div>
+            ) : (
+                <Button size="lg" onClick={onPrimary} disabled={isSaving}>
+                    {!isSignedIn ? "Log in to add" : "Log this game"}
+                </Button>
+            )}
 
             {isSignedIn && !log && (
                 <div className="flex gap-2">

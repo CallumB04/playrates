@@ -7,6 +7,7 @@ import {
     type KeyboardEvent,
     type SVGProps,
 } from "react";
+import { createPortal } from "react-dom";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { fieldClass } from "./Input";
@@ -62,6 +63,7 @@ const Dropdown = ({
 }: DropdownProps) => {
     const [open, setOpen] = useState(false);
     const [active, setActive] = useState(0);
+    const [rect, setRect] = useState<DOMRect | null>(null);
     const wrapRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<HTMLUListElement>(null);
     const listId = useId();
@@ -76,13 +78,33 @@ const Dropdown = ({
 
     useEffect(() => {
         if (!open) return;
+
         const onPointerDown = (event: MouseEvent) => {
-            if (!wrapRef.current?.contains(event.target as Node)) {
+            const target = event.target as Node;
+            if (
+                !wrapRef.current?.contains(target) &&
+                !listRef.current?.contains(target)
+            ) {
                 setOpen(false);
             }
         };
+
+        /* The menu is portalled, so it does not move with the trigger. Track
+           the trigger's box and close on anything that would separate them. */
+        const track = () => {
+            const box = wrapRef.current?.getBoundingClientRect();
+            if (box) setRect(box);
+        };
+
+        track();
         document.addEventListener("mousedown", onPointerDown);
-        return () => document.removeEventListener("mousedown", onPointerDown);
+        window.addEventListener("resize", track);
+        window.addEventListener("scroll", track, true);
+        return () => {
+            document.removeEventListener("mousedown", onPointerDown);
+            window.removeEventListener("resize", track);
+            window.removeEventListener("scroll", track, true);
+        };
     }, [open]);
 
     // Keep the highlighted option in view when arrowing past the fold.
@@ -175,75 +197,94 @@ const Dropdown = ({
                     size={14}
                     aria-hidden
                     className={cn(
-                        "pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-content-muted transition-transform duration-200",
+                        "pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-content-muted transition-transform duration-200",
                         open && "rotate-180"
                     )}
                 />
             </button>
 
-            {open && (
-                <ul
-                    ref={listRef}
-                    id={listId}
-                    role="listbox"
-                    aria-activedescendant={`${listId}-${active}`}
-                    className={cn(
-                        "animate-settle absolute left-0 right-0 top-[calc(100%+0.35rem)] z-30 max-h-72 overflow-y-auto rounded-md border border-subtle bg-surface-raised p-1 shadow-modal",
-                        menuClassName
-                    )}
-                >
-                    {options.map((option, index) => {
-                        const Icon = option.icon;
-                        const isSelected = option.value === value;
-                        const isActive = index === active;
+            {open &&
+                rect &&
+                createPortal(
+                    <ul
+                        ref={listRef}
+                        id={listId}
+                        role="listbox"
+                        aria-activedescendant={`${listId}-${active}`}
+                        /* Fixed and portalled to the body: inside a modal the menu
+                       was clipped by the panel and counted toward its scroll
+                       height, so opening it made the popup scroll. */
+                        style={{
+                            position: "fixed",
+                            left: rect.left,
+                            width: rect.width,
+                            // Flip above the trigger when there is no room below.
+                            ...(window.innerHeight - rect.bottom < 280 &&
+                            rect.top > 280
+                                ? { bottom: window.innerHeight - rect.top + 6 }
+                                : { top: rect.bottom + 6 }),
+                        }}
+                        className={cn(
+                            "z-[60] max-h-72 animate-settle overflow-y-auto rounded-md border border-subtle bg-surface-raised p-1 shadow-modal",
+                            menuClassName
+                        )}
+                    >
+                        {options.map((option, index) => {
+                            const Icon = option.icon;
+                            const isSelected = option.value === value;
+                            const isActive = index === active;
 
-                        return (
-                            <li key={option.value} id={`${listId}-${index}`}>
-                                <button
-                                    type="button"
-                                    role="option"
-                                    aria-selected={isSelected}
-                                    tabIndex={-1}
-                                    onClick={() => commit(index)}
-                                    onPointerEnter={() => setActive(index)}
-                                    className={cn(
-                                        "flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2.5 py-2 text-left text-body-sm transition-colors",
-                                        isActive
-                                            ? "bg-surface-hover text-content"
-                                            : "text-content-secondary",
-                                        isSelected && "text-content"
-                                    )}
+                            return (
+                                <li
+                                    key={option.value}
+                                    id={`${listId}-${index}`}
                                 >
-                                    {Icon && (
-                                        <Icon
-                                            size={15}
-                                            aria-hidden
-                                            className="shrink-0"
-                                        />
-                                    )}
-                                    <span className="min-w-0 flex-1">
-                                        <span className="block truncate">
-                                            {option.label}
-                                        </span>
-                                        {option.hint && (
-                                            <span className="block truncate text-label-sm text-content-muted">
-                                                {option.hint}
-                                            </span>
+                                    <button
+                                        type="button"
+                                        role="option"
+                                        aria-selected={isSelected}
+                                        tabIndex={-1}
+                                        onClick={() => commit(index)}
+                                        onPointerEnter={() => setActive(index)}
+                                        className={cn(
+                                            "flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2.5 py-2 text-left text-body-sm transition-colors",
+                                            isActive
+                                                ? "bg-surface-hover text-content"
+                                                : "text-content-secondary",
+                                            isSelected && "text-content"
                                         )}
-                                    </span>
-                                    {isSelected && (
-                                        <Check
-                                            size={15}
-                                            aria-hidden
-                                            className="shrink-0 text-brand"
-                                        />
-                                    )}
-                                </button>
-                            </li>
-                        );
-                    })}
-                </ul>
-            )}
+                                    >
+                                        {Icon && (
+                                            <Icon
+                                                size={15}
+                                                aria-hidden
+                                                className="shrink-0"
+                                            />
+                                        )}
+                                        <span className="min-w-0 flex-1">
+                                            <span className="block truncate">
+                                                {option.label}
+                                            </span>
+                                            {option.hint && (
+                                                <span className="block truncate text-label-sm text-content-muted">
+                                                    {option.hint}
+                                                </span>
+                                            )}
+                                        </span>
+                                        {isSelected && (
+                                            <Check
+                                                size={15}
+                                                aria-hidden
+                                                className="shrink-0 text-brand"
+                                            />
+                                        )}
+                                    </button>
+                                </li>
+                            );
+                        })}
+                    </ul>,
+                    document.body
+                )}
         </div>
     );
 };

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Pencil, Settings } from "lucide-react";
+import { Moon, Pencil, Settings, Sun } from "lucide-react";
 import type { GameLogWithGame } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import { useProfile } from "../../hooks/queries/useProfiles";
@@ -44,6 +45,7 @@ const isGameStatus = (value: string): value is GameStatus =>
 
 const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const { user: currentUser } = useAuth();
+    const { theme, setTheme } = useTheme();
     const { openLogin } = useAccountForm();
     const notify = useNotify();
     const navigate = useNavigate();
@@ -196,6 +198,32 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 action={
                     isMyAccount ? (
                         <>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                aria-label={
+                                    theme === "dark"
+                                        ? "Switch to day"
+                                        : "Switch to night"
+                                }
+                                title={
+                                    theme === "dark"
+                                        ? "Switch to day"
+                                        : "Switch to night"
+                                }
+                                onClick={() =>
+                                    setTheme(
+                                        theme === "dark" ? "light" : "dark"
+                                    )
+                                }
+                                className="px-2.5"
+                            >
+                                {theme === "dark" ? (
+                                    <Sun size={16} aria-hidden />
+                                ) : (
+                                    <Moon size={16} aria-hidden />
+                                )}
+                            </Button>
                             <Button
                                 variant="secondary"
                                 size="sm"

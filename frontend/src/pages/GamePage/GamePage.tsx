@@ -21,6 +21,8 @@ import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup"
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../components/ui/Skeleton";
 import GameCoverPlate from "./components/GameCoverPlate";
+import ViewGameLogPopup from "../../components/ViewGameLogPopup";
+import { useReviewVote } from "../../hooks/queries/useReviews";
 import RatingPlate from "./components/RatingPlate";
 import CirculationPlate from "./components/CirculationPlate";
 import GameReviews from "./components/GameReviews";
@@ -37,6 +39,8 @@ const GamePage = () => {
 
     const [sort, setSort] = useState<ReviewSort>("recent");
     const [editing, setEditing] = useState(false);
+    const [viewing, setViewing] = useState(false);
+    const vote = useReviewVote();
 
     const { data: game, isLoading, isError } = useGame(gameId);
     const { data: stats } = useGameStats(gameId);
@@ -103,6 +107,9 @@ const GamePage = () => {
                         log={log}
                         isSignedIn={!!user}
                         facts={facts}
+                        onViewLog={
+                            fullLog ? () => setViewing(true) : undefined
+                        }
                         onPrimary={() =>
                             user ? setEditing(true) : openLogin()
                         }
@@ -145,6 +152,14 @@ const GamePage = () => {
 
                     <GameReviews
                         reviews={reviews?.data ?? []}
+                        hasLog={!!log}
+                        onWriteReview={
+                            user
+                                ? () => setEditing(true)
+                                : () => openLogin()
+                        }
+                        canVote={!!user}
+                        onVote={(reviewId) => vote.mutate(reviewId)}
                         total={reviews?.meta.total ?? 0}
                         sort={sort}
                         onSortChange={setSort}
@@ -152,6 +167,17 @@ const GamePage = () => {
                     />
                 </div>
             </div>
+
+            {viewing && fullLog && (
+                <ViewGameLogPopup
+                    gamelog={fullLog}
+                    closePopup={() => setViewing(false)}
+                    primaryAction={{
+                        label: "Edit your log",
+                        onSelect: () => setEditing(true),
+                    }}
+                />
+            )}
 
             {editing && (
                 <CreateOrEditGameLogPopup

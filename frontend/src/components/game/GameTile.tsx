@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import type { ComponentType, SVGProps } from "react";
+import { useState, type ComponentType, type SVGProps } from "react";
 import { cn } from "../../lib/cn";
 import type { DisplayStatus } from "../../constants/gameStatus";
 import { formatRating } from "../../lib/format";
@@ -57,6 +57,14 @@ const ACTION_TONE = {
  * action overlay, which meant that on any tile without actions — every tile on
  * the home rails — hovering simply deleted the name of the game.
  */
+/**
+ * Optimistic state for the one-tap actions.
+ *
+ * The write takes a few hundred milliseconds, and an icon that looks
+ * unchanged for that long invites a second press — which is a second log, or
+ * at best a wasted request. The button fills and locks the moment it is
+ * pressed, so the feedback is immediate and the second press cannot land.
+ */
 const GameTile = ({
     gameId,
     title,
@@ -71,6 +79,7 @@ const GameTile = ({
 }: GameTileProps) => {
     const rows = actions.filter((a) => !a.icon);
     const icons = actions.filter((a) => a.icon);
+    const [pressed, setPressed] = useState<Set<string>>(new Set());
 
     return (
         <div className="group/tile">
@@ -106,10 +115,12 @@ const GameTile = ({
 
                 <span className="absolute inset-x-0 bottom-0 bg-linear-to-t from-overlay-tile via-overlay-tile/80 to-transparent p-2.5 pt-12">
                     {actions.length > 0 && (
-                        /* Rows going 0fr to 1fr animates an auto height, so the
-                       actions push in rather than popping. */
+                        /* Rows going 0fr to 1fr animates an auto height, so
+                           the actions make room rather than popping. The
+                           inner block fades and rises a few pixels on top of
+                           that, which is the part read as motion. */
                         <span className="mb-0 grid grid-rows-[0fr] transition-[grid-template-rows,margin] duration-500 ease-[var(--ease-glide)] group-focus-within/tile:mb-2 group-focus-within/tile:grid-rows-[1fr] group-hover/tile:mb-2 group-hover/tile:grid-rows-[1fr]">
-                            <span className="flex min-h-0 flex-col gap-1.5 overflow-hidden">
+                            <span className="flex min-h-0 translate-y-1.5 flex-col gap-1.5 overflow-hidden opacity-0 transition-[opacity,transform] duration-500 ease-[var(--ease-glide)] group-focus-within/tile:translate-y-0 group-focus-within/tile:opacity-100 group-hover/tile:translate-y-0 group-hover/tile:opacity-100">
                                 {rows.map((action) => (
                                     <button
                                         key={action.key}
@@ -141,17 +152,30 @@ const GameTile = ({
                                                     type="button"
                                                     title={action.label}
                                                     aria-label={action.label}
+                                                    disabled={pressed.has(
+                                                        action.key
+                                                    )}
                                                     onClick={(event) => {
                                                         event.preventDefault();
+                                                        setPressed((set) =>
+                                                            new Set(set).add(
+                                                                action.key
+                                                            )
+                                                        );
                                                         action.onSelect();
                                                     }}
                                                     className={cn(
-                                                        "grid flex-1 cursor-pointer place-items-center rounded-sm border py-1.5 lift",
+                                                        "lift grid flex-1 place-items-center rounded-sm border py-1.5 transition-colors duration-200",
                                                         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-on-media",
-                                                        ACTION_TONE[
-                                                            action.tone ??
-                                                                "secondary"
-                                                        ]
+                                                        pressed.has(action.key)
+                                                            ? "cursor-default border-brand bg-brand text-content-on-solid"
+                                                            : cn(
+                                                                  "cursor-pointer",
+                                                                  ACTION_TONE[
+                                                                      action.tone ??
+                                                                          "secondary"
+                                                                  ]
+                                                              )
                                                     )}
                                                 >
                                                     <Icon

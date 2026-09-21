@@ -37,8 +37,12 @@ const Row = ({ review }: { review: ReviewWithAuthor }) => (
 
         <span className="mt-1.5 flex items-center gap-2 text-label-sm text-content-muted">
             {review.hoursPlayed !== null && (
-                <span className="font-mono">
-                    {formatHours(review.hoursPlayed)} in
+                <span>
+                    Reviewed at{" "}
+                    <span className="font-mono">
+                        {formatHours(review.hoursPlayed)}
+                    </span>{" "}
+                    played
                 </span>
             )}
             <span>{relativeTime(review.createdAt)}</span>
@@ -60,7 +64,7 @@ const ReviewFeed = ({
 }) => (
     <section>
         <h2 className="mb-3 font-display text-section text-content">
-            What people are saying
+            Recent reviews
         </h2>
 
         <div className="flex flex-col">

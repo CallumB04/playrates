@@ -19,6 +19,7 @@ export const paginated = <T>(data: T[]): Paginated<T> => ({
 export const buildProfile = (overrides: Partial<Profile> = {}): Profile => ({
     id: "11111111-1111-1111-1111-111111111111",
     username: "devuser",
+    firstName: null,
     bio: "Local development account.",
     showSexualContent: false,
     avatarUrl: null,
@@ -86,11 +87,14 @@ export const buildReview = (
     author: {
         id: "11111111-1111-1111-1111-111111111111",
         username: "devuser",
+        firstName: null,
         avatarUrl: null,
         online: true,
     },
     rating: 9.5,
     hoursPlayed: 41,
+    voteCount: 3,
+    votedByViewer: false,
     status: "played",
     playedStatus: "finished",
     platform: "steam",

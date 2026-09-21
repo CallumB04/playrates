@@ -49,10 +49,10 @@ const FriendsPanel = ({
                     No friends yet.
                 </p>
                 <Link
-                    to="/library"
+                    to="/community"
                     className={buttonClass("secondary", undefined, "sm")}
                 >
-                    Browse the library
+                    Find people in Community
                 </Link>
             </div>
         ) : (

@@ -18,7 +18,7 @@ interface StatusBadgeProps {
 }
 
 const SIZE: Record<StatusBadgeSize, string> = {
-    stamp: "gap-1 px-2 py-0.5 text-[10px]",
+    stamp: "gap-1.5 px-2 py-[3px] text-[10px] font-semibold",
     base: "gap-1.5 px-2.5 py-1 text-xs",
 };
 
@@ -34,7 +34,13 @@ const StatusBadge = ({
     animateOnChange = false,
     className,
 }: StatusBadgeProps) => {
-    const { label, icon: Mark, chip, markTone } = STATUS_PRESENTATION[status];
+    const {
+        label,
+        icon: Mark,
+        chip,
+        markTone,
+        accent,
+    } = STATUS_PRESENTATION[status];
 
     const previous = useRef(status);
     const [stamping, setStamping] = useState(false);
@@ -54,13 +60,20 @@ const StatusBadge = ({
                 "inline-flex items-center rounded-full border font-medium",
                 SIZE[size],
                 onMedia
-                    ? "border-white/25 bg-media-scrim text-content-on-media backdrop-blur-sm"
+                    ? cn(
+                          accent,
+                          "border-transparent text-white shadow-cover"
+                      )
                     : chip,
                 stamping && "animate-stamp",
                 className
             )}
         >
-            <Mark size={13} aria-hidden className={cn("shrink-0", onMedia ? undefined : markTone)} />
+            <Mark
+                size={size === "stamp" ? 11 : 13}
+                aria-hidden
+                className={cn("shrink-0", onMedia ? undefined : markTone)}
+            />
             {label}
         </span>
     );

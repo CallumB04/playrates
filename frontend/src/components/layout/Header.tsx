@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Menu } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import Button from "../ui/Button";
 import AccountMenu from "./AccountMenu";
+import GlobalSearch from "./GlobalSearch";
 import MobileMenu, { type NavItem } from "./MobileMenu";
 import { cn } from "../../lib/cn";
 
@@ -41,12 +42,9 @@ const isCurrent = (
 const Header = () => {
     const { user, signOut } = useAuth();
     const { openLogin, openSignup } = useAccountForm();
-    const navigate = useNavigate();
     const location = useLocation();
 
     const [menuOpen, setMenuOpen] = useState(false);
-    const [search, setSearch] = useState("");
-    const searchRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -64,35 +62,6 @@ const Header = () => {
         wide.addEventListener("change", close);
         return () => wide.removeEventListener("change", close);
     }, [menuOpen]);
-
-    /* "/" focuses search, as the chip in the field advertises. */
-    useEffect(() => {
-        const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key !== "/" || event.metaKey || event.ctrlKey) return;
-            const target = event.target as HTMLElement | null;
-            const tag = target?.tagName;
-            if (
-                tag === "INPUT" ||
-                tag === "TEXTAREA" ||
-                target?.isContentEditable
-            ) {
-                return;
-            }
-            event.preventDefault();
-            searchRef.current?.focus();
-        };
-        document.addEventListener("keydown", onKeyDown);
-        return () => document.removeEventListener("keydown", onKeyDown);
-    }, []);
-
-    const submitSearch = (event: React.FormEvent) => {
-        event.preventDefault();
-        const term = search.trim();
-        if (!term) return;
-        navigate(`/library?q=${encodeURIComponent(term)}`);
-        setSearch("");
-        searchRef.current?.blur();
-    };
 
     const links: NavItem[] = (
         user
@@ -163,27 +132,7 @@ const Header = () => {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <form
-                            onSubmit={submitSearch}
-                            className="lift hidden items-center gap-2.5 rounded-sm border border-subtle bg-surface-raised px-3 py-2 hover:border-strong focus-within:border-brand focus-within:shadow-glow xl:flex xl:w-64"
-                        >
-                            <Search
-                                size={12}
-                                aria-hidden
-                                className="shrink-0 text-content-muted"
-                            />
-                            <input
-                                ref={searchRef}
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                aria-label="Search titles"
-                                placeholder="Search titles"
-                                className="min-w-0 flex-1 bg-transparent text-body-sm text-content placeholder:text-content-muted focus:outline-none"
-                            />
-                            <kbd className="rounded-xs border border-subtle px-1.5 font-mono text-[10px] text-content-muted">
-                                /
-                            </kbd>
-                        </form>
+                        <GlobalSearch />
 
                         {user ? (
                             <AccountMenu

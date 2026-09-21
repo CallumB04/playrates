@@ -8,13 +8,20 @@ import {
     usePlatforms,
     useSiteStats,
 } from "../../hooks/queries/useGames";
-import { useMyGameLogs, useUserStats } from "../../hooks/queries/useGameLogs";
+import {
+    useMyGameLogIds,
+    useMyGameLogs,
+    useUserStats,
+} from "../../hooks/queries/useGameLogs";
 import { useFriendActivity } from "../../hooks/queries/useFriends";
 import { useRecentReviews } from "../../hooks/queries/useReviews";
 import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
 import { useGameLogMutations } from "../../hooks/queries/useGameLogs";
 import { useNotify } from "../../contexts/NotificationContext";
-import { STATUS_PRESENTATION } from "../../constants/gameStatus";
+import {
+    STATUS_PRESENTATION,
+    displayStatusFor,
+} from "../../constants/gameStatus";
 import type { TileAction } from "../../components/game/GameTile";
 import SignedOutHero from "./components/SignedOutHero";
 import ReEntryPlate from "./components/ReEntryPlate";
@@ -80,6 +87,14 @@ const HomePage = () => {
 
     const current = playing?.data[0];
 
+    /* Ids only: the rails show whether you have logged something, not what is
+       in the log, so a full fetch per rail would be waste. */
+    const { data: myLogIds } = useMyGameLogIds();
+    const logByGameId = useMemo(
+        () => new Map((myLogIds ?? []).map((log) => [log.gameId, log])),
+        [myLogIds]
+    );
+
     const { save } = useGameLogMutations();
     const notify = useNotify();
 
@@ -102,6 +117,11 @@ const HomePage = () => {
 
     /* Every cover on the page can be logged from where it sits, rather than
        only from the library. */
+    const statusFor = (game: Game) => {
+        const log = logByGameId.get(game.id);
+        return log ? displayStatusFor(log.status, log.playedStatus) : null;
+    };
+
     const actionsFor = (game: Game): TileAction[] => {
         if (!user) {
             return [
@@ -110,6 +130,19 @@ const HomePage = () => {
                     label: "Log in to add",
                     tone: "primary",
                     onSelect: openLogin,
+                },
+            ];
+        }
+
+        /* Already logged: editing it is the only useful action, and
+           offering "add to backlog" would silently overwrite the status. */
+        if (logByGameId.has(game.id)) {
+            return [
+                {
+                    key: "edit",
+                    label: "Edit your log",
+                    tone: "primary",
+                    onSelect: () => setLogging(game.id),
                 },
             ];
         }
@@ -141,6 +174,7 @@ const HomePage = () => {
             {user ? (
                 <ReEntryPlate
                     username={user.username}
+                    displayName={user.firstName || user.username}
                     current={current}
                     playingCount={playing?.meta.total ?? 0}
                     backlogCount={backlog?.meta.total ?? 0}
@@ -165,6 +199,32 @@ const HomePage = () => {
                 platforms={platforms ?? []}
                 isLoading={trendingLoading}
                 actionsFor={actionsFor}
+                statusFor={statusFor}
+            />
+
+            <Rail
+                title="Most logged"
+                note="all time, by PlayRates logs"
+                games={popular?.data ?? []}
+                platforms={platforms ?? []}
+                isLoading={popularLoading}
+                actionsFor={actionsFor}
+                statusFor={statusFor}
+            />
+
+            <Rail
+                title="Highest rated"
+                note="by the people who logged them"
+                games={acclaimed?.data ?? []}
+                platforms={platforms ?? []}
+                isLoading={acclaimedLoading}
+                actionsFor={actionsFor}
+                statusFor={statusFor}
+            />
+
+            <ReviewFeed
+                reviews={reviews?.data ?? []}
+                isLoading={reviewsLoading}
             />
 
             {user && (
@@ -175,29 +235,6 @@ const HomePage = () => {
                 />
             )}
 
-            <Rail
-                title="Most logged"
-                note="all time, by PlayRates logs"
-                games={popular?.data ?? []}
-                platforms={platforms ?? []}
-                isLoading={popularLoading}
-                actionsFor={actionsFor}
-            />
-
-            <Rail
-                title="Highest rated"
-                note="by the people who logged them"
-                games={acclaimed?.data ?? []}
-                platforms={platforms ?? []}
-                isLoading={acclaimedLoading}
-                actionsFor={actionsFor}
-            />
-
-            <ReviewFeed
-                reviews={reviews?.data ?? []}
-                isLoading={reviewsLoading}
-            />
-
             <GenreGrid genres={genres ?? []} />
 
             <Rail
@@ -207,6 +244,7 @@ const HomePage = () => {
                 platforms={platforms ?? []}
                 isLoading={freshLoading}
                 actionsFor={actionsFor}
+                statusFor={statusFor}
             />
 
             {logging !== null && (

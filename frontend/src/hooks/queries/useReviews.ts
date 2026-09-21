@@ -11,6 +11,7 @@ import {
     fetchMyReview,
     fetchRecentReviews,
     fetchUserReviews,
+    toggleReviewVote,
     queryKeys,
     saveReview,
 } from "../../api";
@@ -50,6 +51,21 @@ export const useUserReviews = (username: string | undefined) =>
         queryFn: () => fetchUserReviews(username!),
         enabled: !!username,
     });
+
+/**
+ * Voting refetches rather than patching the cache: a review appears in the
+ * game list, the site feed and a profile, and keeping three copies in step by
+ * hand is how they drift apart.
+ */
+export const useReviewVote = () => {
+    const client = useQueryClient();
+    return useMutation({
+        mutationFn: (reviewId: number) => toggleReviewVote(reviewId),
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: ["reviews"] });
+        },
+    });
+};
 
 export const useReviewMutations = () => {
     const queryClient = useQueryClient();

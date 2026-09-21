@@ -39,8 +39,8 @@ const GenreGrid = ({ genres }: { genres: Genre[] }) => {
                             key={genre.slug}
                             to={`/library?genre=${genre.slug}`}
                             className={cn(
-                                "lift group/genre relative flex items-center gap-2.5 overflow-hidden rounded-md border border-subtle bg-surface-raised px-3.5 py-3",
-                                "hover:-translate-y-0.5 hover:border-strong hover:shadow-plate",
+                                "group/genre relative flex items-center gap-2.5 overflow-hidden rounded-md border border-subtle bg-surface-raised px-3.5 py-3 transition-colors duration-300",
+                                "hover:border-strong hover:bg-surface-hover",
                                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                             )}
                         >
@@ -50,7 +50,7 @@ const GenreGrid = ({ genres }: { genres: Genre[] }) => {
                                 imported from a different site. */}
                             <span
                                 aria-hidden
-                                className="h-7 w-1 shrink-0 rounded-full transition-[height] duration-300 group-hover/genre:h-9"
+                                className="h-7 w-1 shrink-0 rounded-full opacity-75 transition-opacity duration-300 group-hover/genre:opacity-100"
                                 style={{
                                     backgroundColor: `hsl(${hue} 65% 55%)`,
                                 }}
@@ -61,7 +61,7 @@ const GenreGrid = ({ genres }: { genres: Genre[] }) => {
                             <ChevronRight
                                 size={14}
                                 aria-hidden
-                                className="shrink-0 text-content-muted transition-transform duration-300 group-hover/genre:translate-x-0.5"
+                                className="shrink-0 text-content-muted transition-colors duration-300 group-hover/genre:text-brand"
                             />
                         </Link>
                     );

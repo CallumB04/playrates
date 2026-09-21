@@ -126,6 +126,7 @@ const SettingsPage = () => {
     });
 
     const [bio, setBio] = useState(user?.bio ?? "");
+    const [firstName, setFirstName] = useState(user?.firstName ?? "");
 
     /* Saved on toggle rather than gathered into the Save bar: this one
        changes what the library will show you, so waiting for a second
@@ -137,6 +138,15 @@ const SettingsPage = () => {
     /* Saved on blur rather than gathered into a page-wide button. Every
        field here is one value with one owner, so a second action to apply it
        only adds a way to lose the change. */
+    const saveFirstName = () => {
+        const next = firstName.trim();
+        if (next === (user?.firstName ?? "")) return;
+        update.mutate(
+            { firstName: next },
+            { onError: () => notify("Couldn't save your name", "error") }
+        );
+    };
+
     const saveBio = () => {
         if (bio === (user?.bio ?? "")) return;
         update.mutate(
@@ -160,6 +170,7 @@ const SettingsPage = () => {
 
     useEffect(() => {
         setBio(user?.bio ?? "");
+        setFirstName(user?.firstName ?? "");
         setShowSexual(user?.showSexualContent ?? false);
     }, [user]);
 
@@ -187,6 +198,19 @@ const SettingsPage = () => {
                     help="Changing this changes your profile's address, so every link anyone has to it."
                 >
                     <UsernameRow current={user.username} />
+                </Row>
+                <Row
+                    label="First name"
+                    help="Optional. Used to greet you; your username is used when this is empty."
+                >
+                    <Input
+                        value={firstName}
+                        maxLength={40}
+                        placeholder="Callum"
+                        onChange={(e) => setFirstName(e.target.value)}
+                        onBlur={saveFirstName}
+                        aria-label="First name"
+                    />
                 </Row>
                 <Row
                     label="Email"

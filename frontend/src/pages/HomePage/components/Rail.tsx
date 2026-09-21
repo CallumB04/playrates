@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Game, Platform } from "@playrates/shared";
+import type { DisplayStatus } from "../../../constants/gameStatus";
 import GameTile, { type TileAction } from "../../../components/game/GameTile";
 import { TileSkeleton } from "../../../components/ui/Skeleton";
 import { releaseYear } from "../../../lib/format";
@@ -13,8 +14,10 @@ interface RailProps {
     games: Game[];
     platforms: Platform[];
     isLoading: boolean;
-    /** Builds the hover action for a tile, e.g. "Log it". */
+    /** Builds the hover action for a tile, e.g. "Create log". */
     actionsFor?: (game: Game) => TileAction[];
+    /** The viewer's own status for a game, stamped on the cover. */
+    statusFor?: (game: Game) => DisplayStatus | null;
 }
 
 const ARROW =
@@ -37,6 +40,7 @@ const Rail = ({
     platforms,
     isLoading,
     actionsFor,
+    statusFor,
 }: RailProps) => {
     const trackRef = useRef<HTMLDivElement>(null);
     const [edges, setEdges] = useState({ start: true, end: false });
@@ -139,6 +143,7 @@ const Rail = ({
                                 footValue={releaseYear(
                                     (game as Game).releaseDate
                                 )}
+                                status={statusFor?.(game as Game)}
                                 actions={actionsFor?.(game as Game)}
                             />
                         )}

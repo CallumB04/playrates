@@ -6,6 +6,8 @@ import { TextSkeleton } from "../../../components/ui/Skeleton";
 import Dropdown from "../../../components/ui/Dropdown";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import RatingBadge from "../../../components/ui/RatingBadge";
+import VoteButton from "../../../components/ui/VoteButton";
+import Button from "../../../components/ui/Button";
 import {
     displayStatusFor,
     isDisplayStatus,
@@ -17,6 +19,12 @@ import { formatCount, formatHours, relativeTime } from "../../../lib/format";
 
 interface GameReviewsProps {
     reviews: ReviewWithAuthor[];
+    /** Whether the viewer already has a log for this game. */
+    hasLog: boolean;
+    /** Opens the log editor. Omitted when signed out. */
+    onWriteReview?: () => void;
+    canVote: boolean;
+    onVote?: (reviewId: number) => void;
     total: number;
     sort: ReviewSort;
     onSortChange: (sort: ReviewSort) => void;
@@ -34,6 +42,10 @@ const reviewStatus = (review: ReviewWithAuthor): DisplayStatus | null => {
 
 const GameReviews = ({
     reviews,
+    hasLog,
+    onWriteReview,
+    canVote,
+    onVote,
     total,
     sort,
     onSortChange,
@@ -51,6 +63,7 @@ const GameReviews = ({
                 <Dropdown
                     options={[
                         { value: "recent", label: "Most recent" },
+                        { value: "helpful", label: "Most helpful" },
                         { value: "oldest", label: "Oldest first" },
                         { value: "rating-high", label: "Highest rated" },
                         { value: "rating-low", label: "Lowest rated" },
@@ -68,7 +81,18 @@ const GameReviews = ({
         ) : reviews.length === 0 ? (
             <EmptyPlate
                 title="No reviews yet"
-                body="Log this game to write the first one."
+                body={
+                    hasLog
+                        ? "You have logged this one. Add a review to your log and it shows up here."
+                        : "Log this game to write the first one."
+                }
+                action={
+                    onWriteReview ? (
+                        <Button onClick={onWriteReview}>
+                            {hasLog ? "Edit your log" : "Log this game"}
+                        </Button>
+                    ) : undefined
+                }
             />
         ) : (
             reviews.map((review) => (
@@ -95,8 +119,12 @@ const GameReviews = ({
                                 <StatusBadge status={reviewStatus(review)!} />
                             )}
                             {review.hoursPlayed !== null && (
-                                <span className="font-mono text-label-sm text-content-muted">
-                                    {formatHours(review.hoursPlayed)} in
+                                <span className="text-label-sm text-content-muted">
+                                    Reviewed at{" "}
+                                    <span className="font-mono">
+                                        {formatHours(review.hoursPlayed)}
+                                    </span>{" "}
+                                    played
                                 </span>
                             )}
                             <span className="text-label-sm text-content-muted">
@@ -107,7 +135,15 @@ const GameReviews = ({
                             {review.body}
                         </p>
                     </div>
-                    <RatingBadge value={review.rating} size="md" />
+                    <div className="flex flex-col items-end gap-2">
+                        <RatingBadge value={review.rating} size="md" />
+                        <VoteButton
+                            count={review.voteCount}
+                            voted={review.votedByViewer}
+                            disabled={!canVote}
+                            onToggle={() => onVote?.(review.id)}
+                        />
+                    </div>
                 </article>
             ))
         )}
