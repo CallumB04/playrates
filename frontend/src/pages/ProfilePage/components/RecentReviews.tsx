@@ -4,6 +4,14 @@ import Panel from "../../../components/ui/Panel";
 import GameCover from "../../../components/game/GameCover";
 import { buttonClass } from "../../../components/ui/Button";
 import RatingBadge from "../../../components/ui/RatingBadge";
+import StatusBadge from "../../../components/ui/StatusBadge";
+import {
+    displayStatusFor,
+    isDisplayStatus,
+    type DisplayStatus,
+    type GameStatus,
+    type PlayedStatus,
+} from "../../../constants/gameStatus";
 import { formatHours, relativeTime } from "../../../lib/format";
 
 interface RecentReviewsProps {
@@ -21,6 +29,15 @@ const SHOWN = 4;
  * because reviews carried a gameId and nothing else. The review_cards view
  * carries the game now, so the fan-out is gone.
  */
+/** The state a review was written in, when its author still has that log. */
+const reviewStatus = (review: ReviewWithAuthor): DisplayStatus | null => {
+    if (!review.status || !isDisplayStatus(review.status)) return null;
+    return displayStatusFor(
+        review.status as GameStatus,
+        review.playedStatus as PlayedStatus | null
+    );
+};
+
 const RecentReviews = ({ reviews, isOwner }: RecentReviewsProps) => {
     const shown = reviews.slice(0, SHOWN);
 
@@ -74,7 +91,13 @@ const RecentReviews = ({ reviews, isOwner }: RecentReviewsProps) => {
                                 {review.body}
                             </span>
 
-                            <span className="mt-1.5 flex flex-wrap items-center gap-x-2.5 text-label-sm text-content-muted">
+                            <span className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label-sm text-content-muted">
+                                {reviewStatus(review) && (
+                                    <StatusBadge
+                                        status={reviewStatus(review)!}
+                                        plain
+                                    />
+                                )}
                                 {/* The hours are what the rating was worth at
                                     the time it was written. */}
                                 {review.hoursPlayed !== null && (
