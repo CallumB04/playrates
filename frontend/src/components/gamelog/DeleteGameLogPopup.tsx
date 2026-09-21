@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
 import type { GameLogWithGame } from "../../api";
 import { useGameLogMutations } from "../../hooks/queries/useGameLogs";
 import { useNotify } from "../../contexts/NotificationContext";
@@ -33,7 +32,6 @@ const DeleteGameLogPopup = ({
     return (
         <ConfirmPopup
             title="Delete log"
-            icon={Trash2}
             confirmLabel="Delete"
             isPending={isDeleting}
             body={

@@ -1,4 +1,3 @@
-import { UserMinus } from "lucide-react";
 import ConfirmPopup from "../../../components/ui/ConfirmPopup";
 
 interface RemoveFriendPopupProps {
@@ -14,7 +13,6 @@ const RemoveFriendPopup = ({
 }: RemoveFriendPopupProps) => (
     <ConfirmPopup
         title="Remove friend"
-        icon={UserMinus}
         confirmLabel="Remove"
         body={
             <>

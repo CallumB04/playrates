@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { type LucideIcon } from "lucide-react";
 import Modal from "./Modal";
 import Button from "./Button";
 import { cn } from "../../lib/cn";
@@ -8,50 +7,42 @@ interface ConfirmPopupProps {
     title: string;
     /** The sentence under the title. Name the thing being acted on. */
     body: ReactNode;
-    icon: LucideIcon;
     confirmLabel: string;
-    /** Destructive actions get the danger treatment on both icon and button. */
     tone?: "danger" | "neutral";
     isPending?: boolean;
     onConfirm: () => void;
     onClose: () => void;
 }
 
-/** One confirmation dialog for every "are you sure?" in the app. */
+/** One confirmation dialog for every "are you sure?" in the app. Same heading
+ *  and rule as the other popups. */
 const ConfirmPopup = ({
     title,
     body,
-    icon: Icon,
     confirmLabel,
     tone = "danger",
     isPending = false,
     onConfirm,
     onClose,
 }: ConfirmPopupProps) => (
-    <Modal onClose={onClose} labelledBy="confirm-title" className="max-w-md">
-        <div className="flex gap-4 pr-6">
-            <span
-                className={cn(
-                    "flex size-10 shrink-0 items-center justify-center rounded-md",
-                    tone === "danger"
-                        ? "bg-danger-subtle text-danger"
-                        : "bg-brand-subtle text-brand"
-                )}
-            >
-                <Icon size={18} aria-hidden />
-            </span>
-            <div className="min-w-0">
-                <h2
-                    id="confirm-title"
-                    className="font-display text-section text-content"
-                >
-                    {title}
-                </h2>
-                <p className="mt-1.5 text-body-sm leading-relaxed text-content-secondary">
-                    {body}
-                </p>
-            </div>
-        </div>
+    <Modal
+        onClose={onClose}
+        labelledBy="confirm-title"
+        className="w-full max-w-md"
+    >
+        <h2
+            id="confirm-title"
+            className={cn(
+                "border-b border-subtle pb-3 font-display text-section",
+                tone === "danger" ? "text-danger" : "text-content"
+            )}
+        >
+            {title}
+        </h2>
+
+        <p className="pt-4 text-body-sm leading-relaxed text-content-secondary">
+            {body}
+        </p>
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="secondary" onClick={onClose} disabled={isPending}>

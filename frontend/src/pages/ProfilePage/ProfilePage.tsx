@@ -149,6 +149,17 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
         action();
     };
 
+    /* No confirmation: taking back a request you sent costs nothing and the
+       button beside it sends another one. */
+    const cancelRequest = async () => {
+        try {
+            await remove.mutateAsync();
+            notify("Request cancelled", "success");
+        } catch {
+            notify("That action failed, please try again", "error");
+        }
+    };
+
     const buildTileActions = (log: GameLogWithGame): TileAction[] => {
         const actions: TileAction[] = [
             {
@@ -258,9 +269,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                             onRemove={guard(() =>
                                 setModal({ kind: "removeFriend" })
                             )}
-                            onCancel={guard(() =>
-                                setModal({ kind: "cancelRequest" })
-                            )}
+                            onCancel={guard(() => void cancelRequest())}
                         />
                     )
                 }
@@ -325,14 +334,6 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                     try {
                         await remove.mutateAsync();
                         notify("Friend removed", "success");
-                    } catch {
-                        notify("That action failed, please try again", "error");
-                    }
-                }}
-                onCancelRequest={async () => {
-                    try {
-                        await remove.mutateAsync();
-                        notify("Request cancelled", "success");
                     } catch {
                         notify("That action failed, please try again", "error");
                     }
