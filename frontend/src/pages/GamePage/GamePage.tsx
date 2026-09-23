@@ -109,7 +109,7 @@ const GamePage = () => {
     return (
         <article className="flex flex-col gap-7">
             <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-y-8">
-                <div className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
+                <div className="min-w-0 lg:col-start-1 lg:row-span-2 lg:row-start-1">
                     <GameCoverPlate
                         game={game}
                         log={log}
