@@ -18,6 +18,13 @@ export interface Game {
   /** RAWG's average playtime in hours, not a time-to-beat estimate. */
   playtimeHours: number | null;
   genres: string[];
+  /** Studios credited with making it, in RAWG's order. */
+  developers: string[];
+  publishers: string[];
+  /** The game's own site, not a store page. */
+  website: string | null;
+  /** RAWG's wording, already display-ready: "Mature", "Everyone 10+". */
+  esrbRating: string | null;
   metacritic: number | null;
   /** RAWG's own 0-5 community score, not a PlayRates rating. */
   rawgRating: number | null;

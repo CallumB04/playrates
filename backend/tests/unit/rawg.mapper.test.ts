@@ -193,6 +193,46 @@ describe("RAWG mapper", () => {
     expect(game.systemSlugs).toEqual([]);
   });
 
+  /* None of these are in a listing row, so the fields have to survive being
+     absent as well as present. */
+  it("reads the credits the detail endpoint adds", () => {
+    const game = toExternalGame({
+      ...rawgResponse,
+      developers: [{ id: 1, name: "CD PROJEKT RED", slug: "cd-projekt-red" }],
+      publishers: [{ id: 2, name: "CD PROJEKT", slug: "cd-projekt" }],
+      website: "https://thewitcher.com/en/witcher3",
+      esrb_rating: { id: 4, slug: "mature", name: "Mature" },
+    });
+
+    expect(game.developers).toEqual(["CD PROJEKT RED"]);
+    expect(game.publishers).toEqual(["CD PROJEKT"]);
+    expect(game.website).toBe("https://thewitcher.com/en/witcher3");
+    expect(game.esrbRating).toBe("Mature");
+  });
+
+  /* A listing row has the age rating but no credits, which is why the import
+     fills one of the four and the first view fills the rest. */
+  it("takes the age rating from a listing row, and no credits", () => {
+    const game = toExternalGame(rawgResponse);
+
+    expect(game.esrbRating).toBe("Mature");
+    expect(game.developers).toEqual([]);
+    expect(game.publishers).toEqual([]);
+    expect(game.website).toBeNull();
+  });
+
+  it("copes with a game carrying no age rating at all", () => {
+    expect(
+      toExternalGame({ ...rawgResponse, esrb_rating: null }).esrbRating,
+    ).toBeNull();
+  });
+
+  /* RAWG sends "" rather than null for a game with no site of its own, and an
+     empty string would pass the column's https check by being absent. */
+  it("treats an empty website as no website", () => {
+    expect(toExternalGame({ ...rawgResponse, website: "" }).website).toBeNull();
+  });
+
   it("treats adults-only as sexual content", () => {
     expect(
       toExternalGame({
@@ -292,6 +332,10 @@ describe("RAWG mapper", () => {
       platformSlugs: [],
       systemSlugs: [],
       genres: [],
+      developers: [],
+      publishers: [],
+      website: null,
+      esrbRating: null,
       contentTags: [],
       hasSexualContent: false,
       metacritic: null,

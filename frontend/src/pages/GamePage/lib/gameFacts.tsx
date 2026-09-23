@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { Game, Genre, Platform } from "@playrates/shared";
 import PlatformMarks from "../../../components/game/PlatformMarks";
-import GenreList from "../components/GenreList";
+import InlineNameList from "../components/InlineNameList";
 import { formatDate } from "../../../lib/format";
 
 export interface Fact {
@@ -19,6 +19,16 @@ const nameFor = <T extends { slug: string }>(
         const match = bySlug.get(slug);
         return match ? name(match) : slug;
     });
+};
+
+/** Hostname only. A full URL is unreadable in a ledger column and a studio's
+ *  site is recognisable without its path. */
+const siteName = (url: string): string => {
+    try {
+        return new URL(url).hostname.replace(/^www\./, "");
+    } catch {
+        return url;
+    }
 };
 
 /** The ledger under the cover. Pure, so the rows are testable without a
@@ -46,13 +56,49 @@ export const buildGameFacts = (
             ),
         });
     }
+    if (game.developers.length > 0) {
+        facts.push({
+            label: game.developers.length > 1 ? "Developers" : "Developer",
+            value: <InlineNameList noun="developers" names={game.developers} />,
+        });
+    }
+    /* Dropped when it only repeats the developer, which is most self-published
+       games — a row saying the same thing twice is noise. */
+    if (
+        game.publishers.length > 0 &&
+        game.publishers.join() !== game.developers.join()
+    ) {
+        facts.push({
+            label: game.publishers.length > 1 ? "Publishers" : "Publisher",
+            value: <InlineNameList noun="publishers" names={game.publishers} />,
+        });
+    }
     if (game.genres.length > 0) {
         facts.push({
             label: "Genres",
             value: (
-                <GenreList
+                <InlineNameList
+                    noun="genres"
                     names={nameFor(game.genres, genres, (g) => g.name)}
                 />
+            ),
+        });
+    }
+    if (game.esrbRating) {
+        facts.push({ label: "Rated", value: game.esrbRating });
+    }
+    if (game.website) {
+        facts.push({
+            label: "Website",
+            value: (
+                <a
+                    href={game.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block truncate underline decoration-subtle underline-offset-2 hover:decoration-current"
+                >
+                    {siteName(game.website)}
+                </a>
             ),
         });
     }

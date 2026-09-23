@@ -45,6 +45,10 @@ export interface GamesRepository {
       description: string;
       contentTags: string[];
       hasSexualContent: boolean;
+      developers: string[];
+      publishers: string[];
+      website: string | null;
+      esrbRating: string | null;
     },
   ): Promise<void>;
   count(): Promise<number>;
@@ -193,6 +197,9 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       release_date: g.releaseDate,
       has_sexual_content: g.hasSexualContent,
       content_tags: g.contentTags,
+      /* Developers, publishers and the website are absent from a listing row
+         and arrive with the first detail fetch; the age rating is not. */
+      esrb_rating: g.esrbRating,
       metacritic: g.metacritic,
       rawg_rating: g.rawgRating,
       rawg_rating_count: g.rawgRatingCount,
@@ -200,7 +207,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       playtime_hours: g.playtimeHours,
       synced_at: now,
       ...(g.description
-        ? { description: g.description, description_synced_at: now }
+        ? { description: g.description, details_synced_at: now }
         : {}),
     }));
 
@@ -370,7 +377,11 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
         description: fields.description,
         content_tags: fields.contentTags,
         has_sexual_content: fields.hasSexualContent,
-        description_synced_at: new Date().toISOString(),
+        developers: fields.developers,
+        publishers: fields.publishers,
+        website: fields.website,
+        esrb_rating: fields.esrbRating,
+        details_synced_at: new Date().toISOString(),
       })
       .eq("id", id);
     if (error) throw error;

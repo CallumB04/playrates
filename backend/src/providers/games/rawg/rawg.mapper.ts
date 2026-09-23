@@ -133,6 +133,10 @@ export interface RawgGame {
   stores?: { store: { id: number; slug: string } }[] | null;
   genres?: { id: number; name: string; slug: string }[] | null;
   tags?: { id: number; name: string; slug: string }[] | null;
+  /* Detail endpoint only — absent from every listing row. */
+  developers?: { id: number; name: string; slug: string }[] | null;
+  publishers?: { id: number; name: string; slug: string }[] | null;
+  website?: string | null;
 }
 
 /** Some RAWG endpoints return the description as HTML. */
@@ -222,6 +226,11 @@ export const toExternalGame = (game: RawgGame): ExternalGame => {
       slug: g.slug,
       name: g.name,
     })),
+    developers: (game.developers ?? []).map((d) => d.name),
+    publishers: (game.publishers ?? []).map((p) => p.name),
+    // RAWG returns an empty string for a game with no site of its own.
+    website: game.website || null,
+    esrbRating: game.esrb_rating?.name ?? null,
     contentTags: tagSlugs,
     hasSexualContent:
       SEXUAL_ESRB_SLUGS.has(game.esrb_rating?.slug ?? "") ||

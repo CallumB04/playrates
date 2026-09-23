@@ -282,6 +282,11 @@ export const createInMemoryRepos = (
               release_date: external.releaseDate,
               has_sexual_content: external.hasSexualContent,
               content_tags: external.contentTags,
+              // The bulk import path has none of these; the detail fetch does.
+              developers: [],
+              publishers: [],
+              website: null,
+              esrb_rating: null,
               is_trending: false,
               playtime_hours: external.playtimeHours,
               metacritic: external.metacritic,
@@ -292,7 +297,7 @@ export const createInMemoryRepos = (
               avg_rating: null,
               rating_count: 0,
               synced_at: now(),
-              description_synced_at: external.description ? now() : null,
+              details_synced_at: external.description ? now() : null,
               created_at: now(),
               updated_at: now(),
             };
@@ -326,7 +331,11 @@ export const createInMemoryRepos = (
           game.description = fields.description;
           game.content_tags = fields.contentTags;
           game.has_sexual_content = fields.hasSexualContent;
-          game.description_synced_at = now();
+          game.developers = fields.developers;
+          game.publishers = fields.publishers;
+          game.website = fields.website;
+          game.esrb_rating = fields.esrbRating;
+          game.details_synced_at = now();
         }
       },
       async playratesStats(gameId) {

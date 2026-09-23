@@ -39,6 +39,10 @@ export interface GameRow {
   has_sexual_content: boolean;
   /** RAWG tag slugs, kept so the flag can be re-derived in place. */
   content_tags: string[];
+  developers: string[];
+  publishers: string[];
+  website: string | null;
+  esrb_rating: string | null;
   is_trending: boolean;
   playtime_hours: number | null;
   metacritic: number | null;
@@ -51,7 +55,7 @@ export interface GameRow {
   avg_rating: number | null;
   rating_count: number;
   synced_at: string | null;
-  description_synced_at: string | null;
+  details_synced_at: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -8,6 +8,7 @@ import type {
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import type { GamesProvider } from "../../providers/games/GamesProvider.js";
+import type { GameRow } from "../../types/database.types.js";
 import type { GamesRepository } from "./games.repository.js";
 import { toGame } from "./games.mapper.js";
 
@@ -24,33 +25,50 @@ export const createGamesService = (
     const row = await repo.findById(id);
     if (!row) throw AppError.notFound("Game");
 
-    /* The bulk import carries no descriptions, so the first person to open a
-       game pays for one fetch. Awaited, or they'd have to reload to see it. */
-    if (!row.description_synced_at && row.rawg_id && provider.isConfigured) {
-      const description = await this.backfillDescription(id, row.rawg_id);
-      if (description) return toGame({ ...row, description });
+    /* The bulk import carries neither descriptions nor credits — RAWG puts
+       both on the detail endpoint only — so the first person to open a game
+       pays for one fetch. Awaited, or they'd have to reload to see it. */
+    if (!row.details_synced_at && row.rawg_id && provider.isConfigured) {
+      const detail = await this.backfillDetails(id, row.rawg_id);
+      if (detail) return toGame({ ...row, ...detail });
     }
 
     return toGame(row);
   },
 
   /**
-   * Fetches and stores one game's description, returning it so this request can
-   * render it. Failures are not fatal — the next view tries again.
+   * Fetches and stores the fields only RAWG's detail endpoint carries,
+   * returning them so this request can render them. Failures are not fatal —
+   * the next view tries again.
    */
-  async backfillDescription(
+  async backfillDetails(
     id: number,
     rawgId: number,
-  ): Promise<string | null> {
+  ): Promise<Partial<GameRow> | null> {
     try {
       const external = await provider.getById(rawgId);
-      if (!external?.description) return null;
-      await repo.refreshFromExternal(id, {
+      if (!external) return null;
+
+      const fields = {
         description: external.description,
         contentTags: external.contentTags,
         hasSexualContent: external.hasSexualContent,
-      });
-      return external.description;
+        developers: external.developers,
+        publishers: external.publishers,
+        website: external.website,
+        esrbRating: external.esrbRating,
+      };
+      await repo.refreshFromExternal(id, fields);
+
+      return {
+        /* A game with no description keeps the one it has: the import leaves
+           it empty, but a later edit or a different provider might not. */
+        ...(external.description ? { description: external.description } : {}),
+        developers: external.developers,
+        publishers: external.publishers,
+        website: external.website,
+        esrb_rating: external.esrbRating,
+      };
     } catch {
       return null;
     }

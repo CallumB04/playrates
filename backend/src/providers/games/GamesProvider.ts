@@ -21,6 +21,13 @@ export interface ExternalGame {
   /** The individual machines within those families. */
   systemSlugs: string[];
   genres: ExternalGenre[];
+  /** Detail-endpoint only; a listing row carries neither. */
+  developers: string[];
+  publishers: string[];
+  /** Detail-endpoint only. The game's own site, not a store page. */
+  website: string | null;
+  /** In both responses, so the bulk import fills this one in. */
+  esrbRating: string | null;
   hasSexualContent: boolean;
   contentTags: string[];
   metacritic: number | null;

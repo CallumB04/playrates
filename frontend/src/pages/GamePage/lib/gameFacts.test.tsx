@@ -22,6 +22,10 @@ const game = (overrides: Partial<Game> = {}): Game =>
         releaseDate: "2017-02-24",
         platforms: ["steam"],
         genres: ["action"],
+        developers: ["Team Cherry"],
+        publishers: ["Team Cherry"],
+        website: null,
+        esrbRating: null,
         ...overrides,
     }) as Game;
 
@@ -34,10 +38,11 @@ const renderValue = (facts: Fact[], label: string) =>
     render(<>{valueOf(facts, label)}</>).container.textContent;
 
 describe("buildGameFacts", () => {
-    it("lists release, platforms and genres in order", () => {
+    it("lists the rows in order", () => {
         expect(labels(buildGameFacts(game(), PLATFORMS, GENRES))).toEqual([
             "Released",
             "Platforms",
+            "Developer",
             "Genres",
         ]);
     });
@@ -48,7 +53,13 @@ describe("buildGameFacts", () => {
     });
 
     it("drops a row rather than printing a dash for it", () => {
-        const bare = game({ releaseDate: null, platforms: [], genres: [] });
+        const bare = game({
+            releaseDate: null,
+            platforms: [],
+            genres: [],
+            developers: [],
+            publishers: [],
+        });
         expect(buildGameFacts(bare, PLATFORMS, GENRES)).toEqual([]);
     });
 
@@ -57,6 +68,7 @@ describe("buildGameFacts", () => {
         expect(labels(buildGameFacts(noGenres, PLATFORMS, GENRES))).toEqual([
             "Released",
             "Platforms",
+            "Developer",
         ]);
     });
 
@@ -75,6 +87,90 @@ describe("buildGameFacts", () => {
     it("still lists genres when the lookup has not loaded", () => {
         const facts = buildGameFacts(game(), PLATFORMS, []);
         expect(renderValue(facts, "Genres")).toContain("action");
+    });
+});
+
+describe("credits", () => {
+    const creditLabels = (overrides: Partial<Game>) =>
+        labels(buildGameFacts(game(overrides), PLATFORMS, GENRES));
+
+    /* Most self-published games list the same name twice, and a row that
+       repeats the one above it is noise. */
+    it("drops a publisher that only repeats the developer", () => {
+        expect(
+            creditLabels({
+                developers: ["Team Cherry"],
+                publishers: ["Team Cherry"],
+            })
+        ).not.toContain("Publisher");
+    });
+
+    it("keeps a publisher that is someone else", () => {
+        expect(
+            creditLabels({
+                developers: ["FromSoftware"],
+                publishers: ["Bandai Namco"],
+            })
+        ).toContain("Publisher");
+    });
+
+    it("pluralises a label with more than one name behind it", () => {
+        const many = creditLabels({
+            developers: ["Valve", "Hidden Path"],
+            publishers: [],
+        });
+        expect(many).toContain("Developers");
+        expect(many).not.toContain("Developer");
+    });
+
+    it("names both studios when a game has two", () => {
+        const facts = buildGameFacts(
+            game({ developers: ["Valve", "Hidden Path"] }),
+            PLATFORMS,
+            GENRES
+        );
+        expect(renderValue(facts, "Developers")).toContain(
+            "Valve · Hidden Path"
+        );
+    });
+
+    it("shows a website by host, not by its whole url", () => {
+        const facts = buildGameFacts(
+            game({ website: "https://www.hollowknight.com/some/path" }),
+            PLATFORMS,
+            GENRES
+        );
+        expect(renderValue(facts, "Website")).toBe("hollowknight.com");
+    });
+
+    it("opens a website away from the page, without handing it the opener", () => {
+        const facts = buildGameFacts(
+            game({ website: "https://hollowknight.com" }),
+            PLATFORMS,
+            GENRES
+        );
+        render(<>{valueOf(facts, "Website")}</>);
+        const link = screen.getByRole("link");
+        expect(link).toHaveAttribute("target", "_blank");
+        expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    });
+
+    it("falls back to the raw value when a website will not parse", () => {
+        const facts = buildGameFacts(
+            game({ website: "not a url" }),
+            PLATFORMS,
+            GENRES
+        );
+        expect(renderValue(facts, "Website")).toBe("not a url");
+    });
+
+    it("prints the age rating as RAWG words it", () => {
+        const facts = buildGameFacts(
+            game({ esrbRating: "Everyone 10+" }),
+            PLATFORMS,
+            GENRES
+        );
+        expect(valueOf(facts, "Rated")).toBe("Everyone 10+");
     });
 });
 
