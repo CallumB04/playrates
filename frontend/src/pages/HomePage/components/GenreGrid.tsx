@@ -31,13 +31,15 @@ const GenreGrid = ({ genres }: { genres: Genre[] }) => {
                             <span className="grid size-7 shrink-0 place-items-center rounded-sm bg-surface-sunken text-content-muted transition-colors duration-300 group-hover/genre:bg-brand-subtle group-hover/genre:text-brand">
                                 <Icon size={14} aria-hidden />
                             </span>
-                            <span className="min-w-0 flex-1 truncate text-body-sm font-medium text-content">
+                            {/* Two columns leaves ~70px for the name, so on a
+                                phone it wraps and the chevron goes. */}
+                            <span className="min-w-0 flex-1 text-body-sm leading-tight font-medium text-content sm:truncate sm:leading-normal">
                                 {genre.name}
                             </span>
                             <ChevronRight
                                 size={14}
                                 aria-hidden
-                                className="shrink-0 text-content-muted transition-colors duration-300 group-hover/genre:text-brand"
+                                className="hidden shrink-0 text-content-muted transition-colors duration-300 group-hover/genre:text-brand sm:block"
                             />
                         </Link>
                     );
