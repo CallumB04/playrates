@@ -81,9 +81,10 @@ const tonedMark = (status: DisplayStatus): ComponentType<IconProps> => {
 const PLAYED_OPTIONS: DropdownOption[] = [
     {
         /* Empty rather than a fifth status: played_status stays null, and its
-           CHECK constraint still lists only the four below. */
+           CHECK constraint still lists only the four below. Same word as
+           the plate, so choosing it is visibly choosing nothing further. */
         value: "",
-        label: "Just played",
+        label: "Played",
         icon: tonedMark("played"),
         hint: STATUS_PRESENTATION.played.hint,
     },

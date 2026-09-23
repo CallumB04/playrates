@@ -50,15 +50,15 @@ describe("StatusPlates", () => {
         plates({ value: "played" });
 
         expect(played()).toHaveAttribute("aria-haspopup", "listbox");
-        expect(played()).toHaveTextContent("Just played");
+        expect(played()).toHaveTextContent("Played");
     });
 
-    it("rests on just played, with the four refinements under it", async () => {
+    it("rests on plain played, with the four refinements under it", async () => {
         plates({ value: "played", playedStatus: null });
         await userEvent.click(played());
 
         expect(screen.getAllByRole("option")).toHaveLength(5);
-        expect(option("Just played")).toHaveAttribute("aria-selected", "true");
+        expect(option("^Played")).toHaveAttribute("aria-selected", "true");
         for (const name of ["Finished", "Mastered", "Shelved", "Retired"]) {
             expect(option(name)).toHaveAttribute("aria-selected", "false");
         }
@@ -80,7 +80,7 @@ describe("StatusPlates", () => {
 
     /* Null, not a fifth status — nothing new reaches played_status, which has
        a CHECK constraint listing only the four. */
-    it("reports just played as nothing at all", async () => {
+    it("reports plain played as nothing at all", async () => {
         const onPlayedStatusChange = vi.fn();
         plates({
             value: "played",
@@ -89,7 +89,7 @@ describe("StatusPlates", () => {
         });
 
         await userEvent.click(played());
-        await userEvent.click(option("Just played"));
+        await userEvent.click(option("^Played"));
         expect(onPlayedStatusChange).toHaveBeenCalledWith(null);
     });
 
