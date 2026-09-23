@@ -1,53 +1,72 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { PlayedStatusPlates } from "./StatusPlates";
+import { PlayedStatusSelect } from "./StatusPlates";
 
-const pressed = (name: string) =>
-    screen.getByRole("button", { name }).getAttribute("aria-pressed");
+const trigger = () => screen.getByRole("button", { name: /how it ended/i });
+const open = () => userEvent.click(trigger());
+const option = (name: string) =>
+    screen.getByRole("option", { name: new RegExp(name) });
 
-describe("PlayedStatusPlates", () => {
-    it("stands on just played when the log carries no substatus", () => {
-        render(<PlayedStatusPlates value={null} onChange={vi.fn()} />);
+describe("PlayedStatusSelect", () => {
+    it("reads as just played when the log carries no substatus", () => {
+        render(<PlayedStatusSelect value={null} onChange={vi.fn()} />);
+        expect(trigger()).toHaveTextContent("Just played");
+    });
 
-        expect(pressed("Just played")).toBe("true");
-        for (const other of ["Finished", "Mastered", "Shelved", "Retired"]) {
-            expect(pressed(other)).toBe("false");
+    it("names the substatus once there is one", () => {
+        render(<PlayedStatusSelect value="mastered" onChange={vi.fn()} />);
+        expect(trigger()).toHaveTextContent("Mastered");
+    });
+
+    it("offers just played alongside the four real substatuses", async () => {
+        render(<PlayedStatusSelect value={null} onChange={vi.fn()} />);
+        await open();
+
+        expect(screen.getAllByRole("option")).toHaveLength(5);
+        for (const name of [
+            "Just played",
+            "Finished",
+            "Mastered",
+            "Shelved",
+            "Retired",
+        ]) {
+            expect(option(name)).toBeInTheDocument();
         }
     });
 
-    it("lets go of just played once a real substatus is chosen", () => {
-        render(<PlayedStatusPlates value="mastered" onChange={vi.fn()} />);
+    it("ticks what is already chosen", async () => {
+        render(<PlayedStatusSelect value="shelved" onChange={vi.fn()} />);
+        await open();
 
-        expect(pressed("Just played")).toBe("false");
-        expect(pressed("Mastered")).toBe("true");
+        expect(option("Shelved")).toHaveAttribute("aria-selected", "true");
+        expect(option("Just played")).toHaveAttribute("aria-selected", "false");
+    });
+
+    it("ticks just played when nothing is set, rather than nothing at all", async () => {
+        render(<PlayedStatusSelect value={null} onChange={vi.fn()} />);
+        await open();
+
+        expect(option("Just played")).toHaveAttribute("aria-selected", "true");
     });
 
     it("reports a substatus by name", async () => {
         const onChange = vi.fn();
-        render(<PlayedStatusPlates value={null} onChange={onChange} />);
+        render(<PlayedStatusSelect value={null} onChange={onChange} />);
+        await open();
+        await userEvent.click(option("Retired"));
 
-        await userEvent.click(screen.getByRole("button", { name: "Shelved" }));
-        expect(onChange).toHaveBeenCalledWith("shelved");
+        expect(onChange).toHaveBeenCalledWith("retired");
     });
 
     /* Null, not a fifth status — nothing new reaches played_status, which has
        a CHECK constraint listing only the four. */
     it("reports just played as nothing at all", async () => {
         const onChange = vi.fn();
-        render(<PlayedStatusPlates value="finished" onChange={onChange} />);
+        render(<PlayedStatusSelect value="finished" onChange={onChange} />);
+        await open();
+        await userEvent.click(option("Just played"));
 
-        await userEvent.click(
-            screen.getByRole("button", { name: "Just played" })
-        );
-        expect(onChange).toHaveBeenCalledWith(null);
-    });
-
-    it("falls back to just played when the chosen tile is pressed again", async () => {
-        const onChange = vi.fn();
-        render(<PlayedStatusPlates value="retired" onChange={onChange} />);
-
-        await userEvent.click(screen.getByRole("button", { name: "Retired" }));
         expect(onChange).toHaveBeenCalledWith(null);
     });
 });

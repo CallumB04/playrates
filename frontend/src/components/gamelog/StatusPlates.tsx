@@ -1,3 +1,4 @@
+import type { ComponentType, SVGProps } from "react";
 import {
     GAME_STATUSES,
     PLAYED_STATUSES,
@@ -7,6 +8,7 @@ import {
     type PlayedStatus,
 } from "../../constants/gameStatus";
 import { cn } from "../../lib/cn";
+import Dropdown, { type DropdownOption } from "../ui/Dropdown";
 
 /* Selected fills with its own hue and lifts. Unselected stays quiet but has
    to read as live, not disabled. */
@@ -101,78 +103,61 @@ export const StatusPlates = ({
     </fieldset>
 );
 
-const PlayedTile = ({
-    label,
-    mark,
-    selected,
-    onClick,
-    className,
-}: {
-    label: string;
-    /** Which presentation lends its icon and hue. */
-    mark: DisplayStatus;
-    selected: boolean;
-    onClick: () => void;
-    className?: string;
-}) => (
-    <button
-        type="button"
-        aria-pressed={selected}
-        onClick={onClick}
-        className={cn(
-            BASE,
-            "focus-visible:outline-brand",
-            selected
-                ? "border-brand bg-brand-subtle text-content shadow-plate"
-                : RESTING,
-            className
-        )}
-    >
-        <Disc status={mark} selected={selected} />
-        <span className="min-w-0 truncate text-body-sm font-medium">
-            {label}
-        </span>
-    </button>
-);
+type IconProps = SVGProps<SVGSVGElement> & { size?: number | string };
 
-export const PlayedStatusPlates = ({
+/** The mark keeps its own hue in the menu, the way it does on a plate. Built
+ *  once at module scope: a component rebuilt per render remounts the icon. */
+const tonedMark = (status: DisplayStatus): ComponentType<IconProps> => {
+    const { icon: Icon, markTone } = STATUS_PRESENTATION[status];
+    const Mark = ({ className, ...props }: IconProps) => (
+        <Icon {...props} className={cn(markTone, className)} />
+    );
+    Mark.displayName = `${status}Mark`;
+    return Mark;
+};
+
+const PLAYED_OPTIONS: DropdownOption[] = [
+    {
+        /* Empty rather than a fifth status: played_status stays null, and its
+           CHECK constraint still lists only the four below. */
+        value: "",
+        label: "Just played",
+        icon: tonedMark("played"),
+        hint: STATUS_PRESENTATION.played.hint,
+    },
+    ...PLAYED_STATUSES.map((status) => ({
+        value: status,
+        label: STATUS_PRESENTATION[status].label,
+        icon: tonedMark(status),
+        hint: STATUS_PRESENTATION[status].hint,
+    })),
+];
+
+/**
+ * The substatus, as a menu rather than a second row of plates. It refines
+ * "played" rather than standing beside it, and a row of tiles gave it the same
+ * weight as the status itself.
+ */
+export const PlayedStatusSelect = ({
     value,
     onChange,
 }: {
     value: PlayedStatus | null;
     onChange: (status: PlayedStatus | null) => void;
 }) => (
-    <fieldset>
-        <legend className="mb-2.5 flex items-baseline gap-2.5">
-            <span className="text-label text-content-muted">How it ended</span>
-        </legend>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-            {/* Stands for no substatus at all, and stays null in the database.
-                Without something already selected the row read as four
-                unanswered questions rather than an optional refinement. */}
-            <PlayedTile
-                label="Just played"
-                mark="played"
-                selected={value === null}
-                onClick={() => onChange(null)}
-                // Its own row: five across clipped every label below 900px.
-                className="col-span-2 sm:col-span-4"
-            />
-            {PLAYED_STATUSES.map((status) => {
-                const { label } = STATUS_PRESENTATION[status];
-                const selected = status === value;
-
-                return (
-                    <PlayedTile
-                        key={status}
-                        label={label}
-                        mark={status}
-                        selected={selected}
-                        // Pressing the selected tile falls back to just played.
-                        onClick={() => onChange(selected ? null : status)}
-                    />
-                );
-            })}
-        </div>
-    </fieldset>
+    <div>
+        <span
+            id="log-played-label"
+            className="mb-2 block text-label text-content-muted"
+        >
+            How it ended
+        </span>
+        <Dropdown
+            options={PLAYED_OPTIONS}
+            value={value ?? ""}
+            aria-labelledby="log-played-label"
+            onChange={(next) => onChange((next || null) as PlayedStatus | null)}
+            className="w-full sm:max-w-[280px]"
+        />
+    </div>
 );

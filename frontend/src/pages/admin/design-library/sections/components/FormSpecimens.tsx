@@ -13,7 +13,7 @@ import {
 import Field from "../../../../../components/ui/Field";
 import {
     StatusPlates,
-    PlayedStatusPlates,
+    PlayedStatusSelect,
 } from "../../../../../components/gamelog/StatusPlates";
 import RatingMeter from "../../../../../components/ui/RatingMeter";
 import RatingBadge from "../../../../../components/ui/RatingBadge";
@@ -133,12 +133,12 @@ const FormSpecimens = () => {
             <Specimen
                 title="Status plates"
                 stack
-                notes="Segmented. The selected plate lifts and lights, with a status-hue top edge; the rest sit flat. Selecting a status that cannot carry a substatus clears the substatus rather than dropping it silently at save."
-                meta="StatusPlates · PlayedStatusPlates — aria-pressed per plate"
+                notes="Segmented. The selected plate lifts and lights, with a status-hue top edge; the rest sit flat. The substatus refines a played log rather than standing beside it, so it is a menu — open by default on Just played, which saves as no substatus at all. Selecting a status that cannot carry one clears it rather than dropping it silently at save."
+                meta="StatusPlates — aria-pressed per plate · PlayedStatusSelect"
             >
                 <StatusPlates value={status} onChange={setStatus} />
                 {status === "played" && (
-                    <PlayedStatusPlates
+                    <PlayedStatusSelect
                         value={playedStatus}
                         onChange={setPlayedStatus}
                     />
