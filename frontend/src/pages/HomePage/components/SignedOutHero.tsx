@@ -43,13 +43,21 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
                 and history in one place. Free, and yours to export.
             </p>
 
-            <div className="mt-7 flex flex-wrap items-center gap-3">
-                <Button size="lg" onClick={onStart}>
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                <Button
+                    size="lg"
+                    onClick={onStart}
+                    className="w-full sm:w-auto"
+                >
                     Start your library
                 </Button>
                 <Link
                     to="/library"
-                    className={buttonClass("secondary", undefined, "lg")}
+                    className={buttonClass(
+                        "secondary",
+                        "w-full sm:w-auto",
+                        "lg"
+                    )}
                 >
                     Browse the library
                 </Link>
@@ -69,16 +77,19 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
             </p>
         </div>
 
+        {/* Leads on a phone, where the alternative is the brand name twice
+            over. Each card steps by a share of the room left once one cover
+            is accounted for, so the fan ends flush at any width. */}
         <div
             aria-hidden
-            className="relative isolate hidden h-[260px] lg:block xl:h-[290px]"
+            className="relative isolate order-first h-[170px] [--cover:84px] sm:h-[230px] sm:[--cover:116px] lg:order-none lg:h-[260px] lg:[--cover:126px] xl:h-[290px] xl:[--cover:140px]"
         >
             {covers.slice(0, 6).map((game, i) => (
                 <span
                     key={game.id}
-                    className="absolute top-1/2 w-[126px] xl:w-[140px]"
+                    className="absolute top-1/2 w-(--cover)"
                     style={{
-                        left: `${i * 15}%`,
+                        left: `calc((100% - var(--cover)) / 5 * ${i})`,
                         zIndex: i,
                         transform: `translateY(calc(-50% + ${FAN[i]!.drop}px)) rotate(${FAN[i]!.rotate}deg)`,
                     }}

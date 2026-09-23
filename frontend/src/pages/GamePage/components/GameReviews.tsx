@@ -61,7 +61,11 @@ const GameReviews = ({
                 </span>
                 {onWriteReview && (
                     // The empty state carries its own action, so skip it there.
-                    <Button size="sm" onClick={onWriteReview}>
+                    <Button
+                        size="sm"
+                        onClick={onWriteReview}
+                        className="min-h-11 sm:min-h-9"
+                    >
                         <PenLine size={14} aria-hidden />
                         {hasLog ? "Edit review" : "Write a review"}
                     </Button>

@@ -18,7 +18,7 @@ const GenreList = ({ names }: { names: string[] }) => {
                     onClick={() => setOpen((was) => !was)}
                     aria-expanded={open}
                     aria-label={open ? "Show fewer genres" : "Show all genres"}
-                    className="shrink-0 cursor-pointer self-center text-content-muted hover:text-content"
+                    className="relative shrink-0 cursor-pointer self-center text-content-muted before:absolute before:-inset-4 before:content-[''] hover:text-content sm:before:hidden"
                 >
                     <ChevronDown
                         size={13}

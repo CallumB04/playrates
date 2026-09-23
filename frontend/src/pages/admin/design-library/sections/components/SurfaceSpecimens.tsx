@@ -89,7 +89,7 @@ const SurfaceSpecimens = () => {
                     <Modal
                         onClose={() => setModalOpen(false)}
                         labelledBy="demo-modal-title"
-                        className="w-[440px]"
+                        className="w-full max-w-[440px]"
                     >
                         <div className="flex items-baseline justify-between border-b border-subtle pb-3">
                             <h2

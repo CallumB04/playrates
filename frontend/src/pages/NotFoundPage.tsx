@@ -63,6 +63,7 @@ const NotFoundPage = () => {
                                   platformSlugs={game.platforms}
                                   platforms={platforms ?? []}
                                   footValue={releaseYear(game.releaseDate)}
+                                  narrowFoot
                               />
                           ))}
                 </div>

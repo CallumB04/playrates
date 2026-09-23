@@ -250,6 +250,7 @@ const LibraryPage = () => {
                                 }
                                 meta={logMeta(game.id)}
                                 actions={buildActions(game.id, game.title)}
+                                narrowFoot
                             />
                         );
                     })}

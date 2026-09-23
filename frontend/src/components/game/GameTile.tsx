@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, type ComponentType, type SVGProps } from "react";
+import { Plus } from "lucide-react";
 import { cn } from "../../lib/cn";
 import type { DisplayStatus } from "../../constants/gameStatus";
 import type { Platform } from "@playrates/shared";
@@ -35,6 +36,9 @@ interface GameTileProps {
     /** A line under the title on hover, e.g. "Your log · 8.5 · 31h". */
     meta?: string;
     actions?: TileAction[];
+    /** Drop the figure below `sm`, for grids too narrow to hold both it and
+     *  the platform marks. */
+    narrowFoot?: boolean;
 }
 
 const ACTION_TONE = {
@@ -57,10 +61,14 @@ const GameTile = ({
     status,
     meta,
     actions = [],
+    narrowFoot = false,
 }: GameTileProps) => {
     const rows = actions.filter((a) => !a.icon);
     const icons = actions.filter((a) => a.icon);
     const [pressed, setPressed] = useState<Set<string>>(new Set());
+
+    const primary = rows[0] ?? icons[0];
+    const PrimaryIcon = primary?.icon ?? Plus;
 
     return (
         <div className="group/tile">
@@ -89,6 +97,29 @@ const GameTile = ({
                         onMedia
                         className="absolute top-1.5 right-1.5"
                     />
+                )}
+
+                {/* The rows below open on hover, which a touch screen can't
+                    ask for, so the loud action gets a standing button. */}
+                {primary && (
+                    <button
+                        type="button"
+                        aria-label={primary.label}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            primary.onSelect();
+                        }}
+                        className={cn(
+                            "absolute top-1.5 left-1.5 grid size-9 place-items-center rounded-full",
+                            "border border-content-on-media/30 bg-overlay-tile text-content-on-media backdrop-blur-sm",
+                            "active:bg-brand active:text-content-on-solid",
+                            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-on-media",
+                            "before:absolute before:-inset-1 before:content-['']",
+                            "sm:hidden"
+                        )}
+                    >
+                        <PrimaryIcon size={16} aria-hidden />
+                    </button>
                 )}
 
                 <span className="absolute inset-x-0 bottom-0 bg-linear-to-t from-overlay-tile via-overlay-tile/80 to-transparent p-2.5 pt-12">
@@ -186,11 +217,24 @@ const GameTile = ({
                         slugs={platformSlugs ?? []}
                         platforms={platforms ?? []}
                         max={3}
-                        className="shrink-0 text-content-muted"
+                        className={cn(
+                            "text-content-muted",
+                            narrowFoot
+                                ? "min-w-0 shrink overflow-hidden sm:shrink-0"
+                                : "shrink-0"
+                        )}
                     />
-                    <span className="leader" aria-hidden="true" />
+                    <span
+                        className={cn("leader", narrowFoot && "max-sm:hidden")}
+                        aria-hidden="true"
+                    />
                     {rating === undefined ? (
-                        <span className="shrink-0 font-mono text-figure-sm whitespace-nowrap text-content-muted">
+                        <span
+                            className={cn(
+                                "shrink-0 font-mono text-figure-sm whitespace-nowrap text-content-muted",
+                                narrowFoot && "max-sm:hidden"
+                            )}
+                        >
                             {footValue ?? ""}
                         </span>
                     ) : (

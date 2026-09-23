@@ -23,7 +23,8 @@ interface RailProps {
 }
 
 const ARROW =
-    "lift flex size-8 cursor-pointer items-center justify-center rounded-full border border-subtle bg-surface-raised text-content-secondary " +
+    "lift relative flex size-8 cursor-pointer items-center justify-center rounded-full border border-subtle bg-surface-raised text-content-secondary " +
+    "before:absolute before:-inset-1.5 before:content-[''] sm:before:hidden " +
     "hover:-translate-y-px hover:border-brand hover:text-content " +
     "disabled:cursor-default disabled:opacity-30 disabled:hover:translate-y-0 disabled:hover:border-subtle " +
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
@@ -111,7 +112,11 @@ const Rail = ({
                 ref={trackRef}
                 onScroll={measure}
                 className={cn(
-                    "flex snap-x snap-mandatory gap-3.5 overflow-x-auto pb-2",
+                    // `contain:layout` or the track's content widens the
+                    // layout viewport itself, letting the whole page pan
+                    // sideways on a phone. Clipping an ancestor does not fix
+                    // it; only containment here does.
+                    "flex snap-x snap-mandatory gap-3.5 overflow-x-auto pb-2 [contain:layout]",
                     // The lift moves tiles up; without room they clip.
                     "-mt-1 pt-1",
                     "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

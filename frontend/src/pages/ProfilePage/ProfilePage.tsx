@@ -226,6 +226,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                                         : "Switch to night"
                                 }
                                 onClick={toggleTheme}
+                                className="max-sm:size-11 max-sm:px-0"
                             >
                                 {theme === "dark" ? (
                                     <Sun size={15} aria-hidden />
@@ -242,6 +243,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                                 onClick={() =>
                                     setModal({ kind: "editProfile" })
                                 }
+                                className="max-sm:size-11 max-sm:px-0"
                             >
                                 <Pencil size={15} aria-hidden />
                                 <span className="hidden sm:inline">
@@ -252,7 +254,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                                 to="/settings"
                                 className={buttonClass(
                                     "outline",
-                                    undefined,
+                                    "max-sm:size-11 max-sm:px-0",
                                     "sm"
                                 )}
                             >

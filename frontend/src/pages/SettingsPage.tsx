@@ -127,6 +127,9 @@ const SettingsPage = () => {
     }, [user]);
 
     const zone = effectiveTimeZone(user?.timezone);
+    /* "UTC" is the column default meaning "never chosen", so the field shows
+       the device's zone. Nothing is saved yet, and it shouldn't imply it is. */
+    const zoneIsDetected = !user?.timezone || user.timezone === "UTC";
 
     const zones = useMemo(() => {
         // The current zone is always offered, even if this runtime omits it.
@@ -208,7 +211,14 @@ const SettingsPage = () => {
                         Send a reset link
                     </Button>
                 </Row>
-                <Row label="Time zone" help="Dates and times render in this.">
+                <Row
+                    label="Time zone"
+                    help={
+                        zoneIsDetected
+                            ? "Dates and times render in this. Detected from your device — choose it to save it to your account."
+                            : "Dates and times render in this."
+                    }
+                >
                     <Dropdown
                         searchable
                         options={zones}

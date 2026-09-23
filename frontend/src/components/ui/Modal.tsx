@@ -18,9 +18,21 @@ interface ModalProps {
  * Not a native `<dialog>`: showModal() brings ::backdrop, the top layer and UA
  * centring with it, all of which move pixels. Keyboard and focus are handled
  * here instead.
+ *
+ * A bottom sheet below `sm`, the centred dialog it always was from there up.
+ * `dvh` not `vh`: `vh` measures against the viewport with the browser chrome
+ * retracted, so a `90vh` panel is taller than what you can see.
  */
+const BACKDROP =
+    "fixed inset-0 z-50 flex h-dvh w-full items-end justify-center bg-overlay-backdrop backdrop-blur-sm " +
+    "sm:items-center sm:px-4";
+
 const PANEL =
-    "relative max-h-[90vh] animate-settle overflow-y-auto rounded-lg border border-subtle bg-surface-raised p-4 shadow-modal sm:p-6";
+    "relative max-h-[88dvh] animate-sheet-rise overflow-y-auto " +
+    "rounded-t-lg border border-b-0 border-subtle bg-surface-raised p-4 shadow-sheet " +
+    // Clears the home indicator; plain p-4 anywhere without an inset.
+    "pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] " +
+    "sm:max-h-[90dvh] sm:animate-settle sm:rounded-lg sm:border-b sm:p-6 sm:shadow-modal";
 
 const Modal = ({
     onClose,
@@ -41,10 +53,7 @@ const Modal = ({
     }, []);
 
     return createPortal(
-        <div
-            className="fixed top-0 left-0 z-50 flex h-screen w-screen items-center justify-center bg-overlay-backdrop px-4 backdrop-blur-sm"
-            onMouseDown={onClose}
-        >
+        <div className={BACKDROP} onMouseDown={onClose}>
             <div
                 ref={panelRef}
                 role="dialog"

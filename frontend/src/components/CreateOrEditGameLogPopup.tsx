@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { GameLogWithGame } from "../api";
 import { useGame, usePlatforms } from "../hooks/queries/useGames";
 import { useGameLogMutations } from "../hooks/queries/useGameLogs";
@@ -29,6 +29,8 @@ interface CreateOrEditGameLogPopupProps {
     gamelog?: GameLogWithGame | null;
     gameID?: number;
     editing: boolean;
+    /** Opened from a review control, so open on the review field. */
+    focusReview?: boolean;
 }
 
 /**
@@ -42,9 +44,11 @@ const CreateOrEditGameLogPopup = ({
     gamelog,
     gameID,
     editing,
+    focusReview = false,
 }: CreateOrEditGameLogPopupProps) => {
     const gameId = gamelog?.gameId ?? gameID!;
     const notify = useNotify();
+    const reviewRef = useRef<HTMLTextAreaElement>(null);
 
     const { data: game } = useGame(gameId);
     const { data: platforms } = usePlatforms();
@@ -68,6 +72,13 @@ const CreateOrEditGameLogPopup = ({
         });
         setHydrated(true);
     }, [hydrated, reviewLoading, gamelog, review]);
+
+    // Only once hydrated: before that the form's height isn't final.
+    useEffect(() => {
+        if (!focusReview || !hydrated) return;
+        reviewRef.current?.scrollIntoView({ block: "center" });
+        reviewRef.current?.focus({ preventScroll: true });
+    }, [focusReview, hydrated]);
 
     const progress = useMemo(() => achievementFraction(draft), [draft]);
     const busy = save.isPending || saveReview.isPending || remove.isPending;
@@ -112,7 +123,8 @@ const CreateOrEditGameLogPopup = ({
     const handleDelete = async () => {
         if (!gamelog) return;
         try {
-            await remove.mutateAsync(gamelog.id);
+            // Keyed by game, not by log row: gamelog.id 404s here.
+            await remove.mutateAsync(gamelog.gameId);
             notify("Log deleted", "success");
             closePopup();
         } catch {
@@ -127,7 +139,7 @@ const CreateOrEditGameLogPopup = ({
             showCloseButton={false}
             className="w-full max-w-[880px] p-0! sm:p-0!"
         >
-            <header className="flex items-center gap-4 border-b border-subtle px-6 py-4">
+            <header className="flex items-center gap-4 border-b border-subtle px-5 py-4 sm:px-6">
                 <div className="min-w-0 flex-1">
                     <h2
                         id="log-editor-title"
@@ -140,13 +152,13 @@ const CreateOrEditGameLogPopup = ({
                     type="button"
                     onClick={closePopup}
                     aria-label="Close"
-                    className="shrink-0 rounded-sm p-2 text-content-muted lift hover:bg-surface-hover hover:text-content"
+                    className="flex size-11 shrink-0 items-center justify-center rounded-sm text-content-muted lift hover:bg-surface-hover hover:text-content sm:size-auto sm:p-2"
                 >
                     <X size={20} />
                 </button>
             </header>
 
-            <div className="flex flex-col gap-5 px-6 py-5">
+            <div className="flex flex-col gap-5 px-5 py-5 sm:px-6">
                 <StatusPlates
                     value={draft.status}
                     onChange={(value) => dispatch({ type: "status", value })}
@@ -350,6 +362,7 @@ const CreateOrEditGameLogPopup = ({
                         </div>
                     </div>
                     <Textarea
+                        ref={reviewRef}
                         rows={3}
                         maxLength={5000}
                         aria-label="Review"
@@ -373,26 +386,31 @@ const CreateOrEditGameLogPopup = ({
                 )}
             </div>
 
-            <footer className="flex flex-wrap items-center gap-3 border-t border-subtle bg-surface-raised px-6 py-4">
+            <footer className="flex flex-col-reverse gap-3 border-t border-subtle bg-surface-raised px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:px-6">
                 {editing && gamelog && (
                     <button
                         type="button"
                         onClick={() => void handleDelete()}
                         disabled={busy}
-                        className="text-label text-danger lift hover:underline disabled:opacity-60"
+                        className="min-h-11 text-label text-danger lift hover:underline disabled:opacity-60 sm:min-h-0"
                     >
                         Delete this log
                     </button>
                 )}
-                <div className="ml-auto flex gap-2.5">
+                <div className="flex flex-col-reverse gap-2.5 sm:ml-auto sm:flex-row">
                     <Button
                         variant="secondary"
                         onClick={closePopup}
                         disabled={busy}
+                        className="w-full sm:w-auto"
                     >
                         Cancel
                     </Button>
-                    <Button onClick={() => void handleSave()} disabled={busy}>
+                    <Button
+                        onClick={() => void handleSave()}
+                        disabled={busy}
+                        className="w-full sm:w-auto"
+                    >
                         {busy ? "Saving…" : "Save entry"}
                     </Button>
                 </div>

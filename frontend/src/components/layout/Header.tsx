@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import Button from "../ui/Button";
 import AccountMenu from "./AccountMenu";
 import GlobalSearch from "./GlobalSearch";
 import MobileMenu, { type NavItem } from "./MobileMenu";
+import MobileSearch from "./MobileSearch";
 import { cn } from "../../lib/cn";
 
 /** Whether a nav link points at where we already are. NavLink matches on
@@ -30,7 +31,8 @@ const isCurrent = (
     return [...wanted].every(([key, value]) => actual.get(key) === value);
 };
 
-/** Static, not fixed — the page scrolls away from the masthead. */
+/** Sticky on a phone, where it carries the only route to nav and search;
+ *  static from `lg`, where the page scrolls away from the masthead. */
 const Header = () => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
@@ -38,6 +40,7 @@ const Header = () => {
     const location = useLocation();
 
     const [menuOpen, setMenuOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
 
     /* Home, not wherever you were: signing out on a settings page or somebody's
        profile leaves you looking at something you can no longer load. */
@@ -49,6 +52,7 @@ const Header = () => {
     useEffect(() => {
         window.scrollTo(0, 0);
         setMenuOpen(false);
+        setSearchOpen(false);
     }, [location.pathname, location.search]);
 
     /* Close on the way up past `lg`: the menu hides there, and its scroll lock
@@ -61,6 +65,16 @@ const Header = () => {
         wide.addEventListener("change", close);
         return () => wide.removeEventListener("change", close);
     }, [menuOpen]);
+
+    /* Same for the search overlay, which gives way at `xl`. */
+    useEffect(() => {
+        if (!searchOpen) return;
+        const wide = window.matchMedia("(min-width: 1280px)");
+        const close = () => wide.matches && setSearchOpen(false);
+        close();
+        wide.addEventListener("change", close);
+        return () => wide.removeEventListener("change", close);
+    }, [searchOpen]);
 
     const links: NavItem[] = (
         user
@@ -90,14 +104,14 @@ const Header = () => {
 
     return (
         <>
-            <header className="mx-auto w-full max-w-[1240px] px-5 pt-6 sm:px-8 lg:px-12">
+            <header className="sticky top-0 z-40 mx-auto w-full max-w-[1240px] bg-surface px-5 pt-6 sm:px-8 lg:static lg:px-12">
                 <div className="flex items-center justify-between gap-6 border-b border-subtle pb-3.5">
                     <div className="flex items-center gap-3 sm:gap-4 lg:gap-8">
                         <button
                             type="button"
                             onClick={() => setMenuOpen(true)}
                             aria-label="Open menu"
-                            className="-ml-2 rounded-sm p-2 text-content lift hover:text-brand lg:hidden"
+                            className="-ml-[11px] flex size-11 items-center justify-center rounded-sm text-content lift hover:text-brand lg:hidden"
                         >
                             <Menu size={22} />
                         </button>
@@ -130,7 +144,16 @@ const Header = () => {
                         </nav>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1 sm:gap-4">
+                        <button
+                            type="button"
+                            onClick={() => setSearchOpen(true)}
+                            aria-label="Search"
+                            className="flex size-11 items-center justify-center rounded-sm text-content lift hover:text-brand xl:hidden"
+                        >
+                            <Search size={20} />
+                        </button>
+
                         <GlobalSearch />
 
                         {user ? (
@@ -155,6 +178,10 @@ const Header = () => {
                     </div>
                 </div>
             </header>
+
+            {searchOpen && (
+                <MobileSearch onClose={() => setSearchOpen(false)} />
+            )}
 
             {menuOpen && (
                 <MobileMenu

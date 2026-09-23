@@ -24,7 +24,7 @@ const AdminLayout = () => (
                 <ThemeToggle />
             </div>
 
-            <nav className="flex flex-row gap-1 overflow-x-auto lg:flex-col">
+            <nav className="flex flex-row gap-1 overflow-x-auto [contain:layout] lg:flex-col">
                 {ADMIN_VIEWS.map((view) => (
                     <NavLink
                         key={view.to}

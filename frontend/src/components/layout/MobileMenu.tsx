@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { LogOut, Settings, UserRound, X } from "lucide-react";
 import Button from "../ui/Button";
 import ProfilePicture from "../ProfilePicture";
+import { GAME_STATUSES, STATUS_PRESENTATION } from "../../constants/gameStatus";
 import { useOverlay } from "../../hooks/useOverlay";
 import { cn } from "../../lib/cn";
 import type { Profile } from "@playrates/shared";
@@ -51,7 +52,7 @@ const MobileMenu = ({
                     type="button"
                     onClick={onClose}
                     aria-label="Close menu"
-                    className="-mr-2 rounded-sm p-2 text-content lift hover:text-brand"
+                    className="-mr-[10px] flex size-11 items-center justify-center rounded-sm text-content lift hover:text-brand"
                 >
                     <X size={24} />
                 </button>
@@ -74,6 +75,39 @@ const MobileMenu = ({
                         {link.label}
                     </Link>
                 ))}
+
+                {user && (
+                    <div className="mt-6 border-t border-subtle pt-5">
+                        <p className="px-4 pb-1 text-label text-content-muted">
+                            Your shelves
+                        </p>
+                        {GAME_STATUSES.map((status) => {
+                            const {
+                                label,
+                                icon: Icon,
+                                markTone,
+                            } = STATUS_PRESENTATION[status];
+                            return (
+                                <Link
+                                    key={status}
+                                    to={`/user/${user.username}?type=${status}`}
+                                    onClick={onClose}
+                                    className={cn(
+                                        ROW,
+                                        "justify-start gap-3 text-content"
+                                    )}
+                                >
+                                    <Icon
+                                        size={18}
+                                        aria-hidden
+                                        className={cn("shrink-0", markTone)}
+                                    />
+                                    {label}
+                                </Link>
+                            );
+                        })}
+                    </div>
+                )}
             </nav>
 
             <div className="mt-auto border-t border-subtle px-3 pt-4 pb-8 sm:px-6">
@@ -107,7 +141,10 @@ const MobileMenu = ({
                                 onClose();
                                 onSignOut();
                             }}
-                            className={cn(ROW, "w-full text-left")}
+                            className={cn(
+                                ROW,
+                                "w-full text-left text-danger hover:bg-danger-subtle hover:text-danger"
+                            )}
                         >
                             Sign out
                             <LogOut size={17} aria-hidden />

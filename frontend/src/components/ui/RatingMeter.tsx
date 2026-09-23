@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import RatingBadge from "./RatingBadge";
 import { formatRating } from "../../lib/format";
 import { cn } from "../../lib/cn";
@@ -31,6 +31,8 @@ const RatingMeter = ({
     className,
 }: RatingMeterProps) => {
     const [hover, setHover] = useState<number | null>(null);
+    const [dragging, setDragging] = useState(false);
+    const trackRef = useRef<HTMLDivElement>(null);
     const shown = hover ?? value ?? 0;
     const filled = Math.round(shown / STEP);
 
@@ -38,6 +40,38 @@ const RatingMeter = ({
         if (disabled) return;
         // Pressing the current value again clears it.
         onChange(next === value ? null : next);
+    };
+
+    /* A segment is 11px wide, which no fingertip can pick out, so a coarse
+       pointer slides along the whole track instead. A mouse keeps the
+       per-segment buttons. */
+    const valueAt = (clientX: number): number => {
+        const el = trackRef.current;
+        if (!el) return 0;
+        const { left, width } = el.getBoundingClientRect();
+        const index = Math.ceil(((clientX - left) / width) * SEGMENTS);
+        return clamp(Math.min(SEGMENTS, Math.max(1, index)) * STEP);
+    };
+
+    const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+        if (disabled || event.pointerType === "mouse") return;
+        // Stops the synthetic click that would otherwise set it a second time.
+        event.preventDefault();
+        event.currentTarget.setPointerCapture(event.pointerId);
+        setDragging(true);
+        setHover(valueAt(event.clientX));
+    };
+
+    const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+        if (!dragging) return;
+        setHover(valueAt(event.clientX));
+    };
+
+    const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+        if (!dragging) return;
+        setDragging(false);
+        setHover(null);
+        set(valueAt(event.clientX));
     };
 
     const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -92,10 +126,18 @@ const RatingMeter = ({
                 }
                 aria-disabled={disabled || undefined}
                 tabIndex={disabled ? -1 : 0}
+                ref={trackRef}
                 onKeyDown={onKeyDown}
-                onPointerLeave={() => setHover(null)}
+                onPointerLeave={() => !dragging && setHover(null)}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onPointerCancel={() => {
+                    setDragging(false);
+                    setHover(null);
+                }}
                 className={cn(
-                    "flex h-9 w-full gap-[3px] rounded-sm",
+                    "flex h-14 w-full touch-none gap-[3px] rounded-sm select-none sm:h-9",
                     "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand",
                     disabled && "pointer-events-none opacity-60"
                 )}
@@ -129,7 +171,13 @@ const RatingMeter = ({
             </div>
 
             <p className="text-label-sm text-content-muted">
-                Half points count. Press the same segment again to clear it.
+                <span className="sm:hidden">
+                    Half points count. Slide to change, and land on the same
+                    value again to clear it.
+                </span>
+                <span className="hidden sm:inline">
+                    Half points count. Press the same segment again to clear it.
+                </span>
             </p>
         </div>
     );
