@@ -7,6 +7,7 @@ import {
     type GameStatus,
     type PlayedStatus,
 } from "../../constants/gameStatus";
+import { ChevronDown } from "lucide-react";
 import { cn } from "../../lib/cn";
 import Dropdown, { type DropdownOption } from "../ui/Dropdown";
 
@@ -64,45 +65,6 @@ const Disc = ({
     );
 };
 
-export const StatusPlates = ({
-    value,
-    onChange,
-}: {
-    value: GameStatus;
-    onChange: (status: GameStatus) => void;
-}) => (
-    <fieldset>
-        <legend className="mb-2.5 text-label text-content-muted">Status</legend>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-            {GAME_STATUSES.map((status) => {
-                const { label } = STATUS_PRESENTATION[status];
-                const selected = status === value;
-
-                return (
-                    <button
-                        key={status}
-                        type="button"
-                        aria-pressed={selected}
-                        onClick={() => onChange(status)}
-                        className={cn(
-                            BASE,
-                            TILE[status].ring,
-                            selected
-                                ? cn(TILE[status].on, "shadow-plate")
-                                : RESTING
-                        )}
-                    >
-                        <Disc status={status} selected={selected} />
-                        <span className="min-w-0 truncate text-body-sm font-medium">
-                            {label}
-                        </span>
-                    </button>
-                );
-            })}
-        </div>
-    </fieldset>
-);
-
 type IconProps = SVGProps<SVGSVGElement> & { size?: number | string };
 
 /** The mark keeps its own hue in the menu, the way it does on a plate. Built
@@ -133,31 +95,88 @@ const PLAYED_OPTIONS: DropdownOption[] = [
     })),
 ];
 
-/**
- * The substatus, as a menu rather than a second row of plates. It refines
- * "played" rather than standing beside it, and a row of tiles gave it the same
- * weight as the status itself.
- */
-export const PlayedStatusSelect = ({
+export const StatusPlates = ({
     value,
     onChange,
+    playedStatus,
+    onPlayedStatusChange,
 }: {
-    value: PlayedStatus | null;
-    onChange: (status: PlayedStatus | null) => void;
+    value: GameStatus;
+    onChange: (status: GameStatus) => void;
+    playedStatus: PlayedStatus | null;
+    onPlayedStatusChange: (status: PlayedStatus | null) => void;
 }) => (
-    <div>
-        <span
-            id="log-played-label"
-            className="mb-2 block text-label text-content-muted"
-        >
-            How it ended
-        </span>
-        <Dropdown
-            options={PLAYED_OPTIONS}
-            value={value ?? ""}
-            aria-labelledby="log-played-label"
-            onChange={(next) => onChange((next || null) as PlayedStatus | null)}
-            className="w-full sm:max-w-[280px]"
-        />
-    </div>
+    <fieldset>
+        <legend className="mb-2.5 text-label text-content-muted">Status</legend>
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            {GAME_STATUSES.map((status) => {
+                const { label } = STATUS_PRESENTATION[status];
+                const selected = status === value;
+
+                /* The chosen played plate opens onto its substatuses in place,
+                   rather than a second row appearing below. The disc stays the
+                   played mark: the row's hues belong to the four statuses, and
+                   a gold trophy inside a green plate reads as a mistake. */
+                if (status === "played" && selected) {
+                    return (
+                        <Dropdown
+                            key={status}
+                            options={PLAYED_OPTIONS}
+                            value={playedStatus ?? ""}
+                            aria-label="How it ended"
+                            onChange={(next) =>
+                                onPlayedStatusChange(
+                                    (next || null) as PlayedStatus | null
+                                )
+                            }
+                            triggerClassName={cn(
+                                BASE,
+                                "w-full",
+                                TILE.played.ring,
+                                TILE.played.on,
+                                "shadow-plate"
+                            )}
+                            renderTrigger={(chosen, open) => (
+                                <>
+                                    <Disc status="played" selected />
+                                    <span className="min-w-0 flex-1 truncate text-body-sm font-medium">
+                                        {chosen?.label ?? label}
+                                    </span>
+                                    <ChevronDown
+                                        size={14}
+                                        aria-hidden
+                                        className={cn(
+                                            "shrink-0 text-content-secondary transition-transform duration-200",
+                                            open && "rotate-180"
+                                        )}
+                                    />
+                                </>
+                            )}
+                        />
+                    );
+                }
+
+                return (
+                    <button
+                        key={status}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => onChange(status)}
+                        className={cn(
+                            BASE,
+                            TILE[status].ring,
+                            selected
+                                ? cn(TILE[status].on, "shadow-plate")
+                                : RESTING
+                        )}
+                    >
+                        <Disc status={status} selected={selected} />
+                        <span className="min-w-0 truncate text-body-sm font-medium">
+                            {label}
+                        </span>
+                    </button>
+                );
+            })}
+        </div>
+    </fieldset>
 );

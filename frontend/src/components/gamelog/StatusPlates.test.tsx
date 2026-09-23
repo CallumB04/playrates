@@ -1,72 +1,104 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { PlayedStatusSelect } from "./StatusPlates";
+import type { GameStatus, PlayedStatus } from "../../constants/gameStatus";
+import { StatusPlates } from "./StatusPlates";
 
-const trigger = () => screen.getByRole("button", { name: /how it ended/i });
-const open = () => userEvent.click(trigger());
+const plates = (
+    props: Partial<{
+        value: GameStatus;
+        playedStatus: PlayedStatus | null;
+        onChange: (s: GameStatus) => void;
+        onPlayedStatusChange: (s: PlayedStatus | null) => void;
+    }> = {}
+) =>
+    render(
+        <StatusPlates
+            value="played"
+            playedStatus={null}
+            onChange={vi.fn()}
+            onPlayedStatusChange={vi.fn()}
+            {...props}
+        />
+    );
+
+const played = () => screen.getByRole("button", { name: /how it ended/i });
 const option = (name: string) =>
     screen.getByRole("option", { name: new RegExp(name) });
 
-describe("PlayedStatusSelect", () => {
-    it("reads as just played when the log carries no substatus", () => {
-        render(<PlayedStatusSelect value={null} onChange={vi.fn()} />);
-        expect(trigger()).toHaveTextContent("Just played");
-    });
-
-    it("names the substatus once there is one", () => {
-        render(<PlayedStatusSelect value="mastered" onChange={vi.fn()} />);
-        expect(trigger()).toHaveTextContent("Mastered");
-    });
-
-    it("offers just played alongside the four real substatuses", async () => {
-        render(<PlayedStatusSelect value={null} onChange={vi.fn()} />);
-        await open();
-
-        expect(screen.getAllByRole("option")).toHaveLength(5);
-        for (const name of [
-            "Just played",
-            "Finished",
-            "Mastered",
-            "Shelved",
-            "Retired",
-        ]) {
-            expect(option(name)).toBeInTheDocument();
+describe("StatusPlates", () => {
+    it("keeps the four statuses in one row", () => {
+        plates({ value: "backlog" });
+        for (const name of ["Played", "Playing", "Backlog", "Wishlist"]) {
+            expect(screen.getByRole("button", { name })).toBeInTheDocument();
         }
     });
 
-    it("ticks what is already chosen", async () => {
-        render(<PlayedStatusSelect value="shelved" onChange={vi.fn()} />);
-        await open();
+    it("leaves played a plain plate until it is the chosen status", async () => {
+        const onChange = vi.fn();
+        plates({ value: "backlog", onChange });
 
-        expect(option("Shelved")).toHaveAttribute("aria-selected", "true");
-        expect(option("Just played")).toHaveAttribute("aria-selected", "false");
+        const plate = screen.getByRole("button", { name: "Played" });
+        expect(plate).toHaveAttribute("aria-pressed", "false");
+        expect(plate).not.toHaveAttribute("aria-haspopup");
+
+        await userEvent.click(plate);
+        expect(onChange).toHaveBeenCalledWith("played");
     });
 
-    it("ticks just played when nothing is set, rather than nothing at all", async () => {
-        render(<PlayedStatusSelect value={null} onChange={vi.fn()} />);
-        await open();
+    it("opens in place once played is chosen", () => {
+        plates({ value: "played" });
 
+        expect(played()).toHaveAttribute("aria-haspopup", "listbox");
+        expect(played()).toHaveTextContent("Just played");
+    });
+
+    it("rests on just played, with the four refinements under it", async () => {
+        plates({ value: "played", playedStatus: null });
+        await userEvent.click(played());
+
+        expect(screen.getAllByRole("option")).toHaveLength(5);
         expect(option("Just played")).toHaveAttribute("aria-selected", "true");
+        for (const name of ["Finished", "Mastered", "Shelved", "Retired"]) {
+            expect(option(name)).toHaveAttribute("aria-selected", "false");
+        }
+    });
+
+    it("names the substatus on the plate once there is one", () => {
+        plates({ value: "played", playedStatus: "mastered" });
+        expect(played()).toHaveTextContent("Mastered");
     });
 
     it("reports a substatus by name", async () => {
-        const onChange = vi.fn();
-        render(<PlayedStatusSelect value={null} onChange={onChange} />);
-        await open();
-        await userEvent.click(option("Retired"));
+        const onPlayedStatusChange = vi.fn();
+        plates({ value: "played", onPlayedStatusChange });
 
-        expect(onChange).toHaveBeenCalledWith("retired");
+        await userEvent.click(played());
+        await userEvent.click(option("Retired"));
+        expect(onPlayedStatusChange).toHaveBeenCalledWith("retired");
     });
 
     /* Null, not a fifth status — nothing new reaches played_status, which has
        a CHECK constraint listing only the four. */
     it("reports just played as nothing at all", async () => {
-        const onChange = vi.fn();
-        render(<PlayedStatusSelect value="finished" onChange={onChange} />);
-        await open();
-        await userEvent.click(option("Just played"));
+        const onPlayedStatusChange = vi.fn();
+        plates({
+            value: "played",
+            playedStatus: "finished",
+            onPlayedStatusChange,
+        });
 
-        expect(onChange).toHaveBeenCalledWith(null);
+        await userEvent.click(played());
+        await userEvent.click(option("Just played"));
+        expect(onPlayedStatusChange).toHaveBeenCalledWith(null);
+    });
+
+    it("does not change the status when the open plate is used", async () => {
+        const onChange = vi.fn();
+        plates({ value: "played", onChange });
+
+        await userEvent.click(played());
+        await userEvent.click(option("Shelved"));
+        expect(onChange).not.toHaveBeenCalled();
     });
 });

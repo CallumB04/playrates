@@ -5,6 +5,7 @@ import {
     useState,
     type ComponentType,
     type KeyboardEvent,
+    type ReactNode,
     type SVGProps,
 } from "react";
 import { createPortal } from "react-dom";
@@ -34,6 +35,15 @@ interface DropdownProps {
     menuClassName?: string;
     /** Adds a filter field to the menu. For lists too long to scan. */
     searchable?: boolean;
+    /** Replaces the field skin on the closed control, for a trigger that has
+     *  to look like something other than a form field. */
+    triggerClassName?: string;
+    /** Replaces what the closed control shows, chevron included. The menu,
+     *  keyboard handling and portalling stay here. */
+    renderTrigger?: (
+        selected: DropdownOption | undefined,
+        open: boolean
+    ) => ReactNode;
     disabled?: boolean;
     id?: string;
     "aria-label"?: string;
@@ -54,6 +64,8 @@ const Dropdown = ({
     className,
     menuClassName,
     searchable = false,
+    triggerClassName,
+    renderTrigger,
     disabled = false,
     id,
     ...aria
@@ -205,37 +217,51 @@ const Dropdown = ({
                 aria-expanded={open}
                 aria-controls={open ? listId : undefined}
                 {...aria}
-                className={fieldClass(
-                    cn(
-                        "flex cursor-pointer items-center gap-2 pr-9 text-left",
-                        open && "border-brand shadow-glow",
-                        disabled && "cursor-not-allowed"
-                    )
-                )}
+                className={
+                    triggerClassName
+                        ? cn(
+                              "cursor-pointer text-left",
+                              disabled && "cursor-not-allowed",
+                              triggerClassName
+                          )
+                        : fieldClass(
+                              cn(
+                                  "flex cursor-pointer items-center gap-2 pr-9 text-left",
+                                  open && "border-brand shadow-glow",
+                                  disabled && "cursor-not-allowed"
+                              )
+                          )
+                }
             >
-                {SelectedIcon && (
-                    <SelectedIcon
-                        size={15}
-                        aria-hidden
-                        className="shrink-0 text-content-secondary"
-                    />
+                {renderTrigger ? (
+                    renderTrigger(selected, open)
+                ) : (
+                    <>
+                        {SelectedIcon && (
+                            <SelectedIcon
+                                size={15}
+                                aria-hidden
+                                className="shrink-0 text-content-secondary"
+                            />
+                        )}
+                        <span
+                            className={cn(
+                                "truncate",
+                                !selected && "text-content-muted"
+                            )}
+                        >
+                            {selected?.label ?? placeholder}
+                        </span>
+                        <ChevronDown
+                            size={14}
+                            aria-hidden
+                            className={cn(
+                                "pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-content-muted transition-transform duration-200",
+                                open && "rotate-180"
+                            )}
+                        />
+                    </>
                 )}
-                <span
-                    className={cn(
-                        "truncate",
-                        !selected && "text-content-muted"
-                    )}
-                >
-                    {selected?.label ?? placeholder}
-                </span>
-                <ChevronDown
-                    size={14}
-                    aria-hidden
-                    className={cn(
-                        "pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-content-muted transition-transform duration-200",
-                        open && "rotate-180"
-                    )}
-                />
             </button>
 
             {open &&

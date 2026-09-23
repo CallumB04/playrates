@@ -11,10 +11,7 @@ import {
     Textarea,
 } from "../../../../../components/ui/Input";
 import Field from "../../../../../components/ui/Field";
-import {
-    StatusPlates,
-    PlayedStatusSelect,
-} from "../../../../../components/gamelog/StatusPlates";
+import { StatusPlates } from "../../../../../components/gamelog/StatusPlates";
 import RatingMeter from "../../../../../components/ui/RatingMeter";
 import RatingBadge from "../../../../../components/ui/RatingBadge";
 import Dropdown from "../../../../../components/ui/Dropdown";
@@ -133,16 +130,15 @@ const FormSpecimens = () => {
             <Specimen
                 title="Status plates"
                 stack
-                notes="Segmented. The selected plate lifts and lights, with a status-hue top edge; the rest sit flat. The substatus refines a played log rather than standing beside it, so it is a menu — open by default on Just played, which saves as no substatus at all. Selecting a status that cannot carry one clears it rather than dropping it silently at save."
-                meta="StatusPlates — aria-pressed per plate · PlayedStatusSelect"
+                notes="Segmented. The selected plate lifts and lights, with a status-hue top edge; the rest sit flat. Played opens in place onto its substatuses, since they refine it rather than standing beside it — it rests on Just played, which saves as no substatus at all. Choosing a status that cannot carry one clears it rather than dropping it silently at save."
+                meta="StatusPlates — aria-pressed per plate, listbox on the chosen played plate"
             >
-                <StatusPlates value={status} onChange={setStatus} />
-                {status === "played" && (
-                    <PlayedStatusSelect
-                        value={playedStatus}
-                        onChange={setPlayedStatus}
-                    />
-                )}
+                <StatusPlates
+                    value={status}
+                    onChange={setStatus}
+                    playedStatus={playedStatus}
+                    onPlayedStatusChange={setPlayedStatus}
+                />
             </Specimen>
 
             <Specimen

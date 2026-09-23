@@ -13,7 +13,7 @@ import RatingMeter from "./ui/RatingMeter";
 import Dropdown from "./ui/Dropdown";
 import { systemOptions } from "../lib/platformIcons";
 import { familyOf, systemsForGame } from "../lib/gameSystems";
-import { StatusPlates, PlayedStatusSelect } from "./gamelog/StatusPlates";
+import { StatusPlates } from "./gamelog/StatusPlates";
 import {
     achievementFraction,
     emptyDraft,
@@ -170,16 +170,11 @@ const CreateOrEditGameLogPopup = ({
                 <StatusPlates
                     value={draft.status}
                     onChange={(value) => dispatch({ type: "status", value })}
+                    playedStatus={draft.playedStatus}
+                    onPlayedStatusChange={(value) =>
+                        dispatch({ type: "playedStatus", value })
+                    }
                 />
-
-                {draft.status === "played" && (
-                    <PlayedStatusSelect
-                        value={draft.playedStatus}
-                        onChange={(value) =>
-                            dispatch({ type: "playedStatus", value })
-                        }
-                    />
-                )}
 
                 <div className="rounded-md border border-subtle bg-surface-sunken/50 px-5 py-4">
                     <RatingMeter
