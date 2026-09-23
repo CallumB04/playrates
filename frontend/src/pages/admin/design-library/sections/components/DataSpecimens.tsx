@@ -58,8 +58,11 @@ const DataSpecimens = () => (
                     <StatusBadge key={status} status={status} />
                 ))}
             </div>
+            {/* All eight over media, not just the substatuses: played kept a
+                white word and mark under a purple border, and this row was
+                where that should have been obvious. */}
             <div className="flex flex-wrap gap-2 bg-surface-media p-4">
-                {PLAYED_STATUSES.map((status) => (
+                {[...GAME_STATUSES, ...PLAYED_STATUSES].map((status) => (
                     <StatusBadge
                         key={status}
                         status={status}

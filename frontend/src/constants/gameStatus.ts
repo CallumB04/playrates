@@ -63,7 +63,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
         chip: "border-status-played bg-status-played-quiet text-content",
         markTone: "text-status-played",
         accent: "bg-status-played",
-        onMediaTone: "border-status-played/60 text-white",
+        onMediaTone: "border-status-played/60 text-[#c9bcff]",
     },
     playing: {
         label: "Playing",
