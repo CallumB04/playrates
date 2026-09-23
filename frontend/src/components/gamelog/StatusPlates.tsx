@@ -86,7 +86,10 @@ const PLAYED_OPTIONS: DropdownOption[] = [
         value: "",
         label: "Played",
         icon: tonedMark("played"),
-        hint: STATUS_PRESENTATION.played.hint,
+        /* About the entry, not the game. The played status's own hint reads as
+           a verdict here, and anything about being done with it trespasses on
+           Shelved and Retired. */
+        hint: "No further detail",
     },
     ...PLAYED_STATUSES.map((status) => ({
         value: status,
