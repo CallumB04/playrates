@@ -112,7 +112,8 @@ const CreateOrEditGameLogPopup = ({
     const handleDelete = async () => {
         if (!gamelog) return;
         try {
-            await remove.mutateAsync(gamelog.id);
+            // Keyed by game, not by log row: gamelog.id 404s here.
+            await remove.mutateAsync(gamelog.gameId);
             notify("Log deleted", "success");
             closePopup();
         } catch {
