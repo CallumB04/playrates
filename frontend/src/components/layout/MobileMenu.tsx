@@ -141,7 +141,10 @@ const MobileMenu = ({
                                 onClose();
                                 onSignOut();
                             }}
-                            className={cn(ROW, "w-full text-left")}
+                            className={cn(
+                                ROW,
+                                "w-full text-left text-danger hover:bg-danger-subtle hover:text-danger"
+                            )}
                         >
                             Sign out
                             <LogOut size={17} aria-hidden />
