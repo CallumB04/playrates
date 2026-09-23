@@ -39,6 +39,11 @@ const GamePage = () => {
 
     const [sort, setSort] = useState<ReviewSort>("recent");
     const [editing, setEditing] = useState(false);
+    const [editIntent, setEditIntent] = useState<"log" | "review">("log");
+    const openEditor = (intent: "log" | "review" = "log") => {
+        setEditIntent(intent);
+        setEditing(true);
+    };
     const [viewing, setViewing] = useState(false);
     const vote = useReviewVote();
 
@@ -108,9 +113,7 @@ const GamePage = () => {
                         isSignedIn={!!user}
                         facts={facts}
                         onViewLog={fullLog ? () => setViewing(true) : undefined}
-                        onPrimary={() =>
-                            user ? setEditing(true) : openLogin()
-                        }
+                        onPrimary={() => (user ? openEditor() : openLogin())}
                         onQuickLog={(status) => void quickLog(status)}
                         isSaving={save.isPending}
                     />
@@ -151,7 +154,9 @@ const GamePage = () => {
                         reviews={reviews?.data ?? []}
                         hasLog={!!log}
                         onWriteReview={
-                            user ? () => setEditing(true) : () => openLogin()
+                            user
+                                ? () => openEditor("review")
+                                : () => openLogin()
                         }
                         canVote={!!user}
                         onVote={(reviewId) => vote.mutate(reviewId)}
@@ -169,7 +174,7 @@ const GamePage = () => {
                     closePopup={() => setViewing(false)}
                     primaryAction={{
                         label: "Edit your log",
-                        onSelect: () => setEditing(true),
+                        onSelect: () => openEditor(),
                     }}
                 />
             )}
@@ -181,6 +186,7 @@ const GamePage = () => {
                     gamelog={fullLog ?? null}
                     gameID={gameId}
                     editing={!!fullLog}
+                    focusReview={editIntent === "review"}
                 />
             )}
         </article>

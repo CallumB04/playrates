@@ -26,7 +26,7 @@ const AccountFormModal = () => {
             labelledBy="account-form-title"
             className="w-full max-w-[440px] p-0! sm:p-0!"
         >
-            <header className="relative overflow-hidden border-b border-subtle px-6 py-6">
+            <header className="relative overflow-hidden border-b border-subtle px-5 py-6 sm:px-6">
                 <span
                     aria-hidden
                     className="pointer-events-none absolute -top-20 -right-16 size-56 rounded-full bg-brand/12 blur-3xl"
@@ -49,7 +49,7 @@ const AccountFormModal = () => {
                 </div>
             </header>
 
-            <div className="px-6 py-6">
+            <div className="px-5 py-6 sm:px-6">
                 {isSignup ? (
                     <SignupForm onSignedUp={handleSignedUp} />
                 ) : (
@@ -57,7 +57,7 @@ const AccountFormModal = () => {
                 )}
             </div>
 
-            <footer className="border-t border-subtle bg-surface-sunken/40 px-6 py-4 text-center text-body-sm text-content-secondary">
+            <footer className="border-t border-subtle bg-surface-sunken/40 px-5 py-4 text-center text-body-sm text-content-secondary sm:px-6">
                 {isSignup ? "Already have an account?" : "New here?"}{" "}
                 <button
                     type="button"
