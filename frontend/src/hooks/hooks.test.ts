@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useDebouncedValue } from "./useDebouncedValue";
 import { useScrollY } from "./useScrollY";
 import { useWindowSize } from "./useWindowSize";
+import { usePageTitle } from "./usePageTitle";
 
 describe("useDebouncedValue", () => {
     beforeEach(() => vi.useFakeTimers());
@@ -130,5 +131,36 @@ describe("useWindowSize", () => {
             vi.advanceTimersByTime(32);
         });
         expect(result.current).toEqual({ width: 390, height: 844 });
+    });
+});
+
+describe("usePageTitle", () => {
+    const DEFAULT = "PlayRates / Video Game Tracker";
+
+    it("names the tab after the page", () => {
+        renderHook(() => usePageTitle("Library"));
+        expect(document.title).toBe("Library / PlayRates");
+    });
+
+    it("falls back to the site title with no page name", () => {
+        renderHook(() => usePageTitle());
+        expect(document.title).toBe(DEFAULT);
+    });
+
+    it("falls back while a name is still loading", () => {
+        const { rerender } = renderHook(
+            ({ name }: { name?: string }) => usePageTitle(name),
+            { initialProps: {} as { name?: string } }
+        );
+        expect(document.title).toBe(DEFAULT);
+
+        rerender({ name: "Hollow Knight" });
+        expect(document.title).toBe("Hollow Knight / PlayRates");
+    });
+
+    it("restores the site title when the page goes away", () => {
+        const { unmount } = renderHook(() => usePageTitle("Settings"));
+        unmount();
+        expect(document.title).toBe(DEFAULT);
     });
 });

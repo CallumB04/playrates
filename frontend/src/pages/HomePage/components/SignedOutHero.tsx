@@ -38,9 +38,9 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
             </h1>
 
             <p className="mt-4 max-w-[48ch] text-[17px] leading-relaxed text-content-secondary">
-                <span className="text-content">{BRAND_MOTTO}.</span> Log what
-                you play, rate it out of ten, and keep your backlog, wishlist
-                and history in one place. Free, and yours to export.
+                <span className="text-content">{BRAND_MOTTO}.</span> Log, rate
+                and review the games you’ve played, manage your backlog and
+                wishlist, and interact with your friends and the community.
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -49,7 +49,7 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
                     onClick={onStart}
                     className="w-full sm:w-auto"
                 >
-                    Start your library
+                    Join PlayRates
                 </Button>
                 <Link
                     to="/library"

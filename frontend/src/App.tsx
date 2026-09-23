@@ -21,6 +21,7 @@ const LEGAL_PAGES = [
     {
         path: "/about",
         title: "About PlayRates",
+        tabTitle: "About",
         summary: "What this is, who built it, and why it exists.",
     },
     {
@@ -78,6 +79,7 @@ function App() {
                                     <LegalPage
                                         title={page.title}
                                         summary={page.summary}
+                                        tabTitle={page.tabTitle}
                                     />
                                 }
                             />

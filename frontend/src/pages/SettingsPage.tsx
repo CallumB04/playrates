@@ -20,6 +20,7 @@ import { useUpdateProfile } from "../hooks/queries/useProfiles";
 import { useUserStats } from "../hooks/queries/useGameLogs";
 import { useUserReviews } from "../hooks/queries/useReviews";
 import { useUserFriends } from "../hooks/queries/useFriends";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { deleteMyAccount } from "../api";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
@@ -88,6 +89,8 @@ const Panel = ({ children }: { children: ReactNode }) => (
 );
 
 const SettingsPage = () => {
+    usePageTitle("Settings");
+
     const { user, session, signOut } = useAuth();
     const { openLogin } = useAccountForm();
     const { preference, setPreference } = useTheme();
@@ -248,7 +251,7 @@ const SettingsPage = () => {
                         rows={3}
                         value={bio}
                         maxLength={160}
-                        placeholder="Mostly RPGs and anything with a grappling hook."
+                        placeholder="I love PlayRates."
                         onChange={(e) => setBio(e.target.value)}
                         onBlur={() =>
                             saveText(
@@ -285,7 +288,7 @@ const SettingsPage = () => {
             <Panel>
                 <Row
                     label="Sexual content"
-                    help="Games tagged as sexually explicit stay out of the library, search and every rail. Violence is not covered by this."
+                    help="Games tagged as sexually explicit stay out of the library, search and every rail."
                 >
                     <Toggle
                         checked={showSexual}

@@ -21,6 +21,7 @@ import { useUserReviews } from "../../hooks/queries/useReviews";
 import { usePlatforms } from "../../hooks/queries/useGames";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { usePagination } from "../../hooks/usePagination";
+import { usePageTitle } from "../../hooks/usePageTitle";
 import Button, { buttonClass } from "../../components/ui/Button";
 import ProfileError from "./components/ProfileError";
 import MemberFileHeader from "./components/MemberFileHeader";
@@ -67,6 +68,9 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
         error: targetUserError,
         isLoading: profileLoading,
     } = useProfile(targetUsername);
+
+    /* The URL's spelling until the profile lands, then its own. */
+    usePageTitle(targetUser?.username ?? targetUsername);
 
     const isMyAccount =
         !!currentUser && currentUser.username === targetUsername;

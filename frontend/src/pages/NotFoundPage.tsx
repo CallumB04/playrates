@@ -3,10 +3,13 @@ import { buttonClass } from "../components/ui/Button";
 import GameTile from "../components/game/GameTile";
 import { TileSkeleton } from "../components/ui/Skeleton";
 import { useGames, usePlatforms } from "../hooks/queries/useGames";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { releaseYear } from "../lib/format";
 
 /** The apology, then the week's most-logged underneath. */
 const NotFoundPage = () => {
+    usePageTitle("Page not found");
+
     const { data: popular, isLoading } = useGames({
         sort: "logged",
         limit: 7,

@@ -171,7 +171,7 @@ const Header = () => {
                                     Sign in
                                 </Button>
                                 <Button size="sm" onClick={openSignup}>
-                                    Start your library
+                                    Join PlayRates
                                 </Button>
                             </div>
                         )}

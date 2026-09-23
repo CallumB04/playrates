@@ -172,11 +172,11 @@ const RatingMeter = ({
 
             <p className="text-label-sm text-content-muted">
                 <span className="sm:hidden">
-                    Half points count. Slide to change, and land on the same
-                    value again to clear it.
+                    Slide to change, and land on the same value again to clear
+                    your rating.
                 </span>
                 <span className="hidden sm:inline">
-                    Half points count. Press the same segment again to clear it.
+                    Press the same segment again to clear your rating.
                 </span>
             </p>
         </div>

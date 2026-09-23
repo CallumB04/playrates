@@ -44,7 +44,7 @@ const AccountFormModal = () => {
                     <p className="mt-1 text-body-sm text-content-secondary">
                         {isSignup
                             ? `${BRAND_MOTTO}.`
-                            : "Pick up where you left off."}
+                            : "What's new on your backlog?"}
                     </p>
                 </div>
             </header>
