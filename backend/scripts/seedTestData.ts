@@ -206,7 +206,9 @@ const main = async () => {
           hours_to_beat: played ? 10 + i * 3 : null,
           start_date: played ? iso(month, 3) : null,
           finish_date: played ? iso(month, 19) : null,
+          // Family and machine together, the way the log editor writes them.
           platform_slug: ["steam", "playstation", "xbox"][i % 3]!,
+          system_slug: ["steam", "playstation5", "xbox-series-x"][i % 3]!,
           achievements_total: played ? 40 : null,
           achievements_completed: played ? Math.min(40, 6 + i * 4) : null,
         },

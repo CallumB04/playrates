@@ -49,6 +49,7 @@ const GameLogFieldsSchema = z
     startDate: IsoDateSchema.nullish(),
     finishDate: IsoDateSchema.nullish(),
     platform: PlatformSlugSchema.nullish(),
+    system: PlatformSlugSchema.nullish(),
     achievementsTotal: z.number().int().min(0).nullish(),
     achievementsCompleted: z.number().int().min(0).nullish(),
   })
@@ -105,6 +106,8 @@ export interface GameLog {
   startDate: string | null;
   finishDate: string | null;
   platform: string | null;
+  /** The machine, where one was named. `platform` is its family. */
+  system: string | null;
   achievementsTotal: number | null;
   achievementsCompleted: number | null;
   createdAt: string;

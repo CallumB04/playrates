@@ -69,10 +69,128 @@ describe("RAWG mapper", () => {
   it("drops platforms it has no mapping for", () => {
     const game = toExternalGame({
       ...rawgResponse,
-      parent_platforms: [{ platform: { id: 999, slug: "atari" } }],
+      parent_platforms: [{ platform: { id: 999, slug: "unknowable" } }],
     });
 
     expect(game.platformSlugs).toEqual([]);
+  });
+
+  it("reads the individual machines, and the family each rolls up into", () => {
+    const game = toExternalGame({
+      ...rawgResponse,
+      platforms: [
+        { platform: { id: 187, slug: "playstation5" } },
+        { platform: { id: 18, slug: "playstation4" } },
+        { platform: { id: 186, slug: "xbox-series-x" } },
+      ],
+      parent_platforms: [
+        { platform: { id: 2, slug: "playstation" } },
+        { platform: { id: 3, slug: "xbox" } },
+      ],
+    });
+
+    expect(game.systemSlugs).toEqual([
+      "playstation5",
+      "playstation4",
+      "xbox-series-x",
+    ]);
+    expect(game.platformSlugs).toEqual(["playstation", "xbox"]);
+  });
+
+  /* Every Nintendo machine shares one parent id, which is how the whole
+     catalogue came to claim NES titles were on the Switch. */
+  it("keeps the Switch apart from the older Nintendo consoles", () => {
+    const retro = toExternalGame({
+      ...rawgResponse,
+      platforms: [
+        { platform: { id: 49, slug: "nes" } },
+        { platform: { id: 83, slug: "snes" } },
+      ],
+      parent_platforms: [{ platform: { id: 7, slug: "nintendo" } }],
+    });
+
+    expect(retro.platformSlugs).toEqual(["nintendo"]);
+    expect(retro.systemSlugs).toEqual(["nes", "snes"]);
+
+    const modern = toExternalGame({
+      ...rawgResponse,
+      platforms: [{ platform: { id: 7, slug: "nintendo-switch" } }],
+      parent_platforms: [{ platform: { id: 7, slug: "nintendo" } }],
+    });
+
+    expect(modern.platformSlugs).toEqual(["nintendo-switch"]);
+  });
+
+  it("keeps the makers it used to drop on the floor", () => {
+    const game = toExternalGame({
+      ...rawgResponse,
+      platforms: [
+        { platform: { id: 5, slug: "macos" } },
+        { platform: { id: 6, slug: "linux" } },
+        { platform: { id: 167, slug: "genesis" } },
+        { platform: { id: 23, slug: "atari-2600" } },
+        { platform: { id: 171, slug: "web" } },
+      ],
+      parent_platforms: [],
+    });
+
+    expect(game.platformSlugs).toEqual([
+      "mac",
+      "linux",
+      "sega",
+      "atari",
+      "web",
+    ]);
+  });
+
+  it("splits iOS and Android apart while keeping one mobile family", () => {
+    const game = toExternalGame({
+      ...rawgResponse,
+      platforms: [
+        { platform: { id: 3, slug: "ios" } },
+        { platform: { id: 21, slug: "android" } },
+      ],
+      parent_platforms: [],
+    });
+
+    expect(game.platformSlugs).toEqual(["mobile"]);
+    expect(game.systemSlugs).toEqual(["ios", "android"]);
+  });
+
+  /* RAWG has no "Steam" platform — it is a store — so the storefront stands in
+     as the machine for a PC game. */
+  it("sends a PC game to the storefront it is sold on", () => {
+    const onSteam = toExternalGame({
+      ...rawgResponse,
+      platforms: [{ platform: { id: 4, slug: "pc" } }],
+      parent_platforms: [{ platform: { id: 1, slug: "pc" } }],
+      stores: [{ store: { id: 1, slug: "steam" } }],
+    });
+
+    expect(onSteam.platformSlugs).toEqual(["steam"]);
+    expect(onSteam.systemSlugs).toEqual(["steam"]);
+
+    const elsewhere = toExternalGame({
+      ...rawgResponse,
+      platforms: [{ platform: { id: 4, slug: "pc" } }],
+      parent_platforms: [{ platform: { id: 1, slug: "pc" } }],
+      stores: [{ store: { id: 11, slug: "epic-games" } }],
+    });
+
+    expect(elsewhere.platformSlugs).toEqual(["other-pc"]);
+  });
+
+  /* A console RAWG adds after this map was written must not take the game's
+     whole platform away with it. */
+  it("falls back to the family for a machine it has never seen", () => {
+    const game = toExternalGame({
+      ...rawgResponse,
+      platforms: [{ platform: { id: 900, slug: "playstation6" } }],
+      parent_platforms: [{ platform: { id: 2, slug: "playstation" } }],
+    });
+
+    expect(game.platformSlugs).toEqual(["playstation"]);
+    expect(game.systemSlugs).toEqual([]);
   });
 
   it("treats adults-only as sexual content", () => {
@@ -172,6 +290,7 @@ describe("RAWG mapper", () => {
       coverUrl: null,
       releaseDate: null,
       platformSlugs: [],
+      systemSlugs: [],
       genres: [],
       contentTags: [],
       hasSexualContent: false,

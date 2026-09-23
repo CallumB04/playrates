@@ -6,6 +6,7 @@ import type {
   GameRow,
   GenreRow,
   PlatformRow,
+  PlatformSystemRow,
   ProfileRow,
   ReviewRow,
 } from "../../src/types/database.types.js";
@@ -30,10 +31,12 @@ export interface SeedData {
   profiles?: ProfileRow[];
   games?: GameRow[];
   gamePlatforms?: { game_id: number; platform_slug: string }[];
+  gameSystems?: { game_id: number; system_slug: string }[];
   gameLogs?: GameLogRow[];
   reviews?: ReviewRow[];
   friendships?: FriendshipRow[];
   platforms?: PlatformRow[];
+  platformSystems?: PlatformSystemRow[];
   genres?: GenreRow[];
 }
 
@@ -41,11 +44,13 @@ export interface InMemoryState {
   profiles: ProfileRow[];
   games: GameRow[];
   gamePlatforms: { game_id: number; platform_slug: string }[];
+  gameSystems: { game_id: number; system_slug: string }[];
   gameLogs: GameLogRow[];
   reviews: ReviewRow[];
   reviewVotes: { review_id: number; user_id: string }[];
   friendships: FriendshipRow[];
   platforms: PlatformRow[];
+  platformSystems: PlatformSystemRow[];
   genres: GenreRow[];
 }
 
@@ -62,11 +67,13 @@ export const createInMemoryRepos = (
     profiles: [...(seed.profiles ?? [])],
     games: [...(seed.games ?? [])],
     gamePlatforms: [...(seed.gamePlatforms ?? [])],
+    gameSystems: [...(seed.gameSystems ?? [])],
     gameLogs: [...(seed.gameLogs ?? [])],
     reviews: [...(seed.reviews ?? [])],
     reviewVotes: [],
     friendships: [...(seed.friendships ?? [])],
     platforms: [...(seed.platforms ?? [])],
+    platformSystems: [...(seed.platformSystems ?? [])],
     genres: [...(seed.genres ?? [])],
   };
 
@@ -79,6 +86,9 @@ export const createInMemoryRepos = (
     game_platforms: state.gamePlatforms
       .filter((gp) => gp.game_id === game.id)
       .map((gp) => ({ platform_slug: gp.platform_slug })),
+    game_systems: state.gameSystems
+      .filter((gs) => gs.game_id === game.id)
+      .map((gs) => ({ system_slug: gs.system_slug })),
   });
 
   const withGame = (log: GameLogRow): GameLogRowWithGame => {
@@ -418,6 +428,7 @@ export const createInMemoryRepos = (
           hours_to_beat: null,
           start_date: null,
           finish_date: null,
+          system_slug: null,
           platform_slug: null,
           achievements_total: null,
           achievements_completed: null,
@@ -698,6 +709,11 @@ export const createInMemoryRepos = (
     platforms: {
       async list() {
         return [...state.platforms].sort((a, b) => a.sort_order - b.sort_order);
+      },
+      async listSystems() {
+        return [...state.platformSystems].sort(
+          (a, b) => a.sort_order - b.sort_order,
+        );
       },
     },
 

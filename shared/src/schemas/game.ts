@@ -9,8 +9,10 @@ export interface Game {
   description: string;
   coverUrl: string | null;
   releaseDate: string | null;
-  /** Platform slugs, e.g. ["steam", "xbox"]. */
+  /** Platform family slugs, e.g. ["steam", "xbox"]. */
   platforms: string[];
+  /** The individual machines, e.g. ["playstation5", "xbox-series-x"]. */
+  systems: string[];
   hasSexualContent: boolean;
   isTrending: boolean;
   /** RAWG's average playtime in hours, not a time-to-beat estimate. */
@@ -102,6 +104,18 @@ export const PlatformSchema = z.object({
 });
 
 export type Platform = z.infer<typeof PlatformSchema>;
+
+/** One machine within a family: a PS5 rather than "PlayStation". What the log
+ *  editor offers, and what a log records alongside its family. */
+export const PlatformSystemSchema = z.object({
+  slug: z.string(),
+  displayName: z.string(),
+  /** The family it belongs to, and the mark it inherits. */
+  platformSlug: z.string(),
+  sortOrder: z.number(),
+});
+
+export type PlatformSystem = z.infer<typeof PlatformSystemSchema>;
 
 export const GenreSchema = z.object({
   slug: z.string(),

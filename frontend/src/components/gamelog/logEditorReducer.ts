@@ -9,7 +9,9 @@ export interface LogDraft {
     hoursToBeat: string;
     startDate: string;
     finishDate: string;
+    /** The family, derived from `system` — never picked directly. */
     platform: string;
+    system: string;
     achievementsCompleted: string;
     achievementsTotal: string;
     reviewBody: string;
@@ -25,6 +27,7 @@ export const emptyDraft: LogDraft = {
     startDate: "",
     finishDate: "",
     platform: "",
+    system: "",
     achievementsCompleted: "",
     achievementsTotal: "",
     reviewBody: "",
@@ -34,6 +37,7 @@ export const emptyDraft: LogDraft = {
 export type LogAction =
     | { type: "set"; field: keyof LogDraft; value: string | boolean | null }
     | { type: "status"; value: GameStatus }
+    | { type: "system"; value: string; platform: string }
     | { type: "playedStatus"; value: PlayedStatus | null }
     | { type: "rating"; value: number | null }
     | {
@@ -59,6 +63,15 @@ export const logReducer = (state: LogDraft, action: LogAction): LogDraft => {
         case "playedStatus":
             return { ...state, playedStatus: action.value };
 
+        // Both at once: the family is a function of the machine, so letting
+        // them drift would put a log on a PS5 under "Xbox".
+        case "system":
+            return {
+                ...state,
+                system: action.value,
+                platform: action.platform,
+            };
+
         case "rating":
             return { ...state, rating: action.value };
 
@@ -83,6 +96,7 @@ export const logReducer = (state: LogDraft, action: LogAction): LogDraft => {
                 startDate: log.startDate ?? "",
                 finishDate: log.finishDate ?? "",
                 platform: log.platform ?? "",
+                system: log.system ?? "",
                 achievementsCompleted: numberOrEmpty(log.achievementsCompleted),
                 achievementsTotal: numberOrEmpty(log.achievementsTotal),
                 reviewBody: review?.body ?? "",
@@ -112,6 +126,7 @@ export const toGameLogInput = (draft: LogDraft): GameLogInput => ({
     startDate: toDate(draft.startDate),
     finishDate: toDate(draft.finishDate),
     platform: draft.platform || null,
+    system: draft.system || null,
     achievementsCompleted: toNumber(draft.achievementsCompleted),
     achievementsTotal: toNumber(draft.achievementsTotal),
 });

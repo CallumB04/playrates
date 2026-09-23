@@ -6,7 +6,7 @@ import type { GameRowWithPlatforms } from "./games.mapper.js";
 export const RATING_BUCKETS = 20;
 
 const SELECT_WITH_RELATIONS =
-  "*, game_platforms(platform_slug), game_genres(genre_slug)";
+  "*, game_platforms(platform_slug), game_systems(system_slug), game_genres(genre_slug)";
 
 export interface GameStatsRow {
   status: string;
@@ -229,7 +229,11 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     }
 
     // replace the links rather than accumulating duplicates
-    for (const table of ["game_platforms", "game_genres"] as const) {
+    for (const table of [
+      "game_platforms",
+      "game_systems",
+      "game_genres",
+    ] as const) {
       const { error: deleteError } = await db
         .from(table)
         .delete()
@@ -246,6 +250,15 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       }));
     });
 
+    const systemLinks = games.flatMap((g) => {
+      const gameId = idByRawgId.get(g.externalId);
+      if (!gameId) return [];
+      return g.systemSlugs.map((slug) => ({
+        game_id: gameId,
+        system_slug: slug,
+      }));
+    });
+
     const genreLinks = games.flatMap((g) => {
       const gameId = idByRawgId.get(g.externalId);
       if (!gameId) return [];
@@ -259,6 +272,13 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       const { error: linkError } = await db
         .from("game_platforms")
         .insert(platformLinks);
+      if (linkError) throw linkError;
+    }
+
+    if (systemLinks.length > 0) {
+      const { error: linkError } = await db
+        .from("game_systems")
+        .insert(systemLinks);
       if (linkError) throw linkError;
     }
 

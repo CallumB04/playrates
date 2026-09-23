@@ -1,9 +1,13 @@
 import type { ReactNode } from "react";
 import type { GameLogWithGame } from "../api";
 import { displayStatusFor } from "../constants/gameStatus";
-import { useGame, usePlatforms } from "../hooks/queries/useGames";
+import {
+    useGame,
+    usePlatforms,
+    usePlatformSystems,
+} from "../hooks/queries/useGames";
 import { useGameReviews } from "../hooks/queries/useReviews";
-import { platformIcon } from "../lib/platformIcons";
+import { platformIcon, systemIcon } from "../lib/platformIcons";
 import RatingBadge from "./ui/RatingBadge";
 import LedgerRow, { LedgerList } from "./ui/LedgerRow";
 import AchievementRing from "./gamelog/AchievementRing";
@@ -37,13 +41,20 @@ const ViewGameLogPopup = ({
 }: ViewGameLogPopupProps) => {
     const { data: game } = useGame(gamelog.gameId);
     const { data: platforms } = usePlatforms();
+    const { data: systems } = usePlatformSystems();
     const { data: reviews } = useGameReviews(
         ownerUsername ? gamelog.gameId : undefined
     );
 
     const status = displayStatusFor(gamelog.status, gamelog.playedStatus);
-    const platform = (platforms ?? []).find((p) => p.slug === gamelog.platform);
-    const PlatformIcon = platformIcon(gamelog.platform ?? "");
+    // The machine where the log names one, its family where it doesn't —
+    // logs made before systems existed only carry the family.
+    const system = (systems ?? []).find((s) => s.slug === gamelog.system);
+    const family = (platforms ?? []).find((p) => p.slug === gamelog.platform);
+    const playedOn = system?.displayName ?? family?.displayName ?? null;
+    const PlatformIcon = system
+        ? systemIcon(system.slug, system.platformSlug)
+        : platformIcon(gamelog.platform ?? "");
 
     const review = (reviews?.data ?? []).find(
         (r) => r.author.username === ownerUsername
@@ -87,10 +98,10 @@ const ViewGameLogPopup = ({
                 </h2>
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-label-sm text-content-muted">
                     <StatusBadge status={status} plain />
-                    {platform && (
+                    {playedOn && (
                         <span className="inline-flex items-center gap-1.5">
                             <PlatformIcon size={13} aria-hidden />
-                            {platform.displayName}
+                            {playedOn}
                         </span>
                     )}
                 </div>

@@ -32,6 +32,7 @@ export const toGameLog = (row: GameLogRow): GameLog => ({
   startDate: row.start_date,
   finishDate: row.finish_date,
   platform: row.platform_slug,
+  system: row.system_slug,
   achievementsTotal: row.achievements_total,
   achievementsCompleted: row.achievements_completed,
   createdAt: row.created_at,
@@ -77,6 +78,7 @@ export const toGameLogRow = (
     row.finish_date = input.finishDate ?? null;
   }
   if (input.platform !== undefined) row.platform_slug = input.platform ?? null;
+  if (input.system !== undefined) row.system_slug = input.system ?? null;
   if (input.achievementsTotal !== undefined) {
     row.achievements_total = input.achievementsTotal ?? null;
   }

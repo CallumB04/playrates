@@ -3,6 +3,7 @@
 export const queryKeys = {
     stats: ["stats"] as const,
     platforms: ["platforms"] as const,
+    platformSystems: ["platforms", "systems"] as const,
     genres: ["genres"] as const,
 
     games: {

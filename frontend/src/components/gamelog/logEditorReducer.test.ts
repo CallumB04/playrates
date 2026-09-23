@@ -94,6 +94,7 @@ describe("logReducer", () => {
                 startDate: null,
                 finishDate: null,
                 platform: null,
+                system: null,
                 achievementsTotal: null,
                 achievementsCompleted: null,
                 createdAt: "2026-01-01T00:00:00Z",
@@ -130,6 +131,7 @@ describe("logReducer", () => {
                 startDate: "2026-01-02",
                 finishDate: null,
                 platform: "steam",
+                system: "steam",
                 achievementsTotal: 52,
                 achievementsCompleted: 46,
                 createdAt: "",
@@ -148,6 +150,7 @@ describe("logReducer", () => {
             startDate: "2026-01-02",
             finishDate: "",
             platform: "steam",
+            system: "steam",
             reviewBody: "Good.",
             reviewIsPublic: false,
         });
@@ -175,6 +178,7 @@ describe("toGameLogInput", () => {
             startDate: null,
             finishDate: null,
             platform: null,
+            system: null,
             achievementsCompleted: null,
             achievementsTotal: null,
         });

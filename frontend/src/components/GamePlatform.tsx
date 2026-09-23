@@ -1,5 +1,5 @@
 import { usePlatforms } from "../hooks/queries/useGames";
-import { getPlatformIcon } from "../lib/icons";
+import { platformIcon } from "../lib/platformIcons";
 
 /** Complete class strings — Tailwind only emits what it finds literally. */
 const PLATFORM_SIZE = {
@@ -18,7 +18,7 @@ interface GamePlatformProps {
 const GamePlatform: React.FC<GamePlatformProps> = ({ platform, size }) => {
     const { data: platforms } = usePlatforms();
     const details = (platforms ?? []).find((p) => p.slug === platform);
-    const Icon = getPlatformIcon(platform);
+    const Icon = platformIcon(platform);
     const { wrapper, icon } = PLATFORM_SIZE[size];
 
     return (

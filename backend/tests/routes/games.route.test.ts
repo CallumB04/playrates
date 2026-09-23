@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import { authHeader, buildTestApp, USER_A } from "../helpers/buildTestApp.js";
-import { baseSeed, buildGame, buildGameLog } from "../helpers/fixtures.js";
+import {
+  baseSeed,
+  buildGame,
+  buildGameLog,
+  buildPlatform,
+  buildPlatformSystem,
+} from "../helpers/fixtures.js";
 import type {
   ExternalGame,
   GamesProvider,
@@ -27,6 +33,7 @@ const externalGame: ExternalGame = {
   coverUrl: "https://example.test/hk.jpg",
   releaseDate: "2017-02-24",
   platformSlugs: ["other-pc"],
+  systemSlugs: ["other-pc"],
   genres: [{ slug: "metroidvania", name: "Metroidvania" }],
   hasSexualContent: false,
   contentTags: [],
@@ -256,6 +263,64 @@ describe("platforms and stats", () => {
     expect(response.status).toBe(200);
     expect(response.body.data[0].slug).toBe("steam");
     expect(response.body.data[0].displayName).toBe("Steam");
+  });
+
+  it("lists the machines within each family", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        platforms: [
+          buildPlatform(),
+          buildPlatform({ slug: "playstation", display_name: "PlayStation" }),
+        ],
+        platformSystems: [
+          buildPlatformSystem(),
+          buildPlatformSystem({
+            slug: "playstation5",
+            display_name: "PlayStation 5",
+            platform_slug: "playstation",
+            sort_order: 4010,
+          }),
+        ],
+      },
+    });
+
+    const response = await request(app).get("/api/v1/platforms/systems");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toEqual([
+      {
+        slug: "steam",
+        displayName: "Steam",
+        platformSlug: "steam",
+        sortOrder: 10,
+      },
+      {
+        slug: "playstation5",
+        displayName: "PlayStation 5",
+        platformSlug: "playstation",
+        sortOrder: 4010,
+      },
+    ]);
+  });
+
+  it("carries a game's machines alongside its families", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        gamePlatforms: [{ game_id: 1, platform_slug: "steam" }],
+        gameSystems: [
+          { game_id: 1, system_slug: "steam" },
+          { game_id: 1, system_slug: "playstation5" },
+        ],
+      },
+    });
+
+    const response = await request(app).get("/api/v1/games/1");
+
+    expect(response.status).toBe(200);
+    expect(response.body.platforms).toEqual(["steam"]);
+    expect(response.body.systems).toEqual(["steam", "playstation5"]);
   });
 
   /** Counts only — the home page should never fetch rows to show a total. */

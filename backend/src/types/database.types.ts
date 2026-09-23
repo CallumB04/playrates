@@ -61,6 +61,18 @@ export interface GamePlatformRow {
   platform_slug: string;
 }
 
+export interface PlatformSystemRow {
+  slug: string;
+  display_name: string;
+  platform_slug: string;
+  sort_order: number;
+}
+
+export interface GameSystemRow {
+  game_id: number;
+  system_slug: string;
+}
+
 export interface GenreRow {
   slug: string;
   name: string;
@@ -83,6 +95,7 @@ export interface GameLogRow {
   start_date: string | null;
   finish_date: string | null;
   platform_slug: string | null;
+  system_slug: string | null;
   achievements_total: number | null;
   achievements_completed: number | null;
   created_at: string;

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { GameLogWithGame } from "../api";
-import { useGame, usePlatforms } from "../hooks/queries/useGames";
+import { useGame, usePlatformSystems } from "../hooks/queries/useGames";
 import { useGameLogMutations } from "../hooks/queries/useGameLogs";
 import { useMyReview, useReviewMutations } from "../hooks/queries/useReviews";
 import { useNotify } from "../contexts/NotificationContext";
@@ -11,7 +11,8 @@ import Field from "./ui/Field";
 import { Input, NumberInput, Textarea } from "./ui/Input";
 import RatingMeter from "./ui/RatingMeter";
 import Dropdown from "./ui/Dropdown";
-import { platformOptions } from "../lib/platformIcons";
+import { systemOptions } from "../lib/platformIcons";
+import { familyOf, systemsForGame } from "../lib/gameSystems";
 import { StatusPlates, PlayedStatusPlates } from "./gamelog/StatusPlates";
 import {
     achievementFraction,
@@ -51,7 +52,7 @@ const CreateOrEditGameLogPopup = ({
     const reviewRef = useRef<HTMLTextAreaElement>(null);
 
     const { data: game } = useGame(gameId);
-    const { data: platforms } = usePlatforms();
+    const { data: systems } = usePlatformSystems();
     const { data: review, isLoading: reviewLoading } = useMyReview(gameId);
     const { save, remove } = useGameLogMutations();
     const { save: saveReview, remove: removeReview } = useReviewMutations();
@@ -79,6 +80,13 @@ const CreateOrEditGameLogPopup = ({
         reviewRef.current?.scrollIntoView({ block: "center" });
         reviewRef.current?.focus({ preventScroll: true });
     }, [focusReview, hydrated]);
+
+    // Only what this game is actually on: the full list runs to every machine
+    // in the catalogue, which is not something anyone should scroll.
+    const available = useMemo(
+        () => systemsForGame(systems ?? [], game?.systems ?? [], draft.system),
+        [systems, game?.systems, draft.system]
+    );
 
     const progress = useMemo(() => achievementFraction(draft), [draft]);
     const busy = save.isPending || saveReview.isPending || remove.isPending;
@@ -263,18 +271,15 @@ const CreateOrEditGameLogPopup = ({
                             Platform
                         </span>
                         <Dropdown
-                            options={platformOptions(
-                                platforms ?? [],
-                                "Not set"
-                            )}
-                            value={draft.platform}
+                            options={systemOptions(available, "Not set")}
+                            value={draft.system}
                             placeholder="Not set"
                             aria-labelledby="log-platform-label"
                             onChange={(value) =>
                                 dispatch({
-                                    type: "set",
-                                    field: "platform",
+                                    type: "system",
                                     value,
+                                    platform: familyOf(available, value) ?? "",
                                 })
                             }
                         />

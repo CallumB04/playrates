@@ -12,14 +12,24 @@ import UserStatus from "../../../../../components/UserStatus";
 import FriendProfile from "../../../../../components/FriendProfile";
 import Specimen from "../../../components/Specimen";
 
+/** Every family, so a new one with no mark of its own shows up here first. */
 const PLATFORM_SLUGS = [
     "steam",
+    "pc-game-pass",
+    "other-pc",
     "playstation",
     "xbox",
     "nintendo-switch",
-    "pc-game-pass",
-    "other-pc",
+    "nintendo",
     "mobile",
+    "mac",
+    "linux",
+    "web",
+    "sega",
+    "atari",
+    "commodore-amiga",
+    "neo-geo",
+    "3do",
 ];
 
 const demoUser = {

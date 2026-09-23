@@ -16,8 +16,10 @@ export interface ExternalGame {
   coverUrl: string | null;
   /** YYYY-MM-DD */
   releaseDate: string | null;
-  /** Already translated to PlayRates platform slugs. */
+  /** Already translated to PlayRates platform family slugs. */
   platformSlugs: string[];
+  /** The individual machines within those families. */
+  systemSlugs: string[];
   genres: ExternalGenre[];
   hasSexualContent: boolean;
   contentTags: string[];

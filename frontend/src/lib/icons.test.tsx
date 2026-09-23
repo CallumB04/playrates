@@ -2,21 +2,14 @@ import { describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { render } from "@testing-library/react";
 import { Gamepad2 } from "lucide-react";
-import { getPlatformIcon, getStatusIcon } from "./icons";
-import { platformIcon, platformOptions } from "./platformIcons";
+import { getStatusIcon } from "./icons";
+import {
+    platformIcon,
+    platformOptions,
+    systemIcon,
+    systemOptions,
+} from "./platformIcons";
 import { genreIcon } from "./genreIcons";
-
-describe("getPlatformIcon", () => {
-    it("gives a distinct mark to the platforms that have one", () => {
-        expect(getPlatformIcon("steam")).not.toBe(Gamepad2);
-        expect(getPlatformIcon("playstation")).not.toBe(Gamepad2);
-    });
-
-    it("falls back to a controller for a slug it has never seen", () => {
-        expect(getPlatformIcon("dreamcast")).toBe(Gamepad2);
-        expect(getPlatformIcon("")).toBe(Gamepad2);
-    });
-});
 
 describe("getStatusIcon", () => {
     it("covers every game log status", () => {
@@ -30,23 +23,95 @@ describe("getStatusIcon", () => {
     });
 });
 
+/** Every family in supabase/migrations/20260109000000_platform_systems.sql. */
+const FAMILIES = [
+    "steam",
+    "pc-game-pass",
+    "other-pc",
+    "playstation",
+    "xbox",
+    "nintendo-switch",
+    "nintendo",
+    "mobile",
+    "mac",
+    "linux",
+    "web",
+    "sega",
+    "atari",
+    "commodore-amiga",
+    "neo-geo",
+    "3do",
+];
+
 describe("platformIcon", () => {
-    it("gives every slug the API returns its own mark", () => {
-        const slugs = [
-            "steam",
-            "playstation",
-            "xbox",
-            "nintendo-switch",
-            "pc-game-pass",
-            "other-pc",
-            "mobile",
-        ];
-        const marks = new Set(slugs.map(platformIcon));
-        expect(marks.size).toBe(slugs.length);
+    it("gives every family the API returns a mark of its own", () => {
+        const marks = new Set(FAMILIES.map(platformIcon));
+        expect(marks.size).toBe(FAMILIES.length);
+    });
+
+    it("never hands a family the unknown-platform fallback", () => {
+        for (const slug of FAMILIES) {
+            expect(platformIcon(slug)).not.toBe(Gamepad2);
+        }
     });
 
     it("falls back to a controller for an unknown slug", () => {
         expect(platformIcon("stadia")).toBe(Gamepad2);
+        expect(platformIcon("")).toBe(Gamepad2);
+    });
+});
+
+describe("systemIcon", () => {
+    it("gives the machines with a brand mark one of their own", () => {
+        expect(systemIcon("playstation5", "playstation")).not.toBe(
+            platformIcon("playstation")
+        );
+        expect(systemIcon("android", "mobile")).not.toBe(
+            platformIcon("mobile")
+        );
+    });
+
+    it("wears the family mark where the machine has none", () => {
+        expect(systemIcon("genesis", "sega")).toBe(platformIcon("sega"));
+        expect(systemIcon("nes", "nintendo")).toBe(platformIcon("nintendo"));
+        expect(systemIcon("xbox360", "xbox")).toBe(platformIcon("xbox"));
+    });
+
+    it("falls back through an unknown family rather than throwing", () => {
+        expect(systemIcon("virtual-boy", "nintendo-virtual")).toBe(Gamepad2);
+    });
+});
+
+describe("systemOptions", () => {
+    const systems = [
+        {
+            slug: "playstation5",
+            displayName: "PlayStation 5",
+            platformSlug: "playstation",
+        },
+        { slug: "nes", displayName: "NES", platformSlug: "nintendo" },
+    ];
+
+    it("maps each machine to a value, label and mark", () => {
+        expect(systemOptions(systems)).toEqual([
+            {
+                value: "playstation5",
+                label: "PlayStation 5",
+                icon: systemIcon("playstation5", "playstation"),
+            },
+            {
+                value: "nes",
+                label: "NES",
+                icon: systemIcon("nes", "nintendo"),
+            },
+        ]);
+    });
+
+    it("prepends an empty option when one is asked for", () => {
+        expect(systemOptions(systems, "Not set")[0]).toEqual({
+            value: "",
+            label: "Not set",
+        });
     });
 });
 
@@ -77,16 +142,7 @@ describe("platformOptions", () => {
 describe("platform marks render", () => {
     /* The Xbox and Switch marks are inlined SVGs rather than imports, so they
        only break at render time. */
-    it.each([
-        ["steam"],
-        ["playstation"],
-        ["xbox"],
-        ["nintendo-switch"],
-        ["pc-game-pass"],
-        ["other-pc"],
-        ["mobile"],
-        ["stadia"],
-    ])("draws an svg for %s", (slug) => {
+    it.each([...FAMILIES, "stadia"])("draws an svg for %s", (slug) => {
         const { container } = render(
             createElement(platformIcon(slug), { size: 24 })
         );

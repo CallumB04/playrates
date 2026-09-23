@@ -4,6 +4,7 @@ import type {
   GameRow,
   GenreRow,
   PlatformRow,
+  PlatformSystemRow,
   ProfileRow,
   ReviewRow,
 } from "../../src/types/database.types.js";
@@ -70,6 +71,7 @@ export const buildGameLog = (
   start_date: null,
   finish_date: null,
   platform_slug: "steam",
+  system_slug: "steam",
   achievements_total: null,
   achievements_completed: null,
   created_at: LONG_AGO,
@@ -109,6 +111,16 @@ export const buildPlatform = (
   ...overrides,
 });
 
+export const buildPlatformSystem = (
+  overrides: Partial<PlatformSystemRow> = {},
+): PlatformSystemRow => ({
+  slug: "steam",
+  display_name: "Steam",
+  platform_slug: "steam",
+  sort_order: 10,
+  ...overrides,
+});
+
 /** Two users, one game, one platform — enough for most route tests. */
 export const buildGenre = (overrides: Partial<GenreRow> = {}): GenreRow => ({
   slug: "action",
@@ -123,6 +135,8 @@ export const baseSeed = () => ({
   ],
   games: [buildGame()],
   gamePlatforms: [{ game_id: 1, platform_slug: "steam" }],
+  gameSystems: [{ game_id: 1, system_slug: "steam" }],
   platforms: [buildPlatform()],
+  platformSystems: [buildPlatformSystem()],
   genres: [buildGenre(), buildGenre({ slug: "indie", name: "Indie" })],
 });
