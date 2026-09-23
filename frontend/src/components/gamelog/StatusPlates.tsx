@@ -101,6 +101,40 @@ export const StatusPlates = ({
     </fieldset>
 );
 
+const PlayedTile = ({
+    label,
+    mark,
+    selected,
+    onClick,
+    className,
+}: {
+    label: string;
+    /** Which presentation lends its icon and hue. */
+    mark: DisplayStatus;
+    selected: boolean;
+    onClick: () => void;
+    className?: string;
+}) => (
+    <button
+        type="button"
+        aria-pressed={selected}
+        onClick={onClick}
+        className={cn(
+            BASE,
+            "focus-visible:outline-brand",
+            selected
+                ? "border-brand bg-brand-subtle text-content shadow-plate"
+                : RESTING,
+            className
+        )}
+    >
+        <Disc status={mark} selected={selected} />
+        <span className="min-w-0 truncate text-body-sm font-medium">
+            {label}
+        </span>
+    </button>
+);
+
 export const PlayedStatusPlates = ({
     value,
     onChange,
@@ -113,30 +147,30 @@ export const PlayedStatusPlates = ({
             <span className="text-label text-content-muted">How it ended</span>
         </legend>
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            {/* Stands for no substatus at all, and stays null in the database.
+                Without something already selected the row read as four
+                unanswered questions rather than an optional refinement. */}
+            <PlayedTile
+                label="Just played"
+                mark="played"
+                selected={value === null}
+                onClick={() => onChange(null)}
+                // Its own row: five across clipped every label below 900px.
+                className="col-span-2 sm:col-span-4"
+            />
             {PLAYED_STATUSES.map((status) => {
                 const { label } = STATUS_PRESENTATION[status];
                 const selected = status === value;
 
                 return (
-                    <button
+                    <PlayedTile
                         key={status}
-                        type="button"
-                        aria-pressed={selected}
-                        // Pressing the selected tile clears it.
+                        label={label}
+                        mark={status}
+                        selected={selected}
+                        // Pressing the selected tile falls back to just played.
                         onClick={() => onChange(selected ? null : status)}
-                        className={cn(
-                            BASE,
-                            "focus-visible:outline-brand",
-                            selected
-                                ? "border-brand bg-brand-subtle text-content shadow-plate"
-                                : RESTING
-                        )}
-                    >
-                        <Disc status={status} selected={selected} />
-                        <span className="min-w-0 truncate text-body-sm font-medium">
-                            {label}
-                        </span>
-                    </button>
+                    />
                 );
             })}
         </div>
