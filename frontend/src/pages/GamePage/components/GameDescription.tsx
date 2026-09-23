@@ -43,7 +43,7 @@ const GameDescription = ({ text }: { text: string }) => {
                     type="button"
                     onClick={() => setOpen((v) => !v)}
                     aria-expanded={open}
-                    className="mt-2 inline-flex cursor-pointer items-center gap-1 text-label text-brand lift hover:text-brand-hover"
+                    className="mt-2 inline-flex min-h-11 cursor-pointer items-center gap-1 text-label text-brand lift hover:text-brand-hover sm:min-h-0"
                 >
                     {open ? "Show less" : "Read the full description"}
                     <ChevronDown

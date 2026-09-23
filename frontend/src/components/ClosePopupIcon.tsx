@@ -10,7 +10,7 @@ const ClosePopupIcon: React.FC<ClosePopupIconProps> = ({ onClick }) => (
         type="button"
         aria-label="Close"
         onClick={onClick}
-        className="absolute top-3 right-[14px] cursor-pointer px-1 text-content transition-colors duration-200 hover:text-brand"
+        className="absolute top-[6px] right-[6px] flex size-11 cursor-pointer items-center justify-center text-content transition-colors duration-200 hover:text-brand sm:top-3 sm:right-[14px] sm:size-auto sm:px-1"
     >
         <X size={24} />
     </button>

@@ -23,7 +23,8 @@ interface RailProps {
 }
 
 const ARROW =
-    "lift flex size-8 cursor-pointer items-center justify-center rounded-full border border-subtle bg-surface-raised text-content-secondary " +
+    "lift relative flex size-8 cursor-pointer items-center justify-center rounded-full border border-subtle bg-surface-raised text-content-secondary " +
+    "before:absolute before:-inset-1.5 before:content-[''] sm:before:hidden " +
     "hover:-translate-y-px hover:border-brand hover:text-content " +
     "disabled:cursor-default disabled:opacity-30 disabled:hover:translate-y-0 disabled:hover:border-subtle " +
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";

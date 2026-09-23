@@ -29,7 +29,7 @@ const VoteButton = ({
         aria-label={voted ? "Remove your upvote" : "Upvote this review"}
         title={disabled ? "Sign in to vote" : undefined}
         className={cn(
-            "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-label-sm transition-colors lift",
+            "inline-flex min-h-11 items-center gap-1 rounded-full border px-2.5 py-1 text-label-sm transition-colors lift sm:min-h-0",
             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
             voted
                 ? "border-brand bg-brand-subtle text-brand"

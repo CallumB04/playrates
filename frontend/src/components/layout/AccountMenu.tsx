@@ -7,7 +7,7 @@ import ProfilePicture from "../ProfilePicture";
 import { cn } from "../../lib/cn";
 
 const ITEM =
-    "flex w-full items-center gap-2.5 rounded-sm px-2.5 py-2.5 text-left text-body-sm leading-none text-content-secondary transition-colors hover:bg-surface-hover hover:text-content";
+    "flex min-h-11 w-full items-center gap-2.5 rounded-sm px-2.5 py-2.5 text-left text-body-sm leading-none text-content-secondary transition-colors hover:bg-surface-hover hover:text-content sm:min-h-0";
 
 /** The avatar, and the account menu behind it. */
 const AccountMenu = ({
@@ -49,7 +49,8 @@ const AccountMenu = ({
                 aria-haspopup="menu"
                 aria-label="Account menu"
                 className={cn(
-                    "block rounded-full ring-offset-2 ring-offset-surface transition-shadow lift",
+                    "relative block rounded-full ring-offset-2 ring-offset-surface transition-shadow lift",
+                    "before:absolute before:-inset-1 before:content-[''] sm:before:hidden",
                     open
                         ? "ring-2 ring-brand"
                         : "hover:ring-2 hover:ring-subtle"

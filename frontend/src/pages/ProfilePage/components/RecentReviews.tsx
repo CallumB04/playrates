@@ -57,7 +57,7 @@ const RecentReviews = ({ reviews, isLoading, isOwner }: RecentReviewsProps) => {
                             to="/library"
                             className={buttonClass(
                                 "secondary",
-                                undefined,
+                                "min-h-11 sm:min-h-9",
                                 "sm"
                             )}
                         >

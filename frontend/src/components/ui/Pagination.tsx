@@ -11,7 +11,8 @@ interface PaginationProps {
 }
 
 const SLOT =
-    "lift min-w-[36px] rounded-sm border px-2 py-2 text-center font-mono text-[12px] font-medium " +
+    "lift grid place-items-center min-h-11 min-w-11 rounded-sm border px-2 text-center font-mono text-[12px] font-medium " +
+    "sm:min-h-0 sm:min-w-[36px] sm:block sm:py-2 " +
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
 const STEP =
@@ -50,7 +51,8 @@ const Pagination = ({ pagination, onChange, className }: PaginationProps) => {
     return (
         <nav
             aria-label="Pagination"
-            className={cn("flex gap-[3px]", className)}
+            /* Wraps: a six-digit last page pushed "next" off screen at 375px. */
+            className={cn("flex flex-wrap gap-[3px]", className)}
         >
             <button
                 type="button"

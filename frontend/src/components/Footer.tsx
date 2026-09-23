@@ -24,12 +24,12 @@ const Footer = () => (
                     </p>
                 </div>
 
-                <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-body-sm">
+                <nav className="-my-2 flex flex-wrap items-center gap-x-6 text-body-sm sm:my-0 sm:gap-y-2">
                     {LINKS.map((link) => (
                         <Link
                             key={link.to}
                             to={link.to}
-                            className="text-content-secondary lift hover:text-brand"
+                            className="inline-flex min-h-11 items-center text-content-secondary lift hover:text-brand sm:min-h-0"
                         >
                             {link.label}
                         </Link>
@@ -46,12 +46,12 @@ const Footer = () => (
                     <span>Game data from RAWG</span>
                 </p>
 
-                <div className="flex items-center gap-4">
+                <div className="-my-2 flex items-center gap-4 sm:my-0">
                     <a
                         href="https://github.com/CallumB04"
                         target="_blank"
                         rel="noreferrer noopener"
-                        className="inline-flex items-center gap-1.5 text-content-secondary lift hover:text-brand"
+                        className="inline-flex min-h-11 items-center gap-1.5 text-content-secondary lift hover:text-brand sm:min-h-0"
                     >
                         <SiGithub size={14} aria-hidden />
                         Built by Callum Burgoyne
@@ -61,7 +61,7 @@ const Footer = () => (
                         onClick={() =>
                             window.scrollTo({ top: 0, behavior: "smooth" })
                         }
-                        className="inline-flex cursor-pointer items-center gap-1.5 text-content-secondary lift hover:text-brand"
+                        className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 text-content-secondary lift hover:text-brand sm:min-h-0"
                     >
                         <ArrowUp size={14} aria-hidden />
                         Back to top
