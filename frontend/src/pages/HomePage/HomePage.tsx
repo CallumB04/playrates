@@ -21,6 +21,7 @@ import {
 } from "../../hooks/queries/useGameLogs";
 import { useFriendActivity } from "../../hooks/queries/useFriends";
 import { useRecentReviews } from "../../hooks/queries/useReviews";
+import { usePageTitle } from "../../hooks/usePageTitle";
 import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
 import { useGameLogMutations } from "../../hooks/queries/useGameLogs";
 import { useNotify } from "../../contexts/NotificationContext";
@@ -48,6 +49,9 @@ const releaseWindow = () => {
 };
 
 const HomePage = () => {
+    /* No name of its own: the homepage keeps the site title. */
+    usePageTitle();
+
     const { user } = useAuth();
     const { openSignup, openLogin } = useAccountForm();
     const [logging, setLogging] = useState<number | null>(null);

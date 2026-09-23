@@ -2,6 +2,7 @@ import { useState } from "react";
 import ColourSection from "./sections/ColourSection";
 import SizingSection from "./sections/SizingSection";
 import ComponentSection from "./sections/ComponentSection";
+import { usePageTitle } from "../../../hooks/usePageTitle";
 
 const TABS = [
     { id: "colour", label: "Colour", Component: ColourSection },
@@ -17,6 +18,8 @@ type TabId = (typeof TABS)[number]["id"];
  * them is a token to fix, not a component to special-case.
  */
 const DesignLibraryPage = () => {
+    usePageTitle("Design library");
+
     const [tab, setTab] = useState<TabId>("colour");
     const Active = TABS.find((t) => t.id === tab)!.Component;
 

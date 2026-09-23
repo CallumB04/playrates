@@ -16,6 +16,7 @@ import { useNotify } from "../../contexts/NotificationContext";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { usePagination } from "../../hooks/usePagination";
+import { usePageTitle } from "../../hooks/usePageTitle";
 import GameTile, { type TileAction } from "../../components/game/GameTile";
 import Pagination, { PaginationSummary } from "../../components/ui/Pagination";
 import { TileSkeleton } from "../../components/ui/Skeleton";
@@ -42,6 +43,8 @@ type OpenModal =
     | null;
 
 const LibraryPage = () => {
+    usePageTitle("Library");
+
     const { user } = useAuth();
     const { openLogin } = useAccountForm();
     const notify = useNotify();

@@ -20,6 +20,7 @@ import { useUpdateProfile } from "../hooks/queries/useProfiles";
 import { useUserStats } from "../hooks/queries/useGameLogs";
 import { useUserReviews } from "../hooks/queries/useReviews";
 import { useUserFriends } from "../hooks/queries/useFriends";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { deleteMyAccount } from "../api";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
@@ -88,6 +89,8 @@ const Panel = ({ children }: { children: ReactNode }) => (
 );
 
 const SettingsPage = () => {
+    usePageTitle("Settings");
+
     const { user, session, signOut } = useAuth();
     const { openLogin } = useAccountForm();
     const { preference, setPreference } = useTheme();
