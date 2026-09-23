@@ -69,6 +69,26 @@ describe("StatusPlates", () => {
         expect(played()).toHaveTextContent("Mastered");
     });
 
+    /* The plate wears the chosen substatus, so it reads as the badge that log
+       will carry. Lucide names its own marks, which is the one part of the
+       presentation worth pinning; the hues are class strings, not behaviour. */
+    it("wears the substatus mark rather than the played one", () => {
+        const { rerender } = plates({ value: "played", playedStatus: null });
+        expect(played().querySelector("svg")).toHaveClass(
+            "lucide-circle-check"
+        );
+
+        rerender(
+            <StatusPlates
+                value="played"
+                playedStatus="retired"
+                onChange={vi.fn()}
+                onPlayedStatusChange={vi.fn()}
+            />
+        );
+        expect(played().querySelector("svg")).toHaveClass("lucide-archive");
+    });
+
     it("reports a substatus by name", async () => {
         const onPlayedStatusChange = vi.fn();
         plates({ value: "played", onPlayedStatusChange });

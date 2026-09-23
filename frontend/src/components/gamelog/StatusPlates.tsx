@@ -1,5 +1,6 @@
 import type { ComponentType, SVGProps } from "react";
 import {
+    displayStatusFor,
     GAME_STATUSES,
     PLAYED_STATUSES,
     STATUS_PRESENTATION,
@@ -11,25 +12,18 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "../../lib/cn";
 import Dropdown, { type DropdownOption } from "../ui/Dropdown";
 
-/* Selected fills with its own hue and lifts. Unselected stays quiet but has
-   to read as live, not disabled. */
-const TILE: Record<GameStatus, { on: string; ring: string }> = {
-    played: {
-        on: "border-status-played bg-status-played-quiet text-content",
-        ring: "focus-visible:outline-status-played",
-    },
-    playing: {
-        on: "border-status-playing bg-status-playing-quiet text-content",
-        ring: "focus-visible:outline-status-playing",
-    },
-    backlog: {
-        on: "border-status-backlog bg-status-backlog-quiet text-content",
-        ring: "focus-visible:outline-status-backlog",
-    },
-    wishlist: {
-        on: "border-status-wishlist bg-status-wishlist-quiet text-content",
-        ring: "focus-visible:outline-status-wishlist",
-    },
+/* Selected fills with its own hue and lifts; the fill itself is the status's
+   chip. Only the focus ring lives here — complete class strings, because
+   Tailwind emits what it finds literally. */
+const RING: Record<DisplayStatus, string> = {
+    played: "focus-visible:outline-status-played",
+    playing: "focus-visible:outline-status-playing",
+    backlog: "focus-visible:outline-status-backlog",
+    wishlist: "focus-visible:outline-status-wishlist",
+    finished: "focus-visible:outline-status-finished",
+    mastered: "focus-visible:outline-status-mastered",
+    shelved: "focus-visible:outline-status-shelved",
+    retired: "focus-visible:outline-status-retired",
 };
 
 const RESTING =
@@ -117,11 +111,13 @@ export const StatusPlates = ({
                 const { label } = STATUS_PRESENTATION[status];
                 const selected = status === value;
 
-                /* The chosen played plate opens onto its substatuses in place,
-                   rather than a second row appearing below. The disc stays the
-                   played mark: the row's hues belong to the four statuses, and
-                   a gold trophy inside a green plate reads as a mistake. */
+                /* The chosen played plate opens onto its substatuses in
+                   place, rather than a second row appearing below, and wears
+                   whichever one is chosen — mark, fill and focus ring — the
+                   way a badge for that log would. */
                 if (status === "played" && selected) {
+                    const shown = displayStatusFor("played", playedStatus);
+
                     return (
                         <Dropdown
                             key={status}
@@ -135,14 +131,13 @@ export const StatusPlates = ({
                             }
                             triggerClassName={cn(
                                 BASE,
-                                "w-full",
-                                TILE.played.ring,
-                                TILE.played.on,
-                                "shadow-plate"
+                                "w-full shadow-plate",
+                                RING[shown],
+                                STATUS_PRESENTATION[shown].chip
                             )}
                             renderTrigger={(chosen, open) => (
                                 <>
-                                    <Disc status="played" selected />
+                                    <Disc status={shown} selected />
                                     <span className="min-w-0 flex-1 truncate text-body-sm font-medium">
                                         {chosen?.label ?? label}
                                     </span>
@@ -168,9 +163,12 @@ export const StatusPlates = ({
                         onClick={() => onChange(status)}
                         className={cn(
                             BASE,
-                            TILE[status].ring,
+                            RING[status],
                             selected
-                                ? cn(TILE[status].on, "shadow-plate")
+                                ? cn(
+                                      STATUS_PRESENTATION[status].chip,
+                                      "shadow-plate"
+                                  )
                                 : RESTING
                         )}
                     >
