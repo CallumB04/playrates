@@ -35,7 +35,7 @@ const DrawerTabs = ({
                 ref={fade.ref}
                 onScroll={fade.onScroll}
                 style={fade.style}
-                className="inline-flex max-w-full gap-1 overflow-x-auto rounded-md border border-subtle bg-surface-sunken p-1"
+                className="inline-flex max-w-full gap-1 overflow-x-auto rounded-md border border-subtle bg-surface-sunken p-1 [contain:layout]"
             >
                 {GAME_STATUSES.map((status) => {
                     const {

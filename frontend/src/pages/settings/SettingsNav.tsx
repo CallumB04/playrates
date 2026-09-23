@@ -24,7 +24,7 @@ const SettingsNav = ({ sections, active, onSelect }: SettingsNavProps) => {
             ref={fade.ref}
             onScroll={fade.onScroll}
             style={fade.style}
-            className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0"
+            className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 [contain:layout] lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0"
         >
             {sections.map(({ id, label, icon: Icon }) => {
                 const isActive = id === active;
