@@ -73,7 +73,7 @@ export const StatusPlates = ({
         <legend className="mb-2.5 text-label text-content-muted">Status</legend>
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {GAME_STATUSES.map((status) => {
-                const { label, hint } = STATUS_PRESENTATION[status];
+                const { label } = STATUS_PRESENTATION[status];
                 const selected = status === value;
 
                 return (
@@ -91,13 +91,8 @@ export const StatusPlates = ({
                         )}
                     >
                         <Disc status={status} selected={selected} />
-                        <span className="min-w-0">
-                            <span className="block text-body-sm font-medium">
-                                {label}
-                            </span>
-                            <span className="block truncate text-[11px] leading-tight text-content-muted">
-                                {hint}
-                            </span>
+                        <span className="min-w-0 truncate text-body-sm font-medium">
+                            {label}
                         </span>
                     </button>
                 );
@@ -119,7 +114,7 @@ export const PlayedStatusPlates = ({
         </legend>
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {PLAYED_STATUSES.map((status) => {
-                const { label, hint } = STATUS_PRESENTATION[status];
+                const { label } = STATUS_PRESENTATION[status];
                 const selected = status === value;
 
                 return (
@@ -138,13 +133,8 @@ export const PlayedStatusPlates = ({
                         )}
                     >
                         <Disc status={status} selected={selected} />
-                        <span className="min-w-0">
-                            <span className="block text-body-sm font-medium">
-                                {label}
-                            </span>
-                            <span className="block truncate text-[11px] leading-tight text-content-muted">
-                                {hint}
-                            </span>
+                        <span className="min-w-0 truncate text-body-sm font-medium">
+                            {label}
                         </span>
                     </button>
                 );

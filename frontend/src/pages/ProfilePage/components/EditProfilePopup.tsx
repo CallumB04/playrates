@@ -79,7 +79,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                             rows={3}
                             value={bio}
                             maxLength={BIO_LIMIT}
-                            placeholder="Mostly RPGs and anything with a grappling hook."
+                            placeholder="I love PlayRates."
                             onChange={(e) => setBio(e.target.value)}
                             {...a11y}
                         />

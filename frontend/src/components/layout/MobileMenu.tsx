@@ -158,7 +158,7 @@ const MobileMenu = ({
                                 onSignUp();
                             }}
                         >
-                            Start your library
+                            Join PlayRates
                         </Button>
                         <Button
                             variant="secondary"

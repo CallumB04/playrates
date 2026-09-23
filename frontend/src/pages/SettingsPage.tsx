@@ -251,7 +251,7 @@ const SettingsPage = () => {
                         rows={3}
                         value={bio}
                         maxLength={160}
-                        placeholder="Mostly RPGs and anything with a grappling hook."
+                        placeholder="I love PlayRates."
                         onChange={(e) => setBio(e.target.value)}
                         onBlur={() =>
                             saveText(
@@ -288,7 +288,7 @@ const SettingsPage = () => {
             <Panel>
                 <Row
                     label="Sexual content"
-                    help="Games tagged as sexually explicit stay out of the library, search and every rail. Violence is not covered by this."
+                    help="Games tagged as sexually explicit stay out of the library, search and every rail."
                 >
                     <Toggle
                         checked={showSexual}

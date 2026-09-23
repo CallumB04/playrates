@@ -197,7 +197,7 @@ const HomePage = () => {
 
             <Rail
                 title="Trending"
-                note="what people are opening this week"
+                note="what people are playing most right now"
                 games={trending?.data ?? []}
                 platforms={platforms ?? []}
                 isLoading={trendingLoading}
