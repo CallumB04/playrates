@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
 import {
     GAME_STATUSES,
     PLAYED_STATUSES,
@@ -11,70 +10,20 @@ import { cn } from "../../../lib/cn";
 
 interface CirculationPlateProps {
     byStatus: Record<string, number>;
-    /** A slice of byStatus.played; the rest recorded no ending. */
+    /** A slice of byStatus.played; the rest carry no substatus. */
     byPlayedStatus: Record<string, number>;
     logCount: number;
 }
 
-interface Segment {
+interface Ending {
     key: string;
-    label: string;
+    /** Whose mark and hue it wears. Plain played has none of its own. */
+    status: DisplayStatus;
     count: number;
-    accent: string;
 }
 
-/** The row anatomy, shared by a status and by an ending under it. */
-const Row = ({
-    mark,
-    label,
-    bar,
-    count,
-    share,
-    inset = false,
-}: {
-    mark: React.ReactNode;
-    label: React.ReactNode;
-    bar: React.ReactNode;
-    count: number;
-    share: number;
-    inset?: boolean;
-}) => (
-    <div
-        className={cn(
-            "flex items-center gap-3.5 border-b border-subtle py-2.5",
-            inset && "border-dashed pl-4 sm:pl-7"
-        )}
-    >
-        {mark}
-        <span
-            className={cn(
-                "w-20 shrink-0 sm:w-24",
-                inset
-                    ? "text-body-sm text-content-secondary"
-                    : "text-body-sm font-medium text-content"
-            )}
-        >
-            {label}
-        </span>
-        <span className="h-2 flex-1 overflow-hidden rounded-full bg-surface-sunken">
-            {bar}
-        </span>
-        <span
-            className={cn(
-                "w-14 shrink-0 text-right font-mono text-body-sm sm:w-[70px]",
-                inset ? "text-content-secondary" : "font-semibold text-content"
-            )}
-        >
-            {formatCount(count)}
-        </span>
-        <span className="w-11 shrink-0 text-right font-mono text-[11.5px] text-content-muted">
-            {formatPercent(share)}
-        </span>
-    </div>
-);
-
 /** How the shelf holds this game: the four states, hue, bar, count and share.
- *  The played bar carries its endings, since they are what it is made of. */
+ *  The played bar is divided by how those plays ended. */
 const CirculationPlate = ({
     byStatus,
     byPlayedStatus,
@@ -85,24 +34,27 @@ const CirculationPlate = ({
     const shareOf = (count: number) => (logCount === 0 ? 0 : count / logCount);
     const played = byStatus.played ?? 0;
 
-    /* Every ending, then whatever is left — a played log with no ending is not
-       a missing row, it is the commonest one. */
-    const endings: Segment[] = PLAYED_STATUSES.map((status) => ({
-        key: status,
-        label: STATUS_PRESENTATION[status].label,
-        count: byPlayedStatus[status] ?? 0,
-        accent: STATUS_PRESENTATION[status].accent,
-    }));
-    const noEnding = endings.reduce((left, e) => left - e.count, played);
-    const segments: Segment[] = [
-        ...endings,
+    /* Plain played first, as the log editor lists it, then the four endings.
+       The plain count is the remainder — what is left once the endings are
+       taken off, which is a state of its own and usually the commonest. */
+    const endings: Ending[] = [
         {
-            key: "none",
-            label: "No ending",
-            count: Math.max(0, noEnding),
-            accent: STATUS_PRESENTATION.played.accent,
+            key: "played",
+            status: "played",
+            count: Math.max(
+                0,
+                PLAYED_STATUSES.reduce(
+                    (left, s) => left - (byPlayedStatus[s] ?? 0),
+                    played
+                )
+            ),
         },
-    ].filter((segment) => segment.count > 0);
+        ...PLAYED_STATUSES.map((status) => ({
+            key: status,
+            status,
+            count: byPlayedStatus[status] ?? 0,
+        })),
+    ];
 
     return (
         <section>
@@ -120,134 +72,146 @@ const CirculationPlate = ({
                     accent,
                 } = STATUS_PRESENTATION[status];
                 const count = byStatus[status] ?? 0;
-                const isPlayed = status === "played";
-                const expandable = isPlayed && segments.length > 0;
+                const divided = status === "played" && played > 0;
 
-                const mark = (
-                    <Mark
-                        size={14}
-                        aria-hidden
-                        className={cn("shrink-0", markTone)}
-                    />
+                const track = (
+                    <span className="block h-2 overflow-hidden rounded-full bg-surface-sunken">
+                        {divided ? (
+                            /* One bar, divided — the endings make up the played
+                               share rather than sitting beside it. */
+                            <span
+                                className="flex h-full"
+                                style={{ width: `${shareOf(count) * 100}%` }}
+                            >
+                                {endings
+                                    .filter((ending) => ending.count > 0)
+                                    .map((ending) => (
+                                        <span
+                                            key={ending.key}
+                                            className={cn(
+                                                "block h-full first:rounded-l-full last:rounded-r-full",
+                                                STATUS_PRESENTATION[
+                                                    ending.status
+                                                ].accent
+                                            )}
+                                            style={{
+                                                width: `${(ending.count / count) * 100}%`,
+                                            }}
+                                        />
+                                    ))}
+                            </span>
+                        ) : (
+                            <span
+                                className={cn(
+                                    "block h-full rounded-full",
+                                    accent
+                                )}
+                                style={{ width: `${shareOf(count) * 100}%` }}
+                            />
+                        )}
+                    </span>
                 );
 
                 return (
-                    <div key={status}>
-                        <Row
-                            mark={mark}
-                            label={
-                                expandable ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => setOpen((was) => !was)}
-                                        aria-expanded={open}
-                                        /* 44px to the touch without growing
-                                           the glyph, which has a row to fit. */
-                                        className="relative flex cursor-pointer items-center gap-1 text-left lift before:absolute before:-inset-3 before:content-[''] hover:text-content sm:before:hidden"
-                                    >
-                                        {label}
-                                        <ChevronDown
-                                            size={13}
-                                            aria-hidden
-                                            className={cn(
-                                                "shrink-0 text-content-muted transition-transform duration-200",
-                                                open && "rotate-180"
-                                            )}
-                                        />
-                                    </button>
-                                ) : (
-                                    label
-                                )
-                            }
-                            bar={
-                                expandable ? (
-                                    /* One bar, divided — the endings make up
-                                       the played share rather than sitting
-                                       beside it. */
-                                    <span
-                                        className="flex h-full"
-                                        style={{
-                                            width: `${shareOf(count) * 100}%`,
-                                        }}
-                                    >
-                                        {segments.map((segment) => (
-                                            <span
-                                                key={segment.key}
-                                                title={`${segment.label}: ${formatCount(segment.count)}`}
-                                                className={cn(
-                                                    "block h-full first:rounded-l-full last:rounded-r-full",
-                                                    segment.accent
-                                                )}
-                                                style={{
-                                                    width: `${
-                                                        (segment.count /
-                                                            count) *
-                                                        100
-                                                    }%`,
-                                                }}
-                                            />
-                                        ))}
-                                    </span>
-                                ) : (
-                                    <span
-                                        className={cn(
-                                            "block h-full rounded-full",
-                                            accent
-                                        )}
-                                        style={{
-                                            width: `${shareOf(count) * 100}%`,
-                                        }}
-                                    />
-                                )
-                            }
-                            count={count}
-                            share={shareOf(count)}
+                    <div
+                        key={status}
+                        className={cn(
+                            "flex items-center gap-3.5 border-b border-subtle",
+                            divided ? "py-0" : "py-2.5"
+                        )}
+                    >
+                        <Mark
+                            size={14}
+                            aria-hidden
+                            className={cn("shrink-0", markTone)}
                         />
+                        <span className="w-20 shrink-0 text-body-sm font-medium text-content sm:w-24">
+                            {label}
+                        </span>
 
-                        {expandable &&
-                            open &&
-                            segments.map((segment) => {
-                                const EndingMark =
-                                    segment.key === "none"
-                                        ? STATUS_PRESENTATION.played.icon
-                                        : STATUS_PRESENTATION[
-                                              segment.key as DisplayStatus
-                                          ].icon;
-                                const tone =
-                                    segment.key === "none"
-                                        ? STATUS_PRESENTATION.played.markTone
-                                        : STATUS_PRESENTATION[
-                                              segment.key as DisplayStatus
-                                          ].markTone;
+                        {divided ? (
+                            <div className="relative flex-1">
+                                {/* Hover on a pointer, tap or focus otherwise —
+                                    a touch screen cannot hover, and the
+                                    breakdown is the point of the bar. */}
+                                <button
+                                    type="button"
+                                    onMouseEnter={() => setOpen(true)}
+                                    onMouseLeave={() => setOpen(false)}
+                                    onFocus={() => setOpen(true)}
+                                    onBlur={() => setOpen(false)}
+                                    onClick={() => setOpen((was) => !was)}
+                                    aria-expanded={open}
+                                    aria-label="How those plays ended"
+                                    /* 44px tall around an 8px bar, so the
+                                       whole row is the target. The row drops
+                                       its own padding to stay level with the
+                                       three beside it. */
+                                    className="block w-full cursor-pointer py-[18px]"
+                                >
+                                    {track}
+                                </button>
 
-                                return (
-                                    <Row
-                                        key={segment.key}
-                                        inset
-                                        mark={
-                                            <EndingMark
-                                                size={13}
-                                                aria-hidden
-                                                className={cn("shrink-0", tone)}
-                                            />
-                                        }
-                                        label={segment.label}
-                                        bar={
-                                            <span
-                                                className={cn(
-                                                    "block h-full rounded-full",
-                                                    segment.accent
-                                                )}
-                                                style={{
-                                                    width: `${shareOf(segment.count) * 100}%`,
-                                                }}
-                                            />
-                                        }
-                                        count={segment.count}
-                                        share={shareOf(segment.count)}
-                                    />
-                                );
-                            })}
+                                {open && (
+                                    <div
+                                        role="tooltip"
+                                        className="absolute bottom-full left-0 z-20 mb-1 w-52 rounded-md border border-subtle bg-surface-raised p-2 shadow-modal"
+                                    >
+                                        <p className="px-1 pb-1.5 text-label text-content-muted">
+                                            How it ended
+                                        </p>
+                                        {endings.map((ending) => {
+                                            const {
+                                                label: name,
+                                                icon: EndMark,
+                                                markTone: tone,
+                                            } = STATUS_PRESENTATION[
+                                                ending.status
+                                            ];
+                                            return (
+                                                <div
+                                                    key={ending.key}
+                                                    className="flex items-center gap-2 px-1 py-1 text-body-sm"
+                                                >
+                                                    <EndMark
+                                                        size={13}
+                                                        aria-hidden
+                                                        className={cn(
+                                                            "shrink-0",
+                                                            tone
+                                                        )}
+                                                    />
+                                                    <span className="min-w-0 flex-1 truncate text-content-secondary">
+                                                        {name}
+                                                    </span>
+                                                    <span className="shrink-0 font-mono text-body-sm font-semibold text-content">
+                                                        {formatCount(
+                                                            ending.count
+                                                        )}
+                                                    </span>
+                                                    <span className="w-10 shrink-0 text-right font-mono text-[11.5px] text-content-muted">
+                                                        {formatPercent(
+                                                            shareOf(
+                                                                ending.count
+                                                            )
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <span className="flex-1">{track}</span>
+                        )}
+
+                        <span className="w-14 shrink-0 text-right font-mono text-body-sm font-semibold text-content sm:w-[70px]">
+                            {formatCount(count)}
+                        </span>
+                        <span className="w-11 shrink-0 text-right font-mono text-[11.5px] text-content-muted">
+                            {formatPercent(shareOf(count))}
+                        </span>
                     </div>
                 );
             })}
