@@ -6,20 +6,21 @@ import {
 } from "../../../constants/gameStatus";
 
 /** "" is every played log; "none" is the ones carrying no substatus, which is
- *  a state of its own rather than the absence of an answer. */
+ *  a state of its own rather than the absence of an answer.
+ *
+ *  No hints: a filter is picked by the word, and the log editor already
+ *  explains what each ending means at the point of choosing one. */
 const OPTIONS = [
     { value: "", label: "All played" },
     {
         value: "none",
         label: STATUS_PRESENTATION.played.label,
         icon: STATUS_PRESENTATION.played.icon,
-        hint: "No further detail",
     },
     ...PLAYED_STATUSES.map((status) => ({
         value: status,
         label: STATUS_PRESENTATION[status].label,
         icon: STATUS_PRESENTATION[status].icon,
-        hint: STATUS_PRESENTATION[status].hint,
     })),
 ];
 
