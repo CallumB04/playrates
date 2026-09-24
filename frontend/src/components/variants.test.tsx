@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import type { ProfileAccent } from "@playrates/shared";
 import LoadingSpinner from "./LoadingSpinner";
 import ProfilePicture from "./ProfilePicture";
 import UserStatus from "./UserStatus";
@@ -89,13 +90,17 @@ describe("ProfilePicture variants", () => {
         expect(wash).not.toBeNull();
     });
 
-    it("gives two usernames different generated hues", () => {
-        const hueOf = (username: string) =>
+    /* The hue used to come from the username. It comes from the profile's
+       chosen colour now, so two names share one colour and two colours do
+       not. */
+    it("colours the generated avatar by the accent, not the name", () => {
+        const fillOf = (username: string, accent?: ProfileAccent) =>
             render(
                 <MemoryRouter>
                     <ProfilePicture
                         variant="nav"
                         username={username}
+                        accent={accent}
                         file=""
                         link={false}
                     />
@@ -104,7 +109,8 @@ describe("ProfilePicture variants", () => {
                 .container.querySelector("[style*='linear-gradient']")!
                 .getAttribute("style");
 
-        expect(hueOf("marlowe")).not.toBe(hueOf("tessellate"));
+        expect(fillOf("marlowe")).toBe(fillOf("tessellate"));
+        expect(fillOf("marlowe", "jade")).not.toBe(fillOf("marlowe", "rose"));
     });
 
     it("prefers an uploaded picture over the generated one", () => {

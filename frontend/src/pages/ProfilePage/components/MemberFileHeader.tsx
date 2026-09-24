@@ -11,7 +11,7 @@ import {
     type GameStatus,
 } from "../../../constants/gameStatus";
 import { formatCount, formatHours, formatMonthYear } from "../../../lib/format";
-import { bannerGradient, profileHue } from "../../../lib/profileAccent";
+import { accentHue, bannerGradient } from "../../../lib/profileAccent";
 import { cn } from "../../../lib/cn";
 
 interface MemberFileHeaderProps {
@@ -110,7 +110,7 @@ const MemberFileHeader = ({
     action,
     onEditPicture,
 }: MemberFileHeaderProps) => {
-    const banner = bannerGradient(profileHue(profile.username, profile.accent));
+    const banner = bannerGradient(accentHue(profile.accent));
     const byStatus = stats?.byStatus ?? {};
     const shelfTotal = GAME_STATUSES.reduce(
         (sum, status) => sum + (byStatus[status] ?? 0),

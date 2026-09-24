@@ -38,8 +38,7 @@ export const UpdateProfileSchema = z
     /* No avatarUrl. A picture is uploaded to /profiles/me/avatar and the URL
        is written there, so the only pictures anyone can wear are ones this
        API stored. */
-    /** Null goes back to the colour derived from the username. */
-    accent: ProfileAccentSchema.nullable().optional(),
+    accent: ProfileAccentSchema.optional(),
     /** Opt-in. Off keeps sexually explicit games out of every listing. */
     showSexualContent: z.boolean().optional(),
     /** Optional display name. Empty string clears it. */
@@ -64,8 +63,8 @@ export interface Profile {
   firstName: string | null;
   bio: string;
   avatarUrl: string | null;
-  /** The chosen colour. Null means the one derived from the username. */
-  accent: ProfileAccent | null;
+  /** The colour this profile wears. Every profile has one. */
+  accent: ProfileAccent;
   /** Derived from last_seen_at, not stored. */
   online: boolean;
   createdAt: string;

@@ -235,8 +235,20 @@ describe("profile colour", () => {
     expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe("jade");
   });
 
-  /* Null is a choice, not an omission: it puts the username's colour back. */
-  it("takes null, and means it", async () => {
+  /* Null used to mean "derive one from the username". There is no deriving
+     any more, so it is not a colour and not an answer. */
+  it("refuses null, which is no longer a colour", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .patch("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A))
+      .send({ accent: null });
+
+    expect(response.status).toBe(422);
+  });
+
+  it("goes back to the brand like any other choice", async () => {
     const { app, state } = buildTestApp({ seed: baseSeed() });
     await request(app)
       .patch("/api/v1/profiles/me")
@@ -246,10 +258,10 @@ describe("profile colour", () => {
     const response = await request(app)
       .patch("/api/v1/profiles/me")
       .set("Authorization", authHeader(USER_A))
-      .send({ accent: null });
+      .send({ accent: "playrates" });
 
-    expect(response.body.accent).toBeNull();
-    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBeNull();
+    expect(response.body.accent).toBe("playrates");
+    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe("playrates");
   });
 
   it("refuses a colour that is not one of ours", async () => {
@@ -261,7 +273,9 @@ describe("profile colour", () => {
       .send({ accent: "chartreuse" });
 
     expect(response.status).toBe(422);
-    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBeNull();
+    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe(
+      "playrates",
+    );
   });
 
   it("shows the colour on the public profile too, so everyone sees it", async () => {

@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import ProfilePicture from "./ProfilePicture";
-import { hueFor } from "../lib/profileAccent";
+import { accentHue } from "../lib/profileAccent";
 
 const show = (props: Partial<Parameters<typeof ProfilePicture>[0]> = {}) =>
     render(
@@ -35,15 +35,17 @@ describe("ProfilePicture", () => {
             c.querySelector<HTMLElement>("span[aria-hidden]")?.style
                 .backgroundImage ?? "";
 
-        it("comes from the username when nothing is chosen", () => {
-            const { container } = show({ accent: null });
-            expect(fill(container)).toContain(`hsl(${hueFor("ada")}`);
+        it("is the brand when no colour is given", () => {
+            const { container } = show({ accent: undefined });
+            expect(fill(container)).toContain(`hsl(${accentHue("playrates")}`);
         });
 
-        it("comes from the chosen colour instead when there is one", () => {
+        it("is the chosen colour when there is one", () => {
             const { container } = show({ accent: "jade" });
             expect(fill(container)).toContain("hsl(150");
-            expect(fill(container)).not.toContain(`hsl(${hueFor("ada")}`);
+            expect(fill(container)).not.toContain(
+                `hsl(${accentHue("playrates")}`
+            );
         });
 
         /* An uploaded picture covers the fill entirely, so the colour only

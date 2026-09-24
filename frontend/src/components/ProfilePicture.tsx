@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Camera } from "lucide-react";
 import type { ProfileAccent } from "@playrates/shared";
-import { avatarGradient, profileHue } from "../lib/profileAccent";
+import { accentHue, avatarGradient } from "../lib/profileAccent";
 import { cn } from "../lib/cn";
 
 /* Complete literal class strings — Tailwind only emits what it can see. The
@@ -35,8 +35,8 @@ interface ProfilePictureProps {
     /** Makes the picture a button — your own, on your own profile. Takes
      *  precedence over `link`: a picture cannot be both. */
     action?: { label: string; onClick: () => void };
-    /** The profile's chosen colour. Null falls back to the username's. */
-    accent?: ProfileAccent | null;
+    /** The profile's colour. Unset falls back to the brand. */
+    accent?: ProfileAccent;
 }
 
 /**
@@ -52,7 +52,7 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
     accent,
 }) => {
     const { box, text } = AVATAR_VARIANT[variant];
-    const hue = profileHue(username, accent);
+    const hue = accentHue(accent);
 
     const className = cn(
         "relative grid aspect-square shrink-0 place-items-center overflow-hidden rounded-full bg-surface-sunken select-none",

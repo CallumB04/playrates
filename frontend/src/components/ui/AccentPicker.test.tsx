@@ -1,32 +1,31 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { PROFILE_ACCENTS } from "@playrates/shared";
+import { DEFAULT_ACCENT, PROFILE_ACCENTS } from "@playrates/shared";
 import AccentPicker from "./AccentPicker";
-import { hueFor } from "../../lib/profileAccent";
+import { accentHue } from "../../lib/profileAccent";
 
-const setup = (value: Parameters<typeof AccentPicker>[0]["value"] = null) => {
+const setup = (
+    value: Parameters<typeof AccentPicker>[0]["value"] = DEFAULT_ACCENT
+) => {
     const onChange = vi.fn();
     const view = render(
-        <AccentPicker
-            label="Profile colour"
-            username="ada"
-            value={value}
-            onChange={onChange}
-        />
+        <AccentPicker label="Profile Colour" value={value} onChange={onChange} />
     );
     return { onChange, ...view };
 };
 
 describe("AccentPicker", () => {
-    it("offers every colour, plus the one you started with", () => {
+    it("offers the whole palette", () => {
         setup();
-        expect(screen.getAllByRole("radio")).toHaveLength(
-            PROFILE_ACCENTS.length + 1
-        );
-        expect(
-            screen.getByRole("radio", { name: "Default, from your username" })
-        ).toBeChecked();
+        expect(screen.getAllByRole("radio")).toHaveLength(PROFILE_ACCENTS.length);
+    });
+
+    /* Nobody has to choose. A profile that never touched this wears the brand
+       and the picker says so rather than showing nothing selected. */
+    it("starts on the brand", () => {
+        setup();
+        expect(screen.getByRole("radio", { name: "PlayRates" })).toBeChecked();
     });
 
     it("reports the colour that was picked", async () => {
@@ -38,41 +37,41 @@ describe("AccentPicker", () => {
         expect(onChange).toHaveBeenCalledWith("jade");
     });
 
-    /* Going back to the default is a choice too, and it is null rather than a
-       slug — the server reads that as "use the username again". */
-    it("reports null for the default", async () => {
+    it("reports going back to the brand as a colour like any other", async () => {
         const user = userEvent.setup();
         const { onChange } = setup("jade");
 
-        await user.click(
-            screen.getByRole("radio", { name: "Default, from your username" })
-        );
+        await user.click(screen.getByRole("radio", { name: "PlayRates" }));
 
-        expect(onChange).toHaveBeenCalledWith(null);
+        expect(onChange).toHaveBeenCalledWith("playrates");
     });
 
     it("marks the chosen one, and only that one", () => {
         setup("rose");
         expect(screen.getByRole("radio", { name: "Rose" })).toBeChecked();
         expect(
-            screen.getByRole("radio", { name: "Default, from your username" })
+            screen.getByRole("radio", { name: "PlayRates" })
         ).not.toBeChecked();
     });
 
-    /* The default swatch is the only one whose colour is not fixed. Drawing it
-       in some other colour would make it a lie. */
-    it("draws the default swatch in the username's own colour", () => {
+    /* A swatch drawn in anything other than the colour it applies would be a
+       lie about what you are picking. */
+    it("draws each swatch in the colour it stands for", () => {
         const { container } = setup();
-        const swatch = container.querySelector<HTMLElement>(
-            "label:first-child span[aria-hidden]"
+        const swatches = container.querySelectorAll<HTMLElement>(
+            "span[aria-hidden]"
         );
-        expect(swatch?.style.backgroundImage).toContain(`hsl(${hueFor("ada")}`);
+        PROFILE_ACCENTS.forEach((accent, i) => {
+            expect(swatches[i]?.style.backgroundImage).toContain(
+                `hsl(${accentHue(accent.slug)}`
+            );
+        });
     });
 
     it("is a radiogroup, so the arrow keys move between colours", () => {
         setup();
         expect(
-            screen.getByRole("radiogroup", { name: "Profile colour" })
+            screen.getByRole("radiogroup", { name: "Profile Colour" })
         ).toBeInTheDocument();
     });
 

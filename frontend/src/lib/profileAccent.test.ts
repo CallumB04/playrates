@@ -1,55 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { PROFILE_ACCENTS } from "@playrates/shared";
-import {
-    avatarGradient,
-    bannerGradient,
-    hueFor,
-    profileHue,
-} from "./profileAccent";
+import { DEFAULT_ACCENT, PROFILE_ACCENTS } from "@playrates/shared";
+import { accentHue, avatarGradient, bannerGradient } from "./profileAccent";
 
-describe("hueFor", () => {
-    it("gives the same username the same hue every time", () => {
-        expect(hueFor("ada")).toBe(hueFor("ada"));
-    });
-
-    it("separates anagrams, which a sum of characters would not", () => {
-        expect(hueFor("listen")).not.toBe(hueFor("silent"));
-        expect(hueFor("ab")).not.toBe(hueFor("ba"));
-    });
-
-    it("always lands on the colour wheel", () => {
-        for (const name of ["a", "zzzzzzzzzzzz", "user_1", "Ada", ""]) {
-            const hue = hueFor(name);
-            expect(hue).toBeGreaterThanOrEqual(0);
-            expect(hue).toBeLessThan(360);
-        }
-    });
-});
-
-describe("profileHue", () => {
-    /* The whole point of the default: a profile that never chose keeps the
-       colour it has always had. */
-    it("falls back to the username when nothing is chosen", () => {
-        expect(profileHue("ada", null)).toBe(hueFor("ada"));
-        expect(profileHue("ada", undefined)).toBe(hueFor("ada"));
-    });
-
-    it("takes the chosen colour over the username's", () => {
+describe("accentHue", () => {
+    it("gives every colour in the palette its own hue", () => {
         for (const accent of PROFILE_ACCENTS) {
-            expect(profileHue("ada", accent.slug)).toBe(accent.hue);
+            expect(accentHue(accent.slug)).toBe(accent.hue);
         }
+        const hues = PROFILE_ACCENTS.map((a) => a.hue);
+        expect(new Set(hues).size).toBe(hues.length);
     });
 
-    /* A slug that is not ours can only come from a row written before this
-       list, or after it changed. It should not leave a profile colourless. */
-    it("falls back rather than break on a colour it does not know", () => {
-        expect(
-            profileHue("ada", "chartreuse" as never)
-        ).toBe(hueFor("ada"));
+    /* Nothing chosen, a row written before this list, a slug that has since
+       been retired: all of them are the brand rather than no colour at all. */
+    it("falls back to the brand, never to nothing", () => {
+        const brand = accentHue(DEFAULT_ACCENT);
+        expect(accentHue(null)).toBe(brand);
+        expect(accentHue(undefined)).toBe(brand);
+        expect(accentHue("chartreuse")).toBe(brand);
     });
 
-    it("gives two different people different colours", () => {
-        expect(profileHue("ada", null)).not.toBe(profileHue("grace", null));
+    it("starts every profile on the brand", () => {
+        expect(DEFAULT_ACCENT).toBe("playrates");
+        expect(PROFILE_ACCENTS[0]?.slug).toBe(DEFAULT_ACCENT);
     });
 });
 
@@ -62,11 +35,21 @@ describe("gradients", () => {
     /* 350 + 45 is 395, which is not a hue. */
     it("wraps the second stop round the wheel", () => {
         expect(avatarGradient(350)).toContain("hsl(35 ");
-        expect(bannerGradient(350)).toContain("hsl(35 ");
+        expect(bannerGradient(350)).toContain("hsl(30 ");
     });
 
-    it("keeps the banner faint enough to sit behind a name", () => {
-        expect(bannerGradient(200)).toContain("transparent");
+    /* Running out to transparent left the right-hand half reading as an
+       unpainted rectangle. Every stop keeps some colour in it. */
+    it("never lets the banner fade out to nothing", () => {
+        const banner = bannerGradient(200);
+        expect(banner).not.toContain("transparent");
+        for (const [, alpha] of banner.matchAll(/\/ (0\.\d+)\)/g)) {
+            expect(Number(alpha)).toBeGreaterThan(0.2);
+        }
+    });
+
+    it("keeps the banner softer than the avatar it sits behind", () => {
         expect(bannerGradient(200)).toMatch(/\/ 0\.\d+/);
+        expect(avatarGradient(200)).not.toMatch(/\/ 0\.\d+/);
     });
 });

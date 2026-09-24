@@ -1,50 +1,29 @@
 import { useId } from "react";
 import { Check } from "lucide-react";
 import { PROFILE_ACCENTS, type ProfileAccent } from "@playrates/shared";
-import { avatarGradient, hueFor } from "../../lib/profileAccent";
+import { avatarGradient } from "../../lib/profileAccent";
 import { cn } from "../../lib/cn";
 
 interface AccentPickerProps {
-    /** Null is the colour the username hashes to, which is offered first. */
-    value: ProfileAccent | null;
-    onChange: (accent: ProfileAccent | null) => void;
-    /** Needed to draw the default swatch as the colour it actually is. */
-    username: string;
+    value: ProfileAccent;
+    onChange: (accent: ProfileAccent) => void;
     label: string;
     disabled?: boolean;
     className?: string;
 }
 
 /**
- * The ten colours a profile can wear, plus the one it started with. Radios
- * rather than buttons: one of them is always the answer, and the arrow keys
- * should move between them.
+ * The colours a profile can wear. Radios rather than buttons: one of them is
+ * always the answer, and the arrow keys should move between them.
  */
 const AccentPicker = ({
     value,
     onChange,
-    username,
     label,
     disabled = false,
     className,
 }: AccentPickerProps) => {
     const name = useId();
-
-    const swatches: { key: string; accent: ProfileAccent | null; label: string; hue: number }[] =
-        [
-            {
-                key: "default",
-                accent: null,
-                label: "Default, from your username",
-                hue: hueFor(username),
-            },
-            ...PROFILE_ACCENTS.map((a) => ({
-                key: a.slug,
-                accent: a.slug as ProfileAccent,
-                label: a.label,
-                hue: a.hue,
-            })),
-        ];
 
     return (
         <div
@@ -52,11 +31,11 @@ const AccentPicker = ({
             aria-label={label}
             className={cn("flex flex-wrap gap-2", className)}
         >
-            {swatches.map((swatch) => {
-                const checked = value === swatch.accent;
+            {PROFILE_ACCENTS.map((swatch) => {
+                const checked = value === swatch.slug;
                 return (
                     <label
-                        key={swatch.key}
+                        key={swatch.slug}
                         title={swatch.label}
                         className={cn(
                             /* The swatch reads at 28px but the label is 44,
@@ -70,10 +49,10 @@ const AccentPicker = ({
                         <input
                             type="radio"
                             name={name}
-                            value={swatch.key}
+                            value={swatch.slug}
                             checked={checked}
                             disabled={disabled}
-                            onChange={() => onChange(swatch.accent)}
+                            onChange={() => onChange(swatch.slug)}
                             className="peer sr-only"
                         />
                         <span

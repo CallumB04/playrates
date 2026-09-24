@@ -29,7 +29,7 @@ export const buildProfile = (
     timezone: "UTC",
     hideOnline: false,
     avatarUrl: null,
-    accent: null,
+    accent: "playrates",
     online: true,
     createdAt: "2026-01-01T00:00:00.000Z",
     ...overrides,

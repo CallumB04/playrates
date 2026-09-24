@@ -37,7 +37,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     const [bio, setBio] = useState(user.bio);
     const [username, setUsername] = useState(user.username);
     const [avatar, setAvatar] = useState<AvatarChoice>({ kind: "unchanged" });
-    const [accent, setAccent] = useState<ProfileAccent | null>(user.accent);
+    const [accent, setAccent] = useState<ProfileAccent>(user.accent);
 
     const sameLetters = username.toLowerCase() === user.username.toLowerCase();
     const fieldsDirty =
@@ -92,11 +92,10 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     disabled={saving}
                 />
 
-                <Field label="Colour" help="Your banner, and your avatar.">
+                <Field label="Profile Colour">
                     {() => (
                         <AccentPicker
-                            label="Profile colour"
-                            username={user.username}
+                            label="Profile Colour"
                             value={accent}
                             onChange={setAccent}
                             disabled={saving}
