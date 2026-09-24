@@ -1,6 +1,8 @@
-import { Router, type RequestHandler } from "express";
+import express, { Router, type RequestHandler } from "express";
 import rateLimit from "express-rate-limit";
 import {
+  AVATAR_MAX_BYTES,
+  AVATAR_MIME,
   CheckUsernameSchema,
   PaginationSchema,
   UpdateProfileSchema,
@@ -32,6 +34,24 @@ const profileSearchLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+/* An avatar is the only route that takes bytes rather than JSON. A raw body
+   parser is all it needs: the client sends one already-compressed image, so
+   there is nothing for multipart to separate. The limit is the same one the
+   service enforces, so an oversized body is dropped before it is buffered. */
+const avatarBody = express.raw({
+  type: AVATAR_MIME,
+  limit: AVATAR_MAX_BYTES,
+});
+
+/* Re-encoding a picture is the most expensive thing a profile can ask for,
+   and it writes to storage. */
+const avatarLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 10,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+});
+
 export const createProfilesRouter = ({
   service,
   requireAuth,
@@ -58,6 +78,22 @@ export const createProfilesRouter = ({
   router.delete("/me", requireAuth, async (req, res) => {
     await service.deleteOwn(callerId(req));
     res.status(204).end();
+  });
+
+  router.post(
+    "/me/avatar",
+    requireAuth,
+    avatarLimiter,
+    avatarBody,
+    async (req, res) => {
+      // express.raw leaves an empty object where the type did not match.
+      const body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+      res.json(await service.setAvatar(callerId(req), body));
+    },
+  );
+
+  router.delete("/me/avatar", requireAuth, async (req, res) => {
+    res.json(await service.clearAvatar(callerId(req)));
   });
 
   router.post("/me/heartbeat", requireAuth, async (req, res) => {

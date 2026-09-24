@@ -1,6 +1,7 @@
 import { Router, type RequestHandler } from "express";
 import type { Repositories } from "./repositories.js";
 import type { AuthAdmin } from "./config/authAdmin.js";
+import type { AvatarStore } from "./config/avatarStore.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
 import { createProfilesService } from "./modules/profiles/profiles.service.js";
 import { createProfilesRouter } from "./modules/profiles/profiles.routes.js";
@@ -33,6 +34,7 @@ interface Deps {
   provider: GamesProvider;
   /** Auth admin lives outside the repository bundle — it is not a table. */
   authAdmin: AuthAdmin;
+  avatars: AvatarStore;
   requireAuth: RequestHandler;
   optionalAuth: RequestHandler;
 }
@@ -41,12 +43,13 @@ export const buildRoutes = ({
   repos,
   provider,
   authAdmin,
+  avatars,
   requireAuth,
   optionalAuth,
 }: Deps): Router => {
   const router = Router();
 
-  const profiles = createProfilesService(repos.profiles, authAdmin);
+  const profiles = createProfilesService(repos.profiles, authAdmin, avatars);
   const games = createGamesService(repos.games, provider, async (userId) => {
     const row = await repos.profiles.findById(userId);
     return { showSexualContent: row?.show_sexual_content ?? false };

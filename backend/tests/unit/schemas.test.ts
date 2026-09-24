@@ -131,8 +131,13 @@ describe("profile input", () => {
     expect(() => UpdateProfileSchema.parse({ email: "x@y.test" })).toThrow();
   });
 
-  it("allows clearing the picture", () => {
-    expect(() => UpdateProfileSchema.parse({ avatarUrl: null })).not.toThrow();
+  /* A picture is uploaded to, and cleared through, /profiles/me/avatar. If
+     avatarUrl were editable here, anyone could wear any URL on the web. */
+  it("will not take a picture URL", () => {
+    expect(() =>
+      UpdateProfileSchema.parse({ avatarUrl: "https://example.com/a.png" }),
+    ).toThrow();
+    expect(() => UpdateProfileSchema.parse({ avatarUrl: null })).toThrow();
   });
 });
 

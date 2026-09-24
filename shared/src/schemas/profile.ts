@@ -34,7 +34,9 @@ export const UpdateProfileSchema = z
   .object({
     username: UsernameSchema.optional(),
     bio: z.string().max(160, "Bio must be at most 160 characters").optional(),
-    avatarUrl: z.string().url().max(2048).nullable().optional(),
+    /* No avatarUrl. A picture is uploaded to /profiles/me/avatar and the URL
+       is written there, so the only pictures anyone can wear are ones this
+       API stored. */
     /** Opt-in. Off keeps sexually explicit games out of every listing. */
     showSexualContent: z.boolean().optional(),
     /** Optional display name. Empty string clears it. */

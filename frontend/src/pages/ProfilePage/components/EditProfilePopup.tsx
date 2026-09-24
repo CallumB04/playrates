@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { Profile } from "@playrates/shared";
-import { useUpdateProfile } from "../../../hooks/queries/useProfiles";
+import {
+    useRemoveAvatar,
+    useUpdateAvatar,
+    useUpdateProfile,
+} from "../../../hooks/queries/useProfiles";
 import { useNotify } from "../../../contexts/NotificationContext";
 import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 import Field from "../../../components/ui/Field";
 import { Input, Textarea } from "../../../components/ui/Input";
-import ProfilePicture from "../../../components/ProfilePicture";
+import AvatarField, { type AvatarChoice } from "./AvatarField";
 
 interface EditProfilePopupProps {
     closePopup: () => void;
@@ -26,18 +30,34 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
 }) => {
     const notify = useNotify();
     const updateProfile = useUpdateProfile();
+    const updateAvatar = useUpdateAvatar();
+    const removeAvatar = useRemoveAvatar();
 
     const [bio, setBio] = useState(user.bio);
     const [username, setUsername] = useState(user.username);
+    const [avatar, setAvatar] = useState<AvatarChoice>({ kind: "unchanged" });
 
     const sameLetters = username.toLowerCase() === user.username.toLowerCase();
-    const dirty = bio !== user.bio || username !== user.username;
+    const fieldsDirty = bio !== user.bio || username !== user.username;
+    const dirty = fieldsDirty || avatar.kind !== "unchanged";
+    const saving =
+        updateProfile.isPending ||
+        updateAvatar.isPending ||
+        removeAvatar.isPending;
 
     const save = async () => {
         if (!sameLetters) return;
         try {
+            /* The picture first: it is the change most likely to fail, and
+               failing it after the text had already been written would leave
+               the two out of step with what the form still shows. */
+            if (avatar.kind === "picked") {
+                await updateAvatar.mutateAsync(avatar.image);
+            } else if (avatar.kind === "removed") {
+                await removeAvatar.mutateAsync();
+            }
             // the mutation seeds the profile caches, so the page updates straight away
-            await updateProfile.mutateAsync({ username, bio });
+            if (fieldsDirty) await updateProfile.mutateAsync({ username, bio });
             notify("Profile updated", "success");
             closePopup();
         } catch {
@@ -59,16 +79,13 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
             </h2>
 
             <div className="flex flex-col gap-5 pt-5">
-                {/* No upload control: there is no endpoint behind one. */}
-                <div className="flex items-center gap-4">
-                    <ProfilePicture
-                        variant="review"
-                        username={user.username}
-                        file={user.avatarUrl ?? ""}
-                        link={false}
-                    />
-                    <p className="text-body-sm text-content">Your picture</p>
-                </div>
+                <AvatarField
+                    username={user.username}
+                    current={user.avatarUrl}
+                    choice={avatar}
+                    onChange={setAvatar}
+                    disabled={saving}
+                />
 
                 <Field
                     label="Bio"
@@ -120,11 +137,9 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     <Button
                         className="flex-1"
                         onClick={() => void save()}
-                        disabled={
-                            !dirty || !sameLetters || updateProfile.isPending
-                        }
+                        disabled={!dirty || !sameLetters || saving}
                     >
-                        {updateProfile.isPending ? "Saving…" : "Save changes"}
+                        {saving ? "Saving…" : "Save changes"}
                     </Button>
                     <Button
                         variant="secondary"

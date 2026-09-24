@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import request from "supertest";
+import { AVATAR_MAX_BYTES } from "@playrates/shared";
 import {
   authHeader,
   buildTestApp,
@@ -217,5 +218,118 @@ describe("closing an account", () => {
       .set("Authorization", authHeader("00000000-0000-0000-0000-00000000dead"));
 
     expect(response.status).toBe(404);
+  });
+});
+
+describe("profile picture", () => {
+  /* The smallest thing that passes the magic-byte check: "RIFF" + a size +
+     "WEBP". The service does not decode it, and nor should it. */
+  const webp = (body = "payload") =>
+    Buffer.concat([
+      Buffer.from("RIFF"),
+      Buffer.from([0, 0, 0, 0]),
+      Buffer.from("WEBP"),
+      Buffer.from(body),
+    ]);
+
+  const upload = (app: Parameters<typeof request>[0], body: Buffer) =>
+    request(app)
+      .post("/api/v1/profiles/me/avatar")
+      .set("Authorization", authHeader(USER_A))
+      .set("Content-Type", "image/webp")
+      .send(body);
+
+  it("stores the image and puts its URL on the profile", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await upload(app, webp());
+
+    expect(response.status).toBe(200);
+    expect(response.body.avatarUrl).toContain(`avatars/${USER_A}/avatar.webp`);
+    expect(state.avatars.get(USER_A)).toEqual(webp());
+    expect(
+      state.profiles.find((p) => p.id === USER_A)?.avatar_url,
+    ).toBe(response.body.avatarUrl);
+  });
+
+  /* The browser compresses before uploading, so anything that is not already
+     a WebP reached this endpoint some other way. */
+  it("refuses a body that is not a WebP", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await upload(app, Buffer.from("\x89PNG\r\n\x1a\n and more"));
+
+    expect(response.status).toBe(400);
+    expect(state.avatars.has(USER_A)).toBe(false);
+  });
+
+  it("refuses an empty body", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await upload(app, Buffer.alloc(0));
+
+    expect(response.status).toBe(400);
+  });
+
+  it("refuses a body over the byte cap", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await upload(app, webp("x".repeat(AVATAR_MAX_BYTES)));
+
+    expect(response.status).toBe(413);
+    expect(state.avatars.has(USER_A)).toBe(false);
+  });
+
+  /* A different content type never reaches the raw parser, so the body
+     arrives empty rather than as bytes to be trusted. */
+  it("refuses a body sent as something other than a WebP", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .post("/api/v1/profiles/me/avatar")
+      .set("Authorization", authHeader(USER_A))
+      .set("Content-Type", "application/octet-stream")
+      .send(webp());
+
+    expect(response.status).toBe(400);
+    expect(state.avatars.has(USER_A)).toBe(false);
+  });
+
+  it("requires authentication", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .post("/api/v1/profiles/me/avatar")
+      .set("Content-Type", "image/webp")
+      .send(webp());
+
+    expect(response.status).toBe(401);
+  });
+
+  it("clears the picture, and takes it out of storage with it", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+    await upload(app, webp());
+
+    const response = await request(app)
+      .delete("/api/v1/profiles/me/avatar")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(200);
+    expect(response.body.avatarUrl).toBeNull();
+    expect(state.avatars.has(USER_A)).toBe(false);
+  });
+
+  /* The upload endpoint is the only way to get a picture, so the general
+     profile update must not be a second door onto avatar_url. */
+  it("will not take an avatarUrl through the profile update", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .patch("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A))
+      .send({ avatarUrl: "https://example.com/somebody-elses.png" });
+
+    expect(response.status).toBe(422);
+    expect(state.profiles.find((p) => p.id === USER_A)?.avatar_url).toBeNull();
   });
 });

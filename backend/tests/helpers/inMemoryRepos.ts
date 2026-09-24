@@ -1,5 +1,6 @@
 import type { Repositories } from "../../src/repositories.js";
 import type { AuthAdmin } from "../../src/config/authAdmin.js";
+import type { AvatarStore } from "../../src/config/avatarStore.js";
 import type {
   FriendshipRow,
   GameLogRow,
@@ -52,6 +53,8 @@ export interface InMemoryState {
   platforms: PlatformRow[];
   platformSystems: PlatformSystemRow[];
   genres: GenreRow[];
+  /** Stored profile pictures, by user id. */
+  avatars: Map<string, Buffer>;
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
@@ -62,6 +65,7 @@ export const createInMemoryRepos = (
   repos: Repositories;
   state: InMemoryState;
   authAdmin: AuthAdmin;
+  avatars: AvatarStore;
 } => {
   const state: InMemoryState = {
     profiles: [...(seed.profiles ?? [])],
@@ -75,6 +79,7 @@ export const createInMemoryRepos = (
     platforms: [...(seed.platforms ?? [])],
     platformSystems: [...(seed.platformSystems ?? [])],
     genres: [...(seed.genres ?? [])],
+    avatars: new Map(),
   };
 
   let nextLogId = 1000;
@@ -823,5 +828,17 @@ export const createInMemoryRepos = (
     },
   };
 
-  return { repos, state, authAdmin };
+  /* Records what was stored so a test can assert the bytes reached it, and
+     hands back a URL shaped like the real one. */
+  const avatars: AvatarStore = {
+    async put(userId, bytes) {
+      state.avatars.set(userId, bytes);
+      return `https://test.supabase.co/storage/v1/object/public/avatars/${userId}/avatar.webp?v=1`;
+    },
+    async remove(userId) {
+      state.avatars.delete(userId);
+    },
+  };
+
+  return { repos, state, authAdmin, avatars };
 };

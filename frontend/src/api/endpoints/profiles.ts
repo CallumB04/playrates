@@ -4,6 +4,7 @@ import type {
     Profile,
     UpdateProfileInput,
 } from "@playrates/shared";
+import { AVATAR_MIME } from "@playrates/shared";
 import { api } from "../client";
 
 export const fetchMyProfile = async (): Promise<MyProfile> => {
@@ -31,6 +32,21 @@ export const updateMyProfile = async (
     input: UpdateProfileInput
 ): Promise<Profile> => {
     const { data } = await api.patch<Profile>("/profiles/me", input);
+    return data;
+};
+
+/** The compressed WebP itself, as the body. The API stores it and returns
+ *  the profile carrying its new URL. */
+export const uploadMyAvatar = async (image: Blob): Promise<MyProfile> => {
+    const { data } = await api.post<MyProfile>("/profiles/me/avatar", image, {
+        headers: { "Content-Type": AVATAR_MIME },
+    });
+    return data;
+};
+
+/** Back to the generated one. */
+export const deleteMyAvatar = async (): Promise<MyProfile> => {
+    const { data } = await api.delete<MyProfile>("/profiles/me/avatar");
     return data;
 };
 

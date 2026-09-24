@@ -5,15 +5,18 @@ import type {
   Profile,
   UpdateProfileInput,
 } from "@playrates/shared";
+import { AVATAR_MAX_BYTES, isWebp } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import type { AuthAdmin } from "../../config/authAdmin.js";
+import type { AvatarStore } from "../../config/avatarStore.js";
 import type { ProfilesRepository } from "./profiles.repository.js";
 import { toMyProfile, toProfile } from "./profiles.mapper.js";
 
 export const createProfilesService = (
   repo: ProfilesRepository,
   authAdmin: AuthAdmin,
+  avatars: AvatarStore,
 ) => ({
   /** The caller's own, so it carries their settings. */
   async getById(id: string): Promise<MyProfile> {
@@ -32,6 +35,31 @@ export const createProfilesService = (
     const row = await repo.findById(id);
     if (!row) throw AppError.notFound("Profile");
     await authAdmin.deleteUser(id);
+  },
+
+  /**
+   * Replaces the caller's profile picture. The browser crops and compresses
+   * before it gets here, so anything that is not already a small WebP has
+   * come from somewhere other than our own uploader and is refused rather
+   * than re-encoded.
+   */
+  async setAvatar(callerId: string, bytes: Buffer): Promise<MyProfile> {
+    if (bytes.length === 0) throw AppError.badRequest("No image was uploaded");
+    if (bytes.length > AVATAR_MAX_BYTES) {
+      throw AppError.badRequest("That picture is too large");
+    }
+    if (!isWebp(bytes)) {
+      throw AppError.badRequest("A profile picture must be a WebP image");
+    }
+
+    const url = await avatars.put(callerId, bytes);
+    return toMyProfile(await repo.update(callerId, { avatar_url: url }));
+  },
+
+  /** Back to the generated one. */
+  async clearAvatar(callerId: string): Promise<MyProfile> {
+    await avatars.remove(callerId);
+    return toMyProfile(await repo.update(callerId, { avatar_url: null }));
   },
 
   async getByUsername(username: string): Promise<Profile> {
@@ -79,7 +107,6 @@ export const createProfilesService = (
     const patch: Record<string, unknown> = {};
     if (input.username !== undefined) patch.username = input.username;
     if (input.bio !== undefined) patch.bio = input.bio;
-    if (input.avatarUrl !== undefined) patch.avatar_url = input.avatarUrl;
     if (input.showSexualContent !== undefined) {
       patch.show_sexual_content = input.showSexualContent;
     }

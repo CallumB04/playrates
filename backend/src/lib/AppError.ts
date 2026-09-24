@@ -5,6 +5,7 @@ export type ErrorCode =
   | "not_found"
   | "conflict"
   | "validation_failed"
+  | "payload_too_large"
   | "rate_limited"
   | "upstream_error"
   | "internal_error"
@@ -55,6 +56,9 @@ export class AppError extends Error {
 
   static validation = (message: string, details?: unknown) =>
     new AppError(422, "validation_failed", message, details);
+
+  static tooLarge = (message = "That upload is too large") =>
+    new AppError(413, "payload_too_large", message);
 
   static rateLimited = (message = "Too many requests") =>
     new AppError(429, "rate_limited", message);
