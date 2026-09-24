@@ -39,6 +39,89 @@ describe("RAWG mapper", () => {
     expect(game.description).not.toContain("<");
   });
 
+  describe("the description", () => {
+    const describedBy = (fields: Partial<RawgGame>) =>
+      toExternalGame({ ...rawgResponse, description: undefined, ...fields })
+        .description;
+
+    /* The paragraphs are RAWG's own, and collapsing whitespace wholesale threw
+       every one of them away across the whole catalogue. */
+    it("keeps the paragraphs the plain text came with", () => {
+      expect(
+        describedBy({
+          description_raw: "First paragraph.\n\nSecond paragraph.",
+        }),
+      ).toBe("First paragraph.\n\nSecond paragraph.");
+    });
+
+    it("still collapses the runs of spaces inside a paragraph", () => {
+      expect(
+        describedBy({ description_raw: "Too    many\t\tspaces here." }),
+      ).toBe("Too many spaces here.");
+    });
+
+    it("trims a run of blank lines down to one break", () => {
+      expect(describedBy({ description_raw: "One.\n\n\n\n\nTwo." })).toBe(
+        "One.\n\nTwo.",
+      );
+    });
+
+    it("turns block tags into the breaks they stand for", () => {
+      expect(
+        describedBy({
+          description_raw: undefined,
+          description: "<p>First.</p><p>Second.</p>",
+        }),
+      ).toBe("First.\n\nSecond.");
+    });
+
+    it("decodes the entities RAWG leaves in its HTML", () => {
+      expect(
+        describedBy({
+          description_raw: undefined,
+          description: "<p>Valve&#39;s puzzler &amp; its sequel</p>",
+        }),
+      ).toBe("Valve's puzzler & its sequel");
+    });
+
+    /* Some upstream sources arrive already flattened; where the HTML still
+       has its blocks, it is the better of the two. */
+    it("prefers the HTML when the plain text has lost its breaks", () => {
+      expect(
+        describedBy({
+          description_raw: "All one line. No breaks at all.",
+          description: "<p>All one line.</p><p>No breaks at all.</p>",
+        }),
+      ).toBe("All one line.\n\nNo breaks at all.");
+    });
+
+    it("keeps the plain text when it is the one with the breaks", () => {
+      expect(
+        describedBy({
+          description_raw: "Proper.\n\nParagraphs.",
+          description: "<p>Proper. Paragraphs.</p>",
+        }),
+      ).toBe("Proper.\n\nParagraphs.");
+    });
+
+    /* "...the world.We're working" — a lost break, not a sentence. */
+    it("parts sentences that ran into each other", () => {
+      expect(
+        describedBy({ description_raw: "Reclaim the world.We're working on it." }),
+      ).toBe("Reclaim the world. We're working on it.");
+    });
+
+    it("leaves abbreviations and decimals alone", () => {
+      expect(
+        describedBy({ description_raw: "Rated 8.5 by e.g.Someone U.S.A wide." }),
+      ).toBe("Rated 8.5 by e.g.Someone U.S.A wide.");
+    });
+
+    it("has nothing to say about a game with no description", () => {
+      expect(describedBy({ description_raw: undefined })).toBe("");
+    });
+  });
+
   it("prefers the plain-text description when present", () => {
     const game = toExternalGame({
       ...rawgResponse,

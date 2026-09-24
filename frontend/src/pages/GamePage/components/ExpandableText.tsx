@@ -56,7 +56,8 @@ const ExpandableText = ({
             <p
                 ref={bodyRef}
                 className={cn(
-                    "leading-relaxed text-content-secondary",
+                    // The blank lines are the author's paragraphs.
+                    "leading-relaxed whitespace-pre-line text-content-secondary",
                     className,
                     !open && CLAMP[lines]
                 )}

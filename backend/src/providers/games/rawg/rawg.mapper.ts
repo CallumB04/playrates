@@ -139,12 +139,69 @@ export interface RawgGame {
   website?: string | null;
 }
 
-/** Some RAWG endpoints return the description as HTML. */
-const stripHtml = (value: string): string =>
+/** The handful RAWG actually emits. Numeric ones are handled separately. */
+const ENTITIES: Record<string, string> = {
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&apos;": "'",
+  "&nbsp;": " ",
+};
+
+const decodeEntities = (value: string): string =>
   value
-    .replace(/<[^>]*>/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(/&#(\d+);/g, (_, code: string) =>
+      String.fromCodePoint(Number(code)),
+    )
+    .replace(/&[a-z]+;/gi, (entity) => ENTITIES[entity.toLowerCase()] ?? entity);
+
+/** Some RAWG endpoints return the description as HTML. Block tags become the
+ *  paragraph breaks they stand for rather than vanishing. */
+const stripHtml = (value: string): string =>
+  decodeEntities(
+    value
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|li|h[1-6]|ul|ol|blockquote)>/gi, "\n\n")
+      .replace(/<[^>]*>/g, ""),
+  );
+
+/**
+ * Tidy without flattening. Runs of spaces collapse; blank lines are the
+ * paragraphs the author wrote and are kept.
+ */
+const tidy = (value: string): string =>
+  value
+    .replace(/\r\n?/g, "\n")
+    // Spaces and tabs only — \s would take the newlines with it.
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+/* A sentence running straight into the next one is a block break that was
+   lost before it reached us, not prose: "...the world.We're working". Two
+   lowercase letters before the stop, so "e.g.Something" and "3.5" are safe. */
+const spaceRunOnSentences = (value: string): string =>
+  value.replace(/([a-z0-9]{2}[.!?])([A-Z])/g, "$1 $2");
+
+/**
+ * The description as it should read. RAWG's plain text usually carries the
+ * paragraphs; where it has been flattened upstream, the HTML sometimes still
+ * has the block tags, so that is worth preferring.
+ */
+export const toDescription = (game: RawgGame): string => {
+  const raw = game.description_raw ?? "";
+  const html = game.description ?? "";
+
+  const fromRaw = tidy(raw);
+  const fromHtml = tidy(stripHtml(html));
+
+  const chosen =
+    !fromRaw.includes("\n") && fromHtml.includes("\n") ? fromHtml : fromRaw;
+
+  return spaceRunOnSentences(chosen || fromHtml);
+};
 
 /**
  * PC becomes "steam" when it's sold on Steam and "other-pc" otherwise.
@@ -208,7 +265,6 @@ export const toPlatforms = (
 };
 
 export const toExternalGame = (game: RawgGame): ExternalGame => {
-  const description = game.description_raw ?? game.description ?? "";
   const tagSlugs = (game.tags ?? []).map((t) => t.slug);
   const { platformSlugs, systemSlugs } = toPlatforms(game);
 
@@ -216,7 +272,7 @@ export const toExternalGame = (game: RawgGame): ExternalGame => {
     externalId: game.id,
     slug: game.slug,
     title: game.name,
-    description: description ? stripHtml(description) : "",
+    description: toDescription(game),
     coverUrl: game.background_image ?? null,
     // RAWG returns an empty string rather than null for unreleased titles
     releaseDate: game.released || null,
