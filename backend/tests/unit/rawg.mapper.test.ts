@@ -379,6 +379,45 @@ describe("RAWG mapper", () => {
     ).toBe(true);
   });
 
+  /* The filter is for games that are pornography, not games with a scene in
+     them. RAWG puts "sexual-content" on 4,880 games including Halo Infinite
+     and Red Dead Redemption, and an M rating already tells a parent that. */
+  it("does not treat a sex scene as sexual content", () => {
+    expect(
+      toExternalGame({
+        ...rawgResponse,
+        name: "Red Dead Redemption",
+        esrb_rating: { id: 4, slug: "mature", name: "Mature" },
+        tags: [
+          { id: 1, name: "Open World", slug: "open-world" },
+          { id: 2, name: "Sexual Content", slug: "sexual-content" },
+        ],
+      }).hasSexualContent,
+    ).toBe(false);
+  });
+
+  /* A handful of games the rules get wrong, checked by hand. Worth more than
+     a weaker rule, which would let real ones through. */
+  it("lets a checked exception through whatever the rules say", () => {
+    expect(
+      toExternalGame({
+        ...rawgResponse,
+        name: "The Sexy Brutale",
+        esrb_rating: null,
+        tags: [],
+      }).hasSexualContent,
+    ).toBe(false);
+
+    expect(
+      toExternalGame({
+        ...rawgResponse,
+        name: "Dream Daddy: A Dad Dating Simulator",
+        esrb_rating: null,
+        tags: [{ id: 1, name: "Adult", slug: "adult" }],
+      }).hasSexualContent,
+    ).toBe(false);
+  });
+
   /* RAWG's tags are contributed, not curated. A fifth of the games with
      "Hentai" in the name carried no tag that marked them, and search handed
      them to everyone. */

@@ -104,6 +104,23 @@ const STEAM_STORE_ID = 1;
 const SEXUAL_ESRB_SLUGS = new Set(["adults-only"]);
 
 /**
+ * Games the rules below get wrong, checked by hand.
+ *
+ * Every one is here because a single contributed tag or a word in its title
+ * says something the game does not: The Sexy Brutale is a puzzle game, Dream
+ * Daddy is wholesome, Ghost Master is from 2003. A short list of names is
+ * worth more than a weaker rule, which would let real ones through.
+ */
+const NOT_SEXUAL_TITLES = new Set([
+  "the sexy brutale",
+  "ghost master",
+  "genesis noir",
+  "dream daddy: a dad dating simulator",
+  "forgotten memories: remastered edition",
+  "vampire: the masquerade - redemption",
+]);
+
+/**
  * A title that says outright what the game is.
  *
  * RAWG's tags are contributed, not curated, and they miss: a fifth of the
@@ -128,9 +145,12 @@ const SEXUAL_ESRB_SLUGS = new Set(["adults-only"]);
 const SEXUAL_TITLE_PATTERN =
   /hentai|futanari|nukige|nsfw|bdsm|porn|ecchi|eroge|erotic|ahegao|lewd|boob|pussy|nude|nudit|(?<!es)(?<!us)(?<!dle)sex|milf(?!ord)|(?<![a-z])xxx(?![a-z])|adults?[ -]*(only|game|sim|film|content|version)/i;
 
+/* Not "sexual-content": RAWG hangs it on any game with a sex scene in it,
+   which is 4,880 games including Halo Infinite, Sekiro, Persona 5 and Red
+   Dead Redemption. The filter is for games that are pornography, not for
+   games that contain a scene — an M-rating already tells a parent that. */
 const SEXUAL_TAG_SLUGS = new Set([
   "nsfw",
-  "sexual-content",
   "adult",
   "hentai",
   "erotic",
@@ -318,9 +338,10 @@ export const toExternalGame = (game: RawgGame): ExternalGame => {
     esrbRating: game.esrb_rating?.name ?? null,
     contentTags: tagSlugs,
     hasSexualContent:
-      SEXUAL_ESRB_SLUGS.has(game.esrb_rating?.slug ?? "") ||
-      tagSlugs.some((slug) => SEXUAL_TAG_SLUGS.has(slug)) ||
-      SEXUAL_TITLE_PATTERN.test(game.name),
+      !NOT_SEXUAL_TITLES.has(game.name.trim().toLowerCase()) &&
+      (SEXUAL_ESRB_SLUGS.has(game.esrb_rating?.slug ?? "") ||
+        tagSlugs.some((slug) => SEXUAL_TAG_SLUGS.has(slug)) ||
+        SEXUAL_TITLE_PATTERN.test(game.name)),
     metacritic: game.metacritic ?? null,
     rawgRating: game.rating ?? null,
     rawgRatingCount: game.ratings_count ?? null,
