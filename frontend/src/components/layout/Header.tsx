@@ -131,14 +131,27 @@ const Header = () => {
                                     aria-current={
                                         link.active ? "page" : undefined
                                     }
+                                    /* The rule is drawn, not padded: a bottom
+                                       border plus its padding sat inside the
+                                       box, which pushed the word off the
+                                       centre line the wordmark sits on. */
                                     className={cn(
-                                        "border-b-2 pb-1 text-label transition-colors lift",
+                                        "group relative py-1 text-label transition-colors lift",
                                         link.active
-                                            ? "border-b-brand text-content"
-                                            : "border-b-transparent text-content-secondary hover:text-content"
+                                            ? "text-content"
+                                            : "text-content-secondary hover:text-content"
                                     )}
                                 >
                                     {link.label}
+                                    <span
+                                        aria-hidden
+                                        className={cn(
+                                            "pointer-events-none absolute inset-x-0 -bottom-0.5 h-0.5 origin-center rounded-full transition-transform duration-200 ease-[var(--ease-glide)]",
+                                            link.active
+                                                ? "scale-x-100 bg-brand"
+                                                : "scale-x-0 bg-strong group-hover:scale-x-100"
+                                        )}
+                                    />
                                 </Link>
                             ))}
                         </nav>
