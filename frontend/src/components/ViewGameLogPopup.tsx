@@ -5,9 +5,10 @@ import {
     usePlatforms,
     usePlatformSystems,
 } from "../hooks/queries/useGames";
-import { useGameReviews } from "../hooks/queries/useReviews";
+import { useGameReviews, useMyReview } from "../hooks/queries/useReviews";
 import { useUser } from "../contexts/AuthContext";
 import { ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { platformIcon, systemIcon } from "../lib/platformIcons";
 import RatingBadge from "./ui/RatingBadge";
 import AchievementRing from "./gamelog/AchievementRing";
@@ -62,9 +63,19 @@ const ViewGameLogPopup = ({
         ? systemIcon(system.slug, system.platformSlug)
         : platformIcon(gamelog.platform ?? "");
 
-    const review = (reviews?.data ?? []).find(
+    /* Your own comes from your own endpoint: the game's list is the public
+       one, so a private review of yours is not in it. */
+    const { data: myReview } = useMyReview(isMine ? gamelog.gameId : undefined);
+    const theirReview = (reviews?.data ?? []).find(
         (r) => r.author.username === ownerUsername
     );
+    const review = isMine ? myReview : theirReview;
+    /* Only a public one has somewhere to lead — a private review is on no
+       page but this one. */
+    const fullReviewHref =
+        review && review.isPublic
+            ? `/game/${gamelog.gameId}#review-${review.id}`
+            : null;
 
     const achievementsTotal = gamelog.achievementsTotal ?? 0;
     const achievementsDone = gamelog.achievementsCompleted ?? 0;
@@ -220,10 +231,33 @@ const ViewGameLogPopup = ({
 
             {review && (
                 <div className="border-t border-subtle px-5 py-4">
-                    <h3 className="text-label text-content-muted">Review</h3>
-                    <p className="mt-1.5 text-body-sm leading-relaxed whitespace-pre-line text-content-secondary">
+                    <div className="flex items-baseline justify-between gap-3">
+                        <h3 className="text-label text-content-muted">
+                            Review
+                        </h3>
+                        {!review.isPublic && (
+                            <span className="text-label-sm text-content-muted">
+                                Private
+                            </span>
+                        )}
+                    </div>
+
+                    {/* A preview: the whole thing belongs on the game, where it
+                        sits among the others. */}
+                    <p className="mt-1.5 line-clamp-3 text-body-sm leading-relaxed whitespace-pre-line text-content-secondary">
                         {review.body}
                     </p>
+
+                    {fullReviewHref && (
+                        <Link
+                            to={fullReviewHref}
+                            onClick={closePopup}
+                            className="mt-2 inline-flex items-center gap-1 text-label-sm text-accent lift hover:underline"
+                        >
+                            Read the full review
+                            <ChevronRight size={13} aria-hidden />
+                        </Link>
+                    )}
                 </div>
             )}
 

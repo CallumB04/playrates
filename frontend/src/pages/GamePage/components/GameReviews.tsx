@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import type { ReviewSort, ReviewWithAuthor } from "@playrates/shared";
 import { Link } from "react-router-dom";
 import ProfilePicture from "../../../components/ProfilePicture";
@@ -5,6 +6,7 @@ import EmptyPlate from "../../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import Dropdown from "../../../components/ui/Dropdown";
 import StatusBadge from "../../../components/ui/StatusBadge";
+import { cn } from "../../../lib/cn";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import VoteButton from "../../../components/ui/VoteButton";
 import Button from "../../../components/ui/Button";
@@ -51,116 +53,143 @@ const GameReviews = ({
     sort,
     onSortChange,
     isLoading,
-}: GameReviewsProps) => (
-    <section>
-        <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-3 border-b border-subtle pb-2.5">
-            <h2 className="font-display text-section text-content">Reviews</h2>
-            <div className="flex flex-wrap items-center gap-3">
-                <span className="text-label text-content-muted">
-                    {formatCount(total)} {total === 1 ? "review" : "reviews"}
-                </span>
-                {onWriteReview && (
-                    // The empty state carries its own action, so skip it there.
-                    <Button
-                        size="sm"
-                        onClick={onWriteReview}
-                        className="min-h-11 sm:min-h-9"
-                    >
-                        <PenLine size={14} aria-hidden />
-                        {hasLog ? "Edit review" : "Write a review"}
-                    </Button>
-                )}
-                <Dropdown
-                    options={[
-                        { value: "recent", label: "Most recent" },
-                        { value: "helpful", label: "Most helpful" },
-                        { value: "oldest", label: "Oldest first" },
-                        { value: "rating-high", label: "Highest rated" },
-                        { value: "rating-low", label: "Lowest rated" },
-                    ]}
-                    value={sort}
-                    onChange={(next) => onSortChange(next as ReviewSort)}
-                    aria-label="Sort reviews"
-                    className="w-40"
-                />
-            </div>
-        </div>
+}: GameReviewsProps) => {
+    /* A link to one review lands before the list has loaded, so the browser
+       has nothing to scroll to and the card's :target styling is all that
+       survives. Once: re-sorting should not yank the page back. */
+    const jumped = useRef(false);
+    const [landedOn, setLandedOn] = useState<string | null>(null);
+    useEffect(() => {
+        if (jumped.current || isLoading || reviews.length === 0) return;
+        const id = window.location.hash.slice(1);
+        if (!id) return;
+        const target = document.getElementById(id);
+        if (!target) return;
+        jumped.current = true;
+        target.scrollIntoView({ block: "center" });
+        /* :target only matches on a real fragment navigation, so arriving
+           from a link inside the app scrolls but never lights the card. */
+        setLandedOn(id);
+    }, [isLoading, reviews]);
 
-        {isLoading ? (
-            <TextSkeleton lines={4} />
-        ) : reviews.length === 0 ? (
-            <EmptyPlate
-                title="No reviews yet"
-                body={
-                    hasLog
-                        ? "You have logged this one. Add a review to your log and it shows up here."
-                        : "Log this game to write the first one."
-                }
-                action={
-                    onWriteReview ? (
-                        <Button onClick={onWriteReview}>
-                            {hasLog ? "Add review" : "Log this game"}
+    return (
+        <section>
+            <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-3 border-b border-subtle pb-2.5">
+                <h2 className="font-display text-section text-content">
+                    Reviews
+                </h2>
+                <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-label text-content-muted">
+                        {formatCount(total)}{" "}
+                        {total === 1 ? "review" : "reviews"}
+                    </span>
+                    {onWriteReview && (
+                        // The empty state carries its own action, so skip it there.
+                        <Button
+                            size="sm"
+                            onClick={onWriteReview}
+                            className="min-h-11 sm:min-h-9"
+                        >
+                            <PenLine size={14} aria-hidden />
+                            {hasLog ? "Edit review" : "Write a review"}
                         </Button>
-                    ) : undefined
-                }
-            />
-        ) : (
-            reviews.map((review) => (
-                <article
-                    key={review.id}
-                    id={`review-${review.id}`}
-                    className="grid grid-cols-[38px_minmax(0,1fr)_auto] gap-4 border-b border-subtle py-4 last:border-b-0 target:bg-brand-subtle"
-                >
-                    <ProfilePicture
-                        variant="friendRow"
-                        file={review.author.avatarUrl ?? ""}
-                        username={review.author.username}
-                        link={false}
+                    )}
+                    <Dropdown
+                        options={[
+                            { value: "recent", label: "Most recent" },
+                            { value: "helpful", label: "Most helpful" },
+                            { value: "oldest", label: "Oldest first" },
+                            { value: "rating-high", label: "Highest rated" },
+                            { value: "rating-low", label: "Lowest rated" },
+                        ]}
+                        value={sort}
+                        onChange={(next) => onSortChange(next as ReviewSort)}
+                        aria-label="Sort reviews"
+                        className="w-40"
                     />
-                    <div className="min-w-0">
-                        <div className="mb-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                            <Link
-                                to={`/user/${review.author.username}`}
-                                className="text-body-sm font-semibold text-content hover:text-brand"
-                            >
-                                {review.author.username}
-                            </Link>
-                            {reviewStatus(review) && (
-                                <StatusBadge
-                                    status={reviewStatus(review)!}
-                                    plain
-                                />
-                            )}
-                            {review.hoursPlayed !== null && (
-                                <span className="text-label-sm text-content-muted">
-                                    Reviewed at{" "}
-                                    <span className="font-mono">
-                                        {formatHours(review.hoursPlayed)}
-                                    </span>{" "}
-                                    played
-                                </span>
-                            )}
-                            <span className="text-label-sm text-content-muted">
-                                {relativeTime(review.createdAt)}
-                            </span>
-                        </div>
-                        <p className="max-w-[46ch] text-sm leading-relaxed text-content-secondary">
-                            {review.body}
-                        </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                        <RatingBadge value={review.rating} size="row" />
-                        <VoteButton
-                            count={review.voteCount}
-                            voted={review.votedByViewer}
-                            disabled={!canVote}
-                            onToggle={() => onVote?.(review.id)}
+                </div>
+            </div>
+
+            {isLoading ? (
+                <TextSkeleton lines={4} />
+            ) : reviews.length === 0 ? (
+                <EmptyPlate
+                    title="No reviews yet"
+                    body={
+                        hasLog
+                            ? "You have logged this one. Add a review to your log and it shows up here."
+                            : "Log this game to write the first one."
+                    }
+                    action={
+                        onWriteReview ? (
+                            <Button onClick={onWriteReview}>
+                                {hasLog ? "Add review" : "Log this game"}
+                            </Button>
+                        ) : undefined
+                    }
+                />
+            ) : (
+                reviews.map((review) => (
+                    <article
+                        key={review.id}
+                        id={`review-${review.id}`}
+                        className={cn(
+                            "grid grid-cols-[38px_minmax(0,1fr)_auto] gap-4 border-b border-subtle py-4 last:border-b-0 target:bg-brand-subtle",
+                            landedOn === `review-${review.id}` &&
+                                "bg-brand-subtle"
+                        )}
+                    >
+                        <ProfilePicture
+                            variant="friendRow"
+                            file={review.author.avatarUrl ?? ""}
+                            username={review.author.username}
+                            link={false}
                         />
-                    </div>
-                </article>
-            ))
-        )}
-    </section>
-);
+                        <div className="min-w-0">
+                            <div className="mb-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                                <Link
+                                    to={`/user/${review.author.username}`}
+                                    className="text-body-sm font-semibold text-content hover:text-brand"
+                                >
+                                    {review.author.username}
+                                </Link>
+                                {reviewStatus(review) && (
+                                    <StatusBadge
+                                        status={reviewStatus(review)!}
+                                        plain
+                                    />
+                                )}
+                                {review.hoursPlayed !== null && (
+                                    <span className="text-label-sm text-content-muted">
+                                        Reviewed at{" "}
+                                        <span className="font-mono">
+                                            {formatHours(review.hoursPlayed)}
+                                        </span>{" "}
+                                        played
+                                    </span>
+                                )}
+                                <span className="text-label-sm text-content-muted">
+                                    {relativeTime(review.createdAt)}
+                                </span>
+                            </div>
+                            <p className="max-w-[46ch] text-sm leading-relaxed text-content-secondary">
+                                {review.body}
+                            </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                            <RatingBadge value={review.rating} size="row" />
+                            <VoteButton
+                                count={review.voteCount}
+                                voted={review.votedByViewer}
+                                disabled={!canVote}
+                                onToggle={() => onVote?.(review.id)}
+                            />
+                        </div>
+                    </article>
+                ))
+            )}
+        </section>
+    );
+};
 
 export default GameReviews;
