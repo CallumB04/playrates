@@ -111,8 +111,14 @@ export type GameLogSort = (typeof GAME_LOG_SORTS)[number];
 export const SortDirectionSchema = z.enum(["asc", "desc"]).default("desc");
 export type SortDirection = z.infer<typeof SortDirectionSchema>;
 
+/** "none" is a filter for played logs carrying no substatus, which is a real
+ *  choice and not the absence of one. */
+export const PlayedStatusFilterSchema = z.enum([...PLAYED_STATUSES, "none"]);
+export type PlayedStatusFilter = z.infer<typeof PlayedStatusFilterSchema>;
+
 export const GameLogQuerySchema = z.object({
   status: GameStatusSchema.optional(),
+  playedStatus: PlayedStatusFilterSchema.optional(),
   sort: GameLogSortSchema,
   direction: SortDirectionSchema,
 });

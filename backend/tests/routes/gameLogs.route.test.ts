@@ -364,4 +364,62 @@ describe("game logs", () => {
       expect(response.status).toBe(422);
     });
   });
+
+  describe("filtering a played shelf by how it ended", () => {
+    const seed = () => ({
+      ...baseSeed(),
+      games: [
+        buildGame({ id: 1, title: "Alpha" }),
+        buildGame({ id: 2, slug: "beta", title: "Beta" }),
+        buildGame({ id: 3, slug: "gamma", title: "Gamma" }),
+      ],
+      gameLogs: [
+        buildGameLog({ id: 1, game_id: 1, played_status: "mastered" }),
+        buildGameLog({ id: 2, game_id: 2, played_status: "shelved" }),
+        // Played, with no further detail.
+        buildGameLog({ id: 3, game_id: 3, played_status: null }),
+      ],
+    });
+
+    const titles = async (query: string) => {
+      const { app } = buildTestApp({ seed: seed() });
+      const response = await request(app)
+        .get(`/api/v1/me/game-logs?${query}`)
+        .set("Authorization", authHeader(USER_A));
+      expect(response.status).toBe(200);
+      return response.body.data.map(
+        (log: { game: { title: string } | null }) => log.game?.title,
+      );
+    };
+
+    it("returns every played log when no ending is asked for", async () => {
+      expect((await titles("status=played")).sort()).toEqual([
+        "Alpha",
+        "Beta",
+        "Gamma",
+      ]);
+    });
+
+    it("narrows to one ending", async () => {
+      expect(await titles("status=played&playedStatus=mastered")).toEqual([
+        "Alpha",
+      ]);
+    });
+
+    /* "No substatus" is a state of its own — filtering for it must not fall
+       through to returning everything. */
+    it("finds the logs carrying no ending at all", async () => {
+      expect(await titles("status=played&playedStatus=none")).toEqual([
+        "Gamma",
+      ]);
+    });
+
+    it("refuses an ending that is not one", async () => {
+      const { app } = buildTestApp({ seed: seed() });
+      const response = await request(app)
+        .get("/api/v1/me/game-logs?playedStatus=abandoned")
+        .set("Authorization", authHeader(USER_A));
+      expect(response.status).toBe(422);
+    });
+  });
 });

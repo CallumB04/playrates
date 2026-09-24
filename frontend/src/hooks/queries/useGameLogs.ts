@@ -19,7 +19,7 @@ import { useAuth } from "../../contexts/AuthContext";
 
 /** The ordering, flattened for a cache key. */
 const orderKey = (page?: GameLogPage) =>
-    `${page?.sort ?? ""}:${page?.direction ?? ""}`;
+    `${page?.sort ?? ""}:${page?.direction ?? ""}:${page?.playedStatus ?? ""}`;
 
 export const useMyGameLogs = (status?: string, page?: GameLogPage) => {
     const { user } = useAuth();

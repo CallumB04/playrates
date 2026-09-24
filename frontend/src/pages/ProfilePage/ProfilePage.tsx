@@ -4,7 +4,9 @@ import { Moon, Pencil, Settings, Sun } from "lucide-react";
 import type { GameLogWithGame } from "../../api";
 import {
     GAME_LOG_SORTS,
+    PLAYED_STATUSES,
     type GameLogSort,
+    type PlayedStatusFilter,
     type SortDirection,
 } from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
@@ -33,6 +35,7 @@ import MemberFileHeader from "./components/MemberFileHeader";
 import FriendAction from "./components/FriendAction";
 import ShelfPanel from "./components/ShelfPanel";
 import ShelfSort from "./components/ShelfSort";
+import PlayedStatusFilterControl from "./components/PlayedStatusFilter";
 import RecentReviews from "./components/RecentReviews";
 import FriendsPanel from "./components/FriendsPanel";
 import ProfileModals, { type ProfileModal } from "./components/ProfileModals";
@@ -75,6 +78,13 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const direction: SortDirection =
         params.get("direction") === "asc" ? "asc" : "desc";
 
+    const rawPlayed = params.get("ending");
+    const playedStatus: PlayedStatusFilter | undefined =
+        rawPlayed === "none" ||
+        PLAYED_STATUSES.includes(rawPlayed as (typeof PLAYED_STATUSES)[number])
+            ? (rawPlayed as PlayedStatusFilter)
+            : undefined;
+
     const [modal, setModal] = useState<ProfileModal>(null);
     const perPage = getProfileGamesPerPage(width);
 
@@ -94,7 +104,14 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const { data: logsPage, isLoading: logsLoading } = useUserGameLogs(
         targetUsername,
         activeSection,
-        { page, limit: perPage, sort, direction }
+        {
+            page,
+            limit: perPage,
+            sort,
+            direction,
+            // Only the played shelf has endings to filter by.
+            playedStatus: activeSection === "played" ? playedStatus : undefined,
+        }
     );
     const { data: stats } = useUserStats(targetUsername);
     const { data: platforms } = usePlatforms();
@@ -131,10 +148,20 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
         setParams(updated);
     };
 
+    const setEnding = (next: PlayedStatusFilter | undefined) => {
+        const updated = new URLSearchParams(params);
+        if (next) updated.set("ending", next);
+        else updated.delete("ending");
+        updated.delete("page");
+        setParams(updated);
+    };
+
     const setSection = (status: GameStatus) => {
         const updated = new URLSearchParams(params);
         updated.set("type", status);
         updated.delete("page"); // a new drawer opens at its own first page
+        // No other shelf has endings, so the filter would be a lie in the URL.
+        if (status !== "played") updated.delete("ending");
         setParams(updated);
     };
 
@@ -324,7 +351,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 isMyAccount={isMyAccount}
                 sort={sort}
                 trailing={
-                    <div className="flex items-center gap-3">
+                    <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
                         {!isMyAccount && myLogIds && (
                             <span className="text-label text-accent max-sm:hidden">
                                 {formatCount(
@@ -334,6 +361,12 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                                 )}{" "}
                                 in common
                             </span>
+                        )}
+                        {activeSection === "played" && (
+                            <PlayedStatusFilterControl
+                                value={playedStatus}
+                                onChange={setEnding}
+                            />
                         )}
                         <ShelfSort
                             sort={sort}

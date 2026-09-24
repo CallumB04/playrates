@@ -27,7 +27,7 @@ const ShelfSort = ({
     const Arrow = flipped ? ArrowUpNarrowWide : ArrowDownWideNarrow;
 
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
             <Dropdown
                 options={shelfSortOptions(isMyAccount).map((option) => ({
                     value: option.value,
@@ -36,7 +36,7 @@ const ShelfSort = ({
                 value={sort}
                 onChange={(value) => onChange({ sort: value as GameLogSort })}
                 aria-label="Sort by"
-                className="w-40 sm:w-44"
+                className="min-w-0 flex-1 sm:w-44 sm:flex-none"
             />
             <button
                 type="button"

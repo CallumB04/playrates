@@ -2,6 +2,7 @@ import type {
     Game,
     GameLog,
     GameLogSort,
+    PlayedStatusFilter,
     SortDirection,
     GameLogInput,
     GameLogPatch,
@@ -33,6 +34,7 @@ export interface GameLogPage {
     limit?: number;
     sort?: GameLogSort;
     direction?: SortDirection;
+    playedStatus?: PlayedStatusFilter;
 }
 
 export const fetchMyGameLogs = async (

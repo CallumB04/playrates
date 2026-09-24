@@ -1,4 +1,8 @@
-import type { GameLogSort, SortDirection } from "@playrates/shared";
+import type {
+  GameLogSort,
+  PlayedStatusFilter,
+  SortDirection,
+} from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
 import type { GameLogRow } from "../../types/database.types.js";
 import type { GameLogRowWithGame } from "./gameLogs.mapper.js";
@@ -25,6 +29,8 @@ const SORT_COLUMNS: Record<GameLogSort, string> = {
  *  through three layers as loose arguments. */
 export interface ShelfQuery {
   status?: string;
+  /** Only meaningful on the played shelf, where substatuses live. */
+  playedStatus?: PlayedStatusFilter;
   sort: GameLogSort;
   direction: SortDirection;
 }
@@ -76,6 +82,12 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
       .eq("user_id", userId);
 
     if (query.status) builder = builder.eq("status", query.status);
+
+    if (query.playedStatus === "none") {
+      builder = builder.is("played_status", null);
+    } else if (query.playedStatus) {
+      builder = builder.eq("played_status", query.playedStatus);
+    }
 
     const { data, error, count } = await builder
       .order(SORT_COLUMNS[query.sort], {

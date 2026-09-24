@@ -110,6 +110,32 @@ describe("catalogue ordering", () => {
     expect(new Set(seen).size).toBe(10);
   });
 
+  /* RAWG carries placeholder dates years out — a 2033 that is a guess, not a
+     release — and they took the whole front of this sort. */
+  it("keeps unreleased games out of newest", async () => {
+    const base = seedWithSorts();
+    const { app } = buildTestApp({
+      seed: {
+        ...base,
+        games: [
+          ...base.games,
+          buildGame({
+            id: 4,
+            slug: "guess",
+            title: "Placeholder",
+            release_date: "2033-12-31",
+          }),
+        ],
+      },
+    });
+
+    const response = await request(app).get("/api/v1/games?sort=released");
+
+    const titles = response.body.data.map((g: { title: string }) => g.title);
+    expect(titles).not.toContain("Placeholder");
+    expect(titles[0]).toBe("Apple");
+  });
+
   it("filters to a release window", async () => {
     const { app } = buildTestApp({ seed: seedWithSorts() });
 

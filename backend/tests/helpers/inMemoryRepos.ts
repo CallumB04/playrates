@@ -235,6 +235,13 @@ export const createInMemoryRepos = (
             (g) => g.release_date !== null && g.release_date <= query.releasedBefore!,
           );
         }
+        // "Newest" means newest released, not newest guessed-at.
+        if (query.sort === "released") {
+          const today = new Date().toISOString().slice(0, 10);
+          rows = rows.filter(
+            (g) => g.release_date !== null && g.release_date <= today,
+          );
+        }
 
         // Mirrors the SQL sort map, tiebreaker included.
         const by = {
@@ -404,11 +411,13 @@ export const createInMemoryRepos = (
 
     gameLogs: {
       async listByUser(userId, query, from, to) {
-        const rows = state.gameLogs.filter(
-          (l) =>
-            l.user_id === userId &&
-            (query.status ? l.status === query.status : true),
-        );
+        const rows = state.gameLogs.filter((l) => {
+          if (l.user_id !== userId) return false;
+          if (query.status && l.status !== query.status) return false;
+          if (query.playedStatus === "none") return l.played_status === null;
+          if (query.playedStatus) return l.played_status === query.playedStatus;
+          return true;
+        });
 
         /* Derived rather than read off the row, which is what the generated
            column in the database holds. */

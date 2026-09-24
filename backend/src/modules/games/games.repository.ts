@@ -5,6 +5,9 @@ import type { GameRowWithPlatforms } from "./games.mapper.js";
 
 export const RATING_BUCKETS = 20;
 
+/** UTC, which is what release_date is stored in. */
+const today = (): string => new Date().toISOString().slice(0, 10);
+
 const SELECT_WITH_RELATIONS =
   "*, game_platforms(platform_slug), game_systems(system_slug), game_genres(genre_slug)";
 
@@ -127,6 +130,14 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     }
     if (query.releasedBefore) {
       builder = builder.lte("release_date", query.releasedBefore);
+    }
+
+    /* "Newest" means newest *released*. RAWG carries placeholder dates years
+       out — a 2033 that is a guess, not a release — and they took the whole
+       front of this sort. A caller's own releasedBefore still narrows it
+       further, since both bounds apply. */
+    if (query.sort === "released") {
+      builder = builder.lte("release_date", today());
     }
 
     /* Log count is the default: this site's own figures should order it.
