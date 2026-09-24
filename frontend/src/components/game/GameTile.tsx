@@ -1,5 +1,10 @@
 import { Link } from "react-router-dom";
-import { useState, type ComponentType, type SVGProps } from "react";
+import {
+    useState,
+    type ComponentType,
+    type ReactNode,
+    type SVGProps,
+} from "react";
 import { Plus } from "lucide-react";
 import { cn } from "../../lib/cn";
 import type { DisplayStatus } from "../../constants/gameStatus";
@@ -30,7 +35,7 @@ interface GameTileProps {
     rating?: number | null;
     /** A muted figure for the right of the line when there is no rating to
      *  show, a release year for instance. */
-    footValue?: string;
+    footValue?: ReactNode;
     /** Stamped on the cover when the viewer has logged it. */
     status?: DisplayStatus | null;
     /** A line under the title on hover, e.g. "Your log · 8.5 · 31h". */

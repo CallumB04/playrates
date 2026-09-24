@@ -1,3 +1,4 @@
+import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { GAME_LOG_SORTS } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
@@ -81,8 +82,12 @@ describe("shelfFoot", () => {
         expect(shelfFoot(log(), "gameRating")).toEqual({ rating: 9.25 });
     });
 
-    it("shows the metacritic score when that is the order", () => {
-        expect(shelfFoot(log(), "metacritic").value).toBe("90");
+    it("shows the metacritic score in its own colour", () => {
+        const { container } = render(
+            <>{shelfFoot(log(), "metacritic").value}</>
+        );
+        expect(container.firstElementChild).toHaveTextContent("90");
+        expect(container.firstElementChild).toHaveClass("bg-[#66cc33]");
     });
 
     /* "Sept", not "Sep" — en-GB's own abbreviation, and the same one

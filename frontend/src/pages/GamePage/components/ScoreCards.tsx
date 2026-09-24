@@ -1,14 +1,7 @@
 import { Clock, Hourglass, Trophy } from "lucide-react";
 import type { Game, GameStats } from "@playrates/shared";
 import { formatHours, formatPercent } from "../../../lib/format";
-import { cn } from "../../../lib/cn";
-
-/** Metacritic's own banding: green from 75, yellow from 50, red below. */
-const metacriticTone = (score: number): string => {
-    if (score >= 75) return "bg-[#66cc33] text-black";
-    if (score >= 50) return "bg-[#ffcc33] text-black";
-    return "bg-[#ff0000] text-white";
-};
+import MetacriticScore from "../../../lib/metacritic";
 
 const Card = ({
     label,
@@ -68,14 +61,7 @@ const ScoreCards = ({
             {game.metacritic !== null ? (
                 <Card label="Metacritic" hint="Critic score">
                     <div className="flex items-center gap-3">
-                        <span
-                            className={cn(
-                                "grid size-14 shrink-0 place-items-center rounded-sm font-mono text-2xl font-bold",
-                                metacriticTone(game.metacritic)
-                            )}
-                        >
-                            {game.metacritic}
-                        </span>
+                        <MetacriticScore score={game.metacritic} size="lg" />
                         <p className="text-body-sm text-content-secondary">
                             {game.metacritic >= 75
                                 ? "Generally favourable"

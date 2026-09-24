@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { GameLogSort, SortDirection } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
 import {
@@ -5,6 +6,7 @@ import {
     formatPercent,
     releaseYear,
 } from "../../../lib/format";
+import MetacriticScore from "../../../lib/metacritic";
 
 interface SortOption {
     value: GameLogSort;
@@ -74,7 +76,7 @@ export const lastPlayed = (log: GameLogWithGame): string | null =>
  */
 export interface ShelfFoot {
     rating?: number | null;
-    value?: string;
+    value?: ReactNode;
 }
 
 export const shelfFoot = (
@@ -85,7 +87,10 @@ export const shelfFoot = (
         case "gameRating":
             return { rating: log.game?.avgRating ?? null };
         case "metacritic":
-            return { value: log.game?.metacritic?.toString() ?? "—" };
+            // Metacritic's own banding, as on the game page.
+            return {
+                value: <MetacriticScore score={log.game?.metacritic ?? null} />,
+            };
         case "played":
             return { value: formatMonthYearShort(lastPlayed(log)) };
         case "released":
