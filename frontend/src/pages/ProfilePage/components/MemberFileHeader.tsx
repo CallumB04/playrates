@@ -19,6 +19,8 @@ interface MemberFileHeaderProps {
     friendCount: number | undefined;
     /** The friend button, or the owner's controls. */
     action: ReactNode;
+    /** Set only on your own profile: makes the picture open the editor. */
+    onEditPicture?: () => void;
 }
 
 /** The split of a shelf across the four states, as one stacked bar. */
@@ -103,6 +105,7 @@ const MemberFileHeader = ({
     reviewCount,
     friendCount,
     action,
+    onEditPicture,
 }: MemberFileHeaderProps) => {
     const byStatus = stats?.byStatus ?? {};
     const shelfTotal = GAME_STATUSES.reduce(
@@ -127,6 +130,12 @@ const MemberFileHeader = ({
                             file={profile.avatarUrl ?? ""}
                             username={profile.username}
                             link={false}
+                            action={
+                                onEditPicture && {
+                                    label: "Change your profile picture",
+                                    onClick: onEditPicture,
+                                }
+                            }
                         />
                         <PresenceDot online={profile.online} size="lg" />
                     </span>

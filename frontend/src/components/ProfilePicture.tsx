@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Camera } from "lucide-react";
 import { cn } from "../lib/cn";
 
 /* Complete literal class strings — Tailwind only emits what it can see. The
@@ -39,6 +40,9 @@ interface ProfilePictureProps {
     username: string;
     /** Render as a link to the user's profile. Prevents nested <a> elements. */
     link: boolean;
+    /** Makes the picture a button — your own, on your own profile. Takes
+     *  precedence over `link`: a picture cannot be both. */
+    action?: { label: string; onClick: () => void };
 }
 
 /**
@@ -50,6 +54,7 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
     file,
     username,
     link,
+    action,
 }) => {
     const { box, text } = AVATAR_VARIANT[variant];
     const hue = hueFor(username);
@@ -57,6 +62,21 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
     const className = cn(
         "relative grid aspect-square shrink-0 place-items-center overflow-hidden rounded-full bg-surface-sunken select-none",
         box
+    );
+
+    /* Standing, not on hover: a touch screen cannot hover, and this is the
+       only thing that says the picture is a control. */
+    const editBadge = (
+        <span
+            aria-hidden
+            className={cn(
+                "absolute inset-x-0 bottom-0 grid h-[30%] place-items-center",
+                "bg-black/55 text-white/95 backdrop-blur-[1px] transition-colors",
+                "group-hover:bg-black/70"
+            )}
+        >
+            <Camera className="size-[38%] min-w-3" strokeWidth={2.25} />
+        </span>
     );
 
     const body = file ? (
@@ -89,6 +109,24 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
             </span>
         </>
     );
+
+    if (action) {
+        return (
+            <button
+                type="button"
+                aria-label={action.label}
+                onClick={action.onClick}
+                className={cn(
+                    className,
+                    "group cursor-pointer",
+                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                )}
+            >
+                {body}
+                {editBadge}
+            </button>
+        );
+    }
 
     return link ? (
         <Link to={`/user/${username}`} className={className}>

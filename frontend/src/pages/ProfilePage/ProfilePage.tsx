@@ -266,6 +266,11 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 friendCount={
                     friendsLoading ? undefined : acceptedFriends.length
                 }
+                onEditPicture={
+                    isMyAccount
+                        ? () => setModal({ kind: "editProfile" })
+                        : undefined
+                }
                 action={
                     isMyAccount ? (
                         <>
