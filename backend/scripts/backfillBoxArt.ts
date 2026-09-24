@@ -74,6 +74,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 interface Options {
   authoritative: number;
+  recheck: boolean;
   limit: number;
   fromId: number;
   concurrency: number;
@@ -88,6 +89,7 @@ const parseArgs = (argv: string[]): Options => {
   };
   return {
     authoritative: Number(value("--authoritative") ?? DEFAULT_AUTHORITATIVE),
+    recheck: argv.includes("--recheck"),
     limit: Number(value("--limit") ?? Number.POSITIVE_INFINITY),
     fromId: Number(value("--from-id") ?? 0),
     concurrency: Number(value("--concurrency") ?? DEFAULT_CONCURRENCY),
@@ -269,17 +271,21 @@ const authoritativeAppIds = async (
   onSteam: Set<number>,
   count: number,
   key: string,
+  recheck: boolean,
 ): Promise<Map<number, string>> => {
   const ids = new Map<number, string>();
   if (count <= 0) return ids;
 
   /* Asked for wide and narrowed here: a URL naming all sixty thousand Steam
      games is longer than PostgREST will accept. */
-  const { data, error } = await db
+  const query = db
     .from("games")
     .select("id, rawg_id")
-    .is("box_art_url", null)
-    .not("rawg_id", "is", null)
+    .not("rawg_id", "is", null);
+
+  /* A recheck is for correcting a guess, so it has to look at the games that
+     already have one. */
+  const { data, error } = await (recheck ? query : query.is("box_art_url", null))
     .order("rawg_added_count", { ascending: false, nullsFirst: false })
     .limit(count * 3);
 
@@ -340,6 +346,7 @@ const main = async () => {
     onSteam,
     rawgKey ? options.authoritative : 0,
     rawgKey ?? "",
+    options.recheck,
   );
   logger.info({ appIds: authoritative.size }, "rawg app ids ready");
 

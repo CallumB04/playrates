@@ -71,6 +71,9 @@ const AvatarField = ({
 
     const canRemove = shown !== "" && !disabled && !working;
     const busy = disabled || working;
+    const note =
+        error ??
+        (choice.kind === "unchanged" ? null : "Save changes to apply this.");
 
     return (
         <div className="flex flex-col gap-3">
@@ -131,16 +134,18 @@ const AvatarField = ({
                 </div>
             </div>
 
-            <p
-                role={error ? "alert" : undefined}
-                className={cn(
-                    "text-label-sm",
-                    error ? "text-danger" : "text-content-muted"
-                )}
-            >
-                {error ??
-                    "Square, and cropped from the middle. Saved when you save the rest."}
-            </p>
+            {/* Nothing to say until something has changed or gone wrong. */}
+            {note && (
+                <p
+                    role={error ? "alert" : undefined}
+                    className={cn(
+                        "text-label-sm",
+                        error ? "text-danger" : "text-content-muted"
+                    )}
+                >
+                    {note}
+                </p>
+            )}
         </div>
     );
 };

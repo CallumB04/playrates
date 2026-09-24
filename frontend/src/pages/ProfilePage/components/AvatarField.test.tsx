@@ -71,6 +71,20 @@ describe("AvatarField", () => {
         expect(onChange).not.toHaveBeenCalled();
     });
 
+    it("says nothing at all until something has changed", () => {
+        setup();
+        expect(
+            screen.queryByText(/save changes to apply/i)
+        ).not.toBeInTheDocument();
+    });
+
+    it("says the change is not saved yet once one is pending", () => {
+        setup({ kind: "picked", image: new Blob(), preview: "blob:preview" });
+        expect(
+            screen.getByText("Save changes to apply this.")
+        ).toBeInTheDocument();
+    });
+
     it("draws the picked picture rather than the saved one", () => {
         setup({
             kind: "picked",
