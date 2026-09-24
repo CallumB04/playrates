@@ -1,30 +1,17 @@
 import RatingBadge from "../../../components/ui/RatingBadge";
 import { formatCount, formatRating } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
+import { medianOf } from "../lib/ratingBuckets";
 
 interface RatingPlateProps {
     average: number | null;
     ratingCount: number;
-    /** Twenty buckets of 0.5. */
+    /** Twenty buckets of 0.5, the first (0, 0.5] and the last (9.5, 10]. */
     buckets: number[];
 }
 
 const MAX = 10;
 const PLOT_HEIGHT = 74;
-
-/* The median, to the nearest half point. Bucket i covers [i/2, (i+1)/2), so
-   the figure is its lower edge. */
-const medianOf = (buckets: number[]): number | null => {
-    const total = buckets.reduce((a, b) => a + b, 0);
-    if (total === 0) return null;
-    const middle = total / 2;
-    let seen = 0;
-    for (let i = 0; i < buckets.length; i++) {
-        seen += buckets[i] ?? 0;
-        if (seen >= middle) return i / 2;
-    }
-    return null;
-};
 
 /* A mean alone can't tell a divisive game from a consistently mediocre one,
    so the shape is the point and the figure is the headline on it. */
