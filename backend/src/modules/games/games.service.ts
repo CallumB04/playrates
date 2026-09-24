@@ -57,6 +57,7 @@ export const createGamesService = (
         publishers: external.publishers,
         website: external.website,
         esrbRating: external.esrbRating,
+        boxArtUrl: external.boxArtUrl,
       };
       await repo.refreshFromExternal(id, fields);
 
@@ -68,6 +69,7 @@ export const createGamesService = (
         publishers: external.publishers,
         website: external.website,
         esrb_rating: external.esrbRating,
+        ...(external.boxArtUrl ? { box_art_url: external.boxArtUrl } : {}),
       };
     } catch {
       return null;

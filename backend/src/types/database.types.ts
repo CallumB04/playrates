@@ -35,6 +35,9 @@ export interface GameRow {
   title: string;
   description: string;
   cover_url: string | null;
+  /** Portrait art from the store, where there is any. Preferred over the
+   *  landscape cover_url when the API hands a game out. */
+  box_art_url: string | null;
   release_date: string | null;
   has_sexual_content: boolean;
   /** RAWG tag slugs, kept so the flag can be re-derived in place. */

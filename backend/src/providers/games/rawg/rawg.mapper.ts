@@ -274,6 +274,8 @@ export const toExternalGame = (game: RawgGame): ExternalGame => {
     title: game.name,
     description: toDescription(game),
     coverUrl: game.background_image ?? null,
+    // Filled in by the provider's detail fetch, which has the store links.
+    boxArtUrl: null,
     // RAWG returns an empty string rather than null for unreleased titles
     releaseDate: game.released || null,
     platformSlugs,

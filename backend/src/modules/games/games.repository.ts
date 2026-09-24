@@ -55,6 +55,7 @@ export interface GamesRepository {
       publishers: string[];
       website: string | null;
       esrbRating: string | null;
+      boxArtUrl: string | null;
     },
   ): Promise<void>;
   count(): Promise<number>;
@@ -402,6 +403,9 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
         publishers: fields.publishers,
         website: fields.website,
         esrb_rating: fields.esrbRating,
+        /* Only when we found one: a game already carrying art should not lose
+           it because Steam happened to be unreachable this time. */
+        ...(fields.boxArtUrl ? { box_art_url: fields.boxArtUrl } : {}),
         details_synced_at: new Date().toISOString(),
       })
       .eq("id", id);

@@ -18,7 +18,8 @@ export const toGame = (row: GameRowWithRelations): Game => ({
   slug: row.slug,
   title: row.title,
   description: row.description,
-  coverUrl: row.cover_url,
+  // The portrait one where we found it; RAWG's landscape image otherwise.
+  coverUrl: row.box_art_url ?? row.cover_url,
   releaseDate: row.release_date,
   platforms: (row.game_platforms ?? []).map((p) => p.platform_slug),
   systems: (row.game_systems ?? []).map((s) => s.system_slug),

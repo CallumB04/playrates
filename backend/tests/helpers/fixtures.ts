@@ -38,6 +38,7 @@ export const buildGame = (overrides: Partial<GameRow> = {}): GameRow => ({
   title: "The Witcher 3: Wild Hunt",
   description: "An open world RPG.",
   cover_url: "https://example.test/cover.jpg",
+  box_art_url: null,
   release_date: "2015-05-18",
   content_tags: [],
   developers: ["Valve"],

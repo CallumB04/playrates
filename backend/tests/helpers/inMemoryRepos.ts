@@ -286,6 +286,7 @@ export const createInMemoryRepos = (
               title: external.title,
               description: external.description,
               cover_url: external.coverUrl,
+              box_art_url: external.boxArtUrl,
               release_date: external.releaseDate,
               has_sexual_content: external.hasSexualContent,
               content_tags: external.contentTags,
@@ -315,6 +316,7 @@ export const createInMemoryRepos = (
               title: external.title,
               description: external.description,
               cover_url: external.coverUrl,
+              box_art_url: external.boxArtUrl,
               synced_at: now(),
             });
           }
@@ -342,6 +344,7 @@ export const createInMemoryRepos = (
           game.publishers = fields.publishers;
           game.website = fields.website;
           game.esrb_rating = fields.esrbRating;
+          if (fields.boxArtUrl) game.box_art_url = fields.boxArtUrl;
           game.details_synced_at = now();
         }
       },

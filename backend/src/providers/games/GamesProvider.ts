@@ -14,6 +14,9 @@ export interface ExternalGame {
   /** Empty when it came from a listing; the detail endpoint fills it in. */
   description: string;
   coverUrl: string | null;
+  /** Portrait art where the store has it; RAWG only has landscape. Detail
+   *  fetches only — the listing has no store links. */
+  boxArtUrl: string | null;
   /** YYYY-MM-DD */
   releaseDate: string | null;
   /** Already translated to PlayRates platform family slugs. */
