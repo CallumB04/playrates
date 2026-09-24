@@ -363,3 +363,103 @@ describe("platforms and stats", () => {
     });
   });
 });
+
+describe("the trending rail", () => {
+  /* buildGame is trending by default, so everything that is not part of the
+     curated set has to say so. Six flagged, two of them explicit: a viewer
+     who has not opted in sees four, which is what shipped. */
+  const trending = (i: number, overrides = {}) =>
+    buildGame({
+      id: i + 1,
+      slug: `trending-${i}`,
+      title: `Trending ${i}`,
+      is_trending: true,
+      log_count: 0,
+      ...overrides,
+    });
+
+  const logged = (i: number) =>
+    buildGame({
+      id: 20 + i,
+      slug: `logged-${i}`,
+      title: `Logged ${i}`,
+      is_trending: false,
+      log_count: 100 - i,
+    });
+
+  const seed = () => ({
+    games: [
+      ...Array.from({ length: 4 }, (_, i) => trending(i)),
+      trending(10, { has_sexual_content: true, title: "Explicit 0" }),
+      trending(11, { has_sexual_content: true, title: "Explicit 1" }),
+      ...Array.from({ length: 5 }, (_, i) => logged(i)),
+    ],
+  });
+
+  const titles = (body: { data: { title: string }[] }) =>
+    body.data.map((g) => g.title);
+
+  const rail = (app: Parameters<typeof request>[0]) =>
+    request(app).get("/api/v1/games?trending=true&limit=24");
+
+  it("makes up the shortfall the content filter leaves", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await rail(app);
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it("puts what is actually trending first, and tops up behind it", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const shown = titles((await rail(app)).body);
+
+    expect(shown.slice(0, 4).every((t) => t.startsWith("Trending"))).toBe(true);
+    expect(shown.slice(4)).toEqual(["Logged 0", "Logged 1"]);
+    expect(new Set(shown).size).toBe(shown.length);
+  });
+
+  it("never tops up with something the viewer may not see", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const shown = titles((await rail(app)).body);
+
+    expect(shown).not.toContain("Explicit 0");
+    expect(shown).not.toContain("Explicit 1");
+  });
+
+  /* Enough flagged to fill the rail on its own: nothing else belongs in it. */
+  it("leaves a full rail alone", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        games: [
+          ...Array.from({ length: 7 }, (_, i) => trending(i)),
+          buildGame({
+            id: 50,
+            slug: "popular",
+            title: "Popular",
+            is_trending: false,
+            log_count: 999,
+          }),
+        ],
+      },
+    });
+
+    const shown = titles((await rail(app)).body);
+
+    expect(shown).toHaveLength(7);
+    expect(shown).not.toContain("Popular");
+  });
+
+  it("does not top up a page past the first", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await request(app).get(
+      "/api/v1/games?trending=true&limit=24&page=2",
+    );
+
+    expect(response.body.data).toHaveLength(0);
+  });
+});

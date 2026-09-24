@@ -15,6 +15,21 @@ import { toGame } from "./games.mapper.js";
 /** Below this many local hits, a search falls through to the provider. */
 const LOCAL_RESULT_THRESHOLD = 8;
 
+/** A trending rail shorter than this looks broken rather than curated. */
+const MIN_TRENDING = 6;
+
+/* Only the first page, and only where the rail came back short: paging
+   through trending, or asking for fewer than the minimum, means the caller
+   wants what is actually flagged. */
+const needsTopUp = (
+  query: GameQuery,
+  pagination: Pagination,
+  found: number,
+): boolean =>
+  query.trending === true &&
+  pagination.page === 1 &&
+  found < Math.min(MIN_TRENDING, pagination.limit);
+
 export const createGamesService = (
   repo: GamesRepository,
   provider: GamesProvider,
@@ -93,7 +108,33 @@ export const createGamesService = (
       showSexualContent,
     );
 
-    return paginate(rows.map(toGame), pagination, total);
+    if (!needsTopUp(query, pagination, rows.length)) {
+      return paginate(rows.map(toGame), pagination, total);
+    }
+
+    /* Trending is a hand-picked set of a handful, and a viewer's content
+       filter cuts into it — so the rail arrived short for most people through
+       no choice of their own. Topped up with what is most logged, which is
+       how the rail beside it is ordered anyway. */
+    const short = Math.min(MIN_TRENDING, pagination.limit) - rows.length;
+    const { rows: candidates } = await repo.list(
+      { ...query, trending: undefined, sort: "logged" },
+      0,
+      rows.length + short - 1,
+      query.excludeLogged ? callerId : undefined,
+      showSexualContent,
+    );
+
+    const already = new Set(rows.map((row) => row.id));
+    const topUp = candidates
+      .filter((row) => !already.has(row.id))
+      .slice(0, short);
+
+    return paginate(
+      [...rows, ...topUp].map(toGame),
+      pagination,
+      rows.length + topUp.length,
+    );
   },
 
   async getStats(gameId: number): Promise<GameStats> {

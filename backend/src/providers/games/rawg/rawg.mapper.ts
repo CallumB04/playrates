@@ -111,7 +111,9 @@ const SEXUAL_TAG_SLUGS = new Set([
   "erotic",
   "eroge",
   "pornographic",
-  "dating-sim",
+  /* Not "dating-sim": it is a genre, and RAWG hangs it on anything with
+     romance in it. It had Stardew Valley behind the explicit-content filter
+     along with a thousand others. */
 ]);
 
 export interface RawgGame {

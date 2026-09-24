@@ -350,6 +350,35 @@ describe("RAWG mapper", () => {
     ).toBe(true);
   });
 
+  /* dating-sim is a genre. RAWG hangs it on anything with romance in it, and
+     it had Stardew Valley behind the filter along with a thousand others. */
+  it("does not treat dating-sim as sexual content", () => {
+    expect(
+      toExternalGame({
+        ...rawgResponse,
+        esrb_rating: null,
+        tags: [
+          { id: 1, name: "Indie", slug: "indie" },
+          { id: 2, name: "Dating Sim", slug: "dating-sim" },
+        ],
+      }).hasSexualContent,
+    ).toBe(false);
+  });
+
+  /* A dating sim that is explicit says so with a tag of its own. */
+  it("still flags a dating sim that carries an explicit tag", () => {
+    expect(
+      toExternalGame({
+        ...rawgResponse,
+        esrb_rating: null,
+        tags: [
+          { id: 1, name: "Dating Sim", slug: "dating-sim" },
+          { id: 2, name: "Eroge", slug: "eroge" },
+        ],
+      }).hasSexualContent,
+    ).toBe(true);
+  });
+
   it("keeps the tag slugs, so the flag can be re-derived", () => {
     expect(
       toExternalGame({
