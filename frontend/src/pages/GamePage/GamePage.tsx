@@ -29,7 +29,7 @@ import CirculationPlate from "./components/CirculationPlate";
 import GameReviews from "./components/GameReviews";
 import { buildGameFacts } from "./lib/gameFacts";
 import ScoreCards from "./components/ScoreCards";
-import GameDescription from "./components/GameDescription";
+import ExpandableText from "./components/ExpandableText";
 
 const GamePage = () => {
     const { gameID } = useParams();
@@ -130,7 +130,11 @@ const GamePage = () => {
 
                 <div className="flex min-w-0 flex-col gap-6 lg:col-start-2 lg:row-start-2">
                     {game.description ? (
-                        <GameDescription text={game.description} />
+                        <ExpandableText
+                            text={game.description}
+                            className="text-body"
+                            moreLabel="Read the full description"
+                        />
                     ) : (
                         <p className="rounded-md border border-dashed border-strong bg-surface-sunken/60 px-4 py-3 text-body-sm text-content-muted">
                             No description on record for this one yet.

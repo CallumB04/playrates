@@ -6,6 +6,7 @@ import EmptyPlate from "../../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import Dropdown from "../../../components/ui/Dropdown";
 import StatusBadge from "../../../components/ui/StatusBadge";
+import ExpandableText from "./ExpandableText";
 import { cn } from "../../../lib/cn";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import VoteButton from "../../../components/ui/VoteButton";
@@ -172,9 +173,16 @@ const GameReviews = ({
                                     {relativeTime(review.createdAt)}
                                 </span>
                             </div>
-                            <p className="max-w-[46ch] text-sm leading-relaxed text-content-secondary">
-                                {review.body}
-                            </p>
+                            {/* The full width of the row: a review is prose,
+                                and a character cap made every one of them a
+                                narrow column with the rest of the row empty
+                                beside it. */}
+                            <ExpandableText
+                                text={review.body}
+                                lines={3}
+                                className="text-sm"
+                                moreLabel="Show more"
+                            />
                         </div>
                         <div className="flex flex-col items-end gap-2">
                             <RatingBadge value={review.rating} size="row" />
