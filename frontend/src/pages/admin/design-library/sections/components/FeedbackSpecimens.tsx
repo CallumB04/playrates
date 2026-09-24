@@ -47,7 +47,7 @@ const FeedbackSpecimens = () => {
         <>
             <Specimen
                 title="Toasts"
-                notes={`A raised card with a tone rule down one edge. The colour is the only thing that varies — the shape is constant so a toast is recognisable before it's read. The line along the bottom is the dwell, drawn: ${DWELL_MS.low! / 1000}s for a success, ${DWELL_MS.high! / 1000}s for an error. A critical one has no line, because nothing takes it away but the X. At most ${MAX_VISIBLE} stand at once; a fourth collapses the oldest out from under them.`}
+                notes={`The same plate as every other surface — no coloured edge. The icon carries the status, and the line along the bottom carries the dwell: ${DWELL_MS.low! / 1000}s for a success, ${DWELL_MS.high! / 1000}s for an error. A critical one has no line, because nothing takes it away but the X. At most ${MAX_VISIBLE} stand at once; a fourth collapses the oldest out from under them.`}
                 meta="ToastStack · notify(text, type, severity)"
             >
                 {TOASTS.map((toast) => (

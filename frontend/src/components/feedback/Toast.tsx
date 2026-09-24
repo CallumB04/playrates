@@ -11,8 +11,6 @@ import { cn } from "../../lib/cn";
 export const EXIT_MS = 240;
 
 interface Tone {
-    /** The rule down the leading edge, and the icon that matches it. */
-    edge: string;
     icon: string;
     /** The countdown line, in the same tone so it reads as one mark. */
     line: string;
@@ -22,19 +20,16 @@ interface Tone {
 /** Static map: every type has an entry, so the lookup cannot miss. */
 const TONES: Record<NotificationType, Tone> = {
     success: {
-        edge: "border-l-success",
         icon: "text-success",
         line: "bg-success",
         Icon: CircleCheck,
     },
     info: {
-        edge: "border-l-info",
         icon: "text-info",
         line: "bg-info",
         Icon: Info,
     },
     error: {
-        edge: "border-l-danger",
         icon: "text-danger",
         line: "bg-danger",
         Icon: CircleAlert,
@@ -54,7 +49,7 @@ interface ToastProps {
  */
 const Toast = ({ toast, onDismiss, onRemove }: ToastProps) => {
     const { id, text, type, dwell, leaving } = toast;
-    const { edge, icon, line, Icon } = TONES[type];
+    const { icon, line, Icon } = TONES[type];
 
     useEffect(() => {
         if (leaving || dwell === null) return;
@@ -80,10 +75,13 @@ const Toast = ({ toast, onDismiss, onRemove }: ToastProps) => {
             <div className="min-h-0 overflow-hidden">
                 <div
                     role={type === "error" ? "alert" : "status"}
+                    // The same plate as every other surface: ambient shadow and
+                    // a rim of light along the top edge. The status is the
+                    // icon's job and the countdown line's, not the card's.
                     className={cn(
-                        "pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-lg",
-                        "border border-l-[3px] border-subtle bg-surface-raised py-3 pr-2 pl-3.5 shadow-toast",
-                        edge
+                        "pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-md",
+                        "border border-subtle bg-surface-raised py-3 pr-2 pl-3.5",
+                        "shadow-toast inset-shadow-deep"
                     )}
                 >
                     <Icon
