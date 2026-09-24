@@ -11,7 +11,7 @@ import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 import Field from "../../../components/ui/Field";
 import { Input, Textarea } from "../../../components/ui/Input";
-import AvatarField, { type AvatarChoice } from "./AvatarField";
+import AvatarField, { type AvatarChoice } from "../../../components/AvatarField";
 import AccentPicker from "../../../components/ui/AccentPicker";
 
 interface EditProfilePopupProps {
@@ -86,6 +86,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
             <div className="flex flex-col gap-5 pt-5">
                 <AvatarField
                     username={user.username}
+                    accent={accent}
                     current={user.avatarUrl}
                     choice={avatar}
                     onChange={setAvatar}

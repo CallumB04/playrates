@@ -5,26 +5,28 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import AvatarField, { type AvatarChoice } from "./AvatarField";
 
 const compressAvatar = vi.hoisted(() => vi.fn());
-vi.mock("../../../lib/avatarImage", () => ({ compressAvatar }));
+vi.mock("../lib/avatarImage", () => ({ compressAvatar }));
 
 const CURRENT = "https://cdn.test/avatars/ada/avatar.webp?v=1";
 
 const setup = (
     choice: AvatarChoice = { kind: "unchanged" },
-    current: string | null = CURRENT
+    current: string | null = CURRENT,
+    extra: Partial<Parameters<typeof AvatarField>[0]> = {}
 ) => {
     const onChange = vi.fn();
-    render(
+    const view = render(
         <MemoryRouter>
             <AvatarField
                 username="ada"
                 current={current}
                 choice={choice}
                 onChange={onChange}
+                {...extra}
             />
         </MemoryRouter>
     );
-    return { onChange };
+    return { onChange, ...view };
 };
 
 const pickFile = async (name = "face.png") => {
@@ -115,6 +117,22 @@ describe("AvatarField", () => {
             screen.queryByRole("button", { name: "Remove" })
         ).not.toBeInTheDocument();
         expect(screen.getByText("Upload")).toBeInTheDocument();
+    });
+
+    /* Settings saves the moment a picture is picked, with no save button to
+       report progress, so the control has to say it itself. */
+    it("says it is saving while the upload is in flight", () => {
+        setup({ kind: "unchanged" }, CURRENT, { disabled: true });
+        expect(screen.getByText("Saving…")).toBeInTheDocument();
+        expect(screen.queryByText("Change")).not.toBeInTheDocument();
+    });
+
+    it("draws the generated avatar in the profile's colour", () => {
+        const { container } = setup({ kind: "unchanged" }, null, {
+            accent: "jade",
+        });
+        const fill = container.querySelector<HTMLElement>("span[aria-hidden]");
+        expect(fill?.style.backgroundImage).toContain("hsl(150");
     });
 
     /* A phone keyboard cannot reach a control that is only 32px tall, and the

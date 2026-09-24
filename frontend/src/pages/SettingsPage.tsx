@@ -16,7 +16,11 @@ import { useAuth } from "../contexts/AuthContext";
 import { useAccountForm } from "../contexts/AccountFormContext";
 import { useNotify } from "../contexts/NotificationContext";
 import { useTheme } from "../contexts/ThemeContext";
-import { useUpdateProfile } from "../hooks/queries/useProfiles";
+import {
+    useRemoveAvatar,
+    useUpdateAvatar,
+    useUpdateProfile,
+} from "../hooks/queries/useProfiles";
 import { useUserStats } from "../hooks/queries/useGameLogs";
 import { useUserReviews } from "../hooks/queries/useReviews";
 import { useUserFriends } from "../hooks/queries/useFriends";
@@ -33,6 +37,7 @@ import UsernameRow from "./settings/UsernameRow";
 import Dropdown from "../components/ui/Dropdown";
 import SegmentedChoice from "../components/ui/SegmentedChoice";
 import AccentPicker from "../components/ui/AccentPicker";
+import AvatarField, { type AvatarChoice } from "../components/AvatarField";
 import { effectiveTimeZone, formatCount, timeZones } from "../lib/format";
 import { cn } from "../lib/cn";
 
@@ -124,6 +129,8 @@ const SettingsPage = () => {
     );
     const [hideOnline, setHideOnline] = useState(user?.hideOnline ?? false);
     const [accent, setAccent] = useState(user?.accent ?? DEFAULT_ACCENT);
+    const updateAvatar = useUpdateAvatar();
+    const removeAvatar = useRemoveAvatar();
 
     useEffect(() => {
         setBio(user?.bio ?? "");
@@ -156,6 +163,19 @@ const SettingsPage = () => {
     ) => {
         if (unchanged) return;
         update.mutate(patch, { onError: () => notify(message, "error") });
+    };
+
+    /* Settings has no save button, so the picture goes up the moment it is
+       chosen. The field is handed "unchanged" throughout: what it draws is
+       whatever the server last confirmed, never a pending choice. */
+    const savingAvatar = updateAvatar.isPending || removeAvatar.isPending;
+    const saveAvatar = (choice: AvatarChoice) => {
+        const done = {
+            onSuccess: () => notify("Profile picture updated", "success"),
+            onError: () => notify("Couldn't save your picture", "error"),
+        };
+        if (choice.kind === "picked") updateAvatar.mutate(choice.image, done);
+        else if (choice.kind === "removed") removeAvatar.mutate(undefined, done);
     };
 
     /* Toggles save immediately and roll back on failure, so the control never
@@ -265,6 +285,16 @@ const SettingsPage = () => {
                             )
                         }
                         aria-label="Bio"
+                    />
+                </Row>
+                <Row label="Profile picture">
+                    <AvatarField
+                        username={user.username}
+                        accent={user.accent}
+                        current={user.avatarUrl}
+                        choice={{ kind: "unchanged" }}
+                        onChange={saveAvatar}
+                        disabled={savingAvatar}
                     />
                 </Row>
                 <Row label="Profile Colour">

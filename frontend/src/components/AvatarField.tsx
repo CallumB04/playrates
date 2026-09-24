@@ -1,9 +1,9 @@
 import { useEffect, useId, useRef, useState } from "react";
-import ProfilePicture from "../../../components/ProfilePicture";
-import { buttonClass } from "../../../components/ui/Button";
-import Button from "../../../components/ui/Button";
-import { compressAvatar } from "../../../lib/avatarImage";
-import { cn } from "../../../lib/cn";
+import type { ProfileAccent } from "@playrates/shared";
+import ProfilePicture from "./ProfilePicture";
+import Button, { buttonClass } from "./ui/Button";
+import { compressAvatar } from "../lib/avatarImage";
+import { cn } from "../lib/cn";
 
 /** What the editor is holding: the picture as it stands, a new one waiting to
  *  be saved, or a decision to go back to the generated one. */
@@ -14,6 +14,8 @@ export type AvatarChoice =
 
 interface AvatarFieldProps {
     username: string;
+    /** So the generated avatar is the profile's colour, not the brand. */
+    accent?: ProfileAccent;
     /** The picture already on the profile, if any. */
     current: string | null;
     choice: AvatarChoice;
@@ -23,6 +25,7 @@ interface AvatarFieldProps {
 
 const AvatarField = ({
     username,
+    accent,
     current,
     choice,
     onChange,
@@ -81,6 +84,7 @@ const AvatarField = ({
                 <ProfilePicture
                     variant="review"
                     username={username}
+                    accent={accent}
                     file={shown}
                     link={false}
                 />
@@ -102,9 +106,11 @@ const AvatarField = ({
                         >
                             {working
                                 ? "Preparing…"
-                                : shown
-                                  ? "Change"
-                                  : "Upload"}
+                                : disabled
+                                  ? "Saving…"
+                                  : shown
+                                    ? "Change"
+                                    : "Upload"}
                         </label>
                         <input
                             id={inputId}
