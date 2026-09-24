@@ -148,6 +148,7 @@ const GamePage = () => {
                             />
                             <CirculationPlate
                                 byStatus={stats.byStatus}
+                                byPlayedStatus={stats.byPlayedStatus}
                                 logCount={stats.logCount}
                             />
                         </>

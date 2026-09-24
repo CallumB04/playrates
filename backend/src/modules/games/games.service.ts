@@ -98,17 +98,18 @@ export const createGamesService = (
     // confirm the game exists so a bad id is a 404, not empty stats
     await this.getById(gameId);
 
-    const [byStatus, rating, own] = await Promise.all([
+    const [counts, rating, own] = await Promise.all([
       repo.statusCounts(gameId),
       repo.ratingSummary(gameId),
       repo.playratesStats(gameId),
     ]);
 
-    const logCount = Object.values(byStatus).reduce((a, b) => a + b, 0);
+    const logCount = Object.values(counts.byStatus).reduce((a, b) => a + b, 0);
 
     return {
       logCount,
-      byStatus,
+      byStatus: counts.byStatus,
+      byPlayedStatus: counts.byPlayedStatus,
       averageRating: rating.average,
       ratingCount: rating.count,
       ratingBuckets: rating.buckets,

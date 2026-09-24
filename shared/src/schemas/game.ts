@@ -39,6 +39,9 @@ export interface Game {
 export interface GameStats {
   logCount: number;
   byStatus: Record<string, number>;
+  /** How the played logs ended. A subset of byStatus.played, so these are not
+   *  summed into the total — the remainder recorded no ending. */
+  byPlayedStatus: Record<string, number>;
   averageRating: number | null;
   ratingCount: number;
   /** Twenty buckets of 0.5, so the rating plate shows a shape, not just a mean. */

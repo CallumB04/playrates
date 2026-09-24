@@ -29,7 +29,10 @@ export interface GamesRepository {
   ): Promise<{ rows: GameRowWithPlatforms[]; total: number }>;
   searchLocal(term: string, limit: number): Promise<GameRowWithPlatforms[]>;
   upsertMany(games: ExternalGame[]): Promise<number[]>;
-  statusCounts(gameId: number): Promise<Record<string, number>>;
+  statusCounts(gameId: number): Promise<{
+    byStatus: Record<string, number>;
+    byPlayedStatus: Record<string, number>;
+  }>;
   ratingSummary(
     gameId: number,
   ): Promise<{ average: number | null; count: number; buckets: number[] }>;
@@ -318,17 +321,24 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       .single();
     if (error) throw error;
 
-    const row = data as {
-      played: number;
-      playing: number;
-      backlog: number;
-      wishlist: number;
-    };
+    const row = data as Record<string, number>;
+    const count = (key: string) => Number(row[key] ?? 0);
+
     return {
-      played: Number(row.played),
-      playing: Number(row.playing),
-      backlog: Number(row.backlog),
-      wishlist: Number(row.wishlist),
+      byStatus: {
+        played: count("played"),
+        playing: count("playing"),
+        backlog: count("backlog"),
+        wishlist: count("wishlist"),
+      },
+      /* Kept apart from byStatus: these are a slice of `played`, and summing
+         one record for a total would count those logs twice. */
+      byPlayedStatus: {
+        finished: count("finished"),
+        mastered: count("mastered"),
+        shelved: count("shelved"),
+        retired: count("retired"),
+      },
     };
   },
 

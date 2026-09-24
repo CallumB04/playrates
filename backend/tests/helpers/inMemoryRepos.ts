@@ -376,16 +376,27 @@ export const createInMemoryRepos = (
       },
 
       async statusCounts(gameId) {
-        const counts: Record<string, number> = {
+        const byStatus: Record<string, number> = {
           played: 0,
           playing: 0,
           backlog: 0,
           wishlist: 0,
         };
+        const byPlayedStatus: Record<string, number> = {
+          finished: 0,
+          mastered: 0,
+          shelved: 0,
+          retired: 0,
+        };
+
         for (const log of state.gameLogs.filter((l) => l.game_id === gameId)) {
-          counts[log.status] = (counts[log.status] ?? 0) + 1;
+          byStatus[log.status] = (byStatus[log.status] ?? 0) + 1;
+          if (log.status === "played" && log.played_status) {
+            byPlayedStatus[log.played_status] =
+              (byPlayedStatus[log.played_status] ?? 0) + 1;
+          }
         }
-        return counts;
+        return { byStatus, byPlayedStatus };
       },
       async ratingSummary(gameId) {
         const ratings = state.gameLogs
