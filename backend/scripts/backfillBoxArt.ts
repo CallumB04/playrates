@@ -21,8 +21,9 @@
  * What it cannot tell apart is a game and the remake that took its name:
  * "DOOM" the 1993 game matches "DOOM" the 2016 one, and nothing free says
  * which of them a Steam app is. Those are the famous titles, so the most
- * tracked games get their app id from RAWG itself first — a request each,
- * which is why it is a few thousand of them and not all sixty thousand.
+ * tracked games get their app id from RAWG itself first — one request each,
+ * out of an allowance that also has to cover every game page a visitor opens
+ * for the rest of the month. Keep that number small.
  *
  * Resumable via --from-id, and the Steam index is cached, so a crash costs
  * minutes rather than the whole run.
@@ -62,9 +63,12 @@ const GAME_PAGE_SIZE = 1_000;
 /* PostgREST caps a response at a thousand rows and says nothing about it, so
    asking for more than this silently gets you this. */
 const ROW_CAP = 1_000;
-/* RAWG allows 20,000 requests a month and this spends one per game, so it
-   buys accuracy only where it is worth most: the games people browse. */
-const DEFAULT_AUTHORITATIVE = 2_000;
+/* RAWG allows 20,000 requests a month, shared with every game page a visitor
+   opens, and this spends one per game. Default to a few hundred — enough to
+   cover the games a name match is most likely to get wrong — and make any
+   larger number an explicit decision that still cannot exceed the ceiling. */
+const DEFAULT_AUTHORITATIVE = 300;
+const RAWG_CEILING = 1_000;
 const RAWG_GAP_MS = 120;
 const HEAD_TIMEOUT_MS = 8_000;
 /* Plain CDN reads, and most of them miss; the misses are slow enough that a
@@ -345,6 +349,13 @@ const main = async () => {
   );
 
   const rawgKey = env().RAWG_API_KEY;
+  if (options.authoritative > RAWG_CEILING) {
+    logger.error(
+      { asked: options.authoritative, ceiling: RAWG_CEILING },
+      "that would spend too much of the monthly RAWG allowance; raise RAWG_CEILING deliberately if you mean it",
+    );
+    process.exit(1);
+  }
   if (options.authoritative > 0 && !rawgKey) {
     logger.error(
       "RAWG_API_KEY is not set — rerun with --authoritative 0 to match on name alone",

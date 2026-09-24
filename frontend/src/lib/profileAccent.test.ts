@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_ACCENT, PROFILE_ACCENTS } from "@playrates/shared";
+import { FALLBACK_ACCENT, PROFILE_ACCENTS } from "@playrates/shared";
 import { accentHue, avatarGradient, bannerGradient } from "./profileAccent";
 
 describe("accentHue", () => {
@@ -11,18 +11,24 @@ describe("accentHue", () => {
         expect(new Set(hues).size).toBe(hues.length);
     });
 
-    /* Nothing chosen, a row written before this list, a slug that has since
-       been retired: all of them are the brand rather than no colour at all. */
-    it("falls back to the brand, never to nothing", () => {
-        const brand = accentHue(DEFAULT_ACCENT);
-        expect(accentHue(null)).toBe(brand);
-        expect(accentHue(undefined)).toBe(brand);
-        expect(accentHue("chartreuse")).toBe(brand);
+    /* Nothing stored, a row written before this list, a slug that has since
+       been retired — "playrates" among them: all of them draw something. */
+    it("falls back rather than leave a profile colourless", () => {
+        const fallback = accentHue(FALLBACK_ACCENT);
+        expect(accentHue(null)).toBe(fallback);
+        expect(accentHue(undefined)).toBe(fallback);
+        expect(accentHue("chartreuse")).toBe(fallback);
+        expect(accentHue("playrates")).toBe(fallback);
     });
 
-    it("starts every profile on the brand", () => {
-        expect(DEFAULT_ACCENT).toBe("playrates");
-        expect(PROFILE_ACCENTS[0]?.slug).toBe(DEFAULT_ACCENT);
+    /* The brand belongs to PlayRates. A profile wearing it would read as
+       official rather than as somebody's choice. */
+    it("does not offer the brand as a profile colour", () => {
+        expect(PROFILE_ACCENTS.map((a) => a.slug)).not.toContain("playrates");
+    });
+
+    it("has a fallback that is one of the colours it offers", () => {
+        expect(PROFILE_ACCENTS.map((a) => a.slug)).toContain(FALLBACK_ACCENT);
     });
 });
 

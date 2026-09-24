@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { Profile, ProfileAccent } from "@playrates/shared";
 import {
@@ -11,7 +11,9 @@ import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 import Field from "../../../components/ui/Field";
 import { Input, Textarea } from "../../../components/ui/Input";
-import AvatarField, { type AvatarChoice } from "../../../components/AvatarField";
+import AvatarField, {
+    type AvatarChoice,
+} from "../../../components/AvatarField";
 import AccentPicker from "../../../components/ui/AccentPicker";
 
 interface EditProfilePopupProps {
@@ -20,6 +22,16 @@ interface EditProfilePopupProps {
 }
 
 const BIO_LIMIT = 160;
+
+/* A heading, not a <label>: the picture and the colour are each a group of
+   controls carrying their own accessible name, and a label pointing at a
+   group would have nothing to attach to. */
+const Group = ({ label, children }: { label: string; children: ReactNode }) => (
+    <div className="flex flex-col">
+        <span className="mb-2 text-label-sm text-content-muted">{label}</span>
+        {children}
+    </div>
+);
 
 /**
  * The profile editor. The username only changes capitalisation here — a real
@@ -41,7 +53,9 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
 
     const sameLetters = username.toLowerCase() === user.username.toLowerCase();
     const fieldsDirty =
-        bio !== user.bio || username !== user.username || accent !== user.accent;
+        bio !== user.bio ||
+        username !== user.username ||
+        accent !== user.accent;
     const dirty = fieldsDirty || avatar.kind !== "unchanged";
     const saving =
         updateProfile.isPending ||
@@ -84,25 +98,25 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
             </h2>
 
             <div className="flex flex-col gap-5 pt-5">
-                <AvatarField
-                    username={user.username}
-                    accent={accent}
-                    current={user.avatarUrl}
-                    choice={avatar}
-                    onChange={setAvatar}
-                    disabled={saving}
-                />
+                <Group label="Profile Picture">
+                    <AvatarField
+                        username={user.username}
+                        accent={accent}
+                        current={user.avatarUrl}
+                        choice={avatar}
+                        onChange={setAvatar}
+                        disabled={saving}
+                    />
+                </Group>
 
-                <Field label="Profile Colour">
-                    {() => (
-                        <AccentPicker
-                            label="Profile Colour"
-                            value={accent}
-                            onChange={setAccent}
-                            disabled={saving}
-                        />
-                    )}
-                </Field>
+                <Group label="Profile Colour">
+                    <AccentPicker
+                        label="Profile Colour"
+                        value={accent}
+                        onChange={setAccent}
+                        disabled={saving}
+                    />
+                </Group>
 
                 <Field
                     label="Bio"

@@ -35,16 +35,18 @@ describe("ProfilePicture", () => {
             c.querySelector<HTMLElement>("span[aria-hidden]")?.style
                 .backgroundImage ?? "";
 
-        it("is the brand when no colour is given", () => {
+        /* Every profile carries a colour, so this is only reached by a
+           caller that has not been given one yet. */
+        it("falls back rather than draw nothing when none is given", () => {
             const { container } = show({ accent: undefined });
-            expect(fill(container)).toContain(`hsl(${accentHue("playrates")}`);
+            expect(fill(container)).toContain(`hsl(${accentHue(undefined)}`);
         });
 
         it("is the chosen colour when there is one", () => {
             const { container } = show({ accent: "jade" });
             expect(fill(container)).toContain("hsl(150");
             expect(fill(container)).not.toContain(
-                `hsl(${accentHue("playrates")}`
+                `hsl(${accentHue(undefined)}`
             );
         });
 

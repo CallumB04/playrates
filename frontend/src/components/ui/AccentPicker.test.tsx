@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { DEFAULT_ACCENT, PROFILE_ACCENTS } from "@playrates/shared";
+import { FALLBACK_ACCENT, PROFILE_ACCENTS } from "@playrates/shared";
 import AccentPicker from "./AccentPicker";
 import { accentHue } from "../../lib/profileAccent";
 
 const setup = (
-    value: Parameters<typeof AccentPicker>[0]["value"] = DEFAULT_ACCENT
+    value: Parameters<typeof AccentPicker>[0]["value"] = FALLBACK_ACCENT
 ) => {
     const onChange = vi.fn();
     const view = render(
@@ -21,11 +21,18 @@ describe("AccentPicker", () => {
         expect(screen.getAllByRole("radio")).toHaveLength(PROFILE_ACCENTS.length);
     });
 
-    /* Nobody has to choose. A profile that never touched this wears the brand
-       and the picker says so rather than showing nothing selected. */
-    it("starts on the brand", () => {
+    /* Every profile carries a colour, dealt at signup if never chosen, so
+       there is always one marked rather than an empty row. */
+    it("always has the profile's colour marked", () => {
+        setup("jade");
+        expect(screen.getByRole("radio", { name: "Jade" })).toBeChecked();
+    });
+
+    it("does not offer the brand", () => {
         setup();
-        expect(screen.getByRole("radio", { name: "PlayRates" })).toBeChecked();
+        expect(
+            screen.queryByRole("radio", { name: "PlayRates" })
+        ).not.toBeInTheDocument();
     });
 
     it("reports the colour that was picked", async () => {
@@ -37,21 +44,19 @@ describe("AccentPicker", () => {
         expect(onChange).toHaveBeenCalledWith("jade");
     });
 
-    it("reports going back to the brand as a colour like any other", async () => {
+    it("reports a change away from the current colour", async () => {
         const user = userEvent.setup();
         const { onChange } = setup("jade");
 
-        await user.click(screen.getByRole("radio", { name: "PlayRates" }));
+        await user.click(screen.getByRole("radio", { name: "Crimson" }));
 
-        expect(onChange).toHaveBeenCalledWith("playrates");
+        expect(onChange).toHaveBeenCalledWith("crimson");
     });
 
     it("marks the chosen one, and only that one", () => {
         setup("rose");
         expect(screen.getByRole("radio", { name: "Rose" })).toBeChecked();
-        expect(
-            screen.getByRole("radio", { name: "PlayRates" })
-        ).not.toBeChecked();
+        expect(screen.getByRole("radio", { name: "Jade" })).not.toBeChecked();
     });
 
     /* A swatch drawn in anything other than the colour it applies would be a

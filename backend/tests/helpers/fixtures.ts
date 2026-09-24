@@ -25,7 +25,7 @@ export const buildProfile = (
   first_name: null,
   timezone: "UTC",
   hide_online: false,
-  accent: "playrates",
+  accent: "indigo",
   last_seen_at: NOW,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,

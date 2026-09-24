@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
+import { AppError } from "../../src/lib/AppError.js";
 import { authHeader, buildTestApp, USER_A } from "../helpers/buildTestApp.js";
 import {
   baseSeed,
@@ -223,6 +224,24 @@ describe("games", () => {
     expect(response.body.data[0].id).not.toBe(externalGame.externalId);
     expect(response.body.data[0].rawgId).toBe(externalGame.externalId);
     expect(state.games).toHaveLength(1);
+  });
+
+  /* Running out of RAWG allowance must not take search down with it: the
+     catalogue is already ours, and thin local results are better than none. */
+  it("still answers from the catalogue when the provider is refusing", async () => {
+    const provider = stubProvider();
+    provider.search = vi.fn(async () => {
+      throw AppError.upstream("RAWG request failed with status 401");
+    }) as never;
+
+    const { app } = buildTestApp({ seed: baseSeed(), provider });
+
+    const response = await request(app)
+      .get("/api/v1/games/search?q=witch")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0].title).toContain("Witcher");
   });
 
   it("requires authentication to search", async () => {

@@ -141,7 +141,16 @@ export const createGamesService = (
       return paginate(local.map(toGame), pagination, local.length);
     }
 
-    const external = await provider.search(term, 20);
+    /* The provider is an enrichment, not the source: a month's RAWG
+       allowance running out, or an outage, used to turn every thin search
+       into a 502 over a catalogue we already hold locally. */
+    let external: Awaited<ReturnType<GamesProvider["search"]>> = [];
+    try {
+      external = await provider.search(term, 20);
+    } catch {
+      return paginate(local.map(toGame), pagination, local.length);
+    }
+
     if (external.length > 0) {
       await repo.upsertMany(external);
     }

@@ -248,7 +248,7 @@ describe("profile colour", () => {
     expect(response.status).toBe(422);
   });
 
-  it("goes back to the brand like any other choice", async () => {
+  it("replaces one choice with another", async () => {
     const { app, state } = buildTestApp({ seed: baseSeed() });
     await request(app)
       .patch("/api/v1/profiles/me")
@@ -258,10 +258,12 @@ describe("profile colour", () => {
     const response = await request(app)
       .patch("/api/v1/profiles/me")
       .set("Authorization", authHeader(USER_A))
-      .send({ accent: "playrates" });
+      .send({ accent: "crimson" });
 
-    expect(response.body.accent).toBe("playrates");
-    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe("playrates");
+    expect(response.body.accent).toBe("crimson");
+    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe(
+      "crimson",
+    );
   });
 
   it("refuses a colour that is not one of ours", async () => {
@@ -274,7 +276,7 @@ describe("profile colour", () => {
 
     expect(response.status).toBe(422);
     expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe(
-      "playrates",
+      "indigo",
     );
   });
 

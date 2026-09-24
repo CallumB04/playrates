@@ -9,11 +9,13 @@ import { z } from "zod";
  * never drift apart. Every hue here is one that stays legible against both
  * themes at the lightness the formula picks.
  *
- * PlayRates first, and the rest a sweep round the wheel from red to violet.
+ * A sweep round the wheel from red to violet. The brand is deliberately not
+ * among them: it belongs to PlayRates, and a profile wearing it would read as
+ * official rather than as a choice. New accounts are dealt one of these at
+ * random, so a signed-up profile looks like somebody rather than like a
+ * default.
  */
 export const PROFILE_ACCENTS = [
-  /** --iris-600, the brand. What a profile wears until it says otherwise. */
-  { slug: "playrates", label: "PlayRates", hue: 253 },
   { slug: "ember", label: "Ember", hue: 22 },
   { slug: "amber", label: "Amber", hue: 44 },
   { slug: "lime", label: "Lime", hue: 84 },
@@ -31,8 +33,9 @@ export const PROFILE_ACCENTS = [
 
 export type ProfileAccent = (typeof PROFILE_ACCENTS)[number]["slug"];
 
-/** The column default, and the fallback wherever a colour is unreadable. */
-export const DEFAULT_ACCENT: ProfileAccent = "playrates";
+/** Drawn when a stored colour is not one of ours. There is no default
+ *  colour — a new profile is dealt one at random by the database. */
+export const FALLBACK_ACCENT: ProfileAccent = "indigo";
 
 export const PROFILE_ACCENT_SLUGS = PROFILE_ACCENTS.map((a) => a.slug) as [
   ProfileAccent,
@@ -41,8 +44,8 @@ export const PROFILE_ACCENT_SLUGS = PROFILE_ACCENTS.map((a) => a.slug) as [
 
 export const ProfileAccentSchema = z.enum(PROFILE_ACCENT_SLUGS);
 
-/** The hue to draw a profile in. Anything unrecognised is the brand, so a
+/** The hue to draw a profile in. Anything unrecognised falls back, so a
  *  profile is never colourless. */
 export const accentHue = (accent: string | null | undefined): number =>
   (PROFILE_ACCENTS.find((a) => a.slug === accent) ??
-    PROFILE_ACCENTS.find((a) => a.slug === DEFAULT_ACCENT)!).hue;
+    PROFILE_ACCENTS.find((a) => a.slug === FALLBACK_ACCENT)!).hue;

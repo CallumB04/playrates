@@ -26,7 +26,7 @@ import { useUserReviews } from "../hooks/queries/useReviews";
 import { useUserFriends } from "../hooks/queries/useFriends";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { deleteMyAccount } from "../api";
-import { DEFAULT_ACCENT } from "@playrates/shared";
+import { FALLBACK_ACCENT } from "@playrates/shared";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
 import Button from "../components/ui/Button";
@@ -128,7 +128,7 @@ const SettingsPage = () => {
         user?.showSexualContent ?? false
     );
     const [hideOnline, setHideOnline] = useState(user?.hideOnline ?? false);
-    const [accent, setAccent] = useState(user?.accent ?? DEFAULT_ACCENT);
+    const [accent, setAccent] = useState(user?.accent ?? FALLBACK_ACCENT);
     const updateAvatar = useUpdateAvatar();
     const removeAvatar = useRemoveAvatar();
 
@@ -137,7 +137,7 @@ const SettingsPage = () => {
         setFirstName(user?.firstName ?? "");
         setShowSexual(user?.showSexualContent ?? false);
         setHideOnline(user?.hideOnline ?? false);
-        setAccent(user?.accent ?? DEFAULT_ACCENT);
+        setAccent(user?.accent ?? FALLBACK_ACCENT);
     }, [user]);
 
     const zone = effectiveTimeZone(user?.timezone);
