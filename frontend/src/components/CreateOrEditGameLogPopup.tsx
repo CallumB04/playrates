@@ -17,6 +17,7 @@ import Dropdown from "./ui/Dropdown";
 import { systemOptions } from "../lib/platformIcons";
 import { familyOf, systemsForGame } from "../lib/gameSystems";
 import { StatusPlates } from "./gamelog/StatusPlates";
+import DeleteGameLogPopup from "./gamelog/DeleteGameLogPopup";
 import {
     achievementFraction,
     emptyDraft,
@@ -70,6 +71,7 @@ const CreateOrEditGameLogPopup = ({
     const [draft, dispatch] = useReducer(logReducer, emptyDraft);
     const [error, setError] = useState<string | null>(null);
     const [hydrated, setHydrated] = useState(false);
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
 
     /* Wait for both, or a blank note overwrites a real one and a backlog game
        opens as played. */
@@ -137,18 +139,6 @@ const CreateOrEditGameLogPopup = ({
 
         notify(existing ? "Entry updated" : "Entry saved", "success");
         viewUpdatedLog();
-    };
-
-    const handleDelete = async () => {
-        if (!existing) return;
-        try {
-            // Keyed by game, not by log row: the log's own id 404s here.
-            await remove.mutateAsync(existing.gameId);
-            notify("Log deleted", "success");
-            closePopup();
-        } catch {
-            notify("Couldn't delete that log", "error");
-        }
     };
 
     return (
@@ -401,7 +391,7 @@ const CreateOrEditGameLogPopup = ({
                 {existing && (
                     <button
                         type="button"
-                        onClick={() => void handleDelete()}
+                        onClick={() => setConfirmingDelete(true)}
                         disabled={busy}
                         className="min-h-11 text-label text-danger lift hover:underline disabled:opacity-60 sm:min-h-0"
                     >
@@ -426,6 +416,16 @@ const CreateOrEditGameLogPopup = ({
                     </Button>
                 </div>
             </footer>
+
+            {/* Deleting takes the rating, the hours and the review with it, so
+                it asks first — the same dialog the profile uses. */}
+            {confirmingDelete && existing && (
+                <DeleteGameLogPopup
+                    gameLog={existing}
+                    closePopup={() => setConfirmingDelete(false)}
+                    onDeleted={closePopup}
+                />
+            )}
         </Modal>
     );
 };

@@ -6,12 +6,17 @@ import ConfirmPopup from "../ui/ConfirmPopup";
 
 interface DeleteGameLogPopupProps {
     gameLog: GameLogWithGame;
+    /** Dismissed without deleting. */
     closePopup: () => void;
+    /** Called instead once the log has gone, for a caller that opened this
+     *  from inside something else and wants that closed too. */
+    onDeleted?: () => void;
 }
 
 const DeleteGameLogPopup = ({
     gameLog,
     closePopup,
+    onDeleted,
 }: DeleteGameLogPopupProps) => {
     const { remove } = useGameLogMutations();
     const notify = useNotify();
@@ -22,7 +27,7 @@ const DeleteGameLogPopup = ({
         try {
             await remove.mutateAsync(gameLog.gameId);
             notify("Log deleted", "success");
-            closePopup();
+            (onDeleted ?? closePopup)();
         } catch {
             notify("Couldn't delete that log", "error");
             setIsDeleting(false);
