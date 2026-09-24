@@ -287,7 +287,6 @@ const LibraryPage = () => {
                     viewUpdatedLog={() => setModal(null)}
                     gamelog={modal.kind === "edit" ? modal.log : null}
                     gameID={modal.kind === "create" ? modal.gameId : undefined}
-                    editing={modal.kind === "edit"}
                 />
             )}
         </section>

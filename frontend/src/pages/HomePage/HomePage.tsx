@@ -271,7 +271,6 @@ const HomePage = () => {
                         current && current.gameId === logging ? current : null
                     }
                     gameID={logging}
-                    editing={!!current && current.gameId === logging}
                 />
             )}
         </div>

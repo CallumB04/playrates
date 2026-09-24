@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { GameLogWithGame } from "../api";
 import { useGame, usePlatformSystems } from "../hooks/queries/useGames";
-import { useGameLogMutations } from "../hooks/queries/useGameLogs";
+import {
+    useGameLogMutations,
+    useMyGameLog,
+} from "../hooks/queries/useGameLogs";
 import { useMyReview, useReviewMutations } from "../hooks/queries/useReviews";
 import { useNotify } from "../contexts/NotificationContext";
 import Modal from "./ui/Modal";
@@ -29,7 +32,6 @@ interface CreateOrEditGameLogPopupProps {
     viewUpdatedLog: () => void;
     gamelog?: GameLogWithGame | null;
     gameID?: number;
-    editing: boolean;
     /** Opened from a review control, so open on the review field. */
     focusReview?: boolean;
 }
@@ -44,7 +46,6 @@ const CreateOrEditGameLogPopup = ({
     viewUpdatedLog,
     gamelog,
     gameID,
-    editing,
     focusReview = false,
 }: CreateOrEditGameLogPopupProps) => {
     const gameId = gamelog?.gameId ?? gameID!;
@@ -57,22 +58,32 @@ const CreateOrEditGameLogPopup = ({
     const { save, remove } = useGameLogMutations();
     const { save: saveReview, remove: removeReview } = useReviewMutations();
 
+    /* Fetched rather than required of the caller: opened from a rail or a
+       tile there is only a game id to hand, and hydrating from nothing put
+       every existing log back to "played" on save. */
+    const { data: fetchedLog, isLoading: logLoading } = useMyGameLog(
+        gameId,
+        !gamelog
+    );
+    const existing = gamelog ?? fetchedLog ?? null;
+
     const [draft, dispatch] = useReducer(logReducer, emptyDraft);
     const [error, setError] = useState<string | null>(null);
     const [hydrated, setHydrated] = useState(false);
 
-    // Wait for the review, or a blank note overwrites a real one on save.
+    /* Wait for both, or a blank note overwrites a real one and a backlog game
+       opens as played. */
     useEffect(() => {
-        if (hydrated || reviewLoading) return;
+        if (hydrated || reviewLoading || logLoading) return;
         dispatch({
             type: "hydrate",
-            log: gamelog ?? null,
+            log: existing,
             review: review
                 ? { body: review.body, isPublic: review.isPublic }
                 : null,
         });
         setHydrated(true);
-    }, [hydrated, reviewLoading, gamelog, review]);
+    }, [hydrated, reviewLoading, logLoading, existing, review]);
 
     // Only once hydrated: before that the form's height isn't final.
     useEffect(() => {
@@ -124,15 +135,15 @@ const CreateOrEditGameLogPopup = ({
             return;
         }
 
-        notify(editing ? "Entry updated" : "Entry saved", "success");
+        notify(existing ? "Entry updated" : "Entry saved", "success");
         viewUpdatedLog();
     };
 
     const handleDelete = async () => {
-        if (!gamelog) return;
+        if (!existing) return;
         try {
-            // Keyed by game, not by log row: gamelog.id 404s here.
-            await remove.mutateAsync(gamelog.gameId);
+            // Keyed by game, not by log row: the log's own id 404s here.
+            await remove.mutateAsync(existing.gameId);
             notify("Log deleted", "success");
             closePopup();
         } catch {
@@ -387,7 +398,7 @@ const CreateOrEditGameLogPopup = ({
             </div>
 
             <footer className="flex flex-col-reverse gap-3 border-t border-subtle bg-surface-raised px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:px-6">
-                {editing && gamelog && (
+                {existing && (
                     <button
                         type="button"
                         onClick={() => void handleDelete()}

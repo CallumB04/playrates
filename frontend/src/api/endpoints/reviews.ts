@@ -5,12 +5,8 @@ import type {
     ReviewSort,
     ReviewWithAuthor,
 } from "@playrates/shared";
-import axios from "axios";
-import { api } from "../client";
+import { api, isNotFound } from "../client";
 import { compactParams } from "./games";
-
-const isNotFound = (error: unknown): boolean =>
-    axios.isAxiosError(error) && error.response?.status === 404;
 
 export const fetchGameReviews = async (
     gameId: number,

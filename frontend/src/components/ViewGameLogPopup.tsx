@@ -12,6 +12,7 @@ import RatingBadge from "./ui/RatingBadge";
 import LedgerRow, { LedgerList } from "./ui/LedgerRow";
 import AchievementRing from "./gamelog/AchievementRing";
 import { formatDate, formatHours } from "../lib/format";
+import { cn } from "../lib/cn";
 import Modal from "./ui/Modal";
 import Button, { buttonClass } from "./ui/Button";
 import StatusBadge from "./ui/StatusBadge";
@@ -63,16 +64,9 @@ const ViewGameLogPopup = ({
     const achievementsTotal = gamelog.achievementsTotal ?? 0;
     const achievementsDone = gamelog.achievementsCompleted ?? 0;
 
+    /* Dates only. The rating, the completion and the hours carry the entry,
+       so they are shown rather than listed. */
     const facts = [
-        { label: "Rating", value: <RatingBadge value={gamelog.rating} /> },
-        gamelog.hoursPlayed !== null && {
-            label: "Hours played",
-            value: formatHours(gamelog.hoursPlayed),
-        },
-        gamelog.hoursToBeat !== null && {
-            label: "Time to beat",
-            value: formatHours(gamelog.hoursToBeat),
-        },
         gamelog.startDate && {
             label: "Started",
             value: formatDate(gamelog.startDate),
@@ -82,6 +76,12 @@ const ViewGameLogPopup = ({
             value: formatDate(gamelog.finishDate),
         },
     ].filter(Boolean) as { label: string; value: ReactNode }[];
+
+    const { hoursPlayed, hoursToBeat } = gamelog;
+    const hasHours = hoursPlayed !== null || hoursToBeat !== null;
+    /* Both bars share a scale, which is the whole point — "60 played against
+       51 to beat" is a comparison, not two figures. */
+    const longest = Math.max(hoursPlayed ?? 0, hoursToBeat ?? 0) || 1;
 
     return (
         <Modal
@@ -107,29 +107,87 @@ const ViewGameLogPopup = ({
                 </div>
             </header>
 
-            <div className="flex flex-wrap items-center gap-6 px-5 py-5">
-                {achievementsTotal > 0 && (
-                    <div className="flex flex-col items-center gap-1.5">
-                        <AchievementRing
-                            done={achievementsDone}
-                            total={achievementsTotal}
-                        />
-                        <span className="font-mono text-label-sm text-content-muted">
-                            {achievementsDone} of {achievementsTotal}
+            <div className="px-5 py-5">
+                {/* The two figures worth crossing the room for. */}
+                <div className="flex items-stretch gap-5 rounded-md border border-subtle bg-surface-sunken/40 p-4">
+                    <div className="flex min-w-0 flex-1 flex-col justify-center gap-2.5">
+                        <RatingBadge value={gamelog.rating} size="lg" />
+                        <span className="h-1.5 w-full overflow-hidden rounded-full bg-surface-sunken">
+                            <span
+                                className="block h-full rounded-full bg-brand transition-[width] duration-700 ease-[var(--ease-glide)]"
+                                style={{
+                                    width: `${((gamelog.rating ?? 0) / 10) * 100}%`,
+                                }}
+                            />
                         </span>
+                        <span className="text-label-sm text-content-muted">
+                            {gamelog.rating === null
+                                ? "Not rated"
+                                : "Your rating"}
+                        </span>
+                    </div>
+
+                    {achievementsTotal > 0 && (
+                        <div className="flex shrink-0 flex-col items-center gap-1.5 border-l border-subtle pl-5">
+                            <AchievementRing
+                                done={achievementsDone}
+                                total={achievementsTotal}
+                            />
+                            <span className="font-mono text-label-sm text-content-muted">
+                                {achievementsDone} of {achievementsTotal}
+                            </span>
+                        </div>
+                    )}
+                </div>
+
+                {hasHours && (
+                    <div className="mt-4 flex flex-col gap-2.5">
+                        {(
+                            [
+                                ["Hours played", hoursPlayed, "bg-brand"],
+                                ["Time to beat", hoursToBeat, "bg-strong"],
+                            ] as const
+                        )
+                            .filter(([, hours]) => hours !== null)
+                            .map(([label, hours, tone]) => (
+                                <div
+                                    key={label}
+                                    className="flex items-center gap-3"
+                                >
+                                    <span className="w-24 shrink-0 text-body-sm text-content-secondary">
+                                        {label}
+                                    </span>
+                                    <span className="h-2 flex-1 overflow-hidden rounded-full bg-surface-sunken">
+                                        <span
+                                            className={cn(
+                                                "block h-full rounded-full",
+                                                tone
+                                            )}
+                                            style={{
+                                                width: `${((hours ?? 0) / longest) * 100}%`,
+                                            }}
+                                        />
+                                    </span>
+                                    <span className="w-14 shrink-0 text-right font-mono text-body-sm font-semibold text-content">
+                                        {formatHours(hours)}
+                                    </span>
+                                </div>
+                            ))}
                     </div>
                 )}
 
-                <LedgerList className="min-w-[210px] flex-1">
-                    {facts.map((fact, i) => (
-                        <LedgerRow
-                            key={fact.label}
-                            label={fact.label}
-                            value={fact.value}
-                            rule={i < facts.length - 1}
-                        />
-                    ))}
-                </LedgerList>
+                {facts.length > 0 && (
+                    <LedgerList className="mt-4">
+                        {facts.map((fact, i) => (
+                            <LedgerRow
+                                key={fact.label}
+                                label={fact.label}
+                                value={fact.value}
+                                rule={i < facts.length - 1}
+                            />
+                        ))}
+                    </LedgerList>
+                )}
             </div>
 
             {review && (

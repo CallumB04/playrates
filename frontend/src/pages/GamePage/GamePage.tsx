@@ -189,7 +189,6 @@ const GamePage = () => {
                     viewUpdatedLog={() => setEditing(false)}
                     gamelog={fullLog ?? null}
                     gameID={gameId}
-                    editing={!!fullLog}
                     focusReview={editIntent === "review"}
                 />
             )}

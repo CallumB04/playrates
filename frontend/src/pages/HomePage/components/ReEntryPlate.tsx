@@ -175,7 +175,7 @@ const ReEntryPlate = ({
                             </span>
                             <span className="mt-1 block text-label-sm text-content-muted">
                                 {backlogCount > 0
-                                    ? `Start one of the ${formatCount(backlogCount)} in your backlog`
+                                    ? `${formatCount(backlogCount)} ${backlogCount === 1 ? "game" : "games"} waiting in your backlog`
                                     : "Find something to play in the library"}
                             </span>
                         </span>

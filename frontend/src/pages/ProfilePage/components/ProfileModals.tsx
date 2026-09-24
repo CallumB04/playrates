@@ -131,7 +131,6 @@ const ProfileModals = ({
                 <CreateOrEditGameLogPopup
                     closePopup={() => setModal(null)}
                     gamelog={modal.log}
-                    editing
                     viewUpdatedLog={() => setModal(null)}
                 />
             )}
@@ -140,7 +139,6 @@ const ProfileModals = ({
                 <CreateOrEditGameLogPopup
                     closePopup={() => setModal(null)}
                     gameID={modal.log.gameId}
-                    editing={false}
                     viewUpdatedLog={() => setModal(null)}
                 />
             )}

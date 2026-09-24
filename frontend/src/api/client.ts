@@ -39,6 +39,13 @@ export class ApiError extends Error {
     }
 }
 
+/** "Is this the API saying there is nothing here?" — the answer to a lookup
+ *  that is allowed to come back empty, rather than a failure. Every rejection
+ *  from this client is an ApiError, so checking for an AxiosError never
+ *  matches. */
+export const isNotFound = (error: unknown): boolean =>
+    error instanceof ApiError && error.isNotFound;
+
 /** The single client. Endpoint modules import this rather than axios itself. */
 export const api = axios.create({
     baseURL: `${env.apiBaseUrl}/api/v1`,

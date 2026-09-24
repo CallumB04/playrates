@@ -34,6 +34,8 @@ export const queryKeys = {
                 order ?? "",
             ] as const,
         mineIds: ["gamelogs", "me", "ids"] as const,
+        mineForGame: (gameId: number) =>
+            ["gamelogs", "me", "game", gameId] as const,
         byUsername: (
             username: string,
             status?: string,

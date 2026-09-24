@@ -7,6 +7,7 @@ import {
 import type { GameLogInput } from "@playrates/shared";
 import {
     deleteGameLog,
+    fetchMyGameLog,
     fetchMyGameLogIds,
     fetchMyGameLogs,
     fetchUserGameLogs,
@@ -47,6 +48,17 @@ export const useUserGameLogs = (
         enabled: !!username,
         placeholderData: keepPreviousData,
     });
+
+/** The caller's own log for one game, so an editor opened with nothing but a
+ *  game id still knows what is already recorded. Null means none. */
+export const useMyGameLog = (gameId: number, enabled = true) => {
+    const { user } = useAuth();
+    return useQuery({
+        queryKey: queryKeys.gameLogs.mineForGame(gameId),
+        queryFn: () => fetchMyGameLog(gameId),
+        enabled: enabled && !!user && gameId > 0,
+    });
+};
 
 /** Every game the caller has logged, as a lookup. Unpaginated: a tile asking
  *  "have I logged this?" needs a complete answer. */
