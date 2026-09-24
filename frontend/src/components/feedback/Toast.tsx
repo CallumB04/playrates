@@ -12,7 +12,7 @@ export const EXIT_MS = 240;
 
 interface Tone {
     icon: string;
-    /** The countdown line, in the same tone so it reads as one mark. */
+    /** The line along the bottom edge, in the same tone as the icon. */
     line: string;
     Icon: IconComponent;
 }
@@ -107,16 +107,22 @@ const Toast = ({ toast, onDismiss, onRemove }: ToastProps) => {
                         <X size={15} />
                     </button>
 
-                    {dwell !== null && (
-                        <span
-                            aria-hidden
-                            style={{ animationDuration: `${dwell}ms` }}
-                            className={cn(
-                                "absolute inset-x-0 bottom-0 h-0.5 origin-left animate-toast-countdown",
-                                line
-                            )}
-                        />
-                    )}
+                    {/* Every toast carries the line: it is part of the card's
+                        shape, and one without it sits short at the bottom.
+                        Only a toast on a clock drains it. */}
+                    <span
+                        aria-hidden
+                        style={
+                            dwell === null
+                                ? undefined
+                                : { animationDuration: `${dwell}ms` }
+                        }
+                        className={cn(
+                            "absolute inset-x-0 bottom-0 h-0.5 origin-left",
+                            dwell !== null && "animate-toast-countdown",
+                            line
+                        )}
+                    />
                 </div>
             </div>
         </li>

@@ -112,23 +112,27 @@ describe("ToastStack", () => {
         expect(screen.queryByText("Note lost")).not.toBeInTheDocument();
     });
 
-    it("draws a countdown line only on a toast that expires", async () => {
+    it("drains the line on a toast with a clock, and holds it on one without", async () => {
         const { container } = renderStack(
             <>
                 <Raise text="Saved" />
                 <Raise text="Note lost" type="error" severity="critical" />
             </>
         );
+        const lines = () => [
+            ...container.querySelectorAll("span[aria-hidden]"),
+        ];
 
         await raise("Saved");
-        expect(container.querySelector(".animate-toast-countdown")).toHaveStyle(
-            { animationDuration: `${DWELL_MS.low}ms` }
-        );
+        expect(lines()[0]).toHaveClass("animate-toast-countdown");
+        expect(lines()[0]).toHaveStyle({
+            animationDuration: `${DWELL_MS.low}ms`,
+        });
 
+        // Oldest first, so the critical one is the second line.
         await raise("Note lost");
-        expect(
-            container.querySelectorAll(".animate-toast-countdown")
-        ).toHaveLength(1);
+        expect(lines()).toHaveLength(2);
+        expect(lines()[1]).not.toHaveClass("animate-toast-countdown");
     });
 
     it("pushes the oldest out when a fourth arrives", async () => {
