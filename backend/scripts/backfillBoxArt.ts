@@ -350,6 +350,39 @@ const main = async () => {
   );
   logger.info({ appIds: authoritative.size }, "rawg app ids ready");
 
+  /* Correcting the head rather than filling the tail: these games may
+     already carry a name-matched guess, and RAWG's answer replaces it. */
+  if (options.recheck) {
+    const corrections = await inPool(
+      [...authoritative],
+      options.concurrency,
+      async ([id, appId]) => {
+        const url = steamBoxArtUrl(appId);
+        return (await hasArt(url)) === "yes" ? { id, url } : null;
+      },
+    );
+
+    let replaced = 0;
+    for (const correction of corrections) {
+      if (!correction || options.dryRun) continue;
+      const { error: writeError } = await db
+        .from("games")
+        .update({ box_art_url: correction.url })
+        .eq("id", correction.id);
+      if (writeError) {
+        logger.error({ err: writeError, id: correction.id }, "write failed");
+        process.exit(1);
+      }
+      replaced++;
+    }
+
+    logger.info(
+      { asked: authoritative.size, replaced },
+      options.dryRun ? "recheck dry run complete" : "recheck complete",
+    );
+    return;
+  }
+
   let lastId = options.fromId;
   let scanned = 0;
   let matched = 0;
