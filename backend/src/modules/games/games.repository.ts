@@ -27,7 +27,11 @@ export interface GamesRepository {
     /** Opt-in, read from the caller's profile. Off hides flagged games. */
     showSexualContent?: boolean,
   ): Promise<{ rows: GameRowWithPlatforms[]; total: number }>;
-  searchLocal(term: string, limit: number): Promise<GameRowWithPlatforms[]>;
+  searchLocal(
+    term: string,
+    limit: number,
+    showSexualContent: boolean,
+  ): Promise<GameRowWithPlatforms[]>;
   upsertMany(games: ExternalGame[]): Promise<number[]>;
   statusCounts(gameId: number): Promise<{
     byStatus: Record<string, number>;
@@ -183,11 +187,18 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     };
   },
 
-  async searchLocal(term, limit) {
-    const { data, error } = await db
+  async searchLocal(term, limit, showSexualContent) {
+    let builder = db
       .from("games")
       .select(SELECT_WITH_RELATIONS)
-      .ilike("title", `%${term}%`)
+      .ilike("title", `%${term}%`);
+
+    // The same rule the listing runs. Search had been the way round it.
+    if (!showSexualContent) {
+      builder = builder.eq("has_sexual_content", false);
+    }
+
+    const { data, error } = await builder
       .order("rawg_added_count", { ascending: false, nullsFirst: false })
       .limit(limit);
     if (error) throw error;

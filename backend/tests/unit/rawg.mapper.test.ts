@@ -379,6 +379,47 @@ describe("RAWG mapper", () => {
     ).toBe(true);
   });
 
+  /* RAWG's tags are contributed, not curated. A fifth of the games with
+     "Hentai" in the name carried no tag that marked them, and search handed
+     them to everyone. */
+  it("reads an untagged title that says what it is", () => {
+    for (const name of [
+      "Hentai Girl",
+      "3D Hentai Blackjack",
+      "Sex with a Vampire",
+      "MILKY BOOBS",
+      "Futanari Affairs",
+      "Porntris",
+      "Softporn Adventure",
+      "Boobserman",
+      "Magical MILFs",
+      "Lula: The Sexy Empire",
+      "Lewd Beach",
+    ]) {
+      expect(
+        toExternalGame({ ...rawgResponse, name, esrb_rating: null, tags: [] })
+          .hasSexualContent,
+      ).toBe(true);
+    }
+  });
+
+  /* The stems still start a word, so a county is a county. */
+  it("does not read it into a title that merely contains the letters", () => {
+    for (const name of [
+      "Essex Rally",
+      "Middlesex United",
+      "Nudge the Box",
+      "Sussex Farming Simulator",
+      "Milford Heaven - Luken's Chronicles",
+      "Asterix & Obelix XXXL: The Ram From Hibernia",
+    ]) {
+      expect(
+        toExternalGame({ ...rawgResponse, name, esrb_rating: null, tags: [] })
+          .hasSexualContent,
+      ).toBe(false);
+    }
+  });
+
   it("keeps the tag slugs, so the flag can be re-derived", () => {
     expect(
       toExternalGame({

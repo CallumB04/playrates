@@ -18,6 +18,7 @@ export interface ReviewRowJoined extends ReviewRow {
   vote_count: number;
   author_avatar_url: string | null;
   author_accent: string | null;
+  game_has_sexual_content: boolean;
   author_last_seen_at: string | null;
   game_title: string;
   game_slug: string;
@@ -44,6 +45,7 @@ export interface ReviewsRepository {
   listRecent(
     from: number,
     to: number,
+    showSexualContent: boolean,
   ): Promise<{ rows: ReviewRowJoined[]; total: number }>;
   findByUserAndGame(
     userId: string,
@@ -111,11 +113,19 @@ export const createReviewsRepository = (db: Db): ReviewsRepository => ({
     return { rows: (data ?? []) as ReviewRowJoined[], total: count ?? 0 };
   },
 
-  async listRecent(from, to) {
-    const { data, error, count } = await db
+  async listRecent(from, to, showSexualContent) {
+    let builder = db
       .from(CARDS)
       .select("*", { count: "exact" })
-      .eq("is_public", true)
+      .eq("is_public", true);
+
+    /* The front page is shown to people who went looking for neither this
+       review nor this game. */
+    if (!showSexualContent) {
+      builder = builder.eq("game_has_sexual_content", false);
+    }
+
+    const { data, error, count } = await builder
       // id breaks ties, or deep pages repeat and skip rows.
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })

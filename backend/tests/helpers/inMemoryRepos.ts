@@ -140,6 +140,7 @@ export const createInMemoryRepos = (
       vote_count: state.reviewVotes.filter((v) => v.review_id === r.id).length,
       author_avatar_url: author?.avatar_url ?? null,
       author_accent: author?.accent ?? null,
+      game_has_sexual_content: game?.has_sexual_content ?? false,
       author_last_seen_at: author?.last_seen_at ?? null,
       // The view inner-joins games, so a row without one cannot exist.
       game_title: game?.title ?? "",
@@ -272,9 +273,10 @@ export const createInMemoryRepos = (
           total: sorted.length,
         };
       },
-      async searchLocal(term, limit) {
+      async searchLocal(term, limit, showSexualContent) {
         return state.games
           .filter((g) => g.title.toLowerCase().includes(term.toLowerCase()))
+          .filter((g) => showSexualContent || !g.has_sexual_content)
           .slice(0, limit)
           .map(withPlatforms);
       },
@@ -631,9 +633,13 @@ export const createInMemoryRepos = (
         return state.reviewVotes.filter((v) => v.review_id === reviewId).length;
       },
 
-      async listRecent(from, to) {
+      async listRecent(from, to, showSexualContent) {
+        const explicit = new Set(
+          state.games.filter((g) => g.has_sexual_content).map((g) => g.id),
+        );
         const rows = state.reviews
           .filter((r) => r.is_public)
+          .filter((r) => showSexualContent || !explicit.has(r.game_id))
           .sort(
             (a, b) =>
               Date.parse(b.created_at) - Date.parse(a.created_at) ||
@@ -711,7 +717,7 @@ export const createInMemoryRepos = (
     },
 
     friends: {
-      async activityFor(viewerId, from, to) {
+      async activityFor(viewerId, from, to, showSexualContent) {
         const friendIds = new Set(
           state.friendships
             .filter(
@@ -744,11 +750,13 @@ export const createInMemoryRepos = (
               actor_username: actor?.username ?? "",
               actor_avatar_url: actor?.avatar_url ?? null,
               actor_accent: actor?.accent ?? null,
+              game_has_sexual_content: game?.has_sexual_content ?? false,
               actor_last_seen_at: actor?.last_seen_at ?? "",
               game_title: game?.title ?? "",
               game_cover_url: game?.cover_url ?? null,
             };
-          });
+          })
+          .filter((row) => showSexualContent || !row.game_has_sexual_content);
 
         return { rows: rows.slice(from, to + 1), total: rows.length };
       },

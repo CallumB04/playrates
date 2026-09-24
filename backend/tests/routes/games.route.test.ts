@@ -1,13 +1,21 @@
 import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import { AppError } from "../../src/lib/AppError.js";
-import { authHeader, buildTestApp, USER_A } from "../helpers/buildTestApp.js";
+import {
+  authHeader,
+  buildTestApp,
+  USER_A,
+  USER_B,
+} from "../helpers/buildTestApp.js";
 import {
   baseSeed,
   buildGame,
   buildGameLog,
   buildPlatform,
   buildPlatformSystem,
+  buildProfile,
+  buildFriendship,
+  buildReview,
 } from "../helpers/fixtures.js";
 import type {
   ExternalGame,
@@ -461,5 +469,123 @@ describe("the trending rail", () => {
     );
 
     expect(response.body.data).toHaveLength(0);
+  });
+});
+
+/* The filter existed and search went round it: a signed-in user with explicit
+   content off searched "hentai" and got it. */
+describe("explicit content stays hidden", () => {
+  const seed = () => ({
+    profiles: [buildProfile({ id: USER_A, show_sexual_content: false })],
+    games: [
+      buildGame({ id: 1, slug: "clean", title: "Hollow Knight" }),
+      buildGame({
+        id: 2,
+        slug: "explicit",
+        title: "Hentai Girl",
+        has_sexual_content: true,
+      }),
+    ],
+  });
+
+  const optedIn = () => ({
+    ...seed(),
+    profiles: [buildProfile({ id: USER_A, show_sexual_content: true })],
+  });
+
+  it("keeps it out of search for someone who has it off", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await request(app)
+      .get("/api/v1/games/search?q=hentai&remote=false")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(0);
+  });
+
+  it("keeps it out of the listing too", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await request(app)
+      .get("/api/v1/games?search=hentai")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.body.data).toHaveLength(0);
+  });
+
+  /* Hiding it from every listing and then serving it to anyone with the link
+     is not hiding it. */
+  it("will not serve its page either", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await request(app)
+      .get("/api/v1/games/2")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(404);
+  });
+
+  it("will not serve its page to someone signed out", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    expect((await request(app).get("/api/v1/games/2")).status).toBe(404);
+  });
+
+  it("still serves everything else", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const search = await request(app)
+      .get("/api/v1/games/search?q=hollow&remote=false")
+      .set("Authorization", authHeader(USER_A));
+    const page = await request(app).get("/api/v1/games/1");
+
+    expect(search.body.data).toHaveLength(1);
+    expect(page.status).toBe(200);
+  });
+
+  /* The front page is shown to people who went looking for neither. A
+     friend's choice to log it is not the viewer's choice to see it. */
+  it("keeps it out of recent reviews and the friend feed", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...seed(),
+        profiles: [
+          buildProfile({ id: USER_A, show_sexual_content: false }),
+          buildProfile({ id: USER_B, username: "friend" }),
+        ],
+        friendships: [
+          buildFriendship({
+            user_a_id: USER_A,
+            user_b_id: USER_B,
+            status: "accepted",
+          }),
+        ],
+        gameLogs: [buildGameLog({ id: 1, user_id: USER_B, game_id: 2 })],
+        reviews: [buildReview({ id: 1, user_id: USER_B, game_id: 2 })],
+      },
+    });
+
+    const reviews = await request(app).get("/api/v1/reviews");
+    const feed = await request(app)
+      .get("/api/v1/me/friends/activity")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(reviews.body.data).toHaveLength(0);
+    expect(feed.body.data).toHaveLength(0);
+  });
+
+  it("shows it to someone who has opted in", async () => {
+    const { app } = buildTestApp({ seed: optedIn() });
+
+    const search = await request(app)
+      .get("/api/v1/games/search?q=hentai&remote=false")
+      .set("Authorization", authHeader(USER_A));
+    const page = await request(app)
+      .get("/api/v1/games/2")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(search.body.data).toHaveLength(1);
+    expect(page.status).toBe(200);
   });
 });

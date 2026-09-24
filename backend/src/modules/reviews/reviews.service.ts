@@ -30,6 +30,12 @@ export const createReviewsService = (
   profiles: ProfilesRepository,
   games: GamesRepository,
 ) => {
+  /** Opt-in, so signed out and unknown both mean no. */
+  const canSeeExplicit = async (viewerId?: string): Promise<boolean> =>
+    viewerId
+      ? ((await profiles.findById(viewerId))?.show_sexual_content ?? false)
+      : false;
+
   /**
    * The view carries the author and the rating, so this is a pure mapping. A
    * missing author falls back to a placeholder — the FK should prevent it, but
@@ -131,7 +137,11 @@ export const createReviewsService = (
       viewerId?: string,
     ): Promise<Paginated<ReviewWithAuthor>> {
       const { from, to } = toRange(pagination);
-      const { rows, total } = await repo.listRecent(from, to);
+      const { rows, total } = await repo.listRecent(
+        from,
+        to,
+        await canSeeExplicit(viewerId),
+      );
       return paginate(
         withAuthors(rows, await votesFor(viewerId, rows)),
         pagination,

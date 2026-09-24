@@ -103,6 +103,31 @@ const STEAM_STORE_ID = 1;
  */
 const SEXUAL_ESRB_SLUGS = new Set(["adults-only"]);
 
+/**
+ * A title that says outright what the game is.
+ *
+ * RAWG's tags are contributed, not curated, and they miss: a fifth of the
+ * games with "Hentai" in the name carried no tag marking them at all, so the
+ * filter let them through. The title is the one thing such a game is never
+ * coy about.
+ *
+ * Substrings, not whole words. Anchoring to word boundaries let Softporn
+ * Adventure, Porntris, Boobserman, Milfylicious, QLewds and Simusex through,
+ * and every one of them came back from a search run with explicit content
+ * switched off.
+ *
+ * The exceptions are the collisions with ordinary English, each carved out
+ * by hand rather than by weakening the rule: the -sex counties, Milford,
+ * XXXL. "adult" only counts in a phrase — Adult Only, adult sim — because on
+ * its own it means grown-up, and it was hiding jigsaw puzzles and colouring
+ * books.
+ *
+ * It errs towards hiding: an opted-in viewer still sees everything, and the
+ * alternative is a child being shown a game called Hentai Girl.
+ */
+const SEXUAL_TITLE_PATTERN =
+  /hentai|futanari|nukige|nsfw|bdsm|porn|ecchi|eroge|erotic|ahegao|lewd|boob|pussy|nude|nudit|(?<!es)(?<!us)(?<!dle)sex|milf(?!ord)|(?<![a-z])xxx(?![a-z])|adults?[ -]*(only|game|sim|film|content|version)/i;
+
 const SEXUAL_TAG_SLUGS = new Set([
   "nsfw",
   "sexual-content",
@@ -294,7 +319,8 @@ export const toExternalGame = (game: RawgGame): ExternalGame => {
     contentTags: tagSlugs,
     hasSexualContent:
       SEXUAL_ESRB_SLUGS.has(game.esrb_rating?.slug ?? "") ||
-      tagSlugs.some((slug) => SEXUAL_TAG_SLUGS.has(slug)),
+      tagSlugs.some((slug) => SEXUAL_TAG_SLUGS.has(slug)) ||
+      SEXUAL_TITLE_PATTERN.test(game.name),
     metacritic: game.metacritic ?? null,
     rawgRating: game.rating ?? null,
     rawgRatingCount: game.ratings_count ?? null,

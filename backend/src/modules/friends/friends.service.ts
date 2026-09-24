@@ -44,117 +44,133 @@ const toEdge = (
 export const createFriendsService = (
   repo: FriendsRepository,
   profiles: ProfilesRepository,
-) => ({
-  async listForUser(
-    userId: string,
-    status?: FriendRelation,
-  ): Promise<FriendEdge[]> {
-    const rows = await repo.listForUser(userId);
-    const edges = rows
-      .map((row) => toEdge(row, userId))
-      .filter((e): e is FriendEdge => e !== null);
+) => {
+  /** Opt-in, so signed out and unknown both mean no. */
+  const canSeeExplicit = async (viewerId?: string): Promise<boolean> =>
+    viewerId
+      ? ((await profiles.findById(viewerId))?.show_sexual_content ?? false)
+      : false;
 
-    return status ? edges.filter((e) => e.status === status) : edges;
-  },
+  return {
+    async listForUser(
+      userId: string,
+      status?: FriendRelation,
+    ): Promise<FriendEdge[]> {
+      const rows = await repo.listForUser(userId);
+      const edges = rows
+        .map((row) => toEdge(row, userId))
+        .filter((e): e is FriendEdge => e !== null);
 
-  async listForUsername(
-    username: string,
-    status?: FriendRelation,
-  ): Promise<FriendEdge[]> {
-    const profile = await profiles.findByUsername(username);
-    if (!profile) throw AppError.notFound("Profile");
-    return this.listForUser(profile.id, status);
-  },
+      return status ? edges.filter((e) => e.status === status) : edges;
+    },
 
-  /** The requester is always the authenticated caller, never a supplied id. */
-  /** What the people you follow have been logging, newest first. */
-  async activityFor(
-    viewerId: string,
-    pagination: Pagination,
-  ): Promise<Paginated<FriendActivity>> {
-    const { from, to } = toRange(pagination);
-    const { rows, total } = await repo.activityFor(viewerId, from, to);
+    async listForUsername(
+      username: string,
+      status?: FriendRelation,
+    ): Promise<FriendEdge[]> {
+      const profile = await profiles.findByUsername(username);
+      if (!profile) throw AppError.notFound("Profile");
+      return this.listForUser(profile.id, status);
+    },
 
-    return paginate(
-      rows.map((row) => ({
-        logId: row.log_id,
-        actor: {
-          id: row.user_id,
-          username: row.actor_username,
-          avatarUrl: row.actor_avatar_url,
-          accent: toAccent(row.actor_accent),
-          bio: "",
-          online: isOnline(row.actor_last_seen_at),
-        },
-        game: {
-          id: row.game_id,
-          title: row.game_title,
-          coverUrl: row.game_cover_url,
-        },
-        status: row.status,
-        playedStatus: row.played_status,
-        rating: row.rating === null ? null : Number(row.rating),
-        hoursPlayed:
-          row.hours_played === null ? null : Number(row.hours_played),
-        at: row.updated_at,
-      })),
-      pagination,
-      total,
-    );
-  },
-
-  async sendRequest(callerId: string, targetId: string): Promise<FriendEdge> {
-    if (callerId === targetId) {
-      throw new AppError(
-        422,
-        "self_friend",
-        "You cannot send yourself a friend request",
+    /** The requester is always the authenticated caller, never a supplied id. */
+    /** What the people you follow have been logging, newest first. */
+    async activityFor(
+      viewerId: string,
+      pagination: Pagination,
+    ): Promise<Paginated<FriendActivity>> {
+      const { from, to } = toRange(pagination);
+      const { rows, total } = await repo.activityFor(
+        viewerId,
+        from,
+        to,
+        await canSeeExplicit(viewerId),
       );
-    }
 
-    const target = await profiles.findById(targetId);
-    if (!target) throw AppError.notFound("Profile");
-
-    // guards against a double click creating a second pending relationship
-    const existing = await repo.find(callerId, targetId);
-    if (existing) {
-      throw AppError.conflict(
-        "already_exists",
-        existing.status === "accepted"
-          ? "You are already friends with this user"
-          : "There is already a pending request with this user",
+      return paginate(
+        rows.map((row) => ({
+          logId: row.log_id,
+          actor: {
+            id: row.user_id,
+            username: row.actor_username,
+            avatarUrl: row.actor_avatar_url,
+            accent: toAccent(row.actor_accent),
+            bio: "",
+            online: isOnline(row.actor_last_seen_at),
+          },
+          game: {
+            id: row.game_id,
+            title: row.game_title,
+            coverUrl: row.game_cover_url,
+          },
+          status: row.status,
+          playedStatus: row.played_status,
+          rating: row.rating === null ? null : Number(row.rating),
+          hoursPlayed:
+            row.hours_played === null ? null : Number(row.hours_played),
+          at: row.updated_at,
+        })),
+        pagination,
+        total,
       );
-    }
+    },
 
-    const row = await repo.create(callerId, targetId);
-    const edge = toEdge(row, callerId);
-    if (!edge) throw AppError.internal("Friendship did not persist");
-    return edge;
-  },
+    async sendRequest(callerId: string, targetId: string): Promise<FriendEdge> {
+      if (callerId === targetId) {
+        throw new AppError(
+          422,
+          "self_friend",
+          "You cannot send yourself a friend request",
+        );
+      }
 
-  async acceptRequest(callerId: string, otherId: string): Promise<FriendEdge> {
-    const existing = await repo.find(callerId, otherId);
-    if (!existing || existing.status !== "pending") {
-      throw AppError.notFound("Friend request");
-    }
+      const target = await profiles.findById(targetId);
+      if (!target) throw AppError.notFound("Profile");
 
-    // only the recipient can accept
-    if (existing.requested_by === callerId) {
-      throw AppError.forbidden("You cannot accept your own request");
-    }
+      // guards against a double click creating a second pending relationship
+      const existing = await repo.find(callerId, targetId);
+      if (existing) {
+        throw AppError.conflict(
+          "already_exists",
+          existing.status === "accepted"
+            ? "You are already friends with this user"
+            : "There is already a pending request with this user",
+        );
+      }
 
-    const row = await repo.accept(callerId, otherId);
-    const edge = toEdge(row, callerId);
-    if (!edge) throw AppError.internal("Friendship did not persist");
-    return edge;
-  },
+      const row = await repo.create(callerId, targetId);
+      const edge = toEdge(row, callerId);
+      if (!edge) throw AppError.internal("Friendship did not persist");
+      return edge;
+    },
 
-  // Decline, cancel and unfriend are the same operation.
-  async removeRelationship(callerId: string, otherId: string): Promise<void> {
-    const existing = await repo.find(callerId, otherId);
-    if (!existing) throw AppError.notFound("Friendship");
-    await repo.remove(callerId, otherId);
-  },
-});
+    async acceptRequest(
+      callerId: string,
+      otherId: string,
+    ): Promise<FriendEdge> {
+      const existing = await repo.find(callerId, otherId);
+      if (!existing || existing.status !== "pending") {
+        throw AppError.notFound("Friend request");
+      }
+
+      // only the recipient can accept
+      if (existing.requested_by === callerId) {
+        throw AppError.forbidden("You cannot accept your own request");
+      }
+
+      const row = await repo.accept(callerId, otherId);
+      const edge = toEdge(row, callerId);
+      if (!edge) throw AppError.internal("Friendship did not persist");
+      return edge;
+    },
+
+    // Decline, cancel and unfriend are the same operation.
+    async removeRelationship(callerId: string, otherId: string): Promise<void> {
+      const existing = await repo.find(callerId, otherId);
+      if (!existing) throw AppError.notFound("Friendship");
+      await repo.remove(callerId, otherId);
+    },
+  };
+};
 
 export type FriendsService = ReturnType<typeof createFriendsService>;
