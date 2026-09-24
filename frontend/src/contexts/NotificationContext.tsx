@@ -2,51 +2,64 @@ import {
     createContext,
     useCallback,
     useContext,
-    useEffect,
     useMemo,
-    useState,
+    useReducer,
     type ReactNode,
 } from "react";
+import {
+    notificationQueue,
+    type NotificationSeverity,
+    type NotificationType,
+    type Toast,
+} from "./notificationQueue";
 
-export type NotificationType = "success" | "error" | "pending";
-
-interface ActiveNotification {
-    id: number;
-    text: string;
-    type: NotificationType;
-}
+export type { NotificationSeverity, NotificationType, Toast };
 
 interface NotificationContextValue {
-    notification: ActiveNotification | null;
-    notify: (text: string, type: NotificationType) => void;
+    toasts: Toast[];
+    notify: (
+        text: string,
+        type: NotificationType,
+        severity?: NotificationSeverity
+    ) => void;
+    /** Starts the exit; the toast asks to be removed once it has played. */
+    dismiss: (id: number) => void;
+    remove: (id: number) => void;
 }
 
 const NotificationContext = createContext<NotificationContextValue | null>(
     null
 );
 
-/** How long a toast stays on screen; matches the CSS fade animation. */
-const DISMISS_AFTER_MS = 7000;
+// A counter rather than Date.now(): two toasts raised in the same millisecond
+// would share a React key, and the second would inherit the first's timers.
+let nextId = 0;
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
-    const [notification, setNotification] = useState<ActiveNotification | null>(
-        null
+    const [toasts, dispatch] = useReducer(notificationQueue, []);
+
+    const notify = useCallback(
+        (
+            text: string,
+            type: NotificationType,
+            severity?: NotificationSeverity
+        ) => dispatch({ kind: "push", id: nextId++, text, type, severity }),
+        []
     );
 
-    // The id is the React key, so a new toast restarts the animation.
-    const notify = useCallback((text: string, type: NotificationType) => {
-        setNotification({ id: Date.now(), text, type });
-    }, []);
+    const dismiss = useCallback(
+        (id: number) => dispatch({ kind: "dismiss", id }),
+        []
+    );
 
-    useEffect(() => {
-        if (!notification) return;
-        const timer = setTimeout(() => setNotification(null), DISMISS_AFTER_MS);
-        return () => clearTimeout(timer);
-    }, [notification]);
+    const remove = useCallback(
+        (id: number) => dispatch({ kind: "remove", id }),
+        []
+    );
 
     const value = useMemo(
-        () => ({ notification, notify }),
-        [notification, notify]
+        () => ({ toasts, notify, dismiss, remove }),
+        [toasts, notify, dismiss, remove]
     );
 
     return (
@@ -66,5 +79,5 @@ export const useNotificationState = (): NotificationContextValue => {
     return context;
 };
 
-/** What most components want; the full state is only needed by the toast. */
+/** What most components want; the full state is only needed by the stack. */
 export const useNotify = () => useNotificationState().notify;

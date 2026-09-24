@@ -131,8 +131,14 @@ const CreateOrEditGameLogPopup = ({
                 await removeReview.mutateAsync(gameId);
             }
         } catch {
-            // The log did save, so don't imply a blanket failure.
-            notify("Entry saved, but your note didn't send", "error");
+            // The log did save, so don't imply a blanket failure. Critical
+            // because the note is the part the user wrote by hand: they have
+            // to see this, not catch it out of the corner of an eye.
+            notify(
+                "Entry saved, but your note didn't send",
+                "error",
+                "critical"
+            );
             viewUpdatedLog();
             return;
         }
