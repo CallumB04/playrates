@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Pencil } from "lucide-react";
+import { ArrowRight, Gamepad2, Pencil } from "lucide-react";
 import type { UserStats } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
 import { buttonClass } from "../../../components/ui/Button";
@@ -121,7 +121,7 @@ const ReEntryPlate = ({
             </div>
 
             <div className="flex flex-col gap-5">
-                {current?.game && (
+                {current?.game ? (
                     <button
                         type="button"
                         onClick={onUpdateLog}
@@ -154,6 +154,37 @@ const ReEntryPlate = ({
                             className="shrink-0 text-content-muted"
                         />
                     </button>
+                ) : (
+                    /* Same anatomy as the card above, so the plate is the same
+                       height whether or not anything is on the go — an empty
+                       right-hand column left it looking unfinished. */
+                    <Link
+                        to={
+                            backlogCount > 0
+                                ? `/user/${username}?type=backlog`
+                                : "/library"
+                        }
+                        className="flex w-full items-center gap-3.5 rounded-md border border-dashed border-subtle bg-surface-sunken/40 p-3 text-left lift hover:border-strong"
+                    >
+                        <span className="grid aspect-3/4 w-14 shrink-0 place-items-center rounded-xs border border-dashed border-strong bg-surface-sunken/60 text-content-muted">
+                            <Gamepad2 size={20} aria-hidden />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                            <span className="block text-body-sm font-medium text-content">
+                                Nothing on the go
+                            </span>
+                            <span className="mt-1 block text-label-sm text-content-muted">
+                                {backlogCount > 0
+                                    ? `Start one of the ${formatCount(backlogCount)} in your backlog`
+                                    : "Find something to play in the library"}
+                            </span>
+                        </span>
+                        <ArrowRight
+                            size={15}
+                            aria-hidden
+                            className="shrink-0 text-content-muted"
+                        />
+                    </Link>
                 )}
 
                 <div>
