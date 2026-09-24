@@ -11,7 +11,7 @@
  * from. Games whose assets live under a hashed path — mostly very recent
  * releases — have no art here and keep RAWG's image.
  */
-const LIBRARY_ART = (appId: string) =>
+export const steamBoxArtUrl = (appId: string) =>
   `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/library_600x900.jpg`;
 
 const STEAM_STORE_ID = 1;
@@ -46,7 +46,7 @@ export const findSteamBoxArt = async (
   const appId = steamAppId(links);
   if (!appId) return null;
 
-  const url = LIBRARY_ART(appId);
+  const url = steamBoxArtUrl(appId);
   try {
     const response = await fetchImpl(url, {
       method: "HEAD",
@@ -57,4 +57,54 @@ export const findSteamBoxArt = async (
     // Steam being unreachable is not a reason to fail the game's detail fetch.
     return null;
   }
+};
+
+/**
+ * A title reduced to what two catalogues can agree on: case, punctuation,
+ * trademark marks and accents all differ between RAWG and Steam for the same
+ * game ("ELDEN RING", "Elden Ring", "NieR:Automata™").
+ */
+export const normaliseTitle = (title: string): string =>
+  title
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]/g, "");
+
+/** Too short or too plain to identify a game on name alone. */
+const AMBIGUOUS_NAME = /^[0-9]*$/;
+const MIN_NAME_LENGTH = 3;
+
+/** Marks a name more than one app answers to. */
+const COLLIDED = Symbol("collided");
+
+export interface SteamApp {
+  appId: string;
+  name: string;
+}
+
+/**
+ * Names to app ids, with every name two apps share dropped rather than
+ * guessed at. A wrong cover is worse than the crop it would replace, and the
+ * per-game lookup still resolves those properly off RAWG's own store link
+ * when someone opens the game.
+ */
+export const indexByTitle = (apps: SteamApp[]): Map<string, string> => {
+  const seen = new Map<string, string | typeof COLLIDED>();
+
+  for (const app of apps) {
+    const key = normaliseTitle(app.name);
+    if (key.length < MIN_NAME_LENGTH || AMBIGUOUS_NAME.test(key)) continue;
+
+    const existing = seen.get(key);
+    if (existing === undefined) seen.set(key, app.appId);
+    else if (existing !== app.appId) seen.set(key, COLLIDED);
+  }
+
+  const index = new Map<string, string>();
+  for (const [key, appId] of seen) {
+    if (appId !== COLLIDED) index.set(key, appId);
+  }
+  return index;
 };
