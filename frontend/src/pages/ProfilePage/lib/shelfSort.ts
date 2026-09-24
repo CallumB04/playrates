@@ -14,38 +14,31 @@ interface SortOption {
     descending: string;
 }
 
-/** Ordered as the menu shows them: the two ratings, then time, then the rest. */
-export const SHELF_SORTS: SortOption[] = [
+const HIGH_LOW = { ascending: "Lowest first", descending: "Highest first" };
+const OLD_NEW = { ascending: "Oldest first", descending: "Newest first" };
+
+/**
+ * Ordered as the menu shows them: the scores, then time, then the rest.
+ *
+ * The first label depends on whose shelf it is — "Your rating" is wrong on
+ * someone else's profile, where the figure is theirs.
+ */
+export const shelfSortOptions = (isMyAccount: boolean): SortOption[] => [
     {
         value: "rating",
-        label: "Your rating",
-        ascending: "Lowest first",
-        descending: "Highest first",
+        label: isMyAccount ? "Your rating" : "User rating",
+        ...HIGH_LOW,
     },
-    {
-        value: "gameRating",
-        label: "Average rating",
-        ascending: "Lowest first",
-        descending: "Highest first",
-    },
-    {
-        value: "played",
-        label: "Recently played",
-        ascending: "Oldest first",
-        descending: "Newest first",
-    },
+    { value: "gameRating", label: "PlayRates average", ...HIGH_LOW },
+    { value: "metacritic", label: "Metacritic", ...HIGH_LOW },
+    { value: "played", label: "Recently played", ...OLD_NEW },
     {
         value: "title",
         label: "Title",
         ascending: "A to Z",
         descending: "Z to A",
     },
-    {
-        value: "released",
-        label: "Release date",
-        ascending: "Oldest first",
-        descending: "Newest first",
-    },
+    { value: "released", label: "Release date", ...OLD_NEW },
     {
         value: "completion",
         label: "Completion",
@@ -58,9 +51,18 @@ export const directionLabel = (
     sort: GameLogSort,
     direction: SortDirection
 ): string => {
-    const option = SHELF_SORTS.find((s) => s.value === sort) ?? SHELF_SORTS[0]!;
+    const options = shelfSortOptions(true);
+    const option = options.find((s) => s.value === sort) ?? options[0]!;
     return direction === "asc" ? option.ascending : option.descending;
 };
+
+/** The later of the two dates, which is what the shelf orders by. Both are
+ *  ISO, so a string sort is a date sort. */
+export const lastPlayed = (log: GameLogWithGame): string | null =>
+    [log.startDate, log.finishDate]
+        .filter((date): date is string => !!date)
+        .sort()
+        .at(-1) ?? null;
 
 /**
  * What a tile prints under its cover. A rating is handed back as a number for
@@ -82,8 +84,10 @@ export const shelfFoot = (
     switch (sort) {
         case "gameRating":
             return { rating: log.game?.avgRating ?? null };
+        case "metacritic":
+            return { value: log.game?.metacritic?.toString() ?? "—" };
         case "played":
-            return { value: formatMonthYearShort(log.updatedAt) };
+            return { value: formatMonthYearShort(lastPlayed(log)) };
         case "released":
             return { value: releaseYear(log.game?.releaseDate) };
         case "completion":

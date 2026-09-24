@@ -424,8 +424,16 @@ export const createInMemoryRepos = (
               return l.rating;
             case "gameRating":
               return game?.avg_rating ?? null;
+            case "metacritic":
+              return game?.metacritic ?? null;
             case "played":
-              return l.updated_at;
+              // Mirrors greatest(start_date, finish_date) in the database.
+              return (
+                [l.start_date, l.finish_date]
+                  .filter((d): d is string => !!d)
+                  .sort()
+                  .at(-1) ?? null
+              );
             case "title":
               return game?.title ?? null;
             case "released":
@@ -479,6 +487,7 @@ export const createInMemoryRepos = (
           finish_date: null,
           system_slug: null,
           completion: null,
+          last_played: null,
           platform_slug: null,
           achievements_total: null,
           achievements_completed: null,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { GAME_LOG_SORTS } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
-import { directionLabel, SHELF_SORTS, shelfFoot } from "./shelfSort";
+import { directionLabel, shelfFoot, shelfSortOptions } from "./shelfSort";
 
 const log = (overrides: Partial<GameLogWithGame> = {}): GameLogWithGame =>
     ({
@@ -28,24 +28,39 @@ const log = (overrides: Partial<GameLogWithGame> = {}): GameLogWithGame =>
             releaseDate: "2007-10-09",
             platforms: [],
             avgRating: 9.25,
+            metacritic: 90,
         },
         ...overrides,
     }) as GameLogWithGame;
 
-describe("SHELF_SORTS", () => {
+describe("shelfSortOptions", () => {
     it("offers every sort the API accepts", () => {
-        expect(SHELF_SORTS.map((s) => s.value).sort()).toEqual(
-            [...GAME_LOG_SORTS].sort()
-        );
+        expect(
+            shelfSortOptions(true)
+                .map((s) => s.value)
+                .sort()
+        ).toEqual([...GAME_LOG_SORTS].sort());
     });
 
     it("words both directions for each, since none of them is 'ascending'", () => {
-        for (const option of SHELF_SORTS) {
+        for (const option of shelfSortOptions(true)) {
             expect(option.ascending, option.value).not.toBe("");
-            expect(option.descending, option.value).not.toBe(
-                option.ascending
-            );
+            expect(option.descending, option.value).not.toBe(option.ascending);
         }
+    });
+
+    /* The figure belongs to whoever's profile it is, and "Your rating" on
+       someone else's shelf claims it is the viewer's. */
+    it("calls the rating yours only on your own profile", () => {
+        expect(shelfSortOptions(true)[0]!.label).toBe("Your rating");
+        expect(shelfSortOptions(false)[0]!.label).toBe("User rating");
+    });
+
+    it("names the site's own average as the site's", () => {
+        const average = shelfSortOptions(true).find(
+            (s) => s.value === "gameRating"
+        );
+        expect(average?.label).toBe("PlayRates average");
     });
 });
 
@@ -66,14 +81,48 @@ describe("shelfFoot", () => {
         expect(shelfFoot(log(), "gameRating")).toEqual({ rating: 9.25 });
     });
 
+    it("shows the metacritic score when that is the order", () => {
+        expect(shelfFoot(log(), "metacritic").value).toBe("90");
+    });
+
     /* "Sept", not "Sep" — en-GB's own abbreviation, and the same one
        formatReleaseShort already prints elsewhere. */
     it("shows a month and year for recently played", () => {
-        expect(shelfFoot(log(), "played").value).toBe("Sept 26");
+        const played = log({ startDate: "2026-09-14", finishDate: null });
+        expect(shelfFoot(played, "played").value).toBe("Sept 26");
+    });
+
+    /* The later of the two, and never updated_at — editing an old log must
+       not make it look recently played. */
+    it("reads recently played off the dates, not the row's timestamp", () => {
+        const both = log({
+            startDate: "2024-03-02",
+            finishDate: "2024-06-11",
+            updatedAt: "2026-09-14T00:00:00.000Z",
+        });
+        expect(shelfFoot(both, "played").value).toBe("Jun 24");
+    });
+
+    it("falls back to whichever date the log actually has", () => {
         expect(
-            shelfFoot(log({ updatedAt: "2024-03-02T00:00:00.000Z" }), "played")
+            shelfFoot(
+                log({ startDate: "2021-02-01", finishDate: null }),
+                "played"
+            ).value
+        ).toBe("Feb 21");
+        expect(
+            shelfFoot(
+                log({ startDate: null, finishDate: "2019-12-25" }),
+                "played"
+            ).value
+        ).toBe("Dec 19");
+    });
+
+    it("shows a dash for a log with neither date", () => {
+        expect(
+            shelfFoot(log({ startDate: null, finishDate: null }), "played")
                 .value
-        ).toBe("Mar 24");
+        ).toBe("—");
     });
 
     it("shows a year alone for release date", () => {

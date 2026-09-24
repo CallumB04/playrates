@@ -12,7 +12,10 @@ const SELECT_WITH_GAME = "*, game:games(*, game_platforms(platform_slug))";
 const SORT_COLUMNS: Record<GameLogSort, string> = {
   rating: "rating",
   gameRating: "game(avg_rating)",
-  played: "updated_at",
+  metacritic: "game(metacritic)",
+  /* When it was played, not when the row was last written — editing an old
+     log should not move it to the top of the shelf. */
+  played: "last_played",
   title: "game(title)",
   released: "game(release_date)",
   completion: "completion",

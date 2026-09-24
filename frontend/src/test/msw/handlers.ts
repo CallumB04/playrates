@@ -83,6 +83,7 @@ export const buildGameLog = (
         releaseDate: "2015-05-18",
         platforms: ["steam"],
         avgRating: 9.1,
+        metacritic: 92,
     },
     ...overrides,
 });

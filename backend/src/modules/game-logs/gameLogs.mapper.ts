@@ -22,8 +22,9 @@ export interface GameLogWithGame extends GameLog {
     | "coverUrl"
     | "releaseDate"
     | "platforms"
-    /** So a shelf ordered by it can print what it ordered on. */
+    /** So a shelf ordered by one of these can print what it ordered on. */
     | "avgRating"
+    | "metacritic"
   > | null;
 }
 
@@ -62,6 +63,7 @@ export const toGameLogWithGame = (row: GameLogRowWithGame): GameLogWithGame => {
       releaseDate: game.releaseDate,
       platforms: game.platforms,
       avgRating: game.avgRating,
+      metacritic: game.metacritic,
     },
   };
 };

@@ -104,6 +104,8 @@ export interface GameLogRow {
   achievements_completed: number | null;
   /** Generated: completed / total, null when there is nothing to divide. */
   completion: number | null;
+  /** Generated: the later of start and finish, null when neither is set. */
+  last_played: string | null;
   created_at: string;
   updated_at: string;
 }

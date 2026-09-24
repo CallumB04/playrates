@@ -221,13 +221,19 @@ describe("game logs", () => {
     const seed = () => ({
       ...baseSeed(),
       games: [
-        buildGame({ id: 1, title: "Alpha", release_date: "2020-01-01" }),
+        buildGame({
+          id: 1,
+          title: "Alpha",
+          release_date: "2020-01-01",
+          metacritic: 70,
+        }),
         buildGame({
           id: 2,
           slug: "beta",
           title: "Beta",
           release_date: "2010-01-01",
           avg_rating: 9,
+          metacritic: 95,
         }),
         buildGame({
           id: 3,
@@ -235,6 +241,7 @@ describe("game logs", () => {
           title: "Gamma",
           release_date: "2015-01-01",
           avg_rating: 4,
+          metacritic: 60,
         }),
       ],
       gameLogs: [
@@ -242,7 +249,9 @@ describe("game logs", () => {
           id: 1,
           game_id: 1,
           rating: 5,
-          updated_at: "2026-01-01T00:00:00.000Z",
+          start_date: "2019-01-01",
+          // Edited yesterday, played years ago.
+          updated_at: "2026-09-01T00:00:00.000Z",
           achievements_total: 10,
           achievements_completed: 1,
         }),
@@ -250,7 +259,9 @@ describe("game logs", () => {
           id: 2,
           game_id: 2,
           rating: 9,
-          updated_at: "2026-03-01T00:00:00.000Z",
+          start_date: "2021-01-01",
+          finish_date: "2021-06-01",
+          updated_at: "2026-01-01T00:00:00.000Z",
           achievements_total: 10,
           achievements_completed: 9,
         }),
@@ -258,6 +269,7 @@ describe("game logs", () => {
           id: 3,
           game_id: 3,
           rating: 7,
+          start_date: "2020-05-01",
           updated_at: "2026-02-01T00:00:00.000Z",
         }),
       ],
@@ -294,11 +306,21 @@ describe("game logs", () => {
       ]);
     });
 
-    it("orders by when the log was last touched", async () => {
+    /* Off the dates on the log, not the row's timestamp — Alpha was edited
+       most recently of the three and was played first of the three. */
+    it("orders by when the game was played, not when the row was written", async () => {
       expect(await titles("sort=played&direction=desc")).toEqual([
         "Beta",
         "Gamma",
         "Alpha",
+      ]);
+    });
+
+    it("orders by the critic score", async () => {
+      expect(await titles("sort=metacritic&direction=desc")).toEqual([
+        "Beta",
+        "Alpha",
+        "Gamma",
       ]);
     });
 

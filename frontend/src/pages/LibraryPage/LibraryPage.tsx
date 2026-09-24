@@ -26,15 +26,12 @@ import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup"
 import LibraryFilters from "./components/LibraryFilters";
 import { getLibraryGamesPerPage } from "./lib/gamesPerPage";
 import { useLibraryQuery } from "./lib/useLibraryQuery";
+import { libraryFoot } from "./lib/libraryFoot";
 import {
     STATUS_PRESENTATION,
     displayStatusFor,
 } from "../../constants/gameStatus";
-import {
-    formatCount,
-    formatRatingOutOfTen,
-    releaseYear,
-} from "../../lib/format";
+import { formatCount, formatRatingOutOfTen } from "../../lib/format";
 
 type OpenModal =
     | { kind: "view"; log: GameLogWithGame }
@@ -232,6 +229,8 @@ const LibraryPage = () => {
                 >
                     {games.map((game) => {
                         const log = logByGameId.get(game.id);
+                        // The grid shows whatever it is ordered by.
+                        const foot = libraryFoot(game, query.sort, log);
                         return (
                             <GameTile
                                 key={game.id}
@@ -241,8 +240,8 @@ const LibraryPage = () => {
                                 platformSlugs={game.platforms}
                                 platforms={platforms ?? []}
                                 // Brand figure only with a real rating behind it.
-                                rating={log ? log.rating : undefined}
-                                footValue={releaseYear(game.releaseDate)}
+                                rating={foot.rating}
+                                footValue={foot.value}
                                 status={
                                     log
                                         ? displayStatusFor(

@@ -338,6 +338,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                         <ShelfSort
                             sort={sort}
                             direction={direction}
+                            isMyAccount={isMyAccount}
                             onChange={setOrder}
                         />
                     </div>

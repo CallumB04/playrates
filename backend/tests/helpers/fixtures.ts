@@ -79,6 +79,7 @@ export const buildGameLog = (
   achievements_total: null,
   achievements_completed: null,
   completion: null,
+  last_played: null,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,
   ...overrides,
