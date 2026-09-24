@@ -89,54 +89,50 @@ const AvatarField = ({
                     link={false}
                 />
 
-                <div className="flex min-w-0 flex-col gap-2">
-                    <p className="text-body-sm text-content">Your picture</p>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                        {/* A label rather than a button: the file input is the
-                            control, and clicking its label opens the picker
-                            without any script. */}
-                        <label
-                            htmlFor={inputId}
-                            className={cn(
-                                buttonClass("secondary", undefined, "sm"),
-                                "min-h-11 sm:min-h-9",
-                                busy && "pointer-events-none opacity-60"
-                            )}
-                        >
-                            {working
-                                ? "Preparing…"
-                                : disabled
-                                  ? "Saving…"
-                                  : shown
-                                    ? "Change"
-                                    : "Upload"}
-                        </label>
-                        <input
-                            id={inputId}
-                            ref={input}
-                            type="file"
-                            accept="image/*"
-                            disabled={busy}
-                            className="sr-only"
-                            onChange={(e) => void pick(e.target.files?.[0])}
-                        />
-
-                        {canRemove && (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="min-h-11 sm:min-h-9"
-                                onClick={() => {
-                                    setError(null);
-                                    onChange({ kind: "removed" });
-                                }}
-                            >
-                                Remove
-                            </Button>
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    {/* A label rather than a button: the file input is the
+                        control, and clicking its label opens the picker
+                        without any script. */}
+                    <label
+                        htmlFor={inputId}
+                        className={cn(
+                            buttonClass("secondary", undefined, "sm"),
+                            "min-h-11 sm:min-h-9",
+                            busy && "pointer-events-none opacity-60"
                         )}
-                    </div>
+                    >
+                        {working
+                            ? "Preparing…"
+                            : disabled
+                              ? "Saving…"
+                              : shown
+                                ? "Change"
+                                : "Upload"}
+                    </label>
+                    <input
+                        id={inputId}
+                        ref={input}
+                        type="file"
+                        accept="image/*"
+                        disabled={busy}
+                        className="sr-only"
+                        onChange={(e) => void pick(e.target.files?.[0])}
+                    />
+
+                    {canRemove && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="min-h-11 sm:min-h-9"
+                            onClick={() => {
+                                setError(null);
+                                onChange({ kind: "removed" });
+                            }}
+                        >
+                            Remove
+                        </Button>
+                    )}
                 </div>
             </div>
 
