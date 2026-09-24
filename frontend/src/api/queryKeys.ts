@@ -23,12 +23,30 @@ export const queryKeys = {
     },
 
     gameLogs: {
-        // Page is part of the key, or two pages collide in the cache.
-        mine: (status?: string, page?: number) =>
-            ["gamelogs", "me", status ?? "all", page ?? 1] as const,
+        /* Page, sort and direction are all part of the key — each names a
+           different set of rows, and sharing a key caches them as one. */
+        mine: (status?: string, page?: number, order?: string) =>
+            [
+                "gamelogs",
+                "me",
+                status ?? "all",
+                page ?? 1,
+                order ?? "",
+            ] as const,
         mineIds: ["gamelogs", "me", "ids"] as const,
-        byUsername: (username: string, status?: string, page?: number) =>
-            ["gamelogs", username, status ?? "all", page ?? 1] as const,
+        byUsername: (
+            username: string,
+            status?: string,
+            page?: number,
+            order?: string
+        ) =>
+            [
+                "gamelogs",
+                username,
+                status ?? "all",
+                page ?? 1,
+                order ?? "",
+            ] as const,
     },
 
     userStats: (username: string, year?: number) =>

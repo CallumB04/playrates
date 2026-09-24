@@ -102,6 +102,8 @@ export interface GameLogRow {
   system_slug: string | null;
   achievements_total: number | null;
   achievements_completed: number | null;
+  /** Generated: completed / total, null when there is nothing to divide. */
+  completion: number | null;
   created_at: string;
   updated_at: string;
 }

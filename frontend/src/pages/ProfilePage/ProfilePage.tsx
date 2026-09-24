@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Moon, Pencil, Settings, Sun } from "lucide-react";
 import type { GameLogWithGame } from "../../api";
+import {
+    GAME_LOG_SORTS,
+    type GameLogSort,
+    type SortDirection,
+} from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
@@ -27,6 +32,7 @@ import ProfileError from "./components/ProfileError";
 import MemberFileHeader from "./components/MemberFileHeader";
 import FriendAction from "./components/FriendAction";
 import ShelfPanel from "./components/ShelfPanel";
+import ShelfSort from "./components/ShelfSort";
 import RecentReviews from "./components/RecentReviews";
 import FriendsPanel from "./components/FriendsPanel";
 import ProfileModals, { type ProfileModal } from "./components/ProfileModals";
@@ -60,6 +66,15 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const page = Math.max(1, Number(params.get("page")) || 1);
     const deepLinkedLog = params.get("log");
 
+    /* In the URL alongside the tab, so a sorted shelf survives a reload and
+       can be linked to. Anything unrecognised falls back to the default. */
+    const rawSort = params.get("sort");
+    const sort: GameLogSort = GAME_LOG_SORTS.includes(rawSort as GameLogSort)
+        ? (rawSort as GameLogSort)
+        : "rating";
+    const direction: SortDirection =
+        params.get("direction") === "asc" ? "asc" : "desc";
+
     const [modal, setModal] = useState<ProfileModal>(null);
     const perPage = getProfileGamesPerPage(width);
 
@@ -79,7 +94,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const { data: logsPage, isLoading: logsLoading } = useUserGameLogs(
         targetUsername,
         activeSection,
-        { page, limit: perPage }
+        { page, limit: perPage, sort, direction }
     );
     const { data: stats } = useUserStats(targetUsername);
     const { data: platforms } = usePlatforms();
@@ -104,6 +119,17 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
             setParams(updated);
         },
     });
+
+    const setOrder = (next: {
+        sort?: GameLogSort;
+        direction?: SortDirection;
+    }) => {
+        const updated = new URLSearchParams(params);
+        if (next.sort) updated.set("sort", next.sort);
+        if (next.direction) updated.set("direction", next.direction);
+        updated.delete("page"); // a reordered shelf starts again at the top
+        setParams(updated);
+    };
 
     const setSection = (status: GameStatus) => {
         const updated = new URLSearchParams(params);
@@ -296,16 +322,25 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 perPage={perPage}
                 buildTileActions={buildTileActions}
                 isMyAccount={isMyAccount}
+                sort={sort}
                 trailing={
-                    !isMyAccount && myLogIds ? (
-                        <span className="text-label text-accent">
-                            {formatCount(
-                                logs.filter((l) => myLogGameIds.has(l.gameId))
-                                    .length
-                            )}{" "}
-                            in common
-                        </span>
-                    ) : undefined
+                    <div className="flex items-center gap-3">
+                        {!isMyAccount && myLogIds && (
+                            <span className="text-label text-accent max-sm:hidden">
+                                {formatCount(
+                                    logs.filter((l) =>
+                                        myLogGameIds.has(l.gameId)
+                                    ).length
+                                )}{" "}
+                                in common
+                            </span>
+                        )}
+                        <ShelfSort
+                            sort={sort}
+                            direction={direction}
+                            onChange={setOrder}
+                        />
+                    </div>
                 }
             />
 

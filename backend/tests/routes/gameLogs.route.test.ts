@@ -6,7 +6,7 @@ import {
   USER_A,
   USER_B,
 } from "../helpers/buildTestApp.js";
-import { baseSeed, buildGameLog } from "../helpers/fixtures.js";
+import { baseSeed, buildGame, buildGameLog } from "../helpers/fixtures.js";
 
 const validLog = {
   status: "played",
@@ -213,5 +213,133 @@ describe("game logs", () => {
 
     expect(response.body.data).toHaveLength(1);
     expect(response.body.data[0].status).toBe("backlog");
+  });
+
+  describe("ordering a shelf", () => {
+    /* Three games and three logs, each field deliberately disagreeing with
+       the others so every sort has a distinct right answer. */
+    const seed = () => ({
+      ...baseSeed(),
+      games: [
+        buildGame({ id: 1, title: "Alpha", release_date: "2020-01-01" }),
+        buildGame({
+          id: 2,
+          slug: "beta",
+          title: "Beta",
+          release_date: "2010-01-01",
+          avg_rating: 9,
+        }),
+        buildGame({
+          id: 3,
+          slug: "gamma",
+          title: "Gamma",
+          release_date: "2015-01-01",
+          avg_rating: 4,
+        }),
+      ],
+      gameLogs: [
+        buildGameLog({
+          id: 1,
+          game_id: 1,
+          rating: 5,
+          updated_at: "2026-01-01T00:00:00.000Z",
+          achievements_total: 10,
+          achievements_completed: 1,
+        }),
+        buildGameLog({
+          id: 2,
+          game_id: 2,
+          rating: 9,
+          updated_at: "2026-03-01T00:00:00.000Z",
+          achievements_total: 10,
+          achievements_completed: 9,
+        }),
+        buildGameLog({
+          id: 3,
+          game_id: 3,
+          rating: 7,
+          updated_at: "2026-02-01T00:00:00.000Z",
+        }),
+      ],
+    });
+
+    const titles = async (query: string) => {
+      const { app } = buildTestApp({ seed: seed() });
+      const response = await request(app)
+        .get(`/api/v1/me/game-logs?${query}`)
+        .set("Authorization", authHeader(USER_A));
+      expect(response.status).toBe(200);
+      return response.body.data.map(
+        (log: { game: { title: string } | null }) => log.game?.title,
+      );
+    };
+
+    it("orders by the caller's own rating, highest first, by default", async () => {
+      expect(await titles("")).toEqual(["Beta", "Gamma", "Alpha"]);
+    });
+
+    it("turns any sort around", async () => {
+      expect(await titles("sort=rating&direction=asc")).toEqual([
+        "Alpha",
+        "Gamma",
+        "Beta",
+      ]);
+    });
+
+    it("orders by the game's average rather than the caller's", async () => {
+      expect(await titles("sort=gameRating&direction=desc")).toEqual([
+        "Beta",
+        "Gamma",
+        "Alpha",
+      ]);
+    });
+
+    it("orders by when the log was last touched", async () => {
+      expect(await titles("sort=played&direction=desc")).toEqual([
+        "Beta",
+        "Gamma",
+        "Alpha",
+      ]);
+    });
+
+    it("orders by title", async () => {
+      expect(await titles("sort=title&direction=asc")).toEqual([
+        "Alpha",
+        "Beta",
+        "Gamma",
+      ]);
+    });
+
+    it("orders by release date", async () => {
+      expect(await titles("sort=released&direction=asc")).toEqual([
+        "Beta",
+        "Gamma",
+        "Alpha",
+      ]);
+    });
+
+    it("orders by achievement completion", async () => {
+      expect(await titles("sort=completion&direction=desc")).toEqual([
+        "Beta",
+        "Alpha",
+        "Gamma",
+      ]);
+    });
+
+    /* A shelf sorted by something half of it has no value for should not put
+       the blanks first just because the arrow was flipped. */
+    it("leaves logs with nothing to sort on at the end either way", async () => {
+      const ascending = await titles("sort=completion&direction=asc");
+      expect(ascending).toEqual(["Alpha", "Beta", "Gamma"]);
+      expect(ascending.at(-1)).toBe("Gamma");
+    });
+
+    it("refuses a sort it does not have", async () => {
+      const { app } = buildTestApp({ seed: seed() });
+      const response = await request(app)
+        .get("/api/v1/me/game-logs?sort=hours")
+        .set("Authorization", authHeader(USER_A));
+      expect(response.status).toBe(422);
+    });
   });
 });

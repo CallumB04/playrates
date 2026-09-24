@@ -82,6 +82,7 @@ export const buildGameLog = (
         coverUrl: "https://example.test/witcher.jpg",
         releaseDate: "2015-05-18",
         platforms: ["steam"],
+        avgRating: 9.1,
     },
     ...overrides,
 });

@@ -1,6 +1,8 @@
 import type {
     Game,
     GameLog,
+    GameLogSort,
+    SortDirection,
     GameLogInput,
     GameLogPatch,
     GameLogSummary,
@@ -14,7 +16,13 @@ import { compactParams } from "./games";
 export interface GameLogWithGame extends GameLog {
     game: Pick<
         Game,
-        "id" | "title" | "slug" | "coverUrl" | "releaseDate" | "platforms"
+        | "id"
+        | "title"
+        | "slug"
+        | "coverUrl"
+        | "releaseDate"
+        | "platforms"
+        | "avgRating"
     > | null;
 }
 
@@ -22,6 +30,8 @@ export interface GameLogPage {
     status?: string;
     page?: number;
     limit?: number;
+    sort?: GameLogSort;
+    direction?: SortDirection;
 }
 
 export const fetchMyGameLogs = async (

@@ -16,7 +16,14 @@ export interface GameLogRowWithGame extends GameLogRow {
 export interface GameLogWithGame extends GameLog {
   game: Pick<
     Game,
-    "id" | "title" | "slug" | "coverUrl" | "releaseDate" | "platforms"
+    | "id"
+    | "title"
+    | "slug"
+    | "coverUrl"
+    | "releaseDate"
+    | "platforms"
+    /** So a shelf ordered by it can print what it ordered on. */
+    | "avgRating"
   > | null;
 }
 
@@ -54,6 +61,7 @@ export const toGameLogWithGame = (row: GameLogRowWithGame): GameLogWithGame => {
       coverUrl: game.coverUrl,
       releaseDate: game.releaseDate,
       platforms: game.platforms,
+      avgRating: game.avgRating,
     },
   };
 };

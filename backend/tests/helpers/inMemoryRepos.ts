@@ -403,13 +403,53 @@ export const createInMemoryRepos = (
     },
 
     gameLogs: {
-      async listByUser(userId, status, from, to) {
+      async listByUser(userId, query, from, to) {
         const rows = state.gameLogs.filter(
-          (l) => l.user_id === userId && (status ? l.status === status : true),
+          (l) =>
+            l.user_id === userId &&
+            (query.status ? l.status === query.status : true),
         );
+
+        /* Derived rather than read off the row, which is what the generated
+           column in the database holds. */
+        const completion = (l: GameLogRow) =>
+          l.achievements_total
+            ? (l.achievements_completed ?? 0) / l.achievements_total
+            : null;
+
+        const sortKey = (l: GameLogRow): string | number | null => {
+          const game = state.games.find((g) => g.id === l.game_id);
+          switch (query.sort) {
+            case "rating":
+              return l.rating;
+            case "gameRating":
+              return game?.avg_rating ?? null;
+            case "played":
+              return l.updated_at;
+            case "title":
+              return game?.title ?? null;
+            case "released":
+              return game?.release_date ?? null;
+            case "completion":
+              return completion(l);
+          }
+        };
+
+        const sorted = [...rows].sort((a, b) => {
+          const x = sortKey(a);
+          const y = sortKey(b);
+          // Nothing to sort on goes last whichever way the rest is facing.
+          if (x === null && y === null) return b.id - a.id;
+          if (x === null) return 1;
+          if (y === null) return -1;
+          if (x === y) return b.id - a.id;
+          const ahead = x < y ? -1 : 1;
+          return query.direction === "asc" ? ahead : -ahead;
+        });
+
         return {
-          rows: rows.slice(from, to + 1).map(withGame),
-          total: rows.length,
+          rows: sorted.slice(from, to + 1).map(withGame),
+          total: sorted.length,
         };
       },
       async findByUserAndGame(userId, gameId) {
@@ -438,6 +478,7 @@ export const createInMemoryRepos = (
           start_date: null,
           finish_date: null,
           system_slug: null,
+          completion: null,
           platform_slug: null,
           achievements_total: null,
           achievements_completed: null,

@@ -78,6 +78,7 @@ export const buildGameLog = (
   system_slug: "steam",
   achievements_total: null,
   achievements_completed: null,
+  completion: null,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,
   ...overrides,

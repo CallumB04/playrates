@@ -1,13 +1,35 @@
+import type { GameLogSort, SortDirection } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
 import type { GameLogRow } from "../../types/database.types.js";
 import type { GameLogRowWithGame } from "./gameLogs.mapper.js";
 
 const SELECT_WITH_GAME = "*, game:games(*, game_platforms(platform_slug))";
 
+/**
+ * The column each sort orders by. Three live on the game rather than the log,
+ * and PostgREST spells ordering a row by its embedded to-one as `game(col)`.
+ */
+const SORT_COLUMNS: Record<GameLogSort, string> = {
+  rating: "rating",
+  gameRating: "game(avg_rating)",
+  played: "updated_at",
+  title: "game(title)",
+  released: "game(release_date)",
+  completion: "completion",
+};
+
+/** What a shelf is filtered and ordered by. Bundled rather than threaded
+ *  through three layers as loose arguments. */
+export interface ShelfQuery {
+  status?: string;
+  sort: GameLogSort;
+  direction: SortDirection;
+}
+
 export interface GameLogsRepository {
   listByUser(
     userId: string,
-    status: string | undefined,
+    query: ShelfQuery,
     from: number,
     to: number,
   ): Promise<{ rows: GameLogRowWithGame[]; total: number }>;
@@ -44,16 +66,23 @@ export interface UserLogStats {
 }
 
 export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
-  async listByUser(userId, status, from, to) {
+  async listByUser(userId, query, from, to) {
     let builder = db
       .from("game_logs")
       .select(SELECT_WITH_GAME, { count: "exact" })
       .eq("user_id", userId);
 
-    if (status) builder = builder.eq("status", status);
+    if (query.status) builder = builder.eq("status", query.status);
 
     const { data, error, count } = await builder
-      .order("updated_at", { ascending: false })
+      .order(SORT_COLUMNS[query.sort], {
+        ascending: query.direction === "asc",
+        /* A log with nothing to sort on goes last either way. Reversing the
+           direction should not float the blanks to the top. */
+        nullsFirst: false,
+      })
+      // Ties are common — unrated shelves sort entirely on the tiebreaker.
+      .order("id", { ascending: false })
       .range(from, to);
     if (error) throw error;
     return { rows: (data ?? []) as GameLogRowWithGame[], total: count ?? 0 };

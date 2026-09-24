@@ -17,10 +17,14 @@ import {
 } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 
+/** The ordering, flattened for a cache key. */
+const orderKey = (page?: GameLogPage) =>
+    `${page?.sort ?? ""}:${page?.direction ?? ""}`;
+
 export const useMyGameLogs = (status?: string, page?: GameLogPage) => {
     const { user } = useAuth();
     return useQuery({
-        queryKey: queryKeys.gameLogs.mine(status, page?.page),
+        queryKey: queryKeys.gameLogs.mine(status, page?.page, orderKey(page)),
         queryFn: () => fetchMyGameLogs(status, page),
         enabled: !!user,
         placeholderData: keepPreviousData,
@@ -33,7 +37,12 @@ export const useUserGameLogs = (
     page?: GameLogPage
 ) =>
     useQuery({
-        queryKey: queryKeys.gameLogs.byUsername(username, status, page?.page),
+        queryKey: queryKeys.gameLogs.byUsername(
+            username,
+            status,
+            page?.page,
+            orderKey(page)
+        ),
         queryFn: () => fetchUserGameLogs(username, status, page),
         enabled: !!username,
         placeholderData: keepPreviousData,

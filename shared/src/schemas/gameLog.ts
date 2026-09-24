@@ -90,8 +90,30 @@ export type GameLogPatch = z.infer<
   ReturnType<typeof GameLogFieldsSchema.partial>
 >;
 
+/**
+ * How a shelf is ordered. Two of these sort on the game rather than the log,
+ * and every one of them decides what figure the tile prints underneath, so the
+ * ordering is legible rather than mysterious.
+ */
+export const GAME_LOG_SORTS = [
+  "rating",
+  "gameRating",
+  "played",
+  "title",
+  "released",
+  "completion",
+] as const;
+
+export const GameLogSortSchema = z.enum(GAME_LOG_SORTS).default("rating");
+export type GameLogSort = (typeof GAME_LOG_SORTS)[number];
+
+export const SortDirectionSchema = z.enum(["asc", "desc"]).default("desc");
+export type SortDirection = z.infer<typeof SortDirectionSchema>;
+
 export const GameLogQuerySchema = z.object({
   status: GameStatusSchema.optional(),
+  sort: GameLogSortSchema,
+  direction: SortDirectionSchema,
 });
 
 /** `id` is the log's own id; `gameId` is the game it refers to. */

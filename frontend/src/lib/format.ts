@@ -125,6 +125,14 @@ export const formatMonthYear = (iso: string | null | undefined): string =>
           )
         : "—";
 
+/** "Sep 26" — the tightest a month and year go, for a figure under a tile. */
+export const formatMonthYearShort = (iso: string | null | undefined): string =>
+    iso
+        ? formatter({ month: "short", year: "2-digit" }, zoneFor(iso)).format(
+              new Date(iso)
+          )
+        : "—";
+
 /** "11 Feb 2026". */
 export const formatDate = (iso: string | null | undefined): string =>
     iso

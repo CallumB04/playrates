@@ -36,10 +36,15 @@ export const createMyGameLogsRouter = ({
   router.use(requireAuth);
 
   router.get("/", validate({ query: ListQuerySchema }), async (req, res) => {
-    const { status, ...pagination } = req.valid!.query as z.infer<
-      typeof ListQuerySchema
-    >;
-    res.json(await service.listForUser(callerId(req), status, pagination));
+    const { status, sort, direction, ...pagination } = req.valid!
+      .query as z.infer<typeof ListQuerySchema>;
+    res.json(
+      await service.listForUser(
+        callerId(req),
+        { status, sort, direction },
+        pagination,
+      ),
+    );
   });
 
   /* Before /:gameId, or "ids" is parsed as a game id. */
@@ -108,10 +113,15 @@ export const createUserGameLogsRouter = ({
     validate({ params: UsernameParamSchema, query: ListQuerySchema }),
     async (req, res) => {
       const { username } = req.valid!.params as { username: string };
-      const { status, ...pagination } = req.valid!.query as z.infer<
-        typeof ListQuerySchema
-      >;
-      res.json(await service.listForUsername(username, status, pagination));
+      const { status, sort, direction, ...pagination } = req.valid!
+        .query as z.infer<typeof ListQuerySchema>;
+      res.json(
+        await service.listForUsername(
+          username,
+          { status, sort, direction },
+          pagination,
+        ),
+      );
     },
   );
 

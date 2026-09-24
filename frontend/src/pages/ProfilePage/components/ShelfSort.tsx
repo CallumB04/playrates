@@ -1,0 +1,50 @@
+import { ArrowDownWideNarrow, ArrowUpNarrowWide } from "lucide-react";
+import type { GameLogSort, SortDirection } from "@playrates/shared";
+import Dropdown from "../../../components/ui/Dropdown";
+import { directionLabel, SHELF_SORTS } from "../lib/shelfSort";
+
+interface ShelfSortProps {
+    sort: GameLogSort;
+    direction: SortDirection;
+    onChange: (next: { sort?: GameLogSort; direction?: SortDirection }) => void;
+}
+
+/**
+ * What the shelf is ordered by, and which way round. The direction is a
+ * toggle rather than twelve menu entries — every sort has both, and the pair
+ * reads as one control.
+ */
+const ShelfSort = ({ sort, direction, onChange }: ShelfSortProps) => {
+    const flipped = direction === "asc";
+    const Arrow = flipped ? ArrowUpNarrowWide : ArrowDownWideNarrow;
+
+    return (
+        <div className="flex items-center gap-2">
+            <Dropdown
+                options={SHELF_SORTS.map((option) => ({
+                    value: option.value,
+                    label: option.label,
+                }))}
+                value={sort}
+                onChange={(value) => onChange({ sort: value as GameLogSort })}
+                aria-label="Sort by"
+                className="w-40 sm:w-44"
+            />
+            <button
+                type="button"
+                onClick={() =>
+                    onChange({ direction: flipped ? "desc" : "asc" })
+                }
+                /* The wording changes with the sort — "A to Z" and "Highest
+                   first" are the same direction but not the same sentence. */
+                aria-label={`Sort order: ${directionLabel(sort, direction)}`}
+                title={directionLabel(sort, direction)}
+                className="flex size-11 shrink-0 items-center justify-center rounded-sm border border-subtle bg-surface-raised text-content-secondary lift hover:border-strong hover:text-content sm:size-9"
+            >
+                <Arrow size={16} aria-hidden />
+            </button>
+        </div>
+    );
+};
+
+export default ShelfSort;
