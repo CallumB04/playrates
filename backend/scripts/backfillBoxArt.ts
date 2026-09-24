@@ -59,6 +59,9 @@ const INDEX_PAGE_GAP_MS = 1_500;
 const INDEX_ATTEMPTS = 5;
 
 const GAME_PAGE_SIZE = 1_000;
+/* PostgREST caps a response at a thousand rows and says nothing about it, so
+   asking for more than this silently gets you this. */
+const ROW_CAP = 1_000;
 /* RAWG allows 20,000 requests a month and this spends one per game, so it
    buys accuracy only where it is worth most: the games people browse. */
 const DEFAULT_AUTHORITATIVE = 2_000;
@@ -278,22 +281,33 @@ const authoritativeAppIds = async (
 
   /* Asked for wide and narrowed here: a URL naming all sixty thousand Steam
      games is longer than PostgREST will accept. */
-  const query = db
-    .from("games")
-    .select("id, rawg_id")
-    .not("rawg_id", "is", null);
+  const wanted: { id: number; rawg_id: number }[] = [];
 
-  /* A recheck is for correcting a guess, so it has to look at the games that
-     already have one. */
-  const { data, error } = await (recheck ? query : query.is("box_art_url", null))
-    .order("rawg_added_count", { ascending: false, nullsFirst: false })
-    .limit(count * 3);
+  for (let from = 0; wanted.length < count; from += ROW_CAP) {
+    const query = db
+      .from("games")
+      .select("id, rawg_id")
+      .not("rawg_id", "is", null);
 
-  if (error) throw new Error(error.message);
+    /* A recheck is for correcting a guess, so it has to look at the games
+       that already have one. */
+    const { data, error } = await (
+      recheck ? query : query.is("box_art_url", null)
+    )
+      .order("rawg_added_count", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: true })
+      .range(from, from + ROW_CAP - 1);
 
-  const wanted = (data ?? [])
-    .filter((game) => onSteam.has(game.id as number))
-    .slice(0, count);
+    if (error) throw new Error(error.message);
+    if (!data || data.length === 0) break;
+
+    for (const game of data) {
+      if (onSteam.has(game.id as number) && wanted.length < count) {
+        wanted.push(game as { id: number; rawg_id: number });
+      }
+    }
+    if (data.length < ROW_CAP) break;
+  }
 
   for (const [i, game] of wanted.entries()) {
     try {

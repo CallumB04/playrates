@@ -18,6 +18,8 @@ export interface ProfileRow {
   timezone: string;
   /** When true, this profile reads as offline to everyone. */
   hide_online: boolean;
+  /** Chosen profile colour. Null falls back to the hash of the username. */
+  accent: string | null;
   created_at: string;
   updated_at: string;
 }

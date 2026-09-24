@@ -221,6 +221,62 @@ describe("closing an account", () => {
   });
 });
 
+describe("profile colour", () => {
+  it("saves a chosen colour", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .patch("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A))
+      .send({ accent: "jade" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.accent).toBe("jade");
+    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe("jade");
+  });
+
+  /* Null is a choice, not an omission: it puts the username's colour back. */
+  it("takes null, and means it", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+    await request(app)
+      .patch("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A))
+      .send({ accent: "jade" });
+
+    const response = await request(app)
+      .patch("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A))
+      .send({ accent: null });
+
+    expect(response.body.accent).toBeNull();
+    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBeNull();
+  });
+
+  it("refuses a colour that is not one of ours", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .patch("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A))
+      .send({ accent: "chartreuse" });
+
+    expect(response.status).toBe(422);
+    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBeNull();
+  });
+
+  it("shows the colour on the public profile too, so everyone sees it", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+    await request(app)
+      .patch("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A))
+      .send({ accent: "ember" });
+
+    const response = await request(app).get("/api/v1/profiles/devuser");
+
+    expect(response.body.accent).toBe("ember");
+  });
+});
+
 describe("profile picture", () => {
   /* The smallest thing that passes the magic-byte check: "RIFF" + a size +
      "WEBP". The service does not decode it, and nor should it. */

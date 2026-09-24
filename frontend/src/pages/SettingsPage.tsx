@@ -31,6 +31,7 @@ import { Input, Textarea } from "../components/ui/Input";
 import UsernameRow from "./settings/UsernameRow";
 import Dropdown from "../components/ui/Dropdown";
 import SegmentedChoice from "../components/ui/SegmentedChoice";
+import AccentPicker from "../components/ui/AccentPicker";
 import { effectiveTimeZone, formatCount, timeZones } from "../lib/format";
 import { cn } from "../lib/cn";
 
@@ -121,12 +122,14 @@ const SettingsPage = () => {
         user?.showSexualContent ?? false
     );
     const [hideOnline, setHideOnline] = useState(user?.hideOnline ?? false);
+    const [accent, setAccent] = useState(user?.accent ?? null);
 
     useEffect(() => {
         setBio(user?.bio ?? "");
         setFirstName(user?.firstName ?? "");
         setShowSexual(user?.showSexualContent ?? false);
         setHideOnline(user?.hideOnline ?? false);
+        setAccent(user?.accent ?? null);
     }, [user]);
 
     const zone = effectiveTimeZone(user?.timezone);
@@ -261,6 +264,17 @@ const SettingsPage = () => {
                             )
                         }
                         aria-label="Bio"
+                    />
+                </Row>
+                <Row label="Colour" help="Your banner, and your avatar.">
+                    <AccentPicker
+                        label="Profile colour"
+                        username={user.username}
+                        value={accent}
+                        onChange={(next) =>
+                            saveToggle({ accent: next }, next, setAccent, accent)
+                        }
+                        disabled={update.isPending}
                     />
                 </Row>
                 <Row

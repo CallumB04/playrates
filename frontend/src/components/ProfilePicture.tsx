@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { Camera } from "lucide-react";
+import type { ProfileAccent } from "@playrates/shared";
+import { avatarGradient, profileHue } from "../lib/profileAccent";
 import { cn } from "../lib/cn";
 
 /* Complete literal class strings — Tailwind only emits what it can see. The
@@ -24,16 +26,6 @@ const AVATAR_VARIANT = {
 
 export type AvatarVariant = keyof typeof AVATAR_VARIANT;
 
-/** A stable hue per username. FNV-1a, so anagrams don't collide. */
-const hueFor = (username: string): number => {
-    let hash = 0x811c9dc5;
-    for (let i = 0; i < username.length; i += 1) {
-        hash ^= username.charCodeAt(i);
-        hash = Math.imul(hash, 0x01000193);
-    }
-    return (hash >>> 0) % 360;
-};
-
 interface ProfilePictureProps {
     variant: AvatarVariant;
     file: string;
@@ -43,6 +35,8 @@ interface ProfilePictureProps {
     /** Makes the picture a button — your own, on your own profile. Takes
      *  precedence over `link`: a picture cannot be both. */
     action?: { label: string; onClick: () => void };
+    /** The profile's chosen colour. Null falls back to the username's. */
+    accent?: ProfileAccent | null;
 }
 
 /**
@@ -55,9 +49,10 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
     username,
     link,
     action,
+    accent,
 }) => {
     const { box, text } = AVATAR_VARIANT[variant];
-    const hue = hueFor(username);
+    const hue = profileHue(username, accent);
 
     const className = cn(
         "relative grid aspect-square shrink-0 place-items-center overflow-hidden rounded-full bg-surface-sunken select-none",
@@ -90,11 +85,7 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
             <span
                 aria-hidden
                 className="absolute inset-0"
-                style={{
-                    backgroundImage: `linear-gradient(145deg, hsl(${hue} 70% 62%), hsl(${
-                        (hue + 45) % 360
-                    } 62% 42%))`,
-                }}
+                style={{ backgroundImage: avatarGradient(hue) }}
             />
             {/* The same tooth used on box art, so a generated avatar reads as
                 part of the same material. */}

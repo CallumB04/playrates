@@ -1,3 +1,4 @@
+import { Palette } from "lucide-react";
 import type { Profile, UserStats } from "@playrates/shared";
 import type { ReactNode } from "react";
 import ProfilePicture from "../../../components/ProfilePicture";
@@ -10,6 +11,7 @@ import {
     type GameStatus,
 } from "../../../constants/gameStatus";
 import { formatCount, formatHours, formatMonthYear } from "../../../lib/format";
+import { bannerGradient, profileHue } from "../../../lib/profileAccent";
 import { cn } from "../../../lib/cn";
 
 interface MemberFileHeaderProps {
@@ -19,7 +21,8 @@ interface MemberFileHeaderProps {
     friendCount: number | undefined;
     /** The friend button, or the owner's controls. */
     action: ReactNode;
-    /** Set only on your own profile: makes the picture open the editor. */
+    /** Set only on your own profile: makes the picture and the banner open
+     *  the editor. */
     onEditPicture?: () => void;
 }
 
@@ -107,6 +110,7 @@ const MemberFileHeader = ({
     action,
     onEditPicture,
 }: MemberFileHeaderProps) => {
+    const banner = bannerGradient(profileHue(profile.username, profile.accent));
     const byStatus = stats?.byStatus ?? {};
     const shelfTotal = GAME_STATUSES.reduce(
         (sum, status) => sum + (byStatus[status] ?? 0),
@@ -116,11 +120,32 @@ const MemberFileHeader = ({
     return (
         <section className="relative overflow-hidden rounded-lg border border-subtle bg-surface-raised shadow-plate">
             {/* A band behind the avatar, so a profile opens with something
-                other than a white rectangle. */}
-            <div
-                aria-hidden
-                className="h-20 bg-linear-to-r from-brand/25 via-brand/10 to-transparent sm:h-24"
-            />
+                other than a white rectangle. It carries the profile's colour,
+                which is also the avatar's. */}
+            {onEditPicture ? (
+                <button
+                    type="button"
+                    aria-label="Change your profile colour"
+                    onClick={onEditPicture}
+                    style={{ backgroundImage: banner }}
+                    className={cn(
+                        "group block h-20 w-full cursor-pointer sm:h-24",
+                        "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+                    )}
+                >
+                    {/* Standing, because a phone cannot hover to find it. */}
+                    <span className="float-right m-2.5 flex items-center gap-1.5 rounded-full bg-surface-raised/80 px-2.5 py-1 text-label-sm text-content-secondary backdrop-blur-sm transition-colors group-hover:text-content">
+                        <Palette className="size-3.5" aria-hidden />
+                        Colour
+                    </span>
+                </button>
+            ) : (
+                <div
+                    aria-hidden
+                    style={{ backgroundImage: banner }}
+                    className="h-20 sm:h-24"
+                />
+            )}
 
             <div className="px-5 pb-5 sm:px-6 sm:pb-6">
                 <div className="-mt-12 flex flex-wrap items-end justify-between gap-4 sm:-mt-14">
@@ -130,6 +155,7 @@ const MemberFileHeader = ({
                             file={profile.avatarUrl ?? ""}
                             username={profile.username}
                             link={false}
+                            accent={profile.accent}
                             action={
                                 onEditPicture && {
                                     label: "Change your profile picture",

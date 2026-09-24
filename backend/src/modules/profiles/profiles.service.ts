@@ -116,6 +116,8 @@ export const createProfilesService = (
     }
     if (input.timezone !== undefined) patch.timezone = input.timezone;
     if (input.hideOnline !== undefined) patch.hide_online = input.hideOnline;
+    // Null is a choice: it puts the username's colour back.
+    if (input.accent !== undefined) patch.accent = input.accent;
 
     if (Object.keys(patch).length === 0) {
       return this.getById(callerId);

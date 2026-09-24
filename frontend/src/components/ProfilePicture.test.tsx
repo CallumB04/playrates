@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import ProfilePicture from "./ProfilePicture";
+import { hueFor } from "../lib/profileAccent";
 
 const show = (props: Partial<Parameters<typeof ProfilePicture>[0]> = {}) =>
     render(
@@ -27,6 +28,33 @@ describe("ProfilePicture", () => {
         show();
         expect(screen.queryByRole("link")).not.toBeInTheDocument();
         expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    });
+
+    describe("its colour", () => {
+        const fill = (c: HTMLElement) =>
+            c.querySelector<HTMLElement>("span[aria-hidden]")?.style
+                .backgroundImage ?? "";
+
+        it("comes from the username when nothing is chosen", () => {
+            const { container } = show({ accent: null });
+            expect(fill(container)).toContain(`hsl(${hueFor("ada")}`);
+        });
+
+        it("comes from the chosen colour instead when there is one", () => {
+            const { container } = show({ accent: "jade" });
+            expect(fill(container)).toContain("hsl(150");
+            expect(fill(container)).not.toContain(`hsl(${hueFor("ada")}`);
+        });
+
+        /* An uploaded picture covers the fill entirely, so the colour only
+           ever shows on the generated one. */
+        it("is not drawn behind an uploaded picture", () => {
+            const { container } = show({
+                accent: "jade",
+                file: "https://cdn.test/ada.webp",
+            });
+            expect(container.querySelector("span[aria-hidden]")).toBeNull();
+        });
     });
 
     describe("as a control", () => {

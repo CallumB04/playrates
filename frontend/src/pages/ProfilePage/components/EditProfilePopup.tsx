@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import type { Profile } from "@playrates/shared";
+import type { Profile, ProfileAccent } from "@playrates/shared";
 import {
     useRemoveAvatar,
     useUpdateAvatar,
@@ -12,6 +12,7 @@ import Button from "../../../components/ui/Button";
 import Field from "../../../components/ui/Field";
 import { Input, Textarea } from "../../../components/ui/Input";
 import AvatarField, { type AvatarChoice } from "./AvatarField";
+import AccentPicker from "../../../components/ui/AccentPicker";
 
 interface EditProfilePopupProps {
     closePopup: () => void;
@@ -36,9 +37,11 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     const [bio, setBio] = useState(user.bio);
     const [username, setUsername] = useState(user.username);
     const [avatar, setAvatar] = useState<AvatarChoice>({ kind: "unchanged" });
+    const [accent, setAccent] = useState<ProfileAccent | null>(user.accent);
 
     const sameLetters = username.toLowerCase() === user.username.toLowerCase();
-    const fieldsDirty = bio !== user.bio || username !== user.username;
+    const fieldsDirty =
+        bio !== user.bio || username !== user.username || accent !== user.accent;
     const dirty = fieldsDirty || avatar.kind !== "unchanged";
     const saving =
         updateProfile.isPending ||
@@ -57,7 +60,9 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                 await removeAvatar.mutateAsync();
             }
             // the mutation seeds the profile caches, so the page updates straight away
-            if (fieldsDirty) await updateProfile.mutateAsync({ username, bio });
+            if (fieldsDirty) {
+                await updateProfile.mutateAsync({ username, bio, accent });
+            }
             notify("Profile updated", "success");
             closePopup();
         } catch {
@@ -86,6 +91,18 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     onChange={setAvatar}
                     disabled={saving}
                 />
+
+                <Field label="Colour" help="Your banner, and your avatar.">
+                    {() => (
+                        <AccentPicker
+                            label="Profile colour"
+                            username={user.username}
+                            value={accent}
+                            onChange={setAccent}
+                            disabled={saving}
+                        />
+                    )}
+                </Field>
 
                 <Field
                     label="Bio"
