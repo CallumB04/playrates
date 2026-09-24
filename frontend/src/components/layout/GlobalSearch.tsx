@@ -44,22 +44,22 @@ const GlobalSearch = ({ variant = "bar", onClose }: GlobalSearchProps) => {
     const debounced = useDebouncedValue(term.trim(), 250);
     const hasTerm = debounced.length >= 2;
 
-    /* The typeahead endpoints sit behind auth; the library search doesn't,
-       so signed out the term goes there instead of nowhere. */
+    /* The game typeahead can reach RAWG, so it stays behind a session and the
+       library search stands in for it signed out. People are a local lookup of
+       already-public pages, so they are offered to everyone. */
     const { user } = useAuth();
-    const enabled = hasTerm && !!user;
 
     const { data: games, isFetching: gamesFetching } = useQuery({
         queryKey: queryKeys.games.search(debounced),
         queryFn: () => searchGames(debounced, PER_SECTION),
-        enabled,
+        enabled: hasTerm && !!user,
         staleTime: 30_000,
     });
 
     const { data: people, isFetching: peopleFetching } = useQuery({
         queryKey: queryKeys.profiles.search(debounced),
         queryFn: () => searchProfiles(debounced),
-        enabled,
+        enabled: hasTerm,
         staleTime: 30_000,
     });
 
@@ -284,7 +284,22 @@ const GlobalSearch = ({ variant = "bar", onClose }: GlobalSearchProps) => {
     );
 
     const results = !user ? (
-        libraryLink
+        <>
+            <Section title="People" from={0} items={rows} />
+            {searching && rows.length === 0 && (
+                <li className="flex items-center gap-2 px-2.5 py-3 text-body-sm text-content-muted">
+                    <LoaderCircle
+                        size={14}
+                        aria-hidden
+                        className="animate-spin"
+                    />
+                    Searching…
+                </li>
+            )}
+            {/* Always offered: the game typeahead is the one thing a signed-out
+                visitor cannot have, so the library is the way through to it. */}
+            {libraryLink}
+        </>
     ) : (
         <>
             <Section

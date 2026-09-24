@@ -1,4 +1,5 @@
 import { Router, type RequestHandler } from "express";
+import rateLimit from "express-rate-limit";
 import {
   CheckUsernameSchema,
   PaginationSchema,
@@ -21,6 +22,15 @@ const callerId = (req: Parameters<RequestHandler>[0]): string => {
   if (!id) throw AppError.unauthorized();
   return id;
 };
+
+/** No upstream cost behind this one, but it is the only unauthenticated route
+ *  that reads a list of people — so it gets a ceiling of its own. */
+const profileSearchLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 30,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+});
 
 export const createProfilesRouter = ({
   service,
@@ -66,17 +76,21 @@ export const createProfilesRouter = ({
     },
   );
 
+  /* Open to anyone: a profile page is already public, so requiring a session
+     to find one only meant the masthead could not offer people to a signed-out
+     visitor. The term is required and rate limited, so this looks names up
+     rather than handing out the whole directory. */
   router.get(
     "/",
-    requireAuth,
+    profileSearchLimiter,
     validate({
       query: PaginationSchema.extend({
-        search: z.string().trim().max(200).optional(),
+        search: z.string().trim().min(2).max(200),
       }),
     }),
     async (req, res) => {
       const { search, ...pagination } = req.valid!.query as {
-        search?: string;
+        search: string;
         page: number;
         limit: number;
       };

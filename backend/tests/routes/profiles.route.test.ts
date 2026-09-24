@@ -112,6 +112,31 @@ describe("profiles", () => {
   });
 });
 
+describe("finding people", () => {
+  /* A profile page is already public, so requiring a session to find one only
+     meant the masthead could not offer people to a signed-out visitor. */
+  it("lets a signed-out visitor look someone up", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app).get("/api/v1/profiles?search=friend");
+
+    expect(response.status).toBe(200);
+    expect(
+      response.body.data.map((p: { username: string }) => p.username),
+    ).toEqual(["frienduser"]);
+  });
+
+  /* Looking a name up, not handing out the directory. */
+  it("refuses to list everyone", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    expect((await request(app).get("/api/v1/profiles")).status).toBe(422);
+    expect((await request(app).get("/api/v1/profiles?search=a")).status).toBe(
+      422,
+    );
+  });
+});
+
 describe("closing an account", () => {
   const seedWithEverything = () => ({
     ...baseSeed(),
