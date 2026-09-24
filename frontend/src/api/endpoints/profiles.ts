@@ -1,8 +1,13 @@
-import type { Paginated, Profile, UpdateProfileInput } from "@playrates/shared";
+import type {
+    MyProfile,
+    Paginated,
+    Profile,
+    UpdateProfileInput,
+} from "@playrates/shared";
 import { api } from "../client";
 
-export const fetchMyProfile = async (): Promise<Profile> => {
-    const { data } = await api.get<Profile>("/profiles/me");
+export const fetchMyProfile = async (): Promise<MyProfile> => {
+    const { data } = await api.get<MyProfile>("/profiles/me");
     return data;
 };
 

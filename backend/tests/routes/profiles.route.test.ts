@@ -126,6 +126,39 @@ describe("finding people", () => {
     ).toEqual(["frienduser"]);
   });
 
+  /* Settings, not profile data. A profile page is public; what the owner has
+     chosen about adult content, their time zone and hiding their presence is
+     not part of it. */
+  const SETTINGS = ["showSexualContent", "timezone", "hideOnline"];
+
+  it("keeps a viewer's settings out of a public profile", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const byName = await request(app).get("/api/v1/profiles/devuser");
+    const bySearch = await request(app).get("/api/v1/profiles?search=devuser");
+
+    expect(byName.status).toBe(200);
+    for (const field of SETTINGS) {
+      expect(byName.body, field).not.toHaveProperty(field);
+      expect(bySearch.body.data[0], field).not.toHaveProperty(field);
+    }
+    // Still the profile, just without the settings behind it.
+    expect(byName.body.username).toBe("devuser");
+  });
+
+  it("gives them back to the owner", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .get("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(200);
+    for (const field of SETTINGS) {
+      expect(response.body, field).toHaveProperty(field);
+    }
+  });
+
   /* Looking a name up, not handing out the directory. */
   it("refuses to list everyone", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });

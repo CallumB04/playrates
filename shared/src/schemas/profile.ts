@@ -61,9 +61,17 @@ export interface Profile {
   avatarUrl: string | null;
   /** Derived from last_seen_at, not stored. */
   online: boolean;
+  createdAt: string;
+}
+
+/**
+ * Your own profile. Everything above plus the settings behind it, which are
+ * nobody else's business — a profile page is public, so the public shape
+ * carries only what a profile page shows.
+ */
+export interface MyProfile extends Profile {
   showSexualContent: boolean;
   /** IANA zone name. Timestamps render in this; dates you picked do not move. */
   timezone: string;
   hideOnline: boolean;
-  createdAt: string;
 }

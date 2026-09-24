@@ -2,8 +2,8 @@ import { http, HttpResponse } from "msw";
 import type {
     FriendEdge,
     Game,
+    MyProfile,
     Paginated,
-    Profile,
     ReviewWithAuthor,
 } from "@playrates/shared";
 import type { GameLogWithGame } from "../../api";
@@ -16,7 +16,11 @@ export const paginated = <T>(data: T[]): Paginated<T> => ({
     meta: { page: 1, limit: 25, total: data.length },
 });
 
-export const buildProfile = (overrides: Partial<Profile> = {}): Profile => ({
+/** The signed-in shape, since the handlers stand in for /profiles/me. A
+ *  public profile is this minus the settings. */
+export const buildProfile = (
+    overrides: Partial<MyProfile> = {}
+): MyProfile => ({
     id: "11111111-1111-1111-1111-111111111111",
     username: "devuser",
     firstName: null,

@@ -1,4 +1,5 @@
 import type {
+  MyProfile,
   Paginated,
   Pagination,
   Profile,
@@ -8,16 +9,17 @@ import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import type { AuthAdmin } from "../../config/authAdmin.js";
 import type { ProfilesRepository } from "./profiles.repository.js";
-import { toProfile } from "./profiles.mapper.js";
+import { toMyProfile, toProfile } from "./profiles.mapper.js";
 
 export const createProfilesService = (
   repo: ProfilesRepository,
   authAdmin: AuthAdmin,
 ) => ({
-  async getById(id: string): Promise<Profile> {
+  /** The caller's own, so it carries their settings. */
+  async getById(id: string): Promise<MyProfile> {
     const row = await repo.findById(id);
     if (!row) throw AppError.notFound("Profile");
-    return toProfile(row);
+    return toMyProfile(row);
   },
 
   /**
@@ -92,7 +94,7 @@ export const createProfilesService = (
       return this.getById(callerId);
     }
 
-    return toProfile(await repo.update(callerId, patch));
+    return toMyProfile(await repo.update(callerId, patch));
   },
 
   async heartbeat(callerId: string): Promise<void> {
