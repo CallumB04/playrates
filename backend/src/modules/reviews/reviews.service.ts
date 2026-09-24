@@ -8,7 +8,7 @@ import type {
 import type { ReviewSort } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
-import { isOnline } from "../profiles/profiles.mapper.js";
+import { isOnline, toAccent } from "../profiles/profiles.mapper.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type { GamesRepository } from "../games/games.repository.js";
 import type {
@@ -48,6 +48,7 @@ export const createReviewsService = (
         username: row.author_username ?? "Unknown user",
         firstName: row.author_first_name,
         avatarUrl: row.author_avatar_url ?? null,
+        accent: toAccent(row.author_accent),
         online: row.author_last_seen_at
           ? isOnline(row.author_last_seen_at)
           : false,

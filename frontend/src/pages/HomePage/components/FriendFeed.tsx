@@ -52,6 +52,7 @@ const Row = ({ item }: { item: FriendActivity }) => {
                     <ProfilePicture
                         variant="nav"
                         file={item.actor.avatarUrl ?? ""}
+                        accent={item.actor.accent}
                         username={item.actor.username}
                         link={false}
                     />

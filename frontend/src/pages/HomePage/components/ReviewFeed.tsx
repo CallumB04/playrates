@@ -34,6 +34,7 @@ const Row = ({ review }: { review: ReviewWithAuthor }) => {
                 <ProfilePicture
                     variant="nav"
                     file={review.author.avatarUrl ?? ""}
+                    accent={review.author.accent}
                     username={review.author.username}
                     link={false}
                 />

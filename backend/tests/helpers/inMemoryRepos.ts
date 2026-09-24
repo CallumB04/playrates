@@ -105,6 +105,7 @@ export const createInMemoryRepos = (
     id: p.id,
     username: p.username,
     avatar_url: p.avatar_url,
+    accent: p.accent,
     bio: p.bio,
     last_seen_at: p.last_seen_at,
   });
@@ -138,6 +139,7 @@ export const createInMemoryRepos = (
       author_first_name: author?.first_name ?? null,
       vote_count: state.reviewVotes.filter((v) => v.review_id === r.id).length,
       author_avatar_url: author?.avatar_url ?? null,
+      author_accent: author?.accent ?? null,
       author_last_seen_at: author?.last_seen_at ?? null,
       // The view inner-joins games, so a row without one cannot exist.
       game_title: game?.title ?? "",
@@ -741,6 +743,7 @@ export const createInMemoryRepos = (
               updated_at: l.updated_at,
               actor_username: actor?.username ?? "",
               actor_avatar_url: actor?.avatar_url ?? null,
+              actor_accent: actor?.accent ?? null,
               actor_last_seen_at: actor?.last_seen_at ?? "",
               game_title: game?.title ?? "",
               game_cover_url: game?.cover_url ?? null,

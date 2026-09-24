@@ -52,6 +52,7 @@ const FriendProfile = ({
                     variant={avatar}
                     username={user.username}
                     file={user.avatarUrl ?? ""}
+                    accent={user.accent}
                     link={false}
                 />
                 <PresenceDot online={user.online} />

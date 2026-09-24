@@ -135,6 +135,7 @@ const GlobalSearch = ({ variant = "bar", onClose }: GlobalSearchProps) => {
                         variant="nav"
                         username={profile.username}
                         file={profile.avatarUrl ?? ""}
+                        accent={profile.accent}
                         link={false}
                     />
                     <span className="min-w-0 flex-1 truncate">

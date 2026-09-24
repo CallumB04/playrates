@@ -143,6 +143,7 @@ const GameReviews = ({
                         <ProfilePicture
                             variant="friendRow"
                             file={review.author.avatarUrl ?? ""}
+                            accent={review.author.accent}
                             username={review.author.username}
                             link={false}
                         />

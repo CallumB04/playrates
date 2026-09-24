@@ -59,6 +59,7 @@ const AccountMenu = ({
                 <ProfilePicture
                     variant="nav"
                     file={user.avatarUrl ?? ""}
+                    accent={user.accent}
                     username={user.username}
                     link={false}
                 />

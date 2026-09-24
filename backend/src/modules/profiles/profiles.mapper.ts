@@ -11,7 +11,7 @@ export const isOnline = (lastSeenAt: string, now = Date.now()): boolean =>
 /* The column is text with a CHECK behind it, but a row read back is still
    just a string. Anything that is not one of ours falls back, so a profile is
    never returned without a colour. */
-const toAccent = (value: string | null): ProfileAccent =>
+export const toAccent = (value: string | null): ProfileAccent =>
   (PROFILE_ACCENT_SLUGS as readonly string[]).includes(value ?? "")
     ? (value as ProfileAccent)
     : FALLBACK_ACCENT;

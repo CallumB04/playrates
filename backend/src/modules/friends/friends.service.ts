@@ -8,7 +8,7 @@ import {
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
-import { isOnline } from "../profiles/profiles.mapper.js";
+import { isOnline, toAccent } from "../profiles/profiles.mapper.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type {
   FriendProfileRow,
@@ -20,6 +20,7 @@ const toFriendUser = (row: FriendProfileRow) => ({
   id: row.id,
   username: row.username,
   avatarUrl: row.avatar_url,
+  accent: toAccent(row.accent),
   bio: row.bio,
   online: isOnline(row.last_seen_at),
 });
@@ -81,6 +82,7 @@ export const createFriendsService = (
           id: row.user_id,
           username: row.actor_username,
           avatarUrl: row.actor_avatar_url,
+          accent: toAccent(row.actor_accent),
           bio: "",
           online: isOnline(row.actor_last_seen_at),
         },

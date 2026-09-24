@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ProfileAccent } from "./profileAccent.js";
 import { PaginationSchema } from "./common.js";
 
 export const ReviewInputSchema = z
@@ -28,6 +29,8 @@ export interface ReviewAuthor {
   username: string;
   firstName: string | null;
   avatarUrl: string | null;
+  /** Colours the generated avatar where there is no picture. */
+  accent: ProfileAccent;
   online: boolean;
 }
 

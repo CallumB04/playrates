@@ -17,6 +17,7 @@ export interface ReviewRowJoined extends ReviewRow {
   author_first_name: string | null;
   vote_count: number;
   author_avatar_url: string | null;
+  author_accent: string | null;
   author_last_seen_at: string | null;
   game_title: string;
   game_slug: string;

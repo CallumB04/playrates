@@ -15,14 +15,15 @@ export interface FriendProfileRow {
   id: string;
   username: string;
   avatar_url: string | null;
+  accent: string | null;
   bio: string;
   last_seen_at: string;
 }
 
 const SELECT_WITH_USERS = `
     *,
-    user_a:profiles!friendships_user_a_id_fkey(id, username, avatar_url, bio, last_seen_at),
-    user_b:profiles!friendships_user_b_id_fkey(id, username, avatar_url, bio, last_seen_at)
+    user_a:profiles!friendships_user_a_id_fkey(id, username, avatar_url, accent, bio, last_seen_at),
+    user_b:profiles!friendships_user_b_id_fkey(id, username, avatar_url, accent, bio, last_seen_at)
 `;
 
 /** A row of the friend_activity view: one friend's log, flattened. */
@@ -37,6 +38,7 @@ export interface FriendActivityRow {
   updated_at: string;
   actor_username: string;
   actor_avatar_url: string | null;
+  actor_accent: string | null;
   actor_last_seen_at: string;
   game_title: string;
   game_cover_url: string | null;

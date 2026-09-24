@@ -1,3 +1,4 @@
+import type { FriendUser } from "@playrates/shared";
 import {
     GAME_STATUSES,
     PLAYED_STATUSES,
@@ -32,10 +33,11 @@ const PLATFORM_SLUGS = [
     "3do",
 ];
 
-const demoUser = {
+const demoUser: FriendUser = {
     id: "00000000-0000-0000-0000-000000000000",
     username: "ashgrove",
     avatarUrl: null,
+    accent: "violet",
     bio: "Local development account.",
     online: true,
 };
