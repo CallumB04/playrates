@@ -7,11 +7,11 @@ import {
 } from "../hooks/queries/useGames";
 import { useGameReviews } from "../hooks/queries/useReviews";
 import { useUser } from "../contexts/AuthContext";
+import { ChevronRight } from "lucide-react";
 import { platformIcon, systemIcon } from "../lib/platformIcons";
 import RatingBadge from "./ui/RatingBadge";
-import LedgerRow, { LedgerList } from "./ui/LedgerRow";
 import AchievementRing from "./gamelog/AchievementRing";
-import { formatDateRange, formatHours } from "../lib/format";
+import { formatDate, formatHours } from "../lib/format";
 import { cn } from "../lib/cn";
 import Modal from "./ui/Modal";
 import Button, { buttonClass } from "./ui/Button";
@@ -69,8 +69,6 @@ const ViewGameLogPopup = ({
     const achievementsTotal = gamelog.achievementsTotal ?? 0;
     const achievementsDone = gamelog.achievementsCompleted ?? 0;
 
-    /* One row, not two: a start and a finish are the ends of a span, and
-       reading them as a range is the point. */
     const played = gamelog.startDate || gamelog.finishDate;
 
     const { hoursPlayed, hoursToBeat } = gamelog;
@@ -92,15 +90,19 @@ const ViewGameLogPopup = ({
                 >
                     {game?.title ?? "…"}
                 </h2>
-                {/* Both as chips, so the status and the machine read as two
-                    facts rather than one run-on line. */}
-                <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                    <StatusBadge status={status} />
+                {/* A meta line, not chips: the status carries its own hue and
+                    mark, and a hairline is enough to part it from the machine
+                    it was played on. */}
+                <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label-sm text-content-muted">
+                    <StatusBadge status={status} plain />
                     {playedOn && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-subtle px-2.5 py-0.5 text-label-sm text-content-secondary">
-                            <PlatformIcon size={13} aria-hidden />
-                            {playedOn}
-                        </span>
+                        <>
+                            <span aria-hidden className="h-3 w-px bg-subtle" />
+                            <span className="inline-flex items-center gap-1.5">
+                                <PlatformIcon size={13} aria-hidden />
+                                {playedOn}
+                            </span>
+                        </>
                     )}
                 </div>
             </header>
@@ -182,16 +184,37 @@ const ViewGameLogPopup = ({
                 )}
 
                 {played && (
-                    <LedgerList className="mt-4">
-                        <LedgerRow
-                            label="Played"
-                            value={formatDateRange(
-                                gamelog.startDate,
-                                gamelog.finishDate
-                            )}
-                            rule={false}
-                        />
-                    </LedgerList>
+                    /* The two ends of a run, with the distance between them
+                       drawn rather than described. An end that was never
+                       recorded keeps its place rather than collapsing the
+                       pair into one lopsided figure. */
+                    <div className="mt-4 flex items-center gap-3 rounded-md border border-subtle bg-surface-sunken/40 px-4 py-3">
+                        <div className="min-w-0 flex-1">
+                            <p className="text-label-sm text-content-muted">
+                                Started
+                            </p>
+                            <p className="mt-1 truncate font-mono text-body-sm font-medium text-content">
+                                {formatDate(gamelog.startDate)}
+                            </p>
+                        </div>
+
+                        <span
+                            aria-hidden
+                            className="flex shrink-0 items-center gap-1 text-content-muted"
+                        >
+                            <span className="h-px w-5 bg-strong sm:w-8" />
+                            <ChevronRight size={13} />
+                        </span>
+
+                        <div className="min-w-0 flex-1 text-right">
+                            <p className="text-label-sm text-content-muted">
+                                Finished
+                            </p>
+                            <p className="mt-1 truncate font-mono text-body-sm font-medium text-content">
+                                {formatDate(gamelog.finishDate)}
+                            </p>
+                        </div>
+                    </div>
                 )}
             </div>
 

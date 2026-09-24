@@ -159,6 +159,8 @@
     --status-finished-quiet: color-mix(in srgb, #10b981 14%, transparent);
     --status-mastered: #b8860b;
     --status-mastered-quiet: color-mix(in srgb, #d4a017 16%, transparent);
+    /* The bright end of the gold, for the sweep on the completion ring. */
+    --status-mastered-sheen: #e3af2b;
     --status-shelved: #64748b;
     --status-shelved-quiet: color-mix(in srgb, #64748b 14%, transparent);
     --status-retired: #b91c1c;
@@ -242,6 +244,7 @@
     --status-finished-quiet: color-mix(in srgb, #34d399 18%, transparent);
     --status-mastered: #e8b530;
     --status-mastered-quiet: color-mix(in srgb, #e8b530 20%, transparent);
+    --status-mastered-sheen: #ffdc72;
     --status-shelved: #94a3b8;
     --status-shelved-quiet: color-mix(in srgb, #94a3b8 18%, transparent);
     --status-retired: #f87171;

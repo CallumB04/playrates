@@ -125,29 +125,6 @@ export const formatMonthYear = (iso: string | null | undefined): string =>
           )
         : "—";
 
-/**
- * Two dates as one span: "2 Feb – 14 Mar 2026", or "2 Feb 2025 – 14 Mar 2026"
- * where they straddle a new year. The year is printed once where both share
- * it, since repeating it is what makes a range read as two dates.
- *
- * One date on its own keeps its preposition, because "played from 2 Feb" and
- * "played until 14 Mar" are different claims.
- */
-export const formatDateRange = (
-    start: string | null | undefined,
-    finish: string | null | undefined
-): string => {
-    if (!start && !finish) return "—";
-    if (start && !finish) return `From ${formatDate(start)}`;
-    if (!start && finish) return `Until ${formatDate(finish)}`;
-
-    // Started and finished the same day is one date, not a span of nothing.
-    if (start === finish) return formatDate(start);
-
-    const sameYear = start!.slice(0, 4) === finish!.slice(0, 4);
-    return `${sameYear ? formatReleaseShort(start) : formatDate(start)} – ${formatDate(finish)}`;
-};
-
 /** "Sep 26" — the tightest a month and year go, for a figure under a tile. */
 export const formatMonthYearShort = (iso: string | null | undefined): string =>
     iso

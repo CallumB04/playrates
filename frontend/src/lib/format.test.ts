@@ -5,7 +5,6 @@ import {
     formatDate,
     formatFraction,
     formatHours,
-    formatDateRange,
     formatMonthYear,
     formatPercent,
     formatRating,
@@ -177,39 +176,6 @@ describe("formatDate", () => {
 
     it("renders an em dash when there is no date", () => {
         expect(formatDate(undefined)).toBe("—");
-    });
-});
-
-describe("formatDateRange", () => {
-    /* The year once, not twice — repeating it is what makes a range read as
-       two separate dates. */
-    it("prints the year once when both dates share it", () => {
-        expect(formatDateRange("2026-02-02", "2026-03-14")).toBe(
-            "2 Feb – 14 Mar 2026"
-        );
-    });
-
-    it("prints both years when the span crosses one", () => {
-        expect(formatDateRange("2025-12-28", "2026-01-09")).toBe(
-            "28 Dec 2025 – 9 Jan 2026"
-        );
-    });
-
-    /* "From" and "Until" are different claims, so a lone date keeps its
-       preposition rather than sitting there ambiguously. */
-    it("keeps a lone start or finish readable on its own", () => {
-        expect(formatDateRange("2026-02-02", null)).toBe("From 2 Feb 2026");
-        expect(formatDateRange(null, "2026-03-14")).toBe("Until 14 Mar 2026");
-    });
-
-    it("has nothing to say about a log with neither", () => {
-        expect(formatDateRange(null, null)).toBe("—");
-        expect(formatDateRange(undefined, undefined)).toBe("—");
-    });
-
-    /* "2 Feb – 2 Feb" is a span of nothing; it is just the day it happened. */
-    it("collapses a same-day span to the one date", () => {
-        expect(formatDateRange("2026-02-02", "2026-02-02")).toBe("2 Feb 2026");
     });
 });
 
