@@ -64,7 +64,11 @@ const GAME_PAGE_SIZE = 1_000;
 const DEFAULT_AUTHORITATIVE = 2_000;
 const RAWG_GAP_MS = 120;
 const HEAD_TIMEOUT_MS = 8_000;
-const DEFAULT_CONCURRENCY = 10;
+/* Plain CDN reads, and most of them miss; the misses are slow enough that a
+   timid setting turns the catalogue into a six-hour walk. */
+const DEFAULT_CONCURRENCY = 32;
+/* Above this share of a page going unanswered, assume it is us, not Steam. */
+const UNKNOWN_LIMIT = 0.2;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -168,30 +172,91 @@ const loadSteamApps = async (
   return apps;
 };
 
-/** Whether Steam actually serves the art, rather than assuming it does. */
-const hasArt = async (url: string): Promise<boolean> => {
-  try {
-    const response = await fetch(url, {
-      method: "HEAD",
-      signal: AbortSignal.timeout(HEAD_TIMEOUT_MS),
-    });
-    return response.ok;
-  } catch {
-    return false;
+/**
+ * Whether Steam actually serves the art.
+ *
+ * "Could not tell" is kept apart from "there is none": under throttling or a
+ * network fault every lookup fails, and counting those as absence would walk
+ * the whole catalogue writing nothing while reporting success.
+ */
+type ArtCheck = "yes" | "no" | "unknown";
+
+const hasArt = async (url: string): Promise<ArtCheck> => {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const response = await fetch(url, {
+        method: "HEAD",
+        signal: AbortSignal.timeout(HEAD_TIMEOUT_MS),
+      });
+      if (response.ok) return "yes";
+      if (response.status === 404) return "no";
+    } catch {
+      // timed out or the connection went; worth one more try
+    }
+    if (attempt === 1) await sleep(500);
   }
+  return "unknown";
 };
 
-/** Runs `worker` over `items`, `limit` of them in flight. */
-const inBatches = async <T, R>(
+/**
+ * Runs `worker` over `items`, `limit` of them in flight.
+ *
+ * A sliding window rather than fixed batches: one slow miss in a batch of
+ * thirty-two otherwise holds up the thirty-one that already came back, which
+ * measured at roughly half the throughput.
+ */
+const inPool = async <T, R>(
   items: T[],
   limit: number,
   worker: (item: T) => Promise<R>,
 ): Promise<R[]> => {
-  const results: R[] = [];
-  for (let i = 0; i < items.length; i += limit) {
-    results.push(...(await Promise.all(items.slice(i, i + limit).map(worker))));
-  }
+  const results: R[] = new Array<R>(items.length);
+  let next = 0;
+
+  const run = async (): Promise<void> => {
+    for (let i = next++; i < items.length; i = next++) {
+      results[i] = await worker(items[i]!);
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, run),
+  );
   return results;
+};
+
+/**
+ * Every game RAWG places on Steam, read once.
+ *
+ * Joining this per page instead cost enough that Postgres cancelled the
+ * query partway through a run: the join got dearer as the rows it had to
+ * look past filled in.
+ */
+const steamGameIds = async (
+  db: ReturnType<typeof supabase>,
+  logger: Logger,
+): Promise<Set<number>> => {
+  const ids = new Set<number>();
+  let lastId = 0;
+
+  for (;;) {
+    const { data, error } = await db
+      .from("game_platforms")
+      .select("game_id")
+      .eq("platform_slug", "steam")
+      .gt("game_id", lastId)
+      .order("game_id", { ascending: true })
+      .limit(GAME_PAGE_SIZE);
+
+    if (error) throw new Error(error.message);
+    if (!data || data.length === 0) break;
+
+    for (const row of data) ids.add(row.game_id as number);
+    lastId = data.at(-1)!.game_id as number;
+  }
+
+  logger.info({ games: ids.size }, "steam games listed");
+  return ids;
 };
 
 /**
@@ -201,24 +266,30 @@ const inBatches = async <T, R>(
 const authoritativeAppIds = async (
   db: ReturnType<typeof supabase>,
   logger: Logger,
+  onSteam: Set<number>,
   count: number,
   key: string,
 ): Promise<Map<number, string>> => {
   const ids = new Map<number, string>();
   if (count <= 0) return ids;
 
+  /* Asked for wide and narrowed here: a URL naming all sixty thousand Steam
+     games is longer than PostgREST will accept. */
   const { data, error } = await db
     .from("games")
-    .select("id, rawg_id, game_platforms!inner(platform_slug)")
-    .eq("game_platforms.platform_slug", "steam")
+    .select("id, rawg_id")
     .is("box_art_url", null)
     .not("rawg_id", "is", null)
     .order("rawg_added_count", { ascending: false, nullsFirst: false })
-    .limit(count);
+    .limit(count * 3);
 
   if (error) throw new Error(error.message);
 
-  for (const [i, game] of (data ?? []).entries()) {
+  const wanted = (data ?? [])
+    .filter((game) => onSteam.has(game.id as number))
+    .slice(0, count);
+
+  for (const [i, game] of wanted.entries()) {
     try {
       const response = await fetch(
         `https://api.rawg.io/api/games/${game.rawg_id as number}/stores?key=${key}`,
@@ -231,7 +302,10 @@ const authoritativeAppIds = async (
       // one game losing its authoritative id just falls back to the name
     }
     if (i % 250 === 0) {
-      logger.info({ asked: i, found: ids.size }, "asking rawg for app ids");
+      logger.info(
+        { asked: i, of: wanted.length, found: ids.size },
+        "asking rawg for app ids",
+      );
     }
     await sleep(RAWG_GAP_MS);
   }
@@ -258,9 +332,12 @@ const main = async () => {
     process.exit(1);
   }
 
+  const onSteam = await steamGameIds(db, logger);
+
   const authoritative = await authoritativeAppIds(
     db,
     logger,
+    onSteam,
     rawgKey ? options.authoritative : 0,
     rawgKey ?? "",
   );
@@ -271,18 +348,14 @@ const main = async () => {
   let matched = 0;
   let written = 0;
   let noArt = 0;
+  let unresolved = 0;
   const samples: string[] = [];
   const startedAt = Date.now();
 
   for (;;) {
-    /* RAWG's own store data, already imported as the "steam" platform
-       family, says whether the game is on Steam at all. Matching names
-       without it would hand a console-only game the cover of the modern
-       remake that took its name. */
     const { data: games, error } = await db
       .from("games")
-      .select("id, title, game_platforms!inner(platform_slug)")
-      .eq("game_platforms.platform_slug", "steam")
+      .select("id, title")
       .is("box_art_url", null)
       .gt("id", lastId)
       .order("id", { ascending: true })
@@ -300,7 +373,12 @@ const main = async () => {
     lastId = games.at(-1)!.id as number;
     scanned += games.length;
 
+    /* RAWG's own store data, already imported as the "steam" platform
+       family, says whether the game is on Steam at all. Matching names
+       without it would hand a console-only game the cover of the modern
+       remake that took its name. */
     const candidates = games.flatMap((game) => {
+      if (!onSteam.has(game.id as number)) return [];
       const appId =
         authoritative.get(game.id as number) ??
         index.get(normaliseTitle(game.title as string));
@@ -310,20 +388,36 @@ const main = async () => {
     });
     matched += candidates.length;
 
-    const found = (
-      await inBatches(candidates, options.concurrency, async (candidate) => {
+    const checked = await inPool(
+      candidates,
+      options.concurrency,
+      async (candidate) => {
         const url = steamBoxArtUrl(candidate.appId);
-        return (await hasArt(url)) ? { ...candidate, url } : null;
-      })
-    ).filter((hit) => hit !== null);
-    noArt += candidates.length - found.length;
+        return { ...candidate, url, art: await hasArt(url) };
+      },
+    );
+
+    const found = checked.filter((hit) => hit.art === "yes");
+    const unknown = checked.filter((hit) => hit.art === "unknown").length;
+    noArt += checked.filter((hit) => hit.art === "no").length;
+    unresolved += unknown;
+
+    /* Steam pushing back looks like every game lacking art, so stop rather
+       than march through the catalogue recording nothing. */
+    if (checked.length > 0 && unknown > checked.length * UNKNOWN_LIMIT) {
+      logger.error(
+        { unknown, checked: checked.length, lastId },
+        `too many lookups went unanswered — wait, then resume with --from-id ${lastId}`,
+      );
+      process.exit(1);
+    }
 
     if (samples.length < 25) {
       samples.push(...found.slice(0, 5).map((hit) => `${hit.title} → ${hit.appId}`));
     }
 
     if (!options.dryRun && found.length > 0) {
-      const writes = await inBatches(found, options.concurrency, async (hit) =>
+      const writes = await inPool(found, options.concurrency, async (hit) =>
         db.from("games").update({ box_art_url: hit.url }).eq("id", hit.id),
       );
       const failed = writes.filter((write) => write.error);
@@ -345,6 +439,7 @@ const main = async () => {
         matched,
         written,
         noArt,
+        unresolved,
         perSecond: Math.round(scanned / Math.max(elapsed, 1)),
       },
       "progress",
@@ -359,6 +454,7 @@ const main = async () => {
       matched,
       written,
       noArt,
+      unresolved,
       unmatched: scanned - matched,
       minutes: Math.round((Date.now() - startedAt) / 60000),
       samples: samples.slice(0, 25),
