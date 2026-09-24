@@ -10,10 +10,6 @@ describe("bucketOf", () => {
         expect(bucketOf(9.5)).toBe(18);
         expect(bucketOf(10)).toBe(BUCKET_COUNT - 1);
     });
-
-    it("keeps a zero on the scale rather than off the end of it", () => {
-        expect(bucketOf(0)).toBe(0);
-    });
 });
 
 describe("medianOf", () => {

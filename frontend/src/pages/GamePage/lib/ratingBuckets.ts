@@ -1,10 +1,9 @@
 /** Twenty buckets of 0.5: bucket i holds the ratings in (i/2, (i+1)/2], so the
- *  first is 0.5 and the twentieth is 10. A rating of 0 joins the 0.5s. */
+ *  first is 0.5 — the lowest rating there is — and the twentieth is 10. */
 export const BUCKET_COUNT = 20;
 
 /** The bucket a rating draws in, 0-based, mirroring game_rating_summary. */
-export const bucketOf = (rating: number): number =>
-    Math.max(Math.ceil(rating * 2) - 1, 0);
+export const bucketOf = (rating: number): number => Math.ceil(rating * 2) - 1;
 
 /* The median, to the nearest half point. Every rating is a multiple of 0.5, so
    the only value a bucket can hold is its upper edge. */

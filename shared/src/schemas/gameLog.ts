@@ -20,10 +20,12 @@ export const PlayedStatusSchema = z.enum(PLAYED_STATUSES);
 export type GameStatus = z.infer<typeof GameStatusSchema>;
 export type PlayedStatus = z.infer<typeof PlayedStatusSchema>;
 
-/** 0-10 in steps of 0.5, mirroring the CHECK constraint on game_logs. */
+/** 0.5-10 in steps of 0.5, mirroring the CHECK constraint on game_logs.
+ *  Zero is not the bottom of the scale, it is the absence of a rating, and
+ *  that is what null is for. */
 const RatingSchema = z
   .number()
-  .min(0)
+  .min(0.5)
   .max(10)
   .refine((n) => Number.isInteger(n * 2), {
     message: "Rating must be a multiple of 0.5",

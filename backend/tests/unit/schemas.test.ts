@@ -53,11 +53,22 @@ describe("pagination", () => {
 
 describe("game log input", () => {
   it("accepts a rating on the 0.5 step", () => {
-    for (const rating of [0, 0.5, 6.5, 8.5, 10]) {
+    for (const rating of [0.5, 6.5, 8.5, 10]) {
       expect(() =>
         GameLogInputSchema.parse({ status: "played", rating }),
       ).not.toThrow();
     }
+  });
+
+  /* Zero is the absence of a rating, not the bottom of the scale, and null
+     already says that. */
+  it("rejects a zero, and takes a null for not rated", () => {
+    expect(() =>
+      GameLogInputSchema.parse({ status: "played", rating: 0 }),
+    ).toThrow();
+    expect(() =>
+      GameLogInputSchema.parse({ status: "played", rating: null }),
+    ).not.toThrow();
   });
 
   /* Quarter points were the old scale. They are now off-step, which is what
@@ -70,10 +81,12 @@ describe("game log input", () => {
     }
   });
 
-  it("rejects a rating outside 0-10", () => {
-    expect(() =>
-      GameLogInputSchema.parse({ status: "played", rating: 11 }),
-    ).toThrow();
+  it("rejects a rating outside 0.5-10", () => {
+    for (const rating of [11, -0.5]) {
+      expect(() =>
+        GameLogInputSchema.parse({ status: "played", rating }),
+      ).toThrow();
+    }
   });
 
   it("rejects an unknown status", () => {
