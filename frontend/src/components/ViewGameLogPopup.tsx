@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import type { GameLogWithGame } from "../api";
 import { displayStatusFor } from "../constants/gameStatus";
 import {
@@ -7,11 +6,12 @@ import {
     usePlatformSystems,
 } from "../hooks/queries/useGames";
 import { useGameReviews } from "../hooks/queries/useReviews";
+import { useUser } from "../contexts/AuthContext";
 import { platformIcon, systemIcon } from "../lib/platformIcons";
 import RatingBadge from "./ui/RatingBadge";
 import LedgerRow, { LedgerList } from "./ui/LedgerRow";
 import AchievementRing from "./gamelog/AchievementRing";
-import { formatDate, formatHours } from "../lib/format";
+import { formatDateRange, formatHours } from "../lib/format";
 import { cn } from "../lib/cn";
 import Modal from "./ui/Modal";
 import Button, { buttonClass } from "./ui/Button";
@@ -40,6 +40,11 @@ const ViewGameLogPopup = ({
     closePopup,
     primaryAction,
 }: ViewGameLogPopupProps) => {
+    const me = useUser();
+    /* Whose figures these are. No owner named means it was opened from your
+       own log, so it is yours. */
+    const isMine = !ownerUsername || me?.username === ownerUsername;
+
     const { data: game } = useGame(gamelog.gameId);
     const { data: platforms } = usePlatforms();
     const { data: systems } = usePlatformSystems();
@@ -64,18 +69,9 @@ const ViewGameLogPopup = ({
     const achievementsTotal = gamelog.achievementsTotal ?? 0;
     const achievementsDone = gamelog.achievementsCompleted ?? 0;
 
-    /* Dates only. The rating, the completion and the hours carry the entry,
-       so they are shown rather than listed. */
-    const facts = [
-        gamelog.startDate && {
-            label: "Started",
-            value: formatDate(gamelog.startDate),
-        },
-        gamelog.finishDate && {
-            label: "Finished",
-            value: formatDate(gamelog.finishDate),
-        },
-    ].filter(Boolean) as { label: string; value: ReactNode }[];
+    /* One row, not two: a start and a finish are the ends of a span, and
+       reading them as a range is the point. */
+    const played = gamelog.startDate || gamelog.finishDate;
 
     const { hoursPlayed, hoursToBeat } = gamelog;
     const hasHours = hoursPlayed !== null || hoursToBeat !== null;
@@ -96,10 +92,12 @@ const ViewGameLogPopup = ({
                 >
                     {game?.title ?? "…"}
                 </h2>
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-label-sm text-content-muted">
-                    <StatusBadge status={status} plain />
+                {/* Both as chips, so the status and the machine read as two
+                    facts rather than one run-on line. */}
+                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                    <StatusBadge status={status} />
                     {playedOn && (
-                        <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-subtle px-2.5 py-0.5 text-label-sm text-content-secondary">
                             <PlatformIcon size={13} aria-hidden />
                             {playedOn}
                         </span>
@@ -123,7 +121,9 @@ const ViewGameLogPopup = ({
                         <span className="text-label-sm text-content-muted">
                             {gamelog.rating === null
                                 ? "Not rated"
-                                : "Your rating"}
+                                : isMine
+                                  ? "Your rating"
+                                  : "Their rating"}
                         </span>
                     </div>
 
@@ -133,8 +133,13 @@ const ViewGameLogPopup = ({
                                 done={achievementsDone}
                                 total={achievementsTotal}
                             />
-                            <span className="font-mono text-label-sm text-content-muted">
+                            <span className="font-mono text-label-sm text-content-secondary">
                                 {achievementsDone} of {achievementsTotal}
+                            </span>
+                            {/* The word the rest of the app uses for this —
+                                the shelf sorts by "Completion" too. */}
+                            <span className="text-label-sm text-content-muted">
+                                Completion
                             </span>
                         </div>
                     )}
@@ -176,16 +181,16 @@ const ViewGameLogPopup = ({
                     </div>
                 )}
 
-                {facts.length > 0 && (
+                {played && (
                     <LedgerList className="mt-4">
-                        {facts.map((fact, i) => (
-                            <LedgerRow
-                                key={fact.label}
-                                label={fact.label}
-                                value={fact.value}
-                                rule={i < facts.length - 1}
-                            />
-                        ))}
+                        <LedgerRow
+                            label="Played"
+                            value={formatDateRange(
+                                gamelog.startDate,
+                                gamelog.finishDate
+                            )}
+                            rule={false}
+                        />
                     </LedgerList>
                 )}
             </div>
