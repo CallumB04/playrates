@@ -61,7 +61,7 @@ const ReEntryPlate = ({
             className="pointer-events-none absolute -top-32 -right-28 size-80 rounded-full bg-brand/12 blur-3xl"
         />
 
-        <div className="relative grid gap-8 px-6 py-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-12 lg:px-8 lg:py-9">
+        <div className="relative grid gap-8 px-5 py-6 sm:px-6 sm:py-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-12 lg:px-8 lg:py-9">
             <div className="flex flex-col justify-between gap-6">
                 <div>
                     <h1 className="font-display text-[34px] leading-tight text-content sm:text-[40px]">
@@ -74,10 +74,14 @@ const ReEntryPlate = ({
                         {formatCount(backlogCount)} in your backlog.
                     </p>
 
-                    <div className="mt-6 flex flex-wrap items-center gap-3">
+                    <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                         <Link
                             to="/library"
-                            className={buttonClass("primary", undefined, "lg")}
+                            className={buttonClass(
+                                "primary",
+                                "w-full sm:w-auto",
+                                "lg"
+                            )}
                         >
                             Browse games
                         </Link>
@@ -85,7 +89,7 @@ const ReEntryPlate = ({
                             to={`/user/${username}`}
                             className={buttonClass(
                                 "secondary",
-                                undefined,
+                                "w-full sm:w-auto",
                                 "lg"
                             )}
                         >
@@ -94,8 +98,10 @@ const ReEntryPlate = ({
                     </div>
                 </div>
 
-                {/* The shelves, one press away. */}
-                <div className="flex flex-wrap gap-2 border-t border-subtle pt-5">
+                {/* The shelves, one press away. Two even columns on a phone:
+                    wrapping four pills of four different widths left the rows
+                    ending in different places. */}
+                <div className="grid grid-cols-2 gap-2 border-t border-subtle pt-5 sm:flex sm:flex-wrap">
                     {GAME_STATUSES.map((status) => {
                         const {
                             label,
@@ -106,7 +112,7 @@ const ReEntryPlate = ({
                             <Link
                                 key={status}
                                 to={`/user/${username}?type=${status}`}
-                                className="inline-flex items-center gap-2 rounded-full border border-subtle px-3.5 py-1.5 text-body-sm text-content-secondary lift hover:border-strong hover:text-content"
+                                className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-subtle px-3.5 py-1.5 text-body-sm text-content-secondary lift hover:border-strong hover:text-content sm:min-h-0 sm:justify-start"
                             >
                                 <Icon
                                     size={14}
