@@ -36,6 +36,10 @@ const TrendingQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(10).default(3),
 });
 
+const SidebarQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(10).default(5),
+});
+
 const UserThreadsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(20).default(5),
 });
@@ -83,6 +87,26 @@ export const createCommunityRouter = ({
     async (req, res) => {
       const { limit } = req.valid!.query as { limit: number };
       res.json(await service.trending(limit, req.auth?.userId));
+    },
+  );
+
+  router.get(
+    "/games",
+    optionalAuth,
+    validate({ query: SidebarQuerySchema }),
+    async (req, res) => {
+      const { limit } = req.valid!.query as { limit: number };
+      res.json(await service.talkedAboutGames(limit, req.auth?.userId));
+    },
+  );
+
+  router.get(
+    "/latest",
+    optionalAuth,
+    validate({ query: SidebarQuerySchema }),
+    async (req, res) => {
+      const { limit } = req.valid!.query as { limit: number };
+      res.json(await service.latestReplies(limit, req.auth?.userId));
     },
   );
 

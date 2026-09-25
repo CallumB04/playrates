@@ -14,7 +14,9 @@ import {
     deleteMessage,
     deleteThread,
     editMessage,
+    fetchLatestReplies,
     fetchPatchNotes,
+    fetchTalkedAboutGames,
     fetchThread,
     fetchThreads,
     fetchTrendingThreads,
@@ -38,6 +40,20 @@ export const useTrendingThreads = (limit = 3) =>
         queryKey: queryKeys.community.trending(limit),
         queryFn: () => fetchTrendingThreads(limit),
         staleTime: 60_000,
+    });
+
+export const useTalkedAboutGames = (limit = 5) =>
+    useQuery({
+        queryKey: queryKeys.community.games(limit),
+        queryFn: () => fetchTalkedAboutGames(limit),
+        staleTime: 60_000,
+    });
+
+export const useLatestReplies = (limit = 4) =>
+    useQuery({
+        queryKey: queryKeys.community.latest(limit),
+        queryFn: () => fetchLatestReplies(limit),
+        staleTime: 30_000,
     });
 
 export const usePatchNotes = () =>

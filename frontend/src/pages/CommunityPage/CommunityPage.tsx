@@ -4,7 +4,9 @@ import type { ThreadSort } from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import {
+    useLatestReplies,
     usePatchNotes,
+    useTalkedAboutGames,
     useThreads,
     useTrendingThreads,
 } from "../../hooks/queries/useCommunity";
@@ -23,6 +25,8 @@ import ThreadCard from "../../components/community/ThreadCard";
 import TrendingHero from "../../components/community/TrendingHero";
 import TrendingRunnerUp from "../../components/community/TrendingRunnerUp";
 import PatchNotesCard from "../../components/community/PatchNotesCard";
+import CommunityPulse from "../../components/community/CommunityPulse";
+import HouseRules from "../../components/community/HouseRules";
 import FilterPill from "../../components/community/FilterPill";
 import GameCover from "../../components/game/GameCover";
 import ProfilePicture from "../../components/ProfilePicture";
@@ -78,6 +82,8 @@ const CommunityPage = () => {
     // Three, not one: the same list the home page shows, from the same cache.
     const { data: trending } = useTrendingThreads(3);
     const { data: patchNotes } = usePatchNotes();
+    const { data: talkedAbout } = useTalkedAboutGames(5);
+    const { data: latestReplies } = useLatestReplies(4);
     const { data: game } = useGame(gameId);
     const { data: person } = useProfile(participant);
 
@@ -257,11 +263,22 @@ const CommunityPage = () => {
                     </section>
                 </div>
 
-                {patchNotes && (
-                    <aside className="hidden lg:sticky lg:top-24 lg:block">
-                        <PatchNotesCard summary={patchNotes} variant="aside" />
-                    </aside>
-                )}
+                {/* Beside the list from lg; on a phone, after it, where the
+                    patch notes are already the banner at the top. */}
+                <aside className="flex flex-col gap-4">
+                    {patchNotes && (
+                        <PatchNotesCard
+                            summary={patchNotes}
+                            variant="aside"
+                            className="hidden lg:block"
+                        />
+                    )}
+                    <CommunityPulse
+                        games={talkedAbout ?? []}
+                        replies={latestReplies ?? []}
+                    />
+                    <HouseRules onStart={startThread} />
+                </aside>
             </div>
         </div>
     );

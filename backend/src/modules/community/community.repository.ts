@@ -34,6 +34,28 @@ export interface MessageCardRow extends CommunityMessageRow {
   vote_count: number;
 }
 
+/** A row of community_trending_games. */
+export interface TalkedAboutGameRow {
+  game_id: number;
+  title: string;
+  cover_url: string | null;
+  recent_message_count: number;
+}
+
+/** A row of community_latest_replies. */
+export interface LatestReplyRow {
+  id: number;
+  thread_id: number;
+  thread_title: string;
+  plain_text: string | null;
+  created_at: string;
+  author_id: string | null;
+  author_username: string | null;
+  author_first_name: string | null;
+  author_avatar_url: string | null;
+  author_accent: string | null;
+}
+
 export interface ListThreadsOptions {
   gameId?: number;
   /** Only threads this user has a standing message in. */
@@ -57,6 +79,16 @@ export interface CommunityRepository {
     limit: number,
     showSexualContent: boolean,
   ): Promise<ThreadCardRow[]>;
+  /** Games by messages in their threads over the trending window. */
+  listTalkedAboutGames(
+    limit: number,
+    showSexualContent: boolean,
+  ): Promise<TalkedAboutGameRow[]>;
+  /** The newest replies in game threads, newest first. */
+  listLatestReplies(
+    limit: number,
+    showSexualContent: boolean,
+  ): Promise<LatestReplyRow[]>;
   /** Messages per day over the trending window, oldest first. */
   threadActivity(threadId: number): Promise<number[]>;
   /** Game threads this person has posted in, most recent post first. The
@@ -183,6 +215,24 @@ export const createCommunityRepository = (db: Db): CommunityRepository => ({
       .limit(limit);
     if (error) throw error;
     return (data ?? []) as ThreadCardRow[];
+  },
+
+  async listTalkedAboutGames(limit, showSexualContent) {
+    const { data, error } = await db.rpc("community_trending_games", {
+      p_limit: limit,
+      p_show_sexual: showSexualContent,
+    });
+    if (error) throw error;
+    return (data ?? []) as TalkedAboutGameRow[];
+  },
+
+  async listLatestReplies(limit, showSexualContent) {
+    const { data, error } = await db.rpc("community_latest_replies", {
+      p_limit: limit,
+      p_show_sexual: showSexualContent,
+    });
+    if (error) throw error;
+    return (data ?? []) as LatestReplyRow[];
   },
 
   async threadActivity(threadId) {

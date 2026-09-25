@@ -3,7 +3,9 @@ import type {
   CreateMessageInput,
   CreateThreadInput,
   Paginated,
+  LatestReply,
   PatchNotesSummary,
+  TalkedAboutGame,
   RichTextDoc,
   ThreadCard,
   ThreadDetail,
@@ -34,7 +36,9 @@ import {
 } from "../notifications/notifications.mapper.js";
 import {
   buildMessageTree,
+  toLatestReply,
   toMessage,
+  toTalkedAboutGame,
   toThreadCard,
   type MessageViewer,
 } from "./community.mapper.js";
@@ -182,6 +186,28 @@ export const createCommunityService = (
           activity: await repo.threadActivity(row.id),
         })),
       );
+    },
+
+    async talkedAboutGames(
+      limit: number,
+      viewerId?: string,
+    ): Promise<TalkedAboutGame[]> {
+      const rows = await repo.listTalkedAboutGames(
+        limit,
+        (await viewerProfile(viewerId))?.show_sexual_content ?? false,
+      );
+      return rows.map(toTalkedAboutGame);
+    },
+
+    async latestReplies(
+      limit: number,
+      viewerId?: string,
+    ): Promise<LatestReply[]> {
+      const rows = await repo.listLatestReplies(
+        limit,
+        (await viewerProfile(viewerId))?.show_sexual_content ?? false,
+      );
+      return rows.map(toLatestReply);
     },
 
     async patchNotes(): Promise<PatchNotesSummary> {

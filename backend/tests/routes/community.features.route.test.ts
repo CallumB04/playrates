@@ -369,3 +369,99 @@ describe("picture cleanup", () => {
     );
   });
 });
+
+describe("the community sidebar", () => {
+  const RECENT = new Date(Date.now() - 60_000).toISOString();
+  const sidebarSeed = () => {
+    const base = seed();
+    return {
+      ...base,
+      games: [
+        ...base.games,
+        buildGame({ id: 2, slug: "hades", title: "Hades" }),
+        buildGame({
+          id: 3,
+          slug: "explicit",
+          title: "Explicit",
+          has_sexual_content: true,
+        }),
+      ],
+      communityThreads: [
+        ...base.communityThreads,
+        buildThread({ id: 2, game_id: 2 }),
+        buildThread({ id: 3, game_id: 3 }),
+        buildThread({
+          id: 4,
+          subject_kind: "patch_notes",
+          game_id: null,
+          title: "PlayRates patch notes",
+        }),
+      ],
+      communityMessages: [
+        ...base.communityMessages,
+        // Witcher: one recent (plus two from long ago that do not count)
+        buildMessage({ id: 3, created_at: RECENT }),
+        // Hades: two recent
+        buildMessage({
+          id: 4,
+          thread_id: 2,
+          is_opening: true,
+          created_at: RECENT,
+        }),
+        buildMessage({
+          id: 5,
+          thread_id: 2,
+          author_id: USER_B,
+          body: doc("Zagreus!"),
+          created_at: RECENT,
+        }),
+        buildMessage({
+          id: 6,
+          thread_id: 3,
+          author_id: USER_B,
+          created_at: RECENT,
+        }),
+        buildMessage({
+          id: 7,
+          thread_id: 4,
+          author_id: USER_B,
+          created_at: RECENT,
+        }),
+      ],
+    };
+  };
+
+  it("lists the games with the most messages lately, leaving explicit games out", async () => {
+    const { app } = buildTestApp({ seed: sidebarSeed() });
+
+    const response = await request(app).get("/api/v1/community/games");
+
+    expect(response.status).toBe(200);
+    expect(
+      response.body.map((g: { game: { id: number } }) => g.game.id),
+    ).toEqual([2, 1]);
+    expect(response.body[0]).toMatchObject({
+      game: { title: "Hades" },
+      recentMessageCount: 2,
+    });
+  });
+
+  it("lists the newest replies, not openings, not patch notes", async () => {
+    const { app } = buildTestApp({ seed: sidebarSeed() });
+
+    const response = await request(app).get("/api/v1/community/latest?limit=5");
+
+    const ids = response.body.map((r: { id: number }) => r.id);
+    expect(ids).toContain(5);
+    expect(ids).not.toContain(4); // an opening
+    expect(ids).not.toContain(6); // an explicit game
+    expect(ids).not.toContain(7); // patch notes
+    expect(response.body.find((r: { id: number }) => r.id === 5)).toMatchObject(
+      {
+        threadId: 2,
+        excerpt: "Zagreus!",
+        author: { username: "frienduser" },
+      },
+    );
+  });
+});

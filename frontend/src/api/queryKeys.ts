@@ -78,6 +78,8 @@ export const queryKeys = {
             ["community", "threads", filters] as const,
         trending: (limit: number) => ["community", "trending", limit] as const,
         patchNotes: ["community", "patch-notes"] as const,
+        games: (limit: number) => ["community", "games", limit] as const,
+        latest: (limit: number) => ["community", "latest", limit] as const,
         thread: (id: number) => ["community", "thread", id] as const,
         byUsername: (username: string, limit: number) =>
             ["community", "user", username, limit] as const,

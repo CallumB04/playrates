@@ -157,6 +157,24 @@ export interface PatchNotesSummary {
   latest: { title: string | null; createdAt: string } | null;
 }
 
+/** A game people are talking about: messages in its threads over the
+ *  trending window. */
+export interface TalkedAboutGame {
+  game: { id: number; title: string; coverUrl: string | null };
+  recentMessageCount: number;
+}
+
+/** One of the newest replies anywhere in the community. */
+export interface LatestReply {
+  id: number;
+  threadId: number;
+  threadTitle: string;
+  /** The start of the reply, as plain text. */
+  excerpt: string;
+  author: CommunityAuthor | null;
+  createdAt: string;
+}
+
 export interface VoteResult {
   voteCount: number;
   votedByViewer: boolean;

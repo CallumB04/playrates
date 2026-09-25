@@ -1,12 +1,19 @@
 import type {
   CommunityAuthor,
   CommunityMessage,
+  LatestReply,
+  TalkedAboutGame,
   RichTextDoc,
   ThreadCard,
   ThreadSubject,
 } from "@playrates/shared";
 import { toAccent } from "../profiles/profiles.mapper.js";
-import type { MessageCardRow, ThreadCardRow } from "./community.repository.js";
+import type {
+  LatestReplyRow,
+  MessageCardRow,
+  TalkedAboutGameRow,
+  ThreadCardRow,
+} from "./community.repository.js";
 
 const toAuthor = (
   id: string | null,
@@ -55,6 +62,22 @@ export const toThreadCard = (row: ThreadCardRow): ThreadCard => ({
     accent: toAccent(c.accent),
   })),
   recentMessageCount: Number(row.recent_message_count ?? 0),
+});
+
+export const toTalkedAboutGame = (
+  row: TalkedAboutGameRow,
+): TalkedAboutGame => ({
+  game: { id: row.game_id, title: row.title, coverUrl: row.cover_url },
+  recentMessageCount: Number(row.recent_message_count),
+});
+
+export const toLatestReply = (row: LatestReplyRow): LatestReply => ({
+  id: row.id,
+  threadId: row.thread_id,
+  threadTitle: row.thread_title,
+  excerpt: (row.plain_text ?? "").slice(0, 140),
+  author: toAuthor(row.author_id, row),
+  createdAt: row.created_at,
 });
 
 /** Who is looking, and at what, which is everything a permission needs. */

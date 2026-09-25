@@ -168,6 +168,69 @@ export const createInMemoryCommunity = (
         .slice(0, limit);
     },
 
+    async listTalkedAboutGames(limit, showSexualContent) {
+      const windowStart = Date.now() - TRENDING_WINDOW_DAYS * DAY_MS;
+      const byGame = new Map<number, { count: number; latest: string }>();
+      for (const m of state.communityMessages) {
+        if (m.deleted_at || Date.parse(m.created_at) <= windowStart) continue;
+        const thread = state.communityThreads.find((t) => t.id === m.thread_id);
+        if (!thread || thread.subject_kind !== "game" || !thread.game_id)
+          continue;
+        const game = state.games.find((g) => g.id === thread.game_id);
+        if (!game || (!showSexualContent && game.has_sexual_content)) continue;
+        const seen = byGame.get(game.id) ?? { count: 0, latest: "" };
+        byGame.set(game.id, {
+          count: seen.count + 1,
+          latest: m.created_at > seen.latest ? m.created_at : seen.latest,
+        });
+      }
+      return [...byGame.entries()]
+        .sort(
+          ([a, x], [b, y]) =>
+            y.count - x.count || y.latest.localeCompare(x.latest) || a - b,
+        )
+        .slice(0, limit)
+        .map(([id, { count }]) => {
+          const game = state.games.find((g) => g.id === id)!;
+          return {
+            game_id: id,
+            title: game.title,
+            cover_url: game.box_art_url ?? game.cover_url,
+            recent_message_count: count,
+          };
+        });
+    },
+
+    async listLatestReplies(limit, showSexualContent) {
+      return state.communityMessages
+        .filter((m) => !m.is_opening && !m.deleted_at)
+        .flatMap((m) => {
+          const thread = state.communityThreads.find(
+            (t) => t.id === m.thread_id,
+          );
+          if (!thread || thread.subject_kind !== "game") return [];
+          const game = state.games.find((g) => g.id === thread.game_id);
+          if (!showSexualContent && game?.has_sexual_content) return [];
+          const author = profile(m.author_id);
+          return [
+            {
+              id: m.id,
+              thread_id: thread.id,
+              thread_title: thread.title,
+              plain_text: toPlainText(m.body as RichTextDoc),
+              created_at: m.created_at,
+              author_id: m.author_id,
+              author_username: author?.username ?? null,
+              author_first_name: author?.first_name ?? null,
+              author_avatar_url: author?.avatar_url ?? null,
+              author_accent: author?.accent ?? null,
+            },
+          ];
+        })
+        .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id - a.id)
+        .slice(0, limit);
+    },
+
     async threadActivity(threadId) {
       const today = new Date().toISOString().slice(0, 10);
       const days = Array.from({ length: TRENDING_WINDOW_DAYS }, (_, i) =>

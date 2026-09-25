@@ -214,6 +214,8 @@ export const handlers = [
         HttpResponse.json(paginated([]))
     ),
     http.get(`${API}/community/trending`, () => HttpResponse.json([])),
+    http.get(`${API}/community/games`, () => HttpResponse.json([])),
+    http.get(`${API}/community/latest`, () => HttpResponse.json([])),
     http.get(`${API}/users/:username/community-threads`, () =>
         HttpResponse.json([])
     ),

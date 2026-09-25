@@ -3,6 +3,8 @@ import type {
     CommunityMessage,
     CreateMessageInput,
     CreateThreadInput,
+    LatestReply,
+    TalkedAboutGame,
     Paginated,
     PatchNotesSummary,
     RichTextDoc,
@@ -40,6 +42,22 @@ export const fetchTrendingThreads = async (
     limit = 3
 ): Promise<TrendingThread[]> => {
     const { data } = await api.get<TrendingThread[]>("/community/trending", {
+        params: { limit },
+    });
+    return data;
+};
+
+export const fetchTalkedAboutGames = async (
+    limit = 5
+): Promise<TalkedAboutGame[]> => {
+    const { data } = await api.get<TalkedAboutGame[]>("/community/games", {
+        params: { limit },
+    });
+    return data;
+};
+
+export const fetchLatestReplies = async (limit = 4): Promise<LatestReply[]> => {
+    const { data } = await api.get<LatestReply[]>("/community/latest", {
         params: { limit },
     });
     return data;
