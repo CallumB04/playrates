@@ -1,5 +1,6 @@
 import { TRENDING_WINDOW_DAYS } from "@playrates/shared";
 import { cn } from "../../lib/cn";
+import { formatMessageCount } from "../../lib/format";
 
 /* Complete class strings: Tailwind only emits what it can see. Today's bar
    is solid, the rest a tint of the same colour. */
@@ -28,7 +29,7 @@ const ActivitySparkline = ({
     return (
         <div
             role="img"
-            aria-label={`${total} messages over the last ${TRENDING_WINDOW_DAYS} days`}
+            aria-label={`${formatMessageCount(total)} messages over the last ${TRENDING_WINDOW_DAYS} days`}
             className={cn("flex h-12 items-end gap-[3px]", className)}
         >
             {activity.map((count, i) => (

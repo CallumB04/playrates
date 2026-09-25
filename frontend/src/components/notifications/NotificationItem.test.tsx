@@ -179,6 +179,22 @@ describe("NotificationItem", () => {
             );
         });
 
+        it("stops counting a thread's new messages at 99+", () => {
+            renderItem({
+                ...welcome(),
+                kind: "community_thread_activity",
+                threadId: 4,
+                threadTitle: "Best boss?",
+                gameTitle: null,
+                coverUrl: null,
+                count: 150,
+            } as AppNotification);
+
+            expect(
+                screen.getByRole("link", { name: /99\+ new messages/ })
+            ).toBeInTheDocument();
+        });
+
         it("counts a thread's new messages, and leaves a read one alone", async () => {
             const seen = capturePatch();
             renderItem({

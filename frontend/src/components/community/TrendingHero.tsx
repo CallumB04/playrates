@@ -3,7 +3,7 @@ import { Flame } from "lucide-react";
 import { TRENDING_WINDOW_DAYS, type TrendingThread } from "@playrates/shared";
 import { cardClass } from "../ui/Card";
 import GameCover from "../game/GameCover";
-import { formatCount } from "../../lib/format";
+import { formatMessageCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import ActivitySparkline from "./ActivitySparkline";
 import ContributorStack from "./ContributorStack";
@@ -61,7 +61,7 @@ const TrendingHero = ({ thread }: { thread: TrendingThread }) => {
                 <span className="flex shrink-0 flex-col justify-end gap-2 border-t border-brand/15 pt-4 sm:w-56 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-6">
                     <span className="flex items-baseline gap-1.5">
                         <span className="font-display text-figure-lg text-content">
-                            {formatCount(thread.recentMessageCount)}
+                            {formatMessageCount(thread.recentMessageCount)}
                         </span>
                         <span className="text-label-sm text-content-muted">
                             messages in {TRENDING_WINDOW_DAYS} days

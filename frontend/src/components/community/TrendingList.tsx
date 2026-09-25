@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import type { TrendingThread } from "@playrates/shared";
 import GameCover from "../game/GameCover";
-import { formatCount } from "../../lib/format";
+import { formatMessageCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import ContributorStack from "./ContributorStack";
 import { threadPath } from "./paths";
@@ -58,7 +58,9 @@ const TrendingList = ({
                             <span className="mt-auto flex items-center justify-between gap-2 pt-1">
                                 <span className="text-label-sm text-content-muted">
                                     <span className="font-mono text-content">
-                                        {formatCount(thread.recentMessageCount)}
+                                        {formatMessageCount(
+                                            thread.recentMessageCount
+                                        )}
                                     </span>{" "}
                                     new{" "}
                                     {thread.recentMessageCount === 1

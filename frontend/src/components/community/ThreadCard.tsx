@@ -3,7 +3,11 @@ import { MessageSquare, Users } from "lucide-react";
 import type { ThreadCard as ThreadCardData } from "@playrates/shared";
 import GameCover from "../game/GameCover";
 import ContributorStack from "./ContributorStack";
-import { formatCount, relativeTime } from "../../lib/format";
+import {
+    formatCount,
+    formatMessageCount,
+    relativeTime,
+} from "../../lib/format";
 import { cn } from "../../lib/cn";
 import { threadPath } from "./paths";
 
@@ -53,7 +57,7 @@ const ThreadCard = ({
                     <span className="inline-flex items-center gap-1">
                         <MessageSquare size={13} aria-hidden />
                         <span className="font-mono tabular-nums">
-                            {formatCount(thread.messageCount)}
+                            {formatMessageCount(thread.messageCount)}
                         </span>
                         {thread.messageCount === 1 ? "message" : "messages"}
                     </span>

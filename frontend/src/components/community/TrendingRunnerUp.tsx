@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import type { TrendingThread } from "@playrates/shared";
 import GameCover from "../game/GameCover";
-import { formatCount } from "../../lib/format";
+import { formatMessageCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import ActivitySparkline from "./ActivitySparkline";
 import { threadPath } from "./paths";
@@ -76,7 +76,7 @@ const TrendingRunnerUp = ({ thread, tone }: TrendingRunnerUpProps) => {
                 <span className="mt-auto flex items-end justify-between gap-3 pt-1">
                     <span className="shrink-0 text-label-sm text-content-muted">
                         <span className="font-mono text-content">
-                            {formatCount(thread.recentMessageCount)}
+                            {formatMessageCount(thread.recentMessageCount)}
                         </span>{" "}
                         new{" "}
                         {thread.recentMessageCount === 1

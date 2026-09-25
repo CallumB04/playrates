@@ -25,7 +25,12 @@ import MessageItem, {
 } from "../../components/community/MessageItem";
 import MessageComposer from "../../components/community/MessageComposer";
 import { replyParentId } from "../../components/community/replyTarget";
-import { formatCount, formatDate, relativeTime } from "../../lib/format";
+import {
+    formatCount,
+    formatDate,
+    formatMessageCount,
+    relativeTime,
+} from "../../lib/format";
 import { cn } from "../../lib/cn";
 
 type Pending =
@@ -193,7 +198,7 @@ const ThreadPage = () => {
                         <h2 className="font-display text-section text-content">
                             {replyCount(data) === 0
                                 ? "Replies"
-                                : `${formatCount(replyCount(data))} ${replyCount(data) === 1 ? "reply" : "replies"}`}
+                                : `${formatMessageCount(replyCount(data))} ${replyCount(data) === 1 ? "reply" : "replies"}`}
                         </h2>
 
                         {data.messages.length <= 1 ? (

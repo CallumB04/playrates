@@ -28,7 +28,7 @@ import { useFriendRelation } from "../../hooks/queries/useFriends";
 import { usePatchNotification } from "../../hooks/queries/useNotifications";
 import GameCover from "../game/GameCover";
 import { threadPath } from "../community/paths";
-import { formatCount } from "../../lib/format";
+import { formatCount, formatMessageCount } from "../../lib/format";
 import { friendRequestState } from "./friendRequestState";
 
 export interface ContentProps<T extends AppNotification> {
@@ -210,7 +210,7 @@ const CommunityActivityContent = ({
         >
             <p className={TITLE}>
                 <span className="group-hover:underline">
-                    {formatCount(count)} new{" "}
+                    {formatMessageCount(count)} new{" "}
                     {count === 1 ? "message" : "messages"}
                 </span>{" "}
                 <span className="font-normal text-content-secondary">
