@@ -37,6 +37,8 @@ import ShelfPanel from "./components/ShelfPanel";
 import ShelfSort from "./components/ShelfSort";
 import PlayedStatusFilterControl from "./components/PlayedStatusFilter";
 import RecentReviews from "./components/RecentReviews";
+import CommunityThreads from "./components/CommunityThreads";
+import { useUserThreads } from "../../hooks/queries/useCommunity";
 import FriendsPanel from "./components/FriendsPanel";
 import ProfileModals, { type ProfileModal } from "./components/ProfileModals";
 import { TextSkeleton } from "../../components/ui/Skeleton";
@@ -120,6 +122,8 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const { data: myFriends } = useMyFriends();
     const { data: reviewsPage, isLoading: reviewsLoading } =
         useUserReviews(targetUsername);
+    const { data: threads, isLoading: threadsLoading } =
+        useUserThreads(targetUsername);
     const { data: myLogIds } = useMyGameLogIds();
 
     const logs = useMemo(() => logsPage?.data ?? [], [logsPage]);
@@ -384,11 +388,18 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
             />
 
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-                <RecentReviews
-                    reviews={reviewsPage?.data ?? []}
-                    isLoading={reviewsLoading}
-                    isOwner={isMyAccount}
-                />
+                <div className="flex min-w-0 flex-col gap-6">
+                    <RecentReviews
+                        reviews={reviewsPage?.data ?? []}
+                        isLoading={reviewsLoading}
+                        isOwner={isMyAccount}
+                    />
+                    <CommunityThreads
+                        threads={threads ?? []}
+                        isLoading={threadsLoading}
+                        isOwner={isMyAccount}
+                    />
+                </div>
                 <FriendsPanel
                     friends={acceptedFriends}
                     isLoading={friendsLoading}

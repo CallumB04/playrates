@@ -2,6 +2,7 @@ import { Router, type RequestHandler } from "express";
 import type { Repositories } from "./repositories.js";
 import type { AuthAdmin } from "./config/authAdmin.js";
 import type { AvatarStore } from "./config/avatarStore.js";
+import type { CommunityImageStore } from "./config/communityImageStore.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
 import { createProfilesService } from "./modules/profiles/profiles.service.js";
 import { createProfilesRouter } from "./modules/profiles/profiles.routes.js";
@@ -27,6 +28,11 @@ import {
 } from "./modules/friends/friends.routes.js";
 import { createNotificationsService } from "./modules/notifications/notifications.service.js";
 import { createMyNotificationsRouter } from "./modules/notifications/notifications.routes.js";
+import { createCommunityService } from "./modules/community/community.service.js";
+import {
+  createCommunityRouter,
+  createUserThreadsRouter,
+} from "./modules/community/community.routes.js";
 import { createPlatformsRouter } from "./modules/platforms/platforms.js";
 import { createGenresRouter } from "./modules/genres/genres.js";
 import { createStatsRouter } from "./modules/stats/stats.js";
@@ -37,6 +43,7 @@ interface Deps {
   /** Auth admin lives outside the repository bundle — it is not a table. */
   authAdmin: AuthAdmin;
   avatars: AvatarStore;
+  communityImages: CommunityImageStore;
   requireAuth: RequestHandler;
   optionalAuth: RequestHandler;
 }
@@ -46,6 +53,7 @@ export const buildRoutes = ({
   provider,
   authAdmin,
   avatars,
+  communityImages,
   requireAuth,
   optionalAuth,
 }: Deps): Router => {
@@ -74,6 +82,13 @@ export const buildRoutes = ({
   const notifications = createNotificationsService(
     repos.notifications,
     repos.friends,
+  );
+
+  const community = createCommunityService(
+    repos.community,
+    repos.profiles,
+    repos.games,
+    communityImages,
   );
 
   router.use("/platforms", createPlatformsRouter(repos.platforms));
@@ -122,6 +137,16 @@ export const buildRoutes = ({
   router.use(
     "/users/:username/friends",
     createUserFriendsRouter({ service: friends, requireAuth, optionalAuth }),
+  );
+
+  router.use(
+    "/users/:username/community-threads",
+    createUserThreadsRouter({ service: community, requireAuth, optionalAuth }),
+  );
+
+  router.use(
+    "/community",
+    createCommunityRouter({ service: community, requireAuth, optionalAuth }),
   );
 
   router.use(

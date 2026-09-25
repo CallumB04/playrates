@@ -15,4 +15,10 @@ describe("whyCannotVote", () => {
             "You can't upvote your own review"
         );
     });
+
+    it("names what is being voted on", () => {
+        expect(whyCannotVote("author", "author", "message")).toBe(
+            "You can't upvote your own message"
+        );
+    });
 });

@@ -5,6 +5,7 @@ import {
     AVATAR_SOURCE_MAX_BYTES,
     AVATAR_SOURCE_TYPES,
 } from "@playrates/shared";
+import { encodeWithin } from "./imageEncode";
 
 export interface CropRect {
     sx: number;
@@ -33,21 +34,6 @@ export const rejectReason = (file: File): string | null => {
     return null;
 };
 
-/* Quality steps down only if the first encode comes out over the limit. A
-   320px photograph lands around 20KB at 0.82, so the fallbacks are for the
-   noisy images that don't. */
-const QUALITIES = [0.82, 0.7, 0.55, 0.4];
-
-const encode = (canvas: HTMLCanvasElement, quality: number): Promise<Blob> =>
-    new Promise((resolve, reject) => {
-        canvas.toBlob(
-            (blob) =>
-                blob ? resolve(blob) : reject(new Error("Encoding failed")),
-            AVATAR_MIME,
-            quality
-        );
-    });
-
 /**
  * A picture the API will take: centre-cropped square, AVATAR_PIXELS across,
  * WebP, under the byte cap. Doing it here rather than on the server keeps a
@@ -73,10 +59,8 @@ export const compressAvatar = async (file: File): Promise<Blob> => {
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(bitmap, sx, sy, size, size, 0, 0, pixels, pixels);
 
-        for (const quality of QUALITIES) {
-            const blob = await encode(canvas, quality);
-            if (blob.size <= AVATAR_MAX_BYTES) return blob;
-        }
+        const blob = await encodeWithin(canvas, AVATAR_MIME, AVATAR_MAX_BYTES);
+        if (blob) return blob;
         throw new Error("That image won't compress small enough. Try another.");
     } finally {
         bitmap.close();

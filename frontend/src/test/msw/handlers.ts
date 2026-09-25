@@ -29,6 +29,7 @@ export const buildProfile = (
     timezone: "UTC",
     hideOnline: false,
     onboardedAt: "2026-01-01T00:00:00.000Z",
+    isAdmin: false,
     avatarUrl: null,
     accent: "indigo",
     online: true,
@@ -206,6 +207,15 @@ export const handlers = [
 
     http.get(`${API}/games/:id/reviews`, () =>
         HttpResponse.json(paginated([buildReview()]))
+    ),
+
+    // An empty community, so a page that shows threads renders without them.
+    http.get(`${API}/community/threads`, () =>
+        HttpResponse.json(paginated([]))
+    ),
+    http.get(`${API}/community/trending`, () => HttpResponse.json([])),
+    http.get(`${API}/users/:username/community-threads`, () =>
+        HttpResponse.json([])
     ),
 
     http.get(`${API}/me/friends`, () =>

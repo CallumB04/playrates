@@ -48,9 +48,8 @@ export const buildTestApp = (
 ): { app: Express; repos: Repositories; state: InMemoryState } => {
   setTestEnv();
 
-  const { repos, state, authAdmin, avatars } = createInMemoryRepos(
-    options.seed,
-  );
+  const { repos, state, authAdmin, avatars, communityImages } =
+    createInMemoryRepos(options.seed);
   const resolved = options.repos ?? repos;
 
   const app = buildApp({
@@ -58,6 +57,7 @@ export const buildTestApp = (
     provider: options.provider ?? nullGamesProvider,
     authAdmin,
     avatars,
+    communityImages,
     verify: fakeVerify,
     logger: createLogger(),
   });

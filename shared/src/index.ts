@@ -7,3 +7,5 @@ export * from "./schemas/gameLog.js";
 export * from "./schemas/review.js";
 export * from "./schemas/friend.js";
 export * from "./schemas/notification.js";
+export * from "./schemas/richText.js";
+export * from "./schemas/community.js";
