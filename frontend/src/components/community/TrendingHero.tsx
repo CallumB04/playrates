@@ -7,7 +7,7 @@ import { formatMessageCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import ActivitySparkline from "./ActivitySparkline";
 import ContributorStack from "./ContributorStack";
-import PeopleCount from "./PeopleCount";
+import { PeopleCount } from "./ThreadStats";
 import { threadPath } from "./paths";
 
 /** The busiest thread of the fortnight, with the fortnight drawn. */
