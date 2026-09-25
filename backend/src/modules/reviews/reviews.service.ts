@@ -157,6 +157,10 @@ export const createReviewsService = (
     ): Promise<{ voteCount: number; votedByViewer: boolean }> {
       const review = await repo.findById(reviewId);
       if (!review) throw AppError.notFound("Review");
+      // A vote says someone else found it useful; the author always does.
+      if (review.user_id === userId) {
+        throw AppError.forbidden("You cannot upvote your own review");
+      }
 
       const voted = await repo.hasVoted(userId, reviewId);
       if (voted) await repo.removeVote(userId, reviewId);

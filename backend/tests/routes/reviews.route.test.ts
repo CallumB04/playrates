@@ -312,3 +312,52 @@ describe("reviews feed", () => {
     expect(review.hoursPlayed).toBe(41);
   });
 });
+
+describe("upvoting a review", () => {
+  // USER_A wrote it, so USER_B is the one who can vote.
+  const seed = () => ({ ...baseSeed(), reviews: [buildReview()] });
+
+  it("counts someone else's vote", async () => {
+    const { app, state } = buildTestApp({ seed: seed() });
+
+    const response = await request(app)
+      .post("/api/v1/reviews/1/vote")
+      .set("Authorization", authHeader(USER_B));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ voteCount: 1, votedByViewer: true });
+    expect(state.reviewVotes).toHaveLength(1);
+  });
+
+  it("withdraws the vote when pressed again", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const vote = () =>
+      request(app)
+        .post("/api/v1/reviews/1/vote")
+        .set("Authorization", authHeader(USER_B));
+
+    await vote();
+    const response = await vote();
+
+    expect(response.body).toEqual({ voteCount: 0, votedByViewer: false });
+  });
+
+  it("refuses a vote on your own review", async () => {
+    const { app, state } = buildTestApp({ seed: seed() });
+
+    const response = await request(app)
+      .post("/api/v1/reviews/1/vote")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(403);
+    expect(state.reviewVotes).toHaveLength(0);
+  });
+
+  it("requires a signed-in caller", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await request(app).post("/api/v1/reviews/1/vote");
+
+    expect(response.status).toBe(401);
+  });
+});

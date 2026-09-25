@@ -10,6 +10,7 @@ import ExpandableText from "./ExpandableText";
 import { cn } from "../../../lib/cn";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import VoteButton from "../../../components/ui/VoteButton";
+import { whyCannotVote } from "../../../lib/voting";
 import Button from "../../../components/ui/Button";
 import { PenLine } from "lucide-react";
 import {
@@ -27,7 +28,9 @@ interface GameReviewsProps {
     hasLog: boolean;
     /** Opens the log editor. Omitted when signed out. */
     onWriteReview?: () => void;
-    canVote: boolean;
+    /** Who is looking, so their own reviews refuse a vote. Unset when signed
+     *  out. */
+    viewerId: string | undefined;
     onVote?: (reviewId: number) => void;
     total: number;
     sort: ReviewSort;
@@ -48,7 +51,7 @@ const GameReviews = ({
     reviews,
     hasLog,
     onWriteReview,
-    canVote,
+    viewerId,
     onVote,
     total,
     sort,
@@ -190,7 +193,10 @@ const GameReviews = ({
                             <VoteButton
                                 count={review.voteCount}
                                 voted={review.votedByViewer}
-                                disabled={!canVote}
+                                disabledReason={whyCannotVote(
+                                    viewerId,
+                                    review.author.id
+                                )}
                                 onToggle={() => onVote?.(review.id)}
                             />
                         </div>

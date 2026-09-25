@@ -166,7 +166,7 @@ const GamePage = () => {
                                 ? () => openEditor("review")
                                 : () => openLogin()
                         }
-                        canVote={!!user}
+                        viewerId={user?.id}
                         onVote={(reviewId) => vote.mutate(reviewId)}
                         total={reviews?.meta.total ?? 0}
                         sort={sort}
