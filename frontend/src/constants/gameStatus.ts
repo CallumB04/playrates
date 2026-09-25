@@ -63,7 +63,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
         chip: "border-status-played bg-status-played-quiet text-content",
         markTone: "text-status-played",
         accent: "bg-status-played",
-        onMediaTone: "border-status-played/60 text-white",
+        onMediaTone: "border-status-played/60 text-[#c9bcff]",
     },
     playing: {
         label: "Playing",
@@ -96,10 +96,10 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
         label: "Finished",
         icon: Flag,
         hint: "Saw the credits",
-        chip: "border-status-finished bg-brand-subtle text-content",
+        chip: "border-status-finished bg-status-finished-quiet text-content",
         markTone: "text-status-finished",
         accent: "bg-status-finished",
-        onMediaTone: "border-status-finished/60 text-[#c9bcff]",
+        onMediaTone: "border-status-finished/60 text-[#a7f3d0]",
     },
     mastered: {
         label: "Mastered",

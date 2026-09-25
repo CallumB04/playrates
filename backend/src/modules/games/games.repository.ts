@@ -5,8 +5,11 @@ import type { GameRowWithPlatforms } from "./games.mapper.js";
 
 export const RATING_BUCKETS = 20;
 
+/** UTC, which is what release_date is stored in. */
+const today = (): string => new Date().toISOString().slice(0, 10);
+
 const SELECT_WITH_RELATIONS =
-  "*, game_platforms(platform_slug), game_genres(genre_slug)";
+  "*, game_platforms(platform_slug), game_systems(system_slug), game_genres(genre_slug)";
 
 export interface GameStatsRow {
   status: string;
@@ -24,9 +27,16 @@ export interface GamesRepository {
     /** Opt-in, read from the caller's profile. Off hides flagged games. */
     showSexualContent?: boolean,
   ): Promise<{ rows: GameRowWithPlatforms[]; total: number }>;
-  searchLocal(term: string, limit: number): Promise<GameRowWithPlatforms[]>;
+  searchLocal(
+    term: string,
+    limit: number,
+    showSexualContent: boolean,
+  ): Promise<GameRowWithPlatforms[]>;
   upsertMany(games: ExternalGame[]): Promise<number[]>;
-  statusCounts(gameId: number): Promise<Record<string, number>>;
+  statusCounts(gameId: number): Promise<{
+    byStatus: Record<string, number>;
+    byPlayedStatus: Record<string, number>;
+  }>;
   ratingSummary(
     gameId: number,
   ): Promise<{ average: number | null; count: number; buckets: number[] }>;
@@ -45,6 +55,11 @@ export interface GamesRepository {
       description: string;
       contentTags: string[];
       hasSexualContent: boolean;
+      developers: string[];
+      publishers: string[];
+      website: string | null;
+      esrbRating: string | null;
+      boxArtUrl: string | null;
     },
   ): Promise<void>;
   count(): Promise<number>;
@@ -125,6 +140,14 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       builder = builder.lte("release_date", query.releasedBefore);
     }
 
+    /* "Newest" means newest *released*. RAWG carries placeholder dates years
+       out — a 2033 that is a guess, not a release — and they took the whole
+       front of this sort. A caller's own releasedBefore still narrows it
+       further, since both bounds apply. */
+    if (query.sort === "released") {
+      builder = builder.lte("release_date", today());
+    }
+
     /* Log count is the default: this site's own figures should order it.
        RAWG's tracker count sits underneath as a hidden second key, because
        almost nothing is logged yet and log_count alone leaves a hundred
@@ -164,11 +187,18 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     };
   },
 
-  async searchLocal(term, limit) {
-    const { data, error } = await db
+  async searchLocal(term, limit, showSexualContent) {
+    let builder = db
       .from("games")
       .select(SELECT_WITH_RELATIONS)
-      .ilike("title", `%${term}%`)
+      .ilike("title", `%${term}%`);
+
+    // The same rule the listing runs. Search had been the way round it.
+    if (!showSexualContent) {
+      builder = builder.eq("has_sexual_content", false);
+    }
+
+    const { data, error } = await builder
       .order("rawg_added_count", { ascending: false, nullsFirst: false })
       .limit(limit);
     if (error) throw error;
@@ -193,6 +223,9 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       release_date: g.releaseDate,
       has_sexual_content: g.hasSexualContent,
       content_tags: g.contentTags,
+      /* Developers, publishers and the website are absent from a listing row
+         and arrive with the first detail fetch; the age rating is not. */
+      esrb_rating: g.esrbRating,
       metacritic: g.metacritic,
       rawg_rating: g.rawgRating,
       rawg_rating_count: g.rawgRatingCount,
@@ -200,7 +233,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       playtime_hours: g.playtimeHours,
       synced_at: now,
       ...(g.description
-        ? { description: g.description, description_synced_at: now }
+        ? { description: g.description, details_synced_at: now }
         : {}),
     }));
 
@@ -229,7 +262,11 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     }
 
     // replace the links rather than accumulating duplicates
-    for (const table of ["game_platforms", "game_genres"] as const) {
+    for (const table of [
+      "game_platforms",
+      "game_systems",
+      "game_genres",
+    ] as const) {
       const { error: deleteError } = await db
         .from(table)
         .delete()
@@ -246,6 +283,15 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       }));
     });
 
+    const systemLinks = games.flatMap((g) => {
+      const gameId = idByRawgId.get(g.externalId);
+      if (!gameId) return [];
+      return g.systemSlugs.map((slug) => ({
+        game_id: gameId,
+        system_slug: slug,
+      }));
+    });
+
     const genreLinks = games.flatMap((g) => {
       const gameId = idByRawgId.get(g.externalId);
       if (!gameId) return [];
@@ -259,6 +305,13 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       const { error: linkError } = await db
         .from("game_platforms")
         .insert(platformLinks);
+      if (linkError) throw linkError;
+    }
+
+    if (systemLinks.length > 0) {
+      const { error: linkError } = await db
+        .from("game_systems")
+        .insert(systemLinks);
       if (linkError) throw linkError;
     }
 
@@ -280,17 +333,24 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       .single();
     if (error) throw error;
 
-    const row = data as {
-      played: number;
-      playing: number;
-      backlog: number;
-      wishlist: number;
-    };
+    const row = data as Record<string, number>;
+    const count = (key: string) => Number(row[key] ?? 0);
+
     return {
-      played: Number(row.played),
-      playing: Number(row.playing),
-      backlog: Number(row.backlog),
-      wishlist: Number(row.wishlist),
+      byStatus: {
+        played: count("played"),
+        playing: count("playing"),
+        backlog: count("backlog"),
+        wishlist: count("wishlist"),
+      },
+      /* Kept apart from byStatus: these are a slice of `played`, and summing
+         one record for a total would count those logs twice. */
+      byPlayedStatus: {
+        finished: count("finished"),
+        mastered: count("mastered"),
+        shelved: count("shelved"),
+        retired: count("retired"),
+      },
     };
   },
 
@@ -350,7 +410,14 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
         description: fields.description,
         content_tags: fields.contentTags,
         has_sexual_content: fields.hasSexualContent,
-        description_synced_at: new Date().toISOString(),
+        developers: fields.developers,
+        publishers: fields.publishers,
+        website: fields.website,
+        esrb_rating: fields.esrbRating,
+        /* Only when we found one: a game already carrying art should not lose
+           it because Steam happened to be unreachable this time. */
+        ...(fields.boxArtUrl ? { box_art_url: fields.boxArtUrl } : {}),
+        details_synced_at: new Date().toISOString(),
       })
       .eq("id", id);
     if (error) throw error;

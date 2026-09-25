@@ -2,6 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Moon, Pencil, Settings, Sun } from "lucide-react";
 import type { GameLogWithGame } from "../../api";
+import {
+    GAME_LOG_SORTS,
+    PLAYED_STATUSES,
+    type GameLogSort,
+    type PlayedStatusFilter,
+    type SortDirection,
+} from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
@@ -27,6 +34,8 @@ import ProfileError from "./components/ProfileError";
 import MemberFileHeader from "./components/MemberFileHeader";
 import FriendAction from "./components/FriendAction";
 import ShelfPanel from "./components/ShelfPanel";
+import ShelfSort from "./components/ShelfSort";
+import PlayedStatusFilterControl from "./components/PlayedStatusFilter";
 import RecentReviews from "./components/RecentReviews";
 import FriendsPanel from "./components/FriendsPanel";
 import ProfileModals, { type ProfileModal } from "./components/ProfileModals";
@@ -60,6 +69,22 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const page = Math.max(1, Number(params.get("page")) || 1);
     const deepLinkedLog = params.get("log");
 
+    /* In the URL alongside the tab, so a sorted shelf survives a reload and
+       can be linked to. Anything unrecognised falls back to the default. */
+    const rawSort = params.get("sort");
+    const sort: GameLogSort = GAME_LOG_SORTS.includes(rawSort as GameLogSort)
+        ? (rawSort as GameLogSort)
+        : "rating";
+    const direction: SortDirection =
+        params.get("direction") === "asc" ? "asc" : "desc";
+
+    const rawPlayed = params.get("ending");
+    const playedStatus: PlayedStatusFilter | undefined =
+        rawPlayed === "none" ||
+        PLAYED_STATUSES.includes(rawPlayed as (typeof PLAYED_STATUSES)[number])
+            ? (rawPlayed as PlayedStatusFilter)
+            : undefined;
+
     const [modal, setModal] = useState<ProfileModal>(null);
     const perPage = getProfileGamesPerPage(width);
 
@@ -79,7 +104,14 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const { data: logsPage, isLoading: logsLoading } = useUserGameLogs(
         targetUsername,
         activeSection,
-        { page, limit: perPage }
+        {
+            page,
+            limit: perPage,
+            sort,
+            direction,
+            // Only the played shelf has endings to filter by.
+            playedStatus: activeSection === "played" ? playedStatus : undefined,
+        }
     );
     const { data: stats } = useUserStats(targetUsername);
     const { data: platforms } = usePlatforms();
@@ -105,10 +137,31 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
         },
     });
 
+    const setOrder = (next: {
+        sort?: GameLogSort;
+        direction?: SortDirection;
+    }) => {
+        const updated = new URLSearchParams(params);
+        if (next.sort) updated.set("sort", next.sort);
+        if (next.direction) updated.set("direction", next.direction);
+        updated.delete("page"); // a reordered shelf starts again at the top
+        setParams(updated);
+    };
+
+    const setEnding = (next: PlayedStatusFilter | undefined) => {
+        const updated = new URLSearchParams(params);
+        if (next) updated.set("ending", next);
+        else updated.delete("ending");
+        updated.delete("page");
+        setParams(updated);
+    };
+
     const setSection = (status: GameStatus) => {
         const updated = new URLSearchParams(params);
         updated.set("type", status);
         updated.delete("page"); // a new drawer opens at its own first page
+        // No other shelf has endings, so the filter would be a lie in the URL.
+        if (status !== "played") updated.delete("ending");
         setParams(updated);
     };
 
@@ -213,6 +266,11 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 friendCount={
                     friendsLoading ? undefined : acceptedFriends.length
                 }
+                onEditPicture={
+                    isMyAccount
+                        ? () => setModal({ kind: "editProfile" })
+                        : undefined
+                }
                 action={
                     isMyAccount ? (
                         <>
@@ -296,16 +354,32 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 perPage={perPage}
                 buildTileActions={buildTileActions}
                 isMyAccount={isMyAccount}
+                sort={sort}
                 trailing={
-                    !isMyAccount && myLogIds ? (
-                        <span className="text-label text-accent">
-                            {formatCount(
-                                logs.filter((l) => myLogGameIds.has(l.gameId))
-                                    .length
-                            )}{" "}
-                            in common
-                        </span>
-                    ) : undefined
+                    <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
+                        {!isMyAccount && myLogIds && (
+                            <span className="text-label text-accent max-sm:hidden">
+                                {formatCount(
+                                    logs.filter((l) =>
+                                        myLogGameIds.has(l.gameId)
+                                    ).length
+                                )}{" "}
+                                in common
+                            </span>
+                        )}
+                        {activeSection === "played" && (
+                            <PlayedStatusFilterControl
+                                value={playedStatus}
+                                onChange={setEnding}
+                            />
+                        )}
+                        <ShelfSort
+                            sort={sort}
+                            direction={direction}
+                            isMyAccount={isMyAccount}
+                            onChange={setOrder}
+                        />
+                    </div>
                 }
             />
 

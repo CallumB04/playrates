@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { GameLogWithGame } from "../api";
-import { useGame, usePlatforms } from "../hooks/queries/useGames";
-import { useGameLogMutations } from "../hooks/queries/useGameLogs";
+import { useGame, usePlatformSystems } from "../hooks/queries/useGames";
+import {
+    useGameLogMutations,
+    useMyGameLog,
+} from "../hooks/queries/useGameLogs";
 import { useMyReview, useReviewMutations } from "../hooks/queries/useReviews";
 import { useNotify } from "../contexts/NotificationContext";
 import Modal from "./ui/Modal";
@@ -11,8 +14,11 @@ import Field from "./ui/Field";
 import { Input, NumberInput, Textarea } from "./ui/Input";
 import RatingMeter from "./ui/RatingMeter";
 import Dropdown from "./ui/Dropdown";
-import { platformOptions } from "../lib/platformIcons";
-import { StatusPlates, PlayedStatusPlates } from "./gamelog/StatusPlates";
+import { systemOptions } from "../lib/platformIcons";
+import { familyOf, systemsForGame } from "../lib/gameSystems";
+import { StatusPlates } from "./gamelog/StatusPlates";
+import Progress from "./ui/Progress";
+import DeleteGameLogPopup from "./gamelog/DeleteGameLogPopup";
 import {
     achievementFraction,
     emptyDraft,
@@ -28,7 +34,6 @@ interface CreateOrEditGameLogPopupProps {
     viewUpdatedLog: () => void;
     gamelog?: GameLogWithGame | null;
     gameID?: number;
-    editing: boolean;
     /** Opened from a review control, so open on the review field. */
     focusReview?: boolean;
 }
@@ -43,7 +48,6 @@ const CreateOrEditGameLogPopup = ({
     viewUpdatedLog,
     gamelog,
     gameID,
-    editing,
     focusReview = false,
 }: CreateOrEditGameLogPopupProps) => {
     const gameId = gamelog?.gameId ?? gameID!;
@@ -51,27 +55,38 @@ const CreateOrEditGameLogPopup = ({
     const reviewRef = useRef<HTMLTextAreaElement>(null);
 
     const { data: game } = useGame(gameId);
-    const { data: platforms } = usePlatforms();
+    const { data: systems } = usePlatformSystems();
     const { data: review, isLoading: reviewLoading } = useMyReview(gameId);
     const { save, remove } = useGameLogMutations();
     const { save: saveReview, remove: removeReview } = useReviewMutations();
 
+    /* Fetched rather than required of the caller: opened from a rail or a
+       tile there is only a game id to hand, and hydrating from nothing put
+       every existing log back to "played" on save. */
+    const { data: fetchedLog, isLoading: logLoading } = useMyGameLog(
+        gameId,
+        !gamelog
+    );
+    const existing = gamelog ?? fetchedLog ?? null;
+
     const [draft, dispatch] = useReducer(logReducer, emptyDraft);
     const [error, setError] = useState<string | null>(null);
     const [hydrated, setHydrated] = useState(false);
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-    // Wait for the review, or a blank note overwrites a real one on save.
+    /* Wait for both, or a blank note overwrites a real one and a backlog game
+       opens as played. */
     useEffect(() => {
-        if (hydrated || reviewLoading) return;
+        if (hydrated || reviewLoading || logLoading) return;
         dispatch({
             type: "hydrate",
-            log: gamelog ?? null,
+            log: existing,
             review: review
                 ? { body: review.body, isPublic: review.isPublic }
                 : null,
         });
         setHydrated(true);
-    }, [hydrated, reviewLoading, gamelog, review]);
+    }, [hydrated, reviewLoading, logLoading, existing, review]);
 
     // Only once hydrated: before that the form's height isn't final.
     useEffect(() => {
@@ -79,6 +94,13 @@ const CreateOrEditGameLogPopup = ({
         reviewRef.current?.scrollIntoView({ block: "center" });
         reviewRef.current?.focus({ preventScroll: true });
     }, [focusReview, hydrated]);
+
+    // Only what this game is actually on: the full list runs to every machine
+    // in the catalogue, which is not something anyone should scroll.
+    const available = useMemo(
+        () => systemsForGame(systems ?? [], game?.systems ?? [], draft.system),
+        [systems, game?.systems, draft.system]
+    );
 
     const progress = useMemo(() => achievementFraction(draft), [draft]);
     const busy = save.isPending || saveReview.isPending || remove.isPending;
@@ -110,26 +132,20 @@ const CreateOrEditGameLogPopup = ({
                 await removeReview.mutateAsync(gameId);
             }
         } catch {
-            // The log did save, so don't imply a blanket failure.
-            notify("Entry saved, but your note didn't send", "error");
+            // The log did save, so don't imply a blanket failure. Critical
+            // because the note is the part the user wrote by hand: they have
+            // to see this, not catch it out of the corner of an eye.
+            notify(
+                "Entry saved, but your note didn't send",
+                "error",
+                "critical"
+            );
             viewUpdatedLog();
             return;
         }
 
-        notify(editing ? "Entry updated" : "Entry saved", "success");
+        notify(existing ? "Entry updated" : "Entry saved", "success");
         viewUpdatedLog();
-    };
-
-    const handleDelete = async () => {
-        if (!gamelog) return;
-        try {
-            // Keyed by game, not by log row: gamelog.id 404s here.
-            await remove.mutateAsync(gamelog.gameId);
-            notify("Log deleted", "success");
-            closePopup();
-        } catch {
-            notify("Couldn't delete that log", "error");
-        }
     };
 
     return (
@@ -162,16 +178,11 @@ const CreateOrEditGameLogPopup = ({
                 <StatusPlates
                     value={draft.status}
                     onChange={(value) => dispatch({ type: "status", value })}
+                    playedStatus={draft.playedStatus}
+                    onPlayedStatusChange={(value) =>
+                        dispatch({ type: "playedStatus", value })
+                    }
                 />
-
-                {draft.status === "played" && (
-                    <PlayedStatusPlates
-                        value={draft.playedStatus}
-                        onChange={(value) =>
-                            dispatch({ type: "playedStatus", value })
-                        }
-                    />
-                )}
 
                 <div className="rounded-md border border-subtle bg-surface-sunken/50 px-5 py-4">
                     <RatingMeter
@@ -263,18 +274,15 @@ const CreateOrEditGameLogPopup = ({
                             Platform
                         </span>
                         <Dropdown
-                            options={platformOptions(
-                                platforms ?? [],
-                                "Not set"
-                            )}
-                            value={draft.platform}
+                            options={systemOptions(available, "Not set")}
+                            value={draft.system}
                             placeholder="Not set"
                             aria-labelledby="log-platform-label"
                             onChange={(value) =>
                                 dispatch({
-                                    type: "set",
-                                    field: "platform",
+                                    type: "system",
                                     value,
+                                    platform: familyOf(available, value) ?? "",
                                 })
                             }
                         />
@@ -325,14 +333,12 @@ const CreateOrEditGameLogPopup = ({
                                 }
                                 className="w-22"
                             />
-                            <span className="h-2.5 flex-1 bg-surface-sunken">
-                                <span
-                                    className="block h-full bg-brand transition-[width]"
-                                    style={{
-                                        width: `${(progress ?? 0) * 100}%`,
-                                    }}
-                                />
-                            </span>
+                            <Progress
+                                size="lg"
+                                value={progress ?? 0}
+                                label="Achievements earned"
+                                className="flex-1"
+                            />
                         </div>
                     </div>
                 </div>
@@ -387,10 +393,10 @@ const CreateOrEditGameLogPopup = ({
             </div>
 
             <footer className="flex flex-col-reverse gap-3 border-t border-subtle bg-surface-raised px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:px-6">
-                {editing && gamelog && (
+                {existing && (
                     <button
                         type="button"
-                        onClick={() => void handleDelete()}
+                        onClick={() => setConfirmingDelete(true)}
                         disabled={busy}
                         className="min-h-11 text-label text-danger lift hover:underline disabled:opacity-60 sm:min-h-0"
                     >
@@ -415,6 +421,16 @@ const CreateOrEditGameLogPopup = ({
                     </Button>
                 </div>
             </footer>
+
+            {/* Deleting takes the rating, the hours and the review with it, so
+                it asks first — the same dialog the profile uses. */}
+            {confirmingDelete && existing && (
+                <DeleteGameLogPopup
+                    gameLog={existing}
+                    closePopup={() => setConfirmingDelete(false)}
+                    onDeleted={closePopup}
+                />
+            )}
         </Modal>
     );
 };

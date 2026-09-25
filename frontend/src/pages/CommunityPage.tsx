@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { cardClass } from "../components/ui/Card";
 import { MessagesSquare } from "lucide-react";
 import { buttonClass } from "../components/ui/Button";
 import { usePageTitle } from "../hooks/usePageTitle";
@@ -7,7 +8,12 @@ const CommunityPage = () => {
     usePageTitle("Community");
 
     return (
-        <section className="relative overflow-hidden rounded-lg border border-subtle bg-surface-raised px-6 py-10 shadow-plate sm:px-10 sm:py-12">
+        <section
+            className={cardClass(
+                "relative overflow-hidden px-6 py-10 sm:px-10 sm:py-12",
+                { padding: "none" }
+            )}
+        >
             <span
                 aria-hidden
                 className="pointer-events-none absolute -top-28 -right-24 size-80 rounded-full bg-brand/12 blur-3xl"

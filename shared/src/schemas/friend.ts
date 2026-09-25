@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ProfileAccent } from "./profileAccent.js";
 
 /** The status as the viewer sees it. Stored as one row plus requested_by;
  *  these three are derived per viewer. */
@@ -25,6 +26,8 @@ export interface FriendUser {
   id: string;
   username: string;
   avatarUrl: string | null;
+  /** Colours the generated avatar where there is no picture. */
+  accent: ProfileAccent;
   bio: string;
   online: boolean;
 }

@@ -6,6 +6,7 @@ import {
     fetchGameStats,
     fetchGenres,
     fetchPlatforms,
+    fetchPlatformSystems,
     fetchSiteStats,
     queryKeys,
     type GameListFilters,
@@ -39,6 +40,13 @@ export const usePlatforms = () =>
     useQuery({
         queryKey: queryKeys.platforms,
         queryFn: fetchPlatforms,
+        staleTime: Infinity, // reference data
+    });
+
+export const usePlatformSystems = () =>
+    useQuery({
+        queryKey: queryKeys.platformSystems,
+        queryFn: fetchPlatformSystems,
         staleTime: Infinity, // reference data
     });
 

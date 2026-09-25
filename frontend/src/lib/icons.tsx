@@ -1,34 +1,12 @@
 import type { ComponentType, SVGProps } from "react";
-import {
-    CalendarPlus,
-    CheckCircle2,
-    Gamepad2,
-    Heart,
-    Monitor,
-    PlayCircle,
-    Smartphone,
-} from "lucide-react";
-import { SiPlaystation, SiSteam } from "@icons-pack/react-simple-icons";
+import { CalendarPlus, CheckCircle2, Heart, PlayCircle } from "lucide-react";
 
-/** Lucide throughout, except brand marks, which come from simple-icons. */
 export type IconComponent = ComponentType<
     SVGProps<SVGSVGElement> & { size?: number | string }
 >;
 
-// Simple Icons dropped Nintendo and Xbox over trademark, so these fall back.
-const PLATFORM_ICONS: Record<string, IconComponent> = {
-    steam: SiSteam,
-    playstation: SiPlaystation,
-    xbox: Gamepad2,
-    "nintendo-switch": Gamepad2,
-    "pc-game-pass": Monitor,
-    "other-pc": Monitor,
-    mobile: Smartphone,
-};
-
-/** Falls back to a controller so an unknown platform still renders. */
-export const getPlatformIcon = (slug: string): IconComponent =>
-    PLATFORM_ICONS[slug] ?? Gamepad2;
+// Platform and system marks live in platformIcons.tsx, alongside the brand
+// marks that have to be inlined.
 
 /** Game log statuses — UI concepts, so Lucide rather than brands. */
 const STATUS_ICONS: Record<string, IconComponent> = {

@@ -3,6 +3,7 @@
 export const queryKeys = {
     stats: ["stats"] as const,
     platforms: ["platforms"] as const,
+    platformSystems: ["platforms", "systems"] as const,
     genres: ["genres"] as const,
 
     games: {
@@ -22,12 +23,32 @@ export const queryKeys = {
     },
 
     gameLogs: {
-        // Page is part of the key, or two pages collide in the cache.
-        mine: (status?: string, page?: number) =>
-            ["gamelogs", "me", status ?? "all", page ?? 1] as const,
+        /* Page, sort and direction are all part of the key — each names a
+           different set of rows, and sharing a key caches them as one. */
+        mine: (status?: string, page?: number, order?: string) =>
+            [
+                "gamelogs",
+                "me",
+                status ?? "all",
+                page ?? 1,
+                order ?? "",
+            ] as const,
         mineIds: ["gamelogs", "me", "ids"] as const,
-        byUsername: (username: string, status?: string, page?: number) =>
-            ["gamelogs", username, status ?? "all", page ?? 1] as const,
+        mineForGame: (gameId: number) =>
+            ["gamelogs", "me", "game", gameId] as const,
+        byUsername: (
+            username: string,
+            status?: string,
+            page?: number,
+            order?: string
+        ) =>
+            [
+                "gamelogs",
+                username,
+                status ?? "all",
+                page ?? 1,
+                order ?? "",
+            ] as const,
     },
 
     userStats: (username: string, year?: number) =>
@@ -46,5 +67,13 @@ export const queryKeys = {
         mine: ["friends", "me"] as const,
         activity: ["friends", "me", "activity"] as const,
         byUsername: (username: string) => ["friends", username] as const,
+    },
+
+    notifications: {
+        all: ["notifications"] as const,
+        /* The inbox and the archive are separate lists, not one list filtered
+           — sharing a key would show the archive's rows under the bell. */
+        list: (archived: boolean) =>
+            ["notifications", archived ? "archived" : "inbox"] as const,
     },
 } as const;

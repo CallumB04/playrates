@@ -16,7 +16,15 @@ export interface GameLogRowWithGame extends GameLogRow {
 export interface GameLogWithGame extends GameLog {
   game: Pick<
     Game,
-    "id" | "title" | "slug" | "coverUrl" | "releaseDate" | "platforms"
+    | "id"
+    | "title"
+    | "slug"
+    | "coverUrl"
+    | "releaseDate"
+    | "platforms"
+    /** So a shelf ordered by one of these can print what it ordered on. */
+    | "avgRating"
+    | "metacritic"
   > | null;
 }
 
@@ -32,6 +40,7 @@ export const toGameLog = (row: GameLogRow): GameLog => ({
   startDate: row.start_date,
   finishDate: row.finish_date,
   platform: row.platform_slug,
+  system: row.system_slug,
   achievementsTotal: row.achievements_total,
   achievementsCompleted: row.achievements_completed,
   createdAt: row.created_at,
@@ -53,6 +62,8 @@ export const toGameLogWithGame = (row: GameLogRowWithGame): GameLogWithGame => {
       coverUrl: game.coverUrl,
       releaseDate: game.releaseDate,
       platforms: game.platforms,
+      avgRating: game.avgRating,
+      metacritic: game.metacritic,
     },
   };
 };
@@ -77,6 +88,7 @@ export const toGameLogRow = (
     row.finish_date = input.finishDate ?? null;
   }
   if (input.platform !== undefined) row.platform_slug = input.platform ?? null;
+  if (input.system !== undefined) row.system_slug = input.system ?? null;
   if (input.achievementsTotal !== undefined) {
     row.achievements_total = input.achievementsTotal ?? null;
   }

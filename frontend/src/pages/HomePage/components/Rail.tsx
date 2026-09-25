@@ -20,6 +20,9 @@ interface RailProps {
     statusFor?: (game: Game) => DisplayStatus | null;
     /** The figure under each cover. Defaults to the release year. */
     footValueFor?: (game: Game) => string;
+    /** A rating for the figure under each cover, carrying the brand colour
+     *  and the "/10". Falls back to the foot value where there is none. */
+    ratingFor?: (game: Game) => number | undefined;
 }
 
 const ARROW =
@@ -39,6 +42,7 @@ const Rail = ({
     actionsFor,
     statusFor,
     footValueFor,
+    ratingFor,
 }: RailProps) => {
     const trackRef = useRef<HTMLDivElement>(null);
     const [edges, setEdges] = useState({ start: true, end: false });
@@ -143,6 +147,7 @@ const Rail = ({
                                     footValueFor?.(game as Game) ??
                                     releaseYear((game as Game).releaseDate)
                                 }
+                                rating={ratingFor?.(game as Game)}
                                 status={statusFor?.(game as Game)}
                                 actions={actionsFor?.(game as Game)}
                             />

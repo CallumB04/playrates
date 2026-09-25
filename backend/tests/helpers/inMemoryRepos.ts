@@ -1,11 +1,14 @@
 import type { Repositories } from "../../src/repositories.js";
 import type { AuthAdmin } from "../../src/config/authAdmin.js";
+import type { AvatarStore } from "../../src/config/avatarStore.js";
 import type {
   FriendshipRow,
   GameLogRow,
   GameRow,
   GenreRow,
+  NotificationRow,
   PlatformRow,
+  PlatformSystemRow,
   ProfileRow,
   ReviewRow,
 } from "../../src/types/database.types.js";
@@ -17,6 +20,7 @@ import type {
 } from "../../src/modules/friends/friends.repository.js";
 import { orderPair } from "../../src/modules/friends/friends.repository.js";
 import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.repository.js";
+import type { NotificationRowWithActor } from "../../src/modules/notifications/notifications.repository.js";
 
 /**
  * Behaviour-equivalent in-memory repositories.
@@ -30,10 +34,13 @@ export interface SeedData {
   profiles?: ProfileRow[];
   games?: GameRow[];
   gamePlatforms?: { game_id: number; platform_slug: string }[];
+  gameSystems?: { game_id: number; system_slug: string }[];
   gameLogs?: GameLogRow[];
   reviews?: ReviewRow[];
   friendships?: FriendshipRow[];
+  notifications?: NotificationRow[];
   platforms?: PlatformRow[];
+  platformSystems?: PlatformSystemRow[];
   genres?: GenreRow[];
 }
 
@@ -41,12 +48,17 @@ export interface InMemoryState {
   profiles: ProfileRow[];
   games: GameRow[];
   gamePlatforms: { game_id: number; platform_slug: string }[];
+  gameSystems: { game_id: number; system_slug: string }[];
   gameLogs: GameLogRow[];
   reviews: ReviewRow[];
   reviewVotes: { review_id: number; user_id: string }[];
   friendships: FriendshipRow[];
+  notifications: NotificationRow[];
   platforms: PlatformRow[];
+  platformSystems: PlatformSystemRow[];
   genres: GenreRow[];
+  /** Stored profile pictures, by user id. */
+  avatars: Map<string, Buffer>;
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
@@ -57,28 +69,37 @@ export const createInMemoryRepos = (
   repos: Repositories;
   state: InMemoryState;
   authAdmin: AuthAdmin;
+  avatars: AvatarStore;
 } => {
   const state: InMemoryState = {
     profiles: [...(seed.profiles ?? [])],
     games: [...(seed.games ?? [])],
     gamePlatforms: [...(seed.gamePlatforms ?? [])],
+    gameSystems: [...(seed.gameSystems ?? [])],
     gameLogs: [...(seed.gameLogs ?? [])],
     reviews: [...(seed.reviews ?? [])],
     reviewVotes: [],
     friendships: [...(seed.friendships ?? [])],
+    notifications: [...(seed.notifications ?? [])],
     platforms: [...(seed.platforms ?? [])],
+    platformSystems: [...(seed.platformSystems ?? [])],
     genres: [...(seed.genres ?? [])],
+    avatars: new Map(),
   };
 
   let nextLogId = 1000;
   let nextReviewId = 2000;
   let nextGameId = 3000;
+  let nextNotificationId = 4000;
 
   const withPlatforms = (game: GameRow): GameRowWithPlatforms => ({
     ...game,
     game_platforms: state.gamePlatforms
       .filter((gp) => gp.game_id === game.id)
       .map((gp) => ({ platform_slug: gp.platform_slug })),
+    game_systems: state.gameSystems
+      .filter((gs) => gs.game_id === game.id)
+      .map((gs) => ({ system_slug: gs.system_slug })),
   });
 
   const withGame = (log: GameLogRow): GameLogRowWithGame => {
@@ -90,9 +111,15 @@ export const createInMemoryRepos = (
     id: p.id,
     username: p.username,
     avatar_url: p.avatar_url,
+    accent: p.accent,
     bio: p.bio,
     last_seen_at: p.last_seen_at,
   });
+
+  const withActor = (n: NotificationRow): NotificationRowWithActor => {
+    const actor = state.profiles.find((p) => p.id === n.actor_id);
+    return { ...n, actor: actor ? asFriendProfile(actor) : null };
+  };
 
   const withUsers = (f: FriendshipRow): FriendshipWithUsers => {
     const a = state.profiles.find((p) => p.id === f.user_a_id);
@@ -123,6 +150,8 @@ export const createInMemoryRepos = (
       author_first_name: author?.first_name ?? null,
       vote_count: state.reviewVotes.filter((v) => v.review_id === r.id).length,
       author_avatar_url: author?.avatar_url ?? null,
+      author_accent: author?.accent ?? null,
+      game_has_sexual_content: game?.has_sexual_content ?? false,
       author_last_seen_at: author?.last_seen_at ?? null,
       // The view inner-joins games, so a row without one cannot exist.
       game_title: game?.title ?? "",
@@ -225,6 +254,13 @@ export const createInMemoryRepos = (
             (g) => g.release_date !== null && g.release_date <= query.releasedBefore!,
           );
         }
+        // "Newest" means newest released, not newest guessed-at.
+        if (query.sort === "released") {
+          const today = new Date().toISOString().slice(0, 10);
+          rows = rows.filter(
+            (g) => g.release_date !== null && g.release_date <= today,
+          );
+        }
 
         // Mirrors the SQL sort map, tiebreaker included.
         const by = {
@@ -248,9 +284,10 @@ export const createInMemoryRepos = (
           total: sorted.length,
         };
       },
-      async searchLocal(term, limit) {
+      async searchLocal(term, limit, showSexualContent) {
         return state.games
           .filter((g) => g.title.toLowerCase().includes(term.toLowerCase()))
+          .filter((g) => showSexualContent || !g.has_sexual_content)
           .slice(0, limit)
           .map(withPlatforms);
       },
@@ -269,9 +306,15 @@ export const createInMemoryRepos = (
               title: external.title,
               description: external.description,
               cover_url: external.coverUrl,
+              box_art_url: external.boxArtUrl,
               release_date: external.releaseDate,
               has_sexual_content: external.hasSexualContent,
               content_tags: external.contentTags,
+              // The bulk import path has none of these; the detail fetch does.
+              developers: [],
+              publishers: [],
+              website: null,
+              esrb_rating: null,
               is_trending: false,
               playtime_hours: external.playtimeHours,
               metacritic: external.metacritic,
@@ -282,7 +325,7 @@ export const createInMemoryRepos = (
               avg_rating: null,
               rating_count: 0,
               synced_at: now(),
-              description_synced_at: external.description ? now() : null,
+              details_synced_at: external.description ? now() : null,
               created_at: now(),
               updated_at: now(),
             };
@@ -293,6 +336,7 @@ export const createInMemoryRepos = (
               title: external.title,
               description: external.description,
               cover_url: external.coverUrl,
+              box_art_url: external.boxArtUrl,
               synced_at: now(),
             });
           }
@@ -316,7 +360,12 @@ export const createInMemoryRepos = (
           game.description = fields.description;
           game.content_tags = fields.contentTags;
           game.has_sexual_content = fields.hasSexualContent;
-          game.description_synced_at = now();
+          game.developers = fields.developers;
+          game.publishers = fields.publishers;
+          game.website = fields.website;
+          game.esrb_rating = fields.esrbRating;
+          if (fields.boxArtUrl) game.box_art_url = fields.boxArtUrl;
+          game.details_synced_at = now();
         }
       },
       async playratesStats(gameId) {
@@ -350,16 +399,27 @@ export const createInMemoryRepos = (
       },
 
       async statusCounts(gameId) {
-        const counts: Record<string, number> = {
+        const byStatus: Record<string, number> = {
           played: 0,
           playing: 0,
           backlog: 0,
           wishlist: 0,
         };
+        const byPlayedStatus: Record<string, number> = {
+          finished: 0,
+          mastered: 0,
+          shelved: 0,
+          retired: 0,
+        };
+
         for (const log of state.gameLogs.filter((l) => l.game_id === gameId)) {
-          counts[log.status] = (counts[log.status] ?? 0) + 1;
+          byStatus[log.status] = (byStatus[log.status] ?? 0) + 1;
+          if (log.status === "played" && log.played_status) {
+            byPlayedStatus[log.played_status] =
+              (byPlayedStatus[log.played_status] ?? 0) + 1;
+          }
         }
-        return counts;
+        return { byStatus, byPlayedStatus };
       },
       async ratingSummary(gameId) {
         const ratings = state.gameLogs
@@ -384,13 +444,63 @@ export const createInMemoryRepos = (
     },
 
     gameLogs: {
-      async listByUser(userId, status, from, to) {
-        const rows = state.gameLogs.filter(
-          (l) => l.user_id === userId && (status ? l.status === status : true),
-        );
+      async listByUser(userId, query, from, to) {
+        const rows = state.gameLogs.filter((l) => {
+          if (l.user_id !== userId) return false;
+          if (query.status && l.status !== query.status) return false;
+          if (query.playedStatus === "none") return l.played_status === null;
+          if (query.playedStatus) return l.played_status === query.playedStatus;
+          return true;
+        });
+
+        /* Derived rather than read off the row, which is what the generated
+           column in the database holds. */
+        const completion = (l: GameLogRow) =>
+          l.achievements_total
+            ? (l.achievements_completed ?? 0) / l.achievements_total
+            : null;
+
+        const sortKey = (l: GameLogRow): string | number | null => {
+          const game = state.games.find((g) => g.id === l.game_id);
+          switch (query.sort) {
+            case "rating":
+              return l.rating;
+            case "gameRating":
+              return game?.avg_rating ?? null;
+            case "metacritic":
+              return game?.metacritic ?? null;
+            case "played":
+              // Mirrors greatest(start_date, finish_date) in the database.
+              return (
+                [l.start_date, l.finish_date]
+                  .filter((d): d is string => !!d)
+                  .sort()
+                  .at(-1) ?? null
+              );
+            case "title":
+              return game?.title ?? null;
+            case "released":
+              return game?.release_date ?? null;
+            case "completion":
+              return completion(l);
+          }
+        };
+
+        const sorted = [...rows].sort((a, b) => {
+          const x = sortKey(a);
+          const y = sortKey(b);
+          // Nothing to sort on goes last whichever way the rest is facing.
+          if (x === null && y === null) return b.id - a.id;
+          if (x === null) return 1;
+          if (y === null) return -1;
+          if (x === y) return b.id - a.id;
+          const ahead = x < y ? -1 : 1;
+          return query.direction === "asc" ? ahead : -ahead;
+        });
+
         return {
-          rows: rows.slice(from, to + 1).map(withGame),
-          total: rows.length,
+          rows: sorted.slice(from, to + 1).map(withGame),
+          total: sorted.length,
         };
       },
       async findByUserAndGame(userId, gameId) {
@@ -418,6 +528,9 @@ export const createInMemoryRepos = (
           hours_to_beat: null,
           start_date: null,
           finish_date: null,
+          system_slug: null,
+          completion: null,
+          last_played: null,
           platform_slug: null,
           achievements_total: null,
           achievements_completed: null,
@@ -531,9 +644,13 @@ export const createInMemoryRepos = (
         return state.reviewVotes.filter((v) => v.review_id === reviewId).length;
       },
 
-      async listRecent(from, to) {
+      async listRecent(from, to, showSexualContent) {
+        const explicit = new Set(
+          state.games.filter((g) => g.has_sexual_content).map((g) => g.id),
+        );
         const rows = state.reviews
           .filter((r) => r.is_public)
+          .filter((r) => showSexualContent || !explicit.has(r.game_id))
           .sort(
             (a, b) =>
               Date.parse(b.created_at) - Date.parse(a.created_at) ||
@@ -611,7 +728,7 @@ export const createInMemoryRepos = (
     },
 
     friends: {
-      async activityFor(viewerId, from, to) {
+      async activityFor(viewerId, from, to, showSexualContent) {
         const friendIds = new Set(
           state.friendships
             .filter(
@@ -643,11 +760,14 @@ export const createInMemoryRepos = (
               updated_at: l.updated_at,
               actor_username: actor?.username ?? "",
               actor_avatar_url: actor?.avatar_url ?? null,
+              actor_accent: actor?.accent ?? null,
+              game_has_sexual_content: game?.has_sexual_content ?? false,
               actor_last_seen_at: actor?.last_seen_at ?? "",
               game_title: game?.title ?? "",
               game_cover_url: game?.cover_url ?? null,
             };
-          });
+          })
+          .filter((row) => showSexualContent || !row.game_has_sexual_content);
 
         return { rows: rows.slice(from, to + 1), total: rows.length };
       },
@@ -695,9 +815,93 @@ export const createInMemoryRepos = (
       },
     },
 
+    notifications: {
+      async listForUser(userId, archived, from, to) {
+        const rows = state.notifications
+          .filter(
+            (n) =>
+              n.user_id === userId && archived === (n.archived_at !== null),
+          )
+          .sort(
+            (a, b) =>
+              Date.parse(b.created_at) - Date.parse(a.created_at) ||
+              b.id - a.id,
+          )
+          .map(withActor);
+        return { rows: rows.slice(from, to + 1), total: rows.length };
+      },
+      async countUnread(userId) {
+        return state.notifications.filter(
+          (n) =>
+            n.user_id === userId &&
+            n.read_at === null &&
+            n.archived_at === null,
+        ).length;
+      },
+      async findById(id) {
+        return state.notifications.find((n) => n.id === id) ?? null;
+      },
+      async update(id, patch) {
+        const row = state.notifications.find((n) => n.id === id);
+        if (!row) throw new Error("notification not found");
+        Object.assign(row, patch);
+        return withActor(row);
+      },
+      async raise({ userId, kind, actorId = null, data = {}, dedupeKey = null }) {
+        const existing =
+          dedupeKey === null
+            ? undefined
+            : state.notifications.find(
+                (n) => n.user_id === userId && n.dedupe_key === dedupeKey,
+              );
+
+        if (existing) {
+          Object.assign(existing, {
+            actor_id: actorId,
+            data,
+            read_at: null,
+            archived_at: null,
+            created_at: now(),
+          });
+          return;
+        }
+
+        state.notifications.push({
+          id: nextNotificationId++,
+          user_id: userId,
+          kind,
+          actor_id: actorId,
+          data,
+          dedupe_key: dedupeKey,
+          read_at: null,
+          archived_at: null,
+          created_at: now(),
+        });
+      },
+      async markAllRead(userId) {
+        for (const n of state.notifications) {
+          if (n.user_id === userId && n.archived_at === null) {
+            n.read_at ??= now();
+          }
+        }
+      },
+      async markReadByKey(userId, dedupeKey) {
+        for (const n of state.notifications) {
+          if (n.user_id === userId && n.dedupe_key === dedupeKey) {
+            n.read_at ??= now();
+          }
+        }
+      },
+    },
+
     platforms: {
       async list() {
         return [...state.platforms].sort((a, b) => a.sort_order - b.sort_order);
+      },
+      async listSystems() {
+        return [...state.platformSystems].sort(
+          (a, b) => a.sort_order - b.sort_order,
+        );
       },
     },
 
@@ -722,8 +926,23 @@ export const createInMemoryRepos = (
       state.friendships = state.friendships.filter(
         (f) => f.user_a_id !== userId && f.user_b_id !== userId,
       );
+      state.notifications = state.notifications.filter(
+        (n) => n.user_id !== userId && n.actor_id !== userId,
+      );
     },
   };
 
-  return { repos, state, authAdmin };
+  /* Records what was stored so a test can assert the bytes reached it, and
+     hands back a URL shaped like the real one. */
+  const avatars: AvatarStore = {
+    async put(userId, bytes) {
+      state.avatars.set(userId, bytes);
+      return `https://test.supabase.co/storage/v1/object/public/avatars/${userId}/avatar.webp?v=1`;
+    },
+    async remove(userId) {
+      state.avatars.delete(userId);
+    },
+  };
+
+  return { repos, state, authAdmin, avatars };
 };

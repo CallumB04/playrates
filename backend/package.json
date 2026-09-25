@@ -16,6 +16,7 @@
     "seed:games": "tsx scripts/seedGames.ts",
     "db:types": "supabase gen types typescript --linked > src/types/database.types.ts",
     "import:games": "tsx scripts/importGames.ts",
+    "backfill:boxart": "tsx scripts/backfillBoxArt.ts",
     "seed:test": "tsx scripts/seedTestData.ts"
   },
   "keywords": [],

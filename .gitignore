@@ -42,3 +42,6 @@ supabase/.branches
 # these are working copies and are not kept in the repo.
 *.dc.html
 support.js
+
+# Cached third-party index for the box-art backfill
+/backend/.cache

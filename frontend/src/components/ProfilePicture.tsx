@@ -1,4 +1,7 @@
 import { Link } from "react-router-dom";
+import { Camera } from "lucide-react";
+import type { ProfileAccent } from "@playrates/shared";
+import { accentHue, avatarGradient } from "../lib/profileAccent";
 import { cn } from "../lib/cn";
 
 /* Complete literal class strings — Tailwind only emits what it can see. The
@@ -23,22 +26,17 @@ const AVATAR_VARIANT = {
 
 export type AvatarVariant = keyof typeof AVATAR_VARIANT;
 
-/** A stable hue per username. FNV-1a, so anagrams don't collide. */
-const hueFor = (username: string): number => {
-    let hash = 0x811c9dc5;
-    for (let i = 0; i < username.length; i += 1) {
-        hash ^= username.charCodeAt(i);
-        hash = Math.imul(hash, 0x01000193);
-    }
-    return (hash >>> 0) % 360;
-};
-
 interface ProfilePictureProps {
     variant: AvatarVariant;
     file: string;
     username: string;
     /** Render as a link to the user's profile. Prevents nested <a> elements. */
     link: boolean;
+    /** Makes the picture a button — your own, on your own profile. Takes
+     *  precedence over `link`: a picture cannot be both. */
+    action?: { label: string; onClick: () => void };
+    /** The profile's colour. Unset falls back to the brand. */
+    accent?: ProfileAccent;
 }
 
 /**
@@ -50,13 +48,30 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
     file,
     username,
     link,
+    action,
+    accent,
 }) => {
     const { box, text } = AVATAR_VARIANT[variant];
-    const hue = hueFor(username);
+    const hue = accentHue(accent);
 
     const className = cn(
         "relative grid aspect-square shrink-0 place-items-center overflow-hidden rounded-full bg-surface-sunken select-none",
         box
+    );
+
+    /* Standing, not on hover: a touch screen cannot hover, and this is the
+       only thing that says the picture is a control. */
+    const editBadge = (
+        <span
+            aria-hidden
+            className={cn(
+                "absolute inset-x-0 bottom-0 grid h-[30%] place-items-center",
+                "bg-black/55 text-white/95 backdrop-blur-[1px] transition-colors",
+                "group-hover:bg-black/70"
+            )}
+        >
+            <Camera className="size-[38%] min-w-3" strokeWidth={2.25} />
+        </span>
     );
 
     const body = file ? (
@@ -70,11 +85,7 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
             <span
                 aria-hidden
                 className="absolute inset-0"
-                style={{
-                    backgroundImage: `linear-gradient(145deg, hsl(${hue} 70% 62%), hsl(${
-                        (hue + 45) % 360
-                    } 62% 42%))`,
-                }}
+                style={{ backgroundImage: avatarGradient(hue) }}
             />
             {/* The same tooth used on box art, so a generated avatar reads as
                 part of the same material. */}
@@ -89,6 +100,24 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
             </span>
         </>
     );
+
+    if (action) {
+        return (
+            <button
+                type="button"
+                aria-label={action.label}
+                onClick={action.onClick}
+                className={cn(
+                    className,
+                    "group cursor-pointer",
+                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                )}
+            >
+                {body}
+                {editBadge}
+            </button>
+        );
+    }
 
     return link ? (
         <Link to={`/user/${username}`} className={className}>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ProfileAccent } from "@playrates/shared";
 import type {
     GameStatus,
     PlayedStatus,
@@ -11,13 +12,14 @@ import {
     Textarea,
 } from "../../../../../components/ui/Input";
 import Field from "../../../../../components/ui/Field";
-import {
-    StatusPlates,
-    PlayedStatusPlates,
-} from "../../../../../components/gamelog/StatusPlates";
+import { StatusPlates } from "../../../../../components/gamelog/StatusPlates";
 import RatingMeter from "../../../../../components/ui/RatingMeter";
 import RatingBadge from "../../../../../components/ui/RatingBadge";
 import Dropdown from "../../../../../components/ui/Dropdown";
+import AccentPicker from "../../../../../components/ui/AccentPicker";
+import AvatarField, {
+    type AvatarChoice,
+} from "../../../../../components/AvatarField";
 import { platformOptions } from "../../../../../lib/platformIcons";
 import Specimen from "../../../components/Specimen";
 
@@ -28,6 +30,8 @@ const FormSpecimens = () => {
     const [playedStatus, setPlayedStatus] = useState<PlayedStatus | null>(
         "mastered"
     );
+    const [avatar, setAvatar] = useState<AvatarChoice>({ kind: "unchanged" });
+    const [accent, setAccent] = useState<ProfileAccent>("violet");
     const [body, setBody] = useState(
         "The light meter is the whole game and it took me until the third act to notice."
     );
@@ -133,16 +137,15 @@ const FormSpecimens = () => {
             <Specimen
                 title="Status plates"
                 stack
-                notes="Segmented. The selected plate lifts and lights, with a status-hue top edge; the rest sit flat. Selecting a status that cannot carry a substatus clears the substatus rather than dropping it silently at save."
-                meta="StatusPlates · PlayedStatusPlates — aria-pressed per plate"
+                notes="Segmented. The selected plate lifts and lights, with a status-hue top edge; the rest sit flat. Played opens in place onto its substatuses, since they refine it rather than standing beside it — it rests on plain Played, which saves as no substatus at all. Choosing a status that cannot carry one clears it rather than dropping it silently at save."
+                meta="StatusPlates — aria-pressed per plate, listbox on the chosen played plate"
             >
-                <StatusPlates value={status} onChange={setStatus} />
-                {status === "played" && (
-                    <PlayedStatusPlates
-                        value={playedStatus}
-                        onChange={setPlayedStatus}
-                    />
-                )}
+                <StatusPlates
+                    value={status}
+                    onChange={setStatus}
+                    playedStatus={playedStatus}
+                    onPlayedStatusChange={setPlayedStatus}
+                />
             </Specimen>
 
             <Specimen
@@ -163,6 +166,32 @@ const FormSpecimens = () => {
                         <RatingBadge value={rating} size="lg" />
                     </div>
                 </div>
+            </Specimen>
+
+            <Specimen
+                title="Profile picture"
+                notes="Picks, crops and compresses in the browser, so what is previewed is exactly what gets stored. It holds a pending choice rather than saving: Settings saves on every change, the welcome popup on Continue. Pick one here to see the preview — nothing is uploaded."
+                meta='username · accent · current · choice ("unchanged" | "picked" | "removed") · onChange · disabled'
+            >
+                <AvatarField
+                    username="ashgrove"
+                    accent={accent}
+                    current={null}
+                    choice={avatar}
+                    onChange={setAvatar}
+                />
+            </Specimen>
+
+            <Specimen
+                title="Profile colour"
+                notes="Colours the generated avatar wherever that person appears, and the banner on their profile."
+                meta="value · onChange · label · disabled"
+            >
+                <AccentPicker
+                    label="Profile colour"
+                    value={accent}
+                    onChange={setAccent}
+                />
             </Specimen>
         </>
     );

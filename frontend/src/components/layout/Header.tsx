@@ -5,10 +5,12 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import Button from "../ui/Button";
 import AccountMenu from "./AccountMenu";
+import NotificationMenu from "./NotificationMenu";
 import GlobalSearch from "./GlobalSearch";
 import MobileMenu, { type NavItem } from "./MobileMenu";
 import MobileSearch from "./MobileSearch";
 import { cn } from "../../lib/cn";
+import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
 
 /** Whether a nav link points at where we already are. NavLink matches on
  *  pathname only, and some links carry a query string that matters. */
@@ -57,24 +59,16 @@ const Header = () => {
 
     /* Close on the way up past `lg`: the menu hides there, and its scroll lock
        would stay on with nothing left to turn it off. */
+    const pastLg = useMediaQuery(BREAKPOINT.lg);
     useEffect(() => {
-        if (!menuOpen) return;
-        const wide = window.matchMedia("(min-width: 1024px)");
-        const close = () => wide.matches && setMenuOpen(false);
-        close();
-        wide.addEventListener("change", close);
-        return () => wide.removeEventListener("change", close);
-    }, [menuOpen]);
+        if (pastLg) setMenuOpen(false);
+    }, [pastLg]);
 
     /* Same for the search overlay, which gives way at `xl`. */
+    const pastXl = useMediaQuery(BREAKPOINT.xl);
     useEffect(() => {
-        if (!searchOpen) return;
-        const wide = window.matchMedia("(min-width: 1280px)");
-        const close = () => wide.matches && setSearchOpen(false);
-        close();
-        wide.addEventListener("change", close);
-        return () => wide.removeEventListener("change", close);
-    }, [searchOpen]);
+        if (pastXl) setSearchOpen(false);
+    }, [pastXl]);
 
     const links: NavItem[] = (
         user
@@ -131,14 +125,27 @@ const Header = () => {
                                     aria-current={
                                         link.active ? "page" : undefined
                                     }
+                                    /* The rule is drawn, not padded: a bottom
+                                       border plus its padding sat inside the
+                                       box, which pushed the word off the
+                                       centre line the wordmark sits on. */
                                     className={cn(
-                                        "border-b-2 pb-1 text-label transition-colors lift",
+                                        "group relative py-1 text-label transition-colors lift",
                                         link.active
-                                            ? "border-b-brand text-content"
-                                            : "border-b-transparent text-content-secondary hover:text-content"
+                                            ? "text-content"
+                                            : "text-content-secondary hover:text-content"
                                     )}
                                 >
                                     {link.label}
+                                    <span
+                                        aria-hidden
+                                        className={cn(
+                                            "pointer-events-none absolute inset-x-0 -bottom-0.5 h-0.5 origin-center rounded-full transition-transform duration-200 ease-[var(--ease-glide)]",
+                                            link.active
+                                                ? "scale-x-100 bg-brand"
+                                                : "scale-x-0 bg-strong group-hover:scale-x-100"
+                                        )}
+                                    />
                                 </Link>
                             ))}
                         </nav>
@@ -157,10 +164,13 @@ const Header = () => {
                         <GlobalSearch />
 
                         {user ? (
-                            <AccountMenu
-                                user={user}
-                                onSignOut={handleSignOut}
-                            />
+                            <>
+                                <NotificationMenu />
+                                <AccountMenu
+                                    user={user}
+                                    onSignOut={handleSignOut}
+                                />
+                            </>
                         ) : (
                             <div className="hidden items-center gap-3 sm:flex">
                                 <Button

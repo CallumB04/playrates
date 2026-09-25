@@ -3,13 +3,20 @@ import { formatCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 
-export type FigureSize = "display" | "row" | "label";
+export type FigureSize = "display" | "lg" | "row" | "label";
 
 const SIZE: Record<FigureSize, string> = {
     display: "text-figure",
+    /** A stat on a card: the game page's score cards, a profile's counts. */
+    lg: "text-figure-lg",
     row: "text-figure-row",
     label: "text-figure-sm",
 };
+
+/** The figure's type, for a value that is not a plain number — a rating
+ *  badge, "31h", a skeleton standing in for either. */
+export const figureClass = (size: FigureSize = "row", className?: string) =>
+    cn("font-mono text-content tabular-nums", SIZE[size], className);
 
 const DURATION = 320;
 const easeOut = (t: number): number => 1 - (1 - t) ** 3;
@@ -67,11 +74,7 @@ const Figure = ({
         <span
             // A counting number must never be announced on every frame.
             aria-live="off"
-            className={cn(
-                "font-mono text-content tabular-nums",
-                SIZE[size],
-                className
-            )}
+            className={figureClass(size, className)}
         >
             {format(roll ? Math.round(rolled) : value)}
         </span>

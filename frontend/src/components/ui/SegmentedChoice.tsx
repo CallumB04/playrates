@@ -12,6 +12,10 @@ interface SegmentedChoiceProps<T extends string> {
     value: T;
     onChange: (value: T) => void;
     label: string;
+    /** Segments share the width equally rather than sizing to their labels.
+     *  For a control that spans its container, where ragged segments read as
+     *  a mistake. */
+    fill?: boolean;
     className?: string;
 }
 
@@ -21,13 +25,15 @@ const SegmentedChoice = <T extends string>({
     value,
     onChange,
     label,
+    fill = false,
     className,
 }: SegmentedChoiceProps<T>) => (
     <div
         role="radiogroup"
         aria-label={label}
         className={cn(
-            "inline-flex gap-1 rounded-md border border-subtle bg-surface-sunken p-1",
+            "gap-1 rounded-md border border-subtle bg-surface-sunken p-1",
+            fill ? "flex w-full" : "inline-flex",
             className
         )}
     >
@@ -41,10 +47,14 @@ const SegmentedChoice = <T extends string>({
                     aria-checked={isActive}
                     onClick={() => onChange(option)}
                     className={cn(
-                        "flex cursor-pointer items-center gap-2 rounded-sm px-3 py-1.5 text-body-sm lift",
+                        "flex min-h-11 cursor-pointer items-center gap-2 rounded-sm px-3 py-1.5 text-body-sm lift sm:min-h-0",
+                        fill && "flex-1 justify-center",
                         "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                         isActive
-                            ? "bg-surface-raised font-medium text-content inset-shadow-deep"
+                            /* Flat, no inset rim: a highlight along the top
+                               edge alone shrinks the pill against the sunken
+                               track it sits in. */
+                            ? "bg-surface-raised font-medium text-content"
                             : "text-content-secondary hover:text-content"
                     )}
                 >

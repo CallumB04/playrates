@@ -18,6 +18,10 @@ export interface ProfileRow {
   timezone: string;
   /** When true, this profile reads as offline to everyone. */
   hide_online: boolean;
+  /** Chosen profile colour. Null falls back to the hash of the username. */
+  accent: string | null;
+  /** When the first-login welcome was dismissed. Null shows it. */
+  onboarded_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -35,10 +39,17 @@ export interface GameRow {
   title: string;
   description: string;
   cover_url: string | null;
+  /** Portrait art from the store, where there is any. Preferred over the
+   *  landscape cover_url when the API hands a game out. */
+  box_art_url: string | null;
   release_date: string | null;
   has_sexual_content: boolean;
   /** RAWG tag slugs, kept so the flag can be re-derived in place. */
   content_tags: string[];
+  developers: string[];
+  publishers: string[];
+  website: string | null;
+  esrb_rating: string | null;
   is_trending: boolean;
   playtime_hours: number | null;
   metacritic: number | null;
@@ -51,7 +62,7 @@ export interface GameRow {
   avg_rating: number | null;
   rating_count: number;
   synced_at: string | null;
-  description_synced_at: string | null;
+  details_synced_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -59,6 +70,18 @@ export interface GameRow {
 export interface GamePlatformRow {
   game_id: number;
   platform_slug: string;
+}
+
+export interface PlatformSystemRow {
+  slug: string;
+  display_name: string;
+  platform_slug: string;
+  sort_order: number;
+}
+
+export interface GameSystemRow {
+  game_id: number;
+  system_slug: string;
 }
 
 export interface GenreRow {
@@ -83,8 +106,13 @@ export interface GameLogRow {
   start_date: string | null;
   finish_date: string | null;
   platform_slug: string | null;
+  system_slug: string | null;
   achievements_total: number | null;
   achievements_completed: number | null;
+  /** Generated: completed / total, null when there is nothing to divide. */
+  completion: number | null;
+  /** Generated: the later of start and finish, null when neither is set. */
+  last_played: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -116,4 +144,18 @@ export interface FriendEdgeRow {
   requested_by: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface NotificationRow {
+  id: number;
+  user_id: string;
+  /** Open text, not an enum — see the notifications migration. */
+  kind: string;
+  actor_id: string | null;
+  /** Per-kind extras, so a new kind needs no column. */
+  data: Record<string, unknown>;
+  dedupe_key: string | null;
+  read_at: string | null;
+  archived_at: string | null;
+  created_at: string;
 }

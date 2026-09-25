@@ -1,31 +1,42 @@
-/** Online / offline indicator. */
+import { cn } from "../lib/cn";
 
 /** Named sizes keep the class strings literal so Tailwind can see them. */
 const STATUS_TEXT_SIZE = {
-    responsive: "text-sm sm:text-lg",
-    sm: "text-sm",
-    lg: "text-lg",
+    sm: "text-label-sm",
+    md: "text-label",
 } as const;
 
 export type UserStatusSize = keyof typeof STATUS_TEXT_SIZE;
 
 interface UserStatusProps {
-    status: "online" | "offline";
+    online: boolean;
     size?: UserStatusSize;
+    className?: string;
 }
 
-const UserStatus: React.FC<UserStatusProps> = ({
-    status,
-    size = "responsive",
-}) => (
-    <div className="flex items-center gap-2">
-        <div
-            className={`size-2 rounded-full ${status === "online" ? "bg-success" : "bg-danger"} `}
-        ></div>
-        <p className={`font-display ${STATUS_TEXT_SIZE[size]} text-content`}>
-            {status}
-        </p>
-    </div>
+/**
+ * Presence said in words, where there is room for them — the profile header.
+ * Offline is muted, not red: being away is not an error, and PresenceDot on
+ * the avatar says the same thing in the same colours.
+ */
+const UserStatus = ({ online, size = "md", className }: UserStatusProps) => (
+    <span
+        className={cn(
+            "flex items-center gap-1.5",
+            STATUS_TEXT_SIZE[size],
+            online ? "text-success" : "text-content-muted",
+            className
+        )}
+    >
+        <span
+            aria-hidden
+            className={cn(
+                "size-[7px] rounded-full",
+                online ? "bg-success" : "bg-content-muted"
+            )}
+        />
+        {online ? "Online" : "Offline"}
+    </span>
 );
 
 export default UserStatus;

@@ -7,6 +7,7 @@ import {
     useState,
     type ReactNode,
 } from "react";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 /** What the page is painted in. */
 export type Theme = "light" | "dark";
@@ -42,16 +43,6 @@ export const readStoredPreference = (): ThemePreference => {
     }
 };
 
-export const systemTheme = (): Theme => {
-    if (typeof window === "undefined" || !window.matchMedia) {
-        return DEFAULT_THEME;
-    }
-    return window.matchMedia(SYSTEM_QUERY).matches ? "light" : "dark";
-};
-
-export const resolveTheme = (preference: ThemePreference): Theme =>
-    preference === "system" ? systemTheme() : preference;
-
 export const applyTheme = (theme: Theme): void => {
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
@@ -63,18 +54,9 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     // matches what the boot script in index.html already applied
     const [preference, setPreferenceState] =
         useState<ThemePreference>(readStoredPreference);
-    const [system, setSystem] = useState<Theme>(systemTheme);
-
-    /* Only while following the system: the OS can flip at sunset with the tab
-       already open. */
-    useEffect(() => {
-        if (preference !== "system" || !window.matchMedia) return;
-        const media = window.matchMedia(SYSTEM_QUERY);
-        const onChange = () => setSystem(media.matches ? "light" : "dark");
-        onChange();
-        media.addEventListener("change", onChange);
-        return () => media.removeEventListener("change", onChange);
-    }, [preference]);
+    /* Live, since the OS can flip at sunset with the tab already open. With
+       nothing to ask it reads false, which lands on the dark default. */
+    const system: Theme = useMediaQuery(SYSTEM_QUERY) ? "light" : "dark";
 
     const theme = preference === "system" ? system : preference;
 

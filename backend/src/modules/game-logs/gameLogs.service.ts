@@ -10,7 +10,10 @@ import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type { GamesRepository } from "../games/games.repository.js";
-import type { GameLogsRepository } from "./gameLogs.repository.js";
+import type {
+  GameLogsRepository,
+  ShelfQuery,
+} from "./gameLogs.repository.js";
 import {
   toGameLogRow,
   toGameLogWithGame,
@@ -24,21 +27,21 @@ export const createGameLogsService = (
 ) => ({
   async listForUsername(
     username: string,
-    status: string | undefined,
+    query: ShelfQuery,
     pagination: Pagination,
   ): Promise<Paginated<GameLogWithGame>> {
     const profile = await profiles.findByUsername(username);
     if (!profile) throw AppError.notFound("Profile");
-    return this.listForUser(profile.id, status, pagination);
+    return this.listForUser(profile.id, query, pagination);
   },
 
   async listForUser(
     userId: string,
-    status: string | undefined,
+    query: ShelfQuery,
     pagination: Pagination,
   ): Promise<Paginated<GameLogWithGame>> {
     const { from, to } = toRange(pagination);
-    const { rows, total } = await repo.listByUser(userId, status, from, to);
+    const { rows, total } = await repo.listByUser(userId, query, from, to);
     return paginate(rows.map(toGameLogWithGame), pagination, total);
   },
 

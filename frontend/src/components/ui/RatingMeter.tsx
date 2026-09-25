@@ -5,10 +5,11 @@ import { cn } from "../../lib/cn";
 
 const MAX = 10;
 const STEP = 0.5;
+const MIN = STEP; // Zero is not the bottom of the scale, it is no rating.
 const SEGMENTS = MAX / STEP; // 20, one per allowed value
 
 const clamp = (value: number): number =>
-    Math.min(MAX, Math.max(0, Math.round(value / STEP) * STEP));
+    Math.min(MAX, Math.max(MIN, Math.round(value / STEP) * STEP));
 
 interface RatingMeterProps {
     value: number | null;
@@ -47,7 +48,7 @@ const RatingMeter = ({
        per-segment buttons. */
     const valueAt = (clientX: number): number => {
         const el = trackRef.current;
-        if (!el) return 0;
+        if (!el) return MIN;
         const { left, width } = el.getBoundingClientRect();
         const index = Math.ceil(((clientX - left) / width) * SEGMENTS);
         return clamp(Math.min(SEGMENTS, Math.max(1, index)) * STEP);
@@ -78,7 +79,9 @@ const RatingMeter = ({
         if (disabled) return;
         const nudge = (delta: number) => {
             event.preventDefault();
-            onChange(clamp((value ?? 0) + delta));
+            // From nothing, a nudge up starts at the bottom of the scale
+            // rather than at 0.5 above it.
+            onChange(value === null ? MIN : clamp(value + delta));
         };
         switch (event.key) {
             case "ArrowRight":
@@ -93,7 +96,7 @@ const RatingMeter = ({
                 return nudge(-1);
             case "Home":
                 event.preventDefault();
-                return onChange(0);
+                return onChange(MIN);
             case "End":
                 event.preventDefault();
                 return onChange(MAX);
@@ -118,7 +121,7 @@ const RatingMeter = ({
             <div
                 role="slider"
                 aria-label={label}
-                aria-valuemin={0}
+                aria-valuemin={MIN}
                 aria-valuemax={MAX}
                 aria-valuenow={value ?? undefined}
                 aria-valuetext={

@@ -2,8 +2,9 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Header from "./components/layout/Header";
 import PageShell from "./components/layout/PageShell";
 import Footer from "./components/Footer";
-import Notification from "./components/Notification";
+import ToastStack from "./components/feedback/ToastStack";
 import AccountFormModal from "./components/auth/AccountFormModal";
+import FirstLoginWelcome from "./components/onboarding/FirstLoginWelcome";
 import HomePage from "./pages/HomePage/HomePage";
 import CommunityPage from "./pages/CommunityPage";
 import LegalPage from "./pages/legal/LegalPage";
@@ -106,7 +107,8 @@ function App() {
             </main>
             <Footer />
             <AccountFormModal />
-            <Notification />
+            <FirstLoginWelcome />
+            <ToastStack />
         </div>
     );
 }

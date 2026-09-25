@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ProfileAccentSchema, type ProfileAccent } from "./profileAccent.js";
 
 export const UsernameSchema = z
   .string()
@@ -34,7 +35,10 @@ export const UpdateProfileSchema = z
   .object({
     username: UsernameSchema.optional(),
     bio: z.string().max(160, "Bio must be at most 160 characters").optional(),
-    avatarUrl: z.string().url().max(2048).nullable().optional(),
+    /* No avatarUrl. A picture is uploaded to /profiles/me/avatar and the URL
+       is written there, so the only pictures anyone can wear are ones this
+       API stored. */
+    accent: ProfileAccentSchema.optional(),
     /** Opt-in. Off keeps sexually explicit games out of every listing. */
     showSexualContent: z.boolean().optional(),
     /** Optional display name. Empty string clears it. */
@@ -59,11 +63,23 @@ export interface Profile {
   firstName: string | null;
   bio: string;
   avatarUrl: string | null;
+  /** The colour this profile wears. Every profile has one. */
+  accent: ProfileAccent;
   /** Derived from last_seen_at, not stored. */
   online: boolean;
+  createdAt: string;
+}
+
+/**
+ * Your own profile. Everything above plus the settings behind it, which are
+ * nobody else's business — a profile page is public, so the public shape
+ * carries only what a profile page shows.
+ */
+export interface MyProfile extends Profile {
   showSexualContent: boolean;
   /** IANA zone name. Timestamps render in this; dates you picked do not move. */
   timezone: string;
   hideOnline: boolean;
-  createdAt: string;
+  /** When the first-login welcome was dismissed. Null until it has been. */
+  onboardedAt: string | null;
 }

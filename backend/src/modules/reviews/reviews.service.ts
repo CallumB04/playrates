@@ -8,7 +8,7 @@ import type {
 import type { ReviewSort } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
-import { isOnline } from "../profiles/profiles.mapper.js";
+import { isOnline, toAccent } from "../profiles/profiles.mapper.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type { GamesRepository } from "../games/games.repository.js";
 import type {
@@ -30,6 +30,12 @@ export const createReviewsService = (
   profiles: ProfilesRepository,
   games: GamesRepository,
 ) => {
+  /** Opt-in, so signed out and unknown both mean no. */
+  const canSeeExplicit = async (viewerId?: string): Promise<boolean> =>
+    viewerId
+      ? ((await profiles.findById(viewerId))?.show_sexual_content ?? false)
+      : false;
+
   /**
    * The view carries the author and the rating, so this is a pure mapping. A
    * missing author falls back to a placeholder — the FK should prevent it, but
@@ -48,6 +54,7 @@ export const createReviewsService = (
         username: row.author_username ?? "Unknown user",
         firstName: row.author_first_name,
         avatarUrl: row.author_avatar_url ?? null,
+        accent: toAccent(row.author_accent),
         online: row.author_last_seen_at
           ? isOnline(row.author_last_seen_at)
           : false,
@@ -130,7 +137,11 @@ export const createReviewsService = (
       viewerId?: string,
     ): Promise<Paginated<ReviewWithAuthor>> {
       const { from, to } = toRange(pagination);
-      const { rows, total } = await repo.listRecent(from, to);
+      const { rows, total } = await repo.listRecent(
+        from,
+        to,
+        await canSeeExplicit(viewerId),
+      );
       return paginate(
         withAuthors(rows, await votesFor(viewerId, rows)),
         pagination,
@@ -146,6 +157,10 @@ export const createReviewsService = (
     ): Promise<{ voteCount: number; votedByViewer: boolean }> {
       const review = await repo.findById(reviewId);
       if (!review) throw AppError.notFound("Review");
+      // A vote says someone else found it useful; the author always does.
+      if (review.user_id === userId) {
+        throw AppError.forbidden("You cannot upvote your own review");
+      }
 
       const voted = await repo.hasVoted(userId, reviewId);
       if (voted) await repo.removeVote(userId, reviewId);

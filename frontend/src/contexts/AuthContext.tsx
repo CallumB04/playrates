@@ -9,14 +9,14 @@ import {
     useState,
     type ReactNode,
 } from "react";
-import type { Profile } from "@playrates/shared";
+import type { MyProfile } from "@playrates/shared";
 import { fetchMyProfile, queryKeys, sendHeartbeat } from "../api";
 import { supabase } from "../lib/supabase";
 import { useNotify } from "./NotificationContext";
 
 interface AuthContextValue {
     session: Session | null;
-    user: Profile | null;
+    user: MyProfile | null;
     isLoading: boolean;
     signUp: (
         email: string,
@@ -85,7 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
     }, [session, queryClient]);
 
-    const { data: user, isLoading: isProfileLoading } = useQuery<Profile>({
+    const { data: user, isLoading: isProfileLoading } = useQuery<MyProfile>({
         queryKey: queryKeys.profiles.me,
         queryFn: fetchMyProfile,
         enabled: !!session,
@@ -147,4 +147,4 @@ export const useAuth = (): AuthContextValue => {
 };
 
 /** Kept so existing call sites reading the current user do not all churn. */
-export const useUser = (): Profile | null => useAuth().user;
+export const useUser = (): MyProfile | null => useAuth().user;

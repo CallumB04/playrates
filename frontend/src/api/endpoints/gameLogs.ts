@@ -1,20 +1,30 @@
 import type {
     Game,
     GameLog,
+    GameLogSort,
+    PlayedStatusFilter,
+    SortDirection,
     GameLogInput,
     GameLogPatch,
     GameLogSummary,
     Paginated,
     UserStats,
 } from "@playrates/shared";
-import { api } from "../client";
+import { api, isNotFound } from "../client";
 import { compactParams } from "./games";
 
 /** The game is embedded, so a grid of tiles needs no request per tile. */
 export interface GameLogWithGame extends GameLog {
     game: Pick<
         Game,
-        "id" | "title" | "slug" | "coverUrl" | "releaseDate" | "platforms"
+        | "id"
+        | "title"
+        | "slug"
+        | "coverUrl"
+        | "releaseDate"
+        | "platforms"
+        | "avgRating"
+        | "metacritic"
     > | null;
 }
 
@@ -22,6 +32,9 @@ export interface GameLogPage {
     status?: string;
     page?: number;
     limit?: number;
+    sort?: GameLogSort;
+    direction?: SortDirection;
+    playedStatus?: PlayedStatusFilter;
 }
 
 export const fetchMyGameLogs = async (
@@ -64,6 +77,22 @@ export const fetchUserStats = async (
         params: compactParams({ year }),
     });
     return data;
+};
+
+/** The caller's own log for one game, or null where there is none. A 404 is
+ *  the answer to "have I logged this?", not a failure. */
+export const fetchMyGameLog = async (
+    gameId: number
+): Promise<GameLogWithGame | null> => {
+    try {
+        const { data } = await api.get<GameLogWithGame>(
+            `/me/game-logs/${gameId}`
+        );
+        return data;
+    } catch (error) {
+        if (isNotFound(error)) return null;
+        throw error;
+    }
 };
 
 /** Idempotent: creates the log, or updates it if one already exists. */

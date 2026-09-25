@@ -7,12 +7,11 @@ import {
     usePlatforms,
 } from "../../hooks/queries/useGames";
 import {
-    useGameLogMutations,
     useMyGameLogIds,
     useMyGameLogs,
+    useQuickAdd,
 } from "../../hooks/queries/useGameLogs";
 import { useAccountForm } from "../../contexts/AccountFormContext";
-import { useNotify } from "../../contexts/NotificationContext";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { usePagination } from "../../hooks/usePagination";
@@ -26,15 +25,12 @@ import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup"
 import LibraryFilters from "./components/LibraryFilters";
 import { getLibraryGamesPerPage } from "./lib/gamesPerPage";
 import { useLibraryQuery } from "./lib/useLibraryQuery";
+import { libraryFoot } from "./lib/libraryFoot";
 import {
     STATUS_PRESENTATION,
     displayStatusFor,
 } from "../../constants/gameStatus";
-import {
-    formatCount,
-    formatRatingOutOfTen,
-    releaseYear,
-} from "../../lib/format";
+import { formatCount, formatRatingOutOfTen } from "../../lib/format";
 
 type OpenModal =
     | { kind: "view"; log: GameLogWithGame }
@@ -47,14 +43,12 @@ const LibraryPage = () => {
 
     const { user } = useAuth();
     const { openLogin } = useAccountForm();
-    const notify = useNotify();
     const { width } = useWindowSize();
     const { query, setQuery } = useLibraryQuery();
 
     const { data: platforms } = usePlatforms();
     const { data: genres } = useGenres();
     const { data: myLogIds } = useMyGameLogIds();
-    const { save } = useGameLogMutations();
 
     const [modal, setModal] = useState<OpenModal>(null);
 
@@ -104,20 +98,7 @@ const LibraryPage = () => {
     const fullLog = (gameId: number) =>
         (myLogs?.data ?? []).find((log) => log.gameId === gameId);
 
-    // One tap, no popup: backlog and wishlist are a single field each.
-    const quickAdd = async (
-        gameId: number,
-        title: string,
-        status: "backlog" | "wishlist"
-    ) => {
-        const { label } = STATUS_PRESENTATION[status];
-        try {
-            await save.mutateAsync({ gameId, input: { status } });
-            notify(`${title} added to your ${label.toLowerCase()}`, "success");
-        } catch {
-            notify(`Couldn't add that to your ${label.toLowerCase()}`, "error");
-        }
-    };
+    const quickAdd = useQuickAdd();
 
     const buildActions = (gameId: number, title: string): TileAction[] => {
         if (!user) {
@@ -144,13 +125,15 @@ const LibraryPage = () => {
                     key: "backlog",
                     label: "Add to backlog",
                     icon: STATUS_PRESENTATION.backlog.icon,
-                    onSelect: () => void quickAdd(gameId, title, "backlog"),
+                    onSelect: () => quickAdd(gameId, title, "backlog"),
+                    doneLabel: "In your backlog",
                 },
                 {
                     key: "wishlist",
                     label: "Add to wishlist",
                     icon: STATUS_PRESENTATION.wishlist.icon,
-                    onSelect: () => void quickAdd(gameId, title, "wishlist"),
+                    onSelect: () => quickAdd(gameId, title, "wishlist"),
+                    doneLabel: "On your wishlist",
                 },
             ];
         }
@@ -232,6 +215,8 @@ const LibraryPage = () => {
                 >
                     {games.map((game) => {
                         const log = logByGameId.get(game.id);
+                        // The grid shows whatever it is ordered by.
+                        const foot = libraryFoot(game, query.sort, log);
                         return (
                             <GameTile
                                 key={game.id}
@@ -241,8 +226,8 @@ const LibraryPage = () => {
                                 platformSlugs={game.platforms}
                                 platforms={platforms ?? []}
                                 // Brand figure only with a real rating behind it.
-                                rating={log ? log.rating : undefined}
-                                footValue={releaseYear(game.releaseDate)}
+                                rating={foot.rating}
+                                footValue={foot.value}
                                 status={
                                     log
                                         ? displayStatusFor(
@@ -288,7 +273,6 @@ const LibraryPage = () => {
                     viewUpdatedLog={() => setModal(null)}
                     gamelog={modal.kind === "edit" ? modal.log : null}
                     gameID={modal.kind === "create" ? modal.gameId : undefined}
-                    editing={modal.kind === "edit"}
                 />
             )}
         </section>

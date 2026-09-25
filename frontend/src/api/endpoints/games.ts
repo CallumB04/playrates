@@ -5,6 +5,7 @@ import type {
     Genre,
     Paginated,
     Platform,
+    PlatformSystem,
 } from "@playrates/shared";
 import { api } from "../client";
 
@@ -61,6 +62,14 @@ export const searchGames = async (
 
 export const fetchPlatforms = async (): Promise<Platform[]> => {
     const { data } = await api.get<{ data: Platform[] }>("/platforms");
+    return data.data;
+};
+
+/** The machines within those families, for the log editor. */
+export const fetchPlatformSystems = async (): Promise<PlatformSystem[]> => {
+    const { data } = await api.get<{ data: PlatformSystem[] }>(
+        "/platforms/systems"
+    );
     return data.data;
 };
 

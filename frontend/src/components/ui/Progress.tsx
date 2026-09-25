@@ -1,38 +1,99 @@
 import { cn } from "../../lib/cn";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 
+const SIZE = {
+    sm: "h-1.5",
+    md: "h-2",
+    lg: "h-2.5",
+} as const;
+
+export type ProgressSize = keyof typeof SIZE;
+
+/** One part of a bar made of parts, as a share of the whole track. */
+export interface ProgressSegment {
+    key: string;
+    /** 0–1 of the whole track, not of the other segments. */
+    value: number;
+    /** The segment's colour, e.g. a status accent. */
+    className: string;
+    title?: string;
+}
+
 interface ProgressProps {
-    /** 0–1. Omit for the indeterminate tick sweep. */
+    /** 0–1. Omit, along with segments, for the indeterminate sweep. */
     value?: number;
+    /** A bar split into parts — a shelf by status, a played share by how
+     *  those plays ended. Takes precedence over value. */
+    segments?: ProgressSegment[];
     label: string;
+    size?: ProgressSize;
+    /** The fill's colour for a single value. The brand unless it says
+     *  something the brand shouldn't — a status, a comparison. */
+    fillClassName?: string;
     className?: string;
 }
 
 const TICKS = 12;
+const clamp = (n: number) => Math.min(1, Math.max(0, n));
+const percent = (n: number) => `${clamp(n) * 100}%`;
 
 /** Determinate is a filled well; indeterminate is a sweep of ticks that holds
  *  still under reduced motion. */
-const Progress = ({ value, label, className }: ProgressProps) => {
+const Progress = ({
+    value,
+    segments,
+    label,
+    size = "md",
+    fillClassName = "bg-brand",
+    className,
+}: ProgressProps) => {
     const reduced = usePrefersReducedMotion();
     const determinate = value !== undefined;
-    const percent = Math.round(Math.min(1, Math.max(0, value ?? 0)) * 100);
+    const track = cn(
+        "block overflow-hidden rounded-full bg-surface-sunken",
+        SIZE[size],
+        className
+    );
+
+    // A breakdown is a picture of proportions, not a task under way.
+    if (segments) {
+        return (
+            <span role="img" aria-label={label} className={cn(track, "flex")}>
+                {segments
+                    .filter((segment) => segment.value > 0)
+                    .map((segment) => (
+                        <span
+                            key={segment.key}
+                            title={segment.title}
+                            className={cn(
+                                "block h-full first:rounded-l-full last:rounded-r-full",
+                                segment.className
+                            )}
+                            style={{ width: percent(segment.value) }}
+                        />
+                    ))}
+            </span>
+        );
+    }
 
     return (
-        <div
+        <span
             role="progressbar"
             aria-label={label}
             aria-valuemin={determinate ? 0 : undefined}
             aria-valuemax={determinate ? 100 : undefined}
-            aria-valuenow={determinate ? percent : undefined}
-            className={cn(
-                "h-2 overflow-hidden rounded-full bg-surface-sunken",
-                className
-            )}
+            aria-valuenow={
+                determinate ? Math.round(clamp(value) * 100) : undefined
+            }
+            className={track}
         >
             {determinate ? (
                 <span
-                    className="block h-full rounded-full bg-brand transition-[width] duration-300"
-                    style={{ width: `${percent}%` }}
+                    className={cn(
+                        "block h-full rounded-full transition-[width] duration-500 ease-[var(--ease-glide)]",
+                        fillClassName
+                    )}
+                    style={{ width: percent(value) }}
                 />
             ) : (
                 <span className="flex h-full gap-1">
@@ -55,7 +116,7 @@ const Progress = ({ value, label, className }: ProgressProps) => {
                     ))}
                 </span>
             )}
-        </div>
+        </span>
     );
 };
 

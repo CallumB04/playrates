@@ -14,8 +14,20 @@ const PG_ERROR_MAP: Record<string, () => AppError> = {
 
 /** Anything that isn't already an AppError becomes one, so every response has
  *  the same shape. */
+/* body-parser rejects a body before any route sees it, and says why in
+   `type`. Without this they all came back as a flat 500. */
+const BODY_ERROR_MAP: Record<string, () => AppError> = {
+  "entity.too.large": () => AppError.tooLarge(),
+  "entity.parse.failed": () => AppError.badRequest("Malformed request body"),
+  "encoding.unsupported": () => AppError.badRequest("Unsupported encoding"),
+};
+
 const normalise = (error: unknown): AppError => {
   if (error instanceof AppError) return error;
+
+  const type = (error as { type?: string } | null)?.type;
+  const fromBody = type ? BODY_ERROR_MAP[type] : undefined;
+  if (fromBody) return fromBody();
 
   const code = (error as { code?: string } | null)?.code;
   const mapped = code ? PG_ERROR_MAP[code] : undefined;

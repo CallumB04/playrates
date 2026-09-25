@@ -10,8 +10,14 @@ import {
 } from "../../src/modules/game-logs/gameLogs.mapper.js";
 import { toGame } from "../../src/modules/games/games.mapper.js";
 import { orderPair } from "../../src/modules/friends/friends.repository.js";
+import { toNotification } from "../../src/modules/notifications/notifications.mapper.js";
 import { relationFor } from "@playrates/shared";
-import { buildGame, buildGameLog, buildProfile } from "../helpers/fixtures.js";
+import {
+  buildGame,
+  buildGameLog,
+  buildNotification,
+  buildProfile,
+} from "../helpers/fixtures.js";
 
 describe("profile mapper", () => {
   it("maps snake_case columns to the camelCase API shape", () => {
@@ -224,5 +230,67 @@ describe("friend relation", () => {
   it("distinguishes sent from received while pending", () => {
     expect(relationFor("pending", "a", "a")).toBe("request-sent");
     expect(relationFor("pending", "a", "b")).toBe("request-received");
+  });
+});
+
+describe("notification mapper", () => {
+  const actor = {
+    id: "actor-1",
+    username: "devuser",
+    avatar_url: null,
+    accent: "indigo",
+    bio: "",
+    last_seen_at: new Date().toISOString(),
+  };
+
+  it("maps a welcome notification", () => {
+    const mapped = toNotification(buildNotification(), () => null);
+
+    expect(mapped).toMatchObject({ kind: "welcome", readAt: null });
+  });
+
+  it("embeds the actor and the relation on a friend request", () => {
+    const mapped = toNotification(
+      { ...buildNotification({ kind: "friend_request" }), actor },
+      () => "request-received",
+    );
+
+    expect(mapped).toMatchObject({
+      kind: "friend_request",
+      relation: "request-received",
+      actor: { username: "devuser" },
+    });
+  });
+
+  it("embeds the actor on an accepted request", () => {
+    const mapped = toNotification(
+      { ...buildNotification({ kind: "friend_accepted" }), actor },
+      () => null,
+    );
+
+    expect(mapped).toMatchObject({
+      kind: "friend_accepted",
+      actor: { username: "devuser" },
+    });
+  });
+
+  /* A client one deploy behind the API should render a plain row rather than
+     throw on a kind it has never heard of. */
+  it("falls back to unknown for a kind it does not handle", () => {
+    const mapped = toNotification(
+      buildNotification({ kind: "badge_earned" }),
+      () => null,
+    );
+
+    expect(mapped.kind).toBe("unknown");
+  });
+
+  it("falls back to unknown when the actor has gone", () => {
+    const mapped = toNotification(
+      buildNotification({ kind: "friend_request", actor_id: null }),
+      () => null,
+    );
+
+    expect(mapped.kind).toBe("unknown");
   });
 });

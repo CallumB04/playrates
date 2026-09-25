@@ -1,16 +1,18 @@
 import { Link } from "react-router-dom";
+import { cardClass } from "../../../components/ui/Card";
 import type { GameLogWithGame } from "../../../api";
-import type { Platform } from "@playrates/shared";
+import type { GameLogSort, Platform } from "@playrates/shared";
 import type { GameStatus } from "../../../constants/gameStatus";
 import type { PaginationState } from "../../../hooks/usePagination";
 import GameTile, { type TileAction } from "../../../components/game/GameTile";
 import Pagination from "../../../components/ui/Pagination";
 import { buttonClass } from "../../../components/ui/Button";
 import { TileSkeleton } from "../../../components/ui/Skeleton";
-import EmptyPlate, { GhostTile } from "../../../components/ui/EmptyPlate";
+import EmptyPlate from "../../../components/ui/EmptyPlate";
 import DrawerTabs from "./DrawerTabs";
 import { displayStatusFor } from "../../../constants/gameStatus";
 import { formatCount } from "../../../lib/format";
+import { shelfFoot } from "../lib/shelfSort";
 import type { ReactNode } from "react";
 
 interface ShelfPanelProps {
@@ -24,6 +26,8 @@ interface ShelfPanelProps {
     perPage: number;
     buildTileActions: (log: GameLogWithGame) => TileAction[];
     isMyAccount: boolean;
+    /** Decides the figure each tile prints, as well as the order. */
+    sort: GameLogSort;
     trailing?: ReactNode;
 }
 
@@ -66,6 +70,7 @@ const ShelfPanel = ({
     perPage,
     buildTileActions,
     isMyAccount,
+    sort,
     trailing,
 }: ShelfPanelProps) => {
     const empty = EMPTY_COPY[active];
@@ -79,7 +84,7 @@ const ShelfPanel = ({
                 trailing={trailing}
             />
 
-            <div className="mt-3 rounded-lg border border-subtle bg-surface-raised p-5 shadow-plate">
+            <div className={cardClass("mt-3 p-5", { padding: "none" })}>
                 {isLoading ? (
                     <div className="grid grid-cols-2 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
                         {Array.from(
@@ -90,55 +95,49 @@ const ShelfPanel = ({
                         )}
                     </div>
                 ) : logs.length === 0 ? (
-                    <div className="flex flex-col gap-5">
-                        <EmptyPlate
-                            title={empty.title}
-                            body={
-                                isMyAccount ? empty.body : "Nothing here yet."
-                            }
-                            action={
-                                isMyAccount ? (
-                                    <Link
-                                        to="/library"
-                                        className={buttonClass("primary")}
-                                    >
-                                        {empty.cta}
-                                    </Link>
-                                ) : undefined
-                            }
-                        />
-                        {isMyAccount && (
-                            // The shelf shows you what it will look like.
-                            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-5 xl:grid-cols-7">
-                                <GhostTile />
-                                <GhostTile />
-                                <GhostTile className="hidden sm:block" />
-                            </div>
-                        )}
-                    </div>
+                    <EmptyPlate
+                        title={empty.title}
+                        body={isMyAccount ? empty.body : "Nothing here yet."}
+                        action={
+                            isMyAccount ? (
+                                <Link
+                                    to="/library"
+                                    className={buttonClass("primary")}
+                                >
+                                    {empty.cta}
+                                </Link>
+                            ) : undefined
+                        }
+                    />
                 ) : (
                     <div className="grid grid-cols-2 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
-                        {logs.map((log) => (
-                            <GameTile
-                                key={log.id}
-                                gameId={log.gameId}
-                                title={log.game?.title ?? "Unknown game"}
-                                coverUrl={log.game?.coverUrl ?? null}
-                                platformSlugs={log.game?.platforms ?? []}
-                                platforms={platforms}
-                                rating={log.rating}
-                                // Only the played tab carries a substatus.
-                                status={
-                                    active === "played"
-                                        ? displayStatusFor(
-                                              log.status,
-                                              log.playedStatus
-                                          )
-                                        : null
-                                }
-                                actions={buildTileActions(log)}
-                            />
-                        ))}
+                        {logs.map((log) => {
+                            // The shelf shows whatever it is ordered by.
+                            const foot = shelfFoot(log, sort);
+
+                            return (
+                                <GameTile
+                                    key={log.id}
+                                    gameId={log.gameId}
+                                    title={log.game?.title ?? "Unknown game"}
+                                    coverUrl={log.game?.coverUrl ?? null}
+                                    platformSlugs={log.game?.platforms ?? []}
+                                    platforms={platforms}
+                                    rating={foot.rating}
+                                    footValue={foot.value}
+                                    // Only the played tab carries a substatus.
+                                    status={
+                                        active === "played"
+                                            ? displayStatusFor(
+                                                  log.status,
+                                                  log.playedStatus
+                                              )
+                                            : null
+                                    }
+                                    actions={buildTileActions(log)}
+                                />
+                            );
+                        })}
                     </div>
                 )}
             </div>

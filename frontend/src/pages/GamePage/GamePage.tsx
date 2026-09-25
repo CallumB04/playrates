@@ -29,7 +29,7 @@ import CirculationPlate from "./components/CirculationPlate";
 import GameReviews from "./components/GameReviews";
 import { buildGameFacts } from "./lib/gameFacts";
 import ScoreCards from "./components/ScoreCards";
-import GameDescription from "./components/GameDescription";
+import ExpandableText from "./components/ExpandableText";
 
 const GamePage = () => {
     const { gameID } = useParams();
@@ -109,7 +109,7 @@ const GamePage = () => {
     return (
         <article className="flex flex-col gap-7">
             <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-y-8">
-                <div className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
+                <div className="min-w-0 lg:col-start-1 lg:row-span-2 lg:row-start-1">
                     <GameCoverPlate
                         game={game}
                         log={log}
@@ -130,7 +130,11 @@ const GamePage = () => {
 
                 <div className="flex min-w-0 flex-col gap-6 lg:col-start-2 lg:row-start-2">
                     {game.description ? (
-                        <GameDescription text={game.description} />
+                        <ExpandableText
+                            text={game.description}
+                            className="text-body"
+                            moreLabel="Read the full description"
+                        />
                     ) : (
                         <p className="rounded-md border border-dashed border-strong bg-surface-sunken/60 px-4 py-3 text-body-sm text-content-muted">
                             No description on record for this one yet.
@@ -148,6 +152,7 @@ const GamePage = () => {
                             />
                             <CirculationPlate
                                 byStatus={stats.byStatus}
+                                byPlayedStatus={stats.byPlayedStatus}
                                 logCount={stats.logCount}
                             />
                         </>
@@ -161,7 +166,7 @@ const GamePage = () => {
                                 ? () => openEditor("review")
                                 : () => openLogin()
                         }
-                        canVote={!!user}
+                        viewerId={user?.id}
                         onVote={(reviewId) => vote.mutate(reviewId)}
                         total={reviews?.meta.total ?? 0}
                         sort={sort}
@@ -188,7 +193,6 @@ const GamePage = () => {
                     viewUpdatedLog={() => setEditing(false)}
                     gamelog={fullLog ?? null}
                     gameID={gameId}
-                    editing={!!fullLog}
                     focusReview={editIntent === "review"}
                 />
             )}

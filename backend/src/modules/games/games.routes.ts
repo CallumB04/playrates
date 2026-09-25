@@ -41,7 +41,7 @@ export const createGamesRouter = ({
       const { q, remote, ...pagination } = req.valid!.query as z.infer<
         typeof GameSearchSchema
       >;
-      res.json(await service.search(q, pagination, remote));
+      res.json(await service.search(q, pagination, remote, req.auth?.userId));
     },
   );
 
@@ -69,10 +69,11 @@ export const createGamesRouter = ({
 
   router.get(
     "/:gameId",
+    optionalAuth,
     validate({ params: GameIdParamSchema }),
     async (req, res) => {
       const { gameId } = req.valid!.params as { gameId: number };
-      res.json(await service.getById(gameId));
+      res.json(await service.getById(gameId, req.auth?.userId));
     },
   );
 

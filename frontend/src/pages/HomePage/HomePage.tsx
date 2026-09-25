@@ -1,11 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Game } from "@playrates/shared";
-import {
-    formatCount,
-    formatRatingOutOfTen,
-    formatReleaseShort,
-    releaseYear,
-} from "../../lib/format";
+import { formatCount, formatReleaseShort, releaseYear } from "../../lib/format";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import {
@@ -15,16 +10,17 @@ import {
     useSiteStats,
 } from "../../hooks/queries/useGames";
 import {
+    useMyGameLog,
     useMyGameLogIds,
     useMyGameLogs,
+    useQuickAdd,
     useUserStats,
 } from "../../hooks/queries/useGameLogs";
 import { useFriendActivity } from "../../hooks/queries/useFriends";
 import { useRecentReviews } from "../../hooks/queries/useReviews";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
-import { useGameLogMutations } from "../../hooks/queries/useGameLogs";
-import { useNotify } from "../../contexts/NotificationContext";
+import ViewGameLogPopup from "../../components/ViewGameLogPopup";
 import {
     STATUS_PRESENTATION,
     displayStatusFor,
@@ -48,6 +44,32 @@ const releaseWindow = () => {
     return { releasedAfter: iso(from), releasedBefore: iso(now) };
 };
 
+/** The home page only holds which games you have logged, not the logs
+ *  themselves, so the one being opened is fetched as it opens. */
+const LogViewer = ({
+    gameId,
+    username,
+    onClose,
+    onEdit,
+}: {
+    gameId: number;
+    username: string;
+    onClose: () => void;
+    onEdit: () => void;
+}) => {
+    const { data: log } = useMyGameLog(gameId);
+    if (!log) return null;
+
+    return (
+        <ViewGameLogPopup
+            gamelog={log}
+            ownerUsername={username}
+            closePopup={onClose}
+            primaryAction={{ label: "Edit", onSelect: onEdit }}
+        />
+    );
+};
+
 const HomePage = () => {
     /* No name of its own: the homepage keeps the site title. */
     usePageTitle();
@@ -55,6 +77,7 @@ const HomePage = () => {
     const { user } = useAuth();
     const { openSignup, openLogin } = useAccountForm();
     const [logging, setLogging] = useState<number | null>(null);
+    const [viewing, setViewing] = useState<number | null>(null);
 
     const { data: siteStats } = useSiteStats();
     const { data: platforms } = usePlatforms();
@@ -102,25 +125,8 @@ const HomePage = () => {
         [myLogIds]
     );
 
-    const { save } = useGameLogMutations();
-    const notify = useNotify();
 
-    /* One tap, no popup: these are a single field each. */
-    const quickAdd = async (game: Game, status: "backlog" | "wishlist") => {
-        const { label } = STATUS_PRESENTATION[status];
-        try {
-            await save.mutateAsync({
-                gameId: game.id,
-                input: { status },
-            });
-            notify(
-                `${game.title} added to your ${label.toLowerCase()}`,
-                "success"
-            );
-        } catch {
-            notify(`Couldn't add that to your ${label.toLowerCase()}`, "error");
-        }
-    };
+    const quickAdd = useQuickAdd();
 
     // Every cover on the page can be logged from where it sits.
     const statusFor = (game: Game) => {
@@ -144,9 +150,14 @@ const HomePage = () => {
         if (logByGameId.has(game.id)) {
             return [
                 {
-                    key: "edit",
-                    label: "Edit your log",
+                    key: "view",
+                    label: "View your log",
                     tone: "primary",
+                    onSelect: () => setViewing(game.id),
+                },
+                {
+                    key: "edit",
+                    label: "Edit",
                     onSelect: () => setLogging(game.id),
                 },
             ];
@@ -163,13 +174,15 @@ const HomePage = () => {
                 key: "backlog",
                 label: "Add to backlog",
                 icon: STATUS_PRESENTATION.backlog.icon,
-                onSelect: () => void quickAdd(game, "backlog"),
+                onSelect: () => quickAdd(game.id, game.title, "backlog"),
+                doneLabel: "In your backlog",
             },
             {
                 key: "wishlist",
                 label: "Add to wishlist",
                 icon: STATUS_PRESENTATION.wishlist.icon,
-                onSelect: () => void quickAdd(game, "wishlist"),
+                onSelect: () => quickAdd(game.id, game.title, "wishlist"),
+                doneLabel: "On your wishlist",
             },
         ];
     };
@@ -230,11 +243,7 @@ const HomePage = () => {
                 isLoading={acclaimedLoading}
                 actionsFor={actionsFor}
                 statusFor={statusFor}
-                footValueFor={(game) =>
-                    game.avgRating !== null
-                        ? formatRatingOutOfTen(game.avgRating)
-                        : releaseYear(game.releaseDate)
-                }
+                ratingFor={(game) => game.avgRating ?? undefined}
             />
 
             <ReviewFeed
@@ -263,6 +272,18 @@ const HomePage = () => {
                 footValueFor={(game) => formatReleaseShort(game.releaseDate)}
             />
 
+            {viewing !== null && user && (
+                <LogViewer
+                    gameId={viewing}
+                    username={user.username}
+                    onClose={() => setViewing(null)}
+                    onEdit={() => {
+                        setViewing(null);
+                        setLogging(viewing);
+                    }}
+                />
+            )}
+
             {logging !== null && (
                 <CreateOrEditGameLogPopup
                     closePopup={() => setLogging(null)}
@@ -271,7 +292,6 @@ const HomePage = () => {
                         current && current.gameId === logging ? current : null
                     }
                     gameID={logging}
-                    editing={!!current && current.gameId === logging}
                 />
             )}
         </div>

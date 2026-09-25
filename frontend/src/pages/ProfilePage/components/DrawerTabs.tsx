@@ -55,7 +55,7 @@ const DrawerTabs = ({
                                 "flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-sm px-3.5 py-2 text-body-sm lift sm:min-h-0",
                                 "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                                 isActive
-                                    ? "bg-surface-raised font-medium text-content inset-shadow-deep"
+                                    ? "bg-surface-raised font-medium text-content"
                                     : "text-content-secondary hover:text-content"
                             )}
                         >

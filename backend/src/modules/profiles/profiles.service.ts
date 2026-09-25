@@ -1,23 +1,28 @@
 import type {
+  MyProfile,
   Paginated,
   Pagination,
   Profile,
   UpdateProfileInput,
 } from "@playrates/shared";
+import { AVATAR_MAX_BYTES, isWebp } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import type { AuthAdmin } from "../../config/authAdmin.js";
+import type { AvatarStore } from "../../config/avatarStore.js";
 import type { ProfilesRepository } from "./profiles.repository.js";
-import { toProfile } from "./profiles.mapper.js";
+import { toMyProfile, toProfile } from "./profiles.mapper.js";
 
 export const createProfilesService = (
   repo: ProfilesRepository,
   authAdmin: AuthAdmin,
+  avatars: AvatarStore,
 ) => ({
-  async getById(id: string): Promise<Profile> {
+  /** The caller's own, so it carries their settings. */
+  async getById(id: string): Promise<MyProfile> {
     const row = await repo.findById(id);
     if (!row) throw AppError.notFound("Profile");
-    return toProfile(row);
+    return toMyProfile(row);
   },
 
   /**
@@ -30,6 +35,31 @@ export const createProfilesService = (
     const row = await repo.findById(id);
     if (!row) throw AppError.notFound("Profile");
     await authAdmin.deleteUser(id);
+  },
+
+  /**
+   * Replaces the caller's profile picture. The browser crops and compresses
+   * before it gets here, so anything that is not already a small WebP has
+   * come from somewhere other than our own uploader and is refused rather
+   * than re-encoded.
+   */
+  async setAvatar(callerId: string, bytes: Buffer): Promise<MyProfile> {
+    if (bytes.length === 0) throw AppError.badRequest("No image was uploaded");
+    if (bytes.length > AVATAR_MAX_BYTES) {
+      throw AppError.badRequest("That picture is too large");
+    }
+    if (!isWebp(bytes)) {
+      throw AppError.badRequest("A profile picture must be a WebP image");
+    }
+
+    const url = await avatars.put(callerId, bytes);
+    return toMyProfile(await repo.update(callerId, { avatar_url: url }));
+  },
+
+  /** Back to the generated one. */
+  async clearAvatar(callerId: string): Promise<MyProfile> {
+    await avatars.remove(callerId);
+    return toMyProfile(await repo.update(callerId, { avatar_url: null }));
   },
 
   async getByUsername(username: string): Promise<Profile> {
@@ -77,7 +107,6 @@ export const createProfilesService = (
     const patch: Record<string, unknown> = {};
     if (input.username !== undefined) patch.username = input.username;
     if (input.bio !== undefined) patch.bio = input.bio;
-    if (input.avatarUrl !== undefined) patch.avatar_url = input.avatarUrl;
     if (input.showSexualContent !== undefined) {
       patch.show_sexual_content = input.showSexualContent;
     }
@@ -87,12 +116,24 @@ export const createProfilesService = (
     }
     if (input.timezone !== undefined) patch.timezone = input.timezone;
     if (input.hideOnline !== undefined) patch.hide_online = input.hideOnline;
+    if (input.accent !== undefined) patch.accent = input.accent;
 
     if (Object.keys(patch).length === 0) {
       return this.getById(callerId);
     }
 
-    return toProfile(await repo.update(callerId, patch));
+    return toMyProfile(await repo.update(callerId, patch));
+  },
+
+  /** The first-login welcome has been seen. Keeps the first time it was, so a
+   *  second tab closing its copy does not move the date. */
+  async markOnboarded(callerId: string): Promise<MyProfile> {
+    const row = await repo.findById(callerId);
+    if (!row) throw AppError.notFound("Profile");
+    if (row.onboarded_at) return toMyProfile(row);
+    return toMyProfile(
+      await repo.update(callerId, { onboarded_at: new Date().toISOString() }),
+    );
   },
 
   async heartbeat(callerId: string): Promise<void> {

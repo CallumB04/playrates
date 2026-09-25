@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { EmptyNote } from "../../../components/ui/EmptyPlate";
 import type { FriendActivity } from "@playrates/shared";
 import ProfilePicture from "../../../components/ProfilePicture";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
@@ -52,6 +53,7 @@ const Row = ({ item }: { item: FriendActivity }) => {
                     <ProfilePicture
                         variant="nav"
                         file={item.actor.avatarUrl ?? ""}
+                        accent={item.actor.accent}
                         username={item.actor.username}
                         link={false}
                     />
@@ -118,9 +120,9 @@ const FriendFeed = ({
             {isLoading ? (
                 <TextSkeleton lines={4} />
             ) : items.length === 0 ? (
-                <p className="rounded-md border border-dashed border-strong bg-surface-sunken/40 px-4 py-6 text-center text-body-sm text-content-muted">
+                <EmptyNote>
                     No activity yet. Logs from your friends appear here.
-                </p>
+                </EmptyNote>
             ) : (
                 items.map((item) => <Row key={item.logId} item={item} />)
             )}

@@ -1,5 +1,8 @@
-import { Router, type RequestHandler } from "express";
+import express, { Router, type RequestHandler } from "express";
+import rateLimit from "express-rate-limit";
 import {
+  AVATAR_MAX_BYTES,
+  AVATAR_MIME,
   CheckUsernameSchema,
   PaginationSchema,
   UpdateProfileSchema,
@@ -21,6 +24,33 @@ const callerId = (req: Parameters<RequestHandler>[0]): string => {
   if (!id) throw AppError.unauthorized();
   return id;
 };
+
+/** No upstream cost behind this one, but it is the only unauthenticated route
+ *  that reads a list of people — so it gets a ceiling of its own. */
+const profileSearchLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 30,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+});
+
+/* An avatar is the only route that takes bytes rather than JSON. A raw body
+   parser is all it needs: the client sends one already-compressed image, so
+   there is nothing for multipart to separate. The limit is the same one the
+   service enforces, so an oversized body is dropped before it is buffered. */
+const avatarBody = express.raw({
+  type: AVATAR_MIME,
+  limit: AVATAR_MAX_BYTES,
+});
+
+/* Re-encoding a picture is the most expensive thing a profile can ask for,
+   and it writes to storage. */
+const avatarLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 10,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+});
 
 export const createProfilesRouter = ({
   service,
@@ -50,6 +80,26 @@ export const createProfilesRouter = ({
     res.status(204).end();
   });
 
+  router.post(
+    "/me/avatar",
+    requireAuth,
+    avatarLimiter,
+    avatarBody,
+    async (req, res) => {
+      // express.raw leaves an empty object where the type did not match.
+      const body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+      res.json(await service.setAvatar(callerId(req), body));
+    },
+  );
+
+  router.delete("/me/avatar", requireAuth, async (req, res) => {
+    res.json(await service.clearAvatar(callerId(req)));
+  });
+
+  router.post("/me/onboarded", requireAuth, async (req, res) => {
+    res.json(await service.markOnboarded(callerId(req)));
+  });
+
   router.post("/me/heartbeat", requireAuth, async (req, res) => {
     await service.heartbeat(callerId(req));
     res.status(204).end();
@@ -66,17 +116,21 @@ export const createProfilesRouter = ({
     },
   );
 
+  /* Open to anyone: a profile page is already public, so requiring a session
+     to find one only meant the masthead could not offer people to a signed-out
+     visitor. The term is required and rate limited, so this looks names up
+     rather than handing out the whole directory. */
   router.get(
     "/",
-    requireAuth,
+    profileSearchLimiter,
     validate({
       query: PaginationSchema.extend({
-        search: z.string().trim().max(200).optional(),
+        search: z.string().trim().min(2).max(200),
       }),
     }),
     async (req, res) => {
       const { search, ...pagination } = req.valid!.query as {
-        search?: string;
+        search: string;
         page: number;
         limit: number;
       };

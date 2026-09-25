@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cardClass } from "../../../components/ui/Card";
 import { ListFilter, Search } from "lucide-react";
 import Button from "../../../components/ui/Button";
 import Modal from "../../../components/ui/Modal";
@@ -94,7 +95,11 @@ const LibraryFilters = ({
 
     return (
         <>
-            <div className="flex flex-col gap-3.5 rounded-lg border border-subtle bg-surface-raised p-4 shadow-plate">
+            <div
+                className={cardClass("flex flex-col gap-3.5 p-4", {
+                    padding: "none",
+                })}
+            >
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
                     <div className="relative flex-1">
                         <Search

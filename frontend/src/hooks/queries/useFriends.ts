@@ -54,6 +54,11 @@ export const useFriendRelation = (targetUserId: string | undefined) => {
 
     const invalidate = () => {
         queryClient.invalidateQueries({ queryKey: ["friends"] });
+        /* Notifications carry the relation live, so a request answered
+           anywhere has to re-read the inbox rows that quote it. */
+        queryClient.invalidateQueries({
+            queryKey: queryKeys.notifications.all,
+        });
     };
 
     const send = useMutation({

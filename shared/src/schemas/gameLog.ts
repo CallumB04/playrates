@@ -20,10 +20,12 @@ export const PlayedStatusSchema = z.enum(PLAYED_STATUSES);
 export type GameStatus = z.infer<typeof GameStatusSchema>;
 export type PlayedStatus = z.infer<typeof PlayedStatusSchema>;
 
-/** 0-10 in steps of 0.5, mirroring the CHECK constraint on game_logs. */
+/** 0.5-10 in steps of 0.5, mirroring the CHECK constraint on game_logs.
+ *  Zero is not the bottom of the scale, it is the absence of a rating, and
+ *  that is what null is for. */
 const RatingSchema = z
   .number()
-  .min(0)
+  .min(0.5)
   .max(10)
   .refine((n) => Number.isInteger(n * 2), {
     message: "Rating must be a multiple of 0.5",
@@ -49,6 +51,7 @@ const GameLogFieldsSchema = z
     startDate: IsoDateSchema.nullish(),
     finishDate: IsoDateSchema.nullish(),
     platform: PlatformSlugSchema.nullish(),
+    system: PlatformSlugSchema.nullish(),
     achievementsTotal: z.number().int().min(0).nullish(),
     achievementsCompleted: z.number().int().min(0).nullish(),
   })
@@ -89,8 +92,37 @@ export type GameLogPatch = z.infer<
   ReturnType<typeof GameLogFieldsSchema.partial>
 >;
 
+/**
+ * How a shelf is ordered. Two of these sort on the game rather than the log,
+ * and every one of them decides what figure the tile prints underneath, so the
+ * ordering is legible rather than mysterious.
+ */
+export const GAME_LOG_SORTS = [
+  "rating",
+  "gameRating",
+  "metacritic",
+  "played",
+  "title",
+  "released",
+  "completion",
+] as const;
+
+export const GameLogSortSchema = z.enum(GAME_LOG_SORTS).default("rating");
+export type GameLogSort = (typeof GAME_LOG_SORTS)[number];
+
+export const SortDirectionSchema = z.enum(["asc", "desc"]).default("desc");
+export type SortDirection = z.infer<typeof SortDirectionSchema>;
+
+/** "none" is a filter for played logs carrying no substatus, which is a real
+ *  choice and not the absence of one. */
+export const PlayedStatusFilterSchema = z.enum([...PLAYED_STATUSES, "none"]);
+export type PlayedStatusFilter = z.infer<typeof PlayedStatusFilterSchema>;
+
 export const GameLogQuerySchema = z.object({
   status: GameStatusSchema.optional(),
+  playedStatus: PlayedStatusFilterSchema.optional(),
+  sort: GameLogSortSchema,
+  direction: SortDirectionSchema,
 });
 
 /** `id` is the log's own id; `gameId` is the game it refers to. */
@@ -105,6 +137,8 @@ export interface GameLog {
   startDate: string | null;
   finishDate: string | null;
   platform: string | null;
+  /** The machine, where one was named. `platform` is its family. */
+  system: string | null;
   achievementsTotal: number | null;
   achievementsCompleted: number | null;
   createdAt: string;

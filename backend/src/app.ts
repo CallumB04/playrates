@@ -9,12 +9,14 @@ import { makeRequireAuth, type Verifier } from "./middleware/requireAuth.js";
 import { buildRoutes } from "./routes.js";
 import type { Repositories } from "./repositories.js";
 import type { AuthAdmin } from "./config/authAdmin.js";
+import type { AvatarStore } from "./config/avatarStore.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
 
 export interface AppDeps {
   repos: Repositories;
   provider: GamesProvider;
   authAdmin: AuthAdmin;
+  avatars: AvatarStore;
   /** Injected so tests can authenticate without signing real JWTs. */
   verify: Verifier;
   logger?: Logger;
@@ -25,6 +27,7 @@ export const buildApp = ({
   repos,
   provider,
   authAdmin,
+  avatars,
   verify,
   logger = createLogger(),
 }: AppDeps): Express => {
@@ -52,6 +55,7 @@ export const buildApp = ({
       repos,
       provider,
       authAdmin,
+      avatars,
       requireAuth: makeRequireAuth(verify),
       optionalAuth: makeRequireAuth(verify, { optional: true }),
     }),

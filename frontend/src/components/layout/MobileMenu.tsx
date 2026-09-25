@@ -122,6 +122,7 @@ const MobileMenu = ({
                                 <ProfilePicture
                                     variant="friendRow"
                                     file={user.avatarUrl ?? ""}
+                                    accent={user.accent}
                                     username={user.username}
                                     link={false}
                                 />

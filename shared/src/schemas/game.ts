@@ -9,13 +9,22 @@ export interface Game {
   description: string;
   coverUrl: string | null;
   releaseDate: string | null;
-  /** Platform slugs, e.g. ["steam", "xbox"]. */
+  /** Platform family slugs, e.g. ["steam", "xbox"]. */
   platforms: string[];
+  /** The individual machines, e.g. ["playstation5", "xbox-series-x"]. */
+  systems: string[];
   hasSexualContent: boolean;
   isTrending: boolean;
   /** RAWG's average playtime in hours, not a time-to-beat estimate. */
   playtimeHours: number | null;
   genres: string[];
+  /** Studios credited with making it, in RAWG's order. */
+  developers: string[];
+  publishers: string[];
+  /** The game's own site, not a store page. */
+  website: string | null;
+  /** RAWG's wording, already display-ready: "Mature", "Everyone 10+". */
+  esrbRating: string | null;
   metacritic: number | null;
   /** RAWG's own 0-5 community score, not a PlayRates rating. */
   rawgRating: number | null;
@@ -30,6 +39,9 @@ export interface Game {
 export interface GameStats {
   logCount: number;
   byStatus: Record<string, number>;
+  /** How the played logs ended. A subset of byStatus.played, so these are not
+   *  summed into the total — the remainder recorded no ending. */
+  byPlayedStatus: Record<string, number>;
   averageRating: number | null;
   ratingCount: number;
   /** Twenty buckets of 0.5, so the rating plate shows a shape, not just a mean. */
@@ -102,6 +114,18 @@ export const PlatformSchema = z.object({
 });
 
 export type Platform = z.infer<typeof PlatformSchema>;
+
+/** One machine within a family: a PS5 rather than "PlayStation". What the log
+ *  editor offers, and what a log records alongside its family. */
+export const PlatformSystemSchema = z.object({
+  slug: z.string(),
+  displayName: z.string(),
+  /** The family it belongs to, and the mark it inherits. */
+  platformSlug: z.string(),
+  sortOrder: z.number(),
+});
+
+export type PlatformSystem = z.infer<typeof PlatformSystemSchema>;
 
 export const GenreSchema = z.object({
   slug: z.string(),

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { EmptyNote } from "../../../components/ui/EmptyPlate";
 import type { ReviewWithAuthor } from "@playrates/shared";
 import ProfilePicture from "../../../components/ProfilePicture";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
@@ -34,6 +35,7 @@ const Row = ({ review }: { review: ReviewWithAuthor }) => {
                 <ProfilePicture
                     variant="nav"
                     file={review.author.avatarUrl ?? ""}
+                    accent={review.author.accent}
                     username={review.author.username}
                     link={false}
                 />
@@ -91,9 +93,7 @@ const ReviewFeed = ({
             {isLoading ? (
                 <TextSkeleton lines={5} />
             ) : reviews.length === 0 ? (
-                <p className="rounded-md border border-dashed border-strong bg-surface-sunken/40 px-4 py-6 text-center text-body-sm text-content-muted">
-                    No reviews yet.
-                </p>
+                <EmptyNote>No reviews yet.</EmptyNote>
             ) : (
                 reviews.map((review) => <Row key={review.id} review={review} />)
             )}

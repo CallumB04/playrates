@@ -4,7 +4,14 @@ import { cn } from "../../../lib/cn";
 
 /* One line by default. A game with eight genres wrapped to four, which pushed
    the rest of the ledger down and left the label stranded beside a block. */
-const GenreList = ({ names }: { names: string[] }) => {
+const InlineNameList = ({
+    names,
+    noun,
+}: {
+    names: string[];
+    /** Plural, for the expander: "Show all genres", "Show all developers". */
+    noun: string;
+}) => {
     const [open, setOpen] = useState(false);
 
     return (
@@ -17,7 +24,9 @@ const GenreList = ({ names }: { names: string[] }) => {
                     type="button"
                     onClick={() => setOpen((was) => !was)}
                     aria-expanded={open}
-                    aria-label={open ? "Show fewer genres" : "Show all genres"}
+                    aria-label={
+                        open ? `Show fewer ${noun}` : `Show all ${noun}`
+                    }
                     className="relative shrink-0 cursor-pointer self-center text-content-muted before:absolute before:-inset-4 before:content-[''] hover:text-content sm:before:hidden"
                 >
                     <ChevronDown
@@ -34,4 +43,4 @@ const GenreList = ({ names }: { names: string[] }) => {
     );
 };
 
-export default GenreList;
+export default InlineNameList;

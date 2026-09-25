@@ -4,6 +4,8 @@ import { useDebouncedValue } from "./useDebouncedValue";
 import { useScrollY } from "./useScrollY";
 import { useWindowSize } from "./useWindowSize";
 import { usePageTitle } from "./usePageTitle";
+import { BREAKPOINT, useMediaQuery } from "./useMediaQuery";
+import { useDismiss } from "./useDismiss";
 
 describe("useDebouncedValue", () => {
     beforeEach(() => vi.useFakeTimers());
@@ -162,5 +164,116 @@ describe("usePageTitle", () => {
         const { unmount } = renderHook(() => usePageTitle("Settings"));
         unmount();
         expect(document.title).toBe(DEFAULT);
+    });
+});
+
+/** A matchMedia that can be flipped from the test, the way a resize would. */
+const controllableMedia = (initial: boolean) => {
+    let matches = initial;
+    const listeners = new Set<() => void>();
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+        get matches() {
+            return matches;
+        },
+        media: query,
+        addEventListener: (_: string, fn: () => void) => listeners.add(fn),
+        removeEventListener: (_: string, fn: () => void) =>
+            listeners.delete(fn),
+    })) as unknown as typeof window.matchMedia;
+
+    return {
+        set: (next: boolean) => {
+            matches = next;
+            listeners.forEach((fn) => fn());
+        },
+        listeners,
+        restore: () => {
+            window.matchMedia = original;
+        },
+    };
+};
+
+describe("useMediaQuery", () => {
+    it("answers with whether the query matches now", () => {
+        const media = controllableMedia(true);
+        const { result } = renderHook(() => useMediaQuery(BREAKPOINT.sm));
+        expect(result.current).toBe(true);
+        media.restore();
+    });
+
+    /* The header closes its mobile menu on the way up past lg; that only
+       works if the answer changes while the component is mounted. */
+    it("follows the query as it changes", () => {
+        const media = controllableMedia(false);
+        const { result } = renderHook(() => useMediaQuery(BREAKPOINT.lg));
+
+        act(() => media.set(true));
+        expect(result.current).toBe(true);
+
+        act(() => media.set(false));
+        expect(result.current).toBe(false);
+        media.restore();
+    });
+
+    it("stops listening once unmounted", () => {
+        const media = controllableMedia(false);
+        const { unmount } = renderHook(() => useMediaQuery(BREAKPOINT.xl));
+        expect(media.listeners.size).toBe(1);
+
+        unmount();
+        expect(media.listeners.size).toBe(0);
+        media.restore();
+    });
+});
+
+describe("useDismiss", () => {
+    const setup = (enabled: boolean, escape = false) => {
+        const inside = document.createElement("div");
+        const outside = document.createElement("div");
+        document.body.append(inside, outside);
+        const onDismiss = vi.fn();
+        const { unmount } = renderHook(() =>
+            useDismiss([{ current: inside }], onDismiss, { enabled, escape })
+        );
+        const cleanup = () => {
+            unmount();
+            inside.remove();
+            outside.remove();
+        };
+        return { inside, outside, onDismiss, cleanup };
+    };
+
+    it("dismisses on a press outside, and not on one inside", () => {
+        const { inside, outside, onDismiss, cleanup } = setup(true);
+
+        inside.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+        expect(onDismiss).not.toHaveBeenCalled();
+
+        outside.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+        expect(onDismiss).toHaveBeenCalledTimes(1);
+        cleanup();
+    });
+
+    it("does nothing while disabled", () => {
+        const { outside, onDismiss, cleanup } = setup(false);
+
+        outside.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+        expect(onDismiss).not.toHaveBeenCalled();
+        cleanup();
+    });
+
+    /* Off by default: the dropdown handles Escape itself, and a second
+       listener would close the modal it sits in as well. */
+    it("leaves Escape alone unless asked", () => {
+        const plain = setup(true);
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+        expect(plain.onDismiss).not.toHaveBeenCalled();
+        plain.cleanup();
+
+        const withEscape = setup(true, true);
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+        expect(withEscape.onDismiss).toHaveBeenCalledTimes(1);
+        withEscape.cleanup();
     });
 });

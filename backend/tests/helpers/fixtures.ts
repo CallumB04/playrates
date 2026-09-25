@@ -3,7 +3,9 @@ import type {
   GameLogRow,
   GameRow,
   GenreRow,
+  NotificationRow,
   PlatformRow,
+  PlatformSystemRow,
   ProfileRow,
   ReviewRow,
 } from "../../src/types/database.types.js";
@@ -24,6 +26,9 @@ export const buildProfile = (
   first_name: null,
   timezone: "UTC",
   hide_online: false,
+  accent: "indigo",
+  // An account from before the welcome existed; a new one overrides to null.
+  onboarded_at: LONG_AGO,
   last_seen_at: NOW,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,
@@ -37,8 +42,13 @@ export const buildGame = (overrides: Partial<GameRow> = {}): GameRow => ({
   title: "The Witcher 3: Wild Hunt",
   description: "An open world RPG.",
   cover_url: "https://example.test/cover.jpg",
+  box_art_url: null,
   release_date: "2015-05-18",
   content_tags: [],
+  developers: ["Valve"],
+  publishers: ["Valve"],
+  website: "https://example.test/game",
+  esrb_rating: "Mature",
   has_sexual_content: false,
   is_trending: true,
   playtime_hours: 51.5,
@@ -50,7 +60,7 @@ export const buildGame = (overrides: Partial<GameRow> = {}): GameRow => ({
   avg_rating: null,
   rating_count: 0,
   synced_at: NOW,
-  description_synced_at: NOW,
+  details_synced_at: NOW,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,
   ...overrides,
@@ -70,8 +80,11 @@ export const buildGameLog = (
   start_date: null,
   finish_date: null,
   platform_slug: "steam",
+  system_slug: "steam",
   achievements_total: null,
   achievements_completed: null,
+  completion: null,
+  last_played: null,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,
   ...overrides,
@@ -109,10 +122,35 @@ export const buildPlatform = (
   ...overrides,
 });
 
+export const buildPlatformSystem = (
+  overrides: Partial<PlatformSystemRow> = {},
+): PlatformSystemRow => ({
+  slug: "steam",
+  display_name: "Steam",
+  platform_slug: "steam",
+  sort_order: 10,
+  ...overrides,
+});
+
 /** Two users, one game, one platform — enough for most route tests. */
 export const buildGenre = (overrides: Partial<GenreRow> = {}): GenreRow => ({
   slug: "action",
   name: "Action",
+  ...overrides,
+});
+
+export const buildNotification = (
+  overrides: Partial<NotificationRow> = {},
+): NotificationRow => ({
+  id: 1,
+  user_id: USER_A,
+  kind: "welcome",
+  actor_id: null,
+  data: {},
+  dedupe_key: "welcome",
+  read_at: null,
+  archived_at: null,
+  created_at: LONG_AGO,
   ...overrides,
 });
 
@@ -123,6 +161,8 @@ export const baseSeed = () => ({
   ],
   games: [buildGame()],
   gamePlatforms: [{ game_id: 1, platform_slug: "steam" }],
+  gameSystems: [{ game_id: 1, system_slug: "steam" }],
   platforms: [buildPlatform()],
+  platformSystems: [buildPlatformSystem()],
   genres: [buildGenre(), buildGenre({ slug: "indie", name: "Indie" })],
 });

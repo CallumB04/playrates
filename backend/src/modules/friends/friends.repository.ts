@@ -15,14 +15,15 @@ export interface FriendProfileRow {
   id: string;
   username: string;
   avatar_url: string | null;
+  accent: string | null;
   bio: string;
   last_seen_at: string;
 }
 
 const SELECT_WITH_USERS = `
     *,
-    user_a:profiles!friendships_user_a_id_fkey(id, username, avatar_url, bio, last_seen_at),
-    user_b:profiles!friendships_user_b_id_fkey(id, username, avatar_url, bio, last_seen_at)
+    user_a:profiles!friendships_user_a_id_fkey(id, username, avatar_url, accent, bio, last_seen_at),
+    user_b:profiles!friendships_user_b_id_fkey(id, username, avatar_url, accent, bio, last_seen_at)
 `;
 
 /** A row of the friend_activity view: one friend's log, flattened. */
@@ -37,6 +38,8 @@ export interface FriendActivityRow {
   updated_at: string;
   actor_username: string;
   actor_avatar_url: string | null;
+  actor_accent: string | null;
+  game_has_sexual_content: boolean;
   actor_last_seen_at: string;
   game_title: string;
   game_cover_url: string | null;
@@ -49,6 +52,7 @@ export interface FriendsRepository {
     viewerId: string,
     from: number,
     to: number,
+    showSexualContent: boolean,
   ): Promise<{ rows: FriendActivityRow[]; total: number }>;
   find(x: string, y: string): Promise<FriendshipRow | null>;
   create(requesterId: string, targetId: string): Promise<FriendshipWithUsers>;
@@ -67,11 +71,18 @@ export const createFriendsRepository = (db: Db): FriendsRepository => ({
     return (data ?? []) as FriendshipWithUsers[];
   },
 
-  async activityFor(viewerId, from, to) {
-    const { data, error, count } = await db
+  async activityFor(viewerId, from, to, showSexualContent) {
+    let builder = db
       .from("friend_activity")
       .select("*", { count: "exact" })
-      .eq("viewer_id", viewerId)
+      .eq("viewer_id", viewerId);
+
+    // A friend's choice to log it is not the viewer's choice to see it.
+    if (!showSexualContent) {
+      builder = builder.eq("game_has_sexual_content", false);
+    }
+
+    const { data, error, count } = await builder
       // log_id breaks ties, or deep pages repeat and skip rows.
       .order("updated_at", { ascending: false })
       .order("log_id", { ascending: false })

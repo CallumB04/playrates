@@ -1,7 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
-import { authHeader, buildTestApp, USER_A } from "../helpers/buildTestApp.js";
-import { baseSeed, buildGame, buildGameLog } from "../helpers/fixtures.js";
+import { AppError } from "../../src/lib/AppError.js";
+import {
+  authHeader,
+  buildTestApp,
+  USER_A,
+  USER_B,
+} from "../helpers/buildTestApp.js";
+import {
+  baseSeed,
+  buildGame,
+  buildGameLog,
+  buildPlatform,
+  buildPlatformSystem,
+  buildProfile,
+  buildFriendship,
+  buildReview,
+} from "../helpers/fixtures.js";
 import type {
   ExternalGame,
   GamesProvider,
@@ -25,9 +40,15 @@ const externalGame: ExternalGame = {
   title: "Hollow Knight",
   description: "A hand-drawn metroidvania.",
   coverUrl: "https://example.test/hk.jpg",
+  boxArtUrl: null,
   releaseDate: "2017-02-24",
   platformSlugs: ["other-pc"],
+  systemSlugs: ["other-pc"],
   genres: [{ slug: "metroidvania", name: "Metroidvania" }],
+  developers: ["Team Cherry"],
+  publishers: ["Team Cherry"],
+  website: "https://www.hollowknight.com",
+  esrbRating: "Everyone 10+",
   hasSexualContent: false,
   contentTags: [],
   metacritic: 90,
@@ -213,6 +234,24 @@ describe("games", () => {
     expect(state.games).toHaveLength(1);
   });
 
+  /* Running out of RAWG allowance must not take search down with it: the
+     catalogue is already ours, and thin local results are better than none. */
+  it("still answers from the catalogue when the provider is refusing", async () => {
+    const provider = stubProvider();
+    provider.search = vi.fn(async () => {
+      throw AppError.upstream("RAWG request failed with status 401");
+    }) as never;
+
+    const { app } = buildTestApp({ seed: baseSeed(), provider });
+
+    const response = await request(app)
+      .get("/api/v1/games/search?q=witch")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0].title).toContain("Witcher");
+  });
+
   it("requires authentication to search", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 
@@ -258,6 +297,64 @@ describe("platforms and stats", () => {
     expect(response.body.data[0].displayName).toBe("Steam");
   });
 
+  it("lists the machines within each family", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        platforms: [
+          buildPlatform(),
+          buildPlatform({ slug: "playstation", display_name: "PlayStation" }),
+        ],
+        platformSystems: [
+          buildPlatformSystem(),
+          buildPlatformSystem({
+            slug: "playstation5",
+            display_name: "PlayStation 5",
+            platform_slug: "playstation",
+            sort_order: 4010,
+          }),
+        ],
+      },
+    });
+
+    const response = await request(app).get("/api/v1/platforms/systems");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toEqual([
+      {
+        slug: "steam",
+        displayName: "Steam",
+        platformSlug: "steam",
+        sortOrder: 10,
+      },
+      {
+        slug: "playstation5",
+        displayName: "PlayStation 5",
+        platformSlug: "playstation",
+        sortOrder: 4010,
+      },
+    ]);
+  });
+
+  it("carries a game's machines alongside its families", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        gamePlatforms: [{ game_id: 1, platform_slug: "steam" }],
+        gameSystems: [
+          { game_id: 1, system_slug: "steam" },
+          { game_id: 1, system_slug: "playstation5" },
+        ],
+      },
+    });
+
+    const response = await request(app).get("/api/v1/games/1");
+
+    expect(response.status).toBe(200);
+    expect(response.body.platforms).toEqual(["steam"]);
+    expect(response.body.systems).toEqual(["steam", "playstation5"]);
+  });
+
   /** Counts only — the home page should never fetch rows to show a total. */
   it("returns counts without exposing any records", async () => {
     const { app } = buildTestApp({
@@ -272,5 +369,223 @@ describe("platforms and stats", () => {
       gameCount: 1,
       logCount: 1,
     });
+  });
+});
+
+describe("the trending rail", () => {
+  /* buildGame is trending by default, so everything that is not part of the
+     curated set has to say so. Six flagged, two of them explicit: a viewer
+     who has not opted in sees four, which is what shipped. */
+  const trending = (i: number, overrides = {}) =>
+    buildGame({
+      id: i + 1,
+      slug: `trending-${i}`,
+      title: `Trending ${i}`,
+      is_trending: true,
+      log_count: 0,
+      ...overrides,
+    });
+
+  const logged = (i: number) =>
+    buildGame({
+      id: 20 + i,
+      slug: `logged-${i}`,
+      title: `Logged ${i}`,
+      is_trending: false,
+      log_count: 100 - i,
+    });
+
+  const seed = () => ({
+    games: [
+      ...Array.from({ length: 4 }, (_, i) => trending(i)),
+      trending(10, { has_sexual_content: true, title: "Explicit 0" }),
+      trending(11, { has_sexual_content: true, title: "Explicit 1" }),
+      ...Array.from({ length: 5 }, (_, i) => logged(i)),
+    ],
+  });
+
+  const titles = (body: { data: { title: string }[] }) =>
+    body.data.map((g) => g.title);
+
+  const rail = (app: Parameters<typeof request>[0]) =>
+    request(app).get("/api/v1/games?trending=true&limit=24");
+
+  it("makes up the shortfall the content filter leaves", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await rail(app);
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it("puts what is actually trending first, and tops up behind it", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const shown = titles((await rail(app)).body);
+
+    expect(shown.slice(0, 4).every((t) => t.startsWith("Trending"))).toBe(true);
+    expect(shown.slice(4)).toEqual(["Logged 0", "Logged 1"]);
+    expect(new Set(shown).size).toBe(shown.length);
+  });
+
+  it("never tops up with something the viewer may not see", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const shown = titles((await rail(app)).body);
+
+    expect(shown).not.toContain("Explicit 0");
+    expect(shown).not.toContain("Explicit 1");
+  });
+
+  /* Enough flagged to fill the rail on its own: nothing else belongs in it. */
+  it("leaves a full rail alone", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        games: [
+          ...Array.from({ length: 7 }, (_, i) => trending(i)),
+          buildGame({
+            id: 50,
+            slug: "popular",
+            title: "Popular",
+            is_trending: false,
+            log_count: 999,
+          }),
+        ],
+      },
+    });
+
+    const shown = titles((await rail(app)).body);
+
+    expect(shown).toHaveLength(7);
+    expect(shown).not.toContain("Popular");
+  });
+
+  it("does not top up a page past the first", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await request(app).get(
+      "/api/v1/games?trending=true&limit=24&page=2",
+    );
+
+    expect(response.body.data).toHaveLength(0);
+  });
+});
+
+/* The filter existed and search went round it: a signed-in user with explicit
+   content off searched "hentai" and got it. */
+describe("explicit content stays hidden", () => {
+  const seed = () => ({
+    profiles: [buildProfile({ id: USER_A, show_sexual_content: false })],
+    games: [
+      buildGame({ id: 1, slug: "clean", title: "Hollow Knight" }),
+      buildGame({
+        id: 2,
+        slug: "explicit",
+        title: "Hentai Girl",
+        has_sexual_content: true,
+      }),
+    ],
+  });
+
+  const optedIn = () => ({
+    ...seed(),
+    profiles: [buildProfile({ id: USER_A, show_sexual_content: true })],
+  });
+
+  it("keeps it out of search for someone who has it off", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await request(app)
+      .get("/api/v1/games/search?q=hentai&remote=false")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(0);
+  });
+
+  it("keeps it out of the listing too", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await request(app)
+      .get("/api/v1/games?search=hentai")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.body.data).toHaveLength(0);
+  });
+
+  /* Hiding it from every listing and then serving it to anyone with the link
+     is not hiding it. */
+  it("will not serve its page either", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await request(app)
+      .get("/api/v1/games/2")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(404);
+  });
+
+  it("will not serve its page to someone signed out", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    expect((await request(app).get("/api/v1/games/2")).status).toBe(404);
+  });
+
+  it("still serves everything else", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const search = await request(app)
+      .get("/api/v1/games/search?q=hollow&remote=false")
+      .set("Authorization", authHeader(USER_A));
+    const page = await request(app).get("/api/v1/games/1");
+
+    expect(search.body.data).toHaveLength(1);
+    expect(page.status).toBe(200);
+  });
+
+  /* The front page is shown to people who went looking for neither. A
+     friend's choice to log it is not the viewer's choice to see it. */
+  it("keeps it out of recent reviews and the friend feed", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...seed(),
+        profiles: [
+          buildProfile({ id: USER_A, show_sexual_content: false }),
+          buildProfile({ id: USER_B, username: "friend" }),
+        ],
+        friendships: [
+          buildFriendship({
+            user_a_id: USER_A,
+            user_b_id: USER_B,
+            status: "accepted",
+          }),
+        ],
+        gameLogs: [buildGameLog({ id: 1, user_id: USER_B, game_id: 2 })],
+        reviews: [buildReview({ id: 1, user_id: USER_B, game_id: 2 })],
+      },
+    });
+
+    const reviews = await request(app).get("/api/v1/reviews");
+    const feed = await request(app)
+      .get("/api/v1/me/friends/activity")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(reviews.body.data).toHaveLength(0);
+    expect(feed.body.data).toHaveLength(0);
+  });
+
+  it("shows it to someone who has opted in", async () => {
+    const { app } = buildTestApp({ seed: optedIn() });
+
+    const search = await request(app)
+      .get("/api/v1/games/search?q=hentai&remote=false")
+      .set("Authorization", authHeader(USER_A));
+    const page = await request(app)
+      .get("/api/v1/games/2")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(search.body.data).toHaveLength(1);
+    expect(page.status).toBe(200);
   });
 });

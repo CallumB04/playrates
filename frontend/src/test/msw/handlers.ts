@@ -2,8 +2,8 @@ import { http, HttpResponse } from "msw";
 import type {
     FriendEdge,
     Game,
+    MyProfile,
     Paginated,
-    Profile,
     ReviewWithAuthor,
 } from "@playrates/shared";
 import type { GameLogWithGame } from "../../api";
@@ -16,7 +16,11 @@ export const paginated = <T>(data: T[]): Paginated<T> => ({
     meta: { page: 1, limit: 25, total: data.length },
 });
 
-export const buildProfile = (overrides: Partial<Profile> = {}): Profile => ({
+/** The signed-in shape, since the handlers stand in for /profiles/me. A
+ *  public profile is this minus the settings. */
+export const buildProfile = (
+    overrides: Partial<MyProfile> = {}
+): MyProfile => ({
     id: "11111111-1111-1111-1111-111111111111",
     username: "devuser",
     firstName: null,
@@ -24,7 +28,9 @@ export const buildProfile = (overrides: Partial<Profile> = {}): Profile => ({
     showSexualContent: false,
     timezone: "UTC",
     hideOnline: false,
+    onboardedAt: "2026-01-01T00:00:00.000Z",
     avatarUrl: null,
+    accent: "indigo",
     online: true,
     createdAt: "2026-01-01T00:00:00.000Z",
     ...overrides,
@@ -39,6 +45,7 @@ export const buildGame = (overrides: Partial<Game> = {}): Game => ({
     coverUrl: "https://example.test/witcher.jpg",
     releaseDate: "2015-05-18",
     platforms: ["steam"],
+    systems: ["steam"],
     hasSexualContent: false,
     logCount: 0,
     avgRating: null,
@@ -46,6 +53,10 @@ export const buildGame = (overrides: Partial<Game> = {}): Game => ({
     isTrending: true,
     playtimeHours: 51.5,
     genres: ["action", "role-playing-games-rpg"],
+    developers: ["CD PROJEKT RED"],
+    publishers: ["CD PROJEKT RED"],
+    website: "https://thewitcher.com",
+    esrbRating: "Mature",
     metacritic: 92,
     rawgRating: 4.66,
     rawgRatingCount: 6900,
@@ -65,6 +76,7 @@ export const buildGameLog = (
     startDate: null,
     finishDate: null,
     platform: "steam",
+    system: "steam",
     achievementsTotal: null,
     achievementsCompleted: null,
     createdAt: "2026-01-01T00:00:00.000Z",
@@ -76,6 +88,8 @@ export const buildGameLog = (
         coverUrl: "https://example.test/witcher.jpg",
         releaseDate: "2015-05-18",
         platforms: ["steam"],
+        avgRating: 9.1,
+        metacritic: 92,
     },
     ...overrides,
 });
@@ -94,6 +108,7 @@ export const buildReview = (
         username: "devuser",
         firstName: null,
         avatarUrl: null,
+        accent: "indigo",
         online: true,
     },
     rating: 9.5,
@@ -119,6 +134,7 @@ export const buildFriendEdge = (
         id: "22222222-2222-2222-2222-222222222222",
         username: "frienduser",
         avatarUrl: null,
+        accent: "rose",
         bio: "",
         online: false,
     },
