@@ -1,9 +1,17 @@
 import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
-import { Bell, PartyPopper, UserPlus, type LucideIcon } from "lucide-react";
+import {
+    Bell,
+    PartyPopper,
+    UserCheck,
+    UserPlus,
+    type LucideIcon,
+} from "lucide-react";
 import type {
     AppNotification,
+    FriendAcceptedNotification,
     FriendRequestNotification,
+    FriendUser,
     WelcomeNotification,
 } from "@playrates/shared";
 import Button from "../ui/Button";
@@ -32,9 +40,7 @@ const BODY = "mt-0.5 text-body-sm text-content-secondary";
 
 /** The homepage's own pitch, so the first thing a new account reads here says
  *  what the front page said. */
-const WelcomeContent = ({
-    onNavigate,
-}: ContentProps<WelcomeNotification>) => (
+const WelcomeContent = ({ onNavigate }: ContentProps<WelcomeNotification>) => (
     <>
         <p className={TITLE}>Welcome to {BRAND_NAME}</p>
         <p className={BODY}>
@@ -62,13 +68,7 @@ const FriendRequestContent = ({
     return (
         <>
             <p className={TITLE}>
-                <Link
-                    to={`/user/${actor.username}`}
-                    onClick={onNavigate}
-                    className="underline-offset-2 hover:underline"
-                >
-                    {actor.username}
-                </Link>{" "}
+                <ActorLink actor={actor} onNavigate={onNavigate} />{" "}
                 <span className="font-normal text-content-secondary">
                     sent you a friend request
                 </span>
@@ -96,6 +96,49 @@ const FriendRequestContent = ({
         </>
     );
 };
+
+const ActorLink = ({
+    actor,
+    onNavigate,
+}: {
+    actor: FriendUser;
+    onNavigate: () => void;
+}) => (
+    <Link
+        to={`/user/${actor.username}`}
+        onClick={onNavigate}
+        className="underline-offset-2 hover:underline"
+    >
+        {actor.username}
+    </Link>
+);
+
+const FriendAcceptedContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<FriendAcceptedNotification>) => (
+    <p className={TITLE}>
+        <ActorLink actor={notification.actor} onNavigate={onNavigate} />{" "}
+        <span className="font-normal text-content-secondary">
+            accepted your friend request
+        </span>
+    </p>
+);
+
+/** Whoever the notification is about, where it is about someone. */
+const ActorFace = ({
+    notification,
+}: {
+    notification: { actor: FriendUser };
+}) => (
+    <ProfilePicture
+        variant="friendRow"
+        username={notification.actor.username}
+        file={notification.actor.avatarUrl ?? ""}
+        accent={notification.actor.accent}
+        link={false}
+    />
+);
 
 const UnknownContent = () => (
     <>
@@ -125,15 +168,13 @@ export const NOTIFICATION_RENDERERS: {
         icon: UserPlus,
         tone: "text-brand",
         Content: FriendRequestContent,
-        Leading: ({ notification }) => (
-            <ProfilePicture
-                variant="friendRow"
-                username={notification.actor.username}
-                file={notification.actor.avatarUrl ?? ""}
-                accent={notification.actor.accent}
-                link={false}
-            />
-        ),
+        Leading: ActorFace,
+    },
+    friend_accepted: {
+        icon: UserCheck,
+        tone: "text-brand",
+        Content: FriendAcceptedContent,
+        Leading: ActorFace,
     },
     unknown: {
         icon: Bell,

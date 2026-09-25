@@ -262,6 +262,18 @@ describe("notification mapper", () => {
     });
   });
 
+  it("embeds the actor on an accepted request", () => {
+    const mapped = toNotification(
+      { ...buildNotification({ kind: "friend_accepted" }), actor },
+      () => null,
+    );
+
+    expect(mapped).toMatchObject({
+      kind: "friend_accepted",
+      actor: { username: "devuser" },
+    });
+  });
+
   /* A client one deploy behind the API should render a plain row rather than
      throw on a kind it has never heard of. */
   it("falls back to unknown for a kind it does not handle", () => {

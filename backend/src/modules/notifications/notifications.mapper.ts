@@ -6,6 +6,10 @@ import type { NotificationRowWithActor } from "./notifications.repository.js";
 export const friendRequestKey = (actorId: string): string =>
   `friend_request:${actorId}`;
 
+/** Unfriending and befriending again resurfaces the one row. */
+export const friendAcceptedKey = (actorId: string): string =>
+  `friend_accepted:${actorId}`;
+
 /** Resolves the caller's current relationship with an actor. Supplied by the
  *  service so the mapper stays pure. */
 export type RelationLookup = (actorId: string) => FriendRelation | null;
@@ -40,6 +44,14 @@ export const toNotification = (
         kind: "friend_request",
         actor: toFriendUser(row.actor, now),
         relation: relationOf(row.actor.id),
+      };
+
+    case "friend_accepted":
+      if (!row.actor) return { ...base, kind: "unknown" };
+      return {
+        ...base,
+        kind: "friend_accepted",
+        actor: toFriendUser(row.actor, now),
       };
 
     default:

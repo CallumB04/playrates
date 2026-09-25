@@ -264,6 +264,53 @@ describe("notifications", () => {
       expect(state.notifications[0]!.read_at).not.toBeNull();
     });
 
+    /* USER_A sent it, USER_B accepts: the sender hears back. */
+    it("tells the sender when their request is accepted", async () => {
+      const { app, state } = buildTestApp({
+        seed: {
+          ...baseSeed(),
+          friendships: [buildFriendship()],
+          notifications: [friendRequest()],
+        },
+      });
+
+      await request(app)
+        .post(`/api/v1/me/friends/${USER_A}/accept`)
+        .set("Authorization", authHeader(USER_B));
+
+      const accepted = state.notifications.filter(
+        (n) => n.kind === "friend_accepted",
+      );
+      expect(accepted).toHaveLength(1);
+      expect(accepted[0]).toMatchObject({ user_id: USER_A, actor_id: USER_B });
+
+      const inbox = await request(app)
+        .get("/api/v1/me/notifications")
+        .set("Authorization", authHeader(USER_A));
+      expect(inbox.body.data[0]).toMatchObject({
+        kind: "friend_accepted",
+        actor: { username: "frienduser" },
+      });
+    });
+
+    it("tells nobody when a request is declined", async () => {
+      const { app, state } = buildTestApp({
+        seed: {
+          ...baseSeed(),
+          friendships: [buildFriendship()],
+          notifications: [friendRequest()],
+        },
+      });
+
+      await request(app)
+        .delete(`/api/v1/me/friends/${USER_A}`)
+        .set("Authorization", authHeader(USER_B));
+
+      expect(
+        state.notifications.some((n) => n.kind === "friend_accepted"),
+      ).toBe(false);
+    });
+
     it("reads the notification when the request is declined", async () => {
       const { app, state } = buildTestApp({
         seed: {

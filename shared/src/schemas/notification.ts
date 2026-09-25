@@ -8,7 +8,11 @@ import type { FriendRelation, FriendUser } from "./friend.js";
 
 /** Every kind the API will hand out. A client that doesn't know one renders
  *  its fallback rather than breaking, so this can grow ahead of the UI. */
-export const NOTIFICATION_KINDS = ["welcome", "friend_request"] as const;
+export const NOTIFICATION_KINDS = [
+  "welcome",
+  "friend_request",
+  "friend_accepted",
+] as const;
 
 export const NotificationKindSchema = z.enum(NOTIFICATION_KINDS);
 export type NotificationKind = z.infer<typeof NotificationKindSchema>;
@@ -34,6 +38,13 @@ export interface FriendRequestNotification extends NotificationBase {
   relation: FriendRelation | null;
 }
 
+/** Your request was accepted — the other half of friend_request, for the
+ *  person who sent it. */
+export interface FriendAcceptedNotification extends NotificationBase {
+  kind: "friend_accepted";
+  actor: FriendUser;
+}
+
 /** A kind added to the API before this client knew about it. Kept in the
  *  union so exhaustive switches have to handle the case. */
 export interface UnknownNotification extends NotificationBase {
@@ -44,6 +55,7 @@ export interface UnknownNotification extends NotificationBase {
 export type AppNotification =
   | WelcomeNotification
   | FriendRequestNotification
+  | FriendAcceptedNotification
   | UnknownNotification;
 
 export const NotificationQuerySchema = PaginationSchema.extend({

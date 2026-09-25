@@ -10,7 +10,10 @@ import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import { isOnline, toAccent } from "../profiles/profiles.mapper.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
-import { friendRequestKey } from "../notifications/notifications.mapper.js";
+import {
+  friendAcceptedKey,
+  friendRequestKey,
+} from "../notifications/notifications.mapper.js";
 import type { NotificationsRepository } from "../notifications/notifications.repository.js";
 import { toFriendUser } from "./friends.mapper.js";
 import type {
@@ -161,6 +164,13 @@ export const createFriendsService = (
 
       const row = await repo.accept(callerId, otherId);
       await notifications.markReadByKey(callerId, friendRequestKey(otherId));
+      // The sender hears back; otherwise a request goes out into silence.
+      await notifications.raise({
+        userId: otherId,
+        kind: "friend_accepted",
+        actorId: callerId,
+        dedupeKey: friendAcceptedKey(callerId),
+      });
 
       const edge = toEdge(row, callerId);
       if (!edge) throw AppError.internal("Friendship did not persist");
