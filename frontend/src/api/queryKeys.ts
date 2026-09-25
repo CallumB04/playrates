@@ -68,4 +68,12 @@ export const queryKeys = {
         activity: ["friends", "me", "activity"] as const,
         byUsername: (username: string) => ["friends", username] as const,
     },
+
+    notifications: {
+        all: ["notifications"] as const,
+        /* The inbox and the archive are separate lists, not one list filtered
+           — sharing a key would show the archive's rows under the bell. */
+        list: (archived: boolean) =>
+            ["notifications", archived ? "archived" : "inbox"] as const,
+    },
 } as const;

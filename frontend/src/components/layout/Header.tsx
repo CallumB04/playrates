@@ -5,6 +5,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import Button from "../ui/Button";
 import AccountMenu from "./AccountMenu";
+import NotificationMenu from "./NotificationMenu";
 import GlobalSearch from "./GlobalSearch";
 import MobileMenu, { type NavItem } from "./MobileMenu";
 import MobileSearch from "./MobileSearch";
@@ -170,10 +171,13 @@ const Header = () => {
                         <GlobalSearch />
 
                         {user ? (
-                            <AccountMenu
-                                user={user}
-                                onSignOut={handleSignOut}
-                            />
+                            <>
+                                <NotificationMenu />
+                                <AccountMenu
+                                    user={user}
+                                    onSignOut={handleSignOut}
+                                />
+                            </>
                         ) : (
                             <div className="hidden items-center gap-3 sm:flex">
                                 <Button

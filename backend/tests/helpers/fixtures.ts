@@ -3,6 +3,7 @@ import type {
   GameLogRow,
   GameRow,
   GenreRow,
+  NotificationRow,
   PlatformRow,
   PlatformSystemRow,
   ProfileRow,
@@ -133,6 +134,21 @@ export const buildPlatformSystem = (
 export const buildGenre = (overrides: Partial<GenreRow> = {}): GenreRow => ({
   slug: "action",
   name: "Action",
+  ...overrides,
+});
+
+export const buildNotification = (
+  overrides: Partial<NotificationRow> = {},
+): NotificationRow => ({
+  id: 1,
+  user_id: USER_A,
+  kind: "welcome",
+  actor_id: null,
+  data: {},
+  dedupe_key: "welcome",
+  read_at: null,
+  archived_at: null,
+  created_at: LONG_AGO,
   ...overrides,
 });
 

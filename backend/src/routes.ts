@@ -25,6 +25,8 @@ import {
   createMyFriendsRouter,
   createUserFriendsRouter,
 } from "./modules/friends/friends.routes.js";
+import { createNotificationsService } from "./modules/notifications/notifications.service.js";
+import { createMyNotificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { createPlatformsRouter } from "./modules/platforms/platforms.js";
 import { createGenresRouter } from "./modules/genres/genres.js";
 import { createStatsRouter } from "./modules/stats/stats.js";
@@ -64,7 +66,15 @@ export const buildRoutes = ({
     repos.profiles,
     repos.games,
   );
-  const friends = createFriendsService(repos.friends, repos.profiles);
+  const friends = createFriendsService(
+    repos.friends,
+    repos.profiles,
+    repos.notifications,
+  );
+  const notifications = createNotificationsService(
+    repos.notifications,
+    repos.friends,
+  );
 
   router.use("/platforms", createPlatformsRouter(repos.platforms));
   router.use("/genres", createGenresRouter(repos.genres));
@@ -90,6 +100,10 @@ export const buildRoutes = ({
   router.use(
     "/me/friends",
     createMyFriendsRouter({ service: friends, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/me/notifications",
+    createMyNotificationsRouter({ service: notifications, requireAuth }),
   );
 
   // per-user public views, addressed by username

@@ -10,20 +10,13 @@ import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import { isOnline, toAccent } from "../profiles/profiles.mapper.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
+import { friendRequestKey } from "../notifications/notifications.mapper.js";
+import type { NotificationsRepository } from "../notifications/notifications.repository.js";
+import { toFriendUser } from "./friends.mapper.js";
 import type {
-  FriendProfileRow,
   FriendshipWithUsers,
   FriendsRepository,
 } from "./friends.repository.js";
-
-const toFriendUser = (row: FriendProfileRow) => ({
-  id: row.id,
-  username: row.username,
-  avatarUrl: row.avatar_url,
-  accent: toAccent(row.accent),
-  bio: row.bio,
-  online: isOnline(row.last_seen_at),
-});
 
 /** The edge as `viewerId` sees it — the embedded user is always the other
  *  party, and pending reads as sent or received depending on the side. */
@@ -44,6 +37,7 @@ const toEdge = (
 export const createFriendsService = (
   repo: FriendsRepository,
   profiles: ProfilesRepository,
+  notifications: NotificationsRepository,
 ) => {
   /** Opt-in, so signed out and unknown both mean no. */
   const canSeeExplicit = async (viewerId?: string): Promise<boolean> =>
@@ -139,6 +133,13 @@ export const createFriendsService = (
       }
 
       const row = await repo.create(callerId, targetId);
+      await notifications.raise({
+        userId: targetId,
+        kind: "friend_request",
+        actorId: callerId,
+        dedupeKey: friendRequestKey(callerId),
+      });
+
       const edge = toEdge(row, callerId);
       if (!edge) throw AppError.internal("Friendship did not persist");
       return edge;
@@ -159,6 +160,8 @@ export const createFriendsService = (
       }
 
       const row = await repo.accept(callerId, otherId);
+      await notifications.markReadByKey(callerId, friendRequestKey(otherId));
+
       const edge = toEdge(row, callerId);
       if (!edge) throw AppError.internal("Friendship did not persist");
       return edge;
@@ -169,6 +172,11 @@ export const createFriendsService = (
       const existing = await repo.find(callerId, otherId);
       if (!existing) throw AppError.notFound("Friendship");
       await repo.remove(callerId, otherId);
+
+      /* Acting on a request reads its notification, wherever you acted from.
+         A no-op when the caller is the one who sent it — the notification
+         belongs to the other party, under a key naming the caller. */
+      await notifications.markReadByKey(callerId, friendRequestKey(otherId));
     },
   };
 };

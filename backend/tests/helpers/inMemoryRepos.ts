@@ -6,6 +6,7 @@ import type {
   GameLogRow,
   GameRow,
   GenreRow,
+  NotificationRow,
   PlatformRow,
   PlatformSystemRow,
   ProfileRow,
@@ -19,6 +20,7 @@ import type {
 } from "../../src/modules/friends/friends.repository.js";
 import { orderPair } from "../../src/modules/friends/friends.repository.js";
 import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.repository.js";
+import type { NotificationRowWithActor } from "../../src/modules/notifications/notifications.repository.js";
 
 /**
  * Behaviour-equivalent in-memory repositories.
@@ -36,6 +38,7 @@ export interface SeedData {
   gameLogs?: GameLogRow[];
   reviews?: ReviewRow[];
   friendships?: FriendshipRow[];
+  notifications?: NotificationRow[];
   platforms?: PlatformRow[];
   platformSystems?: PlatformSystemRow[];
   genres?: GenreRow[];
@@ -50,6 +53,7 @@ export interface InMemoryState {
   reviews: ReviewRow[];
   reviewVotes: { review_id: number; user_id: string }[];
   friendships: FriendshipRow[];
+  notifications: NotificationRow[];
   platforms: PlatformRow[];
   platformSystems: PlatformSystemRow[];
   genres: GenreRow[];
@@ -76,6 +80,7 @@ export const createInMemoryRepos = (
     reviews: [...(seed.reviews ?? [])],
     reviewVotes: [],
     friendships: [...(seed.friendships ?? [])],
+    notifications: [...(seed.notifications ?? [])],
     platforms: [...(seed.platforms ?? [])],
     platformSystems: [...(seed.platformSystems ?? [])],
     genres: [...(seed.genres ?? [])],
@@ -85,6 +90,7 @@ export const createInMemoryRepos = (
   let nextLogId = 1000;
   let nextReviewId = 2000;
   let nextGameId = 3000;
+  let nextNotificationId = 4000;
 
   const withPlatforms = (game: GameRow): GameRowWithPlatforms => ({
     ...game,
@@ -109,6 +115,11 @@ export const createInMemoryRepos = (
     bio: p.bio,
     last_seen_at: p.last_seen_at,
   });
+
+  const withActor = (n: NotificationRow): NotificationRowWithActor => {
+    const actor = state.profiles.find((p) => p.id === n.actor_id);
+    return { ...n, actor: actor ? asFriendProfile(actor) : null };
+  };
 
   const withUsers = (f: FriendshipRow): FriendshipWithUsers => {
     const a = state.profiles.find((p) => p.id === f.user_a_id);
@@ -804,6 +815,85 @@ export const createInMemoryRepos = (
       },
     },
 
+    notifications: {
+      async listForUser(userId, archived, from, to) {
+        const rows = state.notifications
+          .filter(
+            (n) =>
+              n.user_id === userId && archived === (n.archived_at !== null),
+          )
+          .sort(
+            (a, b) =>
+              Date.parse(b.created_at) - Date.parse(a.created_at) ||
+              b.id - a.id,
+          )
+          .map(withActor);
+        return { rows: rows.slice(from, to + 1), total: rows.length };
+      },
+      async countUnread(userId) {
+        return state.notifications.filter(
+          (n) =>
+            n.user_id === userId &&
+            n.read_at === null &&
+            n.archived_at === null,
+        ).length;
+      },
+      async findById(id) {
+        return state.notifications.find((n) => n.id === id) ?? null;
+      },
+      async update(id, patch) {
+        const row = state.notifications.find((n) => n.id === id);
+        if (!row) throw new Error("notification not found");
+        Object.assign(row, patch);
+        return withActor(row);
+      },
+      async raise({ userId, kind, actorId = null, data = {}, dedupeKey = null }) {
+        const existing =
+          dedupeKey === null
+            ? undefined
+            : state.notifications.find(
+                (n) => n.user_id === userId && n.dedupe_key === dedupeKey,
+              );
+
+        if (existing) {
+          Object.assign(existing, {
+            actor_id: actorId,
+            data,
+            read_at: null,
+            archived_at: null,
+            created_at: now(),
+          });
+          return;
+        }
+
+        state.notifications.push({
+          id: nextNotificationId++,
+          user_id: userId,
+          kind,
+          actor_id: actorId,
+          data,
+          dedupe_key: dedupeKey,
+          read_at: null,
+          archived_at: null,
+          created_at: now(),
+        });
+      },
+      async markAllRead(userId) {
+        for (const n of state.notifications) {
+          if (n.user_id === userId && n.archived_at === null) {
+            n.read_at ??= now();
+          }
+        }
+      },
+      async markReadByKey(userId, dedupeKey) {
+        for (const n of state.notifications) {
+          if (n.user_id === userId && n.dedupe_key === dedupeKey) {
+            n.read_at ??= now();
+          }
+        }
+      },
+    },
+
     platforms: {
       async list() {
         return [...state.platforms].sort((a, b) => a.sort_order - b.sort_order);
@@ -835,6 +925,9 @@ export const createInMemoryRepos = (
       state.reviews = state.reviews.filter((r) => r.user_id !== userId);
       state.friendships = state.friendships.filter(
         (f) => f.user_a_id !== userId && f.user_b_id !== userId,
+      );
+      state.notifications = state.notifications.filter(
+        (n) => n.user_id !== userId && n.actor_id !== userId,
       );
     },
   };

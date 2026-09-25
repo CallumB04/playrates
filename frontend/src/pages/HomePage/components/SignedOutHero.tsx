@@ -4,7 +4,11 @@ import Button, { buttonClass } from "../../../components/ui/Button";
 import GameCover from "../../../components/game/GameCover";
 import type { SiteStats } from "../../../api";
 import { formatCount } from "../../../lib/format";
-import { BRAND_MOTTO, BRAND_NAME } from "../../../constants/brand";
+import {
+    BRAND_MOTTO,
+    BRAND_NAME,
+    BRAND_PITCH,
+} from "../../../constants/brand";
 
 interface SignedOutHeroProps {
     siteStats: SiteStats | undefined;
@@ -38,9 +42,9 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
             </h1>
 
             <p className="mt-4 max-w-[48ch] text-[17px] leading-relaxed text-content-secondary">
-                <span className="text-content">{BRAND_MOTTO}.</span> Log, rate
-                and review the games you’ve played, manage your backlog and
-                wishlist, and interact with your friends and the community.
+                <span className="text-content">{BRAND_MOTTO}.</span>{" "}
+                {BRAND_PITCH.lead} {BRAND_PITCH.community}
+                {BRAND_PITCH.tail}
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">

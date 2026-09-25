@@ -143,3 +143,17 @@ export interface FriendEdgeRow {
   created_at: string;
   updated_at: string;
 }
+
+export interface NotificationRow {
+  id: number;
+  user_id: string;
+  /** Open text, not an enum — see the notifications migration. */
+  kind: string;
+  actor_id: string | null;
+  /** Per-kind extras, so a new kind needs no column. */
+  data: Record<string, unknown>;
+  dedupe_key: string | null;
+  read_at: string | null;
+  archived_at: string | null;
+  created_at: string;
+}
