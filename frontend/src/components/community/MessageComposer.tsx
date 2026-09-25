@@ -3,6 +3,7 @@ import { isEmptyDoc, type RichTextDoc } from "@playrates/shared";
 import { useNotify } from "../../contexts/NotificationContext";
 import Button from "../ui/Button";
 import RichTextEditor from "./RichTextEditor";
+import SubmitHint from "./SubmitHint";
 
 interface MessageComposerProps {
     onSubmit: (body: RichTextDoc) => Promise<unknown>;
@@ -65,8 +66,10 @@ const MessageComposer = ({
                 autoFocus={autoFocus}
                 disabled={pending}
                 onUploadingChange={setUploading}
+                onSubmit={() => void submit()}
             />
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+                <SubmitHint verb="send" className="sm:mr-auto" />
                 {onCancel && (
                     <Button
                         type="button"

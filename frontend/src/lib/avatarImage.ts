@@ -26,7 +26,7 @@ export const targetPixels = (cropSize: number): number =>
 /** Why a file can't be used, or null if it can. */
 export const rejectReason = (file: File): string | null => {
     if (!(AVATAR_SOURCE_TYPES as readonly string[]).includes(file.type)) {
-        return "That needs to be an image — JPEG, PNG, WebP, GIF or HEIC.";
+        return "That needs to be an image: JPEG, PNG, WebP, GIF or HEIC.";
     }
     if (file.size > AVATAR_SOURCE_MAX_BYTES) {
         return "That image is over 20MB. Try a smaller one.";

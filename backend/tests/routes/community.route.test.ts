@@ -52,7 +52,7 @@ const communitySeed = () => {
             {
               type: "heading",
               attrs: { level: 1 },
-              content: [{ type: "text", text: "v1.0 — Launch" }],
+              content: [{ type: "text", text: "v1.0 Launch" }],
             },
           ],
         },
@@ -433,7 +433,7 @@ describe("patch notes", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.thread.subject).toEqual({ kind: "patch_notes" });
-    expect(response.body.latest.title).toBe("v1.0 — Launch");
+    expect(response.body.latest.title).toBe("v1.0 Launch");
   });
 
   it("takes no posts from anyone but an admin", async () => {

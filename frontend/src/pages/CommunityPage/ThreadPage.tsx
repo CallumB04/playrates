@@ -394,7 +394,7 @@ const PatchNotesThread = ({
                     </h2>
                     <MessageComposer
                         label="New patch notes"
-                        placeholder="Start with an H1 naming the release — it becomes the entry's title."
+                        placeholder="Start with an H1 naming the release. It becomes the entry's title."
                         submitLabel="Publish"
                         onSubmit={onPost}
                     />

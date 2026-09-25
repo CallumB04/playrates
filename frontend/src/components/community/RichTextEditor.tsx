@@ -34,6 +34,8 @@ interface RichTextEditorProps {
     disabled?: boolean;
     /** Tells the form a picture is still on its way, so it waits to post. */
     onUploadingChange?: (uploading: boolean) => void;
+    /** Ctrl+Enter (Cmd+Enter on a Mac). Plain Enter is a new line. */
+    onSubmit?: () => void;
     className?: string;
 }
 
@@ -85,6 +87,7 @@ const RichTextEditor = ({
     autoFocus = false,
     disabled = false,
     onUploadingChange,
+    onSubmit,
     className,
 }: RichTextEditorProps) => {
     const notify = useNotify();
@@ -96,6 +99,8 @@ const RichTextEditor = ({
     const uploadRef = useRef<(files: File[]) => void>(() => {});
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
+    const onSubmitRef = useRef(onSubmit);
+    onSubmitRef.current = onSubmit;
 
     const editor = useEditor({
         extensions: [
@@ -130,6 +135,18 @@ const RichTextEditor = ({
                the API only shows ones uploaded here, so they are left out
                and the text comes through on its own. */
             transformPastedHTML: (html) => html.replace(/<img[^>]*>/gi, ""),
+            handleKeyDown: (_view, event) => {
+                if (
+                    event.key !== "Enter" ||
+                    !(event.ctrlKey || event.metaKey) ||
+                    !onSubmitRef.current
+                ) {
+                    return false;
+                }
+                event.preventDefault();
+                onSubmitRef.current();
+                return true;
+            },
             handlePaste: (_view, event) => {
                 const files = imageFiles(event.clipboardData?.files);
                 if (files.length === 0) return false;

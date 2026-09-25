@@ -116,7 +116,7 @@ describe("WelcomePopup", () => {
         const { onClose } = renderPopup({ preview: true });
 
         expect(
-            screen.getByText(/nothing you enter here is saved/)
+            screen.getByText(/nothing you enter here is saved/i)
         ).toBeInTheDocument();
         await userEvent.type(screen.getByLabelText("First name"), "Callum");
         await userEvent.click(screen.getByRole("button", { name: "Save" }));

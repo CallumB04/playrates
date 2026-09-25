@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { ThreadSort } from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
@@ -13,14 +13,15 @@ import { usePagination } from "../../hooks/usePagination";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import Button from "../../components/ui/Button";
 import { cardClass } from "../../components/ui/Card";
-import Chip from "../../components/ui/Chip";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import Pagination from "../../components/ui/Pagination";
 import SegmentedChoice from "../../components/ui/SegmentedChoice";
 import { TextSkeleton } from "../../components/ui/Skeleton";
 import ThreadCard from "../../components/community/ThreadCard";
 import TrendingHero from "../../components/community/TrendingHero";
+import TrendingRunnerUp from "../../components/community/TrendingRunnerUp";
 import PatchNotesCard from "../../components/community/PatchNotesCard";
+import GameFilterPill from "../../components/community/GameFilterPill";
 import { newThreadPath } from "../../components/community/paths";
 
 const PER_PAGE = 20;
@@ -76,7 +77,8 @@ const CommunityPage = () => {
     const startThread = () =>
         user ? navigate(newThreadPath(gameId)) : openLogin();
 
-    const top = !gameId ? trending?.[0] : undefined;
+    // Trending is site-wide, so it steps aside while the list is one game's.
+    const [top, ...runnersUp] = !gameId ? (trending ?? []) : [];
     const rows = threads?.data ?? [];
 
     return (
@@ -106,7 +108,22 @@ const CommunityPage = () => {
 
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
                 <div className="flex min-w-0 flex-col gap-6">
-                    {top && <TrendingHero thread={top} />}
+                    {top && (
+                        <div className="flex flex-col gap-3">
+                            <TrendingHero thread={top} />
+                            {runnersUp.length > 0 && (
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    {runnersUp.map((thread, i) => (
+                                        <TrendingRunnerUp
+                                            key={thread.id}
+                                            thread={thread}
+                                            tone={i === 0 ? "info" : "success"}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <section className="flex flex-col gap-3">
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -115,19 +132,14 @@ const CommunityPage = () => {
                                     Threads
                                 </h2>
                                 {gameId && (
-                                    <Chip
-                                        selected
-                                        onClick={() =>
+                                    <GameFilterPill
+                                        gameId={gameId}
+                                        title={game?.title}
+                                        coverUrl={game?.coverUrl}
+                                        onClear={() =>
                                             update({ game: null, page: null })
                                         }
-                                        aria-label={`Showing ${game?.title ?? "one game"} only. Show every game`}
-                                        className="max-w-full"
-                                    >
-                                        <span className="truncate">
-                                            {game?.title ?? "One game"}
-                                        </span>
-                                        <X size={13} aria-hidden />
-                                    </Chip>
+                                    />
                                 )}
                             </div>
                             <SegmentedChoice

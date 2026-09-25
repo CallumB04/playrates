@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RichTextDocSchema, type RichTextDoc } from "@playrates/shared";
 import { renderWithProviders } from "../../test/renderWithProviders";
@@ -72,5 +72,25 @@ describe("RichTextEditor", () => {
         });
         // What the editor produces is what the API will take.
         expect(RichTextDocSchema.safeParse(doc).success).toBe(true);
+    });
+
+    it("sends on Ctrl+Enter or Cmd+Enter, and not on Enter alone", () => {
+        const onSubmit = vi.fn();
+        renderWithProviders(
+            <RichTextEditor
+                label="Message"
+                initial={START}
+                onChange={vi.fn()}
+                onSubmit={onSubmit}
+            />
+        );
+        const box = screen.getByRole("textbox", { name: "Message" });
+
+        fireEvent.keyDown(box, { key: "Enter" });
+        expect(onSubmit).not.toHaveBeenCalled();
+
+        fireEvent.keyDown(box, { key: "Enter", ctrlKey: true });
+        fireEvent.keyDown(box, { key: "Enter", metaKey: true });
+        expect(onSubmit).toHaveBeenCalledTimes(2);
     });
 });

@@ -14,7 +14,7 @@ interface PatchNotesCardProps {
 
 /**
  * The way into the official patch notes. Ember rather than the brand's iris,
- * with a megaphone and an "Official" stamp, so it never reads as one more
+ * with a megaphone and a rule across the top, so it never reads as one more
  * thread in the list.
  */
 const PatchNotesCard = ({
@@ -42,7 +42,7 @@ const PatchNotesCard = ({
                 </span>
                 <span className="min-w-0 flex-1">
                     <span className="block text-label-sm font-semibold text-accent-content">
-                        Official patch notes
+                        PlayRates patch notes
                     </span>
                     <span className="block truncate text-body-sm font-medium text-content">
                         {latest?.title ?? summary.thread.title}
@@ -72,20 +72,17 @@ const PatchNotesCard = ({
                 className="absolute inset-x-0 top-0 h-1 bg-accent"
             />
             <span className="flex flex-col gap-3 p-4 pt-5">
-                <span className="flex items-center justify-between gap-2">
-                    <span className="grid size-10 place-items-center rounded-full bg-accent text-content-on-solid">
+                <span className="flex items-center gap-3">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent text-content-on-solid">
                         <Megaphone size={18} aria-hidden />
                     </span>
-                    <span className="stamp rounded-xs border border-accent/60 px-1.5 py-0.5 text-stamp font-semibold tracking-wider text-accent-content uppercase">
-                        Official
-                    </span>
-                </span>
-                <span>
-                    <span className="block font-display text-base font-semibold text-content">
-                        PlayRates patch notes
-                    </span>
-                    <span className="mt-0.5 block text-label-sm text-content-muted">
-                        What changed, from the people who changed it.
+                    <span className="min-w-0">
+                        <span className="block font-display text-base font-semibold text-content">
+                            PlayRates patch notes
+                        </span>
+                        <span className="mt-0.5 block text-label-sm text-content-muted">
+                            What changed, from the people who changed it.
+                        </span>
                     </span>
                 </span>
                 {latest && (

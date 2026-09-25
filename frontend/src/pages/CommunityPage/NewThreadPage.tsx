@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import {
@@ -23,6 +23,7 @@ import GamePicker, {
 } from "../../components/community/GamePicker";
 import RichTextEditor from "../../components/community/RichTextEditor";
 import { threadPath } from "../../components/community/paths";
+import SubmitHint from "../../components/community/SubmitHint";
 
 const TITLE_MAX = 120;
 
@@ -48,6 +49,7 @@ const NewThreadPage = () => {
     const [body, setBody] = useState<RichTextDoc | null>(null);
     const [uploading, setUploading] = useState(false);
     const [attempted, setAttempted] = useState(false);
+    const formRef = useRef<HTMLFormElement>(null);
 
     // Arriving from a game's page fills the game in, unless it was changed.
     useEffect(() => {
@@ -125,6 +127,7 @@ const NewThreadPage = () => {
             </h1>
 
             <form
+                ref={formRef}
                 onSubmit={(event) => void submit(event)}
                 noValidate
                 className={cardClass("flex flex-col gap-5")}
@@ -167,6 +170,7 @@ const NewThreadPage = () => {
                         placeholder="Set the scene. Everyone who replies will read this first."
                         onChange={setBody}
                         onUploadingChange={setUploading}
+                        onSubmit={() => formRef.current?.requestSubmit()}
                         disabled={createThread.isPending}
                     />
                     {attempted && errors.body && (
@@ -179,7 +183,8 @@ const NewThreadPage = () => {
                     </p>
                 </div>
 
-                <div className="flex flex-col-reverse gap-2 border-t border-subtle pt-4 sm:flex-row sm:justify-end">
+                <div className="flex flex-col-reverse gap-2 border-t border-subtle pt-4 sm:flex-row sm:items-center sm:justify-end">
+                    <SubmitHint verb="post" className="sm:mr-auto" />
                     <Link
                         to={backTo}
                         className={buttonClass("secondary", "w-full sm:w-auto")}
