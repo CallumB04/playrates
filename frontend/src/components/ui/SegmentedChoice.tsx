@@ -51,7 +51,10 @@ const SegmentedChoice = <T extends string>({
                         fill && "flex-1 justify-center",
                         "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                         isActive
-                            ? "bg-surface-raised font-medium text-content inset-shadow-deep"
+                            /* Flat, no inset rim: a highlight along the top
+                               edge alone shrinks the pill against the sunken
+                               track it sits in. */
+                            ? "bg-surface-raised font-medium text-content"
                             : "text-content-secondary hover:text-content"
                     )}
                 >
