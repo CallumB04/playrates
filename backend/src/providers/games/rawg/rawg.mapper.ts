@@ -97,11 +97,10 @@ const PC_PARENT_PLATFORM_ID = 1;
 const PC_SYSTEM_SLUG = "pc";
 const STEAM_STORE_ID = 1;
 
-/**
- * Sexual content, named directly. Deliberately excludes the "mature" ESRB
- * rating, which most large releases carry and which marks violence.
- */
-const SEXUAL_ESRB_SLUGS = new Set(["adults-only"]);
+/* No age rating counts, Adults Only included. RAWG's ratings are
+   contributed, and it had Kingdom Come: Deliverance II — M-rated — as Adults
+   Only. Across the catalogue the rating caught no game a tag or a title did
+   not, only the two it had wrong. */
 
 /**
  * Games the rules below get wrong, checked by hand.
@@ -117,7 +116,6 @@ const NOT_SEXUAL_TITLES = new Set([
   "genesis noir",
   "dream daddy: a dad dating simulator",
   "forgotten memories: remastered edition",
-  "vampire: the masquerade - redemption",
 ]);
 
 /**
@@ -398,8 +396,7 @@ export const toExternalGame = (game: RawgGame): ExternalGame => {
     contentTags: tagSlugs,
     hasSexualContent:
       !NOT_SEXUAL_TITLES.has(game.name.trim().toLowerCase()) &&
-      (SEXUAL_ESRB_SLUGS.has(game.esrb_rating?.slug ?? "") ||
-        tagSlugs.some((slug) => SEXUAL_TAG_SLUGS.has(slug)) ||
+      (tagSlugs.some((slug) => SEXUAL_TAG_SLUGS.has(slug)) ||
         SEXUAL_TITLE_PATTERN.test(game.name)),
     metacritic: game.metacritic ?? null,
     rawgRating: game.rating ?? null,

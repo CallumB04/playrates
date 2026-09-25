@@ -319,11 +319,26 @@ describe("RAWG mapper", () => {
     expect(toExternalGame({ ...rawgResponse, website: "" }).website).toBeNull();
   });
 
-  it("treats adults-only as sexual content", () => {
+  /* RAWG's age ratings are contributed, and it has Kingdom Come: Deliverance
+     II as Adults Only — it is an M-rated RPG. Across the catalogue the rating
+     caught nothing a tag or a title did not, bar two games it got wrong. */
+  it("does not hide a game for its age rating alone", () => {
+    expect(
+      toExternalGame({
+        ...rawgResponse,
+        name: "Kingdom Come: Deliverance II",
+        esrb_rating: { id: 5, slug: "adults-only", name: "Adults Only" },
+        tags: [{ id: 1, name: "RPG", slug: "rpg" }],
+      }).hasSexualContent,
+    ).toBe(false);
+  });
+
+  it("still hides an adults-only game its tags name as such", () => {
     expect(
       toExternalGame({
         ...rawgResponse,
         esrb_rating: { id: 5, slug: "adults-only", name: "Adults Only" },
+        tags: [{ id: 1, name: "Hentai", slug: "hentai" }],
       }).hasSexualContent,
     ).toBe(true);
   });
