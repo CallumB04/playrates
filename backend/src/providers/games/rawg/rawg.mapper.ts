@@ -209,7 +209,15 @@ const stripHtml = (value: string): string =>
   decodeEntities(
     value
       .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<\/(p|div|li|h[1-6]|ul|ol|blockquote)>/gi, "\n\n")
+      /* A list stays a list — an item a line under its bullet — rather than
+         each item becoming a paragraph of its own. `\s` so that <link> is
+         not mistaken for one. */
+      .replace(/<li(\s[^>]*)?>/gi, "\n• ")
+      .replace(/<\/li>/gi, "")
+      /* Both ends of a block, not just the close: a heading straight after
+         inline text has nothing closing before it, and ran onto the end of
+         the sentence. tidy() folds the doubled breaks back together. */
+      .replace(/<\/?(p|div|h[1-6]|ul|ol|blockquote)(\s[^>]*)?>/gi, "\n\n")
       .replace(/<[^>]*>/g, ""),
   );
 
@@ -231,6 +239,11 @@ const tidy = (value: string): string =>
    lowercase letters before the stop, so "e.g.Something" and "3.5" are safe. */
 const spaceRunOnSentences = (value: string): string =>
   value.replace(/([a-z0-9]{2}[.!?])([A-Z])/g, "$1 $2");
+
+/** Any HTML description as the text the page shows — RAWG's, or the one a
+ *  storefront serves directly. */
+export const htmlToText = (html: string): string =>
+  spaceRunOnSentences(tidy(stripHtml(html)));
 
 /**
  * The description as it should read. RAWG's plain text usually carries the

@@ -9,6 +9,7 @@ import {
   findSteamBoxArt,
   type StoreLinksResponse,
 } from "./steamBoxArt.js";
+import { findSteamDescription } from "./steamDescription.js";
 
 const BASE_URL = "https://api.rawg.io/api";
 const TIMEOUT_MS = 8_000;
@@ -123,13 +124,24 @@ export const createRawgProvider = (
 
         /* The store links are a second request, so this is the detail path
            only — where one fetch per game is already the deal. A game with no
-           store link, or none on Steam, simply keeps RAWG's image. */
-        const boxArtUrl = await findSteamBoxArt(
-          await request<StoreLinksResponse>(`/games/${externalId}/stores`),
-          fetchImpl,
-        ).catch(() => null);
+           store link, or none on Steam, keeps RAWG's image and RAWG's text.
 
-        return { ...external, boxArtUrl };
+           Caught on the request itself: a 404 from the store list otherwise
+           escaped as "no such game", and the game re-fetched on every view. */
+        const links = await request<StoreLinksResponse>(
+          `/games/${externalId}/stores`,
+        ).catch((): StoreLinksResponse => ({}));
+
+        const [boxArtUrl, steamDescription] = await Promise.all([
+          findSteamBoxArt(links, fetchImpl),
+          findSteamDescription(links, fetchImpl),
+        ]);
+
+        return {
+          ...external,
+          boxArtUrl,
+          description: steamDescription ?? external.description,
+        };
       } catch (error) {
         if (error instanceof AppError && error.status === 404) return null;
         throw error;

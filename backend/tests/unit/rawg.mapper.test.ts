@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  htmlToText,
   toExternalGame,
   type RawgGame,
 } from "../../src/providers/games/rawg/rawg.mapper.js";
@@ -550,5 +551,52 @@ describe("RAWG mapper", () => {
   it("leaves a description of only markup empty rather than whitespace", () => {
     const game = toExternalGame({ ...rawgResponse, description: "<p></p>" });
     expect(game.description).toBe("");
+  });
+});
+
+describe("htmlToText", () => {
+  /* Steam's markup: a <p> per paragraph, an <h2> per heading, video between. */
+  it("keeps a store page's paragraphs and headings apart", () => {
+    const html =
+      '<p class="bb_paragraph">Welcome aboard, roving voyager.</p>' +
+      '<p class="bb_paragraph"><span class="bb_img_ctn"><video class="bb_img" autoplay>' +
+      '<source src="https://x.test/a.webm" type="video/webm"></video></span></p>' +
+      '<h2 class="bb_tag">Delve into an expansive world</h2>' +
+      '<p class="bb_paragraph">Embrace high degrees of freedom.</p>';
+
+    expect(htmlToText(html)).toBe(
+      "Welcome aboard, roving voyager.\n\n" +
+        "Delve into an expansive world\n\n" +
+        "Embrace high degrees of freedom.",
+    );
+  });
+
+  it("keeps a list as a list, one item a line", () => {
+    const html =
+      "<p>Features:</p><ul class=\"bb_ul\"><li>Flight</li><li>Grapple</li></ul><p>And more.</p>";
+
+    expect(htmlToText(html)).toBe(
+      "Features:\n\n• Flight\n• Grapple\n\nAnd more.",
+    );
+  });
+
+  /* Elden Ring's: italic text, then a heading, with no closing block tag
+     between them — so the heading ran onto the end of the sentence. */
+  it("starts a heading on its own line even after inline text", () => {
+    expect(
+      htmlToText(
+        "<i>The power of the Elden Ring.</i><h2>• A Breathtaking World</h2>The Lands Between.",
+      ),
+    ).toBe(
+      "The power of the Elden Ring.\n\n• A Breathtaking World\n\nThe Lands Between.",
+    );
+  });
+
+  it("does not take a <pre> for a paragraph", () => {
+    expect(htmlToText("<pre>a</pre>")).toBe("a");
+  });
+
+  it("does not take a <link> for a list item", () => {
+    expect(htmlToText('<link rel="x"><p>Just prose.</p>')).toBe("Just prose.");
   });
 });
