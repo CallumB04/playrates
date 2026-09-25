@@ -4,6 +4,7 @@ import GameCover from "../game/GameCover";
 import { formatMessageCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import ContributorStack from "./ContributorStack";
+import PeopleCount from "./PeopleCount";
 import { threadPath } from "./paths";
 
 /** The top few threads by messages this fortnight, ranked. */
@@ -56,16 +57,21 @@ const TrendingList = ({
                                 {thread.title}
                             </span>
                             <span className="mt-auto flex items-center justify-between gap-2 pt-1">
-                                <span className="text-label-sm text-content-muted">
-                                    <span className="font-mono text-content">
-                                        {formatMessageCount(
-                                            thread.recentMessageCount
-                                        )}
-                                    </span>{" "}
-                                    new{" "}
-                                    {thread.recentMessageCount === 1
-                                        ? "message"
-                                        : "messages"}
+                                <span className="flex flex-col gap-0.5 text-label-sm text-content-muted">
+                                    <span>
+                                        <span className="font-mono text-content">
+                                            {formatMessageCount(
+                                                thread.recentMessageCount
+                                            )}
+                                        </span>{" "}
+                                        new{" "}
+                                        {thread.recentMessageCount === 1
+                                            ? "message"
+                                            : "messages"}
+                                    </span>
+                                    <PeopleCount
+                                        count={thread.contributorCount}
+                                    />
                                 </span>
                                 <ContributorStack
                                     contributors={thread.contributors.slice(

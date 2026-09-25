@@ -7,6 +7,7 @@ import { formatMessageCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import ActivitySparkline from "./ActivitySparkline";
 import ContributorStack from "./ContributorStack";
+import PeopleCount from "./PeopleCount";
 import { threadPath } from "./paths";
 
 /** The busiest thread of the fortnight, with the fortnight drawn. */
@@ -51,10 +52,13 @@ const TrendingHero = ({ thread }: { thread: TrendingThread }) => {
                         <span className="line-clamp-3 font-display text-section text-content group-hover:text-brand">
                             {thread.title}
                         </span>
-                        <ContributorStack
-                            contributors={thread.contributors}
-                            total={thread.contributorCount}
-                        />
+                        <span className="flex items-center gap-2.5 text-label-sm text-content-muted">
+                            <ContributorStack
+                                contributors={thread.contributors}
+                                total={thread.contributorCount}
+                            />
+                            <PeopleCount count={thread.contributorCount} />
+                        </span>
                     </span>
                 </span>
 

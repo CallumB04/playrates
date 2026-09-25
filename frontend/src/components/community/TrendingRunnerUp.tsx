@@ -5,6 +5,7 @@ import GameCover from "../game/GameCover";
 import { formatMessageCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import ActivitySparkline from "./ActivitySparkline";
+import PeopleCount from "./PeopleCount";
 import { threadPath } from "./paths";
 
 /* #2 and #3 each get a colour of their own, and neither is the brand's:
@@ -74,14 +75,17 @@ const TrendingRunnerUp = ({ thread, tone }: TrendingRunnerUpProps) => {
                     {thread.title}
                 </span>
                 <span className="mt-auto flex items-end justify-between gap-3 pt-1">
-                    <span className="shrink-0 text-label-sm text-content-muted">
-                        <span className="font-mono text-content">
-                            {formatMessageCount(thread.recentMessageCount)}
-                        </span>{" "}
-                        new{" "}
-                        {thread.recentMessageCount === 1
-                            ? "message"
-                            : "messages"}
+                    <span className="flex shrink-0 flex-col gap-0.5 text-label-sm text-content-muted">
+                        <span>
+                            <span className="font-mono text-content">
+                                {formatMessageCount(thread.recentMessageCount)}
+                            </span>{" "}
+                            new{" "}
+                            {thread.recentMessageCount === 1
+                                ? "message"
+                                : "messages"}
+                        </span>
+                        <PeopleCount count={thread.contributorCount} />
                     </span>
                     <ActivitySparkline
                         activity={thread.activity}
