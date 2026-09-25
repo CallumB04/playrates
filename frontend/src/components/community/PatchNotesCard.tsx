@@ -81,7 +81,7 @@ const PatchNotesCard = ({
                             PlayRates patch notes
                         </span>
                         <span className="mt-0.5 block text-label-sm text-content-muted">
-                            What changed, from the people who changed it.
+                            What’s new, release by release.
                         </span>
                     </span>
                 </span>
