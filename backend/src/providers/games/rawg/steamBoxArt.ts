@@ -8,11 +8,25 @@
  * Steam we can have the cover it actually has.
  *
  * No key and no account: this is the same public CDN the store itself serves
- * from. Games whose assets live under a hashed path — mostly very recent
- * releases — have no art here and keep RAWG's image.
+ * from. Recent releases keep their assets under a hashed folder instead, which
+ * no path can be built for — those are looked up in Steam's asset list.
  */
 export const steamBoxArtUrl = (appId: string) =>
   `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/library_600x900.jpg`;
+
+/* Keyless, like the CDN: the store's own pages call it for the same thing. */
+const storeItemsUrl = (appId: string) =>
+  `https://api.steampowered.com/IStoreBrowseService/GetItems/v1/?input_json=${encodeURIComponent(
+    JSON.stringify({
+      ids: [{ appid: Number(appId) }],
+      context: { language: "english", country_code: "US" },
+      data_request: { include_assets: true },
+    }),
+  )}`;
+
+/* Where the hashed paths resolve. The cloudflare host 301s here, and a stored
+   URL should not cost every visitor a redirect. */
+const ASSET_HOST = "https://shared.steamstatic.com/store_item_assets/";
 
 const STEAM_STORE_ID = 1;
 const TIMEOUT_MS = 5_000;
@@ -34,10 +48,37 @@ export const steamAppId = (links: StoreLinksResponse): string | null => {
   return url ? (/\/app\/(\d+)/.exec(url)?.[1] ?? null) : null;
 };
 
+export interface StoreItemsResponse {
+  response?: {
+    store_items?: {
+      assets?: {
+        /** e.g. "steam/apps/3513350/${FILENAME}?t=1787182292" */
+        asset_url_format?: string;
+        /** 600x900, the size the predictable path serves. */
+        library_capsule_2x?: string;
+        /** 300x450. */
+        library_capsule?: string;
+      };
+    }[];
+  };
+}
+
+/** The portrait capsule out of Steam's asset list, at the larger size where
+ *  there is one. Null when the list has no portrait at all. */
+export const capsuleFromAssets = (body: StoreItemsResponse): string | null => {
+  const assets = body.response?.store_items?.[0]?.assets;
+  const file = assets?.library_capsule_2x ?? assets?.library_capsule;
+  if (!assets?.asset_url_format || !file) return null;
+  return ASSET_HOST + assets.asset_url_format.replace("${FILENAME}", file);
+};
+
 /**
  * The art's URL, or null where Steam has none. Asked for rather than assumed:
  * a 404 would otherwise reach the page as a broken cover, which is worse than
  * the crop it replaced.
+ *
+ * The predictable path first, since it answers most of the catalogue with a
+ * HEAD. Only a miss pays for the asset list.
  */
 export const findSteamBoxArt = async (
   links: StoreLinksResponse,
@@ -46,15 +87,22 @@ export const findSteamBoxArt = async (
   const appId = steamAppId(links);
   if (!appId) return null;
 
-  const url = steamBoxArtUrl(appId);
+  // Steam being unreachable is not a reason to fail the game's detail fetch.
   try {
-    const response = await fetchImpl(url, {
+    const url = steamBoxArtUrl(appId);
+    const head = await fetchImpl(url, {
       method: "HEAD",
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    return response.ok ? url : null;
+    if (head.ok) return url;
+
+    const listing = await fetchImpl(storeItemsUrl(appId), {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!listing.ok) return null;
+    return capsuleFromAssets((await listing.json()) as StoreItemsResponse);
   } catch {
-    // Steam being unreachable is not a reason to fail the game's detail fetch.
     return null;
   }
 };

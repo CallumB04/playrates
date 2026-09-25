@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  capsuleFromAssets,
   findSteamBoxArt,
   indexByTitle,
   normaliseTitle,
@@ -91,6 +92,39 @@ describe("findSteamBoxArt", () => {
     ).resolves.toBeNull();
   });
 
+  /* Recent releases keep their art under a hashed folder, which the
+     predictable path 404s on — Wuthering Waves had no cover because of it. */
+  it("finds art that has moved under a hashed folder", async () => {
+    const fetchImpl = vi.fn(async (url: string) =>
+      url.includes("IStoreBrowseService")
+        ? Response.json({
+            response: {
+              store_items: [
+                {
+                  assets: {
+                    asset_url_format: "steam/apps/620/${FILENAME}?t=1",
+                    library_capsule_2x: "abc123/library_capsule_2x.jpg",
+                  },
+                },
+              ],
+            },
+          })
+        : new Response(null, { status: 404 }),
+    );
+
+    await expect(findSteamBoxArt(onSteam, fetchImpl as never)).resolves.toBe(
+      "https://shared.steamstatic.com/store_item_assets/steam/apps/620/abc123/library_capsule_2x.jpg?t=1",
+    );
+  });
+
+  it("does not ask for the asset list when the predictable path answers", async () => {
+    const fetchImpl = vi.fn(async () => new Response(null, { status: 200 }));
+
+    await findSteamBoxArt(onSteam, fetchImpl as never);
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
   it("asks with HEAD, since only the answer matters", async () => {
     const fetchImpl = vi.fn(async () => new Response(null, { status: 200 }));
 
@@ -100,6 +134,38 @@ describe("findSteamBoxArt", () => {
       expect.stringContaining("/620/library_600x900.jpg"),
       expect.objectContaining({ method: "HEAD" }),
     );
+  });
+});
+
+describe("capsuleFromAssets", () => {
+  const listing = (assets: Record<string, string>) => ({
+    response: { store_items: [{ assets }] },
+  });
+
+  it("prefers the 600x900 capsule the rest of the catalogue uses", () => {
+    expect(
+      capsuleFromAssets(
+        listing({
+          asset_url_format: "steam/apps/1/${FILENAME}",
+          library_capsule: "h/small.jpg",
+          library_capsule_2x: "h/large.jpg",
+        }),
+      ),
+    ).toMatch(/h\/large\.jpg$/);
+  });
+
+  it("settles for the small one where that is all there is", () => {
+    expect(
+      capsuleFromAssets(
+        listing({ asset_url_format: "steam/apps/1/${FILENAME}", library_capsule: "h/small.jpg" }),
+      ),
+    ).toMatch(/h\/small\.jpg$/);
+  });
+
+  it("hands back nothing for a listing with no portrait in it", () => {
+    expect(capsuleFromAssets(listing({ asset_url_format: "steam/apps/1/${FILENAME}" }))).toBeNull();
+    expect(capsuleFromAssets(listing({ library_capsule_2x: "h/large.jpg" }))).toBeNull();
+    expect(capsuleFromAssets({})).toBeNull();
   });
 });
 
