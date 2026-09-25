@@ -36,6 +36,8 @@ export interface MessageCardRow extends CommunityMessageRow {
 
 export interface ListThreadsOptions {
   gameId?: number;
+  /** Only threads this user has a standing message in. */
+  participantId?: string;
   sort: ThreadSort;
   from: number;
   to: number;
@@ -93,13 +95,42 @@ const THREADS = "community_thread_cards";
 const MESSAGES = "community_message_cards";
 
 export const createCommunityRepository = (db: Db): CommunityRepository => ({
-  async listThreads({ gameId, sort, from, to, showSexualContent }) {
+  async listThreads({
+    gameId,
+    participantId,
+    sort,
+    from,
+    to,
+    showSexualContent,
+  }) {
+    let threadIds: number[] | undefined;
+    if (participantId) {
+      /* PostgREST cannot filter the view by a join to messages, so the
+         threads come first. Newest posts first, so a prolific poster's cap
+         falls on their oldest threads. */
+      const { data, error } = await db
+        .from("community_messages")
+        .select("thread_id")
+        .eq("author_id", participantId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      threadIds = [
+        ...new Set(
+          (data ?? []).map((r) => (r as { thread_id: number }).thread_id),
+        ),
+      ];
+      if (threadIds.length === 0) return { rows: [], total: 0 };
+    }
+
     let builder = db
       .from(THREADS)
       .select("*", { count: "exact" })
       .eq("subject_kind", "game");
 
     if (gameId !== undefined) builder = builder.eq("game_id", gameId);
+    if (threadIds) builder = builder.in("id", threadIds);
     if (!showSexualContent) {
       builder = builder.eq("game_has_sexual_content", false);
     }

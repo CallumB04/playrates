@@ -37,8 +37,10 @@ import ShelfPanel from "./components/ShelfPanel";
 import ShelfSort from "./components/ShelfSort";
 import PlayedStatusFilterControl from "./components/PlayedStatusFilter";
 import RecentReviews from "./components/RecentReviews";
-import CommunityThreads from "./components/CommunityThreads";
-import { useUserThreads } from "../../hooks/queries/useCommunity";
+import CommunityThreads, {
+    COMMUNITY_THREADS_SHOWN,
+} from "./components/CommunityThreads";
+import { useThreads, useUserThreads } from "../../hooks/queries/useCommunity";
 import FriendsPanel from "./components/FriendsPanel";
 import ProfileModals, { type ProfileModal } from "./components/ProfileModals";
 import { TextSkeleton } from "../../components/ui/Skeleton";
@@ -122,8 +124,15 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const { data: myFriends } = useMyFriends();
     const { data: reviewsPage, isLoading: reviewsLoading } =
         useUserReviews(targetUsername);
-    const { data: threads, isLoading: threadsLoading } =
-        useUserThreads(targetUsername);
+    const { data: threads, isLoading: threadsLoading } = useUserThreads(
+        targetUsername,
+        COMMUNITY_THREADS_SHOWN
+    );
+    // One row, for its total: "See all" says how many there are.
+    const { data: threadTotal } = useThreads(
+        { participant: targetUsername, limit: 1 },
+        !!targetUsername
+    );
     const { data: myLogIds } = useMyGameLogIds();
 
     const logs = useMemo(() => logsPage?.data ?? [], [logsPage]);
@@ -395,7 +404,9 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                         isOwner={isMyAccount}
                     />
                     <CommunityThreads
+                        username={targetUser?.username ?? targetUsername}
                         threads={threads ?? []}
+                        total={threadTotal?.meta.total ?? 0}
                         isLoading={threadsLoading}
                         isOwner={isMyAccount}
                     />

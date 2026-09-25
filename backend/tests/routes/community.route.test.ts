@@ -602,6 +602,52 @@ describe("threads by participant", () => {
   });
 });
 
+describe("the thread list filtered to one person", () => {
+  it("keeps only threads they started or replied to, with the total", async () => {
+    const seed = communitySeed();
+    const { app } = buildTestApp({
+      seed: {
+        ...seed,
+        communityThreads: [
+          ...seed.communityThreads,
+          buildThread({ id: 3 }),
+          buildThread({ id: 4 }),
+        ],
+        communityMessages: [
+          ...seed.communityMessages,
+          buildMessage({ id: 10, thread_id: 3, author_id: USER_B }),
+          // a deleted reply is not a contribution
+          buildMessage({
+            id: 11,
+            thread_id: 4,
+            author_id: USER_B,
+            deleted_at: daysAgo(0),
+            body: null,
+          }),
+        ],
+      },
+    });
+
+    const response = await request(app).get(
+      "/api/v1/community/threads?participant=frienduser",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.map((t: { id: number }) => t.id)).toEqual([3]);
+    expect(response.body.meta.total).toBe(1);
+  });
+
+  it("is a 404 for someone who does not exist", async () => {
+    const { app } = buildTestApp({ seed: communitySeed() });
+
+    const response = await request(app).get(
+      "/api/v1/community/threads?participant=nobody",
+    );
+
+    expect(response.status).toBe(404);
+  });
+});
+
 describe("threads by participant, patch notes", () => {
   it("leaves the patch notes off the admin's profile", async () => {
     const { app } = buildTestApp({ seed: communitySeed() });

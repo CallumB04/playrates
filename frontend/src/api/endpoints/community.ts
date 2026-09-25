@@ -17,6 +17,8 @@ import { compactParams } from "./games";
 
 export interface ThreadListFilters {
     gameId?: number;
+    /** A username: threads they started or replied to. */
+    participant?: string;
     sort?: ThreadSort;
     page?: number;
     limit?: number;

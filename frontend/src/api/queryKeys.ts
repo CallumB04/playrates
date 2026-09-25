@@ -79,8 +79,8 @@ export const queryKeys = {
         trending: (limit: number) => ["community", "trending", limit] as const,
         patchNotes: ["community", "patch-notes"] as const,
         thread: (id: number) => ["community", "thread", id] as const,
-        byUsername: (username: string) =>
-            ["community", "user", username] as const,
+        byUsername: (username: string, limit: number) =>
+            ["community", "user", username, limit] as const,
     },
 
     notifications: {

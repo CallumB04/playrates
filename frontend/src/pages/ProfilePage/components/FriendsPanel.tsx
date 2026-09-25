@@ -2,11 +2,13 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { FriendEdge } from "@playrates/shared";
 import FriendProfile from "../../../components/FriendProfile";
-import Panel, { PanelCount } from "../../../components/ui/Panel";
+import Panel, {
+    PanelCount,
+    panelButtonClass,
+} from "../../../components/ui/Panel";
 import { buttonClass } from "../../../components/ui/Button";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import { formatCount } from "../../../lib/format";
-import { cn } from "../../../lib/cn";
 
 interface FriendsPanelProps {
     friends: FriendEdge[];
@@ -33,12 +35,7 @@ const PanelButton = ({
     <button
         type="button"
         onClick={onClick}
-        className={cn(
-            "min-h-11 flex-1 cursor-pointer rounded-sm border px-3 py-2 text-body-sm lift sm:min-h-0",
-            accent
-                ? "border-brand/40 text-brand hover:border-brand"
-                : "border-subtle text-content-secondary hover:border-strong hover:text-content"
-        )}
+        className={panelButtonClass(accent)}
     >
         {children}
     </button>

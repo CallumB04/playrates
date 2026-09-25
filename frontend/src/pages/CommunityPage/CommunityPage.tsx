@@ -21,7 +21,10 @@ import ThreadCard from "../../components/community/ThreadCard";
 import TrendingHero from "../../components/community/TrendingHero";
 import TrendingRunnerUp from "../../components/community/TrendingRunnerUp";
 import PatchNotesCard from "../../components/community/PatchNotesCard";
-import GameFilterPill from "../../components/community/GameFilterPill";
+import FilterPill from "../../components/community/FilterPill";
+import GameCover from "../../components/game/GameCover";
+import ProfilePicture from "../../components/ProfilePicture";
+import { useProfile } from "../../hooks/queries/useProfiles";
 import { newThreadPath } from "../../components/community/paths";
 
 const PER_PAGE = 20;
@@ -39,6 +42,7 @@ const CommunityPage = () => {
 
     const [params, setParams] = useSearchParams();
     const gameId = Number(params.get("game")) || undefined;
+    const participant = params.get("user") || undefined;
     const sort: ThreadSort = params.get("sort") === "new" ? "new" : "active";
     const page = Math.max(1, Number(params.get("page")) || 1);
 
@@ -57,6 +61,7 @@ const CommunityPage = () => {
 
     const { data: threads, isLoading } = useThreads({
         gameId,
+        participant,
         sort,
         page,
         limit: PER_PAGE,
@@ -65,6 +70,7 @@ const CommunityPage = () => {
     const { data: trending } = useTrendingThreads(3);
     const { data: patchNotes } = usePatchNotes();
     const { data: game } = useGame(gameId);
+    const { data: person } = useProfile(participant);
 
     const pagination = usePagination({
         total: threads?.meta.total ?? 0,
@@ -77,8 +83,9 @@ const CommunityPage = () => {
     const startThread = () =>
         user ? navigate(newThreadPath(gameId)) : openLogin();
 
-    // Trending is site-wide, so it steps aside while the list is one game's.
-    const [top, ...runnersUp] = !gameId ? (trending ?? []) : [];
+    // Trending is site-wide, so it steps aside while the list is filtered.
+    const filtered = !!gameId || !!participant;
+    const [top, ...runnersUp] = !filtered ? (trending ?? []) : [];
     const rows = threads?.data ?? [];
 
     return (
@@ -132,12 +139,39 @@ const CommunityPage = () => {
                                     Threads
                                 </h2>
                                 {gameId && (
-                                    <GameFilterPill
-                                        gameId={gameId}
-                                        title={game?.title}
-                                        coverUrl={game?.coverUrl}
+                                    <FilterPill
+                                        leading={
+                                            <GameCover
+                                                coverUrl={
+                                                    game?.coverUrl ?? null
+                                                }
+                                                title={game?.title ?? ""}
+                                            />
+                                        }
+                                        label={game?.title ?? "One game"}
+                                        to={`/game/${gameId}`}
+                                        clearLabel={`Clear the ${game?.title ?? "game"} filter and show every thread`}
                                         onClear={() =>
                                             update({ game: null, page: null })
+                                        }
+                                    />
+                                )}
+                                {participant && (
+                                    <FilterPill
+                                        leading={
+                                            <ProfilePicture
+                                                variant="nav"
+                                                file={person?.avatarUrl ?? ""}
+                                                username={participant}
+                                                accent={person?.accent}
+                                                link={false}
+                                            />
+                                        }
+                                        label={`${person?.username ?? participant}'s threads`}
+                                        to={`/user/${encodeURIComponent(participant)}`}
+                                        clearLabel={`Clear the ${participant} filter and show every thread`}
+                                        onClear={() =>
+                                            update({ user: null, page: null })
                                         }
                                     />
                                 )}
@@ -161,9 +195,11 @@ const CommunityPage = () => {
                             <EmptyPlate
                                 title="No threads yet"
                                 body={
-                                    gameId
-                                        ? "Nobody has started one about this game. Be the first."
-                                        : "Start the first one: pick a game and say what's on your mind."
+                                    participant
+                                        ? "No threads from them yet."
+                                        : gameId
+                                          ? "Nobody has started one about this game. Be the first."
+                                          : "Start the first one: pick a game and say what's on your mind."
                                 }
                                 action={
                                     <Button onClick={startThread}>

@@ -50,6 +50,8 @@ export type ThreadSort = (typeof THREAD_SORTS)[number];
 
 export const ThreadListQuerySchema = PaginationSchema.extend({
   gameId: z.coerce.number().int().positive().optional(),
+  /** A username: only threads they have started or replied to. */
+  participant: z.string().trim().min(1).max(24).optional(),
   sort: z.enum(THREAD_SORTS).default("active"),
 });
 export type ThreadListQuery = z.infer<typeof ThreadListQuerySchema>;

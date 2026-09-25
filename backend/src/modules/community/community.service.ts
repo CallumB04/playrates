@@ -97,22 +97,31 @@ export const createCommunityService = (
 
   return {
     async listThreads(
-      { gameId, sort, ...pagination }: ThreadListQuery,
+      { gameId, participant, sort, ...pagination }: ThreadListQuery,
       viewerId?: string,
     ): Promise<Paginated<ThreadCard>> {
       if (gameId !== undefined && !(await games.findById(gameId))) {
         throw AppError.notFound("Game");
       }
+      const participantProfile = participant
+        ? await profiles.findByUsername(participant)
+        : null;
+      if (participant && !participantProfile) {
+        throw AppError.notFound("Profile");
+      }
       const { from, to } = toRange(pagination);
       const { rows, total } = await repo.listThreads({
         gameId,
+        participantId: participantProfile?.id,
         sort,
         from,
         to,
-        /* Someone on a game's own page went looking for it; the community
-           front page is shown to people who went looking for neither. */
+        /* Someone looking at one game's threads, or one person's, went
+           looking for them; the community front page is shown to people
+           who went looking for neither, as a profile's own list is not. */
         showSexualContent:
           gameId !== undefined ||
+          !!participantProfile ||
           ((await viewerProfile(viewerId))?.show_sexual_content ?? false),
       });
       return paginate(rows.map(toThreadCard), pagination, total);

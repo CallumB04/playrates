@@ -116,11 +116,24 @@ export const createInMemoryCommunity = (
   };
 
   return {
-    async listThreads({ gameId, sort, from, to, showSexualContent }) {
+    async listThreads({
+      gameId,
+      participantId,
+      sort,
+      from,
+      to,
+      showSexualContent,
+    }) {
       const key = sort === "new" ? "created_at" : "last_activity_at";
+      const joined = new Set(
+        state.communityMessages
+          .filter((m) => m.author_id === participantId && !m.deleted_at)
+          .map((m) => m.thread_id),
+      );
       const rows = cards()
         .filter((c) => c.subject_kind === "game")
         .filter((c) => gameId === undefined || c.game_id === gameId)
+        .filter((c) => !participantId || joined.has(c.id))
         .filter((c) => showSexualContent || !c.game_has_sexual_content)
         .sort((a, b) => b[key].localeCompare(a[key]) || b.id - a.id);
       return { rows: rows.slice(from, to + 1), total: rows.length };
