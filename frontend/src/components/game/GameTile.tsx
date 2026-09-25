@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import {
+    useEffect,
     useState,
     type ComponentType,
     type ReactNode,
     type SVGProps,
 } from "react";
-import { Plus } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { cn } from "../../lib/cn";
 import type { DisplayStatus } from "../../constants/gameStatus";
 import type { Platform } from "@playrates/shared";
@@ -17,12 +18,29 @@ import RatingBadge from "../ui/RatingBadge";
 export interface TileAction {
     key: string;
     label: string;
-    onSelect: () => void;
+    /** An icon action may return its request. The tile holds every other
+     *  action still until it settles — a second quick-add sent while the
+     *  first was out used to race it — and a rejection hands them back. */
+    onSelect: () => void | Promise<unknown>;
     /** The first action is the loud one; the rest are outlines. */
     tone?: "primary" | "secondary" | "danger";
     /** Renders as a square icon button rather than a full-width row. */
     icon?: ComponentType<SVGProps<SVGSVGElement> & { size?: number | string }>;
+    /** What an icon action's button says once it has worked. */
+    doneLabel?: string;
 }
+
+/** A quick-add in flight, then landed. The icons are kept as they were when
+ *  it was pressed: the page swaps them for View and Edit as soon as the log
+ *  exists, which would pull the button out from under its own confirmation. */
+interface Busy {
+    key: string;
+    phase: "pending" | "done";
+    icons: TileAction[];
+}
+
+/** Long enough to read "On your wishlist" before the tile moves on. */
+const DONE_HOLD_MS = 1400;
 
 interface GameTileProps {
     gameId: number;
@@ -70,8 +88,26 @@ const GameTile = ({
     narrowFoot = false,
 }: GameTileProps) => {
     const rows = actions.filter((a) => !a.icon);
-    const icons = actions.filter((a) => a.icon);
-    const [pressed, setPressed] = useState<Set<string>>(new Set());
+    const [busy, setBusy] = useState<Busy | null>(null);
+    const icons = busy?.icons ?? actions.filter((a) => a.icon);
+
+    useEffect(() => {
+        if (busy?.phase !== "done") return;
+        const timer = setTimeout(() => setBusy(null), DONE_HOLD_MS);
+        return () => clearTimeout(timer);
+    }, [busy?.phase]);
+
+    const quickAdd = async (action: TileAction) => {
+        if (busy) return;
+        setBusy({ key: action.key, phase: "pending", icons });
+        try {
+            await action.onSelect();
+            setBusy({ key: action.key, phase: "done", icons });
+        } catch {
+            // The page has said what went wrong; the buttons come back.
+            setBusy(null);
+        }
+    };
 
     const primary = rows[0] ?? icons[0];
     const PrimaryIcon = primary?.icon ?? Plus;
@@ -92,7 +128,10 @@ const GameTile = ({
                 {actions.length > 0 && (
                     <span
                         aria-hidden
-                        className="absolute inset-0 bg-overlay-tile opacity-0 transition-opacity duration-500 ease-[var(--ease-glide)] group-focus-within/tile:opacity-100 group-hover/tile:opacity-100"
+                        className={cn(
+                            "absolute inset-0 bg-overlay-tile transition-opacity duration-500 ease-[var(--ease-glide)] group-focus-within/tile:opacity-100 group-hover/tile:opacity-100",
+                            busy ? "opacity-100" : "opacity-0"
+                        )}
                     />
                 )}
 
@@ -111,9 +150,10 @@ const GameTile = ({
                     <button
                         type="button"
                         aria-label={primary.label}
+                        disabled={!!busy}
                         onClick={(event) => {
                             event.preventDefault();
-                            primary.onSelect();
+                            void primary.onSelect();
                         }}
                         className={cn(
                             "absolute top-1.5 left-1.5 grid size-9 place-items-center rounded-full",
@@ -132,69 +172,160 @@ const GameTile = ({
                     {actions.length > 0 && (
                         /* 0fr to 1fr animates an auto height, so the actions
                            make room rather than popping in. */
-                        <span className="mb-0 grid grid-rows-[0fr] transition-[grid-template-rows,margin] duration-500 ease-[var(--ease-glide)] group-focus-within/tile:mb-2 group-focus-within/tile:grid-rows-[1fr] group-hover/tile:mb-2 group-hover/tile:grid-rows-[1fr]">
-                            <span className="flex min-h-0 translate-y-1.5 flex-col gap-1.5 overflow-hidden opacity-0 transition-[opacity,transform] duration-500 ease-[var(--ease-glide)] group-focus-within/tile:translate-y-0 group-focus-within/tile:opacity-100 group-hover/tile:translate-y-0 group-hover/tile:opacity-100">
-                                {rows.map((action) => (
-                                    <button
-                                        key={action.key}
-                                        type="button"
-                                        onClick={(event) => {
-                                            // The tile is a link; this is not navigation.
-                                            event.preventDefault();
-                                            action.onSelect();
-                                        }}
+                        <span
+                            className={cn(
+                                "grid transition-[grid-template-rows,margin] duration-500 ease-[var(--ease-glide)] group-focus-within/tile:mb-2 group-focus-within/tile:grid-rows-[1fr] group-hover/tile:mb-2 group-hover/tile:grid-rows-[1fr]",
+                                // Stays open while a quick-add is out, even if the pointer leaves.
+                                busy
+                                    ? "mb-2 grid-rows-[1fr]"
+                                    : "mb-0 grid-rows-[0fr]"
+                            )}
+                        >
+                            <span
+                                className={cn(
+                                    "flex min-h-0 flex-col overflow-hidden transition-[opacity,transform] duration-500 ease-[var(--ease-glide)] group-focus-within/tile:translate-y-0 group-focus-within/tile:opacity-100 group-hover/tile:translate-y-0 group-hover/tile:opacity-100",
+                                    busy
+                                        ? "translate-y-0 opacity-100"
+                                        : "translate-y-1.5 opacity-0"
+                                )}
+                            >
+                                {rows.length > 0 && (
+                                    /* Folds away while a quick-add is out: nothing
+                                       else on the tile should be pressable then. */
+                                    <span
                                         className={cn(
-                                            "w-full cursor-pointer rounded-sm border px-2 py-1.5 text-[11px] font-medium lift",
-                                            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-on-media",
-                                            ACTION_TONE[
-                                                action.tone ?? "secondary"
-                                            ]
+                                            "grid transition-[grid-template-rows,opacity] duration-300 ease-[var(--ease-glide)]",
+                                            busy
+                                                ? "grid-rows-[0fr] opacity-0"
+                                                : "grid-rows-[1fr]"
                                         )}
+                                        aria-hidden={busy ? true : undefined}
                                     >
-                                        {action.label}
-                                    </button>
-                                ))}
+                                        <span
+                                            className={cn(
+                                                "flex min-h-0 flex-col gap-1.5 overflow-hidden",
+                                                icons.length > 0 && "pb-1.5"
+                                            )}
+                                        >
+                                            {rows.map((action) => (
+                                                <button
+                                                    key={action.key}
+                                                    type="button"
+                                                    disabled={!!busy}
+                                                    tabIndex={
+                                                        busy ? -1 : undefined
+                                                    }
+                                                    onClick={(event) => {
+                                                        // The tile is a link; this is not navigation.
+                                                        event.preventDefault();
+                                                        void action.onSelect();
+                                                    }}
+                                                    className={cn(
+                                                        "w-full cursor-pointer rounded-sm border px-2 py-1.5 text-[11px] font-medium lift",
+                                                        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-on-media",
+                                                        ACTION_TONE[
+                                                            action.tone ??
+                                                                "secondary"
+                                                        ]
+                                                    )}
+                                                >
+                                                    {action.label}
+                                                </button>
+                                            ))}
+                                        </span>
+                                    </span>
+                                )}
 
                                 {icons.length > 0 && (
-                                    <span className="flex gap-1.5">
+                                    <span
+                                        className={cn(
+                                            "flex transition-[gap] duration-300 ease-[var(--ease-glide)]",
+                                            busy ? "gap-0" : "gap-1.5"
+                                        )}
+                                    >
                                         {icons.map((action) => {
                                             const Icon = action.icon!;
+                                            const active =
+                                                busy?.key === action.key;
+                                            const folded = !!busy && !active;
+                                            const done =
+                                                active && busy.phase === "done";
                                             return (
                                                 <button
                                                     key={action.key}
                                                     type="button"
                                                     title={action.label}
-                                                    aria-label={action.label}
-                                                    disabled={pressed.has(
-                                                        action.key
-                                                    )}
+                                                    aria-label={
+                                                        done
+                                                            ? (action.doneLabel ??
+                                                              action.label)
+                                                            : action.label
+                                                    }
+                                                    aria-busy={
+                                                        active && !done
+                                                            ? true
+                                                            : undefined
+                                                    }
+                                                    aria-hidden={
+                                                        folded
+                                                            ? true
+                                                            : undefined
+                                                    }
+                                                    tabIndex={
+                                                        folded ? -1 : undefined
+                                                    }
+                                                    disabled={!!busy}
                                                     onClick={(event) => {
                                                         event.preventDefault();
-                                                        setPressed((set) =>
-                                                            new Set(set).add(
-                                                                action.key
-                                                            )
-                                                        );
-                                                        action.onSelect();
+                                                        void quickAdd(action);
                                                     }}
                                                     className={cn(
-                                                        "grid flex-1 place-items-center rounded-sm border py-1.5 transition-colors duration-200 lift",
+                                                        "flex min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded-sm border py-1.5 text-[11px] font-medium whitespace-nowrap",
+                                                        "transition-[flex-grow,opacity,background-color,border-color,color,padding] duration-300 ease-[var(--ease-glide)]",
                                                         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-on-media",
-                                                        pressed.has(action.key)
-                                                            ? "cursor-default border-brand bg-brand text-content-on-solid"
-                                                            : cn(
-                                                                  "cursor-pointer",
-                                                                  ACTION_TONE[
-                                                                      action.tone ??
-                                                                          "secondary"
-                                                                  ]
-                                                              )
+                                                        // The others give their room to the one pressed.
+                                                        folded
+                                                            ? "flex-[0_1_0%] border-transparent px-0 opacity-0"
+                                                            : "flex-1 px-2",
+                                                        !busy &&
+                                                            cn(
+                                                                "cursor-pointer lift",
+                                                                ACTION_TONE[
+                                                                    action.tone ??
+                                                                        "secondary"
+                                                                ]
+                                                            ),
+                                                        active &&
+                                                            !done &&
+                                                            "sweep cursor-wait border-brand bg-brand/70 text-content-on-solid",
+                                                        done &&
+                                                            "animate-stamp cursor-default border-brand bg-brand text-content-on-solid shadow-glow"
                                                     )}
                                                 >
-                                                    <Icon
-                                                        size={14}
-                                                        aria-hidden
-                                                    />
+                                                    {done ? (
+                                                        <Check
+                                                            size={14}
+                                                            aria-hidden
+                                                            className="shrink-0 animate-stamp"
+                                                        />
+                                                    ) : (
+                                                        <Icon
+                                                            size={14}
+                                                            aria-hidden
+                                                            className="shrink-0"
+                                                        />
+                                                    )}
+                                                    {active && (
+                                                        <span
+                                                            key={busy.phase}
+                                                            className="min-w-0 animate-settle truncate"
+                                                        >
+                                                            {done
+                                                                ? (action.doneLabel ??
+                                                                  action.label)
+                                                                : action.label}
+                                                        </span>
+                                                    )}
                                                 </button>
                                             );
                                         })}

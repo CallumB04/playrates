@@ -7,12 +7,11 @@ import {
     usePlatforms,
 } from "../../hooks/queries/useGames";
 import {
-    useGameLogMutations,
     useMyGameLogIds,
     useMyGameLogs,
+    useQuickAdd,
 } from "../../hooks/queries/useGameLogs";
 import { useAccountForm } from "../../contexts/AccountFormContext";
-import { useNotify } from "../../contexts/NotificationContext";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { usePagination } from "../../hooks/usePagination";
@@ -44,14 +43,12 @@ const LibraryPage = () => {
 
     const { user } = useAuth();
     const { openLogin } = useAccountForm();
-    const notify = useNotify();
     const { width } = useWindowSize();
     const { query, setQuery } = useLibraryQuery();
 
     const { data: platforms } = usePlatforms();
     const { data: genres } = useGenres();
     const { data: myLogIds } = useMyGameLogIds();
-    const { save } = useGameLogMutations();
 
     const [modal, setModal] = useState<OpenModal>(null);
 
@@ -101,20 +98,7 @@ const LibraryPage = () => {
     const fullLog = (gameId: number) =>
         (myLogs?.data ?? []).find((log) => log.gameId === gameId);
 
-    // One tap, no popup: backlog and wishlist are a single field each.
-    const quickAdd = async (
-        gameId: number,
-        title: string,
-        status: "backlog" | "wishlist"
-    ) => {
-        const { label } = STATUS_PRESENTATION[status];
-        try {
-            await save.mutateAsync({ gameId, input: { status } });
-            notify(`${title} added to your ${label.toLowerCase()}`, "success");
-        } catch {
-            notify(`Couldn't add that to your ${label.toLowerCase()}`, "error");
-        }
-    };
+    const quickAdd = useQuickAdd();
 
     const buildActions = (gameId: number, title: string): TileAction[] => {
         if (!user) {
@@ -141,13 +125,15 @@ const LibraryPage = () => {
                     key: "backlog",
                     label: "Add to backlog",
                     icon: STATUS_PRESENTATION.backlog.icon,
-                    onSelect: () => void quickAdd(gameId, title, "backlog"),
+                    onSelect: () => quickAdd(gameId, title, "backlog"),
+                    doneLabel: "In your backlog",
                 },
                 {
                     key: "wishlist",
                     label: "Add to wishlist",
                     icon: STATUS_PRESENTATION.wishlist.icon,
-                    onSelect: () => void quickAdd(gameId, title, "wishlist"),
+                    onSelect: () => quickAdd(gameId, title, "wishlist"),
+                    doneLabel: "On your wishlist",
                 },
             ];
         }

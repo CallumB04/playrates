@@ -17,6 +17,8 @@ import {
     type GameLogPage,
 } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotify } from "../../contexts/NotificationContext";
+import { STATUS_PRESENTATION } from "../../constants/gameStatus";
 
 /** The ordering, flattened for a cache key. */
 const orderKey = (page?: GameLogPage) =>
@@ -107,4 +109,27 @@ export const useGameLogMutations = () => {
     });
 
     return { save, remove };
+};
+
+export type QuickAddStatus = "backlog" | "wishlist";
+
+/**
+ * One tap, no popup: backlog and wishlist are a single field each. Says how
+ * it went either way, and rejects on failure — the tile that asked holds its
+ * other buttons still until it hears back, and has to know when to let go.
+ */
+export const useQuickAdd = () => {
+    const { save } = useGameLogMutations();
+    const notify = useNotify();
+
+    return async (gameId: number, title: string, status: QuickAddStatus) => {
+        const shelf = STATUS_PRESENTATION[status].label.toLowerCase();
+        try {
+            await save.mutateAsync({ gameId, input: { status } });
+            notify(`${title} added to your ${shelf}`, "success");
+        } catch (error) {
+            notify(`Couldn't add that to your ${shelf}`, "error");
+            throw error;
+        }
+    };
 };

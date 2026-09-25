@@ -17,6 +17,9 @@ import Specimen from "../../../components/Specimen";
 
 const noop = () => {};
 
+/* Stands in for the request, slow enough to watch. */
+const aMoment = () => new Promise((resolve) => setTimeout(resolve, 1600));
+
 /* What each tile offers, in the order a shelf does: a game you have not
    logged, then one you have. */
 const UNLOGGED: TileAction[] = [
@@ -25,13 +28,15 @@ const UNLOGGED: TileAction[] = [
         key: "backlog",
         label: "Add to backlog",
         icon: STATUS_PRESENTATION.backlog.icon,
-        onSelect: noop,
+        onSelect: aMoment,
+        doneLabel: "In your backlog",
     },
     {
         key: "wishlist",
         label: "Add to wishlist",
         icon: STATUS_PRESENTATION.wishlist.icon,
-        onSelect: noop,
+        onSelect: aMoment,
+        doneLabel: "On your wishlist",
     },
 ];
 const LOGGED: TileAction[] = [
@@ -154,7 +159,7 @@ const SurfaceSpecimens = () => {
 
             <Specimen
                 title="Game tile"
-                notes="The shelf's unit: box art, one line of platform marks and a figure under it, and the actions over the cover on hover. A touch screen cannot hover, so below sm the first action gets a standing button of its own. A logged game is stamped with its status, and its first action opens the log rather than overwriting it."
+                notes="The shelf's unit: box art, one line of platform marks and a figure under it, and the actions over the cover on hover. A touch screen cannot hover, so below sm the first action gets a standing button of its own. A logged game is stamped with its status, and its first action opens the log rather than overwriting it. Pressing a quick-add folds every other action away and grows that one to full width while its request is out, so nothing else can be sent alongside it; it lands as a confirmation, or hands the buttons back if it fails. Try one on the first tile."
                 meta="gameId · title · coverUrl · platformSlugs · platforms · rating · footValue · status · meta · actions · narrowFoot"
             >
                 <div className="grid w-full max-w-lg grid-cols-3 gap-4">

@@ -13,6 +13,7 @@ import {
     useMyGameLog,
     useMyGameLogIds,
     useMyGameLogs,
+    useQuickAdd,
     useUserStats,
 } from "../../hooks/queries/useGameLogs";
 import { useFriendActivity } from "../../hooks/queries/useFriends";
@@ -20,8 +21,6 @@ import { useRecentReviews } from "../../hooks/queries/useReviews";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
 import ViewGameLogPopup from "../../components/ViewGameLogPopup";
-import { useGameLogMutations } from "../../hooks/queries/useGameLogs";
-import { useNotify } from "../../contexts/NotificationContext";
 import {
     STATUS_PRESENTATION,
     displayStatusFor,
@@ -126,25 +125,8 @@ const HomePage = () => {
         [myLogIds]
     );
 
-    const { save } = useGameLogMutations();
-    const notify = useNotify();
 
-    /* One tap, no popup: these are a single field each. */
-    const quickAdd = async (game: Game, status: "backlog" | "wishlist") => {
-        const { label } = STATUS_PRESENTATION[status];
-        try {
-            await save.mutateAsync({
-                gameId: game.id,
-                input: { status },
-            });
-            notify(
-                `${game.title} added to your ${label.toLowerCase()}`,
-                "success"
-            );
-        } catch {
-            notify(`Couldn't add that to your ${label.toLowerCase()}`, "error");
-        }
-    };
+    const quickAdd = useQuickAdd();
 
     // Every cover on the page can be logged from where it sits.
     const statusFor = (game: Game) => {
@@ -192,13 +174,15 @@ const HomePage = () => {
                 key: "backlog",
                 label: "Add to backlog",
                 icon: STATUS_PRESENTATION.backlog.icon,
-                onSelect: () => void quickAdd(game, "backlog"),
+                onSelect: () => quickAdd(game.id, game.title, "backlog"),
+                doneLabel: "In your backlog",
             },
             {
                 key: "wishlist",
                 label: "Add to wishlist",
                 icon: STATUS_PRESENTATION.wishlist.icon,
-                onSelect: () => void quickAdd(game, "wishlist"),
+                onSelect: () => quickAdd(game.id, game.title, "wishlist"),
+                doneLabel: "On your wishlist",
             },
         ];
     };
