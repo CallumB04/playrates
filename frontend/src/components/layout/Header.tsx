@@ -10,6 +10,7 @@ import GlobalSearch from "./GlobalSearch";
 import MobileMenu, { type NavItem } from "./MobileMenu";
 import MobileSearch from "./MobileSearch";
 import { cn } from "../../lib/cn";
+import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
 
 /** Whether a nav link points at where we already are. NavLink matches on
  *  pathname only, and some links carry a query string that matters. */
@@ -58,24 +59,16 @@ const Header = () => {
 
     /* Close on the way up past `lg`: the menu hides there, and its scroll lock
        would stay on with nothing left to turn it off. */
+    const pastLg = useMediaQuery(BREAKPOINT.lg);
     useEffect(() => {
-        if (!menuOpen) return;
-        const wide = window.matchMedia("(min-width: 1024px)");
-        const close = () => wide.matches && setMenuOpen(false);
-        close();
-        wide.addEventListener("change", close);
-        return () => wide.removeEventListener("change", close);
-    }, [menuOpen]);
+        if (pastLg) setMenuOpen(false);
+    }, [pastLg]);
 
     /* Same for the search overlay, which gives way at `xl`. */
+    const pastXl = useMediaQuery(BREAKPOINT.xl);
     useEffect(() => {
-        if (!searchOpen) return;
-        const wide = window.matchMedia("(min-width: 1280px)");
-        const close = () => wide.matches && setSearchOpen(false);
-        close();
-        wide.addEventListener("change", close);
-        return () => wide.removeEventListener("change", close);
-    }, [searchOpen]);
+        if (pastXl) setSearchOpen(false);
+    }, [pastXl]);
 
     const links: NavItem[] = (
         user

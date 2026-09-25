@@ -17,6 +17,7 @@ import Dropdown from "./ui/Dropdown";
 import { systemOptions } from "../lib/platformIcons";
 import { familyOf, systemsForGame } from "../lib/gameSystems";
 import { StatusPlates } from "./gamelog/StatusPlates";
+import Progress from "./ui/Progress";
 import DeleteGameLogPopup from "./gamelog/DeleteGameLogPopup";
 import {
     achievementFraction,
@@ -332,14 +333,12 @@ const CreateOrEditGameLogPopup = ({
                                 }
                                 className="w-22"
                             />
-                            <span className="h-2.5 flex-1 bg-surface-sunken">
-                                <span
-                                    className="block h-full bg-brand transition-[width]"
-                                    style={{
-                                        width: `${(progress ?? 0) * 100}%`,
-                                    }}
-                                />
-                            </span>
+                            <Progress
+                                size="lg"
+                                value={progress ?? 0}
+                                label="Achievements earned"
+                                className="flex-1"
+                            />
                         </div>
                     </div>
                 </div>

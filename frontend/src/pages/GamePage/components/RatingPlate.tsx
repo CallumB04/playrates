@@ -1,4 +1,5 @@
 import RatingBadge from "../../../components/ui/RatingBadge";
+import { cardClass } from "../../../components/ui/Card";
 import { formatCount, formatRating } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 import { medianOf } from "../lib/ratingBuckets";
@@ -20,7 +21,12 @@ const RatingPlate = ({ average, ratingCount, buckets }: RatingPlateProps) => {
     const median = medianOf(buckets);
 
     return (
-        <section className="grid items-center gap-6 rounded-lg border border-subtle bg-surface-raised px-5 py-5 shadow-plate sm:grid-cols-[auto_minmax(0,1fr)]">
+        <section
+            className={cardClass(
+                "grid items-center gap-6 px-5 py-5 sm:grid-cols-[auto_minmax(0,1fr)]",
+                { padding: "none" }
+            )}
+        >
             <div className="sm:border-r sm:border-subtle sm:pr-6">
                 <h2 className="text-label text-content-muted">
                     PlayRates average

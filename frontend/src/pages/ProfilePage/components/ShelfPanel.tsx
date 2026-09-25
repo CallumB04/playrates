@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { cardClass } from "../../../components/ui/Card";
 import type { GameLogWithGame } from "../../../api";
 import type { GameLogSort, Platform } from "@playrates/shared";
 import type { GameStatus } from "../../../constants/gameStatus";
@@ -83,7 +84,7 @@ const ShelfPanel = ({
                 trailing={trailing}
             />
 
-            <div className="mt-3 rounded-lg border border-subtle bg-surface-raised p-5 shadow-plate">
+            <div className={cardClass("mt-3 p-5", { padding: "none" })}>
                 {isLoading ? (
                     <div className="grid grid-cols-2 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
                         {Array.from(

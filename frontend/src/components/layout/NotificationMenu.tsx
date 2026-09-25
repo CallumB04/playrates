@@ -1,29 +1,15 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
+import { popoverClass } from "../ui/popover";
 import { Bell } from "lucide-react";
 import Modal from "../ui/Modal";
 import NotificationPanel from "../notifications/NotificationPanel";
 import { useNotifications } from "../../hooks/queries/useNotifications";
 import { cn } from "../../lib/cn";
+import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
+import { useDismiss } from "../../hooks/useDismiss";
 
 /** Past this the badge stops being a number and starts being a hint. */
 const BADGE_CAP = 9;
-
-/** Matches `sm` in the theme, where the sheet gives way to the popover. */
-const useIsPhone = (): boolean => {
-    const [isPhone, setIsPhone] = useState(
-        () => !window.matchMedia("(min-width: 640px)").matches
-    );
-
-    useEffect(() => {
-        const wide = window.matchMedia("(min-width: 640px)");
-        const sync = () => setIsPhone(!wide.matches);
-        sync();
-        wide.addEventListener("change", sync);
-        return () => wide.removeEventListener("change", sync);
-    }, []);
-
-    return isPhone;
-};
 
 /**
  * The bell, and the inbox behind it. A bottom sheet below `sm`, a popover
@@ -35,31 +21,18 @@ const useIsPhone = (): boolean => {
 const NotificationMenu = () => {
     const [open, setOpen] = useState(false);
     const wrapRef = useRef<HTMLDivElement>(null);
-    const isPhone = useIsPhone();
+    // `sm` is where the sheet gives way to the popover.
+    const isPhone = !useMediaQuery(BREAKPOINT.sm);
     const titleId = useId();
 
     const { data } = useNotifications(false);
     const unread = data?.unread ?? 0;
 
-    useEffect(() => {
-        if (!open || isPhone) return;
-
-        const onPointerDown = (event: MouseEvent) => {
-            if (!wrapRef.current?.contains(event.target as Node)) {
-                setOpen(false);
-            }
-        };
-        const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key === "Escape") setOpen(false);
-        };
-
-        document.addEventListener("mousedown", onPointerDown);
-        document.addEventListener("keydown", onKeyDown);
-        return () => {
-            document.removeEventListener("mousedown", onPointerDown);
-            document.removeEventListener("keydown", onKeyDown);
-        };
-    }, [open, isPhone]);
+    // The sheet on a phone closes itself, through Modal.
+    useDismiss([wrapRef], () => setOpen(false), {
+        enabled: open && !isPhone,
+        escape: true,
+    });
 
     const close = () => setOpen(false);
 
@@ -110,7 +83,10 @@ const NotificationMenu = () => {
                     <div
                         role="dialog"
                         aria-labelledby={titleId}
-                        className="absolute top-[calc(100%+0.6rem)] right-0 z-40 w-[24rem] animate-settle rounded-lg border border-subtle bg-surface-raised p-3 shadow-modal"
+                        className={popoverClass(
+                            "absolute top-[calc(100%+0.6rem)] right-0 z-40 w-[24rem] p-3",
+                            "menu"
+                        )}
                     >
                         <NotificationPanel
                             onNavigate={close}

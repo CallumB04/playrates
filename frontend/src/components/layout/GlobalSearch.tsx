@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from "react";
+import { popoverClass } from "../ui/popover";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { LoaderCircle, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { queryKeys, searchGames, searchProfiles } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import GameCover from "../game/GameCover";
+import LoadingSpinner from "../LoadingSpinner";
 import ProfilePicture from "../ProfilePicture";
 import { releaseYear } from "../../lib/format";
 import { cn } from "../../lib/cn";
+import { useDismiss } from "../../hooks/useDismiss";
 
 /** Three per section: enough to recognise a hit, short enough to scan. */
 const PER_SECTION = 3;
@@ -88,16 +91,10 @@ const GlobalSearch = ({ variant = "bar", onClose }: GlobalSearchProps) => {
         return () => document.removeEventListener("keydown", onKeyDown);
     }, [isOverlay]);
 
-    useEffect(() => {
-        if (!open || isOverlay) return;
-        const onPointerDown = (event: MouseEvent) => {
-            if (!wrapRef.current?.contains(event.target as Node)) {
-                setOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", onPointerDown);
-        return () => document.removeEventListener("mousedown", onPointerDown);
-    }, [open, isOverlay]);
+    // The overlay covers the screen, so there is no outside to press on.
+    useDismiss([wrapRef], () => setOpen(false), {
+        enabled: open && !isOverlay,
+    });
 
     /* The previous term's results stay on screen while the new request is out,
        so "nothing found" has to wait for the request, not an empty list. */
@@ -255,10 +252,10 @@ const GlobalSearch = ({ variant = "bar", onClose }: GlobalSearchProps) => {
                 className="min-w-0 flex-1 bg-transparent text-base text-content placeholder:text-content-muted focus:outline-none sm:text-body-sm"
             />
             {searching ? (
-                <LoaderCircle
-                    size={isOverlay ? 16 : 13}
-                    aria-hidden
-                    className="shrink-0 animate-spin text-content-muted"
+                <LoadingSpinner
+                    size={isOverlay ? "sm" : "xs"}
+                    label={null}
+                    className="text-content-muted"
                 />
             ) : (
                 !isOverlay && (
@@ -289,11 +286,7 @@ const GlobalSearch = ({ variant = "bar", onClose }: GlobalSearchProps) => {
             <Section title="People" from={0} items={rows} />
             {searching && rows.length === 0 && (
                 <li className="flex items-center gap-2 px-2.5 py-3 text-body-sm text-content-muted">
-                    <LoaderCircle
-                        size={14}
-                        aria-hidden
-                        className="animate-spin"
-                    />
+                    <LoadingSpinner size="xs" label={null} />
                     Searching…
                 </li>
             )}
@@ -316,11 +309,7 @@ const GlobalSearch = ({ variant = "bar", onClose }: GlobalSearchProps) => {
 
             {searching && rows.length === 0 ? (
                 <li className="flex items-center gap-2 px-2.5 py-3 text-body-sm text-content-muted">
-                    <LoaderCircle
-                        size={14}
-                        aria-hidden
-                        className="animate-spin"
-                    />
+                    <LoadingSpinner size="xs" label={null} />
                     Searching…
                 </li>
             ) : rows.length === 0 ? (
@@ -365,7 +354,11 @@ const GlobalSearch = ({ variant = "bar", onClose }: GlobalSearchProps) => {
             {field}
 
             {open && hasTerm && (
-                <ul className="absolute top-[calc(100%+0.4rem)] right-0 left-0 z-40 max-h-96 animate-settle overflow-y-auto rounded-md border border-subtle bg-surface-raised p-1 shadow-modal">
+                <ul
+                    className={popoverClass(
+                        "absolute top-[calc(100%+0.4rem)] right-0 left-0 z-40 max-h-96 overflow-y-auto p-1"
+                    )}
+                >
                     {results}
                 </ul>
             )}

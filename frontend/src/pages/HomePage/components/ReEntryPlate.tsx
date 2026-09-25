@@ -1,9 +1,12 @@
-import type { ReactNode } from "react";
+import { cardClass } from "../../../components/ui/Card";
 import { Link } from "react-router-dom";
 import { ArrowRight, Gamepad2, Pencil } from "lucide-react";
 import type { UserStats } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
 import { buttonClass } from "../../../components/ui/Button";
+import { chipClass } from "../../../components/ui/Chip";
+import { plateClass } from "../../../components/ui/Plate";
+import Stat from "../../../components/ui/Stat";
 import GameCover from "../../../components/game/GameCover";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import RatingBadge from "../../../components/ui/RatingBadge";
@@ -29,18 +32,6 @@ interface ReEntryPlateProps {
     onUpdateLog: () => void;
 }
 
-/** The figure leads. The label says what it is; it does not compete. */
-const Stat = ({ label, value }: { label: string; value: ReactNode }) => (
-    <div className="min-w-0">
-        <p className="truncate font-mono text-[26px] leading-none text-content">
-            {value}
-        </p>
-        <p className="mt-1.5 truncate text-label-sm text-content-muted">
-            {label}
-        </p>
-    </div>
-);
-
 /**
  * The signed-in landing: a headline, something to press, and your own year
  * down the right-hand side.
@@ -55,7 +46,9 @@ const ReEntryPlate = ({
     yearStats,
     onUpdateLog,
 }: ReEntryPlateProps) => (
-    <section className="relative overflow-hidden rounded-lg border border-subtle bg-surface-raised shadow-plate">
+    <section
+        className={cardClass("relative overflow-hidden", { padding: "none" })}
+    >
         <span
             aria-hidden
             className="pointer-events-none absolute -top-32 -right-28 size-80 rounded-full bg-brand/12 blur-3xl"
@@ -112,7 +105,10 @@ const ReEntryPlate = ({
                             <Link
                                 key={status}
                                 to={`/user/${username}?type=${status}`}
-                                className="flex min-h-11 items-center justify-center gap-2 rounded-full border border-subtle px-3.5 py-1.5 text-body-sm text-content-secondary lift hover:border-strong hover:text-content sm:min-h-0 sm:justify-start"
+                                className={chipClass(
+                                    false,
+                                    "justify-center sm:justify-start"
+                                )}
                             >
                                 <Icon
                                     size={14}
@@ -131,7 +127,11 @@ const ReEntryPlate = ({
                     <button
                         type="button"
                         onClick={onUpdateLog}
-                        className="flex w-full cursor-pointer items-center gap-3.5 rounded-md border border-subtle bg-surface-sunken/40 p-3 text-left lift hover:border-strong"
+                        className={plateClass(
+                            "pressed",
+                            "shallow",
+                            "flex w-full cursor-pointer items-center gap-3.5 p-3 text-left lift hover:border-strong"
+                        )}
                     >
                         <span className="relative shrink-0">
                             <GameCover
@@ -170,7 +170,11 @@ const ReEntryPlate = ({
                                 ? `/user/${username}?type=backlog`
                                 : "/library"
                         }
-                        className="flex w-full items-center gap-3.5 rounded-md border border-dashed border-subtle bg-surface-sunken/40 p-3 text-left lift hover:border-strong"
+                        className={plateClass(
+                            "pressed",
+                            "shallow",
+                            "flex w-full items-center gap-3.5 border-dashed p-3 text-left lift hover:border-strong"
+                        )}
                     >
                         <span className="grid aspect-3/4 w-14 shrink-0 place-items-center rounded-xs border border-dashed border-strong bg-surface-sunken/60 text-content-muted">
                             <Gamepad2 size={20} aria-hidden />
@@ -217,7 +221,7 @@ const ReEntryPlate = ({
                             value={
                                 <RatingBadge
                                     value={yearStats?.averageRating ?? null}
-                                    className="text-[26px]"
+                                    size="md"
                                 />
                             }
                         />

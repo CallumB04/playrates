@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { cardClass } from "./ui/Card";
 import { ArrowUp } from "lucide-react";
 import { SiGithub } from "@icons-pack/react-simple-icons";
 import { BRAND_MOTTO, BRAND_NAME } from "../constants/brand";
@@ -13,7 +14,7 @@ const LINKS = [
 
 const Footer = () => (
     <footer className="mx-auto mt-6 w-full max-w-[1240px] px-5 pb-10 sm:px-8 lg:px-12">
-        <div className="rounded-lg border border-subtle bg-surface-raised px-5 py-5 shadow-plate sm:px-6">
+        <div className={cardClass("px-5 py-5 sm:px-6", { padding: "none" })}>
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <p className="font-display text-xl font-bold text-content">

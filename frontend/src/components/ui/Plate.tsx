@@ -11,8 +11,9 @@ export type PlateDepth = "shallow" | "deep";
 const STATE: Record<PlateState, string> = {
     raised: "bg-surface-raised border-subtle shadow-plate",
     flat: "bg-surface-raised border-subtle",
-    // A "pressed" surface just sits flat without its rim.
-    pressed: "bg-surface-sunken border-subtle",
+    /* A well set into the surface around it, at the strength the app draws
+       one: the current game on the home page, a log's headline figures. */
+    pressed: "bg-surface-sunken/40 border-subtle",
 };
 
 export const plateClass = (

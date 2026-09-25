@@ -12,6 +12,8 @@ import { createPortal } from "react-dom";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { fieldClass } from "./Input";
+import { useDismiss } from "../../hooks/useDismiss";
+import { popoverClass } from "./popover";
 
 type IconProps = SVGProps<SVGSVGElement> & { size?: number | string };
 
@@ -116,31 +118,24 @@ const Dropdown = ({
         setActive((i) => Math.min(i, Math.max(0, shown.length - 1)));
     }, [shown.length]);
 
+    /* The menu is portalled out of the trigger, so both count as inside.
+       Escape is the keyboard handler's: a document listener would also close
+       a modal the dropdown sits in. */
+    useDismiss([wrapRef, listRef], () => setOpen(false), { enabled: open });
+
     useEffect(() => {
         if (!open) return;
 
-        const onPointerDown = (event: MouseEvent) => {
-            const target = event.target as Node;
-            if (
-                !wrapRef.current?.contains(target) &&
-                !listRef.current?.contains(target)
-            ) {
-                setOpen(false);
-            }
-        };
-
-        // Portalled, so it doesn't move with the trigger — track and close.
+        // Portalled, so it doesn't move with the trigger — track it.
         const track = () => {
             const box = wrapRef.current?.getBoundingClientRect();
             if (box) setRect(box);
         };
 
         track();
-        document.addEventListener("mousedown", onPointerDown);
         window.addEventListener("resize", track);
         window.addEventListener("scroll", track, true);
         return () => {
-            document.removeEventListener("mousedown", onPointerDown);
             window.removeEventListener("resize", track);
             window.removeEventListener("scroll", track, true);
         };
@@ -285,7 +280,7 @@ const Dropdown = ({
                                 : { top: rect.bottom + 6 }),
                         }}
                         className={cn(
-                            "z-[60] max-h-72 animate-settle overflow-y-auto rounded-md border border-subtle bg-surface-raised p-1 shadow-modal",
+                            popoverClass("z-[60] max-h-72 overflow-y-auto p-1"),
                             menuClassName
                         )}
                     >

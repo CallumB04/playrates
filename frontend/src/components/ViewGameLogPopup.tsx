@@ -1,5 +1,7 @@
 import type { GameLogWithGame } from "../api";
 import { displayStatusFor } from "../constants/gameStatus";
+import { plateClass } from "./ui/Plate";
+import Progress from "./ui/Progress";
 import {
     useGame,
     usePlatforms,
@@ -13,7 +15,6 @@ import { platformIcon, systemIcon } from "../lib/platformIcons";
 import RatingBadge from "./ui/RatingBadge";
 import AchievementRing from "./gamelog/AchievementRing";
 import { formatDate, formatHours } from "../lib/format";
-import { cn } from "../lib/cn";
 import Modal from "./ui/Modal";
 import Button, { buttonClass } from "./ui/Button";
 import StatusBadge from "./ui/StatusBadge";
@@ -120,17 +121,21 @@ const ViewGameLogPopup = ({
 
             <div className="px-5 py-5">
                 {/* The two figures worth crossing the room for. */}
-                <div className="flex items-stretch gap-5 rounded-md border border-subtle bg-surface-sunken/40 p-4">
+                <div
+                    className={plateClass(
+                        "pressed",
+                        "shallow",
+                        "flex items-stretch gap-5 p-4"
+                    )}
+                >
                     <div className="flex min-w-0 flex-1 flex-col justify-center gap-2.5">
                         <RatingBadge value={gamelog.rating} size="lg" />
-                        <span className="h-1.5 w-full overflow-hidden rounded-full bg-surface-sunken">
-                            <span
-                                className="block h-full rounded-full bg-brand transition-[width] duration-700 ease-[var(--ease-glide)]"
-                                style={{
-                                    width: `${((gamelog.rating ?? 0) / 10) * 100}%`,
-                                }}
-                            />
-                        </span>
+                        <Progress
+                            size="sm"
+                            value={(gamelog.rating ?? 0) / 10}
+                            label="Rating out of 10"
+                            className="w-full"
+                        />
                         <span className="text-label-sm text-content-muted">
                             {gamelog.rating === null
                                 ? "Not rated"
@@ -175,17 +180,12 @@ const ViewGameLogPopup = ({
                                     <span className="w-24 shrink-0 text-body-sm text-content-secondary">
                                         {label}
                                     </span>
-                                    <span className="h-2 flex-1 overflow-hidden rounded-full bg-surface-sunken">
-                                        <span
-                                            className={cn(
-                                                "block h-full rounded-full",
-                                                tone
-                                            )}
-                                            style={{
-                                                width: `${((hours ?? 0) / longest) * 100}%`,
-                                            }}
-                                        />
-                                    </span>
+                                    <Progress
+                                        value={(hours ?? 0) / longest}
+                                        label={label}
+                                        fillClassName={tone}
+                                        className="flex-1"
+                                    />
                                     <span className="w-14 shrink-0 text-right font-mono text-body-sm font-semibold text-content">
                                         {formatHours(hours)}
                                     </span>
@@ -199,7 +199,13 @@ const ViewGameLogPopup = ({
                        drawn rather than described. An end that was never
                        recorded keeps its place rather than collapsing the
                        pair into one lopsided figure. */
-                    <div className="mt-4 flex items-center gap-3 rounded-md border border-subtle bg-surface-sunken/40 px-4 py-3">
+                    <div
+                        className={plateClass(
+                            "pressed",
+                            "shallow",
+                            "mt-4 flex items-center gap-3 px-4 py-3"
+                        )}
+                    >
                         <div className="min-w-0 flex-1">
                             <p className="text-label-sm text-content-muted">
                                 Started

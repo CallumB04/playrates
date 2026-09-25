@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Check, LoaderCircle, X } from "lucide-react";
+import { Check, X } from "lucide-react";
+import LoadingSpinner from "../../components/LoadingSpinner";
 import { checkUsernameAvailable } from "../../api";
 import { useUpdateProfile } from "../../hooks/queries/useProfiles";
 import { useNotify } from "../../contexts/NotificationContext";
@@ -112,10 +113,10 @@ const UsernameRow = ({ current }: { current: string }) => {
                     />
                     <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2">
                         {availability.state === "checking" && (
-                            <LoaderCircle
-                                size={15}
-                                aria-hidden
-                                className="animate-spin text-content-muted"
+                            <LoadingSpinner
+                                size="sm"
+                                label="Checking the username"
+                                className="text-content-muted"
                             />
                         )}
                         {availability.state === "free" && (

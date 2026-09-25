@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { popoverClass } from "../../../components/ui/popover";
+import Progress from "../../../components/ui/Progress";
 import {
     GAME_STATUSES,
     PLAYED_STATUSES,
@@ -74,42 +76,24 @@ const CirculationPlate = ({
                 const count = byStatus[status] ?? 0;
                 const divided = status === "played" && played > 0;
 
-                const track = (
-                    <span className="block h-2 overflow-hidden rounded-full bg-surface-sunken">
-                        {divided ? (
-                            /* One bar, divided — the endings make up the played
-                               share rather than sitting beside it. */
-                            <span
-                                className="flex h-full"
-                                style={{ width: `${shareOf(count) * 100}%` }}
-                            >
-                                {endings
-                                    .filter((ending) => ending.count > 0)
-                                    .map((ending) => (
-                                        <span
-                                            key={ending.key}
-                                            className={cn(
-                                                "block h-full first:rounded-l-full last:rounded-r-full",
-                                                STATUS_PRESENTATION[
-                                                    ending.status
-                                                ].accent
-                                            )}
-                                            style={{
-                                                width: `${(ending.count / count) * 100}%`,
-                                            }}
-                                        />
-                                    ))}
-                            </span>
-                        ) : (
-                            <span
-                                className={cn(
-                                    "block h-full rounded-full",
-                                    accent
-                                )}
-                                style={{ width: `${shareOf(count) * 100}%` }}
-                            />
-                        )}
-                    </span>
+                /* The played bar is divided: the endings make up the played
+                   share rather than sitting beside it. */
+                const track = divided ? (
+                    <Progress
+                        label={`${label}: ${formatPercent(shareOf(count))}`}
+                        segments={endings.map((ending) => ({
+                            key: ending.key,
+                            value: shareOf(ending.count),
+                            className:
+                                STATUS_PRESENTATION[ending.status].accent,
+                        }))}
+                    />
+                ) : (
+                    <Progress
+                        value={shareOf(count)}
+                        label={`${label}: ${formatPercent(shareOf(count))}`}
+                        fillClassName={accent}
+                    />
                 );
 
                 return (
@@ -155,7 +139,9 @@ const CirculationPlate = ({
                                 {open && (
                                     <div
                                         role="tooltip"
-                                        className="absolute bottom-full left-0 z-20 mb-1 w-52 rounded-md border border-subtle bg-surface-raised p-2 shadow-modal"
+                                        className={popoverClass(
+                                            "absolute bottom-full left-0 z-20 mb-1 w-52 p-2"
+                                        )}
                                     >
                                         <p className="px-1 pb-1.5 text-label text-content-muted">
                                             How it ended

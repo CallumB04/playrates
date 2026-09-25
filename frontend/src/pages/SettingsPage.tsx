@@ -30,6 +30,7 @@ import { FALLBACK_ACCENT } from "@playrates/shared";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
 import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
 import Toggle from "../components/ui/Toggle";
 import EmptyPlate from "../components/ui/EmptyPlate";
 import { Input, Textarea } from "../components/ui/Input";
@@ -89,10 +90,12 @@ const Row = ({ label, help, soon, children }: RowProps) => (
     </div>
 );
 
-const Panel = ({ children }: { children: ReactNode }) => (
-    <section className="overflow-hidden rounded-lg border border-subtle bg-surface-raised shadow-plate">
+/* Its rows run edge to edge with a rule between them, so the card sets no
+   padding of its own. */
+const SettingsCard = ({ children }: { children: ReactNode }) => (
+    <Card padding="none" className="overflow-hidden">
         {children}
-    </section>
+    </Card>
 );
 
 const SettingsPage = () => {
@@ -175,7 +178,8 @@ const SettingsPage = () => {
             onError: () => notify("Couldn't save your picture", "error"),
         };
         if (choice.kind === "picked") updateAvatar.mutate(choice.image, done);
-        else if (choice.kind === "removed") removeAvatar.mutate(undefined, done);
+        else if (choice.kind === "removed")
+            removeAvatar.mutate(undefined, done);
     };
 
     /* Toggles save immediately and roll back on failure, so the control never
@@ -206,7 +210,7 @@ const SettingsPage = () => {
 
     const panels: Record<string, ReactNode> = {
         account: (
-            <Panel>
+            <SettingsCard>
                 <Row label="Username">
                     <UsernameRow current={user.username} />
                 </Row>
@@ -265,11 +269,11 @@ const SettingsPage = () => {
                         aria-label="Time zone"
                     />
                 </Row>
-            </Panel>
+            </SettingsCard>
         ),
 
         profile: (
-            <Panel>
+            <SettingsCard>
                 <Row label="Bio" help={`${bio.length} of 160 characters`}>
                     <Textarea
                         rows={3}
@@ -302,7 +306,12 @@ const SettingsPage = () => {
                         label="Profile Colour"
                         value={accent}
                         onChange={(next) =>
-                            saveToggle({ accent: next }, next, setAccent, accent)
+                            saveToggle(
+                                { accent: next },
+                                next,
+                                setAccent,
+                                accent
+                            )
                         }
                         disabled={update.isPending}
                     />
@@ -325,11 +334,11 @@ const SettingsPage = () => {
                         disabled={update.isPending}
                     />
                 </Row>
-            </Panel>
+            </SettingsCard>
         ),
 
         content: (
-            <Panel>
+            <SettingsCard>
                 <Row
                     label="Sexual content"
                     help="Games tagged as sexually explicit stay out of the library, search and every rail."
@@ -364,29 +373,29 @@ const SettingsPage = () => {
                         onChange={setPreference}
                     />
                 </Row>
-            </Panel>
+            </SettingsCard>
         ),
 
         notifications: (
-            <Panel>
+            <SettingsCard>
                 <Row label="Friend requests" soon>
                     <Toggle checked={false} onChange={() => {}} label="Off" />
                 </Row>
-            </Panel>
+            </SettingsCard>
         ),
 
         connections: (
-            <Panel>
+            <SettingsCard>
                 <Row label="Steam" soon>
                     <Button variant="secondary" size="sm">
                         Connect
                     </Button>
                 </Row>
-            </Panel>
+            </SettingsCard>
         ),
 
         "account-closure": (
-            <section className="overflow-hidden rounded-lg border border-danger/40 bg-surface-raised shadow-plate">
+            <Card padding="none" tone="danger" className="overflow-hidden">
                 <div className="flex flex-wrap items-center gap-5 px-5 py-5">
                     <p className="max-w-[60ch] flex-1 text-body-sm text-content-secondary">
                         Your {formatCount(stats?.logCount ?? 0)} logs and
@@ -405,7 +414,7 @@ const SettingsPage = () => {
                         Delete account
                     </Button>
                 </div>
-            </section>
+            </Card>
         ),
     };
 

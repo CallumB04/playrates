@@ -1,9 +1,12 @@
 import { Palette } from "lucide-react";
+import { cardClass } from "../../../components/ui/Card";
 import type { Profile, UserStats } from "@playrates/shared";
 import type { ReactNode } from "react";
 import ProfilePicture from "../../../components/ProfilePicture";
 import PresenceDot from "../../../components/ui/PresenceDot";
-import Skeleton from "../../../components/ui/Skeleton";
+import Stat from "../../../components/ui/Stat";
+import Progress from "../../../components/ui/Progress";
+import UserStatus from "../../../components/UserStatus";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import {
     GAME_STATUSES,
@@ -38,23 +41,22 @@ const ShelfBar = ({
 
     return (
         <div>
-            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-surface-sunken">
-                {GAME_STATUSES.map((status) => {
+            <Progress
+                size="lg"
+                label={GAME_STATUSES.map(
+                    (status) =>
+                        `${STATUS_PRESENTATION[status].label}: ${byStatus[status] ?? 0}`
+                ).join(", ")}
+                segments={GAME_STATUSES.map((status) => {
                     const count = byStatus[status] ?? 0;
-                    if (count === 0) return null;
-                    return (
-                        <span
-                            key={status}
-                            className={cn(
-                                "h-full",
-                                STATUS_PRESENTATION[status].accent
-                            )}
-                            style={{ width: `${(count / total) * 100}%` }}
-                            title={`${STATUS_PRESENTATION[status].label}: ${count}`}
-                        />
-                    );
+                    return {
+                        key: status,
+                        value: count / total,
+                        className: STATUS_PRESENTATION[status].accent,
+                        title: `${STATUS_PRESENTATION[status].label}: ${count}`,
+                    };
                 })}
-            </div>
+            />
 
             <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5">
                 {GAME_STATUSES.map((status) => {
@@ -80,27 +82,6 @@ const ShelfBar = ({
     );
 };
 
-/* A figure nobody has fetched yet is not zero, and not an em dash either —
-   both read as an answer. */
-const Figure = ({
-    label,
-    value,
-    loading,
-}: {
-    label: string;
-    value: ReactNode;
-    loading: boolean;
-}) => (
-    <div>
-        {loading ? (
-            <Skeleton className="h-[19px] w-14" />
-        ) : (
-            <p className="font-mono text-figure-lg text-content">{value}</p>
-        )}
-        <p className="mt-1 text-label-sm text-content-muted">{label}</p>
-    </div>
-);
-
 /** The profile header: four figures and the shelf bar. */
 const MemberFileHeader = ({
     profile,
@@ -118,7 +99,11 @@ const MemberFileHeader = ({
     );
 
     return (
-        <section className="relative overflow-hidden rounded-lg border border-subtle bg-surface-raised shadow-plate">
+        <section
+            className={cardClass("relative overflow-hidden", {
+                padding: "none",
+            })}
+        >
             {/* A band behind the avatar, so a profile opens with something
                 other than a white rectangle. It carries the profile's colour,
                 which is also the avatar's. */}
@@ -173,25 +158,7 @@ const MemberFileHeader = ({
                     <h1 className="font-display text-title text-content">
                         {profile.username}
                     </h1>
-                    <span
-                        className={cn(
-                            "flex items-center gap-1.5 text-label",
-                            profile.online
-                                ? "text-success"
-                                : "text-content-muted"
-                        )}
-                    >
-                        <span
-                            aria-hidden
-                            className={cn(
-                                "size-[7px] rounded-full",
-                                profile.online
-                                    ? "bg-success"
-                                    : "bg-content-muted"
-                            )}
-                        />
-                        {profile.online ? "Online" : "Offline"}
-                    </span>
+                    <UserStatus online={profile.online} />
                     <span className="text-label text-content-muted">
                         Member since {formatMonthYear(profile.createdAt)}
                     </span>
@@ -205,12 +172,12 @@ const MemberFileHeader = ({
 
                 <div className="mt-5 grid gap-5 border-t border-subtle pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-8">
                     <div className="flex flex-wrap gap-x-7 gap-y-4">
-                        <Figure
+                        <Stat
                             label="Hours played"
                             loading={!stats}
                             value={formatHours(stats?.hoursPlayed)}
                         />
-                        <Figure
+                        <Stat
                             label="Average rating"
                             loading={!stats}
                             value={
@@ -220,12 +187,12 @@ const MemberFileHeader = ({
                                 />
                             }
                         />
-                        <Figure
+                        <Stat
                             label="Reviews"
                             loading={reviewCount === undefined}
                             value={formatCount(reviewCount)}
                         />
-                        <Figure
+                        <Stat
                             label="Friends"
                             loading={friendCount === undefined}
                             value={formatCount(friendCount)}

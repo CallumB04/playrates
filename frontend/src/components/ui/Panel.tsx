@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cardClass } from "./Card";
 import { cn } from "../../lib/cn";
 
 /**
@@ -24,11 +25,10 @@ const Panel = ({
     children,
 }: PanelProps) => (
     <section
-        className={cn(
-            "overflow-hidden rounded-lg border bg-surface-raised shadow-plate",
-            accent ? "border-brand/30" : "border-subtle",
-            className
-        )}
+        className={cardClass(cn("overflow-hidden", className), {
+            padding: "none",
+            tone: accent ? "accent" : "default",
+        })}
     >
         <header
             className={cn(
