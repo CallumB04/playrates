@@ -1,10 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Game } from "@playrates/shared";
-import {
-    formatCount,
-    formatReleaseShort,
-    releaseYear,
-} from "../../lib/format";
+import { formatCount, formatReleaseShort, releaseYear } from "../../lib/format";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import {
@@ -14,6 +10,7 @@ import {
     useSiteStats,
 } from "../../hooks/queries/useGames";
 import {
+    useMyGameLog,
     useMyGameLogIds,
     useMyGameLogs,
     useUserStats,
@@ -22,6 +19,7 @@ import { useFriendActivity } from "../../hooks/queries/useFriends";
 import { useRecentReviews } from "../../hooks/queries/useReviews";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
+import ViewGameLogPopup from "../../components/ViewGameLogPopup";
 import { useGameLogMutations } from "../../hooks/queries/useGameLogs";
 import { useNotify } from "../../contexts/NotificationContext";
 import {
@@ -47,6 +45,32 @@ const releaseWindow = () => {
     return { releasedAfter: iso(from), releasedBefore: iso(now) };
 };
 
+/** The home page only holds which games you have logged, not the logs
+ *  themselves, so the one being opened is fetched as it opens. */
+const LogViewer = ({
+    gameId,
+    username,
+    onClose,
+    onEdit,
+}: {
+    gameId: number;
+    username: string;
+    onClose: () => void;
+    onEdit: () => void;
+}) => {
+    const { data: log } = useMyGameLog(gameId);
+    if (!log) return null;
+
+    return (
+        <ViewGameLogPopup
+            gamelog={log}
+            ownerUsername={username}
+            closePopup={onClose}
+            primaryAction={{ label: "Edit", onSelect: onEdit }}
+        />
+    );
+};
+
 const HomePage = () => {
     /* No name of its own: the homepage keeps the site title. */
     usePageTitle();
@@ -54,6 +78,7 @@ const HomePage = () => {
     const { user } = useAuth();
     const { openSignup, openLogin } = useAccountForm();
     const [logging, setLogging] = useState<number | null>(null);
+    const [viewing, setViewing] = useState<number | null>(null);
 
     const { data: siteStats } = useSiteStats();
     const { data: platforms } = usePlatforms();
@@ -143,9 +168,14 @@ const HomePage = () => {
         if (logByGameId.has(game.id)) {
             return [
                 {
-                    key: "edit",
-                    label: "Edit your log",
+                    key: "view",
+                    label: "View your log",
                     tone: "primary",
+                    onSelect: () => setViewing(game.id),
+                },
+                {
+                    key: "edit",
+                    label: "Edit",
                     onSelect: () => setLogging(game.id),
                 },
             ];
@@ -257,6 +287,18 @@ const HomePage = () => {
                 statusFor={statusFor}
                 footValueFor={(game) => formatReleaseShort(game.releaseDate)}
             />
+
+            {viewing !== null && user && (
+                <LogViewer
+                    gameId={viewing}
+                    username={user.username}
+                    onClose={() => setViewing(null)}
+                    onEdit={() => {
+                        setViewing(null);
+                        setLogging(viewing);
+                    }}
+                />
+            )}
 
             {logging !== null && (
                 <CreateOrEditGameLogPopup
