@@ -76,7 +76,11 @@ const RecentReviews = ({ reviews, isLoading, isOwner }: RecentReviewsProps) => {
                         <GameCover
                             coverUrl={review.game.coverUrl}
                             title={review.game.title}
-                            className="aspect-3/4 w-11 shrink-0 overflow-hidden rounded-xs shadow-cover"
+                            /* self-start: the row stretches its children to
+                               the review's height by default, which overrides
+                               the aspect ratio — a long review made a cover
+                               three times as tall as it is wide. */
+                            className="aspect-3/4 w-11 shrink-0 self-start overflow-hidden rounded-xs shadow-cover"
                         />
 
                         <span className="min-w-0 flex-1">
