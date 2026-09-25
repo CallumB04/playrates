@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   htmlToText,
+  isRawgBoilerplate,
+  toDescription,
   toExternalGame,
   type RawgGame,
 } from "../../src/providers/games/rawg/rawg.mapper.js";
@@ -598,5 +600,50 @@ describe("htmlToText", () => {
 
   it("does not take a <link> for a list item", () => {
     expect(htmlToText('<link rel="x"><p>Just prose.</p>')).toBe("Just prose.");
+  });
+});
+
+/* All three are RAWG's own words, written for games with no description of
+   their own, and taken from our catalogue as they arrived. */
+describe("RAWG's generated descriptions", () => {
+  const generated = {
+    "Donkey Kong Bananza":
+      'Donkey Kong Bananza is an adventure game. It came out on 17-07-2025. Most rawgers rated the game as "Exceptional".\nDonkey Kong Bananza is available on Nintendo Switch. You can purchase the game on Nintendo eShop.',
+    "Warcraft 2: Beyond the Dark Portal":
+      'Warcraft 2: Beyond the Dark Portal is a strategy game developed by Cyberlore Studios. It was originally released in 1996. It was published by Blizzard Entertainment. Most rawgers rated the game as "Recommended".\nWarcraft 2: Beyond the Dark Portal is available on PlayStation and PC.',
+    "Elden Ring - The Unalloyed Dream":
+      'Elden Ring - The Unalloyed Dream is a RPG game developed by Speedius678. It came out on 05-10-2022. The game is rated as "Skip" on RAWG.\nYou can play Elden Ring - The Unalloyed Dream on macOS and PC. The game is sold via itch.io.',
+  };
+
+  for (const [name, text] of Object.entries(generated)) {
+    it(`leaves ${name} with no description rather than RAWG's`, () => {
+      expect(
+        toDescription({ id: 1, slug: "x", name, description_raw: text }),
+      ).toBe("");
+    });
+  }
+
+  it("keeps a developer whose name carries a full stop", () => {
+    expect(
+      isRawgBoilerplate(
+        "Mario Kart World is a racing game developed by Nintendo Co., Ltd. It came out on 05-06-2025.",
+      ),
+    ).toBe(true);
+  });
+
+  /* The rule is every sentence, not any sentence: prose that opens the way
+     the template does is still prose. */
+  it("keeps a real description that opens the way the template does", () => {
+    const real =
+      "Hades is a rogue-like dungeon crawler game. Defy the god of the dead as you hack and slash out of the Underworld.";
+
+    expect(isRawgBoilerplate(real)).toBe(false);
+    expect(
+      toDescription({ id: 1, slug: "hades", name: "Hades", description_raw: real }),
+    ).toBe(real);
+  });
+
+  it("treats an empty description as nothing to strip", () => {
+    expect(isRawgBoilerplate("")).toBe(false);
   });
 });

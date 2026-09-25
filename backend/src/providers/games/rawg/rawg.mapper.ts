@@ -246,6 +246,51 @@ export const htmlToText = (html: string): string =>
   spaceRunOnSentences(tidy(stripHtml(html)));
 
 /**
+ * RAWG writes a description of its own for a game that has none, assembled
+ * from fields the page already shows: "Donkey Kong Bananza is an adventure
+ * game. It came out on 17-07-2025. Most rawgers rated the game as
+ * "Exceptional"." It speaks of RAWG's users and RAWG's ratings, which on
+ * PlayRates is nonsense, and the rest duplicates the details beside it.
+ *
+ * Recognised by every sentence being one of the template's rather than by any
+ * one phrase: the wording varies ("on RAWG" for "rawgers", "sold via" for
+ * "purchase the game on"), and a real description that happens to open
+ * "X is a strategy game" still has sentences of its own.
+ */
+const TEMPLATE_SENTENCES = [
+  /^.+ is an? .+ game( developed by .+)?\.$/i,
+  /^It came out on .+\.$/i,
+  /^It was originally released in .+\.$/i,
+  /^It was published by .+\.$/i,
+  /^Most rawgers rated the game as ".+"\.$/i,
+  /^The game is rated as ".+" on RAWG\.$/i,
+  /^.+ is available on .+\.$/i,
+  /^You can play .+ on .+\.$/i,
+  /^You can purchase the game on .+\.$/i,
+  /^The game is sold via .+\.$/i,
+];
+
+/* The template's sentences are short. Past this a sentence is prose, and not
+   worth three unbounded wildcards backtracking across it. */
+const MAX_TEMPLATE_SENTENCE = 300;
+
+export const isRawgBoilerplate = (text: string): boolean => {
+  const sentences = text
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+
+  return (
+    sentences.length > 0 &&
+    sentences.every(
+      (sentence) =>
+        sentence.length <= MAX_TEMPLATE_SENTENCE &&
+        TEMPLATE_SENTENCES.some((pattern) => pattern.test(sentence)),
+    )
+  );
+};
+
+/**
  * The description as it should read. RAWG's plain text usually carries the
  * paragraphs; where it has been flattened upstream, the HTML sometimes still
  * has the block tags, so that is worth preferring.
@@ -260,7 +305,8 @@ export const toDescription = (game: RawgGame): string => {
   const chosen =
     !fromRaw.includes("\n") && fromHtml.includes("\n") ? fromHtml : fromRaw;
 
-  return spaceRunOnSentences(chosen || fromHtml);
+  const text = spaceRunOnSentences(chosen || fromHtml);
+  return isRawgBoilerplate(text) ? "" : text;
 };
 
 /**
