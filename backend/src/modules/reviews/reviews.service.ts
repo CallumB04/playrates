@@ -11,6 +11,7 @@ import { paginate, toRange } from "../../lib/pagination.js";
 import { isOnline, toAccent } from "../profiles/profiles.mapper.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type { GamesRepository } from "../games/games.repository.js";
+import type { GameLogsRepository } from "../game-logs/gameLogs.repository.js";
 import type {
   ReviewRowJoined,
   ReviewsRepository,
@@ -29,6 +30,7 @@ export const createReviewsService = (
   repo: ReviewsRepository,
   profiles: ProfilesRepository,
   games: GamesRepository,
+  gameLogs: GameLogsRepository,
 ) => {
   /** Opt-in, so signed out and unknown both mean no. */
   const canSeeExplicit = async (viewerId?: string): Promise<boolean> =>
@@ -185,6 +187,12 @@ export const createReviewsService = (
     ): Promise<{ review: Review; created: boolean }> {
       const game = await games.findById(gameId);
       if (!game) throw AppError.notFound("Game");
+      /* A review is written from a log and shown beside its rating and
+         hours, and it goes when the log does. Without one there is nothing
+         for it to hang off. */
+      if (!(await gameLogs.findByUserAndGame(userId, gameId))) {
+        throw AppError.validation("Log this game before reviewing it");
+      }
 
       const { row, created } = await repo.upsert(userId, gameId, {
         body: input.body,

@@ -568,7 +568,14 @@ export const createInMemoryRepos = (
         return withGame(log);
       },
       async remove(id) {
+        const log = state.gameLogs.find((l) => l.id === id);
         state.gameLogs = state.gameLogs.filter((l) => l.id !== id);
+        // the game_logs_delete_review trigger
+        if (log) {
+          state.reviews = state.reviews.filter(
+            (r) => !(r.user_id === log.user_id && r.game_id === log.game_id),
+          );
+        }
       },
       async count() {
         return state.gameLogs.length;
