@@ -730,16 +730,50 @@
         outline-offset: 2px;
     }
 
+    /* A spoiler in a message: a solid cover over transparent text, lifted
+       to a faint tint on hover or once pressed open, so the spoiled part
+       still stands apart from the rest of the sentence. */
+    .spoiler {
+        cursor: pointer;
+        border-radius: 0.25rem;
+        padding: 0 0.125rem;
+        background: color-mix(in srgb, var(--content-muted) 88%, transparent);
+        color: transparent;
+        box-decoration-break: clone;
+        transition:
+            background-color 160ms var(--ease-glide),
+            color 160ms var(--ease-glide);
+    }
+
+    .spoiler * {
+        color: transparent;
+    }
+
+    .spoiler:hover,
+    .spoiler[data-shown] {
+        background: color-mix(in srgb, var(--content-muted) 20%, transparent);
+        color: inherit;
+    }
+
+    .spoiler:hover *,
+    .spoiler[data-shown] * {
+        color: inherit;
+    }
+
     /* In the editor a spoiler stays readable, since it is the author's own
-       words; the stripes say it will be covered for everyone else. */
+       words: brand-coloured, on stripes, with a dashed edge, so it is plain
+       which words everyone else will find covered. */
     .rich-text.ProseMirror span[data-spoiler] {
         border-radius: 0.25rem;
         padding: 0 0.125rem;
+        color: var(--brand);
         background: repeating-linear-gradient(
             -45deg,
-            color-mix(in srgb, var(--content-muted) 22%, transparent) 0 6px,
-            color-mix(in srgb, var(--content-muted) 10%, transparent) 6px 12px
+            color-mix(in srgb, var(--brand) 22%, transparent) 0 5px,
+            color-mix(in srgb, var(--brand) 9%, transparent) 5px 10px
         );
+        outline: 1px dashed color-mix(in srgb, var(--brand) 55%, transparent);
+        outline-offset: 1px;
         box-decoration-break: clone;
     }
 

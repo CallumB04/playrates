@@ -41,11 +41,11 @@ interface ReplyTarget {
     to: string | null;
 }
 
-/** On the thread creator's replies. Not on the opening message, where it
- *  would say the obvious. */
-const CreatorBadge = () => (
+/** On the replies of whoever started the thread. Not on the opening
+ *  message, where it would say the obvious. */
+const OriginalAuthorBadge = () => (
     <span className="rounded-xs bg-brand-subtle px-1.5 py-px text-stamp font-semibold tracking-wider text-brand uppercase">
-        Creator
+        Original author
     </span>
 );
 
@@ -103,7 +103,7 @@ const ThreadPage = () => {
     const creatorId = data.thread.author?.id;
     const badgeFor = (message: CommunityMessage) =>
         !message.isOpening && creatorId && message.author?.id === creatorId ? (
-            <CreatorBadge />
+            <OriginalAuthorBadge />
         ) : undefined;
 
     const actions: MessageActions = {

@@ -75,7 +75,7 @@ describe("RichTextView", () => {
         expect(container).toHaveTextContent("<script>alert(1)</script>");
     });
 
-    it("covers a run of spoiled words as one, until it is pressed", async () => {
+    it("covers a run of spoiled words as one, held open by a press", async () => {
         const doc: RichTextDoc = {
             type: "doc",
             content: [
@@ -107,9 +107,14 @@ describe("RichTextView", () => {
 
         await userEvent.click(covers[0]!);
 
-        expect(screen.queryByRole("button")).toBeNull();
+        // Held open: the words are read out, and pressing again covers them.
+        const held = screen.getByRole("button", { pressed: true });
+        expect(held).toHaveAttribute("data-shown");
+        expect(held).toHaveTextContent("the king was the ghost");
+
+        await userEvent.click(held);
         expect(
-            screen.getByText("was the ghost", { exact: false })
-        ).toBeVisible();
+            screen.getByRole("button", { name: "Spoiler. Press to reveal" })
+        ).not.toHaveAttribute("data-shown");
     });
 });
