@@ -44,15 +44,20 @@ const WelcomeContent = ({ onNavigate }: ContentProps<WelcomeNotification>) => (
     <>
         <p className={TITLE}>Welcome to {BRAND_NAME}</p>
         <p className={BODY}>
-            {BRAND_PITCH.lead}{" "}
-            <Link
-                to="/community"
-                onClick={onNavigate}
-                className="text-brand underline-offset-2 hover:underline"
-            >
-                {BRAND_PITCH.community}
-            </Link>
-            {BRAND_PITCH.tail}
+            {BRAND_PITCH.map((part) =>
+                part.to ? (
+                    <Link
+                        key={part.text}
+                        to={part.to}
+                        onClick={onNavigate}
+                        className="text-brand underline-offset-2 hover:underline"
+                    >
+                        {part.text}
+                    </Link>
+                ) : (
+                    part.text
+                )
+            )}
         </p>
     </>
 );

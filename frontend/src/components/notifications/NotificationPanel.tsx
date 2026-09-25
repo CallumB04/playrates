@@ -43,7 +43,7 @@ const NotificationPanel = ({
             <div className="flex items-center justify-between gap-3 pr-11 sm:pr-0">
                 <h2
                     id={titleId}
-                    className="font-display text-section text-content"
+                    className="font-display text-lg font-semibold text-content"
                 >
                     Notifications
                 </h2>

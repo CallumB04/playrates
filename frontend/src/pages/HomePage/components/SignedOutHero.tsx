@@ -7,7 +7,7 @@ import { formatCount } from "../../../lib/format";
 import {
     BRAND_MOTTO,
     BRAND_NAME,
-    BRAND_PITCH,
+    BRAND_PITCH_TEXT,
 } from "../../../constants/brand";
 
 interface SignedOutHeroProps {
@@ -43,8 +43,7 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
 
             <p className="mt-4 max-w-[48ch] text-[17px] leading-relaxed text-content-secondary">
                 <span className="text-content">{BRAND_MOTTO}.</span>{" "}
-                {BRAND_PITCH.lead} {BRAND_PITCH.community}
-                {BRAND_PITCH.tail}
+                {BRAND_PITCH_TEXT}
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
