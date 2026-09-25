@@ -37,4 +37,5 @@ export const toMyProfile = (row: ProfileRow, now = Date.now()): MyProfile => ({
   showSexualContent: row.show_sexual_content,
   timezone: row.timezone,
   hideOnline: row.hide_online,
+  onboardedAt: row.onboarded_at,
 });

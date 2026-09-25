@@ -125,6 +125,17 @@ export const createProfilesService = (
     return toMyProfile(await repo.update(callerId, patch));
   },
 
+  /** The first-login welcome has been seen. Keeps the first time it was, so a
+   *  second tab closing its copy does not move the date. */
+  async markOnboarded(callerId: string): Promise<MyProfile> {
+    const row = await repo.findById(callerId);
+    if (!row) throw AppError.notFound("Profile");
+    if (row.onboarded_at) return toMyProfile(row);
+    return toMyProfile(
+      await repo.update(callerId, { onboarded_at: new Date().toISOString() }),
+    );
+  },
+
   async heartbeat(callerId: string): Promise<void> {
     await repo.touchLastSeen(callerId);
   },

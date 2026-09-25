@@ -27,6 +27,8 @@ export const buildProfile = (
   timezone: "UTC",
   hide_online: false,
   accent: "indigo",
+  // An account from before the welcome existed; a new one overrides to null.
+  onboarded_at: LONG_AGO,
   last_seen_at: NOW,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,

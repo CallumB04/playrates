@@ -3,6 +3,7 @@ import type { Profile, UpdateProfileInput } from "@playrates/shared";
 import {
     deleteMyAvatar,
     fetchProfileByUsername,
+    markOnboarded,
     queryKeys,
     updateMyProfile,
     uploadMyAvatar,
@@ -44,6 +45,15 @@ export const useRemoveAvatar = () => {
 
     return useMutation({
         mutationFn: deleteMyAvatar,
+        onSuccess: (profile) => seedProfile(queryClient, profile),
+    });
+};
+
+export const useMarkOnboarded = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: markOnboarded,
         onSuccess: (profile) => seedProfile(queryClient, profile),
     });
 };

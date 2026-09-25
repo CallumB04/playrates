@@ -80,4 +80,6 @@ export interface MyProfile extends Profile {
   /** IANA zone name. Timestamps render in this; dates you picked do not move. */
   timezone: string;
   hideOnline: boolean;
+  /** When the first-login welcome was dismissed. Null until it has been. */
+  onboardedAt: string | null;
 }

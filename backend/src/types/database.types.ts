@@ -20,6 +20,8 @@ export interface ProfileRow {
   hide_online: boolean;
   /** Chosen profile colour. Null falls back to the hash of the username. */
   accent: string | null;
+  /** When the first-login welcome was dismissed. Null shows it. */
+  onboarded_at: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -51,6 +51,12 @@ export const deleteMyAvatar = async (): Promise<MyProfile> => {
 };
 
 /** Pushes last_seen_at forward. Nothing else writes it. */
+/** The first-login welcome has been seen, and should not show again. */
+export const markOnboarded = async (): Promise<MyProfile> => {
+    const { data } = await api.post<MyProfile>("/profiles/me/onboarded");
+    return data;
+};
+
 export const sendHeartbeat = async (): Promise<void> => {
     await api.post("/profiles/me/heartbeat");
 };

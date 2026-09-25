@@ -11,6 +11,7 @@ import {
   baseSeed,
   buildFriendship,
   buildGameLog,
+  buildProfile,
   buildReview,
 } from "../helpers/fixtures.js";
 
@@ -403,5 +404,72 @@ describe("profile picture", () => {
 
     expect(response.status).toBe(422);
     expect(state.profiles.find((p) => p.id === USER_A)?.avatar_url).toBeNull();
+  });
+});
+
+describe("the first-login welcome", () => {
+  const newAccount = () => ({
+    ...baseSeed(),
+    profiles: [
+      buildProfile({ onboarded_at: null }),
+      buildProfile({ id: USER_B, username: "frienduser" }),
+    ],
+  });
+
+  it("is still owed to an account that has not dismissed it", async () => {
+    const { app } = buildTestApp({ seed: newAccount() });
+
+    const response = await request(app)
+      .get("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.body.onboardedAt).toBeNull();
+  });
+
+  it("is marked as seen once dismissed", async () => {
+    const { app, state } = buildTestApp({ seed: newAccount() });
+
+    const response = await request(app)
+      .post("/api/v1/profiles/me/onboarded")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(200);
+    expect(response.body.onboardedAt).not.toBeNull();
+    expect(state.profiles[0]!.onboarded_at).not.toBeNull();
+  });
+
+  /* Two tabs can each have the welcome open; closing the second must not
+     move the date the first one set. */
+  it("keeps the first time it was seen", async () => {
+    const { app, state } = buildTestApp({ seed: newAccount() });
+    const dismiss = () =>
+      request(app)
+        .post("/api/v1/profiles/me/onboarded")
+        .set("Authorization", authHeader(USER_A));
+
+    const first = (await dismiss()).body.onboardedAt;
+    await new Promise((r) => setTimeout(r, 5));
+    const second = (await dismiss()).body.onboardedAt;
+
+    expect(second).toBe(first);
+    expect(state.profiles[0]!.onboarded_at).toBe(first);
+  });
+
+  it("is owed to nobody who was here before it existed", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .get("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.body.onboardedAt).not.toBeNull();
+  });
+
+  it("requires a signed-in caller", async () => {
+    const { app } = buildTestApp({ seed: newAccount() });
+
+    const response = await request(app).post("/api/v1/profiles/me/onboarded");
+
+    expect(response.status).toBe(401);
   });
 });

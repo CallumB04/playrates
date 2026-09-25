@@ -96,6 +96,10 @@ export const createProfilesRouter = ({
     res.json(await service.clearAvatar(callerId(req)));
   });
 
+  router.post("/me/onboarded", requireAuth, async (req, res) => {
+    res.json(await service.markOnboarded(callerId(req)));
+  });
+
   router.post("/me/heartbeat", requireAuth, async (req, res) => {
     await service.heartbeat(callerId(req));
     res.status(204).end();
