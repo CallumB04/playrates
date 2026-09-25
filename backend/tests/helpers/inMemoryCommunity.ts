@@ -1,4 +1,5 @@
-import { TRENDING_WINDOW_DAYS } from "@playrates/shared";
+import { TRENDING_WINDOW_DAYS, toPlainText } from "@playrates/shared";
+import type { RichTextDoc } from "@playrates/shared";
 import type {
   CommunityRepository,
   MessageCardRow,
@@ -95,6 +96,20 @@ export const createInMemoryCommunity = (
 
   const cards = () => state.communityThreads.flatMap((t) => card(t.id) ?? []);
 
+  // community_thread_search: the title, the game, or a standing message.
+  const matches = (c: ThreadCardRow, search: string) => {
+    const term = search.toLowerCase();
+    return (
+      c.title.toLowerCase().includes(term) ||
+      (c.game_title ?? "").toLowerCase().includes(term) ||
+      live(c.id).some((m) =>
+        toPlainText(m.body as RichTextDoc)
+          .toLowerCase()
+          .includes(term),
+      )
+    );
+  };
+
   const insert = (
     row: Omit<
       CommunityMessageRow,
@@ -119,6 +134,7 @@ export const createInMemoryCommunity = (
     async listThreads({
       gameId,
       participantId,
+      search,
       sort,
       from,
       to,
@@ -134,6 +150,7 @@ export const createInMemoryCommunity = (
         .filter((c) => c.subject_kind === "game")
         .filter((c) => gameId === undefined || c.game_id === gameId)
         .filter((c) => !participantId || joined.has(c.id))
+        .filter((c) => !search || matches(c, search))
         .filter((c) => showSexualContent || !c.game_has_sexual_content)
         .sort((a, b) => b[key].localeCompare(a[key]) || b.id - a.id);
       return { rows: rows.slice(from, to + 1), total: rows.length };
@@ -252,7 +269,21 @@ export const createInMemoryCommunity = (
       m.deleted_at = new Date().toISOString();
     },
 
+    async listBodiesByAuthor(userId) {
+      return state.communityMessages
+        .filter((m) => m.author_id === userId && !m.deleted_at)
+        .map((m) => m.body);
+    },
+
     async deleteThread(id) {
+      // the community_threads_clear_notifications trigger
+      state.notifications = state.notifications.filter(
+        (n) =>
+          !(
+            ["community_reply", "community_thread_activity"].includes(n.kind) &&
+            n.data.threadId === id
+          ),
+      );
       const gone = new Set(
         state.communityMessages
           .filter((m) => m.thread_id === id)

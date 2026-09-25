@@ -10,6 +10,19 @@ export const friendRequestKey = (actorId: string): string =>
 export const friendAcceptedKey = (actorId: string): string =>
   `friend_accepted:${actorId}`;
 
+/** One activity notification per thread per person. */
+export const communityThreadKey = (threadId: number): string =>
+  `community_thread:${threadId}`;
+
+/** One per reply, so deleting the reply can take its notification too. */
+export const communityReplyKey = (messageId: number): string =>
+  `community_reply:${messageId}`;
+
+const num = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? value : null;
+const str = (value: unknown): string | null =>
+  typeof value === "string" ? value : null;
+
 /** Resolves the caller's current relationship with an actor. Supplied by the
  *  service so the mapper stays pure. */
 export type RelationLookup = (actorId: string) => FriendRelation | null;
@@ -53,6 +66,46 @@ export const toNotification = (
         kind: "friend_accepted",
         actor: toFriendUser(row.actor, now),
       };
+
+    case "community_reply": {
+      const threadId = num(row.data.threadId);
+      const messageId = num(row.data.messageId);
+      const threadTitle = str(row.data.threadTitle);
+      if (
+        !row.actor ||
+        threadId === null ||
+        messageId === null ||
+        !threadTitle
+      ) {
+        return { ...base, kind: "unknown" };
+      }
+      return {
+        ...base,
+        kind: "community_reply",
+        actor: toFriendUser(row.actor, now),
+        threadId,
+        threadTitle,
+        messageId,
+        excerpt: str(row.data.excerpt) ?? "",
+      };
+    }
+
+    case "community_thread_activity": {
+      const threadId = num(row.data.threadId);
+      const threadTitle = str(row.data.threadTitle);
+      if (threadId === null || !threadTitle) {
+        return { ...base, kind: "unknown" };
+      }
+      return {
+        ...base,
+        kind: "community_thread_activity",
+        threadId,
+        threadTitle,
+        gameTitle: str(row.data.gameTitle),
+        coverUrl: str(row.data.coverUrl),
+        count: Math.max(1, num(row.data.count) ?? 1),
+      };
+    }
 
     default:
       return { ...base, kind: "unknown" };

@@ -70,7 +70,7 @@ export interface InMemoryState {
   communityMessages: CommunityMessageRow[];
   communityVotes: { message_id: number; user_id: string }[];
   /** Pictures uploaded to messages, by URL. */
-  communityImages: Map<string, Buffer>;
+  communityImages: Map<string, { bytes: Buffer; createdAt: string }>;
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
@@ -912,6 +912,40 @@ export const createInMemoryRepos = (
           created_at: now(),
         });
       },
+      async bumpThreadActivity(userId, dedupeKey, data) {
+        const existing = state.notifications.find(
+          (n) => n.user_id === userId && n.dedupe_key === dedupeKey,
+        );
+        if (!existing) {
+          state.notifications.push({
+            id: nextNotificationId++,
+            user_id: userId,
+            kind: "community_thread_activity",
+            actor_id: null,
+            data: { ...data, count: 1 },
+            dedupe_key: dedupeKey,
+            read_at: null,
+            archived_at: null,
+            created_at: new Date().toISOString(),
+          });
+          return;
+        }
+        const unread = !existing.read_at && !existing.archived_at;
+        Object.assign(existing, {
+          data: {
+            ...data,
+            count: unread ? Number(existing.data.count ?? 0) + 1 : 1,
+          },
+          read_at: null,
+          archived_at: null,
+          created_at: new Date().toISOString(),
+        });
+      },
+      async removeByKey(dedupeKey) {
+        state.notifications = state.notifications.filter(
+          (n) => n.dedupe_key !== dedupeKey,
+        );
+      },
       async markAllRead(userId) {
         for (const n of state.notifications) {
           if (n.user_id === userId && n.archived_at === null) {
@@ -994,11 +1028,22 @@ export const createInMemoryRepos = (
   const communityImages: CommunityImageStore = {
     async put(userId, bytes) {
       const url = `${IMAGE_PREFIX}${userId}/${nextImage++}.webp`;
-      state.communityImages.set(url, bytes);
+      state.communityImages.set(url, {
+        bytes,
+        createdAt: new Date().toISOString(),
+      });
       return url;
     },
     owns(url) {
       return url.startsWith(IMAGE_PREFIX) && !url.includes("..");
+    },
+    async listUploads(userId) {
+      return [...state.communityImages.entries()]
+        .filter(([url]) => url.startsWith(`${IMAGE_PREFIX}${userId}/`))
+        .map(([url, { createdAt }]) => ({ url, createdAt }));
+    },
+    async remove(urls) {
+      for (const url of urls) state.communityImages.delete(url);
     },
   };
 

@@ -709,7 +709,9 @@ describe("community images", () => {
       .send(webp());
 
     expect(response.status).toBe(201);
-    expect(state.communityImages.get(response.body.url)).toEqual(webp());
+    expect(state.communityImages.get(response.body.url)?.bytes).toEqual(
+      webp(),
+    );
   });
 
   it("refuses bytes that are not a WebP", async () => {

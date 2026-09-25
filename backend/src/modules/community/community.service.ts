@@ -14,7 +14,9 @@ import type {
 import {
   COMMUNITY_IMAGE_MAX_BYTES,
   firstHeading,
+  imageSources,
   isWebp,
+  toPlainText,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { assertAdmin } from "../../lib/authz.js";
@@ -23,6 +25,11 @@ import type { CommunityImageStore } from "../../config/communityImageStore.js";
 import type { GamesRepository } from "../games/games.repository.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type { ProfileRow } from "../../types/database.types.js";
+import type { NotificationsRepository } from "../notifications/notifications.repository.js";
+import {
+  communityReplyKey,
+  communityThreadKey,
+} from "../notifications/notifications.mapper.js";
 import {
   buildMessageTree,
   toMessage,
@@ -40,6 +47,7 @@ export const createCommunityService = (
   profiles: ProfilesRepository,
   games: GamesRepository,
   images: CommunityImageStore,
+  notifications: NotificationsRepository,
 ) => {
   const viewerProfile = async (
     viewerId: string | undefined,
@@ -87,6 +95,35 @@ export const createCommunityService = (
     }
   };
 
+  /* Best effort. By the time a picture is let go the change that dropped it
+     has landed, and failing the request for a leftover file would have
+     someone retry something that worked. A missed one is swept later. */
+  const discard = (urls: string[]) =>
+    images.remove(urls).catch(() => undefined);
+
+  /* How long an upload may sit in no message before it is swept: long
+     enough to write the message it was uploaded for. */
+  const UNPOSTED_GRACE_MS = 24 * 60 * 60 * 1000;
+
+  const sweepUnposted = async (userId: string, keep: string) => {
+    const [uploads, bodies] = await Promise.all([
+      images.listUploads(userId),
+      repo.listBodiesByAuthor(userId),
+    ]);
+    const posted = new Set(bodies.flatMap(imageSources));
+    const cutoff = Date.now() - UNPOSTED_GRACE_MS;
+    await images.remove(
+      uploads
+        .filter(
+          (upload) =>
+            upload.url !== keep &&
+            !posted.has(upload.url) &&
+            Date.parse(upload.createdAt) < cutoff,
+        )
+        .map((upload) => upload.url),
+    );
+  };
+
   const messageFor = async (
     viewerId: string,
     row: MessageCardRow,
@@ -97,7 +134,7 @@ export const createCommunityService = (
 
   return {
     async listThreads(
-      { gameId, participant, sort, ...pagination }: ThreadListQuery,
+      { gameId, participant, q, sort, ...pagination }: ThreadListQuery,
       viewerId?: string,
     ): Promise<Paginated<ThreadCard>> {
       if (gameId !== undefined && !(await games.findById(gameId))) {
@@ -113,6 +150,7 @@ export const createCommunityService = (
       const { rows, total } = await repo.listThreads({
         gameId,
         participantId: participantProfile?.id,
+        search: q,
         sort,
         from,
         to,
@@ -222,8 +260,10 @@ export const createCommunityService = (
       /* One level deep: a reply to a reply joins its parent's replies, and a
          reply to the opening message is a top-level message of its own. */
       let parentId: number | null = null;
+      let answered: MessageCardRow | null = null;
       if (input.parentId) {
         const parent = await repo.findMessage(input.parentId);
+        answered = parent;
         if (!parent || parent.thread_id !== threadId) {
           throw AppError.notFound("Message");
         }
@@ -240,6 +280,50 @@ export const createCommunityService = (
         authorId: userId,
         body: input.body,
       });
+
+      /* Whoever was answered hears about it; the opening message has no
+         Reply of its own, its answers are the thread's activity. The
+         thread's author hears once per thread instead, not once per
+         message, and not twice for a message that answered them. */
+      let notified: string | null = null;
+      if (
+        answered &&
+        !answered.is_opening &&
+        answered.author_id &&
+        answered.author_id !== userId
+      ) {
+        await notifications.raise({
+          userId: answered.author_id,
+          kind: "community_reply",
+          actorId: userId,
+          dedupeKey: communityReplyKey(row.id),
+          data: {
+            threadId,
+            threadTitle: thread.title,
+            messageId: row.id,
+            excerpt: toPlainText(input.body).slice(0, 140),
+          },
+        });
+        notified = answered.author_id;
+      }
+      if (
+        thread.subject_kind === "game" &&
+        thread.author_id &&
+        thread.author_id !== userId &&
+        thread.author_id !== notified
+      ) {
+        await notifications.bumpThreadActivity(
+          thread.author_id,
+          communityThreadKey(threadId),
+          {
+            threadId,
+            threadTitle: thread.title,
+            gameTitle: thread.game_title,
+            coverUrl: thread.game_cover_url,
+          },
+        );
+      }
+
       return messageFor(userId, row);
     },
 
@@ -263,7 +347,11 @@ export const createCommunityService = (
       if (!allowed) throw AppError.forbidden("You cannot edit this message");
 
       assertOwnImages(body);
-      return messageFor(userId, await repo.updateMessageBody(messageId, body));
+      const updated = await repo.updateMessageBody(messageId, body);
+
+      const kept = new Set(imageSources(body));
+      await discard(imageSources(message.body).filter((src) => !kept.has(src)));
+      return messageFor(userId, updated);
     },
 
     async deleteMessage(userId: string, messageId: number): Promise<void> {
@@ -277,6 +365,8 @@ export const createCommunityService = (
         assertAdmin(await profiles.findById(userId));
       }
       await repo.softDeleteMessage(messageId);
+      await discard(imageSources(message.body));
+      await notifications.removeByKey(communityReplyKey(messageId));
     },
 
     async deleteThread(userId: string, threadId: number): Promise<void> {
@@ -285,7 +375,13 @@ export const createCommunityService = (
       if (thread.subject_kind === "patch_notes") {
         throw AppError.forbidden("The patch notes cannot be deleted");
       }
+      // Read before the delete: the messages cascade away with the thread.
+      const pictures = (await repo.listMessages(threadId)).flatMap((m) =>
+        imageSources(m.body),
+      );
+      // Its notifications go by trigger, whichever way the thread is deleted.
       await repo.deleteThread(threadId);
+      await discard(pictures);
     },
 
     /** A toggle, as on reviews: idempotent by primary key. */
@@ -314,7 +410,12 @@ export const createCommunityService = (
       if (!isWebp(bytes)) {
         throw AppError.badRequest("A picture must be a WebP image");
       }
-      return { url: await images.put(userId, bytes) };
+      const url = await images.put(userId, bytes);
+      /* Pictures uploaded and never posted, swept here rather than on a
+         schedule: this is the one moment they can pile up. Like discard, a
+         sweep that fails leaves them for the next upload. */
+      await sweepUnposted(userId, url).catch(() => undefined);
+      return { url };
     },
   };
 };

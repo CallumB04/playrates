@@ -56,12 +56,6 @@ const CommunityThreads = ({
                 </div>
             ) : (
                 <>
-                    <p className="px-3 pt-2 pb-1 text-label text-content-muted">
-                        {isOwner
-                            ? "You started or replied to"
-                            : `${username} started or replied to`}
-                        {", most recent first."}
-                    </p>
                     {shown.map((thread) => (
                         <ThreadCard key={thread.id} thread={thread} />
                     ))}

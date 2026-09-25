@@ -43,6 +43,15 @@ export interface NotificationsRepository {
   markAllRead(userId: string): Promise<void>;
   /** No-op when the user has no notification under that key. */
   markReadByKey(userId: string, dedupeKey: string): Promise<void>;
+  /** Counts a thread's activity notification up while it is unread, or
+   *  starts it again at one. `data` is everything but the count. */
+  bumpThreadActivity(
+    userId: string,
+    dedupeKey: string,
+    data: Record<string, unknown>,
+  ): Promise<void>;
+  /** Whoever it was raised for: the subject is gone. */
+  removeByKey(dedupeKey: string): Promise<void>;
 }
 
 /** Postgres' unique_violation. The insert in `raise` races against itself
@@ -70,7 +79,10 @@ export const createNotificationsRepository = (
       .range(from, to);
 
     if (error) throw error;
-    return { rows: (data ?? []) as NotificationRowWithActor[], total: count ?? 0 };
+    return {
+      rows: (data ?? []) as NotificationRowWithActor[],
+      total: count ?? 0,
+    };
   },
 
   async countUnread(userId) {
@@ -142,6 +154,23 @@ export const createNotificationsRepository = (
       .eq("user_id", userId)
       .is("read_at", null)
       .is("archived_at", null);
+    if (error) throw error;
+  },
+
+  async bumpThreadActivity(userId, dedupeKey, data) {
+    const { error } = await db.rpc("bump_community_thread_activity", {
+      p_user_id: userId,
+      p_dedupe_key: dedupeKey,
+      p_data: data,
+    });
+    if (error) throw error;
+  },
+
+  async removeByKey(dedupeKey) {
+    const { error } = await db
+      .from("notifications")
+      .delete()
+      .eq("dedupe_key", dedupeKey);
     if (error) throw error;
   },
 

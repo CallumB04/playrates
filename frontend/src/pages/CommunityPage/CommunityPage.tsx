@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import type { ThreadSort } from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
@@ -11,6 +11,8 @@ import {
 import { useGame } from "../../hooks/queries/useGames";
 import { usePagination } from "../../hooks/usePagination";
 import { usePageTitle } from "../../hooks/usePageTitle";
+import { useUrlSearchTerm } from "../../hooks/useUrlSearchTerm";
+import { SearchInput } from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import { cardClass } from "../../components/ui/Card";
 import EmptyPlate from "../../components/ui/EmptyPlate";
@@ -59,9 +61,16 @@ const CommunityPage = () => {
             { replace: true }
         );
 
+    const {
+        term,
+        setTerm,
+        value: q,
+    } = useUrlSearchTerm("q", { alsoClear: ["page"] });
+
     const { data: threads, isLoading } = useThreads({
         gameId,
         participant,
+        q,
         sort,
         page,
         limit: PER_PAGE,
@@ -84,7 +93,7 @@ const CommunityPage = () => {
         user ? navigate(newThreadPath(gameId)) : openLogin();
 
     // Trending is site-wide, so it steps aside while the list is filtered.
-    const filtered = !!gameId || !!participant;
+    const filtered = !!gameId || !!participant || !!q;
     const [top, ...runnersUp] = !filtered ? (trending ?? []) : [];
     const rows = threads?.data ?? [];
 
@@ -189,17 +198,35 @@ const CommunityPage = () => {
                             />
                         </div>
 
+                        <div className="relative">
+                            <Search
+                                size={15}
+                                aria-hidden
+                                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-content-muted"
+                            />
+                            <SearchInput
+                                aria-label="Search threads"
+                                placeholder="Search threads and messages"
+                                value={term}
+                                onChange={(event) =>
+                                    setTerm(event.target.value)
+                                }
+                            />
+                        </div>
+
                         {isLoading ? (
                             <TextSkeleton lines={8} />
                         ) : rows.length === 0 ? (
                             <EmptyPlate
-                                title="No threads yet"
+                                title={q ? "No matches" : "No threads yet"}
                                 body={
-                                    participant
-                                        ? "No threads from them yet."
-                                        : gameId
-                                          ? "Nobody has started one about this game. Be the first."
-                                          : "Start the first one: pick a game and say what's on your mind."
+                                    q
+                                        ? `Nothing matches "${q}". Try fewer or different words.`
+                                        : participant
+                                          ? "No threads from them yet."
+                                          : gameId
+                                            ? "Nobody has started one about this game. Be the first."
+                                            : "Start the first one: pick a game and say what's on your mind."
                                 }
                                 action={
                                     <Button onClick={startThread}>

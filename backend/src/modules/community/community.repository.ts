@@ -38,6 +38,8 @@ export interface ListThreadsOptions {
   gameId?: number;
   /** Only threads this user has a standing message in. */
   participantId?: string;
+  /** Only threads whose title, game or a standing message contains this. */
+  search?: string;
   sort: ThreadSort;
   from: number;
   to: number;
@@ -83,6 +85,9 @@ export interface CommunityRepository {
   }): Promise<MessageCardRow>;
   updateMessageBody(id: number, body: unknown): Promise<MessageCardRow>;
   softDeleteMessage(id: number): Promise<void>;
+  /** The bodies of this person's standing messages, for the pictures in
+   *  them. */
+  listBodiesByAuthor(userId: string): Promise<unknown[]>;
   deleteThread(id: number): Promise<void>;
   votedMessageIds(userId: string, messageIds: number[]): Promise<Set<number>>;
   hasVoted(userId: string, messageId: number): Promise<boolean>;
@@ -98,16 +103,27 @@ export const createCommunityRepository = (db: Db): CommunityRepository => ({
   async listThreads({
     gameId,
     participantId,
+    search,
     sort,
     from,
     to,
     showSexualContent,
   }) {
-    let threadIds: number[] | undefined;
+    /* PostgREST cannot filter the view by a join to messages, so the
+       narrowing filters each find their threads first and the list is read
+       from what they have in common. */
+    const narrowedBy: number[][] = [];
+
+    if (search) {
+      const { data, error } = await db.rpc("community_thread_search", {
+        p_query: search,
+      });
+      if (error) throw error;
+      narrowedBy.push(((data ?? []) as number[]).map(Number));
+    }
+
     if (participantId) {
-      /* PostgREST cannot filter the view by a join to messages, so the
-         threads come first. Newest posts first, so a prolific poster's cap
-         falls on their oldest threads. */
+      // Newest first, so a prolific poster's cap falls on their oldest.
       const { data, error } = await db
         .from("community_messages")
         .select("thread_id")
@@ -116,13 +132,17 @@ export const createCommunityRepository = (db: Db): CommunityRepository => ({
         .order("created_at", { ascending: false })
         .limit(1000);
       if (error) throw error;
-      threadIds = [
-        ...new Set(
-          (data ?? []).map((r) => (r as { thread_id: number }).thread_id),
-        ),
-      ];
-      if (threadIds.length === 0) return { rows: [], total: 0 };
+      narrowedBy.push(
+        (data ?? []).map((r) => (r as { thread_id: number }).thread_id),
+      );
     }
+
+    const threadIds = narrowedBy.length
+      ? [...new Set(narrowedBy[0])].filter((id) =>
+          narrowedBy.every((ids) => ids.includes(id)),
+        )
+      : undefined;
+    if (threadIds?.length === 0) return { rows: [], total: 0 };
 
     let builder = db
       .from(THREADS)
@@ -300,6 +320,16 @@ export const createCommunityRepository = (db: Db): CommunityRepository => ({
       .update({ body: null, deleted_at: new Date().toISOString() })
       .eq("id", id);
     if (error) throw error;
+  },
+
+  async listBodiesByAuthor(userId) {
+    const { data, error } = await db
+      .from("community_messages")
+      .select("body")
+      .eq("author_id", userId)
+      .is("deleted_at", null);
+    if (error) throw error;
+    return (data ?? []).map((r) => (r as { body: unknown }).body);
   },
 
   async deleteThread(id) {

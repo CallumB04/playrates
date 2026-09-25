@@ -86,6 +86,21 @@ export const toPlainText = (doc: RichTextDoc): string =>
 export const countImages = (doc: RichTextDoc): number =>
   doc.content.filter((block) => block.type === "image").length;
 
+/** The pictures a document shows. Tolerates a body that is not a document,
+ *  since it is also read back from rows written before any check. */
+export const imageSources = (doc: unknown): string[] => {
+  const content = (doc as { content?: unknown } | null)?.content;
+  if (!Array.isArray(content)) return [];
+  return content.flatMap((block) => {
+    const src = (block as { type?: unknown; attrs?: { src?: unknown } })
+      ?.attrs?.src;
+    return (block as { type?: unknown })?.type === "image" &&
+      typeof src === "string"
+      ? [src]
+      : [];
+  });
+};
+
 /** Nothing to read and nothing to look at. Tiptap's empty editor is one
  *  empty paragraph, not an empty document. */
 export const isEmptyDoc = (doc: RichTextDoc): boolean =>

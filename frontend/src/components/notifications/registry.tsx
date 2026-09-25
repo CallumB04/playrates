@@ -2,6 +2,8 @@ import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
 import {
     Bell,
+    MessageSquareReply,
+    MessagesSquare,
     PartyPopper,
     UserCheck,
     UserPlus,
@@ -9,6 +11,8 @@ import {
 } from "lucide-react";
 import type {
     AppNotification,
+    CommunityReplyNotification,
+    CommunityThreadActivityNotification,
     FriendAcceptedNotification,
     FriendRequestNotification,
     FriendUser,
@@ -18,6 +22,10 @@ import Button from "../ui/Button";
 import { BRAND_NAME, BRAND_PITCH } from "../../constants/brand";
 import ProfilePicture from "../ProfilePicture";
 import { useFriendRelation } from "../../hooks/queries/useFriends";
+import { usePatchNotification } from "../../hooks/queries/useNotifications";
+import GameCover from "../game/GameCover";
+import { threadPath } from "../community/paths";
+import { formatCount } from "../../lib/format";
 import { friendRequestState } from "./friendRequestState";
 
 export interface ContentProps<T extends AppNotification> {
@@ -145,6 +153,85 @@ const ActorFace = ({
     />
 );
 
+/** Opening a community notification is reading it. */
+const useOpen = (notification: AppNotification, onNavigate: () => void) => {
+    const patch = usePatchNotification();
+    return () => {
+        if (notification.readAt === null) {
+            patch.mutate({ id: notification.id, patch: { read: true } });
+        }
+        onNavigate();
+    };
+};
+
+const CommunityReplyContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<CommunityReplyNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    return (
+        <Link
+            to={`${threadPath(notification.threadId)}#message-${notification.messageId}`}
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <span className="group-hover:underline">
+                    {notification.actor.username}
+                </span>{" "}
+                <span className="font-normal text-content-secondary">
+                    replied to you in
+                </span>{" "}
+                {notification.threadTitle}
+            </p>
+            {notification.excerpt && (
+                <p className={`${BODY} line-clamp-2`}>
+                    “{notification.excerpt}”
+                </p>
+            )}
+        </Link>
+    );
+};
+
+const CommunityActivityContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<CommunityThreadActivityNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    const { count } = notification;
+    return (
+        <Link
+            to={threadPath(notification.threadId)}
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <span className="group-hover:underline">
+                    {formatCount(count)} new{" "}
+                    {count === 1 ? "message" : "messages"}
+                </span>{" "}
+                <span className="font-normal text-content-secondary">
+                    in your thread
+                </span>
+            </p>
+            <p className={`${BODY} line-clamp-2`}>{notification.threadTitle}</p>
+        </Link>
+    );
+};
+
+/** The game the thread is about, where the row has no one to show. */
+const ThreadCover = ({
+    notification,
+}: {
+    notification: CommunityThreadActivityNotification;
+}) => (
+    <GameCover
+        coverUrl={notification.coverUrl}
+        title={notification.gameTitle ?? notification.threadTitle}
+        className="aspect-3/4 w-10 shrink-0 self-start overflow-hidden rounded-xs"
+    />
+);
+
 const UnknownContent = () => (
     <>
         <p className={TITLE}>Something happened</p>
@@ -180,6 +267,18 @@ export const NOTIFICATION_RENDERERS: {
         tone: "text-brand",
         Content: FriendAcceptedContent,
         Leading: ActorFace,
+    },
+    community_reply: {
+        icon: MessageSquareReply,
+        tone: "text-brand",
+        Content: CommunityReplyContent,
+        Leading: ActorFace,
+    },
+    community_thread_activity: {
+        icon: MessagesSquare,
+        tone: "text-brand",
+        Content: CommunityActivityContent,
+        Leading: ThreadCover,
     },
     unknown: {
         icon: Bell,

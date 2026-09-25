@@ -12,6 +12,8 @@ export const NOTIFICATION_KINDS = [
   "welcome",
   "friend_request",
   "friend_accepted",
+  "community_reply",
+  "community_thread_activity",
 ] as const;
 
 export const NotificationKindSchema = z.enum(NOTIFICATION_KINDS);
@@ -45,6 +47,29 @@ export interface FriendAcceptedNotification extends NotificationBase {
   actor: FriendUser;
 }
 
+/** Someone answered one of your messages directly, with Reply on it. */
+export interface CommunityReplyNotification extends NotificationBase {
+  kind: "community_reply";
+  actor: FriendUser;
+  threadId: number;
+  threadTitle: string;
+  /** The reply, so the link can land on it. */
+  messageId: number;
+  /** The start of the reply, as plain text. */
+  excerpt: string;
+}
+
+/** New messages in a thread you started. One per thread: it counts up while
+ *  unread, and the next message after reading it starts again at one. */
+export interface CommunityThreadActivityNotification extends NotificationBase {
+  kind: "community_thread_activity";
+  threadId: number;
+  threadTitle: string;
+  gameTitle: string | null;
+  coverUrl: string | null;
+  count: number;
+}
+
 /** A kind added to the API before this client knew about it. Kept in the
  *  union so exhaustive switches have to handle the case. */
 export interface UnknownNotification extends NotificationBase {
@@ -56,6 +81,8 @@ export type AppNotification =
   | WelcomeNotification
   | FriendRequestNotification
   | FriendAcceptedNotification
+  | CommunityReplyNotification
+  | CommunityThreadActivityNotification
   | UnknownNotification;
 
 export const NotificationQuerySchema = PaginationSchema.extend({

@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Megaphone, Trash2 } from "lucide-react";
 import type {
     CommunityMessage,
@@ -57,6 +57,19 @@ const ThreadPage = () => {
     const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
     const [pending, setPending] = useState<Pending | null>(null);
     const composerRef = useRef<HTMLDivElement>(null);
+
+    /* A link to one message lands before the thread has loaded, so the
+       browser has nothing to scroll to; this does it once it has. */
+    const { hash } = useLocation();
+    const [landedOn, setLandedOn] = useState<number | null>(null);
+    useEffect(() => {
+        const match = /^#message-(\d+)$/.exec(hash);
+        if (!match || !data) return;
+        const target = document.getElementById(`message-${match[1]}`);
+        if (!target) return;
+        target.scrollIntoView({ block: "center", behavior: "smooth" });
+        setLandedOn(Number(match[1]));
+    }, [hash, data]);
 
     if (isLoading) return <TextSkeleton lines={8} />;
     if (isError || !data) {
@@ -152,6 +165,7 @@ const ThreadPage = () => {
                             <MessageItem
                                 key={message.id}
                                 message={message}
+                                highlighted={landedOn === message.id}
                                 viewerId={user?.id}
                                 actions={actions}
                                 className={cardClass()}
@@ -197,6 +211,9 @@ const ThreadPage = () => {
                                         <MessageItem
                                             key={message.id}
                                             message={message}
+                                            highlighted={
+                                                landedOn === message.id
+                                            }
                                             viewerId={user?.id}
                                             actions={actions}
                                             className="p-4 sm:p-5"
@@ -210,6 +227,10 @@ const ThreadPage = () => {
                                                             <MessageItem
                                                                 key={reply.id}
                                                                 message={reply}
+                                                                highlighted={
+                                                                    landedOn ===
+                                                                    reply.id
+                                                                }
                                                                 viewerId={
                                                                     user?.id
                                                                 }

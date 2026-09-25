@@ -29,6 +29,8 @@ interface MessageItemProps {
     badge?: ReactNode;
     /** Extra controls in the action row, like deleting the whole thread. */
     extraActions?: ReactNode;
+    /** The message a link landed on, lit so the eye finds it. */
+    highlighted?: boolean;
     className?: string;
     /** What comes beneath: the replies, or a composer answering this. */
     children?: ReactNode;
@@ -70,6 +72,7 @@ const MessageItem = ({
     actions,
     badge,
     extraActions,
+    highlighted = false,
     className,
     children,
 }: MessageItemProps) => {
@@ -88,7 +91,15 @@ const MessageItem = ({
     }
 
     return (
-        <article id={`message-${message.id}`} className={className}>
+        <article
+            id={`message-${message.id}`}
+            className={cn(
+                "scroll-mt-24",
+                highlighted &&
+                    "rounded-xs outline-2 outline-offset-4 outline-brand/50",
+                className
+            )}
+        >
             <header className="flex items-center gap-2.5">
                 {author ? (
                     <ProfilePicture

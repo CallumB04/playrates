@@ -90,6 +90,7 @@ export const buildRoutes = ({
     repos.profiles,
     repos.games,
     communityImages,
+    repos.notifications,
   );
 
   router.use("/platforms", createPlatformsRouter(repos.platforms));

@@ -19,6 +19,8 @@ export interface ThreadListFilters {
     gameId?: number;
     /** A username: threads they started or replied to. */
     participant?: string;
+    /** Matched against titles, the game and every message. */
+    q?: string;
     sort?: ThreadSort;
     page?: number;
     limit?: number;
