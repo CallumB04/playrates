@@ -31,7 +31,8 @@ interface GameTileProps {
     /** Platform marks on the left of the line under the cover. */
     platformSlugs?: string[];
     platforms?: Platform[];
-    /** The viewer's own rating. The brand figure is reserved for these. */
+    /** A rating for the line under the cover — the viewer's own, or the
+     *  community average where that is what the shelf is ordered by. */
     rating?: number | null;
     /** A muted figure for the right of the line when there is no rating to
      *  show, a release year for instance. */

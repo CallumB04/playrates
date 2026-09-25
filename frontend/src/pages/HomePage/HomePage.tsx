@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import type { Game } from "@playrates/shared";
 import {
     formatCount,
-    formatRatingOutOfTen,
     formatReleaseShort,
     releaseYear,
 } from "../../lib/format";
@@ -230,11 +229,7 @@ const HomePage = () => {
                 isLoading={acclaimedLoading}
                 actionsFor={actionsFor}
                 statusFor={statusFor}
-                footValueFor={(game) =>
-                    game.avgRating !== null
-                        ? formatRatingOutOfTen(game.avgRating)
-                        : releaseYear(game.releaseDate)
-                }
+                ratingFor={(game) => game.avgRating ?? undefined}
             />
 
             <ReviewFeed
