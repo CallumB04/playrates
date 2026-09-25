@@ -18,6 +18,12 @@ export const communityThreadKey = (threadId: number): string =>
 export const communityReplyKey = (messageId: number): string =>
   `community_reply:${messageId}`;
 
+/** One per message or review, raised again in place at each milestone. */
+export const communityUpvotesKey = (messageId: number): string =>
+  `community_upvotes:${messageId}`;
+export const reviewUpvotesKey = (reviewId: number): string =>
+  `review_upvotes:${reviewId}`;
+
 const num = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 const str = (value: unknown): string | null =>
@@ -104,6 +110,54 @@ export const toNotification = (
         gameTitle: str(row.data.gameTitle),
         coverUrl: str(row.data.coverUrl),
         count: Math.max(1, num(row.data.count) ?? 1),
+      };
+    }
+
+    case "community_upvote_milestone": {
+      const threadId = num(row.data.threadId);
+      const messageId = num(row.data.messageId);
+      const milestone = num(row.data.milestone);
+      const threadTitle = str(row.data.threadTitle);
+      if (
+        threadId === null ||
+        messageId === null ||
+        milestone === null ||
+        !threadTitle
+      ) {
+        return { ...base, kind: "unknown" };
+      }
+      return {
+        ...base,
+        kind: "community_upvote_milestone",
+        threadId,
+        threadTitle,
+        messageId,
+        excerpt: str(row.data.excerpt) ?? "",
+        milestone,
+      };
+    }
+
+    case "review_upvote_milestone": {
+      const reviewId = num(row.data.reviewId);
+      const gameId = num(row.data.gameId);
+      const milestone = num(row.data.milestone);
+      const gameTitle = str(row.data.gameTitle);
+      if (
+        reviewId === null ||
+        gameId === null ||
+        milestone === null ||
+        !gameTitle
+      ) {
+        return { ...base, kind: "unknown" };
+      }
+      return {
+        ...base,
+        kind: "review_upvote_milestone",
+        reviewId,
+        gameId,
+        gameTitle,
+        coverUrl: str(row.data.coverUrl),
+        milestone,
       };
     }
 

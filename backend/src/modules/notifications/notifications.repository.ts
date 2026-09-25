@@ -50,6 +50,15 @@ export interface NotificationsRepository {
     dedupeKey: string,
     data: Record<string, unknown>,
   ): Promise<void>;
+  /** Raises the milestone, or moves an existing one up to it. A milestone
+   *  already reached, or passed, is left alone. */
+  raiseMilestone(
+    userId: string,
+    kind: "community_upvote_milestone" | "review_upvote_milestone",
+    dedupeKey: string,
+    milestone: number,
+    data: Record<string, unknown>,
+  ): Promise<void>;
   /** Whoever it was raised for: the subject is gone. */
   removeByKey(dedupeKey: string): Promise<void>;
 }
@@ -161,6 +170,17 @@ export const createNotificationsRepository = (
     const { error } = await db.rpc("bump_community_thread_activity", {
       p_user_id: userId,
       p_dedupe_key: dedupeKey,
+      p_data: data,
+    });
+    if (error) throw error;
+  },
+
+  async raiseMilestone(userId, kind, dedupeKey, milestone, data) {
+    const { error } = await db.rpc("raise_upvote_milestone", {
+      p_user_id: userId,
+      p_kind: kind,
+      p_dedupe_key: dedupeKey,
+      p_milestone: milestone,
       p_data: data,
     });
     if (error) throw error;

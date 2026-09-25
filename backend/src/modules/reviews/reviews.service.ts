@@ -6,6 +6,9 @@ import type {
   ReviewWithAuthor,
 } from "@playrates/shared";
 import type { ReviewSort } from "@playrates/shared";
+import { isUpvoteMilestone } from "@playrates/shared";
+import type { NotificationsRepository } from "../notifications/notifications.repository.js";
+import { reviewUpvotesKey } from "../notifications/notifications.mapper.js";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import { isOnline, toAccent } from "../profiles/profiles.mapper.js";
@@ -31,6 +34,7 @@ export const createReviewsService = (
   profiles: ProfilesRepository,
   games: GamesRepository,
   gameLogs: GameLogsRepository,
+  notifications: NotificationsRepository,
 ) => {
   /** Opt-in, so signed out and unknown both mean no. */
   const canSeeExplicit = async (viewerId?: string): Promise<boolean> =>
@@ -167,11 +171,24 @@ export const createReviewsService = (
       const voted = await repo.hasVoted(userId, reviewId);
       if (voted) await repo.removeVote(userId, reviewId);
       else await repo.addVote(userId, reviewId);
+      const voteCount = await repo.voteCount(reviewId);
 
-      return {
-        voteCount: await repo.voteCount(reviewId),
-        votedByViewer: !voted,
-      };
+      if (!voted && isUpvoteMilestone(voteCount)) {
+        await notifications.raiseMilestone(
+          review.user_id,
+          "review_upvote_milestone",
+          reviewUpvotesKey(reviewId),
+          voteCount,
+          {
+            reviewId,
+            gameId: review.game_id,
+            gameTitle: review.game_title,
+            coverUrl: review.game_cover_url,
+          },
+        );
+      }
+
+      return { voteCount, votedByViewer: !voted };
     },
 
     async getOwn(userId: string, gameId: number): Promise<Review> {

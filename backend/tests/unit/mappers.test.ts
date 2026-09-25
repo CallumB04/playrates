@@ -352,4 +352,44 @@ describe("notification mapper", () => {
     expect(reply.kind).toBe("unknown");
     expect(activity.kind).toBe("unknown");
   });
+
+  it("maps both upvote milestones, and refuses one without its subject", () => {
+    const message = toNotification(
+      buildNotification({
+        kind: "community_upvote_milestone",
+        data: {
+          threadId: 4,
+          threadTitle: "Best boss?",
+          messageId: 9,
+          milestone: 10,
+        },
+      }),
+      () => null,
+    );
+    const review = toNotification(
+      buildNotification({
+        kind: "review_upvote_milestone",
+        data: { reviewId: 3, gameId: 1, gameTitle: "Journey", milestone: 5 },
+      }),
+      () => null,
+    );
+    const broken = toNotification(
+      buildNotification({
+        kind: "review_upvote_milestone",
+        data: { reviewId: 3 },
+      }),
+      () => null,
+    );
+
+    expect(message).toMatchObject({
+      kind: "community_upvote_milestone",
+      milestone: 10,
+      excerpt: "",
+    });
+    expect(review).toMatchObject({
+      kind: "review_upvote_milestone",
+      coverUrl: null,
+    });
+    expect(broken.kind).toBe("unknown");
+  });
 });

@@ -15,6 +15,7 @@ import {
   COMMUNITY_IMAGE_MAX_BYTES,
   firstHeading,
   imageSources,
+  isUpvoteMilestone,
   isWebp,
   toPlainText,
 } from "@playrates/shared";
@@ -29,6 +30,7 @@ import type { NotificationsRepository } from "../notifications/notifications.rep
 import {
   communityReplyKey,
   communityThreadKey,
+  communityUpvotesKey,
 } from "../notifications/notifications.mapper.js";
 import {
   buildMessageTree,
@@ -367,6 +369,7 @@ export const createCommunityService = (
       await repo.softDeleteMessage(messageId);
       await discard(imageSources(message.body));
       await notifications.removeByKey(communityReplyKey(messageId));
+      await notifications.removeByKey(communityUpvotesKey(messageId));
     },
 
     async deleteThread(userId: string, threadId: number): Promise<void> {
@@ -394,11 +397,25 @@ export const createCommunityService = (
       const voted = await repo.hasVoted(userId, messageId);
       if (voted) await repo.removeVote(userId, messageId);
       else await repo.addVote(userId, messageId);
+      const voteCount = await repo.voteCount(messageId);
 
-      return {
-        voteCount: await repo.voteCount(messageId),
-        votedByViewer: !voted,
-      };
+      if (!voted && message.author_id && isUpvoteMilestone(voteCount)) {
+        const thread = await requireThread(message.thread_id);
+        await notifications.raiseMilestone(
+          message.author_id,
+          "community_upvote_milestone",
+          communityUpvotesKey(messageId),
+          voteCount,
+          {
+            threadId: thread.id,
+            threadTitle: thread.title,
+            messageId,
+            excerpt: toPlainText(message.body as RichTextDoc).slice(0, 140),
+          },
+        );
+      }
+
+      return { voteCount, votedByViewer: !voted };
     },
 
     async uploadImage(userId: string, bytes: Buffer): Promise<{ url: string }> {

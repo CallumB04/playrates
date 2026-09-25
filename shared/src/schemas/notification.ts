@@ -14,7 +14,16 @@ export const NOTIFICATION_KINDS = [
   "friend_accepted",
   "community_reply",
   "community_thread_activity",
+  "community_upvote_milestone",
+  "review_upvote_milestone",
 ] as const;
+
+/** The upvote counts that are worth telling someone about. */
+export const UPVOTE_MILESTONES = [5, 10, 20, 50, 100, 250] as const;
+
+/** Votes arrive one at a time, so every milestone is passed exactly. */
+export const isUpvoteMilestone = (count: number): boolean =>
+  (UPVOTE_MILESTONES as readonly number[]).includes(count);
 
 export const NotificationKindSchema = z.enum(NOTIFICATION_KINDS);
 export type NotificationKind = z.infer<typeof NotificationKindSchema>;
@@ -70,6 +79,26 @@ export interface CommunityThreadActivityNotification extends NotificationBase {
   count: number;
 }
 
+/** A community message of yours reached an upvote milestone. */
+export interface CommunityUpvoteMilestoneNotification extends NotificationBase {
+  kind: "community_upvote_milestone";
+  threadId: number;
+  threadTitle: string;
+  messageId: number;
+  excerpt: string;
+  milestone: number;
+}
+
+/** A review of yours reached an upvote milestone. */
+export interface ReviewUpvoteMilestoneNotification extends NotificationBase {
+  kind: "review_upvote_milestone";
+  reviewId: number;
+  gameId: number;
+  gameTitle: string;
+  coverUrl: string | null;
+  milestone: number;
+}
+
 /** A kind added to the API before this client knew about it. Kept in the
  *  union so exhaustive switches have to handle the case. */
 export interface UnknownNotification extends NotificationBase {
@@ -83,6 +112,8 @@ export type AppNotification =
   | FriendAcceptedNotification
   | CommunityReplyNotification
   | CommunityThreadActivityNotification
+  | CommunityUpvoteMilestoneNotification
+  | ReviewUpvoteMilestoneNotification
   | UnknownNotification;
 
 export const NotificationQuerySchema = PaginationSchema.extend({

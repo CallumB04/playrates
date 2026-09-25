@@ -280,8 +280,11 @@ export const createInMemoryCommunity = (
       state.notifications = state.notifications.filter(
         (n) =>
           !(
-            ["community_reply", "community_thread_activity"].includes(n.kind) &&
-            n.data.threadId === id
+            [
+              "community_reply",
+              "community_thread_activity",
+              "community_upvote_milestone",
+            ].includes(n.kind) && n.data.threadId === id
           ),
       );
       const gone = new Set(

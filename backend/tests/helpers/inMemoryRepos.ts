@@ -109,6 +109,13 @@ export const createInMemoryRepos = (
   let nextGameId = 3000;
   let nextNotificationId = 4000;
 
+  // the reviews_clear_notifications trigger
+  const clearReviewNotifications = (reviewId: number) => {
+    state.notifications = state.notifications.filter(
+      (n) => n.dedupe_key !== `review_upvotes:${reviewId}`,
+    );
+  };
+
   const withPlatforms = (game: GameRow): GameRowWithPlatforms => ({
     ...game,
     game_platforms: state.gamePlatforms
@@ -572,6 +579,11 @@ export const createInMemoryRepos = (
         state.gameLogs = state.gameLogs.filter((l) => l.id !== id);
         // the game_logs_delete_review trigger
         if (log) {
+          for (const r of state.reviews) {
+            if (r.user_id === log.user_id && r.game_id === log.game_id) {
+              clearReviewNotifications(r.id);
+            }
+          }
           state.reviews = state.reviews.filter(
             (r) => !(r.user_id === log.user_id && r.game_id === log.game_id),
           );
@@ -752,6 +764,7 @@ export const createInMemoryRepos = (
       },
       async remove(id) {
         state.reviews = state.reviews.filter((r) => r.id !== id);
+        clearReviewNotifications(id);
       },
     },
 
@@ -936,6 +949,32 @@ export const createInMemoryRepos = (
             ...data,
             count: unread ? Number(existing.data.count ?? 0) + 1 : 1,
           },
+          read_at: null,
+          archived_at: null,
+          created_at: new Date().toISOString(),
+        });
+      },
+      async raiseMilestone(userId, kind, dedupeKey, milestone, data) {
+        const existing = state.notifications.find(
+          (n) => n.user_id === userId && n.dedupe_key === dedupeKey,
+        );
+        if (existing) {
+          if (Number(existing.data.milestone ?? 0) >= milestone) return;
+          Object.assign(existing, {
+            data: { ...data, milestone },
+            read_at: null,
+            archived_at: null,
+            created_at: new Date().toISOString(),
+          });
+          return;
+        }
+        state.notifications.push({
+          id: nextNotificationId++,
+          user_id: userId,
+          kind,
+          actor_id: null,
+          data: { ...data, milestone },
+          dedupe_key: dedupeKey,
           read_at: null,
           archived_at: null,
           created_at: new Date().toISOString(),

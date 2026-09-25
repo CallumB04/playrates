@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
 import {
+    ArrowBigUp,
     Bell,
     MessageSquareReply,
     MessagesSquare,
@@ -13,6 +14,8 @@ import type {
     AppNotification,
     CommunityReplyNotification,
     CommunityThreadActivityNotification,
+    CommunityUpvoteMilestoneNotification,
+    ReviewUpvoteMilestoneNotification,
     FriendAcceptedNotification,
     FriendRequestNotification,
     FriendUser,
@@ -219,15 +222,68 @@ const CommunityActivityContent = ({
     );
 };
 
-/** The game the thread is about, where the row has no one to show. */
-const ThreadCover = ({
+const Upvotes = ({ count }: { count: number }) => (
+    <span className="group-hover:underline">{formatCount(count)} upvotes</span>
+);
+
+const MessageMilestoneContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<CommunityUpvoteMilestoneNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    return (
+        <Link
+            to={`${threadPath(notification.threadId)}#message-${notification.messageId}`}
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <Upvotes count={notification.milestone} />{" "}
+                <span className="font-normal text-content-secondary">
+                    on your message in
+                </span>{" "}
+                {notification.threadTitle}
+            </p>
+            {notification.excerpt && (
+                <p className={`${BODY} line-clamp-2`}>
+                    “{notification.excerpt}”
+                </p>
+            )}
+        </Link>
+    );
+};
+
+const ReviewMilestoneContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<ReviewUpvoteMilestoneNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    return (
+        <Link
+            to={`/game/${notification.gameId}#review-${notification.reviewId}`}
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <Upvotes count={notification.milestone} />{" "}
+                <span className="font-normal text-content-secondary">
+                    on your review of
+                </span>{" "}
+                {notification.gameTitle}
+            </p>
+        </Link>
+    );
+};
+
+/** The game it is about, where the row has no one to show. */
+const CoverLeading = ({
     notification,
 }: {
-    notification: CommunityThreadActivityNotification;
+    notification: { coverUrl: string | null; gameTitle: string | null };
 }) => (
     <GameCover
         coverUrl={notification.coverUrl}
-        title={notification.gameTitle ?? notification.threadTitle}
+        title={notification.gameTitle ?? ""}
         className="aspect-3/4 w-10 shrink-0 self-start overflow-hidden rounded-xs"
     />
 );
@@ -278,7 +334,18 @@ export const NOTIFICATION_RENDERERS: {
         icon: MessagesSquare,
         tone: "text-brand",
         Content: CommunityActivityContent,
-        Leading: ThreadCover,
+        Leading: CoverLeading,
+    },
+    community_upvote_milestone: {
+        icon: ArrowBigUp,
+        tone: "text-brand",
+        Content: MessageMilestoneContent,
+    },
+    review_upvote_milestone: {
+        icon: ArrowBigUp,
+        tone: "text-brand",
+        Content: ReviewMilestoneContent,
+        Leading: CoverLeading,
     },
     unknown: {
         icon: Bell,

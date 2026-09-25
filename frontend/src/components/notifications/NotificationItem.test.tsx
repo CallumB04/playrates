@@ -105,6 +105,46 @@ describe("NotificationItem", () => {
         );
     });
 
+    describe("upvote milestones", () => {
+        it("links a message milestone to the message", () => {
+            renderItem({
+                ...welcome(),
+                kind: "community_upvote_milestone",
+                threadId: 4,
+                threadTitle: "Best boss?",
+                messageId: 9,
+                excerpt: "The Radiance",
+                milestone: 10,
+            } as AppNotification);
+
+            expect(
+                screen.getByRole("link", { name: /10 upvotes on your message/ })
+            ).toHaveAttribute("href", "/community/thread/4#message-9");
+        });
+
+        it("links a review milestone to the review on its game", async () => {
+            const seen = capturePatch();
+            renderItem({
+                ...welcome(),
+                kind: "review_upvote_milestone",
+                reviewId: 3,
+                gameId: 12,
+                gameTitle: "Journey",
+                coverUrl: null,
+                milestone: 5,
+            } as AppNotification);
+
+            const link = screen.getByRole("link", {
+                name: /5 upvotes on your review of Journey/,
+            });
+            expect(link).toHaveAttribute("href", "/game/12#review-3");
+            await userEvent.click(link);
+            await waitFor(() =>
+                expect(seen).toHaveBeenCalledWith({ read: true })
+            );
+        });
+    });
+
     describe("community notifications", () => {
         const actor = {
             id: "u2",

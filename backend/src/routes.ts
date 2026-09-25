@@ -74,6 +74,7 @@ export const buildRoutes = ({
     repos.profiles,
     repos.games,
     repos.gameLogs,
+    repos.notifications,
   );
   const friends = createFriendsService(
     repos.friends,
