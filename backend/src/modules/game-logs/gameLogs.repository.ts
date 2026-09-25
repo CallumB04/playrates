@@ -9,6 +9,9 @@ import type { GameLogRowWithGame } from "./gameLogs.mapper.js";
 
 const SELECT_WITH_GAME = "*, game:games(*, game_platforms(platform_slug))";
 
+/** Postgres' unique_violation. */
+const UNIQUE_VIOLATION = "23505";
+
 /**
  * The column each sort orders by. Three live on the game rather than the log,
  * and PostgREST spells ordering a row by its embedded to-one as `game(col)`.
@@ -127,8 +130,16 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
       .insert({ ...patch, user_id: userId, game_id: gameId })
       .select(SELECT_WITH_GAME)
       .single();
-    if (error) throw error;
-    return { row: data as GameLogRowWithGame, created: true };
+    if (!error) return { row: data as GameLogRowWithGame, created: true };
+
+    /* Two saves for one game in flight together both find nothing above, and
+       the second insert hits game_logs_user_game_unique. It lost the race, not
+       the write: the row exists now, so it updates it, and the later save wins
+       as it would have had they arrived one after the other. */
+    if (error.code !== UNIQUE_VIOLATION) throw error;
+    const winner = await this.findByUserAndGame(userId, gameId);
+    if (!winner) throw error;
+    return { row: await this.update(winner.id, patch), created: false };
   },
 
   async update(id, patch) {
