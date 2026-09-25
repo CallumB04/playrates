@@ -329,7 +329,10 @@ export const createCommunityService = (
             threadId,
             threadTitle: thread.title,
             messageId: row.id,
-            excerpt: toPlainText(input.body).slice(0, 140),
+            excerpt: toPlainText(input.body, { hideSpoilers: true }).slice(
+              0,
+              140,
+            ),
           },
         });
         notified = answered.author_id;
@@ -436,7 +439,9 @@ export const createCommunityService = (
             threadId: thread.id,
             threadTitle: thread.title,
             messageId,
-            excerpt: toPlainText(message.body as RichTextDoc).slice(0, 140),
+            excerpt: toPlainText(message.body as RichTextDoc, {
+              hideSpoilers: true,
+            }).slice(0, 140),
           },
         );
       }

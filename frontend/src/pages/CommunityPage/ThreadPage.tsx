@@ -41,6 +41,14 @@ interface ReplyTarget {
     to: string | null;
 }
 
+/** On the thread creator's replies. Not on the opening message, where it
+ *  would say the obvious. */
+const CreatorBadge = () => (
+    <span className="rounded-xs bg-brand-subtle px-1.5 py-px text-stamp font-semibold tracking-wider text-brand uppercase">
+        Creator
+    </span>
+);
+
 const OfficialBadge = () => (
     <span className="rounded-xs border border-accent/60 px-1.5 py-px text-stamp font-semibold tracking-wider text-accent-content uppercase">
         Official
@@ -92,6 +100,11 @@ const ThreadPage = () => {
     }
 
     const isPatchNotes = data.thread.subject.kind === "patch_notes";
+    const creatorId = data.thread.author?.id;
+    const badgeFor = (message: CommunityMessage) =>
+        !message.isOpening && creatorId && message.author?.id === creatorId ? (
+            <CreatorBadge />
+        ) : undefined;
 
     const actions: MessageActions = {
         onVote: (message) =>
@@ -219,6 +232,7 @@ const ThreadPage = () => {
                                             highlighted={
                                                 landedOn === message.id
                                             }
+                                            badge={badgeFor(message)}
                                             viewerId={user?.id}
                                             actions={actions}
                                             className="p-4 sm:p-5"
@@ -236,6 +250,9 @@ const ThreadPage = () => {
                                                                     landedOn ===
                                                                     reply.id
                                                                 }
+                                                                badge={badgeFor(
+                                                                    reply
+                                                                )}
                                                                 viewerId={
                                                                     user?.id
                                                                 }

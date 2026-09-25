@@ -13,13 +13,14 @@ export const RICH_TEXT_MAX_IMAGES = 6;
 const MAX_BLOCKS = 300;
 
 const MarkSchema = z.object({
-  type: z.enum(["bold", "italic", "underline"]),
+  /** A spoiler is hidden until the reader asks for it. */
+  type: z.enum(["bold", "italic", "underline", "spoiler"]),
 });
 
 const TextNodeSchema = z.object({
   type: z.literal("text"),
   text: z.string().min(1),
-  marks: z.array(MarkSchema).max(3).optional(),
+  marks: z.array(MarkSchema).max(4).optional(),
 });
 
 const HardBreakSchema = z.object({ type: z.literal("hardBreak") });
@@ -69,17 +70,37 @@ export interface RichTextDoc {
   content: RichTextBlock[];
 }
 
-const blockText = (block: RichTextBlock): string =>
-  block.type === "image"
-    ? ""
-    : (block.content ?? [])
-        .map((node) => (node.type === "text" ? node.text : "\n"))
-        .join("");
+export const SPOILER_PLACEHOLDER = "[spoiler]";
 
-/** The words without the formatting, one block per line. */
-export const toPlainText = (doc: RichTextDoc): string =>
+const isSpoiler = (node: RichTextInline): boolean =>
+  node.type === "text" &&
+  (node.marks ?? []).some((mark) => mark.type === "spoiler");
+
+const blockText = (block: RichTextBlock, hideSpoilers = false): string => {
+  if (block.type === "image") return "";
+  let text = "";
+  let inSpoiler = false;
+  for (const node of block.content ?? []) {
+    // A run of spoiled words is one placeholder, however it is formatted.
+    if (hideSpoilers && isSpoiler(node)) {
+      if (!inSpoiler) text += SPOILER_PLACEHOLDER;
+      inSpoiler = true;
+      continue;
+    }
+    inSpoiler = false;
+    text += node.type === "text" ? node.text : "\n";
+  }
+  return text;
+};
+
+/** The words without the formatting, one block per line. `hideSpoilers`
+ *  is for quoting a message somewhere a reader has not chosen to open it. */
+export const toPlainText = (
+  doc: RichTextDoc,
+  { hideSpoilers = false }: { hideSpoilers?: boolean } = {},
+): string =>
   doc.content
-    .map(blockText)
+    .map((block) => blockText(block, hideSpoilers))
     .filter((line) => line.trim().length > 0)
     .join("\n");
 
@@ -92,8 +113,8 @@ export const imageSources = (doc: unknown): string[] => {
   const content = (doc as { content?: unknown } | null)?.content;
   if (!Array.isArray(content)) return [];
   return content.flatMap((block) => {
-    const src = (block as { type?: unknown; attrs?: { src?: unknown } })
-      ?.attrs?.src;
+    const src = (block as { type?: unknown; attrs?: { src?: unknown } })?.attrs
+      ?.src;
     return (block as { type?: unknown })?.type === "image" &&
       typeof src === "string"
       ? [src]

@@ -43,6 +43,26 @@ describe("reviews", () => {
     expect(state.reviews[0]!.body).toBe("Revised opinion.");
   });
 
+  it("keeps a review's spoiler flag, and defaults it off", async () => {
+    const { app } = buildTestApp({
+      seed: { ...baseSeed(), gameLogs: [buildGameLog()] },
+    });
+    const save = (body: object) =>
+      request(app)
+        .put("/api/v1/me/reviews/1")
+        .set("Authorization", authHeader(USER_A))
+        .send(body);
+
+    expect((await save({ body: "Fine." })).body.containsSpoilers).toBe(false);
+    expect(
+      (await save({ body: "The twist!", containsSpoilers: true })).body
+        .containsSpoilers,
+    ).toBe(true);
+
+    const listed = await request(app).get("/api/v1/games/1/reviews");
+    expect(listed.body.data[0].containsSpoilers).toBe(true);
+  });
+
   it("refuses a review of a game you have not logged", async () => {
     const { app, state } = buildTestApp({ seed: baseSeed() });
 

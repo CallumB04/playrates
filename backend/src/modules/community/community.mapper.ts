@@ -1,3 +1,4 @@
+import { toPlainText } from "@playrates/shared";
 import type {
   CommunityAuthor,
   CommunityMessage,
@@ -75,7 +76,10 @@ export const toLatestReply = (row: LatestReplyRow): LatestReply => ({
   id: row.id,
   threadId: row.thread_id,
   threadTitle: row.thread_title,
-  excerpt: (row.plain_text ?? "").slice(0, 140),
+  // Quoted where nobody chose to open it, so its spoilers stay covered.
+  excerpt: row.body
+    ? toPlainText(row.body as RichTextDoc, { hideSpoilers: true }).slice(0, 140)
+    : "",
   author: toAuthor(row.author_id, row),
   createdAt: row.created_at,
 });

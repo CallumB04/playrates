@@ -465,3 +465,52 @@ describe("the community sidebar", () => {
     );
   });
 });
+
+describe("spoilers", () => {
+  const spoiled = {
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        content: [
+          { type: "text", text: "The ending: " },
+          { type: "text", text: "you die", marks: [{ type: "spoiler" }] },
+        ],
+      },
+    ],
+  };
+
+  it("keeps a spoiler out of the reply notification's quote", async () => {
+    const { app, state } = buildTestApp({ seed: seed() });
+
+    await post(app, USER_C, { body: spoiled, parentId: 2 });
+
+    const [note] = state.notifications.filter(
+      (n) => n.kind === "community_reply",
+    );
+    expect(note!.data.excerpt).toBe("The ending: [spoiler]");
+  });
+
+  it("keeps a spoiler out of the latest replies", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    await post(app, USER_C, { body: spoiled });
+
+    const response = await request(app).get("/api/v1/community/latest");
+
+    expect(response.body[0].excerpt).toBe("The ending: [spoiler]");
+  });
+
+  it("shows the spoiler in the thread itself, for the reader to uncover", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const reply = await post(app, USER_C, { body: spoiled });
+
+    const thread = await request(app).get("/api/v1/community/threads/1");
+    const message = thread.body.messages.find(
+      (m: { id: number }) => m.id === reply.body.id,
+    );
+
+    expect(message.body.content[0].content[1].marks).toEqual([
+      { type: "spoiler" },
+    ]);
+  });
+});

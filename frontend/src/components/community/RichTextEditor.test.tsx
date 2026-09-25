@@ -39,6 +39,7 @@ describe("RichTextEditor", () => {
             "Bold",
             "Italic",
             "Underline",
+            "Spoiler",
             "Heading 1",
             "Heading 2",
             "Heading 3",

@@ -125,6 +125,8 @@ export interface ReviewRow {
   game_id: number;
   body: string;
   is_public: boolean;
+  /** Hides the body until a reader asks to see it. */
+  contains_spoilers: boolean;
   created_at: string;
   updated_at: string;
 }

@@ -99,6 +99,7 @@ export const buildReview = (overrides: Partial<ReviewRow> = {}): ReviewRow => ({
   game_id: 1,
   body: "Still the benchmark for open world side quests.",
   is_public: true,
+  contains_spoilers: false,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,
   ...overrides,

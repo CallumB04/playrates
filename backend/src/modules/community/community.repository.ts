@@ -47,7 +47,7 @@ export interface LatestReplyRow {
   id: number;
   thread_id: number;
   thread_title: string;
-  plain_text: string | null;
+  body: unknown;
   created_at: string;
   author_id: string | null;
   author_username: string | null;

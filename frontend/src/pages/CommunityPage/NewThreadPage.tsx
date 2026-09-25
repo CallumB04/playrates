@@ -24,6 +24,7 @@ import GamePicker, {
 import RichTextEditor from "../../components/community/RichTextEditor";
 import { threadPath } from "../../components/community/paths";
 import SubmitHint from "../../components/community/SubmitHint";
+import HouseRules from "../../components/community/HouseRules";
 
 const TITLE_MAX = 120;
 
@@ -125,6 +126,8 @@ const NewThreadPage = () => {
             <h1 className="font-display text-title text-content">
                 Start a thread
             </h1>
+
+            <HouseRules />
 
             <form
                 ref={formRef}

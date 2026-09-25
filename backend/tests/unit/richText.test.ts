@@ -143,4 +143,33 @@ describe("rich text helpers", () => {
     );
     expect(isEmptyDoc(doc)).toBe(false);
   });
+
+  it("covers spoilers when asked, one placeholder per run", () => {
+    const spoiled: RichTextDoc = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "It turns out " },
+            { type: "text", text: "the king", marks: [{ type: "spoiler" }] },
+            {
+              type: "text",
+              text: " was the ghost",
+              marks: [{ type: "spoiler" }, { type: "bold" }],
+            },
+            { type: "text", text: " all along." },
+          ],
+        },
+      ],
+    };
+
+    expect(toPlainText(spoiled)).toBe(
+      "It turns out the king was the ghost all along.",
+    );
+    expect(toPlainText(spoiled, { hideSpoilers: true })).toBe(
+      "It turns out [spoiler] all along.",
+    );
+    expect(RichTextDocSchema.safeParse(spoiled).success).toBe(true);
+  });
 });

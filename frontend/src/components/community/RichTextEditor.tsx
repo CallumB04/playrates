@@ -5,6 +5,7 @@ import Image from "@tiptap/extension-image";
 import { Placeholder } from "@tiptap/extensions";
 import {
     Bold,
+    EyeOff,
     Heading1,
     Heading2,
     Heading3,
@@ -22,6 +23,7 @@ import { useNotify } from "../../contexts/NotificationContext";
 import { compressCommunityImage } from "../../lib/communityImage";
 import { cn } from "../../lib/cn";
 import LoadingSpinner from "../LoadingSpinner";
+import { Spoiler } from "./spoilerMark";
 
 interface RichTextEditorProps {
     /** The starting document. Read once; remount with a new key to reset. */
@@ -75,8 +77,8 @@ const ToolButton = ({
 );
 
 /**
- * The community's editor: bold, italic, underline, three heading levels and
- * pictures, and nothing else — the API refuses anything outside that set, so
+ * The community's editor: bold, italic, underline, spoilers, three heading
+ * levels and pictures, and nothing else — the API refuses anything outside that set, so
  * the editor never offers it.
  */
 const RichTextEditor = ({
@@ -118,6 +120,7 @@ const RichTextEditor = ({
                 link: false,
             }),
             Image.configure({ inline: false, allowBase64: false }),
+            Spoiler,
             Placeholder.configure({ placeholder }),
         ],
         content: initial ?? undefined,
@@ -173,6 +176,7 @@ const RichTextEditor = ({
                       bold: editor.isActive("bold"),
                       italic: editor.isActive("italic"),
                       underline: editor.isActive("underline"),
+                      spoiler: editor.isActive("spoiler"),
                       h1: editor.isActive("heading", { level: 1 }),
                       h2: editor.isActive("heading", { level: 2 }),
                       h3: editor.isActive("heading", { level: 3 }),
@@ -260,6 +264,14 @@ const RichTextEditor = ({
                     onClick={() => chain()?.toggleUnderline().run()}
                 >
                     <Underline size={16} aria-hidden />
+                </ToolButton>
+                <ToolButton
+                    label="Spoiler"
+                    active={state?.spoiler}
+                    disabled={disabled}
+                    onClick={() => chain()?.toggleMark("spoiler").run()}
+                >
+                    <EyeOff size={16} aria-hidden />
                 </ToolButton>
 
                 <span aria-hidden className="mx-1 h-5 w-px bg-subtle" />

@@ -217,7 +217,7 @@ export const createInMemoryCommunity = (
               id: m.id,
               thread_id: thread.id,
               thread_title: thread.title,
-              plain_text: toPlainText(m.body as RichTextDoc),
+              body: m.body,
               created_at: m.created_at,
               author_id: m.author_id,
               author_username: author?.username ?? null,

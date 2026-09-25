@@ -38,14 +38,25 @@ const CommunityPulse = ({
         >
             {games.length > 0 && (
                 <div>
-                    <h2 className={HEADING}>Talked about</h2>
+                    <h2 className={HEADING}>Most discussed games</h2>
                     <ul>
-                        {games.map(({ game, recentMessageCount }) => (
+                        {games.map(({ game, recentMessageCount }, i) => (
                             <li key={game.id}>
                                 <Link
                                     to={`/community?game=${game.id}`}
                                     className={cn(ROW, "items-center")}
                                 >
+                                    <span
+                                        aria-label={`Number ${i + 1}`}
+                                        className={cn(
+                                            "w-5 shrink-0 font-mono text-label-sm tabular-nums",
+                                            i === 0
+                                                ? "font-semibold text-brand"
+                                                : "text-content-muted"
+                                        )}
+                                    >
+                                        #{i + 1}
+                                    </span>
                                     <GameCover
                                         coverUrl={game.coverUrl}
                                         title={game.title}

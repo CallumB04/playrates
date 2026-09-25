@@ -730,6 +730,19 @@
         outline-offset: 2px;
     }
 
+    /* In the editor a spoiler stays readable, since it is the author's own
+       words; the stripes say it will be covered for everyone else. */
+    .rich-text.ProseMirror span[data-spoiler] {
+        border-radius: 0.25rem;
+        padding: 0 0.125rem;
+        background: repeating-linear-gradient(
+            -45deg,
+            color-mix(in srgb, var(--content-muted) 22%, transparent) 0 6px,
+            color-mix(in srgb, var(--content-muted) 10%, transparent) 6px 12px
+        );
+        box-decoration-break: clone;
+    }
+
     .rich-text p.is-editor-empty:first-child::before {
         content: attr(data-placeholder);
         float: left;

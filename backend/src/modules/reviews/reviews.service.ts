@@ -25,6 +25,7 @@ const toReview = (row: ReviewRowJoined): Review => ({
   gameId: row.game_id,
   body: row.body,
   isPublic: row.is_public,
+  containsSpoilers: row.contains_spoilers ?? false,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -214,6 +215,7 @@ export const createReviewsService = (
       const { row, created } = await repo.upsert(userId, gameId, {
         body: input.body,
         is_public: input.isPublic,
+        contains_spoilers: input.containsSpoilers,
       });
       return { review: toReview(row), created };
     },

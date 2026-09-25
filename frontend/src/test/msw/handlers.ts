@@ -102,6 +102,7 @@ export const buildReview = (
     gameId: 1,
     body: "Still the benchmark for open world side quests.",
     isPublic: true,
+    containsSpoilers: false,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
     author: {

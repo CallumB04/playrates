@@ -26,7 +26,6 @@ import TrendingHero from "../../components/community/TrendingHero";
 import TrendingRunnerUp from "../../components/community/TrendingRunnerUp";
 import PatchNotesCard from "../../components/community/PatchNotesCard";
 import CommunityPulse from "../../components/community/CommunityPulse";
-import HouseRules from "../../components/community/HouseRules";
 import FilterPill from "../../components/community/FilterPill";
 import GameCover from "../../components/game/GameCover";
 import ProfilePicture from "../../components/ProfilePicture";
@@ -277,7 +276,6 @@ const CommunityPage = () => {
                         games={talkedAbout ?? []}
                         replies={latestReplies ?? []}
                     />
-                    <HouseRules onStart={startThread} />
                 </aside>
             </div>
         </div>

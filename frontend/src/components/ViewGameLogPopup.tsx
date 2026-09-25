@@ -17,6 +17,7 @@ import AchievementRing from "./gamelog/AchievementRing";
 import { formatDate, formatHours } from "../lib/format";
 import Modal from "./ui/Modal";
 import Button, { buttonClass } from "./ui/Button";
+import SpoilerCover from "./ui/SpoilerCover";
 import StatusBadge from "./ui/StatusBadge";
 
 export interface LogPopupAction {
@@ -250,9 +251,15 @@ const ViewGameLogPopup = ({
 
                     {/* A preview: the whole thing belongs on the game, where it
                         sits among the others. */}
-                    <p className="mt-1.5 line-clamp-3 text-body-sm leading-relaxed whitespace-pre-line text-content-secondary">
-                        {review.body}
-                    </p>
+                    <SpoilerCover
+                        covered={review.containsSpoilers}
+                        revealLabel="Show review"
+                        className="mt-1.5"
+                    >
+                        <p className="mt-1.5 line-clamp-3 text-body-sm leading-relaxed whitespace-pre-line text-content-secondary">
+                            {review.body}
+                        </p>
+                    </SpoilerCover>
 
                     {fullReviewHref && (
                         <Link
