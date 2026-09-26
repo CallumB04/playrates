@@ -327,12 +327,16 @@ const ThreadPage = () => {
                     title={
                         pending.kind === "thread"
                             ? "Delete this thread?"
-                            : "Delete this message?"
+                            : isPatchNotes
+                              ? "Delete these patch notes?"
+                              : "Delete this message?"
                     }
                     body={
                         pending.kind === "thread"
                             ? "The thread and every message in it go for good."
-                            : "It will show as deleted, so any replies to it still make sense."
+                            : isPatchNotes
+                              ? "It comes off the patch notes for everyone."
+                              : "It will show as deleted, so any replies to it still make sense."
                     }
                     confirmLabel="Delete"
                     isPending={

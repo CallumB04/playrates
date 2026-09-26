@@ -104,14 +104,17 @@ export const canEditMessage = (
   return !row.is_opening && row.author_id === viewer.viewerId;
 };
 
+/* An opening message goes only with its thread, except in the patch notes:
+   that thread is never deleted, and each entry in it, the first included, is
+   the admin's to take down. */
 export const canDeleteMessage = (
   row: Pick<MessageCardRow, "author_id" | "is_opening" | "deleted_at">,
-  viewer: Pick<MessageViewer, "viewerId" | "isAdmin">,
-): boolean =>
-  !row.deleted_at &&
-  !row.is_opening &&
-  !!viewer.viewerId &&
-  (viewer.isAdmin || row.author_id === viewer.viewerId);
+  viewer: Pick<MessageViewer, "viewerId" | "isAdmin" | "isPatchNotes">,
+): boolean => {
+  if (row.deleted_at || !viewer.viewerId) return false;
+  if (row.is_opening) return viewer.isPatchNotes && viewer.isAdmin;
+  return viewer.isAdmin || row.author_id === viewer.viewerId;
+};
 
 export const toMessage = (
   row: MessageCardRow,

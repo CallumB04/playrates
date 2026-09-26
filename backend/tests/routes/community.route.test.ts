@@ -478,6 +478,24 @@ describe("patch notes", () => {
     expect(remove.status).toBe(403);
   });
 
+  it("lets the admin delete any entry, the first one included", async () => {
+    const { app, state } = buildTestApp({ seed: communitySeed() });
+
+    const byUser = await request(app)
+      .delete("/api/v1/community/messages/2")
+      .set("Authorization", authHeader(USER_A));
+    const byAdmin = await request(app)
+      .delete("/api/v1/community/messages/2")
+      .set("Authorization", authHeader(ADMIN));
+
+    expect(byUser.status).toBe(403);
+    expect(byAdmin.status).toBe(204);
+    expect(state.communityThreads.map((t) => t.id)).toContain(2);
+
+    const summary = await request(app).get("/api/v1/community/patch-notes");
+    expect(summary.body.latest).toBeNull();
+  });
+
   it("can be upvoted by anyone signed in", async () => {
     const { app } = buildTestApp({ seed: communitySeed() });
 
@@ -709,9 +727,7 @@ describe("community images", () => {
       .send(webp());
 
     expect(response.status).toBe(201);
-    expect(state.communityImages.get(response.body.url)?.bytes).toEqual(
-      webp(),
-    );
+    expect(state.communityImages.get(response.body.url)?.bytes).toEqual(webp());
   });
 
   it("refuses bytes that are not a WebP", async () => {

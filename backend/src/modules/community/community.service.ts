@@ -36,6 +36,7 @@ import {
 } from "../notifications/notifications.mapper.js";
 import {
   buildMessageTree,
+  canDeleteMessage,
   toLatestReply,
   toMessage,
   toTalkedAboutGame,
@@ -387,13 +388,14 @@ export const createCommunityService = (
 
     async deleteMessage(userId: string, messageId: number): Promise<void> {
       const message = await requireMessage(messageId);
-      if (message.is_opening) {
+      const thread = await requireThread(message.thread_id);
+      const viewer = await viewerFor(userId, thread, []);
+      if (!canDeleteMessage(message, viewer)) {
         throw AppError.forbidden(
-          "The opening message goes only with its thread",
+          message.is_opening
+            ? "The opening message goes only with its thread"
+            : "You cannot delete this message",
         );
-      }
-      if (message.author_id !== userId) {
-        assertAdmin(await profiles.findById(userId));
       }
       await repo.softDeleteMessage(messageId);
       await discard(imageSources(message.body));

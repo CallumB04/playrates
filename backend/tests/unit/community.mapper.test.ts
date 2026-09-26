@@ -93,6 +93,13 @@ describe("message permissions", () => {
   it("lets an admin delete any reply but edit only patch notes", () => {
     const admin = viewer({ viewerId: "admin", isAdmin: true });
     expect(canDeleteMessage(row({}), admin)).toBe(true);
+    expect(canDeleteMessage(row({ is_opening: true }), admin)).toBe(false);
+    expect(
+      canDeleteMessage(row({ is_opening: true }), {
+        ...admin,
+        isPatchNotes: true,
+      }),
+    ).toBe(true);
     expect(canEditMessage(row({}), admin)).toBe(false);
     expect(
       canEditMessage(row({ is_opening: true }), {
