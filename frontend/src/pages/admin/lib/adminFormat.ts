@@ -1,4 +1,4 @@
-import type { AdminBucket, AdminPeriodFigure } from "@playrates/shared";
+import type { AdminBucket } from "@playrates/shared";
 
 const MONTHS = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -13,31 +13,6 @@ export const bucketLabel = (bucket: string, size: AdminBucket): string => {
     return size === "week" ? `w/c ${label}` : label;
 };
 
-/** 1,284 · 12.9k · 1.2m: an axis tick, where width matters. */
-export const compactNumber = (value: number): string =>
-    new Intl.NumberFormat("en-GB", {
-        notation: "compact",
-        maximumFractionDigits: 1,
-    }).format(value);
-
-export type ChangeDirection = "up" | "down" | "flat" | "new";
-
-export const changeDirection = (figure: AdminPeriodFigure): ChangeDirection => {
-    if (figure.change === null) return "new";
-    if (Math.abs(figure.change) < 0.005) return "flat";
-    return figure.change > 0 ? "up" : "down";
-};
-
-/** "+50%", "−20%", "New" for growth from nothing, "No change". */
-export const formatChange = (figure: AdminPeriodFigure): string => {
-    const direction = changeDirection(figure);
-    if (direction === "new") return "New";
-    if (direction === "flat") return "No change";
-    const percent = Math.round(Math.abs(figure.change!) * 100);
-    // A true minus, which lines up with the plus in a tabular face.
-    return `${direction === "up" ? "+" : "−"}${percent}%`;
-};
-
 export const RANGE_LABELS = {
     "7d": "7 days",
     "30d": "30 days",
@@ -45,6 +20,6 @@ export const RANGE_LABELS = {
     "12m": "12 months",
 } as const;
 
-/** 0.4567 → "46%". Null, where there is nothing to divide, reads as a dash. */
+/** 0.4567 → "46%". With nothing to divide it reads as a dash. */
 export const share = (part: number, whole: number): string =>
     whole === 0 ? "—" : `${Math.round((part / whole) * 100)}%`;
