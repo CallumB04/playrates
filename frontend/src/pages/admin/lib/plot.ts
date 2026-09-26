@@ -111,3 +111,28 @@ export const timeInDay = (iso: string, dayLabel: string, zone = displayTimeZone(
     dayLabel === "Today"
         ? ""
         : new Intl.DateTimeFormat("en-GB", { timeZone: zone, hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+
+/** Which of five steps a day falls on: none at all, then quarters of the
+ *  busiest day shown. Anything above zero shows, however small. */
+export const heatLevel = (value: number, peak: number): number => {
+    if (value <= 0) return 0;
+    return Math.min(4, Math.max(1, Math.ceil((value / Math.max(1, peak)) * 4)));
+};
+
+/** Every day from `from` to `to` inclusive, YYYY-MM-DD, with `values` placed
+ *  on the days it names and zero on the rest. */
+export const fillDays = (
+    from: string,
+    to: string,
+    values: Map<string, number> | Set<string>
+): { day: string; value: number }[] => {
+    const out: { day: string; value: number }[] = [];
+    for (let t = Date.parse(`${from}T00:00:00Z`); t <= Date.parse(`${to}T00:00:00Z`); t += 86_400_000) {
+        const day = new Date(t).toISOString().slice(0, 10);
+        out.push({
+            day,
+            value: values instanceof Set ? (values.has(day) ? 1 : 0) : (values.get(day) ?? 0),
+        });
+    }
+    return out;
+};

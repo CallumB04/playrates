@@ -1,5 +1,5 @@
 import { CircleAlert, Flame, type LucideIcon } from "lucide-react";
-import type { AdminGameEvent, GameEventGroup } from "@playrates/shared";
+import type { AdminGameEvent, GameEventGroup, RawgUsage } from "@playrates/shared";
 
 export const GAME_GROUP_LABELS: Record<GameEventGroup, string> = {
     added: "Arrivals",
@@ -96,11 +96,7 @@ export const gameEventSummary = (
 
 export type QuotaLevel = "ok" | "warning" | "danger";
 
-/** Warn at three quarters of the month's allowance, and loudly at nine
- *  tenths: past it, search stops finding new games and imports fail. */
-export const quotaLevel = (used: number, allowance: number): QuotaLevel => {
-    const share = allowance === 0 ? 1 : used / allowance;
-    if (share >= 0.9) return "danger";
-    if (share >= 0.75) return "warning";
-    return "ok";
-};
+/** Running out before the reset is the thing worth colour; under a quarter
+ *  left is worth a warning. */
+export const allowanceTone = (usage: RawgUsage): QuotaLevel =>
+    usage.runsOutOn ? "danger" : usage.left < usage.allowance * 0.25 ? "warning" : "ok";

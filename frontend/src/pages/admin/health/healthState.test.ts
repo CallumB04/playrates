@@ -40,6 +40,11 @@ describe("headline", () => {
         expect(systemStates(recovered).rawg).toBe("up");
     });
 
+    it("says how many requests failed, rather than a few", () => {
+        const h = health({ errors: { last24h: 1 } });
+        expect(headline(systemStates(h), 1).text).toBe("Answering, but 1 request failed in the last day.");
+    });
+
     it("counts a slow database as struggling, not down", () => {
         expect(systemStates(health({ database: { latencyMs: 1500 } })).database).toBe("slow");
     });

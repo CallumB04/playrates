@@ -23,6 +23,7 @@ import {
     fetchAnnouncements,
     fetchRawgUsage,
     fetchServerErrors,
+    correctRawgUsage,
     importAdminGame,
     pullAdminGames,
     queryKeys,
@@ -91,6 +92,14 @@ export const useRawgUsage = () =>
         queryKey: queryKeys.admin.rawgUsage,
         queryFn: fetchRawgUsage,
     });
+
+export const useCorrectRawg = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (left: number) => correctRawgUsage(left),
+        onSuccess: (usage) => queryClient.setQueryData(queryKeys.admin.rawgUsage, usage),
+    });
+};
 
 export const useAdminGameSearch = (q: string) =>
     useQuery({

@@ -110,12 +110,7 @@ const GameControls = () => {
             <h2 id="look-after-heading" className="text-label text-content-muted">
                 Look after a game
             </h2>
-            <p className="mt-2 max-w-[56ch] text-body-sm text-content-secondary">
-                Put a game on the home page’s trending rail, or fetch its description, credits
-                and box art again now rather than on the next visit.
-            </p>
-
-            <div className="relative mt-4">
+            <div className="relative mt-3">
                 <Search
                     size={15}
                     aria-hidden
@@ -136,7 +131,7 @@ const GameControls = () => {
                             Nothing called that here. If RAWG has it, bring it in by its id.
                         </li>
                     ) : (
-                        games.map((game) => <GameRow key={game.id} game={game} />)
+                        games.slice(0, 5).map((game) => <GameRow key={game.id} game={game} />)
                     )}
                 </ul>
             )}
@@ -165,9 +160,7 @@ const GameControls = () => {
                         {importGame.isPending ? "Importing…" : "Import"}
                     </Button>
                 </div>
-                <p className="text-label-sm text-content-muted">
-                    The number in the game’s RAWG address. Costs two or three requests.
-                </p>
+                <p className="text-label-sm text-content-muted">Costs two or three RAWG requests.</p>
             </form>
         </section>
     );

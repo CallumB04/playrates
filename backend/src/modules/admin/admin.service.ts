@@ -1,3 +1,4 @@
+import { RAWG_MONTHLY_ALLOWANCE, RAWG_RESET_DAY } from "@playrates/shared";
 import type {
   AdminActivityQuery,
   AdminGameEventsQuery,
@@ -17,8 +18,11 @@ import type { GamesService } from "../games/games.service.js";
 import type { NotificationsRepository } from "../notifications/notifications.repository.js";
 import type { AdminRepository } from "./admin.repository.js";
 import {
+  isoDay,
   rangeWindow,
   rawgUsageFrom,
+  type RawgAllowanceSetting,
+  type RawgCorrection,
   toActivityEvent,
   toAnnouncement,
   toCursorPage,
@@ -35,6 +39,14 @@ import {
 const bootedAt = Date.now();
 
 const DAY_MS = 86_400_000;
+
+/** Twelve weeks: enough for a person's habits to show, few enough to draw. */
+const ACTIVE_DAYS_SHOWN = 84;
+
+const DEFAULT_ALLOWANCE: RawgAllowanceSetting = {
+  allowance: RAWG_MONTHLY_ALLOWANCE,
+  resetDay: RAWG_RESET_DAY,
+};
 
 /** Everything behind /admin. requireAdmin has already run by the time any of
  *  this is reached, so nothing here checks the caller again. */
@@ -53,6 +65,17 @@ export const createAdminService = (deps: {
     const row = await games.findById(id);
     if (!row) throw AppError.notFound("Game");
     return toGameSummary(row);
+  };
+
+  const rawgUsage = async () => {
+    const today = now();
+    const [setting, correction] = await Promise.all([
+      repo.getSetting<RawgAllowanceSetting>("rawg_allowance"),
+      repo.getSetting<RawgCorrection>("rawg_correction"),
+    ]);
+    const allowance = setting ?? DEFAULT_ALLOWANCE;
+    const rows = await repo.rawgUsage(rawgUsageFrom(today, allowance.resetDay));
+    return toRawgUsage(rows, today, allowance, correction);
   };
 
   return {
@@ -96,7 +119,11 @@ export const createAdminService = (deps: {
     async user(id: string) {
       const row = await repo.userById(id);
       if (!row) throw AppError.notFound("User");
-      return toUserSummary(row, now().getTime());
+      const from = isoDay(new Date(now().getTime() - (ACTIVE_DAYS_SHOWN - 1) * DAY_MS));
+      return {
+        ...toUserSummary(row, now().getTime()),
+        activeDays: await repo.userActiveDays(id, from),
+      };
     },
 
     async gameEvents(query: AdminGameEventsQuery) {
@@ -111,9 +138,21 @@ export const createAdminService = (deps: {
       return rows.map(toGameSummary);
     },
 
-    async rawgUsage() {
-      const today = now();
-      return toRawgUsage(await repo.rawgUsage(rawgUsageFrom(today)), today);
+    rawgUsage,
+
+    /** Takes the figure RAWG's own dashboard shows as the truth from now on.
+     *  Today's requests so far are already inside it, so they are noted and
+     *  not counted a second time. */
+    async correctRawg(left: number) {
+      const today = isoDay(now());
+      const rows = await repo.rawgUsage(today);
+      const correction: RawgCorrection = {
+        left,
+        day: today,
+        baseline: rows.find((r) => r.day === today)?.requests ?? 0,
+      };
+      await repo.setSetting("rawg_correction", correction);
+      return rawgUsage();
     },
 
     pull(input: AdminPullInput, actorId: string) {
@@ -202,9 +241,7 @@ export const createAdminService = (deps: {
       // Everything below reads the database, so it only runs if that is up.
       const [usage, errors] = database.ok
         ? await Promise.all([
-            repo
-              .rawgUsage(rawgUsageFrom(checkedAt))
-              .then((rows) => toRawgUsage(rows, checkedAt)),
+            rawgUsage(),
             repo.serverErrorStats(
               new Date(checkedAt.getTime() - DAY_MS).toISOString(),
             ),

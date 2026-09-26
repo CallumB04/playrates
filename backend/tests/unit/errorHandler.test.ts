@@ -114,4 +114,26 @@ describe("error handler", () => {
 
     expect(sink).not.toHaveBeenCalled();
   });
+
+  it("records what a database error says, though it is not an Error", async () => {
+    const sink = vi.fn(async () => undefined);
+    // The shape PostgREST rejects with when a statement runs out of time.
+    await runHandler(
+      {
+        code: "57014",
+        message: "canceling statement due to statement timeout",
+        details: null,
+        hint: null,
+      },
+      createErrorHandler(sink),
+    );
+
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 500,
+        message: "57014 · canceling statement due to statement timeout",
+        stack: expect.stringContaining("statement timeout"),
+      }),
+    );
+  });
 });

@@ -30,10 +30,7 @@ const ActivityPage = () => {
 
     return (
         <>
-            <AdminPageHeader
-                title="Activity"
-                description="Everything anyone does here, newest first. Open a line for the detail behind it."
-            />
+            <AdminPageHeader title="Activity" />
 
             <div className="mb-4 flex flex-wrap items-center gap-2">
                 <Chip selected={!group} onClick={() => update({ group: null })}>

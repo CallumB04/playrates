@@ -73,7 +73,7 @@ const announcement = {
 
 /** Every admin endpoint, so the gate is proven for all of them rather than
  *  for the ones someone remembered to test. */
-const ENDPOINTS: { method: "get" | "post" | "patch"; path: string; body?: object }[] = [
+const ENDPOINTS: { method: "get" | "post" | "patch" | "put"; path: string; body?: object }[] = [
   { method: "get", path: "/api/v1/admin/stats/overview" },
   { method: "get", path: "/api/v1/admin/stats/users" },
   { method: "get", path: "/api/v1/admin/activity" },
@@ -81,6 +81,7 @@ const ENDPOINTS: { method: "get" | "post" | "patch"; path: string; body?: object
   { method: "get", path: `/api/v1/admin/users/${USER_A}` },
   { method: "get", path: "/api/v1/admin/games/events" },
   { method: "get", path: "/api/v1/admin/games/rawg-usage" },
+  { method: "put", path: "/api/v1/admin/games/rawg-usage", body: { left: 6555 } },
   { method: "get", path: "/api/v1/admin/games/search?q=witcher" },
   {
     method: "post",
@@ -489,5 +490,41 @@ describe("admin feeds", () => {
     expect(response.status).toBe(200);
     expect(response.body.database.ok).toBe(true);
     expect(response.body.rawg.configured).toBe(false);
+  });
+});
+
+describe("admin RAWG allowance", () => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  it("counts on from the figure RAWG gives, not from what PlayRates counted", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...seed(),
+        rawgUsage: [{ day: today, requests: 12, failures: 0, last_request_at: null, last_failure_at: null, last_error: null }],
+      },
+    });
+
+    const before = await request(app)
+      .get("/api/v1/admin/games/rawg-usage")
+      .set("Authorization", authHeader(ADMIN));
+    expect(before.body).toMatchObject({ basis: "counted", left: 19_988 });
+
+    const corrected = await request(app)
+      .put("/api/v1/admin/games/rawg-usage")
+      .set("Authorization", authHeader(ADMIN))
+      .send({ left: 6555 });
+
+    // The 12 already counted today are inside RAWG's figure.
+    expect(corrected.status).toBe(200);
+    expect(corrected.body).toMatchObject({ basis: "corrected", left: 6555, since: today });
+  });
+
+  it("refuses a figure that isn't a whole number of requests", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const response = await request(app)
+      .put("/api/v1/admin/games/rawg-usage")
+      .set("Authorization", authHeader(ADMIN))
+      .send({ left: -3 });
+    expect(response.status).toBe(422);
   });
 });

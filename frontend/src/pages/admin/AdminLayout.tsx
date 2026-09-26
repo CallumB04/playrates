@@ -23,15 +23,10 @@ const AdminLayout = () => {
     const fade = useOverflowFade<HTMLElement>();
 
     return (
-        <div className="flex flex-col gap-7">
+        <div className="flex flex-col gap-6">
             <header className="flex flex-col gap-5">
                 <div className="flex items-end justify-between gap-4">
-                    <div className="min-w-0">
-                        <h1 className="font-display text-title text-content">Admin</h1>
-                        <p className="mt-2 text-label text-content-muted">
-                            Only your account can open this, or anything it reads.
-                        </p>
-                    </div>
+                    <h1 className="font-display text-title text-content">Admin</h1>
                     <ThemeToggle />
                 </div>
 

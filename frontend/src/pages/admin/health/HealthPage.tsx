@@ -11,6 +11,8 @@ import { useAdminHealth, useServerErrors } from "../../../hooks/queries/useAdmin
 import AdminPageHeader from "../components/AdminPageHeader";
 import SectionHeader from "../components/SectionHeader";
 import ShowOlder from "../components/ShowOlder";
+import { SeeAllButton, SeeAllModal } from "../components/SeeAll";
+import { useSeeAll } from "../components/useSeeAll";
 import { headline, systemStates, type SystemState } from "./healthState";
 
 const STATE: Record<SystemState, { word: string; dot: string; text: string }> = {
@@ -87,30 +89,49 @@ const ErrorRow = ({ entry }: { entry: ServerErrorEntry }) => {
     );
 };
 
-const Errors = () => {
+const ErrorList = ({ entries }: { entries: ServerErrorEntry[] }) => (
+    <ul className={cardClass("flex flex-col px-1.5 py-1.5 sm:px-2", { padding: "none" })}>
+        {entries.map((entry) => (
+            <ErrorRow key={entry.id} entry={entry} />
+        ))}
+    </ul>
+);
+
+const AllErrors = () => {
     const errors = useServerErrors();
     const entries = errors.data?.pages.flatMap((p) => p.data) ?? [];
     return (
+        <>
+            <ErrorList entries={entries} />
+            <ShowOlder
+                hasMore={errors.hasNextPage}
+                loading={errors.isFetchingNextPage}
+                onClick={() => errors.fetchNextPage()}
+                end="That’s every error there has been."
+            />
+        </>
+    );
+};
+
+/** The last three failed requests; the rest behind a popup. */
+const Errors = () => {
+    const errors = useServerErrors();
+    const entries = (errors.data?.pages[0]?.data ?? []).slice(0, 3);
+    const all = useSeeAll();
+    return (
         <section>
-            <SectionHeader title="Server errors" note="every 5xx the API has returned, newest first" />
+            <SectionHeader title="Failed requests" trailing={entries.length > 0 && <SeeAllButton onClick={all.show} />} />
             {errors.isPending ? (
-                <TextSkeleton lines={4} />
+                <TextSkeleton lines={3} />
             ) : entries.length === 0 ? (
-                <EmptyNote>None yet. Every failed request will be listed here, with its stack.</EmptyNote>
+                <EmptyNote>None. Every request the API fails is kept here, with its stack.</EmptyNote>
             ) : (
-                <>
-                    <ul className={cardClass("flex flex-col px-1.5 py-1.5 sm:px-2", { padding: "none" })}>
-                        {entries.map((entry) => (
-                            <ErrorRow key={entry.id} entry={entry} />
-                        ))}
-                    </ul>
-                    <ShowOlder
-                        hasMore={errors.hasNextPage}
-                        loading={errors.isFetchingNextPage}
-                        onClick={() => errors.fetchNextPage()}
-                        end="That’s every error there has been."
-                    />
-                </>
+                <ErrorList entries={entries} />
+            )}
+            {all.open && (
+                <SeeAllModal title="Failed requests" onClose={all.hide} wide>
+                    <AllErrors />
+                </SeeAllModal>
             )}
         </section>
     );
@@ -133,7 +154,7 @@ const HealthPage = () => {
 
     const body = (health: AdminHealth, checkedAt: number) => {
         const states = systemStates(health);
-        const lead = headline(states);
+        const lead = headline(states, health.errors.last24h);
         return (
             <section aria-label="Right now" className={cardClass("relative overflow-hidden", { padding: "none" })}>
                 <span
@@ -144,7 +165,7 @@ const HealthPage = () => {
                     <h2 className="text-label text-content-muted">Right now</h2>
                     <p className="mt-3 max-w-[24ch] font-display text-title text-content">{lead.text}</p>
                     <p className="mt-3 text-label text-content-muted">
-                        Checked {relativeTime(new Date(checkedAt).toISOString())}, and every minute this page is open.
+                        Checked {relativeTime(new Date(checkedAt).toISOString())}
                     </p>
                 </div>
                 <div className="relative mt-5 border-t border-subtle px-5 sm:px-6 lg:px-8">
@@ -182,15 +203,15 @@ const HealthPage = () => {
                                         , <span className="font-mono">{health.rawg.todayFailures}</span> failed
                                     </>
                                 )}
-                                {health.rawg.lastRequestAt && <> · the last {relativeTime(health.rawg.lastRequestAt)}</>}
+                                {health.rawg.lastRequestAt && <> · last call {relativeTime(health.rawg.lastRequestAt)}</>}
                                 {states.rawg === "slow" && health.rawg.lastError && <> · {health.rawg.lastError}</>}
                             </>
                         )}
                     </System>
-                    <System name="Requests" state={states.errors}>
+                    <System name="Failed requests" state={states.errors}>
                         <span className="font-mono">{formatCount(health.errors.last24h)}</span>{" "}
-                        {health.errors.last24h === 1 ? "error" : "errors"} in the last day
-                        {health.errors.lastAt && <> · the last {relativeTime(health.errors.lastAt)}</>}
+                        in the last day
+                        {health.errors.lastAt && <> · most recent {relativeTime(health.errors.lastAt)}</>}
                     </System>
                 </div>
             </section>
@@ -201,7 +222,6 @@ const HealthPage = () => {
         <>
             <AdminPageHeader
                 title="Health"
-                description="Whether each part of PlayRates is answering right now."
                 actions={
                     <Button
                         variant="secondary"

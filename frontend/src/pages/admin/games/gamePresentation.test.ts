@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AdminGameEvent } from "@playrates/shared";
-import { gameEventMark, gameEventSummary, quotaLevel } from "./gamePresentation";
+import { gameEventMark, gameEventSummary } from "./gamePresentation";
 
 const event = (overrides: Partial<AdminGameEvent>): AdminGameEvent => ({
     id: 1,
@@ -59,13 +59,5 @@ describe("gameEventMark", () => {
 
     it("leaves ordinary arrivals alone", () => {
         expect(gameEventMark(event({}))).toBeNull();
-    });
-});
-
-describe("quotaLevel", () => {
-    it("warns at three quarters and alarms at nine tenths", () => {
-        expect(quotaLevel(14_999, 20_000)).toBe("ok");
-        expect(quotaLevel(15_000, 20_000)).toBe("warning");
-        expect(quotaLevel(18_000, 20_000)).toBe("danger");
     });
 });

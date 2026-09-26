@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addedIn, barIndexAt, changeWords, groupByDay, plotPeak, timeInDay } from "./plot";
+import { addedIn, barIndexAt, changeWords, fillDays, groupByDay, heatLevel, plotPeak, timeInDay } from "./plot";
 
 describe("barIndexAt", () => {
     it("finds the bar under the pointer, and clamps the gutters", () => {
@@ -87,5 +87,24 @@ describe("timeInDay", () => {
     it("leaves today to relative time, and gives any other day the clock", () => {
         expect(timeInDay("2026-09-23T14:43:00Z", "Today", "UTC")).toBe("");
         expect(timeInDay("2026-09-23T14:43:00Z", "Wednesday 23 Sept", "UTC")).toBe("14:43");
+    });
+});
+
+describe("heatLevel", () => {
+    it("keeps none apart from any, and splits the rest into quarters of the peak", () => {
+        expect(heatLevel(0, 10)).toBe(0);
+        expect(heatLevel(1, 10)).toBe(1);
+        expect(heatLevel(5, 10)).toBe(2);
+        expect(heatLevel(10, 10)).toBe(4);
+    });
+});
+
+describe("fillDays", () => {
+    it("gives every day in the span, marking the ones it was given", () => {
+        expect(fillDays("2026-09-24", "2026-09-26", new Set(["2026-09-25"]))).toEqual([
+            { day: "2026-09-24", value: 0 },
+            { day: "2026-09-25", value: 1 },
+            { day: "2026-09-26", value: 0 },
+        ]);
     });
 });

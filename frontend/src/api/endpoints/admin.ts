@@ -11,6 +11,7 @@ import type {
     AdminPullInput,
     AdminPullResult,
     AdminRange,
+    AdminUserDetail,
     AdminUserSummary,
     Announcement,
     AnnouncementInput,
@@ -70,8 +71,8 @@ export const fetchAdminUsers = async (
         })
     ).data;
 
-export const fetchAdminUser = async (id: string): Promise<AdminUserSummary> =>
-    (await api.get<AdminUserSummary>(`/admin/users/${id}`)).data;
+export const fetchAdminUser = async (id: string): Promise<AdminUserDetail> =>
+    (await api.get<AdminUserDetail>(`/admin/users/${id}`)).data;
 
 export const fetchAdminGameEvents = async (
     group: GameEventGroup | undefined,
@@ -85,6 +86,9 @@ export const fetchAdminGameEvents = async (
 
 export const fetchRawgUsage = async (): Promise<RawgUsage> =>
     (await api.get<RawgUsage>("/admin/games/rawg-usage")).data;
+
+export const correctRawgUsage = async (left: number): Promise<RawgUsage> =>
+    (await api.put<RawgUsage>("/admin/games/rawg-usage", { left })).data;
 
 export const searchAdminGames = async (q: string): Promise<AdminGameSummary[]> =>
     (await api.get<AdminGameSummary[]>("/admin/games/search", { params: { q } }))

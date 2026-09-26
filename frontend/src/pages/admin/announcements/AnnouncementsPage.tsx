@@ -33,6 +33,8 @@ import {
 } from "../../../hooks/queries/useAdmin";
 import AdminPageHeader from "../components/AdminPageHeader";
 import SectionHeader from "../components/SectionHeader";
+import { SeeAllButton, SeeAllModal } from "../components/SeeAll";
+import { useSeeAll } from "../components/useSeeAll";
 import { composeAnnouncement } from "./composeAnnouncement";
 
 /** Counts against the limit the bell was laid out for; it only takes colour
@@ -175,12 +177,12 @@ const AnnouncementsPage = () => {
     };
 
     const reach = overview?.totals.users;
+    const all = useSeeAll();
 
     return (
         <>
             <AdminPageHeader
                 title="Announcements"
-                description="A message to every account, in the bell beside everything else. Only people here when it goes out receive it."
             />
 
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
@@ -237,7 +239,7 @@ const AnnouncementsPage = () => {
 
                     <Field
                         label="Link (optional)"
-                        help="Where tapping it goes. A path on PlayRates, never another site."
+                        help="A page on PlayRates, like /community"
                         error={linkError}
                     >
                         {(a11y) => (
@@ -282,29 +284,36 @@ const AnnouncementsPage = () => {
                             <NotificationItem notification={preview} onNavigate={() => undefined} preview />
                         </ul>
                     </div>
-                    <p className="text-label-sm text-content-muted">
-                        On a phone the bell is a sheet the width of the screen, so this is the narrowest it gets.
-                    </p>
                 </div>
             </div>
 
             <section className="mt-10">
                 <SectionHeader
                     title="Sent"
-                    note={history.data?.length ? `${history.data.length} so far` : undefined}
+                    trailing={(history.data?.length ?? 0) > 3 && <SeeAllButton onClick={all.show} />}
                 />
                 {history.isPending ? (
-                    <TextSkeleton lines={4} />
+                    <TextSkeleton lines={3} />
                 ) : !history.data?.length ? (
-                    <EmptyNote>Nothing has gone out yet. Tests stay out of this list.</EmptyNote>
+                    <EmptyNote>Nothing has gone out yet. Tests aren’t listed.</EmptyNote>
                 ) : (
                     <ul className={cardClass("flex flex-col py-1")}>
-                        {history.data.map((a) => (
+                        {history.data.slice(0, 3).map((a) => (
                             <HistoryRow key={a.id} announcement={a} />
                         ))}
                     </ul>
                 )}
             </section>
+
+            {all.open && history.data && (
+                <SeeAllModal title="Everything sent" onClose={all.hide}>
+                    <ul className="flex flex-col">
+                        {history.data.map((a) => (
+                            <HistoryRow key={a.id} announcement={a} />
+                        ))}
+                    </ul>
+                </SeeAllModal>
+            )}
 
             {confirming && parsed.success && (
                 <ConfirmPopup

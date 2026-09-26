@@ -39,6 +39,7 @@ export const createInMemoryGameEvents = (
 
 export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
   let nextAnnouncementId = 9000;
+  const settings = new Map<string, unknown>();
   let nextNotificationId = 9500;
 
   const directoryRow = (id: string): AdminUserDirectoryRow | null => {
@@ -172,6 +173,18 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
 
     async rawgUsage(from) {
       return state.rawgUsage.filter((d) => d.day >= from);
+    },
+
+    async userActiveDays() {
+      return [];
+    },
+
+    async getSetting<T>(key: string) {
+      return (settings.get(key) as T | undefined) ?? null;
+    },
+
+    async setSetting(key, value) {
+      settings.set(key, value);
     },
 
     async serverErrors(before, limit) {

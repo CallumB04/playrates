@@ -26,7 +26,7 @@ const COUNTS = [
     { key: "reviewCount", label: "Reviews" },
     { key: "messageCount", label: "Replies" },
     { key: "friendCount", label: "Friends" },
-    { key: "activeDayCount", label: "Days here" },
+    { key: "activeDayCount", label: "Days active" },
 ] as const;
 
 /* One grid for the header and every row, so the figures stand in columns
@@ -57,11 +57,10 @@ const Row = ({ user, onOpen }: { user: AdminUserSummary; onOpen: () => void }) =
                     </span>
                     <span className="block truncate text-label-sm text-content-muted">
                         Joined {formatDate(user.createdAt)}
-                        <span className="sm:hidden">
-                            {" · "}
-                            <span className="font-mono">{formatCount(user.logCount)}</span> logs ·{" "}
-                            <span className="font-mono">{formatCount(user.friendCount)}</span> friends
-                        </span>
+                    </span>
+                    <span className="block text-label-sm text-content-muted sm:hidden">
+                        <span className="font-mono">{formatCount(user.logCount)}</span> logs ·{" "}
+                        <span className="font-mono">{formatCount(user.activeDayCount)}</span> days active
                     </span>
                 </span>
             </span>
@@ -98,19 +97,7 @@ const UsersPage = () => {
 
     return (
         <>
-            <AdminPageHeader
-                title="Users"
-                description={
-                    data ? (
-                        <>
-                            <span className="font-mono text-content">{formatCount(data.meta.total)}</span>{" "}
-                            {q ? `matching “${q}”` : "accounts"}. Open anyone for what they’ve done.
-                        </>
-                    ) : (
-                        "Everyone with an account."
-                    )
-                }
-            />
+            <AdminPageHeader title="Users" />
 
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="relative sm:w-72">
@@ -140,7 +127,7 @@ const UsersPage = () => {
                     segments={[
                         { value: "recent", label: "Last seen" },
                         { value: "joined", label: "Newest" },
-                        { value: "active", label: "Most days" },
+                        { value: "active", label: "Most days active" },
                     ]}
                 />
             </div>
@@ -173,6 +160,9 @@ const UsersPage = () => {
                             ))}
                         </ul>
                     </div>
+                    <p className="mt-2 hidden text-label-sm text-content-muted sm:block">
+                        Days active is how many different days they’ve opened PlayRates, not days since they joined.
+                    </p>
 
                     {pagination.pageCount > 1 && (
                         <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">

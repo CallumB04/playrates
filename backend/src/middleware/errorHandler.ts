@@ -37,6 +37,28 @@ const normalise = (error: unknown): AppError => {
   return AppError.internal();
 };
 
+/** What went wrong, in words. The database client rejects with plain
+ *  objects, not Errors, and reading only `Error`s recorded every database
+ *  failure as "Internal server error". */
+export const describeError = (
+  error: unknown,
+): { message: string | null; stack: string | null } => {
+  if (error instanceof Error) {
+    return { message: error.message, stack: error.stack ?? null };
+  }
+  if (error && typeof error === "object") {
+    const e = error as Record<string, unknown>;
+    const parts = [e.code, e.message, e.details, e.hint].filter(
+      (part): part is string => typeof part === "string" && part !== "",
+    );
+    return {
+      message: parts.length > 0 ? parts.join(" · ") : null,
+      stack: JSON.stringify(error, null, 2),
+    };
+  }
+  return { message: typeof error === "string" ? error : null, stack: null };
+};
+
 export const createErrorHandler =
   (sink: ErrorSink = noopErrorSink): ErrorRequestHandler =>
   async (error, req, res, _next) => {
@@ -48,15 +70,16 @@ export const createErrorHandler =
       log?.error({ err: error, requestId: req.id }, "unhandled error");
       /* Recorded before responding: on serverless the instance can be frozen
          the moment the response is sent, taking a pending write with it. */
+      const described = describeError(error);
       await sink({
         status: appError.status,
         code: appError.code,
         method: req.method,
         path: req.originalUrl ?? req.path,
-        message: error instanceof Error ? error.message : appError.message,
+        message: described.message ?? appError.message,
         requestId: req.id ?? null,
         userId: req.auth?.userId ?? null,
-        stack: error instanceof Error ? (error.stack ?? null) : null,
+        stack: described.stack,
       });
     } else {
       log?.warn(

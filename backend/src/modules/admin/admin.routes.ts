@@ -14,6 +14,7 @@ import {
   AnnouncementIdParamSchema,
   AnnouncementInputSchema,
   CursorQuerySchema,
+  RawgCorrectionSchema,
 } from "@playrates/shared";
 import type { z } from "zod";
 import { AppError } from "../../lib/AppError.js";
@@ -104,6 +105,15 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
   router.get("/games/rawg-usage", async (_req, res) => {
     res.json(await service.rawgUsage());
   });
+
+  router.put(
+    "/games/rawg-usage",
+    validate({ body: RawgCorrectionSchema }),
+    async (req, res) => {
+      const { left } = req.valid!.body as z.infer<typeof RawgCorrectionSchema>;
+      res.json(await service.correctRawg(left));
+    },
+  );
 
   router.get(
     "/games/search",

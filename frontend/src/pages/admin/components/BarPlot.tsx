@@ -1,6 +1,7 @@
-import { useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { cn } from "../../../lib/cn";
-import { barIndexAt, plotPeak, type PlotBar } from "../lib/plot";
+import { plotPeak, type PlotBar } from "../lib/plot";
+import { sliderProps, usePlotCursor } from "./usePlotCursor";
 
 interface BarPlotProps {
     bars: PlotBar[];
@@ -33,31 +34,11 @@ const BarPlot = ({
     axis,
     className,
 }: BarPlotProps) => {
-    const latest = Math.max(0, bars.length - 1);
-    const [picked, setPicked] = useState<number | null>(null);
-    const plotRef = useRef<HTMLDivElement>(null);
-    const index = Math.min(picked ?? latest, latest);
+    const cursor = usePlotCursor<HTMLDivElement>(bars.length);
+    const index = cursor.index;
     const peak = plotPeak(bars, marker?.value ?? 0);
     // Past about sixty bars a 3px gutter eats the bars themselves.
     const gap = bars.length > 60 ? 1 : bars.length > 20 ? 2 : 3;
-
-    const pickAt = (event: PointerEvent<HTMLDivElement>) => {
-        const rect = plotRef.current?.getBoundingClientRect();
-        if (!rect) return;
-        setPicked(barIndexAt(event.clientX - rect.left, rect.width, bars.length));
-    };
-
-    const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-        const step: Record<string, number> = {
-            ArrowLeft: index - 1,
-            ArrowRight: index + 1,
-            Home: 0,
-            End: latest,
-        };
-        if (!(event.key in step)) return;
-        event.preventDefault();
-        setPicked(Math.min(latest, Math.max(0, step[event.key]!)));
-    };
 
     return (
         <div className={cn("flex min-w-0 flex-col gap-2.5", className)}>
@@ -66,22 +47,9 @@ const BarPlot = ({
             </div>
 
             <div
-                ref={plotRef}
-                role="slider"
-                tabIndex={0}
-                aria-label={label}
-                aria-valuemin={0}
-                aria-valuemax={latest}
-                aria-valuenow={index}
-                aria-valuetext={bars.length > 0 ? describe(index) : "No data"}
-                onPointerMove={pickAt}
-                onPointerDown={pickAt}
-                // A mouse leaving hands the plot back to the latest; a finger
-                // lifting keeps what it chose, since there is no hover to fall
-                // back on.
-                onPointerLeave={(e) => e.pointerType === "mouse" && setPicked(null)}
-                onBlur={() => setPicked(null)}
-                onKeyDown={onKeyDown}
+                ref={cursor.ref}
+                {...sliderProps(label, index, bars.length, bars.length > 0 ? describe(index) : "")}
+                {...cursor.handlers}
                 className="relative flex cursor-crosshair touch-pan-y items-end rounded-xs focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
                 style={{ height, gap }}
             >

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   periodChange,
   rangeWindow,
+  rawgPeriod,
   rawgUsageFrom,
   toActivityEvent,
   toAnnouncement,
@@ -116,7 +117,29 @@ describe("toOverview", () => {
   });
 });
 
+describe("rawgPeriod", () => {
+  it("runs from the 8th to the 8th, not the calendar month", () => {
+    expect(rawgPeriod(TODAY, 8)).toEqual({ start: "2026-09-08", resetsOn: "2026-10-08" });
+    expect(rawgPeriod(new Date("2026-10-03T00:00:00Z"), 8)).toEqual({
+      start: "2026-09-08",
+      resetsOn: "2026-10-08",
+    });
+  });
+
+  it("starts a new period on the reset day itself", () => {
+    expect(rawgPeriod(new Date("2026-10-08T00:30:00Z"), 8).start).toBe("2026-10-08");
+  });
+
+  it("pulls a reset day in for a month too short for it", () => {
+    expect(rawgPeriod(new Date("2027-02-15T00:00:00Z"), 31)).toEqual({
+      start: "2027-01-31",
+      resetsOn: "2027-02-28",
+    });
+  });
+});
+
 describe("toRawgUsage", () => {
+  const setting = { allowance: 20_000, resetDay: 8 };
   const day = (d: string, requests: number, extra: Partial<RawgUsageDayRow> = {}) => ({
     day: d,
     requests,
@@ -127,40 +150,70 @@ describe("toRawgUsage", () => {
     ...extra,
   });
 
-  it("reaches back to the month's start or thirty days, whichever is earlier", () => {
-    expect(rawgUsageFrom(TODAY)).toBe("2026-08-28");
-    expect(rawgUsageFrom(new Date("2026-09-30T00:00:00Z"))).toBe("2026-09-01");
+  it("reaches back to the period's start or thirty days, whichever is earlier", () => {
+    expect(rawgUsageFrom(TODAY, 8)).toBe("2026-08-28");
+    expect(rawgUsageFrom(new Date("2026-11-07T00:00:00Z"), 8)).toBe("2026-10-08");
   });
 
-  it("totals this month only, and projects the month from its daily rate", () => {
-    const usage = toRawgUsage(
-      [day("2026-08-31", 900), day("2026-09-01", 100), day("2026-09-26", 420)],
-      TODAY,
-    );
+  it("counts only this period when there is nothing to go on but its own count", () => {
+    const usage = toRawgUsage([day("2026-09-07", 900), day("2026-09-20", 100)], TODAY, setting, null);
+    expect(usage).toMatchObject({ basis: "counted", used: 100, left: 19_900, since: "2026-09-07" });
+  });
 
-    expect(usage.monthRequests).toBe(520);
-    // 520 over 26 days is 20 a day, across 30
-    expect(usage.projected).toBe(600);
-    expect(usage.allowance).toBe(20_000);
+  it("counts on from RAWG's own figure, without counting that day twice", () => {
+    // Corrected on the 26th with 20 requests already counted that day; 30
+    // more have come since.
+    const usage = toRawgUsage(
+      [day("2026-09-20", 500), day("2026-09-26", 50)],
+      TODAY,
+      setting,
+      { left: 6_555, day: "2026-09-26", baseline: 20 },
+    );
+    expect(usage).toMatchObject({ basis: "corrected", left: 6_525, used: 13_475, since: "2026-09-26" });
+  });
+
+  it("forgets a correction from an earlier period, since the reset cleared it", () => {
+    const usage = toRawgUsage([day("2026-09-20", 10)], TODAY, setting, {
+      left: 100,
+      day: "2026-09-01",
+      baseline: 0,
+    });
+    expect(usage).toMatchObject({ basis: "counted", left: 19_990 });
+  });
+
+  it("spreads what is left over the days to the reset, and says when it runs out", () => {
+    // 19 days in, 13,475 spent: 709 a day, against 6,525 over 12 days.
+    const usage = toRawgUsage([day("2026-09-26", 30)], TODAY, setting, {
+      left: 6_525,
+      day: "2026-09-26",
+      baseline: 30,
+    });
+    expect(usage.daysLeft).toBe(12);
+    expect(usage.dailyBudget).toBe(543);
+    expect(usage.pace).toBe(709);
+    expect(usage.projectedLeft).toBeLessThan(0);
+    expect(usage.runsOutOn).toBe("2026-10-05");
   });
 
   it("gives thirty days of bars, zero-filled, ending today", () => {
-    const usage = toRawgUsage([day("2026-09-26", 3)], TODAY);
+    const usage = toRawgUsage([day("2026-09-26", 3)], TODAY, setting, null);
     expect(usage.days).toHaveLength(30);
     expect(usage.days.at(-1)).toEqual({ day: "2026-09-26", requests: 3, failures: 0 });
     expect(usage.days[0]).toEqual({ day: "2026-08-28", requests: 0, failures: 0 });
   });
 
-  it("surfaces the most recent failure", () => {
+  it("surfaces the most recent failure, and counts this period's", () => {
     const usage = toRawgUsage(
       [
         day("2026-09-20", 5, { failures: 1, last_failure_at: "2026-09-20T08:00:00Z", last_error: "RAWG responded 502" }),
         day("2026-09-26", 5, { failures: 1, last_failure_at: "2026-09-26T09:00:00Z", last_error: "RAWG responded 429" }),
       ],
       TODAY,
+      setting,
+      null,
     );
     expect(usage.lastError).toBe("RAWG responded 429");
-    expect(usage.monthFailures).toBe(2);
+    expect(usage.periodFailures).toBe(2);
   });
 });
 

@@ -49,6 +49,11 @@ export interface AdminRepository {
 
   /** Days on or after `from`, oldest first. */
   rawgUsage(from: string): Promise<RawgUsageDayRow[]>;
+  /** Days a person used PlayRates on or after `from`, oldest first. */
+  userActiveDays(id: string, from: string): Promise<string[]>;
+
+  getSetting<T>(key: string): Promise<T | null>;
+  setSetting(key: string, value: unknown): Promise<void>;
 
   serverErrors(before: number | undefined, limit: number): Promise<ServerErrorRowWithUser[]>;
   serverErrorStats(since: string): Promise<{ count: number; lastAt: string | null }>;
@@ -172,6 +177,34 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
       .order("day");
     if (error) throw error;
     return (data ?? []) as RawgUsageDayRow[];
+  },
+
+  async userActiveDays(id, from) {
+    const { data, error } = await db
+      .from("user_active_days")
+      .select("day")
+      .eq("user_id", id)
+      .gte("day", from)
+      .order("day");
+    if (error) throw error;
+    return (data ?? []).map((row) => row.day as string);
+  },
+
+  async getSetting<T>(key: string) {
+    const { data, error } = await db
+      .from("admin_settings")
+      .select("value")
+      .eq("key", key)
+      .maybeSingle();
+    if (error) throw error;
+    return ((data?.value as T | undefined) ?? null) as T | null;
+  },
+
+  async setSetting(key, value) {
+    const { error } = await db
+      .from("admin_settings")
+      .upsert({ key, value }, { onConflict: "key" });
+    if (error) throw error;
   },
 
   async serverErrors(before, limit) {

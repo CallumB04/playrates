@@ -1,7 +1,6 @@
 import {
   ADMIN_PERIOD_FIELDS,
   ANNOUNCEMENT_TONES,
-  RAWG_MONTHLY_ALLOWANCE,
   activityGroupOf,
   gameEventGroupOf,
   type AdminActivityEvent,
@@ -253,41 +252,82 @@ export const toUserSummary = (
   activeDayCount: Number(row.active_day_count),
 });
 
-const daysInMonth = (day: string): number => {
-  const date = new Date(`${day}T00:00:00Z`);
-  return new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0),
-  ).getUTCDate();
-};
-
 /** How far back the usage chart looks. */
 export const RAWG_USAGE_DAYS = 30;
 
-/** The first day the usage query has to reach: the month's start or thirty
- *  days back, whichever is earlier. */
-export const rawgUsageFrom = (today: Date): string => {
+export interface RawgAllowanceSetting {
+  allowance: number;
+  resetDay: number;
+}
+
+/** The last figure read off RAWG's dashboard, and how much of that day had
+ *  already been counted when it was, so the day isn't counted twice. */
+export interface RawgCorrection {
+  left: number;
+  day: string;
+  baseline: number;
+}
+
+const dayNumber = (day: string) => Date.parse(`${day}T00:00:00Z`) / DAY_MS;
+
+/** The reset day in a given month, pulled in for a month too short for it. */
+const resetIn = (year: number, month: number, resetDay: number): string => {
+  const last = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  return isoDay(new Date(Date.UTC(year, month, Math.min(resetDay, last))));
+};
+
+/** The allowance period today falls in: from the last reset, up to (not
+ *  including) the next. */
+export const rawgPeriod = (
+  today: Date,
+  resetDay: number,
+): { start: string; resetsOn: string } => {
+  const y = today.getUTCFullYear();
+  const m = today.getUTCMonth();
   const day = isoDay(today);
-  const monthStart = `${day.slice(0, 7)}-01`;
-  const chartStart = addDays(day, -(RAWG_USAGE_DAYS - 1));
-  return monthStart < chartStart ? monthStart : chartStart;
+  const thisMonth = resetIn(y, m, resetDay);
+  return day >= thisMonth
+    ? { start: thisMonth, resetsOn: resetIn(y, m + 1, resetDay) }
+    : { start: resetIn(y, m - 1, resetDay), resetsOn: thisMonth };
+};
+
+/** The first day the usage query has to reach: the period's start or the
+ *  chart's, whichever is earlier. */
+export const rawgUsageFrom = (today: Date, resetDay: number): string => {
+  const { start } = rawgPeriod(today, resetDay);
+  const chartStart = addDays(isoDay(today), -(RAWG_USAGE_DAYS - 1));
+  return start < chartStart ? start : chartStart;
 };
 
 /** `rows` from `rawgUsageFrom(today)`, oldest first. */
-export const toRawgUsage = (rows: RawgUsageDayRow[], today: Date): RawgUsage => {
+export const toRawgUsage = (
+  rows: RawgUsageDayRow[],
+  today: Date,
+  setting: RawgAllowanceSetting,
+  correction: RawgCorrection | null,
+): RawgUsage => {
   const day = isoDay(today);
-  const monthStart = `${day.slice(0, 7)}-01`;
-  const chartStart = addDays(day, -(RAWG_USAGE_DAYS - 1));
+  const { start, resetsOn } = rawgPeriod(today, setting.resetDay);
+  const sumFrom = (from: string) =>
+    rows.filter((r) => r.day >= from).reduce((n, r) => n + r.requests, 0);
 
-  const month = rows.filter((r) => r.day >= monthStart);
-  const monthRequests = month.reduce((n, r) => n + r.requests, 0);
-  const monthFailures = month.reduce((n, r) => n + r.failures, 0);
+  // A correction made this period is the best figure there is; one from an
+  // earlier period was reset away with it.
+  const corrected = correction !== null && correction.day >= start;
+  const used = corrected
+    ? setting.allowance - correction.left + (sumFrom(correction.day) - correction.baseline)
+    : sumFrom(start);
+  const left = Math.max(0, setting.allowance - used);
 
-  // Today counts as a whole day elapsed, so a busy morning projects high
-  // rather than low: the direction that matters with an allowance.
-  const elapsed = Number(day.slice(8, 10));
-  const projected = Math.round((monthRequests / elapsed) * daysInMonth(day));
+  const elapsed = dayNumber(day) - dayNumber(start) + 1;
+  const daysLeft = Math.max(1, dayNumber(resetsOn) - dayNumber(day));
+  const pace = Math.round(used / elapsed);
+  const projectedLeft = left - pace * daysLeft;
+  const runsOutOn =
+    projectedLeft < 0 && pace > 0 ? addDays(day, Math.floor(left / pace)) : null;
 
   const byDay = new Map(rows.map((r) => [r.day, r]));
+  const chartStart = addDays(day, -(RAWG_USAGE_DAYS - 1));
   const days = Array.from({ length: RAWG_USAGE_DAYS }, (_, i) => {
     const d = addDays(chartStart, i);
     const row = byDay.get(d);
@@ -302,10 +342,19 @@ export const toRawgUsage = (rows: RawgUsageDayRow[], today: Date): RawgUsage => 
     .at(-1);
 
   return {
-    allowance: RAWG_MONTHLY_ALLOWANCE,
-    monthRequests,
-    monthFailures,
-    projected,
+    allowance: setting.allowance,
+    periodStart: start,
+    resetsOn,
+    daysLeft,
+    used,
+    left,
+    basis: corrected ? "corrected" : "counted",
+    since: corrected ? correction.day : (rows.find((r) => r.requests > 0)?.day ?? null),
+    dailyBudget: Math.floor(left / daysLeft),
+    pace,
+    projectedLeft,
+    runsOutOn,
+    periodFailures: rows.filter((r) => r.day >= start).reduce((n, r) => n + r.failures, 0),
     days,
     lastRequestAt: latest((r) => r.last_request_at),
     lastFailureAt: lastFailure?.last_failure_at ?? null,

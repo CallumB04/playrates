@@ -14,14 +14,18 @@ const ActivityFeed = ({
     filters,
     onFilterUser,
     compact = false,
+    limit,
 }: {
     filters: AdminActivityFilters;
     onFilterUser?: (userId: string) => void;
     /** Inside another surface, such as a person's detail: no card of its own. */
     compact?: boolean;
+    /** Show only the first few, with no way to page on. */
+    limit?: number;
 }) => {
     const feed = useAdminActivity(filters);
-    const events = feed.data?.pages.flatMap((page) => page.data) ?? [];
+    const all = feed.data?.pages.flatMap((page) => page.data) ?? [];
+    const events = limit ? all.slice(0, limit) : all;
 
     if (feed.isPending) return <TextSkeleton lines={8} />;
     if (feed.isError) {
@@ -57,12 +61,12 @@ const ActivityFeed = ({
                     </section>
                 ))}
             </div>
-            <ShowOlder
+            {!limit && <ShowOlder
                 hasMore={feed.hasNextPage}
                 loading={feed.isFetchingNextPage}
                 onClick={() => feed.fetchNextPage()}
                 end="That’s where the log begins."
-            />
+            />}
         </div>
     );
 };

@@ -35,7 +35,7 @@ const PullPanel = () => {
     const notify = useNotify();
 
     const pages = Number(maxPages);
-    const left = usage ? usage.allowance - usage.monthRequests : null;
+    const left = usage ? usage.left : null;
 
     const run = () =>
         pull.mutate(
@@ -63,11 +63,6 @@ const PullPanel = () => {
             <h2 id="pull-heading" className="text-label text-content-muted">
                 Bring in new releases
             </h2>
-            <p className="mt-2 max-w-[48ch] text-body-sm text-content-secondary">
-                Asks RAWG for games released lately, most tracked first. Anything already
-                here is refreshed rather than doubled.
-            </p>
-
             <div className="mt-2">
                 <Row label="Released in the last">
                     <SegmentedChoice

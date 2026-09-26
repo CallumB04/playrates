@@ -25,13 +25,19 @@ export const systemStates = (h: AdminHealth) => {
 
 /** The one sentence the page leads with: all well, or the worst of it. */
 export const headline = (
-    states: ReturnType<typeof systemStates>
+    states: ReturnType<typeof systemStates>,
+    failed = 0
 ): { text: string; state: SystemState } => {
     if (states.database === "down") return { text: "The database isn’t answering.", state: "down" };
     if (states.errors === "down") return { text: "The API is failing requests.", state: "down" };
     if (states.rawg === "down") return { text: "RAWG isn’t set up, so no new games can arrive.", state: "down" };
     if (states.rawg === "slow") return { text: "RAWG is failing, so search is using the catalogue alone.", state: "slow" };
     if (states.database === "slow") return { text: "The database is slow to answer.", state: "slow" };
-    if (states.errors === "slow") return { text: "Everything is answering, with a few errors today.", state: "slow" };
+    if (states.errors === "slow") {
+        return {
+            text: `Answering, but ${failed === 1 ? "1 request" : `${failed} requests`} failed in the last day.`,
+            state: "slow",
+        };
+    }
     return { text: "Everything is answering.", state: "up" };
 };

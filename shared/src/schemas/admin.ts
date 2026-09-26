@@ -142,6 +142,7 @@ export interface AdminCommunityDetail {
 
 export interface AdminGamesDetail {
   metric: "games";
+  total: number;
   added: number;
   withCover: number;
   withBoxArt: number;
@@ -257,6 +258,11 @@ export const AdminUserIdParamSchema = z.object({
   id: z.string().uuid(),
 });
 
+export interface AdminUserDetail extends AdminUserSummary {
+  /** Days they used PlayRates in the last twelve weeks, YYYY-MM-DD, UTC. */
+  activeDays: string[];
+}
+
 export interface AdminUserSummary extends AdminPerson {
   isAdmin: boolean;
   createdAt: string;
@@ -267,6 +273,7 @@ export interface AdminUserSummary extends AdminPerson {
   reviewCount: number;
   messageCount: number;
   friendCount: number;
+  /** Distinct days they have opened PlayRates, ever. Not days since joining. */
   activeDayCount: number;
 }
 
@@ -348,22 +355,48 @@ export const AdminGamePatchSchema = z
   .object({ isTrending: z.boolean() })
   .strict();
 
-/** RAWG's free tier. Shared with live traffic: every search that falls
- *  through to RAWG spends from it too. */
+/** RAWG's free tier: 20,000 requests a period, renewing on the 8th. Shared
+ *  with live traffic: every search that falls through to RAWG spends it. */
 export const RAWG_MONTHLY_ALLOWANCE = 20_000;
+export const RAWG_RESET_DAY = 8;
 
 export interface RawgUsage {
   allowance: number;
-  /** This calendar month, UTC. */
-  monthRequests: number;
-  monthFailures: number;
-  /** At this month's daily rate, where the month ends up. */
-  projected: number;
+  /** The period this is, YYYY-MM-DD. It ends the day before `resetsOn`. */
+  periodStart: string;
+  resetsOn: string;
+  /** Whole days until the reset, today included. */
+  daysLeft: number;
+  /** Spent this period, best estimate. */
+  used: number;
+  left: number;
+  /** "corrected": counted on from a figure read off RAWG's own dashboard.
+   *  "counted": only what PlayRates has counted, which misses anything spent
+   *  before tracking began. */
+  basis: "corrected" | "counted";
+  /** When the figure was last corrected, or the first day counted. */
+  since: string | null;
+  /** What is left, spread evenly over the days left. */
+  dailyBudget: number;
+  /** Average spent a day so far this period. */
+  pace: number;
+  /** At this pace, what is left on the day it resets. Negative when it runs
+   *  out first. */
+  projectedLeft: number;
+  /** The day it runs out at this pace, when that is before the reset. */
+  runsOutOn: string | null;
+  periodFailures: number;
+  /** The last 30 days, oldest first, zero-filled. */
   days: { day: string; requests: number; failures: number }[];
   lastRequestAt: string | null;
   lastFailureAt: string | null;
   lastError: string | null;
 }
+
+/** What RAWG's own dashboard says is left, to count on from. */
+export const RawgCorrectionSchema = z
+  .object({ left: z.number().int().min(0).max(1_000_000) })
+  .strict();
 
 export const PULL_WINDOWS = [7, 30, 90] as const;
 export const PULL_MAX_PAGES = 5;

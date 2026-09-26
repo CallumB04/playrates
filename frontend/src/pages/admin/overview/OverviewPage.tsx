@@ -5,27 +5,25 @@ import type {
     AdminOverview,
     AdminPeriodFigure,
     AdminRange,
-    AdminSeriesPoint,
 } from "@playrates/shared";
 import { cardClass } from "../../../components/ui/Card";
 import { figureClass } from "../../../components/ui/Figure";
 import SegmentedChoice from "../../../components/ui/SegmentedChoice";
 import EmptyPlate from "../../../components/ui/EmptyPlate";
-import { Skeleton } from "../../../components/ui/Skeleton";
+import { Skeleton, TextSkeleton } from "../../../components/ui/Skeleton";
+import GameCover from "../../../components/game/GameCover";
 import ProfilePicture from "../../../components/ProfilePicture";
 import { cn } from "../../../lib/cn";
-import { formatCount, relativeTime } from "../../../lib/format";
-import {
-    useAdminMetric,
-    useAdminOverview,
-    useAdminUsers,
-} from "../../../hooks/queries/useAdmin";
+import { formatCount } from "../../../lib/format";
+import { useAdminMetric, useAdminOverview } from "../../../hooks/queries/useAdmin";
 import AdminPageHeader from "../components/AdminPageHeader";
-import BarPlot from "../components/BarPlot";
-import SectionHeader from "../components/SectionHeader";
+import LinePlot from "../components/LinePlot";
+import { SeeAllButton } from "../components/SeeAll";
 import StatButton from "../components/StatButton";
+import RawgAllowance from "../games/RawgAllowance";
+import HealthGlance from "../health/HealthGlance";
 import { bucketLabel, RANGE_LABELS } from "../lib/adminFormat";
-import { addedIn, changeWords, plural, type PlotBar } from "../lib/plot";
+import { changeWords } from "../lib/plot";
 import MetricDetailModal from "./MetricDetailModal";
 
 const RANGES: { value: AdminRange; label: string }[] = [
@@ -35,77 +33,64 @@ const RANGES: { value: AdminRange; label: string }[] = [
     { value: "12m", label: "A year" },
 ];
 
-/** In series order, and never cycled; the same four everywhere they appear. */
-const MADE = [
-    { key: "logs", label: "Logs", one: "log", fill: "bg-chart-1" },
-    { key: "reviews", label: "Reviews", one: "review", fill: "bg-chart-2" },
-    { key: "messages", label: "Replies", one: "reply", fill: "bg-chart-3" },
-    { key: "threads", label: "Threads", one: "thread", fill: "bg-chart-4" },
-] as const;
-
-const many = (m: (typeof MADE)[number]) => m.label.toLowerCase();
-
-const single = (series: AdminSeriesPoint[], pick: (p: AdminSeriesPoint) => number, fill: string): PlotBar[] =>
-    series.map((p) => ({ key: p.bucket, segments: [{ key: "v", value: pick(p), className: fill }] }));
-
 /** The figure in its colour, the words in body ink. */
-const Change = ({ figure, previous }: { figure: AdminPeriodFigure; previous: string }) => {
+export const Change = ({ figure, previous }: { figure: AdminPeriodFigure; previous: string }) => {
     const { figure: text, words, tone } = changeWords(figure, previous);
     if (!text) return <>{words}</>;
     return (
         <>
-            <span className={cn("font-mono", tone === "up" ? "text-success" : "text-danger")}>{text}</span>{" "}
-            {words}
+            <span className={cn("font-mono", tone === "up" ? "text-success" : "text-danger")}>{text}</span> {words}
         </>
     );
 };
 
-const Hero = ({
-    data,
-    onOpen,
-}: {
-    data: AdminOverview;
-    onOpen: (metric: AdminMetric) => void;
-}) => {
-    const { totals, period, series, bucket } = data;
-    const range = RANGE_LABELS[data.range];
-    const unit = bucket === "week" ? "week" : "day";
-    const bars = single(series, (p) => p.active, "bg-brand");
+/** A small figure with what it counts under it. */
+const Aside = ({ value, label }: { value: number; label: string }) => (
+    <div>
+        <p className="font-mono text-figure-row text-content">{formatCount(value)}</p>
+        <p className="mt-1 text-label-sm text-content-muted">{label}</p>
+    </div>
+);
 
+const People = ({ data, onOpen }: { data: AdminOverview; onOpen: () => void }) => {
+    const { totals, series, bucket } = data;
+    const weekly = bucket === "week";
     return (
-        <section aria-label="This week" className={cardClass("relative overflow-hidden", { padding: "none" })}>
+        <section aria-label="People using PlayRates" className={cardClass("relative overflow-hidden", { padding: "none" })}>
             <span
                 aria-hidden
                 className="pointer-events-none absolute -top-32 -right-28 size-80 rounded-full bg-brand/12 blur-3xl"
             />
-
-            <div className="relative grid gap-8 px-5 py-6 sm:px-6 sm:py-7 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-12 lg:px-8 lg:py-8">
-                <div className="flex min-w-0 flex-col">
-                    <h2 className="text-label text-content-muted">Around this week</h2>
-                    <p className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                        <span className={figureClass("display")}>{formatCount(totals.wau)}</span>
-                        <span className="text-body text-content-secondary">
-                            {totals.wau === 1 ? "person" : "people"} in the last seven days
-                        </span>
-                    </p>
-                    <p className="mt-4 max-w-[42ch] text-body-sm text-content-secondary">
-                        <span className="font-mono text-content">{formatCount(totals.dau)}</span> of
-                        them today, <span className="font-mono text-content">{formatCount(totals.mau)}</span>{" "}
-                        this month, and <span className="font-mono text-content">{formatCount(totals.online)}</span>{" "}
-                        here right now.
-                    </p>
-                    <p className="mt-2 text-body-sm text-content-muted">
-                        <Change figure={data.activeWeek} previous="week" />.
-                    </p>
+            <div className="relative flex flex-col gap-6 px-5 py-5 sm:px-6 sm:py-6">
+                <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+                    <div>
+                        <h2 className="text-label text-content-muted">Used PlayRates in the last 7 days</h2>
+                        <p className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <span className={figureClass("display")}>{formatCount(totals.wau)}</span>
+                            <span className="text-label text-content-muted">
+                                <Change figure={data.activeWeek} previous="week" />
+                            </span>
+                        </p>
+                    </div>
+                    <div className="flex gap-7">
+                        <Aside value={totals.online} label="Here now" />
+                        <Aside value={totals.dau} label="Today" />
+                        <Aside value={totals.mau} label="Last 30 days" />
+                    </div>
                 </div>
 
-                <BarPlot
-                    bars={bars}
-                    label={`People active each ${unit}, over ${range}`}
-                    height={112}
+                <LinePlot
+                    series={[
+                        { key: "day", label: weekly ? "That week" : "That day", values: series.map((p) => p.active), color: "var(--color-brand)" },
+                        ...(weekly
+                            ? []
+                            : [{ key: "week", label: "The 7 days to then", values: series.map((p) => p.activeWeek), color: "var(--color-chart-2)", quiet: true }]),
+                    ]}
+                    label={`People who used PlayRates each ${bucket}, over ${RANGE_LABELS[data.range]}`}
+                    height={120}
                     describe={(i) => {
                         const p = series[i]!;
-                        return `${bucketLabel(p.bucket, bucket)}: ${p.active} active`;
+                        return `${bucketLabel(p.bucket, bucket)}: ${p.active} used it${weekly ? "" : `, ${p.activeWeek} in the 7 days to then`}`;
                     }}
                     readout={(i) => {
                         const p = series[i]!;
@@ -113,227 +98,147 @@ const Hero = ({
                             <span className="flex flex-wrap justify-between gap-x-3">
                                 <span>
                                     <span className="font-mono text-content">{formatCount(p.active)}</span>{" "}
-                                    active {bucket === "week" ? "the week of" : "on"}{" "}
-                                    {bucketLabel(p.bucket, "day")}
+                                    {p.active === 1 ? "person" : "people"} {weekly ? "the week of" : "on"} {bucketLabel(p.bucket, "day")}
                                 </span>
-                                {bucket === "day" && (
+                                {!weekly && (
                                     <span className="text-content-muted">
-                                        <span className="font-mono">{formatCount(p.activeWeek)}</span> across the week to then
+                                        <span className="font-mono">{formatCount(p.activeWeek)}</span> in the 7 days to then
                                     </span>
                                 )}
                             </span>
                         );
                     }}
-                    axis={{
-                        start: series[0] ? bucketLabel(series[0].bucket, "day") : "",
-                        end: bucket === "week" ? "this week" : "today",
-                    }}
+                    axis={{ start: series[0] ? bucketLabel(series[0].bucket, "day") : "", end: weekly ? "this week" : "today" }}
                 />
-            </div>
 
-            <div className="relative grid grid-cols-2 gap-x-6 gap-y-3 border-t border-subtle px-5 py-4 sm:grid-cols-3 sm:px-6 lg:grid-cols-5 lg:px-8">
-                <StatButton
-                    value={formatCount(totals.users)}
-                    label="People"
-                    note={addedIn(period.signups.current, range)}
-                    onOpen={() => onOpen("users")}
-                />
-                <StatButton
-                    value={formatCount(totals.logs)}
-                    label="Game logs"
-                    note={addedIn(period.logs.current, range)}
-                    onOpen={() => onOpen("logs")}
-                />
-                <StatButton
-                    value={formatCount(totals.reviews)}
-                    label="Reviews"
-                    note={addedIn(period.reviews.current, range)}
-                    onOpen={() => onOpen("reviews")}
-                />
-                <StatButton
-                    value={formatCount(totals.messages)}
-                    label="Replies"
-                    note={`in ${plural(totals.threads, "thread")}`}
-                    onOpen={() => onOpen("community")}
-                />
-                <StatButton
-                    value={formatCount(totals.games)}
-                    label="Games"
-                    note="in the catalogue"
-                    onOpen={() => onOpen("games")}
-                />
+                <SeeAllButton onClick={onOpen} className="self-start">
+                    Who, and on which days
+                </SeeAllButton>
             </div>
         </section>
     );
 };
 
-const Made = ({ data }: { data: AdminOverview }) => {
-    const { series, bucket, period } = data;
+const Period = ({ data, onOpen }: { data: AdminOverview; onOpen: (m: AdminMetric) => void }) => {
     const range = RANGE_LABELS[data.range];
-    const bars: PlotBar[] = series.map((p) => ({
-        key: p.bucket,
-        segments: MADE.map((m) => ({ key: m.key, value: p[m.key], className: m.fill })),
-    }));
-
+    const items: { metric: AdminMetric; label: string; figure: AdminPeriodFigure }[] = [
+        { metric: "users", label: "New accounts", figure: data.period.signups },
+        { metric: "logs", label: "Games logged", figure: data.period.logs },
+        { metric: "reviews", label: "Reviews written", figure: data.period.reviews },
+        { metric: "community", label: "Community replies", figure: data.period.messages },
+    ];
     return (
-        <section>
-            <SectionHeader
-                title="What people made"
-                note={`each ${bucket}, over ${range}`}
-            />
-            <div className={cardClass("flex flex-col gap-5")}>
-                <BarPlot
-                    bars={bars}
-                    label={`Logs, reviews, replies and threads each ${bucket}`}
-                    height={132}
-                    describe={(i) => {
-                        const p = series[i]!;
-                        return `${bucketLabel(p.bucket, bucket)}: ${MADE.map((m) => plural(p[m.key], m.one, many(m))).join(", ")}`;
-                    }}
-                    readout={(i) => {
-                        const p = series[i]!;
-                        return (
-                            <span className="flex flex-wrap gap-x-3 gap-y-1">
-                                <span className="text-content">{bucketLabel(p.bucket, bucket)}</span>
-                                {MADE.map((m) => (
-                                    <span key={m.key} className="text-content-muted">
-                                        <span className="font-mono text-content-secondary">{p[m.key]}</span>{" "}
-                                        {p[m.key] === 1 ? m.one : many(m)}
-                                    </span>
-                                ))}
-                            </span>
-                        );
-                    }}
-                    axis={{
-                        start: series[0] ? bucketLabel(series[0].bucket, "day") : "",
-                        end: bucket === "week" ? "this week" : "today",
-                    }}
-                />
-
-                <ul className="grid grid-cols-2 gap-x-6 gap-y-3 border-t border-subtle pt-4 sm:grid-cols-4">
-                    {MADE.map((m) => (
-                        <li key={m.key} className="min-w-0">
-                            <span className="flex items-center gap-2 text-label text-content-secondary">
-                                <span aria-hidden className={cn("size-2 shrink-0 rounded-full", m.fill)} />
-                                {m.label}
-                            </span>
-                            <span className="mt-1 block font-mono text-figure-row text-content">
-                                {formatCount(period[m.key].current)}
-                            </span>
-                            <span className="mt-1 block text-label-sm text-content-muted">
-                                <Change figure={period[m.key]} previous={range} />
-                            </span>
-                        </li>
-                    ))}
-                </ul>
+        <section aria-labelledby="period-heading" className={cardClass("px-5 py-4 sm:px-6", { padding: "none" })}>
+            <h2 id="period-heading" className="text-label text-content-muted">
+                In the last {range}
+            </h2>
+            <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-3 lg:grid-cols-4">
+                {items.map((item) => (
+                    <StatButton
+                        key={item.metric}
+                        value={formatCount(item.figure.current)}
+                        label={item.label}
+                        note={<Change figure={item.figure} previous={range} />}
+                        onOpen={() => onOpen(item.metric)}
+                    />
+                ))}
             </div>
         </section>
     );
 };
 
-const Signups = ({ data }: { data: AdminOverview }) => {
-    const { series, bucket, period } = data;
+const LIST_HEADING = "flex items-baseline justify-between gap-3 border-b border-subtle pb-2";
+const ROW = "flex min-h-11 items-center gap-3 rounded-sm px-1 py-1.5 lift hover:bg-surface-hover";
+
+const Rank = ({ n }: { n: number }) => (
+    <span className={cn("w-5 shrink-0 font-mono text-label-sm", n === 1 ? "font-semibold text-brand" : "text-content-muted")}>
+        #{n}
+    </span>
+);
+
+const Busiest = ({ range, onOpen }: { range: AdminRange; onOpen: () => void }) => {
+    const { data } = useAdminMetric("users", range);
+    const people = data?.metric === "users" ? data.mostActive.slice(0, 3) : null;
     return (
-        <section>
-            <SectionHeader
-                title="Sign-ups"
-                note={<><span className="font-mono">{formatCount(period.signups.current)}</span> in {RANGE_LABELS[data.range]}</>}
-            />
-            <div className={cardClass()}>
-                <BarPlot
-                    bars={single(series, (p) => p.signups, "bg-brand")}
-                    label={`New accounts each ${bucket}`}
-                    height={56}
-                    describe={(i) => {
-                        const p = series[i]!;
-                        return `${bucketLabel(p.bucket, bucket)}: ${plural(p.signups, "new account")}`;
-                    }}
-                    axis={{
-                        start: series[0] ? bucketLabel(series[0].bucket, "day") : "",
-                        end: bucket === "week" ? "this week" : "today",
-                    }}
-                />
+        <section className={cardClass()}>
+            <div className={LIST_HEADING}>
+                <h2 className="text-label text-content-muted">Most active people, last {RANGE_LABELS[range]}</h2>
+                <SeeAllButton onClick={onOpen} />
             </div>
-        </section>
-    );
-};
-
-const ASIDE_HEADING = "px-3 pt-3 pb-1.5 text-label text-content-muted";
-const ASIDE_ROW =
-    "flex items-center gap-2.5 rounded-sm px-3 py-2 lift hover:bg-surface-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand";
-
-/** Who is doing the most, and who just arrived. One plain card, like the
- *  community's own column. */
-const People = ({ range }: { range: AdminRange }) => {
-    const { data: detail } = useAdminMetric("users", range);
-    const { data: newest } = useAdminUsers({ sort: "joined" });
-    const active = detail?.metric === "users" ? detail.mostActive.slice(0, 5) : [];
-    const joined = newest?.data.slice(0, 5) ?? [];
-
-    return (
-        <aside className={cardClass("flex flex-col pb-1.5", { padding: "none" })}>
-            <h2 className={ASIDE_HEADING}>Busiest over {RANGE_LABELS[range]}</h2>
-            {active.length === 0 ? (
-                <p className="px-3 py-2 text-body-sm text-content-muted">Nobody has done anything yet.</p>
+            {!people ? (
+                <TextSkeleton lines={3} />
+            ) : people.length === 0 ? (
+                <p className="py-3 text-body-sm text-content-muted">Nobody has done anything in this time.</p>
             ) : (
-                <ol>
-                    {active.map((person, i) => (
-                        <li key={person.username}>
-                            <Link to={`/user/${person.username}`} className={ASIDE_ROW}>
-                                <span
-                                    className={cn(
-                                        "w-5 shrink-0 font-mono text-label-sm",
-                                        i === 0 ? "font-semibold text-brand" : "text-content-muted"
-                                    )}
-                                >
-                                    #{i + 1}
+                <ol className="pt-1">
+                    {people.map((p, i) => (
+                        <li key={p.username}>
+                            <Link to={`/user/${p.username}`} className={ROW}>
+                                <Rank n={i + 1} />
+                                <span className="shrink-0 [&>*]:size-8">
+                                    <ProfilePicture variant="nav" file={p.avatarUrl ?? ""} accent={p.accent} username={p.username} link={false} />
                                 </span>
-                                <span className="shrink-0 [&>*]:size-7">
-                                    <ProfilePicture variant="nav" file={person.avatarUrl ?? ""} accent={person.accent} username={person.username} link={false} />
-                                </span>
-                                <span className="min-w-0 flex-1 truncate text-body-sm font-medium text-content">
-                                    {person.username}
-                                </span>
-                                <span className="shrink-0 font-mono text-label-sm text-content-muted">
-                                    {formatCount(person.count)}
+                                <span className="min-w-0 flex-1 truncate text-body-sm font-medium text-content">{p.username}</span>
+                                <span className="shrink-0 text-label-sm text-content-muted">
+                                    <span className="font-mono text-content-secondary">{formatCount(p.count)}</span>{" "}
+                                    {p.count === 1 ? "action" : "actions"}
                                 </span>
                             </Link>
                         </li>
                     ))}
                 </ol>
             )}
+            <p className="mt-2 text-label-sm text-content-muted">
+                An action is a log, review, post, vote or friend request.
+            </p>
+        </section>
+    );
+};
 
-            <hr className="mx-3 my-1.5 border-subtle" />
-
-            <h2 className={ASIDE_HEADING}>Newest here</h2>
-            <ul>
-                {joined.map((user) => (
-                    <li key={user.id}>
-                        <Link to={`/user/${user.username}`} className={ASIDE_ROW}>
-                            <span className="shrink-0 [&>*]:size-7">
-                                <ProfilePicture variant="nav" file={user.avatarUrl ?? ""} accent={user.accent} username={user.username} link={false} />
-                            </span>
-                            <span className="min-w-0 flex-1 truncate text-body-sm font-medium text-content">
-                                {user.username}
-                            </span>
-                            <span className="shrink-0 text-label-sm text-content-muted">
-                                {relativeTime(user.createdAt)}
-                            </span>
-                        </Link>
-                    </li>
-                ))}
-            </ul>
-        </aside>
+const MostLogged = ({ range, onOpen }: { range: AdminRange; onOpen: () => void }) => {
+    const { data } = useAdminMetric("logs", range);
+    const games = data?.metric === "logs" ? data.topGames.slice(0, 5) : null;
+    return (
+        <section className={cardClass()}>
+            <div className={LIST_HEADING}>
+                <h2 className="text-label text-content-muted">Most logged games, last {RANGE_LABELS[range]}</h2>
+                <SeeAllButton onClick={onOpen} />
+            </div>
+            {!games ? (
+                <TextSkeleton lines={5} />
+            ) : games.length === 0 ? (
+                <p className="py-3 text-body-sm text-content-muted">Nobody logged a game in this time.</p>
+            ) : (
+                <ol className="pt-1">
+                    {games.map((g, i) => (
+                        <li key={g.id}>
+                            <Link to={`/game/${g.id}`} className={ROW}>
+                                <Rank n={i + 1} />
+                                <GameCover coverUrl={g.coverUrl} title={g.title} className="aspect-3/4 w-7 shrink-0 overflow-hidden rounded-xs shadow-cover" />
+                                <span className="min-w-0 flex-1 truncate text-body-sm font-medium text-content">{g.title}</span>
+                                <span className="shrink-0 text-label-sm text-content-muted">
+                                    <span className="font-mono text-content-secondary">{formatCount(g.count)}</span>{" "}
+                                    {g.count === 1 ? "log" : "logs"}
+                                </span>
+                            </Link>
+                        </li>
+                    ))}
+                </ol>
+            )}
+        </section>
     );
 };
 
 const Loading = () => (
-    <div className="flex flex-col gap-8" aria-busy="true">
-        <Skeleton className="h-[21rem] rounded-lg" />
+    <div className="flex flex-col gap-6" aria-busy="true">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-            <Skeleton className="h-72 rounded-lg" />
-            <Skeleton className="h-72 rounded-lg" />
+            <Skeleton className="h-80 rounded-lg" />
+            <div className="flex flex-col gap-4">
+                <Skeleton className="h-44 rounded-lg" />
+                <Skeleton className="h-28 rounded-lg" />
+            </div>
         </div>
+        <Skeleton className="h-32 rounded-lg" />
     </div>
 );
 
@@ -346,42 +251,31 @@ const OverviewPage = () => {
         <>
             <AdminPageHeader
                 title="Overview"
-                description="How PlayRates is doing. Every day here ends at midnight UTC."
-                actions={
-                    <SegmentedChoice label="Period" value={range} onChange={setRange} segments={RANGES} />
-                }
+                actions={<SegmentedChoice label="Period" value={range} onChange={setRange} segments={RANGES} />}
             />
 
             {isError ? (
-                <EmptyPlate
-                    title="The numbers didn’t load"
-                    body="Either the API or the database isn’t answering. Health will say which."
-                />
+                <EmptyPlate title="The numbers didn’t load" body="The API or the database isn’t answering. Health says which." />
             ) : isPending || !data ? (
                 <Loading />
             ) : (
-                <div
-                    className={cn(
-                        "flex flex-col gap-10 transition-opacity",
-                        isPlaceholderData && "opacity-60"
-                    )}
-                >
-                    <Hero data={data} onOpen={setOpen} />
-                    <div className="grid items-start gap-x-6 gap-y-10 lg:grid-cols-[minmax(0,1fr)_300px]">
-                        <div className="flex min-w-0 flex-col gap-10">
-                            <Made data={data} />
-                            <Signups data={data} />
+                <div className={cn("flex flex-col gap-6 transition-opacity", isPlaceholderData && "opacity-60")}>
+                    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+                        <People data={data} onOpen={() => setOpen("users")} />
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                            <RawgAllowance compact />
+                            <HealthGlance />
                         </div>
-                        <div className="lg:pt-12">
-                            <People range={range} />
-                        </div>
+                    </div>
+                    <Period data={data} onOpen={setOpen} />
+                    <div className="grid items-start gap-6 lg:grid-cols-2">
+                        <Busiest range={range} onOpen={() => setOpen("users")} />
+                        <MostLogged range={range} onOpen={() => setOpen("logs")} />
                     </div>
                 </div>
             )}
 
-            {open && (
-                <MetricDetailModal metric={open} range={range} overview={data} onClose={() => setOpen(null)} />
-            )}
+            {open && <MetricDetailModal metric={open} range={range} overview={data} onClose={() => setOpen(null)} />}
         </>
     );
 };
