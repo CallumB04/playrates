@@ -1,7 +1,10 @@
 import type { Repositories } from "../../src/repositories.js";
 import type { AuthAdmin } from "../../src/config/authAdmin.js";
 import type { AvatarStore } from "../../src/config/avatarStore.js";
+import type { CommunityImageStore } from "../../src/config/communityImageStore.js";
 import type {
+  CommunityMessageRow,
+  CommunityThreadRow,
   FriendshipRow,
   GameLogRow,
   GameRow,
@@ -21,6 +24,7 @@ import type {
 import { orderPair } from "../../src/modules/friends/friends.repository.js";
 import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.repository.js";
 import type { NotificationRowWithActor } from "../../src/modules/notifications/notifications.repository.js";
+import { createInMemoryCommunity } from "./inMemoryCommunity.js";
 
 /**
  * Behaviour-equivalent in-memory repositories.
@@ -42,6 +46,9 @@ export interface SeedData {
   platforms?: PlatformRow[];
   platformSystems?: PlatformSystemRow[];
   genres?: GenreRow[];
+  communityThreads?: CommunityThreadRow[];
+  communityMessages?: CommunityMessageRow[];
+  communityVotes?: { message_id: number; user_id: string }[];
 }
 
 export interface InMemoryState {
@@ -59,6 +66,11 @@ export interface InMemoryState {
   genres: GenreRow[];
   /** Stored profile pictures, by user id. */
   avatars: Map<string, Buffer>;
+  communityThreads: CommunityThreadRow[];
+  communityMessages: CommunityMessageRow[];
+  communityVotes: { message_id: number; user_id: string }[];
+  /** Pictures uploaded to messages, by URL. */
+  communityImages: Map<string, { bytes: Buffer; createdAt: string }>;
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
@@ -70,6 +82,7 @@ export const createInMemoryRepos = (
   state: InMemoryState;
   authAdmin: AuthAdmin;
   avatars: AvatarStore;
+  communityImages: CommunityImageStore;
 } => {
   const state: InMemoryState = {
     profiles: [...(seed.profiles ?? [])],
@@ -85,12 +98,23 @@ export const createInMemoryRepos = (
     platformSystems: [...(seed.platformSystems ?? [])],
     genres: [...(seed.genres ?? [])],
     avatars: new Map(),
+    communityThreads: [...(seed.communityThreads ?? [])],
+    communityMessages: [...(seed.communityMessages ?? [])],
+    communityVotes: [...(seed.communityVotes ?? [])],
+    communityImages: new Map(),
   };
 
   let nextLogId = 1000;
   let nextReviewId = 2000;
   let nextGameId = 3000;
   let nextNotificationId = 4000;
+
+  // the reviews_clear_notifications trigger
+  const clearReviewNotifications = (reviewId: number) => {
+    state.notifications = state.notifications.filter(
+      (n) => n.dedupe_key !== `review_upvotes:${reviewId}`,
+    );
+  };
 
   const withPlatforms = (game: GameRow): GameRowWithPlatforms => ({
     ...game,
@@ -246,12 +270,15 @@ export const createInMemoryRepos = (
 
         if (query.releasedAfter) {
           rows = rows.filter(
-            (g) => g.release_date !== null && g.release_date >= query.releasedAfter!,
+            (g) =>
+              g.release_date !== null && g.release_date >= query.releasedAfter!,
           );
         }
         if (query.releasedBefore) {
           rows = rows.filter(
-            (g) => g.release_date !== null && g.release_date <= query.releasedBefore!,
+            (g) =>
+              g.release_date !== null &&
+              g.release_date <= query.releasedBefore!,
           );
         }
         // "Newest" means newest released, not newest guessed-at.
@@ -548,7 +575,19 @@ export const createInMemoryRepos = (
         return withGame(log);
       },
       async remove(id) {
+        const log = state.gameLogs.find((l) => l.id === id);
         state.gameLogs = state.gameLogs.filter((l) => l.id !== id);
+        // the game_logs_delete_review trigger
+        if (log) {
+          for (const r of state.reviews) {
+            if (r.user_id === log.user_id && r.game_id === log.game_id) {
+              clearReviewNotifications(r.id);
+            }
+          }
+          state.reviews = state.reviews.filter(
+            (r) => !(r.user_id === log.user_id && r.game_id === log.game_id),
+          );
+        }
       },
       async count() {
         return state.gameLogs.length;
@@ -583,7 +622,8 @@ export const createInMemoryRepos = (
 
         for (const row of rows) {
           byStatus[row.status] = (byStatus[row.status] ?? 0) + 1;
-          if (row.hours_played !== null) hoursPlayed += Number(row.hours_played);
+          if (row.hours_played !== null)
+            hoursPlayed += Number(row.hours_played);
           if (row.rating !== null) {
             ratingSum += Number(row.rating);
             ratingCount += 1;
@@ -724,6 +764,7 @@ export const createInMemoryRepos = (
       },
       async remove(id) {
         state.reviews = state.reviews.filter((r) => r.id !== id);
+        clearReviewNotifications(id);
       },
     },
 
@@ -847,7 +888,13 @@ export const createInMemoryRepos = (
         Object.assign(row, patch);
         return withActor(row);
       },
-      async raise({ userId, kind, actorId = null, data = {}, dedupeKey = null }) {
+      async raise({
+        userId,
+        kind,
+        actorId = null,
+        data = {},
+        dedupeKey = null,
+      }) {
         const existing =
           dedupeKey === null
             ? undefined
@@ -878,6 +925,66 @@ export const createInMemoryRepos = (
           created_at: now(),
         });
       },
+      async bumpThreadActivity(userId, dedupeKey, data) {
+        const existing = state.notifications.find(
+          (n) => n.user_id === userId && n.dedupe_key === dedupeKey,
+        );
+        if (!existing) {
+          state.notifications.push({
+            id: nextNotificationId++,
+            user_id: userId,
+            kind: "community_thread_activity",
+            actor_id: null,
+            data: { ...data, count: 1 },
+            dedupe_key: dedupeKey,
+            read_at: null,
+            archived_at: null,
+            created_at: new Date().toISOString(),
+          });
+          return;
+        }
+        const unread = !existing.read_at && !existing.archived_at;
+        Object.assign(existing, {
+          data: {
+            ...data,
+            count: unread ? Number(existing.data.count ?? 0) + 1 : 1,
+          },
+          read_at: null,
+          archived_at: null,
+          created_at: new Date().toISOString(),
+        });
+      },
+      async raiseMilestone(userId, kind, dedupeKey, milestone, data) {
+        const existing = state.notifications.find(
+          (n) => n.user_id === userId && n.dedupe_key === dedupeKey,
+        );
+        if (existing) {
+          if (Number(existing.data.milestone ?? 0) >= milestone) return;
+          Object.assign(existing, {
+            data: { ...data, milestone },
+            read_at: null,
+            archived_at: null,
+            created_at: new Date().toISOString(),
+          });
+          return;
+        }
+        state.notifications.push({
+          id: nextNotificationId++,
+          user_id: userId,
+          kind,
+          actor_id: null,
+          data: { ...data, milestone },
+          dedupe_key: dedupeKey,
+          read_at: null,
+          archived_at: null,
+          created_at: new Date().toISOString(),
+        });
+      },
+      async removeByKey(dedupeKey) {
+        state.notifications = state.notifications.filter(
+          (n) => n.dedupe_key !== dedupeKey,
+        );
+      },
       async markAllRead(userId) {
         for (const n of state.notifications) {
           if (n.user_id === userId && n.archived_at === null) {
@@ -905,11 +1012,11 @@ export const createInMemoryRepos = (
       },
     },
 
+    community: createInMemoryCommunity(state),
+
     genres: {
       async list() {
-        return [...state.genres].sort((a, b) =>
-          a.name.localeCompare(b.name),
-        );
+        return [...state.genres].sort((a, b) => a.name.localeCompare(b.name));
       },
     },
   };
@@ -929,6 +1036,16 @@ export const createInMemoryRepos = (
       state.notifications = state.notifications.filter(
         (n) => n.user_id !== userId && n.actor_id !== userId,
       );
+      // Community authorship is SET NULL, so the conversation outlives them.
+      for (const t of state.communityThreads) {
+        if (t.author_id === userId) t.author_id = null;
+      }
+      for (const m of state.communityMessages) {
+        if (m.author_id === userId) m.author_id = null;
+      }
+      state.communityVotes = state.communityVotes.filter(
+        (v) => v.user_id !== userId,
+      );
     },
   };
 
@@ -944,5 +1061,30 @@ export const createInMemoryRepos = (
     },
   };
 
-  return { repos, state, authAdmin, avatars };
+  const IMAGE_PREFIX =
+    "https://test.supabase.co/storage/v1/object/public/community-images/";
+  let nextImage = 1;
+  const communityImages: CommunityImageStore = {
+    async put(userId, bytes) {
+      const url = `${IMAGE_PREFIX}${userId}/${nextImage++}.webp`;
+      state.communityImages.set(url, {
+        bytes,
+        createdAt: new Date().toISOString(),
+      });
+      return url;
+    },
+    owns(url) {
+      return url.startsWith(IMAGE_PREFIX) && !url.includes("..");
+    },
+    async listUploads(userId) {
+      return [...state.communityImages.entries()]
+        .filter(([url]) => url.startsWith(`${IMAGE_PREFIX}${userId}/`))
+        .map(([url, { createdAt }]) => ({ url, createdAt }));
+    },
+    async remove(urls) {
+      for (const url of urls) state.communityImages.delete(url);
+    },
+  };
+
+  return { repos, state, authAdmin, avatars, communityImages };
 };

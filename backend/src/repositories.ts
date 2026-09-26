@@ -31,6 +31,10 @@ import {
   createNotificationsRepository,
   type NotificationsRepository,
 } from "./modules/notifications/notifications.repository.js";
+import {
+  createCommunityRepository,
+  type CommunityRepository,
+} from "./modules/community/community.repository.js";
 
 /** Every repository in one bundle. Tests swap the whole object and still run
  *  the real middleware and validation. */
@@ -41,6 +45,7 @@ export interface Repositories {
   reviews: ReviewsRepository;
   friends: FriendsRepository;
   notifications: NotificationsRepository;
+  community: CommunityRepository;
   platforms: PlatformsRepository;
   genres: GenresRepository;
 }
@@ -52,6 +57,7 @@ export const createRepositories = (db: Db): Repositories => ({
   reviews: createReviewsRepository(db),
   friends: createFriendsRepository(db),
   notifications: createNotificationsRepository(db),
+  community: createCommunityRepository(db),
   platforms: createPlatformsRepository(db),
   genres: createGenresRepository(db),
 });

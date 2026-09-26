@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
     capitalise,
     formatCount,
+    formatMessageCount,
     formatDate,
     formatFraction,
     formatHours,
@@ -136,6 +137,15 @@ describe("formatFraction", () => {
         expect(formatFraction(46, null)).toBe("—");
         expect(formatFraction(46, 0)).toBe("—");
         expect(formatFraction(null, 52)).toBe("—");
+    });
+});
+
+describe("formatMessageCount", () => {
+    it("counts up to 99, then says 99+", () => {
+        expect(formatMessageCount(0)).toBe("0");
+        expect(formatMessageCount(99)).toBe("99");
+        expect(formatMessageCount(100)).toBe("99+");
+        expect(formatMessageCount(4321)).toBe("99+");
     });
 });
 

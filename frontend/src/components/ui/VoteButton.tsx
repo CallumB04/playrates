@@ -8,11 +8,13 @@ interface VoteButtonProps {
     /** Set when the viewer cannot vote, and says why — the tally still shows,
      *  so a signed-out viewer or the author can read it. */
     disabledReason?: string | null;
+    /** What is being upvoted, for the label. */
+    noun?: string;
     className?: string;
 }
 
 /**
- * One upvote per person per review. The count is the label, so the whole thing
+ * One upvote per person per thing. The count is the label, so the whole thing
  * is one touch target, and pressing again withdraws the vote.
  */
 const VoteButton = ({
@@ -20,6 +22,7 @@ const VoteButton = ({
     voted,
     onToggle,
     disabledReason,
+    noun = "review",
     className,
 }: VoteButtonProps) => {
     const disabled = !!disabledReason;
@@ -34,7 +37,7 @@ const VoteButton = ({
                     ? `${count} upvotes. ${disabledReason}`
                     : voted
                       ? "Remove your upvote"
-                      : "Upvote this review"
+                      : `Upvote this ${noun}`
             }
             title={disabledReason ?? undefined}
             className={cn(

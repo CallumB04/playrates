@@ -54,7 +54,7 @@ export interface ReviewsRepository {
   upsert(
     userId: string,
     gameId: number,
-    patch: { body: string; is_public: boolean },
+    patch: { body: string; is_public: boolean; contains_spoilers: boolean },
   ): Promise<{ row: ReviewRowJoined; created: boolean }>;
   remove(id: number): Promise<void>;
   findById(id: number): Promise<ReviewRowJoined | null>;

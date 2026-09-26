@@ -10,7 +10,9 @@ import { baseSeed, buildGameLog, buildReview } from "../helpers/fixtures.js";
 
 describe("reviews", () => {
   it("creates a review and returns 201", async () => {
-    const { app } = buildTestApp({ seed: baseSeed() });
+    const { app } = buildTestApp({
+      seed: { ...baseSeed(), gameLogs: [buildGameLog()] },
+    });
 
     const response = await request(app)
       .put("/api/v1/me/reviews/1")
@@ -24,7 +26,11 @@ describe("reviews", () => {
 
   it("updates an existing review rather than creating a second", async () => {
     const { app, state } = buildTestApp({
-      seed: { ...baseSeed(), reviews: [buildReview()] },
+      seed: {
+        ...baseSeed(),
+        gameLogs: [buildGameLog()],
+        reviews: [buildReview()],
+      },
     });
 
     const response = await request(app)
@@ -35,6 +41,56 @@ describe("reviews", () => {
     expect(response.status).toBe(200);
     expect(state.reviews).toHaveLength(1);
     expect(state.reviews[0]!.body).toBe("Revised opinion.");
+  });
+
+  it("keeps a review's spoiler flag, and defaults it off", async () => {
+    const { app } = buildTestApp({
+      seed: { ...baseSeed(), gameLogs: [buildGameLog()] },
+    });
+    const save = (body: object) =>
+      request(app)
+        .put("/api/v1/me/reviews/1")
+        .set("Authorization", authHeader(USER_A))
+        .send(body);
+
+    expect((await save({ body: "Fine." })).body.containsSpoilers).toBe(false);
+    expect(
+      (await save({ body: "The twist!", containsSpoilers: true })).body
+        .containsSpoilers,
+    ).toBe(true);
+
+    const listed = await request(app).get("/api/v1/games/1/reviews");
+    expect(listed.body.data[0].containsSpoilers).toBe(true);
+  });
+
+  it("refuses a review of a game you have not logged", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .put("/api/v1/me/reviews/1")
+      .set("Authorization", authHeader(USER_A))
+      .send({ body: "Never played it, but." });
+
+    expect(response.status).toBe(422);
+    expect(state.reviews).toHaveLength(0);
+  });
+
+  it("goes when the log it was written from is deleted", async () => {
+    const { app, state } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        gameLogs: [buildGameLog()],
+        reviews: [buildReview(), buildReview({ id: 2, user_id: USER_B })],
+      },
+    });
+
+    const response = await request(app)
+      .delete("/api/v1/me/game-logs/1")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(204);
+    // someone else's review of the same game stays
+    expect(state.reviews.map((r) => r.id)).toEqual([2]);
   });
 
   it("rejects an empty review", async () => {
@@ -203,9 +259,9 @@ describe("review sorting", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.body.data.map((r: { rating: number }) => r.rating)).toEqual([
-      9.5, 5,
-    ]);
+    expect(response.body.data.map((r: { rating: number }) => r.rating)).toEqual(
+      [9.5, 5],
+    );
   });
 
   it("orders lowest first on request", async () => {
@@ -215,9 +271,9 @@ describe("review sorting", () => {
       "/api/v1/games/1/reviews?sort=rating-low",
     );
 
-    expect(response.body.data.map((r: { rating: number }) => r.rating)).toEqual([
-      5, 9.5,
-    ]);
+    expect(response.body.data.map((r: { rating: number }) => r.rating)).toEqual(
+      [5, 9.5],
+    );
   });
 
   it("sorts unrated reviews last in both directions", async () => {
@@ -228,7 +284,9 @@ describe("review sorting", () => {
         buildReview({ id: 2, user_id: USER_B, game_id: 1, body: "rated" }),
       ],
       // Only USER_B has a log, so USER_A's review has no rating at all.
-      gameLogs: [buildGameLog({ id: 2, user_id: USER_B, game_id: 1, rating: 7 })],
+      gameLogs: [
+        buildGameLog({ id: 2, user_id: USER_B, game_id: 1, rating: 7 }),
+      ],
     };
 
     for (const sort of ["rating-high", "rating-low"]) {

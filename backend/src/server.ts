@@ -6,6 +6,7 @@ import { env, type Env } from "./config/env.js";
 import { supabase } from "./config/supabase.js";
 import { createAuthAdmin } from "./config/authAdmin.js";
 import { createAvatarStore } from "./config/avatarStore.js";
+import { createCommunityImageStore } from "./config/communityImageStore.js";
 import { createLogger, type Logger } from "./lib/logger.js";
 import { createRepositories } from "./repositories.js";
 import { verifySupabaseJwt } from "./middleware/requireAuth.js";
@@ -48,6 +49,7 @@ export const createServerApp = (): ServerApp => {
       provider,
       authAdmin: createAuthAdmin(db),
       avatars: createAvatarStore(db),
+      communityImages: createCommunityImageStore(db),
       verify: verifySupabaseJwt,
       logger,
     }),

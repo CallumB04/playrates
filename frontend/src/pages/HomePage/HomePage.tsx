@@ -32,6 +32,8 @@ import Rail from "./components/Rail";
 import GenreGrid from "./components/GenreGrid";
 import FriendFeed from "./components/FriendFeed";
 import ReviewFeed from "./components/ReviewFeed";
+import CommunityTrending from "./components/CommunityTrending";
+import { useTrendingThreads } from "../../hooks/queries/useCommunity";
 
 const RAIL_SIZE = 24;
 
@@ -105,6 +107,8 @@ const HomePage = () => {
 
     const { data: activity, isLoading: activityLoading } = useFriendActivity(6);
     const { data: reviews, isLoading: reviewsLoading } = useRecentReviews(4);
+    const { data: communityTrending, isLoading: communityLoading } =
+        useTrendingThreads(3);
 
     // meta.total, not the length of a page.
     const { data: playing } = useMyGameLogs("playing", { limit: 1 });
@@ -124,7 +128,6 @@ const HomePage = () => {
         () => new Map((myLogIds ?? []).map((log) => [log.gameId, log])),
         [myLogIds]
     );
-
 
     const quickAdd = useQuickAdd();
 
@@ -216,6 +219,11 @@ const HomePage = () => {
                 isLoading={trendingLoading}
                 actionsFor={actionsFor}
                 statusFor={statusFor}
+            />
+
+            <CommunityTrending
+                threads={communityTrending ?? []}
+                isLoading={communityLoading}
             />
 
             <Rail

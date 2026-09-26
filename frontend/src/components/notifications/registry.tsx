@@ -1,7 +1,10 @@
 import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
 import {
+    ArrowBigUp,
     Bell,
+    MessageSquareReply,
+    MessagesSquare,
     PartyPopper,
     UserCheck,
     UserPlus,
@@ -9,6 +12,10 @@ import {
 } from "lucide-react";
 import type {
     AppNotification,
+    CommunityReplyNotification,
+    CommunityThreadActivityNotification,
+    CommunityUpvoteMilestoneNotification,
+    ReviewUpvoteMilestoneNotification,
     FriendAcceptedNotification,
     FriendRequestNotification,
     FriendUser,
@@ -18,6 +25,10 @@ import Button from "../ui/Button";
 import { BRAND_NAME, BRAND_PITCH } from "../../constants/brand";
 import ProfilePicture from "../ProfilePicture";
 import { useFriendRelation } from "../../hooks/queries/useFriends";
+import { usePatchNotification } from "../../hooks/queries/useNotifications";
+import GameCover from "../game/GameCover";
+import { threadPath } from "../community/paths";
+import { formatCount, formatMessageCount } from "../../lib/format";
 import { friendRequestState } from "./friendRequestState";
 
 export interface ContentProps<T extends AppNotification> {
@@ -145,6 +156,138 @@ const ActorFace = ({
     />
 );
 
+/** Opening a community notification is reading it. */
+const useOpen = (notification: AppNotification, onNavigate: () => void) => {
+    const patch = usePatchNotification();
+    return () => {
+        if (notification.readAt === null) {
+            patch.mutate({ id: notification.id, patch: { read: true } });
+        }
+        onNavigate();
+    };
+};
+
+const CommunityReplyContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<CommunityReplyNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    return (
+        <Link
+            to={`${threadPath(notification.threadId)}#message-${notification.messageId}`}
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <span className="group-hover:underline">
+                    {notification.actor.username}
+                </span>{" "}
+                <span className="font-normal text-content-secondary">
+                    replied to you in
+                </span>{" "}
+                {notification.threadTitle}
+            </p>
+            {notification.excerpt && (
+                <p className={`${BODY} line-clamp-2`}>
+                    “{notification.excerpt}”
+                </p>
+            )}
+        </Link>
+    );
+};
+
+const CommunityActivityContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<CommunityThreadActivityNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    const { count } = notification;
+    return (
+        <Link
+            to={threadPath(notification.threadId)}
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <span className="group-hover:underline">
+                    {formatMessageCount(count)} new{" "}
+                    {count === 1 ? "message" : "messages"}
+                </span>{" "}
+                <span className="font-normal text-content-secondary">
+                    in your thread
+                </span>
+            </p>
+            <p className={`${BODY} line-clamp-2`}>{notification.threadTitle}</p>
+        </Link>
+    );
+};
+
+const Upvotes = ({ count }: { count: number }) => (
+    <span className="group-hover:underline">{formatCount(count)} upvotes</span>
+);
+
+const MessageMilestoneContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<CommunityUpvoteMilestoneNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    return (
+        <Link
+            to={`${threadPath(notification.threadId)}#message-${notification.messageId}`}
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <Upvotes count={notification.milestone} />{" "}
+                <span className="font-normal text-content-secondary">
+                    on your message in
+                </span>{" "}
+                {notification.threadTitle}
+            </p>
+            {notification.excerpt && (
+                <p className={`${BODY} line-clamp-2`}>
+                    “{notification.excerpt}”
+                </p>
+            )}
+        </Link>
+    );
+};
+
+const ReviewMilestoneContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<ReviewUpvoteMilestoneNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    return (
+        <Link
+            to={`/game/${notification.gameId}#review-${notification.reviewId}`}
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <Upvotes count={notification.milestone} />{" "}
+                <span className="font-normal text-content-secondary">
+                    on your review of
+                </span>{" "}
+                {notification.gameTitle}
+            </p>
+        </Link>
+    );
+};
+
+/** The game it is about, where the row has no one to show. */
+const CoverLeading = ({
+    notification,
+}: {
+    notification: { coverUrl: string | null; gameTitle: string | null };
+}) => (
+    <GameCover
+        coverUrl={notification.coverUrl}
+        title={notification.gameTitle ?? ""}
+        className="aspect-3/4 w-10 shrink-0 self-start overflow-hidden rounded-xs"
+    />
+);
+
 const UnknownContent = () => (
     <>
         <p className={TITLE}>Something happened</p>
@@ -180,6 +323,29 @@ export const NOTIFICATION_RENDERERS: {
         tone: "text-brand",
         Content: FriendAcceptedContent,
         Leading: ActorFace,
+    },
+    community_reply: {
+        icon: MessageSquareReply,
+        tone: "text-brand",
+        Content: CommunityReplyContent,
+        Leading: ActorFace,
+    },
+    community_thread_activity: {
+        icon: MessagesSquare,
+        tone: "text-brand",
+        Content: CommunityActivityContent,
+        Leading: CoverLeading,
+    },
+    community_upvote_milestone: {
+        icon: ArrowBigUp,
+        tone: "text-brand",
+        Content: MessageMilestoneContent,
+    },
+    review_upvote_milestone: {
+        icon: ArrowBigUp,
+        tone: "text-brand",
+        Content: ReviewMilestoneContent,
+        Leading: CoverLeading,
     },
     unknown: {
         icon: Bell,

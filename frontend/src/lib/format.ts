@@ -97,6 +97,11 @@ export const formatRatingOutOfTen = (
 export const formatCount = (value: number | null | undefined): string =>
     value === null || value === undefined ? "—" : value.toLocaleString("en-GB");
 
+/** Messages and replies stop at 99: past that the exact figure tells a
+ *  reader nothing "busy" does not, and it keeps every count one width. */
+export const formatMessageCount = (value: number): string =>
+    value > 99 ? "99+" : formatCount(value);
+
 /** Hours played, trimmed of a pointless trailing zero. */
 export const formatHours = (hours: number | null | undefined): string => {
     if (hours === null || hours === undefined) return "—";

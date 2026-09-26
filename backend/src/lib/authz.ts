@@ -18,3 +18,11 @@ export function canViewReview(
 ): boolean {
   return review.isPublic || viewerId === review.authorId;
 }
+
+/** Admin is a flag on the profile, looked up per request rather than carried
+ *  in the token, so revoking it takes effect at once. */
+export function assertAdmin(profile: { is_admin: boolean } | null): void {
+  if (!profile?.is_admin) {
+    throw AppError.forbidden("Only an admin can do that");
+  }
+}

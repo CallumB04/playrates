@@ -22,6 +22,8 @@ export interface ProfileRow {
   accent: string | null;
   /** When the first-login welcome was dismissed. Null shows it. */
   onboarded_at: string | null;
+  /** Can post patch notes and remove anything in the community. */
+  is_admin: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -123,6 +125,8 @@ export interface ReviewRow {
   game_id: number;
   body: string;
   is_public: boolean;
+  /** Hides the body until a reader asks to see it. */
+  contains_spoilers: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -158,4 +162,28 @@ export interface NotificationRow {
   read_at: string | null;
   archived_at: string | null;
   created_at: string;
+}
+
+export interface CommunityThreadRow {
+  id: number;
+  subject_kind: "game" | "patch_notes";
+  /** Set exactly when subject_kind is 'game'. */
+  game_id: number | null;
+  title: string;
+  author_id: string | null;
+  created_at: string;
+  last_activity_at: string;
+}
+
+export interface CommunityMessageRow {
+  id: number;
+  thread_id: number;
+  parent_id: number | null;
+  author_id: string | null;
+  /** Tiptap document JSON. Null once deleted. */
+  body: unknown;
+  is_opening: boolean;
+  created_at: string;
+  edited_at: string | null;
+  deleted_at: string | null;
 }

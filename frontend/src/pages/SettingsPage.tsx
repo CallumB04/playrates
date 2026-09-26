@@ -246,7 +246,7 @@ const SettingsPage = () => {
                     label="Time zone"
                     help={
                         zoneIsDetected
-                            ? "Dates and times render in this. Detected from your device — choose it to save it to your account."
+                            ? "Dates and times render in this. Detected from your device. Choose it to save it to your account."
                             : "Dates and times render in this."
                     }
                 >

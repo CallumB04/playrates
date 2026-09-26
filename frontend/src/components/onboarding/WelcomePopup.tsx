@@ -142,7 +142,7 @@ const WelcomePopup = ({
 
             {preview && (
                 <p className="mt-5 border-t border-subtle pt-3 text-center text-label-sm text-content-muted">
-                    Preview — nothing you enter here is saved.
+                    Preview. Nothing you enter here is saved.
                 </p>
             )}
         </Modal>

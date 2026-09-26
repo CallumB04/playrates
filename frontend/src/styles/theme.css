@@ -665,6 +665,154 @@
     }
 }
 
+/* Community messages. One set of rules for the editor and the rendered
+   message, so what you type is what gets posted. */
+@layer components {
+    .rich-text {
+        overflow-wrap: anywhere;
+        color: var(--content);
+    }
+
+    .rich-text > * + * {
+        margin-top: 0.7em;
+    }
+
+    .rich-text h1,
+    .rich-text h2,
+    .rich-text h3 {
+        font-family: var(--font-display);
+        font-weight: 620;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+    }
+
+    .rich-text h1 {
+        font-size: 1.5rem;
+    }
+
+    .rich-text h2 {
+        font-size: 1.25rem;
+    }
+
+    .rich-text h3 {
+        font-size: 1.0625rem;
+    }
+
+    .rich-text * + h1,
+    .rich-text * + h2,
+    .rich-text * + h3 {
+        margin-top: 1.1em;
+    }
+
+    /* The reset takes list markers away; messages want them back. */
+    .rich-text ul,
+    .rich-text ol {
+        padding-left: 1.4em;
+    }
+
+    .rich-text ul {
+        list-style: disc;
+    }
+
+    .rich-text ol {
+        list-style: decimal;
+    }
+
+    .rich-text ul ul {
+        list-style: circle;
+    }
+
+    .rich-text li + li,
+    .rich-text li > * + * {
+        margin-top: 0.3em;
+    }
+
+    .rich-text li::marker {
+        color: var(--content-muted);
+    }
+
+    .rich-text strong {
+        font-weight: 650;
+    }
+
+    .rich-text u {
+        text-underline-offset: 3px;
+    }
+
+    .rich-text img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        max-height: 32rem;
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.5rem;
+    }
+
+    .rich-text.ProseMirror {
+        outline: none;
+    }
+
+    .rich-text img.ProseMirror-selectednode {
+        outline: 2px solid var(--brand);
+        outline-offset: 2px;
+    }
+
+    /* A spoiler in a message: a solid cover over transparent text, lifted
+       to a faint tint on hover or once pressed open, so the spoiled part
+       still stands apart from the rest of the sentence. */
+    .spoiler {
+        cursor: pointer;
+        border-radius: 0.25rem;
+        padding: 0 0.125rem;
+        background: color-mix(in srgb, var(--content-muted) 88%, transparent);
+        color: transparent;
+        box-decoration-break: clone;
+        transition:
+            background-color 160ms var(--ease-glide),
+            color 160ms var(--ease-glide);
+    }
+
+    .spoiler * {
+        color: transparent;
+    }
+
+    .spoiler:hover,
+    .spoiler[data-shown] {
+        background: color-mix(in srgb, var(--content-muted) 20%, transparent);
+        color: inherit;
+    }
+
+    .spoiler:hover *,
+    .spoiler[data-shown] * {
+        color: inherit;
+    }
+
+    /* In the editor a spoiler stays readable, since it is the author's own
+       words: brand-coloured, on stripes, with a dashed edge, so it is plain
+       which words everyone else will find covered. */
+    .rich-text.ProseMirror span[data-spoiler] {
+        border-radius: 0.25rem;
+        padding: 0 0.125rem;
+        color: var(--brand);
+        background: repeating-linear-gradient(
+            -45deg,
+            color-mix(in srgb, var(--brand) 22%, transparent) 0 5px,
+            color-mix(in srgb, var(--brand) 9%, transparent) 5px 10px
+        );
+        outline: 1px dashed color-mix(in srgb, var(--brand) 55%, transparent);
+        outline-offset: 1px;
+        box-decoration-break: clone;
+    }
+
+    .rich-text p.is-editor-empty:first-child::before {
+        content: attr(data-placeholder);
+        float: left;
+        height: 0;
+        pointer-events: none;
+        color: var(--content-muted);
+    }
+}
+
 @keyframes stamp {
     from {
         transform: scale(0.92);

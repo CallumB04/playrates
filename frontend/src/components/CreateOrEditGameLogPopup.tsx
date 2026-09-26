@@ -82,7 +82,11 @@ const CreateOrEditGameLogPopup = ({
             type: "hydrate",
             log: existing,
             review: review
-                ? { body: review.body, isPublic: review.isPublic }
+                ? {
+                      body: review.body,
+                      isPublic: review.isPublic,
+                      containsSpoilers: review.containsSpoilers,
+                  }
                 : null,
         });
         setHydrated(true);
@@ -126,7 +130,11 @@ const CreateOrEditGameLogPopup = ({
             if (body) {
                 await saveReview.mutateAsync({
                     gameId,
-                    input: { body, isPublic: draft.reviewIsPublic },
+                    input: {
+                        body,
+                        isPublic: draft.reviewIsPublic,
+                        containsSpoilers: draft.reviewSpoilers,
+                    },
                 });
             } else if (hadReview) {
                 await removeReview.mutateAsync(gameId);
@@ -348,7 +356,18 @@ const CreateOrEditGameLogPopup = ({
                         <span className="text-label text-content-muted">
                             Review (optional)
                         </span>
-                        <div className="flex items-center gap-3.5">
+                        <div className="flex flex-wrap items-center gap-3.5">
+                            <Toggle
+                                checked={draft.reviewSpoilers}
+                                onChange={(value) =>
+                                    dispatch({
+                                        type: "set",
+                                        field: "reviewSpoilers",
+                                        value,
+                                    })
+                                }
+                                label="Spoilers"
+                            />
                             <Toggle
                                 checked={draft.reviewIsPublic}
                                 onChange={(value) =>

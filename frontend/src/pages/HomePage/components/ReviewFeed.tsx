@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { EmptyNote } from "../../../components/ui/EmptyPlate";
 import type { ReviewWithAuthor } from "@playrates/shared";
 import ProfilePicture from "../../../components/ProfilePicture";
+import { SpoilerNote } from "../../../components/ui/SpoilerCover";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import StatusBadge from "../../../components/ui/StatusBadge";
@@ -53,9 +54,13 @@ const Row = ({ review }: { review: ReviewWithAuthor }) => {
                 )}
             </span>
 
-            <p className="mt-1.5 line-clamp-3 text-body-sm leading-relaxed text-content-secondary">
-                {review.body}
-            </p>
+            {review.containsSpoilers ? (
+                <SpoilerNote className="mt-1.5" />
+            ) : (
+                <p className="mt-1.5 line-clamp-3 text-body-sm leading-relaxed text-content-secondary">
+                    {review.body}
+                </p>
+            )}
 
             <span className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label-sm text-content-muted">
                 {status && <StatusBadge status={status} plain />}

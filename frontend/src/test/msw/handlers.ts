@@ -29,6 +29,7 @@ export const buildProfile = (
     timezone: "UTC",
     hideOnline: false,
     onboardedAt: "2026-01-01T00:00:00.000Z",
+    isAdmin: false,
     avatarUrl: null,
     accent: "indigo",
     online: true,
@@ -101,6 +102,7 @@ export const buildReview = (
     gameId: 1,
     body: "Still the benchmark for open world side quests.",
     isPublic: true,
+    containsSpoilers: false,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
     author: {
@@ -206,6 +208,17 @@ export const handlers = [
 
     http.get(`${API}/games/:id/reviews`, () =>
         HttpResponse.json(paginated([buildReview()]))
+    ),
+
+    // An empty community, so a page that shows threads renders without them.
+    http.get(`${API}/community/threads`, () =>
+        HttpResponse.json(paginated([]))
+    ),
+    http.get(`${API}/community/trending`, () => HttpResponse.json([])),
+    http.get(`${API}/community/games`, () => HttpResponse.json([])),
+    http.get(`${API}/community/latest`, () => HttpResponse.json([])),
+    http.get(`${API}/users/:username/community-threads`, () =>
+        HttpResponse.json([])
     ),
 
     http.get(`${API}/me/friends`, () =>

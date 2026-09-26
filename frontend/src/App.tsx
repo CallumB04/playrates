@@ -6,7 +6,9 @@ import ToastStack from "./components/feedback/ToastStack";
 import AccountFormModal from "./components/auth/AccountFormModal";
 import FirstLoginWelcome from "./components/onboarding/FirstLoginWelcome";
 import HomePage from "./pages/HomePage/HomePage";
-import CommunityPage from "./pages/CommunityPage";
+import CommunityPage from "./pages/CommunityPage/CommunityPage";
+import NewThreadPage from "./pages/CommunityPage/NewThreadPage";
+import ThreadPage from "./pages/CommunityPage/ThreadPage";
 import LegalPage from "./pages/legal/LegalPage";
 import ProfilePageRoute from "./pages/ProfilePage/ProfilePageRoute";
 import LibraryPage from "./pages/LibraryPage/LibraryPage";
@@ -69,6 +71,14 @@ function App() {
                         />
                         <Route path="/game/:gameID" element={<GamePage />} />
                         <Route path="/community" element={<CommunityPage />} />
+                        <Route
+                            path="/community/new"
+                            element={<NewThreadPage />}
+                        />
+                        <Route
+                            path="/community/thread/:threadId"
+                            element={<ThreadPage />}
+                        />
                         <Route path="/settings" element={<SettingsPage />} />
 
                         {/* Stubs, so the footer never links into nothing. */}

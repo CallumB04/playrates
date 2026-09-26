@@ -4,6 +4,7 @@ import Panel from "../../../components/ui/Panel";
 import GameCover from "../../../components/game/GameCover";
 import { buttonClass } from "../../../components/ui/Button";
 import RatingBadge from "../../../components/ui/RatingBadge";
+import { SpoilerNote } from "../../../components/ui/SpoilerCover";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import {
@@ -93,9 +94,13 @@ const RecentReviews = ({ reviews, isLoading, isOwner }: RecentReviewsProps) => {
                                 )}
                             </span>
 
-                            <span className="mt-1.5 line-clamp-3 block text-sm leading-relaxed text-content-secondary">
-                                {review.body}
-                            </span>
+                            {review.containsSpoilers ? (
+                                <SpoilerNote className="mt-1.5" />
+                            ) : (
+                                <span className="mt-1.5 line-clamp-3 block text-sm leading-relaxed text-content-secondary">
+                                    {review.body}
+                                </span>
+                            )}
 
                             <span className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label-sm text-content-muted">
                                 {reviewStatus(review) && (

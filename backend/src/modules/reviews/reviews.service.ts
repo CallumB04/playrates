@@ -6,11 +6,15 @@ import type {
   ReviewWithAuthor,
 } from "@playrates/shared";
 import type { ReviewSort } from "@playrates/shared";
+import { isUpvoteMilestone } from "@playrates/shared";
+import type { NotificationsRepository } from "../notifications/notifications.repository.js";
+import { reviewUpvotesKey } from "../notifications/notifications.mapper.js";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import { isOnline, toAccent } from "../profiles/profiles.mapper.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type { GamesRepository } from "../games/games.repository.js";
+import type { GameLogsRepository } from "../game-logs/gameLogs.repository.js";
 import type {
   ReviewRowJoined,
   ReviewsRepository,
@@ -21,6 +25,7 @@ const toReview = (row: ReviewRowJoined): Review => ({
   gameId: row.game_id,
   body: row.body,
   isPublic: row.is_public,
+  containsSpoilers: row.contains_spoilers ?? false,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -29,6 +34,8 @@ export const createReviewsService = (
   repo: ReviewsRepository,
   profiles: ProfilesRepository,
   games: GamesRepository,
+  gameLogs: GameLogsRepository,
+  notifications: NotificationsRepository,
 ) => {
   /** Opt-in, so signed out and unknown both mean no. */
   const canSeeExplicit = async (viewerId?: string): Promise<boolean> =>
@@ -165,11 +172,24 @@ export const createReviewsService = (
       const voted = await repo.hasVoted(userId, reviewId);
       if (voted) await repo.removeVote(userId, reviewId);
       else await repo.addVote(userId, reviewId);
+      const voteCount = await repo.voteCount(reviewId);
 
-      return {
-        voteCount: await repo.voteCount(reviewId),
-        votedByViewer: !voted,
-      };
+      if (!voted && isUpvoteMilestone(voteCount)) {
+        await notifications.raiseMilestone(
+          review.user_id,
+          "review_upvote_milestone",
+          reviewUpvotesKey(reviewId),
+          voteCount,
+          {
+            reviewId,
+            gameId: review.game_id,
+            gameTitle: review.game_title,
+            coverUrl: review.game_cover_url,
+          },
+        );
+      }
+
+      return { voteCount, votedByViewer: !voted };
     },
 
     async getOwn(userId: string, gameId: number): Promise<Review> {
@@ -185,10 +205,17 @@ export const createReviewsService = (
     ): Promise<{ review: Review; created: boolean }> {
       const game = await games.findById(gameId);
       if (!game) throw AppError.notFound("Game");
+      /* A review is written from a log and shown beside its rating and
+         hours, and it goes when the log does. Without one there is nothing
+         for it to hang off. */
+      if (!(await gameLogs.findByUserAndGame(userId, gameId))) {
+        throw AppError.validation("Log this game before reviewing it");
+      }
 
       const { row, created } = await repo.upsert(userId, gameId, {
         body: input.body,
         is_public: input.isPublic,
+        contains_spoilers: input.containsSpoilers,
       });
       return { review: toReview(row), created };
     },

@@ -65,17 +65,23 @@ describe("logReducer", () => {
         const next = logReducer(draft({ status: "played", rating: 9 }), {
             type: "hydrate",
             log: null,
-            review: { body: "Half-written.", isPublic: false },
+            review: {
+                body: "Half-written.",
+                isPublic: false,
+                containsSpoilers: true,
+            },
         });
 
         expect(next.status).toBe(emptyDraft.status);
         expect(next.rating).toBeNull();
         expect(next.reviewBody).toBe("Half-written.");
         expect(next.reviewIsPublic).toBe(false);
+        expect(next.reviewSpoilers).toBe(true);
     });
 
     it("defaults a new review to public when there is none to hydrate", () => {
         const next = logReducer(emptyDraft, { type: "hydrate", log: null });
+        expect(next.reviewSpoilers).toBe(false);
         expect(next.reviewBody).toBe("");
         expect(next.reviewIsPublic).toBe(true);
     });
@@ -138,7 +144,7 @@ describe("logReducer", () => {
                 updatedAt: "",
                 game: null,
             },
-            review: { body: "Good.", isPublic: false },
+            review: { body: "Good.", isPublic: false, containsSpoilers: false },
         });
 
         expect(next).toMatchObject({
@@ -160,7 +166,11 @@ describe("logReducer", () => {
         const next = logReducer(draft({ hoursPlayed: "99" }), {
             type: "hydrate",
             log: null,
-            review: { body: "Draft note", isPublic: true },
+            review: {
+                body: "Draft note",
+                isPublic: true,
+                containsSpoilers: false,
+            },
         });
         expect(next.hoursPlayed).toBe("");
         expect(next.reviewBody).toBe("Draft note");

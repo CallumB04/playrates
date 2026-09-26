@@ -10,6 +10,8 @@ export const ReviewInputSchema = z
       .min(1, "A review cannot be empty")
       .max(5000, "A review must be at most 5000 characters"),
     isPublic: z.boolean().default(true),
+    /** Hides the body until a reader asks to see it. */
+    containsSpoilers: z.boolean().default(false),
   })
   .strict();
 
@@ -20,6 +22,7 @@ export interface Review {
   gameId: number;
   body: string;
   isPublic: boolean;
+  containsSpoilers: boolean;
   createdAt: string;
   updatedAt: string;
 }

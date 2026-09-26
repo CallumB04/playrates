@@ -7,6 +7,7 @@ import { TextSkeleton } from "../../../components/ui/Skeleton";
 import Dropdown from "../../../components/ui/Dropdown";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import ExpandableText from "./ExpandableText";
+import SpoilerCover from "../../../components/ui/SpoilerCover";
 import { cn } from "../../../lib/cn";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import VoteButton from "../../../components/ui/VoteButton";
@@ -181,12 +182,17 @@ const GameReviews = ({
                                 and a character cap made every one of them a
                                 narrow column with the rest of the row empty
                                 beside it. */}
-                            <ExpandableText
-                                text={review.body}
-                                lines={3}
-                                className="text-sm"
-                                moreLabel="Show more"
-                            />
+                            <SpoilerCover
+                                covered={review.containsSpoilers}
+                                revealLabel="Show review"
+                            >
+                                <ExpandableText
+                                    text={review.body}
+                                    lines={3}
+                                    className="text-sm"
+                                    moreLabel="Show more"
+                                />
+                            </SpoilerCover>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                             <RatingBadge value={review.rating} size="row" />

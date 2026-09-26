@@ -13,6 +13,9 @@ export const queryKeys = {
         byId: (id: number) => ["games", id] as const,
         stats: (id: number) => ["games", id, "stats"] as const,
         search: (term: string) => ["games", "search", term] as const,
+        /* Its own key: the masthead search asks for three, and sharing a
+           key would hand the picker that short list. */
+        pick: (term: string) => ["games", "search", term, "pick"] as const,
     },
 
     profiles: {
@@ -67,6 +70,19 @@ export const queryKeys = {
         mine: ["friends", "me"] as const,
         activity: ["friends", "me", "activity"] as const,
         byUsername: (username: string) => ["friends", username] as const,
+    },
+
+    community: {
+        all: ["community"] as const,
+        threads: (filters: Record<string, unknown>) =>
+            ["community", "threads", filters] as const,
+        trending: (limit: number) => ["community", "trending", limit] as const,
+        patchNotes: ["community", "patch-notes"] as const,
+        games: (limit: number) => ["community", "games", limit] as const,
+        latest: (limit: number) => ["community", "latest", limit] as const,
+        thread: (id: number) => ["community", "thread", id] as const,
+        byUsername: (username: string, limit: number) =>
+            ["community", "user", username, limit] as const,
     },
 
     notifications: {

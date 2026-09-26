@@ -16,6 +16,7 @@ export interface LogDraft {
     achievementsTotal: string;
     reviewBody: string;
     reviewIsPublic: boolean;
+    reviewSpoilers: boolean;
 }
 
 export const emptyDraft: LogDraft = {
@@ -32,6 +33,7 @@ export const emptyDraft: LogDraft = {
     achievementsTotal: "",
     reviewBody: "",
     reviewIsPublic: true,
+    reviewSpoilers: false,
 };
 
 export type LogAction =
@@ -43,7 +45,11 @@ export type LogAction =
     | {
           type: "hydrate";
           log: GameLogWithGame | null;
-          review?: { body: string; isPublic: boolean } | null;
+          review?: {
+              body: string;
+              isPublic: boolean;
+              containsSpoilers: boolean;
+          } | null;
       };
 
 const numberOrEmpty = (value: number | null): string =>
@@ -85,6 +91,7 @@ export const logReducer = (state: LogDraft, action: LogAction): LogDraft => {
                     ...emptyDraft,
                     reviewBody: review?.body ?? "",
                     reviewIsPublic: review?.isPublic ?? true,
+                    reviewSpoilers: review?.containsSpoilers ?? false,
                 };
             }
             return {
@@ -101,6 +108,7 @@ export const logReducer = (state: LogDraft, action: LogAction): LogDraft => {
                 achievementsTotal: numberOrEmpty(log.achievementsTotal),
                 reviewBody: review?.body ?? "",
                 reviewIsPublic: review?.isPublic ?? true,
+                reviewSpoilers: review?.containsSpoilers ?? false,
             };
         }
     }

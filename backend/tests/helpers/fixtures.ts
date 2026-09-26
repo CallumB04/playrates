@@ -1,4 +1,6 @@
 import type {
+  CommunityMessageRow,
+  CommunityThreadRow,
   FriendshipRow,
   GameLogRow,
   GameRow,
@@ -29,6 +31,7 @@ export const buildProfile = (
   accent: "indigo",
   // An account from before the welcome existed; a new one overrides to null.
   onboarded_at: LONG_AGO,
+  is_admin: false,
   last_seen_at: NOW,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,
@@ -96,6 +99,7 @@ export const buildReview = (overrides: Partial<ReviewRow> = {}): ReviewRow => ({
   game_id: 1,
   body: "Still the benchmark for open world side quests.",
   is_public: true,
+  contains_spoilers: false,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,
   ...overrides,
@@ -151,6 +155,42 @@ export const buildNotification = (
   read_at: null,
   archived_at: null,
   created_at: LONG_AGO,
+  ...overrides,
+});
+
+/** A one-paragraph Tiptap document. */
+export const doc = (text = "Hello there.") => ({
+  type: "doc" as const,
+  content: [
+    { type: "paragraph" as const, content: [{ type: "text" as const, text }] },
+  ],
+});
+
+export const buildThread = (
+  overrides: Partial<CommunityThreadRow> = {},
+): CommunityThreadRow => ({
+  id: 1,
+  subject_kind: "game",
+  game_id: 1,
+  title: "Best side quest?",
+  author_id: USER_A,
+  created_at: NOW,
+  last_activity_at: NOW,
+  ...overrides,
+});
+
+export const buildMessage = (
+  overrides: Partial<CommunityMessageRow> = {},
+): CommunityMessageRow => ({
+  id: 1,
+  thread_id: 1,
+  parent_id: null,
+  author_id: USER_A,
+  body: doc(),
+  is_opening: false,
+  created_at: NOW,
+  edited_at: null,
+  deleted_at: null,
   ...overrides,
 });
 

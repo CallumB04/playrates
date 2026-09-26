@@ -293,4 +293,103 @@ describe("notification mapper", () => {
 
     expect(mapped.kind).toBe("unknown");
   });
+  it("maps a community reply with its thread and the replier", () => {
+    const mapped = toNotification(
+      {
+        ...buildNotification({
+          kind: "community_reply",
+          data: {
+            threadId: 4,
+            threadTitle: "Best boss?",
+            messageId: 9,
+            excerpt: "Radiance",
+          },
+        }),
+        actor,
+      },
+      () => null,
+    );
+
+    expect(mapped).toMatchObject({
+      kind: "community_reply",
+      threadId: 4,
+      messageId: 9,
+      excerpt: "Radiance",
+      actor: { username: "devuser" },
+    });
+  });
+
+  it("maps thread activity, never counting below one", () => {
+    const mapped = toNotification(
+      buildNotification({
+        kind: "community_thread_activity",
+        data: { threadId: 4, threadTitle: "Best boss?", count: 0 },
+      }),
+      () => null,
+    );
+
+    expect(mapped).toMatchObject({
+      kind: "community_thread_activity",
+      count: 1,
+      gameTitle: null,
+      coverUrl: null,
+    });
+  });
+
+  it("falls back to unknown when a community row is missing its thread", () => {
+    const reply = toNotification(
+      { ...buildNotification({ kind: "community_reply", data: {} }), actor },
+      () => null,
+    );
+    const activity = toNotification(
+      buildNotification({
+        kind: "community_thread_activity",
+        data: { threadId: "4" },
+      }),
+      () => null,
+    );
+
+    expect(reply.kind).toBe("unknown");
+    expect(activity.kind).toBe("unknown");
+  });
+
+  it("maps both upvote milestones, and refuses one without its subject", () => {
+    const message = toNotification(
+      buildNotification({
+        kind: "community_upvote_milestone",
+        data: {
+          threadId: 4,
+          threadTitle: "Best boss?",
+          messageId: 9,
+          milestone: 10,
+        },
+      }),
+      () => null,
+    );
+    const review = toNotification(
+      buildNotification({
+        kind: "review_upvote_milestone",
+        data: { reviewId: 3, gameId: 1, gameTitle: "Journey", milestone: 5 },
+      }),
+      () => null,
+    );
+    const broken = toNotification(
+      buildNotification({
+        kind: "review_upvote_milestone",
+        data: { reviewId: 3 },
+      }),
+      () => null,
+    );
+
+    expect(message).toMatchObject({
+      kind: "community_upvote_milestone",
+      milestone: 10,
+      excerpt: "",
+    });
+    expect(review).toMatchObject({
+      kind: "review_upvote_milestone",
+      coverUrl: null,
+    });
+    expect(broken.kind).toBe("unknown");
+  });
 });

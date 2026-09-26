@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import type { ReviewSort } from "@playrates/shared";
 import type { GameLogWithGame } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -27,6 +27,9 @@ import { useReviewVote } from "../../hooks/queries/useReviews";
 import RatingPlate from "./components/RatingPlate";
 import CirculationPlate from "./components/CirculationPlate";
 import GameReviews from "./components/GameReviews";
+import GameThreads from "./components/GameThreads";
+import { useThreads } from "../../hooks/queries/useCommunity";
+import { newThreadPath } from "../../components/community/paths";
 import { buildGameFacts } from "./lib/gameFacts";
 import ScoreCards from "./components/ScoreCards";
 import ExpandableText from "./components/ExpandableText";
@@ -58,6 +61,11 @@ const GamePage = () => {
         sort
     );
     const { save } = useGameLogMutations();
+    const navigate = useNavigate();
+    const { data: threads, isLoading: threadsLoading } = useThreads(
+        { gameId, limit: 5 },
+        gameId > 0
+    );
 
     usePageTitle(game?.title);
 
@@ -172,6 +180,16 @@ const GamePage = () => {
                         sort={sort}
                         onSortChange={setSort}
                         isLoading={reviewsLoading}
+                    />
+
+                    <GameThreads
+                        gameId={gameId}
+                        threads={threads?.data ?? []}
+                        total={threads?.meta.total ?? 0}
+                        isLoading={threadsLoading}
+                        onStart={() =>
+                            user ? navigate(newThreadPath(gameId)) : openLogin()
+                        }
                     />
                 </div>
             </div>
