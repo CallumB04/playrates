@@ -1,12 +1,12 @@
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, UserRound, X } from "lucide-react";
+import { LogOut, Settings, Shield, UserRound, X } from "lucide-react";
 import Button from "../ui/Button";
 import ProfilePicture from "../ProfilePicture";
 import { GAME_STATUSES, STATUS_PRESENTATION } from "../../constants/gameStatus";
 import { useOverlay } from "../../hooks/useOverlay";
 import { cn } from "../../lib/cn";
-import type { Profile } from "@playrates/shared";
+import type { MyProfile } from "@playrates/shared";
 
 export interface NavItem {
     to: string;
@@ -16,7 +16,7 @@ export interface NavItem {
 
 interface MobileMenuProps {
     links: NavItem[];
-    user: Profile | null;
+    user: MyProfile | null;
     onClose: () => void;
     onSignIn: () => void;
     onSignUp: () => void;
@@ -136,6 +136,12 @@ const MobileMenu = ({
                             Settings
                             <Settings size={17} aria-hidden />
                         </Link>
+                        {user.isAdmin && (
+                            <Link to="/admin" onClick={onClose} className={ROW}>
+                                Admin
+                                <Shield size={17} aria-hidden />
+                            </Link>
+                        )}
                         <button
                             type="button"
                             onClick={() => {

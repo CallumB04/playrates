@@ -4,10 +4,17 @@ import {
   rangeWindow,
   rawgUsageFrom,
   toActivityEvent,
+  toAnnouncement,
   toCursorPage,
+  toGameEvent,
+  toGameSummary,
+  toMetricDetail,
   toOverview,
   toRawgUsage,
+  toServerError,
+  toUserSummary,
 } from "../../src/modules/admin/admin.mapper.js";
+import { buildGame } from "../helpers/fixtures.js";
 import type {
   AdminActivityFeedRow,
   AdminSeriesRow,
@@ -198,5 +205,125 @@ describe("toCursorPage", () => {
     const rows = [{ id: 9 }, { id: 8 }, { id: 7 }];
     expect(toCursorPage(rows, 2, (r) => r.id)).toEqual({ data: [9, 8], nextBefore: 8 });
     expect(toCursorPage(rows, 3, (r) => r.id)).toEqual({ data: [9, 8, 7], nextBefore: null });
+  });
+});
+
+describe("toMetricDetail", () => {
+  it("stamps the metric, and gives every ranked person a real accent", () => {
+    const detail = toMetricDetail("users", {
+      lastSeen: { online: 1, today: 1, week: 2, month: 2, total: 3 },
+      onboarded: 2,
+      mostActive: [{ username: "bee", avatarUrl: null, accent: null, count: 4 }],
+    });
+    expect(detail.metric).toBe("users");
+    expect(detail.metric === "users" && detail.mostActive[0]!.accent).toBe("indigo");
+  });
+
+  it("passes the other metrics through as the SQL shaped them", () => {
+    expect(toMetricDetail("reviews", { public: 2, private: 1 })).toMatchObject({
+      metric: "reviews",
+      public: 2,
+    });
+  });
+});
+
+describe("toGameEvent", () => {
+  const row = {
+    id: 3,
+    kind: "cover_updated",
+    game_id: 1,
+    source: null,
+    actor_id: null,
+    data: { hadOne: false },
+    created_at: "2026-09-26T00:00:00Z",
+    game_title: "Hades",
+    game_slug: "hades",
+    game_cover_url: null,
+    game_is_trending: null,
+    game_rawg_id: 7,
+    actor_username: null,
+  };
+
+  it("groups the kind and embeds the game", () => {
+    expect(toGameEvent(row)).toMatchObject({
+      group: "content",
+      game: { id: 1, title: "Hades", isTrending: false, rawgId: 7 },
+    });
+  });
+
+  it("has no game once it is gone", () => {
+    expect(toGameEvent({ ...row, game_title: null }).game).toBeNull();
+  });
+});
+
+describe("toGameSummary", () => {
+  it("prefers the portrait box art to the landscape cover", () => {
+    const summary = toGameSummary(
+      buildGame({ box_art_url: "https://example.test/box.jpg" }),
+    );
+    expect(summary.coverUrl).toBe("https://example.test/box.jpg");
+  });
+});
+
+describe("toUserSummary", () => {
+  it("counts as numbers, and shows the admin who is really online", () => {
+    const now = Date.parse("2026-09-26T12:00:00Z");
+    const summary = toUserSummary(
+      {
+        id: "u1",
+        username: "bee",
+        avatar_url: null,
+        accent: "rose",
+        is_admin: false,
+        created_at: "2026-01-01T00:00:00Z",
+        last_seen_at: "2026-09-26T11:58:00Z",
+        onboarded_at: null,
+        log_count: "4" as unknown as number,
+        review_count: 1,
+        message_count: 0,
+        friend_count: 2,
+        active_day_count: 9,
+      },
+      now,
+    );
+    expect(summary).toMatchObject({ online: true, logCount: 4, activeDayCount: 9 });
+  });
+});
+
+describe("toAnnouncement", () => {
+  it("falls back to info for a tone this build does not know", () => {
+    const announcement = toAnnouncement({
+      id: 1,
+      tone: "shouting",
+      title: "Hi",
+      body: "There",
+      link_path: "/community",
+      sent_by: null,
+      recipient_count: 3,
+      created_at: "2026-09-26T00:00:00Z",
+      retracted_at: null,
+      read_count: 1,
+    });
+    expect(announcement).toMatchObject({ tone: "info", link: "/community", readCount: 1 });
+  });
+});
+
+describe("toServerError", () => {
+  it("keeps the request id and who was signed in", () => {
+    expect(
+      toServerError({
+        id: 1,
+        status: 500,
+        code: "internal_error",
+        method: "GET",
+        path: "/api/v1/games",
+        message: "boom",
+        request_id: "req-1",
+        user_id: "u1",
+        username: "bee",
+        stack: null,
+        created_at: "2026-09-26T00:00:00Z",
+      }),
+    ).toMatchObject({ requestId: "req-1", username: "bee" });
   });
 });

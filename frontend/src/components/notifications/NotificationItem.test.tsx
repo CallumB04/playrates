@@ -215,4 +215,56 @@ describe("NotificationItem", () => {
             expect(seen).not.toHaveBeenCalled();
         });
     });
+
+    describe("announcements", () => {
+        const announcement = (overrides: Record<string, unknown> = {}) =>
+            ({
+                ...welcome(),
+                kind: "announcement",
+                tone: "warning",
+                title: "Down for maintenance",
+                body: "Back in an hour.",
+                link: null,
+                isTest: false,
+                ...overrides,
+            }) as AppNotification;
+
+        it("shows the words it was sent with, and no link without one", () => {
+            renderItem(announcement());
+
+            expect(screen.getByText("Down for maintenance")).toBeInTheDocument();
+            expect(screen.getByText("Back in an hour.")).toBeInTheDocument();
+            expect(screen.queryByRole("link")).not.toBeInTheDocument();
+        });
+
+        it("opens its link, and marks itself read on the way", async () => {
+            const seen = capturePatch();
+            renderItem(announcement({ link: "/community" }));
+
+            const link = screen.getByRole("link", { name: /Down for maintenance/ });
+            await userEvent.click(link);
+
+            expect(link).toHaveAttribute("href", "/community");
+            await waitFor(() => expect(seen).toHaveBeenCalledWith({ read: true }));
+        });
+
+        it("says when it is only a test", () => {
+            renderItem(announcement({ isTest: true }));
+            expect(screen.getByText("Test")).toBeInTheDocument();
+        });
+
+        it("has nothing to act on as a preview", () => {
+            renderWithProviders(
+                <ul>
+                    <NotificationItem
+                        notification={announcement()}
+                        onNavigate={() => {}}
+                        preview
+                    />
+                </ul>
+            );
+            expect(screen.getByRole("button", { name: "Mark as read" })).toBeDisabled();
+            expect(screen.getByRole("button", { name: "Archive" })).toBeDisabled();
+        });
+    });
 });

@@ -15,8 +15,7 @@ import LibraryPage from "./pages/LibraryPage/LibraryPage";
 import GamePage from "./pages/GamePage/GamePage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFoundPage from "./pages/NotFoundPage";
-import AdminLayout from "./pages/admin/AdminLayout";
-import DesignLibraryPage from "./pages/admin/design-library/DesignLibraryPage";
+import AdminGate from "./pages/admin/AdminGate";
 
 /** Layout shell and route table. State lives in the providers. */
 
@@ -96,20 +95,7 @@ function App() {
                             />
                         ))}
 
-                        {/* Admin area. Built for several views; the design
-                            library is the first. */}
-                        <Route path="/admin" element={<AdminLayout />}>
-                            <Route
-                                index
-                                element={
-                                    <Navigate to="/admin/design" replace />
-                                }
-                            />
-                            <Route
-                                path="design"
-                                element={<DesignLibraryPage />}
-                            />
-                        </Route>
+                        <Route path="/admin/*" element={<AdminGate />} />
 
                         <Route path="*" element={<NotFoundPage />} />
                     </Routes>

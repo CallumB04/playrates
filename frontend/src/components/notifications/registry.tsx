@@ -11,6 +11,7 @@ import {
     type LucideIcon,
 } from "lucide-react";
 import type {
+    AnnouncementNotification,
     AppNotification,
     CommunityReplyNotification,
     CommunityThreadActivityNotification,
@@ -30,6 +31,8 @@ import GameCover from "../game/GameCover";
 import { threadPath } from "../community/paths";
 import { formatCount, formatMessageCount } from "../../lib/format";
 import { friendRequestState } from "./friendRequestState";
+import IconMark from "./IconMark";
+import { ANNOUNCEMENT_PRESENTATION } from "./announcementTones";
 
 export interface ContentProps<T extends AppNotification> {
     notification: T;
@@ -222,6 +225,48 @@ const CommunityActivityContent = ({
     );
 };
 
+/** The tone picks the mark, so it cannot be the registry's one static icon. */
+const AnnouncementMark = ({
+    notification,
+}: {
+    notification: AnnouncementNotification;
+}) => {
+    const { icon, tone } = ANNOUNCEMENT_PRESENTATION[notification.tone];
+    return <IconMark icon={icon} tone={tone} />;
+};
+
+const AnnouncementContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<AnnouncementNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    const words = (
+        <>
+            <p className={`${TITLE} line-clamp-2 break-words`}>
+                {notification.isTest && (
+                    <span className="mr-1.5 rounded-sm bg-surface-sunken px-1 py-px align-[1px] text-label-sm font-medium text-content-muted">
+                        Test
+                    </span>
+                )}
+                <span className={notification.link ? "group-hover:underline" : undefined}>
+                    {notification.title}
+                </span>
+            </p>
+            <p className={`${BODY} line-clamp-3 break-words`}>
+                {notification.body}
+            </p>
+        </>
+    );
+
+    return notification.link ? (
+        <Link to={notification.link} onClick={open} className="group block">
+            {words}
+        </Link>
+    ) : (
+        words
+    );
+};
+
 const Upvotes = ({ count }: { count: number }) => (
     <span className="group-hover:underline">{formatCount(count)} upvotes</span>
 );
@@ -346,6 +391,12 @@ export const NOTIFICATION_RENDERERS: {
         tone: "text-brand",
         Content: ReviewMilestoneContent,
         Leading: CoverLeading,
+    },
+    announcement: {
+        icon: ANNOUNCEMENT_PRESENTATION.update.icon,
+        tone: ANNOUNCEMENT_PRESENTATION.update.tone,
+        Content: AnnouncementContent,
+        Leading: AnnouncementMark,
     },
     unknown: {
         icon: Bell,
