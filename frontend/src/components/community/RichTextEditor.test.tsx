@@ -43,6 +43,8 @@ describe("RichTextEditor", () => {
             "Heading 1",
             "Heading 2",
             "Heading 3",
+            "Bulleted list",
+            "Numbered list",
             "Add a picture",
         ]);
         expect(
@@ -72,6 +74,25 @@ describe("RichTextEditor", () => {
             attrs: { level: 1 },
         });
         // What the editor produces is what the API will take.
+        expect(RichTextDocSchema.safeParse(doc).success).toBe(true);
+    });
+
+    it("makes a list the API accepts", async () => {
+        const onChange = vi.fn();
+        renderWithProviders(
+            <RichTextEditor
+                label="Message"
+                initial={START}
+                onChange={onChange}
+            />
+        );
+
+        await userEvent.click(
+            screen.getByRole("button", { name: "Bulleted list" })
+        );
+
+        const doc = onChange.mock.lastCall?.[0] as RichTextDoc;
+        expect(doc.content[0]).toMatchObject({ type: "bulletList" });
         expect(RichTextDocSchema.safeParse(doc).success).toBe(true);
     });
 

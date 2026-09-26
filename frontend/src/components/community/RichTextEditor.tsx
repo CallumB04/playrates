@@ -11,6 +11,8 @@ import {
     Heading3,
     ImagePlus,
     Italic,
+    List,
+    ListOrdered,
     Underline,
 } from "lucide-react";
 import {
@@ -78,7 +80,7 @@ const ToolButton = ({
 
 /**
  * The community's editor: bold, italic, underline, spoilers, three heading
- * levels and pictures, and nothing else — the API refuses anything outside that set, so
+ * levels, lists and pictures, and nothing else — the API refuses anything outside that set, so
  * the editor never offers it.
  */
 const RichTextEditor = ({
@@ -109,10 +111,6 @@ const RichTextEditor = ({
             StarterKit.configure({
                 heading: { levels: [1, 2, 3] },
                 blockquote: false,
-                bulletList: false,
-                orderedList: false,
-                listItem: false,
-                listKeymap: false,
                 code: false,
                 codeBlock: false,
                 horizontalRule: false,
@@ -180,6 +178,8 @@ const RichTextEditor = ({
                       h1: editor.isActive("heading", { level: 1 }),
                       h2: editor.isActive("heading", { level: 2 }),
                       h3: editor.isActive("heading", { level: 3 }),
+                      bullets: editor.isActive("bulletList"),
+                      numbers: editor.isActive("orderedList"),
                   }
                 : null,
     });
@@ -299,6 +299,25 @@ const RichTextEditor = ({
                     onClick={() => chain()?.toggleHeading({ level: 3 }).run()}
                 >
                     <Heading3 size={17} aria-hidden />
+                </ToolButton>
+
+                <span aria-hidden className="mx-1 h-5 w-px bg-subtle" />
+
+                <ToolButton
+                    label="Bulleted list"
+                    active={state?.bullets}
+                    disabled={disabled}
+                    onClick={() => chain()?.toggleBulletList().run()}
+                >
+                    <List size={17} aria-hidden />
+                </ToolButton>
+                <ToolButton
+                    label="Numbered list"
+                    active={state?.numbers}
+                    disabled={disabled}
+                    onClick={() => chain()?.toggleOrderedList().run()}
+                >
+                    <ListOrdered size={17} aria-hidden />
                 </ToolButton>
 
                 <span aria-hidden className="mx-1 h-5 w-px bg-subtle" />

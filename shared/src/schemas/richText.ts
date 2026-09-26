@@ -2,7 +2,9 @@ import { z } from "zod";
 
 /**
  * The rich text a community message is written in: Tiptap's document JSON,
- * narrowed to what the editor offers. Anything outside the allowlist is
+ * narrowed to what the editor offers: paragraphs, three heading levels,
+ * pictures, bulleted and numbered lists, and bold, italic, underline and
+ * spoiler marks. Anything outside the allowlist is
  * refused rather than stripped, so a message is never stored as something
  * other than what its author saw. Unknown *attributes* on known nodes are
  * dropped, since Tiptap adds nullable ones (alt, title) of its own accord.
@@ -10,6 +12,7 @@ import { z } from "zod";
 
 export const RICH_TEXT_MAX_CHARS = 10_000;
 export const RICH_TEXT_MAX_IMAGES = 6;
+/** Blocks in all, those inside lists included. */
 const MAX_BLOCKS = 300;
 
 const MarkSchema = z.object({
@@ -55,20 +58,84 @@ const ImageSchema = z.object({
   }),
 });
 
-const BlockSchema = z.discriminatedUnion("type", [
-  ParagraphSchema,
-  HeadingSchema,
-  ImageSchema,
-]);
-
 export type RichTextMark = z.infer<typeof MarkSchema>;
 export type RichTextInline = z.infer<typeof InlineSchema>;
-export type RichTextBlock = z.infer<typeof BlockSchema>;
+
+/** A list item holds blocks, so a list can hold a paragraph, a picture or
+ *  another list. */
+export interface RichTextListItem {
+  type: "listItem";
+  content: RichTextBlock[];
+}
+
+export type RichTextBlock =
+  | z.infer<typeof ParagraphSchema>
+  | z.infer<typeof HeadingSchema>
+  | z.infer<typeof ImageSchema>
+  | { type: "bulletList"; content: RichTextListItem[] }
+  | {
+      type: "orderedList";
+      attrs?: { start?: number | null };
+      content: RichTextListItem[];
+    };
 
 export interface RichTextDoc {
   type: "doc";
   content: RichTextBlock[];
 }
+
+// Lazy, because a list's items hold blocks and blocks include lists.
+const BlockSchema: z.ZodType<RichTextBlock, z.ZodTypeDef, unknown> = z.lazy(
+  () =>
+    z.discriminatedUnion("type", [
+      ParagraphSchema,
+      HeadingSchema,
+      ImageSchema,
+      BulletListSchema,
+      OrderedListSchema,
+    ]),
+);
+
+const ListItemSchema = z.object({
+  type: z.literal("listItem"),
+  content: z.array(BlockSchema).min(1),
+});
+
+const BulletListSchema = z.object({
+  type: z.literal("bulletList"),
+  content: z.array(ListItemSchema).min(1),
+});
+
+const OrderedListSchema = z.object({
+  type: z.literal("orderedList"),
+  attrs: z
+    .object({ start: z.number().int().min(0).max(100_000).nullish() })
+    .optional(),
+  content: z.array(ListItemSchema).min(1),
+});
+
+/** Lists inside lists, this deep and no deeper. */
+const MAX_LIST_DEPTH = 4;
+
+const isList = (
+  block: RichTextBlock,
+): block is Extract<RichTextBlock, { type: "bulletList" | "orderedList" }> =>
+  block.type === "bulletList" || block.type === "orderedList";
+
+/** Every block, including those inside lists, with how many lists deep. */
+const eachBlock = function* (
+  blocks: RichTextBlock[],
+  depth = 0,
+): Generator<{ block: RichTextBlock; depth: number }> {
+  for (const block of blocks) {
+    yield { block, depth };
+    if (isList(block)) {
+      for (const item of block.content) {
+        yield* eachBlock(item.content, depth + 1);
+      }
+    }
+  }
+};
 
 export const SPOILER_PLACEHOLDER = "[spoiler]";
 
@@ -78,6 +145,18 @@ const isSpoiler = (node: RichTextInline): boolean =>
 
 const blockText = (block: RichTextBlock, hideSpoilers = false): string => {
   if (block.type === "image") return "";
+  if (isList(block)) {
+    // One line per item, so a list quotes as it reads.
+    return block.content
+      .map((item) =>
+        item.content
+          .map((inner) => blockText(inner, hideSpoilers))
+          .filter((line) => line.trim().length > 0)
+          .join("\n"),
+      )
+      .filter((line) => line.trim().length > 0)
+      .join("\n");
+  }
   let text = "";
   let inSpoiler = false;
   for (const node of block.content ?? []) {
@@ -104,22 +183,32 @@ export const toPlainText = (
     .filter((line) => line.trim().length > 0)
     .join("\n");
 
-export const countImages = (doc: RichTextDoc): number =>
-  doc.content.filter((block) => block.type === "image").length;
+export const countImages = (doc: RichTextDoc): number => {
+  let count = 0;
+  for (const { block } of eachBlock(doc.content)) {
+    if (block.type === "image") count += 1;
+  }
+  return count;
+};
 
-/** The pictures a document shows. Tolerates a body that is not a document,
- *  since it is also read back from rows written before any check. */
+/** The pictures a document shows, lists included. Tolerates a body that is
+ *  not a document, since it is also read back from rows written before any
+ *  check. */
 export const imageSources = (doc: unknown): string[] => {
-  const content = (doc as { content?: unknown } | null)?.content;
-  if (!Array.isArray(content)) return [];
-  return content.flatMap((block) => {
-    const src = (block as { type?: unknown; attrs?: { src?: unknown } })?.attrs
-      ?.src;
-    return (block as { type?: unknown })?.type === "image" &&
-      typeof src === "string"
-      ? [src]
-      : [];
-  });
+  const found: string[] = [];
+  const visit = (node: unknown) => {
+    const { type, attrs, content } = (node ?? {}) as {
+      type?: unknown;
+      attrs?: { src?: unknown };
+      content?: unknown;
+    };
+    if (type === "image" && typeof attrs?.src === "string") {
+      found.push(attrs.src);
+    }
+    if (Array.isArray(content)) content.forEach(visit);
+  };
+  visit(doc);
+  return found;
 };
 
 /** Nothing to read and nothing to look at. Tiptap's empty editor is one
@@ -142,6 +231,21 @@ export const RichTextDocSchema: z.ZodType<RichTextDoc, z.ZodTypeDef, unknown> =
       content: z.array(BlockSchema).max(MAX_BLOCKS),
     })
     .superRefine((doc, ctx) => {
+      let blocks = 0;
+      let deepest = 0;
+      for (const { depth } of eachBlock(doc.content)) {
+        blocks += 1;
+        deepest = Math.max(deepest, depth);
+      }
+      if (blocks > MAX_BLOCKS) {
+        ctx.addIssue({ code: "custom", message: "That message is too long" });
+      }
+      if (deepest > MAX_LIST_DEPTH) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Lists can nest ${MAX_LIST_DEPTH} deep at most`,
+        });
+      }
       if (isEmptyDoc(doc)) {
         ctx.addIssue({ code: "custom", message: "A message cannot be empty" });
       }

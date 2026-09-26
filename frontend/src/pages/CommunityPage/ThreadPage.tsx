@@ -457,6 +457,7 @@ const PatchNotesThread = ({
                             viewerId={viewerId}
                             actions={actions}
                             badge={<OfficialBadge />}
+                            showEdited={false}
                             className={cn(
                                 cardClass(),
                                 "border-l-4 border-l-accent"

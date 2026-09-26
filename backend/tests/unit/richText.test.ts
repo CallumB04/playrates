@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   RICH_TEXT_MAX_CHARS,
   RichTextDocSchema,
+  countImages,
+  imageSources,
   firstHeading,
   isEmptyDoc,
   toPlainText,
@@ -171,5 +173,86 @@ describe("rich text helpers", () => {
       "It turns out [spoiler] all along.",
     );
     expect(RichTextDocSchema.safeParse(spoiled).success).toBe(true);
+  });
+
+  describe("lists", () => {
+    const item = (text: string, ...more: object[]) => ({
+      type: "listItem",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text }] },
+        ...more,
+      ],
+    });
+    const listDoc = {
+      type: "doc",
+      content: [
+        {
+          type: "bulletList",
+          content: [
+            item("Faster search", {
+              type: "orderedList",
+              attrs: { start: 1 },
+              content: [item("titles"), item("messages")],
+            }),
+            {
+              type: "listItem",
+              content: [
+                { type: "image", attrs: { src: "https://cdn.example/a.webp" } },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    it("takes bulleted and numbered lists, nested, with pictures in them", () => {
+      expect(RichTextDocSchema.safeParse(listDoc).success).toBe(true);
+    });
+
+    it("reads a list a line per item, pictures included in the count", () => {
+      const parsed = RichTextDocSchema.parse(listDoc);
+
+      expect(toPlainText(parsed)).toBe("Faster search\ntitles\nmessages");
+      expect(countImages(parsed)).toBe(1);
+      expect(imageSources(parsed)).toEqual(["https://cdn.example/a.webp"]);
+    });
+
+    it("refuses a list item that is not a list item, or an empty list", () => {
+      const badItem = {
+        type: "doc",
+        content: [
+          {
+            type: "bulletList",
+            content: [{ type: "paragraph", content: [text("x")] }],
+          },
+        ],
+      };
+      const empty = {
+        type: "doc",
+        content: [{ type: "bulletList", content: [] }],
+      };
+
+      expect(RichTextDocSchema.safeParse(badItem).success).toBe(false);
+      expect(RichTextDocSchema.safeParse(empty).success).toBe(false);
+    });
+
+    it("stops lists nesting past four deep", () => {
+      const nest = (depth: number): object =>
+        depth === 0
+          ? { type: "paragraph", content: [text("deep")] }
+          : {
+              type: "bulletList",
+              content: [{ type: "listItem", content: [nest(depth - 1)] }],
+            };
+
+      expect(
+        RichTextDocSchema.safeParse({ type: "doc", content: [nest(4)] })
+          .success,
+      ).toBe(true);
+      expect(
+        RichTextDocSchema.safeParse({ type: "doc", content: [nest(6)] })
+          .success,
+      ).toBe(false);
+    });
   });
 });

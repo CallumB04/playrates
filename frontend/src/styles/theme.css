@@ -704,6 +704,33 @@
         margin-top: 1.1em;
     }
 
+    /* The reset takes list markers away; messages want them back. */
+    .rich-text ul,
+    .rich-text ol {
+        padding-left: 1.4em;
+    }
+
+    .rich-text ul {
+        list-style: disc;
+    }
+
+    .rich-text ol {
+        list-style: decimal;
+    }
+
+    .rich-text ul ul {
+        list-style: circle;
+    }
+
+    .rich-text li + li,
+    .rich-text li > * + * {
+        margin-top: 0.3em;
+    }
+
+    .rich-text li::marker {
+        color: var(--content-muted);
+    }
+
     .rich-text strong {
         font-weight: 650;
     }

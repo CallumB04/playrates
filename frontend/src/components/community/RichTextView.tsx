@@ -59,6 +59,22 @@ const HEADINGS = { 1: "h1", 2: "h2", 3: "h3" } as const;
 
 const renderBlock = (block: RichTextBlock, key: number): ReactNode => {
     switch (block.type) {
+        case "bulletList":
+            return (
+                <ul key={key}>
+                    {block.content.map((item, i) => (
+                        <li key={i}>{item.content.map(renderBlock)}</li>
+                    ))}
+                </ul>
+            );
+        case "orderedList":
+            return (
+                <ol key={key} start={block.attrs?.start ?? undefined}>
+                    {block.content.map((item, i) => (
+                        <li key={i}>{item.content.map(renderBlock)}</li>
+                    ))}
+                </ol>
+            );
         case "paragraph":
             return <p key={key}>{inlines(block.content)}</p>;
         case "heading": {

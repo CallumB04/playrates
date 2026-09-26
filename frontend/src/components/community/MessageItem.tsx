@@ -31,6 +31,8 @@ interface MessageItemProps {
     extraActions?: ReactNode;
     /** The message a link landed on, lit so the eye finds it. */
     highlighted?: boolean;
+    /** Off where a message is kept up to date on purpose, like patch notes. */
+    showEdited?: boolean;
     className?: string;
     /** What comes beneath: the replies, or a composer answering this. */
     children?: ReactNode;
@@ -73,6 +75,7 @@ const MessageItem = ({
     badge,
     extraActions,
     highlighted = false,
+    showEdited = true,
     className,
     children,
 }: MessageItemProps) => {
@@ -130,7 +133,7 @@ const MessageItem = ({
                     {badge}
                     <span className="text-label-sm text-content-muted">
                         {relativeTime(message.createdAt)}
-                        {message.editedAt && " · edited"}
+                        {showEdited && message.editedAt && " · edited"}
                     </span>
                 </span>
             </header>

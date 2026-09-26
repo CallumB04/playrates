@@ -117,4 +117,54 @@ describe("RichTextView", () => {
             screen.getByRole("button", { name: "Spoiler. Press to reveal" })
         ).not.toHaveAttribute("data-shown");
     });
+
+    it("renders bulleted and numbered lists, nested", () => {
+        const doc: RichTextDoc = {
+            type: "doc",
+            content: [
+                {
+                    type: "orderedList",
+                    attrs: { start: 3 },
+                    content: [
+                        {
+                            type: "listItem",
+                            content: [
+                                {
+                                    type: "paragraph",
+                                    content: [{ type: "text", text: "Search" }],
+                                },
+                                {
+                                    type: "bulletList",
+                                    content: [
+                                        {
+                                            type: "listItem",
+                                            content: [
+                                                {
+                                                    type: "paragraph",
+                                                    content: [
+                                                        {
+                                                            type: "text",
+                                                            text: "titles",
+                                                        },
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        };
+
+        const { container } = render(<RichTextView doc={doc} />);
+
+        expect(container.querySelector("ol")).toHaveAttribute("start", "3");
+        expect(container.querySelector("ol > li > ul > li")).toHaveTextContent(
+            "titles"
+        );
+        expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    });
 });
