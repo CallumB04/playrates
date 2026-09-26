@@ -14,7 +14,7 @@ type TabId = (typeof TABS)[number]["id"];
 
 /**
  * Every semantic token and global component, rendered by the code the app
- * ships. Check both themes with the sidebar toggle — anything wrong in one of
+ * ships. Check both themes with the toggle above — anything wrong in one of
  * them is a token to fix, not a component to special-case.
  */
 const DesignLibraryPage = () => {
@@ -31,8 +31,8 @@ const DesignLibraryPage = () => {
                 </h2>
                 <p className="max-w-prose text-content-secondary">
                     Every colour and sizing token, and every shared component,
-                    rendered live. Toggle the theme in the sidebar to check both
-                    at once.
+                    rendered live. Switch between day and night above to check
+                    both.
                 </p>
             </header>
 
@@ -47,7 +47,7 @@ const DesignLibraryPage = () => {
                         role="tab"
                         aria-selected={tab === t.id}
                         onClick={() => setTab(t.id)}
-                        className={`-mb-px border-b-2 px-4 py-2 font-display text-sm transition-colors ${
+                        className={`-mb-px min-h-11 border-b-2 px-4 py-2 font-display text-sm transition-colors sm:min-h-0 ${
                             tab === t.id
                                 ? "border-b-brand text-brand"
                                 : "border-b-transparent text-content-secondary hover:text-content"

@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import { usePageTitle } from "../../../hooks/usePageTitle";
 
-/** Every admin view opens the same way: what it is, and its controls. */
+/** What the view is for, in a sentence, with its controls beside it. The
+ *  tabs above already name it, so the name only goes to the tab and to
+ *  assistive tech. */
 const AdminPageHeader = ({
     title,
     description,
@@ -11,19 +13,15 @@ const AdminPageHeader = ({
     description?: ReactNode;
     actions?: ReactNode;
 }) => {
-    usePageTitle(`Admin · ${title}`);
+    usePageTitle(`${title} · Admin`);
     return (
-        <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div className="min-w-0">
-                <h2 className="text-title font-semibold text-content">{title}</h2>
-                {description && (
-                    <p className="mt-1 text-body-sm text-content-secondary">
-                        {description}
-                    </p>
-                )}
-            </div>
-            {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
-        </header>
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <h2 className="sr-only">{title}</h2>
+            {description && (
+                <p className="max-w-[60ch] text-body text-content-secondary">{description}</p>
+            )}
+            {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        </div>
     );
 };
 

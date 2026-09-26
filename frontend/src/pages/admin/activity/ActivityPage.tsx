@@ -5,13 +5,13 @@ import Chip from "../../../components/ui/Chip";
 import { useAdminUser } from "../../../hooks/queries/useAdmin";
 import AdminPageHeader from "../components/AdminPageHeader";
 import ActivityFeed from "./ActivityFeed";
-import { GROUP_TONES } from "./activityPresentation";
+import { GROUP_LABELS } from "./activityPresentation";
 
 const isGroup = (value: string | null): value is ActivityGroup =>
     value !== null && (ACTIVITY_GROUP_NAMES as string[]).includes(value);
 
-/** Filters live in the URL, so a filtered view can be linked to: from a
- *  user's detail, say, or kept as a bookmark. */
+/** Filters live in the URL, so a narrowed view can be linked to: from a
+ *  person's detail, or kept as a bookmark. */
 const ActivityPage = () => {
     const [params, setParams] = useSearchParams();
     const groupParam = params.get("group");
@@ -32,7 +32,7 @@ const ActivityPage = () => {
         <>
             <AdminPageHeader
                 title="Activity"
-                description="Everything people do, newest first. Tap a row for the detail."
+                description="Everything anyone does here, newest first. Open a line for the detail behind it."
             />
 
             <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -40,27 +40,23 @@ const ActivityPage = () => {
                     Everything
                 </Chip>
                 {ACTIVITY_GROUP_NAMES.map((name) => (
-                    <Chip
-                        key={name}
-                        selected={group === name}
-                        dotClassName={GROUP_TONES[name].bar}
-                        onClick={() => update({ group: name })}
-                    >
-                        {GROUP_TONES[name].label}
+                    <Chip key={name} selected={group === name} onClick={() => update({ group: name })}>
+                        {GROUP_LABELS[name]}
                     </Chip>
                 ))}
                 {userId && (
-                    <Chip selected onClick={() => update({ user: null })}>
+                    <button
+                        type="button"
+                        onClick={() => update({ user: null })}
+                        className="relative ml-1 inline-flex min-h-11 cursor-pointer items-center gap-1.5 text-label text-content-secondary hover:text-content sm:min-h-0"
+                    >
                         Only {user?.username ?? "one person"}
-                        <X size={13} aria-label="Clear" />
-                    </Chip>
+                        <X size={13} aria-label="clear" />
+                    </button>
                 )}
             </div>
 
-            <ActivityFeed
-                filters={{ group, userId }}
-                onFilterUser={(id) => update({ user: id })}
-            />
+            <ActivityFeed filters={{ group, userId }} onFilterUser={(id) => update({ user: id })} />
         </>
     );
 };

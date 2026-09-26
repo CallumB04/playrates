@@ -1,143 +1,207 @@
 import { useState, type ReactNode } from "react";
-import {
-    CircleCheck,
-    CircleX,
-    Database,
-    Gamepad2,
-    RefreshCw,
-    Server,
-    TriangleAlert,
-    ChevronDown,
-    type LucideIcon,
-} from "lucide-react";
-import type { ServerErrorEntry } from "@playrates/shared";
+import type { AdminHealth, ServerErrorEntry } from "@playrates/shared";
 import Button from "../../../components/ui/Button";
-import Card from "../../../components/ui/Card";
-import Panel from "../../../components/ui/Panel";
-import EmptyPlate from "../../../components/ui/EmptyPlate";
+import { cardClass } from "../../../components/ui/Card";
+import { plateClass } from "../../../components/ui/Plate";
+import EmptyPlate, { EmptyNote } from "../../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import { cn } from "../../../lib/cn";
 import { formatCount, relativeTime } from "../../../lib/format";
 import { useAdminHealth, useServerErrors } from "../../../hooks/queries/useAdmin";
 import AdminPageHeader from "../components/AdminPageHeader";
-import LoadMore from "../components/LoadMore";
+import SectionHeader from "../components/SectionHeader";
+import ShowOlder from "../components/ShowOlder";
+import { headline, systemStates, type SystemState } from "./healthState";
 
-type State = "up" | "degraded" | "down";
-
-const STATE: Record<State, { label: string; icon: LucideIcon; tone: string }> = {
-    up: { label: "Up", icon: CircleCheck, tone: "text-success" },
-    degraded: { label: "Degraded", icon: TriangleAlert, tone: "text-warning" },
-    down: { label: "Down", icon: CircleX, tone: "text-danger" },
+const STATE: Record<SystemState, { word: string; dot: string; text: string }> = {
+    up: { word: "Answering", dot: "bg-success", text: "text-success" },
+    slow: { word: "Struggling", dot: "bg-warning", text: "text-warning" },
+    down: { word: "Down", dot: "bg-danger", text: "text-danger" },
 };
 
-const duration = (seconds: number): string => {
-    if (seconds < 60) return `${seconds}s`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-    if (seconds < 86_400) return `${Math.floor(seconds / 3600)}h`;
-    return `${Math.floor(seconds / 86_400)}d`;
+/** How long, as a figure and its unit, so only the figure is set in mono. */
+const duration = (seconds: number): [number, string] => {
+    const [n, unit] =
+        seconds < 60 ? [seconds, "second"]
+        : seconds < 3600 ? [Math.floor(seconds / 60), "minute"]
+        : seconds < 86_400 ? [Math.floor(seconds / 3600), "hour"]
+        : [Math.floor(seconds / 86_400), "day"];
+    return [n, n === 1 ? unit : `${unit}s`];
 };
 
-/** A status reads by icon and word as well as colour. */
-const StatusCard = ({
-    title,
-    icon: Icon,
-    state,
-    children,
-}: {
-    title: string;
-    icon: LucideIcon;
-    state: State;
-    children: ReactNode;
-}) => {
-    const { label, icon: StateIcon, tone } = STATE[state];
-    return (
-        <Card className="flex flex-col gap-3">
-            <div className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-2 text-label text-content-secondary">
-                    <Icon size={15} aria-hidden className="text-content-muted" />
-                    {title}
-                </span>
-                <span className={cn("flex items-center gap-1.5 text-body-sm font-medium", tone)}>
-                    <StateIcon size={16} aria-hidden />
-                    {label}
-                </span>
-            </div>
-            <div className="text-body-sm text-content-secondary">{children}</div>
-        </Card>
-    );
-};
+/** A system's name and state read as words; the dot only repeats them. */
+const System = ({ name, state, children }: { name: string; state: SystemState; children: ReactNode }) => (
+    <div className="flex flex-col gap-1 border-b border-subtle py-3.5 last:border-b-0 sm:flex-row sm:items-baseline sm:gap-6">
+        <span className="flex w-52 shrink-0 items-center gap-2.5">
+            <span aria-hidden className={cn("size-2 shrink-0 rounded-full", STATE[state].dot)} />
+            <span className="text-body-sm font-medium text-content">{name}</span>
+            <span className={cn("text-label", STATE[state].text)}>{STATE[state].word}</span>
+        </span>
+        <span className="pl-4.5 text-body-sm text-content-secondary sm:pl-0">{children}</span>
+    </div>
+);
 
 const ErrorRow = ({ entry }: { entry: ServerErrorEntry }) => {
     const [open, setOpen] = useState(false);
     return (
-        <li className="relative overflow-hidden rounded-md border border-subtle bg-surface-raised">
-            <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-danger" />
+        <li>
             <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
                 aria-expanded={open}
-                className="flex w-full cursor-pointer items-center gap-3 py-2.5 pr-3 pl-4 text-left hover:bg-surface-hover"
+                className={cn(
+                    "flex w-full cursor-pointer items-start gap-3 rounded-md px-2 py-2.5 text-left lift hover:bg-surface-hover",
+                    "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
+                    open && "bg-surface-hover"
+                )}
             >
-                <span className="shrink-0 rounded-sm bg-danger-subtle px-1.5 font-mono text-label-sm text-danger-content">
-                    {entry.status}
-                </span>
+                <span className="w-9 shrink-0 pt-px font-mono text-body-sm font-semibold text-danger">{entry.status}</span>
                 <span className="min-w-0 flex-1">
                     <span className="block truncate font-mono text-label text-content">
                         {entry.method} {entry.path}
                     </span>
-                    <span className="block truncate text-label-sm text-content-muted">
-                        {entry.message}
+                    <span className="mt-1 block text-label-sm break-words text-content-muted">
+                        {entry.message} · {relativeTime(entry.createdAt)}
                     </span>
                 </span>
-                <time dateTime={entry.createdAt} className="shrink-0 text-label-sm text-content-muted">
-                    {relativeTime(entry.createdAt)}
-                </time>
-                <ChevronDown size={16} aria-hidden className={cn("shrink-0 text-content-muted transition-transform", open && "rotate-180")} />
             </button>
             {open && (
-                <div className="flex flex-col gap-2 border-t border-subtle bg-surface-sunken/40 py-3 pr-3 pl-4 text-body-sm">
-                    <p className="break-words text-content">{entry.message}</p>
-                    <p className="text-label-sm text-content-muted">
-                        {new Date(entry.createdAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "medium" })}
-                        {entry.requestId && ` · request ${entry.requestId}`}
-                        {entry.username && ` · signed in as ${entry.username}`}
-                    </p>
-                    {entry.stack && (
-                        <pre className="max-h-64 overflow-auto rounded-sm bg-surface-sunken p-2 font-mono text-label-sm text-content-secondary">
-                            {entry.stack}
-                        </pre>
-                    )}
+                <div className="pb-2 pl-2 sm:pl-14">
+                    <div className={plateClass("pressed", "shallow", "flex flex-col gap-2 px-3.5 py-3 text-body-sm")}>
+                        <p className="text-label text-content-muted">
+                            {new Date(entry.createdAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "medium" })}
+                            {entry.requestId && <> · request <span className="font-mono">{entry.requestId}</span></>}
+                            {entry.username && <> · signed in as {entry.username}</>}
+                        </p>
+                        {entry.stack ? (
+                            <pre className="max-h-72 overflow-auto font-mono text-label-sm leading-relaxed whitespace-pre text-content-secondary">
+                                {entry.stack}
+                            </pre>
+                        ) : (
+                            <p className="text-content-muted">No stack came with it.</p>
+                        )}
+                    </div>
                 </div>
             )}
         </li>
     );
 };
 
+const Errors = () => {
+    const errors = useServerErrors();
+    const entries = errors.data?.pages.flatMap((p) => p.data) ?? [];
+    return (
+        <section>
+            <SectionHeader title="Server errors" note="every 5xx the API has returned, newest first" />
+            {errors.isPending ? (
+                <TextSkeleton lines={4} />
+            ) : entries.length === 0 ? (
+                <EmptyNote>None yet. Every failed request will be listed here, with its stack.</EmptyNote>
+            ) : (
+                <>
+                    <ul className={cardClass("flex flex-col px-1.5 py-1.5 sm:px-2", { padding: "none" })}>
+                        {entries.map((entry) => (
+                            <ErrorRow key={entry.id} entry={entry} />
+                        ))}
+                    </ul>
+                    <ShowOlder
+                        hasMore={errors.hasNextPage}
+                        loading={errors.isFetchingNextPage}
+                        onClick={() => errors.fetchNextPage()}
+                        end="That’s every error there has been."
+                    />
+                </>
+            )}
+        </section>
+    );
+};
+
+const GLOW: Record<SystemState, string> = {
+    up: "bg-success/10",
+    slow: "bg-warning/12",
+    down: "bg-danger/14",
+};
+
 /**
- * Checked live when opened and every minute after. No history: that needs a
- * monitor outside the site, since a check the site runs on itself stops when
- * the site does.
+ * Checked live when opened, and every minute after. There's no history of it:
+ * a site checking itself stops when the site does, so that needs a monitor
+ * somewhere else.
  */
 const HealthPage = () => {
     const health = useAdminHealth();
-    const errors = useServerErrors();
-    const entries = errors.data?.pages.flatMap((p) => p.data) ?? [];
     const h = health.data;
 
-    const rawgState: State = !h
-        ? "down"
-        : !h.rawg.configured
-          ? "down"
-          : h.rawg.lastFailureAt &&
-              (!h.rawg.lastRequestAt || h.rawg.lastFailureAt >= h.rawg.lastRequestAt)
-            ? "degraded"
-            : "up";
+    const body = (health: AdminHealth, checkedAt: number) => {
+        const states = systemStates(health);
+        const lead = headline(states);
+        return (
+            <section aria-label="Right now" className={cardClass("relative overflow-hidden", { padding: "none" })}>
+                <span
+                    aria-hidden
+                    className={cn("pointer-events-none absolute -top-32 -right-28 size-80 rounded-full blur-3xl", GLOW[lead.state])}
+                />
+                <div className="relative px-5 pt-6 sm:px-6 sm:pt-7 lg:px-8">
+                    <h2 className="text-label text-content-muted">Right now</h2>
+                    <p className="mt-3 max-w-[24ch] font-display text-title text-content">{lead.text}</p>
+                    <p className="mt-3 text-label text-content-muted">
+                        Checked {relativeTime(new Date(checkedAt).toISOString())}, and every minute this page is open.
+                    </p>
+                </div>
+                <div className="relative mt-5 border-t border-subtle px-5 sm:px-6 lg:px-8">
+                    <System name="API" state={states.api}>
+                        Up <span className="font-mono">{duration(health.api.uptimeSeconds)[0]}</span>{" "}
+                        {duration(health.api.uptimeSeconds)[1]}
+                        {health.api.region && <> in {health.api.region}</>} ·{" "}
+                        {health.api.commit ? (
+                            <>
+                                deploy <span className="font-mono">{health.api.commit}</span>
+                            </>
+                        ) : (
+                            "a local build"
+                        )}{" "}
+                        · Node <span className="font-mono">{health.api.node.replace(/^v/, "")}</span>
+                    </System>
+                    <System name="Database" state={states.database}>
+                        {health.database.ok ? (
+                            <>
+                                Answered in <span className="font-mono">{health.database.latencyMs}ms</span>
+                            </>
+                        ) : (
+                            health.database.error
+                        )}
+                    </System>
+                    <System name="RAWG" state={states.rawg}>
+                        {!health.rawg.configured ? (
+                            "No API key is set, so search uses the local catalogue only."
+                        ) : (
+                            <>
+                                <span className="font-mono">{formatCount(health.rawg.todayRequests)}</span>{" "}
+                                {health.rawg.todayRequests === 1 ? "call" : "calls"} today
+                                {health.rawg.todayFailures > 0 && (
+                                    <>
+                                        , <span className="font-mono">{health.rawg.todayFailures}</span> failed
+                                    </>
+                                )}
+                                {health.rawg.lastRequestAt && <> · the last {relativeTime(health.rawg.lastRequestAt)}</>}
+                                {states.rawg === "slow" && health.rawg.lastError && <> · {health.rawg.lastError}</>}
+                            </>
+                        )}
+                    </System>
+                    <System name="Requests" state={states.errors}>
+                        <span className="font-mono">{formatCount(health.errors.last24h)}</span>{" "}
+                        {health.errors.last24h === 1 ? "error" : "errors"} in the last day
+                        {health.errors.lastAt && <> · the last {relativeTime(health.errors.lastAt)}</>}
+                    </System>
+                </div>
+            </section>
+        );
+    };
 
     return (
         <>
             <AdminPageHeader
                 title="Health"
-                description="Is everything answering, right now."
+                description="Whether each part of PlayRates is answering right now."
                 actions={
                     <Button
                         variant="secondary"
@@ -145,73 +209,27 @@ const HealthPage = () => {
                         disabled={health.isFetching}
                         className="w-full sm:w-auto"
                     >
-                        <RefreshCw size={15} aria-hidden className={health.isFetching ? "animate-spin" : undefined} />
-                        Check again
+                        {health.isFetching ? "Checking…" : "Check again"}
                     </Button>
                 }
             />
 
-            {health.isPending ? (
-                <TextSkeleton lines={4} />
-            ) : health.isError || !h ? (
-                <StatusCard title="API" icon={Server} state="down">
-                    The API didn’t answer. If the rest of the site is down too, it’s the host.
-                </StatusCard>
-            ) : (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <StatusCard title="API" icon={Server} state="up">
-                        This instance has been up {duration(h.api.uptimeSeconds)}
-                        {h.api.region && ` in ${h.api.region}`}.
-                        <br />
-                        {h.api.commit ? `Deploy ${h.api.commit}` : "Local build"} · Node {h.api.node}
-                    </StatusCard>
-                    <StatusCard title="Database" icon={Database} state={h.database.ok ? "up" : "down"}>
-                        {h.database.ok
-                            ? `Answered in ${h.database.latencyMs}ms.`
-                            : `Unreachable: ${h.database.error}`}
-                    </StatusCard>
-                    <StatusCard title="RAWG" icon={Gamepad2} state={rawgState}>
-                        {!h.rawg.configured
-                            ? "No API key set; search uses the local catalogue only."
-                            : `${formatCount(h.rawg.todayRequests)} ${h.rawg.todayRequests === 1 ? "call" : "calls"} today${h.rawg.todayFailures ? `, ${h.rawg.todayFailures} failed` : ""}. Last ${relativeTime(h.rawg.lastRequestAt)}.`}
-                        {h.rawg.lastError && rawgState === "degraded" && (
-                            <>
-                                <br />
-                                Last failure {relativeTime(h.rawg.lastFailureAt)}: {h.rawg.lastError}
-                            </>
-                        )}
-                    </StatusCard>
-                    <StatusCard
-                        title="Server errors"
-                        icon={TriangleAlert}
-                        state={h.errors.last24h === 0 ? "up" : h.errors.last24h < 10 ? "degraded" : "down"}
-                    >
-                        {formatCount(h.errors.last24h)} in the last day.
-                        {h.errors.lastAt && ` Last ${relativeTime(h.errors.lastAt)}.`}
-                    </StatusCard>
-                </div>
-            )}
-
-            <Panel title="Server errors" className="mt-6">
-                {errors.isPending ? (
-                    <TextSkeleton lines={4} />
-                ) : entries.length === 0 ? (
-                    <EmptyPlate title="No errors" body="Every 5xx the API returns lands here." />
+            <div className="flex flex-col gap-10">
+                {health.isPending ? (
+                    <div className={cardClass()}>
+                        <TextSkeleton lines={5} />
+                    </div>
+                ) : health.isError || !h ? (
+                    <EmptyPlate
+                        title="The API isn’t answering"
+                        body="If the rest of the site is down too, it’s the host. This page can’t say more without the API."
+                    />
                 ) : (
-                    <>
-                        <ul className="flex flex-col gap-1.5">
-                            {entries.map((entry) => (
-                                <ErrorRow key={entry.id} entry={entry} />
-                            ))}
-                        </ul>
-                        <LoadMore
-                            hasMore={errors.hasNextPage}
-                            loading={errors.isFetchingNextPage}
-                            onClick={() => errors.fetchNextPage()}
-                        />
-                    </>
+                    body(h, health.dataUpdatedAt)
                 )}
-            </Panel>
+
+                <Errors />
+            </div>
         </>
     );
 };

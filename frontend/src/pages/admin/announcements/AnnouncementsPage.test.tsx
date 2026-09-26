@@ -77,7 +77,7 @@ describe("AnnouncementsPage", () => {
         renderWithProviders(<AnnouncementsPage />);
         await write({ title: "Lists are here", body: "Share one." });
 
-        const bell = screen.getByText("In the bell").parentElement!;
+        const bell = screen.getByText("How it will look").parentElement!;
         expect(within(bell).getByText("Lists are here")).toBeInTheDocument();
         expect(within(bell).getByText("Share one.")).toBeInTheDocument();
     });

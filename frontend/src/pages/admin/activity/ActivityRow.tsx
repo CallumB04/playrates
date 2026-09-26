@@ -1,174 +1,158 @@
 import { useId, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
 import type { AdminActivityEvent } from "@playrates/shared";
 import GameCover from "../../../components/game/GameCover";
+import ProfilePicture from "../../../components/ProfilePicture";
+import RatingBadge from "../../../components/ui/RatingBadge";
+import LedgerRow, { LedgerList } from "../../../components/ui/LedgerRow";
+import { plateClass } from "../../../components/ui/Plate";
 import { cn } from "../../../lib/cn";
 import { relativeTime } from "../../../lib/format";
-import {
-    activityIcon,
-    activitySummary,
-    activityTone,
-} from "./activityPresentation";
+import { timeInDay } from "../lib/plot";
+import { activityMark, activitySummary } from "./activityPresentation";
 
-const when = (iso: string) =>
-    new Date(iso).toLocaleString("en-GB", {
-        dateStyle: "medium",
-        timeStyle: "short",
-    });
+const at = (iso: string) =>
+    new Date(iso).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
 
 const LINK =
-    "inline-flex min-h-11 items-center text-body-sm text-brand underline-offset-2 hover:underline sm:min-h-0";
+    "inline-flex min-h-11 items-center text-label font-medium text-brand underline-offset-2 hover:underline sm:min-h-0";
+
+/** The row's figure, when there is one worth showing. */
+const Face = ({ event }: { event: AdminActivityEvent }) =>
+    event.actor ? (
+        <span className="shrink-0 [&>*]:size-9">
+            <ProfilePicture
+                variant="nav"
+                file={event.actor.avatarUrl ?? ""}
+                accent={event.actor.accent}
+                username={event.actor.username}
+                link={false}
+            />
+        </span>
+    ) : (
+        // The account is gone; its place stays so the column still lines up.
+        <span aria-hidden className="size-9 shrink-0 rounded-full border border-dashed border-strong" />
+    );
 
 /**
- * One event: what happened in a line, and everything behind it a tap away.
- * The whole summary is the toggle, so there is nothing to find by hovering.
+ * One thing someone did, as a sentence, the way the home feed says it. The
+ * detail opens in a well beneath it; the whole sentence is the control, so
+ * there is nothing to find by hovering.
  */
 const ActivityRow = ({
     event,
+    day,
     onFilterUser,
 }: {
     event: AdminActivityEvent;
+    /** The heading of the day it sits under, so its time doesn't repeat it. */
+    day: string;
     /** Narrows the feed to this person, where the feed allows it. */
     onFilterUser?: (userId: string) => void;
 }) => {
     const [open, setOpen] = useState(false);
     const detailsId = useId();
     const summary = activitySummary(event);
-    const tone = activityTone(event);
-    const Icon = activityIcon(event.kind);
+    const mark = activityMark(event);
     const change =
-        event.kind === "log_updated"
-            ? (event.data as { from?: unknown; to?: unknown })
-            : null;
+        event.kind === "log_updated" ? (event.data as { from?: unknown; to?: unknown }) : null;
 
     return (
-        <li className="relative overflow-hidden rounded-md border border-subtle bg-surface-raised">
-            <span aria-hidden className={cn("absolute inset-y-0 left-0 w-1", tone.bar)} />
-
+        <li>
             <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
                 aria-expanded={open}
                 aria-controls={detailsId}
-                className="flex w-full cursor-pointer items-center gap-3 py-2.5 pr-3 pl-4 text-left hover:bg-surface-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+                className={cn(
+                    "flex w-full cursor-pointer items-center gap-3 rounded-md px-2 py-2.5 text-left lift hover:bg-surface-hover",
+                    "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
+                    open && "bg-surface-hover"
+                )}
             >
-                <span
-                    className={cn(
-                        "flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-sunken",
-                        tone.icon
-                    )}
-                >
-                    <Icon size={15} aria-hidden />
-                </span>
+                <Face event={event} />
 
                 <span className="min-w-0 flex-1">
                     <span className="block text-body-sm break-words text-content-secondary">
-                        <span className="font-medium text-content">{summary.who}</span>{" "}
-                        {summary.action}
+                        <span className="font-medium text-content">{summary.who}</span> {summary.action}
                         {summary.target && (
                             <>
                                 {" "}
-                                <span className="font-medium text-content">
-                                    {summary.target}
-                                </span>
+                                <span className="font-medium text-content">{summary.target}</span>
                             </>
                         )}
-                        {summary.tags.map((tag) => (
-                            <span
-                                key={tag}
-                                className="ml-1.5 inline-block rounded-sm bg-surface-sunken px-1.5 align-[1px] font-mono text-label-sm text-content-muted"
-                            >
-                                {tag}
-                            </span>
-                        ))}
+                        {summary.after && <> {summary.after}</>}
                     </span>
-                    <time
-                        dateTime={event.createdAt}
-                        className="mt-0.5 block text-label-sm text-content-muted sm:hidden"
-                    >
-                        {relativeTime(event.createdAt)}
-                    </time>
+                    <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label-sm text-content-muted">
+                        {mark && (
+                            <span className={cn("inline-flex items-center gap-1", mark.className)}>
+                                <mark.icon size={11} aria-hidden />
+                                {mark.label}
+                            </span>
+                        )}
+                        {summary.rating !== null && <RatingBadge value={summary.rating} />}
+                        <time dateTime={event.createdAt}>{timeInDay(event.createdAt, day) || relativeTime(event.createdAt)}</time>
+                    </span>
                 </span>
 
                 {event.game && (
                     <GameCover
                         coverUrl={event.game.coverUrl}
                         title={event.game.title}
-                        className="hidden w-7 shrink-0 rounded-xs sm:block"
+                        className="aspect-3/4 w-9 shrink-0 overflow-hidden rounded-xs shadow-cover"
                     />
                 )}
-                <time
-                    dateTime={event.createdAt}
-                    className="hidden w-20 shrink-0 text-right text-label-sm text-content-muted sm:block"
-                >
-                    {relativeTime(event.createdAt)}
-                </time>
-                <ChevronDown
-                    size={16}
-                    aria-hidden
-                    className={cn(
-                        "shrink-0 text-content-muted transition-transform",
-                        open && "rotate-180"
-                    )}
-                />
             </button>
 
             {open && (
-                <div
-                    id={detailsId}
-                    className="flex flex-col gap-3 border-t border-subtle bg-surface-sunken/40 py-3 pr-3 pl-4 sm:pl-15"
-                >
-                    <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-body-sm">
-                        <dt className="text-content-muted">When</dt>
-                        <dd className="text-content">{when(event.createdAt)}</dd>
-                        <dt className="text-content-muted">Event</dt>
-                        <dd className="font-mono text-label text-content">{event.kind}</dd>
-                        {change && (
-                            <>
-                                <dt className="text-content-muted">Change</dt>
-                                <dd className="font-mono text-label break-all text-content">
-                                    {JSON.stringify(change.from)} → {JSON.stringify(change.to)}
-                                </dd>
-                            </>
+                <div id={detailsId} className="pb-2 pl-2 sm:pl-14">
+                    <div className={plateClass("pressed", "shallow", "flex flex-col gap-3 px-3.5 py-3")}>
+                        <LedgerList>
+                            <LedgerRow label="When" value={at(event.createdAt)} />
+                            <LedgerRow label="Recorded as" value={event.kind} />
+                            {change && (
+                                <LedgerRow
+                                    label="Change"
+                                    value={<span className="break-all">{JSON.stringify(change.from)} → {JSON.stringify(change.to)}</span>}
+                                />
+                            )}
+                            <LedgerRow label="Event" value={`#${event.id}`} rule={false} />
+                        </LedgerList>
+
+                        {event.excerpt && (
+                            <blockquote className="border-l-2 border-strong pl-3 text-body-sm break-words text-content-secondary">
+                                {event.excerpt}
+                            </blockquote>
                         )}
+
                         {event.data.backfilled === true && (
-                            <>
-                                <dt className="text-content-muted">Note</dt>
-                                <dd className="text-content-secondary">
-                                    Recovered from what already existed when the
-                                    log began, so it shows the row as it is now.
-                                </dd>
-                            </>
+                            <p className="text-label-sm text-content-muted">
+                                Recovered from what was already here when the log began, so it
+                                shows the row as it stands now rather than as it was then.
+                            </p>
                         )}
-                    </dl>
 
-                    {event.excerpt && (
-                        <blockquote className="border-l-2 border-subtle pl-3 text-body-sm break-words text-content-secondary">
-                            {event.excerpt}
-                        </blockquote>
-                    )}
-
-                    <div className="flex flex-wrap gap-x-4 gap-y-1">
-                        {summary.href && (
-                            <Link to={summary.href} className={LINK}>
-                                Open {summary.target}
-                            </Link>
-                        )}
-                        {event.actor && (
-                            <Link to={`/user/${event.actor.username}`} className={LINK}>
-                                {event.actor.username}’s profile
-                            </Link>
-                        )}
-                        {event.actor && onFilterUser && (
-                            <button
-                                type="button"
-                                onClick={() => onFilterUser(event.actor!.id)}
-                                className={cn(LINK, "cursor-pointer")}
-                            >
-                                Only {event.actor.username}’s activity
-                            </button>
-                        )}
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                            {summary.href && summary.target && (
+                                <Link to={summary.href} className={LINK}>
+                                    Open {summary.target}
+                                </Link>
+                            )}
+                            {event.actor && (
+                                <Link to={`/user/${event.actor.username}`} className={LINK}>
+                                    {event.actor.username}’s profile
+                                </Link>
+                            )}
+                            {event.actor && onFilterUser && (
+                                <button
+                                    type="button"
+                                    onClick={() => onFilterUser(event.actor!.id)}
+                                    className={cn(LINK, "cursor-pointer")}
+                                >
+                                    Only {event.actor.username}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

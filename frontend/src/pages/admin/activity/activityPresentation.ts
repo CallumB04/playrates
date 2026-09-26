@@ -1,46 +1,22 @@
-import {
-    ArrowBigUp,
-    BookOpen,
-    CircleUserRound,
-    Handshake,
-    MessageSquareReply,
-    MessagesSquare,
-    NotebookPen,
-    PenLine,
-    Trash2,
-    UserMinus,
-    UserPlus,
-    UserRoundPen,
-    type LucideIcon,
-} from "lucide-react";
+import { EyeOff, Trash2, TriangleAlert, type LucideIcon } from "lucide-react";
 import type { ActivityGroup, AdminActivityEvent } from "@playrates/shared";
 import {
     STATUS_PRESENTATION,
     displayStatusFor,
     isDisplayStatus,
+    type DisplayStatus,
+    type GameStatus,
+    type PlayedStatus,
 } from "../../../constants/gameStatus";
-import type { GameStatus, PlayedStatus } from "../../../constants/gameStatus";
 import { threadPath } from "../../../components/community/paths";
-import { formatRatingOutOfTen } from "../../../lib/format";
 
-export interface ActivityTone {
-    /** The bar down the row's edge. */
-    bar: string;
-    /** The icon's colour. */
-    icon: string;
-}
-
-/** Colour by what the event is about; anything taken away is danger,
- *  whatever it was. */
-export const GROUP_TONES: Record<ActivityGroup, ActivityTone & { label: string }> = {
-    account: { label: "Accounts", bar: "bg-brand", icon: "text-brand" },
-    logs: { label: "Logs", bar: "bg-status-playing", icon: "text-status-playing" },
-    reviews: { label: "Reviews", bar: "bg-info", icon: "text-info" },
-    community: { label: "Community", bar: "bg-success", icon: "text-success" },
-    social: { label: "Friends", bar: "bg-accent", icon: "text-accent" },
+export const GROUP_LABELS: Record<ActivityGroup, string> = {
+    account: "Accounts",
+    logs: "Logs",
+    reviews: "Reviews",
+    community: "Community",
+    social: "Friends",
 };
-
-const REMOVAL: ActivityTone = { bar: "bg-danger", icon: "text-danger" };
 
 const REMOVALS = new Set([
     "account_deleted",
@@ -62,7 +38,7 @@ interface LogState {
 const asLog = (value: unknown): LogState =>
     value && typeof value === "object" ? (value as LogState) : {};
 
-const shelfOf = (log: LogState) =>
+const shelfOf = (log: LogState): DisplayStatus | null =>
     log.status && isDisplayStatus(log.status)
         ? displayStatusFor(
               log.status as GameStatus,
@@ -72,58 +48,62 @@ const shelfOf = (log: LogState) =>
 
 const shelfLabel = (log: LogState): string => {
     const shelf = shelfOf(log);
-    return shelf ? STATUS_PRESENTATION[shelf].label : (log.status ?? "a shelf");
+    return shelf ? STATUS_PRESENTATION[shelf].label : "a shelf";
 };
 
-const rating = (log: LogState): number | null =>
+const ratingOf = (log: LogState): number | null =>
     log.rating === null || log.rating === undefined ? null : Number(log.rating);
 
-export const activityTone = (event: AdminActivityEvent): ActivityTone => {
-    if (isRemoval(event.kind)) return REMOVAL;
-    // A log wears the colour of the shelf it landed on.
+/** The home feed's verbs, so a log reads the same here as it does there. */
+const VERB: Record<DisplayStatus, string> = {
+    played: "logged",
+    playing: "started",
+    backlog: "added to their backlog",
+    wishlist: "wishlisted",
+    finished: "finished",
+    mastered: "mastered",
+    shelved: "shelved",
+    retired: "gave up on",
+};
+
+/** The one mark a row's meta line carries: the shelf a log is on, in its own
+ *  hue, or that something went. Nothing else gets colour. */
+export interface ActivityMark {
+    icon: LucideIcon;
+    label: string;
+    className: string;
+}
+
+export const activityMark = (event: AdminActivityEvent): ActivityMark | null => {
+    if (isRemoval(event.kind)) {
+        return { icon: Trash2, label: "Removed", className: "text-danger" };
+    }
     if (event.group === "logs") {
         const shelf = shelfOf(asLog(event.kind === "log_updated" ? event.data.to : event.data));
         if (shelf) {
-            const { accent, markTone } = STATUS_PRESENTATION[shelf];
-            return { bar: accent, icon: markTone };
+            const { icon, label, markTone } = STATUS_PRESENTATION[shelf];
+            return { icon, label, className: markTone };
         }
     }
-    return event.group ? GROUP_TONES[event.group] : GROUP_TONES.account;
+    if (event.data.isPublic === false) {
+        return { icon: EyeOff, label: "Private", className: "text-content-muted" };
+    }
+    if (event.data.containsSpoilers === true) {
+        return { icon: TriangleAlert, label: "Spoilers", className: "text-content-muted" };
+    }
+    return null;
 };
 
-const ICONS: Record<string, LucideIcon> = {
-    signup: UserPlus,
-    profile_updated: UserRoundPen,
-    account_deleted: CircleUserRound,
-    log_added: NotebookPen,
-    log_updated: NotebookPen,
-    log_removed: Trash2,
-    review_posted: BookOpen,
-    review_edited: PenLine,
-    review_removed: Trash2,
-    review_upvoted: ArrowBigUp,
-    thread_created: MessagesSquare,
-    thread_removed: Trash2,
-    message_posted: MessageSquareReply,
-    message_edited: PenLine,
-    message_deleted: Trash2,
-    message_upvoted: ArrowBigUp,
-    friend_requested: UserPlus,
-    friend_accepted: Handshake,
-    friend_removed: UserMinus,
-};
-
-export const activityIcon = (kind: string): LucideIcon =>
-    ICONS[kind] ?? CircleUserRound;
-
-/** "<who> <action> <target>", with the target linkable. */
+/** "<who> <action> <target> <after>", with the target linkable. */
 export interface ActivitySummary {
     who: string;
     action: string;
     target: string | null;
     href: string | null;
-    /** Small facts worth seeing without expanding: "private", "8/10". */
-    tags: string[];
+    /** Words after the target: "from Backlog to Playing". */
+    after: string | null;
+    /** A rating to show as the app shows ratings. */
+    rating: number | null;
 }
 
 const str = (value: unknown): string | null =>
@@ -141,69 +121,58 @@ export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
     const threadId = typeof d.threadId === "number" ? d.threadId : null;
     const threadTitle = str(d.threadTitle) ?? "a thread";
     const threadHref = threadId ? threadPath(threadId) : null;
-    const person = event.subjectUsername;
-    const personHref = person ? `/user/${person}` : null;
+    const person = event.subjectUsername ?? "someone";
+    const personHref = event.subjectUsername ? `/user/${event.subjectUsername}` : null;
 
     const line = (
         action: string,
         target: string | null = null,
         href: string | null = null,
-        tags: string[] = []
-    ): ActivitySummary => ({ who, action, target, href, tags });
+        extra: Partial<Pick<ActivitySummary, "after" | "rating">> = {}
+    ): ActivitySummary => ({ who, action, target, href, after: null, rating: null, ...extra });
 
     switch (event.kind) {
         case "signup":
             return line("joined PlayRates");
         case "account_deleted":
-            return line("deleted their account");
+            return line("closed their account");
         case "profile_updated": {
             const fields = Array.isArray(d.fields) ? (d.fields as string[]) : [];
             if (fields.includes("username") && str(d.previousUsername)) {
-                return line(`changed their username from ${d.previousUsername}`);
+                return line("changed their name from", str(d.previousUsername));
             }
             const what = fields.filter((f) => f !== "username");
-            return line(
-                `updated their ${what.length > 0 ? what.join(" and ") : "profile"}`
-            );
+            return line(`changed their ${what.length > 0 ? what.join(" and ") : "profile"}`);
         }
 
         case "log_added": {
             const log = asLog(d);
-            const score = rating(log);
-            return line(`added to ${shelfLabel(log)}`, game, gameHref,
-                score === null ? [] : [formatRatingOutOfTen(score)]);
+            const shelf = shelfOf(log);
+            return line(shelf ? VERB[shelf] : "logged", game, gameHref, { rating: ratingOf(log) });
         }
         case "log_updated": {
             const from = asLog(d.from);
             const to = asLog(d.to);
-            const moved = shelfOf(from) !== shelfOf(to);
-            const before = rating(from);
-            const after = rating(to);
-            const tags =
-                after !== before
-                    ? [after === null ? "rating cleared" : formatRatingOutOfTen(after)]
-                    : [];
-            if (moved) {
-                return line(`moved from ${shelfLabel(from)} to ${shelfLabel(to)}`, game, gameHref, tags);
+            const before = ratingOf(from);
+            const after = ratingOf(to);
+            const rating = after !== before ? after : null;
+            if (shelfOf(from) !== shelfOf(to)) {
+                return line("moved", game, gameHref, {
+                    after: `from ${shelfLabel(from)} to ${shelfLabel(to)}`,
+                    rating,
+                });
             }
-            return line(after === null ? "cleared their rating of" : "rated", game, gameHref, tags);
+            return after === null
+                ? line("took the rating off", game, gameHref)
+                : line("rated", game, gameHref, { rating });
         }
         case "log_removed":
-            return line(`removed from ${shelfLabel(asLog(d))}`, game, gameHref);
+            return line("took", game, gameHref, { after: `off ${shelfLabel(asLog(d))}` });
 
         case "review_posted":
-        case "review_edited": {
-            const tags = [
-                ...(d.isPublic === false ? ["private"] : []),
-                ...(d.containsSpoilers === true ? ["spoilers"] : []),
-            ];
-            return line(
-                event.kind === "review_posted" ? "reviewed" : "edited their review of",
-                game,
-                gameHref,
-                tags
-            );
-        }
+            return line("reviewed", game, gameHref);
+        case "review_edited":
+            return line("rewrote their review of", game, gameHref);
         case "review_removed":
             return line("deleted their review of", game, gameHref);
         case "review_upvoted":
@@ -211,14 +180,14 @@ export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
 
         case "thread_created":
             return line(
-                "started a thread",
+                "started",
                 str(d.title) ?? "a thread",
                 event.subjectId ? threadPath(Number(event.subjectId)) : null
             );
         case "thread_removed":
-            return line("lost a thread", str(d.title) ?? "a thread");
+            return line("lost their thread", str(d.title) ?? "a thread");
         case "message_posted":
-            return line(d.isReply === true ? "replied to someone in" : "posted in", threadTitle, threadHref);
+            return line(d.isReply === true ? "answered someone in" : "posted in", threadTitle, threadHref);
         case "message_edited":
             return line("edited a message in", threadTitle, threadHref);
         case "message_deleted":
@@ -227,13 +196,13 @@ export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
             return line("upvoted a message in", threadTitle, threadHref);
 
         case "friend_requested":
-            return line("sent a friend request to", person ?? "someone", personHref);
+            return line("asked to be friends with", person, personHref);
         case "friend_accepted":
-            return line("became friends with", person ?? "someone", personHref);
+            return line("became friends with", person, personHref);
         case "friend_removed":
             return line(
-                d.wasAccepted === false ? "withdrew a friend request to" : "unfriended",
-                person ?? "someone",
+                d.wasAccepted === false ? "withdrew their request to" : "unfriended",
+                person,
                 personHref
             );
 

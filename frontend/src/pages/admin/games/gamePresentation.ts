@@ -1,64 +1,41 @@
-import {
-    CircleAlert,
-    FileText,
-    Flame,
-    FlameKindling,
-    Image,
-    ImagePlus,
-    PackagePlus,
-    RefreshCw,
-    Search,
-    Type,
-    CalendarClock,
-    DownloadCloud,
-    type LucideIcon,
-} from "lucide-react";
+import { CircleAlert, Flame, type LucideIcon } from "lucide-react";
 import type { AdminGameEvent, GameEventGroup } from "@playrates/shared";
 
-export const GAME_GROUP_TONES: Record<
-    GameEventGroup,
-    { label: string; bar: string; icon: string }
-> = {
-    added: { label: "New games", bar: "bg-success", icon: "text-success" },
-    content: { label: "Art & text", bar: "bg-info", icon: "text-info" },
-    pulls: { label: "RAWG calls", bar: "bg-brand", icon: "text-brand" },
-    failures: { label: "Failures", bar: "bg-danger", icon: "text-danger" },
-    controls: { label: "Your changes", bar: "bg-accent", icon: "text-accent" },
+export const GAME_GROUP_LABELS: Record<GameEventGroup, string> = {
+    added: "Arrivals",
+    content: "Art and text",
+    pulls: "Calls to RAWG",
+    failures: "Failures",
+    controls: "Your changes",
 };
 
-const ICONS: Record<string, LucideIcon> = {
-    game_added: PackagePlus,
-    rawg_import: DownloadCloud,
-    cover_updated: Image,
-    box_art_updated: ImagePlus,
-    description_pulled: FileText,
-    release_date_changed: CalendarClock,
-    title_changed: Type,
-    details_resynced: RefreshCw,
-    search_pull: Search,
-    manual_pull: DownloadCloud,
-    details_backfill_failed: CircleAlert,
-    trending_set: Flame,
-    trending_cleared: FlameKindling,
+export const SOURCE_WORDS: Record<string, string> = {
+    search: "from a search",
+    page_view: "when someone opened it",
+    manual_pull: "from a manual pull",
+    import: "from an import",
+    admin: "by you",
 };
 
-export const gameEventIcon = (kind: string): LucideIcon =>
-    ICONS[kind] ?? FileText;
-
-export const gameEventTone = (event: AdminGameEvent) => {
-    // A pull or a re-sync that failed reads as a failure, whatever its kind.
-    if (event.data.failed === true || event.data.ok === false) {
-        return GAME_GROUP_TONES.failures;
+/** The one mark a line carries: it failed, or it was put on the trending
+ *  rail, the one change of yours people will notice. */
+export const gameEventMark = (
+    event: AdminGameEvent
+): { icon: LucideIcon; label: string; className: string } | null => {
+    if (event.data.failed === true || event.data.ok === false || event.kind === "details_backfill_failed") {
+        return { icon: CircleAlert, label: "Failed", className: "text-danger" };
     }
-    return event.group ? GAME_GROUP_TONES[event.group] : GAME_GROUP_TONES.content;
+    if (event.kind === "trending_set") {
+        return { icon: Flame, label: "Trending", className: "text-accent" };
+    }
+    return null;
 };
 
-const num = (value: unknown): number =>
-    typeof value === "number" ? value : 0;
+const num = (value: unknown): number => (typeof value === "number" ? value : 0);
 const str = (value: unknown): string | null =>
     typeof value === "string" && value !== "" ? value : null;
 
-const plural = (n: number, one: string, many = `${one}s`) =>
+const count = (n: number, one: string, many = `${one}s`) =>
     `${n.toLocaleString("en-GB")} ${n === 1 ? one : many}`;
 
 /** One line per catalogue event. The title comes from the game where it still
@@ -73,56 +50,45 @@ export const gameEventSummary = (
         case "game_added":
             return { title, text: "arrived in the catalogue" };
         case "rawg_import":
-            return { title, text: "imported from RAWG by id" };
+            return { title, text: "was imported from RAWG by its id" };
         case "cover_updated":
             return { title, text: d.hadOne ? "got a new cover" : "got its cover" };
         case "box_art_updated":
-            return { title, text: d.hadOne ? "got new box art" : "got box art" };
+            return { title, text: d.hadOne ? "got new box art" : "got its box art" };
         case "description_pulled":
-            return {
-                title,
-                text: d.hadOne ? "had its description replaced" : "got its description",
-            };
+            return { title, text: d.hadOne ? "had its description replaced" : "got its description" };
         case "release_date_changed":
             return {
                 title,
-                text: `release date moved ${str(d.from) ?? "from none"} → ${str(d.to) ?? "none"}`,
+                text: `moved its release from ${str(d.from) ?? "no date"} to ${str(d.to) ?? "no date"}`,
             };
         case "title_changed":
-            return { title, text: `was renamed from ${str(d.from) ?? "?"}` };
+            return { title, text: `was renamed from ${str(d.from) ?? "something else"}` };
         case "details_resynced":
-            return {
-                title,
-                text: d.ok === false ? "re-sync failed" : "details re-synced",
-            };
+            return { title, text: d.ok === false ? "couldn’t be re-synced" : "was re-synced" };
         case "details_backfill_failed":
             return {
                 title,
-                text: `details couldn't be fetched${str(d.error) ? `: ${d.error}` : ""}`,
+                text: `couldn’t fetch its details${str(d.error) ? `: ${d.error}` : ""}`,
             };
         case "trending_set":
-            return { title, text: "flagged as trending" };
+            return { title, text: "went on the trending rail" };
         case "trending_cleared":
-            return { title, text: "no longer trending" };
+            return { title, text: "came off the trending rail" };
         case "search_pull":
-            if (d.failed === true) {
-                return {
-                    title: null,
-                    text: `A search for “${str(d.term) ?? "?"}” couldn't reach RAWG`,
-                };
-            }
-            return {
-                title: null,
-                text: `A search for “${str(d.term) ?? "?"}” went to RAWG: ${plural(num(d.fetched), "result")}, ${num(d.added).toLocaleString("en-GB")} new`,
-            };
+            return d.failed === true
+                ? { title: null, text: `A search for “${str(d.term) ?? "?"}” couldn’t reach RAWG` }
+                : {
+                      title: null,
+                      text: `A search for “${str(d.term) ?? "?"}” asked RAWG and brought back ${count(num(d.fetched), "game")}, ${num(d.added).toLocaleString("en-GB")} new`,
+                  };
         case "manual_pull":
-            if (d.failed === true) {
-                return { title: null, text: `A manual pull failed after ${plural(num(d.pages), "page")}` };
-            }
-            return {
-                title: null,
-                text: `A manual pull fetched ${plural(num(d.fetched), "game")} over ${plural(num(d.pages), "page")}: ${num(d.added).toLocaleString("en-GB")} new`,
-            };
+            return d.failed === true
+                ? { title: null, text: `A pull stopped after ${count(num(d.pages), "page")}` }
+                : {
+                      title: null,
+                      text: `A pull fetched ${count(num(d.fetched), "game")} over ${count(num(d.pages), "page")}, ${num(d.added).toLocaleString("en-GB")} new`,
+                  };
         default:
             return { title, text: event.kind.replace(/_/g, " ") };
     }

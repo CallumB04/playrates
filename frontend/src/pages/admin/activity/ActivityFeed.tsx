@@ -1,18 +1,24 @@
 import type { AdminActivityFilters } from "../../../api";
-import EmptyPlate from "../../../components/ui/EmptyPlate";
+import { cardClass } from "../../../components/ui/Card";
+import EmptyPlate, { EmptyNote } from "../../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
+import { cn } from "../../../lib/cn";
 import { useAdminActivity } from "../../../hooks/queries/useAdmin";
-import LoadMore from "../components/LoadMore";
+import ShowOlder from "../components/ShowOlder";
+import { groupByDay } from "../lib/plot";
 import ActivityRow from "./ActivityRow";
 
-/** The activity log for whatever the filters say: everyone, one group, one
- *  person. Also what a user's detail shows. */
+/** The activity log for whatever the filters say, one day at a time: every
+ *  person, one kind, or a single account's history. */
 const ActivityFeed = ({
     filters,
     onFilterUser,
+    compact = false,
 }: {
     filters: AdminActivityFilters;
     onFilterUser?: (userId: string) => void;
+    /** Inside another surface, such as a person's detail: no card of its own. */
+    compact?: boolean;
 }) => {
     const feed = useAdminActivity(filters);
     const events = feed.data?.pages.flatMap((page) => page.data) ?? [];
@@ -21,27 +27,41 @@ const ActivityFeed = ({
     if (feed.isError) {
         return (
             <EmptyPlate
-                title="The activity log didn't load"
-                body="Check the Health view for the API and database."
+                title="The activity log didn’t load"
+                body="Either the API or the database isn’t answering. Health will say which."
             />
         );
     }
     if (events.length === 0) {
-        return <EmptyPlate title="Nothing here yet" body="No activity matches." />;
+        return compact ? (
+            <EmptyNote>Nothing yet.</EmptyNote>
+        ) : (
+            <EmptyPlate title="Nothing to show" body="Nobody has done that yet. Pick another kind, or clear the filter." />
+        );
     }
 
     return (
-        <div className={feed.isPlaceholderData ? "opacity-60 transition-opacity" : undefined}>
-            <ul className="flex flex-col gap-1.5">
-                {events.map((event) => (
-                    <ActivityRow key={event.id} event={event} onFilterUser={onFilterUser} />
+        <div className={cn("transition-opacity", feed.isPlaceholderData && "opacity-60")}>
+            <div className={compact ? undefined : cardClass("px-1.5 pt-1 pb-2 sm:px-2", { padding: "none" })}>
+                {groupByDay(events, (e) => e.createdAt).map((day) => (
+                    <section key={day.key}>
+                        <h3 className="flex items-baseline justify-between px-2 pt-3.5 pb-1 text-label text-content-muted">
+                            {day.label}
+                            <span className="font-mono text-label-sm">{day.items.length}</span>
+                        </h3>
+                        <ul className="flex flex-col">
+                            {day.items.map((event) => (
+                                <ActivityRow key={event.id} event={event} day={day.label} onFilterUser={onFilterUser} />
+                            ))}
+                        </ul>
+                    </section>
                 ))}
-            </ul>
-            <LoadMore
+            </div>
+            <ShowOlder
                 hasMore={feed.hasNextPage}
                 loading={feed.isFetchingNextPage}
                 onClick={() => feed.fetchNextPage()}
-                endLabel="That's the beginning of the log."
+                end="That’s where the log begins."
             />
         </div>
     );

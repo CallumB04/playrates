@@ -24,7 +24,9 @@ const SemanticTable = ({ group }: { group: SemanticGroup }) => {
                 </p>
             </header>
 
-            <div className="grid gap-x-8 lg:grid-cols-2">
+            {/* minmax(0, …) so a long token name truncates instead of widening the
+                track past the screen. */}
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 lg:grid-cols-[repeat(2,minmax(0,1fr))]">
                 {group.tokens.map((token) => {
                     const value = values[token.cssVar];
                     return (

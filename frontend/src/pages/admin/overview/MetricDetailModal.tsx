@@ -9,182 +9,188 @@ import type {
 } from "@playrates/shared";
 import Modal from "../../../components/ui/Modal";
 import Progress from "../../../components/ui/Progress";
+import Stat from "../../../components/ui/Stat";
+import RatingBadge from "../../../components/ui/RatingBadge";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import GameCover from "../../../components/game/GameCover";
 import ProfilePicture from "../../../components/ProfilePicture";
 import { threadPath } from "../../../components/community/paths";
 import {
+    GAME_STATUSES,
+    PLAYED_STATUSES,
     STATUS_PRESENTATION,
     isDisplayStatus,
 } from "../../../constants/gameStatus";
-import { formatCount, formatRating } from "../../../lib/format";
+import { cn } from "../../../lib/cn";
+import { formatCount } from "../../../lib/format";
 import { useAdminMetric } from "../../../hooks/queries/useAdmin";
-import { StackedColumns, TrendChart, type Series } from "../charts/charts";
-import { RANGE_LABELS, share } from "../lib/adminFormat";
+import BarPlot from "../components/BarPlot";
+import { bucketLabel, RANGE_LABELS, share } from "../lib/adminFormat";
 
-const TITLES: Record<AdminMetric, string> = {
-    users: "People",
-    logs: "Game logs",
-    reviews: "Reviews",
-    community: "Community",
-    games: "The catalogue",
+const TITLES: Record<AdminMetric, { title: string; sentence: string }> = {
+    users: { title: "People", sentence: "Who comes back, and who has only signed up." },
+    logs: { title: "Game logs", sentence: "Every shelf, and the games people are putting on them." },
+    reviews: { title: "Reviews", sentence: "What gets written, and who gets to read it." },
+    community: { title: "Community", sentence: "Replies, votes, and the threads people are in." },
+    games: { title: "The catalogue", sentence: "How complete the games are, and which ones people log." },
 };
 
+/** The game page's own heading inside a card: a label on a hairline. */
 const Section = ({ title, children }: { title: string; children: ReactNode }) => (
-    <section className="flex flex-col gap-3">
-        <h3 className="text-label font-medium text-content-secondary">{title}</h3>
+    <section>
+        <h3 className="border-b border-subtle pb-2 text-label text-content-muted">{title}</h3>
         {children}
     </section>
 );
 
-/** A labelled share of a whole, with the numbers beside the bar. */
+/** Label, bar, count, share: CirculationPlate's row. */
 const ShareRow = ({
     label,
+    mark,
     part,
     whole,
-    fillClassName,
+    fill = "bg-brand",
 }: {
     label: string;
+    mark?: ReactNode;
     part: number;
     whole: number;
-    fillClassName?: string;
+    fill?: string;
 }) => (
-    <div className="flex flex-col gap-1.5">
-        <div className="flex items-baseline justify-between gap-3 text-body-sm">
-            <span className="text-content-secondary">{label}</span>
-            <span className="font-mono text-content tabular-nums">
-                {formatCount(part)}{" "}
-                <span className="text-content-muted">{share(part, whole)}</span>
-            </span>
-        </div>
+    <div className="flex items-center gap-3.5 border-b border-subtle py-2.5">
+        {mark}
+        <span className="w-24 shrink-0 truncate text-body-sm font-medium text-content sm:w-36">{label}</span>
         <Progress
             value={whole === 0 ? 0 : part / whole}
             label={`${label}: ${share(part, whole)}`}
-            size="sm"
-            fillClassName={fillClassName}
+            fillClassName={fill}
+            className="min-w-0 flex-1"
         />
+        <span className="w-10 shrink-0 text-right font-mono text-body-sm font-semibold text-content sm:w-12">
+            {formatCount(part)}
+        </span>
+        <span className="w-9 shrink-0 text-right font-mono text-[11.5px] text-content-muted sm:w-10">
+            {share(part, whole)}
+        </span>
     </div>
 );
 
-const Figures = ({ items }: { items: { label: string; value: string }[] }) => (
-    <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {items.map((item) => (
-            <div
-                key={item.label}
-                className="rounded-md border border-subtle bg-surface-sunken/40 px-3 py-2"
-            >
-                <dt className="text-label-sm text-content-muted">{item.label}</dt>
-                <dd className="font-mono text-figure-sm text-content tabular-nums">
-                    {item.value}
-                </dd>
-            </div>
-        ))}
-    </dl>
+const StatusRow = ({ status, part, whole }: { status: string; part: number; whole: number }) => {
+    if (!isDisplayStatus(status)) return <ShareRow label={status} part={part} whole={whole} />;
+    const { label, icon: Mark, markTone, accent } = STATUS_PRESENTATION[status];
+    return (
+        <ShareRow
+            label={label}
+            mark={<Mark size={14} aria-hidden className={cn("shrink-0", markTone)} />}
+            part={part}
+            whole={whole}
+            fill={accent}
+        />
+    );
+};
+
+/** A band of figures, as a profile has them. */
+const Band = ({ children }: { children: ReactNode }) => (
+    <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:flex sm:flex-wrap">{children}</div>
 );
 
-const GameList = ({
-    games,
-    noun,
-}: {
-    games: AdminRankedGame[];
-    /** Singular and plural. */
-    noun: [string, string];
-}) =>
+const Ranked = ({ children }: { children: ReactNode }) => <ol className="flex flex-col py-1">{children}</ol>;
+
+const Rank = ({ n }: { n: number }) => (
+    <span
+        className={cn(
+            "w-5 shrink-0 font-mono text-label-sm",
+            n === 1 ? "font-semibold text-brand" : "text-content-muted"
+        )}
+    >
+        #{n}
+    </span>
+);
+
+const ROW = "flex min-h-11 items-center gap-3 rounded-sm px-1 py-1.5 lift hover:bg-surface-hover";
+
+const Games = ({ games, noun }: { games: AdminRankedGame[]; noun: [string, string] }) =>
     games.length === 0 ? (
-        <p className="text-body-sm text-content-muted">None in this period.</p>
+        <p className="py-3 text-body-sm text-content-muted">Nothing in this period.</p>
     ) : (
-        <ol className="flex flex-col gap-2">
-            {games.map((game, index) => (
+        <Ranked>
+            {games.map((game, i) => (
                 <li key={game.id}>
-                    <Link
-                        to={`/game/${game.id}`}
-                        className="flex min-h-11 items-center gap-3 rounded-md px-1 hover:bg-surface-hover"
-                    >
-                        <span className="w-4 shrink-0 text-right font-mono text-label-sm text-content-muted">
-                            {index + 1}
-                        </span>
+                    <Link to={`/game/${game.id}`} className={ROW}>
+                        <Rank n={i + 1} />
                         <GameCover
                             coverUrl={game.coverUrl}
                             title={game.title}
-                            className="w-8 shrink-0 rounded-xs"
+                            className="aspect-3/4 w-8 shrink-0 overflow-hidden rounded-xs shadow-cover"
                         />
-                        <span className="min-w-0 flex-1 truncate text-body-sm text-content">
+                        <span className="min-w-0 flex-1 truncate text-body-sm font-medium text-content">
                             {game.title}
                         </span>
-                        <span className="shrink-0 font-mono text-label text-content-secondary tabular-nums">
-                            {formatCount(game.count)} {game.count === 1 ? noun[0] : noun[1]}
+                        <span className="shrink-0 text-label-sm text-content-muted">
+                            <span className="font-mono text-content-secondary">{formatCount(game.count)}</span>{" "}
+                            {game.count === 1 ? noun[0] : noun[1]}
                         </span>
                     </Link>
                 </li>
             ))}
-        </ol>
+        </Ranked>
     );
 
-const Body = ({
-    detail,
-    overview,
-}: {
-    detail: AdminMetricDetail;
-    overview: AdminOverview | undefined;
-}) => {
+const Body = ({ detail, overview }: { detail: AdminMetricDetail; overview: AdminOverview | undefined }) => {
     const series = overview?.series ?? [];
     const bucket = overview?.bucket ?? "day";
-    const range = overview ? RANGE_LABELS[overview.range] : "";
+    const range = overview ? RANGE_LABELS[overview.range] : "the period";
 
     switch (detail.metric) {
         case "users": {
             const { lastSeen } = detail;
             return (
                 <>
+                    <Band>
+                        <Stat label="Accounts" value={formatCount(lastSeen.total)} />
+                        <Stat label="Here right now" value={formatCount(lastSeen.online)} />
+                        <Stat label="Finished the welcome" value={share(detail.onboarded, lastSeen.total)} />
+                    </Band>
                     <Section title="Last seen">
-                        <ShareRow label="Online now" part={lastSeen.online} whole={lastSeen.total} />
                         <ShareRow label="In the last day" part={lastSeen.today} whole={lastSeen.total} />
                         <ShareRow label="In the last week" part={lastSeen.week} whole={lastSeen.total} />
                         <ShareRow label="In the last month" part={lastSeen.month} whole={lastSeen.total} />
-                        <ShareRow
-                            label="Finished the welcome"
-                            part={detail.onboarded}
-                            whole={lastSeen.total}
-                            fillClassName="bg-success"
-                        />
                     </Section>
-                    <Section title={`Sign-ups over ${range}`}>
-                        <StackedColumns
-                            data={series}
-                            series={SIGNUPS}
-                            bucket={bucket}
-                            caption={`Sign-ups per ${bucket}`}
-                            height={140}
-                        />
-                    </Section>
-                    <Section title={`Most active over ${range}`}>
+                    {series.length > 0 && (
+                        <Section title={`Sign-ups over ${range}`}>
+                            <div className="pt-3">
+                                <BarPlot
+                                    bars={series.map((p) => ({ key: p.bucket, segments: [{ key: "v", value: p.signups, className: "bg-brand" }] }))}
+                                    label="Sign-ups"
+                                    height={56}
+                                    describe={(i) => `${bucketLabel(series[i]!.bucket, bucket)}: ${series[i]!.signups} new`}
+                                />
+                            </div>
+                        </Section>
+                    )}
+                    <Section title={`Busiest over ${range}`}>
                         {detail.mostActive.length === 0 ? (
-                            <p className="text-body-sm text-content-muted">Nobody yet.</p>
+                            <p className="py-3 text-body-sm text-content-muted">Nobody yet.</p>
                         ) : (
-                            <ol className="flex flex-col gap-1">
-                                {detail.mostActive.map((person) => (
+                            <Ranked>
+                                {detail.mostActive.map((person, i) => (
                                     <li key={person.username}>
-                                        <Link
-                                            to={`/user/${person.username}`}
-                                            className="flex min-h-11 items-center gap-3 rounded-md px-1 hover:bg-surface-hover"
-                                        >
-                                            <ProfilePicture
-                                                variant="friendRow"
-                                                file={person.avatarUrl ?? ""}
-                                                accent={person.accent}
-                                                username={person.username}
-                                                link={false}
-                                            />
-                                            <span className="min-w-0 flex-1 truncate text-body-sm text-content">
+                                        <Link to={`/user/${person.username}`} className={ROW}>
+                                            <Rank n={i + 1} />
+                                            <span className="shrink-0 [&>*]:size-8">
+                                                <ProfilePicture variant="nav" file={person.avatarUrl ?? ""} accent={person.accent} username={person.username} link={false} />
+                                            </span>
+                                            <span className="min-w-0 flex-1 truncate text-body-sm font-medium text-content">
                                                 {person.username}
                                             </span>
-                                            <span className="font-mono text-label text-content-secondary tabular-nums">
-                                                {formatCount(person.count)} {person.count === 1 ? "action" : "actions"}
+                                            <span className="shrink-0 text-label-sm text-content-muted">
+                                                <span className="font-mono text-content-secondary">{formatCount(person.count)}</span>{" "}
+                                                {person.count === 1 ? "thing done" : "things done"}
                                             </span>
                                         </Link>
                                     </li>
                                 ))}
-                            </ol>
+                            </Ranked>
                         )}
                     </Section>
                 </>
@@ -196,48 +202,28 @@ const Body = ({
             const played = Object.values(detail.byPlayedStatus).reduce((a, b) => a + b, 0);
             return (
                 <>
-                    <Figures
-                        items={[
-                            { label: "Logs", value: formatCount(total) },
-                            {
-                                label: "With a rating",
-                                value:
-                                    detail.ratedShare === null
-                                        ? "—"
-                                        : `${Math.round(detail.ratedShare * 100)}%`,
-                            },
-                            {
-                                label: "Average rating",
-                                value: formatRating(detail.averageRating),
-                            },
-                        ]}
-                    />
-                    <Section title="By shelf">
-                        {Object.entries(detail.byStatus).map(([status, count]) => (
-                            <ShareRow
-                                key={status}
-                                label={isDisplayStatus(status) ? STATUS_PRESENTATION[status].label : status}
-                                part={count}
-                                whole={total}
-                                fillClassName={isDisplayStatus(status) ? STATUS_PRESENTATION[status].accent : undefined}
-                            />
+                    <Band>
+                        <Stat label="Logs" value={formatCount(total)} />
+                        <Stat label="Average rating" value={<RatingBadge value={detail.averageRating} size="md" />} />
+                        <Stat
+                            label="Carry a rating"
+                            value={detail.ratedShare === null ? "—" : `${Math.round(detail.ratedShare * 100)}%`}
+                        />
+                    </Band>
+                    <Section title="Every log · by shelf">
+                        {GAME_STATUSES.map((s) => (
+                            <StatusRow key={s} status={s} part={detail.byStatus[s] ?? 0} whole={total} />
                         ))}
                     </Section>
                     {played > 0 && (
                         <Section title="How plays ended">
-                            {Object.entries(detail.byPlayedStatus).map(([status, count]) => (
-                                <ShareRow
-                                    key={status}
-                                    label={isDisplayStatus(status) ? STATUS_PRESENTATION[status].label : status}
-                                    part={count}
-                                    whole={played}
-                                    fillClassName={isDisplayStatus(status) ? STATUS_PRESENTATION[status].accent : undefined}
-                                />
+                            {PLAYED_STATUSES.map((s) => (
+                                <StatusRow key={s} status={s} part={detail.byPlayedStatus[s] ?? 0} whole={played} />
                             ))}
                         </Section>
                     )}
                     <Section title={`Most logged over ${range}`}>
-                        <GameList games={detail.topGames} noun={["log", "logs"]} />
+                        <Games games={detail.topGames} noun={["log", "logs"]} />
                     </Section>
                 </>
             );
@@ -247,24 +233,17 @@ const Body = ({
             const total = detail.public + detail.private;
             return (
                 <>
-                    <Figures
-                        items={[
-                            { label: "Reviews", value: formatCount(total) },
-                            { label: `Upvotes in ${range}`, value: formatCount(detail.upvotes) },
-                            { label: "Marked as spoilers", value: share(detail.spoilers, total) },
-                        ]}
-                    />
+                    <Band>
+                        <Stat label="Reviews" value={formatCount(total)} />
+                        <Stat label={`Upvotes in ${range}`} value={formatCount(detail.upvotes)} />
+                        <Stat label="Behind a spoiler" value={share(detail.spoilers, total)} />
+                    </Band>
                     <Section title="Who can read them">
-                        <ShareRow label="Public" part={detail.public} whole={total} />
-                        <ShareRow
-                            label="Private"
-                            part={detail.private}
-                            whole={total}
-                            fillClassName="bg-content-muted"
-                        />
+                        <ShareRow label="Everyone" part={detail.public} whole={total} />
+                        <ShareRow label="Only the author" part={detail.private} whole={total} fill="bg-content-muted" />
                     </Section>
                     <Section title={`Most reviewed over ${range}`}>
-                        <GameList games={detail.topGames} noun={["review", "reviews"]} />
+                        <Games games={detail.topGames} noun={["review", "reviews"]} />
                     </Section>
                 </>
             );
@@ -273,44 +252,30 @@ const Body = ({
         case "community":
             return (
                 <>
-                    <Figures
-                        items={[
-                            { label: `Replies in ${range}`, value: formatCount(detail.replies) },
-                            { label: `Upvotes in ${range}`, value: formatCount(detail.upvotes) },
-                        ]}
-                    />
-                    <Section title={`Replies and threads over ${range}`}>
-                        <TrendChart
-                            data={series}
-                            series={COMMUNITY}
-                            bucket={bucket}
-                            caption={`Replies and new threads per ${bucket}`}
-                            height={160}
-                        />
-                    </Section>
+                    <Band>
+                        <Stat label={`Replies in ${range}`} value={formatCount(detail.replies)} />
+                        <Stat label={`Upvotes in ${range}`} value={formatCount(detail.upvotes)} />
+                    </Band>
                     <Section title={`Busiest threads over ${range}`}>
                         {detail.topThreads.length === 0 ? (
-                            <p className="text-body-sm text-content-muted">
-                                No messages in this period.
-                            </p>
+                            <p className="py-3 text-body-sm text-content-muted">Nobody posted in this period.</p>
                         ) : (
-                            <ol className="flex flex-col gap-1">
-                                {detail.topThreads.map((thread) => (
+                            <Ranked>
+                                {detail.topThreads.map((thread, i) => (
                                     <li key={thread.id}>
-                                        <Link
-                                            to={threadPath(thread.id)}
-                                            className="flex min-h-11 items-center justify-between gap-3 rounded-md px-1 hover:bg-surface-hover"
-                                        >
-                                            <span className="min-w-0 truncate text-body-sm text-content">
+                                        <Link to={threadPath(thread.id)} className={ROW}>
+                                            <Rank n={i + 1} />
+                                            <span className="min-w-0 flex-1 truncate text-body-sm font-medium text-content">
                                                 {thread.title}
                                             </span>
-                                            <span className="shrink-0 font-mono text-label text-content-secondary tabular-nums">
-                                                {formatCount(thread.count)}
+                                            <span className="shrink-0 text-label-sm text-content-muted">
+                                                <span className="font-mono text-content-secondary">{formatCount(thread.count)}</span>{" "}
+                                                {thread.count === 1 ? "message" : "messages"}
                                             </span>
                                         </Link>
                                     </li>
                                 ))}
-                            </ol>
+                            </Ranked>
                         )}
                     </Section>
                 </>
@@ -320,25 +285,19 @@ const Body = ({
             const total = overview?.totals.games ?? 0;
             return (
                 <>
-                    <Figures
-                        items={[
-                            { label: "Games", value: formatCount(total) },
-                            { label: `Added in ${range}`, value: formatCount(detail.added) },
-                            { label: "Flagged trending", value: formatCount(detail.trending) },
-                        ]}
-                    />
-                    <Section title="How complete the catalogue is">
-                        <ShareRow label="Has a cover" part={detail.withCover} whole={total} />
-                        <ShareRow label="Has portrait box art" part={detail.withBoxArt} whole={total} />
-                        <ShareRow label="Has a description" part={detail.withDescription} whole={total} />
-                        <ShareRow
-                            label="Details fetched from RAWG"
-                            part={detail.detailsSynced}
-                            whole={total}
-                        />
+                    <Band>
+                        <Stat label="Games" value={formatCount(total)} />
+                        <Stat label={`Arrived in ${range}`} value={formatCount(detail.added)} />
+                        <Stat label="Flagged trending" value={formatCount(detail.trending)} />
+                    </Band>
+                    <Section title="How complete it is">
+                        <ShareRow label="Cover" part={detail.withCover} whole={total} />
+                        <ShareRow label="Portrait box art" part={detail.withBoxArt} whole={total} />
+                        <ShareRow label="Description" part={detail.withDescription} whole={total} />
+                        <ShareRow label="Details fetched" part={detail.detailsSynced} whole={total} />
                     </Section>
                     <Section title="Most logged, ever">
-                        <GameList games={detail.mostLogged} noun={["log", "logs"]} />
+                        <Games games={detail.mostLogged} noun={["log", "logs"]} />
                     </Section>
                 </>
             );
@@ -346,16 +305,7 @@ const Body = ({
     }
 };
 
-const SIGNUPS: Series<"signups">[] = [
-    { key: "signups", label: "Sign-ups", color: "var(--color-chart-1)" },
-];
-
-const COMMUNITY: Series<"messages" | "threads">[] = [
-    { key: "messages", label: "Replies", color: "var(--color-chart-3)" },
-    { key: "threads", label: "New threads", color: "var(--color-chart-4)" },
-];
-
-/** The detail behind a tile. A bottom sheet on a phone, like every Modal. */
+/** The detail behind a figure. A bottom sheet on a phone, like every Modal. */
 const MetricDetailModal = ({
     metric,
     range,
@@ -369,23 +319,20 @@ const MetricDetailModal = ({
 }) => {
     const titleId = useId();
     const { data, isPending, isError } = useAdminMetric(metric, range);
+    const { title, sentence } = TITLES[metric];
 
     return (
         <Modal onClose={onClose} labelledBy={titleId} className="w-full sm:max-w-2xl">
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-7">
                 <header className="pr-10">
-                    <h2 id={titleId} className="text-section font-semibold text-content">
-                        {TITLES[metric]}
+                    <h2 id={titleId} className="font-display text-section text-content">
+                        {title}
                     </h2>
-                    <p className="text-body-sm text-content-secondary">
-                        Over the last {RANGE_LABELS[range]}, where a period applies.
-                    </p>
+                    <p className="mt-1.5 text-body-sm text-content-secondary">{sentence}</p>
                 </header>
                 {isPending && <TextSkeleton lines={6} />}
                 {isError && (
-                    <p className="text-body-sm text-danger">
-                        This didn’t load. Try again in a moment.
-                    </p>
+                    <p className="text-body-sm text-danger">This didn’t load. Close it and try again.</p>
                 )}
                 {data && <Body detail={data} overview={overview} />}
             </div>

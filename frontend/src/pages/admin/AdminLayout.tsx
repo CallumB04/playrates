@@ -1,59 +1,72 @@
-import {
-    Activity,
-    Gamepad2,
-    HeartPulse,
-    LayoutDashboard,
-    Megaphone,
-    SwatchBook,
-    Users,
-} from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import ThemeToggle from "../../components/ui/ThemeToggle";
+import { useOverflowFade } from "../../hooks/useOverflowFade";
+import { cn } from "../../lib/cn";
 
 /** Add a view by adding an entry here and a route in AdminApp.tsx. */
 const ADMIN_VIEWS = [
-    { to: "/admin/overview", label: "Overview", Icon: LayoutDashboard },
-    { to: "/admin/activity", label: "Activity", Icon: Activity },
-    { to: "/admin/users", label: "Users", Icon: Users },
-    { to: "/admin/games", label: "Games", Icon: Gamepad2 },
-    { to: "/admin/announcements", label: "Announcements", Icon: Megaphone },
-    { to: "/admin/health", label: "Health", Icon: HeartPulse },
-    { to: "/admin/design", label: "Design library", Icon: SwatchBook },
+    { to: "/admin/overview", label: "Overview" },
+    { to: "/admin/activity", label: "Activity" },
+    { to: "/admin/users", label: "Users" },
+    { to: "/admin/games", label: "Games" },
+    { to: "/admin/announcements", label: "Announcements" },
+    { to: "/admin/health", label: "Health" },
+    { to: "/admin/design", label: "Design library" },
 ];
 
-/** Shell for the admin area. Who gets in is AdminGate's decision. */
-const AdminLayout = () => (
-    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6 font-display lg:flex-row">
-        <aside className="flex w-full shrink-0 flex-col gap-4 lg:sticky lg:top-24 lg:h-max lg:w-52">
-            <div className="flex items-center justify-between gap-2">
-                <h1 className="text-xl font-semibold text-content">Admin</h1>
-                <ThemeToggle />
+/**
+ * The admin area wears the profile's drawer tabs rather than a sidebar: it is
+ * a handful of views of one site, not an app of its own. Who gets in is
+ * AdminGate's decision.
+ */
+const AdminLayout = () => {
+    const fade = useOverflowFade<HTMLElement>();
+
+    return (
+        <div className="flex flex-col gap-7">
+            <header className="flex flex-col gap-5">
+                <div className="flex items-end justify-between gap-4">
+                    <div className="min-w-0">
+                        <h1 className="font-display text-title text-content">Admin</h1>
+                        <p className="mt-2 text-label text-content-muted">
+                            Only your account can open this, or anything it reads.
+                        </p>
+                    </div>
+                    <ThemeToggle />
+                </div>
+
+                <nav
+                    aria-label="Admin"
+                    ref={fade.ref}
+                    onScroll={fade.onScroll}
+                    style={fade.style}
+                    className="flex max-w-full gap-1 self-start overflow-x-auto rounded-md border border-subtle bg-surface-sunken p-1 [contain:layout]"
+                >
+                    {ADMIN_VIEWS.map((view) => (
+                        <NavLink
+                            key={view.to}
+                            to={view.to}
+                            className={({ isActive }) =>
+                                cn(
+                                    "flex min-h-11 shrink-0 items-center rounded-sm px-3.5 py-2 text-body-sm whitespace-nowrap lift sm:min-h-0",
+                                    "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
+                                    isActive
+                                        ? "bg-surface-raised font-medium text-content"
+                                        : "text-content-secondary hover:text-content"
+                                )
+                            }
+                        >
+                            {view.label}
+                        </NavLink>
+                    ))}
+                </nav>
+            </header>
+
+            <div className="min-w-0">
+                <Outlet />
             </div>
-
-            <nav className="-mx-5 flex flex-row gap-1 overflow-x-auto px-5 [contain:layout] sm:-mx-8 sm:px-8 lg:mx-0 lg:flex-col lg:px-0">
-                {ADMIN_VIEWS.map((view) => (
-                    <NavLink
-                        key={view.to}
-                        to={view.to}
-                        className={({ isActive }) =>
-                            `flex min-h-11 shrink-0 items-center gap-3 rounded-md px-3 py-2 text-sm whitespace-nowrap transition-colors lg:min-h-0 ${
-                                isActive
-                                    ? "bg-surface-selected text-brand"
-                                    : "text-content-secondary hover:bg-surface-hover hover:text-content"
-                            }`
-                        }
-                    >
-                        <view.Icon size={16} aria-hidden />
-                        {view.label}
-                    </NavLink>
-                ))}
-            </nav>
-        </aside>
-
-        <div className="min-w-0 flex-1">
-            <Outlet />
         </div>
-    </div>
-);
+    );
+};
 
 export default AdminLayout;
