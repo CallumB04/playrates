@@ -57,6 +57,14 @@ export interface GamesProvider {
   /** One page of the catalogue, most-tracked first. Carries everything except
    *  the description. */
   listByPopularity(page: number, pageSize: number): Promise<GamePage>;
+  /** Games released between two dates (YYYY-MM-DD, inclusive), most-tracked
+   *  first. Also listing-only, so no descriptions. */
+  listByDate(query: {
+    from: string;
+    to: string;
+    page: number;
+    pageSize: number;
+  }): Promise<GamePage>;
 }
 
 /** Used when no API key is set. Returns empty results rather than throwing,
@@ -71,6 +79,9 @@ export const nullGamesProvider: GamesProvider = {
     return null;
   },
   async listByPopularity() {
+    return { games: [], total: 0, hasNext: false };
+  },
+  async listByDate() {
     return { games: [], total: 0, hasNext: false };
   },
 };

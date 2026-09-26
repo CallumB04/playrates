@@ -1,15 +1,23 @@
-import type {
-  Game,
-  GameQuery,
-  GameStats,
-  Paginated,
-  Pagination,
+import {
+  PULL_PAGE_SIZE,
+  type AdminPullInput,
+  type AdminPullResult,
+  type Game,
+  type GameEventSource,
+  type GameQuery,
+  type GameStats,
+  type Paginated,
+  type Pagination,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import type { GamesProvider } from "../../providers/games/GamesProvider.js";
 import type { GameRow } from "../../types/database.types.js";
 import type { GamesRepository } from "./games.repository.js";
+import type {
+  GameEventDraft,
+  GameEventsRepository,
+} from "./gameEvents.repository.js";
 import { toGame } from "./games.mapper.js";
 
 /** Below this many local hits, a search falls through to the provider. */
@@ -35,7 +43,36 @@ export const createGamesService = (
   provider: GamesProvider,
   // One lookup, so this takes a function rather than the whole repository.
   viewerPrefs: (userId: string) => Promise<{ showSexualContent: boolean }>,
+  events: GameEventsRepository,
 ) => {
+  /** The catalogue log is for the admin; a failure to write it is not the
+   *  visitor's problem. */
+  const record = async (
+    event: GameEventDraft | GameEventDraft[],
+  ): Promise<void> => {
+    try {
+      await events.record(event);
+    } catch {
+      // the log is best-effort
+    }
+  };
+
+  const errorText = (error: unknown): string =>
+    error instanceof Error ? error.message : String(error);
+
+  /** Upserts, and says how many of those were new to the catalogue. */
+  const upsertCounting = async (
+    external: Awaited<ReturnType<GamesProvider["search"]>>,
+  ): Promise<{ added: number; updated: number }> => {
+    if (external.length === 0) return { added: 0, updated: 0 };
+    const existing = new Set(
+      await repo.existingRawgIds(external.map((g) => g.externalId)),
+    );
+    await repo.upsertMany(external);
+    const added = external.filter((g) => !existing.has(g.externalId)).length;
+    return { added, updated: external.length - added };
+  };
+
   /** Opt-in, so signed out and unknown both mean no. */
   const canSeeExplicit = async (callerId?: string): Promise<boolean> =>
     callerId ? (await viewerPrefs(callerId)).showSexualContent : false;
@@ -72,10 +109,19 @@ export const createGamesService = (
     async backfillDetails(
       id: number,
       rawgId: number,
+      source: GameEventSource = "page_view",
     ): Promise<Partial<GameRow> | null> {
       try {
         const external = await provider.getById(rawgId);
-        if (!external) return null;
+        if (!external) {
+          await record({
+            kind: "details_backfill_failed",
+            source,
+            gameId: id,
+            data: { rawgId, error: "RAWG has no game with this id" },
+          });
+          return null;
+        }
 
         const fields = {
           description: external.description,
@@ -101,7 +147,13 @@ export const createGamesService = (
           esrb_rating: external.esrbRating,
           ...(external.boxArtUrl ? { box_art_url: external.boxArtUrl } : {}),
         };
-      } catch {
+      } catch (error) {
+        await record({
+          kind: "details_backfill_failed",
+          source,
+          gameId: id,
+          data: { rawgId, error: errorText(error) },
+        });
         return null;
       }
     },
@@ -209,13 +261,23 @@ export const createGamesService = (
       let external: Awaited<ReturnType<GamesProvider["search"]>> = [];
       try {
         external = await provider.search(term, 20);
-      } catch {
+      } catch (error) {
+        await record({
+          kind: "search_pull",
+          source: "search",
+          actorId: callerId,
+          data: { term, failed: true, error: errorText(error) },
+        });
         return paginate(local.map(toGame), pagination, local.length);
       }
 
-      if (external.length > 0) {
-        await repo.upsertMany(external);
-      }
+      const { added } = await upsertCounting(external);
+      await record({
+        kind: "search_pull",
+        source: "search",
+        actorId: callerId,
+        data: { term, fetched: external.length, added, localHits: local.length },
+      });
 
       const refreshed = await repo.searchLocal(
         term,
@@ -228,6 +290,7 @@ export const createGamesService = (
     /** Imports a specific upstream game, or returns it if already cached. */
     async importByRawgId(
       rawgId: number,
+      actor?: { id: string; source: GameEventSource },
     ): Promise<{ game: Game; created: boolean }> {
       const existing = await repo.findByRawgId(rawgId);
       if (existing) return { game: toGame(existing), created: false };
@@ -246,7 +309,119 @@ export const createGamesService = (
       const saved = await repo.findByRawgId(rawgId);
       if (!saved) throw AppError.internal("Game import did not persist");
 
+      await record({
+        kind: "rawg_import",
+        source: actor?.source ?? "import",
+        gameId: saved.id,
+        actorId: actor?.id,
+        data: { rawgId, title: saved.title },
+      });
+
       return { game: toGame(saved), created: true };
+    },
+
+    /**
+     * Brings in games released in a recent window, most-tracked first. Each
+     * page is one RAWG request, so the cap is what it costs. Listings carry
+     * no descriptions; those come with the first view, as for any import.
+     */
+    async pullByDate(
+      input: AdminPullInput,
+      actorId: string,
+      today = new Date(),
+    ): Promise<AdminPullResult> {
+      if (!provider.isConfigured) {
+        throw AppError.notConfigured(
+          "No games provider is configured. Set RAWG_API_KEY to pull games.",
+        );
+      }
+
+      const day = (offset: number): string =>
+        new Date(today.getTime() + offset * 86_400_000)
+          .toISOString()
+          .slice(0, 10);
+      const from = day(-input.windowDays);
+      // RAWG lists games well before release; half a year ahead catches them.
+      const to = input.includeUpcoming ? day(183) : day(0);
+
+      const result: AdminPullResult = {
+        pages: 0,
+        fetched: 0,
+        added: 0,
+        updated: 0,
+        hasMore: false,
+      };
+
+      try {
+        for (let page = 1; page <= input.maxPages; page++) {
+          const listing = await provider.listByDate({
+            from,
+            to,
+            page,
+            pageSize: PULL_PAGE_SIZE,
+          });
+          result.pages = page;
+          result.fetched += listing.games.length;
+          const counts = await upsertCounting(listing.games);
+          result.added += counts.added;
+          result.updated += counts.updated;
+          result.hasMore = listing.hasNext;
+          if (!listing.hasNext) break;
+        }
+      } catch (error) {
+        await record({
+          kind: "manual_pull",
+          source: "manual_pull",
+          actorId,
+          data: { ...input, from, to, ...result, failed: true, error: errorText(error) },
+        });
+        throw error;
+      }
+
+      await record({
+        kind: "manual_pull",
+        source: "manual_pull",
+        actorId,
+        data: { ...input, from, to, ...result },
+      });
+      return result;
+    },
+
+    async setTrending(id: number, isTrending: boolean, actorId: string) {
+      const row = await repo.findById(id);
+      if (!row) throw AppError.notFound("Game");
+      if (row.is_trending !== isTrending) {
+        await repo.setTrending(id, isTrending);
+        await record({
+          kind: isTrending ? "trending_set" : "trending_cleared",
+          source: "admin",
+          gameId: id,
+          actorId,
+          data: { title: row.title },
+        });
+      }
+    },
+
+    /** Fetches the detail fields again now, rather than on the next view. */
+    async resyncDetails(id: number, actorId: string): Promise<boolean> {
+      const row = await repo.findById(id);
+      if (!row) throw AppError.notFound("Game");
+      if (!row.rawg_id) {
+        throw AppError.validation("This game did not come from RAWG");
+      }
+      if (!provider.isConfigured) {
+        throw AppError.notConfigured("No games provider is configured.");
+      }
+
+      const detail = await this.backfillDetails(id, row.rawg_id, "admin");
+      await record({
+        kind: "details_resynced",
+        source: "admin",
+        gameId: id,
+        actorId,
+        data: { title: row.title, ok: detail !== null },
+      });
+      return detail !== null;
     },
   };
 };

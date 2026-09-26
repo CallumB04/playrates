@@ -1,5 +1,6 @@
 import type { ErrorRequestHandler, RequestHandler } from "express";
 import { AppError } from "../lib/AppError.js";
+import { noopErrorSink, type ErrorSink } from "../config/errorSink.js";
 
 /** Postgres and PostgREST codes translated once, so no service has to
  *  hand-roll "is this a duplicate key?". */
@@ -36,32 +37,48 @@ const normalise = (error: unknown): AppError => {
   return AppError.internal();
 };
 
-export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
-  const appError = normalise(error);
-  const log = req.log;
+export const createErrorHandler =
+  (sink: ErrorSink = noopErrorSink): ErrorRequestHandler =>
+  async (error, req, res, _next) => {
+    const appError = normalise(error);
+    const log = req.log;
 
-  if (appError.status >= 500) {
-    // log the original error, not the normalised one, so the stack survives
-    log?.error({ err: error, requestId: req.id }, "unhandled error");
-  } else {
-    log?.warn(
-      { code: appError.code, path: req.path, requestId: req.id },
-      appError.message,
-    );
-  }
+    if (appError.status >= 500) {
+      // log the original error, not the normalised one, so the stack survives
+      log?.error({ err: error, requestId: req.id }, "unhandled error");
+      /* Recorded before responding: on serverless the instance can be frozen
+         the moment the response is sent, taking a pending write with it. */
+      await sink({
+        status: appError.status,
+        code: appError.code,
+        method: req.method,
+        path: req.originalUrl ?? req.path,
+        message: error instanceof Error ? error.message : appError.message,
+        requestId: req.id ?? null,
+        userId: req.auth?.userId ?? null,
+        stack: error instanceof Error ? (error.stack ?? null) : null,
+      });
+    } else {
+      log?.warn(
+        { code: appError.code, path: req.path, requestId: req.id },
+        appError.message,
+      );
+    }
 
-  res.status(appError.status).json({
-    error: {
-      code: appError.code,
-      // a 5xx never leaks its message
-      message: appError.expose ? appError.message : "Internal server error",
-      ...(appError.expose && appError.details !== undefined
-        ? { details: appError.details }
-        : {}),
-      requestId: req.id,
-    },
-  });
-};
+    res.status(appError.status).json({
+      error: {
+        code: appError.code,
+        // a 5xx never leaks its message
+        message: appError.expose ? appError.message : "Internal server error",
+        ...(appError.expose && appError.details !== undefined
+          ? { details: appError.details }
+          : {}),
+        requestId: req.id,
+      },
+    });
+  };
+
+export const errorHandler = createErrorHandler();
 
 export const notFoundHandler: RequestHandler = (_req, _res, next) => {
   next(AppError.notFound("Endpoint"));

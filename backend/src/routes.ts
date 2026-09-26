@@ -36,6 +36,9 @@ import {
 import { createPlatformsRouter } from "./modules/platforms/platforms.js";
 import { createGenresRouter } from "./modules/genres/genres.js";
 import { createStatsRouter } from "./modules/stats/stats.js";
+import { createAdminService } from "./modules/admin/admin.service.js";
+import { createAdminRouter } from "./modules/admin/admin.routes.js";
+import { requireAdmin } from "./middleware/requireAdmin.js";
 
 interface Deps {
   repos: Repositories;
@@ -60,10 +63,15 @@ export const buildRoutes = ({
   const router = Router();
 
   const profiles = createProfilesService(repos.profiles, authAdmin, avatars);
-  const games = createGamesService(repos.games, provider, async (userId) => {
-    const row = await repos.profiles.findById(userId);
-    return { showSexualContent: row?.show_sexual_content ?? false };
-  });
+  const games = createGamesService(
+    repos.games,
+    provider,
+    async (userId) => {
+      const row = await repos.profiles.findById(userId);
+      return { showSexualContent: row?.show_sexual_content ?? false };
+    },
+    repos.gameEvents,
+  );
   const gameLogs = createGameLogsService(
     repos.gameLogs,
     repos.profiles,
@@ -92,6 +100,28 @@ export const buildRoutes = ({
     repos.games,
     communityImages,
     repos.notifications,
+  );
+
+  const admin = createAdminService({
+    repo: repos.admin,
+    games: repos.games,
+    gamesService: games,
+    notifications: repos.notifications,
+    provider,
+  });
+
+  // Under /api so the host's rewrites reach it; the root one does not.
+  router.get("/health", (_req, res) => {
+    res.json({ status: "ok" });
+  });
+
+  // The one gate for the whole admin API: requireAdmin runs before every
+  // route in the router, so a new admin route cannot skip it.
+  router.use(
+    "/admin",
+    requireAuth,
+    requireAdmin(repos.profiles),
+    createAdminRouter({ service: admin }),
   );
 
   router.use("/platforms", createPlatformsRouter(repos.platforms));

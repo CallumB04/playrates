@@ -3,6 +3,11 @@ import type { AuthAdmin } from "../../src/config/authAdmin.js";
 import type { AvatarStore } from "../../src/config/avatarStore.js";
 import type { CommunityImageStore } from "../../src/config/communityImageStore.js";
 import type {
+  ActivityEventRow,
+  AnnouncementRow,
+  GameEventRow,
+  RawgUsageDayRow,
+  ServerErrorRow,
   CommunityMessageRow,
   CommunityThreadRow,
   FriendshipRow,
@@ -25,6 +30,7 @@ import { orderPair } from "../../src/modules/friends/friends.repository.js";
 import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.repository.js";
 import type { NotificationRowWithActor } from "../../src/modules/notifications/notifications.repository.js";
 import { createInMemoryCommunity } from "./inMemoryCommunity.js";
+import { createInMemoryAdmin, createInMemoryGameEvents } from "./inMemoryAdmin.js";
 
 /**
  * Behaviour-equivalent in-memory repositories.
@@ -49,6 +55,10 @@ export interface SeedData {
   communityThreads?: CommunityThreadRow[];
   communityMessages?: CommunityMessageRow[];
   communityVotes?: { message_id: number; user_id: string }[];
+  activityEvents?: ActivityEventRow[];
+  gameEvents?: GameEventRow[];
+  rawgUsage?: RawgUsageDayRow[];
+  serverErrors?: ServerErrorRow[];
 }
 
 export interface InMemoryState {
@@ -71,6 +81,12 @@ export interface InMemoryState {
   communityVotes: { message_id: number; user_id: string }[];
   /** Pictures uploaded to messages, by URL. */
   communityImages: Map<string, { bytes: Buffer; createdAt: string }>;
+  /** Written by triggers in Postgres; seeded directly here. */
+  activityEvents: ActivityEventRow[];
+  gameEvents: GameEventRow[];
+  rawgUsage: RawgUsageDayRow[];
+  serverErrors: ServerErrorRow[];
+  announcements: AnnouncementRow[];
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
@@ -102,6 +118,11 @@ export const createInMemoryRepos = (
     communityMessages: [...(seed.communityMessages ?? [])],
     communityVotes: [...(seed.communityVotes ?? [])],
     communityImages: new Map(),
+    activityEvents: [...(seed.activityEvents ?? [])],
+    gameEvents: [...(seed.gameEvents ?? [])],
+    rawgUsage: [...(seed.rawgUsage ?? [])],
+    serverErrors: [...(seed.serverErrors ?? [])],
+    announcements: [],
   };
 
   let nextLogId = 1000;
@@ -380,6 +401,15 @@ export const createInMemoryRepos = (
           ids.push(existing.id);
         }
         return ids;
+      },
+      async existingRawgIds(rawgIds) {
+        return state.games
+          .map((g) => g.rawg_id)
+          .filter((id): id is number => id !== null && rawgIds.includes(id));
+      },
+      async setTrending(id, isTrending) {
+        const game = state.games.find((g) => g.id === id);
+        if (game) game.is_trending = isTrending;
       },
       async refreshFromExternal(id, fields) {
         const game = state.games.find((g) => g.id === id);
@@ -1013,6 +1043,8 @@ export const createInMemoryRepos = (
     },
 
     community: createInMemoryCommunity(state),
+    gameEvents: createInMemoryGameEvents(state),
+    admin: createInMemoryAdmin(state),
 
     genres: {
       async list() {

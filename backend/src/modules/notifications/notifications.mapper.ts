@@ -1,4 +1,9 @@
-import type { AppNotification, FriendRelation } from "@playrates/shared";
+import {
+  ANNOUNCEMENT_TONES,
+  type AnnouncementTone,
+  type AppNotification,
+  type FriendRelation,
+} from "@playrates/shared";
 import { toFriendUser } from "../friends/friends.mapper.js";
 import type { NotificationRowWithActor } from "./notifications.repository.js";
 
@@ -158,6 +163,24 @@ export const toNotification = (
         gameTitle,
         coverUrl: str(row.data.coverUrl),
         milestone,
+      };
+    }
+
+    case "announcement": {
+      const title = str(row.data.title);
+      const body = str(row.data.body);
+      if (!title || !body) return { ...base, kind: "unknown" };
+      const tone = str(row.data.tone);
+      return {
+        ...base,
+        kind: "announcement",
+        tone: (ANNOUNCEMENT_TONES as readonly string[]).includes(tone ?? "")
+          ? (tone as AnnouncementTone)
+          : "info",
+        title,
+        body,
+        link: str(row.data.link),
+        isTest: row.data.test === true,
       };
     }
 

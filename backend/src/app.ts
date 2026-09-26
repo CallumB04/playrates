@@ -4,7 +4,8 @@ import helmet from "helmet";
 import { env } from "./config/env.js";
 import { createLogger, type Logger } from "./lib/logger.js";
 import { requestContext } from "./middleware/requestContext.js";
-import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+import { createErrorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+import { noopErrorSink, type ErrorSink } from "./config/errorSink.js";
 import { makeRequireAuth, type Verifier } from "./middleware/requireAuth.js";
 import { buildRoutes } from "./routes.js";
 import type { Repositories } from "./repositories.js";
@@ -22,6 +23,8 @@ export interface AppDeps {
   /** Injected so tests can authenticate without signing real JWTs. */
   verify: Verifier;
   logger?: Logger;
+  /** Where 5xx responses are recorded for the admin dashboard. */
+  errorSink?: ErrorSink;
 }
 
 /** Builds the app but does not listen, so supertest can drive it in-process. */
@@ -33,6 +36,7 @@ export const buildApp = ({
   communityImages,
   verify,
   logger = createLogger(),
+  errorSink = noopErrorSink,
 }: AppDeps): Express => {
   const app = express();
 
@@ -68,7 +72,7 @@ export const buildApp = ({
   app.use(notFoundHandler);
   // must be last: Express 5 forwards rejected promises here, so no handler
   // needs its own try/catch
-  app.use(errorHandler);
+  app.use(createErrorHandler(errorSink));
 
   return app;
 };

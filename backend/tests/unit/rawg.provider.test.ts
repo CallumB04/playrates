@@ -86,3 +86,68 @@ describe("RAWG provider, detail fetch", () => {
     expect(result?.boxArtUrl).toBeNull();
   });
 });
+
+describe("RAWG provider, request counting", () => {
+  it("reports every call, retries included, and which ones failed", async () => {
+    const statuses = [503, 200];
+    const fetchImpl = (async () => {
+      const status = statuses.shift()!;
+      return status === 200
+        ? Response.json({ results: [], count: 0 })
+        : new Response(null, { status });
+    }) as typeof fetch;
+    const outcomes: { failed: boolean; error: string | null }[] = [];
+
+    const provider = createRawgProvider("key", fetchImpl, {
+      onRequest: (outcome) => {
+        outcomes.push(outcome);
+      },
+    });
+    await provider.search("hades");
+
+    expect(outcomes).toEqual([
+      { failed: true, error: "RAWG responded 503" },
+      { failed: false, error: null },
+    ]);
+  });
+
+  it("counts a 404 as a request that worked: the game simply is not there", async () => {
+    const fetchImpl = (async () => new Response(null, { status: 404 })) as typeof fetch;
+    const outcomes: { failed: boolean }[] = [];
+    const provider = createRawgProvider("key", fetchImpl, {
+      onRequest: (outcome) => {
+        outcomes.push(outcome);
+      },
+    });
+
+    await expect(provider.getById(1)).resolves.toBeNull();
+    expect(outcomes[0]).toMatchObject({ failed: false });
+  });
+
+  it("reports a network failure before passing it on", async () => {
+    const fetchImpl = (async () => {
+      throw new Error("socket hang up");
+    }) as typeof fetch;
+    const outcomes: { failed: boolean; error: string | null }[] = [];
+    const provider = createRawgProvider("key", fetchImpl, {
+      onRequest: (outcome) => {
+        outcomes.push(outcome);
+      },
+    });
+
+    await expect(provider.search("hades")).rejects.toThrow("socket hang up");
+    expect(outcomes).toEqual([{ failed: true, error: "socket hang up" }]);
+  });
+
+  it("still answers when recording the call fails", async () => {
+    const fetchImpl = (async () =>
+      Response.json({ results: [], count: 0 })) as typeof fetch;
+    const provider = createRawgProvider("key", fetchImpl, {
+      onRequest: async () => {
+        throw new Error("database down");
+      },
+    });
+
+    await expect(provider.search("hades")).resolves.toEqual([]);
+  });
+});

@@ -75,10 +75,8 @@ export const createProfilesRepository = (db: Db): ProfilesRepository => ({
   },
 
   async touchLastSeen(id) {
-    const { error } = await db
-      .from("profiles")
-      .update({ last_seen_at: new Date().toISOString() })
-      .eq("id", id);
+    // Marks today in user_active_days too, which the active-user charts read.
+    const { error } = await db.rpc("touch_last_seen", { p_user_id: id });
     if (error) throw error;
   },
 

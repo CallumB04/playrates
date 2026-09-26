@@ -32,6 +32,14 @@ import {
   type NotificationsRepository,
 } from "./modules/notifications/notifications.repository.js";
 import {
+  createGameEventsRepository,
+  type GameEventsRepository,
+} from "./modules/games/gameEvents.repository.js";
+import {
+  createAdminRepository,
+  type AdminRepository,
+} from "./modules/admin/admin.repository.js";
+import {
   createCommunityRepository,
   type CommunityRepository,
 } from "./modules/community/community.repository.js";
@@ -48,6 +56,8 @@ export interface Repositories {
   community: CommunityRepository;
   platforms: PlatformsRepository;
   genres: GenresRepository;
+  gameEvents: GameEventsRepository;
+  admin: AdminRepository;
 }
 
 export const createRepositories = (db: Db): Repositories => ({
@@ -60,4 +70,6 @@ export const createRepositories = (db: Db): Repositories => ({
   community: createCommunityRepository(db),
   platforms: createPlatformsRepository(db),
   genres: createGenresRepository(db),
+  gameEvents: createGameEventsRepository(db),
+  admin: createAdminRepository(db),
 });
