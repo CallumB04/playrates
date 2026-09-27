@@ -279,6 +279,8 @@ export interface AnnouncementRow {
   recipient_count: number;
   created_at: string;
   retracted_at: string | null;
+  /** The patch-notes entry this announces, when it announces one. */
+  patch_note_message_id: number | null;
 }
 
 /** announcements with how many copies have been read. */

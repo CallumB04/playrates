@@ -21,6 +21,9 @@ import {
     fetchAdminUser,
     fetchAdminUsers,
     fetchAnnouncements,
+    fetchAdminPatchNotes,
+    announcePatchNote,
+    sendTestPatchNote,
     fetchRawgUsage,
     fetchServerErrors,
     correctRawgUsage,
@@ -97,7 +100,8 @@ export const useCorrectRawg = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (left: number) => correctRawgUsage(left),
-        onSuccess: (usage) => queryClient.setQueryData(queryKeys.admin.rawgUsage, usage),
+        onSuccess: (usage) =>
+            queryClient.setQueryData(queryKeys.admin.rawgUsage, usage),
     });
 };
 
@@ -180,6 +184,39 @@ export const useSendTestAnnouncement = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (input: AnnouncementInput) => sendTestAnnouncement(input),
+        onSuccess: () =>
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.notifications.all,
+            }),
+    });
+};
+
+export const useAdminPatchNotes = () =>
+    useQuery({
+        queryKey: queryKeys.admin.patchNotes,
+        queryFn: fetchAdminPatchNotes,
+    });
+
+export const useAnnouncePatchNote = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (messageId: number) => announcePatchNote(messageId),
+        onSuccess: () => {
+            // the history and the patch notes both
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.admin.announcements,
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.notifications.all,
+            });
+        },
+    });
+};
+
+export const useSendTestPatchNote = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (messageId: number) => sendTestPatchNote(messageId),
         onSuccess: () =>
             queryClient.invalidateQueries({
                 queryKey: queryKeys.notifications.all,

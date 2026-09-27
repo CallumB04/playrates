@@ -14,7 +14,14 @@ import {
   toRawgUsage,
   toServerError,
   toUserSummary,
+  patchNoteTitle,
+  toPatchNote,
 } from "../../src/modules/admin/admin.mapper.js";
+import {
+  ANNOUNCEMENT_TITLE_MAX,
+  AnnouncementInputSchema,
+  patchNoteAnnouncement,
+} from "@playrates/shared";
 import { buildGame } from "../helpers/fixtures.js";
 import type {
   AdminActivityFeedRow,
@@ -355,9 +362,67 @@ describe("toAnnouncement", () => {
       recipient_count: 3,
       created_at: "2026-09-26T00:00:00Z",
       retracted_at: null,
+      patch_note_message_id: null,
       read_count: 1,
     });
     expect(announcement).toMatchObject({ tone: "info", link: "/community", readCount: 1 });
+  });
+});
+
+const heading = (level: 1 | 2 | 3, text: string) => ({
+  type: "heading",
+  attrs: { level },
+  content: [{ type: "text", text }],
+});
+const para = (text: string) => ({ type: "paragraph", content: [{ type: "text", text }] });
+
+describe("patchNoteTitle", () => {
+  it("is the first h1, even under a smaller heading", () => {
+    const body = { type: "doc", content: [heading(2, "Fixes"), para("…"), heading(1, "v1.2 Lists")] };
+    expect(patchNoteTitle(body)).toBe("v1.2 Lists");
+  });
+
+  it("falls back to the first heading, then to nothing", () => {
+    expect(patchNoteTitle({ type: "doc", content: [heading(2, "v1.1"), para("x")] })).toBe("v1.1");
+    expect(patchNoteTitle({ type: "doc", content: [para("no heading")] })).toBeNull();
+    expect(patchNoteTitle(null)).toBeNull();
+  });
+});
+
+describe("toPatchNote", () => {
+  it("links to the entry in the thread, and says whether it has gone out", () => {
+    const entry = {
+      id: 41,
+      thread_id: 1,
+      body: { type: "doc", content: [heading(1, "v1.2")] },
+      created_at: "2026-09-27T09:00:00Z",
+      edited_at: null,
+    };
+    expect(toPatchNote(entry, undefined)).toMatchObject({
+      messageId: 41,
+      title: "v1.2",
+      link: "/community/thread/1#message-41",
+      announcement: null,
+    });
+  });
+});
+
+describe("patchNoteAnnouncement", () => {
+  it("names the release in the title and opens the notes at it", () => {
+    expect(patchNoteAnnouncement("v1.2 Lists", "/community/thread/1#message-41")).toEqual({
+      tone: "update",
+      title: "New patch notes: v1.2 Lists",
+      body: expect.any(String),
+      link: "/community/thread/1#message-41",
+    });
+  });
+
+  it("keeps a long title inside the bell's limit, and does without one", () => {
+    const long = patchNoteAnnouncement("x".repeat(80), "/p");
+    expect(long.title.length).toBeLessThanOrEqual(ANNOUNCEMENT_TITLE_MAX);
+    expect(long.title.endsWith("\u2026")).toBe(true);
+    expect(patchNoteAnnouncement(null, "/p").title).toBe("New patch notes");
+    expect(AnnouncementInputSchema.safeParse(long).success).toBe(true);
   });
 });
 

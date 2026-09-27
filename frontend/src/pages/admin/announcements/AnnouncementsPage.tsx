@@ -36,6 +36,7 @@ import SectionHeader from "../components/SectionHeader";
 import { SeeAllButton, SeeAllModal } from "../components/SeeAll";
 import { useSeeAll } from "../components/useSeeAll";
 import { composeAnnouncement } from "./composeAnnouncement";
+import PatchNotesSection from "./PatchNotesSection";
 
 /** Counts against the limit the bell was laid out for; it only takes colour
  *  as it gets close. */
@@ -111,7 +112,6 @@ const HistoryRow = ({ announcement }: { announcement: Announcement }) => {
             {!retracted && (
                 <Button
                     variant="ghost"
-                    size="sm"
                     onClick={() => setConfirming(true)}
                     className="w-full shrink-0 sm:w-auto"
                 >
@@ -359,6 +359,8 @@ const AnnouncementsPage = () => {
                     </div>
                 </div>
             </div>
+
+            <PatchNotesSection reach={reach} />
 
             <section className="mt-10">
                 <SectionHeader

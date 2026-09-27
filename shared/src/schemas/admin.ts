@@ -485,6 +485,51 @@ export interface AnnouncementSendResult {
   announcement: Announcement;
 }
 
+// Patch notes ----------------------------------------------------------------
+
+/** One entry in the patch notes, and whether everyone has been told of it. */
+export interface AdminPatchNote {
+  messageId: number;
+  threadId: number;
+  /** The entry's first h1, which names the release. Null when it has none. */
+  title: string | null;
+  createdAt: string;
+  editedAt: string | null;
+  /** The patch notes, scrolled to this entry. */
+  link: string;
+  /** The announcement that told everyone, while it stands. Taking it back
+   *  leaves the entry free to go out again. */
+  announcement: Announcement | null;
+}
+
+export const PatchNoteIdParamSchema = z.object({
+  messageId: z.coerce.number().int().positive(),
+});
+
+export const patchNotePath = (threadId: number, messageId: number): string =>
+  `/community/thread/${threadId}#message-${messageId}`;
+
+const PATCH_NOTE_PREFIX = "New patch notes: ";
+
+/** What everyone is sent for an entry: its title in the bell, and a tap
+ *  that opens the notes at that entry. */
+export const patchNoteAnnouncement = (
+  title: string | null,
+  link: string,
+): AnnouncementInput => {
+  const room = ANNOUNCEMENT_TITLE_MAX - PATCH_NOTE_PREFIX.length;
+  const name = title?.trim();
+  return {
+    tone: "update",
+    title: !name
+      ? "New patch notes"
+      : PATCH_NOTE_PREFIX +
+        (name.length > room ? `${name.slice(0, room - 1).trimEnd()}\u2026` : name),
+    body: "What\u2019s new and what\u2019s fixed in PlayRates. Open it to read the notes.",
+    link,
+  };
+};
+
 // Health -------------------------------------------------------------------------
 
 export interface AdminHealth {

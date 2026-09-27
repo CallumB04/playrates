@@ -8,6 +8,7 @@ import type {
     AdminMetric,
     AdminMetricDetail,
     AdminOverview,
+    AdminPatchNote,
     AdminPullInput,
     AdminPullResult,
     AdminRange,
@@ -27,8 +28,11 @@ import { compactParams } from "./games";
 export const fetchAdminOverview = async (
     range: AdminRange
 ): Promise<AdminOverview> =>
-    (await api.get<AdminOverview>("/admin/stats/overview", { params: { range } }))
-        .data;
+    (
+        await api.get<AdminOverview>("/admin/stats/overview", {
+            params: { range },
+        })
+    ).data;
 
 export const fetchAdminMetric = async (
     metric: AdminMetric,
@@ -90,9 +94,14 @@ export const fetchRawgUsage = async (): Promise<RawgUsage> =>
 export const correctRawgUsage = async (left: number): Promise<RawgUsage> =>
     (await api.put<RawgUsage>("/admin/games/rawg-usage", { left })).data;
 
-export const searchAdminGames = async (q: string): Promise<AdminGameSummary[]> =>
-    (await api.get<AdminGameSummary[]>("/admin/games/search", { params: { q } }))
-        .data;
+export const searchAdminGames = async (
+    q: string
+): Promise<AdminGameSummary[]> =>
+    (
+        await api.get<AdminGameSummary[]>("/admin/games/search", {
+            params: { q },
+        })
+    ).data;
 
 export const pullAdminGames = async (
     input: AdminPullInput
@@ -126,6 +135,19 @@ export const sendTestAnnouncement = async (
     input: AnnouncementInput
 ): Promise<void> => {
     await api.post("/admin/announcements/test", input);
+};
+
+export const fetchAdminPatchNotes = async (): Promise<AdminPatchNote[]> =>
+    (await api.get<AdminPatchNote[]>("/admin/patch-notes")).data;
+
+export const announcePatchNote = async (
+    messageId: number
+): Promise<AdminPatchNote> =>
+    (await api.post<AdminPatchNote>(`/admin/patch-notes/${messageId}/announce`))
+        .data;
+
+export const sendTestPatchNote = async (messageId: number): Promise<void> => {
+    await api.post(`/admin/patch-notes/${messageId}/test`);
 };
 
 export const retractAnnouncement = async (id: number): Promise<Announcement> =>

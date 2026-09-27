@@ -95,10 +95,14 @@ export const queryKeys = {
         users: (filters: Record<string, unknown>) =>
             ["admin", "users", filters] as const,
         user: (id: string) => ["admin", "user", id] as const,
-        gameEvents: (group: string) => ["admin", "games", "events", group] as const,
+        gameEvents: (group: string) =>
+            ["admin", "games", "events", group] as const,
         gameSearch: (q: string) => ["admin", "games", "search", q] as const,
         rawgUsage: ["admin", "games", "rawg-usage"] as const,
         announcements: ["admin", "announcements"] as const,
+        /* Under announcements, so anything that refreshes the history —
+           taking one back above all — refreshes which entries went out. */
+        patchNotes: ["admin", "announcements", "patch-notes"] as const,
         health: ["admin", "health"] as const,
         errors: ["admin", "errors"] as const,
     },

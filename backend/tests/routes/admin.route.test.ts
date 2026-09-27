@@ -10,7 +10,13 @@ import {
   authHeader,
   buildTestApp,
 } from "../helpers/buildTestApp.js";
-import { baseSeed, buildGame, buildProfile } from "../helpers/fixtures.js";
+import {
+  baseSeed,
+  buildGame,
+  buildMessage,
+  buildProfile,
+  buildThread,
+} from "../helpers/fixtures.js";
 import type {
   ExternalGame,
   GamePage,
@@ -19,6 +25,14 @@ import type {
 
 const ADMIN = "33333333-3333-3333-3333-333333333333";
 
+const releaseNotes = (title: string) => ({
+  type: "doc",
+  content: [
+    { type: "heading", attrs: { level: 1 }, content: [{ type: "text", text: title }] },
+    { type: "paragraph", content: [{ type: "text", text: "Fixed things." }] },
+  ],
+});
+
 const seed = () => {
   const base = baseSeed();
   return {
@@ -26,6 +40,42 @@ const seed = () => {
     profiles: [
       ...base.profiles,
       buildProfile({ id: ADMIN, username: "calbgyn", is_admin: true }),
+    ],
+    communityThreads: [
+      buildThread(),
+      buildThread({
+        id: 7,
+        subject_kind: "patch_notes",
+        game_id: null,
+        title: "PlayRates patch notes",
+        author_id: ADMIN,
+      }),
+    ],
+    communityMessages: [
+      buildMessage({ id: 1, is_opening: true }),
+      buildMessage({
+        id: 40,
+        thread_id: 7,
+        author_id: ADMIN,
+        is_opening: true,
+        body: releaseNotes("v1.0 Launch"),
+        created_at: "2026-09-20T10:00:00Z",
+      }),
+      buildMessage({
+        id: 41,
+        thread_id: 7,
+        author_id: ADMIN,
+        body: releaseNotes("v1.1 Lists"),
+        created_at: "2026-09-26T10:00:00Z",
+      }),
+      buildMessage({
+        id: 42,
+        thread_id: 7,
+        author_id: ADMIN,
+        body: releaseNotes("Pulled"),
+        created_at: "2026-09-27T10:00:00Z",
+        deleted_at: "2026-09-27T10:05:00Z",
+      }),
     ],
   };
 };
@@ -95,6 +145,9 @@ const ENDPOINTS: { method: "get" | "post" | "patch" | "put"; path: string; body?
   { method: "post", path: "/api/v1/admin/announcements", body: announcement },
   { method: "post", path: "/api/v1/admin/announcements/test", body: announcement },
   { method: "post", path: "/api/v1/admin/announcements/1/retract" },
+  { method: "get", path: "/api/v1/admin/patch-notes" },
+  { method: "post", path: "/api/v1/admin/patch-notes/41/announce" },
+  { method: "post", path: "/api/v1/admin/patch-notes/41/test" },
   { method: "get", path: "/api/v1/admin/health" },
   { method: "get", path: "/api/v1/admin/errors" },
 ];
@@ -526,5 +579,86 @@ describe("admin RAWG allowance", () => {
       .set("Authorization", authHeader(ADMIN))
       .send({ left: -3 });
     expect(response.status).toBe(422);
+  });
+});
+
+describe("admin patch notes", () => {
+  const as = (app: Parameters<typeof request>[0]) => ({
+    list: () => request(app).get("/api/v1/admin/patch-notes").set("Authorization", authHeader(ADMIN)),
+    post: (path: string) =>
+      request(app).post(`/api/v1/admin/patch-notes/${path}`).set("Authorization", authHeader(ADMIN)),
+  });
+
+  it("lists standing entries newest first, each named by its h1 and unsent", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await as(app).list();
+
+    expect(response.status).toBe(200);
+    expect(response.body.map((n: { title: string }) => n.title)).toEqual(["v1.1 Lists", "v1.0 Launch"]);
+    expect(response.body[0]).toMatchObject({
+      messageId: 41,
+      link: "/community/thread/7#message-41",
+      announcement: null,
+    });
+  });
+
+  it("tells everyone once, with the release in the title and a link to the entry", async () => {
+    const { app, state } = buildTestApp({ seed: seed() });
+
+    const sent = await as(app).post("41/announce");
+
+    expect(sent.status).toBe(201);
+    expect(sent.body.announcement).toMatchObject({ recipientCount: 3, tone: "update" });
+    const copies = state.notifications.filter((n) => n.kind === "announcement");
+    expect(copies).toHaveLength(3);
+    expect(copies[0]!.data).toMatchObject({
+      title: "New patch notes: v1.1 Lists",
+      link: "/community/thread/7#message-41",
+    });
+
+    const again = await as(app).post("41/announce");
+    expect(again.status).toBe(409);
+    expect(state.notifications.filter((n) => n.kind === "announcement")).toHaveLength(3);
+
+    const list = await as(app).list();
+    expect(list.body[0].announcement).toMatchObject({ id: sent.body.announcement.id });
+    expect(list.body[1].announcement).toBeNull();
+  });
+
+  it("is free to go out again once the announcement is taken back", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const { body } = await as(app).post("41/announce");
+
+    await request(app)
+      .post(`/api/v1/admin/announcements/${body.announcement.id}/retract`)
+      .set("Authorization", authHeader(ADMIN));
+
+    expect((await as(app).list()).body[0].announcement).toBeNull();
+    expect((await as(app).post("41/announce")).status).toBe(201);
+  });
+
+  it("sends a test to the admin alone, and leaves the entry unsent", async () => {
+    const { app, state } = buildTestApp({ seed: seed() });
+
+    const response = await as(app).post("41/test");
+
+    expect(response.status).toBe(204);
+    const copies = state.notifications.filter((n) => n.kind === "announcement");
+    expect(copies.map((n) => n.user_id)).toEqual([ADMIN]);
+    expect(copies[0]!.data).toMatchObject({ test: true, title: "New patch notes: v1.1 Lists" });
+    expect((await as(app).list()).body[0].announcement).toBeNull();
+  });
+
+  it.each([
+    ["a deleted entry", "42"],
+    ["a message outside the patch notes", "1"],
+    ["one that does not exist", "999"],
+  ])("will not announce %s", async (_what, id) => {
+    const { app, state } = buildTestApp({ seed: seed() });
+
+    expect((await as(app).post(`${id}/announce`)).status).toBe(404);
+    expect((await as(app).post(`${id}/test`)).status).toBe(404);
+    expect(state.notifications.some((n) => n.kind === "announcement")).toBe(false);
   });
 });

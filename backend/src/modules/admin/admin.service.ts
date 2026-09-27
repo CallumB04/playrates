@@ -1,4 +1,8 @@
-import { RAWG_MONTHLY_ALLOWANCE, RAWG_RESET_DAY } from "@playrates/shared";
+import {
+  RAWG_MONTHLY_ALLOWANCE,
+  RAWG_RESET_DAY,
+  patchNoteAnnouncement,
+} from "@playrates/shared";
 import type {
   AdminActivityQuery,
   AdminGameEventsQuery,
@@ -30,6 +34,7 @@ import {
   toGameSummary,
   toMetricDetail,
   toOverview,
+  toPatchNote,
   toRawgUsage,
   toServerError,
   toUserSummary,
@@ -76,6 +81,22 @@ export const createAdminService = (deps: {
     const allowance = setting ?? DEFAULT_ALLOWANCE;
     const rows = await repo.rawgUsage(rawgUsageFrom(today, allowance.resetDay));
     return toRawgUsage(rows, today, allowance, correction);
+  };
+
+  /** Only to the admin, and kept out of the history: it is a proof. */
+  const sendTestAnnouncement = async (input: AnnouncementInput, actorId: string) => {
+    await notifications.raise({
+      userId: actorId,
+      kind: "announcement",
+      data: {
+        tone: input.tone,
+        title: input.title,
+        body: input.body,
+        link: input.link,
+        test: true,
+      },
+      dedupeKey: `announcement_test:${now().getTime()}`,
+    });
   };
 
   return {
@@ -194,20 +215,56 @@ export const createAdminService = (deps: {
       return toAnnouncement(card);
     },
 
-    /** Only to the admin, and kept out of the history: it is a proof. */
-    async sendTestAnnouncement(input: AnnouncementInput, actorId: string) {
-      await notifications.raise({
-        userId: actorId,
-        kind: "announcement",
-        data: {
-          tone: input.tone,
-          title: input.title,
-          body: input.body,
-          link: input.link,
-          test: true,
-        },
-        dedupeKey: `announcement_test:${now().getTime()}`,
-      });
+    sendTestAnnouncement,
+
+    async listPatchNotes() {
+      const [entries, sent] = await Promise.all([
+        repo.listPatchNoteEntries(),
+        repo.standingPatchNoteAnnouncements(),
+      ]);
+      const byEntry = new Map(sent.map((a) => [a.patch_note_message_id, a]));
+      return entries.map((e) => toPatchNote(e, byEntry.get(e.id)));
+    },
+
+    async sendPatchNote(messageId: number, actorId: string) {
+      const entry = await repo.findPatchNoteEntry(messageId);
+      if (!entry) throw AppError.notFound("Patch notes entry");
+      const standing = (await repo.standingPatchNoteAnnouncements()).some(
+        (a) => a.patch_note_message_id === messageId,
+      );
+      const told = () =>
+        AppError.conflict(
+          "already_exists",
+          "Everyone has already been told about this entry",
+        );
+      if (standing) throw told();
+
+      const note = toPatchNote(entry, undefined);
+      const created = await repo
+        .createAnnouncement(
+          patchNoteAnnouncement(note.title, note.link),
+          actorId,
+          messageId,
+        )
+        .catch((error: unknown) => {
+          // Two sends at once: the unique index lets only one through.
+          if ((error as { code?: string }).code === "23505") throw told();
+          throw error;
+        });
+      await repo.broadcastAnnouncement(created.id);
+      const card = await repo.findAnnouncement(created.id);
+      if (!card) throw AppError.internal("Announcement did not persist");
+      return toPatchNote(entry, card);
+    },
+
+    async sendTestPatchNote(messageId: number, actorId: string) {
+      const entry = await repo.findPatchNoteEntry(messageId);
+      if (!entry) throw AppError.notFound("Patch notes entry");
+      const note = toPatchNote(entry, undefined);
+      await sendTestAnnouncement(
+        patchNoteAnnouncement(note.title, note.link),
+        actorId,
+      );
     },
 
     async retractAnnouncement(id: number) {

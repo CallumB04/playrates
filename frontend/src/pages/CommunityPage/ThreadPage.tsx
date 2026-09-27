@@ -80,7 +80,13 @@ const ThreadPage = () => {
         if (!match || !data) return;
         const target = document.getElementById(`message-${match[1]}`);
         if (!target) return;
-        target.scrollIntoView({ block: "center", behavior: "smooth" });
+        // Centred, a patch-notes entry taller than the screen lands halfway
+        // down; a long one is brought to its start instead.
+        const tall = target.offsetHeight > window.innerHeight * 0.6;
+        target.scrollIntoView({
+            block: tall ? "start" : "center",
+            behavior: "smooth",
+        });
         setLandedOn(Number(match[1]));
     }, [hash, data]);
 

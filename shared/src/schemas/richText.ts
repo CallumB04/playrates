@@ -217,9 +217,16 @@ export const isEmptyDoc = (doc: RichTextDoc): boolean =>
   countImages(doc) === 0 && toPlainText(doc).trim().length === 0;
 
 /** The text of the first heading, which is how a patch-notes entry names
- *  its release. */
-export const firstHeading = (doc: RichTextDoc): string | null => {
-  const heading = doc.content.find((block) => block.type === "heading");
+ *  its release. Given a level, the first heading at that level. */
+export const firstHeading = (
+  doc: RichTextDoc,
+  level?: 1 | 2 | 3,
+): string | null => {
+  const heading = doc.content.find(
+    (block) =>
+      block.type === "heading" &&
+      (level === undefined || block.attrs.level === level),
+  );
   const text = heading ? blockText(heading).trim() : "";
   return text || null;
 };

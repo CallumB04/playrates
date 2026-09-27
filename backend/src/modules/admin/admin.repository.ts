@@ -25,6 +25,15 @@ export interface ServerErrorRowWithUser extends ServerErrorRow {
   username: string | null;
 }
 
+/** A standing entry in the patch notes: top-level and not deleted. */
+export interface PatchNoteEntryRow {
+  id: number;
+  thread_id: number;
+  body: unknown;
+  created_at: string;
+  edited_at: string | null;
+}
+
 export interface AdminRepository {
   ping(): Promise<void>;
   totals(): Promise<AdminTotals>;
@@ -60,11 +69,21 @@ export interface AdminRepository {
 
   listAnnouncements(): Promise<AnnouncementCardRow[]>;
   findAnnouncement(id: number): Promise<AnnouncementCardRow | null>;
-  createAnnouncement(input: AnnouncementInput, sentBy: string): Promise<AnnouncementRow>;
+  createAnnouncement(
+    input: AnnouncementInput,
+    sentBy: string,
+    patchNoteMessageId?: number,
+  ): Promise<AnnouncementRow>;
   /** Delivers to every account, returning how many it reached. */
   broadcastAnnouncement(id: number): Promise<number>;
   /** Takes every copy back out of every inbox. */
   retractAnnouncement(id: number): Promise<void>;
+
+  /** Newest first. */
+  listPatchNoteEntries(): Promise<PatchNoteEntryRow[]>;
+  findPatchNoteEntry(messageId: number): Promise<PatchNoteEntryRow | null>;
+  /** Announcements of patch-notes entries that have not been taken back. */
+  standingPatchNoteAnnouncements(): Promise<AnnouncementCardRow[]>;
 }
 
 export const announcementKey = (id: number): string => `announcement:${id}`;
@@ -278,7 +297,7 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
     return (data as AnnouncementCardRow | null) ?? null;
   },
 
-  async createAnnouncement(input, sentBy) {
+  async createAnnouncement(input, sentBy, patchNoteMessageId) {
     const { data, error } = await db
       .from("announcements")
       .insert({
@@ -287,6 +306,7 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
         body: input.body,
         link_path: input.link,
         sent_by: sentBy,
+        patch_note_message_id: patchNoteMessageId ?? null,
       })
       .select("*")
       .single();
@@ -313,5 +333,46 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
       .update({ retracted_at: new Date().toISOString() })
       .eq("id", id);
     if (markError) throw markError;
+  },
+  async listPatchNoteEntries() {
+    const { data, error } = await db
+      .from("community_messages")
+      .select("id, thread_id, body, created_at, edited_at, community_threads!inner(subject_kind)")
+      .eq("community_threads.subject_kind", "patch_notes")
+      .is("parent_id", null)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
+    if (error) throw error;
+    return ((data ?? []) as (PatchNoteEntryRow & { community_threads?: unknown })[]).map(
+      ({ community_threads: _thread, ...row }) => row,
+    );
+  },
+
+  async findPatchNoteEntry(messageId) {
+    const { data, error } = await db
+      .from("community_messages")
+      .select("id, thread_id, body, created_at, edited_at, community_threads!inner(subject_kind)")
+      .eq("id", messageId)
+      .eq("community_threads.subject_kind", "patch_notes")
+      .is("parent_id", null)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    const { community_threads: _thread, ...row } = data as PatchNoteEntryRow & {
+      community_threads?: unknown;
+    };
+    return row;
+  },
+
+  async standingPatchNoteAnnouncements() {
+    const { data, error } = await db
+      .from("announcement_cards")
+      .select("*")
+      .not("patch_note_message_id", "is", null)
+      .is("retracted_at", null);
+    if (error) throw error;
+    return (data ?? []) as AnnouncementCardRow[];
   },
 });

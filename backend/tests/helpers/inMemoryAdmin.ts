@@ -211,7 +211,7 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
       return card(id);
     },
 
-    async createAnnouncement(input, sentBy) {
+    async createAnnouncement(input, sentBy, patchNoteMessageId) {
       const row = {
         id: nextAnnouncementId++,
         tone: input.tone,
@@ -222,6 +222,7 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
         recipient_count: 0,
         created_at: new Date().toISOString(),
         retracted_at: null,
+        patch_note_message_id: patchNoteMessageId ?? null,
       };
       state.announcements.push(row);
       return row;
@@ -266,6 +267,36 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
       );
       const a = state.announcements.find((x) => x.id === id);
       if (a) a.retracted_at = new Date().toISOString();
+    },
+
+    async listPatchNoteEntries() {
+      const notes = state.communityThreads.find((t) => t.subject_kind === "patch_notes");
+      return state.communityMessages
+        .filter((m) => m.thread_id === notes?.id && m.parent_id === null && !m.deleted_at)
+        .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id - a.id)
+        .map(({ id, thread_id, body, created_at, edited_at }) => ({
+          id,
+          thread_id,
+          body,
+          created_at,
+          edited_at,
+        }));
+    },
+
+    async findPatchNoteEntry(messageId) {
+      const notes = state.communityThreads.find((t) => t.subject_kind === "patch_notes");
+      const m = state.communityMessages.find(
+        (x) => x.id === messageId && x.thread_id === notes?.id && x.parent_id === null && !x.deleted_at,
+      );
+      return m
+        ? { id: m.id, thread_id: m.thread_id, body: m.body, created_at: m.created_at, edited_at: m.edited_at }
+        : null;
+    },
+
+    async standingPatchNoteAnnouncements() {
+      return state.announcements
+        .filter((a) => a.patch_note_message_id !== null && !a.retracted_at)
+        .map((a) => card(a.id)!);
     },
   };
 };

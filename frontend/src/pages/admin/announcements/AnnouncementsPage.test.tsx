@@ -17,6 +17,10 @@ beforeEach(() => {
     tested.mockClear();
     server.use(
         http.get(`${API}/admin/announcements`, () => HttpResponse.json([])),
+        http.get(`${API}/community/patch-notes`, () =>
+            HttpResponse.json({ thread: { id: 7 }, latest: null })
+        ),
+        http.get(`${API}/admin/patch-notes`, () => HttpResponse.json([])),
         http.get(`${API}/admin/stats/overview`, () =>
             HttpResponse.json({ totals: { users: 3 }, series: [], period: {} })
         ),

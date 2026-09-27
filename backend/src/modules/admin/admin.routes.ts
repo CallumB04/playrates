@@ -13,6 +13,7 @@ import {
   AdminUsersQuerySchema,
   AnnouncementIdParamSchema,
   AnnouncementInputSchema,
+  PatchNoteIdParamSchema,
   CursorQuerySchema,
   RawgCorrectionSchema,
 } from "@playrates/shared";
@@ -193,6 +194,33 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     async (req, res) => {
       const { id } = req.valid!.params as z.infer<typeof AnnouncementIdParamSchema>;
       res.json(await service.retractAnnouncement(id));
+    },
+  );
+
+  // Patch notes -------------------------------------------------------------
+  // Each entry goes out as an announcement, so retracting one is the
+  // announcement's own retract above.
+
+  router.get("/patch-notes", async (_req, res) => {
+    res.json(await service.listPatchNotes());
+  });
+
+  router.post(
+    "/patch-notes/:messageId/announce",
+    validate({ params: PatchNoteIdParamSchema }),
+    async (req, res) => {
+      const { messageId } = req.valid!.params as z.infer<typeof PatchNoteIdParamSchema>;
+      res.status(201).json(await service.sendPatchNote(messageId, callerId(req)));
+    },
+  );
+
+  router.post(
+    "/patch-notes/:messageId/test",
+    validate({ params: PatchNoteIdParamSchema }),
+    async (req, res) => {
+      const { messageId } = req.valid!.params as z.infer<typeof PatchNoteIdParamSchema>;
+      await service.sendTestPatchNote(messageId, callerId(req));
+      res.status(204).end();
     },
   );
 

@@ -2,7 +2,11 @@ import {
   ADMIN_PERIOD_FIELDS,
   ANNOUNCEMENT_TONES,
   activityGroupOf,
+  firstHeading,
   gameEventGroupOf,
+  patchNotePath,
+  type AdminPatchNote,
+  type RichTextDoc,
   type AdminActivityEvent,
   type AdminBucket,
   type AdminGameEvent,
@@ -30,7 +34,7 @@ import type {
   RawgUsageDayRow,
 } from "../../types/database.types.js";
 import { isOnline, toAccent } from "../profiles/profiles.mapper.js";
-import type { ServerErrorRowWithUser } from "./admin.repository.js";
+import type { PatchNoteEntryRow, ServerErrorRowWithUser } from "./admin.repository.js";
 
 const DAY_MS = 86_400_000;
 
@@ -377,6 +381,27 @@ export const toAnnouncement = (row: AnnouncementCardRow): Announcement => ({
   retractedAt: row.retracted_at,
   recipientCount: row.recipient_count,
   readCount: Number(row.read_count),
+});
+
+/** An entry is named by its first h1; failing that, by whatever heading
+ *  comes first, since the editor lets a release be headed at any level. */
+export const patchNoteTitle = (body: unknown): string | null => {
+  const doc = body as RichTextDoc | null;
+  if (!doc || !Array.isArray(doc.content)) return null;
+  return firstHeading(doc, 1) ?? firstHeading(doc);
+};
+
+export const toPatchNote = (
+  entry: PatchNoteEntryRow,
+  announcement: AnnouncementCardRow | undefined,
+): AdminPatchNote => ({
+  messageId: entry.id,
+  threadId: entry.thread_id,
+  title: patchNoteTitle(entry.body),
+  createdAt: entry.created_at,
+  editedAt: entry.edited_at,
+  link: patchNotePath(entry.thread_id, entry.id),
+  announcement: announcement ? toAnnouncement(announcement) : null,
 });
 
 export const toServerError = (row: ServerErrorRowWithUser): ServerErrorEntry => ({
