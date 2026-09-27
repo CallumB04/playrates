@@ -58,6 +58,8 @@ export const buildApp = ({
   // visitor shares the proxy's address, and one rate limit between them.
   app.set("trust proxy", 1);
 
+  app.use(requestContext(logger));
+
   // Pages before helmet: they wear the site's CSP, not the API's.
   app.use(
     createPagesRouter({
@@ -77,7 +79,6 @@ export const buildApp = ({
     }),
   );
   app.use(express.json({ limit: "64kb" }));
-  app.use(requestContext(logger));
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
