@@ -301,3 +301,16 @@ export interface AdminSeriesRow {
   active: number;
   active_week: number;
 }
+
+export interface ContentReportRow {
+  id: number;
+  reporter_id: string | null;
+  target_type: string;
+  target_id: string;
+  reason: string;
+  details: string | null;
+  status: string;
+  created_at: string;
+  resolved_at: string | null;
+  resolved_by: string | null;
+}

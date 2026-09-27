@@ -10,6 +10,7 @@ export type ErrorCode =
   | "upstream_error"
   | "internal_error"
   | "username_taken"
+  | "already_reported"
   | "already_exists"
   | "self_friend"
   | "not_configured";

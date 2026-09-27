@@ -11,6 +11,7 @@ import type {
   GameEventRow,
   RawgUsageDayRow,
   ServerErrorRow,
+  ContentReportRow,
   CommunityMessageRow,
   CommunityThreadRow,
   FriendshipRow,
@@ -62,6 +63,7 @@ export interface SeedData {
   gameEvents?: GameEventRow[];
   rawgUsage?: RawgUsageDayRow[];
   serverErrors?: ServerErrorRow[];
+  contentReports?: ContentReportRow[];
 }
 
 export interface InMemoryState {
@@ -90,6 +92,7 @@ export interface InMemoryState {
   rawgUsage: RawgUsageDayRow[];
   serverErrors: ServerErrorRow[];
   announcements: AnnouncementRow[];
+  contentReports: ContentReportRow[];
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
@@ -126,6 +129,7 @@ export const createInMemoryRepos = (
     rawgUsage: [...(seed.rawgUsage ?? [])],
     serverErrors: [...(seed.serverErrors ?? [])],
     announcements: [],
+    contentReports: [...(seed.contentReports ?? [])],
   };
 
   let nextLogId = 1000;
@@ -208,7 +212,57 @@ export const createInMemoryRepos = (
     };
   };
 
+  let nextReportId = 1;
   const repos: Repositories = {
+    reports: {
+      async create(row) {
+        const report: ContentReportRow = {
+          ...row,
+          id: nextReportId++,
+          status: "open",
+          created_at: new Date().toISOString(),
+          resolved_at: null,
+          resolved_by: null,
+        };
+        state.contentReports.push(report);
+        return report;
+      },
+      async findOpen(reporterId, type, id) {
+        return (
+          state.contentReports.find(
+            (r) =>
+              r.reporter_id === reporterId &&
+              r.target_type === type &&
+              r.target_id === id &&
+              r.status === "open",
+          ) ?? null
+        );
+      },
+      async findById(id) {
+        return state.contentReports.find((r) => r.id === id) ?? null;
+      },
+      async list(status, from, to) {
+        const matched = state.contentReports.filter((r) => r.status === status);
+        return { rows: matched.slice(from, to + 1), total: matched.length };
+      },
+      async countOpenFor(type, id) {
+        return state.contentReports.filter(
+          (r) =>
+            r.target_type === type && r.target_id === id && r.status === "open",
+        ).length;
+      },
+      async closeOpenFor(type, id, status, by) {
+        for (const r of state.contentReports) {
+          if (r.target_type === type && r.target_id === id && r.status === "open") {
+            Object.assign(r, { status, resolved_by: by, resolved_at: now() });
+          }
+        }
+      },
+      async close(id, status, by) {
+        const r = state.contentReports.find((x) => x.id === id);
+        if (r) Object.assign(r, { status, resolved_by: by, resolved_at: now() });
+      },
+    },
     accountExport: {
       async collect(userId) {
         return {
@@ -233,6 +287,9 @@ export const createInMemoryRepos = (
             (v) => v.user_id === userId,
           ),
           activeDays: [],
+          reportsFiled: state.contentReports.filter(
+            (r) => r.reporter_id === userId,
+          ),
         };
       },
     },

@@ -105,6 +105,8 @@ export const queryKeys = {
         patchNotes: ["admin", "announcements", "patch-notes"] as const,
         health: ["admin", "health"] as const,
         errors: ["admin", "errors"] as const,
+        reports: (status: string, page: number) =>
+            ["admin", "reports", status, page] as const,
     },
 
     notifications: {

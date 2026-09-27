@@ -17,6 +17,7 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import Button from "../../components/ui/Button";
 import { cardClass } from "../../components/ui/Card";
 import ConfirmPopup from "../../components/ui/ConfirmPopup";
+import ReportDialog from "../../components/ReportDialog";
 import EmptyPlate, { EmptyNote } from "../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../components/ui/Skeleton";
 import GameCover from "../../components/game/GameCover";
@@ -69,6 +70,10 @@ const ThreadPage = () => {
 
     const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
     const [pending, setPending] = useState<Pending | null>(null);
+    const [reporting, setReporting] = useState<{
+        targetType: "thread" | "message";
+        targetId: number;
+    } | null>(null);
     const composerRef = useRef<HTMLDivElement>(null);
 
     /* A link to one message lands before the thread has loaded, so the
@@ -136,6 +141,15 @@ const ThreadPage = () => {
         onSaveEdit: (message, body) =>
             mutations.edit.mutateAsync({ messageId: message.id, body }),
         onDelete: (message) => setPending({ kind: "message", message }),
+        // The opening message is the thread: reporting it reports the thread.
+        onReport: isPatchNotes
+            ? undefined
+            : (message) =>
+                  setReporting(
+                      message.isOpening
+                          ? { targetType: "thread", targetId: id }
+                          : { targetType: "message", targetId: message.id }
+                  ),
     };
 
     const post = (body: RichTextDoc, parentId?: number) =>
@@ -326,6 +340,13 @@ const ThreadPage = () => {
                         )}
                     </div>
                 </>
+            )}
+
+            {reporting && (
+                <ReportDialog
+                    {...reporting}
+                    onClose={() => setReporting(null)}
+                />
             )}
 
             {pending && (

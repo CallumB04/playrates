@@ -10,3 +10,4 @@ export * from "./schemas/notification.js";
 export * from "./schemas/richText.js";
 export * from "./schemas/community.js";
 export * from "./schemas/admin.js";
+export * from "./schemas/report.js";

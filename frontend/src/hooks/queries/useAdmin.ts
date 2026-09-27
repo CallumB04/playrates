@@ -11,6 +11,8 @@ import type {
     AdminRange,
     AnnouncementInput,
     GameEventGroup,
+    ReportStatus,
+    ResolveReportInput,
 } from "@playrates/shared";
 import {
     fetchAdminActivity,
@@ -20,6 +22,8 @@ import {
     fetchAdminOverview,
     fetchAdminUser,
     fetchAdminUsers,
+    fetchAdminReports,
+    resolveReport,
     fetchAnnouncements,
     fetchAdminPatchNotes,
     announcePatchNote,
@@ -255,3 +259,25 @@ export const useServerErrors = () =>
         initialPageParam: undefined as number | undefined,
         getNextPageParam: (last) => last.nextBefore ?? undefined,
     });
+
+export const useAdminReports = (status: ReportStatus, page: number) =>
+    useQuery({
+        queryKey: queryKeys.admin.reports(status, page),
+        queryFn: () => fetchAdminReports({ status, page }),
+        placeholderData: keepPreviousData,
+    });
+
+export const useResolveReport = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({
+            id,
+            input,
+        }: {
+            id: number;
+            input: ResolveReportInput;
+        }) => resolveReport(id, input),
+        onSuccess: () =>
+            queryClient.invalidateQueries({ queryKey: ["admin", "reports"] }),
+    });
+};

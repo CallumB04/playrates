@@ -8,6 +8,7 @@ const ADMIN_VIEWS = [
     { to: "/admin/overview", label: "Overview" },
     { to: "/admin/activity", label: "Activity" },
     { to: "/admin/users", label: "Users" },
+    { to: "/admin/reports", label: "Reports" },
     { to: "/admin/games", label: "Games" },
     { to: "/admin/announcements", label: "Announcements" },
     { to: "/admin/health", label: "Health" },
