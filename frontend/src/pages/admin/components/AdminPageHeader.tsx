@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { usePageTitle } from "../../../hooks/usePageTitle";
+import { usePageMeta } from "../../../hooks/usePageMeta";
 
 /** What the view is for, in a sentence, with its controls beside it. The
  *  tabs above already name it, so the name only goes to the tab and to
@@ -13,7 +13,7 @@ const AdminPageHeader = ({
     description?: ReactNode;
     actions?: ReactNode;
 }) => {
-    usePageTitle(`${title} · Admin`);
+    usePageMeta({ title: `${title} · Admin`, noindex: true });
     return (
         <div className="mb-5 flex flex-col gap-4 empty:hidden sm:flex-row sm:items-end sm:justify-between">
             <h2 className="sr-only">{title}</h2>

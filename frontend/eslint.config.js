@@ -51,5 +51,7 @@ export default tseslint.config(
         languageOptions: {
             globals: { ...globals.browser, ...globals.node },
         },
+        // Tests set up the document by hand; nothing there reaches a user.
+        rules: { "no-restricted-properties": "off" },
     }
 );

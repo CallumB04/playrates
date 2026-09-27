@@ -15,6 +15,7 @@ interface FieldErrors {
     username?: string;
     email?: string;
     password?: string;
+    agree?: string;
 }
 
 const SignupForm = ({ onSignedUp }: SignupFormProps) => {
@@ -32,6 +33,7 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
         const username = String(data.get("username") ?? "");
         const email = String(data.get("email") ?? "").toLowerCase();
         const password = String(data.get("password") ?? "");
+        const agreed = data.get("agree") === "on";
 
         // the same schemas the backend validates with, so the rules cannot drift
         const next: FieldErrors = {};
@@ -44,6 +46,11 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
         const passwordResult = PasswordSchema.safeParse(password);
         if (!passwordResult.success) {
             next.password = passwordResult.error.issues[0]?.message;
+        }
+
+        if (!agreed) {
+            next.agree =
+                "You need to be 13 or older and agree to the terms to join.";
         }
 
         if (!next.username) {
@@ -102,6 +109,51 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
                 help="At least 8 characters."
                 error={errors.password}
             />
+
+            <div>
+                <label className="flex min-h-11 cursor-pointer items-start gap-3 py-1 text-body-sm text-content-secondary">
+                    <input
+                        type="checkbox"
+                        name="agree"
+                        aria-invalid={errors.agree ? true : undefined}
+                        aria-describedby={
+                            errors.agree ? "signup-agree-error" : undefined
+                        }
+                        className="mt-0.5 size-4.5 shrink-0 accent-brand"
+                    />
+                    <span>
+                        I’m 13 or older and I agree to the{" "}
+                        {/* A new tab, so reading them doesn't lose what has
+                            been typed here. */}
+                        <a
+                            href="/terms"
+                            target="_blank"
+                            rel="noopener"
+                            className="text-content underline underline-offset-2 hover:text-brand"
+                        >
+                            Terms
+                        </a>{" "}
+                        and{" "}
+                        <a
+                            href="/privacy"
+                            target="_blank"
+                            rel="noopener"
+                            className="text-content underline underline-offset-2 hover:text-brand"
+                        >
+                            Privacy Policy
+                        </a>
+                        .
+                    </span>
+                </label>
+                {errors.agree && (
+                    <p
+                        id="signup-agree-error"
+                        className="mt-1 text-label text-danger"
+                    >
+                        {errors.agree}
+                    </p>
+                )}
+            </div>
 
             <Button type="submit" size="lg" disabled={isSubmitting}>
                 {isSubmitting ? "Creating your account…" : "Create account"}

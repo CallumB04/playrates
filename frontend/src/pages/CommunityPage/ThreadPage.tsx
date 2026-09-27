@@ -13,7 +13,8 @@ import {
     useCommunityMutations,
     useThread,
 } from "../../hooks/queries/useCommunity";
-import { usePageTitle } from "../../hooks/usePageTitle";
+import { toPlainText } from "@playrates/shared";
+import { usePageMeta } from "../../hooks/usePageMeta";
 import Button from "../../components/ui/Button";
 import { cardClass } from "../../components/ui/Card";
 import ConfirmPopup from "../../components/ui/ConfirmPopup";
@@ -66,7 +67,13 @@ const ThreadPage = () => {
     const mutations = useCommunityMutations();
 
     const { data, isLoading, isError } = useThread(id);
-    usePageTitle(data?.thread.title);
+    const opening = data?.messages.find((m) => m.isOpening)?.body;
+    usePageMeta({
+        title: data?.thread.title,
+        description: opening
+            ? toPlainText(opening, { hideSpoilers: true })
+            : null,
+    });
 
     const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
     const [pending, setPending] = useState<Pending | null>(null);

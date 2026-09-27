@@ -24,7 +24,7 @@ import {
 import { useUserStats } from "../hooks/queries/useGameLogs";
 import { useUserReviews } from "../hooks/queries/useReviews";
 import { useUserFriends } from "../hooks/queries/useFriends";
-import { usePageTitle } from "../hooks/usePageTitle";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { deleteMyAccount, fetchMyData } from "../api";
 import { saveFile } from "../lib/saveFile";
 import { FALLBACK_ACCENT } from "@playrates/shared";
@@ -100,7 +100,7 @@ const SettingsCard = ({ children }: { children: ReactNode }) => (
 );
 
 const SettingsPage = () => {
-    usePageTitle("Settings");
+    usePageMeta({ title: "Settings", noindex: true });
 
     const { user, session, signOut } = useAuth();
     const { openLogin } = useAccountForm();

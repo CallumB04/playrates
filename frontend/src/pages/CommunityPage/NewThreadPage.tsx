@@ -11,7 +11,7 @@ import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import { useCommunityMutations } from "../../hooks/queries/useCommunity";
 import { useGame } from "../../hooks/queries/useGames";
-import { usePageTitle } from "../../hooks/usePageTitle";
+import { usePageMeta } from "../../hooks/usePageMeta";
 import Button, { buttonClass } from "../../components/ui/Button";
 import { cardClass } from "../../components/ui/Card";
 import EmptyPlate from "../../components/ui/EmptyPlate";
@@ -33,7 +33,7 @@ const TITLE_MAX = 120;
  * and on a phone a sheet would leave it a strip above the keyboard.
  */
 const NewThreadPage = () => {
-    usePageTitle("New thread");
+    usePageMeta({ title: "New thread", noindex: true });
     const navigate = useNavigate();
     const notify = useNotify();
     const { user, isLoading: authLoading } = useAuth();
