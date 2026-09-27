@@ -9,14 +9,19 @@ const SLOW_DATABASE_MS = 800;
 export const systemStates = (h: AdminHealth) => {
     const rawgFailingNow =
         h.rawg.lastFailureAt !== null &&
-        (h.rawg.lastRequestAt === null || h.rawg.lastFailureAt >= h.rawg.lastRequestAt);
+        (h.rawg.lastRequestAt === null ||
+            h.rawg.lastFailureAt >= h.rawg.lastRequestAt);
 
     const database: SystemState = !h.database.ok
         ? "down"
         : (h.database.latencyMs ?? 0) > SLOW_DATABASE_MS
           ? "slow"
           : "up";
-    const rawg: SystemState = !h.rawg.configured ? "down" : rawgFailingNow ? "slow" : "up";
+    const rawg: SystemState = !h.rawg.configured
+        ? "down"
+        : rawgFailingNow
+          ? "slow"
+          : "up";
     const errors: SystemState =
         h.errors.last24h === 0 ? "up" : h.errors.last24h < 10 ? "slow" : "down";
 
@@ -28,11 +33,22 @@ export const headline = (
     states: ReturnType<typeof systemStates>,
     failed = 0
 ): { text: string; state: SystemState } => {
-    if (states.database === "down") return { text: "The database isn’t answering.", state: "down" };
-    if (states.errors === "down") return { text: "The API is failing requests.", state: "down" };
-    if (states.rawg === "down") return { text: "RAWG isn’t set up, so no new games can arrive.", state: "down" };
-    if (states.rawg === "slow") return { text: "RAWG is failing, so search is using the catalogue alone.", state: "slow" };
-    if (states.database === "slow") return { text: "The database is slow to answer.", state: "slow" };
+    if (states.database === "down")
+        return { text: "The database isn’t answering.", state: "down" };
+    if (states.errors === "down")
+        return { text: "The API is failing requests.", state: "down" };
+    if (states.rawg === "down")
+        return {
+            text: "RAWG isn’t set up, so no new games can arrive.",
+            state: "down",
+        };
+    if (states.rawg === "slow")
+        return {
+            text: "RAWG is failing, so search is using the catalogue alone.",
+            state: "slow",
+        };
+    if (states.database === "slow")
+        return { text: "The database is slow to answer.", state: "slow" };
     if (states.errors === "slow") {
         return {
             text: `Answering, but ${failed === 1 ? "1 request" : `${failed} requests`} failed in the last day.`,
@@ -40,4 +56,14 @@ export const headline = (
         };
     }
     return { text: "Everything is answering.", state: "up" };
+};
+
+/** Each state in words and in its status colour, for its dot and its word. */
+export const STATE: Record<
+    SystemState,
+    { word: string; dot: string; text: string }
+> = {
+    up: { word: "Answering", dot: "bg-success", text: "text-success" },
+    slow: { word: "Struggling", dot: "bg-warning", text: "text-warning" },
+    down: { word: "Down", dot: "bg-danger", text: "text-danger" },
 };

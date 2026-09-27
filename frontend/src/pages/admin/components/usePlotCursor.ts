@@ -32,11 +32,15 @@ export const usePlotCursor = <T extends HTMLElement>(count: number) => {
 
     return {
         index,
+        /** Whether someone is pointing at a point, rather than the plot
+         *  resting on the latest. */
+        engaged: picked !== null,
         ref,
         handlers: {
             onPointerMove: pickAt,
             onPointerDown: pickAt,
-            onPointerLeave: (e: PointerEvent<T>) => e.pointerType === "mouse" && setPicked(null),
+            onPointerLeave: (e: PointerEvent<T>) =>
+                e.pointerType === "mouse" && setPicked(null),
             onBlur: () => setPicked(null),
             onKeyDown,
         },
@@ -44,7 +48,12 @@ export const usePlotCursor = <T extends HTMLElement>(count: number) => {
 };
 
 /** The slider semantics a plot takes so assistive tech can step through it. */
-export const sliderProps = (label: string, index: number, count: number, text: string) => ({
+export const sliderProps = (
+    label: string,
+    index: number,
+    count: number,
+    text: string
+) => ({
     role: "slider" as const,
     tabIndex: 0,
     "aria-label": label,

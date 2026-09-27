@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Button from "../../../components/ui/Button";
 import AdminPageHeader from "../components/AdminPageHeader";
-import MetricDetailModal from "../overview/MetricDetailModal";
+import CataloguePopup from "./CataloguePopup";
 import GameControls from "./GameControls";
 import GameEventFeed from "./GameEventFeed";
 import PullPanel from "./PullPanel";
@@ -14,7 +14,11 @@ const GamesPage = () => {
             <AdminPageHeader
                 title="Games"
                 actions={
-                    <Button variant="secondary" onClick={() => setCatalogue(true)} className="w-full sm:w-auto">
+                    <Button
+                        variant="secondary"
+                        onClick={() => setCatalogue(true)}
+                        className="w-full sm:w-auto"
+                    >
                         How complete the catalogue is
                     </Button>
                 }
@@ -28,7 +32,7 @@ const GamesPage = () => {
                 <GameEventFeed />
             </div>
             {catalogue && (
-                <MetricDetailModal metric="games" range="30d" overview={undefined} onClose={() => setCatalogue(false)} />
+                <CataloguePopup onClose={() => setCatalogue(false)} />
             )}
         </>
     );

@@ -19,6 +19,9 @@ interface LinePlotProps {
     readout?: (index: number) => ReactNode;
     height?: number;
     axis?: { start: string; end: string };
+    /** A picture only: no readout and nothing to step through, for a plot
+     *  inside something that is itself the control, such as a card. */
+    still?: boolean;
     className?: string;
 }
 
@@ -37,6 +40,7 @@ const LinePlot = ({
     readout = describe,
     height = 112,
     axis,
+    still = false,
     className,
 }: LinePlotProps) => {
     const id = useId().replace(/:/g, "");
@@ -51,15 +55,33 @@ const LinePlot = ({
 
     return (
         <div className={cn("flex min-w-0 flex-col gap-2.5", className)}>
-            <div aria-hidden className="min-h-5 text-label text-content-secondary">
-                {count > 0 && readout(index)}
-            </div>
+            {!still && (
+                <div
+                    aria-hidden
+                    className="min-h-5 text-label text-content-secondary"
+                >
+                    {count > 0 && readout(index)}
+                </div>
+            )}
 
             <div
                 ref={cursor.ref}
-                {...sliderProps(label, index, count, count > 0 ? describe(index) : "")}
-                {...cursor.handlers}
-                className="relative cursor-crosshair touch-pan-y rounded-xs focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
+                {...(still
+                    ? { role: "img", "aria-label": label }
+                    : {
+                          ...sliderProps(
+                              label,
+                              index,
+                              count,
+                              count > 0 ? describe(index) : ""
+                          ),
+                          ...cursor.handlers,
+                      })}
+                className={cn(
+                    "relative rounded-xs",
+                    !still &&
+                        "cursor-crosshair touch-pan-y focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
+                )}
                 style={{ height }}
             >
                 <svg
@@ -69,12 +91,33 @@ const LinePlot = ({
                     className="absolute inset-0 size-full overflow-visible"
                 >
                     <defs>
-                        <linearGradient id={`${id}-wash`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={series[0]?.color} stopOpacity={0.18} />
-                            <stop offset="100%" stopColor={series[0]?.color} stopOpacity={0} />
+                        <linearGradient
+                            id={`${id}-wash`}
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                        >
+                            <stop
+                                offset="0%"
+                                stopColor={series[0]?.color}
+                                stopOpacity={0.18}
+                            />
+                            <stop
+                                offset="100%"
+                                stopColor={series[0]?.color}
+                                stopOpacity={0}
+                            />
                         </linearGradient>
                     </defs>
-                    <line x1={0} x2={W} y1={height - 0.5} y2={height - 0.5} stroke="var(--color-subtle)" vectorEffect="non-scaling-stroke" />
+                    <line
+                        x1={0}
+                        x2={W}
+                        y1={height - 0.5}
+                        y2={height - 0.5}
+                        stroke="var(--color-subtle)"
+                        vectorEffect="non-scaling-stroke"
+                    />
                     {series[0] && count > 1 && (
                         <path
                             d={`M0,${height} ${series[0].values.map((v, i) => `L${x(i)},${y(v)}`).join(" ")} L${W},${height} Z`}
@@ -84,7 +127,9 @@ const LinePlot = ({
                     {series.map((s) => (
                         <polyline
                             key={s.key}
-                            points={s.values.map((v, i) => `${x(i)},${y(v)}`).join(" ")}
+                            points={s.values
+                                .map((v, i) => `${x(i)},${y(v)}`)
+                                .join(" ")}
                             fill="none"
                             stroke={s.color}
                             strokeWidth={s.quiet ? 1.5 : 2}
@@ -99,11 +144,13 @@ const LinePlot = ({
 
                 {count > 0 && (
                     <>
-                        <span
-                            aria-hidden
-                            className="pointer-events-none absolute inset-y-0 w-px bg-strong"
-                            style={{ left: `${at}%` }}
-                        />
+                        {!still && (
+                            <span
+                                aria-hidden
+                                className="pointer-events-none absolute inset-y-0 w-px bg-strong"
+                                style={{ left: `${at}%` }}
+                            />
+                        )}
                         {series.map((s) => (
                             <span
                                 key={s.key}
@@ -132,9 +179,15 @@ const LinePlot = ({
                     {series.length > 1 && (
                         <span className="flex gap-3 font-sans text-label-sm">
                             {series.map((s) => (
-                                <span key={s.key} className="flex items-center gap-1.5">
+                                <span
+                                    key={s.key}
+                                    className="flex items-center gap-1.5"
+                                >
                                     <span
-                                        className={cn("h-0.5 w-3 rounded-full", s.quiet && "opacity-70")}
+                                        className={cn(
+                                            "h-0.5 w-3 rounded-full",
+                                            s.quiet && "opacity-70"
+                                        )}
                                         style={{ background: s.color }}
                                     />
                                     {s.label}

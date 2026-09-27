@@ -1,4 +1,9 @@
-import { useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
+import {
+    useState,
+    type KeyboardEvent,
+    type PointerEvent,
+    type ReactNode,
+} from "react";
 import { cn } from "../../../lib/cn";
 import { heatLevel } from "../lib/plot";
 
@@ -8,13 +13,24 @@ export interface HeatDay {
     value: number;
 }
 
-const LEVELS = [
-    "bg-surface-sunken",
-    "bg-brand/25",
-    "bg-brand/45",
-    "bg-brand/70",
-    "bg-brand",
-];
+/** Five steps of one hue: nothing, then quarters of the busiest day. Written
+ *  out whole so the classes exist for the stylesheet. */
+const TONES = {
+    brand: [
+        "bg-surface-sunken",
+        "bg-brand/25",
+        "bg-brand/45",
+        "bg-brand/70",
+        "bg-brand",
+    ],
+    teal: [
+        "bg-surface-sunken",
+        "bg-chart-2/25",
+        "bg-chart-2/45",
+        "bg-chart-2/70",
+        "bg-chart-2",
+    ],
+} as const;
 
 const WEEKDAYS = ["Mon", "", "Wed", "", "Fri", "", ""];
 
@@ -28,20 +44,25 @@ const Heatmap = ({
     label,
     describe,
     readout = describe,
+    tone = "brand",
     className,
 }: {
     days: HeatDay[];
+    tone?: keyof typeof TONES;
     label: string;
     describe: (day: HeatDay) => string;
     readout?: (day: HeatDay) => ReactNode;
     className?: string;
 }) => {
+    const LEVELS = TONES[tone];
     const latest = Math.max(0, days.length - 1);
     const [picked, setPicked] = useState<number | null>(null);
     const index = Math.min(picked ?? latest, latest);
     const peak = Math.max(1, ...days.map((d) => d.value));
     // Monday is 0, as the rows run.
-    const lead = days[0] ? (new Date(`${days[0].day}T00:00:00Z`).getUTCDay() + 6) % 7 : 0;
+    const lead = days[0]
+        ? (new Date(`${days[0].day}T00:00:00Z`).getUTCDay() + 6) % 7
+        : 0;
     const weeks = Math.ceil((lead + days.length) / 7);
 
     const pickFrom = (event: PointerEvent<HTMLDivElement>) => {
@@ -68,7 +89,10 @@ const Heatmap = ({
 
     return (
         <div className={cn("flex min-w-0 flex-col gap-2.5", className)}>
-            <div aria-hidden className="min-h-5 text-label text-content-secondary">
+            <div
+                aria-hidden
+                className="min-h-5 text-label text-content-secondary"
+            >
                 {days[index] && readout(days[index])}
             </div>
 
@@ -85,14 +109,22 @@ const Heatmap = ({
                 aria-valuetext={days[index] ? describe(days[index]) : "No data"}
                 onPointerMove={pickFrom}
                 onPointerDown={pickFrom}
-                onPointerLeave={(e) => e.pointerType === "mouse" && setPicked(null)}
+                onPointerLeave={(e) =>
+                    e.pointerType === "mouse" && setPicked(null)
+                }
                 onBlur={() => setPicked(null)}
                 onKeyDown={onKeyDown}
                 className="grid w-full max-w-[24rem] grid-flow-col grid-rows-7 gap-[3px] rounded-xs focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
-                style={{ gridTemplateColumns: `auto repeat(${weeks}, minmax(0, 1fr))` }}
+                style={{
+                    gridTemplateColumns: `auto repeat(${weeks}, minmax(0, 1fr))`,
+                }}
             >
                 {WEEKDAYS.map((d, i) => (
-                    <span key={`label-${i}`} aria-hidden className="flex items-center pr-1.5 font-mono text-stamp leading-none text-content-muted">
+                    <span
+                        key={`label-${i}`}
+                        aria-hidden
+                        className="flex items-center pr-1.5 font-mono text-stamp leading-none text-content-muted"
+                    >
                         {d}
                     </span>
                 ))}
@@ -107,13 +139,17 @@ const Heatmap = ({
                         className={cn(
                             "aspect-square w-full rounded-[3px]",
                             LEVELS[heatLevel(d.value, peak)],
-                            i === index && "ring-2 ring-content ring-offset-1 ring-offset-surface-raised"
+                            i === index &&
+                                "ring-2 ring-content ring-offset-1 ring-offset-surface-raised"
                         )}
                     />
                 ))}
             </div>
 
-            <div aria-hidden className="flex w-full max-w-[24rem] items-center justify-end gap-1.5 text-label-sm text-content-muted">
+            <div
+                aria-hidden
+                className="flex w-full max-w-[24rem] items-center justify-end gap-1.5 text-label-sm text-content-muted"
+            >
                 Fewer
                 {LEVELS.map((l) => (
                     <span key={l} className={cn("size-2.5 rounded-[2px]", l)} />

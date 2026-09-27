@@ -50,4 +50,44 @@ describe("BarPlot", () => {
         const { container } = renderPlot();
         expect(container.querySelectorAll(".bg-strong")).toHaveLength(1);
     });
+
+    it("fades the rest only while one bar is being read", () => {
+        const { container } = renderPlot();
+        const faded = () => container.querySelectorAll(".opacity-40").length;
+        expect(faded()).toBe(0);
+        fireEvent.keyDown(screen.getByRole("slider"), { key: "ArrowLeft" });
+        expect(faded()).toBe(3);
+    });
+
+    it("says so in words when every bar is zero, rather than drawing stubs", () => {
+        const flat = bars.map((b) => ({
+            ...b,
+            segments: [{ ...b.segments[0]!, value: 0 }],
+        }));
+        render(
+            <BarPlot
+                bars={flat}
+                label="Reviews"
+                describe={() => ""}
+                empty="No reviews in this time"
+            />
+        );
+        expect(screen.getByText("No reviews in this time")).toBeInTheDocument();
+        expect(screen.queryByRole("slider")).not.toBeInTheDocument();
+    });
+
+    it("is only a picture when still, with nothing to step through", () => {
+        render(
+            <BarPlot
+                still
+                bars={bars}
+                label="People each day"
+                describe={(i) => `Day ${i + 1}`}
+            />
+        );
+        expect(
+            screen.getByRole("img", { name: "People each day" })
+        ).toBeInTheDocument();
+        expect(screen.queryByRole("slider")).not.toBeInTheDocument();
+    });
 });

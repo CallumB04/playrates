@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
 import type { RawgUsage } from "@playrates/shared";
 import { cardClass } from "../../../components/ui/Card";
 import { figureClass } from "../../../components/ui/Figure";
@@ -8,7 +7,6 @@ import Field from "../../../components/ui/Field";
 import { NumberInput } from "../../../components/ui/Input";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { useNotify } from "../../../contexts/NotificationContext";
-import { cn } from "../../../lib/cn";
 import { formatCount, relativeTime } from "../../../lib/format";
 import { useCorrectRawg, useRawgUsage } from "../../../hooks/queries/useAdmin";
 import BarPlot from "../components/BarPlot";
@@ -21,7 +19,119 @@ import { allowanceTone } from "./gamePresentation";
 /** "8 Oct". The period's dates are UTC days, read as such. */
 const shortDate = (day: string) => bucketLabel(day, "day");
 
-const Correct = ({ usage, onDone }: { usage: RawgUsage; onDone: () => void }) => {
+const projectedUse = (usage: RawgUsage) =>
+    usage.used + usage.pace * usage.daysLeft;
+
+/** The allowance as a meter, with when it resets and what a day can spend. */
+export const AllowanceMeter = ({ usage }: { usage: RawgUsage }) => (
+    <div className="flex flex-col gap-2.5">
+        <Meter
+            used={usage.used}
+            total={usage.allowance}
+            projected={projectedUse(usage)}
+            tone={allowanceTone(usage)}
+            label={`${formatCount(usage.used)} of ${formatCount(usage.allowance)} spent; at this pace ${formatCount(projectedUse(usage))} by the reset`}
+        />
+        <p className="text-label text-content-secondary">
+            Resets {shortDate(usage.resetsOn)} ·{" "}
+            <span className="font-mono text-content">
+                {formatCount(usage.dailyBudget)}
+            </span>{" "}
+            a day to last
+        </p>
+        {usage.runsOutOn && (
+            <p className="-mt-1.5 text-label text-danger">
+                At <span className="font-mono">{formatCount(usage.pace)}</span>{" "}
+                a day it runs out {shortDate(usage.runsOutOn)}
+            </p>
+        )}
+    </div>
+);
+
+/** Requests counted each day this period, against a day's budget. */
+export const AllowanceDays = ({
+    usage,
+    height = 104,
+}: {
+    usage: RawgUsage;
+    height?: number;
+}) => {
+    const days = usage.days.filter((d) => d.day >= usage.periodStart);
+    return (
+        <div className="flex flex-col gap-2">
+            <BarPlot
+                bars={days.map((d) => ({
+                    key: d.day,
+                    segments: [
+                        {
+                            key: "ok",
+                            value: d.requests - d.failures,
+                            className: "bg-brand",
+                        },
+                        {
+                            key: "failed",
+                            value: d.failures,
+                            className: "bg-danger",
+                        },
+                    ],
+                }))}
+                label="RAWG requests each day, this period"
+                height={height}
+                // Always drawn, and the scale reaches it: against a day's budget a
+                // quiet day looks quiet, where scaled to itself one request fills
+                // the plot.
+                marker={{ value: usage.dailyBudget, label: "a day’s budget" }}
+                describe={(i) => {
+                    const d = days[i]!;
+                    return `${shortDate(d.day)}: ${d.requests} ${d.requests === 1 ? "request" : "requests"}${d.failures ? `, ${d.failures} failed` : ""}`;
+                }}
+                readout={(i) => {
+                    const d = days[i]!;
+                    return (
+                        <span className="flex flex-wrap justify-between gap-x-3">
+                            <span>
+                                <span className="font-mono text-content">
+                                    {formatCount(d.requests)}
+                                </span>{" "}
+                                {d.requests === 1 ? "request" : "requests"}{" "}
+                                counted on {shortDate(d.day)}
+                                {d.failures > 0 && (
+                                    <span className="text-danger">
+                                        {" · "}
+                                        <span className="font-mono">
+                                            {d.failures}
+                                        </span>{" "}
+                                        failed
+                                    </span>
+                                )}
+                            </span>
+                            {usage.lastRequestAt && (
+                                <span className="text-content-muted">
+                                    last {relativeTime(usage.lastRequestAt)}
+                                </span>
+                            )}
+                        </span>
+                    );
+                }}
+                axis={{ start: shortDate(days[0]?.day ?? ""), end: "today" }}
+            />
+            {usage.lastError && (
+                <p className="text-label-sm text-danger">
+                    Last failure {relativeTime(usage.lastFailureAt)}:{" "}
+                    {usage.lastError}
+                </p>
+            )}
+        </div>
+    );
+};
+
+const CorrectForm = ({
+    usage,
+    onDone,
+}: {
+    usage: RawgUsage;
+    onDone: () => void;
+}) => {
     const [left, setLeft] = useState("");
     const correct = useCorrectRawg();
     const notify = useNotify();
@@ -42,9 +152,9 @@ const Correct = ({ usage, onDone }: { usage: RawgUsage; onDone: () => void }) =>
     return (
         <form onSubmit={submit} className="flex flex-col gap-4">
             <p className="text-body-sm text-content-secondary">
-                RAWG’s responses don’t say how much is left, so PlayRates counts every request
-                it makes. Anything spent elsewhere, or before counting began, is only caught by
-                copying RAWG’s own figure in here.
+                RAWG’s responses don’t say how much is left, so PlayRates counts
+                every request it makes. Anything spent elsewhere is only caught
+                by copying RAWG’s own figure in here.
             </p>
             <Field label="Requests left, as RAWG’s dashboard shows it">
                 {(a11y) => (
@@ -60,135 +170,89 @@ const Correct = ({ usage, onDone }: { usage: RawgUsage; onDone: () => void }) =>
                     />
                 )}
             </Field>
-            <Button type="submit" disabled={left === "" || correct.isPending} className="w-full sm:w-auto sm:self-end">
+            <Button
+                type="submit"
+                disabled={left === "" || correct.isPending}
+                className="w-full sm:w-auto sm:self-end"
+            >
                 {correct.isPending ? "Saving…" : "Use this figure"}
             </Button>
         </form>
     );
 };
 
-/**
- * What is left of RAWG's allowance, the figure that decides whether new games
- * can arrive. The meter's fill is spent, its ember tick where this pace ends
- * up by the reset.
- */
-const RawgAllowance = ({ compact = false }: { compact?: boolean }) => {
-    const { data: usage } = useRawgUsage();
+/** Where the figure comes from, and a way to put RAWG's own in. */
+export const AllowanceBasis = ({ usage }: { usage: RawgUsage }) => {
     const correcting = useSeeAll();
-
-    if (!usage) return <Skeleton className={cn("rounded-lg", compact ? "h-44" : "h-72")} />;
-
-    const tone = allowanceTone(usage);
-    const heading = (
+    return (
         <>
-            <h2 className="text-label text-content-muted">RAWG requests left</h2>
-            <p className="mt-2 flex items-baseline gap-1.5">
-                <span className={figureClass(compact ? "lg" : "display")}>{formatCount(usage.left)}</span>
-                <span className="font-mono text-body-sm text-content-muted">/ {formatCount(usage.allowance)}</span>
+            <p className="text-label-sm text-content-muted">
+                {usage.basis === "corrected"
+                    ? `From RAWG’s figure on ${shortDate(usage.since!)}, plus every request since`
+                    : "Counted by PlayRates alone, so it may be missing some"}
+                {" · "}
+                <button
+                    type="button"
+                    onClick={correcting.show}
+                    className="relative cursor-pointer font-medium text-brand before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:underline sm:before:hidden"
+                >
+                    Correct it
+                </button>
             </p>
-            <Meter
-                className="mt-3"
-                used={usage.used}
-                total={usage.allowance}
-                projected={usage.used + usage.pace * usage.daysLeft}
-                tone={tone}
-                label={`${formatCount(usage.used)} of ${formatCount(usage.allowance)} spent; at this pace ${formatCount(usage.used + usage.pace * usage.daysLeft)} by the reset`}
-            />
-            <p className="mt-3 text-label text-content-secondary">
-                Resets {shortDate(usage.resetsOn)} ·{" "}
-                <span className="font-mono text-content">{formatCount(usage.dailyBudget)}</span> a day to last
-            </p>
-            {usage.runsOutOn && (
-                <p className="mt-1 text-label text-danger">
-                    At <span className="font-mono">{formatCount(usage.pace)}</span> a day it runs out{" "}
-                    {shortDate(usage.runsOutOn)}
-                </p>
+            {correcting.open && (
+                <SeeAllModal
+                    title="Correct the RAWG count"
+                    onClose={correcting.hide}
+                >
+                    <CorrectForm usage={usage} onDone={correcting.hide} />
+                </SeeAllModal>
             )}
         </>
     );
+};
 
-    if (compact) {
-        return (
-            <Link
-                to="/admin/games"
-                className={cardClass("block lift hover:-translate-y-px hover:shadow-lifted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand")}
-            >
-                {heading}
-            </Link>
-        );
-    }
+/** The figure itself, over its allowance. */
+export const AllowanceFigure = ({ usage }: { usage: RawgUsage }) => (
+    <p className="flex items-baseline gap-1.5">
+        <span className={figureClass("display")}>
+            {formatCount(usage.left)}
+        </span>
+        <span className="font-mono text-body-sm text-content-muted">
+            / {formatCount(usage.allowance)}
+        </span>
+    </p>
+);
+
+/**
+ * What is left of RAWG's allowance, the figure that decides whether new games
+ * can arrive, as the Games view shows it: the figure on the left, the days
+ * that spent it on the right.
+ */
+const RawgAllowance = () => {
+    const { data: usage } = useRawgUsage();
+    if (!usage) return <Skeleton className="h-72 rounded-lg" />;
 
     return (
-        <section aria-label="RAWG allowance" className={cardClass("grid gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]", { padding: "none" })}>
-            <div className="flex flex-col border-b border-subtle px-5 py-5 lg:border-r lg:border-b-0 lg:pr-6">
-                {heading}
-                <p className="mt-auto pt-4 text-label-sm text-content-muted">
-                    {usage.basis === "corrected"
-                        ? `From RAWG’s figure on ${shortDate(usage.since!)}, plus every request since`
-                        : "Counted by PlayRates alone, so it may be missing some"}
-                    {" · "}
-                    <button
-                        type="button"
-                        onClick={correcting.show}
-                        className="relative cursor-pointer font-medium text-brand before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:underline sm:before:hidden"
-                    >
-                        Correct it
-                    </button>
-                </p>
-            </div>
-
-            <div className="flex min-w-0 flex-col gap-3 px-5 pb-5 lg:py-5 lg:pr-6 lg:pl-0">
-                <BarPlot
-                    bars={usage.days.map((d) => ({
-                        key: d.day,
-                        segments: [
-                            { key: "ok", value: d.requests - d.failures, className: "bg-brand" },
-                            { key: "failed", value: d.failures, className: "bg-danger" },
-                        ],
-                    }))}
-                    label="RAWG requests each day, last 30 days"
-                    height={104}
-                    marker={
-                        Math.max(...usage.days.map((d) => d.requests)) >= usage.dailyBudget / 4
-                            ? { value: usage.dailyBudget, label: "a day’s budget" }
-                            : undefined
-                    }
-                    describe={(i) => {
-                        const d = usage.days[i]!;
-                        return `${shortDate(d.day)}: ${d.requests} ${d.requests === 1 ? "request" : "requests"}${d.failures ? `, ${d.failures} failed` : ""}`;
-                    }}
-                    readout={(i) => {
-                        const d = usage.days[i]!;
-                        return (
-                            <span className="flex flex-wrap justify-between gap-x-3">
-                                <span>
-                                    <span className="font-mono text-content">{formatCount(d.requests)}</span>{" "}
-                                    {d.requests === 1 ? "request" : "requests"} counted on {shortDate(d.day)}
-                                    {d.failures > 0 && (
-                                        <span className="text-danger">
-                                            {" · "}
-                                            <span className="font-mono">{d.failures}</span> failed
-                                        </span>
-                                    )}
-                                </span>
-                                {usage.lastRequestAt && <span className="text-content-muted">last {relativeTime(usage.lastRequestAt)}</span>}
-                            </span>
-                        );
-                    }}
-                    axis={{ start: shortDate(usage.days[0]?.day ?? ""), end: "today" }}
-                />
-                {usage.lastError && (
-                    <p className="text-label-sm text-danger">
-                        Last failure {relativeTime(usage.lastFailureAt)}: {usage.lastError}
-                    </p>
-                )}
-            </div>
-
-            {correcting.open && (
-                <SeeAllModal title="Correct the RAWG count" onClose={correcting.hide}>
-                    <Correct usage={usage} onDone={correcting.hide} />
-                </SeeAllModal>
+        <section
+            aria-label="RAWG allowance"
+            className={cardClass(
+                "grid gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]",
+                { padding: "none" }
             )}
+        >
+            <div className="flex flex-col gap-3 border-b border-subtle px-5 py-5 lg:border-r lg:border-b-0 lg:pr-6">
+                <h2 className="text-label text-content-muted">
+                    RAWG requests left
+                </h2>
+                <AllowanceFigure usage={usage} />
+                <AllowanceMeter usage={usage} />
+                <div className="mt-auto pt-2">
+                    <AllowanceBasis usage={usage} />
+                </div>
+            </div>
+            <div className="min-w-0 px-5 pb-5 lg:py-5 lg:pr-6 lg:pl-0">
+                <AllowanceDays usage={usage} />
+            </div>
         </section>
     );
 };

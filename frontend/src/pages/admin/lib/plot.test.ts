@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { addedIn, barIndexAt, changeWords, fillDays, groupByDay, heatLevel, plotPeak, timeInDay } from "./plot";
+import {
+    addedIn,
+    barIndexAt,
+    changeWords,
+    fillDays,
+    groupByDay,
+    heatLevel,
+    plotPeak,
+    runningTotal,
+    timeInDay,
+} from "./plot";
 
 describe("barIndexAt", () => {
     it("finds the bar under the pointer, and clamps the gutters", () => {
@@ -13,7 +23,13 @@ describe("barIndexAt", () => {
 describe("plotPeak", () => {
     it("is the tallest stack, never zero, and reaches a marker above it", () => {
         const bars = [
-            { key: "a", segments: [{ key: "x", value: 2, className: "" }, { key: "y", value: 3, className: "" }] },
+            {
+                key: "a",
+                segments: [
+                    { key: "x", value: 2, className: "" },
+                    { key: "y", value: 3, className: "" },
+                ],
+            },
             { key: "b", segments: [{ key: "x", value: 1, className: "" }] },
         ];
         expect(plotPeak(bars)).toBe(5);
@@ -24,25 +40,41 @@ describe("plotPeak", () => {
 
 describe("changeWords", () => {
     it("gives the signed figure, with a true minus, and the words after it", () => {
-        expect(changeWords({ current: 15, previous: 10, change: 0.5 }, "week")).toEqual({
+        expect(
+            changeWords({ current: 15, previous: 10, change: 0.5 }, "week")
+        ).toEqual({
             figure: "+50%",
             words: "on the week before",
             tone: "up",
         });
-        expect(changeWords({ current: 8, previous: 10, change: -0.2 }, "week").figure).toBe("−20%");
+        expect(
+            changeWords({ current: 8, previous: 10, change: -0.2 }, "week")
+                .figure
+        ).toBe("−20%");
+    });
+
+    it("says nothing on nothing plainly, rather than calling it no change", () => {
+        expect(
+            changeWords({ current: 0, previous: 0, change: 0 }, "week").words
+        ).toBe("None the week before either");
     });
 
     it("says growth from nothing as a sentence, since it has no percentage", () => {
-        expect(changeWords({ current: 3, previous: 0, change: null }, "week")).toMatchObject({
+        expect(
+            changeWords({ current: 3, previous: 0, change: null }, "week")
+        ).toMatchObject({
             figure: "",
             words: "Up from none the week before",
         });
     });
 
     it("calls a hair's breadth the same", () => {
-        expect(changeWords({ current: 1000, previous: 1001, change: -0.001 }, "week").words).toBe(
-            "The same as the week before"
-        );
+        expect(
+            changeWords(
+                { current: 1000, previous: 1001, change: -0.001 },
+                "week"
+            ).words
+        ).toBe("The same as the week before");
     });
 });
 
@@ -78,15 +110,21 @@ describe("groupByDay", () => {
         // in London but already this morning in Tokyo.
         const morning = new Date("2026-09-26T10:00:00Z");
         const late = [{ at: "2026-09-25T23:30:00Z" }];
-        expect(groupByDay(late, (i) => i.at, morning, "UTC")[0]!.label).toBe("Yesterday");
-        expect(groupByDay(late, (i) => i.at, morning, "Asia/Tokyo")[0]!.label).toBe("Today");
+        expect(groupByDay(late, (i) => i.at, morning, "UTC")[0]!.label).toBe(
+            "Yesterday"
+        );
+        expect(
+            groupByDay(late, (i) => i.at, morning, "Asia/Tokyo")[0]!.label
+        ).toBe("Today");
     });
 });
 
 describe("timeInDay", () => {
     it("leaves today to relative time, and gives any other day the clock", () => {
         expect(timeInDay("2026-09-23T14:43:00Z", "Today", "UTC")).toBe("");
-        expect(timeInDay("2026-09-23T14:43:00Z", "Wednesday 23 Sept", "UTC")).toBe("14:43");
+        expect(
+            timeInDay("2026-09-23T14:43:00Z", "Wednesday 23 Sept", "UTC")
+        ).toBe("14:43");
     });
 });
 
@@ -101,10 +139,18 @@ describe("heatLevel", () => {
 
 describe("fillDays", () => {
     it("gives every day in the span, marking the ones it was given", () => {
-        expect(fillDays("2026-09-24", "2026-09-26", new Set(["2026-09-25"]))).toEqual([
+        expect(
+            fillDays("2026-09-24", "2026-09-26", new Set(["2026-09-25"]))
+        ).toEqual([
             { day: "2026-09-24", value: 0 },
             { day: "2026-09-25", value: 1 },
             { day: "2026-09-26", value: 0 },
         ]);
+    });
+});
+
+describe("runningTotal", () => {
+    it("walks today's total back through each day's sign-ups", () => {
+        expect(runningTotal(10, [1, 0, 2, 3])).toEqual([5, 5, 7, 10]);
     });
 });
