@@ -12,6 +12,8 @@ import { createRepositories } from "./repositories.js";
 import { verifySupabaseJwt } from "./middleware/requireAuth.js";
 import { nullGamesProvider } from "./providers/games/GamesProvider.js";
 import { createRawgProvider } from "./providers/games/rawg/rawg.provider.js";
+import { createRawgUsageRecorder } from "./config/rawgUsage.js";
+import { createServerErrorSink } from "./config/errorSink.js";
 
 export interface ServerApp {
   app: Express;
@@ -29,8 +31,12 @@ export const createServerApp = (): ServerApp => {
   const config = env();
   const logger = createLogger();
 
+  const db = supabase();
+
   const provider = config.RAWG_API_KEY
-    ? createRawgProvider(config.RAWG_API_KEY)
+    ? createRawgProvider(config.RAWG_API_KEY, fetch, {
+        onRequest: createRawgUsageRecorder(db),
+      })
     : nullGamesProvider;
 
   if (!provider.isConfigured) {
@@ -38,8 +44,6 @@ export const createServerApp = (): ServerApp => {
       "RAWG_API_KEY is not set - game search will only use the local catalogue",
     );
   }
-
-  const db = supabase();
 
   return {
     config,
@@ -52,6 +56,7 @@ export const createServerApp = (): ServerApp => {
       communityImages: createCommunityImageStore(db),
       verify: verifySupabaseJwt,
       logger,
+      errorSink: createServerErrorSink(db),
     }),
   };
 };

@@ -5,6 +5,7 @@ import {
   type Paginated,
 } from "./common.js";
 import type { FriendRelation, FriendUser } from "./friend.js";
+import type { AnnouncementTone } from "./admin.js";
 
 /** Every kind the API will hand out. A client that doesn't know one renders
  *  its fallback rather than breaking, so this can grow ahead of the UI. */
@@ -16,6 +17,7 @@ export const NOTIFICATION_KINDS = [
   "community_thread_activity",
   "community_upvote_milestone",
   "review_upvote_milestone",
+  "announcement",
 ] as const;
 
 /** The upvote counts that are worth telling someone about. */
@@ -99,6 +101,18 @@ export interface ReviewUpvoteMilestoneNotification extends NotificationBase {
   milestone: number;
 }
 
+/** A message from PlayRates to everyone, sent from the admin dashboard. */
+export interface AnnouncementNotification extends NotificationBase {
+  kind: "announcement";
+  tone: AnnouncementTone;
+  title: string;
+  body: string;
+  /** An in-app path, never another site. */
+  link: string | null;
+  /** Sent only to the admin, to see it in the bell before everyone does. */
+  isTest: boolean;
+}
+
 /** A kind added to the API before this client knew about it. Kept in the
  *  union so exhaustive switches have to handle the case. */
 export interface UnknownNotification extends NotificationBase {
@@ -114,6 +128,7 @@ export type AppNotification =
   | CommunityThreadActivityNotification
   | CommunityUpvoteMilestoneNotification
   | ReviewUpvoteMilestoneNotification
+  | AnnouncementNotification
   | UnknownNotification;
 
 export const NotificationQuerySchema = PaginationSchema.extend({

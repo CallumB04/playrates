@@ -13,6 +13,7 @@ import { supabase } from "../src/config/supabase.js";
 import { createLogger } from "../src/lib/logger.js";
 import { createGamesRepository } from "../src/modules/games/games.repository.js";
 import { createRawgProvider } from "../src/providers/games/rawg/rawg.provider.js";
+import { createRawgUsageRecorder } from "../src/config/rawgUsage.js";
 
 /** Reasonable starting catalogue when no terms are given. */
 const DEFAULT_TERMS = [
@@ -42,7 +43,10 @@ const main = async () => {
   const terms = process.argv.slice(2);
   const searchTerms = terms.length > 0 ? terms : DEFAULT_TERMS;
 
-  const provider = createRawgProvider(config.RAWG_API_KEY);
+  // Counted like live traffic: it all comes out of the same allowance.
+  const provider = createRawgProvider(config.RAWG_API_KEY, fetch, {
+    onRequest: createRawgUsageRecorder(supabase()),
+  });
   const repo = createGamesRepository(supabase());
 
   let imported = 0;

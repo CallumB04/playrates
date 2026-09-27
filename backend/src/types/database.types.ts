@@ -187,3 +187,115 @@ export interface CommunityMessageRow {
   edited_at: string | null;
   deleted_at: string | null;
 }
+
+/** Written by triggers on the tables it describes. No foreign keys: it
+ *  outlives what it describes. */
+export interface ActivityEventRow {
+  id: number;
+  actor_id: string | null;
+  kind: string;
+  game_id: number | null;
+  subject_id: string | null;
+  data: Record<string, unknown>;
+  created_at: string;
+}
+
+/** activity_events joined to the names and covers it points at. */
+export interface AdminActivityFeedRow extends ActivityEventRow {
+  actor_username: string | null;
+  actor_avatar_url: string | null;
+  actor_accent: string | null;
+  game_title: string | null;
+  game_cover_url: string | null;
+  subject_username: string | null;
+  message_excerpt: string | null;
+}
+
+export interface GameEventRow {
+  id: number;
+  kind: string;
+  game_id: number | null;
+  source: string | null;
+  actor_id: string | null;
+  data: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface AdminGameFeedRow extends GameEventRow {
+  game_title: string | null;
+  game_slug: string | null;
+  game_cover_url: string | null;
+  game_is_trending: boolean | null;
+  game_rawg_id: number | null;
+  actor_username: string | null;
+}
+
+export interface AdminUserDirectoryRow {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  accent: string | null;
+  is_admin: boolean;
+  created_at: string;
+  last_seen_at: string;
+  onboarded_at: string | null;
+  log_count: number;
+  review_count: number;
+  message_count: number;
+  friend_count: number;
+  active_day_count: number;
+}
+
+export interface RawgUsageDayRow {
+  /** YYYY-MM-DD, UTC. */
+  day: string;
+  requests: number;
+  failures: number;
+  last_request_at: string | null;
+  last_failure_at: string | null;
+  last_error: string | null;
+}
+
+export interface ServerErrorRow {
+  id: number;
+  status: number;
+  code: string;
+  method: string;
+  path: string;
+  message: string;
+  request_id: string | null;
+  user_id: string | null;
+  stack: string | null;
+  created_at: string;
+}
+
+export interface AnnouncementRow {
+  id: number;
+  tone: string;
+  title: string;
+  body: string;
+  link_path: string | null;
+  sent_by: string | null;
+  recipient_count: number;
+  created_at: string;
+  retracted_at: string | null;
+  /** The patch-notes entry this announces, when it announces one. */
+  patch_note_message_id: number | null;
+}
+
+/** announcements with how many copies have been read. */
+export interface AnnouncementCardRow extends AnnouncementRow {
+  read_count: number;
+}
+
+/** One row of admin_series(). */
+export interface AdminSeriesRow {
+  bucket: string;
+  signups: number;
+  logs: number;
+  reviews: number;
+  threads: number;
+  messages: number;
+  active: number;
+  active_week: number;
+}

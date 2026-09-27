@@ -7,3 +7,4 @@ export * from "./endpoints/reviews";
 export * from "./endpoints/friends";
 export * from "./endpoints/notifications";
 export * from "./endpoints/community";
+export * from "./endpoints/admin";

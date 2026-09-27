@@ -63,6 +63,9 @@ export interface GamesRepository {
     },
   ): Promise<void>;
   count(): Promise<number>;
+  /** Which of these upstream ids are already in the catalogue. */
+  existingRawgIds(rawgIds: number[]): Promise<number[]>;
+  setTrending(id: number, isTrending: boolean): Promise<void>;
 }
 
 export const createGamesRepository = (db: Db): GamesRepository => ({
@@ -429,5 +432,23 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       .select("id", { count: "exact", head: true });
     if (error) throw error;
     return count ?? 0;
+  },
+
+  async existingRawgIds(rawgIds) {
+    if (rawgIds.length === 0) return [];
+    const { data, error } = await db
+      .from("games")
+      .select("rawg_id")
+      .in("rawg_id", rawgIds);
+    if (error) throw error;
+    return (data ?? []).map((row) => row.rawg_id as number);
+  },
+
+  async setTrending(id, isTrending) {
+    const { error } = await db
+      .from("games")
+      .update({ is_trending: isTrending })
+      .eq("id", id);
+    if (error) throw error;
   },
 });

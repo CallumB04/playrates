@@ -25,10 +25,30 @@ interface RawgListResponse {
   results?: RawgGame[];
 }
 
+export interface RawgRequestOutcome {
+  failed: boolean;
+  error: string | null;
+}
+
+export interface RawgHooks {
+  /** Once per call to RAWG, retries included: each one spends from the
+   *  monthly allowance. Awaited, but a failure here is swallowed. */
+  onRequest?: (outcome: RawgRequestOutcome) => Promise<void> | void;
+}
+
 export const createRawgProvider = (
   apiKey: string,
   fetchImpl: typeof fetch = fetch,
+  hooks: RawgHooks = {},
 ): GamesProvider => {
+  const report = async (outcome: RawgRequestOutcome): Promise<void> => {
+    try {
+      await hooks.onRequest?.(outcome);
+    } catch {
+      // counting a request must never be why it fails
+    }
+  };
+
   // Chained with a minimum gap, so a burst of searches can't trip RAWG's rate
   // limit. Single-process only: a second instance keeps its own chain.
   let chain: Promise<unknown> = Promise.resolve();
@@ -58,9 +78,24 @@ export const createRawgProvider = (
       }
 
       for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-        const response = await fetchImpl(url, {
-          headers: { Accept: "application/json" },
-          signal: AbortSignal.timeout(TIMEOUT_MS),
+        let response: Response;
+        try {
+          response = await fetchImpl(url, {
+            headers: { Accept: "application/json" },
+            signal: AbortSignal.timeout(TIMEOUT_MS),
+          });
+        } catch (error) {
+          await report({
+            failed: true,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          throw error;
+        }
+
+        const retryable = response.status === 429 || response.status >= 500;
+        await report({
+          failed: retryable || (!response.ok && response.status !== 404),
+          error: response.ok ? null : `RAWG responded ${response.status}`,
         });
 
         if (response.ok) return (await response.json()) as T;
@@ -70,7 +105,7 @@ export const createRawgProvider = (
         }
 
         // retry on throttling and transient upstream failures
-        if (response.status === 429 || response.status >= 500) {
+        if (retryable) {
           const backoff = 2 ** attempt * 250 + Math.floor(Math.random() * 150);
           await new Promise((r) => setTimeout(r, backoff));
           continue;
@@ -105,6 +140,22 @@ export const createRawgProvider = (
      */
     async listByPopularity(page, pageSize): Promise<GamePage> {
       const data = await request<RawgListResponse>("/games", {
+        ordering: "-added",
+        page: String(page),
+        page_size: String(Math.min(pageSize, 40)),
+      });
+
+      return {
+        games: (data.results ?? []).map(toExternalGame),
+        total: data.count ?? 0,
+        hasNext: Boolean(data.next),
+      };
+    },
+
+    async listByDate({ from, to, page, pageSize }): Promise<GamePage> {
+      const data = await request<RawgListResponse>("/games", {
+        dates: `${from},${to}`,
+        // most-tracked first, so a capped pull takes the ones people want
         ordering: "-added",
         page: String(page),
         page_size: String(Math.min(pageSize, 40)),

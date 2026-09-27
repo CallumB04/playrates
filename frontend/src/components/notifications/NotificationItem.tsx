@@ -6,6 +6,7 @@ import {
     CircleCheck,
     type LucideIcon,
 } from "lucide-react";
+import IconMark from "./IconMark";
 import type { AppNotification } from "@playrates/shared";
 import { usePatchNotification } from "../../hooks/queries/useNotifications";
 import { relativeTime } from "../../lib/format";
@@ -19,18 +20,6 @@ const ACTION =
     "before:absolute before:-inset-2 before:content-[''] hover:bg-surface-hover hover:text-content " +
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand " +
     "disabled:cursor-not-allowed disabled:opacity-50";
-
-/** The mark a kind falls back to when it has no face to show. */
-const IconMark = ({ icon: Icon, tone }: { icon: LucideIcon; tone: string }) => (
-    <span
-        className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-full border border-subtle bg-surface-sunken",
-            tone
-        )}
-    >
-        <Icon size={16} aria-hidden />
-    </span>
-);
 
 const RowAction = ({
     icon: Icon,
@@ -66,9 +55,13 @@ const RowAction = ({
 const NotificationItem = ({
     notification,
     onNavigate,
+    preview = false,
 }: {
     notification: AppNotification;
     onNavigate: () => void;
+    /** A row that isn't in anyone's inbox yet, for the announcement composer:
+     *  laid out exactly as the bell has it, with nothing to act on. */
+    preview?: boolean;
 }) => {
     const patch = usePatchNotification();
     const renderer = NOTIFICATION_RENDERERS[notification.kind];
@@ -120,7 +113,7 @@ const NotificationItem = ({
                 <RowAction
                     icon={unread ? Circle : CircleCheck}
                     label={unread ? "Mark as read" : "Mark as unread"}
-                    disabled={patch.isPending}
+                    disabled={preview || patch.isPending}
                     onClick={() =>
                         patch.mutate({
                             id: notification.id,
@@ -131,7 +124,7 @@ const NotificationItem = ({
                 <RowAction
                     icon={archived ? ArchiveRestore : Archive}
                     label={archived ? "Move back to inbox" : "Archive"}
-                    disabled={patch.isPending}
+                    disabled={preview || patch.isPending}
                     onClick={() =>
                         patch.mutate({
                             id: notification.id,

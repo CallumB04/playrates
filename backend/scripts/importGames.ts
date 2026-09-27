@@ -17,6 +17,7 @@ import { supabase } from "../src/config/supabase.js";
 import { createLogger } from "../src/lib/logger.js";
 import { createGamesRepository } from "../src/modules/games/games.repository.js";
 import { createRawgProvider } from "../src/providers/games/rawg/rawg.provider.js";
+import { createRawgUsageRecorder } from "../src/config/rawgUsage.js";
 
 const PAGE_SIZE = 40;
 const DEFAULT_LIMIT = 100_000;
@@ -63,7 +64,10 @@ const main = async () => {
     process.exit(1);
   }
 
-  const provider = createRawgProvider(config.RAWG_API_KEY);
+  // Counted like live traffic: it all comes out of the same allowance.
+  const provider = createRawgProvider(config.RAWG_API_KEY, fetch, {
+    onRequest: createRawgUsageRecorder(supabase()),
+  });
   const repo = createGamesRepository(supabase());
 
   const pagesNeeded = Math.ceil(options.limit / PAGE_SIZE);

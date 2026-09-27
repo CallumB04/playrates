@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import { popoverClass } from "../ui/popover";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, UserRound } from "lucide-react";
+import { LogOut, Settings, Shield, UserRound } from "lucide-react";
 import { GAME_STATUSES, STATUS_PRESENTATION } from "../../constants/gameStatus";
-import type { Profile } from "@playrates/shared";
+import type { MyProfile } from "@playrates/shared";
 import ProfilePicture from "../ProfilePicture";
 import { cn } from "../../lib/cn";
 import { useDismiss } from "../../hooks/useDismiss";
@@ -16,7 +16,7 @@ const AccountMenu = ({
     user,
     onSignOut,
 }: {
-    user: Profile;
+    user: MyProfile;
     onSignOut: () => void;
 }) => {
     const [open, setOpen] = useState(false);
@@ -109,6 +109,16 @@ const AccountMenu = ({
                     >
                         <Settings size={15} aria-hidden /> Settings
                     </Link>
+                    {user.isAdmin && (
+                        <Link
+                            to="/admin"
+                            onClick={() => setOpen(false)}
+                            className={ITEM}
+                            role="menuitem"
+                        >
+                            <Shield size={15} aria-hidden /> Admin
+                        </Link>
+                    )}
                     <button
                         type="button"
                         role="menuitem"

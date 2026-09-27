@@ -1,20 +1,25 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Request, Response } from "express";
-import { errorHandler } from "../../src/middleware/errorHandler.js";
+import {
+  createErrorHandler,
+  errorHandler,
+} from "../../src/middleware/errorHandler.js";
 import { AppError } from "../../src/lib/AppError.js";
 
-const runHandler = (error: unknown) => {
+const runHandler = async (error: unknown, handler = errorHandler) => {
   const json = vi.fn();
   // Typed params, or the mock's call tuple is [] and calls[0][0] won't index.
   const status = vi.fn((_code: number) => ({ json }));
   const req = {
     id: "req-1",
     path: "/test",
+    method: "GET",
+    originalUrl: "/test?x=1",
     log: undefined,
   } as unknown as Request;
   const res = { status } as unknown as Response;
 
-  errorHandler(error, req, res, vi.fn());
+  await handler(error, req, res, vi.fn());
 
   return {
     status: status.mock.calls[0]?.[0],
@@ -30,8 +35,8 @@ const runHandler = (error: unknown) => {
 };
 
 describe("error handler", () => {
-  it("passes an AppError through with its status and code", () => {
-    const { status, body } = runHandler(
+  it("passes an AppError through with its status and code", async () => {
+    const { status, body } = await runHandler(
       AppError.conflict("username_taken", "That username is taken"),
     );
 
@@ -40,8 +45,8 @@ describe("error handler", () => {
     expect(body.error.message).toBe("That username is taken");
   });
 
-  it("includes validation details on a 422", () => {
-    const { body } = runHandler(
+  it("includes validation details on a 422", async () => {
+    const { body } = await runHandler(
       AppError.validation("Request validation failed", {
         rating: ["must be a multiple of 0.25"],
       }),
@@ -52,28 +57,28 @@ describe("error handler", () => {
     });
   });
 
-  it("maps a Postgres unique violation to 409", () => {
-    const { status, body } = runHandler({ code: "23505" });
+  it("maps a Postgres unique violation to 409", async () => {
+    const { status, body } = await runHandler({ code: "23505" });
 
     expect(status).toBe(409);
     expect(body.error.code).toBe("already_exists");
   });
 
-  it("maps a foreign key violation to 422", () => {
-    expect(runHandler({ code: "23503" }).status).toBe(422);
+  it("maps a foreign key violation to 422", async () => {
+    expect((await runHandler({ code: "23503" })).status).toBe(422);
   });
 
-  it("maps a check constraint violation to 422", () => {
-    expect(runHandler({ code: "23514" }).status).toBe(422);
+  it("maps a check constraint violation to 422", async () => {
+    expect((await runHandler({ code: "23514" })).status).toBe(422);
   });
 
-  it("maps a PostgREST no-rows result to 404", () => {
-    expect(runHandler({ code: "PGRST116" }).status).toBe(404);
+  it("maps a PostgREST no-rows result to 404", async () => {
+    expect((await runHandler({ code: "PGRST116" })).status).toBe(404);
   });
 
   /** A 5xx must never leak internals to the client. */
-  it("hides the message and details of an unexpected error", () => {
-    const { status, body } = runHandler(
+  it("hides the message and details of an unexpected error", async () => {
+    const { status, body } = await runHandler(
       new Error('duplicate key value violates constraint "profiles_pkey"'),
     );
 
@@ -83,7 +88,52 @@ describe("error handler", () => {
     expect(body.error.details).toBeUndefined();
   });
 
-  it("always includes the request id", () => {
-    expect(runHandler(AppError.notFound()).body.error.requestId).toBe("req-1");
+  it("always includes the request id", async () => {
+    expect((await runHandler(AppError.notFound())).body.error.requestId).toBe("req-1");
+  });
+
+  it("records a 5xx with the original message, for the admin error feed", async () => {
+    const sink = vi.fn(async () => undefined);
+    await runHandler(new Error("connection reset"), createErrorHandler(sink));
+
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 500,
+        code: "internal_error",
+        method: "GET",
+        path: "/test?x=1",
+        message: "connection reset",
+        requestId: "req-1",
+      }),
+    );
+  });
+
+  it("does not record a client error", async () => {
+    const sink = vi.fn(async () => undefined);
+    await runHandler(AppError.notFound(), createErrorHandler(sink));
+
+    expect(sink).not.toHaveBeenCalled();
+  });
+
+  it("records what a database error says, though it is not an Error", async () => {
+    const sink = vi.fn(async () => undefined);
+    // The shape PostgREST rejects with when a statement runs out of time.
+    await runHandler(
+      {
+        code: "57014",
+        message: "canceling statement due to statement timeout",
+        details: null,
+        hint: null,
+      },
+      createErrorHandler(sink),
+    );
+
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 500,
+        message: "57014 · canceling statement due to statement timeout",
+        stack: expect.stringContaining("statement timeout"),
+      }),
+    );
   });
 });

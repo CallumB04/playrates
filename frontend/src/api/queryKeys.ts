@@ -85,6 +85,28 @@ export const queryKeys = {
             ["community", "user", username, limit] as const,
     },
 
+    admin: {
+        all: ["admin"] as const,
+        overview: (range: string) => ["admin", "overview", range] as const,
+        metric: (metric: string, range: string) =>
+            ["admin", "metric", metric, range] as const,
+        activity: (filters: Record<string, unknown>) =>
+            ["admin", "activity", filters] as const,
+        users: (filters: Record<string, unknown>) =>
+            ["admin", "users", filters] as const,
+        user: (id: string) => ["admin", "user", id] as const,
+        gameEvents: (group: string) =>
+            ["admin", "games", "events", group] as const,
+        gameSearch: (q: string) => ["admin", "games", "search", q] as const,
+        rawgUsage: ["admin", "games", "rawg-usage"] as const,
+        announcements: ["admin", "announcements"] as const,
+        /* Under announcements, so anything that refreshes the history —
+           taking one back above all — refreshes which entries went out. */
+        patchNotes: ["admin", "announcements", "patch-notes"] as const,
+        health: ["admin", "health"] as const,
+        errors: ["admin", "errors"] as const,
+    },
+
     notifications: {
         all: ["notifications"] as const,
         /* The inbox and the archive are separate lists, not one list filtered
