@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { PULL_MAX_PAGES, PULL_PAGE_SIZE, type AdminPullResult } from "@playrates/shared";
+import {
+    PULL_MAX_PAGES,
+    PULL_PAGE_SIZE,
+    type AdminPullResult,
+} from "@playrates/shared";
 import { cardClass } from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import SegmentedChoice from "../../../components/ui/SegmentedChoice";
@@ -13,7 +17,13 @@ type Window = "7" | "30" | "90";
 
 const PAGES = Array.from({ length: PULL_MAX_PAGES }, (_, i) => String(i + 1));
 
-const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
+const Row = ({
+    label,
+    children,
+}: {
+    label: string;
+    children: React.ReactNode;
+}) => (
     <div className="flex flex-col gap-2 border-b border-subtle py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <span className="text-body-sm text-content-secondary">{label}</span>
         {children}
@@ -39,7 +49,11 @@ const PullPanel = () => {
 
     const run = () =>
         pull.mutate(
-            { windowDays: Number(windowDays) as 7 | 30 | 90, includeUpcoming, maxPages: pages },
+            {
+                windowDays: Number(windowDays) as 7 | 30 | 90,
+                includeUpcoming,
+                maxPages: pages,
+            },
             {
                 onSuccess: (outcome) => {
                     setResult(outcome);
@@ -59,7 +73,10 @@ const PullPanel = () => {
         );
 
     return (
-        <section aria-labelledby="pull-heading" className={cardClass("flex flex-col")}>
+        <section
+            aria-labelledby="pull-heading"
+            className={cardClass("flex flex-col")}
+        >
             <h2 id="pull-heading" className="text-label text-content-muted">
                 Bring in new releases
             </h2>
@@ -95,26 +112,47 @@ const PullPanel = () => {
 
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-label text-content-muted">
-                    Up to <span className="font-mono text-content">{pages}</span>{" "}
+                    Up to{" "}
+                    <span className="font-mono text-content">{pages}</span>{" "}
                     {pages === 1 ? "request" : "requests"}
                     {left !== null && (
                         <>
                             {" "}
-                            of the <span className="font-mono">{formatCount(left)}</span> left
+                            of the{" "}
+                            <span className="font-mono">
+                                {formatCount(left)}
+                            </span>{" "}
+                            left
                         </>
                     )}
                 </p>
-                <Button onClick={() => setConfirming(true)} disabled={pull.isPending} className="w-full sm:w-auto">
+                <Button
+                    onClick={() => setConfirming(true)}
+                    disabled={pull.isPending}
+                    className="w-full sm:w-auto"
+                >
                     {pull.isPending ? "Asking RAWG…" : "Pull from RAWG"}
                 </Button>
             </div>
 
             {result && (
                 <p className="mt-4 border-t border-subtle pt-3 text-body-sm text-content-secondary">
-                    Last pull brought back <span className="font-mono text-content">{formatCount(result.fetched)}</span>:{" "}
-                    <span className="font-mono text-content">{formatCount(result.added)}</span> new,{" "}
-                    <span className="font-mono">{formatCount(result.updated)}</span> refreshed
-                    {result.hasMore ? ". RAWG has more past the page cap." : "."}
+                    Last pull brought back{" "}
+                    <span className="font-mono text-content">
+                        {formatCount(result.fetched)}
+                    </span>
+                    :{" "}
+                    <span className="font-mono text-content">
+                        {formatCount(result.added)}
+                    </span>{" "}
+                    new,{" "}
+                    <span className="font-mono">
+                        {formatCount(result.updated)}
+                    </span>{" "}
+                    refreshed
+                    {result.hasMore
+                        ? ". RAWG has more past the page cap."
+                        : "."}
                 </p>
             )}
 

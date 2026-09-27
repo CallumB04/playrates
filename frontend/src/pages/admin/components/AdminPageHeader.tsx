@@ -18,9 +18,15 @@ const AdminPageHeader = ({
         <div className="mb-5 flex flex-col gap-4 empty:hidden sm:flex-row sm:items-end sm:justify-between">
             <h2 className="sr-only">{title}</h2>
             {description && (
-                <p className="max-w-[60ch] text-body text-content-secondary">{description}</p>
+                <p className="max-w-[60ch] text-body text-content-secondary">
+                    {description}
+                </p>
             )}
-            {actions && <div className="flex flex-wrap items-center gap-2 sm:ml-auto">{actions}</div>}
+            {actions && (
+                <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+                    {actions}
+                </div>
+            )}
         </div>
     );
 };

@@ -26,7 +26,10 @@ const GameRow = ({ game }: { game: AdminGameSummary }) => {
 
     return (
         <li className="flex flex-col gap-3 border-b border-subtle py-3 last:border-b-0 sm:flex-row sm:items-center sm:gap-5">
-            <Link to={`/game/${game.id}`} className="group flex min-w-0 flex-1 items-center gap-3">
+            <Link
+                to={`/game/${game.id}`}
+                className="group flex min-w-0 flex-1 items-center gap-3"
+            >
                 <GameCover
                     coverUrl={game.coverUrl}
                     title={game.title}
@@ -37,8 +40,13 @@ const GameRow = ({ game }: { game: AdminGameSummary }) => {
                         {game.title}
                     </span>
                     <span className="mt-0.5 block truncate text-label-sm text-content-muted">
-                        <span className="font-mono">{releaseYear(game.releaseDate)}</span> ·{" "}
-                        <span className="font-mono">{formatCount(game.logCount)}</span>{" "}
+                        <span className="font-mono">
+                            {releaseYear(game.releaseDate)}
+                        </span>{" "}
+                        ·{" "}
+                        <span className="font-mono">
+                            {formatCount(game.logCount)}
+                        </span>{" "}
                         {game.logCount === 1 ? "log" : "logs"} ·{" "}
                         {game.detailsSyncedAt
                             ? `details from ${relativeTime(game.detailsSyncedAt)}`
@@ -54,8 +62,14 @@ const GameRow = ({ game }: { game: AdminGameSummary }) => {
                             { id: game.id, isTrending },
                             {
                                 onSuccess: () =>
-                                    notify(isTrending ? `${game.title} is trending` : `${game.title} is off the rail`, "success"),
-                                onError: () => notify("That didn’t save", "error"),
+                                    notify(
+                                        isTrending
+                                            ? `${game.title} is trending`
+                                            : `${game.title} is off the rail`,
+                                        "success"
+                                    ),
+                                onError: () =>
+                                    notify("That didn’t save", "error"),
                             }
                         )
                     }
@@ -66,10 +80,18 @@ const GameRow = ({ game }: { game: AdminGameSummary }) => {
                     variant="secondary"
                     size="sm"
                     disabled={resync.isPending || game.rawgId === null}
-                    title={game.rawgId === null ? "This one didn’t come from RAWG" : undefined}
+                    title={
+                        game.rawgId === null
+                            ? "This one didn’t come from RAWG"
+                            : undefined
+                    }
                     onClick={() =>
                         resync.mutate(game.id, {
-                            onSuccess: () => notify(`${game.title} is up to date`, "success"),
+                            onSuccess: () =>
+                                notify(
+                                    `${game.title} is up to date`,
+                                    "success"
+                                ),
                             onError: (error) => notify(error.message, "error"),
                         })
                     }
@@ -97,7 +119,12 @@ const GameControls = () => {
         if (!Number.isInteger(id) || id <= 0) return;
         importGame.mutate(id, {
             onSuccess: ({ game, created }) => {
-                notify(created ? `${game.title} is in the catalogue` : `${game.title} was already here`, "success");
+                notify(
+                    created
+                        ? `${game.title} is in the catalogue`
+                        : `${game.title} was already here`,
+                    "success"
+                );
                 setRawgId("");
                 setQuery(game.title);
             },
@@ -106,8 +133,14 @@ const GameControls = () => {
     };
 
     return (
-        <section aria-labelledby="look-after-heading" className={cardClass("flex flex-col")}>
-            <h2 id="look-after-heading" className="text-label text-content-muted">
+        <section
+            aria-labelledby="look-after-heading"
+            className={cardClass("flex flex-col")}
+        >
+            <h2
+                id="look-after-heading"
+                className="text-label text-content-muted"
+            >
                 Look after a game
             </h2>
             <div className="relative mt-3">
@@ -125,20 +158,36 @@ const GameControls = () => {
             </div>
 
             {q.length >= 2 && games && (
-                <ul className={cn("mt-2 flex flex-col transition-opacity", isFetching && "opacity-60")}>
+                <ul
+                    className={cn(
+                        "mt-2 flex flex-col transition-opacity",
+                        isFetching && "opacity-60"
+                    )}
+                >
                     {games.length === 0 ? (
                         <li className="py-3 text-body-sm text-content-muted">
-                            Nothing called that here. If RAWG has it, bring it in by its id.
+                            Nothing called that here. If RAWG has it, bring it
+                            in by its id.
                         </li>
                     ) : (
-                        games.slice(0, 5).map((game) => <GameRow key={game.id} game={game} />)
+                        games
+                            .slice(0, 5)
+                            .map((game) => (
+                                <GameRow key={game.id} game={game} />
+                            ))
                     )}
                 </ul>
             )}
 
-            <form onSubmit={submitImport} className="mt-5 flex flex-col gap-2 border-t border-subtle pt-4">
+            <form
+                onSubmit={submitImport}
+                className="mt-5 flex flex-col gap-2 border-t border-subtle pt-4"
+            >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                    <Field label="Bring one in by its RAWG id" className="sm:max-w-xs sm:flex-1">
+                    <Field
+                        label="Bring one in by its RAWG id"
+                        className="sm:max-w-xs sm:flex-1"
+                    >
                         {(a11y) => (
                             <NumberInput
                                 {...a11y}
@@ -160,7 +209,9 @@ const GameControls = () => {
                         {importGame.isPending ? "Importing…" : "Import"}
                     </Button>
                 </div>
-                <p className="text-label-sm text-content-muted">Costs two or three RAWG requests.</p>
+                <p className="text-label-sm text-content-muted">
+                    Costs two or three RAWG requests.
+                </p>
             </form>
         </section>
     );

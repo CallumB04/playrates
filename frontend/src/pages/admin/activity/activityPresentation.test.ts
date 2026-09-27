@@ -27,15 +27,22 @@ describe("activitySummary", () => {
 
     it("names a closed account by the username it had", () => {
         const summary = activitySummary(
-            event({ kind: "account_deleted", actor: null, data: { username: "gone" } })
+            event({
+                kind: "account_deleted",
+                actor: null,
+                data: { username: "gone" },
+            })
         );
-        expect(summary).toMatchObject({ who: "gone", action: "closed their account" });
+        expect(summary).toMatchObject({
+            who: "gone",
+            action: "closed their account",
+        });
     });
 
     it("falls back when the actor's account is gone", () => {
-        expect(activitySummary(event({ kind: "log_added", actor: null })).who).toBe(
-            "A deleted account"
-        );
+        expect(
+            activitySummary(event({ kind: "log_added", actor: null })).who
+        ).toBe("A deleted account");
     });
 
     it("uses the home feed's verb for a new log, and carries its rating", () => {
@@ -56,7 +63,13 @@ describe("activitySummary", () => {
 
     it("says a wishlisting the way the home feed does", () => {
         expect(
-            activitySummary(event({ kind: "log_added", group: "logs", data: { status: "wishlist" } })).action
+            activitySummary(
+                event({
+                    kind: "log_added",
+                    group: "logs",
+                    data: { status: "wishlist" },
+                })
+            ).action
         ).toBe("wishlisted");
     });
 
@@ -66,7 +79,11 @@ describe("activitySummary", () => {
                 kind: "log_updated",
                 group: "logs",
                 data: {
-                    from: { status: "backlog", playedStatus: null, rating: null },
+                    from: {
+                        status: "backlog",
+                        playedStatus: null,
+                        rating: null,
+                    },
                     to: { status: "playing", playedStatus: null, rating: null },
                 },
             })
@@ -98,7 +115,11 @@ describe("activitySummary", () => {
             event({
                 kind: "message_posted",
                 group: "community",
-                data: { threadId: 12, threadTitle: "Best boss?", isReply: true },
+                data: {
+                    threadId: 12,
+                    threadTitle: "Best boss?",
+                    isReply: true,
+                },
             })
         );
         expect(summary).toMatchObject({
@@ -109,11 +130,18 @@ describe("activitySummary", () => {
     });
 
     it("tells a withdrawn request from an unfriending", () => {
-        const base = { kind: "friend_removed", group: "social" as const, subjectUsername: "cee" };
-        expect(activitySummary(event({ ...base, data: { wasAccepted: false } })).action).toBe(
-            "withdrew their request to"
-        );
-        expect(activitySummary(event({ ...base, data: { wasAccepted: true } }))).toMatchObject({
+        const base = {
+            kind: "friend_removed",
+            group: "social" as const,
+            subjectUsername: "cee",
+        };
+        expect(
+            activitySummary(event({ ...base, data: { wasAccepted: false } }))
+                .action
+        ).toBe("withdrew their request to");
+        expect(
+            activitySummary(event({ ...base, data: { wasAccepted: true } }))
+        ).toMatchObject({
             action: "unfriended",
             target: "cee",
             href: "/user/cee",
@@ -122,15 +150,22 @@ describe("activitySummary", () => {
 
     it("reports a name change with the old name", () => {
         const summary = activitySummary(
-            event({ kind: "profile_updated", data: { fields: ["username"], previousUsername: "old" } })
+            event({
+                kind: "profile_updated",
+                data: { fields: ["username"], previousUsername: "old" },
+            })
         );
-        expect(summary).toMatchObject({ action: "changed their name from", target: "old" });
+        expect(summary).toMatchObject({
+            action: "changed their name from",
+            target: "old",
+        });
     });
 
     it("still says something for a kind it has never seen", () => {
-        expect(activitySummary(event({ kind: "brand_new_thing", group: null })).action).toBe(
-            "brand new thing"
-        );
+        expect(
+            activitySummary(event({ kind: "brand_new_thing", group: null }))
+                .action
+        ).toBe("brand new thing");
     });
 });
 
@@ -140,14 +175,22 @@ describe("activityMark", () => {
             event({
                 kind: "log_updated",
                 group: "logs",
-                data: { from: { status: "backlog" }, to: { status: "wishlist" } },
+                data: {
+                    from: { status: "backlog" },
+                    to: { status: "wishlist" },
+                },
             })
         );
-        expect(mark).toMatchObject({ label: "Wishlist", className: "text-status-wishlist" });
+        expect(mark).toMatchObject({
+            label: "Wishlist",
+            className: "text-status-wishlist",
+        });
     });
 
     it("marks anything taken away as removed, whatever it was", () => {
-        expect(activityMark(event({ kind: "review_removed", group: "reviews" }))).toMatchObject({
+        expect(
+            activityMark(event({ kind: "review_removed", group: "reviews" }))
+        ).toMatchObject({
             label: "Removed",
             className: "text-danger",
         });
@@ -156,12 +199,18 @@ describe("activityMark", () => {
     it("says a review is private before anything else about it", () => {
         expect(
             activityMark(
-                event({ kind: "review_posted", group: "reviews", data: { isPublic: false, containsSpoilers: true } })
+                event({
+                    kind: "review_posted",
+                    group: "reviews",
+                    data: { isPublic: false, containsSpoilers: true },
+                })
             )?.label
         ).toBe("Private");
     });
 
     it("leaves everything else unmarked", () => {
-        expect(activityMark(event({ kind: "friend_accepted", group: "social" }))).toBeNull();
+        expect(
+            activityMark(event({ kind: "friend_accepted", group: "social" }))
+        ).toBeNull();
     });
 });

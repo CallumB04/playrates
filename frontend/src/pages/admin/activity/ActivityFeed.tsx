@@ -40,33 +40,58 @@ const ActivityFeed = ({
         return compact ? (
             <EmptyNote>Nothing yet.</EmptyNote>
         ) : (
-            <EmptyPlate title="Nothing to show" body="Nobody has done that yet. Pick another kind, or clear the filter." />
+            <EmptyPlate
+                title="Nothing to show"
+                body="Nobody has done that yet. Pick another kind, or clear the filter."
+            />
         );
     }
 
     return (
-        <div className={cn("transition-opacity", feed.isPlaceholderData && "opacity-60")}>
-            <div className={compact ? undefined : cardClass("px-1.5 pt-1 pb-2 sm:px-2", { padding: "none" })}>
+        <div
+            className={cn(
+                "transition-opacity",
+                feed.isPlaceholderData && "opacity-60"
+            )}
+        >
+            <div
+                className={
+                    compact
+                        ? undefined
+                        : cardClass("px-1.5 pt-1 pb-2 sm:px-2", {
+                              padding: "none",
+                          })
+                }
+            >
                 {groupByDay(events, (e) => e.createdAt).map((day) => (
                     <section key={day.key}>
                         <h3 className="flex items-baseline justify-between px-2 pt-3.5 pb-1 text-label text-content-muted">
                             {day.label}
-                            <span className="font-mono text-label-sm">{day.items.length}</span>
+                            <span className="font-mono text-label-sm">
+                                {day.items.length}
+                            </span>
                         </h3>
                         <ul className="flex flex-col">
                             {day.items.map((event) => (
-                                <ActivityRow key={event.id} event={event} day={day.label} onFilterUser={onFilterUser} />
+                                <ActivityRow
+                                    key={event.id}
+                                    event={event}
+                                    day={day.label}
+                                    onFilterUser={onFilterUser}
+                                />
                             ))}
                         </ul>
                     </section>
                 ))}
             </div>
-            {!limit && <ShowOlder
-                hasMore={feed.hasNextPage}
-                loading={feed.isFetchingNextPage}
-                onClick={() => feed.fetchNextPage()}
-                end="That’s where the log begins."
-            />}
+            {!limit && (
+                <ShowOlder
+                    hasMore={feed.hasNextPage}
+                    loading={feed.isFetchingNextPage}
+                    onClick={() => feed.fetchNextPage()}
+                    end="That’s where the log begins."
+                />
+            )}
         </div>
     );
 };

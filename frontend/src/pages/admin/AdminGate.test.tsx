@@ -25,14 +25,20 @@ describe("AdminGate", () => {
     });
 
     it("shows a signed-in user who is not the admin the same page", () => {
-        auth.value = { user: buildProfile({ isAdmin: false }), isLoading: false };
+        auth.value = {
+            user: buildProfile({ isAdmin: false }),
+            isLoading: false,
+        };
         renderWithProviders(<AdminGate />);
         expect(screen.getByText("404")).toBeInTheDocument();
         expect(screen.queryByText("the dashboard")).not.toBeInTheDocument();
     });
 
     it("loads the dashboard for the admin", async () => {
-        auth.value = { user: buildProfile({ isAdmin: true }), isLoading: false };
+        auth.value = {
+            user: buildProfile({ isAdmin: true }),
+            isLoading: false,
+        };
         renderWithProviders(<AdminGate />);
         expect(await screen.findByText("the dashboard")).toBeInTheDocument();
     });

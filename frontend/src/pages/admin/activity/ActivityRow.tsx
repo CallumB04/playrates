@@ -12,7 +12,10 @@ import { timeInDay } from "../lib/plot";
 import { activityMark, activitySummary } from "./activityPresentation";
 
 const at = (iso: string) =>
-    new Date(iso).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+    new Date(iso).toLocaleString("en-GB", {
+        dateStyle: "medium",
+        timeStyle: "short",
+    });
 
 const LINK =
     "inline-flex min-h-11 items-center text-label font-medium text-brand underline-offset-2 hover:underline sm:min-h-0";
@@ -31,7 +34,10 @@ const Face = ({ event }: { event: AdminActivityEvent }) =>
         </span>
     ) : (
         // The account is gone; its place stays so the column still lines up.
-        <span aria-hidden className="size-9 shrink-0 rounded-full border border-dashed border-strong" />
+        <span
+            aria-hidden
+            className="size-9 shrink-0 rounded-full border border-dashed border-strong"
+        />
     );
 
 /**
@@ -55,7 +61,9 @@ const ActivityRow = ({
     const summary = activitySummary(event);
     const mark = activityMark(event);
     const change =
-        event.kind === "log_updated" ? (event.data as { from?: unknown; to?: unknown }) : null;
+        event.kind === "log_updated"
+            ? (event.data as { from?: unknown; to?: unknown })
+            : null;
 
     return (
         <li>
@@ -74,24 +82,39 @@ const ActivityRow = ({
 
                 <span className="min-w-0 flex-1">
                     <span className="block text-body-sm break-words text-content-secondary">
-                        <span className="font-medium text-content">{summary.who}</span> {summary.action}
+                        <span className="font-medium text-content">
+                            {summary.who}
+                        </span>{" "}
+                        {summary.action}
                         {summary.target && (
                             <>
                                 {" "}
-                                <span className="font-medium text-content">{summary.target}</span>
+                                <span className="font-medium text-content">
+                                    {summary.target}
+                                </span>
                             </>
                         )}
                         {summary.after && <> {summary.after}</>}
                     </span>
                     <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label-sm text-content-muted">
                         {mark && (
-                            <span className={cn("inline-flex items-center gap-1", mark.className)}>
+                            <span
+                                className={cn(
+                                    "inline-flex items-center gap-1",
+                                    mark.className
+                                )}
+                            >
                                 <mark.icon size={11} aria-hidden />
                                 {mark.label}
                             </span>
                         )}
-                        {summary.rating !== null && <RatingBadge value={summary.rating} />}
-                        <time dateTime={event.createdAt}>{timeInDay(event.createdAt, day) || relativeTime(event.createdAt)}</time>
+                        {summary.rating !== null && (
+                            <RatingBadge value={summary.rating} />
+                        )}
+                        <time dateTime={event.createdAt}>
+                            {timeInDay(event.createdAt, day) ||
+                                relativeTime(event.createdAt)}
+                        </time>
                     </span>
                 </span>
 
@@ -106,17 +129,35 @@ const ActivityRow = ({
 
             {open && (
                 <div id={detailsId} className="pb-2 pl-2 sm:pl-14">
-                    <div className={plateClass("pressed", "shallow", "flex flex-col gap-3 px-3.5 py-3")}>
+                    <div
+                        className={plateClass(
+                            "pressed",
+                            "shallow",
+                            "flex flex-col gap-3 px-3.5 py-3"
+                        )}
+                    >
                         <LedgerList>
-                            <LedgerRow label="When" value={at(event.createdAt)} />
+                            <LedgerRow
+                                label="When"
+                                value={at(event.createdAt)}
+                            />
                             <LedgerRow label="Recorded as" value={event.kind} />
                             {change && (
                                 <LedgerRow
                                     label="Change"
-                                    value={<span className="break-all">{JSON.stringify(change.from)} → {JSON.stringify(change.to)}</span>}
+                                    value={
+                                        <span className="break-all">
+                                            {JSON.stringify(change.from)} →{" "}
+                                            {JSON.stringify(change.to)}
+                                        </span>
+                                    }
                                 />
                             )}
-                            <LedgerRow label="Event" value={`#${event.id}`} rule={false} />
+                            <LedgerRow
+                                label="Event"
+                                value={`#${event.id}`}
+                                rule={false}
+                            />
                         </LedgerList>
 
                         {event.excerpt && (
@@ -127,8 +168,9 @@ const ActivityRow = ({
 
                         {event.data.backfilled === true && (
                             <p className="text-label-sm text-content-muted">
-                                Recovered from what was already here when the log began, so it
-                                shows the row as it stands now rather than as it was then.
+                                Recovered from what was already here when the
+                                log began, so it shows the row as it stands now
+                                rather than as it was then.
                             </p>
                         )}
 
@@ -139,14 +181,19 @@ const ActivityRow = ({
                                 </Link>
                             )}
                             {event.actor && (
-                                <Link to={`/user/${event.actor.username}`} className={LINK}>
+                                <Link
+                                    to={`/user/${event.actor.username}`}
+                                    className={LINK}
+                                >
                                     {event.actor.username}’s profile
                                 </Link>
                             )}
                             {event.actor && onFilterUser && (
                                 <button
                                     type="button"
-                                    onClick={() => onFilterUser(event.actor!.id)}
+                                    onClick={() =>
+                                        onFilterUser(event.actor!.id)
+                                    }
                                     className={cn(LINK, "cursor-pointer")}
                                 >
                                     Only {event.actor.username}

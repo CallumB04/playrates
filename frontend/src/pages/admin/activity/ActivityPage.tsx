@@ -19,7 +19,10 @@ const ActivityPage = () => {
     const userId = params.get("user") ?? undefined;
     const { data: user } = useAdminUser(userId ?? null);
 
-    const update = (next: { group?: ActivityGroup | null; user?: string | null }) => {
+    const update = (next: {
+        group?: ActivityGroup | null;
+        user?: string | null;
+    }) => {
         const copy = new URLSearchParams(params);
         for (const [key, value] of Object.entries(next)) {
             if (value) copy.set(key, value);
@@ -37,7 +40,11 @@ const ActivityPage = () => {
                     Everything
                 </Chip>
                 {ACTIVITY_GROUP_NAMES.map((name) => (
-                    <Chip key={name} selected={group === name} onClick={() => update({ group: name })}>
+                    <Chip
+                        key={name}
+                        selected={group === name}
+                        onClick={() => update({ group: name })}
+                    >
                         {GROUP_LABELS[name]}
                     </Chip>
                 ))}
@@ -53,7 +60,10 @@ const ActivityPage = () => {
                 )}
             </div>
 
-            <ActivityFeed filters={{ group, userId }} onFilterUser={(id) => update({ user: id })} />
+            <ActivityFeed
+                filters={{ group, userId }}
+                onFilterUser={(id) => update({ user: id })}
+            />
         </>
     );
 };

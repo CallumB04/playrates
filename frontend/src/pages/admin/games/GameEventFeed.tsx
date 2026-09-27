@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { GAME_EVENT_GROUP_NAMES, type AdminGameEvent, type GameEventGroup } from "@playrates/shared";
+import {
+    GAME_EVENT_GROUP_NAMES,
+    type AdminGameEvent,
+    type GameEventGroup,
+} from "@playrates/shared";
 import { cardClass } from "../../../components/ui/Card";
 import Chip from "../../../components/ui/Chip";
 import EmptyPlate, { EmptyNote } from "../../../components/ui/EmptyPlate";
@@ -16,7 +20,12 @@ import ShowOlder from "../components/ShowOlder";
 import { SeeAllButton, SeeAllModal } from "../components/SeeAll";
 import { useSeeAll } from "../components/useSeeAll";
 import { groupByDay, timeInDay } from "../lib/plot";
-import { GAME_GROUP_LABELS, SOURCE_WORDS, gameEventMark, gameEventSummary } from "./gamePresentation";
+import {
+    GAME_GROUP_LABELS,
+    SOURCE_WORDS,
+    gameEventMark,
+    gameEventSummary,
+} from "./gamePresentation";
 
 const EventRow = ({ event, day }: { event: AdminGameEvent; day: string }) => {
     const [open, setOpen] = useState(false);
@@ -45,41 +54,80 @@ const EventRow = ({ event, day }: { event: AdminGameEvent; day: string }) => {
                 ) : (
                     // A call to RAWG is about many games or none; its place
                     // stays so the sentences still line up.
-                    <span aria-hidden className="aspect-3/4 w-9 shrink-0 rounded-xs border border-dashed border-strong" />
+                    <span
+                        aria-hidden
+                        className="aspect-3/4 w-9 shrink-0 rounded-xs border border-dashed border-strong"
+                    />
                 )}
                 <span className="min-w-0 flex-1">
                     <span className="block text-body-sm break-words text-content-secondary">
-                        {title && <span className="font-medium text-content">{title} </span>}
+                        {title && (
+                            <span className="font-medium text-content">
+                                {title}{" "}
+                            </span>
+                        )}
                         {text}
                     </span>
                     <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label-sm text-content-muted">
                         {mark && (
-                            <span className={cn("inline-flex items-center gap-1", mark.className)}>
+                            <span
+                                className={cn(
+                                    "inline-flex items-center gap-1",
+                                    mark.className
+                                )}
+                            >
                                 <mark.icon size={11} aria-hidden />
                                 {mark.label}
                             </span>
                         )}
-                        {event.source && <span>{SOURCE_WORDS[event.source] ?? event.source}</span>}
-                        <time dateTime={event.createdAt}>{timeInDay(event.createdAt, day) || relativeTime(event.createdAt)}</time>
+                        {event.source && (
+                            <span>
+                                {SOURCE_WORDS[event.source] ?? event.source}
+                            </span>
+                        )}
+                        <time dateTime={event.createdAt}>
+                            {timeInDay(event.createdAt, day) ||
+                                relativeTime(event.createdAt)}
+                        </time>
                     </span>
                 </span>
             </button>
 
             {open && (
                 <div className="pb-2 pl-2 sm:pl-14">
-                    <div className={plateClass("pressed", "shallow", "flex flex-col gap-3 px-3.5 py-3")}>
+                    <div
+                        className={plateClass(
+                            "pressed",
+                            "shallow",
+                            "flex flex-col gap-3 px-3.5 py-3"
+                        )}
+                    >
                         <LedgerList>
                             <LedgerRow
                                 label="When"
-                                value={new Date(event.createdAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}
+                                value={new Date(event.createdAt).toLocaleString(
+                                    "en-GB",
+                                    { dateStyle: "medium", timeStyle: "short" }
+                                )}
                             />
                             <LedgerRow label="Recorded as" value={event.kind} />
-                            {event.game?.rawgId && <LedgerRow label="RAWG id" value={event.game.rawgId} />}
+                            {event.game?.rawgId && (
+                                <LedgerRow
+                                    label="RAWG id"
+                                    value={event.game.rawgId}
+                                />
+                            )}
                             {facts.map(([key, value], i) => (
                                 <LedgerRow
                                     key={key}
                                     label={key}
-                                    value={<span className="break-all">{typeof value === "string" ? value : JSON.stringify(value)}</span>}
+                                    value={
+                                        <span className="break-all">
+                                            {typeof value === "string"
+                                                ? value
+                                                : JSON.stringify(value)}
+                                        </span>
+                                    }
                                     rule={i < facts.length - 1}
                                 />
                             ))}
@@ -103,10 +151,16 @@ const Days = ({ events }: { events: AdminGameEvent[] }) => (
     <div className={cardClass("px-1.5 pt-1 pb-2 sm:px-2", { padding: "none" })}>
         {groupByDay(events, (e) => e.createdAt).map((day) => (
             <section key={day.key}>
-                <h3 className="px-2 pt-3.5 pb-1 text-label text-content-muted">{day.label}</h3>
+                <h3 className="px-2 pt-3.5 pb-1 text-label text-content-muted">
+                    {day.label}
+                </h3>
                 <ul className="flex flex-col">
                     {day.items.map((event) => (
-                        <EventRow key={event.id} event={event} day={day.label} />
+                        <EventRow
+                            key={event.id}
+                            event={event}
+                            day={day.label}
+                        />
                     ))}
                 </ul>
             </section>
@@ -127,7 +181,11 @@ const FullLog = () => {
                     Everything
                 </Chip>
                 {GAME_EVENT_GROUP_NAMES.map((name) => (
-                    <Chip key={name} selected={group === name} onClick={() => setGroup(name)}>
+                    <Chip
+                        key={name}
+                        selected={group === name}
+                        onClick={() => setGroup(name)}
+                    >
                         {GAME_GROUP_LABELS[name]}
                     </Chip>
                 ))}
@@ -137,7 +195,12 @@ const FullLog = () => {
             ) : events.length === 0 ? (
                 <EmptyPlate title="Nothing of that kind yet" />
             ) : (
-                <div className={cn("transition-opacity", feed.isPlaceholderData && "opacity-60")}>
+                <div
+                    className={cn(
+                        "transition-opacity",
+                        feed.isPlaceholderData && "opacity-60"
+                    )}
+                >
                     <Days events={events} />
                     <ShowOlder
                         hasMore={feed.hasNextPage}
@@ -160,11 +223,19 @@ const GameEventFeed = () => {
 
     return (
         <section>
-            <SectionHeader title="Latest in the catalogue" trailing={events.length > 0 && <SeeAllButton onClick={all.show} />} />
+            <SectionHeader
+                title="Latest in the catalogue"
+                trailing={
+                    events.length > 0 && <SeeAllButton onClick={all.show} />
+                }
+            />
             {feed.isPending ? (
                 <TextSkeleton lines={5} />
             ) : events.length === 0 ? (
-                <EmptyNote>Nothing yet. Arrivals, new art and calls to RAWG show up here.</EmptyNote>
+                <EmptyNote>
+                    Nothing yet. Arrivals, new art and calls to RAWG show up
+                    here.
+                </EmptyNote>
             ) : (
                 <Days events={events} />
             )}

@@ -44,7 +44,11 @@ const Counter = ({ length, max }: { length: number; max: number }) => (
         aria-live="polite"
         className={cn(
             "font-mono text-label-sm",
-            length > max ? "font-semibold text-danger" : length > max * 0.9 ? "text-warning" : "text-content-muted"
+            length > max
+                ? "font-semibold text-danger"
+                : length > max * 0.9
+                  ? "text-warning"
+                  : "text-content-muted"
         )}
     >
         {length}/{max}
@@ -60,20 +64,44 @@ const HistoryRow = ({ announcement }: { announcement: Announcement }) => {
 
     return (
         <li className="flex flex-col gap-3 border-b border-subtle py-3.5 last:border-b-0 sm:flex-row sm:items-start sm:gap-4">
-            <div className={cn("flex min-w-0 flex-1 gap-3", retracted && "opacity-60")}>
+            <div
+                className={cn(
+                    "flex min-w-0 flex-1 gap-3",
+                    retracted && "opacity-60"
+                )}
+            >
                 <IconMark icon={icon} tone={tone} />
                 <div className="min-w-0">
-                    <p className="text-body-sm font-medium break-words text-content">{announcement.title}</p>
-                    <p className="mt-0.5 text-body-sm break-words text-content-secondary">{announcement.body}</p>
+                    <p className="text-body-sm font-medium break-words text-content">
+                        {announcement.title}
+                    </p>
+                    <p className="mt-0.5 text-body-sm break-words text-content-secondary">
+                        {announcement.body}
+                    </p>
                     <p className="mt-1.5 text-label-sm text-content-muted">
                         {formatDate(announcement.createdAt)} · to{" "}
-                        <span className="font-mono">{formatCount(announcement.recipientCount)}</span>
+                        <span className="font-mono">
+                            {formatCount(announcement.recipientCount)}
+                        </span>
                         {retracted ? (
-                            <> · taken back {formatDate(announcement.retractedAt)}</>
+                            <>
+                                {" "}
+                                · taken back{" "}
+                                {formatDate(announcement.retractedAt)}
+                            </>
                         ) : (
                             <>
-                                {" "}· read by <span className="font-mono">{formatCount(announcement.readCount)}</span>{" "}
-                                ({share(announcement.readCount, announcement.recipientCount)})
+                                {" "}
+                                · read by{" "}
+                                <span className="font-mono">
+                                    {formatCount(announcement.readCount)}
+                                </span>{" "}
+                                (
+                                {share(
+                                    announcement.readCount,
+                                    announcement.recipientCount
+                                )}
+                                )
                             </>
                         )}
                         {announcement.link && <> · opens {announcement.link}</>}
@@ -81,7 +109,12 @@ const HistoryRow = ({ announcement }: { announcement: Announcement }) => {
                 </div>
             </div>
             {!retracted && (
-                <Button variant="ghost" size="sm" onClick={() => setConfirming(true)} className="w-full shrink-0 sm:w-auto">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setConfirming(true)}
+                    className="w-full shrink-0 sm:w-auto"
+                >
                     Take back
                 </Button>
             )}
@@ -97,7 +130,8 @@ const HistoryRow = ({ announcement }: { announcement: Announcement }) => {
                                 setConfirming(false);
                                 notify("Taken out of every inbox", "success");
                             },
-                            onError: () => notify("That didn’t go through", "error"),
+                            onError: () =>
+                                notify("That didn’t go through", "error"),
                         })
                     }
                     onClose={() => setConfirming(false)}
@@ -131,7 +165,9 @@ const AnnouncementsPage = () => {
     const draft = composeAnnouncement({ tone, title, body, link });
     const parsed = AnnouncementInputSchema.safeParse(draft);
     const linkError =
-        link.trim() !== "" && !parsed.success && parsed.error.flatten().fieldErrors.link
+        link.trim() !== "" &&
+        !parsed.success &&
+        parsed.error.flatten().fieldErrors.link
             ? "An in-app path, like /community"
             : undefined;
 
@@ -154,7 +190,8 @@ const AnnouncementsPage = () => {
     const sendTest = () => {
         if (!parsed.success) return;
         test.mutate(parsed.data, {
-            onSuccess: () => notify("In your bell, and nobody else’s", "success"),
+            onSuccess: () =>
+                notify("In your bell, and nobody else’s", "success"),
             onError: () => notify("The test didn’t send", "error"),
         });
     };
@@ -167,7 +204,10 @@ const AnnouncementsPage = () => {
                 setTitle("");
                 setBody("");
                 setLink("");
-                notify(`In ${formatCount(sent.recipientCount)} inboxes`, "success");
+                notify(
+                    `In ${formatCount(sent.recipientCount)} inboxes`,
+                    "success"
+                );
             },
             onError: () => {
                 setConfirming(false);
@@ -181,13 +221,17 @@ const AnnouncementsPage = () => {
 
     return (
         <>
-            <AdminPageHeader
-                title="Announcements"
-            />
+            <AdminPageHeader title="Announcements" />
 
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
-                <section aria-labelledby="compose-heading" className={cardClass("flex flex-col gap-4")}>
-                    <h2 id="compose-heading" className="text-label text-content-muted">
+                <section
+                    aria-labelledby="compose-heading"
+                    className={cardClass("flex flex-col gap-4")}
+                >
+                    <h2
+                        id="compose-heading"
+                        className="text-label text-content-muted"
+                    >
                         Write one
                     </h2>
 
@@ -197,7 +241,9 @@ const AnnouncementsPage = () => {
                                 id={a11y.id}
                                 options={TONE_OPTIONS}
                                 value={tone}
-                                onChange={(value) => setTone(value as AnnouncementTone)}
+                                onChange={(value) =>
+                                    setTone(value as AnnouncementTone)
+                                }
                             />
                         )}
                     </Field>
@@ -210,12 +256,18 @@ const AnnouncementsPage = () => {
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="Lists are here"
-                                    aria-invalid={title.trim().length > ANNOUNCEMENT_TITLE_MAX || undefined}
+                                    aria-invalid={
+                                        title.trim().length >
+                                            ANNOUNCEMENT_TITLE_MAX || undefined
+                                    }
                                 />
                             )}
                         </Field>
                         <span className="self-end">
-                            <Counter length={title.trim().length} max={ANNOUNCEMENT_TITLE_MAX} />
+                            <Counter
+                                length={title.trim().length}
+                                max={ANNOUNCEMENT_TITLE_MAX}
+                            />
                         </span>
                     </div>
 
@@ -228,12 +280,18 @@ const AnnouncementsPage = () => {
                                     onChange={(e) => setBody(e.target.value)}
                                     rows={3}
                                     placeholder="Make a list of anything, and share it with your friends."
-                                    aria-invalid={body.trim().length > ANNOUNCEMENT_BODY_MAX || undefined}
+                                    aria-invalid={
+                                        body.trim().length >
+                                            ANNOUNCEMENT_BODY_MAX || undefined
+                                    }
                                 />
                             )}
                         </Field>
                         <span className="self-end">
-                            <Counter length={body.trim().length} max={ANNOUNCEMENT_BODY_MAX} />
+                            <Counter
+                                length={body.trim().length}
+                                max={ANNOUNCEMENT_BODY_MAX}
+                            />
                         </span>
                     </div>
 
@@ -269,19 +327,34 @@ const AnnouncementsPage = () => {
                             disabled={!parsed.success || send.isPending}
                             className="w-full sm:w-auto"
                         >
-                            {reach ? `Send to ${formatCount(reach)} people` : "Send to everyone"}
+                            {reach
+                                ? `Send to ${formatCount(reach)} people`
+                                : "Send to everyone"}
                         </Button>
                     </div>
                 </section>
 
                 <div className="flex flex-col gap-2.5 lg:sticky lg:top-24">
-                    <h3 className="text-label text-content-muted">How it will look</h3>
+                    <h3 className="text-label text-content-muted">
+                        How it will look
+                    </h3>
                     {/* The bell's own surface, width and heading, so what fits
                         here fits there. */}
-                    <div className={popoverClass("w-full max-w-[24rem] animate-none p-3", "menu")}>
-                        <p className="font-display text-lg font-semibold text-content">Notifications</p>
+                    <div
+                        className={popoverClass(
+                            "w-full max-w-[24rem] animate-none p-3",
+                            "menu"
+                        )}
+                    >
+                        <p className="font-display text-lg font-semibold text-content">
+                            Notifications
+                        </p>
                         <ul className="mt-3">
-                            <NotificationItem notification={preview} onNavigate={() => undefined} preview />
+                            <NotificationItem
+                                notification={preview}
+                                onNavigate={() => undefined}
+                                preview
+                            />
                         </ul>
                     </div>
                 </div>
@@ -290,12 +363,18 @@ const AnnouncementsPage = () => {
             <section className="mt-10">
                 <SectionHeader
                     title="Sent"
-                    trailing={(history.data?.length ?? 0) > 3 && <SeeAllButton onClick={all.show} />}
+                    trailing={
+                        (history.data?.length ?? 0) > 3 && (
+                            <SeeAllButton onClick={all.show} />
+                        )
+                    }
                 />
                 {history.isPending ? (
                     <TextSkeleton lines={3} />
                 ) : !history.data?.length ? (
-                    <EmptyNote>Nothing has gone out yet. Tests aren’t listed.</EmptyNote>
+                    <EmptyNote>
+                        Nothing has gone out yet. Tests aren’t listed.
+                    </EmptyNote>
                 ) : (
                     <ul className={cardClass("flex flex-col py-1")}>
                         {history.data.slice(0, 3).map((a) => (

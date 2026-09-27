@@ -18,7 +18,10 @@ const ShowOlder = ({
                 type="button"
                 onClick={onClick}
                 disabled={loading}
-                className={panelButtonClass(false, "disabled:cursor-wait disabled:opacity-60")}
+                className={panelButtonClass(
+                    false,
+                    "disabled:cursor-wait disabled:opacity-60"
+                )}
             >
                 {loading ? "Loading…" : "Show older"}
             </button>

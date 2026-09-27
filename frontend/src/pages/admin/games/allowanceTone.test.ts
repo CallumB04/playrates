@@ -33,6 +33,8 @@ describe("allowanceTone", () => {
     });
 
     it("alarms when this pace runs it out before the reset, however much is left", () => {
-        expect(allowanceTone(usage({ left: 6_554, runsOutOn: "2026-10-05" }))).toBe("danger");
+        expect(
+            allowanceTone(usage({ left: 6_554, runsOutOn: "2026-10-05" }))
+        ).toBe("danger");
     });
 });

@@ -1,5 +1,9 @@
 import { CircleAlert, Flame, type LucideIcon } from "lucide-react";
-import type { AdminGameEvent, GameEventGroup, RawgUsage } from "@playrates/shared";
+import type {
+    AdminGameEvent,
+    GameEventGroup,
+    RawgUsage,
+} from "@playrates/shared";
 
 export const GAME_GROUP_LABELS: Record<GameEventGroup, string> = {
     added: "Arrivals",
@@ -22,7 +26,11 @@ export const SOURCE_WORDS: Record<string, string> = {
 export const gameEventMark = (
     event: AdminGameEvent
 ): { icon: LucideIcon; label: string; className: string } | null => {
-    if (event.data.failed === true || event.data.ok === false || event.kind === "details_backfill_failed") {
+    if (
+        event.data.failed === true ||
+        event.data.ok === false ||
+        event.kind === "details_backfill_failed"
+    ) {
         return { icon: CircleAlert, label: "Failed", className: "text-danger" };
     }
     if (event.kind === "trending_set") {
@@ -52,20 +60,38 @@ export const gameEventSummary = (
         case "rawg_import":
             return { title, text: "was imported from RAWG by its id" };
         case "cover_updated":
-            return { title, text: d.hadOne ? "got a new cover" : "got its cover" };
+            return {
+                title,
+                text: d.hadOne ? "got a new cover" : "got its cover",
+            };
         case "box_art_updated":
-            return { title, text: d.hadOne ? "got new box art" : "got its box art" };
+            return {
+                title,
+                text: d.hadOne ? "got new box art" : "got its box art",
+            };
         case "description_pulled":
-            return { title, text: d.hadOne ? "had its description replaced" : "got its description" };
+            return {
+                title,
+                text: d.hadOne
+                    ? "had its description replaced"
+                    : "got its description",
+            };
         case "release_date_changed":
             return {
                 title,
                 text: `moved its release from ${str(d.from) ?? "no date"} to ${str(d.to) ?? "no date"}`,
             };
         case "title_changed":
-            return { title, text: `was renamed from ${str(d.from) ?? "something else"}` };
+            return {
+                title,
+                text: `was renamed from ${str(d.from) ?? "something else"}`,
+            };
         case "details_resynced":
-            return { title, text: d.ok === false ? "couldn’t be re-synced" : "was re-synced" };
+            return {
+                title,
+                text:
+                    d.ok === false ? "couldn’t be re-synced" : "was re-synced",
+            };
         case "details_backfill_failed":
             return {
                 title,
@@ -77,14 +103,20 @@ export const gameEventSummary = (
             return { title, text: "came off the trending rail" };
         case "search_pull":
             return d.failed === true
-                ? { title: null, text: `A search for “${str(d.term) ?? "?"}” couldn’t reach RAWG` }
+                ? {
+                      title: null,
+                      text: `A search for “${str(d.term) ?? "?"}” couldn’t reach RAWG`,
+                  }
                 : {
                       title: null,
                       text: `A search for “${str(d.term) ?? "?"}” asked RAWG and brought back ${count(num(d.fetched), "game")}, ${num(d.added).toLocaleString("en-GB")} new`,
                   };
         case "manual_pull":
             return d.failed === true
-                ? { title: null, text: `A pull stopped after ${count(num(d.pages), "page")}` }
+                ? {
+                      title: null,
+                      text: `A pull stopped after ${count(num(d.pages), "page")}`,
+                  }
                 : {
                       title: null,
                       text: `A pull fetched ${count(num(d.fetched), "game")} over ${count(num(d.pages), "page")}, ${num(d.added).toLocaleString("en-GB")} new`,
@@ -99,4 +131,8 @@ export type QuotaLevel = "ok" | "warning" | "danger";
 /** Running out before the reset is the thing worth colour; under a quarter
  *  left is worth a warning. */
 export const allowanceTone = (usage: RawgUsage): QuotaLevel =>
-    usage.runsOutOn ? "danger" : usage.left < usage.allowance * 0.25 ? "warning" : "ok";
+    usage.runsOutOn
+        ? "danger"
+        : usage.left < usage.allowance * 0.25
+          ? "warning"
+          : "ok";

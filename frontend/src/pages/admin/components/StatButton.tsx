@@ -31,7 +31,9 @@ const StatButton = ({
             className
         )}
     >
-        <span className={figureClass("lg", "truncate leading-none")}>{value}</span>
+        <span className={figureClass("lg", "truncate leading-none")}>
+            {value}
+        </span>
         <span className="mt-1.5 flex items-center gap-0.5 text-label-sm text-content-muted group-hover:text-content-secondary">
             {label}
             <ChevronRight
@@ -40,7 +42,11 @@ const StatButton = ({
                 className="shrink-0 transition-transform group-hover:translate-x-0.5"
             />
         </span>
-        {note && <span className="mt-1 text-label-sm text-content-muted">{note}</span>}
+        {note && (
+            <span className="mt-1 text-label-sm text-content-muted">
+                {note}
+            </span>
+        )}
     </button>
 );
 

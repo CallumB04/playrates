@@ -74,22 +74,34 @@ export interface ActivityMark {
     className: string;
 }
 
-export const activityMark = (event: AdminActivityEvent): ActivityMark | null => {
+export const activityMark = (
+    event: AdminActivityEvent
+): ActivityMark | null => {
     if (isRemoval(event.kind)) {
         return { icon: Trash2, label: "Removed", className: "text-danger" };
     }
     if (event.group === "logs") {
-        const shelf = shelfOf(asLog(event.kind === "log_updated" ? event.data.to : event.data));
+        const shelf = shelfOf(
+            asLog(event.kind === "log_updated" ? event.data.to : event.data)
+        );
         if (shelf) {
             const { icon, label, markTone } = STATUS_PRESENTATION[shelf];
             return { icon, label, className: markTone };
         }
     }
     if (event.data.isPublic === false) {
-        return { icon: EyeOff, label: "Private", className: "text-content-muted" };
+        return {
+            icon: EyeOff,
+            label: "Private",
+            className: "text-content-muted",
+        };
     }
     if (event.data.containsSpoilers === true) {
-        return { icon: TriangleAlert, label: "Spoilers", className: "text-content-muted" };
+        return {
+            icon: TriangleAlert,
+            label: "Spoilers",
+            className: "text-content-muted",
+        };
     }
     return null;
 };
@@ -122,14 +134,24 @@ export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
     const threadTitle = str(d.threadTitle) ?? "a thread";
     const threadHref = threadId ? threadPath(threadId) : null;
     const person = event.subjectUsername ?? "someone";
-    const personHref = event.subjectUsername ? `/user/${event.subjectUsername}` : null;
+    const personHref = event.subjectUsername
+        ? `/user/${event.subjectUsername}`
+        : null;
 
     const line = (
         action: string,
         target: string | null = null,
         href: string | null = null,
         extra: Partial<Pick<ActivitySummary, "after" | "rating">> = {}
-    ): ActivitySummary => ({ who, action, target, href, after: null, rating: null, ...extra });
+    ): ActivitySummary => ({
+        who,
+        action,
+        target,
+        href,
+        after: null,
+        rating: null,
+        ...extra,
+    });
 
     switch (event.kind) {
         case "signup":
@@ -137,18 +159,24 @@ export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
         case "account_deleted":
             return line("closed their account");
         case "profile_updated": {
-            const fields = Array.isArray(d.fields) ? (d.fields as string[]) : [];
+            const fields = Array.isArray(d.fields)
+                ? (d.fields as string[])
+                : [];
             if (fields.includes("username") && str(d.previousUsername)) {
                 return line("changed their name from", str(d.previousUsername));
             }
             const what = fields.filter((f) => f !== "username");
-            return line(`changed their ${what.length > 0 ? what.join(" and ") : "profile"}`);
+            return line(
+                `changed their ${what.length > 0 ? what.join(" and ") : "profile"}`
+            );
         }
 
         case "log_added": {
             const log = asLog(d);
             const shelf = shelfOf(log);
-            return line(shelf ? VERB[shelf] : "logged", game, gameHref, { rating: ratingOf(log) });
+            return line(shelf ? VERB[shelf] : "logged", game, gameHref, {
+                rating: ratingOf(log),
+            });
         }
         case "log_updated": {
             const from = asLog(d.from);
@@ -167,7 +195,9 @@ export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
                 : line("rated", game, gameHref, { rating });
         }
         case "log_removed":
-            return line("took", game, gameHref, { after: `off ${shelfLabel(asLog(d))}` });
+            return line("took", game, gameHref, {
+                after: `off ${shelfLabel(asLog(d))}`,
+            });
 
         case "review_posted":
             return line("reviewed", game, gameHref);
@@ -187,7 +217,11 @@ export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
         case "thread_removed":
             return line("lost their thread", str(d.title) ?? "a thread");
         case "message_posted":
-            return line(d.isReply === true ? "answered someone in" : "posted in", threadTitle, threadHref);
+            return line(
+                d.isReply === true ? "answered someone in" : "posted in",
+                threadTitle,
+                threadHref
+            );
         case "message_edited":
             return line("edited a message in", threadTitle, threadHref);
         case "message_deleted":
@@ -201,7 +235,9 @@ export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
             return line("became friends with", person, personHref);
         case "friend_removed":
             return line(
-                d.wasAccepted === false ? "withdrew their request to" : "unfriended",
+                d.wasAccepted === false
+                    ? "withdrew their request to"
+                    : "unfriended",
                 person,
                 personHref
             );

@@ -4,7 +4,9 @@ import type { AdminUserSummary } from "@playrates/shared";
 import { cardClass } from "../../../components/ui/Card";
 import { SearchInput } from "../../../components/ui/Input";
 import SegmentedChoice from "../../../components/ui/SegmentedChoice";
-import Pagination, { PaginationSummary } from "../../../components/ui/Pagination";
+import Pagination, {
+    PaginationSummary,
+} from "../../../components/ui/Pagination";
 import EmptyPlate from "../../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import ProfilePicture from "../../../components/ProfilePicture";
@@ -31,9 +33,16 @@ const COUNTS = [
 
 /* One grid for the header and every row, so the figures stand in columns
    without a table's chrome. Below sm the figures fold into a sentence. */
-const GRID = "sm:grid sm:grid-cols-[minmax(0,1fr)_7rem_repeat(5,3.75rem)] sm:items-center sm:gap-x-3";
+const GRID =
+    "sm:grid sm:grid-cols-[minmax(0,1fr)_7rem_repeat(5,3.75rem)] sm:items-center sm:gap-x-3";
 
-const Row = ({ user, onOpen }: { user: AdminUserSummary; onOpen: () => void }) => (
+const Row = ({
+    user,
+    onOpen,
+}: {
+    user: AdminUserSummary;
+    onOpen: () => void;
+}) => (
     <li>
         <button
             type="button"
@@ -47,25 +56,50 @@ const Row = ({ user, onOpen }: { user: AdminUserSummary; onOpen: () => void }) =
         >
             <span className="flex min-w-0 flex-1 items-center gap-3">
                 <span className="relative shrink-0 [&>*:first-child]:size-9">
-                    <ProfilePicture variant="nav" file={user.avatarUrl ?? ""} accent={user.accent} username={user.username} link={false} />
+                    <ProfilePicture
+                        variant="nav"
+                        file={user.avatarUrl ?? ""}
+                        accent={user.accent}
+                        username={user.username}
+                        link={false}
+                    />
                     {user.online && <PresenceDot online />}
                 </span>
                 <span className="min-w-0">
                     <span className="flex items-baseline gap-2">
-                        <span className="truncate text-body-sm font-medium text-content">{user.username}</span>
-                        {user.isAdmin && <span className="shrink-0 text-label-sm text-brand">you</span>}
+                        <span className="truncate text-body-sm font-medium text-content">
+                            {user.username}
+                        </span>
+                        {user.isAdmin && (
+                            <span className="shrink-0 text-label-sm text-brand">
+                                you
+                            </span>
+                        )}
                     </span>
                     <span className="block truncate text-label-sm text-content-muted">
                         Joined {formatDate(user.createdAt)}
                     </span>
                     <span className="block text-label-sm text-content-muted sm:hidden">
-                        <span className="font-mono">{formatCount(user.logCount)}</span> logs ·{" "}
-                        <span className="font-mono">{formatCount(user.activeDayCount)}</span> days active
+                        <span className="font-mono">
+                            {formatCount(user.logCount)}
+                        </span>{" "}
+                        logs ·{" "}
+                        <span className="font-mono">
+                            {formatCount(user.activeDayCount)}
+                        </span>{" "}
+                        days active
                     </span>
                 </span>
             </span>
 
-            <span className={cn("shrink-0 text-label-sm sm:text-body-sm", user.online ? "text-success" : "text-content-muted sm:text-content-secondary")}>
+            <span
+                className={cn(
+                    "shrink-0 text-label-sm sm:text-body-sm",
+                    user.online
+                        ? "text-success"
+                        : "text-content-muted sm:text-content-secondary"
+                )}
+            >
                 {user.online ? "Here now" : relativeTime(user.lastSeenAt)}
             </span>
 
@@ -74,7 +108,9 @@ const Row = ({ user, onOpen }: { user: AdminUserSummary; onOpen: () => void }) =
                     key={c.key}
                     className={cn(
                         "hidden text-right font-mono text-body-sm sm:block",
-                        user[c.key] === 0 ? "text-content-muted" : "text-content"
+                        user[c.key] === 0
+                            ? "text-content-muted"
+                            : "text-content"
                     )}
                 >
                     {formatCount(user[c.key])}
@@ -91,8 +127,17 @@ const UsersPage = () => {
     const [openId, setOpenId] = useState<string | null>(null);
     const q = useDebouncedValue(query.trim(), 250);
 
-    const { data, isPending, isPlaceholderData } = useAdminUsers({ q: q || undefined, sort, page });
-    const pagination = usePagination({ total: data?.meta.total ?? 0, perPage: PER_PAGE, page, onPageChange: setPage });
+    const { data, isPending, isPlaceholderData } = useAdminUsers({
+        q: q || undefined,
+        sort,
+        page,
+    });
+    const pagination = usePagination({
+        total: data?.meta.total ?? 0,
+        perPage: PER_PAGE,
+        page,
+        onPageChange: setPage,
+    });
     const users = data?.data ?? [];
 
     return (
@@ -135,10 +180,22 @@ const UsersPage = () => {
             {isPending ? (
                 <TextSkeleton lines={8} />
             ) : users.length === 0 ? (
-                <EmptyPlate title="Nobody by that name" body="Names match anywhere in them, so try fewer letters." />
+                <EmptyPlate
+                    title="Nobody by that name"
+                    body="Names match anywhere in them, so try fewer letters."
+                />
             ) : (
-                <div className={cn("transition-opacity", isPlaceholderData && "opacity-60")}>
-                    <div className={cardClass("px-1.5 py-1.5 sm:px-2", { padding: "none" })}>
+                <div
+                    className={cn(
+                        "transition-opacity",
+                        isPlaceholderData && "opacity-60"
+                    )}
+                >
+                    <div
+                        className={cardClass("px-1.5 py-1.5 sm:px-2", {
+                            padding: "none",
+                        })}
+                    >
                         <div
                             aria-hidden
                             className={cn(
@@ -156,24 +213,34 @@ const UsersPage = () => {
                         </div>
                         <ul className="flex flex-col pt-1">
                             {users.map((user) => (
-                                <Row key={user.id} user={user} onOpen={() => setOpenId(user.id)} />
+                                <Row
+                                    key={user.id}
+                                    user={user}
+                                    onOpen={() => setOpenId(user.id)}
+                                />
                             ))}
                         </ul>
                     </div>
                     <p className="mt-2 hidden text-label-sm text-content-muted sm:block">
-                        Days active is how many different days they’ve opened PlayRates, not days since they joined.
+                        Days active is how many different days they’ve opened
+                        PlayRates, not days since they joined.
                     </p>
 
                     {pagination.pageCount > 1 && (
                         <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
-                            <PaginationSummary pagination={pagination} className="text-label text-content-muted" />
+                            <PaginationSummary
+                                pagination={pagination}
+                                className="text-label text-content-muted"
+                            />
                             <Pagination pagination={pagination} />
                         </div>
                     )}
                 </div>
             )}
 
-            {openId && <UserModal userId={openId} onClose={() => setOpenId(null)} />}
+            {openId && (
+                <UserModal userId={openId} onClose={() => setOpenId(null)} />
+            )}
         </>
     );
 };

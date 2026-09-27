@@ -42,34 +42,56 @@ beforeEach(() => {
     );
 });
 
-const write = async (fields: { title?: string; body?: string; link?: string }) => {
+const write = async (fields: {
+    title?: string;
+    body?: string;
+    link?: string;
+}) => {
     const user = userEvent.setup();
-    if (fields.title !== undefined) await user.type(screen.getByLabelText("Title"), fields.title);
-    if (fields.body !== undefined) await user.type(screen.getByLabelText("Message"), fields.body);
-    if (fields.link !== undefined) await user.type(screen.getByLabelText("Link (optional)"), fields.link);
+    if (fields.title !== undefined)
+        await user.type(screen.getByLabelText("Title"), fields.title);
+    if (fields.body !== undefined)
+        await user.type(screen.getByLabelText("Message"), fields.body);
+    if (fields.link !== undefined)
+        await user.type(screen.getByLabelText("Link (optional)"), fields.link);
     return user;
 };
 
 describe("AnnouncementsPage", () => {
     it("holds back an empty announcement", () => {
         renderWithProviders(<AnnouncementsPage />);
-        expect(screen.getByRole("button", { name: /Send test to me/ })).toBeDisabled();
+        expect(
+            screen.getByRole("button", { name: /Send test to me/ })
+        ).toBeDisabled();
         expect(screen.getByRole("button", { name: /Send to/ })).toBeDisabled();
     });
 
     it("counts against the title limit and refuses to send past it", async () => {
         renderWithProviders(<AnnouncementsPage />);
-        await write({ title: "x".repeat(ANNOUNCEMENT_TITLE_MAX + 1), body: "Hello" });
+        await write({
+            title: "x".repeat(ANNOUNCEMENT_TITLE_MAX + 1),
+            body: "Hello",
+        });
 
-        expect(screen.getByText(`${ANNOUNCEMENT_TITLE_MAX + 1}/${ANNOUNCEMENT_TITLE_MAX}`)).toBeInTheDocument();
+        expect(
+            screen.getByText(
+                `${ANNOUNCEMENT_TITLE_MAX + 1}/${ANNOUNCEMENT_TITLE_MAX}`
+            )
+        ).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /Send to/ })).toBeDisabled();
     });
 
     it("refuses a link to another site", async () => {
         renderWithProviders(<AnnouncementsPage />);
-        await write({ title: "Hi", body: "There", link: "https://example.com" });
+        await write({
+            title: "Hi",
+            body: "There",
+            link: "https://example.com",
+        });
 
-        expect(screen.getByText("An in-app path, like /community")).toBeInTheDocument();
+        expect(
+            screen.getByText("An in-app path, like /community")
+        ).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /Send to/ })).toBeDisabled();
     });
 
@@ -86,19 +108,32 @@ describe("AnnouncementsPage", () => {
         renderWithProviders(<AnnouncementsPage />);
         const user = await write({ title: "Hi", body: "There" });
 
-        await user.click(screen.getByRole("button", { name: /Send test to me/ }));
+        await user.click(
+            screen.getByRole("button", { name: /Send test to me/ })
+        );
 
         await waitFor(() =>
-            expect(tested).toHaveBeenCalledWith({ tone: "update", title: "Hi", body: "There", link: null })
+            expect(tested).toHaveBeenCalledWith({
+                tone: "update",
+                title: "Hi",
+                body: "There",
+                link: null,
+            })
         );
         expect(sent).not.toHaveBeenCalled();
     });
 
     it("asks before sending to everyone, then sends and clears the form", async () => {
         renderWithProviders(<AnnouncementsPage />);
-        const user = await write({ title: "Hi", body: "There", link: "/community" });
+        const user = await write({
+            title: "Hi",
+            body: "There",
+            link: "/community",
+        });
 
-        await user.click(await screen.findByRole("button", { name: "Send to 3 people" }));
+        await user.click(
+            await screen.findByRole("button", { name: "Send to 3 people" })
+        );
         expect(sent).not.toHaveBeenCalled();
 
         const dialog = screen.getByRole("dialog");
@@ -112,6 +147,8 @@ describe("AnnouncementsPage", () => {
                 link: "/community",
             })
         );
-        await waitFor(() => expect(screen.getByLabelText("Title")).toHaveValue(""));
+        await waitFor(() =>
+            expect(screen.getByLabelText("Title")).toHaveValue("")
+        );
     });
 });

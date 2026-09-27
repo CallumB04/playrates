@@ -21,14 +21,23 @@ const Meter = ({
     tone?: "ok" | "warning" | "danger";
     className?: string;
 }) => {
-    const share = (n: number) => `${Math.min(100, Math.max(0, (n / Math.max(1, total)) * 100))}%`;
+    const share = (n: number) =>
+        `${Math.min(100, Math.max(0, (n / Math.max(1, total)) * 100))}%`;
     return (
-        <div role="img" aria-label={label} className={cn("relative h-2.5", className)}>
+        <div
+            role="img"
+            aria-label={label}
+            className={cn("relative h-2.5", className)}
+        >
             <span className="absolute inset-0 overflow-hidden rounded-full bg-surface-sunken">
                 <span
                     className={cn(
                         "block h-full rounded-full transition-[width] duration-500",
-                        tone === "ok" ? "bg-brand" : tone === "warning" ? "bg-warning" : "bg-danger"
+                        tone === "ok"
+                            ? "bg-brand"
+                            : tone === "warning"
+                              ? "bg-warning"
+                              : "bg-danger"
                     )}
                     style={{ width: share(used) }}
                 />

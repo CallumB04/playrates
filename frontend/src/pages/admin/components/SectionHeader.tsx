@@ -26,7 +26,9 @@ const SectionHeader = ({
     >
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
             <h2 className="font-display text-section text-content">{title}</h2>
-            {note && <span className="text-label text-content-muted">{note}</span>}
+            {note && (
+                <span className="text-label text-content-muted">{note}</span>
+            )}
         </div>
         {trailing}
     </header>

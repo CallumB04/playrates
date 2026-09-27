@@ -16,7 +16,15 @@ export interface ProportionPart {
  * legend that carries the figures, since the bar is for the shape and the
  * legend for the numbers.
  */
-const Proportion = ({ parts, label, className }: { parts: ProportionPart[]; label: string; className?: string }) => {
+const Proportion = ({
+    parts,
+    label,
+    className,
+}: {
+    parts: ProportionPart[];
+    label: string;
+    className?: string;
+}) => {
     const total = parts.reduce((n, p) => n + p.value, 0);
     return (
         <div className={cn("flex flex-col gap-3", className)}>
@@ -32,11 +40,24 @@ const Proportion = ({ parts, label, className }: { parts: ProportionPart[]; labe
             />
             <ul className="flex flex-wrap gap-x-5 gap-y-2">
                 {parts.map((p) => (
-                    <li key={p.key} className="flex items-center gap-1.5 text-label-sm text-content-muted">
-                        <span aria-hidden className={cn("size-2 shrink-0 rounded-full", p.fill)} />
+                    <li
+                        key={p.key}
+                        className="flex items-center gap-1.5 text-label-sm text-content-muted"
+                    >
+                        <span
+                            aria-hidden
+                            className={cn(
+                                "size-2 shrink-0 rounded-full",
+                                p.fill
+                            )}
+                        />
                         {p.label}
-                        <span className="font-mono text-content">{formatCount(p.value)}</span>
-                        <span className="font-mono">{share(p.value, total)}</span>
+                        <span className="font-mono text-content">
+                            {formatCount(p.value)}
+                        </span>
+                        <span className="font-mono">
+                            {share(p.value, total)}
+                        </span>
                     </li>
                 ))}
             </ul>
