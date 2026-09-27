@@ -9,6 +9,7 @@ import {
   UsernameParamSchema,
 } from "@playrates/shared";
 import { z } from "zod";
+import { perMinute } from "../../lib/rateLimit.js";
 import { validate } from "../../middleware/validate.js";
 import { AppError } from "../../lib/AppError.js";
 import type { ProfilesService } from "./profiles.service.js";
@@ -57,6 +58,7 @@ export const createProfilesRouter = ({
   requireAuth,
 }: Deps): Router => {
   const router = Router();
+  const usernameCheckLimiter = perMinute(30);
 
   // "/me" and "/check-username" must come before "/:username", or they parse
   // as usernames.
@@ -107,6 +109,8 @@ export const createProfilesRouter = ({
 
   router.get(
     "/check-username",
+    // Unauthenticated, and a yes or no on whether an account exists.
+    usernameCheckLimiter,
     validate({ query: CheckUsernameSchema }),
     async (req, res) => {
       const { username } = req.valid!.query as z.infer<

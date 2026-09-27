@@ -1,4 +1,5 @@
 import type { Db } from "../../config/supabase.js";
+import { likeTerm } from "../../lib/likeTerm.js";
 import type { ProfileRow } from "../../types/database.types.js";
 
 /** Swap in an in-memory implementation and the whole HTTP stack runs with no
@@ -44,7 +45,7 @@ export const createProfilesRepository = (db: Db): ProfilesRepository => ({
       .select("*", { count: "exact" })
       .order("username");
 
-    if (query) builder = builder.ilike("username", `%${query}%`);
+    if (query) builder = builder.ilike("username", likeTerm(query));
 
     const { data, error, count } = await builder.range(from, to);
     if (error) throw error;

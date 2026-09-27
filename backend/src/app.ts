@@ -4,6 +4,7 @@ import helmet from "helmet";
 import { env } from "./config/env.js";
 import { createLogger, type Logger } from "./lib/logger.js";
 import { requestContext } from "./middleware/requestContext.js";
+import { perMinute } from "./lib/rateLimit.js";
 import { createErrorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 import { noopErrorSink, type ErrorSink } from "./config/errorSink.js";
 import { makeRequireAuth, type Verifier } from "./middleware/requireAuth.js";
@@ -41,6 +42,9 @@ export const buildApp = ({
   const app = express();
 
   app.disable("x-powered-by");
+  // One hop: Vercel's edge sets x-forwarded-for itself. Without this every
+  // visitor shares the proxy's address, and one rate limit between them.
+  app.set("trust proxy", 1);
   app.use(helmet());
   app.use(
     cors({
@@ -55,6 +59,15 @@ export const buildApp = ({
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
   });
+
+  // A ceiling on writes of any kind. The routes that cost more carry
+  // tighter ones of their own.
+  const writeLimiter = perMinute(60);
+  app.use("/api/v1", (req, res, next) =>
+    req.method === "GET" || req.method === "HEAD"
+      ? next()
+      : writeLimiter(req, res, next),
+  );
 
   app.use(
     "/api/v1",

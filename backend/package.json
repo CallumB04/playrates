@@ -33,6 +33,7 @@
     "jose": "^5.9.6",
     "pino": "^9.6.0",
     "pino-http": "^10.3.0",
+    "sharp": "^0.35.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {

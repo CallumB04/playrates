@@ -1,7 +1,10 @@
 import type { Repositories } from "../../src/repositories.js";
 import type { AuthAdmin } from "../../src/config/authAdmin.js";
 import type { AvatarStore } from "../../src/config/avatarStore.js";
-import type { CommunityImageStore } from "../../src/config/communityImageStore.js";
+import {
+  isStoredImageUrl,
+  type CommunityImageStore,
+} from "../../src/config/communityImageStore.js";
 import type {
   ActivityEventRow,
   AnnouncementRow,
@@ -1106,7 +1109,7 @@ export const createInMemoryRepos = (
       return url;
     },
     owns(url) {
-      return url.startsWith(IMAGE_PREFIX) && !url.includes("..");
+      return isStoredImageUrl(IMAGE_PREFIX, url);
     },
     async listUploads(userId) {
       return [...state.communityImages.entries()]

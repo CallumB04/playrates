@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import request from "supertest";
+import { isWebp } from "@playrates/shared";
+import { webpWithPayload } from "../helpers/webp.js";
 import {
   authHeader,
   buildTestApp,
@@ -60,14 +62,6 @@ const communitySeed = () => {
     ],
   };
 };
-
-const webp = () =>
-  Buffer.concat([
-    Buffer.from("RIFF"),
-    Buffer.from([0, 0, 0, 0]),
-    Buffer.from("WEBP"),
-    Buffer.from("payload"),
-  ]);
 
 describe("community threads", () => {
   it("opens a thread on a game with its first message", async () => {
@@ -724,10 +718,12 @@ describe("community images", () => {
       .post("/api/v1/community/images")
       .set("Authorization", authHeader(USER_A))
       .set("Content-Type", "image/webp")
-      .send(webp());
+      .send(await webpWithPayload("<html>"));
 
     expect(response.status).toBe(201);
-    expect(state.communityImages.get(response.body.url)?.bytes).toEqual(webp());
+    const stored = state.communityImages.get(response.body.url)!.bytes;
+    expect(isWebp(stored)).toBe(true);
+    expect(stored.includes("<html>")).toBe(false);
   });
 
   it("refuses bytes that are not a WebP", async () => {
@@ -770,6 +766,57 @@ describe("community images", () => {
           content: [
             { type: "image", attrs: { src: "https://evil.example/pixel.png" } },
           ],
+        },
+      });
+
+    expect(response.status).toBe(422);
+  });
+
+  it("refuses a picture from elsewhere tucked inside a list", async () => {
+    const { app } = buildTestApp({ seed: communitySeed() });
+
+    const response = await request(app)
+      .post("/api/v1/community/threads/1/messages")
+      .set("Authorization", authHeader(USER_B))
+      .send({
+        body: {
+          type: "doc",
+          content: [
+            {
+              type: "bulletList",
+              content: [
+                {
+                  type: "listItem",
+                  content: [
+                    {
+                      type: "image",
+                      attrs: { src: "https://evil.example/pixel.png" },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+    expect(response.status).toBe(422);
+  });
+
+  it("refuses a bucket URL that climbs out of the folder", async () => {
+    const { app } = buildTestApp({ seed: communitySeed() });
+    const climbing = IMAGE_URL.replace(
+      `${USER_A}/1.webp`,
+      `${USER_A}/%2e%2e/%2e%2e/avatars/x.webp`,
+    );
+
+    const response = await request(app)
+      .post("/api/v1/community/threads/1/messages")
+      .set("Authorization", authHeader(USER_B))
+      .send({
+        body: {
+          type: "doc",
+          content: [{ type: "image", attrs: { src: climbing } }],
         },
       });
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
+import { realWebp } from "../helpers/webp.js";
 import {
   authHeader,
   buildTestApp,
@@ -350,13 +351,7 @@ describe("picture cleanup", () => {
       .post("/api/v1/community/images")
       .set("Authorization", authHeader(USER_B))
       .set("Content-Type", "image/webp")
-      .send(
-        Buffer.concat([
-          Buffer.from("RIFF"),
-          Buffer.from([0, 0, 0, 0]),
-          Buffer.from("WEBPdata"),
-        ]),
-      );
+      .send(await realWebp());
 
     expect(upload.status).toBe(201);
     expect([...state.communityImages.keys()].sort()).toEqual(

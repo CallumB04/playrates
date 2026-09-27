@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
-import { AVATAR_MAX_BYTES } from "@playrates/shared";
+import { AVATAR_MAX_BYTES, AVATAR_PIXELS, isWebp } from "@playrates/shared";
+import { realWebp, webpWithPayload } from "../helpers/webp.js";
 import {
   authHeader,
   buildTestApp,
@@ -295,15 +296,10 @@ describe("profile colour", () => {
 });
 
 describe("profile picture", () => {
-  /* The smallest thing that passes the magic-byte check: "RIFF" + a size +
-     "WEBP". The service does not decode it, and nor should it. */
-  const webp = (body = "payload") =>
-    Buffer.concat([
-      Buffer.from("RIFF"),
-      Buffer.from([0, 0, 0, 0]),
-      Buffer.from("WEBP"),
-      Buffer.from(body),
-    ]);
+  let webp: Buffer;
+  beforeAll(async () => {
+    webp = await realWebp();
+  });
 
   const upload = (app: Parameters<typeof request>[0], body: Buffer) =>
     request(app)
@@ -315,11 +311,11 @@ describe("profile picture", () => {
   it("stores the image and puts its URL on the profile", async () => {
     const { app, state } = buildTestApp({ seed: baseSeed() });
 
-    const response = await upload(app, webp());
+    const response = await upload(app, webp);
 
     expect(response.status).toBe(200);
     expect(response.body.avatarUrl).toContain(`avatars/${USER_A}/avatar.webp`);
-    expect(state.avatars.get(USER_A)).toEqual(webp());
+    expect(isWebp(state.avatars.get(USER_A)!)).toBe(true);
     expect(
       state.profiles.find((p) => p.id === USER_A)?.avatar_url,
     ).toBe(response.body.avatarUrl);
@@ -344,10 +340,42 @@ describe("profile picture", () => {
     expect(response.status).toBe(400);
   });
 
+  it("stores only the pixels, not anything riding after them", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await upload(
+      app,
+      await webpWithPayload("<script>alert(1)</script>"),
+    );
+
+    expect(response.status).toBe(200);
+    expect(state.avatars.get(USER_A)!.includes("<script>")).toBe(false);
+  });
+
+  it("refuses a WebP header with no picture behind it", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await upload(app, webp.subarray(0, 20));
+
+    expect(response.status).toBe(400);
+    expect(state.avatars.has(USER_A)).toBe(false);
+  });
+
+  it("refuses a picture larger than the uploader ever sends", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await upload(app, await realWebp(AVATAR_PIXELS + 1));
+
+    expect(response.status).toBe(400);
+  });
+
   it("refuses a body over the byte cap", async () => {
     const { app, state } = buildTestApp({ seed: baseSeed() });
 
-    const response = await upload(app, webp("x".repeat(AVATAR_MAX_BYTES)));
+    const response = await upload(
+      app,
+      Buffer.concat([webp, Buffer.alloc(AVATAR_MAX_BYTES)]),
+    );
 
     expect(response.status).toBe(413);
     expect(state.avatars.has(USER_A)).toBe(false);
@@ -362,7 +390,7 @@ describe("profile picture", () => {
       .post("/api/v1/profiles/me/avatar")
       .set("Authorization", authHeader(USER_A))
       .set("Content-Type", "application/octet-stream")
-      .send(webp());
+      .send(webp);
 
     expect(response.status).toBe(400);
     expect(state.avatars.has(USER_A)).toBe(false);
@@ -374,14 +402,14 @@ describe("profile picture", () => {
     const response = await request(app)
       .post("/api/v1/profiles/me/avatar")
       .set("Content-Type", "image/webp")
-      .send(webp());
+      .send(webp);
 
     expect(response.status).toBe(401);
   });
 
   it("clears the picture, and takes it out of storage with it", async () => {
     const { app, state } = buildTestApp({ seed: baseSeed() });
-    await upload(app, webp());
+    await upload(app, webp);
 
     const response = await request(app)
       .delete("/api/v1/profiles/me/avatar")

@@ -5,8 +5,9 @@ import type {
   Profile,
   UpdateProfileInput,
 } from "@playrates/shared";
-import { AVATAR_MAX_BYTES, isWebp } from "@playrates/shared";
+import { AVATAR_MAX_BYTES, AVATAR_PIXELS, isWebp } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
+import { cleanWebp } from "../../lib/cleanWebp.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import type { AuthAdmin } from "../../config/authAdmin.js";
 import type { AvatarStore } from "../../config/avatarStore.js";
@@ -40,8 +41,8 @@ export const createProfilesService = (
   /**
    * Replaces the caller's profile picture. The browser crops and compresses
    * before it gets here, so anything that is not already a small WebP has
-   * come from somewhere other than our own uploader and is refused rather
-   * than re-encoded.
+   * come from somewhere other than our own uploader and is refused. What
+   * passes is still re-encoded, so only decoded pixels are ever stored.
    */
   async setAvatar(callerId: string, bytes: Buffer): Promise<MyProfile> {
     if (bytes.length === 0) throw AppError.badRequest("No image was uploaded");
@@ -52,7 +53,11 @@ export const createProfilesService = (
       throw AppError.badRequest("A profile picture must be a WebP image");
     }
 
-    const url = await avatars.put(callerId, bytes);
+    const clean = await cleanWebp(bytes, {
+      maxEdge: AVATAR_PIXELS,
+      maxBytes: AVATAR_MAX_BYTES,
+    });
+    const url = await avatars.put(callerId, clean);
     return toMyProfile(await repo.update(callerId, { avatar_url: url }));
   },
 
