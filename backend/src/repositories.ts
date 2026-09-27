@@ -48,6 +48,10 @@ import {
   type ReportsRepository,
 } from "./modules/reports/reports.repository.js";
 import {
+  createSitemapRepository,
+  type SitemapRepository,
+} from "./modules/pages/sitemap.repository.js";
+import {
   createCommunityRepository,
   type CommunityRepository,
 } from "./modules/community/community.repository.js";
@@ -68,6 +72,7 @@ export interface Repositories {
   admin: AdminRepository;
   accountExport: AccountExportRepository;
   reports: ReportsRepository;
+  sitemap: SitemapRepository;
 }
 
 export const createRepositories = (db: Db): Repositories => ({
@@ -84,4 +89,5 @@ export const createRepositories = (db: Db): Repositories => ({
   admin: createAdminRepository(db),
   accountExport: createAccountExportRepository(db),
   reports: createReportsRepository(db),
+  sitemap: createSitemapRepository(db),
 });

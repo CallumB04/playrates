@@ -14,6 +14,12 @@ import type { AuthAdmin } from "./config/authAdmin.js";
 import type { AvatarStore } from "./config/avatarStore.js";
 import type { CommunityImageStore } from "./config/communityImageStore.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
+import { createPagesRouter } from "./modules/pages/pages.routes.js";
+import { createPagesService } from "./modules/pages/pages.service.js";
+import {
+  createTemplateSource,
+  type TemplateSource,
+} from "./modules/pages/template.js";
 
 export interface AppDeps {
   repos: Repositories;
@@ -26,6 +32,10 @@ export interface AppDeps {
   logger?: Logger;
   /** Where 5xx responses are recorded for the admin dashboard. */
   errorSink?: ErrorSink;
+  /** The built index.html that rendered pages start from. */
+  template?: TemplateSource;
+  /** Whether this is the live site, which alone asks to be indexed. */
+  production?: boolean;
 }
 
 /** Builds the app but does not listen, so supertest can drive it in-process. */
@@ -38,6 +48,8 @@ export const buildApp = ({
   verify,
   logger = createLogger(),
   errorSink = noopErrorSink,
+  template = createTemplateSource(),
+  production = process.env.VERCEL_ENV === "production",
 }: AppDeps): Express => {
   const app = express();
 
@@ -45,6 +57,17 @@ export const buildApp = ({
   // One hop: Vercel's edge sets x-forwarded-for itself. Without this every
   // visitor shares the proxy's address, and one rate limit between them.
   app.set("trust proxy", 1);
+
+  // Pages before helmet: they wear the site's CSP, not the API's.
+  app.use(
+    createPagesRouter({
+      service: createPagesService(repos),
+      sitemap: repos.sitemap,
+      template,
+      logger,
+      production,
+    }),
+  );
   app.use(helmet());
   app.use(
     cors({

@@ -214,6 +214,24 @@ export const createInMemoryRepos = (
 
   let nextReportId = 1;
   const repos: Repositories = {
+    sitemap: {
+      async countGames() {
+        return state.games.filter((g) => !g.has_sexual_content).length;
+      },
+      async games(offset, limit) {
+        return state.games
+          .filter((g) => !g.has_sexual_content)
+          .sort((a, b) => a.id - b.id)
+          .slice(offset, offset + limit)
+          .map((g) => ({ id: g.id, lastmod: g.updated_at.slice(0, 10) }));
+      },
+      async threads() {
+        return state.communityThreads.map((t) => ({
+          id: t.id,
+          lastmod: t.last_activity_at.slice(0, 10),
+        }));
+      },
+    },
     reports: {
       async create(row) {
         const report: ContentReportRow = {

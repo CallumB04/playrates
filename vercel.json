@@ -2,9 +2,38 @@
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "buildCommand": "npm run build -w @playrates/shared && npm run build -w frontend",
     "outputDirectory": "frontend/dist",
+    "functions": {
+        "api/index.ts": {
+            "includeFiles": "frontend/dist/index.html"
+        }
+    },
     "rewrites": [
         {
             "source": "/api/(.*)",
+            "destination": "/api"
+        },
+        {
+            "source": "/game/:id",
+            "destination": "/api"
+        },
+        {
+            "source": "/user/:username",
+            "destination": "/api"
+        },
+        {
+            "source": "/community/thread/:id",
+            "destination": "/api"
+        },
+        {
+            "source": "/sitemap.xml",
+            "destination": "/api"
+        },
+        {
+            "source": "/sitemaps/:file",
+            "destination": "/api"
+        },
+        {
+            "source": "/robots.txt",
             "destination": "/api"
         },
         {
