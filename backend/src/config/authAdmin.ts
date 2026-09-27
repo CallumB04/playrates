@@ -7,6 +7,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  */
 export interface AuthAdmin {
   deleteUser(userId: string): Promise<void>;
+  /** Held by Supabase Auth, not the profile, so it is asked for here. */
+  getEmail(userId: string): Promise<string | null>;
 }
 
 export const createAuthAdmin = (db: SupabaseClient): AuthAdmin => ({
@@ -17,5 +19,11 @@ export const createAuthAdmin = (db: SupabaseClient): AuthAdmin => ({
        handle_new_user is AFTER INSERT only. */
     const { error } = await db.auth.admin.deleteUser(userId);
     if (error) throw error;
+  },
+
+  async getEmail(userId) {
+    const { data, error } = await db.auth.admin.getUserById(userId);
+    if (error) throw error;
+    return data.user?.email ?? null;
   },
 });

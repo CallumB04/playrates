@@ -40,6 +40,10 @@ import {
   type AdminRepository,
 } from "./modules/admin/admin.repository.js";
 import {
+  createAccountExportRepository,
+  type AccountExportRepository,
+} from "./modules/profiles/accountExport.repository.js";
+import {
   createCommunityRepository,
   type CommunityRepository,
 } from "./modules/community/community.repository.js";
@@ -58,6 +62,7 @@ export interface Repositories {
   genres: GenresRepository;
   gameEvents: GameEventsRepository;
   admin: AdminRepository;
+  accountExport: AccountExportRepository;
 }
 
 export const createRepositories = (db: Db): Repositories => ({
@@ -72,4 +77,5 @@ export const createRepositories = (db: Db): Repositories => ({
   genres: createGenresRepository(db),
   gameEvents: createGameEventsRepository(db),
   admin: createAdminRepository(db),
+  accountExport: createAccountExportRepository(db),
 });

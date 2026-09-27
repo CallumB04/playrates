@@ -18,6 +18,8 @@ export interface ProfileRow {
   timezone: string;
   /** When true, this profile reads as offline to everyone. */
   hide_online: boolean;
+  /** When true, the profile page asks search engines not to index it. */
+  hide_from_search: boolean;
   /** Chosen profile colour. Null falls back to the hash of the username. */
   accent: string | null;
   /** When the first-login welcome was dismissed. Null shows it. */

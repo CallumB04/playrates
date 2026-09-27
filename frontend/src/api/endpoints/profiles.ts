@@ -61,6 +61,14 @@ export const sendHeartbeat = async (): Promise<void> => {
     await api.post("/profiles/me/heartbeat");
 };
 
+/** Everything held about the caller, as the JSON file they asked for. */
+export const fetchMyData = async (): Promise<Blob> => {
+    const { data } = await api.get<Blob>("/profiles/me/export", {
+        responseType: "blob",
+    });
+    return data;
+};
+
 /** Irreversible. Cascades to every log, review and friendship. */
 export const deleteMyAccount = async (): Promise<void> => {
     await api.delete("/profiles/me");

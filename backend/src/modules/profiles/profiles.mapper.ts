@@ -27,6 +27,7 @@ export const toProfile = (row: ProfileRow, now = Date.now()): Profile => ({
   accent: toAccent(row.accent),
   // Opting out hides presence from everyone, the owner included.
   online: !row.hide_online && isOnline(row.last_seen_at, now),
+  hideFromSearch: row.hide_from_search,
   createdAt: row.created_at,
 });
 

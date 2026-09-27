@@ -62,7 +62,12 @@ export const buildRoutes = ({
 }: Deps): Router => {
   const router = Router();
 
-  const profiles = createProfilesService(repos.profiles, authAdmin, avatars);
+  const profiles = createProfilesService(
+    repos.profiles,
+    authAdmin,
+    avatars,
+    repos.accountExport,
+  );
   const games = createGamesService(
     repos.games,
     provider,

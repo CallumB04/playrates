@@ -12,12 +12,22 @@ import { paginate, toRange } from "../../lib/pagination.js";
 import type { AuthAdmin } from "../../config/authAdmin.js";
 import type { AvatarStore } from "../../config/avatarStore.js";
 import type { ProfilesRepository } from "./profiles.repository.js";
+import type {
+  AccountData,
+  AccountExportRepository,
+} from "./accountExport.repository.js";
 import { toMyProfile, toProfile } from "./profiles.mapper.js";
+
+export interface AccountExport extends AccountData {
+  exportedAt: string;
+  email: string | null;
+}
 
 export const createProfilesService = (
   repo: ProfilesRepository,
   authAdmin: AuthAdmin,
   avatars: AvatarStore,
+  exports: AccountExportRepository,
 ) => ({
   /** The caller's own, so it carries their settings. */
   async getById(id: string): Promise<MyProfile> {
@@ -35,7 +45,21 @@ export const createProfilesService = (
     // 404 rather than a silent success if it is already gone.
     const row = await repo.findById(id);
     if (!row) throw AppError.notFound("Profile");
+    // First, so a storage failure stops here with the account still whole
+    // and the request safe to retry.
+    if (row.avatar_url) await avatars.remove(id);
     await authAdmin.deleteUser(id);
+    await repo.eraseTraces(id);
+  },
+
+  /** A copy of everything held about the caller, for them to keep. */
+  async exportOwn(id: string): Promise<AccountExport> {
+    const [data, email] = await Promise.all([
+      exports.collect(id),
+      authAdmin.getEmail(id),
+    ]);
+    if (!data.profile) throw AppError.notFound("Profile");
+    return { exportedAt: new Date().toISOString(), email, ...data };
   },
 
   /**
@@ -121,6 +145,9 @@ export const createProfilesService = (
     }
     if (input.timezone !== undefined) patch.timezone = input.timezone;
     if (input.hideOnline !== undefined) patch.hide_online = input.hideOnline;
+    if (input.hideFromSearch !== undefined) {
+      patch.hide_from_search = input.hideFromSearch;
+    }
     if (input.accent !== undefined) patch.accent = input.accent;
 
     if (Object.keys(patch).length === 0) {

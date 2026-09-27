@@ -124,10 +124,10 @@ const str = (value: unknown): string | null =>
 /** One readable line per event. Pure, so every kind's wording is tested. */
 export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
     const d = event.data;
+    // A closed account's line keeps no name: closing it erases that.
     const who =
         event.actor?.username ??
-        (event.kind === "account_deleted" ? str(d.username) : null) ??
-        "A deleted account";
+        (event.kind === "account_deleted" ? "Someone" : "A deleted account");
     const game = event.game?.title ?? "a game";
     const gameHref = event.game ? `/game/${event.game.id}` : null;
     const threadId = typeof d.threadId === "number" ? d.threadId : null;

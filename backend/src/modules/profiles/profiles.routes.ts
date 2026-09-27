@@ -59,6 +59,8 @@ export const createProfilesRouter = ({
 }: Deps): Router => {
   const router = Router();
   const usernameCheckLimiter = perMinute(30);
+  // Reads every table the account touches.
+  const exportLimiter = perMinute(3);
 
   // "/me" and "/check-username" must come before "/:username", or they parse
   // as usernames.
@@ -80,6 +82,16 @@ export const createProfilesRouter = ({
   router.delete("/me", requireAuth, async (req, res) => {
     await service.deleteOwn(callerId(req));
     res.status(204).end();
+  });
+
+  router.get("/me/export", requireAuth, exportLimiter, async (req, res) => {
+    const data = await service.exportOwn(callerId(req));
+    const day = data.exportedAt.slice(0, 10);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="playrates-${String(data.profile?.username ?? "account")}-${day}.json"`,
+    );
+    res.json(data);
   });
 
   router.post(

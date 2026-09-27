@@ -197,6 +197,62 @@ describe("closing an account", () => {
     expect(state.friendships).toHaveLength(0);
   });
 
+  it("clears what the logs held about them, and their picture", async () => {
+    const event = (id: number, actor: string) => ({
+      id,
+      actor_id: actor,
+      kind: "review_posted",
+      game_id: 1,
+      subject_id: "1",
+      data: { excerpt: "what they wrote" },
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const { app, state } = buildTestApp({
+      seed: {
+        ...seedWithEverything(),
+        profiles: baseSeed().profiles.map((p) =>
+          p.id === USER_A ? { ...p, avatar_url: "https://x.test/a.webp" } : p,
+        ),
+        activityEvents: [event(1, USER_A), event(2, USER_B)],
+        gameEvents: [
+          {
+            id: 1,
+            kind: "search",
+            game_id: null,
+            source: "search",
+            actor_id: USER_A,
+            data: { term: "zelda" },
+            created_at: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+        serverErrors: [
+          {
+            id: 1,
+            status: 500,
+            code: "internal",
+            method: "GET",
+            path: "/x",
+            message: "boom",
+            request_id: null,
+            user_id: USER_A,
+            stack: null,
+            created_at: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+      },
+    });
+    state.avatars.set(USER_A, Buffer.from("x"));
+
+    await request(app)
+      .delete("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(state.activityEvents.map((e) => e.actor_id)).toEqual([USER_B]);
+    expect(state.gameEvents[0]!.actor_id).toBeNull();
+    expect(state.serverErrors[0]!.user_id).toBeNull();
+    expect(state.avatars.has(USER_A)).toBe(false);
+  });
+
   it("leaves everyone else alone", async () => {
     const { app, state } = buildTestApp({ seed: seedWithEverything() });
 
@@ -499,5 +555,57 @@ describe("the first-login welcome", () => {
     const response = await request(app).post("/api/v1/profiles/me/onboarded");
 
     expect(response.status).toBe(401);
+  });
+});
+
+describe("exporting an account", () => {
+  const seed = () => ({
+    ...baseSeed(),
+    gameLogs: [
+      buildGameLog({ id: 1, user_id: USER_A, game_id: 1 }),
+      buildGameLog({ id: 2, user_id: USER_B, game_id: 1 }),
+    ],
+    reviews: [buildReview({ id: 1, user_id: USER_A, game_id: 1 })],
+  });
+
+  it("hands over the caller's own rows as a download", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await request(app)
+      .get("/api/v1/profiles/me/export")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-disposition"]).toMatch(
+      /^attachment; filename="playrates-devuser-\d{4}-\d{2}-\d{2}\.json"$/,
+    );
+    expect(response.body.email).toBe(`${USER_A}@example.test`);
+    expect(response.body.profile.username).toBe("devuser");
+    expect(response.body.gameLogs.map((l: { id: number }) => l.id)).toEqual([1]);
+    expect(response.body.reviews).toHaveLength(1);
+  });
+
+  it("requires authentication", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    expect((await request(app).get("/api/v1/profiles/me/export")).status).toBe(
+      401,
+    );
+  });
+});
+
+describe("hiding from search engines", () => {
+  it("is off by default, and the owner can switch it on", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const before = await request(app).get("/api/v1/profiles/devuser");
+    await request(app)
+      .patch("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A))
+      .send({ hideFromSearch: true });
+    const after = await request(app).get("/api/v1/profiles/devuser");
+
+    expect(before.body.hideFromSearch).toBe(false);
+    expect(after.body.hideFromSearch).toBe(true);
   });
 });

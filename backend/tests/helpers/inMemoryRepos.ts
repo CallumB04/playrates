@@ -209,7 +209,45 @@ export const createInMemoryRepos = (
   };
 
   const repos: Repositories = {
+    accountExport: {
+      async collect(userId) {
+        return {
+          profile: (state.profiles.find((p) => p.id === userId) ??
+            null) as Record<string, unknown> | null,
+          gameLogs: state.gameLogs.filter((l) => l.user_id === userId),
+          reviews: state.reviews.filter((r) => r.user_id === userId),
+          reviewVotes: state.reviewVotes.filter((v) => v.user_id === userId),
+          friendships: state.friendships.filter(
+            (f) => f.user_a_id === userId || f.user_b_id === userId,
+          ),
+          notifications: state.notifications.filter(
+            (n) => n.user_id === userId,
+          ),
+          communityThreads: state.communityThreads.filter(
+            (t) => t.author_id === userId,
+          ),
+          communityMessages: state.communityMessages.filter(
+            (m) => m.author_id === userId,
+          ),
+          communityVotes: state.communityVotes.filter(
+            (v) => v.user_id === userId,
+          ),
+          activeDays: [],
+        };
+      },
+    },
     profiles: {
+      async eraseTraces(id) {
+        state.activityEvents = state.activityEvents.filter(
+          (e) => e.actor_id !== id && e.subject_id !== id,
+        );
+        for (const e of state.gameEvents) {
+          if (e.actor_id === id) e.actor_id = null;
+        }
+        for (const e of state.serverErrors) {
+          if (e.user_id === id) e.user_id = null;
+        }
+      },
       async findById(id) {
         return state.profiles.find((p) => p.id === id) ?? null;
       },
@@ -1061,6 +1099,11 @@ export const createInMemoryRepos = (
      friendships with it — a fake that only dropped the profile would let a
      broken cascade pass the tests. */
   const authAdmin: AuthAdmin = {
+    async getEmail(userId) {
+      return state.profiles.some((p) => p.id === userId)
+        ? `${userId}@example.test`
+        : null;
+    },
     async deleteUser(userId) {
       state.profiles = state.profiles.filter((p) => p.id !== userId);
       state.gameLogs = state.gameLogs.filter((l) => l.user_id !== userId);

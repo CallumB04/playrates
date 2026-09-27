@@ -25,7 +25,7 @@ describe("activitySummary", () => {
         });
     });
 
-    it("names a closed account by the username it had", () => {
+    it("does not name a closed account, even from an old line", () => {
         const summary = activitySummary(
             event({
                 kind: "account_deleted",
@@ -34,7 +34,7 @@ describe("activitySummary", () => {
             })
         );
         expect(summary).toMatchObject({
-            who: "gone",
+            who: "Someone",
             action: "closed their account",
         });
     });

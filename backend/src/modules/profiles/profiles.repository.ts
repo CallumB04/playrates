@@ -15,10 +15,19 @@ export interface ProfilesRepository {
   update(id: string, patch: Partial<ProfileRow>): Promise<ProfileRow>;
   usernameExists(username: string, excludingId?: string): Promise<boolean>;
   touchLastSeen(id: string): Promise<void>;
+  /** Clears what the logs hold about a closed account. The profile's delete
+   *  trigger does this too; calling it after sweeps up anything a cascade
+   *  wrote once the trigger had run. */
+  eraseTraces(id: string): Promise<void>;
   count(): Promise<number>;
 }
 
 export const createProfilesRepository = (db: Db): ProfilesRepository => ({
+  async eraseTraces(id) {
+    const { error } = await db.rpc("erase_account_traces", { p_id: id });
+    if (error) throw error;
+  },
+
   async findById(id) {
     const { data, error } = await db
       .from("profiles")
