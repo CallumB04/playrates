@@ -1,15 +1,32 @@
 import { Link } from "react-router-dom";
+import { Mail } from "lucide-react";
 import { CONTACT_EMAIL } from "@playrates/shared";
+import { buttonClass } from "../../components/ui/Button";
 import ProsePage from "./ProsePage";
-
-const Email = () => <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>;
 
 const ContactPage = () => (
     <ProsePage title="Contact" summary="The quickest way to reach me.">
-        <p>
-            Email <Email />. I read everything that comes in, though it might
-            take me a few days to reply.
-        </p>
+        <div className="flex flex-col gap-4 rounded-lg border border-subtle bg-surface-raised p-5 shadow-plate sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div>
+                <p className="font-display text-section text-content">
+                    Send me an email
+                </p>
+                <p className="mt-1 text-body-sm text-content-secondary">
+                    I read everything and reply as soon as I can.
+                </p>
+            </div>
+            <a
+                href={`mailto:${CONTACT_EMAIL}`}
+                className={buttonClass(
+                    "primary",
+                    "w-full no-underline sm:w-auto",
+                    "lg"
+                )}
+            >
+                <Mail size={17} aria-hidden />
+                {CONTACT_EMAIL}
+            </a>
+        </div>
 
         <h2>Found a bug?</h2>
         <p>
@@ -41,9 +58,6 @@ const ContactPage = () => (
             to it and a line on what’s wrong. If someone is in immediate danger,
             contact the police first.
         </p>
-
-        <h2>Anything else</h2>
-        <p>Ideas, questions, or just saying hello: same address.</p>
     </ProsePage>
 );
 
