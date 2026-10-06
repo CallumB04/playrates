@@ -355,7 +355,7 @@
     --font-sans: "Geist Variable", system-ui, -apple-system, sans-serif;
     --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
 
-    --spacing-navbar: 4rem;
+    --spacing-navbar: 5rem;
     --container-measure: 52ch; /* ~65 rendered characters in Geist */
 
     /* Type scale. Zilla Slab displays, IBM Plex Sans sets prose, IBM Plex
