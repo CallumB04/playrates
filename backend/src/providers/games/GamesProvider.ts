@@ -13,10 +13,12 @@ export interface ExternalGame {
   slug: string;
   title: string;
   description: string;
-  /** Wide art, for link previews and backdrops. */
+  /** Wide art, for link previews. */
   coverUrl: string | null;
   /** The portrait cover every tile shows. */
   boxArtUrl: string | null;
+  /** The picture across the top of the game's page. */
+  bannerUrl: string | null;
   /** YYYY-MM-DD */
   releaseDate: string | null;
   /** Already translated to PlayRates platform family slugs. */

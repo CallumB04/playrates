@@ -201,6 +201,17 @@ describe("game mapper", () => {
     expect(game.artworkUrl).toBe("https://example.test/art.jpg");
   });
 
+  it("puts the banner behind the page where a game has one", () => {
+    const game = toGame(
+      buildGame({
+        cover_url: "https://example.test/logo.jpg",
+        banner_url: "https://example.test/scene.jpg",
+      }),
+    );
+
+    expect(game.artworkUrl).toBe("https://example.test/scene.jpg");
+  });
+
   it("flattens the joined platforms into slugs", () => {
     const game = toGame({
       ...buildGame(),

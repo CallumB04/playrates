@@ -9,8 +9,8 @@ export interface Game {
   title: string;
   description: string;
   coverUrl: string | null;
-  /** Wide art to sit behind things: artwork, else a screenshot, else the
-   *  cover again. */
+  /** Wide art to sit behind things: a screenshot first, then artwork, else
+   *  the cover again. */
   artworkUrl: string | null;
   releaseDate: string | null;
   /** Platform family slugs, e.g. ["steam", "xbox"]. */

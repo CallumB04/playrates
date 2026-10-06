@@ -122,6 +122,18 @@ export const pickSeries = (
   return collection ? { id: collection.id, name: collection.name } : null;
 };
 
+/**
+ * The picture across the top of a game page. A screenshot first: IGDB's
+ * first artwork is often the logo or a poster with the title on it, which
+ * fills a banner with giant letters, where a screenshot is the game itself.
+ */
+export const pickBanner = (
+  game: Pick<IgdbGame, "screenshots" | "artworks">,
+): string | null => {
+  const scene = game.screenshots?.[0] ?? game.artworks?.[0];
+  return scene ? igdbImage(scene.image_id, "1080p") : null;
+};
+
 /** Edition covers first, then regional ones, never the main cover twice. */
 const altCovers = (game: IgdbGame, editions: AltCover[]): AltCover[] => {
   const regional = (game.game_localizations ?? []).flatMap((l) =>
@@ -142,7 +154,7 @@ export const toExternalGame = (
 ): ExternalGame => {
   const systemSlugs = systems(game);
   const cover = game.cover ? igdbImage(game.cover.image_id, "cover_big_2x") : null;
-  // A wide picture for link previews and the game page's backdrop.
+  // A wide picture for link previews, where a logo reads well.
   const wide = game.artworks?.[0] ?? game.screenshots?.[0];
 
   return {
@@ -152,6 +164,7 @@ export const toExternalGame = (
     description: (game.summary || game.storyline || "").trim(),
     coverUrl: wide ? igdbImage(wide.image_id, "1080p") : cover,
     boxArtUrl: cover,
+    bannerUrl: pickBanner(game),
     releaseDate: releaseDate(game.first_release_date),
     platformSlugs: unique(systemSlugs.map((s) => SYSTEM_FAMILY[s]!)),
     systemSlugs,

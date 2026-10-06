@@ -93,6 +93,7 @@ const toRow = (g: ExternalGame, now: string) => ({
   ...(g.description ? { description: g.description } : {}),
   cover_url: g.coverUrl,
   box_art_url: g.boxArtUrl,
+  banner_url: g.bannerUrl,
   release_date: g.releaseDate,
   has_sexual_content: g.hasSexualContent,
   developers: g.developers,

@@ -180,6 +180,29 @@ describe("IGDB provider", () => {
     );
   });
 
+  it("re-reads just the banner for a batch of games", async () => {
+    const api = upstream([
+      () =>
+        Response.json([
+          {
+            id: 1,
+            artworks: [{ image_id: "ar1" }],
+            screenshots: [{ image_id: "sc1" }],
+          },
+          { id: 2 },
+        ]),
+    ]);
+    const igdb = createIgdbProvider("id", "secret", api.fetchImpl);
+
+    const banners = await igdb.bannersOf([1, 2]);
+
+    expect(banners.get(1)).toContain("/sc1.jpg");
+    expect(banners.get(2)).toBeNull();
+    expect(api.queries[0]!.body).toBe(
+      "fields screenshots.image_id,artworks.image_id; where id = (1,2); limit 500;",
+    );
+  });
+
   it("re-reads just the series for a batch of games", async () => {
     const api = upstream([
       () =>

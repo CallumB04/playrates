@@ -6,6 +6,7 @@ import type {
 } from "../GamesProvider.js";
 import type { AltCover } from "../GamesProvider.js";
 import {
+  pickBanner,
   pickSeries,
   toExternalGame,
   type IgdbGame,
@@ -81,6 +82,8 @@ export interface IgdbProvider extends GamesProvider {
   listMostVisited(pageNumber: number, pageSize: number): Promise<GamePage>;
   /** The series of up to 500 games, by IGDB id, for re-deriving it alone. */
   seriesOf(igdbIds: number[]): Promise<Map<number, ExternalGame["series"]>>;
+  /** Just the banner of each game, for when the rule that picks it changes. */
+  bannersOf(igdbIds: number[]): Promise<Map<number, string | null>>;
 }
 
 export interface IgdbRequestOutcome {
@@ -336,6 +339,14 @@ export const createIgdbProvider = (
         `fields franchises.name,collections.name; where id = (${igdbIds.join(",")}); limit ${MAX_LIMIT};`,
       );
       return new Map(found.map((g) => [g.id, pickSeries(g)]));
+    },
+
+    async bannersOf(igdbIds) {
+      const found = await query<IgdbGame[]>(
+        "games",
+        `fields screenshots.image_id,artworks.image_id; where id = (${igdbIds.join(",")}); limit ${MAX_LIMIT};`,
+      );
+      return new Map(found.map((g) => [g.id, pickBanner(g)]));
     },
 
     listByDate({ from, to, page: pageNumber, pageSize }) {

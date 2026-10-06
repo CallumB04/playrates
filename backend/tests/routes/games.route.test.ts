@@ -41,6 +41,7 @@ const externalGame: ExternalGame = {
   description: "A hand-drawn metroidvania.",
   coverUrl: "https://example.test/hk.jpg",
   boxArtUrl: null,
+  bannerUrl: null,
   releaseDate: "2017-02-24",
   platformSlugs: ["other-pc"],
   systemSlugs: ["other-pc"],

@@ -25,6 +25,10 @@
  *     Asks IGDB for every game's series again and writes the ones that have
  *     changed, after the rule that picks a series changes.
  *
+ *   npm run migrate:igdb -w backend -- --refresh-banners
+ *     Asks IGDB for every game's banner again, after the rule that picks
+ *     one changes.
+ *
  *   npm run migrate:igdb -w backend -- --trending
  *     Sets the trending games from IGDB now, as the daily job does.
  *
@@ -306,6 +310,37 @@ const refreshSeries = async () => {
   }
 };
 
+const refreshBanners = async () => {
+  const provider = requireProvider();
+  let checked = 0;
+  let changed = 0;
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await db
+      .from("games")
+      .select("id, igdb_id")
+      .not("igdb_id", "is", null)
+      .order("id")
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    const rows = data ?? [];
+    if (rows.length === 0) break;
+
+    const banners = await provider.bannersOf(rows.map((r) => r.igdb_id as number));
+    const updates = rows.map((r) => ({
+      id: r.id,
+      banner_url: banners.get(r.igdb_id as number) ?? null,
+    }));
+    const { data: n, error: rpcError } = await db.rpc("set_game_banners", {
+      p_rows: updates,
+    });
+    if (rpcError) throw rpcError;
+    changed += Number(n);
+    checked += rows.length;
+    console.log(`${checked} checked, ${changed} changed`);
+    if (rows.length < PAGE_SIZE) break;
+  }
+};
+
 const cleanup = async () => {
   let total = 0;
   for (;;) {
@@ -325,6 +360,7 @@ const steps: [string, () => Promise<void>][] = [
   ["--purge", purge],
   ["--import", importCatalogue],
   ["--refresh-series", refreshSeries],
+  ["--refresh-banners", refreshBanners],
   [
     "--trending",
     async () => console.log(await refreshTrending(requireProvider(), repo)),

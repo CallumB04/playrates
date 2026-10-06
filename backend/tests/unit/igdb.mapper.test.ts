@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   igdbImage,
+  pickBanner,
   toExternalGame,
   type IgdbGame,
 } from "../../src/providers/games/igdb/igdb.mapper.js";
@@ -241,5 +242,23 @@ describe("toExternalGame", () => {
       criticScore: null,
       igdbRatingCount: null,
     });
+  });
+});
+
+describe("pickBanner", () => {
+  const shot = { image_id: "sc1" };
+  const art = { image_id: "ar1" };
+
+  /* The first artwork is often the logo: The Witcher 3's claws, GTA V's
+     wordmark. A screenshot is the game itself. */
+  it("takes a screenshot over artwork", () => {
+    expect(pickBanner({ artworks: [art], screenshots: [shot] })).toBe(
+      "https://images.igdb.com/igdb/image/upload/t_1080p/sc1.jpg",
+    );
+  });
+
+  it("falls back to artwork, then to nothing", () => {
+    expect(pickBanner({ artworks: [art] })).toContain("/ar1.jpg");
+    expect(pickBanner({})).toBeNull();
   });
 });

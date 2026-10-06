@@ -45,6 +45,8 @@ export interface GameRow {
   description: string;
   /** Wide art: link previews and backdrops. */
   cover_url: string | null;
+  /** The picture across the top of the game page; a screenshot first. */
+  banner_url: string | null;
   /** The portrait cover. Preferred whenever the API hands a game out. */
   box_art_url: string | null;
   release_date: string | null;

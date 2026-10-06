@@ -87,6 +87,7 @@ const external = (id: number, title = `Game ${id}`): ExternalGame => ({
   description: "",
   coverUrl: null,
   boxArtUrl: null,
+  bannerUrl: null,
   releaseDate: "2026-09-20",
   platformSlugs: [],
   systemSlugs: [],
