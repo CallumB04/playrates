@@ -1,4 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { effectiveTimeZone, setDisplayTimeZone } from "../lib/format";
 import {
@@ -6,6 +7,7 @@ import {
     useContext,
     useEffect,
     useMemo,
+    useRef,
     useState,
     type ReactNode,
 } from "react";
@@ -25,6 +27,11 @@ interface AuthContextValue {
     ) => Promise<void>;
     signIn: (email: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
+    /** Emails a link to set a new password. Says nothing about whether the
+     *  address has an account. */
+    requestPasswordReset: (email: string) => Promise<void>;
+    /** Sets a new password for whoever followed that link. */
+    updatePassword: (password: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -34,6 +41,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [isRestoring, setIsRestoring] = useState(true);
     const queryClient = useQueryClient();
     const notify = useNotify();
+    const navigate = useNavigate();
+    const navigateRef = useRef(navigate);
+    navigateRef.current = navigate;
 
     // restore any existing session, then follow it
     useEffect(() => {
@@ -47,8 +57,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+        } = supabase.auth.onAuthStateChange((event, nextSession) => {
             setSession(nextSession);
+            // A reset link signs you in to choose a new password, wherever
+            // the link landed, so take you to where that's done.
+            if (event === "PASSWORD_RECOVERY") {
+                navigateRef.current("/reset-password");
+            }
         });
 
         return () => {
@@ -121,6 +136,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 });
                 if (error) throw error;
                 notify("You are now logged in", "success");
+            },
+
+            async requestPasswordReset(email) {
+                const { error } = await supabase.auth.resetPasswordForEmail(
+                    email,
+                    { redirectTo: `${window.location.origin}/reset-password` }
+                );
+                if (error) throw error;
+            },
+
+            async updatePassword(password) {
+                const { error } = await supabase.auth.updateUser({ password });
+                if (error) throw error;
+                notify("Your password has been changed", "success");
             },
 
             async signOut() {

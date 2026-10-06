@@ -9,12 +9,14 @@ import {
 } from "react";
 import { useLocation } from "react-router-dom";
 
-export type AccountFormMode = "login" | "signup";
+export type AccountFormMode = "login" | "signup" | "reset";
 
 interface AccountFormContextValue {
     mode: AccountFormMode | null;
     openLogin: () => void;
     openSignup: () => void;
+    /** The forgotten-password form, in the same popup. */
+    openReset: () => void;
     close: () => void;
 }
 
@@ -30,6 +32,7 @@ export const AccountFormProvider = ({ children }: { children: ReactNode }) => {
 
     const openLogin = useCallback(() => setMode("login"), []);
     const openSignup = useCallback(() => setMode("signup"), []);
+    const openReset = useCallback(() => setMode("reset"), []);
     const close = useCallback(() => setMode(null), []);
 
     // navigating away should dismiss the modal
@@ -38,8 +41,8 @@ export const AccountFormProvider = ({ children }: { children: ReactNode }) => {
     }, [location.pathname]);
 
     const value = useMemo(
-        () => ({ mode, openLogin, openSignup, close }),
-        [mode, openLogin, openSignup, close]
+        () => ({ mode, openLogin, openSignup, openReset, close }),
+        [mode, openLogin, openSignup, openReset, close]
     );
 
     return (

@@ -9,9 +9,11 @@ import PasswordField from "./PasswordField";
 interface LoginFormProps {
     /** Carried over when the user has just signed up. */
     initialEmail?: string;
+    /** Opens the forgotten-password form with whatever email was typed. */
+    onForgot?: (email: string) => void;
 }
 
-const LoginForm = ({ initialEmail = "" }: LoginFormProps) => {
+const LoginForm = ({ initialEmail = "", onForgot }: LoginFormProps) => {
     const { signIn } = useAuth();
     const { close } = useAccountForm();
     const notify = useNotify();
@@ -57,7 +59,26 @@ const LoginForm = ({ initialEmail = "" }: LoginFormProps) => {
                 required
                 autoFocus
             />
-            <PasswordField error={formError} />
+            <div className="flex flex-col gap-1.5">
+                <PasswordField error={formError} />
+                {/* Where every login form keeps it: someone who's forgotten
+                    looks right under the password. */}
+                {onForgot && (
+                    <button
+                        type="button"
+                        onClick={(event) => {
+                            const email =
+                                event.currentTarget.form?.elements.namedItem(
+                                    "email"
+                                ) as HTMLInputElement | null;
+                            onForgot(email?.value ?? "");
+                        }}
+                        className="relative cursor-pointer self-end text-label text-brand before:absolute before:-inset-3 before:content-[''] hover:underline sm:before:hidden"
+                    >
+                        Forgot password?
+                    </button>
+                )}
+            </div>
 
             {/* The button carries the pending state rather than a spinner
                 covering the panel, which hid the fields you were correcting. */}
