@@ -612,7 +612,7 @@ describe("related games", () => {
     ],
   });
 
-  it("gives the series in release order, the developer's other games, and similar ones, none twice", async () => {
+  it("gives the series newest first, the developer's other games, and similar ones, none twice", async () => {
     const { app } = buildTestApp({ seed: seed() });
 
     const response = await request(app).get("/api/v1/games/1/related");
@@ -620,7 +620,7 @@ describe("related games", () => {
     expect(response.status).toBe(200);
     const titles = (games: { title: string }[]) => games.map((g) => g.title);
     expect(response.body.series.name).toBe("The Witcher");
-    expect(titles(response.body.series.games)).toEqual(["The Witcher", "The Witcher 2"]);
+    expect(titles(response.body.series.games)).toEqual(["The Witcher 2", "The Witcher"]);
     expect(response.body.developer.name).toBe("CD Projekt RED");
     expect(titles(response.body.developer.games)).toEqual(["Cyberpunk 2077"]);
     // Cyberpunk is already under the developer; the explicit one stays hidden.

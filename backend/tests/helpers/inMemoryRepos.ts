@@ -543,7 +543,7 @@ export const createInMemoryRepos = (
           .filter((g) => showSexualContent || !g.has_sexual_content)
           .sort(
             (a, b) =>
-              (a.release_date ?? "9999").localeCompare(b.release_date ?? "9999") ||
+              (b.release_date ?? "").localeCompare(a.release_date ?? "") ||
               a.id - b.id,
           )
           .slice(0, limit)

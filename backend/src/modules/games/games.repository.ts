@@ -57,7 +57,7 @@ export interface GamesRepository {
   count(): Promise<number>;
   /** Which of these upstream ids are already in the catalogue. */
   existingIgdbIds(igdbIds: number[]): Promise<number[]>;
-  /** Games of a series, in release order, leaving one game out. */
+  /** Games of a series, newest first, leaving one game out. */
   listSeries(
     seriesId: number,
     exceptId: number,
@@ -430,7 +430,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       .neq("id", exceptId);
     if (!showSexualContent) builder = builder.eq("has_sexual_content", false);
     const { data, error } = await builder
-      .order("release_date", { ascending: true, nullsFirst: false })
+      .order("release_date", { ascending: false, nullsFirst: false })
       .order("id")
       .limit(limit);
     if (error) throw error;
