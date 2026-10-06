@@ -13,15 +13,9 @@ const COLUMNS = [
         ],
     },
     {
-        heading: BRAND_NAME,
+        heading: "Info",
         links: [
-            { to: "/about", label: "About" },
             { to: "/contact", label: "Contact" },
-        ],
-    },
-    {
-        heading: "Legal",
-        links: [
             { to: "/privacy", label: "Privacy" },
             { to: "/terms", label: "Terms" },
         ],
@@ -35,7 +29,7 @@ const SMALL_LINK =
     "inline-flex min-h-11 items-center gap-1.5 text-label text-content-muted lift hover:text-content sm:min-h-0";
 
 const Footer = () => (
-    <footer className="relative mt-16 overflow-hidden border-t border-subtle bg-surface-sunken">
+    <footer className="relative mt-12 overflow-hidden border-t border-subtle bg-surface-sunken">
         {/* The brand's light catching the top edge. */}
         <div
             aria-hidden
@@ -46,8 +40,8 @@ const Footer = () => (
             className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(50%_100%_at_50%_0%,color-mix(in_oklab,var(--brand)_12%,transparent),transparent)]"
         />
 
-        <div className="relative mx-auto w-full max-w-[1240px] px-5 pt-12 sm:px-8 sm:pt-14 lg:px-12">
-            <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:gap-16">
+        <div className="relative mx-auto w-full max-w-[1240px] px-5 pt-8 pb-6 sm:px-8 sm:pt-10 lg:px-12">
+            <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-16">
                 <div>
                     <Link
                         to="/"
@@ -62,21 +56,21 @@ const Footer = () => (
                             {BRAND_NAME}
                         </span>
                     </Link>
-                    <p className="mt-3 max-w-[32ch] text-body text-content-secondary">
+                    <p className="mt-2 max-w-[32ch] text-body text-content-secondary">
                         {BRAND_MOTTO}
                     </p>
                 </div>
 
                 <nav
                     aria-label="Footer"
-                    className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3"
+                    className="grid grid-cols-2 gap-x-12 sm:gap-x-16"
                 >
                     {COLUMNS.map((column) => (
                         <div key={column.heading}>
                             <h2 className="text-label-sm font-medium tracking-[0.14em] text-content-muted uppercase">
                                 {column.heading}
                             </h2>
-                            <ul className="mt-3 flex flex-col sm:gap-1">
+                            <ul className="mt-2 flex flex-col">
                                 {column.links.map((link) => (
                                     <li key={link.to}>
                                         <Link to={link.to} className={LINK}>
@@ -90,7 +84,7 @@ const Footer = () => (
                 </nav>
             </div>
 
-            <div className="mt-12 flex flex-col gap-2 border-t border-subtle pt-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="mt-6 flex flex-col gap-2 border-t border-subtle pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <p className="flex flex-wrap items-center gap-x-2 text-label text-content-muted">
                     <span>
                         © {new Date().getFullYear()} {BRAND_NAME}
@@ -136,15 +130,6 @@ const Footer = () => (
                 </div>
             </div>
         </div>
-
-        {/* The name, set large and let fade into the floor: the last thing
-            on every page. */}
-        <p
-            aria-hidden
-            className="pointer-events-none relative mx-auto -mb-[0.2em] max-w-[1240px] bg-linear-to-b from-content/[0.09] to-transparent bg-clip-text px-3 text-center font-display text-[clamp(4.5rem,19vw,14rem)] leading-none font-bold tracking-[-0.04em] whitespace-nowrap text-transparent select-none"
-        >
-            {BRAND_NAME}
-        </p>
     </footer>
 );
 

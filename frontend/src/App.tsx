@@ -9,7 +9,6 @@ import HomePage from "./pages/HomePage/HomePage";
 import CommunityPage from "./pages/CommunityPage/CommunityPage";
 import NewThreadPage from "./pages/CommunityPage/NewThreadPage";
 import ThreadPage from "./pages/CommunityPage/ThreadPage";
-import AboutPage from "./pages/legal/AboutPage";
 import PrivacyPage from "./pages/legal/PrivacyPage";
 import TermsPage from "./pages/legal/TermsPage";
 import ContactPage from "./pages/legal/ContactPage";
@@ -60,7 +59,6 @@ function App() {
                         <Route path="/settings" element={<SettingsPage />} />
 
                         {/* Stubs, so the footer never links into nothing. */}
-                        <Route path="/about" element={<AboutPage />} />
                         <Route path="/privacy" element={<PrivacyPage />} />
                         <Route path="/terms" element={<TermsPage />} />
                         <Route path="/contact" element={<ContactPage />} />

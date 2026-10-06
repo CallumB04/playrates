@@ -9,7 +9,6 @@ export const STATIC_PATHS = [
   "/",
   "/library",
   "/community",
-  "/about",
   "/contact",
   "/privacy",
   "/terms",
