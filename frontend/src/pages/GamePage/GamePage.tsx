@@ -97,7 +97,8 @@ const GamePage = () => {
     );
 
     const facts = useMemo(
-        () => (game ? buildGameFacts(game, platforms ?? [], genres ?? []) : []),
+        () =>
+            game ? buildGameFacts(game, platforms ?? [], genres ?? []) : null,
         [game, platforms, genres]
     );
 
