@@ -5,7 +5,11 @@ import type {
   GamesProvider,
 } from "../GamesProvider.js";
 import type { AltCover } from "../GamesProvider.js";
-import { toExternalGame, type IgdbGame } from "./igdb.mapper.js";
+import {
+  pickSeries,
+  toExternalGame,
+  type IgdbGame,
+} from "./igdb.mapper.js";
 
 const API = "https://api.igdb.com/v4";
 const TOKEN_URL = "https://id.twitch.tv/oauth2/token";
@@ -71,6 +75,8 @@ export interface IgdbProvider extends GamesProvider {
    * pageSize, since visits count DLC and editions the filter drops.
    */
   listMostVisited(pageNumber: number, pageSize: number): Promise<GamePage>;
+  /** The series of up to 500 games, by IGDB id, for re-deriving it alone. */
+  seriesOf(igdbIds: number[]): Promise<Map<number, ExternalGame["series"]>>;
 }
 
 export interface IgdbRequestOutcome {
@@ -310,6 +316,14 @@ export const createIgdbProvider = (
         total: (pageNumber - 1) * limit + visited.length,
         hasNext: visited.length === limit,
       };
+    },
+
+    async seriesOf(igdbIds) {
+      const found = await query<IgdbGame[]>(
+        "games",
+        `fields franchises.name,collections.name; where id = (${igdbIds.join(",")}); limit ${MAX_LIMIT};`,
+      );
+      return new Map(found.map((g) => [g.id, pickSeries(g)]));
     },
 
     listByDate({ from, to, page: pageNumber, pageSize }) {

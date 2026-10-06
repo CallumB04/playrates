@@ -166,18 +166,24 @@ describe("toExternalGame", () => {
     ).toBe(false);
   });
 
-  it("groups by the series, falling back to a franchise kept apart by sign", () => {
+  /* Ocarina of Time's first collection is "Ocarina of Time", which kept
+     it out of every other Zelda game's row. */
+  it("groups by the franchise over a narrower collection", () => {
     expect(
       toExternalGame({
         ...witcher,
-        collections: [{ id: 62, name: "The Witcher" }],
-        franchises: [{ id: 452, name: "The Witcher" }],
+        collections: [{ id: 8993, name: "The Legend of Zelda: Ocarina of Time" }],
+        franchises: [{ id: 596, name: "The Legend of Zelda" }],
       }).series,
-    ).toEqual({ id: 62, name: "The Witcher" });
+    ).toEqual({ id: -596, name: "The Legend of Zelda" });
+  });
+
+  it("falls back to a collection, kept apart from franchises by sign", () => {
     expect(
-      toExternalGame({ ...witcher, franchises: [{ id: 452, name: "The Witcher" }] })
+      toExternalGame({ ...witcher, collections: [{ id: 62, name: "The Witcher" }] })
         .series,
-    ).toEqual({ id: -452, name: "The Witcher" });
+    ).toEqual({ id: 62, name: "The Witcher" });
+    expect(toExternalGame(witcher).series).toBeNull();
   });
 
   it("keeps IGDB's similar games by id", () => {

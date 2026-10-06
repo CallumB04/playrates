@@ -543,6 +543,7 @@ export const createInMemoryRepos = (
           .filter((g) => showSexualContent || !g.has_sexual_content)
           .sort(
             (a, b) =>
+              (b.igdb_rating_count ?? -1) - (a.igdb_rating_count ?? -1) ||
               (b.release_date ?? "").localeCompare(a.release_date ?? "") ||
               a.id - b.id,
           )

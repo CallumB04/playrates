@@ -604,15 +604,17 @@ describe("related games", () => {
         developers: ["CD Projekt RED"],
         similar_igdb_ids: [900, 901, 777, 999],
       }),
-      related({ id: 2, title: "The Witcher 2", igdb_id: 500, series_id: 62, release_date: "2011-05-17" }),
-      related({ id: 3, title: "The Witcher", igdb_id: 501, series_id: 62, release_date: "2007-10-26" }),
+      related({ id: 2, title: "The Witcher 2", igdb_id: 500, series_id: 62, release_date: "2011-05-17", igdb_rating_count: 1500 }),
+      related({ id: 3, title: "The Witcher", igdb_id: 501, series_id: 62, release_date: "2007-10-26", igdb_rating_count: 900 }),
+      // Newer, but a side-game hardly anyone has rated.
+      related({ id: 7, title: "Roach Race", igdb_id: 502, series_id: 62, release_date: "2022-09-06", igdb_rating_count: 3 }),
       related({ id: 4, title: "Cyberpunk 2077", igdb_id: 777, developers: ["CD Projekt RED"], igdb_rating_count: 900 }),
       related({ id: 5, title: "Dragon Age", igdb_id: 900 }),
       related({ id: 6, title: "Explicit", igdb_id: 901, has_sexual_content: true }),
     ],
   });
 
-  it("gives the series newest first, the developer's other games, and similar ones, none twice", async () => {
+  it("gives the series best known first, the developer's other games, and similar ones, none twice", async () => {
     const { app } = buildTestApp({ seed: seed() });
 
     const response = await request(app).get("/api/v1/games/1/related");
@@ -620,7 +622,11 @@ describe("related games", () => {
     expect(response.status).toBe(200);
     const titles = (games: { title: string }[]) => games.map((g) => g.title);
     expect(response.body.series.name).toBe("The Witcher");
-    expect(titles(response.body.series.games)).toEqual(["The Witcher 2", "The Witcher"]);
+    expect(titles(response.body.series.games)).toEqual([
+      "The Witcher 2",
+      "The Witcher",
+      "Roach Race",
+    ]);
     expect(response.body.developer.name).toBe("CD Projekt RED");
     expect(titles(response.body.developer.games)).toEqual(["Cyberpunk 2077"]);
     // Cyberpunk is already under the developer; the explicit one stays hidden.

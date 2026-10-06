@@ -168,6 +168,25 @@ describe("IGDB provider", () => {
     expect(api.queries[1]!.body).toContain("where version_parent = (1942) & cover != null");
   });
 
+  it("re-reads just the series for a batch of games", async () => {
+    const api = upstream([
+      () =>
+        Response.json([
+          { id: 1, franchises: [{ id: 596, name: "The Legend of Zelda" }] },
+          { id: 2 },
+        ]),
+    ]);
+    const igdb = createIgdbProvider("id", "secret", api.fetchImpl);
+
+    const series = await igdb.seriesOf([1, 2]);
+
+    expect(series.get(1)).toEqual({ id: -596, name: "The Legend of Zelda" });
+    expect(series.get(2)).toBeNull();
+    expect(api.queries[0]!.body).toBe(
+      "fields franchises.name,collections.name; where id = (1,2); limit 500;",
+    );
+  });
+
   it("pages the catalogue by rating only among games that have one", async () => {
     const api = upstream([() => Response.json([])]);
     const igdb = createIgdbProvider("id", "secret", api.fetchImpl);

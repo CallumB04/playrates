@@ -106,16 +106,20 @@ const companies = (
   );
 
 /**
- * The series to group a game with. IGDB's collections are the tighter
- * grouping (the numbered games); a franchise is the fallback for a game in
- * none. Franchise ids are stored negative: the two are numbered separately,
- * and a collection and a franchise sharing an id would merge two series.
+ * The series to group a game with. The franchise first: IGDB also files
+ * games into narrower collections ("Ocarina of Time" and "Breath of the
+ * Wild" inside Zelda), and the first one listed split a series in three.
+ * A collection is the fallback for a game with no franchise. Franchise
+ * ids are stored negative: the two are numbered separately, and a
+ * collection and a franchise sharing an id would merge two series.
  */
-const series = (game: IgdbGame): ExternalGame["series"] => {
-  const collection = game.collections?.[0];
-  if (collection) return { id: collection.id, name: collection.name };
+export const pickSeries = (
+  game: Pick<IgdbGame, "franchises" | "collections">,
+): ExternalGame["series"] => {
   const franchise = game.franchises?.[0];
-  return franchise ? { id: -franchise.id, name: franchise.name } : null;
+  if (franchise) return { id: -franchise.id, name: franchise.name };
+  const collection = game.collections?.[0];
+  return collection ? { id: collection.id, name: collection.name } : null;
 };
 
 /** Edition covers first, then regional ones, never the main cover twice. */
@@ -167,7 +171,7 @@ export const toExternalGame = (
         : Math.round(game.aggregated_rating),
     igdbRatingCount: game.total_rating_count ?? null,
     similarIds: game.similar_games ?? [],
-    series: series(game),
+    series: pickSeries(game),
     altCovers: altCovers(game, editions),
   };
 };

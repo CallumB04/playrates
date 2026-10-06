@@ -57,7 +57,9 @@ export interface GamesRepository {
   count(): Promise<number>;
   /** Which of these upstream ids are already in the catalogue. */
   existingIgdbIds(igdbIds: number[]): Promise<number[]>;
-  /** Games of a series, newest first, leaving one game out. */
+  /** Games of a series, best known first, leaving one game out. Spin-offs
+   *  share a series with the main games, and by date a card game or a
+   *  racing side-game would sit beside the numbered ones. */
   listSeries(
     seriesId: number,
     exceptId: number,
@@ -430,6 +432,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       .neq("id", exceptId);
     if (!showSexualContent) builder = builder.eq("has_sexual_content", false);
     const { data, error } = await builder
+      .order("igdb_rating_count", { ascending: false, nullsFirst: false })
       .order("release_date", { ascending: false, nullsFirst: false })
       .order("id")
       .limit(limit);

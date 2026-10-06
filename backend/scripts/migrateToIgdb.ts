@@ -21,6 +21,10 @@
  *     limit or when the database reaches 400MB. Upserts, so running it
  *     again after a stop picks up where the catalogue left off.
  *
+ *   npm run migrate:igdb -w backend -- --refresh-series
+ *     Asks IGDB for every game's series again and writes the ones that have
+ *     changed, after the rule that picks a series changes.
+ *
  *   npm run migrate:igdb -w backend -- --cleanup
  *     Deletes game events about games that no longer exist.
  */
@@ -262,6 +266,42 @@ const importCatalogue = async () => {
   console.log(`imported ${seen.size}`);
 };
 
+const refreshSeries = async () => {
+  const provider = requireProvider();
+  let checked = 0;
+  let changed = 0;
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await db
+      .from("games")
+      .select("id, igdb_id, series_id, series_name")
+      .not("igdb_id", "is", null)
+      .order("id")
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    const rows = data ?? [];
+    if (rows.length === 0) break;
+
+    const series = await provider.seriesOf(rows.map((r) => r.igdb_id as number));
+    const updates = rows.flatMap((r) => {
+      const next = series.get(r.igdb_id as number) ?? null;
+      const id = next?.id ?? null;
+      return id === r.series_id && (next?.name ?? null) === r.series_name
+        ? []
+        : [{ id: r.id, series_id: id, series_name: next?.name ?? null }];
+    });
+    if (updates.length > 0) {
+      const { data: n, error: rpcError } = await db.rpc("set_game_series", {
+        p_rows: updates,
+      });
+      if (rpcError) throw rpcError;
+      changed += Number(n);
+    }
+    checked += rows.length;
+    console.log(`${checked} checked, ${changed} changed`);
+    if (rows.length < PAGE_SIZE) break;
+  }
+};
+
 const cleanup = async () => {
   let total = 0;
   for (;;) {
@@ -280,6 +320,7 @@ const steps: [string, () => Promise<void>][] = [
   ["--apply-matches", applyMatches],
   ["--purge", purge],
   ["--import", importCatalogue],
+  ["--refresh-series", refreshSeries],
   ["--cleanup", cleanup],
 ];
 
