@@ -113,6 +113,8 @@ const HomePage = () => {
     const { data: reviews, isLoading: reviewsLoading } = useRecentReviews(4);
     const { data: communityTrending, isLoading: communityLoading } =
         useTrendingThreads(3);
+    const communityEmpty =
+        !communityLoading && (communityTrending?.length ?? 0) === 0;
 
     const { data: playing } = useMyGameLogs("playing", { limit: 1 });
     // Enough to draw a year without paging. The chart is a shape, not a ledger.
@@ -224,10 +226,14 @@ const HomePage = () => {
                 statusFor={statusFor}
             />
 
-            <CommunityTrending
-                threads={communityTrending ?? []}
-                isLoading={communityLoading}
-            />
+            {/* Second place is the most-seen spot after the top, so an empty
+                community doesn't take it; its invitation moves down the page. */}
+            {!communityEmpty && (
+                <CommunityTrending
+                    threads={communityTrending ?? []}
+                    isLoading={communityLoading}
+                />
+            )}
 
             <Rail
                 title="Most logged"
@@ -268,6 +274,10 @@ const HomePage = () => {
                     isLoading={activityLoading}
                     username={user.username}
                 />
+            )}
+
+            {communityEmpty && (
+                <CommunityTrending threads={[]} isLoading={false} />
             )}
 
             <GenreGrid genres={genres ?? []} />
