@@ -133,8 +133,11 @@ const MemberFileHeader = ({
             )}
 
             <div className="px-5 pb-5 sm:px-6 sm:pb-6">
-                <div className="-mt-12 flex flex-wrap items-end justify-between gap-4 sm:-mt-14">
-                    <span className="relative inline-block rounded-full ring-4 ring-surface-raised">
+                {/* Only the avatar reaches up into the banner. On a phone the
+                    44px buttons are taller than the part of it below the
+                    band, so lifted with it they would sit on the colour. */}
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                    <span className="relative -mt-12 inline-block self-start rounded-full ring-4 ring-surface-raised sm:-mt-14">
                         <ProfilePicture
                             variant="profileHeader"
                             file={profile.avatarUrl ?? ""}
@@ -151,7 +154,7 @@ const MemberFileHeader = ({
                         <PresenceDot online={profile.online} size="lg" />
                     </span>
 
-                    <div className="flex items-center gap-2">{action}</div>
+                    <div className="mt-3 flex items-center gap-2">{action}</div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
