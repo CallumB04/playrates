@@ -208,7 +208,11 @@ const YearGlance = ({
                 )}
             </span>
         </div>
-        <YearChart logs={yearLogs} barsClassName="h-10" />
+        <YearChart
+            logs={yearLogs}
+            barsClassName="h-10"
+            emptyNote="Games you finish this year chart here"
+        />
     </div>
 );
 
@@ -226,8 +230,6 @@ const ReEntryPlate = ({
     yearStats,
     onUpdateLog,
 }: ReEntryPlateProps) => {
-    const loggedThisYear = (yearStats?.logCount ?? 0) > 0;
-
     return (
         <section
             aria-labelledby="home-greeting"
@@ -245,11 +247,9 @@ const ReEntryPlate = ({
                         {isNew ? "Welcome" : "Welcome back"}, {displayName}
                     </h1>
                 </div>
-                {loggedThisYear && (
-                    <div className="hidden lg:block">
-                        <YearGlance yearLogs={yearLogs} yearStats={yearStats} />
-                    </div>
-                )}
+                <div className="hidden lg:block">
+                    <YearGlance yearLogs={yearLogs} yearStats={yearStats} />
+                </div>
             </div>
 
             <div className="overflow-hidden rounded-lg border border-subtle bg-surface-raised shadow-plate lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)] lg:divide-x lg:divide-subtle">

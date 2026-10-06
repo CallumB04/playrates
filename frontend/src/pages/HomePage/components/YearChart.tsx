@@ -22,13 +22,21 @@ const MONTHS = [
  * shape of a year doesn't need to be exact to the row. Empty months still get
  * a bar, so a gap reads as a gap rather than the chart ending early.
  */
+/** Made-up heights for the placeholder, so an empty year still reads as a
+ *  chart rather than a gap. */
+const GHOST = [35, 55, 30, 65, 45, 80, 40, 60, 50, 75, 35, 55];
+
 const YearChart = ({
     logs,
     barsClassName = "h-20",
+    emptyNote,
 }: {
     logs: GameLogWithGame[];
     /** The height of the bars. */
     barsClassName?: string;
+    /** Shown over placeholder bars while the year has nothing in it.
+     *  Without one, an empty year draws nothing. */
+    emptyNote?: string;
 }) => {
     const { counts, peak, total } = useMemo(() => {
         const year = new Date().getFullYear();
@@ -50,7 +58,28 @@ const YearChart = ({
         };
     }, [logs]);
 
-    if (total === 0) return null;
+    if (total === 0) {
+        if (!emptyNote) return null;
+        return (
+            <div>
+                <div
+                    aria-hidden
+                    className={cn("flex items-end gap-1.5", barsClassName)}
+                >
+                    {GHOST.map((height, i) => (
+                        <span
+                            key={i}
+                            className="flex-1 rounded-xs border border-strong bg-surface-sunken"
+                            style={{ height: `${height}%` }}
+                        />
+                    ))}
+                </div>
+                <p className="mt-2 text-label-sm text-content-muted">
+                    {emptyNote}
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div>
