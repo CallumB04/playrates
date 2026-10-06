@@ -7,6 +7,7 @@ import {
     useUpdateProfile,
 } from "../../../hooks/queries/useProfiles";
 import { useNotify } from "../../../contexts/NotificationContext";
+import { ApiError } from "../../../api/client";
 import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 import Field from "../../../components/ui/Field";
@@ -22,6 +23,15 @@ interface EditProfilePopupProps {
 }
 
 const BIO_LIMIT = 160;
+
+/** The server's own words where it sent some: "That picture is too large"
+ *  says what to do; "Couldn't update your profile" does not. */
+const reasonFor = (error: unknown, fallback: string): string =>
+    error instanceof ApiError &&
+    error.status !== undefined &&
+    error.status < 500
+        ? error.message
+        : fallback;
 
 /* A heading, not a <label>: the picture and the colour are each a group of
    controls carrying their own accessible name, and a label pointing at a
@@ -50,6 +60,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     const [username, setUsername] = useState(user.username);
     const [avatar, setAvatar] = useState<AvatarChoice>({ kind: "unchanged" });
     const [accent, setAccent] = useState<ProfileAccent>(user.accent);
+    const [pictureError, setPictureError] = useState<string | null>(null);
 
     const sameLetters = username.toLowerCase() === user.username.toLowerCase();
     const fieldsDirty =
@@ -64,24 +75,37 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
 
     const save = async () => {
         if (!sameLetters) return;
+        setPictureError(null);
+        /* The words first. A picture the server turns away should not take
+           the bio and colour down with it; once they are saved the form
+           holds only the picture, so Save again retries just that. */
         try {
-            /* The picture first: it is the change most likely to fail, and
-               failing it after the text had already been written would leave
-               the two out of step with what the form still shows. */
+            // the mutation seeds the profile caches, so the page updates straight away
+            if (fieldsDirty) {
+                await updateProfile.mutateAsync({ username, bio, accent });
+            }
+        } catch (error) {
+            notify(reasonFor(error, "Couldn't update your profile"), "error");
+            return;
+        }
+        try {
             if (avatar.kind === "picked") {
                 await updateAvatar.mutateAsync(avatar.image);
             } else if (avatar.kind === "removed") {
                 await removeAvatar.mutateAsync();
             }
-            // the mutation seeds the profile caches, so the page updates straight away
-            if (fieldsDirty) {
-                await updateProfile.mutateAsync({ username, bio, accent });
-            }
-            notify("Profile updated", "success");
-            closePopup();
-        } catch {
-            notify("Couldn't update your profile", "error");
+        } catch (error) {
+            setPictureError(reasonFor(error, "Your picture didn't save."));
+            notify(
+                fieldsDirty
+                    ? "Saved, apart from the picture"
+                    : "Your picture didn't save",
+                "error"
+            );
+            return;
         }
+        notify("Profile updated", "success");
+        closePopup();
     };
 
     return (
@@ -104,8 +128,12 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                         accent={accent}
                         current={user.avatarUrl}
                         choice={avatar}
-                        onChange={setAvatar}
+                        onChange={(choice) => {
+                            setPictureError(null);
+                            setAvatar(choice);
+                        }}
                         disabled={saving}
+                        saveError={pictureError}
                     />
                 </Group>
 

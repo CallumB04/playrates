@@ -21,6 +21,8 @@ interface AvatarFieldProps {
     choice: AvatarChoice;
     onChange: (choice: AvatarChoice) => void;
     disabled?: boolean;
+    /** Why saving the picked picture failed, from the server. */
+    saveError?: string | null;
 }
 
 const AvatarField = ({
@@ -30,6 +32,7 @@ const AvatarField = ({
     choice,
     onChange,
     disabled = false,
+    saveError = null,
 }: AvatarFieldProps) => {
     const inputId = useId();
     const input = useRef<HTMLInputElement>(null);
@@ -74,8 +77,9 @@ const AvatarField = ({
 
     const canRemove = shown !== "" && !disabled && !working;
     const busy = disabled || working;
+    const failure = error ?? saveError;
     const note =
-        error ??
+        failure ??
         (choice.kind === "unchanged" ? null : "Save changes to apply this.");
 
     return (
@@ -139,10 +143,10 @@ const AvatarField = ({
             {/* Nothing to say until something has changed or gone wrong. */}
             {note && (
                 <p
-                    role={error ? "alert" : undefined}
+                    role={failure ? "alert" : undefined}
                     className={cn(
                         "text-label-sm",
-                        error ? "text-danger" : "text-content-muted"
+                        failure ? "text-danger" : "text-content-muted"
                     )}
                 >
                     {note}
