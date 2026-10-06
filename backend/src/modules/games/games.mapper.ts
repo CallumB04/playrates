@@ -21,6 +21,7 @@ export const toGame = (row: GameRowWithRelations): Game => ({
   description: row.description,
   // Tiles want the portrait cover; the wide art is for previews.
   coverUrl: row.box_art_url ?? row.cover_url,
+  artworkUrl: row.cover_url,
   releaseDate: row.release_date,
   platforms: (row.game_platforms ?? []).map((p) => p.platform_slug),
   systems: (row.game_systems ?? []).map((s) => s.system_slug),

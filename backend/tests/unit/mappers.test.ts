@@ -189,6 +189,18 @@ describe("game log with embedded game", () => {
 });
 
 describe("game mapper", () => {
+  it("gives tiles the portrait cover and backdrops the wide art", () => {
+    const game = toGame(
+      buildGame({
+        box_art_url: "https://example.test/box.jpg",
+        cover_url: "https://example.test/art.jpg",
+      }),
+    );
+
+    expect(game.coverUrl).toBe("https://example.test/box.jpg");
+    expect(game.artworkUrl).toBe("https://example.test/art.jpg");
+  });
+
   it("flattens the joined platforms into slugs", () => {
     const game = toGame({
       ...buildGame(),

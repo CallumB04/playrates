@@ -45,6 +45,7 @@ export const buildGame = (overrides: Partial<Game> = {}): Game => ({
     title: "The Witcher 3: Wild Hunt",
     description: "An open world RPG.",
     coverUrl: "https://example.test/witcher.jpg",
+    artworkUrl: null,
     releaseDate: "2015-05-18",
     platforms: ["steam"],
     systems: ["steam"],
