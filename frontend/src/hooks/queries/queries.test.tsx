@@ -8,7 +8,7 @@ import { server } from "../../test/msw/server";
 import { createTestQueryClient } from "../../test/renderWithProviders";
 import { buildGameLog, paginated } from "../../test/msw/handlers";
 import { useGame, useGames, useSiteStats } from "./useGames";
-import { useUserGameLogs } from "./useGameLogs";
+import { useGameLogMutations, useUserGameLogs } from "./useGameLogs";
 import { useUserReviews } from "./useReviews";
 import { useProfile } from "./useProfiles";
 
@@ -23,6 +23,37 @@ const wrapper = () => {
     Wrapper.displayName = "TestQueryWrapper";
     return Wrapper;
 };
+
+describe("log mutations", () => {
+    /* Shelf counts come from the stats, so a game added to the backlog
+       has to show in them without a reload. */
+    it("refreshes the shelf counts after a log is saved", async () => {
+        const client = createTestQueryClient();
+        const Wrapper = ({ children }: { children: ReactNode }) => (
+            <QueryClientProvider client={client}>
+                {children}
+            </QueryClientProvider>
+        );
+        server.use(
+            http.put(`${API}/me/game-logs/:gameId`, () =>
+                HttpResponse.json(buildGameLog())
+            )
+        );
+        client.setQueryData(["userStats", "devuser", "all"], { logCount: 0 });
+
+        const { result } = renderHook(() => useGameLogMutations(), {
+            wrapper: Wrapper,
+        });
+        await result.current.save.mutateAsync({
+            gameId: 1,
+            input: { status: "backlog" },
+        });
+
+        expect(
+            client.getQueryState(["userStats", "devuser", "all"])?.isInvalidated
+        ).toBe(true);
+    });
+});
 
 describe("query hooks", () => {
     it("loads the games list", async () => {

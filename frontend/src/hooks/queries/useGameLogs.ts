@@ -88,6 +88,8 @@ export const useGameLogMutations = () => {
 
     const invalidate = () => {
         queryClient.invalidateQueries({ queryKey: ["gamelogs"] });
+        // a profile's shelf counts and hours, the home page's too
+        queryClient.invalidateQueries({ queryKey: ["userStats"] });
         queryClient.invalidateQueries({ queryKey: ["games"] });
         queryClient.invalidateQueries({ queryKey: queryKeys.stats });
     };
