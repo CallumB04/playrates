@@ -192,19 +192,22 @@ const GamePage = () => {
 
                     <ScoreCards game={game} stats={stats} />
 
-                    {stats && (
-                        <>
-                            <RatingPlate
-                                average={stats.averageRating}
-                                ratingCount={stats.ratingCount}
-                                buckets={stats.ratingBuckets}
-                            />
-                            <CirculationPlate
-                                byStatus={stats.byStatus}
-                                byPlayedStatus={stats.byPlayedStatus}
-                                logCount={stats.logCount}
-                            />
-                        </>
+                    {/* Only once there's something in them. Most games have
+                        no logs yet, and an empty chart and four bars at zero
+                        repeat what "0 logs" above already says. */}
+                    {stats && stats.ratingCount > 0 && (
+                        <RatingPlate
+                            average={stats.averageRating}
+                            ratingCount={stats.ratingCount}
+                            buckets={stats.ratingBuckets}
+                        />
+                    )}
+                    {stats && stats.logCount > 0 && (
+                        <CirculationPlate
+                            byStatus={stats.byStatus}
+                            byPlayedStatus={stats.byPlayedStatus}
+                            logCount={stats.logCount}
+                        />
                     )}
 
                     <GameReviews
