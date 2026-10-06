@@ -26,6 +26,8 @@ import MessageItem, {
     type MessageActions,
 } from "../../components/community/MessageItem";
 import MessageComposer from "../../components/community/MessageComposer";
+import PatchNoteNotify from "../../components/community/PatchNoteNotify";
+import { useAdminPatchNotes } from "../../hooks/queries/useAdmin";
 import { replyParentId } from "../../components/community/replyTarget";
 import {
     formatCount,
@@ -445,6 +447,10 @@ const PatchNotesThread = ({
     onPost: (body: RichTextDoc) => Promise<unknown>;
 }) => {
     const entries = [...detail.messages].reverse();
+    // Only whoever can post here can tell everyone about it.
+    const { data: sendable } = useAdminPatchNotes(detail.canPost);
+    const noteFor = (messageId: number) =>
+        sendable?.find((note) => note.messageId === messageId);
 
     return (
         <>
@@ -484,18 +490,24 @@ const PatchNotesThread = ({
                 <EmptyNote>No patch notes yet.</EmptyNote>
             ) : (
                 <div className="flex flex-col gap-5">
-                    {entries.map((entry) => (
-                        <MessageItem
-                            key={entry.id}
-                            message={entry}
-                            viewerId={viewerId}
-                            actions={actions}
-                            badge={<OfficialBadge />}
-                            showEdited={false}
-                            linkify
-                            className={cardClass()}
-                        />
-                    ))}
+                    {entries.map((entry) => {
+                        const note = noteFor(entry.id);
+                        return (
+                            <MessageItem
+                                key={entry.id}
+                                message={entry}
+                                viewerId={viewerId}
+                                actions={actions}
+                                badge={<OfficialBadge />}
+                                extraActions={
+                                    note && <PatchNoteNotify note={note} />
+                                }
+                                showEdited={false}
+                                linkify
+                                className={cardClass()}
+                            />
+                        );
+                    })}
                 </div>
             )}
         </>

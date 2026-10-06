@@ -42,7 +42,7 @@ interface MessageItemProps {
     children?: ReactNode;
 }
 
-const ActionButton = ({
+export const ActionButton = ({
     onClick,
     icon,
     children,

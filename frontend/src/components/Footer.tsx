@@ -29,18 +29,8 @@ const SMALL_LINK =
     "inline-flex min-h-11 items-center gap-1.5 text-label text-content-muted lift hover:text-content sm:min-h-0";
 
 const Footer = () => (
-    <footer className="relative mt-12 overflow-hidden border-t border-subtle bg-surface-sunken">
-        {/* The brand's light catching the top edge. */}
-        <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-brand/60 to-transparent"
-        />
-        <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(50%_100%_at_50%_0%,color-mix(in_oklab,var(--brand)_12%,transparent),transparent)]"
-        />
-
-        <div className="relative mx-auto w-full max-w-[1240px] px-5 pt-8 pb-6 sm:px-8 sm:pt-10 lg:px-12">
+    <footer className="mt-12 border-t border-subtle bg-surface-sunken">
+        <div className="mx-auto w-full max-w-[1240px] px-5 pt-8 pb-6 sm:px-8 sm:pt-10 lg:px-12">
             <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-16">
                 <div>
                     <Link

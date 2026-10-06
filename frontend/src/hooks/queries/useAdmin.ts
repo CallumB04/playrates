@@ -186,10 +186,11 @@ export const useSendTestAnnouncement = () => {
     });
 };
 
-export const useAdminPatchNotes = () =>
+export const useAdminPatchNotes = (enabled = true) =>
     useQuery({
         queryKey: queryKeys.admin.patchNotes,
         queryFn: fetchAdminPatchNotes,
+        enabled,
     });
 
 export const useAnnouncePatchNote = () => {
