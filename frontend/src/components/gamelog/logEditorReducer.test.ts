@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
     achievementFraction,
     emptyDraft,
+    HOURS_HINT,
     logReducer,
     toGameLogInput,
     validateDraft,
@@ -263,5 +264,23 @@ describe("achievementFraction", () => {
                 draft({ achievementsCompleted: "5", achievementsTotal: "0" })
             )
         ).toBeNull();
+    });
+});
+
+describe("hours", () => {
+    it("saves hours however they were written", () => {
+        const input = toGameLogInput(
+            draft({ hoursPlayed: "12h30", hoursToBeat: "40,5" })
+        );
+        expect(input.hoursPlayed).toBe(12.5);
+        expect(input.hoursToBeat).toBe(40.5);
+    });
+
+    /* "12h30" used to be dropped without a word and saved as no hours. */
+    it("refuses to save hours it can't read, rather than dropping them", () => {
+        expect(validateDraft(draft({ hoursPlayed: "a while" }))).toBe(
+            HOURS_HINT
+        );
+        expect(validateDraft(draft({ hoursPlayed: "12h30" }))).toBeNull();
     });
 });

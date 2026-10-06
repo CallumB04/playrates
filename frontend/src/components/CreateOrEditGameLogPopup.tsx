@@ -22,8 +22,10 @@ import DeleteGameLogPopup from "./gamelog/DeleteGameLogPopup";
 import {
     achievementFraction,
     emptyDraft,
+    HOURS_HINT,
     logReducer,
     toGameLogInput,
+    unreadableHours,
     validateDraft,
 } from "./gamelog/logEditorReducer";
 import { X } from "lucide-react";
@@ -203,12 +205,20 @@ const CreateOrEditGameLogPopup = ({
                 </div>
 
                 <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
-                    <Field label="Hours played">
+                    <Field
+                        label="Hours played"
+                        error={
+                            unreadableHours(draft.hoursPlayed)
+                                ? HOURS_HINT
+                                : undefined
+                        }
+                    >
                         {(a11y) => (
-                            <NumberInput
-                                step={0.5}
-                                min={0}
+                            <Input
+                                inputMode="decimal"
+                                autoComplete="off"
                                 placeholder="0"
+                                className="font-mono tabular-nums"
                                 value={draft.hoursPlayed}
                                 onChange={(e) =>
                                     dispatch({
@@ -221,12 +231,20 @@ const CreateOrEditGameLogPopup = ({
                             />
                         )}
                     </Field>
-                    <Field label="Hours to beat">
+                    <Field
+                        label="Hours to beat"
+                        error={
+                            unreadableHours(draft.hoursToBeat)
+                                ? HOURS_HINT
+                                : undefined
+                        }
+                    >
                         {(a11y) => (
-                            <NumberInput
-                                step={0.5}
-                                min={0}
+                            <Input
+                                inputMode="decimal"
+                                autoComplete="off"
                                 placeholder="0"
+                                className="font-mono tabular-nums"
                                 value={draft.hoursToBeat}
                                 onChange={(e) =>
                                     dispatch({
