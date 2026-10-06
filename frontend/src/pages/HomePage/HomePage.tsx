@@ -130,11 +130,6 @@ const HomePage = () => {
 
     const quickAdd = useQuickAdd();
 
-    /* Once a newcomer, until the page is left: adding the first starter
-       would otherwise swap the plate out from under the tap that did it. */
-    const [newcomer, setNewcomer] = useState(false);
-    if (myLogIds?.length === 0 && !newcomer) setNewcomer(true);
-
     // Every cover on the page can be logged from where it sits.
     const statusFor = (game: Game) => {
         const log = logByGameId.get(game.id);
@@ -200,18 +195,11 @@ const HomePage = () => {
                 <ReEntryPlate
                     username={user.username}
                     displayName={user.firstName || user.username}
-                    isNew={newcomer}
+                    isNew={myLogIds?.length === 0}
                     current={current}
                     shelves={allTime?.byStatus}
                     yearLogs={played?.data ?? []}
                     yearStats={yearStats}
-                    starters={popular?.data ?? []}
-                    shelfOf={(gameId) =>
-                        logByGameId.get(gameId)?.status ?? null
-                    }
-                    onAddStarter={(game, shelf) =>
-                        quickAdd(game.id, game.title, shelf)
-                    }
                     onUpdateLog={() => current && setLogging(current.gameId)}
                 />
             ) : (

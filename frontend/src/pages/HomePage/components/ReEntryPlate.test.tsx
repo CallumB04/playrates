@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { buildGame, buildGameLog } from "../../../test/msw/handlers";
+import { buildGameLog } from "../../../test/msw/handlers";
 import { renderWithProviders } from "../../../test/renderWithProviders";
 import ReEntryPlate from "./ReEntryPlate";
 
@@ -11,14 +11,11 @@ const base = {
     current: undefined,
     yearLogs: [],
     yearStats: undefined,
-    starters: [buildGame({ id: 5, title: "Stray" })],
-    shelfOf: () => null,
-    onAddStarter: vi.fn(async () => undefined),
     onUpdateLog: vi.fn(),
 };
 
 describe("ReEntryPlate", () => {
-    it("offers a newcomer games to add to either shelf", async () => {
+    it("welcomes a newcomer rather than back, with nothing on the go", () => {
         renderWithProviders(
             <ReEntryPlate {...base} isNew shelves={undefined} />
         );
@@ -26,32 +23,7 @@ describe("ReEntryPlate", () => {
         expect(
             screen.getByRole("heading", { name: "Welcome, Kai" })
         ).toBeInTheDocument();
-        await userEvent.click(
-            screen.getByRole("button", { name: "Add Stray to your wishlist" })
-        );
-        expect(base.onAddStarter).toHaveBeenCalledWith(
-            base.starters[0],
-            "wishlist"
-        );
-        expect(
-            screen.getByRole("button", { name: "Add Stray to your backlog" })
-        ).toBeInTheDocument();
-    });
-
-    it("says which shelf a starter is already on", () => {
-        renderWithProviders(
-            <ReEntryPlate
-                {...base}
-                isNew
-                shelves={undefined}
-                shelfOf={() => "wishlist"}
-            />
-        );
-
-        expect(screen.getByText("On your wishlist")).toBeInTheDocument();
-        expect(
-            screen.queryByRole("button", { name: /to your/ })
-        ).not.toBeInTheDocument();
+        expect(screen.getByText("Nothing on the go")).toBeInTheDocument();
     });
 
     it("shows a returning player the game on the go and their shelves", async () => {
@@ -75,8 +47,5 @@ describe("ReEntryPlate", () => {
         ).toHaveAttribute("href", "/user/devuser?type=playing");
         await userEvent.click(screen.getByRole("button", { name: "Update" }));
         expect(onUpdateLog).toHaveBeenCalledOnce();
-        expect(
-            screen.queryByRole("heading", { name: "Start your shelves" })
-        ).not.toBeInTheDocument();
     });
 });

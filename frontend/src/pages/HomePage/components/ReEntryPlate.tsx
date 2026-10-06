@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Gamepad2, Pencil, Plus } from "lucide-react";
-import type { Game, GameStatus, UserStats } from "@playrates/shared";
+import { ArrowRight, Gamepad2, Pencil } from "lucide-react";
+import type { UserStats } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
 import Button from "../../../components/ui/Button";
 import GameCover from "../../../components/game/GameCover";
@@ -14,23 +13,11 @@ import {
 import { formatCount, formatHours, relativeTime } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 
-const STARTERS = 6;
-
-type QuickShelf = "backlog" | "wishlist";
-
-/** What a starter already on a shelf says in place of its buttons. */
-const ON_SHELF: Record<GameStatus, string> = {
-    played: "Played",
-    playing: "Playing",
-    backlog: "In your backlog",
-    wishlist: "On your wishlist",
-};
-
 interface ReEntryPlateProps {
     username: string;
     /** First name where they have set one, username otherwise. */
     displayName: string;
-    /** Nothing logged yet: offer games to start their shelves with. */
+    /** Nothing logged yet, so not "welcome back". */
     isNew: boolean;
     /** The most recently touched "playing" log, if there is one. */
     current: GameLogWithGame | undefined;
@@ -39,11 +26,6 @@ interface ReEntryPlateProps {
     /** This year's played logs, for the chart. */
     yearLogs: GameLogWithGame[];
     yearStats: UserStats | undefined;
-    /** Well-known games for a newcomer to start with. */
-    starters: Game[];
-    /** Which shelf a game is on already, if any. */
-    shelfOf: (gameId: number) => GameStatus | null;
-    onAddStarter: (game: Game, shelf: QuickShelf) => Promise<unknown>;
     onUpdateLog: () => void;
 }
 
@@ -198,127 +180,6 @@ const Shelves = ({
     </nav>
 );
 
-const ShelfButton = ({
-    shelf,
-    title,
-    onClick,
-    disabled,
-}: {
-    shelf: QuickShelf;
-    title: string;
-    onClick: () => void;
-    disabled: boolean;
-}) => {
-    const { label, markTone } = STATUS_PRESENTATION[shelf];
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            disabled={disabled}
-            aria-label={`Add ${title} to your ${label.toLowerCase()}`}
-            className="flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-1 rounded-sm border border-subtle bg-surface-raised px-1 text-label-sm text-content transition-colors hover:border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-default disabled:opacity-60 sm:min-h-8"
-        >
-            <Plus size={12} aria-hidden className={cn("shrink-0", markTone)} />
-            {label}
-        </button>
-    );
-};
-
-const Starters = ({
-    games,
-    shelfOf,
-    onAdd,
-}: {
-    games: Game[];
-    shelfOf: (gameId: number) => GameStatus | null;
-    onAdd: (game: Game, shelf: QuickShelf) => Promise<unknown>;
-}) => {
-    const [adding, setAdding] = useState<number | null>(null);
-
-    const add = async (game: Game, shelf: QuickShelf) => {
-        setAdding(game.id);
-        try {
-            await onAdd(game, shelf);
-        } catch {
-            // the quick add has already said it failed
-        } finally {
-            setAdding(null);
-        }
-    };
-
-    return (
-        <section aria-labelledby="starters-heading">
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-1">
-                <div>
-                    <h2
-                        id="starters-heading"
-                        className="font-display text-section text-content"
-                    >
-                        Start your shelves
-                    </h2>
-                    <p className="mt-1 text-body-sm text-content-secondary">
-                        Add a few you’ve played or want to.
-                    </p>
-                </div>
-                <Link
-                    to="/library"
-                    className="inline-flex min-h-11 items-center gap-1 text-label text-brand hover:underline sm:min-h-0"
-                >
-                    Browse the library
-                    <ArrowRight size={13} aria-hidden />
-                </Link>
-            </div>
-
-            {/* A row that scrolls on a phone, where six covers side by side
-                would be too small to tell apart. */}
-            <ul className="-mx-5 flex snap-x snap-mandatory [scrollbar-width:none] gap-3 overflow-x-auto px-5 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 md:grid-cols-6 [&::-webkit-scrollbar]:hidden">
-                {games.slice(0, STARTERS).map((game) => {
-                    const shelf = shelfOf(game.id);
-                    return (
-                        <li
-                            key={game.id}
-                            className="w-[42%] shrink-0 snap-start sm:w-auto"
-                        >
-                            <Link
-                                to={`/game/${game.id}`}
-                                className="block lift"
-                            >
-                                <GameCover
-                                    coverUrl={game.coverUrl}
-                                    title={game.title}
-                                    className="aspect-3/4 w-full overflow-hidden rounded-sm shadow-cover"
-                                />
-                            </Link>
-                            {shelf ? (
-                                <p className="mt-2 flex min-h-11 items-center justify-center gap-1 text-label-sm text-success sm:min-h-8">
-                                    <Check size={13} aria-hidden />
-                                    {ON_SHELF[shelf]}
-                                </p>
-                            ) : (
-                                <div className="mt-2 flex gap-1.5">
-                                    {(["backlog", "wishlist"] as const).map(
-                                        (option) => (
-                                            <ShelfButton
-                                                key={option}
-                                                shelf={option}
-                                                title={game.title}
-                                                disabled={adding === game.id}
-                                                onClick={() =>
-                                                    void add(game, option)
-                                                }
-                                            />
-                                        )
-                                    )}
-                                </div>
-                            )}
-                        </li>
-                    );
-                })}
-            </ul>
-        </section>
-    );
-};
-
 /** This year in three figures and twelve bars, beside the greeting. */
 const YearGlance = ({
     yearLogs,
@@ -353,8 +214,7 @@ const YearGlance = ({
 
 /**
  * The signed-in landing: a greeting, then one panel with the game on the go
- * and the four shelves, laid straight on the page. A newcomer also gets
- * well-known games to start their shelves with.
+ * and the four shelves, laid straight on the page.
  */
 const ReEntryPlate = ({
     username,
@@ -364,9 +224,6 @@ const ReEntryPlate = ({
     shelves,
     yearLogs,
     yearStats,
-    starters,
-    shelfOf,
-    onAddStarter,
     onUpdateLog,
 }: ReEntryPlateProps) => {
     const loggedThisYear = (yearStats?.logCount ?? 0) > 0;
@@ -406,14 +263,6 @@ const ReEntryPlate = ({
                     <Shelves username={username} shelves={shelves} />
                 </div>
             </div>
-
-            {isNew && (
-                <Starters
-                    games={starters}
-                    shelfOf={shelfOf}
-                    onAdd={onAddStarter}
-                />
-            )}
         </section>
     );
 };
