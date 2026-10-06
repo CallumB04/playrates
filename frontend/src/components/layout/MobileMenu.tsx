@@ -24,7 +24,7 @@ interface MobileMenuProps {
 }
 
 const ROW =
-    "flex items-center justify-between gap-4 rounded-md px-4 py-3.5 text-body text-content-secondary transition-colors hover:bg-surface-hover hover:text-content";
+    "flex items-center justify-between gap-4 rounded-md px-4 py-3 text-body text-content-secondary transition-colors hover:bg-surface-hover hover:text-content";
 
 /** The whole screen, not a tray under the masthead. */
 const MobileMenu = ({
@@ -44,7 +44,7 @@ const MobileMenu = ({
             aria-label="Menu"
             className="fixed inset-0 z-50 flex animate-settle flex-col overflow-y-auto bg-surface lg:hidden"
         >
-            <div className="flex items-center justify-between px-5 pt-6 sm:px-8">
+            <div className="flex items-center justify-between px-5 pt-5 sm:px-8">
                 <span className="font-display text-2xl font-bold text-content">
                     PlayRates
                 </span>
@@ -58,7 +58,7 @@ const MobileMenu = ({
                 </button>
             </div>
 
-            <nav className="flex flex-col gap-1 px-3 pt-8 sm:px-6">
+            <nav className="flex flex-col gap-1 px-3 pt-4 sm:px-6">
                 {links.map((link) => (
                     <Link
                         key={link.to}
@@ -66,7 +66,7 @@ const MobileMenu = ({
                         onClick={onClose}
                         aria-current={link.active ? "page" : undefined}
                         className={cn(
-                            "rounded-md px-4 py-3.5 font-display text-2xl transition-colors lift",
+                            "rounded-md px-4 py-2.5 font-display text-xl transition-colors lift",
                             link.active
                                 ? "bg-brand-subtle text-brand"
                                 : "text-content hover:bg-surface-hover"
@@ -77,40 +77,44 @@ const MobileMenu = ({
                 ))}
 
                 {user && (
-                    <div className="mt-6 border-t border-subtle pt-5">
+                    <div className="mt-4 border-t border-subtle pt-4">
                         <p className="px-4 pb-1 text-label text-content-muted">
                             Your shelves
                         </p>
-                        {GAME_STATUSES.map((status) => {
-                            const {
-                                label,
-                                icon: Icon,
-                                markTone,
-                            } = STATUS_PRESENTATION[status];
-                            return (
-                                <Link
-                                    key={status}
-                                    to={`/user/${user.username}?type=${status}`}
-                                    onClick={onClose}
-                                    className={cn(
-                                        ROW,
-                                        "justify-start gap-3 text-content"
-                                    )}
-                                >
-                                    <Icon
-                                        size={18}
-                                        aria-hidden
-                                        className={cn("shrink-0", markTone)}
-                                    />
-                                    {label}
-                                </Link>
-                            );
-                        })}
+                        {/* Two by two: four rows of their own pushed the
+                            account links below the fold of a small phone. */}
+                        <div className="grid grid-cols-2 gap-1">
+                            {GAME_STATUSES.map((status) => {
+                                const {
+                                    label,
+                                    icon: Icon,
+                                    markTone,
+                                } = STATUS_PRESENTATION[status];
+                                return (
+                                    <Link
+                                        key={status}
+                                        to={`/user/${user.username}?type=${status}`}
+                                        onClick={onClose}
+                                        className={cn(
+                                            ROW,
+                                            "justify-start gap-3 text-content"
+                                        )}
+                                    >
+                                        <Icon
+                                            size={18}
+                                            aria-hidden
+                                            className={cn("shrink-0", markTone)}
+                                        />
+                                        {label}
+                                    </Link>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
             </nav>
 
-            <div className="mt-auto border-t border-subtle px-3 pt-4 pb-8 sm:px-6">
+            <div className="mt-auto border-t border-subtle px-3 pt-3 pb-6 sm:px-6">
                 {user ? (
                     <>
                         <Link
