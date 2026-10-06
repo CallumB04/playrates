@@ -161,7 +161,7 @@ const Shelves = ({
                 <Link
                     key={status}
                     to={`/user/${username}?type=${status}`}
-                    className="group flex min-h-11 flex-col items-center justify-center gap-1 px-1 py-3 transition-colors hover:bg-surface-hover/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand lg:items-start lg:justify-between lg:gap-4 lg:px-5 lg:py-5"
+                    className="group flex min-h-11 flex-col items-center justify-center gap-1 px-1 py-3 transition-colors hover:bg-surface-hover/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand lg:items-start lg:justify-center lg:gap-2 lg:px-5 lg:py-5"
                 >
                     <span className="flex items-center gap-1.5 text-label-sm text-content-muted group-hover:text-content-secondary lg:text-label">
                         <Icon
