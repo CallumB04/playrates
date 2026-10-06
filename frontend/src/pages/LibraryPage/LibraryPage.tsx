@@ -181,7 +181,7 @@ const LibraryPage = () => {
                         is empty, which it isn't. */}
                     {page ? (
                         <p className="mt-2 text-label text-content-muted">
-                            {formatCount(total)} titles
+                            {formatCount(total)} {total === 1 ? "title" : "titles"}
                         </p>
                     ) : (
                         <Skeleton className="mt-2.5 h-3.5 w-24" />
