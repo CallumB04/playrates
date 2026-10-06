@@ -28,7 +28,6 @@ const GameCover = ({ coverUrl, title, className }: GameCoverProps) => {
                 loading="lazy"
                 className="size-full object-cover"
             />
-            <span className="pointer-events-none absolute inset-0 hatch" />
         </span>
     );
 };
