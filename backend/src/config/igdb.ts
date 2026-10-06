@@ -6,6 +6,7 @@ import {
 } from "../providers/games/GamesProvider.js";
 import {
   createIgdbProvider,
+  type IgdbProvider,
   type IgdbRequestOutcome,
 } from "../providers/games/igdb/igdb.provider.js";
 
@@ -21,14 +22,22 @@ export const createIgdbUsageRecorder =
     if (rpcError) throw rpcError;
   };
 
-/** IGDB when both Twitch credentials are set; the local catalogue alone
- *  otherwise. */
-export const igdbFromEnv = (
-  config: Pick<Env, "IGDB_CLIENT_ID" | "IGDB_CLIENT_SECRET">,
+type IgdbCredentials = Pick<Env, "IGDB_CLIENT_ID" | "IGDB_CLIENT_SECRET">;
+
+/** IGDB itself, or null without both Twitch credentials. */
+export const igdbProviderFromEnv = (
+  config: IgdbCredentials,
   db: SupabaseClient,
-): GamesProvider =>
+): IgdbProvider | null =>
   config.IGDB_CLIENT_ID && config.IGDB_CLIENT_SECRET
     ? createIgdbProvider(config.IGDB_CLIENT_ID, config.IGDB_CLIENT_SECRET, fetch, {
         onRequest: createIgdbUsageRecorder(db),
       })
-    : nullGamesProvider;
+    : null;
+
+/** IGDB when both Twitch credentials are set; the local catalogue alone
+ *  otherwise. */
+export const igdbFromEnv = (
+  config: IgdbCredentials,
+  db: SupabaseClient,
+): GamesProvider => igdbProviderFromEnv(config, db) ?? nullGamesProvider;

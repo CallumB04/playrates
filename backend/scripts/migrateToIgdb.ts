@@ -15,9 +15,11 @@
  *   npm run migrate:igdb -w backend -- --purge
  *     Deletes the RAWG games nobody has touched, 5,000 at a time.
  *
- *   npm run migrate:igdb -w backend -- --import [--limit 100000] [--from-page 1]
- *     Brings IGDB's catalogue in, best known first, 500 a request. Stops at
- *     the limit or when the database reaches 400MB.
+ *   npm run migrate:igdb -w backend -- --import [--limit 100000]
+ *     Brings IGDB's catalogue in, 500 a request: every game anyone has
+ *     rated, most rated first, then IGDB's most visited. Stops at the
+ *     limit or when the database reaches 400MB. Upserts, so running it
+ *     again after a stop picks up where the catalogue left off.
  *
  *   npm run migrate:igdb -w backend -- --cleanup
  *     Deletes game events about games that no longer exist.
@@ -28,7 +30,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { env } from "../src/config/env.js";
 import { supabase } from "../src/config/supabase.js";
-import { igdbFromEnv } from "../src/config/igdb.js";
+import { igdbProviderFromEnv } from "../src/config/igdb.js";
 import { createGamesRepository } from "../src/modules/games/games.repository.js";
 import type { ExternalGame } from "../src/providers/games/GamesProvider.js";
 
@@ -58,16 +60,17 @@ const options = (name: string): string[] =>
   args.flatMap((arg, i) => (arg === name && args[i + 1] ? [args[i + 1]!] : []));
 
 const db = supabase();
-const provider = igdbFromEnv(env(), db);
+const igdb = igdbProviderFromEnv(env(), db);
 const repo = createGamesRepository(db);
 
 const requireProvider = () => {
-  if (!provider.isConfigured) {
+  if (!igdb) {
     console.error(
       "IGDB_CLIENT_ID and IGDB_CLIENT_SECRET are not set in backend/.env.",
     );
     process.exit(1);
   }
+  return igdb;
 };
 
 const normalise = (title: string) =>
@@ -118,7 +121,7 @@ const pick = (
 };
 
 const match = async () => {
-  requireProvider();
+  const provider = requireProvider();
   const overrides = new Map(
     options("--override").map((pair) => {
       const [gameId, igdbId] = pair.split("=").map(Number);
@@ -161,7 +164,7 @@ const match = async () => {
 };
 
 const applyMatches = async () => {
-  requireProvider();
+  const provider = requireProvider();
   const matches = JSON.parse(await readFile(MATCHES_FILE, "utf8")) as Match[];
   for (const m of matches) {
     if (!m.igdbId) {
@@ -211,35 +214,52 @@ const setImporting = async (running: boolean) => {
 };
 
 const importCatalogue = async () => {
-  requireProvider();
+  const provider = requireProvider();
   const limit = Number(option("--limit") ?? 100_000);
-  const firstPage = Number(option("--from-page") ?? 1);
-  let imported = 0;
+  // Visits count games the rated pass already brought in; each is
+  // imported once and counted once.
+  const seen = new Set<number>();
+  let pages = 0;
+
+  const store = async (games: ExternalGame[]): Promise<boolean> => {
+    if (pages++ % STORAGE_CHECK_EVERY === 0) {
+      const bytes = await storage();
+      console.log(`database is ${Math.round(bytes / 1024 / 1024)}MB`);
+      if (bytes >= STORAGE_CEILING) {
+        console.warn("stopping: the database has reached 400MB");
+        return false;
+      }
+    }
+    const fresh = games
+      .filter((g) => !seen.has(g.externalId))
+      .slice(0, limit - seen.size);
+    await repo.upsertMany(fresh);
+    for (const g of fresh) seen.add(g.externalId);
+    console.log(`${seen.size} games`);
+    return seen.size < limit;
+  };
 
   // Quiet the per-game "added" events while thousands arrive at once.
   await setImporting(true);
   try {
-    for (let page = firstPage; imported < limit; page++) {
-      if ((page - firstPage) % STORAGE_CHECK_EVERY === 0) {
-        const bytes = await storage();
-        console.log(`database is ${Math.round(bytes / 1024 / 1024)}MB`);
-        if (bytes >= STORAGE_CEILING) {
-          console.warn("stopping: the database has reached 400MB");
-          break;
-        }
-      }
-
+    let going = true;
+    console.log("rated games, most rated first");
+    for (let page = 1; going; page++) {
       const listing = await provider.listByPopularity(page, PAGE_SIZE);
-      const games = listing.games.slice(0, limit - imported);
-      await repo.upsertMany(games);
-      imported += games.length;
-      console.log(`page ${page}: ${imported} games`);
-      if (!listing.hasNext) break;
+      going = (await store(listing.games)) && listing.hasNext;
+    }
+    if (seen.size < limit) {
+      console.log("then the most visited");
+      going = true;
+      for (let page = 1; going; page++) {
+        const listing = await provider.listMostVisited(page, PAGE_SIZE);
+        going = (await store(listing.games)) && listing.hasNext;
+      }
     }
   } finally {
     await setImporting(false);
   }
-  console.log(`imported ${imported}. Resume with --from-page if it stopped early.`);
+  console.log(`imported ${seen.size}`);
 };
 
 const cleanup = async () => {

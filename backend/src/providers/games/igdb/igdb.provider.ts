@@ -52,6 +52,20 @@ export const GAME_FIELDS = [
 export const CATALOGUE_FILTER =
   "game_type = (0,4,8,9,10) & version_parent = null & cover != null";
 
+/** IGDB's own page visits, as its popularity data counts them. */
+const VISITS = 1;
+
+/** The provider, and the one thing only a catalogue import asks of IGDB. */
+export interface IgdbProvider extends GamesProvider {
+  /**
+   * One page of IGDB's most visited games that pass the catalogue filter,
+   * most visited first. Reaches the games nobody has rated yet, which
+   * listByPopularity cannot order. A page can come back short of
+   * pageSize, since visits count DLC and editions the filter drops.
+   */
+  listMostVisited(pageNumber: number, pageSize: number): Promise<GamePage>;
+}
+
 export interface IgdbRequestOutcome {
   failed: boolean;
   error: string | null;
@@ -75,7 +89,7 @@ export const createIgdbProvider = (
   clientSecret: string,
   fetchImpl: typeof fetch = fetch,
   hooks: IgdbHooks = {},
-): GamesProvider => {
+): IgdbProvider => {
   const report = async (outcome: IgdbRequestOutcome): Promise<void> => {
     try {
       await hooks.onRequest?.(outcome);
@@ -232,8 +246,33 @@ export const createIgdbProvider = (
       return found ? toExternalGame(found) : null;
     },
 
+    // Rated games only: past them the rating count is null, and IGDB
+    // orders the rest arbitrarily. listMostVisited carries on from there.
     listByPopularity(pageNumber, pageSize) {
-      return page("", pageNumber, pageSize);
+      return page(" & total_rating_count > 0", pageNumber, pageSize);
+    },
+
+    async listMostVisited(pageNumber, pageSize) {
+      const limit = Math.min(pageSize, MAX_LIMIT);
+      const visited = await query<{ game_id: number }[]>(
+        "popularity_primitives",
+        `fields game_id; where popularity_type = ${VISITS}; sort value desc; limit ${limit}; offset ${(pageNumber - 1) * limit};`,
+      );
+      if (visited.length === 0) return { games: [], total: 0, hasNext: false };
+
+      const ids = visited.map((v) => v.game_id);
+      const found = await games(
+        ` & id = (${ids.join(",")})`,
+        `limit ${MAX_LIMIT};`,
+      );
+      const rank = new Map(ids.map((id, i) => [id, i]));
+      return {
+        games: found
+          .sort((a, b) => rank.get(a.id)! - rank.get(b.id)!)
+          .map(toExternalGame),
+        total: (pageNumber - 1) * limit + visited.length,
+        hasNext: visited.length === limit,
+      };
     },
 
     listByDate({ from, to, page: pageNumber, pageSize }) {

@@ -126,6 +126,31 @@ describe("IGDB provider", () => {
     expect(api.queries[1]!.body).toContain("offset 2;");
   });
 
+  it("pages the catalogue by rating only among games that have one", async () => {
+    const api = upstream([() => Response.json([])]);
+    const igdb = createIgdbProvider("id", "secret", api.fetchImpl);
+
+    await igdb.listByPopularity(1, 500);
+
+    expect(api.queries[0]!.body).toContain("& total_rating_count > 0;");
+  });
+
+  it("lists the most visited games in visit order, through the catalogue filter", async () => {
+    const api = upstream([
+      () => Response.json([{ game_id: 30 }, { game_id: 10 }, { game_id: 20 }]),
+      // 20 was a DLC, so the filter left it out; the rest come back unordered
+      () => Response.json([game(10), game(30)]),
+    ]);
+    const igdb = createIgdbProvider("id", "secret", api.fetchImpl);
+
+    const page = await igdb.listMostVisited(1, 3);
+
+    expect(page.games.map((g) => g.externalId)).toEqual([30, 10]);
+    expect(page.hasNext).toBe(true);
+    expect(api.queries[0]!.body).toContain("where popularity_type = 1; sort value desc; limit 3; offset 0;");
+    expect(api.queries[1]!.body).toContain("& id = (30,10,20)");
+  });
+
   it("asks for a release window in IGDB's unix seconds, end day included", async () => {
     const api = upstream([() => Response.json([])]);
     const igdb = createIgdbProvider("id", "secret", api.fetchImpl);
