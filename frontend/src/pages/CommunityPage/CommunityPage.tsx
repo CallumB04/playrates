@@ -257,7 +257,11 @@ const CommunityPage = () => {
                                             : "Start the first one: pick a game and say what's on your mind."
                                 }
                                 action={
-                                    <Button onClick={startThread}>
+                                    // The header's button is the primary one.
+                                    <Button
+                                        variant="secondary"
+                                        onClick={startThread}
+                                    >
                                         Start a thread
                                     </Button>
                                 }
