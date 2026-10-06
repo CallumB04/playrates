@@ -194,7 +194,6 @@ const LibraryPage = () => {
                 setQuery={setQuery}
                 searchDraft={searchDraft}
                 onSearchDraft={setSearchDraft}
-                matches={page?.meta.total}
                 platforms={platforms ?? []}
                 genres={genres ?? []}
                 isSignedIn={!!user}
