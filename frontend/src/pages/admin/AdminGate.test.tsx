@@ -20,7 +20,9 @@ describe("AdminGate", () => {
     it("shows a signed-out visitor the not-found page", () => {
         auth.value = { user: null, isLoading: false };
         renderWithProviders(<AdminGate />);
-        expect(screen.getByText("404")).toBeInTheDocument();
+        expect(
+            screen.getByRole("heading", { name: "Page not found" })
+        ).toBeInTheDocument();
         expect(screen.queryByText("the dashboard")).not.toBeInTheDocument();
     });
 
@@ -30,7 +32,9 @@ describe("AdminGate", () => {
             isLoading: false,
         };
         renderWithProviders(<AdminGate />);
-        expect(screen.getByText("404")).toBeInTheDocument();
+        expect(
+            screen.getByRole("heading", { name: "Page not found" })
+        ).toBeInTheDocument();
         expect(screen.queryByText("the dashboard")).not.toBeInTheDocument();
     });
 
