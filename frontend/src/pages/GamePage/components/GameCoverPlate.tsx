@@ -1,3 +1,4 @@
+import type { RefObject } from "react";
 import type { Game } from "@playrates/shared";
 import type { GameLogSummary } from "@playrates/shared";
 import CoverCarousel from "./CoverCarousel";
@@ -22,6 +23,8 @@ interface GameCoverPlateProps {
     onViewLog?: () => void;
     onQuickLog: (status: "backlog" | "wishlist") => void;
     isSaving: boolean;
+    /** Marks where the log buttons end, for the phone's sticky bar. */
+    actionsEndRef?: RefObject<HTMLSpanElement>;
 }
 
 // A tinted panel with a word in it reads as a notice, so these get a hover
@@ -46,6 +49,7 @@ const GameCoverPlate = ({
     onViewLog,
     onQuickLog,
     isSaving,
+    actionsEndRef,
 }: GameCoverPlateProps) => {
     const status = log ? displayStatusFor(log.status, log.playedStatus) : null;
 
@@ -115,7 +119,7 @@ const GameCoverPlate = ({
                                 onClick={() => onQuickLog(status)}
                                 disabled={isSaving}
                                 className={cn(
-                                    "inline-flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-sm border bg-surface-raised text-body-sm font-medium lift",
+                                    "inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-sm border bg-surface-raised text-body-sm font-medium lift sm:min-h-10",
                                     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
                                     "hover:-translate-y-px hover:shadow-plate",
                                     "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0",
@@ -129,6 +133,8 @@ const GameCoverPlate = ({
                     })}
                 </div>
             )}
+
+            <span ref={actionsEndRef} aria-hidden />
 
             {facts && <GameDetails facts={facts} />}
         </div>
