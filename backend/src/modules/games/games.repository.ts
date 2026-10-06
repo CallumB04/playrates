@@ -198,7 +198,10 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
 
     let builder = db
       .from("games")
-      .select(select.join(", "), { count: "exact" });
+      .select(
+        select.join(", "),
+        query.count === false ? undefined : { count: "exact" },
+      );
 
     if (query.search) builder = builder.ilike("title", likeTerm(query.search));
     if (query.trending !== undefined) {
@@ -286,10 +289,9 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     const { data, error, count } = await builder.order("id").range(from, to);
     if (error) throw error;
     // the select string is built at runtime, so supabase-js cannot infer it
-    return {
-      rows: (data ?? []) as unknown as GameRowWithPlatforms[],
-      total: count ?? 0,
-    };
+    const rows = (data ?? []) as unknown as GameRowWithPlatforms[];
+    // Uncounted, the total is only what this page reached.
+    return { rows, total: count ?? from + rows.length };
   },
 
   async searchLocal(term, limit, showSexualContent) {

@@ -287,6 +287,15 @@ describe("games", () => {
 });
 
 describe("platforms and stats", () => {
+  it("lists games without counting them when asked not to", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app).get("/api/v1/games?count=false&limit=1");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(1);
+  });
+
   it("lists platforms", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 

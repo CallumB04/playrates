@@ -90,19 +90,23 @@ const HomePage = () => {
     const { data: trending, isLoading: trendingLoading } = useGames({
         trending: true,
         limit: RAIL_SIZE,
+        count: false,
     });
     const { data: popular, isLoading: popularLoading } = useGames({
         sort: "logged",
         limit: RAIL_SIZE,
+        count: false,
     });
     const { data: fresh, isLoading: freshLoading } = useGames({
         sort: "released",
         limit: RAIL_SIZE,
+        count: false,
         ...window,
     });
     const { data: acclaimed, isLoading: acclaimedLoading } = useGames({
         sort: "rating",
         limit: RAIL_SIZE,
+        count: false,
     });
 
     const { data: activity, isLoading: activityLoading } = useFriendActivity(6);
