@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import {
     useEffect,
+    useRef,
     useState,
     type ComponentType,
     type ReactNode,
@@ -11,6 +12,7 @@ import { cn } from "../../lib/cn";
 import type { DisplayStatus } from "../../constants/gameStatus";
 import type { Platform } from "@playrates/shared";
 import GameCover from "./GameCover";
+import { usePrefetchGame } from "../../hooks/queries/useGames";
 import PlatformMarks from "./PlatformMarks";
 import StatusBadge from "../ui/StatusBadge";
 import RatingBadge from "../ui/RatingBadge";
@@ -89,6 +91,18 @@ const GameTile = ({
 }: GameTileProps) => {
     const rows = actions.filter((a) => !a.icon);
     const [busy, setBusy] = useState<Busy | null>(null);
+
+    /* A pointer resting on a tile is a click on its way, so the game starts
+       loading then. The pause stops a sweep across a rail from fetching
+       every game it passes. */
+    const prefetchGame = usePrefetchGame();
+    const intent = useRef<ReturnType<typeof setTimeout>>();
+    const prefetchSoon = () => {
+        clearTimeout(intent.current);
+        intent.current = setTimeout(() => void prefetchGame(gameId), 120);
+    };
+    const cancelPrefetch = () => clearTimeout(intent.current);
+    useEffect(() => cancelPrefetch, []);
     const icons = busy?.icons ?? actions.filter((a) => a.icon);
 
     useEffect(() => {
@@ -116,6 +130,10 @@ const GameTile = ({
         <div className="group/tile">
             <Link
                 to={`/game/${gameId}`}
+                onMouseEnter={prefetchSoon}
+                onMouseLeave={cancelPrefetch}
+                onFocus={prefetchSoon}
+                onTouchStart={() => void prefetchGame(gameId)}
                 className="relative block aspect-3/4 overflow-hidden rounded-md bg-surface-media shadow-cover transition-shadow duration-500 ease-[var(--ease-glide)] group-hover/tile:shadow-cover-hover"
             >
                 <GameCover

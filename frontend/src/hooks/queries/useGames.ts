@@ -1,4 +1,8 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import type { Game } from "@playrates/shared";
 import {
     fetchGameById,
@@ -29,6 +33,18 @@ export const useGame = (id: number | undefined) =>
         enabled: typeof id === "number" && id > 0,
         staleTime: 5 * 60_000,
     });
+
+/** Loads a game ahead of the click, so its page opens with it already in
+ *  hand. Same key and freshness as useGame, so the page just reads it. */
+export const usePrefetchGame = () => {
+    const queryClient = useQueryClient();
+    return (id: number) =>
+        queryClient.prefetchQuery({
+            queryKey: queryKeys.games.byId(id),
+            queryFn: () => fetchGameById(id),
+            staleTime: 5 * 60_000,
+        });
+};
 
 export const useGameStats = (id: number | undefined) =>
     useQuery({

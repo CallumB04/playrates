@@ -101,3 +101,32 @@ describe("GameTile quick-add", () => {
         vi.useRealTimers();
     });
 });
+
+describe("GameTile prefetch", () => {
+    const API = "http://localhost:3000/api/v1";
+
+    it("loads the game when the pointer rests on its tile, not when it passes", async () => {
+        const fetched = vi.fn();
+        const { server } = await import("../../test/msw/server");
+        const { http, HttpResponse } = await import("msw");
+        const { buildGame } = await import("../../test/msw/handlers");
+        server.use(
+            http.get(`${API}/games/:id`, ({ params }) => {
+                fetched(params.id);
+                return HttpResponse.json(buildGame({ id: Number(params.id) }));
+            })
+        );
+        renderWithProviders(
+            <GameTile gameId={7} title="Lanternfall" coverUrl={null} />
+        );
+        const link = screen.getByRole("link", { name: /Lanternfall/ });
+
+        await userEvent.hover(link);
+        await userEvent.unhover(link);
+        await new Promise((r) => setTimeout(r, 200));
+        expect(fetched).not.toHaveBeenCalled();
+
+        await userEvent.hover(link);
+        await waitFor(() => expect(fetched).toHaveBeenCalledWith("7"));
+    });
+});
