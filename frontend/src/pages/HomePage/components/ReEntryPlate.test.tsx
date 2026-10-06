@@ -19,7 +19,7 @@ const base = {
 };
 
 describe("ReEntryPlate", () => {
-    it("offers a newcomer games to start from, added with a tap", async () => {
+    it("offers a newcomer games to start from, beside their shelves", async () => {
         renderWithProviders(
             <ReEntryPlate {...base} isNew shelves={undefined} />
         );
@@ -31,6 +31,11 @@ describe("ReEntryPlate", () => {
             screen.getByRole("button", { name: "Add Stray to your backlog" })
         );
         expect(base.onAddStarter).toHaveBeenCalledWith(base.starters[0]);
+        expect(screen.getByRole("link", { name: /Backlog/ })).toHaveAttribute(
+            "href",
+            "/user/devuser?type=backlog"
+        );
+        expect(screen.getByText("Nothing on the go")).toBeInTheDocument();
     });
 
     it("shows a returning player their shelves instead", () => {

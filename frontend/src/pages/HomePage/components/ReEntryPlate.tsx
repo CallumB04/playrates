@@ -5,7 +5,6 @@ import type { Game, UserStats } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
 import { cardClass } from "../../../components/ui/Card";
 import { buttonClass } from "../../../components/ui/Button";
-import { plateClass } from "../../../components/ui/Plate";
 import Stat from "../../../components/ui/Stat";
 import GameCover from "../../../components/game/GameCover";
 import StatusBadge from "../../../components/ui/StatusBadge";
@@ -44,6 +43,9 @@ interface ReEntryPlateProps {
     onUpdateLog: () => void;
 }
 
+const ROW =
+    "flex w-full items-center gap-3.5 p-3 text-left transition-colors hover:bg-surface-hover/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand";
+
 const CurrentGame = ({
     current,
     onUpdateLog,
@@ -54,11 +56,7 @@ const CurrentGame = ({
     <button
         type="button"
         onClick={onUpdateLog}
-        className={plateClass(
-            "pressed",
-            "shallow",
-            "flex w-full cursor-pointer items-center gap-3.5 p-3 text-left lift hover:border-strong"
-        )}
+        className={cn(ROW, "cursor-pointer")}
     >
         <GameCover
             coverUrl={current.game.coverUrl}
@@ -90,11 +88,7 @@ const NothingOnTheGo = ({
 }) => (
     <Link
         to={backlogCount > 0 ? `/user/${username}?type=backlog` : "/library"}
-        className={plateClass(
-            "pressed",
-            "shallow",
-            "flex w-full items-center gap-3.5 border-dashed p-3 text-left lift hover:border-strong"
-        )}
+        className={ROW}
     >
         <span className="grid aspect-3/4 w-14 shrink-0 place-items-center rounded-xs border border-dashed border-strong bg-surface-sunken/60 text-content-muted">
             <Gamepad2 size={20} aria-hidden />
@@ -115,6 +109,66 @@ const NothingOnTheGo = ({
             className="shrink-0 text-content-muted"
         />
     </Link>
+);
+
+/** The game on the go and the four shelves, in one panel over the art. */
+const Panel = ({
+    username,
+    current,
+    shelves,
+    onUpdateLog,
+}: {
+    username: string;
+    current: GameLogWithGame | undefined;
+    shelves: Record<string, number> | undefined;
+    onUpdateLog: () => void;
+}) => (
+    <div className="overflow-hidden rounded-md border border-subtle bg-surface-raised/75 shadow-plate backdrop-blur-md">
+        {current?.game ? (
+            <CurrentGame
+                current={{ ...current, game: current.game }}
+                onUpdateLog={onUpdateLog}
+            />
+        ) : (
+            <NothingOnTheGo
+                username={username}
+                backlogCount={shelves?.backlog ?? 0}
+            />
+        )}
+        <nav
+            aria-label="Your shelves"
+            className="grid grid-cols-4 divide-x divide-subtle border-t border-subtle"
+        >
+            {GAME_STATUSES.map((status) => {
+                const {
+                    label,
+                    icon: Icon,
+                    markTone,
+                } = STATUS_PRESENTATION[status];
+                return (
+                    <Link
+                        key={status}
+                        to={`/user/${username}?type=${status}`}
+                        className="flex min-h-11 flex-col items-center justify-center gap-0.5 px-1 py-2.5 transition-colors hover:bg-surface-hover/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+                    >
+                        <span className="flex items-center gap-1.5">
+                            <Icon
+                                size={14}
+                                aria-hidden
+                                className={cn("shrink-0", markTone)}
+                            />
+                            <span className="font-mono text-body-sm font-medium text-content">
+                                {formatCount(shelves?.[status] ?? 0)}
+                            </span>
+                        </span>
+                        <span className="text-label-sm text-content-muted">
+                            {label}
+                        </span>
+                    </Link>
+                );
+            })}
+        </nav>
+    </div>
 );
 
 const Starters = ({
@@ -192,9 +246,9 @@ const Starters = ({
 };
 
 /**
- * The signed-in landing: the game on the go over its own artwork, the
- * shelves a press away, and your year down the side on a wide screen. A
- * newcomer, with nothing to show, gets trending games to start from instead.
+ * The signed-in landing over game artwork: the game on the go and the
+ * shelves a press away in one panel, and your year down the side on a wide
+ * screen. A newcomer also gets well-known games to start their shelves.
  */
 const ReEntryPlate = ({
     username,
@@ -243,10 +297,10 @@ const ReEntryPlate = ({
                 />
             )}
 
-            {/* Three blocks so a phone can read them in the order that
-                matters, greeting, the game, then the shelves, while a wide
-                screen keeps the game and the year down the right. */}
-            <div className="grid gap-6 px-5 py-6 sm:px-6 sm:py-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-x-12 lg:px-8 lg:py-9">
+            {/* Blocks in the order a phone reads them: greeting, the panel,
+                a newcomer's starters, then Browse. A wide screen moves the
+                panel and the year to the right-hand column. */}
+            <div className="grid gap-6 px-5 py-6 sm:px-6 sm:py-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:grid-rows-[auto_auto_1fr] lg:gap-x-12 lg:px-8 lg:py-9">
                 <div className="lg:col-start-1 lg:row-start-1">
                     <h1 className="font-display text-[32px] leading-tight text-content sm:text-[40px]">
                         {isNew ? "Welcome" : "Welcome back"}, {displayName}
@@ -260,24 +314,13 @@ const ReEntryPlate = ({
                     )}
                 </div>
 
-                <div className="flex flex-col gap-5 lg:col-start-2 lg:row-span-2 lg:row-start-1">
-                    {isNew ? (
-                        <Starters
-                            games={starters}
-                            isLogged={isLogged}
-                            onAdd={onAddStarter}
-                        />
-                    ) : current?.game ? (
-                        <CurrentGame
-                            current={{ ...current, game: current.game }}
-                            onUpdateLog={onUpdateLog}
-                        />
-                    ) : (
-                        <NothingOnTheGo
-                            username={username}
-                            backlogCount={backlogCount}
-                        />
-                    )}
+                <div className="flex flex-col gap-6 lg:col-start-2 lg:row-span-3 lg:row-start-1">
+                    <Panel
+                        username={username}
+                        current={current}
+                        shelves={shelves}
+                        onUpdateLog={onUpdateLog}
+                    />
 
                     {/* The chart is what made a phone long and empty, so it
                         waits for a wide screen and a year with something in
@@ -327,58 +370,26 @@ const ReEntryPlate = ({
                     )}
                 </div>
 
-                <div className="flex flex-col gap-4 lg:col-start-1 lg:row-start-2 lg:self-end">
-                    {!isNew && (
-                        <nav
-                            aria-label="Your shelves"
-                            className="grid grid-cols-4 gap-2 sm:max-w-[460px]"
-                        >
-                            {GAME_STATUSES.map((status) => {
-                                const {
-                                    label,
-                                    icon: Icon,
-                                    markTone,
-                                } = STATUS_PRESENTATION[status];
-                                return (
-                                    <Link
-                                        key={status}
-                                        to={`/user/${username}?type=${status}`}
-                                        className="flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-md border border-subtle bg-surface-raised/70 px-1 py-2 backdrop-blur-sm transition-colors lift hover:border-strong"
-                                    >
-                                        <span className="flex items-center gap-1.5">
-                                            <Icon
-                                                size={14}
-                                                aria-hidden
-                                                className={cn(
-                                                    "shrink-0",
-                                                    markTone
-                                                )}
-                                            />
-                                            <span className="font-mono text-body-sm font-medium text-content">
-                                                {formatCount(
-                                                    shelves?.[status] ?? 0
-                                                )}
-                                            </span>
-                                        </span>
-                                        <span className="text-label-sm text-content-muted">
-                                            {label}
-                                        </span>
-                                    </Link>
-                                );
-                            })}
-                        </nav>
+                {isNew && (
+                    <div className="lg:col-start-1 lg:row-start-2 lg:max-w-[440px]">
+                        <Starters
+                            games={starters}
+                            isLogged={isLogged}
+                            onAdd={onAddStarter}
+                        />
+                    </div>
+                )}
+
+                <Link
+                    to="/library"
+                    className={buttonClass(
+                        "primary",
+                        "w-full sm:w-auto sm:justify-self-start lg:col-start-1 lg:row-start-3 lg:self-end",
+                        "lg"
                     )}
-                    <Link
-                        to="/library"
-                        className={buttonClass(
-                            "primary",
-                            "w-full sm:w-auto sm:self-start",
-                            "lg"
-                        )}
-                    >
-                        Browse games
-                    </Link>
-                </div>
+                >
+                    Browse games
+                </Link>
             </div>
         </section>
     );
