@@ -65,16 +65,10 @@ export const CATALOGUE_FILTER =
 
 /** IGDB's own page visits, as its popularity data counts them. */
 const VISITS = 1;
-const WANT_TO_PLAY = 2;
-const PLAYING = 3;
-
-/**
- * Visits alone surface games almost nobody wants or plays, pushed up by a
- * burst of traffic. A share this small of IGDB's want-to-play and playing
- * lists combined is where those sit and the real ones, even unreleased,
- * clear it.
- */
-const TRENDING_INTEREST_FLOOR = 1e-4;
+/** Steam's peak concurrent players over the last day. Steam only, so no
+ *  console exclusives, but the one figure that moves with what people are
+ *  playing now; the others barely change from month to month. */
+const STEAM_PEAK_PLAYERS = 5;
 
 /** The provider, and the one thing only a catalogue import asks of IGDB. */
 export interface IgdbProvider extends GamesProvider {
@@ -328,24 +322,12 @@ export const createIgdbProvider = (
       };
     },
 
-    /** IGDB's page visits, recalculated daily: what IGDB's own site calls
-     *  trending. */
     async trendingIds(limit) {
-      const visited = await query<{ game_id: number }[]>(
+      const played = await query<{ game_id: number }[]>(
         "popularity_primitives",
-        `fields game_id; where popularity_type = ${VISITS}; sort value desc; limit ${Math.min(limit, MAX_LIMIT / 2)};`,
+        `fields game_id; where popularity_type = ${STEAM_PEAK_PLAYERS}; sort value desc; limit ${Math.min(limit, MAX_LIMIT)};`,
       );
-      if (visited.length === 0) return [];
-      const ids = visited.map((v) => v.game_id);
-      const interest = await query<{ game_id: number; value: number }[]>(
-        "popularity_primitives",
-        `fields game_id,value; where game_id = (${ids.join(",")}) & popularity_type = (${WANT_TO_PLAY},${PLAYING}); limit ${MAX_LIMIT};`,
-      );
-      const total = new Map<number, number>();
-      for (const row of interest) {
-        total.set(row.game_id, (total.get(row.game_id) ?? 0) + row.value);
-      }
-      return ids.filter((id) => (total.get(id) ?? 0) >= TRENDING_INTEREST_FLOOR);
+      return played.map((p) => p.game_id);
     },
 
     async seriesOf(igdbIds) {
