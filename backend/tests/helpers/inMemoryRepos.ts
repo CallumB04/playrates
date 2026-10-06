@@ -1,4 +1,5 @@
 import type { ExternalGame } from "../../src/providers/games/GamesProvider.js";
+import { searchKey } from "../../src/lib/searchKey.js";
 import type { Repositories } from "../../src/repositories.js";
 import type { AuthAdmin } from "../../src/config/authAdmin.js";
 import type { AvatarStore } from "../../src/config/avatarStore.js";
@@ -417,8 +418,8 @@ export const createInMemoryRepos = (
         let rows = state.games;
 
         if (query.search) {
-          const term = query.search.toLowerCase();
-          rows = rows.filter((g) => g.title.toLowerCase().includes(term));
+          const term = searchKey(query.search);
+          rows = rows.filter((g) => searchKey(g.title).includes(term));
         }
         if (query.trending !== undefined) {
           rows = rows.filter((g) => g.is_trending === query.trending);
@@ -492,7 +493,7 @@ export const createInMemoryRepos = (
       },
       async searchLocal(term, limit, showSexualContent) {
         return state.games
-          .filter((g) => g.title.toLowerCase().includes(term.toLowerCase()))
+          .filter((g) => searchKey(g.title).includes(searchKey(term)))
           .filter((g) => showSexualContent || !g.has_sexual_content)
           .slice(0, limit)
           .map(withPlatforms);

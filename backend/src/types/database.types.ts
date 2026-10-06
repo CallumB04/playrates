@@ -42,6 +42,8 @@ export interface GameRow {
   igdb_id: number | null;
   slug: string;
   title: string;
+  /** The title as search matches it; kept by a trigger, never written. */
+  search_title?: string | null;
   description: string;
   /** Wide art: link previews and backdrops. */
   cover_url: string | null;

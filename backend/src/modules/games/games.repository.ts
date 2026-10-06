@@ -1,5 +1,6 @@
 import type { GameQuery } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
+import { searchKey } from "../../lib/searchKey.js";
 import { likeTerm } from "../../lib/likeTerm.js";
 import type { ExternalGame } from "../../providers/games/GamesProvider.js";
 import type { GameRowWithPlatforms } from "./games.mapper.js";
@@ -82,6 +83,18 @@ export interface GamesRepository {
   /** Makes exactly these games trending, ranked in the order given. */
   replaceTrending(ids: number[]): Promise<void>;
 }
+
+/** Matches on the search key, so "witcher iii" finds "The Witcher 3". A
+ *  term of nothing but punctuation has no key, and falls back to the title. */
+const matchTitle = <B extends { ilike: (column: string, pattern: string) => B }>(
+  builder: B,
+  term: string,
+): B => {
+  const key = searchKey(term);
+  return key
+    ? builder.ilike("search_title", likeTerm(key))
+    : builder.ilike("title", likeTerm(term));
+};
 
 /** Every column an upstream game decides. Ours (log counts, ratings, the
  *  trending flag) are left alone. */
@@ -203,7 +216,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
         query.count === false ? undefined : { count: "exact" },
       );
 
-    if (query.search) builder = builder.ilike("title", likeTerm(query.search));
+    if (query.search) builder = matchTitle(builder, query.search);
     if (query.trending !== undefined) {
       builder = builder.eq("is_trending", query.trending);
     }
@@ -295,10 +308,10 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
   },
 
   async searchLocal(term, limit, showSexualContent) {
-    let builder = db
-      .from("games")
-      .select(SELECT_WITH_RELATIONS)
-      .ilike("title", likeTerm(term));
+    let builder = matchTitle(
+      db.from("games").select(SELECT_WITH_RELATIONS),
+      term,
+    );
 
     // The same rule the listing runs. Search had been the way round it.
     if (!showSexualContent) {
