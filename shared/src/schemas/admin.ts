@@ -147,7 +147,8 @@ export interface AdminGamesDetail {
   withCover: number;
   withBoxArt: number;
   withDescription: number;
-  detailsSynced: number;
+  /** Games that came from IGDB, rather than from before it. */
+  fromIgdb: number;
   trending: number;
   mostLogged: AdminRankedGame[];
 }
@@ -280,7 +281,7 @@ export interface AdminUserSummary extends AdminPerson {
 // Games --------------------------------------------------------------------------
 
 export const GAME_EVENT_GROUPS = {
-  added: ["game_added", "rawg_import"],
+  added: ["game_added", "igdb_import"],
   content: [
     "cover_updated",
     "box_art_updated",
@@ -325,10 +326,11 @@ export type AdminGameEventsQuery = z.infer<typeof AdminGameEventsQuerySchema>;
 
 export interface AdminGameSummary extends AdminGameRef {
   slug: string;
-  rawgId: number | null;
+  igdbId: number | null;
   isTrending: boolean;
   releaseDate: string | null;
-  detailsSyncedAt: string | null;
+  /** When IGDB's details were last written onto it. */
+  syncedAt: string | null;
   logCount: number;
 }
 
@@ -338,7 +340,7 @@ export interface AdminGameEvent {
   group: GameEventGroup | null;
   source: string | null;
   createdAt: string;
-  game: (AdminGameRef & { isTrending: boolean; rawgId: number | null }) | null;
+  game: (AdminGameRef & { isTrending: boolean; igdbId: number | null }) | null;
   actorUsername: string | null;
   data: Record<string, unknown>;
 }
@@ -355,37 +357,11 @@ export const AdminGamePatchSchema = z
   .object({ isTrending: z.boolean() })
   .strict();
 
-/** RAWG's free tier: 20,000 requests a period, renewing on the 8th. Shared
- *  with live traffic: every search that falls through to RAWG spends it. */
-export const RAWG_MONTHLY_ALLOWANCE = 20_000;
-export const RAWG_RESET_DAY = 8;
-
-export interface RawgUsage {
-  allowance: number;
-  /** The period this is, YYYY-MM-DD. It ends the day before `resetsOn`. */
-  periodStart: string;
-  resetsOn: string;
-  /** Whole days until the reset, today included. */
-  daysLeft: number;
-  /** Spent this period, best estimate. */
-  used: number;
-  left: number;
-  /** "corrected": counted on from a figure read off RAWG's own dashboard.
-   *  "counted": only what PlayRates has counted, which misses anything spent
-   *  before tracking began. */
-  basis: "corrected" | "counted";
-  /** When the figure was last corrected, or the first day counted. */
-  since: string | null;
-  /** What is left, spread evenly over the days left. */
-  dailyBudget: number;
-  /** Average spent a day so far this period. */
-  pace: number;
-  /** At this pace, what is left on the day it resets. Negative when it runs
-   *  out first. */
-  projectedLeft: number;
-  /** The day it runs out at this pace, when that is before the reset. */
-  runsOutOn: string | null;
-  periodFailures: number;
+/** IGDB has no allowance to spend, only a rate; this is for seeing that
+ *  calls are getting through. */
+export interface IgdbUsage {
+  todayRequests: number;
+  todayFailures: number;
   /** The last 30 days, oldest first, zero-filled. */
   days: { day: string; requests: number; failures: number }[];
   lastRequestAt: string | null;
@@ -393,15 +369,10 @@ export interface RawgUsage {
   lastError: string | null;
 }
 
-/** What RAWG's own dashboard says is left, to count on from. */
-export const RawgCorrectionSchema = z
-  .object({ left: z.number().int().min(0).max(1_000_000) })
-  .strict();
-
 export const PULL_WINDOWS = [7, 30, 90] as const;
 export const PULL_MAX_PAGES = 5;
-/** RAWG's page size ceiling, and what each pull page asks for. */
-export const PULL_PAGE_SIZE = 40;
+/** IGDB's page size ceiling, and what each pull page asks for. */
+export const PULL_PAGE_SIZE = 500;
 
 export const AdminPullSchema = z
   .object({
@@ -414,17 +385,17 @@ export const AdminPullSchema = z
 export type AdminPullInput = z.infer<typeof AdminPullSchema>;
 
 export interface AdminPullResult {
-  /** Each page is one RAWG request, unless RAWG had to be retried. */
+  /** Each page is one IGDB request, unless it had to be retried. */
   pages: number;
   fetched: number;
   added: number;
   updated: number;
-  /** RAWG had more beyond the page cap. */
+  /** IGDB had more beyond the page cap. */
   hasMore: boolean;
 }
 
 export const AdminImportSchema = z
-  .object({ rawgId: z.number().int().positive() })
+  .object({ igdbId: z.number().int().positive() })
   .strict();
 
 export interface AdminImportResult {
@@ -548,7 +519,7 @@ export interface AdminHealth {
     latencyMs: number | null;
     error: string | null;
   };
-  rawg: {
+  igdb: {
     configured: boolean;
     todayRequests: number;
     todayFailures: number;

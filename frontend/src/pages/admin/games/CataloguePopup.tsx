@@ -63,12 +63,12 @@ const CataloguePopup = ({ onClose }: { onClose: () => void }) => {
                     <PopupSection title="How many have each">
                         <Row
                             label="Cover"
-                            part={games.withCover}
+                            part={games.withBoxArt}
                             whole={games.total}
                         />
                         <Row
-                            label="Portrait box art"
-                            part={games.withBoxArt}
+                            label="Wide artwork"
+                            part={games.withCover}
                             whole={games.total}
                         />
                         <Row
@@ -77,8 +77,8 @@ const CataloguePopup = ({ onClose }: { onClose: () => void }) => {
                             whole={games.total}
                         />
                         <Row
-                            label="Details from RAWG"
-                            part={games.detailsSynced}
+                            label="From IGDB"
+                            part={games.fromIgdb}
                             whole={games.total}
                         />
                     </PopupSection>

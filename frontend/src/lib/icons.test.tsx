@@ -159,16 +159,12 @@ describe("platform marks render", () => {
 
 describe("genreIcon", () => {
     it("gives a known genre a mark of its own", () => {
-        expect(genreIcon("action")).not.toBe(Gamepad2);
+        expect(genreIcon("role-playing-rpg")).not.toBe(Gamepad2);
         expect(genreIcon("puzzle")).not.toBe(Gamepad2);
     });
 
-    it("maps both RPG slugs RAWG uses to the same mark", () => {
-        expect(genreIcon("rpg")).toBe(genreIcon("role-playing-games-rpg"));
-    });
-
     it("falls back to a controller so a new genre leaves no hole", () => {
-        expect(genreIcon("visual-novel")).toBe(Gamepad2);
+        expect(genreIcon("role-playing-games-rpg")).toBe(Gamepad2);
         expect(genreIcon("")).toBe(Gamepad2);
     });
 });

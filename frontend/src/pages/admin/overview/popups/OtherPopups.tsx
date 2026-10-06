@@ -9,20 +9,15 @@ import { relativeTime } from "../../../../lib/format";
 import {
     useAdminHealth,
     useAdminMetric,
-    useRawgUsage,
+    useIgdbUsage,
     useServerErrors,
 } from "../../../../hooks/queries/useAdmin";
 import RankBars from "../../components/RankBars";
 import { RANGE_LABELS } from "../../lib/adminFormat";
-import {
-    AllowanceBasis,
-    AllowanceDays,
-    AllowanceMeter,
-} from "../../games/RawgAllowance";
+import { UsageDays, UsageFigure } from "../../games/IgdbUsage";
 import HealthSystems from "../../health/HealthSystems";
 import { ErrorList } from "../../health/ErrorRow";
 import { headline, systemStates } from "../../health/healthState";
-import { formatCount } from "../../../../lib/format";
 import Popup, { PopupSection } from "./Popup";
 
 interface RangeProps {
@@ -107,24 +102,18 @@ export const MostLoggedPopup = ({ range, onClose }: RangeProps) => {
     );
 };
 
-export const RawgPopup = ({ onClose }: { onClose: () => void }) => {
-    const { data: usage } = useRawgUsage();
+export const IgdbPopup = ({ onClose }: { onClose: () => void }) => {
+    const { data: usage } = useIgdbUsage();
     return (
-        <Popup
-            title="RAWG requests left"
-            value={usage ? formatCount(usage.left) : undefined}
-            note={usage ? `of ${formatCount(usage.allowance)}` : undefined}
-            onClose={onClose}
-        >
+        <Popup title="IGDB requests today" onClose={onClose}>
             {!usage ? (
                 <TextSkeleton lines={5} />
             ) : (
                 <>
-                    <AllowanceMeter usage={usage} />
-                    <PopupSection title="Requests counted each day · this period">
-                        <AllowanceDays usage={usage} height={140} />
+                    <UsageFigure usage={usage} />
+                    <PopupSection title="Requests each day · last 30 days">
+                        <UsageDays usage={usage} height={140} />
                     </PopupSection>
-                    <AllowanceBasis usage={usage} />
                     <Link
                         to="/admin/games"
                         className={buttonClass(

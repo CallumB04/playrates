@@ -16,7 +16,7 @@ interface Deps {
   optionalAuth: RequestHandler;
 }
 
-/** Search is the only route that can reach RAWG, so it gets its own limit. */
+/** Search is the only route that can reach IGDB, so it gets its own limit. */
 const searchLimiter = rateLimit({
   windowMs: 60_000,
   limit: 30,
@@ -51,8 +51,8 @@ export const createGamesRouter = ({
     searchLimiter,
     validate({ body: GameImportSchema }),
     async (req, res) => {
-      const { rawgId } = req.valid!.body as z.infer<typeof GameImportSchema>;
-      const { game, created } = await service.importByRawgId(rawgId);
+      const { igdbId } = req.valid!.body as z.infer<typeof GameImportSchema>;
+      const { game, created } = await service.importByIgdbId(igdbId);
       res.status(created ? 201 : 200).json(game);
     },
   );

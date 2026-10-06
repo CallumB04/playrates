@@ -19,7 +19,7 @@ export interface GameStatsRow {
 
 export interface GamesRepository {
   findById(id: number): Promise<GameRowWithPlatforms | null>;
-  findByRawgId(rawgId: number): Promise<GameRowWithPlatforms | null>;
+  findByIgdbId(igdbId: number): Promise<GameRowWithPlatforms | null>;
   list(
     query: GameQuery,
     from: number,
@@ -41,33 +41,99 @@ export interface GamesRepository {
   ratingSummary(
     gameId: number,
   ): Promise<{ average: number | null; count: number; buckets: number[] }>;
-  /** This site's own figures for a game, as distinct from RAWG's. */
+  /** This site's own figures for a game, as distinct from IGDB's. */
   playratesStats(gameId: number): Promise<{
     avgHoursPlayed: number | null;
     avgHoursToBeat: number | null;
     avgCompletion: number | null;
     achievementTrackedCount: number;
   }>;
-  /** Writes what the detail endpoint knows that the bulk listing didn't. The
-   *  content tags ride along so the sexual-content flag re-derives per game. */
-  refreshFromExternal(
-    id: number,
-    fields: {
-      description: string;
-      contentTags: string[];
-      hasSexualContent: boolean;
-      developers: string[];
-      publishers: string[];
-      website: string | null;
-      esrbRating: string | null;
-      boxArtUrl: string | null;
-    },
-  ): Promise<void>;
+  /**
+   * Writes an upstream game onto a row that already exists, by our id. How a
+   * game from before IGDB becomes an IGDB one without losing the logs,
+   * reviews and threads that point at it.
+   */
+  applyExternal(id: number, game: ExternalGame): Promise<void>;
   count(): Promise<number>;
   /** Which of these upstream ids are already in the catalogue. */
-  existingRawgIds(rawgIds: number[]): Promise<number[]>;
+  existingIgdbIds(igdbIds: number[]): Promise<number[]>;
   setTrending(id: number, isTrending: boolean): Promise<void>;
 }
+
+/** Every column an upstream game decides. Ours (log counts, ratings, the
+ *  trending flag) are left alone. */
+const toRow = (g: ExternalGame, now: string) => ({
+  igdb_id: g.externalId,
+  slug: g.slug,
+  title: g.title,
+  // An empty one keeps whatever the game had rather than wiping it.
+  ...(g.description ? { description: g.description } : {}),
+  cover_url: g.coverUrl,
+  box_art_url: g.boxArtUrl,
+  release_date: g.releaseDate,
+  has_sexual_content: g.hasSexualContent,
+  developers: g.developers,
+  publishers: g.publishers,
+  website: g.website,
+  esrb_rating: g.esrbRating,
+  critic_score: g.criticScore,
+  igdb_rating_count: g.igdbRatingCount,
+  synced_at: now,
+});
+
+/** Swaps each game's platform, system and genre links for the upstream
+ *  ones, adding any genre not seen before. */
+const replaceLinks = async (
+  db: Db,
+  games: { id: number; game: ExternalGame }[],
+): Promise<void> => {
+  if (games.length === 0) return;
+  const gameIds = games.map((g) => g.id);
+
+  const genres = new Map<string, string>();
+  for (const { game } of games) {
+    for (const genre of game.genres) genres.set(genre.slug, genre.name);
+  }
+  if (genres.size > 0) {
+    const { error } = await db.from("genres").upsert(
+      [...genres].map(([slug, name]) => ({ slug, name })),
+      { onConflict: "slug", ignoreDuplicates: true },
+    );
+    if (error) throw error;
+  }
+
+  // replace the links rather than accumulating duplicates
+  for (const table of ["game_platforms", "game_systems", "game_genres"]) {
+    const { error } = await db.from(table).delete().in("game_id", gameIds);
+    if (error) throw error;
+  }
+
+  const links: [string, Record<string, unknown>[]][] = [
+    [
+      "game_platforms",
+      games.flatMap(({ id, game }) =>
+        game.platformSlugs.map((slug) => ({ game_id: id, platform_slug: slug })),
+      ),
+    ],
+    [
+      "game_systems",
+      games.flatMap(({ id, game }) =>
+        game.systemSlugs.map((slug) => ({ game_id: id, system_slug: slug })),
+      ),
+    ],
+    [
+      "game_genres",
+      games.flatMap(({ id, game }) =>
+        game.genres.map((genre) => ({ game_id: id, genre_slug: genre.slug })),
+      ),
+    ],
+  ];
+  for (const [table, rows] of links) {
+    if (rows.length === 0) continue;
+    const { error } = await db.from(table).insert(rows);
+    if (error) throw error;
+  }
+};
 
 export const createGamesRepository = (db: Db): GamesRepository => ({
   async findById(id) {
@@ -80,11 +146,11 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     return (data as GameRowWithPlatforms | null) ?? null;
   },
 
-  async findByRawgId(rawgId) {
+  async findByIgdbId(igdbId) {
     const { data, error } = await db
       .from("games")
       .select(SELECT_WITH_RELATIONS)
-      .eq("rawg_id", rawgId)
+      .eq("igdb_id", igdbId)
       .maybeSingle();
     if (error) throw error;
     return (data as GameRowWithPlatforms | null) ?? null;
@@ -144,16 +210,16 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       builder = builder.lte("release_date", query.releasedBefore);
     }
 
-    /* "Newest" means newest *released*. RAWG carries placeholder dates years
-       out — a 2033 that is a guess, not a release — and they took the whole
-       front of this sort. A caller's own releasedBefore still narrows it
-       further, since both bounds apply. */
+    /* "Newest" means newest *released*: an announced game's date is a plan,
+       not a release, and those would take the whole front of this sort. A
+       caller's own releasedBefore still narrows it further, since both
+       bounds apply. */
     if (query.sort === "released") {
       builder = builder.lte("release_date", today());
     }
 
     /* Log count is the default: this site's own figures should order it.
-       RAWG's tracker count sits underneath as a hidden second key, because
+       IGDB's rating count sits underneath as a hidden second key, because
        almost nothing is logged yet and log_count alone leaves a hundred
        thousand rows of zero ordered by id. It isn't offered as a sort of its
        own — somebody else's popularity figure would read as ours. */
@@ -166,17 +232,17 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
         builder = builder.order("release_date", desc);
         break;
       case "rating":
-        /* Our ratings, not RAWG's 0-5 score. The count is a second key so one
-           lone 10.0 doesn't outrank a game fifty people settled at 9.2. */
+        /* Our ratings, not IGDB's. The count is a second key so one lone
+           10.0 doesn't outrank a game fifty people settled at 9.2. */
         builder = builder.order("avg_rating", desc).order("rating_count", desc);
         break;
-      case "metacritic":
-        builder = builder.order("metacritic", desc);
+      case "critic":
+        builder = builder.order("critic_score", desc);
         break;
       default:
         builder = builder
           .order("log_count", desc)
-          .order("rawg_added_count", desc);
+          .order("igdb_rating_count", desc);
     }
 
     /* The tiebreaker is not optional. Every sort key above collides, and
@@ -203,130 +269,37 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     }
 
     const { data, error } = await builder
-      .order("rawg_added_count", { ascending: false, nullsFirst: false })
+      .order("igdb_rating_count", { ascending: false, nullsFirst: false })
       .limit(limit);
     if (error) throw error;
     return (data ?? []) as GameRowWithPlatforms[];
   },
 
-  /**
-   * Upserts a batch and replaces their platform and genre links. Only writes
-   * `description` when there is one: the bulk import has none, and blanking a
-   * backfilled one would lose it.
-   */
+  /** Upserts a batch on the IGDB id and replaces their platform, system and
+   *  genre links. */
   async upsertMany(games) {
     if (games.length === 0) return [];
 
     const now = new Date().toISOString();
-
-    const rows = games.map((g) => ({
-      rawg_id: g.externalId,
-      slug: g.slug,
-      title: g.title,
-      cover_url: g.coverUrl,
-      release_date: g.releaseDate,
-      has_sexual_content: g.hasSexualContent,
-      content_tags: g.contentTags,
-      /* Developers, publishers and the website are absent from a listing row
-         and arrive with the first detail fetch; the age rating is not. */
-      esrb_rating: g.esrbRating,
-      metacritic: g.metacritic,
-      rawg_rating: g.rawgRating,
-      rawg_rating_count: g.rawgRatingCount,
-      rawg_added_count: g.rawgAddedCount,
-      playtime_hours: g.playtimeHours,
-      synced_at: now,
-      ...(g.description
-        ? { description: g.description, details_synced_at: now }
-        : {}),
-    }));
-
     const { data, error } = await db
       .from("games")
-      .upsert(rows, { onConflict: "rawg_id", ignoreDuplicates: false })
-      .select("id, rawg_id");
+      .upsert(
+        games.map((g) => toRow(g, now)),
+        { onConflict: "igdb_id", ignoreDuplicates: false },
+      )
+      .select("id, igdb_id");
     if (error) throw error;
 
-    const saved = (data ?? []) as { id: number; rawg_id: number }[];
-    const idByRawgId = new Map(saved.map((r) => [r.rawg_id, r.id]));
-    const gameIds = saved.map((r) => r.id);
-    if (gameIds.length === 0) return [];
-
-    // any genre RAWG returns that we have not seen before
-    const genres = new Map<string, string>();
-    for (const g of games) {
-      for (const genre of g.genres) genres.set(genre.slug, genre.name);
-    }
-    if (genres.size > 0) {
-      const { error: genreError } = await db.from("genres").upsert(
-        [...genres].map(([slug, name]) => ({ slug, name })),
-        { onConflict: "slug", ignoreDuplicates: true },
-      );
-      if (genreError) throw genreError;
-    }
-
-    // replace the links rather than accumulating duplicates
-    for (const table of [
-      "game_platforms",
-      "game_systems",
-      "game_genres",
-    ] as const) {
-      const { error: deleteError } = await db
-        .from(table)
-        .delete()
-        .in("game_id", gameIds);
-      if (deleteError) throw deleteError;
-    }
-
-    const platformLinks = games.flatMap((g) => {
-      const gameId = idByRawgId.get(g.externalId);
-      if (!gameId) return [];
-      return g.platformSlugs.map((slug) => ({
-        game_id: gameId,
-        platform_slug: slug,
-      }));
-    });
-
-    const systemLinks = games.flatMap((g) => {
-      const gameId = idByRawgId.get(g.externalId);
-      if (!gameId) return [];
-      return g.systemSlugs.map((slug) => ({
-        game_id: gameId,
-        system_slug: slug,
-      }));
-    });
-
-    const genreLinks = games.flatMap((g) => {
-      const gameId = idByRawgId.get(g.externalId);
-      if (!gameId) return [];
-      return g.genres.map((genre) => ({
-        game_id: gameId,
-        genre_slug: genre.slug,
-      }));
-    });
-
-    if (platformLinks.length > 0) {
-      const { error: linkError } = await db
-        .from("game_platforms")
-        .insert(platformLinks);
-      if (linkError) throw linkError;
-    }
-
-    if (systemLinks.length > 0) {
-      const { error: linkError } = await db
-        .from("game_systems")
-        .insert(systemLinks);
-      if (linkError) throw linkError;
-    }
-
-    if (genreLinks.length > 0) {
-      const { error: linkError } = await db
-        .from("game_genres")
-        .insert(genreLinks);
-      if (linkError) throw linkError;
-    }
-
-    return gameIds;
+    const saved = (data ?? []) as { id: number; igdb_id: number }[];
+    const idByIgdbId = new Map(saved.map((r) => [r.igdb_id, r.id]));
+    await replaceLinks(
+      db,
+      games.flatMap((g) => {
+        const id = idByIgdbId.get(g.externalId);
+        return id ? [{ id, game: g }] : [];
+      }),
+    );
+    return saved.map((r) => r.id);
   },
 
   /* Both aggregate in SQL. Reducing in JS means pulling every row, which
@@ -407,24 +380,13 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     };
   },
 
-  async refreshFromExternal(id, fields) {
+  async applyExternal(id, game) {
     const { error } = await db
       .from("games")
-      .update({
-        description: fields.description,
-        content_tags: fields.contentTags,
-        has_sexual_content: fields.hasSexualContent,
-        developers: fields.developers,
-        publishers: fields.publishers,
-        website: fields.website,
-        esrb_rating: fields.esrbRating,
-        /* Only when we found one: a game already carrying art should not lose
-           it because Steam happened to be unreachable this time. */
-        ...(fields.boxArtUrl ? { box_art_url: fields.boxArtUrl } : {}),
-        details_synced_at: new Date().toISOString(),
-      })
+      .update(toRow(game, new Date().toISOString()))
       .eq("id", id);
     if (error) throw error;
+    await replaceLinks(db, [{ id, game }]);
   },
 
   async count() {
@@ -435,14 +397,14 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     return count ?? 0;
   },
 
-  async existingRawgIds(rawgIds) {
-    if (rawgIds.length === 0) return [];
+  async existingIgdbIds(igdbIds) {
+    if (igdbIds.length === 0) return [];
     const { data, error } = await db
       .from("games")
-      .select("rawg_id")
-      .in("rawg_id", rawgIds);
+      .select("igdb_id")
+      .in("igdb_id", igdbIds);
     if (error) throw error;
-    return (data ?? []).map((row) => row.rawg_id as number);
+    return (data ?? []).map((row) => row.igdb_id as number);
   },
 
   async setTrending(id, isTrending) {

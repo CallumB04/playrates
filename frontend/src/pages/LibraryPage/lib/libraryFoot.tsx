@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { Game, GameSort } from "@playrates/shared";
 import type { GameLogSummary } from "@playrates/shared";
 import { formatCount, releaseYear } from "../../../lib/format";
-import MetacriticScore from "../../../lib/metacritic";
+import CriticScore from "../../../lib/criticScore";
 
 /** What a tile prints under its cover, the way a profile shelf does. A rating
  *  comes back as a number for the badge; everything else is already text. */
@@ -33,9 +33,9 @@ export const libraryFoot = (
             };
         case "rating":
             return { rating: game.avgRating };
-        case "metacritic":
-            // Metacritic's own banding, as on the game page.
-            return { value: <MetacriticScore score={game.metacritic} /> };
+        case "critic":
+            // The same coloured box as on the game page.
+            return { value: <CriticScore score={game.criticScore} /> };
         case "released":
             return { value: releaseYear(game.releaseDate) };
         case "title":

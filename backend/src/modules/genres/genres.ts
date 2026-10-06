@@ -21,7 +21,7 @@ const toGenre = (row: GenreRow): Genre => ({
 });
 
 /* Games carry genre slugs, so a filter needs somewhere to read display names
-   from. Not a closed set — the importer inserts genres RAWG returns that we
+   from. Not a closed set — the importer inserts genres IGDB returns that we
    haven't seen, which is why it's an endpoint and not a frontend constant. */
 export const createGenresRouter = (repo: GenresRepository): Router => {
   const router = Router();

@@ -7,25 +7,25 @@ const SLOW_DATABASE_MS = 800;
 
 /** Each system's state, judged the same way everywhere it is shown. */
 export const systemStates = (h: AdminHealth) => {
-    const rawgFailingNow =
-        h.rawg.lastFailureAt !== null &&
-        (h.rawg.lastRequestAt === null ||
-            h.rawg.lastFailureAt >= h.rawg.lastRequestAt);
+    const igdbFailingNow =
+        h.igdb.lastFailureAt !== null &&
+        (h.igdb.lastRequestAt === null ||
+            h.igdb.lastFailureAt >= h.igdb.lastRequestAt);
 
     const database: SystemState = !h.database.ok
         ? "down"
         : (h.database.latencyMs ?? 0) > SLOW_DATABASE_MS
           ? "slow"
           : "up";
-    const rawg: SystemState = !h.rawg.configured
+    const igdb: SystemState = !h.igdb.configured
         ? "down"
-        : rawgFailingNow
+        : igdbFailingNow
           ? "slow"
           : "up";
     const errors: SystemState =
         h.errors.last24h === 0 ? "up" : h.errors.last24h < 10 ? "slow" : "down";
 
-    return { api: "up" as SystemState, database, rawg, errors };
+    return { api: "up" as SystemState, database, igdb, errors };
 };
 
 /** The one sentence the page leads with: all well, or the worst of it. */
@@ -37,14 +37,14 @@ export const headline = (
         return { text: "The database isn’t answering.", state: "down" };
     if (states.errors === "down")
         return { text: "The API is failing requests.", state: "down" };
-    if (states.rawg === "down")
+    if (states.igdb === "down")
         return {
-            text: "RAWG isn’t set up, so no new games can arrive.",
+            text: "IGDB isn’t set up, so no new games can arrive.",
             state: "down",
         };
-    if (states.rawg === "slow")
+    if (states.igdb === "slow")
         return {
-            text: "RAWG is failing, so search is using the catalogue alone.",
+            text: "IGDB is failing, so search is using the catalogue alone.",
             state: "slow",
         };
     if (states.database === "slow")

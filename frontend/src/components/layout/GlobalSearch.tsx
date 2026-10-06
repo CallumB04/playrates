@@ -47,7 +47,7 @@ const GlobalSearch = ({ variant = "bar", onClose }: GlobalSearchProps) => {
     const debounced = useDebouncedValue(term.trim(), 250);
     const hasTerm = debounced.length >= 2;
 
-    /* The game typeahead can reach RAWG, so it stays behind a session and the
+    /* The game typeahead can reach IGDB, so it stays behind a session and the
        library search stands in for it signed out. People are a local lookup of
        already-public pages, so they are offered to everyone. */
     const { user } = useAuth();

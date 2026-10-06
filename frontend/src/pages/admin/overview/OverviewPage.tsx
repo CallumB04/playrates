@@ -16,13 +16,13 @@ import {
     useAdminHealth,
     useAdminMetric,
     useAdminOverview,
-    useRawgUsage,
+    useIgdbUsage,
 } from "../../../hooks/queries/useAdmin";
 import AdminPageHeader from "../components/AdminPageHeader";
 import BarPlot from "../components/BarPlot";
 import LinePlot from "../components/LinePlot";
 import SectionHeader from "../components/SectionHeader";
-import { AllowanceMeter } from "../games/RawgAllowance";
+import { UsageDays } from "../games/IgdbUsage";
 import { headline, STATE, systemStates } from "../health/healthState";
 import { bucketLabel, RANGE_LABELS } from "../lib/adminFormat";
 import { addedIn, runningTotal } from "../lib/plot";
@@ -33,7 +33,7 @@ import {
     HealthPopup,
     MostActivePopup,
     MostLoggedPopup,
-    RawgPopup,
+    IgdbPopup,
 } from "./popups/OtherPopups";
 import {
     ActiveUsersPopup,
@@ -57,7 +57,7 @@ type Open =
     | "replies"
     | "mostActive"
     | "mostLogged"
-    | "rawg"
+    | "igdb"
     | "health";
 
 const axisOf = (data: AdminOverview) => ({
@@ -368,7 +368,7 @@ const Leaders = ({
 };
 
 const Running = ({ open }: { open: (o: Open) => void }) => {
-    const { data: usage } = useRawgUsage();
+    const { data: usage } = useIgdbUsage();
     const health = useAdminHealth();
     const h = health.data;
     const states = h ? systemStates(h) : null;
@@ -377,15 +377,19 @@ const Running = ({ open }: { open: (o: Open) => void }) => {
     return (
         <div className="grid gap-4 md:grid-cols-2">
             <InsightCard
-                label="RAWG requests left"
-                value={usage ? formatCount(usage.left) : "…"}
-                note={usage ? `of ${formatCount(usage.allowance)}` : undefined}
-                onOpen={() => open("rawg")}
+                label="IGDB requests today"
+                value={usage ? formatCount(usage.todayRequests) : "…"}
+                note={
+                    usage?.todayFailures
+                        ? `${formatCount(usage.todayFailures)} failed`
+                        : undefined
+                }
+                onOpen={() => open("igdb")}
             >
                 {usage ? (
-                    <AllowanceMeter usage={usage} />
+                    <UsageDays usage={usage} height={56} />
                 ) : (
-                    <Skeleton className="h-10" />
+                    <Skeleton className="h-14" />
                 )}
             </InsightCard>
             <InsightCard label="Health" onOpen={() => open("health")}>
@@ -418,7 +422,7 @@ const Running = ({ open }: { open: (o: Open) => void }) => {
                                 [
                                     ["API", states.api],
                                     ["Database", states.database],
-                                    ["RAWG", states.rawg],
+                                    ["IGDB", states.igdb],
                                     ["Requests", states.errors],
                                 ] as const
                             ).map(([name, state]) => (
@@ -544,7 +548,7 @@ const OverviewPage = () => {
             {open === "mostLogged" && (
                 <MostLoggedPopup range={range} onClose={close} />
             )}
-            {open === "rawg" && <RawgPopup onClose={close} />}
+            {open === "igdb" && <IgdbPopup onClose={close} />}
             {open === "health" && <HealthPopup onClose={close} />}
         </>
     );

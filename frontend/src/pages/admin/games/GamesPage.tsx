@@ -5,7 +5,7 @@ import CataloguePopup from "./CataloguePopup";
 import GameControls from "./GameControls";
 import GameEventFeed from "./GameEventFeed";
 import PullPanel from "./PullPanel";
-import RawgAllowance from "./RawgAllowance";
+import IgdbUsage from "./IgdbUsage";
 
 const GamesPage = () => {
     const [catalogue, setCatalogue] = useState(false);
@@ -24,7 +24,7 @@ const GamesPage = () => {
                 }
             />
             <div className="flex flex-col gap-8">
-                <RawgAllowance />
+                <IgdbUsage />
                 <div className="grid items-start gap-6 lg:grid-cols-2">
                     <PullPanel />
                     <GameControls />

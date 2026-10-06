@@ -48,9 +48,11 @@ const GameRow = ({ game }: { game: AdminGameSummary }) => {
                             {formatCount(game.logCount)}
                         </span>{" "}
                         {game.logCount === 1 ? "log" : "logs"} ·{" "}
-                        {game.detailsSyncedAt
-                            ? `details from ${relativeTime(game.detailsSyncedAt)}`
-                            : "details never fetched"}
+                        {game.igdbId === null
+                            ? "not linked to IGDB yet"
+                            : game.syncedAt
+                              ? `details from ${relativeTime(game.syncedAt)}`
+                              : "details never fetched"}
                     </span>
                 </span>
             </Link>
@@ -79,10 +81,10 @@ const GameRow = ({ game }: { game: AdminGameSummary }) => {
                 <Button
                     variant="secondary"
                     size="sm"
-                    disabled={resync.isPending || game.rawgId === null}
+                    disabled={resync.isPending || game.igdbId === null}
                     title={
-                        game.rawgId === null
-                            ? "This one didn’t come from RAWG"
+                        game.igdbId === null
+                            ? "This one isn’t linked to IGDB yet"
                             : undefined
                     }
                     onClick={() =>
@@ -109,13 +111,13 @@ const GameControls = () => {
     const q = useDebouncedValue(query.trim(), 250);
     const { data: games, isFetching } = useAdminGameSearch(q);
 
-    const [rawgId, setRawgId] = useState("");
+    const [igdbId, setIgdbId] = useState("");
     const importGame = useImportGame();
     const notify = useNotify();
 
     const submitImport = (e: FormEvent) => {
         e.preventDefault();
-        const id = Number(rawgId);
+        const id = Number(igdbId);
         if (!Number.isInteger(id) || id <= 0) return;
         importGame.mutate(id, {
             onSuccess: ({ game, created }) => {
@@ -125,7 +127,7 @@ const GameControls = () => {
                         : `${game.title} was already here`,
                     "success"
                 );
-                setRawgId("");
+                setIgdbId("");
                 setQuery(game.title);
             },
             onError: (error) => notify(error.message, "error"),
@@ -166,7 +168,7 @@ const GameControls = () => {
                 >
                     {games.length === 0 ? (
                         <li className="py-3 text-body-sm text-content-muted">
-                            Nothing called that here. If RAWG has it, bring it
+                            Nothing called that here. If IGDB has it, bring it
                             in by its id.
                         </li>
                     ) : (
@@ -185,32 +187,33 @@ const GameControls = () => {
             >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                     <Field
-                        label="Bring one in by its RAWG id"
+                        label="Bring one in by its IGDB id"
                         className="sm:max-w-xs sm:flex-1"
                     >
                         {(a11y) => (
                             <NumberInput
                                 {...a11y}
-                                value={rawgId}
-                                onChange={(e) => setRawgId(e.target.value)}
+                                value={igdbId}
+                                onChange={(e) => setIgdbId(e.target.value)}
                                 min={1}
                                 step={1}
                                 inputMode="numeric"
-                                placeholder="1011283"
+                                placeholder="1942"
                             />
                         )}
                     </Field>
                     <Button
                         type="submit"
                         variant="secondary"
-                        disabled={importGame.isPending || rawgId === ""}
+                        disabled={importGame.isPending || igdbId === ""}
                         className="w-full sm:w-auto"
                     >
                         {importGame.isPending ? "Importing…" : "Import"}
                     </Button>
                 </div>
                 <p className="text-label-sm text-content-muted">
-                    Costs two or three RAWG requests.
+                    The number listed as “IGDB ID” on the game’s page at
+                    igdb.com.
                 </p>
             </form>
         </section>

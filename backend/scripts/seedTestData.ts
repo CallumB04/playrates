@@ -95,7 +95,7 @@ const main = async () => {
   const { data: games, error: gamesError } = await db
     .from("games")
     .select("id, title")
-    .order("rawg_added_count", { ascending: false, nullsFirst: false })
+    .order("igdb_rating_count", { ascending: false, nullsFirst: false })
     .limit(40);
   if (gamesError) throw gamesError;
   if (!games || games.length < 20) {

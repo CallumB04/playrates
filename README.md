@@ -8,7 +8,7 @@ PlayRates is a full-stack video game tracking website I am building, using React
 
 - [Node.js](https://nodejs.org/) installed on your machine
 - A [Supabase](https://supabase.com) project
-- A [RAWG API key](https://rawg.io/apidocs), for the games catalogue
+- A [Twitch developer app](https://dev.twitch.tv/console) (Client ID and secret), for the games catalogue from [IGDB](https://www.igdb.com)
 
 ### Setup
 

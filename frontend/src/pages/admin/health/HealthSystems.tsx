@@ -84,34 +84,34 @@ const HealthSystems = ({ health }: { health: AdminHealth }) => {
                     health.database.error
                 )}
             </System>
-            <System name="RAWG" state={states.rawg}>
-                {!health.rawg.configured ? (
-                    "No API key is set, so search uses the local catalogue only."
+            <System name="IGDB" state={states.igdb}>
+                {!health.igdb.configured ? (
+                    "No Twitch credentials are set, so search uses the local catalogue only."
                 ) : (
                     <>
                         <span className="font-mono">
-                            {formatCount(health.rawg.todayRequests)}
+                            {formatCount(health.igdb.todayRequests)}
                         </span>{" "}
-                        {health.rawg.todayRequests === 1 ? "call" : "calls"}{" "}
+                        {health.igdb.todayRequests === 1 ? "call" : "calls"}{" "}
                         today
-                        {health.rawg.todayFailures > 0 && (
+                        {health.igdb.todayFailures > 0 && (
                             <>
                                 ,{" "}
                                 <span className="font-mono">
-                                    {health.rawg.todayFailures}
+                                    {health.igdb.todayFailures}
                                 </span>{" "}
                                 failed
                             </>
                         )}
-                        {health.rawg.lastRequestAt && (
+                        {health.igdb.lastRequestAt && (
                             <>
                                 {" "}
                                 · last call{" "}
-                                {relativeTime(health.rawg.lastRequestAt)}
+                                {relativeTime(health.igdb.lastRequestAt)}
                             </>
                         )}
-                        {states.rawg === "slow" && health.rawg.lastError && (
-                            <> · {health.rawg.lastError}</>
+                        {states.igdb === "slow" && health.igdb.lastError && (
+                            <> · {health.igdb.lastError}</>
                         )}
                     </>
                 )}

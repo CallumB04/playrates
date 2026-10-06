@@ -1,3 +1,4 @@
+import type { ExternalGame } from "../../src/providers/games/GamesProvider.js";
 import type { Repositories } from "../../src/repositories.js";
 import type { AuthAdmin } from "../../src/config/authAdmin.js";
 import type { AvatarStore } from "../../src/config/avatarStore.js";
@@ -9,7 +10,7 @@ import type {
   ActivityEventRow,
   AnnouncementRow,
   GameEventRow,
-  RawgUsageDayRow,
+  IgdbUsageDayRow,
   ServerErrorRow,
   ContentReportRow,
   CommunityMessageRow,
@@ -61,7 +62,7 @@ export interface SeedData {
   communityVotes?: { message_id: number; user_id: string }[];
   activityEvents?: ActivityEventRow[];
   gameEvents?: GameEventRow[];
-  rawgUsage?: RawgUsageDayRow[];
+  igdbUsage?: IgdbUsageDayRow[];
   serverErrors?: ServerErrorRow[];
   contentReports?: ContentReportRow[];
 }
@@ -89,7 +90,7 @@ export interface InMemoryState {
   /** Written by triggers in Postgres; seeded directly here. */
   activityEvents: ActivityEventRow[];
   gameEvents: GameEventRow[];
-  rawgUsage: RawgUsageDayRow[];
+  igdbUsage: IgdbUsageDayRow[];
   serverErrors: ServerErrorRow[];
   announcements: AnnouncementRow[];
   contentReports: ContentReportRow[];
@@ -126,7 +127,7 @@ export const createInMemoryRepos = (
     communityImages: new Map(),
     activityEvents: [...(seed.activityEvents ?? [])],
     gameEvents: [...(seed.gameEvents ?? [])],
-    rawgUsage: [...(seed.rawgUsage ?? [])],
+    igdbUsage: [...(seed.igdbUsage ?? [])],
     serverErrors: [...(seed.serverErrors ?? [])],
     announcements: [],
     contentReports: [...(seed.contentReports ?? [])],
@@ -210,6 +211,38 @@ export const createInMemoryRepos = (
       game_slug: game?.slug ?? "",
       game_cover_url: game?.cover_url ?? null,
     };
+  };
+
+  /* What the real repository writes from an upstream game, links included.
+     An empty description keeps the one the game had. */
+  const applyExternal = (game: GameRow, external: ExternalGame) => {
+    Object.assign(game, {
+      igdb_id: external.externalId,
+      slug: external.slug,
+      title: external.title,
+      ...(external.description ? { description: external.description } : {}),
+      cover_url: external.coverUrl,
+      box_art_url: external.boxArtUrl,
+      release_date: external.releaseDate,
+      has_sexual_content: external.hasSexualContent,
+      developers: external.developers,
+      publishers: external.publishers,
+      website: external.website,
+      esrb_rating: external.esrbRating,
+      critic_score: external.criticScore,
+      igdb_rating_count: external.igdbRatingCount,
+      synced_at: now(),
+    });
+    state.gamePlatforms = state.gamePlatforms.filter(
+      (gp) => gp.game_id !== game.id,
+    );
+    state.gameSystems = state.gameSystems.filter((gs) => gs.game_id !== game.id);
+    for (const slug of external.platformSlugs) {
+      state.gamePlatforms.push({ game_id: game.id, platform_slug: slug });
+    }
+    for (const slug of external.systemSlugs) {
+      state.gameSystems.push({ game_id: game.id, system_slug: slug });
+    }
   };
 
   let nextReportId = 1;
@@ -371,8 +404,8 @@ export const createInMemoryRepos = (
         const game = state.games.find((g) => g.id === id);
         return game ? withPlatforms(game) : null;
       },
-      async findByRawgId(rawgId) {
-        const game = state.games.find((g) => g.rawg_id === rawgId);
+      async findByIgdbId(igdbId) {
+        const game = state.games.find((g) => g.igdb_id === igdbId);
         return game ? withPlatforms(game) : null;
       },
       async list(query, from, to, excludeLoggedForUser, showSexualContent) {
@@ -434,12 +467,12 @@ export const createInMemoryRepos = (
           rating: (a: GameRow, b: GameRow) =>
             (b.avg_rating ?? -1) - (a.avg_rating ?? -1) ||
             b.rating_count - a.rating_count,
-          metacritic: (a: GameRow, b: GameRow) =>
-            (b.metacritic ?? -1) - (a.metacritic ?? -1),
-          // RAWG's tracker count is the hidden second key, not a sort.
+          critic: (a: GameRow, b: GameRow) =>
+            (b.critic_score ?? -1) - (a.critic_score ?? -1),
+          // IGDB's rating count is the hidden second key, not a sort.
           logged: (a: GameRow, b: GameRow) =>
             b.log_count - a.log_count ||
-            (b.rawg_added_count ?? 0) - (a.rawg_added_count ?? 0),
+            (b.igdb_rating_count ?? 0) - (a.igdb_rating_count ?? 0),
         } as const;
         const compare = by[query.sort ?? "logged"];
         const sorted = [...rows].sort((a, b) => compare(a, b) || a.id - b.id);
@@ -459,87 +492,55 @@ export const createInMemoryRepos = (
         const ids: number[] = [];
         for (const external of games) {
           const found = state.games.find(
-            (g) => g.rawg_id === external.externalId,
+            (g) => g.igdb_id === external.externalId,
           );
           let existing: GameRow;
           if (!found) {
             existing = {
               id: nextGameId++,
-              rawg_id: external.externalId,
+              igdb_id: external.externalId,
               slug: external.slug,
               title: external.title,
-              description: external.description,
-              cover_url: external.coverUrl,
-              box_art_url: external.boxArtUrl,
-              release_date: external.releaseDate,
-              has_sexual_content: external.hasSexualContent,
-              content_tags: external.contentTags,
-              // The bulk import path has none of these; the detail fetch does.
+              description: "",
+              cover_url: null,
+              box_art_url: null,
+              release_date: null,
+              has_sexual_content: false,
               developers: [],
               publishers: [],
               website: null,
               esrb_rating: null,
               is_trending: false,
-              playtime_hours: external.playtimeHours,
-              metacritic: external.metacritic,
-              rawg_rating: external.rawgRating,
-              rawg_rating_count: external.rawgRatingCount,
-              rawg_added_count: external.rawgAddedCount,
+              critic_score: null,
+              igdb_rating_count: null,
               log_count: 0,
               avg_rating: null,
               rating_count: 0,
               synced_at: now(),
-              details_synced_at: external.description ? now() : null,
               created_at: now(),
               updated_at: now(),
             };
             state.games.push(existing);
           } else {
             existing = found;
-            Object.assign(existing, {
-              title: external.title,
-              description: external.description,
-              cover_url: external.coverUrl,
-              box_art_url: external.boxArtUrl,
-              synced_at: now(),
-            });
           }
-
-          state.gamePlatforms = state.gamePlatforms.filter(
-            (gp) => gp.game_id !== existing.id,
-          );
-          for (const slug of external.platformSlugs) {
-            state.gamePlatforms.push({
-              game_id: existing.id,
-              platform_slug: slug,
-            });
-          }
+          applyExternal(existing, external);
           ids.push(existing.id);
         }
         return ids;
       },
-      async existingRawgIds(rawgIds) {
+      async existingIgdbIds(igdbIds) {
         return state.games
-          .map((g) => g.rawg_id)
-          .filter((id): id is number => id !== null && rawgIds.includes(id));
+          .map((g) => g.igdb_id)
+          .filter((id): id is number => id !== null && igdbIds.includes(id));
       },
       async setTrending(id, isTrending) {
         const game = state.games.find((g) => g.id === id);
         if (game) game.is_trending = isTrending;
       },
-      async refreshFromExternal(id, fields) {
+      async applyExternal(id, external) {
         const game = state.games.find((g) => g.id === id);
-        if (game) {
-          game.description = fields.description;
-          game.content_tags = fields.contentTags;
-          game.has_sexual_content = fields.hasSexualContent;
-          game.developers = fields.developers;
-          game.publishers = fields.publishers;
-          game.website = fields.website;
-          game.esrb_rating = fields.esrbRating;
-          if (fields.boxArtUrl) game.box_art_url = fields.boxArtUrl;
-          game.details_synced_at = now();
-        }
+        if (game) applyExternal(game, external);
       },
       async playratesStats(gameId) {
         const logs = state.gameLogs.filter((l) => l.game_id === gameId);
@@ -640,8 +641,8 @@ export const createInMemoryRepos = (
               return l.rating;
             case "gameRating":
               return game?.avg_rating ?? null;
-            case "metacritic":
-              return game?.metacritic ?? null;
+            case "critic":
+              return game?.critic_score ?? null;
             case "played":
               // Mirrors greatest(start_date, finish_date) in the database.
               return (

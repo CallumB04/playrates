@@ -52,7 +52,7 @@ const EventRow = ({ event, day }: { event: AdminGameEvent; day: string }) => {
                         className="aspect-3/4 w-9 shrink-0 overflow-hidden rounded-xs shadow-cover"
                     />
                 ) : (
-                    // A call to RAWG is about many games or none; its place
+                    // A call to IGDB is about many games or none; its place
                     // stays so the sentences still line up.
                     <span
                         aria-hidden
@@ -111,10 +111,10 @@ const EventRow = ({ event, day }: { event: AdminGameEvent; day: string }) => {
                                 )}
                             />
                             <LedgerRow label="Recorded as" value={event.kind} />
-                            {event.game?.rawgId && (
+                            {event.game?.igdbId && (
                                 <LedgerRow
-                                    label="RAWG id"
-                                    value={event.game.rawgId}
+                                    label="IGDB id"
+                                    value={event.game.igdbId}
                                 />
                             )}
                             {facts.map(([key, value], i) => (
@@ -233,7 +233,7 @@ const GameEventFeed = () => {
                 <TextSkeleton lines={5} />
             ) : events.length === 0 ? (
                 <EmptyNote>
-                    Nothing yet. Arrivals, new art and calls to RAWG show up
+                    Nothing yet. Arrivals, new art and calls to IGDB show up
                     here.
                 </EmptyNote>
             ) : (

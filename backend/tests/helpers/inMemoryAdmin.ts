@@ -149,7 +149,7 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
             game_slug: game?.slug ?? null,
             game_cover_url: game?.cover_url ?? null,
             game_is_trending: game?.is_trending ?? null,
-            game_rawg_id: game?.rawg_id ?? null,
+            game_igdb_id: game?.igdb_id ?? null,
             actor_username:
               state.profiles.find((p) => p.id === e.actor_id)?.username ?? null,
           };
@@ -171,8 +171,8 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
       return directoryRow(id);
     },
 
-    async rawgUsage(from) {
-      return state.rawgUsage.filter((d) => d.day >= from);
+    async igdbUsage(from) {
+      return state.igdbUsage.filter((d) => d.day >= from);
     },
 
     async userActiveDays() {

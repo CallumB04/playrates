@@ -38,35 +38,32 @@ export interface PlatformRow {
 
 export interface GameRow {
   id: number;
-  rawg_id: number | null;
+  /** Null only on a game from before IGDB, not yet replaced. */
+  igdb_id: number | null;
   slug: string;
   title: string;
   description: string;
+  /** Wide art: link previews and backdrops. */
   cover_url: string | null;
-  /** Portrait art from the store, where there is any. Preferred over the
-   *  landscape cover_url when the API hands a game out. */
+  /** The portrait cover. Preferred whenever the API hands a game out. */
   box_art_url: string | null;
   release_date: string | null;
   has_sexual_content: boolean;
-  /** RAWG tag slugs, kept so the flag can be re-derived in place. */
-  content_tags: string[];
   developers: string[];
   publishers: string[];
   website: string | null;
   esrb_rating: string | null;
   is_trending: boolean;
-  playtime_hours: number | null;
-  metacritic: number | null;
-  rawg_rating: number | null;
-  rawg_rating_count: number | null;
-  rawg_added_count: number | null;
+  /** Professional reviews, averaged, 0-100. */
+  critic_score: number | null;
+  /** How many have rated it on IGDB: the catalogue's "how well known". */
+  igdb_rating_count: number | null;
   /** PlayRates logs for this game, maintained by a trigger. */
   log_count: number;
   /** Mean PlayRates rating, also maintained by a trigger. */
   avg_rating: number | null;
   rating_count: number;
   synced_at: string | null;
-  details_synced_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -228,7 +225,7 @@ export interface AdminGameFeedRow extends GameEventRow {
   game_slug: string | null;
   game_cover_url: string | null;
   game_is_trending: boolean | null;
-  game_rawg_id: number | null;
+  game_igdb_id: number | null;
   actor_username: string | null;
 }
 
@@ -248,7 +245,7 @@ export interface AdminUserDirectoryRow {
   active_day_count: number;
 }
 
-export interface RawgUsageDayRow {
+export interface IgdbUsageDayRow {
   /** YYYY-MM-DD, UTC. */
   day: string;
   requests: number;

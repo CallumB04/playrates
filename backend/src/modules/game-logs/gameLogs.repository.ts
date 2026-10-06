@@ -19,7 +19,7 @@ const UNIQUE_VIOLATION = "23505";
 const SORT_COLUMNS: Record<GameLogSort, string> = {
   rating: "rating",
   gameRating: "game(avg_rating)",
-  metacritic: "game(metacritic)",
+  critic: "game(critic_score)",
   /* When it was played, not when the row was last written — editing an old
      log should not move it to the top of the shelf. */
   played: "last_played",

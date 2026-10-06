@@ -10,9 +10,7 @@ import { createCommunityImageStore } from "./config/communityImageStore.js";
 import { createLogger, type Logger } from "./lib/logger.js";
 import { createRepositories } from "./repositories.js";
 import { verifySupabaseJwt } from "./middleware/requireAuth.js";
-import { nullGamesProvider } from "./providers/games/GamesProvider.js";
-import { createRawgProvider } from "./providers/games/rawg/rawg.provider.js";
-import { createRawgUsageRecorder } from "./config/rawgUsage.js";
+import { igdbFromEnv } from "./config/igdb.js";
 import { createServerErrorSink } from "./config/errorSink.js";
 
 export interface ServerApp {
@@ -33,15 +31,11 @@ export const createServerApp = (): ServerApp => {
 
   const db = supabase();
 
-  const provider = config.RAWG_API_KEY
-    ? createRawgProvider(config.RAWG_API_KEY, fetch, {
-        onRequest: createRawgUsageRecorder(db),
-      })
-    : nullGamesProvider;
+  const provider = igdbFromEnv(config, db);
 
   if (!provider.isConfigured) {
     logger.warn(
-      "RAWG_API_KEY is not set - game search will only use the local catalogue",
+      "IGDB_CLIENT_ID and IGDB_CLIENT_SECRET are not set - game search will only use the local catalogue",
     );
   }
 
