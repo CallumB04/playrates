@@ -38,6 +38,21 @@ describe("ReEntryPlate", () => {
         expect(screen.getByText("Nothing on the go")).toBeInTheDocument();
     });
 
+    it("says a starter already on the shelves is added", () => {
+        renderWithProviders(
+            <ReEntryPlate
+                {...base}
+                isNew
+                shelves={undefined}
+                isLogged={() => true}
+            />
+        );
+
+        expect(
+            screen.getByRole("button", { name: "Stray is on your shelves" })
+        ).toHaveTextContent("Added");
+    });
+
     it("shows a returning player their shelves instead", () => {
         renderWithProviders(
             <ReEntryPlate

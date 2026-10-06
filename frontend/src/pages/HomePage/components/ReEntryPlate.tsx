@@ -202,7 +202,7 @@ const Starters = ({
                 {games.slice(0, STARTERS).map((game) => {
                     const added = isLogged(game.id);
                     return (
-                        <li key={game.id} className="relative">
+                        <li key={game.id}>
                             <Link
                                 to={`/game/${game.id}`}
                                 className="block lift"
@@ -217,25 +217,25 @@ const Starters = ({
                                 type="button"
                                 aria-label={
                                     added
-                                        ? `${game.title} is in your backlog`
+                                        ? `${game.title} is on your shelves`
                                         : `Add ${game.title} to your backlog`
                                 }
                                 disabled={added || adding === game.id}
                                 onClick={() => void add(game)}
                                 className={cn(
-                                    "absolute right-1.5 bottom-1.5 grid size-7 cursor-pointer place-items-center rounded-full shadow-e2 backdrop-blur-sm",
-                                    "before:absolute before:-inset-2 before:content-['']",
+                                    "mt-2 flex min-h-11 w-full cursor-pointer items-center justify-center gap-1 rounded-sm border text-label-sm font-medium transition-colors sm:min-h-8",
                                     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
                                     added
-                                        ? "cursor-default bg-success text-content-on-solid"
-                                        : "bg-surface-raised/90 text-content hover:bg-surface-raised disabled:opacity-60"
+                                        ? "cursor-default border-transparent text-success"
+                                        : "border-subtle bg-surface-raised/80 text-content backdrop-blur-sm hover:border-strong disabled:opacity-60"
                                 )}
                             >
                                 {added ? (
-                                    <Check size={15} aria-hidden />
+                                    <Check size={13} aria-hidden />
                                 ) : (
-                                    <Plus size={15} aria-hidden />
+                                    <Plus size={13} aria-hidden />
                                 )}
+                                {added ? "Added" : "Backlog"}
                             </button>
                         </li>
                     );
@@ -247,7 +247,7 @@ const Starters = ({
 
 /**
  * The signed-in landing over game artwork: the game on the go and the
- * shelves a press away in one panel, and your year down the side on a wide
+ * shelves a press away in one panel, and your year beside it on a wide
  * screen. A newcomer also gets well-known games to start their shelves.
  */
 const ReEntryPlate = ({
@@ -280,14 +280,15 @@ const ReEntryPlate = ({
                         src={backdrop}
                         alt=""
                         aria-hidden
-                        className="absolute inset-0 -z-10 size-full object-cover"
+                        className="absolute inset-0 -z-10 size-full scale-125 object-cover blur-2xl"
                     />
                     {/* Keeps the words readable over any picture, in either
                         theme: solid where the text is, thinning towards the
-                        art. */}
+                        art. The blur above turns art that is mostly a logo
+                        into colour rather than giant letters. */}
                     <span
                         aria-hidden
-                        className="absolute inset-0 -z-10 bg-linear-to-t from-surface-raised from-30% via-surface-raised/75 to-surface-raised/20 lg:bg-linear-to-r lg:from-20% lg:via-surface-raised/70 lg:to-surface-raised/15"
+                        className="absolute inset-0 -z-10 bg-linear-to-t from-surface-raised from-30% via-surface-raised/75 to-surface-raised/20 lg:bg-linear-to-r lg:from-20% lg:via-surface-raised/70 lg:to-surface-raised/30"
                     />
                 </>
             ) : (
@@ -298,8 +299,9 @@ const ReEntryPlate = ({
             )}
 
             {/* Blocks in the order a phone reads them: greeting, the panel,
-                a newcomer's starters, then Browse. A wide screen moves the
-                panel and the year to the right-hand column. */}
+                a newcomer's starters, then Browse. A wide screen puts the
+                panel alone on the right, over the art, and keeps everything
+                else on the solid left. */}
             <div className="grid gap-6 px-5 py-6 sm:px-6 sm:py-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:grid-rows-[auto_auto_1fr] lg:gap-x-12 lg:px-8 lg:py-9">
                 <div className="lg:col-start-1 lg:row-start-1">
                     <h1 className="font-display text-[32px] leading-tight text-content sm:text-[40px]">
@@ -314,61 +316,53 @@ const ReEntryPlate = ({
                     )}
                 </div>
 
-                <div className="flex flex-col gap-6 lg:col-start-2 lg:row-span-3 lg:row-start-1">
+                <div className="lg:col-start-2 lg:row-span-3 lg:row-start-1">
                     <Panel
                         username={username}
                         current={current}
                         shelves={shelves}
                         onUpdateLog={onUpdateLog}
                     />
-
-                    {/* The chart is what made a phone long and empty, so it
-                        waits for a wide screen and a year with something in
-                        it. */}
-                    {loggedThisYear && (
-                        <div className="hidden lg:block">
-                            <div className="mb-3 flex items-baseline justify-between gap-3">
-                                <h2 className="text-label text-content-muted">
-                                    Your {new Date().getFullYear()}
-                                </h2>
-                                <span className="font-mono text-label-sm text-content-muted">
-                                    {formatCount(yearStats?.logCount ?? 0)}{" "}
-                                    logged
-                                </span>
-                            </div>
-
-                            <YearChart logs={yearLogs} />
-
-                            {/* Equal columns, so three figures of different
-                                lengths still line up. */}
-                            <div className="mt-5 grid grid-cols-3 gap-4 border-t border-subtle pt-4">
-                                <Stat
-                                    label="Hours"
-                                    value={formatHours(
-                                        yearStats?.hoursPlayed ?? 0
-                                    )}
-                                />
-                                <Stat
-                                    label="Average rating"
-                                    value={
-                                        <RatingBadge
-                                            value={
-                                                yearStats?.averageRating ?? null
-                                            }
-                                            size="md"
-                                        />
-                                    }
-                                />
-                                <Stat
-                                    label="Rated"
-                                    value={formatCount(
-                                        yearStats?.ratingCount ?? 0
-                                    )}
-                                />
-                            </div>
-                        </div>
-                    )}
                 </div>
+
+                {/* The chart is what made a phone long and empty, so it waits
+                    for a wide screen and a year with something in it. */}
+                {!isNew && loggedThisYear && (
+                    <div className="hidden lg:col-start-1 lg:row-start-2 lg:block lg:max-w-[460px]">
+                        <div className="mb-3 flex items-baseline justify-between gap-3">
+                            <h2 className="text-label text-content-muted">
+                                Your {new Date().getFullYear()}
+                            </h2>
+                            <span className="font-mono text-label-sm text-content-muted">
+                                {formatCount(yearStats?.logCount ?? 0)} logged
+                            </span>
+                        </div>
+
+                        <YearChart logs={yearLogs} />
+
+                        {/* Equal columns, so three figures of different
+                                lengths still line up. */}
+                        <div className="mt-5 grid grid-cols-3 gap-4 border-t border-subtle pt-4">
+                            <Stat
+                                label="Hours"
+                                value={formatHours(yearStats?.hoursPlayed ?? 0)}
+                            />
+                            <Stat
+                                label="Average rating"
+                                value={
+                                    <RatingBadge
+                                        value={yearStats?.averageRating ?? null}
+                                        size="md"
+                                    />
+                                }
+                            />
+                            <Stat
+                                label="Rated"
+                                value={formatCount(yearStats?.ratingCount ?? 0)}
+                            />
+                        </div>
+                    </div>
+                )}
 
                 {isNew && (
                     <div className="lg:col-start-1 lg:row-start-2 lg:max-w-[440px]">
