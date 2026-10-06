@@ -70,28 +70,29 @@ set bio = 'The other local account, for testing friend requests.'
 where id = '22222222-2222-2222-2222-222222222222';
 
 -- A handful of games so the library and home pages have something to render.
+-- IGDB's ids, so a local seed:games run updates these rather than doubling them.
 insert into public.games (
-    rawg_id, slug, title, description, release_date, is_trending, playtime_hours
+    igdb_id, slug, title, description, release_date, is_trending
 )
 values
-    (3328,  'the-witcher-3-wild-hunt', 'The Witcher 3: Wild Hunt',
-     'An open world RPG following Geralt of Rivia.', '2015-05-18', true,  51.5),
-    (4200,  'portal-2', 'Portal 2',
-     'A first-person puzzle game about thinking with portals.', '2011-04-18', true, 8.5),
-    (5286,  'tomb-raider', 'Tomb Raider',
-     'Survival action adventure reboot of the series.', '2013-03-05', false, 12.0),
-    (13536, 'portal', 'Portal',
-     'The original puzzle game that started it all.', '2007-10-09', false, 3.0),
-    (5679,  'the-elder-scrolls-v-skyrim', 'The Elder Scrolls V: Skyrim',
-     'Open world fantasy RPG set in the province of Skyrim.', '2011-11-11', true, 34.0),
-    (28,    'red-dead-redemption-2', 'Red Dead Redemption 2',
-     'An epic tale of life in America at the dawn of the modern age.', '2018-10-26', false, 49.0);
+    (1942,  'the-witcher-3-wild-hunt', 'The Witcher 3: Wild Hunt',
+     'An open world RPG following Geralt of Rivia.', '2015-05-19', true),
+    (72,    'portal-2', 'Portal 2',
+     'A first-person puzzle game about thinking with portals.', '2011-04-18', true),
+    (1164,  'tomb-raider--2', 'Tomb Raider',
+     'Survival action adventure reboot of the series.', '2013-03-05', false),
+    (71,    'portal', 'Portal',
+     'The original puzzle game that started it all.', '2007-10-09', false),
+    (472,   'the-elder-scrolls-v-skyrim', 'The Elder Scrolls V: Skyrim',
+     'Open world fantasy RPG set in the province of Skyrim.', '2011-11-11', true),
+    (25076, 'red-dead-redemption-2', 'Red Dead Redemption 2',
+     'An epic tale of life in America at the dawn of the modern age.', '2018-10-26', false);
 
 insert into public.game_platforms (game_id, platform_slug)
 select g.id, p.slug
 from public.games g
 cross join (values ('steam'), ('playstation'), ('xbox')) as p (slug)
-where g.rawg_id in (3328, 4200, 5286, 13536, 5679, 28);
+where g.igdb_id in (1942, 72, 1164, 71, 472, 25076);
 
 -- One logged game with a rating and a public review, so the profile and game
 -- pages have populated states to look at. Ratings are half points, as
@@ -107,7 +108,7 @@ select
     9.5,
     60.5,
     'steam'
-from public.games where rawg_id = 3328;
+from public.games where igdb_id = 1942;
 
 insert into public.reviews (user_id, game_id, body, is_public)
 select
@@ -115,7 +116,7 @@ select
     id,
     'Still the benchmark for open world side quests.',
     true
-from public.games where rawg_id = 3328;
+from public.games where igdb_id = 1942;
 
 -- An accepted friendship between the two dev accounts. Note the ordered pair:
 -- user_a_id must sort before user_b_id.
@@ -127,13 +128,17 @@ values (
     '11111111-1111-1111-1111-111111111111'
 );
 
--- a couple of genres so the join table has something in it locally
+-- a couple of IGDB's genres so the join table has something in it locally
+insert into public.genres (slug, name)
+values ('role-playing-rpg', 'Role-playing (RPG)'), ('puzzle', 'Puzzle')
+on conflict (slug) do nothing;
+
 insert into public.game_genres (game_id, genre_slug)
-select g.id, 'action'
+select g.id, 'role-playing-rpg'
 from public.games g
-where g.rawg_id in (3328, 28, 5679);
+where g.igdb_id in (1942, 25076, 472);
 
 insert into public.game_genres (game_id, genre_slug)
 select g.id, 'puzzle'
 from public.games g
-where g.rawg_id in (4200, 13536);
+where g.igdb_id in (72, 71);
