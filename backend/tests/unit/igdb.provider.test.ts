@@ -11,7 +11,7 @@ const game = (id: number, ratings = 0): IgdbGame => ({
 
 /** A fake Twitch and IGDB: hands out tokens, and answers each games query
  *  from the queue of responses given. */
-const upstream = (responses: (() => Response)[]) => {
+const upstream = (responses: (() => Response)[], editions = false) => {
   let tokens = 0;
   const queries: { body: string; auth: string | null }[] = [];
   const fetchImpl = vi.fn(async (input: string | URL, init?: RequestInit) => {
@@ -19,6 +19,11 @@ const upstream = (responses: (() => Response)[]) => {
     if (url.startsWith("https://id.twitch.tv/")) {
       tokens += 1;
       return Response.json({ access_token: `token-${tokens}`, expires_in: 5_000_000 });
+    }
+    // The edition-cover lookup that follows every listing: no editions,
+    // unless a test queues them itself.
+    if (String(init?.body).includes("where version_parent = (") && !editions) {
+      return Response.json([]);
     }
     queries.push({
       body: String(init?.body),
@@ -75,10 +80,24 @@ describe("IGDB provider", () => {
 
     await igdb.getById(1);
 
+    // The throttled attempt, its retry, then the edition-cover lookup.
     expect(onRequest.mock.calls.map(([o]) => o)).toEqual([
       { failed: true, error: "IGDB responded 429" },
       { failed: false, error: null },
+      { failed: false, error: null },
     ]);
+  });
+
+  it("tries again after a dropped connection", async () => {
+    const api = upstream([
+      () => {
+        throw new TypeError("fetch failed");
+      },
+      () => Response.json([game(1)]),
+    ]);
+    const igdb = createIgdbProvider("id", "secret", api.fetchImpl);
+
+    expect((await igdb.getById(1))?.externalId).toBe(1);
   });
 
   it("gives up on a request IGDB refuses outright", async () => {
@@ -124,6 +143,29 @@ describe("IGDB provider", () => {
       "sort total_rating_count desc; limit 2; offset 0;",
     );
     expect(api.queries[1]!.body).toContain("offset 2;");
+  });
+
+  it("adds each game's edition covers, from one more request for the batch", async () => {
+    const api = upstream(
+      [
+        () => Response.json([{ ...game(1942), cover: { image_id: "main" } }]),
+        () =>
+          Response.json([
+            { version_parent: 1942, version_title: "Complete Edition", name: "x", cover: { image_id: "co5uct" } },
+            { version_parent: 1942, name: "The Witcher 3 - GOTY", cover: { image_id: "co1wz4" } },
+          ]),
+      ],
+      true,
+    );
+    const igdb = createIgdbProvider("id", "secret", api.fetchImpl);
+
+    const found = await igdb.getById(1942);
+
+    expect(found?.altCovers).toEqual([
+      { imageId: "co5uct", label: "Complete Edition" },
+      { imageId: "co1wz4", label: "The Witcher 3 - GOTY" },
+    ]);
+    expect(api.queries[1]!.body).toContain("where version_parent = (1942) & cover != null");
   });
 
   it("pages the catalogue by rating only among games that have one", async () => {

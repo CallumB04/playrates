@@ -78,6 +78,16 @@ export const createGamesRouter = ({
   );
 
   router.get(
+    "/:gameId/related",
+    optionalAuth,
+    validate({ params: GameIdParamSchema }),
+    async (req, res) => {
+      const { gameId } = req.valid!.params as { gameId: number };
+      res.json(await service.getRelated(gameId, req.auth?.userId));
+    },
+  );
+
+  router.get(
     "/:gameId/stats",
     validate({ params: GameIdParamSchema }),
     async (req, res) => {

@@ -1,4 +1,4 @@
-import type { ExternalGame } from "../GamesProvider.js";
+import type { AltCover, ExternalGame } from "../GamesProvider.js";
 import { isSexualContent } from "../explicitContent.js";
 import { IGDB_PC, IGDB_SYSTEMS, SYSTEM_FAMILY } from "./igdb.platforms.js";
 
@@ -33,7 +33,17 @@ export interface IgdbGame {
   aggregated_rating?: number;
   /** Everyone who has rated it, critics and players. */
   total_rating_count?: number;
+  similar_games?: number[];
+  collections?: { id: number; name: string }[];
+  franchises?: { id: number; name: string }[];
+  game_localizations?: {
+    cover?: { image_id: string };
+    region?: { name: string };
+  }[];
 }
+
+/** How many other covers a game keeps, so a page shows a few, not forty. */
+export const MAX_ALT_COVERS = 4;
 
 const IMAGE_BASE = "https://images.igdb.com/igdb/image/upload";
 
@@ -95,7 +105,37 @@ const companies = (
       .map((c) => c.company!.name),
   );
 
-export const toExternalGame = (game: IgdbGame): ExternalGame => {
+/**
+ * The series to group a game with. IGDB's collections are the tighter
+ * grouping (the numbered games); a franchise is the fallback for a game in
+ * none. Franchise ids are stored negative: the two are numbered separately,
+ * and a collection and a franchise sharing an id would merge two series.
+ */
+const series = (game: IgdbGame): ExternalGame["series"] => {
+  const collection = game.collections?.[0];
+  if (collection) return { id: collection.id, name: collection.name };
+  const franchise = game.franchises?.[0];
+  return franchise ? { id: -franchise.id, name: franchise.name } : null;
+};
+
+/** Edition covers first, then regional ones, never the main cover twice. */
+const altCovers = (game: IgdbGame, editions: AltCover[]): AltCover[] => {
+  const regional = (game.game_localizations ?? []).flatMap((l) =>
+    l.cover?.image_id
+      ? [{ imageId: l.cover.image_id, label: l.region?.name ?? "Regional" }]
+      : [],
+  );
+  const seen = new Set([game.cover?.image_id]);
+  return [...editions, ...regional]
+    .filter((c) => !seen.has(c.imageId) && seen.add(c.imageId))
+    .slice(0, MAX_ALT_COVERS);
+};
+
+export const toExternalGame = (
+  game: IgdbGame,
+  /** Covers of the game's editions, which IGDB keeps as games of their own. */
+  editions: AltCover[] = [],
+): ExternalGame => {
   const systemSlugs = systems(game);
   const cover = game.cover ? igdbImage(game.cover.image_id, "cover_big_2x") : null;
   // A wide picture for link previews and the game page's backdrop.
@@ -126,5 +166,8 @@ export const toExternalGame = (game: IgdbGame): ExternalGame => {
         ? null
         : Math.round(game.aggregated_rating),
     igdbRatingCount: game.total_rating_count ?? null,
+    similarIds: game.similar_games ?? [],
+    series: series(game),
+    altCovers: altCovers(game, editions),
   };
 };

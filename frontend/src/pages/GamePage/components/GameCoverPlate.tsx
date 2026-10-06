@@ -1,6 +1,6 @@
 import type { Game } from "@playrates/shared";
 import type { GameLogSummary } from "@playrates/shared";
-import GameCover from "../../../components/game/GameCover";
+import CoverCarousel from "./CoverCarousel";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import Button from "../../../components/ui/Button";
 import LedgerRow, { LedgerList } from "../../../components/ui/LedgerRow";
@@ -55,22 +55,25 @@ const GameCoverPlate = ({
                 {/* Edge-to-edge on a phone, a 3:4 cover eats the whole first
                     screen and pushes the title below the fold. It only spans
                     the column once the column is a column. */}
-                <div className="relative mx-auto aspect-3/4 w-2/3 max-w-[240px] overflow-hidden rounded-lg bg-surface-media shadow-e3 sm:w-1/2 sm:max-w-[280px] lg:w-full lg:max-w-none">
-                    <GameCover
-                        coverUrl={game.coverUrl}
-                        title={game.title}
-                        className="size-full"
-                    />
-                    {status && (
-                        <StatusBadge
-                            status={status}
-                            size="stamp"
-                            onMedia
-                            animateOnChange
-                            className="absolute top-3 right-3"
-                        />
-                    )}
-                </div>
+                <CoverCarousel
+                    covers={[
+                        { url: game.coverUrl, label: null },
+                        ...game.altCovers,
+                    ]}
+                    title={game.title}
+                    className="mx-auto w-2/3 max-w-[240px] sm:w-1/2 sm:max-w-[280px] lg:w-full lg:max-w-none"
+                    overlay={
+                        status && (
+                            <StatusBadge
+                                status={status}
+                                size="stamp"
+                                onMedia
+                                animateOnChange
+                                className="absolute top-3 right-3"
+                            />
+                        )
+                    }
+                />
                 <div className="mt-3 flex items-center justify-between text-label-sm text-content-muted">
                     <span className="truncate">{game.title}</span>
                     <span className="shrink-0 font-mono">

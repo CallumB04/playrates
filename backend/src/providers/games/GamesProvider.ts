@@ -35,6 +35,18 @@ export interface ExternalGame {
   criticScore: number | null;
   /** How many people have rated it upstream: how well known it is. */
   igdbRatingCount: number | null;
+  /** Upstream ids of games like it, whether or not they are here. */
+  similarIds: number[];
+  /** The series it belongs to, if any. */
+  series: { id: number; name: string } | null;
+  /** Other covers: special editions, then regional releases. Image ids,
+   *  with what each one is. */
+  altCovers: AltCover[];
+}
+
+export interface AltCover {
+  imageId: string;
+  label: string;
 }
 
 export interface GamePage {

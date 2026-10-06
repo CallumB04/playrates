@@ -59,6 +59,7 @@ export const buildGame = (overrides: Partial<Game> = {}): Game => ({
     website: "https://thewitcher.com",
     esrbRating: "Mature",
     criticScore: 92,
+    altCovers: [],
     ...overrides,
 });
 

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Game, Platform } from "@playrates/shared";
-import type { DisplayStatus } from "../../../constants/gameStatus";
-import GameTile, { type TileAction } from "../../../components/game/GameTile";
-import { TileSkeleton } from "../../../components/ui/Skeleton";
-import { releaseYear } from "../../../lib/format";
-import { cn } from "../../../lib/cn";
+import type { DisplayStatus } from "../../constants/gameStatus";
+import GameTile, { type TileAction } from "./GameTile";
+import { TileSkeleton } from "../ui/Skeleton";
+import { releaseYear } from "../../lib/format";
+import { cn } from "../../lib/cn";
 
 interface RailProps {
     title: string;

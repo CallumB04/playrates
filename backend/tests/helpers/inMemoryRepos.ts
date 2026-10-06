@@ -231,6 +231,10 @@ export const createInMemoryRepos = (
       esrb_rating: external.esrbRating,
       critic_score: external.criticScore,
       igdb_rating_count: external.igdbRatingCount,
+      similar_igdb_ids: external.similarIds,
+      series_id: external.series?.id ?? null,
+      series_name: external.series?.name ?? null,
+      alt_covers: external.altCovers,
       synced_at: now(),
     });
     state.gamePlatforms = state.gamePlatforms.filter(
@@ -513,6 +517,10 @@ export const createInMemoryRepos = (
               is_trending: false,
               critic_score: null,
               igdb_rating_count: null,
+              similar_igdb_ids: [],
+              series_id: null,
+              series_name: null,
+              alt_covers: [],
               log_count: 0,
               avg_rating: null,
               rating_count: 0,
@@ -528,6 +536,36 @@ export const createInMemoryRepos = (
           ids.push(existing.id);
         }
         return ids;
+      },
+      async listSeries(seriesId, exceptId, limit, showSexualContent) {
+        return state.games
+          .filter((g) => g.series_id === seriesId && g.id !== exceptId)
+          .filter((g) => showSexualContent || !g.has_sexual_content)
+          .sort(
+            (a, b) =>
+              (a.release_date ?? "9999").localeCompare(b.release_date ?? "9999") ||
+              a.id - b.id,
+          )
+          .slice(0, limit)
+          .map(withPlatforms);
+      },
+      async listByDeveloper(developer, exceptIds, limit, showSexualContent) {
+        return state.games
+          .filter((g) => g.developers.includes(developer) && !exceptIds.includes(g.id))
+          .filter((g) => showSexualContent || !g.has_sexual_content)
+          .sort(
+            (a, b) =>
+              (b.igdb_rating_count ?? -1) - (a.igdb_rating_count ?? -1) || a.id - b.id,
+          )
+          .slice(0, limit)
+          .map(withPlatforms);
+      },
+      async listByIgdbIds(igdbIds, showSexualContent) {
+        return igdbIds
+          .map((id) => state.games.find((g) => g.igdb_id === id))
+          .filter((g): g is GameRow => !!g)
+          .filter((g) => showSexualContent || !g.has_sexual_content)
+          .map(withPlatforms);
       },
       async existingIgdbIds(igdbIds) {
         return state.games

@@ -57,6 +57,25 @@ export interface GamesRepository {
   count(): Promise<number>;
   /** Which of these upstream ids are already in the catalogue. */
   existingIgdbIds(igdbIds: number[]): Promise<number[]>;
+  /** Games of a series, in release order, leaving one game out. */
+  listSeries(
+    seriesId: number,
+    exceptId: number,
+    limit: number,
+    showSexualContent: boolean,
+  ): Promise<GameRowWithPlatforms[]>;
+  /** A developer's games, best known first, leaving some out. */
+  listByDeveloper(
+    developer: string,
+    exceptIds: number[],
+    limit: number,
+    showSexualContent: boolean,
+  ): Promise<GameRowWithPlatforms[]>;
+  /** Whichever of these IGDB ids are in the catalogue, in the order given. */
+  listByIgdbIds(
+    igdbIds: number[],
+    showSexualContent: boolean,
+  ): Promise<GameRowWithPlatforms[]>;
   setTrending(id: number, isTrending: boolean): Promise<void>;
 }
 
@@ -78,6 +97,10 @@ const toRow = (g: ExternalGame, now: string) => ({
   esrb_rating: g.esrbRating,
   critic_score: g.criticScore,
   igdb_rating_count: g.igdbRatingCount,
+  similar_igdb_ids: g.similarIds,
+  series_id: g.series?.id ?? null,
+  series_name: g.series?.name ?? null,
+  alt_covers: g.altCovers,
   synced_at: now,
 });
 
@@ -284,7 +307,9 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     const { data, error } = await db
       .from("games")
       .upsert(
-        games.map((g) => toRow(g, now)),
+        // Every row the same shape: a batch where some rows leave the
+        // description out sends null for those, and the column refuses it.
+        games.map((g) => ({ ...toRow(g, now), description: g.description })),
         { onConflict: "igdb_id", ignoreDuplicates: false },
       )
       .select("id, igdb_id");
@@ -395,6 +420,51 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       .select("id", { count: "exact", head: true });
     if (error) throw error;
     return count ?? 0;
+  },
+
+  async listSeries(seriesId, exceptId, limit, showSexualContent) {
+    let builder = db
+      .from("games")
+      .select(SELECT_WITH_RELATIONS)
+      .eq("series_id", seriesId)
+      .neq("id", exceptId);
+    if (!showSexualContent) builder = builder.eq("has_sexual_content", false);
+    const { data, error } = await builder
+      .order("release_date", { ascending: true, nullsFirst: false })
+      .order("id")
+      .limit(limit);
+    if (error) throw error;
+    return (data ?? []) as GameRowWithPlatforms[];
+  },
+
+  async listByDeveloper(developer, exceptIds, limit, showSexualContent) {
+    let builder = db
+      .from("games")
+      .select(SELECT_WITH_RELATIONS)
+      .contains("developers", [developer])
+      .not("id", "in", `(${exceptIds.join(",")})`);
+    if (!showSexualContent) builder = builder.eq("has_sexual_content", false);
+    const { data, error } = await builder
+      .order("igdb_rating_count", { ascending: false, nullsFirst: false })
+      .order("id")
+      .limit(limit);
+    if (error) throw error;
+    return (data ?? []) as GameRowWithPlatforms[];
+  },
+
+  async listByIgdbIds(igdbIds, showSexualContent) {
+    if (igdbIds.length === 0) return [];
+    let builder = db
+      .from("games")
+      .select(SELECT_WITH_RELATIONS)
+      .in("igdb_id", igdbIds);
+    if (!showSexualContent) builder = builder.eq("has_sexual_content", false);
+    const { data, error } = await builder;
+    if (error) throw error;
+    const rank = new Map(igdbIds.map((id, i) => [id, i]));
+    return ((data ?? []) as GameRowWithPlatforms[]).sort(
+      (a, b) => rank.get(a.igdb_id!)! - rank.get(b.igdb_id!)!,
+    );
   },
 
   async existingIgdbIds(igdbIds) {

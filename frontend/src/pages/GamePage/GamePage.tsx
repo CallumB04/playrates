@@ -33,6 +33,7 @@ import { useThreads } from "../../hooks/queries/useCommunity";
 import { newThreadPath } from "../../components/community/paths";
 import { buildGameFacts } from "./lib/gameFacts";
 import ScoreCards from "./components/ScoreCards";
+import RelatedGames from "./components/RelatedGames";
 import ExpandableText from "./components/ExpandableText";
 
 const GamePage = () => {
@@ -207,6 +208,8 @@ const GamePage = () => {
                     />
                 </div>
             </div>
+
+            <RelatedGames gameId={gameId} platforms={platforms ?? []} />
 
             {viewing && fullLog && (
                 <ViewGameLogPopup

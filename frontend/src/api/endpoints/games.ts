@@ -1,5 +1,6 @@
 import type {
     Game,
+    GameRelated,
     GameSort,
     GameStats,
     Genre,
@@ -42,6 +43,11 @@ export const fetchGames = async (
 
 export const fetchGameById = async (id: number): Promise<Game> => {
     const { data } = await api.get<Game>(`/games/${id}`);
+    return data;
+};
+
+export const fetchGameRelated = async (id: number): Promise<GameRelated> => {
+    const { data } = await api.get<GameRelated>(`/games/${id}/related`);
     return data;
 };
 

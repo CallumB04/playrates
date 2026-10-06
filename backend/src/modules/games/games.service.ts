@@ -5,6 +5,7 @@ import {
   type Game,
   type GameEventSource,
   type GameQuery,
+  type GameRelated,
   type GameStats,
   type Paginated,
   type Pagination,
@@ -17,7 +18,10 @@ import type {
   GameEventDraft,
   GameEventsRepository,
 } from "./gameEvents.repository.js";
-import { toGame } from "./games.mapper.js";
+import { toGame, type GameRowWithRelations } from "./games.mapper.js";
+
+/** Enough to fill a row on a wide screen without it scrolling forever. */
+const RELATED_PER_ROW = 8;
 
 /** Below this many local hits, a search falls through to the provider. */
 const LOCAL_RESULT_THRESHOLD = 8;
@@ -166,6 +170,56 @@ export const createGamesService = (
         pagination,
         rows.length + topUp.length,
       );
+    },
+
+    /**
+     * Where the page points onwards: the rest of its series, more from its
+     * developer, and games like it. Each game appears once, in the first
+     * of those it belongs to, so the three never repeat each other.
+     */
+    async getRelated(gameId: number, callerId?: string): Promise<GameRelated> {
+      const row = await repo.findById(gameId);
+      if (!row) throw AppError.notFound("Game");
+      const showSexual = await canSeeExplicit(callerId);
+      if (row.has_sexual_content && !showSexual) throw AppError.notFound("Game");
+
+      const shown = new Set<number>([row.id]);
+      const take = (rows: GameRowWithRelations[]) => {
+        const fresh = rows.filter((r) => !shown.has(r.id)).slice(0, RELATED_PER_ROW);
+        for (const r of fresh) shown.add(r.id);
+        return fresh.map(toGame);
+      };
+
+      const seriesGames =
+        row.series_id === null
+          ? []
+          : take(await repo.listSeries(row.series_id, row.id, RELATED_PER_ROW, showSexual));
+      const developer = row.developers[0] ?? null;
+      const developerGames = developer
+        ? take(
+            await repo.listByDeveloper(
+              developer,
+              [...shown],
+              RELATED_PER_ROW,
+              showSexual,
+            ),
+          )
+        : [];
+      const similar = take(
+        await repo.listByIgdbIds(row.similar_igdb_ids ?? [], showSexual),
+      );
+
+      return {
+        series:
+          row.series_name && seriesGames.length > 0
+            ? { name: row.series_name, games: seriesGames }
+            : null,
+        developer:
+          developer && developerGames.length > 0
+            ? { name: developer, games: developerGames }
+            : null,
+        similar,
+      };
     },
 
     async getStats(gameId: number): Promise<GameStats> {

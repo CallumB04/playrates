@@ -3,6 +3,7 @@ import type { Game } from "@playrates/shared";
 import {
     fetchGameById,
     fetchGames,
+    fetchGameRelated,
     fetchGameStats,
     fetchGenres,
     fetchPlatforms,
@@ -34,6 +35,16 @@ export const useGameStats = (id: number | undefined) =>
         queryKey: queryKeys.games.stats(id ?? 0),
         queryFn: () => fetchGameStats(id!),
         enabled: typeof id === "number" && id > 0,
+    });
+
+/** Not urgent: it sits below everything else on the page, and changes only
+ *  when the catalogue does. */
+export const useGameRelated = (id: number | undefined) =>
+    useQuery({
+        queryKey: queryKeys.games.related(id ?? 0),
+        queryFn: () => fetchGameRelated(id!),
+        enabled: typeof id === "number" && id > 0,
+        staleTime: 30 * 60_000,
     });
 
 export const usePlatforms = () =>

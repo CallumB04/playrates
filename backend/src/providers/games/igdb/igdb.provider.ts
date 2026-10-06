@@ -4,11 +4,13 @@ import type {
   GamePage,
   GamesProvider,
 } from "../GamesProvider.js";
+import type { AltCover } from "../GamesProvider.js";
 import { toExternalGame, type IgdbGame } from "./igdb.mapper.js";
 
 const API = "https://api.igdb.com/v4";
 const TOKEN_URL = "https://id.twitch.tv/oauth2/token";
-const TIMEOUT_MS = 10_000;
+/** A page of 500 games with everything expanded can take a few seconds. */
+const TIMEOUT_MS = 20_000;
 const MAX_ATTEMPTS = 3;
 /** IGDB allows four requests a second; this keeps a margin under it. */
 const MIN_INTERVAL_MS = 260;
@@ -41,6 +43,11 @@ export const GAME_FIELDS = [
   "age_ratings.rating_category.rating",
   "aggregated_rating",
   "total_rating_count",
+  "similar_games",
+  "collections.name",
+  "franchises.name",
+  "game_localizations.cover.image_id",
+  "game_localizations.region.name",
 ].join(",");
 
 /**
@@ -163,7 +170,10 @@ export const createIgdbProvider = (
             failed: true,
             error: error instanceof Error ? error.message : String(error),
           });
-          throw error;
+          // A dropped connection or a timeout is as passing as a 429.
+          if (attempt === MAX_ATTEMPTS - 1) throw error;
+          await new Promise((r) => setTimeout(r, 2 ** attempt * 300));
+          continue;
         }
 
         const retryable =
@@ -200,6 +210,32 @@ export const createIgdbProvider = (
       `fields ${GAME_FIELDS}; where ${CATALOGUE_FILTER}${where}; ${rest}`,
     );
 
+  /**
+   * Maps a batch, with each game's edition covers. Editions are games of
+   * their own on IGDB (version_parent), so it is one more request for the
+   * whole batch rather than one per game.
+   */
+  const withEditions = async (found: IgdbGame[]): Promise<ExternalGame[]> => {
+    if (found.length === 0) return [];
+    const byParent = new Map<number, AltCover[]>();
+    const ids = found.map((g) => g.id).join(",");
+    for (let offset = 0; ; offset += MAX_LIMIT) {
+      const editions = await query<
+        { version_parent: number; version_title?: string; name: string; cover?: { image_id: string } }[]
+      >(
+        "games",
+        `fields version_parent,version_title,name,cover.image_id; where version_parent = (${ids}) & cover != null; sort id asc; limit ${MAX_LIMIT}; offset ${offset};`,
+      );
+      for (const e of editions) {
+        const list = byParent.get(e.version_parent) ?? [];
+        list.push({ imageId: e.cover!.image_id, label: e.version_title ?? e.name });
+        byParent.set(e.version_parent, list);
+      }
+      if (editions.length < MAX_LIMIT) break;
+    }
+    return found.map((g) => toExternalGame(g, byParent.get(g.id) ?? []));
+  };
+
   /** IGDB says how many match a query at its own endpoint, not in the
    *  listing, so a page only knows there is more by coming back full. */
   const page = async (
@@ -213,7 +249,7 @@ export const createIgdbProvider = (
       `sort total_rating_count desc; limit ${limit}; offset ${(pageNumber - 1) * limit};`,
     );
     return {
-      games: found.map(toExternalGame),
+      games: await withEditions(found),
       total: (pageNumber - 1) * limit + found.length,
       hasNext: found.length === limit,
     };
@@ -230,10 +266,11 @@ export const createIgdbProvider = (
         "games",
         `search ${quote(term)}; fields ${GAME_FIELDS}; where ${CATALOGUE_FILTER}; limit ${Math.min(limit * 2, 50)};`,
       );
-      return found
-        .sort((a, b) => (b.total_rating_count ?? 0) - (a.total_rating_count ?? 0))
-        .slice(0, limit)
-        .map(toExternalGame);
+      return withEditions(
+        found
+          .sort((a, b) => (b.total_rating_count ?? 0) - (a.total_rating_count ?? 0))
+          .slice(0, limit),
+      );
     },
 
     async getById(externalId): Promise<ExternalGame | null> {
@@ -243,7 +280,7 @@ export const createIgdbProvider = (
         "games",
         `fields ${GAME_FIELDS}; where id = ${Math.trunc(externalId)};`,
       );
-      return found ? toExternalGame(found) : null;
+      return found ? (await withEditions([found]))[0]! : null;
     },
 
     // Rated games only: past them the rating count is null, and IGDB
@@ -267,9 +304,9 @@ export const createIgdbProvider = (
       );
       const rank = new Map(ids.map((id, i) => [id, i]));
       return {
-        games: found
-          .sort((a, b) => rank.get(a.id)! - rank.get(b.id)!)
-          .map(toExternalGame),
+        games: await withEditions(
+          found.sort((a, b) => rank.get(a.id)! - rank.get(b.id)!),
+        ),
         total: (pageNumber - 1) * limit + visited.length,
         hasNext: visited.length === limit,
       };

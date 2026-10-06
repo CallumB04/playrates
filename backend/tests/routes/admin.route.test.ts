@@ -98,6 +98,9 @@ const external = (id: number, title = `Game ${id}`): ExternalGame => ({
   hasSexualContent: false,
   criticScore: null,
   igdbRatingCount: null,
+  similarIds: [],
+  series: null,
+  altCovers: [],
 });
 
 const stubProvider = (overrides: Partial<GamesProvider> = {}): GamesProvider => ({

@@ -28,7 +28,7 @@ import {
 import type { TileAction } from "../../components/game/GameTile";
 import SignedOutHero from "./components/SignedOutHero";
 import ReEntryPlate from "./components/ReEntryPlate";
-import Rail from "./components/Rail";
+import Rail from "../../components/game/GameRail";
 import GenreGrid from "./components/GenreGrid";
 import FriendFeed from "./components/FriendFeed";
 import ReviewFeed from "./components/ReviewFeed";

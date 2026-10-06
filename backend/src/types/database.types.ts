@@ -58,6 +58,13 @@ export interface GameRow {
   critic_score: number | null;
   /** How many have rated it on IGDB: the catalogue's "how well known". */
   igdb_rating_count: number | null;
+  /** IGDB ids of games like it; resolved against the catalogue on read. */
+  similar_igdb_ids: number[];
+  /** IGDB's series (a franchise, stored negative, where there is none). */
+  series_id: number | null;
+  series_name: string | null;
+  /** Other covers: IGDB image ids, with what each one is. */
+  alt_covers: { imageId: string; label: string }[];
   /** PlayRates logs for this game, maintained by a trigger. */
   log_count: number;
   /** Mean PlayRates rating, also maintained by a trigger. */

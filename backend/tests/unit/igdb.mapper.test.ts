@@ -166,6 +166,58 @@ describe("toExternalGame", () => {
     ).toBe(false);
   });
 
+  it("groups by the series, falling back to a franchise kept apart by sign", () => {
+    expect(
+      toExternalGame({
+        ...witcher,
+        collections: [{ id: 62, name: "The Witcher" }],
+        franchises: [{ id: 452, name: "The Witcher" }],
+      }).series,
+    ).toEqual({ id: 62, name: "The Witcher" });
+    expect(
+      toExternalGame({ ...witcher, franchises: [{ id: 452, name: "The Witcher" }] })
+        .series,
+    ).toEqual({ id: -452, name: "The Witcher" });
+  });
+
+  it("keeps IGDB's similar games by id", () => {
+    expect(
+      toExternalGame({ ...witcher, similar_games: [1887, 3025] }).similarIds,
+    ).toEqual([1887, 3025]);
+  });
+
+  it("lists edition covers before regional ones, without the main cover, four at most", () => {
+    const game = toExternalGame(
+      {
+        ...witcher,
+        game_localizations: [
+          { cover: { image_id: "jp" }, region: { name: "Japan" } },
+          { region: { name: "Korea" } },
+          { cover: { image_id: "co1wyy" }, region: { name: "Europe" } },
+        ],
+      },
+      [
+        { imageId: "e1", label: "Complete Edition" },
+        { imageId: "e2", label: "Collector's Edition" },
+        { imageId: "e1", label: "Complete Edition" },
+        { imageId: "e3", label: "GOTY" },
+        { imageId: "e4", label: "Deluxe" },
+      ],
+    );
+    expect(game.altCovers).toEqual([
+      { imageId: "e1", label: "Complete Edition" },
+      { imageId: "e2", label: "Collector's Edition" },
+      { imageId: "e3", label: "GOTY" },
+      { imageId: "e4", label: "Deluxe" },
+    ]);
+    expect(
+      toExternalGame({
+        ...witcher,
+        game_localizations: [{ cover: { image_id: "jp" }, region: { name: "Japan" } }],
+      }).altCovers,
+    ).toEqual([{ imageId: "jp", label: "Japan" }]);
+  });
+
   it("leaves out what IGDB left out", () => {
     const bare = toExternalGame({ id: 1, name: "Bare", slug: "bare" });
     expect(bare).toMatchObject({

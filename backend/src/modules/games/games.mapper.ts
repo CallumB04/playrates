@@ -1,5 +1,6 @@
 import type { Game } from "@playrates/shared";
 import type { GameRow } from "../../types/database.types.js";
+import { igdbImage } from "../../providers/games/igdb/igdb.mapper.js";
 
 /** A games row with its platform and genre joins pulled in. */
 export interface GameRowWithRelations extends GameRow {
@@ -31,6 +32,10 @@ export const toGame = (row: GameRowWithRelations): Game => ({
   hasSexualContent: row.has_sexual_content,
   isTrending: row.is_trending,
   criticScore: row.critic_score,
+  altCovers: (row.alt_covers ?? []).map(({ imageId, label }) => ({
+    url: igdbImage(imageId, "cover_big_2x"),
+    label,
+  })),
   logCount: row.log_count,
   avgRating: num(row.avg_rating),
   ratingCount: row.rating_count,

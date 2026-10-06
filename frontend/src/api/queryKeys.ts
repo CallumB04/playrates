@@ -12,6 +12,7 @@ export const queryKeys = {
             ["games", "list", filters] as const,
         byId: (id: number) => ["games", id] as const,
         stats: (id: number) => ["games", id, "stats"] as const,
+        related: (id: number) => ["games", id, "related"] as const,
         search: (term: string) => ["games", "search", term] as const,
         /* Its own key: the masthead search asks for three, and sharing a
            key would hand the picker that short list. */

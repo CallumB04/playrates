@@ -26,11 +26,22 @@ export interface Game {
   esrbRating: string | null;
   /** Professional reviews, averaged, 0-100. */
   criticScore: number | null;
+  /** Other covers to page through after the main one: special editions,
+   *  regional releases. Empty for most games. */
+  altCovers: { url: string; label: string }[];
   /** PlayRates logs for this game. */
   logCount: number;
   /** Mean PlayRates rating, and how many it is made of. */
   avgRating: number | null;
   ratingCount: number;
+}
+
+/** Where a game page points onwards. Each part is empty or null when there
+ *  is nothing for it in the catalogue. */
+export interface GameRelated {
+  series: { name: string; games: Game[] } | null;
+  developer: { name: string; games: Game[] } | null;
+  similar: Game[];
 }
 
 export interface GameStats {
