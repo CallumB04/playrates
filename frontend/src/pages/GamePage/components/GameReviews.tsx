@@ -93,6 +93,7 @@ const GameReviews = ({
                     {onWriteReview && (
                         // The empty state carries its own action, so skip it there.
                         <Button
+                            variant="secondary"
                             size="sm"
                             onClick={onWriteReview}
                             className="min-h-11 sm:min-h-9"
@@ -129,7 +130,7 @@ const GameReviews = ({
                     }
                     action={
                         onWriteReview ? (
-                            <Button onClick={onWriteReview}>
+                            <Button variant="secondary" onClick={onWriteReview}>
                                 {hasLog ? "Add review" : "Log this game"}
                             </Button>
                         ) : undefined

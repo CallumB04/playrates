@@ -34,6 +34,7 @@ const GameThreads = ({
                     {formatCount(total)} {total === 1 ? "thread" : "threads"}
                 </span>
                 <Button
+                    variant="secondary"
                     size="sm"
                     onClick={onStart}
                     className="min-h-11 sm:min-h-9"
