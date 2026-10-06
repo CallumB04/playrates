@@ -156,7 +156,10 @@ const GamePage = () => {
                 onPress={() => (user ? openEditor() : openLogin())}
                 disabled={save.isPending}
             />
-            <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-y-8">
+            {/* auto then 1fr: when the cover column is the taller, the spare
+                height goes below the description, not between it and the
+                title. */}
+            <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-y-8">
                 <div className="min-w-0 lg:col-start-1 lg:row-span-2 lg:row-start-1">
                     <GameCoverPlate
                         game={game}
