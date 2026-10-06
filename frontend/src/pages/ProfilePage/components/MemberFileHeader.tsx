@@ -174,7 +174,7 @@ const MemberFileHeader = ({
                 )}
 
                 <div className="mt-5 grid gap-5 border-t border-subtle pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-8">
-                    <div className="flex flex-wrap gap-x-7 gap-y-4">
+                    <div className="grid grid-cols-2 gap-x-7 gap-y-4 sm:flex sm:flex-wrap">
                         <Stat
                             label="Hours played"
                             loading={!stats}
