@@ -54,6 +54,7 @@ export const buildGame = (overrides: Partial<GameRow> = {}): GameRow => ({
   esrb_rating: "Mature",
   has_sexual_content: false,
   is_trending: true,
+  trending_rank: null,
   critic_score: 92,
   igdb_rating_count: 100,
   similar_igdb_ids: [],

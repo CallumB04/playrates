@@ -110,6 +110,7 @@ const stubProvider = (overrides: Partial<GamesProvider> = {}): GamesProvider => 
   getById: vi.fn(async () => null),
   listByPopularity: vi.fn(async () => ({ games: [], total: 0, hasNext: false })),
   listByDate: vi.fn(async () => ({ games: [], total: 0, hasNext: false })),
+  trendingIds: vi.fn(async () => []),
   ...overrides,
 });
 

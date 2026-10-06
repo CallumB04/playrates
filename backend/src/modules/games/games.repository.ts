@@ -79,6 +79,8 @@ export interface GamesRepository {
     showSexualContent: boolean,
   ): Promise<GameRowWithPlatforms[]>;
   setTrending(id: number, isTrending: boolean): Promise<void>;
+  /** Makes exactly these games trending, ranked in the order given. */
+  replaceTrending(ids: number[]): Promise<void>;
 }
 
 /** Every column an upstream game decides. Ours (log counts, ratings, the
@@ -265,6 +267,13 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
         builder = builder.order("critic_score", desc);
         break;
       default:
+        // The trending set comes ranked from IGDB; keep its order.
+        if (query.trending === true) {
+          builder = builder.order("trending_rank", {
+            ascending: true,
+            nullsFirst: false,
+          });
+        }
         builder = builder
           .order("log_count", desc)
           .order("igdb_rating_count", desc);
@@ -478,6 +487,11 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       .in("igdb_id", igdbIds);
     if (error) throw error;
     return (data ?? []).map((row) => row.igdb_id as number);
+  },
+
+  async replaceTrending(ids) {
+    const { error } = await db.rpc("set_trending", { p_ids: ids });
+    if (error) throw error;
   },
 
   async setTrending(id, isTrending) {

@@ -54,6 +54,8 @@ export interface GameRow {
   website: string | null;
   esrb_rating: string | null;
   is_trending: boolean;
+  /** Where IGDB put it among what is trending; null when it isn't. */
+  trending_rank: number | null;
   /** Professional reviews, averaged, 0-100. */
   critic_score: number | null;
   /** How many have rated it on IGDB: the catalogue's "how well known". */

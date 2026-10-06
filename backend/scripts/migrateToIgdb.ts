@@ -25,6 +25,9 @@
  *     Asks IGDB for every game's series again and writes the ones that have
  *     changed, after the rule that picks a series changes.
  *
+ *   npm run migrate:igdb -w backend -- --trending
+ *     Sets the trending games from IGDB now, as the daily job does.
+ *
  *   npm run migrate:igdb -w backend -- --cleanup
  *     Deletes game events about games that no longer exist.
  */
@@ -37,6 +40,7 @@ import { supabase } from "../src/config/supabase.js";
 import { igdbProviderFromEnv } from "../src/config/igdb.js";
 import { createGamesRepository } from "../src/modules/games/games.repository.js";
 import type { ExternalGame } from "../src/providers/games/GamesProvider.js";
+import { refreshTrending } from "../src/modules/games/trending.js";
 
 const MATCHES_FILE = path.join(process.cwd(), ".cache/igdb-matches.json");
 const PAGE_SIZE = 500;
@@ -321,6 +325,10 @@ const steps: [string, () => Promise<void>][] = [
   ["--purge", purge],
   ["--import", importCatalogue],
   ["--refresh-series", refreshSeries],
+  [
+    "--trending",
+    async () => console.log(await refreshTrending(requireProvider(), repo)),
+  ],
   ["--cleanup", cleanup],
 ];
 

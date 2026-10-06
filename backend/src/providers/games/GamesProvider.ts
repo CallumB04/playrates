@@ -72,6 +72,8 @@ export interface GamesProvider {
     page: number;
     pageSize: number;
   }): Promise<GamePage>;
+  /** Upstream ids of what is trending now, most first. */
+  trendingIds(limit: number): Promise<number[]>;
 }
 
 /** Used when no credentials are set. Returns empty results rather than throwing,
@@ -90,5 +92,8 @@ export const nullGamesProvider: GamesProvider = {
   },
   async listByDate() {
     return { games: [], total: 0, hasNext: false };
+  },
+  async trendingIds() {
+    return [];
   },
 };

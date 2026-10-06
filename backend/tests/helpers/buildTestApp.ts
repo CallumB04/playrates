@@ -24,6 +24,7 @@ export const setTestEnv = (): void => {
   process.env.CORS_ORIGINS = "http://localhost:5173";
   delete process.env.IGDB_CLIENT_ID;
   delete process.env.IGDB_CLIENT_SECRET;
+  process.env.CRON_SECRET = "test-cron-secret";
   resetEnv();
 };
 

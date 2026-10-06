@@ -168,6 +168,28 @@ describe("IGDB provider", () => {
     expect(api.queries[1]!.body).toContain("where version_parent = (1942) & cover != null");
   });
 
+  it("takes what is trending from IGDB's visits, less what nobody wants or plays", async () => {
+    const api = upstream([
+      () => Response.json([{ game_id: 30 }, { game_id: 20 }, { game_id: 10 }]),
+      () =>
+        Response.json([
+          { game_id: 10, value: 6e-5 },
+          { game_id: 10, value: 5e-5 },
+          { game_id: 20, value: 9e-5 },
+          { game_id: 30, value: 2e-3 },
+        ]),
+    ]);
+    const igdb = createIgdbProvider("id", "secret", api.fetchImpl);
+
+    expect(await igdb.trendingIds(200)).toEqual([30, 10]);
+    expect(api.queries[0]!.body).toBe(
+      "fields game_id; where popularity_type = 1; sort value desc; limit 200;",
+    );
+    expect(api.queries[1]!.body).toBe(
+      "fields game_id,value; where game_id = (30,20,10) & popularity_type = (2,3); limit 500;",
+    );
+  });
+
   it("re-reads just the series for a batch of games", async () => {
     const api = upstream([
       () =>

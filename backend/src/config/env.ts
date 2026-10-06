@@ -28,6 +28,9 @@ const EnvSchema = z.object({
   IGDB_CLIENT_ID: z.string().optional(),
   IGDB_CLIENT_SECRET: z.string().optional(),
 
+  /** Vercel's cron secret; scheduled jobs are refused without it. */
+  CRON_SECRET: z.string().optional(),
+
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
     .default("info"),

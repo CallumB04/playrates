@@ -8,6 +8,8 @@ import { createProfilesService } from "./modules/profiles/profiles.service.js";
 import { createProfilesRouter } from "./modules/profiles/profiles.routes.js";
 import { createGamesService } from "./modules/games/games.service.js";
 import { createGamesRouter } from "./modules/games/games.routes.js";
+import { createCronRouter } from "./modules/games/cron.routes.js";
+import { env } from "./config/env.js";
 import { createGameLogsService } from "./modules/game-logs/gameLogs.service.js";
 import {
   createMyGameLogsRouter,
@@ -216,6 +218,15 @@ export const buildRoutes = ({
   router.use(
     "/games",
     createGamesRouter({ service: games, requireAuth, optionalAuth }),
+  );
+
+  router.use(
+    "/cron",
+    createCronRouter({
+      provider,
+      repo: repos.games,
+      secret: env().CRON_SECRET,
+    }),
   );
 
   return router;

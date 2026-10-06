@@ -474,7 +474,11 @@ export const createInMemoryRepos = (
           critic: (a: GameRow, b: GameRow) =>
             (b.critic_score ?? -1) - (a.critic_score ?? -1),
           // IGDB's rating count is the hidden second key, not a sort.
+          // The trending set keeps IGDB's order, then the usual one.
           logged: (a: GameRow, b: GameRow) =>
+            (query.trending === true
+              ? (a.trending_rank ?? Infinity) - (b.trending_rank ?? Infinity)
+              : 0) ||
             b.log_count - a.log_count ||
             (b.igdb_rating_count ?? 0) - (a.igdb_rating_count ?? 0),
         } as const;
@@ -515,6 +519,7 @@ export const createInMemoryRepos = (
               website: null,
               esrb_rating: null,
               is_trending: false,
+              trending_rank: null,
               critic_score: null,
               igdb_rating_count: null,
               similar_igdb_ids: [],
@@ -576,6 +581,13 @@ export const createInMemoryRepos = (
       async setTrending(id, isTrending) {
         const game = state.games.find((g) => g.id === id);
         if (game) game.is_trending = isTrending;
+      },
+      async replaceTrending(ids) {
+        for (const g of state.games) {
+          const rank = ids.indexOf(g.id);
+          g.is_trending = rank !== -1;
+          g.trending_rank = rank === -1 ? null : rank + 1;
+        }
       },
       async applyExternal(id, external) {
         const game = state.games.find((g) => g.id === id);
