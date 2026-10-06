@@ -45,6 +45,7 @@ describe("compressCommunityImage", () => {
         sizeFor = () => 1_000;
         context = {
             drawImage: (...args: unknown[]) => drawn.push(args),
+            fillRect: () => undefined,
             imageSmoothingEnabled: false,
             imageSmoothingQuality: "low",
         };

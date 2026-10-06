@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { isWebp } from "@playrates/shared";
+import { isJpeg, isWebp } from "@playrates/shared";
 import { AppError } from "./AppError.js";
 
 // The same ladder the browser encoder walks, so an honest upload comes back
@@ -14,23 +14,26 @@ interface CleanOptions {
 }
 
 /**
- * Decodes an uploaded WebP and encodes a fresh one from the pixels.
+ * Decodes an uploaded picture and encodes a fresh WebP from the pixels.
  *
- * The header check alone would pass a file that is WebP for twelve bytes and
- * something else after; storing only what the decoder produced leaves nothing
- * of the original but the picture, metadata included.
+ * WebP from most browsers, JPEG from Safari, which cannot encode WebP. The
+ * header check alone would pass a file that is a picture for a few bytes and
+ * something else after; storing only what the decoder produced leaves
+ * nothing of the original but the picture, metadata included.
  */
-export const cleanWebp = async (
+export const cleanUpload = async (
   bytes: Buffer,
   { maxEdge, maxBytes }: CleanOptions,
 ): Promise<Buffer> => {
-  if (!isWebp(bytes)) throw AppError.badRequest("A picture must be a WebP image");
+  if (!isWebp(bytes) && !isJpeg(bytes)) {
+    throw AppError.badRequest("A picture must be a WebP or JPEG image");
+  }
 
   const image = sharp(bytes, { failOn: "error", limitInputPixels: maxEdge ** 2 });
   const meta = await image.metadata().catch(() => null);
   if (
     !meta ||
-    meta.format !== "webp" ||
+    (meta.format !== "webp" && meta.format !== "jpeg") ||
     !meta.width ||
     !meta.height ||
     Math.max(meta.width, meta.height) > maxEdge

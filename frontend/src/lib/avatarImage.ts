@@ -36,7 +36,7 @@ export const rejectReason = (file: File): string | null => {
 
 /**
  * A picture the API will take: centre-cropped square, AVATAR_PIXELS across,
- * WebP, under the byte cap. Doing it here rather than on the server keeps a
+ * WebP (JPEG where the browser can't), under the byte cap. Doing it here rather than on the server keeps a
  * 8MB phone photo off the wire entirely.
  */
 export const compressAvatar = async (file: File): Promise<Blob> => {

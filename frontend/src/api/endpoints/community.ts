@@ -1,4 +1,3 @@
-import { COMMUNITY_IMAGE_MIME } from "@playrates/shared";
 import type {
     CommunityMessage,
     CreateMessageInput,
@@ -139,7 +138,7 @@ export const uploadCommunityImage = async (
     const { data } = await api.post<{ url: string }>(
         "/community/images",
         image,
-        { headers: { "Content-Type": COMMUNITY_IMAGE_MIME } }
+        { headers: { "Content-Type": image.type } }
     );
     return data;
 };

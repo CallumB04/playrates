@@ -2,7 +2,7 @@ import express, { Router, type RequestHandler } from "express";
 import rateLimit from "express-rate-limit";
 import {
   AVATAR_MAX_BYTES,
-  AVATAR_MIME,
+  UPLOAD_IMAGE_MIMES,
   CheckUsernameSchema,
   PaginationSchema,
   UpdateProfileSchema,
@@ -40,7 +40,7 @@ const profileSearchLimiter = rateLimit({
    there is nothing for multipart to separate. The limit is the same one the
    service enforces, so an oversized body is dropped before it is buffered. */
 const avatarBody = express.raw({
-  type: AVATAR_MIME,
+  type: [...UPLOAD_IMAGE_MIMES],
   limit: AVATAR_MAX_BYTES,
 });
 

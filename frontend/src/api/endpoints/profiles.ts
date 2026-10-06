@@ -4,7 +4,6 @@ import type {
     Profile,
     UpdateProfileInput,
 } from "@playrates/shared";
-import { AVATAR_MIME } from "@playrates/shared";
 import { api } from "../client";
 
 export const fetchMyProfile = async (): Promise<MyProfile> => {
@@ -35,11 +34,11 @@ export const updateMyProfile = async (
     return data;
 };
 
-/** The compressed WebP itself, as the body. The API stores it and returns
- *  the profile carrying its new URL. */
+/** The compressed picture itself, as the body: WebP, or JPEG from Safari.
+ *  The API stores it and returns the profile carrying its new URL. */
 export const uploadMyAvatar = async (image: Blob): Promise<MyProfile> => {
     const { data } = await api.post<MyProfile>("/profiles/me/avatar", image, {
-        headers: { "Content-Type": AVATAR_MIME },
+        headers: { "Content-Type": image.type },
     });
     return data;
 };

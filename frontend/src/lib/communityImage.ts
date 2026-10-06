@@ -21,7 +21,8 @@ export const fitWithin = (
 };
 
 /**
- * A picture for a message, the terms the API takes: WebP, uncropped, no
+ * A picture for a message, the terms the API takes: WebP (JPEG where the
+ * browser can't), uncropped, no
  * longer than COMMUNITY_IMAGE_MAX_EDGE on either side, under the byte cap.
  * The same file checks as an avatar, since both come from the same picker.
  */

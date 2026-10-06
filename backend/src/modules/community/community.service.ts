@@ -19,12 +19,11 @@ import {
   firstHeading,
   imageSources,
   isUpvoteMilestone,
-  isWebp,
   toPlainText,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { assertAdmin } from "../../lib/authz.js";
-import { cleanWebp } from "../../lib/cleanWebp.js";
+import { cleanUpload } from "../../lib/cleanUpload.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import type { CommunityImageStore } from "../../config/communityImageStore.js";
 import type { GamesRepository } from "../games/games.repository.js";
@@ -459,10 +458,7 @@ export const createCommunityService = (
       if (bytes.length > COMMUNITY_IMAGE_MAX_BYTES) {
         throw AppError.badRequest("That picture is too large");
       }
-      if (!isWebp(bytes)) {
-        throw AppError.badRequest("A picture must be a WebP image");
-      }
-      const clean = await cleanWebp(bytes, {
+      const clean = await cleanUpload(bytes, {
         maxEdge: COMMUNITY_IMAGE_MAX_EDGE,
         maxBytes: COMMUNITY_IMAGE_MAX_BYTES,
       });

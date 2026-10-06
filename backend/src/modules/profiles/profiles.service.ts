@@ -5,9 +5,9 @@ import type {
   Profile,
   UpdateProfileInput,
 } from "@playrates/shared";
-import { AVATAR_MAX_BYTES, AVATAR_PIXELS, isWebp } from "@playrates/shared";
+import { AVATAR_MAX_BYTES, AVATAR_PIXELS } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
-import { cleanWebp } from "../../lib/cleanWebp.js";
+import { cleanUpload } from "../../lib/cleanUpload.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import type { AuthAdmin } from "../../config/authAdmin.js";
 import type { AvatarStore } from "../../config/avatarStore.js";
@@ -64,20 +64,16 @@ export const createProfilesService = (
 
   /**
    * Replaces the caller's profile picture. The browser crops and compresses
-   * before it gets here, so anything that is not already a small WebP has
-   * come from somewhere other than our own uploader and is refused. What
-   * passes is still re-encoded, so only decoded pixels are ever stored.
+   * before it gets here, so anything that is not already a small WebP or
+   * JPEG has come from somewhere other than our own uploader and is refused.
+   * What passes is re-encoded to WebP, so only decoded pixels are stored.
    */
   async setAvatar(callerId: string, bytes: Buffer): Promise<MyProfile> {
     if (bytes.length === 0) throw AppError.badRequest("No image was uploaded");
     if (bytes.length > AVATAR_MAX_BYTES) {
       throw AppError.badRequest("That picture is too large");
     }
-    if (!isWebp(bytes)) {
-      throw AppError.badRequest("A profile picture must be a WebP image");
-    }
-
-    const clean = await cleanWebp(bytes, {
+    const clean = await cleanUpload(bytes, {
       maxEdge: AVATAR_PIXELS,
       maxBytes: AVATAR_MAX_BYTES,
     });

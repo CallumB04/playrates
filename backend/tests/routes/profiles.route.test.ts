@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 import { AVATAR_MAX_BYTES, AVATAR_PIXELS, isWebp } from "@playrates/shared";
-import { realWebp, webpWithPayload } from "../helpers/webp.js";
+import { realJpeg, realWebp, webpWithPayload } from "../helpers/webp.js";
 import {
   authHeader,
   buildTestApp,
@@ -377,9 +377,22 @@ describe("profile picture", () => {
     ).toBe(response.body.avatarUrl);
   });
 
+  it("takes a JPEG from a browser that cannot encode WebP, and stores WebP", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .post("/api/v1/profiles/me/avatar")
+      .set("Authorization", authHeader(USER_A))
+      .set("Content-Type", "image/jpeg")
+      .send(await realJpeg());
+
+    expect(response.status).toBe(200);
+    expect(isWebp(state.avatars.get(USER_A)!)).toBe(true);
+  });
+
   /* The browser compresses before uploading, so anything that is not already
-     a WebP reached this endpoint some other way. */
-  it("refuses a body that is not a WebP", async () => {
+     a WebP or JPEG reached this endpoint some other way. */
+  it("refuses a body that is not a WebP or JPEG", async () => {
     const { app, state } = buildTestApp({ seed: baseSeed() });
 
     const response = await upload(app, Buffer.from("\x89PNG\r\n\x1a\n and more"));

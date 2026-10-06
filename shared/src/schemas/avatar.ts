@@ -12,6 +12,13 @@ export const AVATAR_PIXELS = 320;
 /** WebP only. One format in the bucket means one decoder path everywhere. */
 export const AVATAR_MIME = "image/webp";
 
+/**
+ * What an upload may arrive as. WebP where the browser can encode it, JPEG
+ * where it can't: Safari's canvas quietly hands back a PNG when asked for
+ * WebP. The server re-encodes either to WebP, so the bucket stays one format.
+ */
+export const UPLOAD_IMAGE_MIMES = ["image/webp", "image/jpeg"] as const;
+
 /** 128KB. A 320px WebP lands well under this; anything over has not been
  *  through the compressor. */
 export const AVATAR_MAX_BYTES = 128 * 1024;
@@ -30,6 +37,10 @@ export const AVATAR_SOURCE_TYPES = [
 
 /** 20MB in, before compression. A modern phone photo is 3-8MB. */
 export const AVATAR_SOURCE_MAX_BYTES = 20 * 1024 * 1024;
+
+/** The start of every JPEG: FF D8 FF. */
+export const isJpeg = (bytes: Uint8Array): boolean =>
+  bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
 
 /** The first twelve bytes of a WebP: "RIFF" ---- "WEBP". */
 export const isWebp = (bytes: Uint8Array): boolean =>

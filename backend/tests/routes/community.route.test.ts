@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import request from "supertest";
 import { isWebp } from "@playrates/shared";
-import { webpWithPayload } from "../helpers/webp.js";
+import { realJpeg, webpWithPayload } from "../helpers/webp.js";
 import {
   authHeader,
   buildTestApp,
@@ -726,7 +726,20 @@ describe("community images", () => {
     expect(stored.includes("<html>")).toBe(false);
   });
 
-  it("refuses bytes that are not a WebP", async () => {
+  it("takes a JPEG from a browser that cannot encode WebP, and stores WebP", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .post("/api/v1/community/images")
+      .set("Authorization", authHeader(USER_A))
+      .set("Content-Type", "image/jpeg")
+      .send(await realJpeg());
+
+    expect(response.status).toBe(201);
+    expect(isWebp(state.communityImages.get(response.body.url)!.bytes)).toBe(true);
+  });
+
+  it("refuses bytes that are not a picture", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 
     const response = await request(app)

@@ -2,7 +2,7 @@ import express, { Router, type RequestHandler } from "express";
 import { z } from "zod";
 import {
   COMMUNITY_IMAGE_MAX_BYTES,
-  COMMUNITY_IMAGE_MIME,
+  UPLOAD_IMAGE_MIMES,
   CreateMessageInputSchema,
   CreateThreadInputSchema,
   MessageIdParamSchema,
@@ -46,7 +46,7 @@ const UserThreadsQuerySchema = z.object({
 
 // Same shape as the avatar upload: one already-compressed image, raw bytes.
 const imageBody = express.raw({
-  type: COMMUNITY_IMAGE_MIME,
+  type: [...UPLOAD_IMAGE_MIMES],
   limit: COMMUNITY_IMAGE_MAX_BYTES,
 });
 

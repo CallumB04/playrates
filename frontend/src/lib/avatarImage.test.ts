@@ -84,6 +84,7 @@ describe("compressAvatar", () => {
         bitmapFor = () => ({ width: 1000, height: 400, close });
         context = {
             drawImage: (...args: unknown[]) => drawn.push(args),
+            fillRect: () => undefined,
             imageSmoothingEnabled: false,
             imageSmoothingQuality: "low",
         };
@@ -144,6 +145,23 @@ describe("compressAvatar", () => {
         sizeFor = () => AVATAR_MAX_BYTES + 1;
 
         await expect(compressAvatar(png())).rejects.toThrow(/another/i);
+    });
+
+    /* Safari's canvas cannot encode WebP. Asked for it, it hands back a PNG
+       of whatever size, and the server would refuse that anyway. */
+    it("falls back to JPEG where the browser can't encode WebP", async () => {
+        vi.mocked(HTMLCanvasElement.prototype.toBlob).mockImplementation(
+            function (this: HTMLCanvasElement, cb, type, quality) {
+                encodes.push({ type: type!, quality: quality as number });
+                const made = type === "image/jpeg" ? type : "image/png";
+                cb(new Blob([new Uint8Array(1_000)], { type: made }));
+            }
+        );
+
+        const blob = await compressAvatar(png());
+
+        expect(blob.type).toBe("image/jpeg");
+        expect(encodes.map((e) => e.type)).toEqual([AVATAR_MIME, "image/jpeg"]);
     });
 
     it("turns away an unusable file without decoding it", async () => {
