@@ -33,8 +33,8 @@ const isCurrent = (
     return [...wanted].every(([key, value]) => actual.get(key) === value);
 };
 
-/** Sticky on a phone, where it carries the only route to nav and search;
- *  static from `lg`, where the page scrolls away from the masthead. */
+/** Stays at the top at every width, translucent so a page's own colours
+ *  (a game's art, say) carry up behind it. */
 const Header = () => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
@@ -98,8 +98,8 @@ const Header = () => {
 
     return (
         <>
-            <header className="sticky top-0 z-40 mx-auto w-full max-w-[1240px] bg-surface px-5 pt-6 sm:px-8 lg:static lg:px-12">
-                <div className="flex items-center justify-between gap-6 border-b border-subtle pb-3.5">
+            <header className="sticky top-0 z-40 w-full border-b border-subtle bg-surface/75 backdrop-blur-lg">
+                <div className="mx-auto flex h-navbar w-full max-w-[1240px] items-center justify-between gap-6 px-5 sm:px-8 lg:px-12">
                     <div className="flex items-center gap-3 sm:gap-4 lg:gap-8">
                         <button
                             type="button"
