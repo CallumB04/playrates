@@ -29,9 +29,11 @@ const LibraryRedirect = () => {
 
 function App() {
     return (
-        <div className="flex min-h-screen flex-col">
+        <div className="flex min-h-dvh flex-col">
             <Header />
-            <main className="flex-1">
+            {/* A full screen at least, so a short page (an empty community, a
+                search with no results) doesn't end on the footer. */}
+            <main className="min-h-dvh flex-1">
                 <PageShell>
                     <Routes>
                         <Route path="/" element={<HomePage />} />
