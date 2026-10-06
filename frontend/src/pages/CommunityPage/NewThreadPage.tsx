@@ -22,6 +22,12 @@ import GamePicker, {
     type PickedGame,
 } from "../../components/community/GamePicker";
 import RichTextEditor from "../../components/community/RichTextEditor";
+import {
+    clearThreadDraft,
+    hasContent,
+    readThreadDraft,
+    writeThreadDraft,
+} from "../../lib/drafts";
 import { threadPath } from "../../components/community/paths";
 import SubmitHint from "../../components/community/SubmitHint";
 import HouseRules from "../../components/community/HouseRules";
@@ -44,10 +50,38 @@ const NewThreadPage = () => {
     const presetId = Number(params.get("game")) || undefined;
     const { data: preset } = useGame(presetId);
 
-    const [game, setGame] = useState<PickedGame | null>(null);
-    const [touchedGame, setTouchedGame] = useState(false);
-    const [title, setTitle] = useState("");
-    const [body, setBody] = useState<RichTextDoc | null>(null);
+    /* A thread left half-written is kept on this device and picked up here,
+       unless this visit came from a different game's page: that's a fresh
+       thread about that game. */
+    const [restored] = useState(() => {
+        const draft = readThreadDraft();
+        if (!draft || !hasContent(draft)) return null;
+        if (presetId && draft.game && draft.game.id !== presetId) return null;
+        return draft;
+    });
+    const [game, setGame] = useState<PickedGame | null>(restored?.game ?? null);
+    const [touchedGame, setTouchedGame] = useState(!!restored?.game);
+    const [title, setTitle] = useState(restored?.title ?? "");
+    const [body, setBody] = useState<RichTextDoc | null>(
+        restored?.body ?? null
+    );
+    const [editorKey, setEditorKey] = useState(0);
+
+    useEffect(() => {
+        const draft = { game, title, body };
+        if (hasContent(draft)) writeThreadDraft(draft);
+        else clearThreadDraft();
+    }, [game, title, body]);
+
+    const startOver = () => {
+        clearThreadDraft();
+        setGame(null);
+        setTouchedGame(true);
+        setTitle("");
+        setBody(null);
+        // the editor holds its own document, so it starts again empty
+        setEditorKey((key) => key + 1);
+    };
     const [uploading, setUploading] = useState(false);
     const [attempted, setAttempted] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
@@ -100,6 +134,7 @@ const NewThreadPage = () => {
                 title: title.trim(),
                 body,
             });
+            clearThreadDraft();
             navigate(threadPath(created.thread.id), { replace: true });
         } catch (error) {
             notify(
@@ -123,9 +158,23 @@ const NewThreadPage = () => {
                 {presetId ? "Back to the game" : "Community"}
             </Link>
 
-            <h1 className="font-display text-title text-content">
-                Start a thread
-            </h1>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <h1 className="font-display text-title text-content">
+                    Start a thread
+                </h1>
+                {restored && (
+                    <p className="text-label text-content-muted">
+                        Picked up where you left off.{" "}
+                        <button
+                            type="button"
+                            onClick={startOver}
+                            className="relative cursor-pointer text-brand before:absolute before:-inset-3 before:content-[''] hover:underline sm:before:hidden"
+                        >
+                            Start over
+                        </button>
+                    </p>
+                )}
+            </div>
 
             <HouseRules />
 
@@ -169,6 +218,8 @@ const NewThreadPage = () => {
                         First message
                     </span>
                     <RichTextEditor
+                        key={editorKey}
+                        initial={editorKey === 0 ? restored?.body : null}
                         label="First message"
                         placeholder="Set the scene. Everyone who replies will read this first."
                         onChange={setBody}
