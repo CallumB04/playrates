@@ -22,13 +22,16 @@ import DeleteGameLogPopup from "./gamelog/DeleteGameLogPopup";
 import {
     achievementFraction,
     emptyDraft,
+    fieldsFor,
+    filledDetails,
     HOURS_HINT,
     logReducer,
     toGameLogInput,
     unreadableHours,
     validateDraft,
 } from "./gamelog/logEditorReducer";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
+import { cn } from "../lib/cn";
 import { formatPercent } from "../lib/format";
 
 interface CreateOrEditGameLogPopupProps {
@@ -75,6 +78,7 @@ const CreateOrEditGameLogPopup = ({
     const [error, setError] = useState<string | null>(null);
     const [hydrated, setHydrated] = useState(false);
     const [confirmingDelete, setConfirmingDelete] = useState(false);
+    const [detailsOpen, setDetailsOpen] = useState(false);
 
     /* Wait for both, or a blank note overwrites a real one and a backlog game
        opens as played. */
@@ -92,6 +96,16 @@ const CreateOrEditGameLogPopup = ({
                 : null,
         });
         setHydrated(true);
+        // A log that already has details opens with them showing.
+        setDetailsOpen(
+            !!existing &&
+                (existing.hoursPlayed !== null ||
+                    existing.hoursToBeat !== null ||
+                    existing.startDate !== null ||
+                    existing.finishDate !== null ||
+                    !!existing.system ||
+                    existing.achievementsTotal !== null)
+        );
     }, [hydrated, reviewLoading, logLoading, existing, review]);
 
     // Only once hydrated: before that the form's height isn't final.
@@ -109,6 +123,8 @@ const CreateOrEditGameLogPopup = ({
     );
 
     const progress = useMemo(() => achievementFraction(draft), [draft]);
+    const fields = fieldsFor(draft.status);
+    const filled = filledDetails(draft);
     const busy = save.isPending || saveReview.isPending || remove.isPending;
 
     const handleSave = async () => {
@@ -165,7 +181,9 @@ const CreateOrEditGameLogPopup = ({
             showCloseButton={false}
             className="w-full max-w-[880px] p-0! sm:p-0!"
         >
-            <header className="flex items-center gap-4 border-b border-subtle px-5 py-4 sm:px-6">
+            {/* Header and footer stay put while the form scrolls between
+                them, so Save is never a scroll away from the field just set. */}
+            <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-subtle bg-surface-raised px-5 py-4 sm:px-6">
                 <div className="min-w-0 flex-1">
                     <h2
                         id="log-editor-title"
@@ -194,232 +212,292 @@ const CreateOrEditGameLogPopup = ({
                     }
                 />
 
-                <div className="rounded-md border border-subtle bg-surface-sunken/50 px-5 py-4">
-                    <RatingMeter
-                        value={draft.rating}
-                        onChange={(value) =>
-                            dispatch({ type: "rating", value })
-                        }
-                        label="Your rating"
-                    />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
-                    <Field
-                        label="Hours played"
-                        error={
-                            unreadableHours(draft.hoursPlayed)
-                                ? HOURS_HINT
-                                : undefined
-                        }
-                    >
-                        {(a11y) => (
-                            <Input
-                                inputMode="decimal"
-                                autoComplete="off"
-                                placeholder="0"
-                                className="font-mono tabular-nums"
-                                value={draft.hoursPlayed}
-                                onChange={(e) =>
-                                    dispatch({
-                                        type: "set",
-                                        field: "hoursPlayed",
-                                        value: e.target.value,
-                                    })
-                                }
-                                {...a11y}
-                            />
-                        )}
-                    </Field>
-                    <Field
-                        label="Hours to beat"
-                        error={
-                            unreadableHours(draft.hoursToBeat)
-                                ? HOURS_HINT
-                                : undefined
-                        }
-                    >
-                        {(a11y) => (
-                            <Input
-                                inputMode="decimal"
-                                autoComplete="off"
-                                placeholder="0"
-                                className="font-mono tabular-nums"
-                                value={draft.hoursToBeat}
-                                onChange={(e) =>
-                                    dispatch({
-                                        type: "set",
-                                        field: "hoursToBeat",
-                                        value: e.target.value,
-                                    })
-                                }
-                                {...a11y}
-                            />
-                        )}
-                    </Field>
-                    <Field label="Started">
-                        {(a11y) => (
-                            <Input
-                                type="date"
-                                value={draft.startDate}
-                                onChange={(e) =>
-                                    dispatch({
-                                        type: "set",
-                                        field: "startDate",
-                                        value: e.target.value,
-                                    })
-                                }
-                                {...a11y}
-                            />
-                        )}
-                    </Field>
-                    <Field label="Finished">
-                        {(a11y) => (
-                            <Input
-                                type="date"
-                                value={draft.finishDate}
-                                onChange={(e) =>
-                                    dispatch({
-                                        type: "set",
-                                        field: "finishDate",
-                                        value: e.target.value,
-                                    })
-                                }
-                                {...a11y}
-                            />
-                        )}
-                    </Field>
-                </div>
-
-                <div className="grid gap-5 lg:grid-cols-2">
-                    <div>
-                        <span
-                            id="log-platform-label"
-                            className="mb-2 block text-label text-content-muted"
-                        >
-                            Platform
-                        </span>
-                        <Dropdown
-                            options={systemOptions(available, "Not set")}
-                            value={draft.system}
-                            placeholder="Not set"
-                            aria-labelledby="log-platform-label"
+                {fields.has("rating") && (
+                    <div className="rounded-md border border-subtle bg-surface-sunken/50 px-5 py-4">
+                        <RatingMeter
+                            value={draft.rating}
                             onChange={(value) =>
-                                dispatch({
-                                    type: "system",
-                                    value,
-                                    platform: familyOf(available, value) ?? "",
-                                })
+                                dispatch({ type: "rating", value })
                             }
+                            label="Your rating"
                         />
                     </div>
+                )}
 
+                {(fields.has("review") || focusReview) && (
                     <div>
-                        <div className="mb-2 flex items-baseline justify-between gap-3">
+                        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-3">
                             <span className="text-label text-content-muted">
-                                Achievements
+                                Review (optional)
                             </span>
-                            {progress !== null && (
-                                <span className="text-label-sm text-status-played">
-                                    {formatPercent(progress)} ·{" "}
-                                    {draft.achievementsCompleted} of{" "}
-                                    {draft.achievementsTotal}
+                            <div className="flex flex-wrap items-center gap-3.5">
+                                <Toggle
+                                    checked={draft.reviewSpoilers}
+                                    onChange={(value) =>
+                                        dispatch({
+                                            type: "set",
+                                            field: "reviewSpoilers",
+                                            value,
+                                        })
+                                    }
+                                    label="Spoilers"
+                                />
+                                <Toggle
+                                    checked={draft.reviewIsPublic}
+                                    onChange={(value) =>
+                                        dispatch({
+                                            type: "set",
+                                            field: "reviewIsPublic",
+                                            value,
+                                        })
+                                    }
+                                    label={
+                                        draft.reviewIsPublic
+                                            ? "Public"
+                                            : "Private"
+                                    }
+                                />
+                                <span className="text-label-sm text-content-muted">
+                                    {draft.reviewBody.length} / 5000
+                                </span>
+                            </div>
+                        </div>
+                        <Textarea
+                            ref={reviewRef}
+                            rows={3}
+                            maxLength={5000}
+                            aria-label="Review"
+                            value={draft.reviewBody}
+                            onChange={(e) =>
+                                dispatch({
+                                    type: "set",
+                                    field: "reviewBody",
+                                    value: e.target.value,
+                                })
+                            }
+                            className="min-h-[74px] leading-relaxed"
+                            placeholder="What stayed with you?"
+                        />
+                    </div>
+                )}
+
+                {/* The rest is detail most logs never fill in, so it waits
+                    behind one press, open from the start where it's filled. */}
+                <div className="border-t border-subtle pt-4">
+                    <button
+                        type="button"
+                        aria-expanded={detailsOpen}
+                        aria-controls="log-details"
+                        onClick={() => setDetailsOpen((open) => !open)}
+                        className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 text-left text-label text-content-secondary hover:text-content sm:min-h-9"
+                    >
+                        <span>
+                            {detailsOpen ? "Fewer details" : "More details"}
+                            {!detailsOpen && filled > 0 && (
+                                <span className="ml-2 text-content-muted">
+                                    {filled} filled in
                                 </span>
                             )}
-                        </div>
-                        <div className="flex items-center gap-2.5">
-                            <NumberInput
-                                min={0}
-                                aria-label="Achievements completed"
-                                placeholder="0"
-                                value={draft.achievementsCompleted}
-                                onChange={(e) =>
-                                    dispatch({
-                                        type: "set",
-                                        field: "achievementsCompleted",
-                                        value: e.target.value,
-                                    })
-                                }
-                                className="w-22"
-                            />
-                            <span className="font-mono text-[13px] text-content-muted">
-                                of
-                            </span>
-                            <NumberInput
-                                min={0}
-                                aria-label="Achievements total"
-                                placeholder="0"
-                                value={draft.achievementsTotal}
-                                onChange={(e) =>
-                                    dispatch({
-                                        type: "set",
-                                        field: "achievementsTotal",
-                                        value: e.target.value,
-                                    })
-                                }
-                                className="w-22"
-                            />
-                            <Progress
-                                size="lg"
-                                value={progress ?? 0}
-                                label="Achievements earned"
-                                className="flex-1"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <div className="mb-2 flex flex-wrap items-baseline justify-between gap-3">
-                        <span className="text-label text-content-muted">
-                            Review (optional)
                         </span>
-                        <div className="flex flex-wrap items-center gap-3.5">
-                            <Toggle
-                                checked={draft.reviewSpoilers}
-                                onChange={(value) =>
-                                    dispatch({
-                                        type: "set",
-                                        field: "reviewSpoilers",
-                                        value,
-                                    })
-                                }
-                                label="Spoilers"
-                            />
-                            <Toggle
-                                checked={draft.reviewIsPublic}
-                                onChange={(value) =>
-                                    dispatch({
-                                        type: "set",
-                                        field: "reviewIsPublic",
-                                        value,
-                                    })
-                                }
-                                label={
-                                    draft.reviewIsPublic ? "Public" : "Private"
-                                }
-                            />
-                            <span className="text-label-sm text-content-muted">
-                                {draft.reviewBody.length} / 5000
-                            </span>
+                        <ChevronDown
+                            size={16}
+                            aria-hidden
+                            className={cn(
+                                "shrink-0 transition-transform",
+                                detailsOpen && "rotate-180"
+                            )}
+                        />
+                    </button>
+                    {detailsOpen && (
+                        <div
+                            id="log-details"
+                            className="mt-3 flex flex-col gap-5"
+                        >
+                            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+                                {fields.has("hoursPlayed") && (
+                                    <Field
+                                        label="Hours played"
+                                        error={
+                                            unreadableHours(draft.hoursPlayed)
+                                                ? HOURS_HINT
+                                                : undefined
+                                        }
+                                    >
+                                        {(a11y) => (
+                                            <Input
+                                                inputMode="decimal"
+                                                autoComplete="off"
+                                                placeholder="0"
+                                                className="font-mono tabular-nums"
+                                                value={draft.hoursPlayed}
+                                                onChange={(e) =>
+                                                    dispatch({
+                                                        type: "set",
+                                                        field: "hoursPlayed",
+                                                        value: e.target.value,
+                                                    })
+                                                }
+                                                {...a11y}
+                                            />
+                                        )}
+                                    </Field>
+                                )}
+                                <Field
+                                    label="Hours to beat"
+                                    error={
+                                        unreadableHours(draft.hoursToBeat)
+                                            ? HOURS_HINT
+                                            : undefined
+                                    }
+                                >
+                                    {(a11y) => (
+                                        <Input
+                                            inputMode="decimal"
+                                            autoComplete="off"
+                                            placeholder="0"
+                                            className="font-mono tabular-nums"
+                                            value={draft.hoursToBeat}
+                                            onChange={(e) =>
+                                                dispatch({
+                                                    type: "set",
+                                                    field: "hoursToBeat",
+                                                    value: e.target.value,
+                                                })
+                                            }
+                                            {...a11y}
+                                        />
+                                    )}
+                                </Field>
+                                {fields.has("startDate") && (
+                                    <Field label="Started">
+                                        {(a11y) => (
+                                            <Input
+                                                type="date"
+                                                value={draft.startDate}
+                                                onChange={(e) =>
+                                                    dispatch({
+                                                        type: "set",
+                                                        field: "startDate",
+                                                        value: e.target.value,
+                                                    })
+                                                }
+                                                {...a11y}
+                                            />
+                                        )}
+                                    </Field>
+                                )}
+                                {fields.has("finishDate") && (
+                                    <Field label="Finished">
+                                        {(a11y) => (
+                                            <Input
+                                                type="date"
+                                                value={draft.finishDate}
+                                                onChange={(e) =>
+                                                    dispatch({
+                                                        type: "set",
+                                                        field: "finishDate",
+                                                        value: e.target.value,
+                                                    })
+                                                }
+                                                {...a11y}
+                                            />
+                                        )}
+                                    </Field>
+                                )}
+                            </div>
+
+                            <div className="grid gap-5 lg:grid-cols-2">
+                                <div>
+                                    <span
+                                        id="log-platform-label"
+                                        className="mb-2 block text-label text-content-muted"
+                                    >
+                                        Platform
+                                    </span>
+                                    <Dropdown
+                                        options={systemOptions(
+                                            available,
+                                            "Not set"
+                                        )}
+                                        value={draft.system}
+                                        placeholder="Not set"
+                                        aria-labelledby="log-platform-label"
+                                        onChange={(value) =>
+                                            dispatch({
+                                                type: "system",
+                                                value,
+                                                platform:
+                                                    familyOf(
+                                                        available,
+                                                        value
+                                                    ) ?? "",
+                                            })
+                                        }
+                                    />
+                                </div>
+
+                                {fields.has("achievements") && (
+                                    <div>
+                                        <div className="mb-2 flex items-baseline justify-between gap-3">
+                                            <span className="text-label text-content-muted">
+                                                Achievements
+                                            </span>
+                                            {progress !== null && (
+                                                <span className="text-label-sm text-status-played">
+                                                    {formatPercent(progress)} ·{" "}
+                                                    {
+                                                        draft.achievementsCompleted
+                                                    }{" "}
+                                                    of {draft.achievementsTotal}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2.5">
+                                            <NumberInput
+                                                min={0}
+                                                aria-label="Achievements completed"
+                                                placeholder="0"
+                                                value={
+                                                    draft.achievementsCompleted
+                                                }
+                                                onChange={(e) =>
+                                                    dispatch({
+                                                        type: "set",
+                                                        field: "achievementsCompleted",
+                                                        value: e.target.value,
+                                                    })
+                                                }
+                                                className="w-22"
+                                            />
+                                            <span className="font-mono text-[13px] text-content-muted">
+                                                of
+                                            </span>
+                                            <NumberInput
+                                                min={0}
+                                                aria-label="Achievements total"
+                                                placeholder="0"
+                                                value={draft.achievementsTotal}
+                                                onChange={(e) =>
+                                                    dispatch({
+                                                        type: "set",
+                                                        field: "achievementsTotal",
+                                                        value: e.target.value,
+                                                    })
+                                                }
+                                                className="w-22"
+                                            />
+                                            <Progress
+                                                size="lg"
+                                                value={progress ?? 0}
+                                                label="Achievements earned"
+                                                className="flex-1"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                    <Textarea
-                        ref={reviewRef}
-                        rows={3}
-                        maxLength={5000}
-                        aria-label="Review"
-                        value={draft.reviewBody}
-                        onChange={(e) =>
-                            dispatch({
-                                type: "set",
-                                field: "reviewBody",
-                                value: e.target.value,
-                            })
-                        }
-                        className="min-h-[74px] leading-relaxed"
-                        placeholder="What stayed with you?"
-                    />
+                    )}
                 </div>
 
                 {error && (
@@ -429,7 +507,7 @@ const CreateOrEditGameLogPopup = ({
                 )}
             </div>
 
-            <footer className="flex flex-col-reverse gap-3 border-t border-subtle bg-surface-raised px-5 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:px-6">
+            <footer className="sticky bottom-0 z-10 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-subtle bg-surface-raised px-5 pt-3 pb-[calc(--spacing(3)+env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
                 {existing && (
                     <button
                         type="button"
@@ -440,19 +518,19 @@ const CreateOrEditGameLogPopup = ({
                         Delete this log
                     </button>
                 )}
-                <div className="flex flex-col-reverse gap-2.5 sm:ml-auto sm:flex-row">
+                <div className="flex w-full gap-2.5 sm:ml-auto sm:w-auto">
                     <Button
                         variant="secondary"
                         onClick={closePopup}
                         disabled={busy}
-                        className="w-full sm:w-auto"
+                        className="flex-1 sm:flex-none"
                     >
                         Cancel
                     </Button>
                     <Button
                         onClick={() => void handleSave()}
                         disabled={busy}
-                        className="w-full sm:w-auto"
+                        className="flex-1 sm:flex-none"
                     >
                         {busy ? "Saving…" : "Save entry"}
                     </Button>

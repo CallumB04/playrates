@@ -181,3 +181,49 @@ export const achievementFraction = (draft: LogDraft): number | null => {
     if (completed === null || !total) return null;
     return Math.min(1, Math.max(0, completed / total));
 };
+
+export type LogField =
+    | "rating"
+    | "review"
+    | "hoursPlayed"
+    | "startDate"
+    | "finishDate"
+    | "achievements";
+
+const EVERY: LogField[] = [
+    "rating",
+    "review",
+    "hoursPlayed",
+    "startDate",
+    "finishDate",
+    "achievements",
+];
+
+/**
+ * What a log at this status asks for, beyond the platform and hours to beat
+ * every log can have. A wishlist entry has nothing to rate, review or date.
+ * A field it doesn't ask for keeps its value, so changing status by mistake
+ * and back loses nothing.
+ */
+export const fieldsFor = (status: GameStatus): ReadonlySet<LogField> => {
+    switch (status) {
+        case "played":
+            return new Set(EVERY);
+        case "playing":
+            return new Set(EVERY.filter((field) => field !== "finishDate"));
+        default:
+            return new Set();
+    }
+};
+
+/** How many of the tucked-away details hold something, so they open on
+ *  their own for a log that has them. */
+export const filledDetails = (draft: LogDraft): number =>
+    [
+        draft.hoursPlayed,
+        draft.hoursToBeat,
+        draft.startDate,
+        draft.finishDate,
+        draft.system,
+        draft.achievementsCompleted || draft.achievementsTotal,
+    ].filter((value) => value.trim() !== "").length;
