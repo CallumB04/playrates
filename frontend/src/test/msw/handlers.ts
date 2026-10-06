@@ -87,6 +87,7 @@ export const buildGameLog = (
         title: "The Witcher 3: Wild Hunt",
         slug: "the-witcher-3-wild-hunt",
         coverUrl: "https://example.test/witcher.jpg",
+        artworkUrl: null,
         releaseDate: "2015-05-18",
         platforms: ["steam"],
         avgRating: 9.1,

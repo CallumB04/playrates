@@ -110,15 +110,14 @@ const HomePage = () => {
     const { data: communityTrending, isLoading: communityLoading } =
         useTrendingThreads(3);
 
-    // meta.total, not the length of a page.
     const { data: playing } = useMyGameLogs("playing", { limit: 1 });
-    const { data: backlog } = useMyGameLogs("backlog", { limit: 1 });
     // Enough to draw a year without paging. The chart is a shape, not a ledger.
     const { data: played } = useMyGameLogs("played", { limit: 100 });
     const { data: yearStats } = useUserStats(
         user?.username ?? "",
         new Date().getFullYear()
     );
+    const { data: allTime } = useUserStats(user?.username ?? "");
 
     const current = playing?.data[0];
 
@@ -130,6 +129,11 @@ const HomePage = () => {
     );
 
     const quickAdd = useQuickAdd();
+
+    /* Once a newcomer, until the page is left: adding the first starter
+       would otherwise swap the plate out from under the tap that did it. */
+    const [newcomer, setNewcomer] = useState(false);
+    if (myLogIds?.length === 0 && !newcomer) setNewcomer(true);
 
     // Every cover on the page can be logged from where it sits.
     const statusFor = (game: Game) => {
@@ -196,11 +200,23 @@ const HomePage = () => {
                 <ReEntryPlate
                     username={user.username}
                     displayName={user.firstName || user.username}
+                    isNew={newcomer}
+                    backdrop={
+                        current?.game?.artworkUrl ??
+                        (newcomer
+                            ? popular?.data[0]?.artworkUrl
+                            : trending?.data[0]?.artworkUrl) ??
+                        null
+                    }
                     current={current}
-                    playingCount={playing?.meta.total ?? 0}
-                    backlogCount={backlog?.meta.total ?? 0}
+                    shelves={allTime?.byStatus}
                     yearLogs={played?.data ?? []}
                     yearStats={yearStats}
+                    starters={popular?.data ?? []}
+                    isLogged={(gameId) => logByGameId.has(gameId)}
+                    onAddStarter={(game) =>
+                        quickAdd(game.id, game.title, "backlog")
+                    }
                     onUpdateLog={() => current && setLogging(current.gameId)}
                 />
             ) : (

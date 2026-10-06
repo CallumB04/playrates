@@ -21,6 +21,7 @@ export interface GameLogWithGame extends GameLog {
         | "title"
         | "slug"
         | "coverUrl"
+        | "artworkUrl"
         | "releaseDate"
         | "platforms"
         | "avgRating"

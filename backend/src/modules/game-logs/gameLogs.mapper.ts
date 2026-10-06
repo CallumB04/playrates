@@ -20,6 +20,7 @@ export interface GameLogWithGame extends GameLog {
     | "title"
     | "slug"
     | "coverUrl"
+    | "artworkUrl"
     | "releaseDate"
     | "platforms"
     /** So a shelf ordered by one of these can print what it ordered on. */
@@ -60,6 +61,7 @@ export const toGameLogWithGame = (row: GameLogRowWithGame): GameLogWithGame => {
       title: game.title,
       slug: game.slug,
       coverUrl: game.coverUrl,
+      artworkUrl: game.artworkUrl,
       releaseDate: game.releaseDate,
       platforms: game.platforms,
       avgRating: game.avgRating,
