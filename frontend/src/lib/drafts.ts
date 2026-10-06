@@ -47,3 +47,22 @@ export const hasContent = (draft: ThreadDraft): boolean =>
     !!draft.game ||
     draft.title.trim() !== "" ||
     (!!draft.body && !isEmptyDoc(draft.body));
+
+const LAST_SYSTEM = "playrates:last-system";
+
+/** The machine the last log was saved on, to start the next one there. */
+export const readLastSystem = (): string | null => {
+    try {
+        return localStorage.getItem(LAST_SYSTEM);
+    } catch {
+        return null;
+    }
+};
+
+export const writeLastSystem = (system: string): void => {
+    try {
+        localStorage.setItem(LAST_SYSTEM, system);
+    } catch {
+        // the next log just starts unset
+    }
+};

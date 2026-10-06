@@ -7,6 +7,7 @@ import {
     useMyGameLogIds,
 } from "../hooks/queries/useGameLogs";
 import { logMilestone } from "../lib/logMilestone";
+import { readLastSystem, writeLastSystem } from "../lib/drafts";
 import { useMyReview, useReviewMutations } from "../hooks/queries/useReviews";
 import { useNotify } from "../contexts/NotificationContext";
 import Modal from "./ui/Modal";
@@ -126,6 +127,24 @@ const CreateOrEditGameLogPopup = ({
         [systems, game?.systems, draft.system]
     );
 
+    /* A new log starts on the machine the last one was saved on, when this
+       game is on it: most people play on one or two, and choosing it every
+       time is work the site can do. */
+    const [presetSystem, setPresetSystem] = useState(false);
+    useEffect(() => {
+        if (presetSystem || !hydrated || existing || draft.system) return;
+        // the game's own machines, not the whole list it falls back to
+        if (!game || available.length === 0) return;
+        setPresetSystem(true);
+        const last = readLastSystem();
+        if (!last || !available.some((s) => s.slug === last)) return;
+        dispatch({
+            type: "system",
+            value: last,
+            platform: familyOf(available, last) ?? "",
+        });
+    }, [presetSystem, hydrated, existing, draft.system, available, game]);
+
     const progress = useMemo(() => achievementFraction(draft), [draft]);
     const fields = fieldsFor(draft.status);
     const filled = filledDetails(draft);
@@ -145,6 +164,7 @@ const CreateOrEditGameLogPopup = ({
             notify("Couldn't save that entry", "error");
             return;
         }
+        if (draft.system) writeLastSystem(draft.system);
 
         const body = draft.reviewBody.trim();
         const hadReview = !!review;
