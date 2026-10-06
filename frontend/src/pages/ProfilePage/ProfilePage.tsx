@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Flag, Moon, Pencil, Settings, Sun } from "lucide-react";
+import { Flag, Pencil, Settings } from "lucide-react";
 import ReportDialog from "../../components/ReportDialog";
 import type { GameLogWithGame } from "../../api";
 import {
@@ -11,7 +11,6 @@ import {
     type SortDirection,
 } from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
-import { useTheme } from "../../contexts/ThemeContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import { useProfile } from "../../hooks/queries/useProfiles";
@@ -61,7 +60,6 @@ const isGameStatus = (value: string): value is GameStatus =>
 
 const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const { user: currentUser } = useAuth();
-    const { theme, toggleTheme } = useTheme();
     const { openLogin } = useAccountForm();
     const notify = useNotify();
     const navigate = useNavigate();
@@ -300,43 +298,17 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                aria-label={
-                                    theme === "dark"
-                                        ? "Switch to day"
-                                        : "Switch to night"
-                                }
-                                title={
-                                    theme === "dark"
-                                        ? "Switch to day"
-                                        : "Switch to night"
-                                }
-                                onClick={toggleTheme}
-                                className="max-sm:size-11 max-sm:px-0"
-                            >
-                                {theme === "dark" ? (
-                                    <Sun size={15} aria-hidden />
-                                ) : (
-                                    <Moon size={15} aria-hidden />
-                                )}
-                                <span className="hidden sm:inline">
-                                    {theme === "dark" ? "Day" : "Night"}
-                                </span>
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
                                 onClick={() =>
                                     setModal({ kind: "editProfile" })
                                 }
-                                className="max-sm:size-11 max-sm:px-0"
+                                className="max-sm:min-h-11"
                             >
                                 <Pencil size={15} aria-hidden />
-                                <span className="hidden sm:inline">
-                                    Edit profile
-                                </span>
+                                Edit profile
                             </Button>
                             <Link
                                 to="/settings"
+                                aria-label="Settings"
                                 className={buttonClass(
                                     "outline",
                                     "max-sm:size-11 max-sm:px-0",

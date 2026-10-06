@@ -1,6 +1,15 @@
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, Shield, UserRound, X } from "lucide-react";
+import {
+    LogOut,
+    Moon,
+    Settings,
+    Shield,
+    Sun,
+    UserRound,
+    X,
+} from "lucide-react";
+import { useTheme } from "../../contexts/ThemeContext";
 import Button from "../ui/Button";
 import ProfilePicture from "../ProfilePicture";
 import { GAME_STATUSES, STATUS_PRESENTATION } from "../../constants/gameStatus";
@@ -36,6 +45,7 @@ const MobileMenu = ({
     onSignOut,
 }: MobileMenuProps) => {
     useOverlay(onClose);
+    const { theme, toggleTheme } = useTheme();
 
     return createPortal(
         <div
@@ -48,14 +58,33 @@ const MobileMenu = ({
                 <span className="font-display text-2xl font-bold text-content">
                     PlayRates
                 </span>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close menu"
-                    className="-mr-[10px] flex size-11 items-center justify-center rounded-sm text-content lift hover:text-brand"
-                >
-                    <X size={24} />
-                </button>
+                <div className="-mr-[10px] flex items-center gap-1">
+                    {/* In the bar, so it costs the menu no height. */}
+                    <button
+                        type="button"
+                        onClick={toggleTheme}
+                        aria-label={
+                            theme === "dark"
+                                ? "Switch to day"
+                                : "Switch to night"
+                        }
+                        className="flex size-11 items-center justify-center rounded-sm text-content-secondary lift hover:text-brand"
+                    >
+                        {theme === "dark" ? (
+                            <Sun size={20} aria-hidden />
+                        ) : (
+                            <Moon size={20} aria-hidden />
+                        )}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        aria-label="Close menu"
+                        className="flex size-11 items-center justify-center rounded-sm text-content lift hover:text-brand"
+                    >
+                        <X size={24} />
+                    </button>
+                </div>
             </div>
 
             <nav className="flex flex-col gap-1 px-3 pt-4 sm:px-6">
