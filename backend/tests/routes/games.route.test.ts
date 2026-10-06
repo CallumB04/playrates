@@ -50,12 +50,8 @@ const externalGame: ExternalGame = {
   website: "https://www.hollowknight.com",
   esrbRating: "Everyone 10+",
   hasSexualContent: false,
-  contentTags: [],
-  metacritic: 90,
-  rawgRating: 4.5,
-  rawgRatingCount: 4200,
-  rawgAddedCount: 500,
-  playtimeHours: 27,
+  criticScore: 90,
+  igdbRatingCount: 4200,
 };
 
 describe("games", () => {
@@ -75,7 +71,7 @@ describe("games", () => {
         ...baseSeed(),
         games: [
           buildGame(),
-          buildGame({ id: 2, title: "Portal 2", rawg_id: 4200 }),
+          buildGame({ id: 2, title: "Portal 2", igdb_id: 4200 }),
         ],
       },
     });
@@ -92,7 +88,7 @@ describe("games", () => {
         ...baseSeed(),
         games: [
           buildGame(),
-          buildGame({ id: 2, title: "Portal 2", rawg_id: 4200 }),
+          buildGame({ id: 2, title: "Portal 2", igdb_id: 4200 }),
         ],
         gamePlatforms: [{ game_id: 2, platform_slug: "xbox" }],
       },
@@ -110,7 +106,7 @@ describe("games", () => {
         ...baseSeed(),
         games: [
           buildGame(),
-          buildGame({ id: 2, has_sexual_content: true, rawg_id: 9 }),
+          buildGame({ id: 2, has_sexual_content: true, igdb_id: 9 }),
         ],
       },
     });
@@ -127,7 +123,7 @@ describe("games", () => {
         ...baseSeed(),
         games: [
           buildGame(),
-          buildGame({ id: 2, title: "Portal 2", rawg_id: 4200 }),
+          buildGame({ id: 2, title: "Portal 2", igdb_id: 4200 }),
         ],
         gameLogs: [buildGameLog({ game_id: 1 })],
       },
@@ -196,7 +192,7 @@ describe("games", () => {
   it("does not call the provider when the local cache is warm", async () => {
     const provider = stubProvider();
     const games = Array.from({ length: 10 }, (_, i) =>
-      buildGame({ id: i + 1, title: `Witcher ${i}`, rawg_id: 1000 + i }),
+      buildGame({ id: i + 1, title: `Witcher ${i}`, igdb_id: 1000 + i }),
     );
     const { app } = buildTestApp({
       seed: { ...baseSeed(), games },
@@ -230,16 +226,16 @@ describe("games", () => {
     expect(response.body.data).toHaveLength(1);
     expect(response.body.data[0].title).toBe("Hollow Knight");
     expect(response.body.data[0].id).not.toBe(externalGame.externalId);
-    expect(response.body.data[0].rawgId).toBe(externalGame.externalId);
+    expect(response.body.data[0].igdbId).toBe(externalGame.externalId);
     expect(state.games).toHaveLength(1);
   });
 
-  /* Running out of RAWG allowance must not take search down with it: the
+  /* An IGDB outage must not take search down with it: the
      catalogue is already ours, and thin local results are better than none. */
   it("still answers from the catalogue when the provider is refusing", async () => {
     const provider = stubProvider();
     provider.search = vi.fn(async () => {
-      throw AppError.upstream("RAWG request failed with status 401");
+      throw AppError.upstream("IGDB request failed with status 401");
     }) as never;
 
     const { app } = buildTestApp({ seed: baseSeed(), provider });
@@ -266,7 +262,7 @@ describe("games", () => {
     const response = await request(app)
       .post("/api/v1/games/import")
       .set("Authorization", authHeader(USER_A))
-      .send({ rawgId: 123 });
+      .send({ igdbId: 123 });
 
     expect(response.status).toBe(503);
     expect(response.body.error.code).toBe("not_configured");
@@ -279,7 +275,7 @@ describe("games", () => {
     const response = await request(app)
       .post("/api/v1/games/import")
       .set("Authorization", authHeader(USER_A))
-      .send({ rawgId: 3328 });
+      .send({ igdbId: 1942 });
 
     expect(response.status).toBe(200);
     expect(provider.getById).not.toHaveBeenCalled();

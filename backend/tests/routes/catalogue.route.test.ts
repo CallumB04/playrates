@@ -35,19 +35,19 @@ describe("catalogue ordering", () => {
         id: 1,
         title: "Zebra",
         release_date: "2020-01-01",
-        rawg_added_count: 500,
+        igdb_rating_count: 500,
       }),
       buildGame({
         id: 2,
         title: "Apple",
         release_date: "2024-06-01",
-        rawg_added_count: 900,
+        igdb_rating_count: 900,
       }),
       buildGame({
         id: 3,
         title: "Mango",
         release_date: "2022-03-01",
-        rawg_added_count: null,
+        igdb_rating_count: null,
       }),
     ],
     gamePlatforms: [],
@@ -93,7 +93,7 @@ describe("catalogue ordering", () => {
           buildGame({
             id: i + 1,
             title: "Same Title",
-            rawg_added_count: 100,
+            igdb_rating_count: 100,
           }),
         ),
         gamePlatforms: [],
@@ -110,8 +110,8 @@ describe("catalogue ordering", () => {
     expect(new Set(seen).size).toBe(10);
   });
 
-  /* RAWG carries placeholder dates years out — a 2033 that is a guess, not a
-     release — and they took the whole front of this sort. */
+  /* An announced game's date is a plan, not a release — a 2033 would take
+     the whole front of this sort. */
   it("keeps unreleased games out of newest", async () => {
     const base = seedWithSorts();
     const { app } = buildTestApp({
@@ -196,7 +196,7 @@ describe("my game-log summaries", () => {
 describe("user stats", () => {
   const seedWithLogs = () => ({
     ...baseSeed(),
-    games: [buildGame({ id: 1 }), buildGame({ id: 2, slug: "b", rawg_id: 2 })],
+    games: [buildGame({ id: 1 }), buildGame({ id: 2, slug: "b", igdb_id: 2 })],
     gameLogs: [
       buildGameLog({ id: 1, game_id: 1, status: "played", hours_played: 52.5, rating: 9 }),
       buildGameLog({ id: 2, game_id: 2, status: "backlog", hours_played: null, rating: null }),
@@ -305,14 +305,14 @@ describe("rating buckets", () => {
 });
 
 describe("most-logged sort", () => {
-    it("orders by PlayRates logs, not by RAWG's tracker count", async () => {
-        // Deliberately opposed: the least-tracked game has the most logs.
+    it("orders by PlayRates logs, not by how well known a game is", async () => {
+        // Deliberately opposed: the least-known game has the most logs.
         const { app } = buildTestApp({
             seed: {
                 ...baseSeed(),
                 games: [
-                    buildGame({ id: 1, title: "Tracked", rawg_added_count: 9000, log_count: 1 }),
-                    buildGame({ id: 2, title: "Logged", rawg_added_count: 10, log_count: 40 }),
+                    buildGame({ id: 1, title: "Tracked", igdb_rating_count: 9000, log_count: 1 }),
+                    buildGame({ id: 2, title: "Logged", igdb_rating_count: 10, log_count: 40 }),
                 ],
                 gamePlatforms: [],
             },
@@ -326,16 +326,16 @@ describe("most-logged sort", () => {
         ]);
     });
 
-    /* RAWG's tracker count orders everything with no logs yet, which is
+    /* IGDB's rating count orders everything with no logs yet, which is
        almost the whole library. It is not a sort anyone can ask for. */
-    it("falls back to the tracker count only where logs tie", async () => {
+    it("falls back to IGDB's rating count only where logs tie", async () => {
         const { app } = buildTestApp({
             seed: {
                 ...baseSeed(),
                 games: [
-                    buildGame({ id: 1, title: "Quiet", rawg_added_count: 10, log_count: 0 }),
-                    buildGame({ id: 2, title: "Known", rawg_added_count: 9000, log_count: 0 }),
-                    buildGame({ id: 3, title: "Logged", rawg_added_count: 1, log_count: 5 }),
+                    buildGame({ id: 1, title: "Quiet", igdb_rating_count: 10, log_count: 0 }),
+                    buildGame({ id: 2, title: "Known", igdb_rating_count: 9000, log_count: 0 }),
+                    buildGame({ id: 3, title: "Logged", igdb_rating_count: 1, log_count: 5 }),
                 ],
                 gamePlatforms: [],
             },
@@ -350,15 +350,15 @@ describe("most-logged sort", () => {
         ]);
     });
 
-    it("rejects the old RAWG sort rather than quietly serving it", async () => {
+    it("rejects an old sort rather than quietly serving it", async () => {
         const { app } = buildTestApp({ seed: baseSeed() });
         const response = await request(app).get("/api/v1/games?sort=popular");
         expect(response.status).toBe(422);
     });
 
-    /* This is the bug the sort had: it ordered on RAWG's own 0-5 community
-       score under a heading that says "by the people who logged them". */
-    it("sorts by PlayRates ratings, not RAWG's community score", async () => {
+    /* The sort once ordered on an upstream community score under a heading
+       that says "by the people who logged them". */
+    it("sorts by PlayRates ratings, not by how well known a game is", async () => {
         const { app } = buildTestApp({
             seed: {
                 ...baseSeed(),
@@ -368,14 +368,14 @@ describe("most-logged sort", () => {
                         title: "Loved here",
                         avg_rating: 9.5,
                         rating_count: 40,
-                        rawg_rating: 1.2,
+                        igdb_rating_count: 10,
                     }),
                     buildGame({
                         id: 2,
                         title: "Loved elsewhere",
                         avg_rating: 4,
                         rating_count: 40,
-                        rawg_rating: 4.9,
+                        igdb_rating_count: 9000,
                     }),
                 ],
                 gamePlatforms: [],
@@ -421,20 +421,20 @@ describe("most-logged sort", () => {
         ]);
     });
 
-    it("sorts by Metacritic, with unscored games last", async () => {
+    it("sorts by critic score, with unscored games last", async () => {
         const { app } = buildTestApp({
             seed: {
                 ...baseSeed(),
                 games: [
-                    buildGame({ id: 1, title: "Unscored", metacritic: null }),
-                    buildGame({ id: 2, title: "Good", metacritic: 78 }),
-                    buildGame({ id: 3, title: "Great", metacritic: 95 }),
+                    buildGame({ id: 1, title: "Unscored", critic_score: null }),
+                    buildGame({ id: 2, title: "Good", critic_score: 78 }),
+                    buildGame({ id: 3, title: "Great", critic_score: 95 }),
                 ],
                 gamePlatforms: [],
             },
         });
 
-        const response = await request(app).get("/api/v1/games?sort=metacritic");
+        const response = await request(app).get("/api/v1/games?sort=critic");
 
         expect(response.body.data.map((g: { title: string }) => g.title)).toEqual([
             "Great",

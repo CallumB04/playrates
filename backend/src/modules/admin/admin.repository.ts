@@ -18,7 +18,7 @@ import type {
   AdminUserDirectoryRow,
   AnnouncementCardRow,
   AnnouncementRow,
-  RawgUsageDayRow,
+  IgdbUsageDayRow,
   ServerErrorRow,
 } from "../../types/database.types.js";
 
@@ -58,7 +58,7 @@ export interface AdminRepository {
   userById(id: string): Promise<AdminUserDirectoryRow | null>;
 
   /** Days on or after `from`, oldest first. */
-  rawgUsage(from: string): Promise<RawgUsageDayRow[]>;
+  igdbUsage(from: string): Promise<IgdbUsageDayRow[]>;
   /** Days a person used PlayRates on or after `from`, oldest first. */
   userActiveDays(id: string, from: string): Promise<string[]>;
 
@@ -186,14 +186,14 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
     return (data as AdminUserDirectoryRow | null) ?? null;
   },
 
-  async rawgUsage(from) {
+  async igdbUsage(from) {
     const { data, error } = await db
-      .from("rawg_usage_days")
+      .from("igdb_usage_days")
       .select("*")
       .gte("day", from)
       .order("day");
     if (error) throw error;
-    return (data ?? []) as RawgUsageDayRow[];
+    return (data ?? []) as IgdbUsageDayRow[];
   },
 
   async userActiveDays(id, from) {

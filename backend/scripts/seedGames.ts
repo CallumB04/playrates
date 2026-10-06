@@ -1,10 +1,11 @@
 /**
- * Populates the games table from RAWG.
+ * Adds a handful of games from IGDB, by search. For a fresh local database;
+ * the full catalogue comes from scripts/migrateToIgdb.ts --import.
  *
  *   npm run seed:games -w backend
  *   npm run seed:games -w backend -- "hollow knight" "celeste"
  *
- * Safe to re-run: games upsert on rawg_id.
+ * Safe to re-run: games upsert on igdb_id.
  */
 // side-effect import: must come first so .env is loaded before env() runs
 import "../src/config/loadEnv.js";
@@ -12,8 +13,7 @@ import { env } from "../src/config/env.js";
 import { supabase } from "../src/config/supabase.js";
 import { createLogger } from "../src/lib/logger.js";
 import { createGamesRepository } from "../src/modules/games/games.repository.js";
-import { createRawgProvider } from "../src/providers/games/rawg/rawg.provider.js";
-import { createRawgUsageRecorder } from "../src/config/rawgUsage.js";
+import { igdbFromEnv } from "../src/config/igdb.js";
 
 /** Reasonable starting catalogue when no terms are given. */
 const DEFAULT_TERMS = [
@@ -33,9 +33,10 @@ const main = async () => {
   const logger = createLogger();
   const config = env();
 
-  if (!config.RAWG_API_KEY) {
+  const provider = igdbFromEnv(config, supabase());
+  if (!provider.isConfigured) {
     logger.error(
-      "RAWG_API_KEY is not set. Add it to backend/.env - get a free key at https://rawg.io/apidocs",
+      "IGDB_CLIENT_ID and IGDB_CLIENT_SECRET are not set. Add a Twitch app's credentials to backend/.env (dev.twitch.tv/console).",
     );
     process.exit(1);
   }
@@ -43,16 +44,12 @@ const main = async () => {
   const terms = process.argv.slice(2);
   const searchTerms = terms.length > 0 ? terms : DEFAULT_TERMS;
 
-  // Counted like live traffic: it all comes out of the same allowance.
-  const provider = createRawgProvider(config.RAWG_API_KEY, fetch, {
-    onRequest: createRawgUsageRecorder(supabase()),
-  });
   const repo = createGamesRepository(supabase());
 
   let imported = 0;
 
   for (const term of searchTerms) {
-    logger.info({ term }, "searching RAWG");
+    logger.info({ term }, "searching IGDB");
     const results = await provider.search(term, 5);
 
     if (results.length === 0) {

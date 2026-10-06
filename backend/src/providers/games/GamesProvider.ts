@@ -1,6 +1,7 @@
 /**
- * The seam between PlayRates and whichever games API is in use. Everything
- * above deals in `ExternalGame`, so swapping RAWG for IGDB is a new folder.
+ * The seam between PlayRates and whichever games API is in use (IGDB).
+ * Everything above deals in `ExternalGame`, so another source would be a
+ * new folder beside igdb/.
  */
 export interface ExternalGenre {
   slug: string;
@@ -11,11 +12,10 @@ export interface ExternalGame {
   externalId: number;
   slug: string;
   title: string;
-  /** Empty when it came from a listing; the detail endpoint fills it in. */
   description: string;
+  /** Wide art, for link previews and backdrops. */
   coverUrl: string | null;
-  /** Portrait art where the store has it; RAWG only has landscape. Detail
-   *  fetches only — the listing has no store links. */
+  /** The portrait cover every tile shows. */
   boxArtUrl: string | null;
   /** YYYY-MM-DD */
   releaseDate: string | null;
@@ -24,21 +24,17 @@ export interface ExternalGame {
   /** The individual machines within those families. */
   systemSlugs: string[];
   genres: ExternalGenre[];
-  /** Detail-endpoint only; a listing row carries neither. */
   developers: string[];
   publishers: string[];
-  /** Detail-endpoint only. The game's own site, not a store page. */
+  /** The game's own site, not a store page. */
   website: string | null;
-  /** In both responses, so the bulk import fills this one in. */
+  /** In words: "Mature", "Everyone 10+". */
   esrbRating: string | null;
   hasSexualContent: boolean;
-  contentTags: string[];
-  metacritic: number | null;
-  rawgRating: number | null;
-  rawgRatingCount: number | null;
-  /** How many upstream users track it; the popularity ordering. */
-  rawgAddedCount: number | null;
-  playtimeHours: number | null;
+  /** Professional reviews, averaged, 0-100. */
+  criticScore: number | null;
+  /** How many people have rated it upstream: how well known it is. */
+  igdbRatingCount: number | null;
 }
 
 export interface GamePage {
@@ -54,11 +50,10 @@ export interface GamesProvider {
   readonly isConfigured: boolean;
   search(query: string, limit?: number): Promise<ExternalGame[]>;
   getById(externalId: number): Promise<ExternalGame | null>;
-  /** One page of the catalogue, most-tracked first. Carries everything except
-   *  the description. */
+  /** One page of the catalogue, best known first. */
   listByPopularity(page: number, pageSize: number): Promise<GamePage>;
-  /** Games released between two dates (YYYY-MM-DD, inclusive), most-tracked
-   *  first. Also listing-only, so no descriptions. */
+  /** Games released between two dates (YYYY-MM-DD, inclusive), best known
+   *  first. */
   listByDate(query: {
     from: string;
     to: string;
@@ -67,7 +62,7 @@ export interface GamesProvider {
   }): Promise<GamePage>;
 }
 
-/** Used when no API key is set. Returns empty results rather than throwing,
+/** Used when no credentials are set. Returns empty results rather than throwing,
  *  so the app runs on its local catalogue. */
 export const nullGamesProvider: GamesProvider = {
   name: "none",

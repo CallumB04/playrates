@@ -23,7 +23,10 @@ const EnvSchema = z.object({
   /** Bypasses row level security. Backend only — never expose this. */
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
 
-  RAWG_API_KEY: z.string().optional(),
+  /** A Twitch developer app's credentials; IGDB authenticates through
+   *  Twitch. Without both, search uses the local catalogue only. */
+  IGDB_CLIENT_ID: z.string().optional(),
+  IGDB_CLIENT_SECRET: z.string().optional(),
 
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])

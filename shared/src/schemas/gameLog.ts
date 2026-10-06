@@ -100,7 +100,7 @@ export type GameLogPatch = z.infer<
 export const GAME_LOG_SORTS = [
   "rating",
   "gameRating",
-  "metacritic",
+  "critic",
   "played",
   "title",
   "released",

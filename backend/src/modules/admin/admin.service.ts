@@ -1,8 +1,4 @@
-import {
-  RAWG_MONTHLY_ALLOWANCE,
-  RAWG_RESET_DAY,
-  patchNoteAnnouncement,
-} from "@playrates/shared";
+import { patchNoteAnnouncement } from "@playrates/shared";
 import type {
   AdminActivityQuery,
   AdminGameEventsQuery,
@@ -23,10 +19,8 @@ import type { NotificationsRepository } from "../notifications/notifications.rep
 import type { AdminRepository } from "./admin.repository.js";
 import {
   isoDay,
+  IGDB_USAGE_DAYS,
   rangeWindow,
-  rawgUsageFrom,
-  type RawgAllowanceSetting,
-  type RawgCorrection,
   toActivityEvent,
   toAnnouncement,
   toCursorPage,
@@ -34,8 +28,8 @@ import {
   toGameSummary,
   toMetricDetail,
   toOverview,
+  toIgdbUsage,
   toPatchNote,
-  toRawgUsage,
   toServerError,
   toUserSummary,
 } from "./admin.mapper.js";
@@ -47,11 +41,6 @@ const DAY_MS = 86_400_000;
 
 /** Twelve weeks: enough for a person's habits to show, few enough to draw. */
 const ACTIVE_DAYS_SHOWN = 84;
-
-const DEFAULT_ALLOWANCE: RawgAllowanceSetting = {
-  allowance: RAWG_MONTHLY_ALLOWANCE,
-  resetDay: RAWG_RESET_DAY,
-};
 
 /** Everything behind /admin. requireAdmin has already run by the time any of
  *  this is reached, so nothing here checks the caller again. */
@@ -72,15 +61,10 @@ export const createAdminService = (deps: {
     return toGameSummary(row);
   };
 
-  const rawgUsage = async () => {
+  const igdbUsage = async () => {
     const today = now();
-    const [setting, correction] = await Promise.all([
-      repo.getSetting<RawgAllowanceSetting>("rawg_allowance"),
-      repo.getSetting<RawgCorrection>("rawg_correction"),
-    ]);
-    const allowance = setting ?? DEFAULT_ALLOWANCE;
-    const rows = await repo.rawgUsage(rawgUsageFrom(today, allowance.resetDay));
-    return toRawgUsage(rows, today, allowance, correction);
+    const from = isoDay(new Date(today.getTime() - (IGDB_USAGE_DAYS - 1) * DAY_MS));
+    return toIgdbUsage(await repo.igdbUsage(from), today);
   };
 
   /** Only to the admin, and kept out of the history: it is a proof. */
@@ -159,29 +143,14 @@ export const createAdminService = (deps: {
       return rows.map(toGameSummary);
     },
 
-    rawgUsage,
-
-    /** Takes the figure RAWG's own dashboard shows as the truth from now on.
-     *  Today's requests so far are already inside it, so they are noted and
-     *  not counted a second time. */
-    async correctRawg(left: number) {
-      const today = isoDay(now());
-      const rows = await repo.rawgUsage(today);
-      const correction: RawgCorrection = {
-        left,
-        day: today,
-        baseline: rows.find((r) => r.day === today)?.requests ?? 0,
-      };
-      await repo.setSetting("rawg_correction", correction);
-      return rawgUsage();
-    },
+    igdbUsage,
 
     pull(input: AdminPullInput, actorId: string) {
       return gamesService.pullByDate(input, actorId, now());
     },
 
-    async importGame(rawgId: number, actorId: string): Promise<AdminImportResult> {
-      const { game, created } = await gamesService.importByRawgId(rawgId, {
+    async importGame(igdbId: number, actorId: string): Promise<AdminImportResult> {
+      const { game, created } = await gamesService.importByIgdbId(igdbId, {
         id: actorId,
         source: "admin",
       });
@@ -197,7 +166,7 @@ export const createAdminService = (deps: {
       const ok = await gamesService.resyncDetails(id, actorId);
       if (!ok) {
         throw AppError.upstream(
-          "RAWG did not return this game's details. The game log has the reason.",
+          "IGDB did not return this game's details. The game log has the reason.",
         );
       }
       return findGame(id);
@@ -298,13 +267,12 @@ export const createAdminService = (deps: {
       // Everything below reads the database, so it only runs if that is up.
       const [usage, errors] = database.ok
         ? await Promise.all([
-            rawgUsage(),
+            igdbUsage(),
             repo.serverErrorStats(
               new Date(checkedAt.getTime() - DAY_MS).toISOString(),
             ),
           ])
         : [null, { count: 0, lastAt: null }];
-      const todayRow = usage?.days.at(-1);
 
       return {
         checkedAt: checkedAt.toISOString(),
@@ -316,10 +284,10 @@ export const createAdminService = (deps: {
           node: process.version,
         },
         database,
-        rawg: {
+        igdb: {
           configured: provider.isConfigured,
-          todayRequests: todayRow?.requests ?? 0,
-          todayFailures: todayRow?.failures ?? 0,
+          todayRequests: usage?.todayRequests ?? 0,
+          todayFailures: usage?.todayFailures ?? 0,
           lastRequestAt: usage?.lastRequestAt ?? null,
           lastFailureAt: usage?.lastFailureAt ?? null,
           lastError: usage?.lastError ?? null,

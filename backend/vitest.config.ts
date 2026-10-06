@@ -18,7 +18,8 @@ export default defineConfig({
                 "src/middleware/**",
                 "src/modules/**/*.mapper.ts",
                 "src/providers/games/GamesProvider.ts",
-                "src/providers/games/rawg/rawg.mapper.ts",
+                "src/providers/games/igdb/igdb.mapper.ts",
+                "src/providers/games/explicitContent.ts",
             ],
             exclude: [
                 "**/*.test.ts",

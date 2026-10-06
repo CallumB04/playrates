@@ -3,7 +3,8 @@ import { BooleanQuerySchema, PaginationSchema } from "./common.js";
 
 export interface Game {
   id: number;
-  rawgId: number | null;
+  /** Null only on a game from before IGDB, not yet replaced. */
+  igdbId: number | null;
   slug: string;
   title: string;
   description: string;
@@ -15,25 +16,21 @@ export interface Game {
   systems: string[];
   hasSexualContent: boolean;
   isTrending: boolean;
-  /** RAWG's average playtime in hours, not a time-to-beat estimate. */
-  playtimeHours: number | null;
   genres: string[];
-  /** Studios credited with making it, in RAWG's order. */
+  /** Studios credited with making it, in IGDB's order. */
   developers: string[];
   publishers: string[];
   /** The game's own site, not a store page. */
   website: string | null;
-  /** RAWG's wording, already display-ready: "Mature", "Everyone 10+". */
+  /** Display-ready: "Mature", "Everyone 10+". */
   esrbRating: string | null;
-  metacritic: number | null;
-  /** RAWG's own 0-5 community score, not a PlayRates rating. */
-  rawgRating: number | null;
+  /** Professional reviews, averaged, 0-100. */
+  criticScore: number | null;
   /** PlayRates logs for this game. */
   logCount: number;
   /** Mean PlayRates rating, and how many it is made of. */
   avgRating: number | null;
   ratingCount: number;
-  rawgRatingCount: number | null;
 }
 
 export interface GameStats {
@@ -59,15 +56,16 @@ const IsoDateSchema = z
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected a YYYY-MM-DD date");
 
 /**
- * How the library is ordered. PlayRates figures only — RAWG's tracker count
- * is the hidden tiebreaker under "logged", not a sort of its own.
+ * How the library is ordered. PlayRates figures, and the critics' — IGDB's
+ * rating count is the hidden tiebreaker under "logged", not a sort of its
+ * own.
  */
 export const GAME_SORTS = [
   "logged",
   "title",
   "released",
   "rating",
-  "metacritic",
+  "critic",
 ] as const;
 export const GameSortSchema = z.enum(GAME_SORTS).default("logged");
 export type GameSort = z.infer<typeof GameSortSchema>;
@@ -103,7 +101,7 @@ export const GameSearchSchema = PaginationSchema.extend({
 
 export const GameImportSchema = z
   .object({
-    rawgId: z.number().int().positive(),
+    igdbId: z.number().int().positive(),
   })
   .strict();
 

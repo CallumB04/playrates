@@ -21,7 +21,7 @@ import {
   type AdminUserSummary,
   type Announcement,
   type AnnouncementTone,
-  type RawgUsage,
+  type IgdbUsage,
   type ServerErrorEntry,
 } from "@playrates/shared";
 import type {
@@ -31,7 +31,7 @@ import type {
   AdminUserDirectoryRow,
   AnnouncementCardRow,
   GameRow,
-  RawgUsageDayRow,
+  IgdbUsageDayRow,
 } from "../../types/database.types.js";
 import { isOnline, toAccent } from "../profiles/profiles.mapper.js";
 import type { PatchNoteEntryRow, ServerErrorRowWithUser } from "./admin.repository.js";
@@ -216,7 +216,7 @@ export const toGameEvent = (row: AdminGameFeedRow): AdminGameEvent => ({
           title: row.game_title,
           coverUrl: row.game_cover_url,
           isTrending: row.game_is_trending ?? false,
-          rawgId: row.game_rawg_id,
+          igdbId: row.game_igdb_id,
         }
       : null,
   actorUsername: row.actor_username,
@@ -228,10 +228,10 @@ export const toGameSummary = (row: GameRow): AdminGameSummary => ({
   title: row.title,
   slug: row.slug,
   coverUrl: row.box_art_url ?? row.cover_url,
-  rawgId: row.rawg_id,
+  igdbId: row.igdb_id,
   isTrending: row.is_trending,
   releaseDate: row.release_date,
-  detailsSyncedAt: row.details_synced_at,
+  syncedAt: row.synced_at,
   logCount: row.log_count,
 });
 
@@ -257,88 +257,20 @@ export const toUserSummary = (
 });
 
 /** How far back the usage chart looks. */
-export const RAWG_USAGE_DAYS = 30;
+export const IGDB_USAGE_DAYS = 30;
 
-export interface RawgAllowanceSetting {
-  allowance: number;
-  resetDay: number;
-}
-
-/** The last figure read off RAWG's dashboard, and how much of that day had
- *  already been counted when it was, so the day isn't counted twice. */
-export interface RawgCorrection {
-  left: number;
-  day: string;
-  baseline: number;
-}
-
-const dayNumber = (day: string) => Date.parse(`${day}T00:00:00Z`) / DAY_MS;
-
-/** The reset day in a given month, pulled in for a month too short for it. */
-const resetIn = (year: number, month: number, resetDay: number): string => {
-  const last = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-  return isoDay(new Date(Date.UTC(year, month, Math.min(resetDay, last))));
-};
-
-/** The allowance period today falls in: from the last reset, up to (not
- *  including) the next. */
-export const rawgPeriod = (
-  today: Date,
-  resetDay: number,
-): { start: string; resetsOn: string } => {
-  const y = today.getUTCFullYear();
-  const m = today.getUTCMonth();
+/** `rows` from the last IGDB_USAGE_DAYS, oldest first. */
+export const toIgdbUsage = (rows: IgdbUsageDayRow[], today: Date): IgdbUsage => {
   const day = isoDay(today);
-  const thisMonth = resetIn(y, m, resetDay);
-  return day >= thisMonth
-    ? { start: thisMonth, resetsOn: resetIn(y, m + 1, resetDay) }
-    : { start: resetIn(y, m - 1, resetDay), resetsOn: thisMonth };
-};
-
-/** The first day the usage query has to reach: the period's start or the
- *  chart's, whichever is earlier. */
-export const rawgUsageFrom = (today: Date, resetDay: number): string => {
-  const { start } = rawgPeriod(today, resetDay);
-  const chartStart = addDays(isoDay(today), -(RAWG_USAGE_DAYS - 1));
-  return start < chartStart ? start : chartStart;
-};
-
-/** `rows` from `rawgUsageFrom(today)`, oldest first. */
-export const toRawgUsage = (
-  rows: RawgUsageDayRow[],
-  today: Date,
-  setting: RawgAllowanceSetting,
-  correction: RawgCorrection | null,
-): RawgUsage => {
-  const day = isoDay(today);
-  const { start, resetsOn } = rawgPeriod(today, setting.resetDay);
-  const sumFrom = (from: string) =>
-    rows.filter((r) => r.day >= from).reduce((n, r) => n + r.requests, 0);
-
-  // A correction made this period is the best figure there is; one from an
-  // earlier period was reset away with it.
-  const corrected = correction !== null && correction.day >= start;
-  const used = corrected
-    ? setting.allowance - correction.left + (sumFrom(correction.day) - correction.baseline)
-    : sumFrom(start);
-  const left = Math.max(0, setting.allowance - used);
-
-  const elapsed = dayNumber(day) - dayNumber(start) + 1;
-  const daysLeft = Math.max(1, dayNumber(resetsOn) - dayNumber(day));
-  const pace = Math.round(used / elapsed);
-  const projectedLeft = left - pace * daysLeft;
-  const runsOutOn =
-    projectedLeft < 0 && pace > 0 ? addDays(day, Math.floor(left / pace)) : null;
-
   const byDay = new Map(rows.map((r) => [r.day, r]));
-  const chartStart = addDays(day, -(RAWG_USAGE_DAYS - 1));
-  const days = Array.from({ length: RAWG_USAGE_DAYS }, (_, i) => {
+  const chartStart = addDays(day, -(IGDB_USAGE_DAYS - 1));
+  const days = Array.from({ length: IGDB_USAGE_DAYS }, (_, i) => {
     const d = addDays(chartStart, i);
     const row = byDay.get(d);
     return { day: d, requests: row?.requests ?? 0, failures: row?.failures ?? 0 };
   });
 
-  const latest = (pick: (r: RawgUsageDayRow) => string | null) =>
+  const latest = (pick: (r: IgdbUsageDayRow) => string | null) =>
     rows.map(pick).filter((v): v is string => v !== null).sort().at(-1) ?? null;
   const lastFailure = [...rows]
     .filter((r) => r.last_failure_at)
@@ -346,19 +278,8 @@ export const toRawgUsage = (
     .at(-1);
 
   return {
-    allowance: setting.allowance,
-    periodStart: start,
-    resetsOn,
-    daysLeft,
-    used,
-    left,
-    basis: corrected ? "corrected" : "counted",
-    since: corrected ? correction.day : (rows.find((r) => r.requests > 0)?.day ?? null),
-    dailyBudget: Math.floor(left / daysLeft),
-    pace,
-    projectedLeft,
-    runsOutOn,
-    periodFailures: rows.filter((r) => r.day >= start).reduce((n, r) => n + r.failures, 0),
+    todayRequests: byDay.get(day)?.requests ?? 0,
+    todayFailures: byDay.get(day)?.failures ?? 0,
     days,
     lastRequestAt: latest((r) => r.last_request_at),
     lastFailureAt: lastFailure?.last_failure_at ?? null,

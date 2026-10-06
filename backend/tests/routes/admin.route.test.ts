@@ -96,12 +96,8 @@ const external = (id: number, title = `Game ${id}`): ExternalGame => ({
   website: null,
   esrbRating: null,
   hasSexualContent: false,
-  contentTags: [],
-  metacritic: null,
-  rawgRating: null,
-  rawgRatingCount: null,
-  rawgAddedCount: null,
-  playtimeHours: null,
+  criticScore: null,
+  igdbRatingCount: null,
 });
 
 const stubProvider = (overrides: Partial<GamesProvider> = {}): GamesProvider => ({
@@ -130,15 +126,14 @@ const ENDPOINTS: { method: "get" | "post" | "patch" | "put"; path: string; body?
   { method: "get", path: "/api/v1/admin/users" },
   { method: "get", path: `/api/v1/admin/users/${USER_A}` },
   { method: "get", path: "/api/v1/admin/games/events" },
-  { method: "get", path: "/api/v1/admin/games/rawg-usage" },
-  { method: "put", path: "/api/v1/admin/games/rawg-usage", body: { left: 6555 } },
+  { method: "get", path: "/api/v1/admin/games/igdb-usage" },
   { method: "get", path: "/api/v1/admin/games/search?q=witcher" },
   {
     method: "post",
     path: "/api/v1/admin/games/pull",
     body: { windowDays: 7, includeUpcoming: false, maxPages: 1 },
   },
-  { method: "post", path: "/api/v1/admin/games/import", body: { rawgId: 3328 } },
+  { method: "post", path: "/api/v1/admin/games/import", body: { igdbId: 1942 } },
   { method: "post", path: "/api/v1/admin/games/1/resync" },
   { method: "patch", path: "/api/v1/admin/games/1", body: { isTrending: false } },
   { method: "get", path: "/api/v1/admin/announcements" },
@@ -324,8 +319,8 @@ describe("admin catalogue controls", () => {
 
   it("pulls page by page up to the cap, counting new and known games", async () => {
     const pages: GamePage[] = [
-      // 3328 is the seeded Witcher, so it is an update, not an addition
-      { games: [external(3328, "The Witcher 3"), external(10)], total: 90, hasNext: true },
+      // 1942 is the seeded Witcher, so it is an update, not an addition
+      { games: [external(1942, "The Witcher 3"), external(10)], total: 90, hasNext: true },
       { games: [external(11), external(12)], total: 90, hasNext: true },
       { games: [external(13)], total: 90, hasNext: true },
     ];
@@ -348,7 +343,7 @@ describe("admin catalogue controls", () => {
       hasMore: true,
     });
     expect(listByDate).toHaveBeenCalledTimes(2);
-    expect(state.games.map((g) => g.rawg_id)).toEqual(
+    expect(state.games.map((g) => g.igdb_id)).toEqual(
       expect.arrayContaining([10, 11, 12]),
     );
     expect(state.gameEvents.at(-1)).toMatchObject({
@@ -413,16 +408,16 @@ describe("admin catalogue controls", () => {
 
   it("re-syncs a game's details now", async () => {
     const getById = vi.fn(async () => ({
-      ...external(3328, "The Witcher 3: Wild Hunt"),
-      description: "Fresh from RAWG.",
+      ...external(1942, "The Witcher 3: Wild Hunt"),
+      description: "Fresh from IGDB.",
     }));
     const { app, state } = buildTestApp({ seed: seed(), provider: stubProvider({ getById }) });
 
     const response = await admin(request(app).post("/api/v1/admin/games/1/resync"));
 
     expect(response.status).toBe(200);
-    expect(getById).toHaveBeenCalledWith(3328);
-    expect(state.games[0]!.description).toBe("Fresh from RAWG.");
+    expect(getById).toHaveBeenCalledWith(1942);
+    expect(state.games[0]!.description).toBe("Fresh from IGDB.");
     expect(state.gameEvents.at(-1)).toMatchObject({
       kind: "details_resynced",
       data: expect.objectContaining({ ok: true }),
@@ -431,7 +426,7 @@ describe("admin catalogue controls", () => {
 
   it("reports a failed re-sync, and logs why", async () => {
     const getById = vi.fn(async () => {
-      throw new Error("RAWG responded 503");
+      throw new Error("IGDB responded 503");
     });
     const { app, state } = buildTestApp({ seed: seed(), provider: stubProvider({ getById }) });
 
@@ -442,22 +437,22 @@ describe("admin catalogue controls", () => {
       "details_backfill_failed",
       "details_resynced",
     ]);
-    expect(state.gameEvents[0]!.data.error).toBe("RAWG responded 503");
+    expect(state.gameEvents[0]!.data.error).toBe("IGDB responded 503");
   });
 
-  it("refuses to re-sync a game that did not come from RAWG", async () => {
+  it("refuses to re-sync a game that is not linked to IGDB", async () => {
     const base = seed();
     const { app } = buildTestApp({
-      seed: { ...base, games: [buildGame({ rawg_id: null })] },
+      seed: { ...base, games: [buildGame({ igdb_id: null })] },
       provider: stubProvider(),
     });
     const response = await admin(request(app).post("/api/v1/admin/games/1/resync"));
     expect(response.status).toBe(422);
   });
 
-  it("logs a search that fell through to RAWG, with what it brought in", async () => {
+  it("logs a search that fell through to IGDB, with what it brought in", async () => {
     const provider = stubProvider({
-      search: vi.fn(async () => [external(50, "Hades II"), external(3328)]),
+      search: vi.fn(async () => [external(50, "Hades II"), external(1942)]),
     });
     const { app, state } = buildTestApp({ seed: seed(), provider });
 
@@ -542,43 +537,28 @@ describe("admin feeds", () => {
       .set("Authorization", authHeader(ADMIN));
     expect(response.status).toBe(200);
     expect(response.body.database.ok).toBe(true);
-    expect(response.body.rawg.configured).toBe(false);
+    expect(response.body.igdb.configured).toBe(false);
   });
 });
 
-describe("admin RAWG allowance", () => {
+describe("admin IGDB usage", () => {
   const today = new Date().toISOString().slice(0, 10);
 
-  it("counts on from the figure RAWG gives, not from what PlayRates counted", async () => {
+  it("says how many requests went to IGDB today", async () => {
     const { app } = buildTestApp({
       seed: {
         ...seed(),
-        rawgUsage: [{ day: today, requests: 12, failures: 0, last_request_at: null, last_failure_at: null, last_error: null }],
+        igdbUsage: [{ day: today, requests: 12, failures: 1, last_request_at: null, last_failure_at: null, last_error: null }],
       },
     });
 
-    const before = await request(app)
-      .get("/api/v1/admin/games/rawg-usage")
-      .set("Authorization", authHeader(ADMIN));
-    expect(before.body).toMatchObject({ basis: "counted", left: 19_988 });
-
-    const corrected = await request(app)
-      .put("/api/v1/admin/games/rawg-usage")
-      .set("Authorization", authHeader(ADMIN))
-      .send({ left: 6555 });
-
-    // The 12 already counted today are inside RAWG's figure.
-    expect(corrected.status).toBe(200);
-    expect(corrected.body).toMatchObject({ basis: "corrected", left: 6555, since: today });
-  });
-
-  it("refuses a figure that isn't a whole number of requests", async () => {
-    const { app } = buildTestApp({ seed: seed() });
     const response = await request(app)
-      .put("/api/v1/admin/games/rawg-usage")
-      .set("Authorization", authHeader(ADMIN))
-      .send({ left: -3 });
-    expect(response.status).toBe(422);
+      .get("/api/v1/admin/games/igdb-usage")
+      .set("Authorization", authHeader(ADMIN));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ todayRequests: 12, todayFailures: 1 });
+    expect(response.body.days).toHaveLength(30);
   });
 });
 

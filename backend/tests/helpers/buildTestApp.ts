@@ -22,7 +22,8 @@ export const setTestEnv = (): void => {
   process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
   process.env.LOG_LEVEL = "silent";
   process.env.CORS_ORIGINS = "http://localhost:5173";
-  delete process.env.RAWG_API_KEY;
+  delete process.env.IGDB_CLIENT_ID;
+  delete process.env.IGDB_CLIENT_SECRET;
   resetEnv();
 };
 

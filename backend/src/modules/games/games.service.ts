@@ -12,7 +12,6 @@ import {
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import type { GamesProvider } from "../../providers/games/GamesProvider.js";
-import type { GameRow } from "../../types/database.types.js";
 import type { GamesRepository } from "./games.repository.js";
 import type {
   GameEventDraft,
@@ -66,7 +65,7 @@ export const createGamesService = (
   ): Promise<{ added: number; updated: number }> => {
     if (external.length === 0) return { added: 0, updated: 0 };
     const existing = new Set(
-      await repo.existingRawgIds(external.map((g) => g.externalId)),
+      await repo.existingIgdbIds(external.map((g) => g.externalId)),
     );
     await repo.upsertMany(external);
     const added = external.filter((g) => !existing.has(g.externalId)).length;
@@ -90,71 +89,39 @@ export const createGamesService = (
         throw AppError.notFound("Game");
       }
 
-      /* The bulk import carries neither descriptions nor credits — RAWG puts
-       both on the detail endpoint only — so the first person to open a game
-       pays for one fetch. Awaited, or they'd have to reload to see it. */
-      if (!row.details_synced_at && row.rawg_id && provider.isConfigured) {
-        const detail = await this.backfillDetails(id, row.rawg_id);
-        if (detail) return toGame({ ...row, ...detail });
-      }
-
       return toGame(row);
     },
 
     /**
-     * Fetches and stores the fields only RAWG's detail endpoint carries,
-     * returning them so this request can render them. Failures are not fatal —
-     * the next view tries again.
+     * Fetches a game from IGDB again and writes it over the row. Failures
+     * are recorded and reported, not thrown: the row keeps what it had.
      */
-    async backfillDetails(
+    async refreshFromIgdb(
       id: number,
-      rawgId: number,
-      source: GameEventSource = "page_view",
-    ): Promise<Partial<GameRow> | null> {
+      igdbId: number,
+      source: GameEventSource,
+    ): Promise<boolean> {
       try {
-        const external = await provider.getById(rawgId);
+        const external = await provider.getById(igdbId);
         if (!external) {
           await record({
             kind: "details_backfill_failed",
             source,
             gameId: id,
-            data: { rawgId, error: "RAWG has no game with this id" },
+            data: { igdbId, error: "IGDB has no game with this id" },
           });
-          return null;
+          return false;
         }
-
-        const fields = {
-          description: external.description,
-          contentTags: external.contentTags,
-          hasSexualContent: external.hasSexualContent,
-          developers: external.developers,
-          publishers: external.publishers,
-          website: external.website,
-          esrbRating: external.esrbRating,
-          boxArtUrl: external.boxArtUrl,
-        };
-        await repo.refreshFromExternal(id, fields);
-
-        return {
-          /* A game with no description keeps the one it has: the import leaves
-           it empty, but a later edit or a different provider might not. */
-          ...(external.description
-            ? { description: external.description }
-            : {}),
-          developers: external.developers,
-          publishers: external.publishers,
-          website: external.website,
-          esrb_rating: external.esrbRating,
-          ...(external.boxArtUrl ? { box_art_url: external.boxArtUrl } : {}),
-        };
+        await repo.applyExternal(id, external);
+        return true;
       } catch (error) {
         await record({
           kind: "details_backfill_failed",
           source,
           gameId: id,
-          data: { rawgId, error: errorText(error) },
+          data: { igdbId, error: errorText(error) },
         });
-        return null;
+        return false;
       }
     },
 
@@ -230,7 +197,7 @@ export const createGamesService = (
     },
 
     /**
-     * Cache-through search: local first, then RAWG, caching what returns. Upstream
+     * Cache-through search: local first, then IGDB, caching what returns. Upstream
      * results are written and re-read, so the ids handed back are always ours.
      */
     async search(
@@ -255,9 +222,9 @@ export const createGamesService = (
         return paginate(local.map(toGame), pagination, local.length);
       }
 
-      /* The provider is an enrichment, not the source: a month's RAWG
-       allowance running out, or an outage, used to turn every thin search
-       into a 502 over a catalogue we already hold locally. */
+      /* The provider is an enrichment, not the source: an outage upstream
+       used to turn every thin search into a 502 over a catalogue we already
+       hold locally. */
       let external: Awaited<ReturnType<GamesProvider["search"]>> = [];
       try {
         external = await provider.search(term, 20);
@@ -288,43 +255,40 @@ export const createGamesService = (
     },
 
     /** Imports a specific upstream game, or returns it if already cached. */
-    async importByRawgId(
-      rawgId: number,
+    async importByIgdbId(
+      igdbId: number,
       actor?: { id: string; source: GameEventSource },
     ): Promise<{ game: Game; created: boolean }> {
-      const existing = await repo.findByRawgId(rawgId);
+      const existing = await repo.findByIgdbId(igdbId);
       if (existing) return { game: toGame(existing), created: false };
 
       if (!provider.isConfigured) {
         throw AppError.notConfigured(
-          "No games provider is configured. Set RAWG_API_KEY to import games.",
+          "No games provider is configured. Set IGDB_CLIENT_ID and IGDB_CLIENT_SECRET to import games.",
         );
       }
 
-      const external = await provider.getById(rawgId);
+      const external = await provider.getById(igdbId);
       if (!external) throw AppError.notFound("Game");
 
       await repo.upsertMany([external]);
 
-      const saved = await repo.findByRawgId(rawgId);
+      const saved = await repo.findByIgdbId(igdbId);
       if (!saved) throw AppError.internal("Game import did not persist");
 
       await record({
-        kind: "rawg_import",
+        kind: "igdb_import",
         source: actor?.source ?? "import",
         gameId: saved.id,
         actorId: actor?.id,
-        data: { rawgId, title: saved.title },
+        data: { igdbId, title: saved.title },
       });
 
       return { game: toGame(saved), created: true };
     },
 
-    /**
-     * Brings in games released in a recent window, most-tracked first. Each
-     * page is one RAWG request, so the cap is what it costs. Listings carry
-     * no descriptions; those come with the first view, as for any import.
-     */
+    /** Brings in games released in a recent window, best known first, one
+     *  IGDB request a page. */
     async pullByDate(
       input: AdminPullInput,
       actorId: string,
@@ -332,7 +296,7 @@ export const createGamesService = (
     ): Promise<AdminPullResult> {
       if (!provider.isConfigured) {
         throw AppError.notConfigured(
-          "No games provider is configured. Set RAWG_API_KEY to pull games.",
+          "No games provider is configured. Set IGDB_CLIENT_ID and IGDB_CLIENT_SECRET to pull games.",
         );
       }
 
@@ -341,7 +305,7 @@ export const createGamesService = (
           .toISOString()
           .slice(0, 10);
       const from = day(-input.windowDays);
-      // RAWG lists games well before release; half a year ahead catches them.
+      // Games are listed well before release; half a year ahead catches them.
       const to = input.includeUpcoming ? day(183) : day(0);
 
       const result: AdminPullResult = {
@@ -402,26 +366,26 @@ export const createGamesService = (
       }
     },
 
-    /** Fetches the detail fields again now, rather than on the next view. */
+    /** Fetches the game from IGDB again now. */
     async resyncDetails(id: number, actorId: string): Promise<boolean> {
       const row = await repo.findById(id);
       if (!row) throw AppError.notFound("Game");
-      if (!row.rawg_id) {
-        throw AppError.validation("This game did not come from RAWG");
+      if (!row.igdb_id) {
+        throw AppError.validation("This game isn't linked to IGDB yet");
       }
       if (!provider.isConfigured) {
         throw AppError.notConfigured("No games provider is configured.");
       }
 
-      const detail = await this.backfillDetails(id, row.rawg_id, "admin");
+      const ok = await this.refreshFromIgdb(id, row.igdb_id, "admin");
       await record({
         kind: "details_resynced",
         source: "admin",
         gameId: id,
         actorId,
-        data: { title: row.title, ok: detail !== null },
+        data: { title: row.title, ok },
       });
-      return detail !== null;
+      return ok;
     },
   };
 };

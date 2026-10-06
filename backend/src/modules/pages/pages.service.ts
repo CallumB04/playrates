@@ -21,7 +21,7 @@ type Repos = Pick<Repositories, "games" | "platforms" | "profiles" | "community"
 /**
  * What the server says about a page before the app loads: enough for a
  * link preview and a search result. Read straight from the repositories,
- * never through a service, so rendering a page can't set off a RAWG call.
+ * never through a service, so rendering a page can't set off an IGDB call.
  *
  * Each returns null when there is nothing at that address.
  */

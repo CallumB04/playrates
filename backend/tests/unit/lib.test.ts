@@ -44,7 +44,7 @@ describe("AppError", () => {
       [AppError.validation("nope"), 422, "validation_failed"],
       [AppError.rateLimited(), 429, "rate_limited"],
       [AppError.internal(), 500, "internal_error"],
-      [AppError.upstream("RAWG is down"), 502, "upstream_error"],
+      [AppError.upstream("IGDB is down"), 502, "upstream_error"],
       [AppError.notConfigured("no key"), 503, "not_configured"],
     ];
 

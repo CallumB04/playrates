@@ -14,11 +14,11 @@ const num = (value: number | null): number | null =>
 
 export const toGame = (row: GameRowWithRelations): Game => ({
   id: row.id,
-  rawgId: row.rawg_id,
+  igdbId: row.igdb_id,
   slug: row.slug,
   title: row.title,
   description: row.description,
-  // The portrait one where we found it; RAWG's landscape image otherwise.
+  // Tiles want the portrait cover; the wide art is for previews.
   coverUrl: row.box_art_url ?? row.cover_url,
   releaseDate: row.release_date,
   platforms: (row.game_platforms ?? []).map((p) => p.platform_slug),
@@ -30,10 +30,7 @@ export const toGame = (row: GameRowWithRelations): Game => ({
   esrbRating: row.esrb_rating,
   hasSexualContent: row.has_sexual_content,
   isTrending: row.is_trending,
-  playtimeHours: num(row.playtime_hours),
-  metacritic: row.metacritic,
-  rawgRating: num(row.rawg_rating),
-  rawgRatingCount: row.rawg_rating_count,
+  criticScore: row.critic_score,
   logCount: row.log_count,
   avgRating: num(row.avg_rating),
   ratingCount: row.rating_count,

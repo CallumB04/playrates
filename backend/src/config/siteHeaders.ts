@@ -14,7 +14,7 @@ export const SITE_CSP = [
   "script-src 'self'",
   // Tiptap and React set inline styles.
   "style-src 'self' 'unsafe-inline'",
-  // Cover art comes from RAWG and a spread of Steam CDN hosts.
+  // Cover art comes from IGDB's image servers, and game websites vary.
   "img-src 'self' data: blob: https:",
   "font-src 'self'",
   `connect-src 'self' https://${SUPABASE} wss://${SUPABASE}`,

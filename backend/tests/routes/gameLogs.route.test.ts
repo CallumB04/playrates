@@ -225,7 +225,7 @@ describe("game logs", () => {
           id: 1,
           title: "Alpha",
           release_date: "2020-01-01",
-          metacritic: 70,
+          critic_score: 70,
         }),
         buildGame({
           id: 2,
@@ -233,7 +233,7 @@ describe("game logs", () => {
           title: "Beta",
           release_date: "2010-01-01",
           avg_rating: 9,
-          metacritic: 95,
+          critic_score: 95,
         }),
         buildGame({
           id: 3,
@@ -241,7 +241,7 @@ describe("game logs", () => {
           title: "Gamma",
           release_date: "2015-01-01",
           avg_rating: 4,
-          metacritic: 60,
+          critic_score: 60,
         }),
       ],
       gameLogs: [
@@ -317,7 +317,7 @@ describe("game logs", () => {
     });
 
     it("orders by the critic score", async () => {
-      expect(await titles("sort=metacritic&direction=desc")).toEqual([
+      expect(await titles("sort=critic&direction=desc")).toEqual([
         "Beta",
         "Alpha",
         "Gamma",

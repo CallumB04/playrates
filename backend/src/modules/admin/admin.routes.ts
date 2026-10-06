@@ -15,7 +15,6 @@ import {
   AnnouncementInputSchema,
   PatchNoteIdParamSchema,
   CursorQuerySchema,
-  RawgCorrectionSchema,
 } from "@playrates/shared";
 import type { z } from "zod";
 import { AppError } from "../../lib/AppError.js";
@@ -103,18 +102,9 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     },
   );
 
-  router.get("/games/rawg-usage", async (_req, res) => {
-    res.json(await service.rawgUsage());
+  router.get("/games/igdb-usage", async (_req, res) => {
+    res.json(await service.igdbUsage());
   });
-
-  router.put(
-    "/games/rawg-usage",
-    validate({ body: RawgCorrectionSchema }),
-    async (req, res) => {
-      const { left } = req.valid!.body as z.infer<typeof RawgCorrectionSchema>;
-      res.json(await service.correctRawg(left));
-    },
-  );
 
   router.get(
     "/games/search",
@@ -138,8 +128,8 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     "/games/import",
     validate({ body: AdminImportSchema }),
     async (req, res) => {
-      const { rawgId } = req.valid!.body as z.infer<typeof AdminImportSchema>;
-      const result = await service.importGame(rawgId, callerId(req));
+      const { igdbId } = req.valid!.body as z.infer<typeof AdminImportSchema>;
+      const result = await service.importGame(igdbId, callerId(req));
       res.status(result.created ? 201 : 200).json(result);
     },
   );
