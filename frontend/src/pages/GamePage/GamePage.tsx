@@ -33,6 +33,7 @@ import { useThreads } from "../../hooks/queries/useCommunity";
 import { newThreadPath } from "../../components/community/paths";
 import { buildGameFacts } from "./lib/gameFacts";
 import GameBackdrop from "./components/GameBackdrop";
+import { cn } from "../../lib/cn";
 import ScoreCards from "./components/ScoreCards";
 import RelatedGames from "./components/RelatedGames";
 import ExpandableText from "./components/ExpandableText";
@@ -132,7 +133,13 @@ const GamePage = () => {
     }
 
     return (
-        <article className="flex flex-col gap-7">
+        <article
+            className={cn(
+                "flex flex-col gap-7",
+                // room for the banner to be seen before the page starts
+                game.artworkUrl && "pt-16 sm:pt-28 lg:pt-32"
+            )}
+        >
             <GameBackdrop url={game.artworkUrl} />
             <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-y-8">
                 <div className="min-w-0 lg:col-start-1 lg:row-span-2 lg:row-start-1">
