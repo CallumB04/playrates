@@ -22,7 +22,14 @@ const MONTHS = [
  * shape of a year doesn't need to be exact to the row. Empty months still get
  * a bar, so a gap reads as a gap rather than the chart ending early.
  */
-const YearChart = ({ logs }: { logs: GameLogWithGame[] }) => {
+const YearChart = ({
+    logs,
+    barsClassName = "h-20",
+}: {
+    logs: GameLogWithGame[];
+    /** The height of the bars. */
+    barsClassName?: string;
+}) => {
     const { counts, peak, total } = useMemo(() => {
         const year = new Date().getFullYear();
         const counts = new Array<number>(12).fill(0);
@@ -47,7 +54,7 @@ const YearChart = ({ logs }: { logs: GameLogWithGame[] }) => {
 
     return (
         <div>
-            <div className="flex h-20 items-end gap-1.5">
+            <div className={cn("flex items-end gap-1.5", barsClassName)}>
                 {counts.map((count, i) => (
                     <div
                         key={i}

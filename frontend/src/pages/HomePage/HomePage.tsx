@@ -201,21 +201,16 @@ const HomePage = () => {
                     username={user.username}
                     displayName={user.firstName || user.username}
                     isNew={newcomer}
-                    backdrop={
-                        current?.game?.artworkUrl ??
-                        (newcomer
-                            ? popular?.data[0]?.artworkUrl
-                            : trending?.data[0]?.artworkUrl) ??
-                        null
-                    }
                     current={current}
                     shelves={allTime?.byStatus}
                     yearLogs={played?.data ?? []}
                     yearStats={yearStats}
                     starters={popular?.data ?? []}
-                    isLogged={(gameId) => logByGameId.has(gameId)}
-                    onAddStarter={(game) =>
-                        quickAdd(game.id, game.title, "backlog")
+                    shelfOf={(gameId) =>
+                        logByGameId.get(gameId)?.status ?? null
+                    }
+                    onAddStarter={(game, shelf) =>
+                        quickAdd(game.id, game.title, shelf)
                     }
                     onUpdateLog={() => current && setLogging(current.gameId)}
                 />

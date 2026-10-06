@@ -1,25 +1,24 @@
 import { describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { buildGame } from "../../../test/msw/handlers";
+import { buildGame, buildGameLog } from "../../../test/msw/handlers";
 import { renderWithProviders } from "../../../test/renderWithProviders";
 import ReEntryPlate from "./ReEntryPlate";
 
 const base = {
     username: "devuser",
     displayName: "Kai",
-    backdrop: null,
     current: undefined,
     yearLogs: [],
     yearStats: undefined,
     starters: [buildGame({ id: 5, title: "Stray" })],
-    isLogged: () => false,
+    shelfOf: () => null,
     onAddStarter: vi.fn(async () => undefined),
     onUpdateLog: vi.fn(),
 };
 
 describe("ReEntryPlate", () => {
-    it("offers a newcomer games to start from, beside their shelves", async () => {
+    it("offers a newcomer games to add to either shelf", async () => {
         renderWithProviders(
             <ReEntryPlate {...base} isNew shelves={undefined} />
         );
@@ -28,48 +27,56 @@ describe("ReEntryPlate", () => {
             screen.getByRole("heading", { name: "Welcome, Kai" })
         ).toBeInTheDocument();
         await userEvent.click(
+            screen.getByRole("button", { name: "Add Stray to your wishlist" })
+        );
+        expect(base.onAddStarter).toHaveBeenCalledWith(
+            base.starters[0],
+            "wishlist"
+        );
+        expect(
             screen.getByRole("button", { name: "Add Stray to your backlog" })
-        );
-        expect(base.onAddStarter).toHaveBeenCalledWith(base.starters[0]);
-        expect(screen.getByRole("link", { name: /Backlog/ })).toHaveAttribute(
-            "href",
-            "/user/devuser?type=backlog"
-        );
-        expect(screen.getByText("Nothing on the go")).toBeInTheDocument();
+        ).toBeInTheDocument();
     });
 
-    it("says a starter already on the shelves is added", () => {
+    it("says which shelf a starter is already on", () => {
         renderWithProviders(
             <ReEntryPlate
                 {...base}
                 isNew
                 shelves={undefined}
-                isLogged={() => true}
+                shelfOf={() => "wishlist"}
             />
         );
 
+        expect(screen.getByText("On your wishlist")).toBeInTheDocument();
         expect(
-            screen.getByRole("button", { name: "Stray is on your shelves" })
-        ).toHaveTextContent("Added");
+            screen.queryByRole("button", { name: /to your/ })
+        ).not.toBeInTheDocument();
     });
 
-    it("shows a returning player their shelves instead", () => {
+    it("shows a returning player the game on the go and their shelves", async () => {
+        const onUpdateLog = vi.fn();
         renderWithProviders(
             <ReEntryPlate
                 {...base}
                 isNew={false}
-                shelves={{ played: 12, playing: 1, backlog: 4, wishlist: 0 }}
+                current={buildGameLog({ status: "playing" })}
+                shelves={{ played: 12, playing: 3, backlog: 4, wishlist: 0 }}
+                onUpdateLog={onUpdateLog}
             />
         );
 
+        expect(screen.getByRole("link", { name: /12\s*$/ })).toHaveAttribute(
+            "href",
+            "/user/devuser?type=played"
+        );
         expect(
-            screen.getByText("1 game in progress, 4 in your backlog.")
-        ).toBeInTheDocument();
+            screen.getByRole("link", { name: "+2 more on the go" })
+        ).toHaveAttribute("href", "/user/devuser?type=playing");
+        await userEvent.click(screen.getByRole("button", { name: "Update" }));
+        expect(onUpdateLog).toHaveBeenCalledOnce();
         expect(
-            screen.getByRole("link", { name: /12\s*Played/ })
-        ).toHaveAttribute("href", "/user/devuser?type=played");
-        expect(
-            screen.queryByRole("button", { name: /to your backlog/ })
+            screen.queryByRole("heading", { name: "Start your shelves" })
         ).not.toBeInTheDocument();
     });
 });
