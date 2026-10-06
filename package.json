@@ -28,7 +28,7 @@
     "bugs": {
         "url": "https://github.com/CallumB04/playrates/issues"
     },
-    "homepage": "https://github.com/CallumB04/playrates#readme",
+    "homepage": "https://playrates.app",
     "engines": {
         "node": ">=20.6"
     },
