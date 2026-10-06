@@ -4,7 +4,9 @@ import type {
     RichTextDoc,
     RichTextInline,
 } from "@playrates/shared";
+import { SITE_ORIGIN } from "@playrates/shared";
 import { cn } from "../../lib/cn";
+import { linkify } from "../../lib/linkify";
 import Spoiler from "./Spoiler";
 
 /* Built from the JSON node by node, never set as HTML: the document came from
@@ -17,14 +19,44 @@ const MARK_TAGS: Partial<Record<string, "strong" | "em" | "u">> = {
     underline: "u",
 };
 
-const renderInline = (node: RichTextInline, key: number): ReactNode => {
+/** Addresses written out in the text, made into links. Only http(s) and
+ *  mailto ever come out of linkify, so nothing here can run script. */
+const withLinks = (text: string): ReactNode =>
+    linkify(text).map((part, i) =>
+        typeof part === "string" ? (
+            part
+        ) : part.href.startsWith(SITE_ORIGIN) ||
+          part.href.startsWith("mailto:") ? (
+            <a key={i} href={part.href}>
+                {part.text}
+            </a>
+        ) : (
+            <a
+                key={i}
+                href={part.href}
+                target="_blank"
+                rel="noreferrer noopener"
+            >
+                {part.text}
+            </a>
+        )
+    );
+
+const renderInline = (
+    node: RichTextInline,
+    key: number,
+    links: boolean
+): ReactNode => {
     if (node.type === "hardBreak") return <br key={key} />;
     if (node.type !== "text") return null;
 
-    return (node.marks ?? []).reduce<ReactNode>((inner, mark) => {
-        const Tag = MARK_TAGS[mark.type];
-        return Tag ? <Tag>{inner}</Tag> : inner;
-    }, node.text);
+    return (node.marks ?? []).reduce<ReactNode>(
+        (inner, mark) => {
+            const Tag = MARK_TAGS[mark.type];
+            return Tag ? <Tag>{inner}</Tag> : inner;
+        },
+        links ? withLinks(node.text) : node.text
+    );
 };
 
 const isSpoiler = (node: RichTextInline) =>
@@ -33,7 +65,7 @@ const isSpoiler = (node: RichTextInline) =>
 
 /* A run of spoiled text is one cover, however it is formatted inside, so a
    spoiler with a bold word in it is one press and not three. */
-const inlines = (content: RichTextInline[] | undefined) => {
+const inlines = (content: RichTextInline[] | undefined, links: boolean) => {
     const out: ReactNode[] = [];
     let run: ReactNode[] = [];
     const closeRun = () => {
@@ -43,7 +75,7 @@ const inlines = (content: RichTextInline[] | undefined) => {
     };
 
     (content ?? []).forEach((node, i) => {
-        const rendered = <span key={i}>{renderInline(node, i)}</span>;
+        const rendered = <span key={i}>{renderInline(node, i, links)}</span>;
         if (isSpoiler(node)) {
             run.push(rendered);
         } else {
@@ -57,13 +89,21 @@ const inlines = (content: RichTextInline[] | undefined) => {
 
 const HEADINGS = { 1: "h1", 2: "h2", 3: "h3" } as const;
 
-const renderBlock = (block: RichTextBlock, key: number): ReactNode => {
+const renderBlock = (
+    block: RichTextBlock,
+    key: number,
+    links: boolean
+): ReactNode => {
     switch (block.type) {
         case "bulletList":
             return (
                 <ul key={key}>
                     {block.content.map((item, i) => (
-                        <li key={i}>{item.content.map(renderBlock)}</li>
+                        <li key={i}>
+                            {item.content.map((b, j) =>
+                                renderBlock(b, j, links)
+                            )}
+                        </li>
                     ))}
                 </ul>
             );
@@ -71,15 +111,19 @@ const renderBlock = (block: RichTextBlock, key: number): ReactNode => {
             return (
                 <ol key={key} start={block.attrs?.start ?? undefined}>
                     {block.content.map((item, i) => (
-                        <li key={i}>{item.content.map(renderBlock)}</li>
+                        <li key={i}>
+                            {item.content.map((b, j) =>
+                                renderBlock(b, j, links)
+                            )}
+                        </li>
                     ))}
                 </ol>
             );
         case "paragraph":
-            return <p key={key}>{inlines(block.content)}</p>;
+            return <p key={key}>{inlines(block.content, links)}</p>;
         case "heading": {
             const Tag = HEADINGS[block.attrs.level] ?? "h3";
-            return <Tag key={key}>{inlines(block.content)}</Tag>;
+            return <Tag key={key}>{inlines(block.content, links)}</Tag>;
         }
         case "image":
             return (
@@ -98,11 +142,19 @@ const renderBlock = (block: RichTextBlock, key: number): ReactNode => {
 interface RichTextViewProps {
     doc: RichTextDoc;
     className?: string;
+    /** Make written-out web and email addresses clickable. Only for posts
+     *  from the site itself: links from anyone else are how spam and
+     *  phishing arrive, so members' posts stay plain text. */
+    linkify?: boolean;
 }
 
-const RichTextView = ({ doc, className }: RichTextViewProps) => (
+const RichTextView = ({
+    doc,
+    className,
+    linkify = false,
+}: RichTextViewProps) => (
     <div className={cn("rich-text text-body", className)}>
-        {(doc.content ?? []).map(renderBlock)}
+        {(doc.content ?? []).map((b, i) => renderBlock(b, i, linkify))}
     </div>
 );
 

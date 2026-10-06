@@ -848,6 +848,21 @@
         font-weight: 650;
     }
 
+    .rich-text a {
+        color: var(--brand);
+        text-decoration: underline;
+        text-decoration-color: color-mix(
+            in oklab,
+            var(--brand) 45%,
+            transparent
+        );
+        text-underline-offset: 3px;
+    }
+
+    .rich-text a:hover {
+        text-decoration-color: currentColor;
+    }
+
     .rich-text u {
         text-underline-offset: 3px;
     }

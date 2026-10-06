@@ -29,11 +29,9 @@ import MessageComposer from "../../components/community/MessageComposer";
 import { replyParentId } from "../../components/community/replyTarget";
 import {
     formatCount,
-    formatDate,
     formatMessageCount,
     relativeTime,
 } from "../../lib/format";
-import { cn } from "../../lib/cn";
 
 type Pending =
     { kind: "message"; message: CommunityMessage } | { kind: "thread" };
@@ -485,24 +483,20 @@ const PatchNotesThread = ({
             {entries.length === 0 ? (
                 <EmptyNote>No patch notes yet.</EmptyNote>
             ) : (
-                entries.map((entry) => (
-                    <div key={entry.id} className="flex flex-col gap-2">
-                        <p className="font-mono text-label-sm text-accent-content">
-                            {formatDate(entry.createdAt)}
-                        </p>
+                <div className="flex flex-col gap-5">
+                    {entries.map((entry) => (
                         <MessageItem
+                            key={entry.id}
                             message={entry}
                             viewerId={viewerId}
                             actions={actions}
                             badge={<OfficialBadge />}
                             showEdited={false}
-                            className={cn(
-                                cardClass(),
-                                "border-l-4 border-l-accent"
-                            )}
+                            linkify
+                            className={cardClass()}
                         />
-                    </div>
-                ))
+                    ))}
+                </div>
             )}
         </>
     );

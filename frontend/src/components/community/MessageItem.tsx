@@ -35,6 +35,8 @@ interface MessageItemProps {
     highlighted?: boolean;
     /** Off where a message is kept up to date on purpose, like patch notes. */
     showEdited?: boolean;
+    /** Clickable addresses in the body. See RichTextView. */
+    linkify?: boolean;
     className?: string;
     /** What comes beneath: the replies, or a composer answering this. */
     children?: ReactNode;
@@ -78,6 +80,7 @@ const MessageItem = ({
     extraActions,
     highlighted = false,
     showEdited = true,
+    linkify = false,
     className,
     children,
 }: MessageItemProps) => {
@@ -156,7 +159,11 @@ const MessageItem = ({
                 </div>
             ) : (
                 message.body && (
-                    <RichTextView doc={message.body} className="mt-2.5" />
+                    <RichTextView
+                        doc={message.body}
+                        className="mt-2.5"
+                        linkify={linkify}
+                    />
                 )
             )}
 

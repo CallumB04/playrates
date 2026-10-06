@@ -167,4 +167,38 @@ describe("RichTextView", () => {
         );
         expect(screen.getAllByRole("listitem")).toHaveLength(2);
     });
+
+    describe("addresses in the text", () => {
+        const doc: RichTextDoc = {
+            type: "doc",
+            content: [
+                {
+                    type: "paragraph",
+                    content: [
+                        {
+                            type: "text",
+                            text: "Live at playrates.app, or email hello@playrates.app.",
+                        },
+                    ],
+                },
+            ],
+        };
+
+        it("stay plain text in a member's post", () => {
+            render(<RichTextView doc={doc} />);
+
+            expect(screen.queryByRole("link")).toBeNull();
+        });
+
+        it("become links when the post asks for them", () => {
+            render(<RichTextView doc={doc} linkify />);
+
+            expect(
+                screen.getByRole("link", { name: "playrates.app" })
+            ).toHaveAttribute("href", "https://playrates.app");
+            expect(
+                screen.getByRole("link", { name: "hello@playrates.app" })
+            ).toHaveAttribute("href", "mailto:hello@playrates.app");
+        });
+    });
 });
