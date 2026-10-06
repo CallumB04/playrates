@@ -33,7 +33,7 @@ const ChipRow = ({
                     <li key={slug}>
                         <Link
                             to={`/library?${param}=${encodeURIComponent(slug)}`}
-                            className={chipClass(false, "gap-1.5 px-3")}
+                            className={chipClass(false, "gap-1.5 px-3", "tag")}
                         >
                             <Icon size={13} aria-hidden className="shrink-0" />
                             {name}
@@ -55,7 +55,10 @@ const GameDetails = ({ facts }: { facts: GameFacts }) => {
             aria-labelledby="game-details"
             className="flex flex-col gap-4 border-t border-subtle pt-4"
         >
-            <h2 id="game-details" className="text-label text-content-muted">
+            <h2
+                id="game-details"
+                className="font-display text-base font-semibold text-content"
+            >
                 Details
             </h2>
 
