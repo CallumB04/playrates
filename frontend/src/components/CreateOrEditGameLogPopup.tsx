@@ -4,7 +4,9 @@ import { useGame, usePlatformSystems } from "../hooks/queries/useGames";
 import {
     useGameLogMutations,
     useMyGameLog,
+    useMyGameLogIds,
 } from "../hooks/queries/useGameLogs";
+import { logMilestone } from "../lib/logMilestone";
 import { useMyReview, useReviewMutations } from "../hooks/queries/useReviews";
 import { useNotify } from "../contexts/NotificationContext";
 import Modal from "./ui/Modal";
@@ -63,6 +65,8 @@ const CreateOrEditGameLogPopup = ({
     const { data: systems } = usePlatformSystems();
     const { data: review, isLoading: reviewLoading } = useMyReview(gameId);
     const { save, remove } = useGameLogMutations();
+    // How many games are logged before this one, for a milestone.
+    const { data: loggedIds } = useMyGameLogIds();
     const { save: saveReview, remove: removeReview } = useReviewMutations();
 
     /* Fetched rather than required of the caller: opened from a rail or a
@@ -170,7 +174,15 @@ const CreateOrEditGameLogPopup = ({
             return;
         }
 
-        notify(existing ? "Entry updated" : "Entry saved", "success");
+        // A new log that lands on a milestone says so: the moment people
+        // remember a site by. Ordinary saves stay plain.
+        const milestone = existing
+            ? null
+            : logMilestone((loggedIds?.length ?? 0) + 1);
+        notify(
+            milestone ?? (existing ? "Entry updated" : "Entry saved"),
+            "success"
+        );
         viewUpdatedLog();
     };
 
