@@ -172,17 +172,22 @@ const Header = () => {
                                 />
                             </>
                         ) : (
-                            <div className="hidden items-center gap-3 sm:flex">
+                            <div className="flex items-center gap-3">
+                                {/* On a phone too: someone coming back looks
+                                    for it top right, not inside the menu. */}
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={openLogin}
+                                    className="max-sm:min-h-11 max-sm:px-3"
                                 >
                                     Sign in
                                 </Button>
-                                <Button size="sm" onClick={openSignup}>
-                                    Join PlayRates
-                                </Button>
+                                <span className="hidden sm:contents">
+                                    <Button size="sm" onClick={openSignup}>
+                                        Join PlayRates
+                                    </Button>
+                                </span>
                             </div>
                         )}
                     </div>
