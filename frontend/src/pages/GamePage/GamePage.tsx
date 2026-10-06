@@ -200,7 +200,7 @@ const GamePage = () => {
                                 : () => openLogin()
                         }
                         viewerId={user?.id}
-                        onVote={(reviewId) => vote.mutate(reviewId)}
+                        onVote={(reviewId) => vote.mutateAsync(reviewId)}
                         total={reviews?.meta.total ?? 0}
                         sort={sort}
                         onSortChange={setSort}

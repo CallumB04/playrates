@@ -33,7 +33,7 @@ interface GameReviewsProps {
     /** Who is looking, so their own reviews refuse a vote. Unset when signed
      *  out. */
     viewerId: string | undefined;
-    onVote?: (reviewId: number) => void;
+    onVote?: (reviewId: number) => unknown;
     total: number;
     sort: ReviewSort;
     onSortChange: (sort: ReviewSort) => void;

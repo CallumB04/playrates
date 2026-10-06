@@ -12,7 +12,7 @@ import RichTextView from "./RichTextView";
 import MessageComposer from "./MessageComposer";
 
 export interface MessageActions {
-    onVote: (message: CommunityMessage) => void;
+    onVote: (message: CommunityMessage) => unknown;
     onReply?: (message: CommunityMessage) => void;
     onSaveEdit: (
         message: CommunityMessage,
