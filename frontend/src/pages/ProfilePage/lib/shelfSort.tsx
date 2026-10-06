@@ -6,7 +6,7 @@ import {
     formatPercent,
     releaseYear,
 } from "../../../lib/format";
-import MetacriticScore from "../../../lib/metacritic";
+import CriticScore from "../../../lib/criticScore";
 
 interface SortOption {
     value: GameLogSort;
@@ -32,7 +32,7 @@ export const shelfSortOptions = (isMyAccount: boolean): SortOption[] => [
         ...HIGH_LOW,
     },
     { value: "gameRating", label: "PlayRates average", ...HIGH_LOW },
-    { value: "metacritic", label: "Metacritic", ...HIGH_LOW },
+    { value: "critic", label: "Critic score", ...HIGH_LOW },
     { value: "played", label: "Recently played", ...OLD_NEW },
     {
         value: "title",
@@ -86,10 +86,10 @@ export const shelfFoot = (
     switch (sort) {
         case "gameRating":
             return { rating: log.game?.avgRating ?? null };
-        case "metacritic":
-            // Metacritic's own banding, as on the game page.
+        case "critic":
+            // The same coloured box as on the game page.
             return {
-                value: <MetacriticScore score={log.game?.metacritic ?? null} />,
+                value: <CriticScore score={log.game?.criticScore ?? null} />,
             };
         case "played":
             return { value: formatMonthYearShort(lastPlayed(log)) };

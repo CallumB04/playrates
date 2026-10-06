@@ -26,7 +26,7 @@ interface LibraryFiltersProps {
 const SORT_OPTIONS = [
     { value: "logged", label: "Most logged" },
     { value: "rating", label: "Highest rated" },
-    { value: "metacritic", label: "Metacritic score" },
+    { value: "critic", label: "Critic score" },
     { value: "released", label: "Newest" },
     { value: "title", label: "A to Z" },
 ];

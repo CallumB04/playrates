@@ -1,14 +1,10 @@
 import { CircleAlert, Flame, type LucideIcon } from "lucide-react";
-import type {
-    AdminGameEvent,
-    GameEventGroup,
-    RawgUsage,
-} from "@playrates/shared";
+import type { AdminGameEvent, GameEventGroup } from "@playrates/shared";
 
 export const GAME_GROUP_LABELS: Record<GameEventGroup, string> = {
     added: "Arrivals",
     content: "Art and text",
-    pulls: "Calls to RAWG",
+    pulls: "Calls to IGDB",
     failures: "Failures",
     controls: "Your changes",
 };
@@ -57,17 +53,18 @@ export const gameEventSummary = (
     switch (event.kind) {
         case "game_added":
             return { title, text: "arrived in the catalogue" };
-        case "rawg_import":
-            return { title, text: "was imported from RAWG by its id" };
+        case "igdb_import":
+            return { title, text: "was imported from IGDB by its id" };
+        // The wide art behind previews; the cover on tiles is box_art.
         case "cover_updated":
             return {
                 title,
-                text: d.hadOne ? "got a new cover" : "got its cover",
+                text: d.hadOne ? "got new artwork" : "got its artwork",
             };
         case "box_art_updated":
             return {
                 title,
-                text: d.hadOne ? "got new box art" : "got its box art",
+                text: d.hadOne ? "got a new cover" : "got its cover",
             };
         case "description_pulled":
             return {
@@ -105,11 +102,11 @@ export const gameEventSummary = (
             return d.failed === true
                 ? {
                       title: null,
-                      text: `A search for “${str(d.term) ?? "?"}” couldn’t reach RAWG`,
+                      text: `A search for “${str(d.term) ?? "?"}” couldn’t reach IGDB`,
                   }
                 : {
                       title: null,
-                      text: `A search for “${str(d.term) ?? "?"}” asked RAWG and brought back ${count(num(d.fetched), "game")}, ${num(d.added).toLocaleString("en-GB")} new`,
+                      text: `A search for “${str(d.term) ?? "?"}” asked IGDB and brought back ${count(num(d.fetched), "game")}, ${num(d.added).toLocaleString("en-GB")} new`,
                   };
         case "manual_pull":
             return d.failed === true
@@ -125,14 +122,3 @@ export const gameEventSummary = (
             return { title, text: event.kind.replace(/_/g, " ") };
     }
 };
-
-export type QuotaLevel = "ok" | "warning" | "danger";
-
-/** Running out before the reset is the thing worth colour; under a quarter
- *  left is worth a warning. */
-export const allowanceTone = (usage: RawgUsage): QuotaLevel =>
-    usage.runsOutOn
-        ? "danger"
-        : usage.left < usage.allowance * 0.25
-          ? "warning"
-          : "ok";

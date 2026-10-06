@@ -1,11 +1,9 @@
 import { cn } from "./cn";
 
-/** Metacritic's own banding: green from 75, yellow from 50, red below. Their
- *  colours, not the theme's — a critic score people recognise by its box. */
 const tone = (score: number): string => {
-    if (score >= 75) return "bg-[#66cc33] text-black";
-    if (score >= 50) return "bg-[#ffcc33] text-black";
-    return "bg-[#ff0000] text-white";
+    if (score >= 75) return "bg-success-subtle text-success-content";
+    if (score >= 50) return "bg-warning-subtle text-warning-content";
+    return "bg-danger-subtle text-danger-content";
 };
 
 const SIZE = {
@@ -15,9 +13,10 @@ const SIZE = {
     lg: "grid size-14 place-items-center rounded-sm text-2xl",
 } as const;
 
-/** The score in its own colour. One component at two sizes, so the figure
- *  under a cover and the one on the game page cannot drift apart. */
-const MetacriticScore = ({
+/** The critics' average in its band's colour. One component at two sizes,
+ *  so the figure under a cover and the one on the game page cannot drift
+ *  apart. */
+const CriticScore = ({
     score,
     size = "sm",
     className,
@@ -41,4 +40,4 @@ const MetacriticScore = ({
         </span>
     );
 
-export default MetacriticScore;
+export default CriticScore;

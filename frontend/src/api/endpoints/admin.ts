@@ -19,7 +19,7 @@ import type {
     CursorPage,
     GameEventGroup,
     Paginated,
-    RawgUsage,
+    IgdbUsage,
     ServerErrorEntry,
 } from "@playrates/shared";
 import { api } from "../client";
@@ -88,11 +88,8 @@ export const fetchAdminGameEvents = async (
         })
     ).data;
 
-export const fetchRawgUsage = async (): Promise<RawgUsage> =>
-    (await api.get<RawgUsage>("/admin/games/rawg-usage")).data;
-
-export const correctRawgUsage = async (left: number): Promise<RawgUsage> =>
-    (await api.put<RawgUsage>("/admin/games/rawg-usage", { left })).data;
+export const fetchIgdbUsage = async (): Promise<IgdbUsage> =>
+    (await api.get<IgdbUsage>("/admin/games/igdb-usage")).data;
 
 export const searchAdminGames = async (
     q: string
@@ -109,9 +106,9 @@ export const pullAdminGames = async (
     (await api.post<AdminPullResult>("/admin/games/pull", input)).data;
 
 export const importAdminGame = async (
-    rawgId: number
+    igdbId: number
 ): Promise<AdminImportResult> =>
-    (await api.post<AdminImportResult>("/admin/games/import", { rawgId })).data;
+    (await api.post<AdminImportResult>("/admin/games/import", { igdbId })).data;
 
 export const resyncAdminGame = async (id: number): Promise<AdminGameSummary> =>
     (await api.post<AdminGameSummary>(`/admin/games/${id}/resync`)).data;

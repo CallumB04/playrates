@@ -90,15 +90,15 @@ const Footer = () => (
                         © {new Date().getFullYear()} {BRAND_NAME}
                     </span>
                     <span aria-hidden>·</span>
-                    {/* RAWG's terms ask for an active link back wherever
-                        their data is shown, and it is shown on every page. */}
+                    {/* IGDB asks for a credit people can see, in a place that
+                        doesn't move, and its data is on every page. */}
                     <a
-                        href="https://rawg.io"
+                        href="https://www.igdb.com"
                         target="_blank"
                         rel="noreferrer noopener"
                         className={SMALL_LINK}
                     >
-                        Game data from RAWG
+                        Game data from IGDB
                         <ArrowUpRight size={13} aria-hidden />
                     </a>
                 </p>

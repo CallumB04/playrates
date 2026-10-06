@@ -13,7 +13,7 @@ const event = (overrides: Partial<AdminGameEvent>): AdminGameEvent => ({
         title: "EA SPORTS FC 26",
         coverUrl: null,
         isTrending: false,
-        rawgId: 99,
+        igdbId: 99,
     },
     actorUsername: null,
     data: {},
@@ -31,12 +31,12 @@ describe("gameEventSummary", () => {
     it("tells a first cover from a replacement", () => {
         expect(
             gameEventSummary(
-                event({ kind: "cover_updated", data: { hadOne: false } })
+                event({ kind: "box_art_updated", data: { hadOne: false } })
             ).text
         ).toBe("got its cover");
         expect(
             gameEventSummary(
-                event({ kind: "cover_updated", data: { hadOne: true } })
+                event({ kind: "box_art_updated", data: { hadOne: true } })
             ).text
         ).toBe("got a new cover");
     });
@@ -53,7 +53,7 @@ describe("gameEventSummary", () => {
         ).toBe("Old Game");
     });
 
-    it("says what a search brought back from RAWG", () => {
+    it("says what a search brought back from IGDB", () => {
         expect(
             gameEventSummary(
                 event({
@@ -64,7 +64,7 @@ describe("gameEventSummary", () => {
                 })
             ).text
         ).toBe(
-            "A search for “fc 26” asked RAWG and brought back 20 games, 3 new"
+            "A search for “fc 26” asked IGDB and brought back 20 games, 3 new"
         );
     });
 
@@ -73,10 +73,10 @@ describe("gameEventSummary", () => {
             gameEventSummary(
                 event({
                     kind: "details_backfill_failed",
-                    data: { error: "RAWG responded 429" },
+                    data: { error: "IGDB responded 429" },
                 })
             ).text
-        ).toBe("couldn’t fetch its details: RAWG responded 429");
+        ).toBe("couldn’t fetch its details: IGDB responded 429");
     });
 });
 

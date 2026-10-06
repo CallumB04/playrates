@@ -29,7 +29,7 @@ const log = (overrides: Partial<GameLogWithGame> = {}): GameLogWithGame =>
             releaseDate: "2007-10-09",
             platforms: [],
             avgRating: 9.25,
-            metacritic: 90,
+            criticScore: 90,
         },
         ...overrides,
     }) as GameLogWithGame;
@@ -82,12 +82,10 @@ describe("shelfFoot", () => {
         expect(shelfFoot(log(), "gameRating")).toEqual({ rating: 9.25 });
     });
 
-    it("shows the metacritic score in its own colour", () => {
-        const { container } = render(
-            <>{shelfFoot(log(), "metacritic").value}</>
-        );
+    it("shows the critic score in its band's colour", () => {
+        const { container } = render(<>{shelfFoot(log(), "critic").value}</>);
         expect(container.firstElementChild).toHaveTextContent("90");
-        expect(container.firstElementChild).toHaveClass("bg-[#66cc33]");
+        expect(container.firstElementChild).toHaveClass("bg-success-subtle");
     });
 
     /* "Sept", not "Sep" — en-GB's own abbreviation, and the same one

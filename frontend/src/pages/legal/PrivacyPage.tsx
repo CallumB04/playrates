@@ -11,7 +11,7 @@ const External = ({ href, children }: { href: string; children: string }) => (
 );
 
 /* When the substance of this page changes, move the date. */
-const UPDATED = "2026-09-27";
+const UPDATED = "2026-10-06";
 
 const PrivacyPage = () => (
     <ProsePage
@@ -153,15 +153,15 @@ const PrivacyPage = () => (
         </p>
         <ul>
             <li>
-                <strong>RAWG</strong> supplies game details. When a search needs
-                to look beyond the PlayRates catalogue, my server sends RAWG the
-                search words, with nothing that identifies you.
+                <strong>IGDB</strong>, which Twitch runs, supplies game details.
+                When a search needs to look beyond the PlayRates catalogue, my
+                server sends IGDB the search words, with nothing that identifies
+                you.
             </li>
             <li>
-                Cover art and screenshots load straight from{" "}
-                <strong>RAWG</strong> and <strong>Steam</strong>, so your
-                browser connects to their image servers and they see your IP
-                address, the same as any site that shows their images.
+                Covers and artwork load straight from <strong>IGDB</strong>’s
+                image servers, so your browser connects to them and they see
+                your IP address, the same as any site that shows their images.
             </li>
         </ul>
         <p>

@@ -147,7 +147,8 @@ export interface AdminGamesDetail {
   withCover: number;
   withBoxArt: number;
   withDescription: number;
-  detailsSynced: number;
+  /** Games that came from IGDB, rather than from before it. */
+  fromIgdb: number;
   trending: number;
   mostLogged: AdminRankedGame[];
 }

@@ -19,7 +19,7 @@ interface ExpandableTextProps {
 }
 
 /**
- * Prose, a few lines at a time: a RAWG description runs to a dozen paragraphs
+ * Prose, a few lines at a time: a game description can run to a dozen paragraphs
  * on a big release, and a review can run as long as someone likes.
  *
  * The expander only appears when there is something behind it, which is

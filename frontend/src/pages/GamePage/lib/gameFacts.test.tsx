@@ -164,7 +164,7 @@ describe("credits", () => {
         expect(renderValue(facts, "Website")).toBe("not a url");
     });
 
-    it("prints the age rating as RAWG words it", () => {
+    it("prints the age rating in words", () => {
         const facts = buildGameFacts(
             game({ esrbRating: "Everyone 10+" }),
             PLATFORMS,

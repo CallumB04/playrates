@@ -11,7 +11,7 @@ import Toggle from "../../../components/ui/Toggle";
 import ConfirmPopup from "../../../components/ui/ConfirmPopup";
 import { useNotify } from "../../../contexts/NotificationContext";
 import { formatCount } from "../../../lib/format";
-import { usePullGames, useRawgUsage } from "../../../hooks/queries/useAdmin";
+import { usePullGames } from "../../../hooks/queries/useAdmin";
 
 type Window = "7" | "30" | "90";
 
@@ -41,11 +41,9 @@ const PullPanel = () => {
     const [confirming, setConfirming] = useState(false);
     const [result, setResult] = useState<AdminPullResult | null>(null);
     const pull = usePullGames();
-    const { data: usage } = useRawgUsage();
     const notify = useNotify();
 
     const pages = Number(maxPages);
-    const left = usage ? usage.left : null;
 
     const run = () =>
         pull.mutate(
@@ -114,24 +112,14 @@ const PullPanel = () => {
                 <p className="text-label text-content-muted">
                     Up to{" "}
                     <span className="font-mono text-content">{pages}</span>{" "}
-                    {pages === 1 ? "request" : "requests"}
-                    {left !== null && (
-                        <>
-                            {" "}
-                            of the{" "}
-                            <span className="font-mono">
-                                {formatCount(left)}
-                            </span>{" "}
-                            left
-                        </>
-                    )}
+                    {pages === 1 ? "request" : "requests"} to IGDB
                 </p>
                 <Button
                     onClick={() => setConfirming(true)}
                     disabled={pull.isPending}
                     className="w-full sm:w-auto"
                 >
-                    {pull.isPending ? "Asking RAWG…" : "Pull from RAWG"}
+                    {pull.isPending ? "Asking IGDB…" : "Pull from IGDB"}
                 </Button>
             </div>
 
@@ -151,14 +139,14 @@ const PullPanel = () => {
                     </span>{" "}
                     refreshed
                     {result.hasMore
-                        ? ". RAWG has more past the page cap."
+                        ? ". IGDB has more past the page cap."
                         : "."}
                 </p>
             )}
 
             {confirming && (
                 <ConfirmPopup
-                    title="Pull from RAWG?"
+                    title="Pull from IGDB?"
                     body={`Up to ${pages} ${pages === 1 ? "request" : "requests"} for games released in the last ${windowDays} days${includeUpcoming ? ", and those still to come" : ""}.`}
                     confirmLabel="Pull"
                     tone="neutral"

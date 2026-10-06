@@ -40,7 +40,7 @@ export const buildProfile = (
 
 export const buildGame = (overrides: Partial<Game> = {}): Game => ({
     id: 1,
-    rawgId: 3328,
+    igdbId: 1942,
     slug: "the-witcher-3-wild-hunt",
     title: "The Witcher 3: Wild Hunt",
     description: "An open world RPG.",
@@ -53,15 +53,12 @@ export const buildGame = (overrides: Partial<Game> = {}): Game => ({
     avgRating: null,
     ratingCount: 0,
     isTrending: true,
-    playtimeHours: 51.5,
-    genres: ["action", "role-playing-games-rpg"],
+    genres: ["adventure", "role-playing-rpg"],
     developers: ["CD PROJEKT RED"],
     publishers: ["CD PROJEKT RED"],
     website: "https://thewitcher.com",
     esrbRating: "Mature",
-    metacritic: 92,
-    rawgRating: 4.66,
-    rawgRatingCount: 6900,
+    criticScore: 92,
     ...overrides,
 });
 
@@ -91,7 +88,7 @@ export const buildGameLog = (
         releaseDate: "2015-05-18",
         platforms: ["steam"],
         avgRating: 9.1,
-        metacritic: 92,
+        criticScore: 92,
     },
     ...overrides,
 });

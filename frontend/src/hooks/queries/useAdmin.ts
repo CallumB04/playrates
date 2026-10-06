@@ -28,9 +28,8 @@ import {
     fetchAdminPatchNotes,
     announcePatchNote,
     sendTestPatchNote,
-    fetchRawgUsage,
+    fetchIgdbUsage,
     fetchServerErrors,
-    correctRawgUsage,
     importAdminGame,
     pullAdminGames,
     queryKeys,
@@ -94,20 +93,11 @@ export const useAdminGameEvents = (group: GameEventGroup | undefined) =>
         placeholderData: keepPreviousData,
     });
 
-export const useRawgUsage = () =>
+export const useIgdbUsage = () =>
     useQuery({
-        queryKey: queryKeys.admin.rawgUsage,
-        queryFn: fetchRawgUsage,
+        queryKey: queryKeys.admin.igdbUsage,
+        queryFn: fetchIgdbUsage,
     });
-
-export const useCorrectRawg = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: (left: number) => correctRawgUsage(left),
-        onSuccess: (usage) =>
-            queryClient.setQueryData(queryKeys.admin.rawgUsage, usage),
-    });
-};
 
 export const useAdminGameSearch = (q: string) =>
     useQuery({
@@ -117,7 +107,8 @@ export const useAdminGameSearch = (q: string) =>
         placeholderData: keepPreviousData,
     });
 
-/** A catalogue change shows up in the game log, the quota and the search. */
+/** A catalogue change shows up in the game log, the request count and the
+ *  search. */
 const useCatalogueInvalidator = () => {
     const queryClient = useQueryClient();
     return () =>
@@ -135,7 +126,7 @@ export const usePullGames = () => {
 export const useImportGame = () => {
     const invalidate = useCatalogueInvalidator();
     return useMutation({
-        mutationFn: (rawgId: number) => importAdminGame(rawgId),
+        mutationFn: (igdbId: number) => importAdminGame(igdbId),
         onSettled: invalidate,
     });
 };

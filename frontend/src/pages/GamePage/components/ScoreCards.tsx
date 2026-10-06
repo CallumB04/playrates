@@ -1,7 +1,8 @@
 import { Clock, Hourglass, Trophy } from "lucide-react";
 import type { Game, GameStats } from "@playrates/shared";
 import { formatHours, formatPercent } from "../../../lib/format";
-import MetacriticScore from "../../../lib/metacritic";
+import CriticScore from "../../../lib/criticScore";
+import { criticVerdict } from "../../../lib/criticVerdict";
 import { plateClass } from "../../../components/ui/Plate";
 import Stat from "../../../components/ui/Stat";
 
@@ -28,8 +29,9 @@ const ScoreCard = ({
 );
 
 /**
- * What this game scored, and what playing it costs. Metacritic is somebody
- * else's number and is labelled as theirs; everything beside it is ours.
+ * What this game scored, and what playing it costs. The critic score is
+ * somebody else's number and is labelled as theirs; everything beside it is
+ * ours.
  */
 const ScoreCards = ({
     game,
@@ -42,21 +44,23 @@ const ScoreCards = ({
 
     return (
         <section className="grid items-stretch gap-3 sm:grid-cols-2">
-            {game.metacritic !== null ? (
-                <ScoreCard label="Metacritic" hint="Critic score">
+            {game.criticScore !== null ? (
+                <ScoreCard
+                    label="Critic score"
+                    hint="From the critics, via IGDB"
+                >
                     <div className="flex items-center gap-3">
-                        <MetacriticScore score={game.metacritic} size="lg" />
+                        <CriticScore score={game.criticScore} size="lg" />
                         <p className="text-body-sm text-content-secondary">
-                            {game.metacritic >= 75
-                                ? "Generally favourable"
-                                : game.metacritic >= 50
-                                  ? "Mixed or average"
-                                  : "Generally unfavourable"}
+                            {criticVerdict(game.criticScore)}
                         </p>
                     </div>
                 </ScoreCard>
             ) : (
-                <ScoreCard label="Metacritic" hint="Critic score">
+                <ScoreCard
+                    label="Critic score"
+                    hint="From the critics, via IGDB"
+                >
                     <div className="flex items-center gap-3">
                         <span className="grid size-14 shrink-0 place-items-center rounded-sm bg-surface-sunken font-mono text-2xl text-content-muted">
                             –

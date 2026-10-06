@@ -98,7 +98,7 @@ export const queryKeys = {
         gameEvents: (group: string) =>
             ["admin", "games", "events", group] as const,
         gameSearch: (q: string) => ["admin", "games", "search", q] as const,
-        rawgUsage: ["admin", "games", "rawg-usage"] as const,
+        igdbUsage: ["admin", "games", "igdb-usage"] as const,
         announcements: ["admin", "announcements"] as const,
         /* Under announcements, so anything that refreshes the history —
            taking one back above all — refreshes which entries went out. */

@@ -14,7 +14,7 @@ const game = (overrides: Partial<Game> = {}): Game =>
         releaseDate: "2007-10-09",
         logCount: 1284,
         avgRating: 9.25,
-        metacritic: 90,
+        criticScore: 90,
         ...overrides,
     }) as Game;
 
@@ -36,29 +36,29 @@ describe("libraryFoot", () => {
         });
     });
 
-    /* Metacritic's own banding, the same box the game page shows. */
-    it("shows the metacritic score in its own colour", () => {
-        const green = shown(libraryFoot(game(), "metacritic").value);
-        expect(green).toHaveTextContent("90");
-        expect(green).toHaveClass("bg-[#66cc33]");
+    /* Banded by colour, the same box the game page shows. */
+    it("shows the critic score in its band's colour", () => {
+        const good = shown(libraryFoot(game(), "critic").value);
+        expect(good).toHaveTextContent("90");
+        expect(good).toHaveClass("bg-success-subtle");
 
-        const yellow = shown(
-            libraryFoot(game({ metacritic: 62 }), "metacritic").value
+        const mixed = shown(
+            libraryFoot(game({ criticScore: 62 }), "critic").value
         );
-        expect(yellow).toHaveClass("bg-[#ffcc33]");
+        expect(mixed).toHaveClass("bg-warning-subtle");
 
-        const red = shown(
-            libraryFoot(game({ metacritic: 30 }), "metacritic").value
+        const poor = shown(
+            libraryFoot(game({ criticScore: 30 }), "critic").value
         );
-        expect(red).toHaveClass("bg-[#ff0000]");
+        expect(poor).toHaveClass("bg-danger-subtle");
     });
 
-    it("shows an uncoloured dash for a game metacritic never scored", () => {
+    it("shows an uncoloured dash for a game the critics never scored", () => {
         const none = shown(
-            libraryFoot(game({ metacritic: null }), "metacritic").value
+            libraryFoot(game({ criticScore: null }), "critic").value
         );
         expect(none).toHaveTextContent("—");
-        expect(none).not.toHaveClass("bg-[#ff0000]");
+        expect(none).not.toHaveClass("bg-danger-subtle");
     });
 
     it("shows a year for release date", () => {

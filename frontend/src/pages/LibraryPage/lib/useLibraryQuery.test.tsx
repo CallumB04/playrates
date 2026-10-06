@@ -78,12 +78,15 @@ describe("useLibraryQuery", () => {
         expect(result.current.query.sort).toBe("logged");
     });
 
-    /* "popular" was RAWG's tracker count, offered as a sort of its own. It is
-       the hidden tiebreaker under "logged" now, so an old link falls back
-       rather than 422ing on the request. */
-    it("falls back when an old RAWG sort is in the URL", () => {
-        const { result } = renderQuery("/library?sort=popular");
-        expect(result.current.query.sort).toBe("logged");
+    /* Sorts that have gone ("popular", "metacritic") may still be in old
+       links, so they fall back rather than 422ing on the request. */
+    it("falls back when an old sort is in the URL", () => {
+        expect(
+            renderQuery("/library?sort=popular").result.current.query.sort
+        ).toBe("logged");
+        expect(
+            renderQuery("/library?sort=metacritic").result.current.query.sort
+        ).toBe("logged");
     });
 
     it("treats a nonsense page as page one", () => {

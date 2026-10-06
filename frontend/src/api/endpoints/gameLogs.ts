@@ -24,7 +24,7 @@ export interface GameLogWithGame extends GameLog {
         | "releaseDate"
         | "platforms"
         | "avgRating"
-        | "metacritic"
+        | "criticScore"
     > | null;
 }
 

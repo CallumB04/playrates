@@ -5,7 +5,7 @@ import { headline, systemStates } from "./healthState";
 const health = (
     overrides: {
         database?: Partial<AdminHealth["database"]>;
-        rawg?: Partial<AdminHealth["rawg"]>;
+        igdb?: Partial<AdminHealth["igdb"]>;
         errors?: Partial<AdminHealth["errors"]>;
     } = {}
 ): AdminHealth => ({
@@ -18,14 +18,14 @@ const health = (
         node: "v22.0.0",
     },
     database: { ok: true, latencyMs: 40, error: null, ...overrides.database },
-    rawg: {
+    igdb: {
         configured: true,
         todayRequests: 3,
         todayFailures: 0,
         lastRequestAt: "2026-09-26T11:00:00Z",
         lastFailureAt: null,
         lastError: null,
-        ...overrides.rawg,
+        ...overrides.igdb,
     },
     errors: { last24h: 0, lastAt: null, ...overrides.errors },
 });
@@ -51,19 +51,19 @@ describe("headline", () => {
         });
     });
 
-    it("calls RAWG failing only while its last call was the failure", () => {
+    it("calls IGDB failing only while its last call was the failure", () => {
         const failing = health({
-            rawg: { lastFailureAt: "2026-09-26T11:00:00Z" },
+            igdb: { lastFailureAt: "2026-09-26T11:00:00Z" },
         });
-        expect(systemStates(failing).rawg).toBe("slow");
+        expect(systemStates(failing).igdb).toBe("slow");
 
         const recovered = health({
-            rawg: {
+            igdb: {
                 lastFailureAt: "2026-09-26T09:00:00Z",
                 lastRequestAt: "2026-09-26T11:00:00Z",
             },
         });
-        expect(systemStates(recovered).rawg).toBe("up");
+        expect(systemStates(recovered).igdb).toBe("up");
     });
 
     it("says how many requests failed, rather than a few", () => {
