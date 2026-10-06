@@ -1,6 +1,6 @@
 # PlayRates
 
-PlayRates is a full-stack video game tracking website I am building, using React/TypeScript (frontend) and Node/Express (backend). Log and rate the games you've played, manage your backlog and wishlist, and interact with friends and the community. The app is live at [playrates.vercel.app](https://playrates.vercel.app).
+PlayRates is a full-stack video game tracking website I am building, using React/TypeScript (frontend) and Node/Express (backend). Log and rate the games you've played, manage your backlog and wishlist, and interact with friends and the community. The app is live at [playrates.app](https://playrates.app).
 
 ## Installation and Setup
 

@@ -39,6 +39,11 @@ import { createStatsRouter } from "./modules/stats/stats.js";
 import { createAdminService } from "./modules/admin/admin.service.js";
 import { createAdminRouter } from "./modules/admin/admin.routes.js";
 import { requireAdmin } from "./middleware/requireAdmin.js";
+import { createReportsService } from "./modules/reports/reports.service.js";
+import {
+  createAdminReportsRouter,
+  createReportsRouter,
+} from "./modules/reports/reports.routes.js";
 
 interface Deps {
   repos: Repositories;
@@ -62,7 +67,12 @@ export const buildRoutes = ({
 }: Deps): Router => {
   const router = Router();
 
-  const profiles = createProfilesService(repos.profiles, authAdmin, avatars);
+  const profiles = createProfilesService(
+    repos.profiles,
+    authAdmin,
+    avatars,
+    repos.accountExport,
+  );
   const games = createGamesService(
     repos.games,
     provider,
@@ -102,6 +112,15 @@ export const buildRoutes = ({
     repos.notifications,
   );
 
+  const reports = createReportsService({
+    repo: repos.reports,
+    community: repos.community,
+    communityService: community,
+    reviews: repos.reviews,
+    profiles: repos.profiles,
+    avatars,
+  });
+
   const admin = createAdminService({
     repo: repos.admin,
     games: repos.games,
@@ -121,8 +140,11 @@ export const buildRoutes = ({
     "/admin",
     requireAuth,
     requireAdmin(repos.profiles),
+    Router().use("/reports", createAdminReportsRouter({ service: reports })),
     createAdminRouter({ service: admin }),
   );
+
+  router.use("/reports", createReportsRouter({ service: reports, requireAuth }));
 
   router.use("/platforms", createPlatformsRouter(repos.platforms));
   router.use("/genres", createGenresRouter(repos.genres));

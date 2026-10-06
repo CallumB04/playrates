@@ -683,6 +683,101 @@
     }
 }
 
+/* Long reading: the about, privacy and terms pages. Set for reading a page
+   top to bottom rather than a message in passing, so more air than
+   .rich-text and headings that can be linked to. */
+@layer components {
+    .prose-page {
+        color: var(--content-secondary);
+        font-size: 1rem;
+        line-height: 1.7;
+        overflow-wrap: break-word;
+    }
+
+    .prose-page > * + * {
+        margin-top: 1em;
+    }
+
+    .prose-page h2 {
+        margin-top: 2.2em;
+        scroll-margin-top: 6rem;
+        color: var(--content);
+        font-family: var(--font-display);
+        font-size: 1.3rem;
+        font-weight: 640;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+    }
+
+    .prose-page h3 {
+        margin-top: 1.6em;
+        color: var(--content);
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+        font-weight: 620;
+    }
+
+    .prose-page > h2:first-child {
+        margin-top: 0.4em;
+    }
+
+    .prose-page h2 + *,
+    .prose-page h3 + * {
+        margin-top: 0.6em;
+    }
+
+    .prose-page strong {
+        color: var(--content);
+        font-weight: 620;
+    }
+
+    .prose-page a {
+        color: var(--content);
+        text-decoration: underline;
+        text-decoration-color: color-mix(
+            in oklab,
+            var(--brand) 55%,
+            transparent
+        );
+        text-underline-offset: 3px;
+        transition: color 200ms var(--ease-glide);
+    }
+
+    .prose-page a:hover {
+        color: var(--brand);
+    }
+
+    .prose-page ul,
+    .prose-page ol {
+        padding-left: 1.3em;
+    }
+
+    .prose-page ul {
+        list-style: disc;
+    }
+
+    .prose-page ol {
+        list-style: decimal;
+    }
+
+    .prose-page li + li {
+        margin-top: 0.4em;
+    }
+
+    .prose-page li::marker {
+        color: var(--content-muted);
+    }
+
+    .prose-page code {
+        border-radius: 4px;
+        background: var(--surface-sunken);
+        padding: 0.1em 0.35em;
+        color: var(--content);
+        font-family: var(--font-mono);
+        font-size: 0.875em;
+    }
+}
+
 /* Community messages. One set of rules for the editor and the rendered
    message, so what you type is what gets posted. */
 @layer components {

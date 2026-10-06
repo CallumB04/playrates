@@ -30,7 +30,12 @@ beforeEach(() => {
 describe("SignupForm", () => {
     const fill = async (
         user: ReturnType<typeof userEvent.setup>,
-        values: { username?: string; email?: string; password?: string }
+        values: {
+            username?: string;
+            email?: string;
+            password?: string;
+            agree?: boolean;
+        }
     ) => {
         if (values.username !== undefined) {
             await user.type(screen.getByLabelText("Username"), values.username);
@@ -41,7 +46,35 @@ describe("SignupForm", () => {
         if (values.password !== undefined) {
             await user.type(screen.getByLabelText("Password"), values.password);
         }
+        if (values.agree ?? true) {
+            await user.click(
+                screen.getByRole("checkbox", { name: /13 or older/ })
+            );
+        }
     };
+
+    it("won't sign up without the age and terms box ticked", async () => {
+        const user = userEvent.setup();
+        renderWithProviders(<SignupForm onSignedUp={vi.fn()} />);
+
+        await fill(user, {
+            username: "brandnew",
+            email: "new@example.test",
+            password: "longenough1",
+            agree: false,
+        });
+        await user.click(
+            screen.getByRole("button", { name: "Create account" })
+        );
+
+        expect(
+            await screen.findByText(/13 or older and agree to the terms/)
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("checkbox", { name: /13 or older/ })
+        ).toHaveAttribute("aria-invalid", "true");
+        expect(signUp).not.toHaveBeenCalled();
+    });
 
     it("signs up with a valid submission", async () => {
         const user = userEvent.setup();

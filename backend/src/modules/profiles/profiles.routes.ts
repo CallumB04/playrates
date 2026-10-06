@@ -9,6 +9,7 @@ import {
   UsernameParamSchema,
 } from "@playrates/shared";
 import { z } from "zod";
+import { perMinute } from "../../lib/rateLimit.js";
 import { validate } from "../../middleware/validate.js";
 import { AppError } from "../../lib/AppError.js";
 import type { ProfilesService } from "./profiles.service.js";
@@ -57,6 +58,9 @@ export const createProfilesRouter = ({
   requireAuth,
 }: Deps): Router => {
   const router = Router();
+  const usernameCheckLimiter = perMinute(30);
+  // Reads every table the account touches.
+  const exportLimiter = perMinute(3);
 
   // "/me" and "/check-username" must come before "/:username", or they parse
   // as usernames.
@@ -78,6 +82,16 @@ export const createProfilesRouter = ({
   router.delete("/me", requireAuth, async (req, res) => {
     await service.deleteOwn(callerId(req));
     res.status(204).end();
+  });
+
+  router.get("/me/export", requireAuth, exportLimiter, async (req, res) => {
+    const data = await service.exportOwn(callerId(req));
+    const day = data.exportedAt.slice(0, 10);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="playrates-${String(data.profile?.username ?? "account")}-${day}.json"`,
+    );
+    res.json(data);
   });
 
   router.post(
@@ -107,6 +121,8 @@ export const createProfilesRouter = ({
 
   router.get(
     "/check-username",
+    // Unauthenticated, and a yes or no on whether an account exists.
+    usernameCheckLimiter,
     validate({ query: CheckUsernameSchema }),
     async (req, res) => {
       const { username } = req.valid!.query as z.infer<

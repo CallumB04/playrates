@@ -1,5 +1,4 @@
 import express, { Router, type RequestHandler } from "express";
-import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import {
   COMMUNITY_IMAGE_MAX_BYTES,
@@ -18,6 +17,7 @@ import {
 } from "@playrates/shared";
 import { validate } from "../../middleware/validate.js";
 import { AppError } from "../../lib/AppError.js";
+import { perMinute } from "../../lib/rateLimit.js";
 import type { CommunityService } from "./community.service.js";
 
 interface Deps {
@@ -50,14 +50,6 @@ const imageBody = express.raw({
   limit: COMMUNITY_IMAGE_MAX_BYTES,
 });
 
-const perMinute = (limit: number) =>
-  rateLimit({
-    windowMs: 60_000,
-    limit,
-    standardHeaders: "draft-7",
-    legacyHeaders: false,
-  });
-
 /** Mounted at /community. */
 export const createCommunityRouter = ({
   service,
@@ -65,7 +57,6 @@ export const createCommunityRouter = ({
   optionalAuth,
 }: Deps): Router => {
   const router = Router();
-  // Per router rather than per module, so each app built counts afresh.
   const imageLimiter = perMinute(20);
   // Posting is cheap for us and expensive for everyone reading.
   const postLimiter = perMinute(20);

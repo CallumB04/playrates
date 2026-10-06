@@ -1,13 +1,17 @@
 import type { Repositories } from "../../src/repositories.js";
 import type { AuthAdmin } from "../../src/config/authAdmin.js";
 import type { AvatarStore } from "../../src/config/avatarStore.js";
-import type { CommunityImageStore } from "../../src/config/communityImageStore.js";
+import {
+  isStoredImageUrl,
+  type CommunityImageStore,
+} from "../../src/config/communityImageStore.js";
 import type {
   ActivityEventRow,
   AnnouncementRow,
   GameEventRow,
   RawgUsageDayRow,
   ServerErrorRow,
+  ContentReportRow,
   CommunityMessageRow,
   CommunityThreadRow,
   FriendshipRow,
@@ -59,6 +63,7 @@ export interface SeedData {
   gameEvents?: GameEventRow[];
   rawgUsage?: RawgUsageDayRow[];
   serverErrors?: ServerErrorRow[];
+  contentReports?: ContentReportRow[];
 }
 
 export interface InMemoryState {
@@ -87,6 +92,7 @@ export interface InMemoryState {
   rawgUsage: RawgUsageDayRow[];
   serverErrors: ServerErrorRow[];
   announcements: AnnouncementRow[];
+  contentReports: ContentReportRow[];
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
@@ -123,6 +129,7 @@ export const createInMemoryRepos = (
     rawgUsage: [...(seed.rawgUsage ?? [])],
     serverErrors: [...(seed.serverErrors ?? [])],
     announcements: [],
+    contentReports: [...(seed.contentReports ?? [])],
   };
 
   let nextLogId = 1000;
@@ -205,8 +212,117 @@ export const createInMemoryRepos = (
     };
   };
 
+  let nextReportId = 1;
   const repos: Repositories = {
+    sitemap: {
+      async countGames() {
+        return state.games.filter((g) => !g.has_sexual_content).length;
+      },
+      async games(offset, limit) {
+        return state.games
+          .filter((g) => !g.has_sexual_content)
+          .sort((a, b) => a.id - b.id)
+          .slice(offset, offset + limit)
+          .map((g) => ({ id: g.id, lastmod: g.updated_at.slice(0, 10) }));
+      },
+      async threads() {
+        return state.communityThreads.map((t) => ({
+          id: t.id,
+          lastmod: t.last_activity_at.slice(0, 10),
+        }));
+      },
+    },
+    reports: {
+      async create(row) {
+        const report: ContentReportRow = {
+          ...row,
+          id: nextReportId++,
+          status: "open",
+          created_at: new Date().toISOString(),
+          resolved_at: null,
+          resolved_by: null,
+        };
+        state.contentReports.push(report);
+        return report;
+      },
+      async findOpen(reporterId, type, id) {
+        return (
+          state.contentReports.find(
+            (r) =>
+              r.reporter_id === reporterId &&
+              r.target_type === type &&
+              r.target_id === id &&
+              r.status === "open",
+          ) ?? null
+        );
+      },
+      async findById(id) {
+        return state.contentReports.find((r) => r.id === id) ?? null;
+      },
+      async list(status, from, to) {
+        const matched = state.contentReports.filter((r) => r.status === status);
+        return { rows: matched.slice(from, to + 1), total: matched.length };
+      },
+      async countOpenFor(type, id) {
+        return state.contentReports.filter(
+          (r) =>
+            r.target_type === type && r.target_id === id && r.status === "open",
+        ).length;
+      },
+      async closeOpenFor(type, id, status, by) {
+        for (const r of state.contentReports) {
+          if (r.target_type === type && r.target_id === id && r.status === "open") {
+            Object.assign(r, { status, resolved_by: by, resolved_at: now() });
+          }
+        }
+      },
+      async close(id, status, by) {
+        const r = state.contentReports.find((x) => x.id === id);
+        if (r) Object.assign(r, { status, resolved_by: by, resolved_at: now() });
+      },
+    },
+    accountExport: {
+      async collect(userId) {
+        return {
+          profile: (state.profiles.find((p) => p.id === userId) ??
+            null) as Record<string, unknown> | null,
+          gameLogs: state.gameLogs.filter((l) => l.user_id === userId),
+          reviews: state.reviews.filter((r) => r.user_id === userId),
+          reviewVotes: state.reviewVotes.filter((v) => v.user_id === userId),
+          friendships: state.friendships.filter(
+            (f) => f.user_a_id === userId || f.user_b_id === userId,
+          ),
+          notifications: state.notifications.filter(
+            (n) => n.user_id === userId,
+          ),
+          communityThreads: state.communityThreads.filter(
+            (t) => t.author_id === userId,
+          ),
+          communityMessages: state.communityMessages.filter(
+            (m) => m.author_id === userId,
+          ),
+          communityVotes: state.communityVotes.filter(
+            (v) => v.user_id === userId,
+          ),
+          activeDays: [],
+          reportsFiled: state.contentReports.filter(
+            (r) => r.reporter_id === userId,
+          ),
+        };
+      },
+    },
     profiles: {
+      async eraseTraces(id) {
+        state.activityEvents = state.activityEvents.filter(
+          (e) => e.actor_id !== id && e.subject_id !== id,
+        );
+        for (const e of state.gameEvents) {
+          if (e.actor_id === id) e.actor_id = null;
+        }
+        for (const e of state.serverErrors) {
+          if (e.user_id === id) e.user_id = null;
+        }
+      },
       async findById(id) {
         return state.profiles.find((p) => p.id === id) ?? null;
       },
@@ -1058,6 +1174,11 @@ export const createInMemoryRepos = (
      friendships with it — a fake that only dropped the profile would let a
      broken cascade pass the tests. */
   const authAdmin: AuthAdmin = {
+    async getEmail(userId) {
+      return state.profiles.some((p) => p.id === userId)
+        ? `${userId}@example.test`
+        : null;
+    },
     async deleteUser(userId) {
       state.profiles = state.profiles.filter((p) => p.id !== userId);
       state.gameLogs = state.gameLogs.filter((l) => l.user_id !== userId);
@@ -1106,7 +1227,7 @@ export const createInMemoryRepos = (
       return url;
     },
     owns(url) {
-      return url.startsWith(IMAGE_PREFIX) && !url.includes("..");
+      return isStoredImageUrl(IMAGE_PREFIX, url);
     },
     async listUploads(userId) {
       return [...state.communityImages.entries()]

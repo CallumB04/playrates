@@ -25,15 +25,23 @@ export interface CommunityImageStore {
   remove(urls: string[]): Promise<void>;
 }
 
+/**
+ * Whether a URL points at a file in this bucket, as the upload names them:
+ * `<user>/<name>.webp`. Matching the whole shape, rather than refusing "..",
+ * also refuses the encoded spellings (%2e%2e, %2F) a browser would still
+ * resolve out of the folder.
+ */
+export const isStoredImageUrl = (prefix: string, url: string): boolean =>
+  url.startsWith(prefix) &&
+  /^[A-Za-z0-9-]+\/[A-Za-z0-9-]+\.webp$/.test(url.slice(prefix.length));
+
 export const createCommunityImageStore = (
   db: SupabaseClient,
 ): CommunityImageStore => {
   const base = db.storage.from(BUCKET).getPublicUrl("").data.publicUrl;
   const prefix = base.endsWith("/") ? base : `${base}/`;
 
-  const owns = (url: string) =>
-    // ".." would let a browser resolve the URL out of this bucket.
-    url.startsWith(prefix) && !url.includes("..");
+  const owns = (url: string) => isStoredImageUrl(prefix, url);
 
   return {
     async put(userId, bytes) {

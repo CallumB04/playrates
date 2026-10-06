@@ -1,5 +1,6 @@
 import type { GameQuery } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
+import { likeTerm } from "../../lib/likeTerm.js";
 import type { ExternalGame } from "../../providers/games/GamesProvider.js";
 import type { GameRowWithPlatforms } from "./games.mapper.js";
 
@@ -105,7 +106,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       .from("games")
       .select(select.join(", "), { count: "exact" });
 
-    if (query.search) builder = builder.ilike("title", `%${query.search}%`);
+    if (query.search) builder = builder.ilike("title", likeTerm(query.search));
     if (query.trending !== undefined) {
       builder = builder.eq("is_trending", query.trending);
     }
@@ -194,7 +195,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     let builder = db
       .from("games")
       .select(SELECT_WITH_RELATIONS)
-      .ilike("title", `%${term}%`);
+      .ilike("title", likeTerm(term));
 
     // The same rule the listing runs. Search had been the way round it.
     if (!showSexualContent) {

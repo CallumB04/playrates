@@ -10,6 +10,7 @@ import {
   type AnnouncementInput,
 } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
+import { likeTerm } from "../../lib/likeTerm.js";
 import type {
   AdminActivityFeedRow,
   AdminGameFeedRow,
@@ -88,9 +89,6 @@ export interface AdminRepository {
 
 export const announcementKey = (id: number): string => `announcement:${id}`;
 
-/** % and _ are wildcards to ILIKE; a username can hold an underscore. */
-const likeTerm = (term: string): string =>
-  `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 
 const USER_SORT: Record<AdminUsersQuery["sort"], keyof AdminUserDirectoryRow> = {
   recent: "last_seen_at",

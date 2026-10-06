@@ -3,37 +3,41 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <!-- Game, profile and thread pages have this block swapped for their
+             own by the server (backend/src/modules/pages); the app keeps it
+             in step as you move around (hooks/usePageMeta). Keep the markers. -->
+        <!-- head:start -->
         <title>PlayRates / Video Game Tracker</title>
+        <meta
+            name="description"
+            content="Log, rate and review the games you’ve played, manage your backlog and wishlist, and interact with your friends and the community."
+        />
+        <meta property="og:site_name" content="PlayRates" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="PlayRates / Video Game Tracker" />
+        <meta
+            property="og:description"
+            content="Log, rate and review the games you’ve played, manage your backlog and wishlist, and interact with your friends and the community."
+        />
+        <meta property="og:url" content="https://playrates.app/" />
+        <meta property="og:image" content="https://playrates.app/og-default.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                "name": "PlayRates",
+                "url": "https://playrates.app/"
+            }
+        </script>
+        <!-- head:end -->
+        <meta name="theme-color" content="#0f0e12" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#f1eff7" media="(prefers-color-scheme: light)" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="icon" href="/favicon.ico" sizes="48x48" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <script>
-            // Apply the stored theme before first paint, otherwise the page
-            // renders in the default theme and visibly flips. Must agree with
-            // ThemeContext.tsx: same key, same default, same "system" rule.
-            (function () {
-                try {
-                    var stored = localStorage.getItem("playrates-theme");
-                    var theme =
-                        stored === "light" || stored === "dark"
-                            ? stored
-                            : stored === "system" &&
-                                window.matchMedia(
-                                    "(prefers-color-scheme: light)"
-                                ).matches
-                              ? "light"
-                              : "dark";
-                    document.documentElement.classList.toggle(
-                        "dark",
-                        theme === "dark"
-                    );
-                    document.documentElement.style.colorScheme = theme;
-                } catch (e) {
-                    document.documentElement.classList.add("dark");
-                    document.documentElement.style.colorScheme = "dark";
-                }
-            })();
-        </script>
+        <link rel="manifest" href="/site.webmanifest" />
+        <script src="/theme-init.js"></script>
     </head>
     <body>
         <div id="root"></div>

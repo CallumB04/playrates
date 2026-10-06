@@ -15,6 +15,7 @@ import type {
 } from "@playrates/shared";
 import {
   COMMUNITY_IMAGE_MAX_BYTES,
+  COMMUNITY_IMAGE_MAX_EDGE,
   firstHeading,
   imageSources,
   isUpvoteMilestone,
@@ -23,6 +24,7 @@ import {
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { assertAdmin } from "../../lib/authz.js";
+import { cleanWebp } from "../../lib/cleanWebp.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import type { CommunityImageStore } from "../../config/communityImageStore.js";
 import type { GamesRepository } from "../games/games.repository.js";
@@ -95,10 +97,10 @@ export const createCommunityService = (
   /* Only pictures that went through our upload. Anything else would let a
      message load whatever it liked from wherever it liked. */
   const assertOwnImages = (body: RichTextDoc): void => {
-    for (const block of body.content) {
-      if (block.type === "image" && !images.owns(block.attrs.src)) {
-        throw AppError.validation("Images must be uploaded to PlayRates");
-      }
+    // Every image in the document, not only the top level: a list item can
+    // hold one too.
+    if (!imageSources(body).every((src) => images.owns(src))) {
+      throw AppError.validation("Images must be uploaded to PlayRates");
     }
   };
 
@@ -460,7 +462,11 @@ export const createCommunityService = (
       if (!isWebp(bytes)) {
         throw AppError.badRequest("A picture must be a WebP image");
       }
-      const url = await images.put(userId, bytes);
+      const clean = await cleanWebp(bytes, {
+        maxEdge: COMMUNITY_IMAGE_MAX_EDGE,
+        maxBytes: COMMUNITY_IMAGE_MAX_BYTES,
+      });
+      const url = await images.put(userId, clean);
       /* Pictures uploaded and never posted, swept here rather than on a
          schedule: this is the one moment they can pile up. Like discard, a
          sweep that fails leaves them for the next upload. */

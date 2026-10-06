@@ -15,7 +15,7 @@ export type Theme = "light" | "dark";
 export type ThemePreference = Theme | "system";
 
 /** Vellum is built for the dark. Kept in one place so the boot script in
- *  index.html agrees. */
+ *  public/theme-init.js agrees. */
 export const DEFAULT_THEME: Theme = "dark";
 export const THEME_STORAGE_KEY = "playrates-theme";
 
@@ -51,7 +51,7 @@ export const applyTheme = (theme: Theme): void => {
 };
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-    // matches what the boot script in index.html already applied
+    // matches what public/theme-init.js already applied
     const [preference, setPreferenceState] =
         useState<ThemePreference>(readStoredPreference);
     /* Live, since the OS can flip at sunset with the tab already open. With

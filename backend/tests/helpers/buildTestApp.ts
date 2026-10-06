@@ -41,7 +41,19 @@ interface TestAppOptions {
   seed?: SeedData;
   provider?: GamesProvider;
   repos?: Repositories;
+  production?: boolean;
 }
+
+/** index.html as the build leaves it, cut down to what pages touch. */
+export const TEST_TEMPLATE = `<!doctype html>
+<html lang="en">
+    <head>
+        <!-- head:start -->
+        <title>PlayRates / Video Game Tracker</title>
+        <!-- head:end -->
+    </head>
+    <body><div id="root"></div></body>
+</html>`;
 
 export const buildTestApp = (
   options: TestAppOptions = {},
@@ -60,6 +72,8 @@ export const buildTestApp = (
     communityImages,
     verify: fakeVerify,
     logger: createLogger(),
+    template: async () => TEST_TEMPLATE,
+    production: options.production ?? false,
   });
 
   return { app, repos: resolved, state };

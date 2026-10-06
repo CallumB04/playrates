@@ -35,6 +35,14 @@ export default tseslint.config(
             // we use the new JSX transform, so React need not be in scope
             "react/react-in-jsx-scope": "off",
             "react/prop-types": "off",
+            // Everything user-written is rendered as React text or as rich
+            // text node by node. Keep it that way.
+            "react/no-danger": "error",
+            "no-restricted-properties": [
+                "error",
+                { property: "innerHTML" },
+                { property: "outerHTML" },
+            ],
         },
     },
     // vitest setup + test files also run in a node-ish environment
@@ -43,5 +51,7 @@ export default tseslint.config(
         languageOptions: {
             globals: { ...globals.browser, ...globals.node },
         },
+        // Tests set up the document by hand; nothing there reaches a user.
+        rules: { "no-restricted-properties": "off" },
     }
 );

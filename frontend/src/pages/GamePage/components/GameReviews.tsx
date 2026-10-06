@@ -13,7 +13,8 @@ import RatingBadge from "../../../components/ui/RatingBadge";
 import VoteButton from "../../../components/ui/VoteButton";
 import { whyCannotVote } from "../../../lib/voting";
 import Button from "../../../components/ui/Button";
-import { PenLine } from "lucide-react";
+import { Flag, PenLine } from "lucide-react";
+import ReportDialog from "../../../components/ReportDialog";
 import {
     displayStatusFor,
     isDisplayStatus,
@@ -64,6 +65,7 @@ const GameReviews = ({
        survives. Once: re-sorting should not yank the page back. */
     const jumped = useRef(false);
     const [landedOn, setLandedOn] = useState<string | null>(null);
+    const [reporting, setReporting] = useState<number | null>(null);
     useEffect(() => {
         if (jumped.current || isLoading || reviews.length === 0) return;
         const id = window.location.hash.slice(1);
@@ -193,6 +195,18 @@ const GameReviews = ({
                                     moreLabel="Show more"
                                 />
                             </SpoilerCover>
+                            {viewerId && viewerId !== review.author.id && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setReporting(review.id)}
+                                    className="mt-1 -ml-2.5 min-h-11 px-2.5 text-content-muted sm:min-h-8"
+                                >
+                                    <Flag size={13} aria-hidden />
+                                    Report
+                                </Button>
+                            )}
                         </div>
                         <div className="flex flex-col items-end gap-2">
                             <RatingBadge value={review.rating} size="row" />
@@ -208,6 +222,13 @@ const GameReviews = ({
                         </div>
                     </article>
                 ))
+            )}
+            {reporting !== null && (
+                <ReportDialog
+                    targetType="review"
+                    targetId={reporting}
+                    onClose={() => setReporting(null)}
+                />
             )}
         </section>
     );

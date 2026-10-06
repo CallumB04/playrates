@@ -17,7 +17,8 @@ import {
     useMyGameLogs,
 } from "../../hooks/queries/useGameLogs";
 import { useGameReviews } from "../../hooks/queries/useReviews";
-import { usePageTitle } from "../../hooks/usePageTitle";
+import { usePageMeta } from "../../hooks/usePageMeta";
+import { gameDescription, gamePageName } from "@playrates/shared";
 import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../components/ui/Skeleton";
@@ -67,7 +68,20 @@ const GamePage = () => {
         gameId > 0
     );
 
-    usePageTitle(game?.title);
+    usePageMeta({
+        title: game ? gamePageName(game) : null,
+        description: game
+            ? gameDescription({
+                  ...game,
+                  platforms: game.platforms.map(
+                      (slug) =>
+                          platforms?.find((p) => p.slug === slug)
+                              ?.displayName ?? slug
+                  ),
+              })
+            : null,
+        image: game?.coverUrl,
+    });
 
     const log = useMemo(
         () => (myLogIds ?? []).find((entry) => entry.gameId === gameId),

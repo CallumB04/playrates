@@ -46,6 +46,8 @@ export const UpdateProfileSchema = z
     timezone: TimeZoneSchema.optional(),
     /** Opt-out, so the default is the permissive one. */
     hideOnline: z.boolean().optional(),
+    /** Asks search engines to leave the profile page out. */
+    hideFromSearch: z.boolean().optional(),
   })
   .strict();
 
@@ -67,6 +69,8 @@ export interface Profile {
   accent: ProfileAccent;
   /** Derived from last_seen_at, not stored. */
   online: boolean;
+  /** Public because the page has to say it: a noindex is read by anyone. */
+  hideFromSearch: boolean;
   createdAt: string;
 }
 

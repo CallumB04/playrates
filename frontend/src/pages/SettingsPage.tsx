@@ -24,8 +24,9 @@ import {
 import { useUserStats } from "../hooks/queries/useGameLogs";
 import { useUserReviews } from "../hooks/queries/useReviews";
 import { useUserFriends } from "../hooks/queries/useFriends";
-import { usePageTitle } from "../hooks/usePageTitle";
-import { deleteMyAccount } from "../api";
+import { usePageMeta } from "../hooks/usePageMeta";
+import { deleteMyAccount, fetchMyData } from "../api";
+import { saveFile } from "../lib/saveFile";
 import { FALLBACK_ACCENT } from "@playrates/shared";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
@@ -99,7 +100,7 @@ const SettingsCard = ({ children }: { children: ReactNode }) => (
 );
 
 const SettingsPage = () => {
-    usePageTitle("Settings");
+    usePageMeta({ title: "Settings", noindex: true });
 
     const { user, session, signOut } = useAuth();
     const { openLogin } = useAccountForm();
@@ -125,12 +126,27 @@ const SettingsPage = () => {
         onError: () => notify("Couldn't delete your account", "error"),
     });
 
+    const exportData = useMutation({
+        mutationFn: fetchMyData,
+        onSuccess: (blob) => {
+            const day = new Date().toISOString().slice(0, 10);
+            saveFile(
+                blob,
+                `playrates-${user?.username ?? "account"}-${day}.json`
+            );
+        },
+        onError: () => notify("Couldn't export your data", "error"),
+    });
+
     const [bio, setBio] = useState(user?.bio ?? "");
     const [firstName, setFirstName] = useState(user?.firstName ?? "");
     const [showSexual, setShowSexual] = useState(
         user?.showSexualContent ?? false
     );
     const [hideOnline, setHideOnline] = useState(user?.hideOnline ?? false);
+    const [hideFromSearch, setHideFromSearch] = useState(
+        user?.hideFromSearch ?? false
+    );
     const [accent, setAccent] = useState(user?.accent ?? FALLBACK_ACCENT);
     const updateAvatar = useUpdateAvatar();
     const removeAvatar = useRemoveAvatar();
@@ -140,6 +156,7 @@ const SettingsPage = () => {
         setFirstName(user?.firstName ?? "");
         setShowSexual(user?.showSexualContent ?? false);
         setHideOnline(user?.hideOnline ?? false);
+        setHideFromSearch(user?.hideFromSearch ?? false);
         setAccent(user?.accent ?? FALLBACK_ACCENT);
     }, [user]);
 
@@ -334,6 +351,24 @@ const SettingsPage = () => {
                         disabled={update.isPending}
                     />
                 </Row>
+                <Row
+                    label="Hide from search engines"
+                    help="Asks Google and the like to leave your profile out of their results. It stays public here."
+                >
+                    <Toggle
+                        checked={hideFromSearch}
+                        onChange={(next) =>
+                            saveToggle(
+                                { hideFromSearch: next },
+                                next,
+                                setHideFromSearch,
+                                hideFromSearch
+                            )
+                        }
+                        label={hideFromSearch ? "On" : "Off"}
+                        disabled={update.isPending}
+                    />
+                </Row>
             </SettingsCard>
         ),
 
@@ -402,13 +437,17 @@ const SettingsPage = () => {
                         everything attached to them will be deleted. This cannot
                         be undone.
                     </p>
-                    {/* Export has no backing yet, but the shape is real. */}
-                    <Button variant="secondary" size="sm" disabled>
-                        Export my data
+                    <Button
+                        variant="secondary"
+                        className="w-full sm:w-auto"
+                        onClick={() => exportData.mutate()}
+                        disabled={exportData.isPending}
+                    >
+                        {exportData.isPending ? "Exporting…" : "Export my data"}
                     </Button>
                     <Button
                         variant="danger"
-                        size="sm"
+                        className="w-full sm:w-auto"
                         onClick={() => setConfirmingDelete(true)}
                     >
                         Delete account

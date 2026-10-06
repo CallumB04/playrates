@@ -18,6 +18,8 @@ export interface ProfileRow {
   timezone: string;
   /** When true, this profile reads as offline to everyone. */
   hide_online: boolean;
+  /** When true, the profile page asks search engines not to index it. */
+  hide_from_search: boolean;
   /** Chosen profile colour. Null falls back to the hash of the username. */
   accent: string | null;
   /** When the first-login welcome was dismissed. Null shows it. */
@@ -298,4 +300,17 @@ export interface AdminSeriesRow {
   messages: number;
   active: number;
   active_week: number;
+}
+
+export interface ContentReportRow {
+  id: number;
+  reporter_id: string | null;
+  target_type: string;
+  target_id: string;
+  reason: string;
+  details: string | null;
+  status: string;
+  created_at: string;
+  resolved_at: string | null;
+  resolved_by: string | null;
 }

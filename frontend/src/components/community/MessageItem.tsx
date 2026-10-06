@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { MessageSquareReply, Pencil, Trash2, UserX } from "lucide-react";
+import { Flag, MessageSquareReply, Pencil, Trash2, UserX } from "lucide-react";
 import type { CommunityMessage, RichTextDoc } from "@playrates/shared";
 import ProfilePicture from "../ProfilePicture";
 import VoteButton from "../ui/VoteButton";
@@ -19,6 +19,8 @@ export interface MessageActions {
         body: RichTextDoc
     ) => Promise<unknown>;
     onDelete: (message: CommunityMessage) => void;
+    /** Left out where there is nothing to report, like patch notes. */
+    onReport?: (message: CommunityMessage) => void;
 }
 
 interface MessageItemProps {
@@ -198,6 +200,17 @@ const MessageItem = ({
                         </ActionButton>
                     )}
                     {extraActions}
+                    {actions.onReport &&
+                        viewerId &&
+                        author &&
+                        author.id !== viewerId && (
+                            <ActionButton
+                                onClick={() => actions.onReport?.(message)}
+                                icon={<Flag size={14} aria-hidden />}
+                            >
+                                Report
+                            </ActionButton>
+                        )}
                 </div>
             )}
 

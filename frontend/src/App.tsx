@@ -9,7 +9,10 @@ import HomePage from "./pages/HomePage/HomePage";
 import CommunityPage from "./pages/CommunityPage/CommunityPage";
 import NewThreadPage from "./pages/CommunityPage/NewThreadPage";
 import ThreadPage from "./pages/CommunityPage/ThreadPage";
-import LegalPage from "./pages/legal/LegalPage";
+import AboutPage from "./pages/legal/AboutPage";
+import PrivacyPage from "./pages/legal/PrivacyPage";
+import TermsPage from "./pages/legal/TermsPage";
+import ContactPage from "./pages/legal/ContactPage";
 import ProfilePageRoute from "./pages/ProfilePage/ProfilePageRoute";
 import LibraryPage from "./pages/LibraryPage/LibraryPage";
 import GamePage from "./pages/GamePage/GamePage";
@@ -18,30 +21,6 @@ import NotFoundPage from "./pages/NotFoundPage";
 import AdminGate from "./pages/admin/AdminGate";
 
 /** Layout shell and route table. State lives in the providers. */
-
-const LEGAL_PAGES = [
-    {
-        path: "/about",
-        title: "About PlayRates",
-        tabTitle: "About",
-        summary: "What this is, who built it, and why it exists.",
-    },
-    {
-        path: "/privacy",
-        title: "Privacy",
-        summary: "What we store about you, and what we do with it.",
-    },
-    {
-        path: "/terms",
-        title: "Terms",
-        summary: "The rules for keeping an account here.",
-    },
-    {
-        path: "/contact",
-        title: "Contact",
-        summary: "How to reach someone about the site.",
-    },
-];
 
 // /catalogue was the old name. Keep the query string: the filters live there.
 const LibraryRedirect = () => {
@@ -81,19 +60,10 @@ function App() {
                         <Route path="/settings" element={<SettingsPage />} />
 
                         {/* Stubs, so the footer never links into nothing. */}
-                        {LEGAL_PAGES.map((page) => (
-                            <Route
-                                key={page.path}
-                                path={page.path}
-                                element={
-                                    <LegalPage
-                                        title={page.title}
-                                        summary={page.summary}
-                                        tabTitle={page.tabTitle}
-                                    />
-                                }
-                            />
-                        ))}
+                        <Route path="/about" element={<AboutPage />} />
+                        <Route path="/privacy" element={<PrivacyPage />} />
+                        <Route path="/terms" element={<TermsPage />} />
+                        <Route path="/contact" element={<ContactPage />} />
 
                         <Route path="/admin/*" element={<AdminGate />} />
 

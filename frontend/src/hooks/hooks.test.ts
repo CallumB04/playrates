@@ -4,6 +4,7 @@ import { useDebouncedValue } from "./useDebouncedValue";
 import { useScrollY } from "./useScrollY";
 import { useWindowSize } from "./useWindowSize";
 import { usePageTitle } from "./usePageTitle";
+import { MemoryRouter } from "react-router-dom";
 import { BREAKPOINT, useMediaQuery } from "./useMediaQuery";
 import { useDismiss } from "./useDismiss";
 
@@ -140,19 +141,19 @@ describe("usePageTitle", () => {
     const DEFAULT = "PlayRates / Video Game Tracker";
 
     it("names the tab after the page", () => {
-        renderHook(() => usePageTitle("Library"));
+        renderHook(() => usePageTitle("Library"), { wrapper: MemoryRouter });
         expect(document.title).toBe("Library / PlayRates");
     });
 
     it("falls back to the site title with no page name", () => {
-        renderHook(() => usePageTitle());
+        renderHook(() => usePageTitle(), { wrapper: MemoryRouter });
         expect(document.title).toBe(DEFAULT);
     });
 
     it("falls back while a name is still loading", () => {
         const { rerender } = renderHook(
             ({ name }: { name?: string }) => usePageTitle(name),
-            { initialProps: {} as { name?: string } }
+            { initialProps: {} as { name?: string }, wrapper: MemoryRouter }
         );
         expect(document.title).toBe(DEFAULT);
 
@@ -161,7 +162,9 @@ describe("usePageTitle", () => {
     });
 
     it("restores the site title when the page goes away", () => {
-        const { unmount } = renderHook(() => usePageTitle("Settings"));
+        const { unmount } = renderHook(() => usePageTitle("Settings"), {
+            wrapper: MemoryRouter,
+        });
         unmount();
         expect(document.title).toBe(DEFAULT);
     });

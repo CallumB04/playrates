@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Moon, Pencil, Settings, Sun } from "lucide-react";
+import { Flag, Moon, Pencil, Settings, Sun } from "lucide-react";
+import ReportDialog from "../../components/ReportDialog";
 import type { GameLogWithGame } from "../../api";
 import {
     GAME_LOG_SORTS,
@@ -28,7 +29,8 @@ import { useUserReviews } from "../../hooks/queries/useReviews";
 import { usePlatforms } from "../../hooks/queries/useGames";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { usePagination } from "../../hooks/usePagination";
-import { usePageTitle } from "../../hooks/usePageTitle";
+import { usePageMeta } from "../../hooks/usePageMeta";
+import { profileDescription } from "@playrates/shared";
 import Button, { buttonClass } from "../../components/ui/Button";
 import ProfileError from "./components/ProfileError";
 import MemberFileHeader from "./components/MemberFileHeader";
@@ -90,6 +92,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
             : undefined;
 
     const [modal, setModal] = useState<ProfileModal>(null);
+    const [reportingProfile, setReportingProfile] = useState(false);
     const perPage = getProfileGamesPerPage(width);
 
     const {
@@ -99,7 +102,14 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     } = useProfile(targetUsername);
 
     /* The URL's spelling until the profile lands, then its own. */
-    usePageTitle(targetUser?.username ?? targetUsername);
+    usePageMeta({
+        title: targetUser?.username ?? targetUsername,
+        description: targetUser
+            ? profileDescription(targetUser.username, targetUser.bio)
+            : null,
+        image: targetUser?.avatarUrl,
+        noindex: targetUser?.hideFromSearch,
+    });
 
     const isMyAccount =
         !!currentUser && currentUser.username === targetUsername;
@@ -340,17 +350,33 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                             </Link>
                         </>
                     ) : (
-                        <FriendAction
-                            relation={relation}
-                            since={friendEdge?.createdAt}
-                            isPending={isPending}
-                            onAdd={guard(() => void send.mutateAsync())}
-                            onAccept={guard(() => void accept.mutateAsync())}
-                            onRemove={guard(() =>
-                                setModal({ kind: "removeFriend" })
+                        <>
+                            {currentUser && targetUser && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    aria-label="Report this profile"
+                                    title="Report this profile"
+                                    onClick={() => setReportingProfile(true)}
+                                    className="max-sm:size-11 max-sm:px-0"
+                                >
+                                    <Flag size={15} aria-hidden />
+                                </Button>
                             )}
-                            onCancel={guard(() => void cancelRequest())}
-                        />
+                            <FriendAction
+                                relation={relation}
+                                since={friendEdge?.createdAt}
+                                isPending={isPending}
+                                onAdd={guard(() => void send.mutateAsync())}
+                                onAccept={guard(
+                                    () => void accept.mutateAsync()
+                                )}
+                                onRemove={guard(() =>
+                                    setModal({ kind: "removeFriend" })
+                                )}
+                                onCancel={guard(() => void cancelRequest())}
+                            />
+                        </>
                     )
                 }
             />
@@ -447,6 +473,14 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 }}
                 navigate={navigate}
             />
+
+            {reportingProfile && targetUser && (
+                <ReportDialog
+                    targetType="profile"
+                    targetId={targetUser.id}
+                    onClose={() => setReportingProfile(false)}
+                />
+            )}
         </div>
     );
 };
