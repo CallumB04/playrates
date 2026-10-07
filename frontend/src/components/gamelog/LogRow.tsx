@@ -40,7 +40,9 @@ export const LogRow = ({ log, onSelect, aside, className }: LogRowProps) => {
                 aria-hidden
                 className="shrink-0 text-content-secondary"
             />
-            <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
+            {/* Stacked, not side by side: the row also sits in the cover's
+                300px column, where a console's name needs the whole width. */}
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span
                     className={cn(
                         "truncate text-body-sm font-medium",

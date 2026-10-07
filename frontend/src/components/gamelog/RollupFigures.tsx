@@ -35,6 +35,8 @@ const RollupFigures = ({
                 value={formatHours(rollup.hoursPlayed)}
             />
             <Stat
+                // The console's name is the point, so it isn't cut off.
+                wrapLabel
                 label={
                     quickestOn
                         ? `Quickest beat · ${quickestOn}`

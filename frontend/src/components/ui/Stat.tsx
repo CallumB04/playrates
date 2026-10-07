@@ -13,6 +13,8 @@ interface StatProps {
     /** Holds the figure's place until it arrives. A figure nobody has fetched
      *  yet is not zero, and not an em dash either — both read as an answer. */
     loading?: boolean;
+    /** Lets a long label run to a second line rather than cut off. */
+    wrapLabel?: boolean;
     className?: string;
 }
 
@@ -23,6 +25,7 @@ const Stat = ({
     value,
     icon: Icon,
     loading = false,
+    wrapLabel = false,
     className,
 }: StatProps) => (
     <div className={cn("min-w-0", className)}>
@@ -41,7 +44,12 @@ const Stat = ({
                 value
             )}
         </p>
-        <p className="mt-1.5 truncate text-label-sm text-content-muted">
+        <p
+            className={cn(
+                "mt-1.5 text-label-sm text-content-muted",
+                wrapLabel ? "line-clamp-2" : "truncate"
+            )}
+        >
             {label}
         </p>
     </div>
