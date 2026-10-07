@@ -39,6 +39,9 @@ interface Busy {
     key: string;
     phase: "pending" | "done";
     icons: TileAction[];
+    /** The request has come back. Until then the other actions stay held,
+     *  even with "done" already showing, so two saves can't race. */
+    settled?: boolean;
 }
 
 /** Long enough to read "On your wishlist" before the tile moves on. */
@@ -106,19 +109,21 @@ const GameTile = ({
     const icons = busy?.icons ?? actions.filter((a) => a.icon);
 
     useEffect(() => {
-        if (busy?.phase !== "done") return;
+        if (busy?.phase !== "done" || !busy.settled) return;
         const timer = setTimeout(() => setBusy(null), DONE_HOLD_MS);
         return () => clearTimeout(timer);
-    }, [busy?.phase]);
+    }, [busy?.phase, busy?.settled]);
 
+    /* Done the moment it's pressed: adding to a shelf almost never fails,
+       and waiting on the round trip made a tap look ignored. If it does
+       fail, the page says so and the buttons come back. */
     const quickAdd = async (action: TileAction) => {
         if (busy) return;
-        setBusy({ key: action.key, phase: "pending", icons });
+        setBusy({ key: action.key, phase: "done", icons });
         try {
             await action.onSelect();
-            setBusy({ key: action.key, phase: "done", icons });
+            setBusy((current) => current && { ...current, settled: true });
         } catch {
-            // The page has said what went wrong; the buttons come back.
             setBusy(null);
         }
     };

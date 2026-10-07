@@ -8,7 +8,12 @@ import { server } from "../../test/msw/server";
 import { createTestQueryClient } from "../../test/renderWithProviders";
 import { buildGameLog, paginated } from "../../test/msw/handlers";
 import { useGame, useGames, useSiteStats } from "./useGames";
-import { useGameLogMutations, useUserGameLogs } from "./useGameLogs";
+import {
+    useGameLogMutations,
+    useQuickAdd,
+    useUserGameLogs,
+} from "./useGameLogs";
+import { NotificationProvider } from "../../contexts/NotificationContext";
 import { useUserReviews } from "./useReviews";
 import { useProfile } from "./useProfiles";
 
@@ -52,6 +57,61 @@ describe("log mutations", () => {
         expect(
             client.getQueryState(["userStats", "devuser", "all"])?.isInvalidated
         ).toBe(true);
+    });
+});
+
+describe("quick add", () => {
+    const setup = () => {
+        const client = createTestQueryClient();
+        const Wrapper = ({ children }: { children: ReactNode }) => (
+            <QueryClientProvider client={client}>
+                <NotificationProvider>{children}</NotificationProvider>
+            </QueryClientProvider>
+        );
+        client.setQueryData(["gamelogs", "me", "ids"], []);
+        const { result } = renderHook(() => useQuickAdd(), {
+            wrapper: Wrapper,
+        });
+        return { client, quickAdd: result.current };
+    };
+
+    it("shows the game as logged before the save comes back", async () => {
+        let finish!: () => void;
+        server.use(
+            http.put(`${API}/me/game-logs/:gameId`, async () => {
+                await new Promise<void>((resolve) => (finish = resolve));
+                return HttpResponse.json(buildGameLog());
+            })
+        );
+        const { client, quickAdd } = setup();
+
+        const saving = quickAdd(7, "Lanternfall", "backlog");
+
+        await waitFor(() =>
+            expect(client.getQueryData(["gamelogs", "me", "ids"])).toEqual([
+                {
+                    gameId: 7,
+                    status: "backlog",
+                    playedStatus: null,
+                    rating: null,
+                },
+            ])
+        );
+        finish();
+        await saving;
+    });
+
+    it("takes it back when the save fails", async () => {
+        server.use(
+            http.put(`${API}/me/game-logs/:gameId`, () =>
+                HttpResponse.json({ error: { message: "no" } }, { status: 500 })
+            )
+        );
+        const { client, quickAdd } = setup();
+
+        await expect(quickAdd(7, "Lanternfall", "backlog")).rejects.toThrow();
+
+        expect(client.getQueryData(["gamelogs", "me", "ids"])).toEqual([]);
     });
 });
 

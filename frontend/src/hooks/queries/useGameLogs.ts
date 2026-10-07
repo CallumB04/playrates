@@ -4,7 +4,7 @@ import {
     useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
-import type { GameLogInput } from "@playrates/shared";
+import type { GameLogInput, GameLogSummary } from "@playrates/shared";
 import {
     deleteGameLog,
     fetchMyGameLog,
@@ -123,13 +123,28 @@ export type QuickAddStatus = "backlog" | "wishlist";
 export const useQuickAdd = () => {
     const { save } = useGameLogMutations();
     const notify = useNotify();
+    const queryClient = useQueryClient();
 
     return async (gameId: number, title: string, status: QuickAddStatus) => {
         const shelf = STATUS_PRESENTATION[status].label.toLowerCase();
+
+        /* Every tile and badge reading "have I logged this?" shows it at
+           once, rather than a round trip later; a failure puts it back. */
+        const key = queryKeys.gameLogs.mineIds;
+        await queryClient.cancelQueries({ queryKey: key });
+        const before = queryClient.getQueryData<GameLogSummary[]>(key);
+        if (before && !before.some((log) => log.gameId === gameId)) {
+            queryClient.setQueryData<GameLogSummary[]>(key, [
+                ...before,
+                { gameId, status, playedStatus: null, rating: null },
+            ]);
+        }
+
         try {
             await save.mutateAsync({ gameId, input: { status } });
             notify(`${title} added to your ${shelf}`, "success");
         } catch (error) {
+            queryClient.setQueryData(key, before);
             notify(`Couldn't add that to your ${shelf}`, "error");
             throw error;
         }
