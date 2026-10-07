@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { popoverClass } from "../ui/popover";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, Shield, UserRound } from "lucide-react";
+import { LogOut, Moon, Settings, Shield, Sun, UserRound } from "lucide-react";
+import { useTheme } from "../../contexts/ThemeContext";
 import { GAME_STATUSES, STATUS_PRESENTATION } from "../../constants/gameStatus";
 import type { MyProfile } from "@playrates/shared";
 import ProfilePicture from "../ProfilePicture";
@@ -21,6 +22,7 @@ const AccountMenu = ({
 }) => {
     const [open, setOpen] = useState(false);
     const wrapRef = useRef<HTMLDivElement>(null);
+    const { theme, toggleTheme } = useTheme();
 
     useDismiss([wrapRef], () => setOpen(false), {
         enabled: open,
@@ -109,6 +111,21 @@ const AccountMenu = ({
                     >
                         <Settings size={15} aria-hidden /> Settings
                     </Link>
+                    {/* Here, where sites keep it, rather than on the
+                        profile page. The menu stays open to show it took. */}
+                    <button
+                        type="button"
+                        role="menuitem"
+                        onClick={toggleTheme}
+                        className={cn(ITEM, "cursor-pointer")}
+                    >
+                        {theme === "dark" ? (
+                            <Sun size={15} aria-hidden />
+                        ) : (
+                            <Moon size={15} aria-hidden />
+                        )}
+                        {theme === "dark" ? "Day mode" : "Night mode"}
+                    </button>
                     {user.isAdmin && (
                         <Link
                             to="/admin"

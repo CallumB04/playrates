@@ -6,7 +6,7 @@ import Button, {
     type ButtonVariant,
 } from "../../../../../components/ui/Button";
 import Toggle from "../../../../../components/ui/Toggle";
-import Chip from "../../../../../components/ui/Chip";
+import Chip, { chipClass } from "../../../../../components/ui/Chip";
 import SegmentedChoice from "../../../../../components/ui/SegmentedChoice";
 import VoteButton from "../../../../../components/ui/VoteButton";
 import Pagination, {
@@ -90,8 +90,8 @@ const ActionsSpecimens = () => {
 
             <Specimen
                 title="Chips"
-                notes="Filter chips. aria-pressed is the source of truth for both the semantics and the styling, so the two can't drift. chipClass is the same skin for a chip that has to be a link — the home page's shelf shortcuts navigate rather than filter."
-                meta="selected · dotClassName — chipClass(selected, className)"
+                notes="Filter chips. aria-pressed is the source of truth for both the semantics and the styling, so the two can't drift. chipClass is the same skin for a chip that has to be a link. The tag shape takes the buttons' corners, for a chip that names something rather than filters: a game page's platforms and genres."
+                meta='selected · dotClassName — chipClass(selected, className, "pill" | "tag")'
             >
                 {PLATFORMS.map((name) => (
                     <Chip
@@ -107,6 +107,9 @@ const ActionsSpecimens = () => {
                         {name}
                     </Chip>
                 ))}
+                <span className={chipClass(false, undefined, "tag")}>
+                    Role-playing (RPG)
+                </span>
             </Specimen>
 
             <Specimen

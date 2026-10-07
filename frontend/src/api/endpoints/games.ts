@@ -21,6 +21,8 @@ export interface GameListFilters {
     releasedBefore?: string;
     page?: number;
     limit?: number;
+    /** Off where nothing shows a total: counting is most of the cost. */
+    count?: boolean;
 }
 
 /** Drops empty values: an empty slug fails validation with a 422, which is

@@ -18,7 +18,7 @@ import { usePagination } from "../../hooks/usePagination";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import GameTile, { type TileAction } from "../../components/game/GameTile";
 import Pagination, { PaginationSummary } from "../../components/ui/Pagination";
-import { TileSkeleton } from "../../components/ui/Skeleton";
+import { Skeleton, TileSkeleton } from "../../components/ui/Skeleton";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import ViewGameLogPopup from "../../components/ViewGameLogPopup";
 import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
@@ -177,9 +177,15 @@ const LibraryPage = () => {
                     <h1 className="font-display text-title text-content">
                         Library
                     </h1>
-                    <p className="mt-2 text-label text-content-muted">
-                        {formatCount(total)} titles
-                    </p>
+                    {/* Not "0 titles" while it loads: that says the library
+                        is empty, which it isn't. */}
+                    {page ? (
+                        <p className="mt-2 text-label text-content-muted">
+                            {formatCount(total)} {total === 1 ? "title" : "titles"}
+                        </p>
+                    ) : (
+                        <Skeleton className="mt-2.5 h-3.5 w-24" />
+                    )}
                 </div>
             </header>
 
@@ -188,7 +194,6 @@ const LibraryPage = () => {
                 setQuery={setQuery}
                 searchDraft={searchDraft}
                 onSearchDraft={setSearchDraft}
-                matches={page?.meta.total}
                 platforms={platforms ?? []}
                 genres={genres ?? []}
                 isSignedIn={!!user}

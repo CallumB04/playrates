@@ -35,7 +35,7 @@ const DrawerTabs = ({
                 ref={fade.ref}
                 onScroll={fade.onScroll}
                 style={fade.style}
-                className="inline-flex max-w-full gap-1 overflow-x-auto rounded-md border border-subtle bg-surface-sunken p-1 [contain:layout]"
+                className="grid w-full grid-cols-4 gap-1 rounded-md border border-subtle bg-surface-sunken p-1 [contain:layout] sm:inline-flex sm:w-auto sm:max-w-full sm:overflow-x-auto"
             >
                 {GAME_STATUSES.map((status) => {
                     const {
@@ -52,22 +52,32 @@ const DrawerTabs = ({
                             aria-selected={isActive}
                             onClick={() => onSelect(status)}
                             className={cn(
-                                "flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-sm px-3.5 py-2 text-body-sm lift sm:min-h-0",
+                                // Four equal cells on a phone, so Backlog and
+                                // Wishlist aren't scrolled out of sight.
+                                "flex min-h-11 min-w-0 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-sm px-1 py-1.5 text-label-sm lift sm:min-h-0 sm:shrink-0 sm:flex-row sm:gap-2 sm:px-3.5 sm:py-2 sm:text-body-sm",
                                 "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                                 isActive
                                     ? "bg-surface-raised font-medium text-content"
                                     : "text-content-secondary hover:text-content"
                             )}
                         >
-                            <Icon
-                                size={14}
-                                aria-hidden
-                                className={cn("shrink-0", isActive && markTone)}
-                            />
-                            {label}
+                            <span className="flex items-center gap-1.5">
+                                <Icon
+                                    size={14}
+                                    aria-hidden
+                                    className={cn(
+                                        "shrink-0",
+                                        isActive && markTone
+                                    )}
+                                />
+                                <span className="font-mono tabular-nums sm:hidden">
+                                    {formatCount(counts[status] ?? 0)}
+                                </span>
+                            </span>
+                            <span className="truncate">{label}</span>
                             <span
                                 className={cn(
-                                    "rounded-full px-1.5 font-mono text-label-sm tabular-nums",
+                                    "hidden rounded-full px-1.5 font-mono text-label-sm tabular-nums sm:inline",
                                     isActive
                                         ? "bg-surface-sunken text-content-secondary"
                                         : "text-content-muted"

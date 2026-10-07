@@ -1,18 +1,28 @@
 import { NavLink, Outlet } from "react-router-dom";
 import ThemeToggle from "../../components/ui/ThemeToggle";
-import { useOverflowFade } from "../../hooks/useOverflowFade";
 import { cn } from "../../lib/cn";
 
-/** Add a view by adding an entry here and a route in AdminApp.tsx. */
-const ADMIN_VIEWS = [
-    { to: "/admin/overview", label: "Overview" },
-    { to: "/admin/activity", label: "Activity" },
-    { to: "/admin/users", label: "Users" },
-    { to: "/admin/reports", label: "Reports" },
-    { to: "/admin/games", label: "Games" },
-    { to: "/admin/announcements", label: "Announcements" },
-    { to: "/admin/health", label: "Health" },
-    { to: "/admin/design", label: "Design library" },
+/**
+ * Add a view by adding an entry here and a route in AdminApp.tsx.
+ *
+ * Grouped by what it's for, since eight tabs in a row are eight things to
+ * read through: watching the site, its people, and what goes on it.
+ */
+const ADMIN_GROUPS = [
+    [
+        { to: "/admin/overview", label: "Overview" },
+        { to: "/admin/activity", label: "Activity" },
+        { to: "/admin/health", label: "Health" },
+    ],
+    [
+        { to: "/admin/users", label: "Users" },
+        { to: "/admin/reports", label: "Reports" },
+    ],
+    [
+        { to: "/admin/games", label: "Games" },
+        { to: "/admin/announcements", label: "Announcements" },
+        { to: "/admin/design", label: "Design library" },
+    ],
 ];
 
 /**
@@ -21,8 +31,6 @@ const ADMIN_VIEWS = [
  * AdminGate's decision.
  */
 const AdminLayout = () => {
-    const fade = useOverflowFade<HTMLElement>();
-
     return (
         <div className="flex flex-col gap-6">
             <header className="flex flex-col gap-5">
@@ -33,29 +41,38 @@ const AdminLayout = () => {
                     <ThemeToggle />
                 </div>
 
+                {/* Wraps rather than scrolls, a group to a line on a phone,
+                    so no view is hidden off the edge. */}
                 <nav
                     aria-label="Admin"
-                    ref={fade.ref}
-                    onScroll={fade.onScroll}
-                    style={fade.style}
-                    className="flex max-w-full gap-1 self-start overflow-x-auto rounded-md border border-subtle bg-surface-sunken p-1 [contain:layout]"
+                    className="flex max-w-full flex-wrap items-center gap-1 self-start rounded-md border border-subtle bg-surface-sunken p-1"
                 >
-                    {ADMIN_VIEWS.map((view) => (
-                        <NavLink
-                            key={view.to}
-                            to={view.to}
-                            className={({ isActive }) =>
-                                cn(
-                                    "flex min-h-11 shrink-0 items-center rounded-sm px-3.5 py-2 text-body-sm whitespace-nowrap lift sm:min-h-0",
-                                    "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
-                                    isActive
-                                        ? "bg-surface-raised font-medium text-content"
-                                        : "text-content-secondary hover:text-content"
-                                )
-                            }
-                        >
-                            {view.label}
-                        </NavLink>
+                    {ADMIN_GROUPS.map((group, i) => (
+                        <div key={i} className="flex items-center gap-1">
+                            {i > 0 && (
+                                <span
+                                    aria-hidden
+                                    className="mx-1 hidden h-5 border-l border-subtle sm:block"
+                                />
+                            )}
+                            {group.map((view) => (
+                                <NavLink
+                                    key={view.to}
+                                    to={view.to}
+                                    className={({ isActive }) =>
+                                        cn(
+                                            "flex min-h-11 shrink-0 items-center rounded-sm px-3.5 py-2 text-body-sm whitespace-nowrap lift sm:min-h-0",
+                                            "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
+                                            isActive
+                                                ? "bg-surface-raised font-medium text-content"
+                                                : "text-content-secondary hover:text-content"
+                                        )
+                                    }
+                                >
+                                    {view.label}
+                                </NavLink>
+                            ))}
+                        </div>
                     ))}
                 </nav>
             </header>

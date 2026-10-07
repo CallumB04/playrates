@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { ReviewSort } from "@playrates/shared";
 import type { GameLogWithGame } from "../../api";
@@ -33,6 +33,7 @@ import { useThreads } from "../../hooks/queries/useCommunity";
 import { newThreadPath } from "../../components/community/paths";
 import { buildGameFacts } from "./lib/gameFacts";
 import GameBackdrop from "./components/GameBackdrop";
+import StickyLogBar from "./components/StickyLogBar";
 import { cn } from "../../lib/cn";
 import ScoreCards from "./components/ScoreCards";
 import RelatedGames from "./components/RelatedGames";
@@ -86,6 +87,7 @@ const GamePage = () => {
         image: game?.coverUrl,
     });
 
+    const actionsEnd = useRef<HTMLSpanElement>(null);
     const log = useMemo(
         () => (myLogIds ?? []).find((entry) => entry.gameId === gameId),
         [myLogIds, gameId]
@@ -135,13 +137,29 @@ const GamePage = () => {
     return (
         <article
             className={cn(
-                "flex flex-col gap-7",
+                // max-sm:pb-20: room at the very bottom for the sticky bar
+                "flex flex-col gap-7 max-sm:pb-20",
                 // room for the banner to be seen before the page starts
                 game.artworkUrl && "pt-16 sm:pt-28 lg:pt-32"
             )}
         >
             <GameBackdrop url={game.artworkUrl} />
-            <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-y-8">
+            <StickyLogBar
+                anchor={actionsEnd}
+                label={
+                    log
+                        ? "Edit your log"
+                        : user
+                          ? "Log this game"
+                          : "Log in to add"
+                }
+                onPress={() => (user ? openEditor() : openLogin())}
+                disabled={save.isPending}
+            />
+            {/* auto then 1fr: when the cover column is the taller, the spare
+                height goes below the description, not between it and the
+                title. */}
+            <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-y-8">
                 <div className="min-w-0 lg:col-start-1 lg:row-span-2 lg:row-start-1">
                     <GameCoverPlate
                         game={game}
@@ -152,6 +170,7 @@ const GamePage = () => {
                         onPrimary={() => (user ? openEditor() : openLogin())}
                         onQuickLog={(status) => void quickLog(status)}
                         isSaving={save.isPending}
+                        actionsEndRef={actionsEnd}
                     />
                 </div>
 
@@ -176,19 +195,22 @@ const GamePage = () => {
 
                     <ScoreCards game={game} stats={stats} />
 
-                    {stats && (
-                        <>
-                            <RatingPlate
-                                average={stats.averageRating}
-                                ratingCount={stats.ratingCount}
-                                buckets={stats.ratingBuckets}
-                            />
-                            <CirculationPlate
-                                byStatus={stats.byStatus}
-                                byPlayedStatus={stats.byPlayedStatus}
-                                logCount={stats.logCount}
-                            />
-                        </>
+                    {/* Only once there's something in them. Most games have
+                        no logs yet, and an empty chart and four bars at zero
+                        repeat what "0 logs" above already says. */}
+                    {stats && stats.ratingCount > 0 && (
+                        <RatingPlate
+                            average={stats.averageRating}
+                            ratingCount={stats.ratingCount}
+                            buckets={stats.ratingBuckets}
+                        />
+                    )}
+                    {stats && stats.logCount > 0 && (
+                        <CirculationPlate
+                            byStatus={stats.byStatus}
+                            byPlayedStatus={stats.byPlayedStatus}
+                            logCount={stats.logCount}
+                        />
                     )}
 
                     <GameReviews
@@ -200,7 +222,7 @@ const GamePage = () => {
                                 : () => openLogin()
                         }
                         viewerId={user?.id}
-                        onVote={(reviewId) => vote.mutate(reviewId)}
+                        onVote={(reviewId) => vote.mutateAsync(reviewId)}
                         total={reviews?.meta.total ?? 0}
                         sort={sort}
                         onSortChange={setSort}

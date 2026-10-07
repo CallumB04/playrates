@@ -37,7 +37,12 @@ const setup = (backlog: () => Promise<unknown>) => {
         },
     ];
     renderWithProviders(
-        <GameTile gameId={1} title="Lanternfall" coverUrl={null} actions={actions} />
+        <GameTile
+            gameId={1}
+            title="Lanternfall"
+            coverUrl={null}
+            actions={actions}
+        />
     );
     // By title: a folded button is hidden from the accessibility tree.
     const button = (label: string) => screen.getAllByTitle(label)[0]!;
@@ -61,19 +66,34 @@ describe("GameTile quick-add", () => {
         await act(async () => request.resolve());
     });
 
-    it("says it worked once the request comes back", async () => {
+    /* A tap that waited on the round trip looked ignored. */
+    it("says it worked straight away, before the request comes back", async () => {
         const request = deferred();
         const { button } = setup(() => request.promise);
 
         await userEvent.click(button("Add to backlog"));
-        expect(button("Add to backlog")).toHaveAttribute("aria-busy", "true");
+
+        expect(screen.getByText("In your backlog")).toBeInTheDocument();
+        expect(button("Add to wishlist")).toBeDisabled();
 
         await act(async () => request.resolve());
+    });
 
-        expect(await screen.findByText("In your backlog")).toBeInTheDocument();
-        expect(
-            screen.getByRole("button", { name: "In your backlog" })
-        ).not.toHaveAttribute("aria-busy");
+    /* Shown as done, but still out: the others must not be pressable yet,
+       however long the request takes. */
+    it("holds the other actions until the request is back, past the confirmation", async () => {
+        vi.useFakeTimers({ shouldAdvanceTime: true });
+        const request = deferred();
+        const { button } = setup(() => request.promise);
+
+        await userEvent.click(button("Add to backlog"));
+        await act(async () => vi.advanceTimersByTime(3000));
+        expect(button("Add to wishlist")).toBeDisabled();
+
+        await act(async () => request.resolve());
+        await act(async () => vi.advanceTimersByTime(1500));
+        expect(button("Add to wishlist")).toBeEnabled();
+        vi.useRealTimers();
     });
 
     it("hands the buttons back when the request fails", async () => {
@@ -99,5 +119,34 @@ describe("GameTile quick-add", () => {
         expect(screen.queryByText("In your backlog")).toBeNull();
         expect(button("Add to wishlist")).toBeEnabled();
         vi.useRealTimers();
+    });
+});
+
+describe("GameTile prefetch", () => {
+    const API = "http://localhost:3000/api/v1";
+
+    it("loads the game when the pointer rests on its tile, not when it passes", async () => {
+        const fetched = vi.fn();
+        const { server } = await import("../../test/msw/server");
+        const { http, HttpResponse } = await import("msw");
+        const { buildGame } = await import("../../test/msw/handlers");
+        server.use(
+            http.get(`${API}/games/:id`, ({ params }) => {
+                fetched(params.id);
+                return HttpResponse.json(buildGame({ id: Number(params.id) }));
+            })
+        );
+        renderWithProviders(
+            <GameTile gameId={7} title="Lanternfall" coverUrl={null} />
+        );
+        const link = screen.getByRole("link", { name: /Lanternfall/ });
+
+        await userEvent.hover(link);
+        await userEvent.unhover(link);
+        await new Promise((r) => setTimeout(r, 200));
+        expect(fetched).not.toHaveBeenCalled();
+
+        await userEvent.hover(link);
+        await waitFor(() => expect(fetched).toHaveBeenCalledWith("7"));
     });
 });

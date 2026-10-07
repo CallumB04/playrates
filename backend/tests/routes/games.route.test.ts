@@ -287,6 +287,28 @@ describe("games", () => {
 });
 
 describe("platforms and stats", () => {
+  it("finds a title however it's typed", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    for (const q of ["witcher iii", "the witcher 3", "WITCHER-3"]) {
+      const response = await request(app).get(
+        `/api/v1/games?search=${encodeURIComponent(q)}`,
+      );
+      expect(response.body.data.map((g: { title: string }) => g.title)).toEqual([
+        "The Witcher 3: Wild Hunt",
+      ]);
+    }
+  });
+
+  it("lists games without counting them when asked not to", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app).get("/api/v1/games?count=false&limit=1");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(1);
+  });
+
   it("lists platforms", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 

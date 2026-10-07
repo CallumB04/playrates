@@ -12,7 +12,7 @@ import RichTextView from "./RichTextView";
 import MessageComposer from "./MessageComposer";
 
 export interface MessageActions {
-    onVote: (message: CommunityMessage) => void;
+    onVote: (message: CommunityMessage) => unknown;
     onReply?: (message: CommunityMessage) => void;
     onSaveEdit: (
         message: CommunityMessage,
@@ -40,6 +40,11 @@ interface MessageItemProps {
     className?: string;
     /** What comes beneath: the replies, or a composer answering this. */
     children?: ReactNode;
+    /** From sm, sits the body under the name rather than the avatar, so a
+     *  line can run down from the avatar beside it. */
+    threaded?: boolean;
+    /** Draws that line, for the replies (`reply-thread`) to join. */
+    connected?: boolean;
 }
 
 export const ActionButton = ({
@@ -80,6 +85,8 @@ const MessageItem = ({
     extraActions,
     highlighted = false,
     showEdited = true,
+    threaded = false,
+    connected = false,
     linkify = false,
     className,
     children,
@@ -143,85 +150,96 @@ const MessageItem = ({
                 </span>
             </header>
 
-            {editing && message.body ? (
-                <div className="mt-3">
-                    <MessageComposer
-                        initial={message.body}
-                        label="Edit your message"
-                        submitLabel="Save"
-                        autoFocus
-                        onCancel={() => setEditing(false)}
-                        onSubmit={async (body) => {
-                            await actions.onSaveEdit(message, body);
-                            setEditing(false);
-                        }}
+            <div className={cn("relative", threaded && "sm:pl-[46px]")}>
+                {connected && (
+                    <span
+                        aria-hidden
+                        className="pointer-events-none absolute top-1 bottom-0 left-[17px] hidden w-0.5 bg-strong sm:block"
                     />
-                </div>
-            ) : (
-                message.body && (
-                    <RichTextView
-                        doc={message.body}
-                        className="mt-2.5"
-                        linkify={linkify}
-                    />
-                )
-            )}
+                )}
 
-            {!editing && (
-                <div className="mt-2 -ml-1 flex flex-wrap items-center gap-1">
-                    <VoteButton
-                        count={message.voteCount}
-                        voted={message.votedByViewer}
-                        noun="message"
-                        disabledReason={whyCannotVote(
-                            viewerId,
-                            author?.id,
-                            "message"
-                        )}
-                        onToggle={() => actions.onVote(message)}
-                        className="mr-1"
-                    />
-                    {actions.onReply && (
-                        <ActionButton
-                            onClick={() => actions.onReply?.(message)}
-                            icon={<MessageSquareReply size={14} aria-hidden />}
-                        >
-                            Reply
-                        </ActionButton>
-                    )}
-                    {message.canEdit && (
-                        <ActionButton
-                            onClick={() => setEditing(true)}
-                            icon={<Pencil size={14} aria-hidden />}
-                        >
-                            Edit
-                        </ActionButton>
-                    )}
-                    {message.canDelete && (
-                        <ActionButton
-                            tone="danger"
-                            onClick={() => actions.onDelete(message)}
-                            icon={<Trash2 size={14} aria-hidden />}
-                        >
-                            Delete
-                        </ActionButton>
-                    )}
-                    {extraActions}
-                    {actions.onReport &&
-                        viewerId &&
-                        author &&
-                        author.id !== viewerId && (
+                {editing && message.body ? (
+                    <div className="mt-3">
+                        <MessageComposer
+                            initial={message.body}
+                            label="Edit your message"
+                            submitLabel="Save"
+                            autoFocus
+                            onCancel={() => setEditing(false)}
+                            onSubmit={async (body) => {
+                                await actions.onSaveEdit(message, body);
+                                setEditing(false);
+                            }}
+                        />
+                    </div>
+                ) : (
+                    message.body && (
+                        <RichTextView
+                            doc={message.body}
+                            className="mt-2.5"
+                            linkify={linkify}
+                        />
+                    )
+                )}
+
+                {!editing && (
+                    <div className="mt-2 -ml-1 flex flex-wrap items-center gap-1">
+                        <VoteButton
+                            count={message.voteCount}
+                            voted={message.votedByViewer}
+                            noun="message"
+                            disabledReason={whyCannotVote(
+                                viewerId,
+                                author?.id,
+                                "message"
+                            )}
+                            onToggle={() => actions.onVote(message)}
+                            className="mr-1"
+                        />
+                        {actions.onReply && (
                             <ActionButton
-                                onClick={() => actions.onReport?.(message)}
-                                icon={<Flag size={14} aria-hidden />}
+                                onClick={() => actions.onReply?.(message)}
+                                icon={
+                                    <MessageSquareReply size={14} aria-hidden />
+                                }
                             >
-                                Report
+                                Reply
                             </ActionButton>
                         )}
-                </div>
-            )}
+                        {message.canEdit && (
+                            <ActionButton
+                                onClick={() => setEditing(true)}
+                                icon={<Pencil size={14} aria-hidden />}
+                            >
+                                Edit
+                            </ActionButton>
+                        )}
+                        {message.canDelete && (
+                            <ActionButton
+                                tone="danger"
+                                onClick={() => actions.onDelete(message)}
+                                icon={<Trash2 size={14} aria-hidden />}
+                            >
+                                Delete
+                            </ActionButton>
+                        )}
+                        {extraActions}
+                        {actions.onReport &&
+                            viewerId &&
+                            author &&
+                            author.id !== viewerId && (
+                                <ActionButton
+                                    onClick={() => actions.onReport?.(message)}
+                                    icon={<Flag size={14} aria-hidden />}
+                                >
+                                    Report
+                                </ActionButton>
+                            )}
+                    </div>
+                )}
 
-            {children}
+                {children}
+            </div>
         </article>
     );
 };

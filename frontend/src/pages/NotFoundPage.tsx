@@ -13,6 +13,7 @@ const NotFoundPage = () => {
     const { data: popular, isLoading } = useGames({
         sort: "logged",
         limit: 7,
+        count: false,
     });
     const { data: platforms } = usePlatforms();
 

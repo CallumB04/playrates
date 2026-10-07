@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-    Bell,
     Eye,
     Monitor,
     Moon,
-    Plug,
     SlidersHorizontal,
     Sun,
     TriangleAlert,
@@ -43,12 +41,13 @@ import AvatarField, { type AvatarChoice } from "../components/AvatarField";
 import { effectiveTimeZone, formatCount, timeZones } from "../lib/format";
 import { cn } from "../lib/cn";
 
+/* Only what can be used today. Sections and rows that were all "coming
+   soon" were choices that led nowhere; Row's `soon` is there for when one
+   is close enough to show. */
 const SECTIONS: SettingsSection[] = [
     { id: "account", label: "Account", icon: UserRound },
     { id: "profile", label: "Profile", icon: Eye },
     { id: "content", label: "Content", icon: SlidersHorizontal },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "connections", label: "Connections", icon: Plug },
     { id: "account-closure", label: "Close account", icon: TriangleAlert },
 ];
 
@@ -102,7 +101,7 @@ const SettingsCard = ({ children }: { children: ReactNode }) => (
 const SettingsPage = () => {
     usePageMeta({ title: "Settings", noindex: true });
 
-    const { user, session, signOut } = useAuth();
+    const { user, signOut } = useAuth();
     const { openLogin } = useAccountForm();
     const { preference, setPreference } = useTheme();
     const notify = useNotify();
@@ -246,18 +245,6 @@ const SettingsPage = () => {
                         }
                         aria-label="First name"
                     />
-                </Row>
-                <Row label="Change email" soon>
-                    <Input
-                        value={session?.user.email ?? ""}
-                        readOnly
-                        aria-label="Email"
-                    />
-                </Row>
-                <Row label="Reset password" soon>
-                    <Button variant="secondary" size="sm">
-                        Send a reset link
-                    </Button>
                 </Row>
                 <Row
                     label="Time zone"
@@ -407,24 +394,6 @@ const SettingsPage = () => {
                         value={preference}
                         onChange={setPreference}
                     />
-                </Row>
-            </SettingsCard>
-        ),
-
-        notifications: (
-            <SettingsCard>
-                <Row label="Friend requests" soon>
-                    <Toggle checked={false} onChange={() => {}} label="Off" />
-                </Row>
-            </SettingsCard>
-        ),
-
-        connections: (
-            <SettingsCard>
-                <Row label="Steam" soon>
-                    <Button variant="secondary" size="sm">
-                        Connect
-                    </Button>
                 </Row>
             </SettingsCard>
         ),

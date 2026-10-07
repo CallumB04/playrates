@@ -103,6 +103,9 @@ export const GameQuerySchema = PaginationSchema.extend({
   /** Release-date window, so "new releases" can exclude unreleased titles. */
   releasedAfter: IsoDateSchema.optional(),
   releasedBefore: IsoDateSchema.optional(),
+  /** Whether the reply needs the total. A rail shows no page count, and
+   *  counting is most of what a listing costs. */
+  count: BooleanQuerySchema.default(true),
 });
 
 export type GameQuery = z.infer<typeof GameQuerySchema>;

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import {
     useEffect,
+    useRef,
     useState,
     type ComponentType,
     type ReactNode,
@@ -11,6 +12,7 @@ import { cn } from "../../lib/cn";
 import type { DisplayStatus } from "../../constants/gameStatus";
 import type { Platform } from "@playrates/shared";
 import GameCover from "./GameCover";
+import { usePrefetchGame } from "../../hooks/queries/useGames";
 import PlatformMarks from "./PlatformMarks";
 import StatusBadge from "../ui/StatusBadge";
 import RatingBadge from "../ui/RatingBadge";
@@ -37,6 +39,9 @@ interface Busy {
     key: string;
     phase: "pending" | "done";
     icons: TileAction[];
+    /** The request has come back. Until then the other actions stay held,
+     *  even with "done" already showing, so two saves can't race. */
+    settled?: boolean;
 }
 
 /** Long enough to read "On your wishlist" before the tile moves on. */
@@ -89,22 +94,36 @@ const GameTile = ({
 }: GameTileProps) => {
     const rows = actions.filter((a) => !a.icon);
     const [busy, setBusy] = useState<Busy | null>(null);
+
+    /* A pointer resting on a tile is a click on its way, so the game starts
+       loading then. The pause stops a sweep across a rail from fetching
+       every game it passes. */
+    const prefetchGame = usePrefetchGame();
+    const intent = useRef<ReturnType<typeof setTimeout>>();
+    const prefetchSoon = () => {
+        clearTimeout(intent.current);
+        intent.current = setTimeout(() => void prefetchGame(gameId), 120);
+    };
+    const cancelPrefetch = () => clearTimeout(intent.current);
+    useEffect(() => cancelPrefetch, []);
     const icons = busy?.icons ?? actions.filter((a) => a.icon);
 
     useEffect(() => {
-        if (busy?.phase !== "done") return;
+        if (busy?.phase !== "done" || !busy.settled) return;
         const timer = setTimeout(() => setBusy(null), DONE_HOLD_MS);
         return () => clearTimeout(timer);
-    }, [busy?.phase]);
+    }, [busy?.phase, busy?.settled]);
 
+    /* Done the moment it's pressed: adding to a shelf almost never fails,
+       and waiting on the round trip made a tap look ignored. If it does
+       fail, the page says so and the buttons come back. */
     const quickAdd = async (action: TileAction) => {
         if (busy) return;
-        setBusy({ key: action.key, phase: "pending", icons });
+        setBusy({ key: action.key, phase: "done", icons });
         try {
             await action.onSelect();
-            setBusy({ key: action.key, phase: "done", icons });
+            setBusy((current) => current && { ...current, settled: true });
         } catch {
-            // The page has said what went wrong; the buttons come back.
             setBusy(null);
         }
     };
@@ -116,6 +135,10 @@ const GameTile = ({
         <div className="group/tile">
             <Link
                 to={`/game/${gameId}`}
+                onMouseEnter={prefetchSoon}
+                onMouseLeave={cancelPrefetch}
+                onFocus={prefetchSoon}
+                onTouchStart={() => void prefetchGame(gameId)}
                 className="relative block aspect-3/4 overflow-hidden rounded-md bg-surface-media shadow-cover transition-shadow duration-500 ease-[var(--ease-glide)] group-hover/tile:shadow-cover-hover"
             >
                 <GameCover

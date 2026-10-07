@@ -16,6 +16,7 @@ import ProfilePageRoute from "./pages/ProfilePage/ProfilePageRoute";
 import LibraryPage from "./pages/LibraryPage/LibraryPage";
 import GamePage from "./pages/GamePage/GamePage";
 import SettingsPage from "./pages/SettingsPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AdminGate from "./pages/admin/AdminGate";
 
@@ -59,6 +60,10 @@ function App() {
                             element={<ThreadPage />}
                         />
                         <Route path="/settings" element={<SettingsPage />} />
+                        <Route
+                            path="/reset-password"
+                            element={<ResetPasswordPage />}
+                        />
 
                         {/* Stubs, so the footer never links into nothing. */}
                         <Route path="/privacy" element={<PrivacyPage />} />

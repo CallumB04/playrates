@@ -1,5 +1,6 @@
 import type { GameLogInput, GameStatus, PlayedStatus } from "@playrates/shared";
 import type { GameLogWithGame } from "../../api";
+import { parseHours } from "../../lib/parseHours";
 
 export interface LogDraft {
     status: GameStatus;
@@ -121,16 +122,27 @@ const toNumber = (value: string): number | null => {
     return Number.isFinite(parsed) ? parsed : null;
 };
 
+const hoursOrNull = (value: string): number | null => {
+    const hours = parseHours(value);
+    return hours === null || Number.isNaN(hours) ? null : hours;
+};
+
+/** True when there's something in an hours field it can't read. */
+export const unreadableHours = (value: string): boolean =>
+    Number.isNaN(parseHours(value));
+
 const toDate = (value: string): string | null =>
     /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+
+export const HOURS_HINT = "Hours can be written as 12, 12.5 or 12h30.";
 
 /** The draft as the API wants it. Empty strings become nulls, not zeroes. */
 export const toGameLogInput = (draft: LogDraft): GameLogInput => ({
     status: draft.status,
     playedStatus: draft.status === "played" ? draft.playedStatus : null,
     rating: draft.rating,
-    hoursPlayed: toNumber(draft.hoursPlayed),
-    hoursToBeat: toNumber(draft.hoursToBeat),
+    hoursPlayed: hoursOrNull(draft.hoursPlayed),
+    hoursToBeat: hoursOrNull(draft.hoursToBeat),
     startDate: toDate(draft.startDate),
     finishDate: toDate(draft.finishDate),
     platform: draft.platform || null,
@@ -142,6 +154,12 @@ export const toGameLogInput = (draft: LogDraft): GameLogInput => ({
 /** Mirrors the database CHECKs, so the form can point at the bad field
  *  instead of surfacing a 422. */
 export const validateDraft = (draft: LogDraft): string | null => {
+    if (
+        unreadableHours(draft.hoursPlayed) ||
+        unreadableHours(draft.hoursToBeat)
+    ) {
+        return HOURS_HINT;
+    }
     const completed = toNumber(draft.achievementsCompleted);
     const total = toNumber(draft.achievementsTotal);
     if (completed !== null && total !== null && completed > total) {
@@ -163,3 +181,49 @@ export const achievementFraction = (draft: LogDraft): number | null => {
     if (completed === null || !total) return null;
     return Math.min(1, Math.max(0, completed / total));
 };
+
+export type LogField =
+    | "rating"
+    | "review"
+    | "hoursPlayed"
+    | "startDate"
+    | "finishDate"
+    | "achievements";
+
+const EVERY: LogField[] = [
+    "rating",
+    "review",
+    "hoursPlayed",
+    "startDate",
+    "finishDate",
+    "achievements",
+];
+
+/**
+ * What a log at this status asks for, beyond the platform and hours to beat
+ * every log can have. A wishlist entry has nothing to rate, review or date.
+ * A field it doesn't ask for keeps its value, so changing status by mistake
+ * and back loses nothing.
+ */
+export const fieldsFor = (status: GameStatus): ReadonlySet<LogField> => {
+    switch (status) {
+        case "played":
+            return new Set(EVERY);
+        case "playing":
+            return new Set(EVERY.filter((field) => field !== "finishDate"));
+        default:
+            return new Set();
+    }
+};
+
+/** How many of the tucked-away details hold something, so they open on
+ *  their own for a log that has them. */
+export const filledDetails = (draft: LogDraft): number =>
+    [
+        draft.hoursPlayed,
+        draft.hoursToBeat,
+        draft.startDate,
+        draft.finishDate,
+        draft.system,
+        draft.achievementsCompleted || draft.achievementsTotal,
+    ].filter((value) => value.trim() !== "").length;

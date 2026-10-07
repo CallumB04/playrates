@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
     achievementFraction,
     emptyDraft,
+    fieldsFor,
+    filledDetails,
+    HOURS_HINT,
     logReducer,
     toGameLogInput,
     validateDraft,
@@ -263,5 +266,62 @@ describe("achievementFraction", () => {
                 draft({ achievementsCompleted: "5", achievementsTotal: "0" })
             )
         ).toBeNull();
+    });
+});
+
+describe("hours", () => {
+    it("saves hours however they were written", () => {
+        const input = toGameLogInput(
+            draft({ hoursPlayed: "12h30", hoursToBeat: "40,5" })
+        );
+        expect(input.hoursPlayed).toBe(12.5);
+        expect(input.hoursToBeat).toBe(40.5);
+    });
+
+    /* "12h30" used to be dropped without a word and saved as no hours. */
+    it("refuses to save hours it can't read, rather than dropping them", () => {
+        expect(validateDraft(draft({ hoursPlayed: "a while" }))).toBe(
+            HOURS_HINT
+        );
+        expect(validateDraft(draft({ hoursPlayed: "12h30" }))).toBeNull();
+    });
+});
+
+describe("fieldsFor", () => {
+    it("asks a played log for everything", () => {
+        expect([...fieldsFor("played")]).toEqual([
+            "rating",
+            "review",
+            "hoursPlayed",
+            "startDate",
+            "finishDate",
+            "achievements",
+        ]);
+    });
+
+    it("leaves the finish date off a game still being played", () => {
+        const playing = fieldsFor("playing");
+        expect(playing.has("finishDate")).toBe(false);
+        expect(playing.has("rating")).toBe(true);
+    });
+
+    it("asks a wishlist or backlog entry for nothing it can't have", () => {
+        expect(fieldsFor("wishlist").size).toBe(0);
+        expect(fieldsFor("backlog").size).toBe(0);
+    });
+});
+
+describe("filledDetails", () => {
+    it("counts the tucked-away details that hold something", () => {
+        expect(filledDetails(draft())).toBe(0);
+        expect(
+            filledDetails(
+                draft({
+                    hoursPlayed: "12",
+                    system: "playstation5",
+                    achievementsTotal: "40",
+                })
+            )
+        ).toBe(3);
     });
 });

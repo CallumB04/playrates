@@ -8,7 +8,6 @@ import { SearchInput } from "../../../components/ui/Input";
 import Dropdown from "../../../components/ui/Dropdown";
 import { platformOptions } from "../../../lib/platformIcons";
 import Toggle from "../../../components/ui/Toggle";
-import { formatCount } from "../../../lib/format";
 import type { LibraryQuery } from "../lib/useLibraryQuery";
 
 interface LibraryFiltersProps {
@@ -17,7 +16,6 @@ interface LibraryFiltersProps {
     /** Local, so typing stays instant while the request is debounced. */
     searchDraft: string;
     onSearchDraft: (value: string) => void;
-    matches: number | undefined;
     platforms: Platform[];
     genres: Genre[];
     isSignedIn: boolean;
@@ -36,7 +34,6 @@ const LibraryFilters = ({
     setQuery,
     searchDraft,
     onSearchDraft,
-    matches,
     platforms,
     genres,
     isSignedIn,
@@ -112,13 +109,7 @@ const LibraryFilters = ({
                             onChange={(e) => onSearchDraft(e.target.value)}
                             aria-label="Search the library"
                             placeholder="Search titles"
-                            className="pr-28"
                         />
-                        {matches !== undefined && (
-                            <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-label-sm text-content-muted">
-                                {formatCount(matches)} matches
-                            </span>
-                        )}
                     </div>
 
                     {/* Below lg the selects and toggles move into a sheet, so

@@ -1,5 +1,7 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, Search } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { PenLine, Plus, Search } from "lucide-react";
+import { hasContent, readThreadDraft } from "../../lib/drafts";
 import type { ThreadSort } from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
@@ -97,6 +99,9 @@ const CommunityPage = () => {
     const startThread = () =>
         user ? navigate(newThreadPath(gameId)) : openLogin();
 
+    const [kept] = useState(readThreadDraft);
+    const draft = user && kept && hasContent(kept) ? kept : null;
+
     // Trending is site-wide, so it steps aside while the list is filtered.
     const filtered = !!gameId || !!participant || !!q;
     const [top, ...runnersUp] = !filtered ? (trending ?? []) : [];
@@ -113,10 +118,28 @@ const CommunityPage = () => {
                         Threads about the games people here are playing.
                     </p>
                 </div>
-                <Button onClick={startThread} className="w-full sm:w-auto">
-                    <Plus size={16} aria-hidden />
-                    Start a thread
-                </Button>
+                <div className="flex flex-col items-stretch gap-2 sm:items-end">
+                    <Button onClick={startThread} className="w-full sm:w-auto">
+                        <Plus size={16} aria-hidden />
+                        Start a thread
+                    </Button>
+                    {/* An unfinished thread is easier to come back to when it's
+                        pointed at, right where a new one would start. */}
+                    {draft && (
+                        <Link
+                            to="/community/new"
+                            className="inline-flex min-h-11 items-center justify-center gap-1.5 text-label text-brand hover:underline sm:min-h-0"
+                        >
+                            <PenLine size={13} aria-hidden />
+                            Finish your draft
+                            {draft.title.trim() && (
+                                <span className="max-w-[24ch] truncate text-content-muted">
+                                    “{draft.title.trim()}”
+                                </span>
+                            )}
+                        </Link>
+                    )}
+                </div>
             </header>
 
             {patchNotes && (
@@ -234,7 +257,11 @@ const CommunityPage = () => {
                                             : "Start the first one: pick a game and say what's on your mind."
                                 }
                                 action={
-                                    <Button onClick={startThread}>
+                                    // The header's button is the primary one.
+                                    <Button
+                                        variant="secondary"
+                                        onClick={startThread}
+                                    >
                                         Start a thread
                                     </Button>
                                 }
