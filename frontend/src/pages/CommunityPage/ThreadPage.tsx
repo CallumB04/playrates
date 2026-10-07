@@ -263,11 +263,16 @@ const ThreadPage = () => {
                                             viewerId={user?.id}
                                             actions={actions}
                                             className="p-4 sm:p-5"
+                                            threaded
+                                            connected={
+                                                message.replies.length > 0 ||
+                                                replyTo?.parentId === message.id
+                                            }
                                         >
                                             {(message.replies.length > 0 ||
                                                 replyTo?.parentId ===
                                                     message.id) && (
-                                                <div className="mt-3 flex flex-col gap-4 border-l-2 border-subtle pl-3 sm:ml-4 sm:pl-5">
+                                                <div className="reply-thread mt-3 flex flex-col gap-4 border-l-2 border-subtle pl-3 sm:border-l-0 sm:pl-0">
                                                     {message.replies.map(
                                                         (reply) => (
                                                             <MessageItem

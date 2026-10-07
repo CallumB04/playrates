@@ -652,6 +652,40 @@
     animation: var(--animate-sweep);
 }
 
+/* Replies joined to the message they answer: each curves in from the line
+   that runs down from that message's avatar (MessageItem's `connected`),
+   and the last one ends it. Offsets match a 36px avatar with its name 46px
+   in. From sm only: a phone can't spare the indent under the name. */
+@utility reply-thread {
+    @media (width >= 40rem) {
+        & > * {
+            position: relative;
+        }
+        & > *::before {
+            content: "";
+            position: absolute;
+            left: -29px;
+            top: 0;
+            width: 26px;
+            height: 18px;
+            border-left: 2px solid var(--border-strong);
+            border-bottom: 2px solid var(--border-strong);
+            border-bottom-left-radius: 12px;
+            pointer-events: none;
+        }
+        & > *:last-child::after {
+            content: "";
+            position: absolute;
+            left: -30px;
+            top: 18px;
+            bottom: -2px;
+            width: 4px;
+            background: var(--surface-raised);
+            pointer-events: none;
+        }
+    }
+}
+
 /* A stamp lands slightly off-square, the way a real one does. */
 @utility stamp {
     transform: rotate(-4deg);
