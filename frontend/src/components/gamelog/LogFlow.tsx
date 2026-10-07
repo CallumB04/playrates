@@ -1,59 +1,32 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
-import { useMyGameLogIds } from "../../hooks/queries/useGameLogs";
+import { useMemo, useState, type ReactNode } from "react";
 import CreateOrEditGameLogPopup from "../CreateOrEditGameLogPopup";
 import ViewGameLogPopup from "../ViewGameLogPopup";
-import LogPickerSheet from "./LogPickerSheet";
-import { resolveTarget, type PickIntent } from "./logTarget";
 import { LogFlowContext, type LogFlow } from "./useLogFlow";
 
 type Open =
     | {
           kind: "editor";
           gameId: number;
-          /** null starts a log on another console; undefined is "whichever
-           *  this game has", for an editor opened before the logs are known. */
+          /** null starts a log on another console; undefined opens on the
+           *  log that speaks for the game, with the rest a tab away. */
           logId?: number | null;
           focusReview: boolean;
       }
     | { kind: "viewer"; gameId: number; owner?: string; logId?: number }
-    | { kind: "picker"; gameId: number; intent: PickIntent }
     | null;
 
 /**
- * Every page opens logs the same way. With a log per console, "edit your log"
- * can mean one of several, and each page working that out on its own is how
- * they drift; here it is decided once.
+ * Every page opens logs the same way: the editor, with a tab for each
+ * console the game is logged on, or the viewer.
  */
 export const LogFlowProvider = ({ children }: { children: ReactNode }) => {
     const [current, setCurrent] = useState<Open>(null);
-    const { data: summaries } = useMyGameLogIds();
-
-    const summaryOf = useCallback(
-        (gameId: number) => summaries?.find((s) => s.gameId === gameId),
-        [summaries]
-    );
-
-    const go = useCallback(
-        (gameId: number, intent: PickIntent) => {
-            const target = resolveTarget(summaryOf(gameId), intent);
-            setCurrent(
-                target.kind === "picker"
-                    ? { kind: "picker", gameId, intent }
-                    : {
-                          kind: "editor",
-                          gameId,
-                          logId: target.logId,
-                          focusReview: target.focusReview,
-                      }
-            );
-        },
-        [summaryOf]
-    );
-
     const flow = useMemo<LogFlow>(
         () => ({
-            open: (gameId) => go(gameId, "edit"),
-            review: (gameId) => go(gameId, "review"),
+            open: (gameId) =>
+                setCurrent({ kind: "editor", gameId, focusReview: false }),
+            review: (gameId) =>
+                setCurrent({ kind: "editor", gameId, focusReview: true }),
             add: (gameId) =>
                 setCurrent({
                     kind: "editor",
@@ -66,7 +39,7 @@ export const LogFlowProvider = ({ children }: { children: ReactNode }) => {
             view: (gameId, options) =>
                 setCurrent({ kind: "viewer", gameId, ...options }),
         }),
-        [go]
+        []
     );
 
     const close = () => setCurrent(null);
@@ -91,13 +64,6 @@ export const LogFlowProvider = ({ children }: { children: ReactNode }) => {
                     gameId={current.gameId}
                     ownerUsername={current.owner}
                     initialLogId={current.logId}
-                    onClose={close}
-                />
-            )}
-            {current?.kind === "picker" && (
-                <LogPickerSheet
-                    gameId={current.gameId}
-                    intent={current.intent}
                     onClose={close}
                 />
             )}

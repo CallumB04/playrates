@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { headlineOf } from "@playrates/shared";
 import { ApiError } from "../api";
 import { useGame, usePlatformSystems } from "../hooks/queries/useGames";
@@ -26,7 +26,6 @@ import Progress from "./ui/Progress";
 import DeleteGameLogPopup from "./gamelog/DeleteGameLogPopup";
 import {
     achievementFraction,
-    emptyDraft,
     fieldsFor,
     filledDetails,
     HOURS_HINT,
@@ -34,15 +33,26 @@ import {
     toGameLogInput,
     unreadableHours,
     validateDraft,
+    type LogAction,
 } from "./gamelog/logEditorReducer";
-import { ChevronDown, X } from "lucide-react";
+import {
+    isDirty,
+    NEW_TAB,
+    needsConsole,
+    newTab,
+    startingTab,
+    tabForLog,
+    takenBy,
+    type LogTab,
+} from "./gamelog/logTabs";
+import { ChevronDown, Plus, X } from "lucide-react";
 import { cn } from "../lib/cn";
 import { formatPercent, formatRating } from "../lib/format";
 
 interface CreateOrEditGameLogPopupProps {
     gameId: number;
-    /** The log to edit. null starts one on another console; left out, it is
-     *  whichever log the game has, or a new one if it has none. */
+    /** The log to open on. null opens a new one on another console; left
+     *  out, the log that speaks for the game, or a new one if it has none. */
     logId?: number | null;
     /** Opened from a review control, so open on the review field. */
     focusReview?: boolean;
@@ -50,9 +60,10 @@ interface CreateOrEditGameLogPopupProps {
 }
 
 /**
- * The log editor. The review is a separate resource with no transaction
- * between the two, so save writes the log first and reports a partial success
- * if the review fails.
+ * The log editor, with a tab for each console the game is logged on and a
+ * "+" for another. Each tab keeps its own changes, and Save writes every tab
+ * that has any. The review is a separate resource with no transaction between
+ * the two, so a log saves first and a failed review is reported on its own.
  */
 const CreateOrEditGameLogPopup = ({
     gameId,
@@ -73,57 +84,47 @@ const CreateOrEditGameLogPopup = ({
     /* Fetched rather than handed in: opened from a rail or a tile there is
        only a game id to hand, and hydrating from nothing put every existing
        log back to "played" on save. */
-    const { data: bundle, isLoading: bundleLoading } = useMyLogBundle(gameId);
-    const logs = useMemo(() => bundle?.logs ?? [], [bundle]);
-    const existing =
-        logId === null
-            ? null
-            : logId !== undefined
-              ? (logs.find((l) => l.id === logId) ?? null)
-              : headlineOf(logs);
-    const others = logs.filter((l) => l.id !== existing?.id);
-    const logged = others
-        .map((l) => l.system)
-        .filter((s): s is string => s !== null);
+    const { data: bundle } = useMyLogBundle(gameId);
 
-    /* Once a game has a log on one console, the console is what tells this
-       log from the others, so it leads and has to be chosen. A log that
-       never named one can stay that way. */
-    const perConsole = others.length > 0;
-    const consoleRequired = perConsole && !(existing && !existing.system);
-
-    const [draft, dispatch] = useReducer(logReducer, emptyDraft);
+    const [tabs, setTabs] = useState<LogTab[]>([]);
+    const [active, setActive] = useState<string>(NEW_TAB);
+    const [hydrated, setHydrated] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [consoleError, setConsoleError] = useState<string | null>(null);
-    const [hydrated, setHydrated] = useState(false);
     const [confirmingDelete, setConfirmingDelete] = useState(false);
     const [detailsOpen, setDetailsOpen] = useState(false);
 
     useEffect(() => {
-        if (hydrated || bundleLoading) return;
-        dispatch({
-            type: "hydrate",
-            log: existing,
-            review: existing?.review
-                ? {
-                      body: existing.review.body,
-                      isPublic: existing.review.isPublic,
-                      containsSpoilers: existing.review.containsSpoilers,
-                  }
-                : null,
-        });
+        if (hydrated || !bundle) return;
+        const initial = bundle.logs.map(tabForLog);
+        if (logId === null || initial.length === 0) initial.push(newTab());
+        setTabs(initial);
+        setActive(startingTab(initial, logId, headlineOf(bundle.logs)?.id));
         setHydrated(true);
-        // A log that already has details opens with them showing.
-        setDetailsOpen(
-            !!existing &&
-                (existing.hoursPlayed !== null ||
-                    existing.hoursToBeat !== null ||
-                    existing.startDate !== null ||
-                    existing.finishDate !== null ||
-                    (!perConsole && !!existing.system) ||
-                    existing.achievementsTotal !== null)
+    }, [hydrated, bundle, logId]);
+
+    const tab = tabs.find((t) => t.key === active);
+    const draft = tab?.draft ?? newTab().draft;
+    const dispatch = (action: LogAction) =>
+        setTabs((all) =>
+            all.map((t) =>
+                t.key === active
+                    ? { ...t, draft: logReducer(t.draft, action) }
+                    : t
+            )
         );
-    }, [hydrated, bundleLoading, existing, perConsole]);
+    const savedCount = bundle?.logs.length ?? 0;
+    const several = tabs.length > 1;
+    const taken = takenBy(tabs, active);
+
+    // A tab that already has details opens with them showing.
+    useEffect(() => {
+        setError(null);
+        setConsoleError(null);
+        setDetailsOpen(!!tab?.original && filledDetails(tab.original) > 0);
+        // Only on moving between tabs, not on every keystroke in one.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [active, hydrated]);
 
     // Only once hydrated: before that the form's height isn't final.
     useEffect(() => {
@@ -138,33 +139,32 @@ const CreateOrEditGameLogPopup = ({
         () => systemsForGame(systems ?? [], game?.systems ?? [], draft.system),
         [systems, game?.systems, draft.system]
     );
+    const free = useMemo(
+        () =>
+            systemsForGame(systems ?? [], game?.systems ?? []).filter(
+                (s) => !tabs.some((t) => t.draft.system === s.slug)
+            ),
+        [systems, game?.systems, tabs]
+    );
 
     /* A new log starts on the machine the last one was saved on, when this
-       game is on it and it isn't logged already: most people play on one or
-       two, and choosing it every time is work the site can do. */
-    const [presetSystem, setPresetSystem] = useState(false);
+       game is on it and no other tab has it: most people play on one or two,
+       and choosing it every time is work the site can do. */
+    const [presetFor, setPresetFor] = useState<string | null>(null);
     useEffect(() => {
-        if (presetSystem || !hydrated || existing || draft.system) return;
-        // the game's own machines, not the whole list it falls back to
-        if (!game || available.length === 0) return;
-        setPresetSystem(true);
+        if (!hydrated || !tab || tab.logId !== null || draft.system) return;
+        if (presetFor === tab.key || !game || !systems) return;
+        setPresetFor(tab.key);
         const last = readLastSystem();
-        if (!last || logged.includes(last)) return;
+        if (!last || taken.includes(last)) return;
         if (!available.some((s) => s.slug === last)) return;
         dispatch({
             type: "system",
             value: last,
             platform: familyOf(available, last) ?? "",
         });
-    }, [
-        presetSystem,
-        hydrated,
-        existing,
-        draft.system,
-        available,
-        game,
-        logged,
-    ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [hydrated, tab?.key, draft.system, game, systems]);
 
     const chooseSystem = (value: string) => {
         setConsoleError(null);
@@ -175,16 +175,32 @@ const CreateOrEditGameLogPopup = ({
         });
     };
 
-    const consoleName = playedOn({
-        system: draft.system || null,
-        platform: draft.platform || null,
-    }).name;
+    const nameOf = (t: LogTab) =>
+        playedOn({
+            system: t.draft.system || null,
+            platform: t.draft.platform || null,
+        }).name;
+    const consoleName = tab ? nameOf(tab) : null;
+
+    /** "+" adds a tab for another console, one at a time. */
+    const addTab = () => {
+        if (tabs.some((t) => t.key === NEW_TAB)) return setActive(NEW_TAB);
+        setTabs((all) => [...all, newTab()]);
+        setActive(NEW_TAB);
+    };
+    const discardNewTab = () => {
+        const rest = tabs.filter((t) => t.key !== NEW_TAB);
+        if (rest.length === 0) return onClose();
+        setTabs(rest);
+        setActive(rest[0]!.key);
+    };
+
     // What the rest of your logs of it scored, to rate this one against.
-    const otherRatings = others
-        .filter((l) => l.rating !== null)
-        .map((l) => {
-            const name = playedOn(l).name;
-            return `${formatRating(l.rating)}${name ? ` on ${name}` : ""}`;
+    const otherRatings = tabs
+        .filter((t) => t.key !== active && t.draft.rating !== null)
+        .map((t) => {
+            const name = nameOf(t);
+            return `${formatRating(t.draft.rating)}${name ? ` on ${name}` : ""}`;
         });
 
     const progress = useMemo(() => achievementFraction(draft), [draft]);
@@ -197,83 +213,118 @@ const CreateOrEditGameLogPopup = ({
         mutations.removeReview.isPending;
 
     const handleSave = async () => {
-        if (consoleRequired && !draft.system) {
-            return setConsoleError("Pick the platform this log is for.");
-        }
-        const problem = validateDraft(draft);
-        if (problem) return setError(problem);
-        setError(null);
+        const pending = tabs.filter(isDirty);
+        if (pending.length === 0) return onClose();
 
-        const input = toGameLogInput(draft);
-        let saved;
-        try {
-            saved = existing
-                ? await mutations.update.mutateAsync({
-                      logId: existing.id,
-                      input,
-                  })
-                : await mutations.create.mutateAsync({ gameId, ...input });
-        } catch (failure) {
-            if (
-                failure instanceof ApiError &&
-                failure.code === "platform_taken"
-            ) {
-                setConsoleError(
-                    `You've already logged this on ${consoleName ?? "that platform"}.`
-                );
+        // Every tab checks out before anything is written.
+        for (const t of pending) {
+            if (needsConsole(t, tabs)) {
+                setActive(t.key);
+                setConsoleError("Pick the platform this log is for.");
                 return;
             }
-            notify("Couldn't save that entry", "error");
-            return;
-        }
-        if (draft.system) writeLastSystem(draft.system);
-
-        const body = draft.reviewBody.trim();
-        const hadReview = !!existing?.review;
-        try {
-            if (body) {
-                await mutations.saveReview.mutateAsync({
-                    logId: saved.id,
-                    input: {
-                        body,
-                        isPublic: draft.reviewIsPublic,
-                        containsSpoilers: draft.reviewSpoilers,
-                    },
-                });
-            } else if (hadReview) {
-                await mutations.removeReview.mutateAsync(saved.id);
+            const problem = validateDraft(t.draft);
+            if (problem) {
+                setActive(t.key);
+                setError(problem);
+                return;
             }
-        } catch {
-            // The log did save, so don't imply a blanket failure. Critical
-            // because the note is the part the user wrote by hand: they have
-            // to see this, not catch it out of the corner of an eye.
-            notify(
-                "Entry saved, but your note didn't send",
-                "error",
-                "critical"
+        }
+
+        let next = tabs;
+        let created = false;
+        for (const t of pending) {
+            const input = toGameLogInput(t.draft);
+            let saved;
+            try {
+                saved =
+                    t.logId !== null
+                        ? await mutations.update.mutateAsync({
+                              logId: t.logId,
+                              input,
+                          })
+                        : await mutations.create.mutateAsync({
+                              gameId,
+                              ...input,
+                          });
+            } catch (failure) {
+                // What did save stays saved; this tab is left to fix.
+                setTabs(next);
+                setActive(t.key);
+                if (
+                    failure instanceof ApiError &&
+                    failure.code === "platform_taken"
+                ) {
+                    setConsoleError(
+                        `You've already logged this on ${nameOf(t) ?? "that platform"}.`
+                    );
+                } else {
+                    notify("Couldn't save that entry", "error");
+                }
+                return;
+            }
+            created ||= t.logId === null;
+            if (t.draft.system) writeLastSystem(t.draft.system);
+
+            const body = t.draft.reviewBody.trim();
+            try {
+                if (body) {
+                    await mutations.saveReview.mutateAsync({
+                        logId: saved.id,
+                        input: {
+                            body,
+                            isPublic: t.draft.reviewIsPublic,
+                            containsSpoilers: t.draft.reviewSpoilers,
+                        },
+                    });
+                } else if (t.hadReview) {
+                    await mutations.removeReview.mutateAsync(saved.id);
+                }
+            } catch {
+                // The log did save, so don't imply a blanket failure. Critical
+                // because the note is the part the user wrote by hand: they
+                // have to see this, not catch it out of the corner of an eye.
+                notify(
+                    "Entry saved, but your note didn't send",
+                    "error",
+                    "critical"
+                );
+                onClose();
+                return;
+            }
+            next = next.map((x) =>
+                x.key === t.key
+                    ? { ...x, logId: saved.id, original: x.draft }
+                    : x
             );
-            onClose();
-            return;
         }
 
         // A new game that lands on a milestone says so: the moment people
         // remember a site by. Another console of a game already logged isn't
         // a new game, and ordinary saves stay plain.
         const milestone =
-            logs.length === 0
+            savedCount === 0 && created
                 ? logMilestone((loggedIds?.length ?? 0) + 1)
                 : null;
+        const only = pending.length === 1 ? pending[0]! : null;
         notify(
             milestone ??
-                (existing
-                    ? "Entry updated"
-                    : logs.length > 0
-                      ? `Added ${consoleName ?? "another platform"} to your logs`
-                      : "Entry saved"),
+                (!only
+                    ? "Logs updated"
+                    : only.logId !== null
+                      ? "Entry updated"
+                      : savedCount > 0
+                        ? `Added ${nameOf(only) ?? "another platform"} to your logs`
+                        : "Entry saved"),
             "success"
         );
         onClose();
     };
+
+    const deletable =
+        tab &&
+        tab.logId !== null &&
+        bundle?.logs.find((l) => l.id === tab.logId);
 
     return (
         <Modal
@@ -284,36 +335,126 @@ const CreateOrEditGameLogPopup = ({
         >
             {/* Header and footer stay put while the form scrolls between
                 them, so Save is never a scroll away from the field just set. */}
-            <header className="sticky top-0 z-10 flex items-center gap-4 border-b border-subtle bg-surface-raised px-5 py-4 sm:px-6">
-                <div className="min-w-0 flex-1">
+            <header
+                className={cn(
+                    "sticky top-0 z-10 border-b border-subtle bg-surface-raised px-5 pt-4 sm:px-6",
+                    savedCount > 0 ? "pb-0" : "pb-4"
+                )}
+            >
+                <div className="flex items-center gap-4">
                     <h2
                         id="log-editor-title"
-                        className="font-display text-[28px] leading-tight text-content"
+                        className="min-w-0 flex-1 font-display text-[28px] leading-tight text-content"
                     >
                         {game?.title ?? "…"}
                     </h2>
-                    {(perConsole || logId === null) && (
-                        <p className="mt-0.5 text-body-sm text-content-muted">
-                            {existing
-                                ? existing.system
-                                    ? `Your log on ${consoleName ?? "this platform"}`
-                                    : "Your log"
-                                : "A log on another platform"}
-                        </p>
-                    )}
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        aria-label="Close"
+                        className="flex size-11 shrink-0 items-center justify-center rounded-sm text-content-muted lift hover:bg-surface-hover hover:text-content sm:size-auto sm:p-2"
+                    >
+                        <X size={20} />
+                    </button>
                 </div>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close"
-                    className="flex size-11 shrink-0 items-center justify-center rounded-sm text-content-muted lift hover:bg-surface-hover hover:text-content sm:size-auto sm:p-2"
-                >
-                    <X size={20} />
-                </button>
+                {savedCount > 0 && (
+                    /* A tab per console, like the shelves on a game page:
+                       scrolls inside itself on a phone rather than pushing
+                       the page sideways. */
+                    <div className="-mx-5 mt-3 -mb-px flex items-end gap-1 overflow-x-auto px-5 sm:-mx-6 sm:px-6">
+                        <div
+                            role="tablist"
+                            aria-label="Your logs of this game"
+                            className="flex items-end gap-1"
+                        >
+                            {tabs.map((t) => {
+                                const selected = t.key === active;
+                                const on = playedOn({
+                                    system: t.draft.system || null,
+                                    platform: t.draft.platform || null,
+                                });
+                                const Mark = on.Icon;
+                                const name =
+                                    on.name ??
+                                    (t.logId === null
+                                        ? "New platform"
+                                        : "No platform");
+                                return (
+                                    <span
+                                        key={t.key}
+                                        className={cn(
+                                            "flex shrink-0 items-center border-b-2",
+                                            selected
+                                                ? "border-brand"
+                                                : "border-transparent"
+                                        )}
+                                    >
+                                        <button
+                                            type="button"
+                                            role="tab"
+                                            aria-selected={selected}
+                                            onClick={() => setActive(t.key)}
+                                            className={cn(
+                                                "flex min-h-11 cursor-pointer items-center gap-1.5 px-3 text-label whitespace-nowrap lift",
+                                                selected
+                                                    ? "text-content"
+                                                    : "text-content-muted hover:text-content"
+                                            )}
+                                        >
+                                            {on.name && (
+                                                <Mark
+                                                    size={14}
+                                                    aria-hidden
+                                                    className="shrink-0"
+                                                />
+                                            )}
+                                            {name}
+                                            {isDirty(t) && t.logId !== null && (
+                                                <span
+                                                    aria-label="unsaved changes"
+                                                    className="size-1.5 rounded-full bg-brand"
+                                                />
+                                            )}
+                                        </button>
+                                        {t.key === NEW_TAB && (
+                                            <button
+                                                type="button"
+                                                onClick={discardNewTab}
+                                                aria-label="Discard this log"
+                                                className="relative -ml-1 flex size-6 cursor-pointer items-center justify-center rounded-sm text-content-muted before:absolute before:-inset-2.5 before:content-[''] hover:bg-surface-hover hover:text-content"
+                                            >
+                                                <X size={13} aria-hidden />
+                                            </button>
+                                        )}
+                                    </span>
+                                );
+                            })}
+                        </div>
+                        {/* Greyed out, not hidden, once every console is
+                            logged: it says why there is nothing to add. */}
+                        <button
+                            type="button"
+                            onClick={addTab}
+                            disabled={
+                                free.length === 0 ||
+                                tabs.some((t) => t.key === NEW_TAB)
+                            }
+                            aria-label="Add a platform"
+                            title={
+                                free.length === 0
+                                    ? "Logged on every platform it's on"
+                                    : "Add a platform"
+                            }
+                            className="mb-1 ml-1 flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-dashed border-strong text-content-secondary lift hover:border-brand hover:text-content disabled:cursor-not-allowed disabled:border-subtle disabled:text-content-muted disabled:opacity-50 disabled:hover:border-subtle sm:size-9"
+                        >
+                            <Plus size={16} aria-hidden />
+                        </button>
+                    </div>
+                )}
             </header>
 
             <div className="flex flex-col gap-5 px-5 py-5 sm:px-6">
-                {perConsole && (
+                {tab?.logId === null && savedCount > 0 && (
                     <div>
                         <span
                             id="log-console-label"
@@ -325,7 +466,7 @@ const CreateOrEditGameLogPopup = ({
                             systems={available}
                             value={draft.system}
                             onChange={chooseSystem}
-                            logged={logged}
+                            logged={taken}
                             labelledBy="log-console-label"
                             describedBy={
                                 consoleError ? "log-console-error" : undefined
@@ -422,7 +563,7 @@ const CreateOrEditGameLogPopup = ({
                             }
                             className="min-h-[74px] leading-relaxed"
                             placeholder={
-                                perConsole && consoleName
+                                several && consoleName
                                     ? `What was it like on ${consoleName}?`
                                     : "What stayed with you?"
                             }
@@ -556,7 +697,7 @@ const CreateOrEditGameLogPopup = ({
                             </div>
 
                             <div className="grid gap-5 lg:grid-cols-2">
-                                {!perConsole && (
+                                {!(tab?.logId === null && savedCount > 0) && (
                                     <div>
                                         <span
                                             id="log-platform-label"
@@ -566,8 +707,23 @@ const CreateOrEditGameLogPopup = ({
                                         </span>
                                         <Dropdown
                                             options={systemOptions(
-                                                available,
-                                                "Not set"
+                                                available.filter(
+                                                    (s) =>
+                                                        !taken.includes(s.slug)
+                                                ),
+                                                tab &&
+                                                    needsConsole(
+                                                        {
+                                                            ...tab,
+                                                            draft: {
+                                                                ...draft,
+                                                                system: "",
+                                                            },
+                                                        },
+                                                        tabs
+                                                    )
+                                                    ? undefined
+                                                    : "Not set"
                                             )}
                                             value={draft.system}
                                             placeholder="Not set"
@@ -657,14 +813,16 @@ const CreateOrEditGameLogPopup = ({
             </div>
 
             <footer className="sticky bottom-0 z-10 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-subtle bg-surface-raised px-5 pt-3 pb-[calc(--spacing(3)+env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
-                {existing && (
+                {deletable && (
                     <button
                         type="button"
                         onClick={() => setConfirmingDelete(true)}
                         disabled={busy}
                         className="min-h-11 text-label text-danger lift hover:underline disabled:opacity-60 sm:min-h-0"
                     >
-                        Delete this log
+                        {several && consoleName
+                            ? `Delete ${consoleName} log`
+                            : "Delete this log"}
                     </button>
                 )}
                 <div className="flex w-full gap-2.5 sm:ml-auto sm:w-auto">
@@ -681,20 +839,30 @@ const CreateOrEditGameLogPopup = ({
                         disabled={busy}
                         className="flex-1 sm:flex-none"
                     >
-                        {busy ? "Saving…" : "Save entry"}
+                        {busy
+                            ? "Saving…"
+                            : tabs.filter(isDirty).length > 1
+                              ? "Save all"
+                              : "Save entry"}
                     </Button>
                 </div>
             </footer>
 
             {/* Deleting takes the rating, the hours and the review with it, so
                 it asks first — the same dialog the profile uses. */}
-            {confirmingDelete && existing && (
+            {confirmingDelete && deletable && (
                 <DeleteGameLogPopup
-                    log={existing}
+                    log={deletable}
                     gameTitle={game?.title}
-                    othersCount={others.length}
+                    othersCount={savedCount - 1}
                     closePopup={() => setConfirmingDelete(false)}
-                    onDeleted={onClose}
+                    onDeleted={() => {
+                        setConfirmingDelete(false);
+                        const rest = tabs.filter((t) => t.key !== active);
+                        if (rest.length === 0) return onClose();
+                        setTabs(rest);
+                        setActive(rest[0]!.key);
+                    }}
                 />
             )}
         </Modal>
