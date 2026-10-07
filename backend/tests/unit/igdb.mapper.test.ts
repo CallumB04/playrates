@@ -106,6 +106,13 @@ describe("toExternalGame", () => {
     ]);
   });
 
+  /* It used to fold into Switch, so nobody could log the one they played. */
+  it("keeps Switch 2 apart from Switch, in the same family", () => {
+    const game = toExternalGame({ ...witcher, platforms: [130, 508] });
+    expect(game.systemSlugs).toEqual(["nintendo-switch", "nintendo-switch-2"]);
+    expect(game.platformSlugs).toEqual(["nintendo-switch"]);
+  });
+
   it("counts a PC game not on Steam as plain PC", () => {
     const game = toExternalGame({
       ...witcher,

@@ -24,7 +24,7 @@ export const IGDB_SYSTEMS: Record<number, string> = {
   11: "xbox-old",
   // Nintendo
   130: "nintendo-switch",
-  508: "nintendo-switch",
+  508: "nintendo-switch-2",
   41: "wii-u",
   5: "wii",
   21: "gamecube",
@@ -87,6 +87,7 @@ export const SYSTEM_FAMILY: Record<string, string> = {
   xbox360: "xbox",
   "xbox-old": "xbox",
   "nintendo-switch": "nintendo-switch",
+  "nintendo-switch-2": "nintendo-switch",
   "wii-u": "nintendo",
   wii: "nintendo",
   gamecube: "nintendo",

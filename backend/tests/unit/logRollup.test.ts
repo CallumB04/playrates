@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   headlineOf,
+  loggableSystems,
   meanRating,
   rollupLogs,
   type GameLog,
@@ -166,5 +167,25 @@ describe("pickLegacyLog", () => {
   it("won't guess between several", () => {
     expect(pickLegacyLog([ps5, bare])).toEqual({ kind: "several" });
     expect(pickLegacyLog([ps5, bare], "switch")).toEqual({ kind: "several" });
+  });
+});
+
+describe("loggableSystems", () => {
+  /* A subscription no catalogue lists, but a way of playing PC and Xbox
+     games all the same. */
+  it("offers Game Pass on a game that is on PC or Xbox", () => {
+    expect(loggableSystems(["steam", "playstation5"])).toEqual([
+      "steam",
+      "playstation5",
+      "pc-game-pass",
+    ]);
+    expect(loggableSystems(["xbox-one"])).toContain("pc-game-pass");
+  });
+
+  it("doesn't offer it where Game Pass can't reach", () => {
+    expect(loggableSystems(["nintendo-switch", "playstation5"])).toEqual([
+      "nintendo-switch",
+      "playstation5",
+    ]);
   });
 });

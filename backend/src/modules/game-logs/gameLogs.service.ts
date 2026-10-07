@@ -10,7 +10,12 @@ import type {
   ShelfEntry,
   UserStats,
 } from "@playrates/shared";
-import { headlineOf, meanRating, rollupLogs } from "@playrates/shared";
+import {
+  headlineOf,
+  loggableSystems,
+  meanRating,
+  rollupLogs,
+} from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
@@ -56,7 +61,9 @@ export const createGameLogsService = (
     if (!system || system === previous) return;
     const game = await games.findById(gameId);
     if (!game) throw AppError.notFound("Game");
-    const listed = game.game_systems?.map((s) => s.system_slug) ?? [];
+    const listed = loggableSystems(
+      game.game_systems?.map((s) => s.system_slug) ?? [],
+    );
     if (listed.length > 0 && !listed.includes(system)) {
       throw AppError.validation("This game isn't on that platform", {
         system: ["This game isn't on that platform"],

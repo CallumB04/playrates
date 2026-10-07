@@ -1,4 +1,4 @@
-import type { PlatformSystem } from "@playrates/shared";
+import { loggableSystems, type PlatformSystem } from "@playrates/shared";
 
 /**
  * The machines worth offering for one game, in catalogue order.
@@ -17,7 +17,7 @@ export const systemsForGame = (
 ): PlatformSystem[] => {
     if (gameSystems.length === 0) return all;
 
-    const wanted = new Set(gameSystems);
+    const wanted = new Set(loggableSystems(gameSystems));
     if (selected) wanted.add(selected);
 
     return all.filter((system) => wanted.has(system.slug));

@@ -111,3 +111,19 @@ describe("playedOnName", () => {
         ).toBeNull();
     });
 });
+
+describe("systemsForGame and Game Pass", () => {
+    const withPass = [...ALL, system("pc-game-pass", "pc-game-pass")];
+
+    it("offers Game Pass on a PC game, though no catalogue lists it", () => {
+        expect(
+            systemsForGame(withPass, ["steam"]).map((s) => s.slug)
+        ).toContain("pc-game-pass");
+    });
+
+    it("doesn't offer it on a game only on PlayStation", () => {
+        expect(
+            systemsForGame(withPass, ["playstation5"]).map((s) => s.slug)
+        ).not.toContain("pc-game-pass");
+    });
+});

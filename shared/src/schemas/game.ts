@@ -142,6 +142,19 @@ export const PlatformSystemSchema = z.object({
 
 export type PlatformSystem = z.infer<typeof PlatformSystemSchema>;
 
+/** Game Pass is a subscription, not a machine, so no catalogue lists it on a
+ *  game. It can be played through on any game that is on PC or Xbox. */
+const GAME_PASS = "pc-game-pass";
+const GAME_PASS_HOSTS = ["steam", "other-pc", "xbox-series-x", "xbox-one"];
+
+/** The consoles a log of this game can name: the ones the catalogue lists,
+ *  and Game Pass wherever it could be how someone played it. */
+export const loggableSystems = (gameSystems: readonly string[]): string[] =>
+  gameSystems.some((s) => GAME_PASS_HOSTS.includes(s)) &&
+  !gameSystems.includes(GAME_PASS)
+    ? [...gameSystems, GAME_PASS]
+    : [...gameSystems];
+
 export const GenreSchema = z.object({
   slug: z.string(),
   name: z.string(),

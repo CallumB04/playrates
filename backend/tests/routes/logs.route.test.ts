@@ -95,6 +95,18 @@ describe("a log per platform", () => {
     expect(response.status).toBe(422);
   });
 
+  it("takes Game Pass for a game that is on PC", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await post(app, {
+      gameId: 1,
+      status: "played",
+      system: "pc-game-pass",
+    });
+
+    expect(response.status).toBe(201);
+  });
+
   it("takes any console for a game that lists none", async () => {
     const { app } = buildTestApp({ seed: seed() });
 
