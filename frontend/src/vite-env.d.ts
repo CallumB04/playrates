@@ -7,6 +7,8 @@ interface ImportMetaEnv {
     /** Publishable key. Safe in the bundle — RLS is on with no policies, so it
      *  can reach nothing directly. */
     readonly VITE_SUPABASE_ANON_KEY: string;
+    /** "true" under npm run dev:local, which points at a local database. */
+    readonly VITE_LOCAL_DATA?: string;
 }
 
 interface ImportMeta {

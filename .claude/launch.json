@@ -4,14 +4,33 @@
         {
             "name": "playrates",
             "runtimeExecutable": "npm",
-            "runtimeArgs": ["run", "dev", "-w", "frontend"],
+            "runtimeArgs": [
+                "run",
+                "dev",
+                "-w",
+                "frontend"
+            ],
             "port": 5173
         },
         {
             "name": "playrates-api",
             "runtimeExecutable": "npm",
-            "runtimeArgs": ["run", "dev", "-w", "backend"],
+            "runtimeArgs": [
+                "run",
+                "dev",
+                "-w",
+                "backend"
+            ],
             "port": 3000
+        },
+        {
+            "name": "playrates-local",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "dev:local"
+            ],
+            "port": 5173
         }
     ]
 }

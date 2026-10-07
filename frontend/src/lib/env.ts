@@ -21,4 +21,5 @@ export const env = {
         "VITE_SUPABASE_ANON_KEY",
         import.meta.env.VITE_SUPABASE_ANON_KEY
     ),
+    localData: import.meta.env.VITE_LOCAL_DATA === "true",
 } as const;

@@ -45,3 +45,6 @@ support.js
 
 # Cached third-party index for the box-art backfill
 /backend/.cache
+
+# The local stack's data, copied from live and generated from it
+supabase/seed/

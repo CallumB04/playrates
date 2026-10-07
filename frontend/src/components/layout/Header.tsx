@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { env } from "../../lib/env";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -116,6 +117,15 @@ const Header = () => {
                         >
                             PlayRates
                         </Link>
+                        {/* So a test run is never mistaken for the live site. */}
+                        {env.localData && (
+                            <span
+                                title="Running against the local database. Nothing here touches live."
+                                className="rounded-sm border border-dashed border-warning-border px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-warning-content uppercase"
+                            >
+                                Local
+                            </span>
+                        )}
 
                         <nav className="hidden items-center gap-6 lg:flex">
                             {links.map((link) => (
