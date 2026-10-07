@@ -1,6 +1,6 @@
 /**
- * Draws the pictures the site hands to other apps: the link-preview card
- * and the home-screen icons. Run it after changing the logo, the motto or
+ * Draws the pictures the site hands to other apps: the link-preview card,
+ * the home-screen icons and favicon.ico. Run it after changing the logo, the motto or
  * the palette, and commit what it writes to public/.
  *
  *   node scripts/brand-assets.mjs
@@ -35,6 +35,12 @@ const font = (weight) =>
 const favicon = await readFile(path.join(publicDir, "favicon.svg"), "utf8");
 // The PR glyph alone, so the icons can set it on a square of their own.
 const glyph = favicon.match(/<path[\s\S]*?\/>/)[0];
+
+/* favicon.svg is square: a bookmark bar or tab strip shows it as drawn, and
+   the footer and the preview card round it themselves. An installed app's
+   icon sits on the desktop with nothing to round it, so it keeps corners. */
+const rounded = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="13" fill="${IRIS}"/>${glyph}</svg>`;
 
 const png = (svg, width) =>
     new Resvg(svg, { fitTo: { mode: "width", value: width } }).render().asPng();
@@ -145,11 +151,31 @@ const squareIcon = (glyphScale) => {
     </svg>`;
 };
 
+/** PNG-in-ICO, which every browser that still asks for an .ico can read. */
+const ico = (sizes) => {
+    const images = sizes.map((size) => png(favicon, size));
+    const header = Buffer.alloc(6 + 16 * images.length);
+    header.writeUInt16LE(1, 2);
+    header.writeUInt16LE(images.length, 4);
+    let offset = header.length;
+    images.forEach((image, i) => {
+        const at = 6 + 16 * i;
+        header.writeUInt8(sizes[i], at);
+        header.writeUInt8(sizes[i], at + 1);
+        header.writeUInt16LE(1, at + 4);
+        header.writeUInt16LE(32, at + 6);
+        header.writeUInt32LE(image.length, at + 8);
+        header.writeUInt32LE(offset, at + 12);
+        offset += image.length;
+    });
+    return Buffer.concat([header, ...images]);
+};
+
 const outputs = {
     "og-default.png": await card(),
-    // The favicon as drawn, rounded corners and all.
-    "icon-192.png": png(favicon, 192),
-    "icon-512.png": png(favicon, 512),
+    "favicon.ico": ico([16, 32, 48]),
+    "icon-192.png": png(rounded, 192),
+    "icon-512.png": png(rounded, 512),
     "icon-maskable-512.png": png(squareIcon(0.62), 512),
 };
 
