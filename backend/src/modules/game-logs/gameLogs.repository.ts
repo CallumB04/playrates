@@ -4,13 +4,28 @@ import type {
   SortDirection,
 } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
-import type { GameLogRow } from "../../types/database.types.js";
+import type {
+  GameLogRow,
+  UserLogStatsRow,
+} from "../../types/database.types.js";
+import { AppError } from "../../lib/AppError.js";
 import type { GameLogRowWithGame } from "./gameLogs.mapper.js";
 
 const SELECT_WITH_GAME = "*, game:games(*, game_platforms(platform_slug))";
 
 /** Postgres' unique_violation. */
 const UNIQUE_VIOLATION = "23505";
+
+// PostgREST stops at 1000 rows a request; a long-time user can pass that.
+const PAGE = 1000;
+
+/** game_logs_user_game_system_unique: this console, or a second log with no
+ *  console, is already logged for this game. */
+const platformTaken = () =>
+  AppError.conflict(
+    "platform_taken",
+    "You've already logged this game on that platform",
+  );
 
 /**
  * The column each sort orders by. Three live on the game rather than the log,
@@ -28,6 +43,18 @@ const SORT_COLUMNS: Record<GameLogSort, string> = {
   completion: "completion",
 };
 
+/** The same orderings over game_log_rollups, a row per game: the mean
+ *  rating, the latest play, the best completion. */
+const ROLLUP_SORT_COLUMNS: Record<GameLogSort, string> = {
+  rating: "rating",
+  gameRating: "game_avg_rating",
+  critic: "game_critic_score",
+  played: "last_played",
+  title: "game_title",
+  released: "game_release_date",
+  completion: "completion",
+};
+
 /** What a shelf is filtered and ordered by. Bundled rather than threaded
  *  through three layers as loose arguments. */
 export interface ShelfQuery {
@@ -39,21 +66,36 @@ export interface ShelfQuery {
 }
 
 export interface GameLogsRepository {
+  /** One row per log. Kept for clients from before logs were per console. */
   listByUser(
     userId: string,
     query: ShelfQuery,
     from: number,
     to: number,
   ): Promise<{ rows: GameLogRowWithGame[]; total: number }>;
-  findByUserAndGame(
+  /** A page of games: a game sits on every shelf one of its logs is on. */
+  shelfByUser(
+    userId: string,
+    query: ShelfQuery,
+    from: number,
+    to: number,
+  ): Promise<{ gameIds: number[]; total: number }>;
+  /** The user's log, or null if it is not theirs. */
+  findOwn(userId: string, logId: number): Promise<GameLogRowWithGame | null>;
+  /** Oldest first, so the consoles keep the order they were logged in. */
+  listByUserAndGame(
     userId: string,
     gameId: number,
-  ): Promise<GameLogRowWithGame | null>;
-  upsert(
+  ): Promise<GameLogRowWithGame[]>;
+  listByUserAndGames(
+    userId: string,
+    gameIds: number[],
+  ): Promise<GameLogRowWithGame[]>;
+  create(
     userId: string,
     gameId: number,
     patch: Partial<GameLogRow>,
-  ): Promise<{ row: GameLogRowWithGame; created: boolean }>;
+  ): Promise<GameLogRowWithGame>;
   update(id: number, patch: Partial<GameLogRow>): Promise<GameLogRowWithGame>;
   remove(id: number): Promise<void>;
   count(): Promise<number>;
@@ -64,13 +106,18 @@ export interface GameLogsRepository {
 }
 
 export interface GameLogSummaryRow {
+  id: number;
   game_id: number;
+  system_slug: string | null;
   status: string;
   played_status: string | null;
   rating: number | null;
 }
 
 export interface UserLogStats {
+  logCount: number;
+  gameCount: number;
+  /** Games with a log in each status. */
   byStatus: Record<string, number>;
   hoursPlayed: number;
   averageRating: number | null;
@@ -106,40 +153,68 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
     return { rows: (data ?? []) as GameLogRowWithGame[], total: count ?? 0 };
   },
 
-  async findByUserAndGame(userId, gameId) {
+  async shelfByUser(userId, query, from, to) {
+    let builder = db
+      .from("game_log_rollups")
+      .select("game_id", { count: "exact" })
+      .eq("user_id", userId);
+
+    if (query.status) builder = builder.contains("statuses", [query.status]);
+    if (query.playedStatus) {
+      builder = builder.contains("played_endings", [query.playedStatus]);
+    }
+
+    const { data, error, count } = await builder
+      .order(ROLLUP_SORT_COLUMNS[query.sort], {
+        ascending: query.direction === "asc",
+        nullsFirst: false,
+      })
+      .order("latest_log_id", { ascending: false })
+      .range(from, to);
+    if (error) throw error;
+    return {
+      gameIds: ((data ?? []) as { game_id: number }[]).map((r) => r.game_id),
+      total: count ?? 0,
+    };
+  },
+
+  async findOwn(userId, logId) {
     const { data, error } = await db
       .from("game_logs")
       .select(SELECT_WITH_GAME)
+      .eq("id", logId)
       .eq("user_id", userId)
-      .eq("game_id", gameId)
       .maybeSingle();
     if (error) throw error;
     return (data as GameLogRowWithGame | null) ?? null;
   },
 
-  async upsert(userId, gameId, patch) {
-    const existing = await this.findByUserAndGame(userId, gameId);
+  async listByUserAndGame(userId, gameId) {
+    return this.listByUserAndGames(userId, [gameId]);
+  },
 
-    if (existing) {
-      const row = await this.update(existing.id, patch);
-      return { row, created: false };
-    }
+  async listByUserAndGames(userId, gameIds) {
+    if (gameIds.length === 0) return [];
+    const { data, error } = await db
+      .from("game_logs")
+      .select(SELECT_WITH_GAME)
+      .eq("user_id", userId)
+      .in("game_id", gameIds)
+      .order("created_at")
+      .order("id");
+    if (error) throw error;
+    return (data ?? []) as GameLogRowWithGame[];
+  },
 
+  async create(userId, gameId, patch) {
     const { data, error } = await db
       .from("game_logs")
       .insert({ ...patch, user_id: userId, game_id: gameId })
       .select(SELECT_WITH_GAME)
       .single();
-    if (!error) return { row: data as GameLogRowWithGame, created: true };
-
-    /* Two saves for one game in flight together both find nothing above, and
-       the second insert hits game_logs_user_game_unique. It lost the race, not
-       the write: the row exists now, so it updates it, and the later save wins
-       as it would have had they arrived one after the other. */
-    if (error.code !== UNIQUE_VIOLATION) throw error;
-    const winner = await this.findByUserAndGame(userId, gameId);
-    if (!winner) throw error;
-    return { row: await this.update(winner.id, patch), created: false };
+    if (error?.code === UNIQUE_VIOLATION) throw platformTaken();
+    if (error) throw error;
+    return data as GameLogRowWithGame;
   },
 
   async update(id, patch) {
@@ -149,6 +224,7 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
       .eq("id", id)
       .select(SELECT_WITH_GAME)
       .single();
+    if (error?.code === UNIQUE_VIOLATION) throw platformTaken();
     if (error) throw error;
     return data as GameLogRowWithGame;
   },
@@ -166,66 +242,45 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
     return count ?? 0;
   },
 
-  /* Four narrow columns rather than the paginated list. Callers only ask "have
-     I logged this, and how", which a page can't answer. Small enough to send
-     whole even at several thousand logs. */
+  /* Narrow columns rather than the paginated list. Callers only ask "have I
+     logged this, and how", which a page can't answer. Paged past PostgREST's
+     row cap, as a long-time user can hold more logs than one request returns. */
   async summariesByUser(userId) {
-    const { data, error } = await db
-      .from("game_logs")
-      .select("game_id, status, played_status, rating")
-      .eq("user_id", userId);
-    if (error) throw error;
-    return (data ?? []) as GameLogSummaryRow[];
+    const rows: GameLogSummaryRow[] = [];
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await db
+        .from("game_logs")
+        .select("id, game_id, system_slug, status, played_status, rating")
+        .eq("user_id", userId)
+        .order("id")
+        .range(from, from + PAGE - 1);
+      if (error) throw error;
+      rows.push(...((data ?? []) as GameLogSummaryRow[]));
+      if ((data ?? []).length < PAGE) return rows;
+    }
   },
 
   async statsByUser(userId, year) {
-    let builder = db
-      .from("game_logs")
-      .select("status, hours_played, rating")
-      .eq("user_id", userId);
-
-    if (year !== undefined) {
-      builder = builder
-        .gte("updated_at", `${year}-01-01`)
-        .lt("updated_at", `${year + 1}-01-01`);
-    }
-
-    const { data, error } = await builder;
+    const { data, error } = await db
+      .rpc("user_log_stats", { p_user_id: userId, p_year: year ?? null })
+      .single();
     if (error) throw error;
-
-    const rows = (data ?? []) as {
-      status: string;
-      hours_played: number | null;
-      rating: number | null;
-    }[];
-
-    const byStatus: Record<string, number> = {
-      played: 0,
-      playing: 0,
-      backlog: 0,
-      wishlist: 0,
-    };
-    let hoursPlayed = 0;
-    let ratingSum = 0;
-    let ratingCount = 0;
-
-    for (const row of rows) {
-      byStatus[row.status] = (byStatus[row.status] ?? 0) + 1;
-      if (row.hours_played !== null) hoursPlayed += Number(row.hours_played);
-      if (row.rating !== null) {
-        ratingSum += Number(row.rating);
-        ratingCount += 1;
-      }
-    }
+    const row = data as UserLogStatsRow;
+    const rating =
+      row.average_rating === null ? null : Number(row.average_rating);
 
     return {
-      byStatus,
-      hoursPlayed: Math.round(hoursPlayed * 10) / 10,
-      averageRating:
-        ratingCount === 0
-          ? null
-          : Math.round((ratingSum / ratingCount) * 100) / 100,
-      ratingCount,
+      logCount: row.log_count,
+      gameCount: row.game_count,
+      byStatus: {
+        played: row.played,
+        playing: row.playing,
+        backlog: row.backlog,
+        wishlist: row.wishlist,
+      },
+      hoursPlayed: Math.round(Number(row.hours_played ?? 0) * 10) / 10,
+      averageRating: rating === null ? null : Math.round(rating * 100) / 100,
+      ratingCount: row.rated_games,
     };
   },
 });

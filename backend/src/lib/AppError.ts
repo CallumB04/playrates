@@ -13,7 +13,9 @@ export type ErrorCode =
   | "already_reported"
   | "already_exists"
   | "self_friend"
-  | "not_configured";
+  | "not_configured"
+  | "platform_taken"
+  | "several_logs";
 
 /**
  * Errors the API returns on purpose. `expose` keeps internals in: a 5xx logs

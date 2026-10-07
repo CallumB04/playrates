@@ -40,50 +40,45 @@ const scripted = (script: Record<Op, Result[]>) => {
 };
 
 const row = (status: string) => ({ id: 7, user_id: "u", game_id: 1, status });
-const missing: Result = { data: null, error: null };
+const taken: Result = { data: null, error: { code: "23505" } };
 
-describe("game logs repository, upsert", () => {
-  it("creates the log when there is none", async () => {
-    const { db } = scripted({
-      select: [missing],
-      insert: [{ data: row("wishlist"), error: null }],
+/* game_logs_user_game_system_unique: the console is already logged for this
+   game. That is the user's mistake to fix, so it answers 409 with a code the
+   editor can show beside the console, not a bare "already exists". */
+describe("game logs repository, a console logged twice", () => {
+  it("creates the log when the console is free", async () => {
+    const { db, calls } = scripted({
+      select: [],
+      insert: [{ data: row("played"), error: null }],
       update: [],
     });
-
-    const result = await createGameLogsRepository(db).upsert("u", 1, {
-      status: "wishlist",
-    });
-
-    expect(result).toEqual({ row: row("wishlist"), created: true });
+    const log = await createGameLogsRepository(db).create("u", 1, {});
+    expect(log.status).toBe("played");
+    expect(calls).toEqual(["insert"]);
   });
 
-  /* Wishlist then backlog, pressed before the first request came back: both
-     found no log, the second insert hit the unique constraint, and the
-     request failed with a 500. */
-  it("updates the log a concurrent save created, rather than failing", async () => {
-    const { db, calls } = scripted({
-      select: [missing, { data: row("wishlist"), error: null }],
-      insert: [{ data: null, error: { code: "23505" } }],
-      update: [{ data: row("backlog"), error: null }],
-    });
-
-    const result = await createGameLogsRepository(db).upsert("u", 1, {
-      status: "backlog",
-    });
-
-    expect(result).toEqual({ row: row("backlog"), created: false });
-    expect(calls).toEqual(["insert", "update"]);
+  it("says the platform is taken when an insert collides", async () => {
+    const { db } = scripted({ select: [], insert: [taken], update: [] });
+    await expect(
+      createGameLogsRepository(db).create("u", 1, { system_slug: "ps5" }),
+    ).rejects.toMatchObject({ status: 409, code: "platform_taken" });
   });
 
-  it("still fails on any other insert error", async () => {
+  it("says the same when moving a log onto a taken console", async () => {
+    const { db } = scripted({ select: [], insert: [], update: [taken] });
+    await expect(
+      createGameLogsRepository(db).update(7, { system_slug: "ps5" }),
+    ).rejects.toMatchObject({ status: 409, code: "platform_taken" });
+  });
+
+  it("passes any other error through", async () => {
     const { db } = scripted({
-      select: [missing],
+      select: [],
       insert: [{ data: null, error: { code: "23503" } }],
       update: [],
     });
-
     await expect(
-      createGameLogsRepository(db).upsert("u", 1, { status: "backlog" }),
+      createGameLogsRepository(db).create("u", 1, {}),
     ).rejects.toMatchObject({ code: "23503" });
   });
 });

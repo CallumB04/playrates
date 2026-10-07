@@ -99,6 +99,8 @@ export const buildReview = (overrides: Partial<ReviewRow> = {}): ReviewRow => ({
   id: 1,
   user_id: USER_A,
   game_id: 1,
+  // buildGameLog's default id: the log this review hangs off.
+  log_id: 1,
   body: "Still the benchmark for open world side quests.",
   is_public: true,
   contains_spoilers: false,

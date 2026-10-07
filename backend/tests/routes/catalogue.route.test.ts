@@ -172,7 +172,21 @@ describe("my game-log summaries", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data).toEqual([
-      { gameId: 1, status: "played", playedStatus: "mastered", rating: 9 },
+      {
+        gameId: 1,
+        status: "played",
+        playedStatus: "mastered",
+        rating: 9,
+        logs: [
+          {
+            id: 1,
+            system: "steam",
+            status: "played",
+            playedStatus: "mastered",
+            rating: 9,
+          },
+        ],
+      },
     ]);
   });
 

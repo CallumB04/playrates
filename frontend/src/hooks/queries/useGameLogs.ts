@@ -136,7 +136,7 @@ export const useQuickAdd = () => {
         if (before && !before.some((log) => log.gameId === gameId)) {
             queryClient.setQueryData<GameLogSummary[]>(key, [
                 ...before,
-                { gameId, status, playedStatus: null, rating: null },
+                { gameId, status, playedStatus: null, rating: null, logs: [] },
             ]);
         }
 

@@ -4,8 +4,8 @@ import type { ReviewRow } from "../../types/database.types.js";
 
 /**
  * A row of the review_cards view: the review, its author, and the rating from
- * that author's log. The view exists because there is no foreign key from
- * reviews to game_logs, so the rating can't be embedded or sorted on.
+ * the log it reviews. The view lets the rating be sorted on, which an
+ * embedded log can't be.
  */
 export interface ReviewRowJoined extends ReviewRow {
   rating: number | null;
@@ -13,6 +13,7 @@ export interface ReviewRowJoined extends ReviewRow {
   status: string | null;
   played_status: string | null;
   platform_slug: string | null;
+  system_slug: string | null;
   author_username: string | null;
   author_first_name: string | null;
   vote_count: number;
@@ -47,13 +48,18 @@ export interface ReviewsRepository {
     to: number,
     showSexualContent: boolean,
   ): Promise<{ rows: ReviewRowJoined[]; total: number }>;
+  /** The newest of a user's reviews of a game, for clients that address
+   *  reviews by game. */
   findByUserAndGame(
     userId: string,
     gameId: number,
   ): Promise<ReviewRowJoined | null>;
-  upsert(
+  findByLog(logId: number): Promise<ReviewRowJoined | null>;
+  listByLogs(logIds: number[]): Promise<ReviewRowJoined[]>;
+  upsertForLog(
     userId: string,
     gameId: number,
+    logId: number,
     patch: { body: string; is_public: boolean; contains_spoilers: boolean },
   ): Promise<{ row: ReviewRowJoined; created: boolean }>;
   remove(id: number): Promise<void>;
@@ -200,24 +206,50 @@ export const createReviewsRepository = (db: Db): ReviewsRepository => ({
       .select("*")
       .eq("user_id", userId)
       .eq("game_id", gameId)
+      .order("updated_at", { ascending: false })
+      .limit(1);
+    if (error) throw error;
+    return ((data ?? [])[0] as ReviewRowJoined | undefined) ?? null;
+  },
+
+  async findByLog(logId) {
+    const { data, error } = await db
+      .from(CARDS)
+      .select("*")
+      .eq("log_id", logId)
       .maybeSingle();
     if (error) throw error;
     return (data as ReviewRowJoined | null) ?? null;
   },
 
+  async listByLogs(logIds) {
+    if (logIds.length === 0) return [];
+    const { data, error } = await db
+      .from(CARDS)
+      .select("*")
+      .in("log_id", logIds);
+    if (error) throw error;
+    return (data ?? []) as ReviewRowJoined[];
+  },
+
   /* Writes go to the table, then the card is read back: the view isn't
      updatable through a join, and callers want the joined shape. */
-  async upsert(userId, gameId, patch) {
-    const existing = await this.findByUserAndGame(userId, gameId);
+  async upsertForLog(userId, gameId, logId, patch) {
+    const existing = await this.findByLog(logId);
 
     const { error } = existing
       ? await db.from("reviews").update(patch).eq("id", existing.id)
       : await db
           .from("reviews")
-          .insert({ ...patch, user_id: userId, game_id: gameId });
+          .insert({
+            ...patch,
+            user_id: userId,
+            game_id: gameId,
+            log_id: logId,
+          });
     if (error) throw error;
 
-    const row = await this.findByUserAndGame(userId, gameId);
+    const row = await this.findByLog(logId);
     if (!row) throw new Error("review vanished immediately after write");
     return { row, created: !existing };
   },

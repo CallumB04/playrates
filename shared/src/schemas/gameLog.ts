@@ -1,4 +1,7 @@
 import { z } from "zod";
+import type { GameLogRollup } from "../logs/rollup.js";
+import type { Review } from "./review.js";
+import type { Game } from "./game.js";
 
 export const GAME_STATUSES = [
   "played",
@@ -88,6 +91,14 @@ export const GameLogPatchSchema = withCrossFieldChecks(
   GameLogFieldsSchema.partial(),
 );
 
+/** A new log names its game in the body: the game alone no longer picks out
+ *  one log, so creating is POST /me/logs rather than PUT by game. */
+export const GameLogCreateSchema = withCrossFieldChecks(
+  GameLogFieldsSchema.extend({ gameId: z.number().int().positive() }),
+);
+
+export type GameLogCreate = GameLogInput & { gameId: number };
+
 export type GameLogPatch = z.infer<
   ReturnType<typeof GameLogFieldsSchema.partial>
 >;
@@ -145,19 +156,68 @@ export interface GameLog {
   updatedAt: string;
 }
 
-/** A log reduced to what a "have I logged this?" lookup needs. Unpaginated:
- *  a partial answer makes a tile show the wrong action. */
-export interface GameLogSummary {
-  gameId: number;
+/** One console's log, as far as a "have I logged this?" lookup needs. */
+export interface LoggedPlatform {
+  id: number;
+  system: string | null;
   status: GameStatus;
   playedStatus: PlayedStatus | null;
   rating: number | null;
 }
 
+/** A game the user has logged, on however many consoles. Unpaginated: a
+ *  partial answer makes a tile show the wrong action. The top-level fields
+ *  speak for the game: the headline status and the mean rating. */
+export interface GameLogSummary {
+  gameId: number;
+  status: GameStatus;
+  playedStatus: PlayedStatus | null;
+  rating: number | null;
+  logs: LoggedPlatform[];
+}
+
+/** A log with its own review, which belongs to it alone. */
+export interface LogWithReview extends GameLog {
+  review: Review | null;
+}
+
+/** What a shelf tile shows of the game itself. */
+export type ShelfGame = Pick<
+  Game,
+  | "id"
+  | "title"
+  | "slug"
+  | "coverUrl"
+  | "artworkUrl"
+  | "releaseDate"
+  | "platforms"
+  | "avgRating"
+  | "criticScore"
+>;
+
+/** A game on a shelf: one tile, however many consoles it was logged on. */
+export interface ShelfEntry {
+  gameId: number;
+  game: ShelfGame | null;
+  logs: GameLog[];
+  rollup: GameLogRollup;
+}
+
+/** Everything one person has logged of one game. */
+export interface LogBundle {
+  gameId: number;
+  logs: LogWithReview[];
+  rollup: GameLogRollup | null;
+}
+
 /** Totals across a user's whole shelf — the log list is paginated, so these
  *  can't be summed client-side. */
 export interface UserStats {
+  /** Logs, one per console. */
   logCount: number;
+  /** Games, however many consoles each was logged on. byStatus counts games
+   *  too, as the shelves list each game once. */
+  gameCount: number;
   byStatus: Record<string, number>;
   hoursPlayed: number;
   averageRating: number | null;

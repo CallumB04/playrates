@@ -94,6 +94,7 @@ describe("quick add", () => {
                     status: "backlog",
                     playedStatus: null,
                     rating: null,
+                    logs: [],
                 },
             ])
         );

@@ -194,26 +194,30 @@ const main = async () => {
       const played = shape.status === "played";
       const month = MONTHS[i % MONTHS.length]!;
 
-      const { error } = await db.from("game_logs").upsert(
-        {
-          user_id: person.id,
-          game_id: game.id,
-          status: shape.status,
-          played_status: played ? shape.played : null,
-          // Half points only, matching the constraint.
-          rating: played ? 5 + ((i * 1.5) % 5.5) : null,
-          hours_played: played ? 8 + i * 4 : null,
-          hours_to_beat: played ? 10 + i * 3 : null,
-          start_date: played ? iso(month, 3) : null,
-          finish_date: played ? iso(month, 19) : null,
-          // Family and machine together, the way the log editor writes them.
-          platform_slug: ["steam", "playstation", "xbox"][i % 3]!,
-          system_slug: ["steam", "playstation5", "xbox-series-x"][i % 3]!,
-          achievements_total: played ? 40 : null,
-          achievements_completed: played ? Math.min(40, 6 + i * 4) : null,
-        },
-        { onConflict: "user_id,game_id" },
-      );
+      const { data: log, error } = await db
+        .from("game_logs")
+        .upsert(
+          {
+            user_id: person.id,
+            game_id: game.id,
+            status: shape.status,
+            played_status: played ? shape.played : null,
+            // Half points only, matching the constraint.
+            rating: played ? 5 + ((i * 1.5) % 5.5) : null,
+            hours_played: played ? 8 + i * 4 : null,
+            hours_to_beat: played ? 10 + i * 3 : null,
+            start_date: played ? iso(month, 3) : null,
+            finish_date: played ? iso(month, 19) : null,
+            // Family and machine together, the way the log editor writes them.
+            platform_slug: ["steam", "playstation", "xbox"][i % 3]!,
+            system_slug: ["steam", "playstation5", "xbox-series-x"][i % 3]!,
+            achievements_total: played ? 40 : null,
+            achievements_completed: played ? Math.min(40, 6 + i * 4) : null,
+          },
+          { onConflict: "user_id,game_id,system_slug" },
+        )
+        .select("id")
+        .single();
       if (error) throw error;
       logCount += 1;
 
@@ -225,10 +229,11 @@ const main = async () => {
             {
               user_id: person.id,
               game_id: game.id,
+              log_id: log.id,
               body: REVIEW_BODIES[(personIndex + i) % REVIEW_BODIES.length]!,
               is_public: true,
             },
-            { onConflict: "user_id,game_id" },
+            { onConflict: "log_id" },
           )
           .select("id")
           .single();

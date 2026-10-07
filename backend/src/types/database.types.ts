@@ -135,12 +135,46 @@ export interface ReviewRow {
   id: number;
   user_id: string;
   game_id: number;
+  /** The log it reviews: one console's run of the game. */
+  log_id: number;
   body: string;
   is_public: boolean;
   /** Hides the body until a reader asks to see it. */
   contains_spoilers: boolean;
   created_at: string;
   updated_at: string;
+}
+
+/** Row shape of the game_log_rollups view: a person's logs of one game. */
+export interface GameLogRollupRow {
+  user_id: string;
+  game_id: number;
+  log_count: number;
+  latest_log_id: number;
+  statuses: string[];
+  played_endings: string[];
+  rating: number | null;
+  hours_played: number | null;
+  completion: number | null;
+  last_played: string | null;
+  updated_at: string;
+  game_title: string;
+  game_avg_rating: number | null;
+  game_critic_score: number | null;
+  game_release_date: string | null;
+}
+
+/** What user_log_stats() returns. */
+export interface UserLogStatsRow {
+  log_count: number;
+  game_count: number;
+  played: number;
+  playing: number;
+  backlog: number;
+  wishlist: number;
+  hours_played: number | null;
+  average_rating: number | null;
+  rated_games: number;
 }
 
 export interface FriendshipRow {

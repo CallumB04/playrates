@@ -20,6 +20,8 @@ export type ReviewInput = z.infer<typeof ReviewInputSchema>;
 export interface Review {
   id: number;
   gameId: number;
+  /** The log it reviews: one console's run of the game. */
+  logId: number;
   body: string;
   isPublic: boolean;
   containsSpoilers: boolean;
@@ -56,6 +58,8 @@ export interface ReviewWithAuthor extends Review {
   status: string | null;
   playedStatus: string | null;
   platform: string | null;
+  /** The console the review is about. */
+  system: string | null;
   game: ReviewGame;
   voteCount: number;
   /** Whether the viewer has upvoted it. False when signed out. */

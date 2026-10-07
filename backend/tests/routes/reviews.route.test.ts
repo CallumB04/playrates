@@ -79,8 +79,11 @@ describe("reviews", () => {
     const { app, state } = buildTestApp({
       seed: {
         ...baseSeed(),
-        gameLogs: [buildGameLog()],
-        reviews: [buildReview(), buildReview({ id: 2, user_id: USER_B })],
+        gameLogs: [buildGameLog(), buildGameLog({ id: 2, user_id: USER_B })],
+        reviews: [
+          buildReview(),
+          buildReview({ id: 2, user_id: USER_B, log_id: 2 }),
+        ],
       },
     });
 
@@ -199,7 +202,11 @@ describe("reviews", () => {
 
   it("deletes with a 204 and an empty body", async () => {
     const { app, state } = buildTestApp({
-      seed: { ...baseSeed(), reviews: [buildReview()] },
+      seed: {
+        ...baseSeed(),
+        gameLogs: [buildGameLog()],
+        reviews: [buildReview()],
+      },
     });
 
     const response = await request(app)
@@ -243,7 +250,13 @@ describe("review sorting", () => {
     ...baseSeed(),
     reviews: [
       buildReview({ id: 1, user_id: USER_A, game_id: 1, body: "mid" }),
-      buildReview({ id: 2, user_id: USER_B, game_id: 1, body: "loved it" }),
+      buildReview({
+        id: 2,
+        user_id: USER_B,
+        game_id: 1,
+        log_id: 2,
+        body: "loved it",
+      }),
     ],
     gameLogs: [
       buildGameLog({ id: 1, user_id: USER_A, game_id: 1, rating: 5 }),
@@ -280,11 +293,18 @@ describe("review sorting", () => {
     const seed = {
       ...baseSeed(),
       reviews: [
-        buildReview({ id: 1, user_id: USER_A, game_id: 1, body: "no log" }),
-        buildReview({ id: 2, user_id: USER_B, game_id: 1, body: "rated" }),
+        buildReview({ id: 1, user_id: USER_A, game_id: 1, body: "unrated" }),
+        buildReview({
+          id: 2,
+          user_id: USER_B,
+          game_id: 1,
+          log_id: 2,
+          body: "rated",
+        }),
       ],
-      // Only USER_B has a log, so USER_A's review has no rating at all.
+      // USER_A's log carries no rating, so neither does their review.
       gameLogs: [
+        buildGameLog({ id: 1, user_id: USER_A, game_id: 1, rating: null }),
         buildGameLog({ id: 2, user_id: USER_B, game_id: 1, rating: 7 }),
       ],
     };

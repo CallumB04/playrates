@@ -15,20 +15,18 @@ import { isOnline, toAccent } from "../profiles/profiles.mapper.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type { GamesRepository } from "../games/games.repository.js";
 import type { GameLogsRepository } from "../game-logs/gameLogs.repository.js";
+import { pickLegacyLog } from "../game-logs/legacyLog.js";
+import { toReview } from "./reviews.mapper.js";
 import type {
   ReviewRowJoined,
   ReviewsRepository,
 } from "./reviews.repository.js";
 
-const toReview = (row: ReviewRowJoined): Review => ({
-  id: row.id,
-  gameId: row.game_id,
-  body: row.body,
-  isPublic: row.is_public,
-  containsSpoilers: row.contains_spoilers ?? false,
-  createdAt: row.created_at,
-  updatedAt: row.updated_at,
-});
+const severalLogs = () =>
+  AppError.conflict(
+    "several_logs",
+    "This game has a log per platform now. Refresh to edit them.",
+  );
 
 export const createReviewsService = (
   repo: ReviewsRepository,
@@ -71,6 +69,7 @@ export const createReviewsService = (
       status: row.status,
       playedStatus: row.played_status,
       platform: row.platform_slug,
+      system: row.system_slug,
       game: {
         id: row.game_id,
         title: row.game_title,
@@ -192,6 +191,46 @@ export const createReviewsService = (
       return { voteCount, votedByViewer: !voted };
     },
 
+    /** The review on one of the caller's logs. */
+    async getForLog(userId: string, logId: number): Promise<Review> {
+      const row = await repo.findByLog(logId);
+      if (!row || row.user_id !== userId) throw AppError.notFound("Review");
+      return toReview(row);
+    },
+
+    /* A review is written from a log and shown beside its rating and hours,
+       and it goes when the log does. 404 rather than 403 on someone else's
+       log: it shouldn't be told apart from one that doesn't exist. */
+    async upsertForLog(
+      userId: string,
+      logId: number,
+      input: ReviewInput,
+    ): Promise<{ review: Review; created: boolean }> {
+      const log = await gameLogs.findOwn(userId, logId);
+      if (!log) throw AppError.notFound("Game log");
+
+      const { row, created } = await repo.upsertForLog(
+        userId,
+        log.game_id,
+        log.id,
+        {
+          body: input.body,
+          is_public: input.isPublic,
+          contains_spoilers: input.containsSpoilers,
+        },
+      );
+      return { review: toReview(row), created };
+    },
+
+    async deleteForLog(userId: string, logId: number): Promise<void> {
+      const existing = await repo.findByLog(logId);
+      if (!existing || existing.user_id !== userId) {
+        throw AppError.notFound("Review");
+      }
+      await repo.remove(existing.id);
+    },
+
+    /* By game, from clients written when a game had one log. */
     async getOwn(userId: string, gameId: number): Promise<Review> {
       const row = await repo.findByUserAndGame(userId, gameId);
       if (!row) throw AppError.notFound("Review");
@@ -205,23 +244,24 @@ export const createReviewsService = (
     ): Promise<{ review: Review; created: boolean }> {
       const game = await games.findById(gameId);
       if (!game) throw AppError.notFound("Game");
-      /* A review is written from a log and shown beside its rating and
-         hours, and it goes when the log does. Without one there is nothing
-         for it to hang off. */
-      if (!(await gameLogs.findByUserAndGame(userId, gameId))) {
+
+      const pick = pickLegacyLog(
+        await gameLogs.listByUserAndGame(userId, gameId),
+      );
+      if (pick.kind === "none") {
         throw AppError.validation("Log this game before reviewing it");
       }
-
-      const { row, created } = await repo.upsert(userId, gameId, {
-        body: input.body,
-        is_public: input.isPublic,
-        contains_spoilers: input.containsSpoilers,
-      });
-      return { review: toReview(row), created };
+      if (pick.kind === "several") throw severalLogs();
+      return this.upsertForLog(userId, pick.log.id, input);
     },
 
     async deleteOwn(userId: string, gameId: number): Promise<void> {
-      const existing = await repo.findByUserAndGame(userId, gameId);
+      const pick = pickLegacyLog(
+        await gameLogs.listByUserAndGame(userId, gameId),
+      );
+      if (pick.kind === "several") throw severalLogs();
+      const existing =
+        pick.kind === "one" ? await repo.findByLog(pick.log.id) : null;
       if (!existing) throw AppError.notFound("Review");
       await repo.remove(existing.id);
     },

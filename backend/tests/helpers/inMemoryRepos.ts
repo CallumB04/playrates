@@ -1,5 +1,11 @@
 import type { ExternalGame } from "../../src/providers/games/GamesProvider.js";
 import { searchKey } from "../../src/lib/searchKey.js";
+import { AppError } from "../../src/lib/AppError.js";
+import {
+  logRank,
+  type GameStatus,
+  type PlayedStatus,
+} from "@playrates/shared";
 import type { Repositories } from "../../src/repositories.js";
 import type { AuthAdmin } from "../../src/config/authAdmin.js";
 import type { AvatarStore } from "../../src/config/avatarStore.js";
@@ -185,13 +191,11 @@ export const createInMemoryRepos = (
     };
   };
 
-  /* Mirrors the review_cards view: the review with its author and the
-     author's log of that game flattened onto one row. */
+  /* Mirrors the review_cards view: the review with its author and the log
+     it reviews flattened onto one row. */
   const withAuthor = (r: ReviewRow): ReviewRowJoined => {
     const author = state.profiles.find((p) => p.id === r.user_id);
-    const log = state.gameLogs.find(
-      (l) => l.user_id === r.user_id && l.game_id === r.game_id,
-    );
+    const log = state.gameLogs.find((l) => l.id === r.log_id);
     const game = state.games.find((g) => g.id === r.game_id);
     return {
       ...r,
@@ -200,6 +204,7 @@ export const createInMemoryRepos = (
       status: log?.status ?? null,
       played_status: log?.played_status ?? null,
       platform_slug: log?.platform_slug ?? null,
+      system_slug: log?.system_slug ?? null,
       author_username: author?.username ?? null,
       author_first_name: author?.first_name ?? null,
       vote_count: state.reviewVotes.filter((v) => v.review_id === r.id).length,
@@ -216,6 +221,46 @@ export const createInMemoryRepos = (
 
   /* What the real repository writes from an upstream game, links included.
      An empty description keeps the one the game had. */
+  const findGame = (id: number) => state.games.find((g) => g.id === id);
+
+  /** Logs grouped by a key, in first-seen order. */
+  const groupBy = (logs: GameLogRow[], key: (l: GameLogRow) => string) => {
+    const groups = new Map<string, GameLogRow[]>();
+    for (const log of logs) {
+      groups.set(key(log), [...(groups.get(key(log)) ?? []), log]);
+    }
+    return [...groups.values()];
+  };
+  const byPerson = (logs: GameLogRow[]) => groupBy(logs, (l) => l.user_id);
+  const byGame = (logs: GameLogRow[]) =>
+    groupBy(logs, (l) => `${l.user_id}:${l.game_id}`);
+
+  /** log_rank() in SQL: the log that speaks for a person's game. */
+  const headlineRow = (logs: GameLogRow[]): GameLogRow =>
+    [...logs].sort(
+      (a, b) =>
+        logRank(a.status as GameStatus, a.played_status as PlayedStatus) -
+          logRank(b.status as GameStatus, b.played_status as PlayedStatus) ||
+        a.id - b.id,
+    )[0]!;
+
+  /** game_logs_user_game_system_unique, nulls not distinct. */
+  const assertConsoleFree = (log: GameLogRow) => {
+    const clash = state.gameLogs.some(
+      (l) =>
+        l.id !== log.id &&
+        l.user_id === log.user_id &&
+        l.game_id === log.game_id &&
+        l.system_slug === log.system_slug,
+    );
+    if (clash) {
+      throw AppError.conflict(
+        "platform_taken",
+        "You've already logged this game on that platform",
+      );
+    }
+  };
+
   const applyExternal = (game: GameRow, external: ExternalGame) => {
     Object.assign(game, {
       igdb_id: external.externalId,
@@ -596,8 +641,12 @@ export const createInMemoryRepos = (
         const game = state.games.find((g) => g.id === id);
         if (game) applyExternal(game, external);
       },
+      /* The SQL counts each person once: their hours summed across
+         consoles, their quickest time to beat, their best completion. */
       async playratesStats(gameId) {
-        const logs = state.gameLogs.filter((l) => l.game_id === gameId);
+        const people = byPerson(
+          state.gameLogs.filter((l) => l.game_id === gameId),
+        );
         const mean = (values: (number | null)[]) => {
           const present = values.filter((v): v is number => v !== null);
           if (present.length === 0) return null;
@@ -607,25 +656,47 @@ export const createInMemoryRepos = (
             ) / 10
           );
         };
-        const tracked = logs.filter((l) => (l.achievements_total ?? 0) > 0);
+        const present = (values: (number | null)[]) =>
+          values.filter((v): v is number => v !== null);
         // Clamped per log, like the SQL: completed is not constrained to total.
-        const completions = tracked.map((l) =>
-          Math.min(
-            1,
-            (l.achievements_completed ?? 0) / (l.achievements_total ?? 1),
-          ),
-        );
+        const completions = people
+          .map((logs) =>
+            present(
+              logs.map((l) =>
+                (l.achievements_total ?? 0) > 0
+                  ? Math.min(
+                      1,
+                      (l.achievements_completed ?? 0) /
+                        (l.achievements_total ?? 1),
+                    )
+                  : null,
+              ),
+            ),
+          )
+          .filter((c) => c.length > 0)
+          .map((c) => Math.max(...c));
         return {
-          avgHoursPlayed: mean(logs.map((l) => l.hours_played)),
-          avgHoursToBeat: mean(logs.map((l) => l.hours_to_beat)),
+          avgHoursPlayed: mean(
+            people.map((logs) => {
+              const hours = present(logs.map((l) => l.hours_played));
+              return hours.length ? hours.reduce((a, b) => a + b, 0) : null;
+            }),
+          ),
+          avgHoursToBeat: mean(
+            people.map((logs) => {
+              const hours = present(logs.map((l) => l.hours_to_beat));
+              return hours.length ? Math.min(...hours) : null;
+            }),
+          ),
           avgCompletion:
             completions.length === 0
               ? null
               : completions.reduce((a, b) => a + b, 0) / completions.length,
-          achievementTrackedCount: tracked.length,
+          achievementTrackedCount: completions.length,
         };
       },
 
+      /* One bucket per person, by the log that speaks for the game. */
       async statusCounts(gameId) {
         const byStatus: Record<string, number> = {
           played: 0,
@@ -640,7 +711,10 @@ export const createInMemoryRepos = (
           retired: 0,
         };
 
-        for (const log of state.gameLogs.filter((l) => l.game_id === gameId)) {
+        for (const logs of byPerson(
+          state.gameLogs.filter((l) => l.game_id === gameId),
+        )) {
+          const log = headlineRow(logs);
           byStatus[log.status] = (byStatus[log.status] ?? 0) + 1;
           if (log.status === "played" && log.played_status) {
             byPlayedStatus[log.played_status] =
@@ -650,9 +724,14 @@ export const createInMemoryRepos = (
         return { byStatus, byPlayedStatus };
       },
       async ratingSummary(gameId) {
-        const ratings = state.gameLogs
-          .filter((l) => l.game_id === gameId && l.rating !== null)
-          .map((l) => Number(l.rating));
+        const ratings = byPerson(
+          state.gameLogs.filter(
+            (l) => l.game_id === gameId && l.rating !== null,
+          ),
+        ).map(
+          (logs) =>
+            logs.reduce((a, l) => a + Number(l.rating), 0) / logs.length,
+        );
         const buckets = new Array<number>(20).fill(0);
         for (const rating of ratings) {
           const index = Math.min(19, Math.floor(rating * 2));
@@ -731,20 +810,98 @@ export const createInMemoryRepos = (
           total: sorted.length,
         };
       },
-      async findByUserAndGame(userId, gameId) {
+      async shelfByUser(userId, query, from, to) {
+        const games = byGame(state.gameLogs.filter((l) => l.user_id === userId))
+          .filter((logs) => {
+            if (query.status && !logs.some((l) => l.status === query.status)) {
+              return false;
+            }
+            if (!query.playedStatus) return true;
+            return logs.some(
+              (l) =>
+                l.status === "played" &&
+                (l.played_status ?? "none") === query.playedStatus,
+            );
+          })
+          .map((logs) => ({ logs, game: findGame(logs[0]!.game_id) }));
+
+        const sortKey = ({
+          logs,
+          game,
+        }: (typeof games)[number]): string | number | null => {
+          const present = <T,>(values: (T | null)[]) =>
+            values.filter((v): v is T => v !== null);
+          switch (query.sort) {
+            case "rating": {
+              const rated = present(logs.map((l) => l.rating)).map(Number);
+              return rated.length
+                ? rated.reduce((a, b) => a + b, 0) / rated.length
+                : null;
+            }
+            case "gameRating":
+              return game?.avg_rating ?? null;
+            case "critic":
+              return game?.critic_score ?? null;
+            case "played":
+              return (
+                present(logs.flatMap((l) => [l.start_date, l.finish_date]))
+                  .sort()
+                  .at(-1) ?? null
+              );
+            case "title":
+              return game?.title ?? null;
+            case "released":
+              return game?.release_date ?? null;
+            case "completion": {
+              const done = present(
+                logs.map((l) =>
+                  l.achievements_total
+                    ? (l.achievements_completed ?? 0) / l.achievements_total
+                    : null,
+                ),
+              );
+              return done.length ? Math.max(...done) : null;
+            }
+          }
+        };
+        const latest = (g: (typeof games)[number]) =>
+          Math.max(...g.logs.map((l) => l.id));
+
+        const sorted = [...games].sort((a, b) => {
+          const x = sortKey(a);
+          const y = sortKey(b);
+          if (x === null && y === null) return latest(b) - latest(a);
+          if (x === null) return 1;
+          if (y === null) return -1;
+          if (x === y) return latest(b) - latest(a);
+          const ahead = x < y ? -1 : 1;
+          return query.direction === "asc" ? ahead : -ahead;
+        });
+
+        return {
+          gameIds: sorted.slice(from, to + 1).map((g) => g.logs[0]!.game_id),
+          total: sorted.length,
+        };
+      },
+      async findOwn(userId, logId) {
         const log = state.gameLogs.find(
-          (l) => l.user_id === userId && l.game_id === gameId,
+          (l) => l.id === logId && l.user_id === userId,
         );
         return log ? withGame(log) : null;
       },
-      async upsert(userId, gameId, patch) {
-        const existing = state.gameLogs.find(
-          (l) => l.user_id === userId && l.game_id === gameId,
-        );
-        if (existing) {
-          Object.assign(existing, patch, { updated_at: now() });
-          return { row: withGame(existing), created: false };
-        }
+      async listByUserAndGame(userId, gameId) {
+        return this.listByUserAndGames(userId, [gameId]);
+      },
+      async listByUserAndGames(userId, gameIds) {
+        return state.gameLogs
+          .filter((l) => l.user_id === userId && gameIds.includes(l.game_id))
+          .sort(
+            (a, b) =>
+              a.created_at.localeCompare(b.created_at) || a.id - b.id,
+          )
+          .map(withGame);
+      },
+      async create(userId, gameId, patch) {
         const row: GameLogRow = {
           id: nextLogId++,
           user_id: userId,
@@ -766,29 +923,24 @@ export const createInMemoryRepos = (
           updated_at: now(),
           ...patch,
         };
+        assertConsoleFree(row);
         state.gameLogs.push(row);
-        return { row: withGame(row), created: true };
+        return withGame(row);
       },
       async update(id, patch) {
         const log = state.gameLogs.find((l) => l.id === id);
         if (!log) throw new Error("game log not found");
+        assertConsoleFree({ ...log, ...patch });
         Object.assign(log, patch, { updated_at: now() });
         return withGame(log);
       },
       async remove(id) {
-        const log = state.gameLogs.find((l) => l.id === id);
         state.gameLogs = state.gameLogs.filter((l) => l.id !== id);
-        // the game_logs_delete_review trigger
-        if (log) {
-          for (const r of state.reviews) {
-            if (r.user_id === log.user_id && r.game_id === log.game_id) {
-              clearReviewNotifications(r.id);
-            }
-          }
-          state.reviews = state.reviews.filter(
-            (r) => !(r.user_id === log.user_id && r.game_id === log.game_id),
-          );
+        // reviews_log_fk cascades
+        for (const r of state.reviews) {
+          if (r.log_id === id) clearReviewNotifications(r.id);
         }
+        state.reviews = state.reviews.filter((r) => r.log_id !== id);
       },
       async count() {
         return state.gameLogs.length;
@@ -797,12 +949,16 @@ export const createInMemoryRepos = (
         return state.gameLogs
           .filter((l) => l.user_id === userId)
           .map((l) => ({
+            id: l.id,
             game_id: l.game_id,
+            system_slug: l.system_slug,
             status: l.status,
             played_status: l.played_status,
             rating: l.rating,
           }));
       },
+      /* Mirrors user_log_stats(): shelf counts are games, with a game on
+         every shelf one of its logs is on; the rating is over games. */
       async statsByUser(userId, year) {
         const rows = state.gameLogs.filter(
           (l) =>
@@ -810,6 +966,7 @@ export const createInMemoryRepos = (
             (year === undefined ||
               new Date(l.updated_at).getUTCFullYear() === year),
         );
+        const games = byGame(rows);
 
         const byStatus: Record<string, number> = {
           played: 0,
@@ -817,28 +974,35 @@ export const createInMemoryRepos = (
           backlog: 0,
           wishlist: 0,
         };
-        let hoursPlayed = 0;
-        let ratingSum = 0;
-        let ratingCount = 0;
-
-        for (const row of rows) {
-          byStatus[row.status] = (byStatus[row.status] ?? 0) + 1;
-          if (row.hours_played !== null)
-            hoursPlayed += Number(row.hours_played);
-          if (row.rating !== null) {
-            ratingSum += Number(row.rating);
-            ratingCount += 1;
+        for (const logs of games) {
+          for (const status of new Set(logs.map((l) => l.status))) {
+            byStatus[status] = (byStatus[status] ?? 0) + 1;
           }
         }
+        const hoursPlayed = rows.reduce(
+          (sum, l) => sum + Number(l.hours_played ?? 0),
+          0,
+        );
+        const means = games
+          .map((logs) => logs.filter((l) => l.rating !== null))
+          .filter((rated) => rated.length > 0)
+          .map(
+            (rated) =>
+              rated.reduce((a, l) => a + Number(l.rating), 0) / rated.length,
+          );
 
         return {
+          logCount: rows.length,
+          gameCount: games.length,
           byStatus,
           hoursPlayed: Math.round(hoursPlayed * 10) / 10,
           averageRating:
-            ratingCount === 0
+            means.length === 0
               ? null
-              : Math.round((ratingSum / ratingCount) * 100) / 100,
-          ratingCount,
+              : Math.round(
+                  (means.reduce((a, b) => a + b, 0) / means.length) * 100,
+                ) / 100,
+          ratingCount: means.length,
         };
       },
     },
@@ -939,15 +1103,22 @@ export const createInMemoryRepos = (
         };
       },
       async findByUserAndGame(userId, gameId) {
-        const review = state.reviews.find(
-          (r) => r.user_id === userId && r.game_id === gameId,
-        );
+        const review = state.reviews
+          .filter((r) => r.user_id === userId && r.game_id === gameId)
+          .sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0];
         return review ? withAuthor(review) : null;
       },
-      async upsert(userId, gameId, patch) {
-        const existing = state.reviews.find(
-          (r) => r.user_id === userId && r.game_id === gameId,
-        );
+      async findByLog(logId) {
+        const review = state.reviews.find((r) => r.log_id === logId);
+        return review ? withAuthor(review) : null;
+      },
+      async listByLogs(logIds) {
+        return state.reviews
+          .filter((r) => logIds.includes(r.log_id))
+          .map(withAuthor);
+      },
+      async upsertForLog(userId, gameId, logId, patch) {
+        const existing = state.reviews.find((r) => r.log_id === logId);
         if (existing) {
           Object.assign(existing, patch, { updated_at: now() });
           return { row: withAuthor(existing), created: false };
@@ -956,6 +1127,7 @@ export const createInMemoryRepos = (
           id: nextReviewId++,
           user_id: userId,
           game_id: gameId,
+          log_id: logId,
           created_at: now(),
           updated_at: now(),
           ...patch,

@@ -101,6 +101,7 @@ export const buildReview = (
 ): ReviewWithAuthor => ({
     id: 1,
     gameId: 1,
+    logId: 10,
     body: "Still the benchmark for open world side quests.",
     isPublic: true,
     containsSpoilers: false,
@@ -121,6 +122,7 @@ export const buildReview = (
     status: "played",
     playedStatus: "finished",
     platform: "steam",
+    system: "steam",
     game: {
         id: 1,
         title: "The Witcher 3: Wild Hunt",

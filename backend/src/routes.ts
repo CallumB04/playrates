@@ -13,7 +13,11 @@ import { env } from "./config/env.js";
 import { createGameLogsService } from "./modules/game-logs/gameLogs.service.js";
 import {
   createMyGameLogsRouter,
+  createMyLogsRouter,
+  createMyShelfRouter,
   createUserGameLogsRouter,
+  createUserLogsRouter,
+  createUserShelfRouter,
   createUserStatsRouter,
 } from "./modules/game-logs/gameLogs.routes.js";
 import { createReviewsService } from "./modules/reviews/reviews.service.js";
@@ -88,6 +92,7 @@ export const buildRoutes = ({
     repos.gameLogs,
     repos.profiles,
     repos.games,
+    repos.reviews,
   );
   const reviews = createReviewsService(
     repos.reviews,
@@ -166,6 +171,14 @@ export const buildRoutes = ({
     createMyGameLogsRouter({ service: gameLogs, requireAuth, optionalAuth }),
   );
   router.use(
+    "/me/logs",
+    createMyLogsRouter({ service: gameLogs, reviews, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/me/shelf",
+    createMyShelfRouter({ service: gameLogs, requireAuth, optionalAuth }),
+  );
+  router.use(
     "/me/reviews",
     createMyReviewsRouter({ service: reviews, requireAuth, optionalAuth }),
   );
@@ -182,6 +195,14 @@ export const buildRoutes = ({
   router.use(
     "/users/:username/game-logs",
     createUserGameLogsRouter({ service: gameLogs, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/users/:username/shelf",
+    createUserShelfRouter({ service: gameLogs, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/users/:username/logs",
+    createUserLogsRouter({ service: gameLogs, requireAuth, optionalAuth }),
   );
   router.use(
     "/users/:username/stats",

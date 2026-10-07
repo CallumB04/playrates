@@ -19,6 +19,16 @@ export const GameIdParamSchema = z.object({
   gameId: z.coerce.number().int().positive(),
 });
 
+/** A log's own id. With a log per console, the game alone no longer picks
+ *  one out. */
+export const LogIdParamSchema = z.object({
+  logId: z.coerce.number().int().positive(),
+});
+
+export const GameIdQuerySchema = z.object({
+  gameId: z.coerce.number().int().positive(),
+});
+
 export const UsernameParamSchema = z.object({
   username: z.string().min(1),
 });
