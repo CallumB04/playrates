@@ -1,5 +1,9 @@
-import type { GameLogInput, GameStatus, PlayedStatus } from "@playrates/shared";
-import type { GameLogWithGame } from "../../api";
+import type {
+    GameLog,
+    GameLogInput,
+    GameStatus,
+    PlayedStatus,
+} from "@playrates/shared";
 import { parseHours } from "../../lib/parseHours";
 
 export interface LogDraft {
@@ -45,7 +49,7 @@ export type LogAction =
     | { type: "rating"; value: number | null }
     | {
           type: "hydrate";
-          log: GameLogWithGame | null;
+          log: GameLog | null;
           review?: {
               body: string;
               isPublic: boolean;

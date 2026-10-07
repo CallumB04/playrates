@@ -7,9 +7,11 @@ import { AuthProvider } from "../contexts/AuthContext";
 import { AccountFormProvider } from "../contexts/AccountFormContext";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import ErrorBoundary from "../components/feedback/ErrorBoundary";
+import { LogFlowProvider } from "../components/gamelog/LogFlow";
 
 /* Order matters. AuthProvider loads the profile through the query client and
-   emits toasts, and AccountFormProvider needs useLocation. */
+   emits toasts, AccountFormProvider needs useLocation, and the log popups
+   LogFlowProvider opens need all of them. */
 export const AppProviders = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
         <ThemeProvider>
@@ -18,7 +20,7 @@ export const AppProviders = ({ children }: { children: ReactNode }) => (
                     <BrowserRouter>
                         <AuthProvider>
                             <AccountFormProvider>
-                                {children}
+                                <LogFlowProvider>{children}</LogFlowProvider>
                             </AccountFormProvider>
                         </AuthProvider>
                     </BrowserRouter>

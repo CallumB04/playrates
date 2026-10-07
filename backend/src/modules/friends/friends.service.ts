@@ -103,6 +103,7 @@ export const createFriendsService = (
           status: row.status,
           playedStatus: row.played_status,
           rating: row.rating === null ? null : Number(row.rating),
+          system: row.system_slug ?? null,
           hoursPlayed:
             row.hours_played === null ? null : Number(row.hours_played),
           at: row.updated_at,

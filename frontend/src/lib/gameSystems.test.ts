@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { PlatformSystem } from "@playrates/shared";
-import { familyOf, systemsForGame } from "./gameSystems";
+import {
+    familyOf,
+    playedOnName,
+    remainingSystems,
+    systemsForGame,
+} from "./gameSystems";
 
 const system = (
     slug: string,
@@ -60,5 +65,49 @@ describe("familyOf", () => {
     it("returns null rather than guessing at an unknown machine", () => {
         expect(familyOf(ALL, "dreamcast")).toBeNull();
         expect(familyOf(ALL, "")).toBeNull();
+    });
+});
+
+describe("remainingSystems", () => {
+    it("leaves out the consoles already logged", () => {
+        const free = remainingSystems(ALL, ["steam", "playstation5"]);
+        expect(free.map((s) => s.slug)).not.toContain("steam");
+        expect(free.map((s) => s.slug)).not.toContain("playstation5");
+        expect(free.map((s) => s.slug)).toContain("playstation3");
+    });
+
+    /* A log with no console blocks nothing: another can still name one. */
+    it("frees every console when the only log names none", () => {
+        expect(remainingSystems(ALL, [null])).toHaveLength(ALL.length);
+    });
+});
+
+describe("playedOnName", () => {
+    const families = [{ slug: "playstation", displayName: "PlayStation" }];
+
+    it("names the machine where the log has one", () => {
+        expect(
+            playedOnName(
+                { system: "playstation3", platform: "playstation" },
+                ALL,
+                families
+            )
+        ).toBe("playstation3");
+    });
+
+    it("falls back to the family on a log from before machines", () => {
+        expect(
+            playedOnName(
+                { system: null, platform: "playstation" },
+                ALL,
+                families
+            )
+        ).toBe("PlayStation");
+    });
+
+    it("has no name for a log that recorded neither", () => {
+        expect(
+            playedOnName({ system: null, platform: null }, ALL, families)
+        ).toBeNull();
     });
 });

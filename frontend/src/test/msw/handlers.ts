@@ -1,10 +1,14 @@
 import { http, HttpResponse } from "msw";
-import type {
-    FriendEdge,
-    Game,
-    MyProfile,
-    Paginated,
-    ReviewWithAuthor,
+import {
+    rollupLogs,
+    type FriendEdge,
+    type GameLog,
+    type Game,
+    type LogBundle,
+    type MyProfile,
+    type Paginated,
+    type ReviewWithAuthor,
+    type ShelfEntry,
 } from "@playrates/shared";
 import type { GameLogWithGame } from "../../api";
 
@@ -96,6 +100,37 @@ export const buildGameLog = (
     ...overrides,
 });
 
+const withoutGame = (log: GameLogWithGame): GameLog => {
+    const plain: Partial<GameLogWithGame> = { ...log };
+    delete plain.game;
+    return plain as GameLog;
+};
+
+/** A game on a shelf, one tile, with these logs (one by default). */
+export const buildShelfEntry = (
+    logs: GameLogWithGame[] = [buildGameLog()]
+): ShelfEntry => {
+    const plain = logs.map(withoutGame);
+    return {
+        gameId: logs[0]!.gameId,
+        game: logs[0]!.game,
+        logs: plain,
+        rollup: rollupLogs(plain)!,
+    };
+};
+
+/** Everything one person logged of a game, each log with no review. */
+export const buildLogBundle = (
+    logs: GameLogWithGame[] = [buildGameLog()]
+): LogBundle => {
+    const plain = logs.map((log) => ({ ...withoutGame(log), review: null }));
+    return {
+        gameId: logs[0]?.gameId ?? 1,
+        logs: plain,
+        rollup: rollupLogs(plain),
+    };
+};
+
 export const buildReview = (
     overrides: Partial<ReviewWithAuthor> = {}
 ): ReviewWithAuthor => ({
@@ -168,6 +203,19 @@ export const handlers = [
         })
     ),
 
+    http.get(`${API}/platforms/systems`, () =>
+        HttpResponse.json({
+            data: [
+                {
+                    slug: "steam",
+                    displayName: "Steam",
+                    platformSlug: "steam",
+                    sortOrder: 10,
+                },
+            ],
+        })
+    ),
+
     http.get(`${API}/games`, () =>
         HttpResponse.json(
             paginated([
@@ -197,12 +245,12 @@ export const handlers = [
         HttpResponse.json(buildProfile({ username: String(params.username) }))
     ),
 
-    http.get(`${API}/me/game-logs`, () =>
-        HttpResponse.json(paginated([buildGameLog()]))
+    http.get(`${API}/me/shelf`, () =>
+        HttpResponse.json(paginated([buildShelfEntry()]))
     ),
 
-    http.get(`${API}/users/:username/game-logs`, () =>
-        HttpResponse.json(paginated([buildGameLog()]))
+    http.get(`${API}/users/:username/shelf`, () =>
+        HttpResponse.json(paginated([buildShelfEntry()]))
     ),
 
     http.get(`${API}/users/:username/reviews`, () =>

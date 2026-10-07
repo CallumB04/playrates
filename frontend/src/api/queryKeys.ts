@@ -40,6 +40,8 @@ export const queryKeys = {
         mineIds: ["gamelogs", "me", "ids"] as const,
         mineForGame: (gameId: number) =>
             ["gamelogs", "me", "game", gameId] as const,
+        forUserAndGame: (username: string, gameId: number) =>
+            ["gamelogs", username, "game", gameId] as const,
         byUsername: (
             username: string,
             status?: string,
@@ -62,7 +64,6 @@ export const queryKeys = {
         recent: ["reviews", "recent"] as const,
         byGame: (gameId: number, sort?: string) =>
             ["reviews", "game", gameId, sort ?? "recent"] as const,
-        mine: (gameId: number) => ["reviews", "me", gameId] as const,
         byUsername: (username: string) =>
             ["reviews", "user", username] as const,
     },

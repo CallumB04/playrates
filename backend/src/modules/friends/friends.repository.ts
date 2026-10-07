@@ -43,6 +43,7 @@ export interface FriendActivityRow {
   actor_last_seen_at: string;
   game_title: string;
   game_cover_url: string | null;
+  system_slug: string | null;
 }
 
 export interface FriendsRepository {

@@ -1,17 +1,17 @@
-import type { GameLogWithGame } from "../api";
+import { useState } from "react";
+import type { LogWithReview } from "@playrates/shared";
 import { displayStatusFor } from "../constants/gameStatus";
 import { plateClass } from "./ui/Plate";
 import Progress from "./ui/Progress";
+import { useGame, usePlatformSystems } from "../hooks/queries/useGames";
 import {
-    useGame,
-    usePlatforms,
-    usePlatformSystems,
-} from "../hooks/queries/useGames";
-import { useGameReviews, useMyReview } from "../hooks/queries/useReviews";
+    useMyGameLogIds,
+    useMyLogBundle,
+    useUserLogBundle,
+} from "../hooks/queries/useGameLogs";
 import { useUser } from "../contexts/AuthContext";
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { platformIcon, systemIcon } from "../lib/platformIcons";
 import RatingBadge from "./ui/RatingBadge";
 import AchievementRing from "./gamelog/AchievementRing";
 import { formatDate, formatHours } from "../lib/format";
@@ -19,59 +19,40 @@ import Modal from "./ui/Modal";
 import Button, { buttonClass } from "./ui/Button";
 import SpoilerCover from "./ui/SpoilerCover";
 import StatusBadge from "./ui/StatusBadge";
+import { TextSkeleton } from "./ui/Skeleton";
+import { cn } from "../lib/cn";
+import { remainingSystems, systemsForGame } from "../lib/gameSystems";
+import { useLogFlow } from "./gamelog/useLogFlow";
+import { usePlayedOn } from "./gamelog/usePlayedOn";
+import LogRow from "./gamelog/LogRow";
+import RollupFigures from "./gamelog/RollupFigures";
 
-export interface LogPopupAction {
+interface LogPopupAction {
     label: string;
     onSelect: () => void;
 }
 
 interface ViewGameLogPopupProps {
-    /** Non-null: the parent does not render this until it has a log. */
-    gamelog: GameLogWithGame;
-    /** Whose log this is, so their review can be picked out of the game's. */
+    gameId: number;
+    /** Whose logs these are. None named means your own. */
     ownerUsername?: string;
-    closePopup: () => void;
-    /** Edit your own, jump to your own log of the same game, or start one.
-     *  Omitted when signed out. */
-    primaryAction?: LogPopupAction;
+    /** Open on this console's log rather than the summary. */
+    initialLogId?: number;
+    onClose: () => void;
 }
 
-/** Somebody's log: the facts as a ledger, with the achievement ring beside them. */
-const ViewGameLogPopup = ({
+/** One console's log: the facts as a ledger, with the achievement ring
+ *  beside them, and the review written about that run. */
+const LogDetails = ({
     gamelog,
-    ownerUsername,
-    closePopup,
-    primaryAction,
-}: ViewGameLogPopupProps) => {
-    const me = useUser();
-    /* Whose figures these are. No owner named means it was opened from your
-       own log, so it is yours. */
-    const isMine = !ownerUsername || me?.username === ownerUsername;
-
-    const { data: game } = useGame(gamelog.gameId);
-    const { data: platforms } = usePlatforms();
-    const { data: systems } = usePlatformSystems();
-    const { data: reviews } = useGameReviews(
-        ownerUsername ? gamelog.gameId : undefined
-    );
-
-    const status = displayStatusFor(gamelog.status, gamelog.playedStatus);
-    // The machine where the log names one, its family where it doesn't —
-    // logs made before systems existed only carry the family.
-    const system = (systems ?? []).find((s) => s.slug === gamelog.system);
-    const family = (platforms ?? []).find((p) => p.slug === gamelog.platform);
-    const playedOn = system?.displayName ?? family?.displayName ?? null;
-    const PlatformIcon = system
-        ? systemIcon(system.slug, system.platformSlug)
-        : platformIcon(gamelog.platform ?? "");
-
-    /* Your own comes from your own endpoint: the game's list is the public
-       one, so a private review of yours is not in it. */
-    const { data: myReview } = useMyReview(isMine ? gamelog.gameId : undefined);
-    const theirReview = (reviews?.data ?? []).find(
-        (r) => r.author.username === ownerUsername
-    );
-    const review = isMine ? myReview : theirReview;
+    isMine,
+    onClose,
+}: {
+    gamelog: LogWithReview;
+    isMine: boolean;
+    onClose: () => void;
+}) => {
+    const review = gamelog.review;
     /* Only a public one has somewhere to lead — a private review is on no
        page but this one. */
     const fullReviewHref =
@@ -91,35 +72,7 @@ const ViewGameLogPopup = ({
     const longest = Math.max(hoursPlayed ?? 0, hoursToBeat ?? 0) || 1;
 
     return (
-        <Modal
-            onClose={closePopup}
-            labelledBy="view-log-title"
-            className="w-full max-w-[520px] p-0! sm:p-0!"
-        >
-            <header className="border-b border-subtle px-5 py-4 pr-12">
-                <h2
-                    id="view-log-title"
-                    className="font-display text-section leading-tight text-content"
-                >
-                    {game?.title ?? "…"}
-                </h2>
-                {/* A meta line, not chips: the status carries its own hue and
-                    mark, and a hairline is enough to part it from the machine
-                    it was played on. */}
-                <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label-sm text-content-muted">
-                    <StatusBadge status={status} plain />
-                    {playedOn && (
-                        <>
-                            <span aria-hidden className="h-3 w-px bg-subtle" />
-                            <span className="inline-flex items-center gap-1.5">
-                                <PlatformIcon size={13} aria-hidden />
-                                {playedOn}
-                            </span>
-                        </>
-                    )}
-                </div>
-            </header>
-
+        <>
             <div className="px-5 py-5">
                 {/* The two figures worth crossing the room for. */}
                 <div
@@ -264,7 +217,7 @@ const ViewGameLogPopup = ({
                     {fullReviewHref && (
                         <Link
                             to={fullReviewHref}
-                            onClick={closePopup}
+                            onClick={onClose}
                             className="mt-2 inline-flex items-center gap-1 text-label-sm text-accent lift hover:underline"
                         >
                             Read the full review
@@ -273,26 +226,188 @@ const ViewGameLogPopup = ({
                     )}
                 </div>
             )}
+        </>
+    );
+};
+
+/** Somebody's logs of a game: one console's in full, or with several, a
+ *  summary across them and a tab for each. */
+const ViewGameLogPopup = ({
+    gameId,
+    ownerUsername,
+    initialLogId,
+    onClose,
+}: ViewGameLogPopupProps) => {
+    const me = useUser();
+    const isMine = !ownerUsername || me?.username === ownerUsername;
+    const flow = useLogFlow();
+    const playedOn = usePlayedOn();
+
+    const { data: game } = useGame(gameId);
+    const { data: systems } = usePlatformSystems();
+    const { data: myIds } = useMyGameLogIds();
+    const mine = useMyLogBundle(gameId, isMine);
+    const theirs = useUserLogBundle(ownerUsername, gameId, !isMine);
+    const bundle = isMine ? mine.data : theirs.data;
+    const logs = bundle?.logs ?? [];
+
+    const [tab, setTab] = useState<number | "all">(initialLogId ?? "all");
+    const selected =
+        logs.length === 1
+            ? logs[0]!
+            : tab === "all"
+              ? null
+              : (logs.find((l) => l.id === tab) ?? null);
+    const several = logs.length > 1;
+
+    const free = remainingSystems(
+        systemsForGame(systems ?? [], game?.systems ?? []),
+        logs.map((l) => l.system)
+    );
+
+    /* Your own is editable, a game you've logged too opens yours, anything
+       else you can start. */
+    const action = ((): LogPopupAction | undefined => {
+        if (!me) return undefined;
+        if (!isMine) {
+            return myIds?.some((s) => s.gameId === gameId)
+                ? { label: "View my log", onSelect: () => flow.view(gameId) }
+                : { label: "Add this game", onSelect: () => flow.open(gameId) };
+        }
+        if (selected) {
+            const name = playedOn(selected).name;
+            return {
+                label: several && name ? `Edit ${name} log` : "Edit your log",
+                onSelect: () => flow.edit(gameId, selected.id),
+            };
+        }
+        return free.length > 0
+            ? { label: "Add a platform", onSelect: () => flow.add(gameId) }
+            : { label: "Edit your logs", onSelect: () => flow.open(gameId) };
+    })();
+
+    const meta = selected ? playedOn(selected) : null;
+    const MetaIcon = meta?.Icon;
+
+    return (
+        <Modal
+            onClose={onClose}
+            labelledBy="view-log-title"
+            className="w-full max-w-[560px] p-0! sm:p-0!"
+        >
+            <header className="border-b border-subtle px-5 pt-4 pr-12">
+                <h2
+                    id="view-log-title"
+                    className="font-display text-section leading-tight text-content"
+                >
+                    {game?.title ?? "…"}
+                </h2>
+                {/* A meta line, not chips: the status carries its own hue and
+                    mark, and a hairline is enough to part it from the machine
+                    it was played on. */}
+                {selected && !several && (
+                    <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label-sm text-content-muted">
+                        <StatusBadge
+                            status={displayStatusFor(
+                                selected.status,
+                                selected.playedStatus
+                            )}
+                            plain
+                        />
+                        {meta?.name && MetaIcon && (
+                            <>
+                                <span
+                                    aria-hidden
+                                    className="h-3 w-px bg-subtle"
+                                />
+                                <span className="inline-flex items-center gap-1.5">
+                                    <MetaIcon size={13} aria-hidden />
+                                    {meta.name}
+                                </span>
+                            </>
+                        )}
+                    </div>
+                )}
+                {several ? (
+                    /* Scrolls inside itself on a phone rather than pushing
+                       the page sideways. */
+                    <div
+                        role="tablist"
+                        aria-label="Platforms"
+                        className="-mx-5 mt-3 flex gap-1 overflow-x-auto px-5 pb-px"
+                    >
+                        {[null, ...logs].map((log) => {
+                            const active = log ? tab === log.id : tab === "all";
+                            const label = log
+                                ? (playedOn(log).name ?? "No platform")
+                                : "All";
+                            return (
+                                <button
+                                    key={log?.id ?? "all"}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={active}
+                                    onClick={() => setTab(log?.id ?? "all")}
+                                    className={cn(
+                                        "-mb-px flex min-h-11 shrink-0 cursor-pointer items-center border-b-2 px-3 text-label whitespace-nowrap lift",
+                                        active
+                                            ? "border-brand text-content"
+                                            : "border-transparent text-content-muted hover:text-content"
+                                    )}
+                                >
+                                    {label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="pb-4" />
+                )}
+            </header>
+
+            {!bundle ? (
+                <div className="px-5 py-5">
+                    <TextSkeleton lines={4} />
+                </div>
+            ) : selected ? (
+                <LogDetails
+                    gamelog={selected}
+                    isMine={isMine}
+                    onClose={onClose}
+                />
+            ) : (
+                <div className="px-5 py-5">
+                    {bundle.rollup && (
+                        <RollupFigures
+                            rollup={bundle.rollup}
+                            whose={isMine ? "Your" : "Their"}
+                        />
+                    )}
+                    <div className="-mx-3 mt-5 flex flex-col border-t border-subtle pt-2">
+                        {logs.map((log) => (
+                            <LogRow
+                                key={log.id}
+                                log={log}
+                                onSelect={() => setTab(log.id)}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <footer className="flex flex-wrap gap-3 border-t border-subtle px-5 py-4">
-                {primaryAction && (
-                    <Button
-                        className="flex-1"
-                        onClick={() => {
-                            closePopup();
-                            primaryAction.onSelect();
-                        }}
-                    >
-                        {primaryAction.label}
+                {action && (
+                    <Button className="flex-1" onClick={action.onSelect}>
+                        {action.label}
                     </Button>
                 )}
                 <button
                     type="button"
                     className={buttonClass(
                         "secondary",
-                        primaryAction ? "flex-1" : "w-full"
+                        action ? "flex-1" : "w-full"
                     )}
-                    onClick={closePopup}
+                    onClick={onClose}
                 >
                     Close
                 </button>

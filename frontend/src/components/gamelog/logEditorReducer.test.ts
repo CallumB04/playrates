@@ -108,7 +108,6 @@ describe("logReducer", () => {
                 achievementsCompleted: null,
                 createdAt: "2026-01-01T00:00:00Z",
                 updatedAt: "2026-01-01T00:00:00Z",
-                game: null,
             },
         });
 
@@ -145,7 +144,6 @@ describe("logReducer", () => {
                 achievementsCompleted: 46,
                 createdAt: "",
                 updatedAt: "",
-                game: null,
             },
             review: { body: "Good.", isPublic: false, containsSpoilers: false },
         });

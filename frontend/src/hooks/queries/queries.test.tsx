@@ -6,13 +6,13 @@ import { http, HttpResponse } from "msw";
 import type { ReactNode } from "react";
 import { server } from "../../test/msw/server";
 import { createTestQueryClient } from "../../test/renderWithProviders";
-import { buildGameLog, paginated } from "../../test/msw/handlers";
-import { useGame, useGames, useSiteStats } from "./useGames";
 import {
-    useGameLogMutations,
-    useQuickAdd,
-    useUserGameLogs,
-} from "./useGameLogs";
+    buildGameLog,
+    buildShelfEntry,
+    paginated,
+} from "../../test/msw/handlers";
+import { useGame, useGames, useSiteStats } from "./useGames";
+import { useLogMutations, useQuickAdd, useUserShelf } from "./useGameLogs";
 import { NotificationProvider } from "../../contexts/NotificationContext";
 import { useUserReviews } from "./useReviews";
 import { useProfile } from "./useProfiles";
@@ -40,18 +40,16 @@ describe("log mutations", () => {
             </QueryClientProvider>
         );
         server.use(
-            http.put(`${API}/me/game-logs/:gameId`, () =>
-                HttpResponse.json(buildGameLog())
-            )
+            http.post(`${API}/me/logs`, () => HttpResponse.json(buildGameLog()))
         );
         client.setQueryData(["userStats", "devuser", "all"], { logCount: 0 });
 
-        const { result } = renderHook(() => useGameLogMutations(), {
+        const { result } = renderHook(() => useLogMutations(), {
             wrapper: Wrapper,
         });
-        await result.current.save.mutateAsync({
+        await result.current.create.mutateAsync({
             gameId: 1,
-            input: { status: "backlog" },
+            status: "backlog",
         });
 
         expect(
@@ -78,7 +76,7 @@ describe("quick add", () => {
     it("shows the game as logged before the save comes back", async () => {
         let finish!: () => void;
         server.use(
-            http.put(`${API}/me/game-logs/:gameId`, async () => {
+            http.post(`${API}/me/logs`, async () => {
                 await new Promise<void>((resolve) => (finish = resolve));
                 return HttpResponse.json(buildGameLog());
             })
@@ -94,7 +92,15 @@ describe("quick add", () => {
                     status: "backlog",
                     playedStatus: null,
                     rating: null,
-                    logs: [],
+                    logs: [
+                        {
+                            id: -7,
+                            system: null,
+                            status: "backlog",
+                            playedStatus: null,
+                            rating: null,
+                        },
+                    ],
                 },
             ])
         );
@@ -104,7 +110,7 @@ describe("quick add", () => {
 
     it("takes it back when the save fails", async () => {
         server.use(
-            http.put(`${API}/me/game-logs/:gameId`, () =>
+            http.post(`${API}/me/logs`, () =>
                 HttpResponse.json({ error: { message: "no" } }, { status: 500 })
             )
         );
@@ -195,30 +201,29 @@ describe("query hooks", () => {
     });
 
     /** The embedded game is what saves a request per tile. */
-    it("returns game logs with the game already embedded", async () => {
-        const { result } = renderHook(() => useUserGameLogs("devuser"), {
+    it("returns a shelf of games, each with its game and logs", async () => {
+        const { result } = renderHook(() => useUserShelf("devuser"), {
             wrapper: wrapper(),
         });
 
         await waitFor(() => expect(result.current.isSuccess).toBe(true));
-        const log = result.current.data?.data[0];
-        expect(log?.game?.title).toBe("The Witcher 3: Wild Hunt");
-        expect(log?.gameId).toBe(1);
-        // the log's own id, not the game id
-        expect(log?.id).not.toBe(log?.gameId);
+        const entry = result.current.data?.data[0];
+        expect(entry?.game?.title).toBe("The Witcher 3: Wild Hunt");
+        expect(entry?.gameId).toBe(1);
+        expect(entry?.logs).toHaveLength(1);
     });
 
     it("passes a status filter through to the request", async () => {
         let url = "";
         server.use(
-            http.get(`${API}/users/:username/game-logs`, ({ request }) => {
+            http.get(`${API}/users/:username/shelf`, ({ request }) => {
                 url = request.url;
-                return HttpResponse.json(paginated([buildGameLog()]));
+                return HttpResponse.json(paginated([buildShelfEntry()]));
             })
         );
 
         const { result } = renderHook(
-            () => useUserGameLogs("devuser", "backlog"),
+            () => useUserShelf("devuser", "backlog"),
             { wrapper: wrapper() }
         );
 

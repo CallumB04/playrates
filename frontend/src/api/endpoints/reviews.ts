@@ -1,11 +1,9 @@
 import type {
     Paginated,
-    Review,
-    ReviewInput,
     ReviewSort,
     ReviewWithAuthor,
 } from "@playrates/shared";
-import { api, isNotFound } from "../client";
+import { api } from "../client";
 import { compactParams } from "./games";
 
 export const fetchGameReviews = async (
@@ -40,18 +38,6 @@ export const fetchRecentReviews = async (
     return data;
 };
 
-/** The caller's own review of a game, for prefilling the log editor. */
-export const fetchMyReview = async (gameId: number): Promise<Review | null> => {
-    try {
-        const { data } = await api.get<Review>(`/me/reviews/${gameId}`);
-        return data;
-    } catch (error) {
-        // No review yet is the common case, not a failure.
-        if (isNotFound(error)) return null;
-        throw error;
-    }
-};
-
 export const fetchUserReviews = async (
     username: string
 ): Promise<Paginated<ReviewWithAuthor>> => {
@@ -59,16 +45,4 @@ export const fetchUserReviews = async (
         `/users/${username}/reviews`
     );
     return data;
-};
-
-export const saveReview = async (
-    gameId: number,
-    input: ReviewInput
-): Promise<Review> => {
-    const { data } = await api.put<Review>(`/me/reviews/${gameId}`, input);
-    return data;
-};
-
-export const deleteReview = async (gameId: number): Promise<void> => {
-    await api.delete(`/me/reviews/${gameId}`);
 };

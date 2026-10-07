@@ -6,6 +6,7 @@ import Button from "../../../components/ui/Button";
 import GameCover from "../../../components/game/GameCover";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import YearChart from "./YearChart";
+import { usePlayedOn } from "../../../components/gamelog/usePlayedOn";
 import {
     GAME_STATUSES,
     STATUS_PRESENTATION,
@@ -50,6 +51,9 @@ const NowPlaying = ({
     onUpdateLog: () => void;
 }) => {
     const game = current?.game;
+    const playedOn = usePlayedOn()(
+        current ?? { system: null, platform: null }
+    ).name;
     const others = Math.max(0, (shelves?.playing ?? 0) - 1);
     const backlog = shelves?.backlog ?? 0;
 
@@ -109,6 +113,7 @@ const NowPlaying = ({
                     {game.title}
                 </Link>
                 <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-label-sm text-content-muted">
+                    {playedOn && <span>on {playedOn}</span>}
                     {current.hoursPlayed !== null && (
                         <span className="font-mono">
                             {formatHours(current.hoursPlayed)}
@@ -196,7 +201,7 @@ const YearGlance = ({
             <span className="flex items-center gap-3 text-label-sm text-content-secondary">
                 <span>
                     <span className="font-mono text-content">
-                        {formatCount(yearStats?.logCount ?? 0)}
+                        {formatCount(yearStats?.gameCount ?? 0)}
                     </span>{" "}
                     logged
                 </span>

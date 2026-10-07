@@ -1,16 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import type { GameLogWithGame } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import {
     useGames,
     useGenres,
     usePlatforms,
 } from "../../hooks/queries/useGames";
-import {
-    useMyGameLogIds,
-    useMyGameLogs,
-    useQuickAdd,
-} from "../../hooks/queries/useGameLogs";
+import { useMyGameLogIds, useQuickAdd } from "../../hooks/queries/useGameLogs";
+import { useLogFlow } from "../../components/gamelog/useLogFlow";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
@@ -20,8 +16,6 @@ import GameTile, { type TileAction } from "../../components/game/GameTile";
 import Pagination, { PaginationSummary } from "../../components/ui/Pagination";
 import { Skeleton, TileSkeleton } from "../../components/ui/Skeleton";
 import EmptyPlate from "../../components/ui/EmptyPlate";
-import ViewGameLogPopup from "../../components/ViewGameLogPopup";
-import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
 import LibraryFilters from "./components/LibraryFilters";
 import { getLibraryGamesPerPage } from "./lib/gamesPerPage";
 import { useLibraryQuery } from "./lib/useLibraryQuery";
@@ -31,12 +25,6 @@ import {
     displayStatusFor,
 } from "../../constants/gameStatus";
 import { formatCount, formatRatingOutOfTen } from "../../lib/format";
-
-type OpenModal =
-    | { kind: "view"; log: GameLogWithGame }
-    | { kind: "edit"; log: GameLogWithGame }
-    | { kind: "create"; gameId: number }
-    | null;
 
 const LibraryPage = () => {
     usePageTitle("Library");
@@ -50,7 +38,7 @@ const LibraryPage = () => {
     const { data: genres } = useGenres();
     const { data: myLogIds } = useMyGameLogIds();
 
-    const [modal, setModal] = useState<OpenModal>(null);
+    const flow = useLogFlow();
 
     /* The input is local so typing is instant; the query trails it. */
     const [searchDraft, setSearchDraft] = useState(query.search);
@@ -93,11 +81,6 @@ const LibraryPage = () => {
         [myLogIds]
     );
 
-    // The full log is only needed once a modal opens.
-    const { data: myLogs } = useMyGameLogs(undefined, { limit: 100 });
-    const fullLog = (gameId: number) =>
-        (myLogs?.data ?? []).find((log) => log.gameId === gameId);
-
     const quickAdd = useQuickAdd();
 
     const buildActions = (gameId: number, title: string): TileAction[] => {
@@ -119,7 +102,7 @@ const LibraryPage = () => {
                     key: "log",
                     label: "Create log",
                     tone: "primary",
-                    onSelect: () => setModal({ kind: "create", gameId }),
+                    onSelect: () => flow.open(gameId),
                 },
                 {
                     key: "backlog",
@@ -141,20 +124,14 @@ const LibraryPage = () => {
         return [
             {
                 key: "view",
-                label: "View your log",
+                label: log.logs.length > 1 ? "View your logs" : "View your log",
                 tone: "primary",
-                onSelect: () => {
-                    const full = fullLog(gameId);
-                    if (full) setModal({ kind: "view", log: full });
-                },
+                onSelect: () => flow.view(gameId),
             },
             {
                 key: "edit",
                 label: "Edit",
-                onSelect: () => {
-                    const full = fullLog(gameId);
-                    if (full) setModal({ kind: "edit", log: full });
-                },
+                onSelect: () => flow.open(gameId),
             },
         ];
     };
@@ -162,7 +139,10 @@ const LibraryPage = () => {
     const logMeta = (gameId: number): string | undefined => {
         const log = logByGameId.get(gameId);
         if (!log) return undefined;
-        const parts = ["Your log"];
+        const parts =
+            log.logs.length > 1
+                ? ["Your logs", `${log.logs.length} platforms`]
+                : ["Your log"];
         if (log.rating !== null) parts.push(formatRatingOutOfTen(log.rating));
         return parts.join(" · ");
     };
@@ -181,7 +161,8 @@ const LibraryPage = () => {
                         is empty, which it isn't. */}
                     {page ? (
                         <p className="mt-2 text-label text-content-muted">
-                            {formatCount(total)} {total === 1 ? "title" : "titles"}
+                            {formatCount(total)}{" "}
+                            {total === 1 ? "title" : "titles"}
                         </p>
                     ) : (
                         <Skeleton className="mt-2.5 h-3.5 w-24" />
@@ -257,29 +238,6 @@ const LibraryPage = () => {
                     onChange={() => window.scrollTo({ top: 0 })}
                 />
             </div>
-
-            {modal?.kind === "view" && (
-                <ViewGameLogPopup
-                    gamelog={modal.log}
-                    ownerUsername={user?.username}
-                    closePopup={() => setModal(null)}
-                    // Only reachable from "View your log", so it's always yours.
-                    primaryAction={{
-                        label: "Edit",
-                        onSelect: () =>
-                            setModal({ kind: "edit", log: modal.log }),
-                    }}
-                />
-            )}
-
-            {(modal?.kind === "edit" || modal?.kind === "create") && (
-                <CreateOrEditGameLogPopup
-                    closePopup={() => setModal(null)}
-                    viewUpdatedLog={() => setModal(null)}
-                    gamelog={modal.kind === "edit" ? modal.log : null}
-                    gameID={modal.kind === "create" ? modal.gameId : undefined}
-                />
-            )}
         </section>
     );
 };

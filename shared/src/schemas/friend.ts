@@ -53,6 +53,8 @@ export interface FriendActivity {
   playedStatus: string | null;
   rating: number | null;
   hoursPlayed: number | null;
+  /** The console the log is for, so a second platform reads as one. */
+  system: string | null;
   at: string;
 }
 

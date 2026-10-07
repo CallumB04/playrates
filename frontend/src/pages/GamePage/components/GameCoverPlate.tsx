@@ -1,6 +1,7 @@
 import type { RefObject } from "react";
-import type { Game } from "@playrates/shared";
-import type { GameLogSummary } from "@playrates/shared";
+import { Plus } from "lucide-react";
+import type { Game, GameLogSummary, LogBundle } from "@playrates/shared";
+import MyLogsPlate from "../../../components/gamelog/MyLogsPlate";
 import CoverCarousel from "./CoverCarousel";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import Button from "../../../components/ui/Button";
@@ -19,8 +20,13 @@ interface GameCoverPlateProps {
     isSignedIn: boolean;
     facts: GameFacts | null;
     onPrimary: () => void;
-    /** Only passed when the viewer has a log to look at. */
-    onViewLog?: () => void;
+    onViewLog: () => void;
+    /** Your logs in full, once there are two to add up. */
+    bundle?: LogBundle;
+    /** Whether a console is left to log it on. */
+    canAdd: boolean;
+    onAddPlatform: () => void;
+    onEditLog: (logId: number) => void;
     onQuickLog: (status: "backlog" | "wishlist") => void;
     isSaving: boolean;
     /** Marks where the log buttons end, for the phone's sticky bar. */
@@ -47,6 +53,10 @@ const GameCoverPlate = ({
     facts,
     onPrimary,
     onViewLog,
+    bundle,
+    canAdd,
+    onAddPlatform,
+    onEditLog,
     onQuickLog,
     isSaving,
     actionsEndRef,
@@ -86,7 +96,16 @@ const GameCoverPlate = ({
                 </div>
             </div>
 
-            {log && onViewLog ? (
+            {log && log.logs.length > 1 && bundle?.rollup ? (
+                <MyLogsPlate
+                    logs={bundle.logs}
+                    rollup={bundle.rollup}
+                    canAdd={canAdd}
+                    onEdit={onEditLog}
+                    onAdd={onAddPlatform}
+                    onView={onViewLog}
+                />
+            ) : log ? (
                 // Viewing leads once a log exists; editing is one press in.
                 <div className="flex flex-col gap-2">
                     <Button size="lg" onClick={onPrimary} disabled={isSaving}>
@@ -100,6 +119,18 @@ const GameCoverPlate = ({
                     >
                         View your log
                     </Button>
+                    {/* Quiet: most games are played on one console. Here for
+                        the ones that weren't, rather than a menu to find. */}
+                    {canAdd && (
+                        <button
+                            type="button"
+                            onClick={onAddPlatform}
+                            className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 text-label-sm text-content-secondary lift hover:text-content hover:underline"
+                        >
+                            <Plus size={14} aria-hidden />
+                            Played it on another platform?
+                        </button>
+                    )}
                 </div>
             ) : (
                 <Button size="lg" onClick={onPrimary} disabled={isSaving}>

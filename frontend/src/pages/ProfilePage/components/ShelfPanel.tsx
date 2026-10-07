@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { cardClass } from "../../../components/ui/Card";
-import type { GameLogWithGame } from "../../../api";
+import { headlineOf, type ShelfEntry } from "@playrates/shared";
 import type { GameLogSort, Platform } from "@playrates/shared";
 import type { GameStatus } from "../../../constants/gameStatus";
 import type { PaginationState } from "../../../hooks/usePagination";
@@ -19,12 +19,12 @@ interface ShelfPanelProps {
     active: GameStatus;
     counts: Partial<Record<GameStatus, number>>;
     onSelect: (status: GameStatus) => void;
-    logs: GameLogWithGame[];
+    entries: ShelfEntry[];
     platforms: Platform[];
     isLoading: boolean;
     pagination: PaginationState;
     perPage: number;
-    buildTileActions: (log: GameLogWithGame) => TileAction[];
+    buildTileActions: (entry: ShelfEntry) => TileAction[];
     isMyAccount: boolean;
     /** Decides the figure each tile prints, as well as the order. */
     sort: GameLogSort;
@@ -63,7 +63,7 @@ const ShelfPanel = ({
     active,
     counts,
     onSelect,
-    logs,
+    entries,
     platforms,
     isLoading,
     pagination,
@@ -94,7 +94,7 @@ const ShelfPanel = ({
                             )
                         )}
                     </div>
-                ) : logs.length === 0 ? (
+                ) : entries.length === 0 ? (
                     <EmptyPlate
                         title={empty.title}
                         body={isMyAccount ? empty.body : "Nothing here yet."}
@@ -111,30 +111,47 @@ const ShelfPanel = ({
                     />
                 ) : (
                     <div className="grid grid-cols-2 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
-                        {logs.map((log) => {
+                        {entries.map((entry) => {
                             // The shelf shows whatever it is ordered by.
-                            const foot = shelfFoot(log, sort);
+                            const foot = shelfFoot(entry, sort);
+                            // The best ending of its played runs.
+                            const played = headlineOf(
+                                entry.logs.filter((l) => l.status === "played")
+                            );
+                            /* The consoles it was logged on, where the logs
+                               say; the game's own where none do. */
+                            const logged = [
+                                ...new Set(
+                                    entry.logs
+                                        .map((l) => l.platform)
+                                        .filter((p): p is string => !!p)
+                                ),
+                            ];
 
                             return (
                                 <GameTile
-                                    key={log.id}
-                                    gameId={log.gameId}
-                                    title={log.game?.title ?? "Unknown game"}
-                                    coverUrl={log.game?.coverUrl ?? null}
-                                    platformSlugs={log.game?.platforms ?? []}
+                                    key={entry.gameId}
+                                    gameId={entry.gameId}
+                                    title={entry.game?.title ?? "Unknown game"}
+                                    coverUrl={entry.game?.coverUrl ?? null}
+                                    platformSlugs={
+                                        logged.length > 0
+                                            ? logged
+                                            : (entry.game?.platforms ?? [])
+                                    }
                                     platforms={platforms}
                                     rating={foot.rating}
                                     footValue={foot.value}
                                     // Only the played tab carries a substatus.
                                     status={
-                                        active === "played"
+                                        active === "played" && played
                                             ? displayStatusFor(
-                                                  log.status,
-                                                  log.playedStatus
+                                                  played.status,
+                                                  played.playedStatus
                                               )
                                             : null
                                     }
-                                    actions={buildTileActions(log)}
+                                    actions={buildTileActions(entry)}
                                 />
                             );
                         })}

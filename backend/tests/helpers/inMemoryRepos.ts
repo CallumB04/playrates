@@ -1179,6 +1179,7 @@ export const createInMemoryRepos = (
               actor_last_seen_at: actor?.last_seen_at ?? "",
               game_title: game?.title ?? "",
               game_cover_url: game?.cover_url ?? null,
+              system_slug: l.system_slug,
             };
           })
           .filter((row) => showSexualContent || !row.game_has_sexual_content);

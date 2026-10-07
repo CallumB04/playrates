@@ -23,11 +23,13 @@ import {
     type PlayedStatus,
 } from "../../../constants/gameStatus";
 import { formatCount, formatHours, relativeTime } from "../../../lib/format";
+import { usePlayedOn } from "../../../components/gamelog/usePlayedOn";
+import { groupByAuthor } from "../lib/groupReviews";
 
 interface GameReviewsProps {
     reviews: ReviewWithAuthor[];
-    /** Whether the viewer already has a log for this game. */
-    hasLog: boolean;
+    /** How many logs the viewer has of this game, one per console. */
+    logCount: number;
     /** Opens the log editor. Omitted when signed out. */
     onWriteReview?: () => void;
     /** Who is looking, so their own reviews refuse a vote. Unset when signed
@@ -51,7 +53,7 @@ const reviewStatus = (review: ReviewWithAuthor): DisplayStatus | null => {
 
 const GameReviews = ({
     reviews,
-    hasLog,
+    logCount,
     onWriteReview,
     viewerId,
     onVote,
@@ -66,6 +68,8 @@ const GameReviews = ({
     const jumped = useRef(false);
     const [landedOn, setLandedOn] = useState<string | null>(null);
     const [reporting, setReporting] = useState<number | null>(null);
+    const playedOn = usePlayedOn();
+    const hasLog = logCount > 0;
     useEffect(() => {
         if (jumped.current || isLoading || reviews.length === 0) return;
         const id = window.location.hash.slice(1);
@@ -99,7 +103,11 @@ const GameReviews = ({
                             className="min-h-11 sm:min-h-9"
                         >
                             <PenLine size={14} aria-hidden />
-                            {hasLog ? "Edit review" : "Write a review"}
+                            {logCount > 1
+                                ? "Review a platform"
+                                : hasLog
+                                  ? "Edit review"
+                                  : "Write a review"}
                         </Button>
                     )}
                     <Dropdown
@@ -137,89 +145,143 @@ const GameReviews = ({
                     }
                 />
             ) : (
-                reviews.map((review) => (
+                groupByAuthor(reviews).map(({ author, reviews: theirs }) => (
                     <article
-                        key={review.id}
-                        id={`review-${review.id}`}
-                        className={cn(
-                            "grid grid-cols-[38px_minmax(0,1fr)_auto] gap-4 border-b border-subtle py-4 last:border-b-0 target:bg-brand-subtle",
-                            landedOn === `review-${review.id}` &&
-                                "bg-brand-subtle"
-                        )}
+                        key={`${author.id}-${theirs[0]!.id}`}
+                        className="grid grid-cols-[38px_minmax(0,1fr)] gap-4 border-b border-subtle py-4 last:border-b-0"
                     >
                         <ProfilePicture
                             variant="friendRow"
-                            file={review.author.avatarUrl ?? ""}
-                            accent={review.author.accent}
-                            username={review.author.username}
+                            file={author.avatarUrl ?? ""}
+                            accent={author.accent}
+                            username={author.username}
                             link={false}
                         />
-                        <div className="min-w-0">
-                            <div className="mb-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                                <Link
-                                    to={`/user/${review.author.username}`}
-                                    className="text-body-sm font-semibold text-content hover:text-brand"
-                                >
-                                    {review.author.username}
-                                </Link>
-                                {reviewStatus(review) && (
-                                    <StatusBadge
-                                        status={reviewStatus(review)!}
-                                        plain
-                                    />
-                                )}
-                                {review.hoursPlayed !== null && (
-                                    <span className="text-label-sm text-content-muted">
-                                        Reviewed at{" "}
-                                        <span className="font-mono">
-                                            {formatHours(review.hoursPlayed)}
-                                        </span>{" "}
-                                        played
-                                    </span>
-                                )}
-                                <span className="text-label-sm text-content-muted">
-                                    {relativeTime(review.createdAt)}
-                                </span>
-                            </div>
-                            {/* The full width of the row: a review is prose,
-                                and a character cap made every one of them a
-                                narrow column with the rest of the row empty
-                                beside it. */}
-                            <SpoilerCover
-                                covered={review.containsSpoilers}
-                                revealLabel="Show review"
-                            >
-                                <ExpandableText
-                                    text={review.body}
-                                    lines={3}
-                                    className="text-sm"
-                                    moreLabel="Show more"
-                                />
-                            </SpoilerCover>
-                            {viewerId && viewerId !== review.author.id && (
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setReporting(review.id)}
-                                    className="mt-1 -ml-2.5 min-h-11 px-2.5 text-content-muted sm:min-h-8"
-                                >
-                                    <Flag size={13} aria-hidden />
-                                    Report
-                                </Button>
-                            )}
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                            <RatingBadge value={review.rating} size="row" />
-                            <VoteButton
-                                count={review.voteCount}
-                                voted={review.votedByViewer}
-                                disabledReason={whyCannotVote(
-                                    viewerId,
-                                    review.author.id
-                                )}
-                                onToggle={() => onVote?.(review.id)}
-                            />
+                        <div className="flex min-w-0 flex-col">
+                            {theirs.map((review, index) => {
+                                const PlatformIcon = playedOn(review).Icon;
+                                const platformName = playedOn(review).name;
+                                return (
+                                    <div
+                                        key={review.id}
+                                        id={`review-${review.id}`}
+                                        className={cn(
+                                            "grid grid-cols-[minmax(0,1fr)_auto] gap-4 target:bg-brand-subtle",
+                                            index > 0 &&
+                                                "mt-4 border-t border-dashed border-subtle pt-4",
+                                            landedOn ===
+                                                `review-${review.id}` &&
+                                                "bg-brand-subtle"
+                                        )}
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="mb-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                                                {index === 0 && (
+                                                    <Link
+                                                        to={`/user/${author.username}`}
+                                                        className="text-body-sm font-semibold text-content hover:text-brand"
+                                                    >
+                                                        {author.username}
+                                                    </Link>
+                                                )}
+                                                {/* Which console the take is
+                                                    about: a port can be a
+                                                    different game. */}
+                                                {platformName && (
+                                                    <span className="inline-flex items-center gap-1.5 text-label-sm text-content-secondary">
+                                                        <PlatformIcon
+                                                            size={13}
+                                                            aria-hidden
+                                                        />
+                                                        {platformName}
+                                                    </span>
+                                                )}
+                                                {reviewStatus(review) && (
+                                                    <StatusBadge
+                                                        status={reviewStatus(
+                                                            review
+                                                        )!}
+                                                        plain
+                                                    />
+                                                )}
+                                                {review.hoursPlayed !==
+                                                    null && (
+                                                    <span className="text-label-sm text-content-muted">
+                                                        Reviewed at{" "}
+                                                        <span className="font-mono">
+                                                            {formatHours(
+                                                                review.hoursPlayed
+                                                            )}
+                                                        </span>{" "}
+                                                        played
+                                                    </span>
+                                                )}
+                                                <span className="text-label-sm text-content-muted">
+                                                    {relativeTime(
+                                                        review.createdAt
+                                                    )}
+                                                </span>
+                                            </div>
+                                            {/* The full width of the row: a
+                                                review is prose, and a
+                                                character cap made every one
+                                                of them a narrow column with
+                                                the rest of the row empty
+                                                beside it. */}
+                                            <SpoilerCover
+                                                covered={
+                                                    review.containsSpoilers
+                                                }
+                                                revealLabel="Show review"
+                                            >
+                                                <ExpandableText
+                                                    text={review.body}
+                                                    lines={3}
+                                                    className="text-sm"
+                                                    moreLabel="Show more"
+                                                />
+                                            </SpoilerCover>
+                                            {viewerId &&
+                                                viewerId !== author.id && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            setReporting(
+                                                                review.id
+                                                            )
+                                                        }
+                                                        className="mt-1 -ml-2.5 min-h-11 px-2.5 text-content-muted sm:min-h-8"
+                                                    >
+                                                        <Flag
+                                                            size={13}
+                                                            aria-hidden
+                                                        />
+                                                        Report
+                                                    </Button>
+                                                )}
+                                        </div>
+                                        <div className="flex flex-col items-end gap-2">
+                                            <RatingBadge
+                                                value={review.rating}
+                                                size="row"
+                                            />
+                                            <VoteButton
+                                                count={review.voteCount}
+                                                voted={review.votedByViewer}
+                                                disabledReason={whyCannotVote(
+                                                    viewerId,
+                                                    author.id
+                                                )}
+                                                onToggle={() =>
+                                                    onVote?.(review.id)
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </article>
                 ))

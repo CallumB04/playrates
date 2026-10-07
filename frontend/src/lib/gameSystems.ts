@@ -27,3 +27,22 @@ export const systemsForGame = (
  *  stats and filters, the machine is what the reader actually wants to see. */
 export const familyOf = (all: PlatformSystem[], slug: string): string | null =>
     all.find((system) => system.slug === slug)?.platformSlug ?? null;
+
+/** Consoles still free for another log of this game. A log with no console
+ *  holds no console, so it leaves every one free. */
+export const remainingSystems = (
+    available: PlatformSystem[],
+    logged: (string | null)[]
+): PlatformSystem[] =>
+    available.filter((system) => !logged.includes(system.slug));
+
+/** What to call the console a log was played on: the machine where it names
+ *  one, the family where only that was recorded. */
+export const playedOnName = (
+    log: { system: string | null; platform: string | null },
+    systems: PlatformSystem[],
+    families: { slug: string; displayName: string }[]
+): string | null =>
+    systems.find((s) => s.slug === log.system)?.displayName ??
+    families.find((p) => p.slug === log.platform)?.displayName ??
+    null;

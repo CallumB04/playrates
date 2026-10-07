@@ -1,11 +1,16 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { GAME_LOG_SORTS } from "@playrates/shared";
-import type { GameLogWithGame } from "../../../api";
+import {
+    GAME_LOG_SORTS,
+    rollupLogs,
+    type GameLog,
+    type ShelfEntry,
+} from "@playrates/shared";
 import { directionLabel, shelfFoot, shelfSortOptions } from "./shelfSort";
 
-const log = (overrides: Partial<GameLogWithGame> = {}): GameLogWithGame =>
-    ({
+/** A game on a shelf with one log, the log built from these overrides. */
+const log = (overrides: Partial<GameLog> = {}): ShelfEntry => {
+    const one: GameLog = {
         id: 1,
         gameId: 2,
         status: "played",
@@ -21,18 +26,25 @@ const log = (overrides: Partial<GameLogWithGame> = {}): GameLogWithGame =>
         achievementsCompleted: null,
         createdAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-09-14T00:00:00.000Z",
+        ...overrides,
+    };
+    return {
+        gameId: 2,
         game: {
             id: 2,
             title: "Portal",
             slug: "portal",
             coverUrl: null,
+            artworkUrl: null,
             releaseDate: "2007-10-09",
             platforms: [],
             avgRating: 9.25,
             criticScore: 90,
         },
-        ...overrides,
-    }) as GameLogWithGame;
+        logs: [one],
+        rollup: rollupLogs([one])!,
+    };
+};
 
 describe("shelfSortOptions", () => {
     it("offers every sort the API accepts", () => {
@@ -150,8 +162,8 @@ describe("shelfFoot", () => {
         expect(shelfFoot(log(), "title")).toEqual({ rating: 8.5 });
     });
 
-    it("copes with a log whose game did not come back", () => {
-        const orphan = log({ game: null });
+    it("copes with an entry whose game did not come back", () => {
+        const orphan = { ...log(), game: null };
         expect(shelfFoot(orphan, "gameRating")).toEqual({ rating: null });
         expect(shelfFoot(orphan, "released").value).toBe("—");
     });
@@ -164,5 +176,37 @@ describe("shelfFoot", () => {
                 sort
             ).toBe(true);
         }
+    });
+});
+
+/* A game on two consoles is one tile, showing what it was ordered by. */
+describe("shelfFoot, a game logged on more than one console", () => {
+    const both = (): ShelfEntry => {
+        const first = log({
+            rating: 9,
+            finishDate: "2024-06-11",
+            achievementsTotal: 10,
+            achievementsCompleted: 5,
+        });
+        const second = log({
+            rating: 7,
+            startDate: "2026-02-01",
+            achievementsTotal: 4,
+            achievementsCompleted: 4,
+        });
+        const logs = [first.logs[0]!, { ...second.logs[0]!, id: 2 }];
+        return { ...first, logs, rollup: rollupLogs(logs)! };
+    };
+
+    it("rates it by the mean of its logs", () => {
+        expect(shelfFoot(both(), "rating")).toEqual({ rating: 8 });
+    });
+
+    it("dates it by the latest play on any of them", () => {
+        expect(shelfFoot(both(), "played").value).toBe("Feb 26");
+    });
+
+    it("shows the best completion, as trophy lists differ by console", () => {
+        expect(shelfFoot(both(), "completion").value).toBe("100%");
     });
 });

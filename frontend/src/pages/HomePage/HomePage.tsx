@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { Game } from "@playrates/shared";
 import { formatCount, formatReleaseShort, releaseYear } from "../../lib/format";
 import { useAuth } from "../../contexts/AuthContext";
@@ -10,17 +10,16 @@ import {
     useSiteStats,
 } from "../../hooks/queries/useGames";
 import {
-    useMyGameLog,
     useMyGameLogIds,
-    useMyGameLogs,
+    useMyShelf,
     useQuickAdd,
     useUserStats,
 } from "../../hooks/queries/useGameLogs";
+import { latestRun, logOnShelf } from "../../api";
+import { useLogFlow } from "../../components/gamelog/useLogFlow";
 import { useFriendActivity } from "../../hooks/queries/useFriends";
 import { useRecentReviews } from "../../hooks/queries/useReviews";
 import { usePageTitle } from "../../hooks/usePageTitle";
-import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
-import ViewGameLogPopup from "../../components/ViewGameLogPopup";
 import {
     STATUS_PRESENTATION,
     displayStatusFor,
@@ -46,40 +45,13 @@ const releaseWindow = () => {
     return { releasedAfter: iso(from), releasedBefore: iso(now) };
 };
 
-/** The home page only holds which games you have logged, not the logs
- *  themselves, so the one being opened is fetched as it opens. */
-const LogViewer = ({
-    gameId,
-    username,
-    onClose,
-    onEdit,
-}: {
-    gameId: number;
-    username: string;
-    onClose: () => void;
-    onEdit: () => void;
-}) => {
-    const { data: log } = useMyGameLog(gameId);
-    if (!log) return null;
-
-    return (
-        <ViewGameLogPopup
-            gamelog={log}
-            ownerUsername={username}
-            closePopup={onClose}
-            primaryAction={{ label: "Edit", onSelect: onEdit }}
-        />
-    );
-};
-
 const HomePage = () => {
     /* No name of its own: the homepage keeps the site title. */
     usePageTitle();
 
     const { user } = useAuth();
     const { openSignup, openLogin } = useAccountForm();
-    const [logging, setLogging] = useState<number | null>(null);
-    const [viewing, setViewing] = useState<number | null>(null);
+    const flow = useLogFlow();
 
     const { data: siteStats } = useSiteStats();
     const { data: platforms } = usePlatforms();
@@ -116,16 +88,21 @@ const HomePage = () => {
     const communityEmpty =
         !communityLoading && (communityTrending?.length ?? 0) === 0;
 
-    const { data: playing } = useMyGameLogs("playing", { limit: 1 });
+    const { data: playing } = useMyShelf("playing", { limit: 1 });
     // Enough to draw a year without paging. The chart is a shape, not a ledger.
-    const { data: played } = useMyGameLogs("played", { limit: 100 });
+    const { data: played } = useMyShelf("played", { limit: 100 });
     const { data: yearStats } = useUserStats(
         user?.username ?? "",
         new Date().getFullYear()
     );
     const { data: allTime } = useUserStats(user?.username ?? "");
 
-    const current = playing?.data[0];
+    const current = playing?.data[0] && logOnShelf(playing.data[0], "playing");
+    // A game counts once in the year however many consoles it was played on.
+    const yearLogs = useMemo(
+        () => (played?.data ?? []).map(latestRun),
+        [played]
+    );
 
     // Ids only: the rails show whether you logged something, not what's in it.
     const { data: myLogIds } = useMyGameLogIds();
@@ -155,18 +132,22 @@ const HomePage = () => {
         }
 
         // Already logged, so "add to backlog" would overwrite the status.
-        if (logByGameId.has(game.id)) {
+        const logged = logByGameId.get(game.id);
+        if (logged) {
             return [
                 {
                     key: "view",
-                    label: "View your log",
+                    label:
+                        logged.logs.length > 1
+                            ? "View your logs"
+                            : "View your log",
                     tone: "primary",
-                    onSelect: () => setViewing(game.id),
+                    onSelect: () => flow.view(game.id),
                 },
                 {
                     key: "edit",
                     label: "Edit",
-                    onSelect: () => setLogging(game.id),
+                    onSelect: () => flow.open(game.id),
                 },
             ];
         }
@@ -176,7 +157,7 @@ const HomePage = () => {
                 key: "log",
                 label: "Create log",
                 tone: "primary",
-                onSelect: () => setLogging(game.id),
+                onSelect: () => flow.open(game.id),
             },
             {
                 key: "backlog",
@@ -204,9 +185,11 @@ const HomePage = () => {
                     isNew={myLogIds?.length === 0}
                     current={current}
                     shelves={allTime?.byStatus}
-                    yearLogs={played?.data ?? []}
+                    yearLogs={yearLogs}
                     yearStats={yearStats}
-                    onUpdateLog={() => current && setLogging(current.gameId)}
+                    onUpdateLog={() =>
+                        current && flow.edit(current.gameId, current.id)
+                    }
                 />
             ) : (
                 <SignedOutHero
@@ -246,7 +229,7 @@ const HomePage = () => {
                 footValueFor={(game) =>
                     game.logCount > 0
                         ? `${formatCount(game.logCount)} ${
-                              game.logCount === 1 ? "log" : "logs"
+                              game.logCount === 1 ? "player" : "players"
                           }`
                         : releaseYear(game.releaseDate)
                 }
@@ -292,29 +275,6 @@ const HomePage = () => {
                 statusFor={statusFor}
                 footValueFor={(game) => formatReleaseShort(game.releaseDate)}
             />
-
-            {viewing !== null && user && (
-                <LogViewer
-                    gameId={viewing}
-                    username={user.username}
-                    onClose={() => setViewing(null)}
-                    onEdit={() => {
-                        setViewing(null);
-                        setLogging(viewing);
-                    }}
-                />
-            )}
-
-            {logging !== null && (
-                <CreateOrEditGameLogPopup
-                    closePopup={() => setLogging(null)}
-                    viewUpdatedLog={() => setLogging(null)}
-                    gamelog={
-                        current && current.gameId === logging ? current : null
-                    }
-                    gameID={logging}
-                />
-            )}
         </div>
     );
 };

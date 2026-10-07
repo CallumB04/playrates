@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
-import type { GameLogWithGame } from "../api";
+import { headlineOf } from "@playrates/shared";
+import { ApiError } from "../api";
 import { useGame, usePlatformSystems } from "../hooks/queries/useGames";
 import {
-    useGameLogMutations,
-    useMyGameLog,
+    useLogMutations,
     useMyGameLogIds,
+    useMyLogBundle,
 } from "../hooks/queries/useGameLogs";
 import { logMilestone } from "../lib/logMilestone";
 import { readLastSystem, writeLastSystem } from "../lib/drafts";
-import { useMyReview, useReviewMutations } from "../hooks/queries/useReviews";
 import { useNotify } from "../contexts/NotificationContext";
 import Modal from "./ui/Modal";
 import Button from "./ui/Button";
@@ -19,6 +19,8 @@ import RatingMeter from "./ui/RatingMeter";
 import Dropdown from "./ui/Dropdown";
 import { systemOptions } from "../lib/platformIcons";
 import { familyOf, systemsForGame } from "../lib/gameSystems";
+import SystemPicker from "./gamelog/SystemPicker";
+import { usePlayedOn } from "./gamelog/usePlayedOn";
 import { StatusPlates } from "./gamelog/StatusPlates";
 import Progress from "./ui/Progress";
 import DeleteGameLogPopup from "./gamelog/DeleteGameLogPopup";
@@ -35,15 +37,16 @@ import {
 } from "./gamelog/logEditorReducer";
 import { ChevronDown, X } from "lucide-react";
 import { cn } from "../lib/cn";
-import { formatPercent } from "../lib/format";
+import { formatPercent, formatRating } from "../lib/format";
 
 interface CreateOrEditGameLogPopupProps {
-    closePopup: () => void;
-    viewUpdatedLog: () => void;
-    gamelog?: GameLogWithGame | null;
-    gameID?: number;
+    gameId: number;
+    /** The log to edit. null starts one on another console; left out, it is
+     *  whichever log the game has, or a new one if it has none. */
+    logId?: number | null;
     /** Opened from a review control, so open on the review field. */
     focusReview?: boolean;
+    onClose: () => void;
 }
 
 /**
@@ -52,51 +55,60 @@ interface CreateOrEditGameLogPopupProps {
  * if the review fails.
  */
 const CreateOrEditGameLogPopup = ({
-    closePopup,
-    viewUpdatedLog,
-    gamelog,
-    gameID,
+    gameId,
+    logId,
     focusReview = false,
+    onClose,
 }: CreateOrEditGameLogPopupProps) => {
-    const gameId = gamelog?.gameId ?? gameID!;
     const notify = useNotify();
     const reviewRef = useRef<HTMLTextAreaElement>(null);
+    const playedOn = usePlayedOn();
 
     const { data: game } = useGame(gameId);
     const { data: systems } = usePlatformSystems();
-    const { data: review, isLoading: reviewLoading } = useMyReview(gameId);
-    const { save, remove } = useGameLogMutations();
+    const mutations = useLogMutations();
     // How many games are logged before this one, for a milestone.
     const { data: loggedIds } = useMyGameLogIds();
-    const { save: saveReview, remove: removeReview } = useReviewMutations();
 
-    /* Fetched rather than required of the caller: opened from a rail or a
-       tile there is only a game id to hand, and hydrating from nothing put
-       every existing log back to "played" on save. */
-    const { data: fetchedLog, isLoading: logLoading } = useMyGameLog(
-        gameId,
-        !gamelog
-    );
-    const existing = gamelog ?? fetchedLog ?? null;
+    /* Fetched rather than handed in: opened from a rail or a tile there is
+       only a game id to hand, and hydrating from nothing put every existing
+       log back to "played" on save. */
+    const { data: bundle, isLoading: bundleLoading } = useMyLogBundle(gameId);
+    const logs = useMemo(() => bundle?.logs ?? [], [bundle]);
+    const existing =
+        logId === null
+            ? null
+            : logId !== undefined
+              ? (logs.find((l) => l.id === logId) ?? null)
+              : headlineOf(logs);
+    const others = logs.filter((l) => l.id !== existing?.id);
+    const logged = others
+        .map((l) => l.system)
+        .filter((s): s is string => s !== null);
+
+    /* Once a game has a log on one console, the console is what tells this
+       log from the others, so it leads and has to be chosen. A log that
+       never named one can stay that way. */
+    const perConsole = others.length > 0;
+    const consoleRequired = perConsole && !(existing && !existing.system);
 
     const [draft, dispatch] = useReducer(logReducer, emptyDraft);
     const [error, setError] = useState<string | null>(null);
+    const [consoleError, setConsoleError] = useState<string | null>(null);
     const [hydrated, setHydrated] = useState(false);
     const [confirmingDelete, setConfirmingDelete] = useState(false);
     const [detailsOpen, setDetailsOpen] = useState(false);
 
-    /* Wait for both, or a blank note overwrites a real one and a backlog game
-       opens as played. */
     useEffect(() => {
-        if (hydrated || reviewLoading || logLoading) return;
+        if (hydrated || bundleLoading) return;
         dispatch({
             type: "hydrate",
             log: existing,
-            review: review
+            review: existing?.review
                 ? {
-                      body: review.body,
-                      isPublic: review.isPublic,
-                      containsSpoilers: review.containsSpoilers,
+                      body: existing.review.body,
+                      isPublic: existing.review.isPublic,
+                      containsSpoilers: existing.review.containsSpoilers,
                   }
                 : null,
         });
@@ -108,10 +120,10 @@ const CreateOrEditGameLogPopup = ({
                     existing.hoursToBeat !== null ||
                     existing.startDate !== null ||
                     existing.finishDate !== null ||
-                    !!existing.system ||
+                    (!perConsole && !!existing.system) ||
                     existing.achievementsTotal !== null)
         );
-    }, [hydrated, reviewLoading, logLoading, existing, review]);
+    }, [hydrated, bundleLoading, existing, perConsole]);
 
     // Only once hydrated: before that the form's height isn't final.
     useEffect(() => {
@@ -128,8 +140,8 @@ const CreateOrEditGameLogPopup = ({
     );
 
     /* A new log starts on the machine the last one was saved on, when this
-       game is on it: most people play on one or two, and choosing it every
-       time is work the site can do. */
+       game is on it and it isn't logged already: most people play on one or
+       two, and choosing it every time is work the site can do. */
     const [presetSystem, setPresetSystem] = useState(false);
     useEffect(() => {
         if (presetSystem || !hydrated || existing || draft.system) return;
@@ -137,41 +149,91 @@ const CreateOrEditGameLogPopup = ({
         if (!game || available.length === 0) return;
         setPresetSystem(true);
         const last = readLastSystem();
-        if (!last || !available.some((s) => s.slug === last)) return;
+        if (!last || logged.includes(last)) return;
+        if (!available.some((s) => s.slug === last)) return;
         dispatch({
             type: "system",
             value: last,
             platform: familyOf(available, last) ?? "",
         });
-    }, [presetSystem, hydrated, existing, draft.system, available, game]);
+    }, [
+        presetSystem,
+        hydrated,
+        existing,
+        draft.system,
+        available,
+        game,
+        logged,
+    ]);
+
+    const chooseSystem = (value: string) => {
+        setConsoleError(null);
+        dispatch({
+            type: "system",
+            value,
+            platform: familyOf(available, value) ?? "",
+        });
+    };
+
+    const consoleName = playedOn({
+        system: draft.system || null,
+        platform: draft.platform || null,
+    }).name;
+    // What the rest of your logs of it scored, to rate this one against.
+    const otherRatings = others
+        .filter((l) => l.rating !== null)
+        .map((l) => {
+            const name = playedOn(l).name;
+            return `${formatRating(l.rating)}${name ? ` on ${name}` : ""}`;
+        });
 
     const progress = useMemo(() => achievementFraction(draft), [draft]);
     const fields = fieldsFor(draft.status);
     const filled = filledDetails(draft);
-    const busy = save.isPending || saveReview.isPending || remove.isPending;
+    const busy =
+        mutations.create.isPending ||
+        mutations.update.isPending ||
+        mutations.saveReview.isPending ||
+        mutations.removeReview.isPending;
 
     const handleSave = async () => {
+        if (consoleRequired && !draft.system) {
+            return setConsoleError("Pick the platform this log is for.");
+        }
         const problem = validateDraft(draft);
         if (problem) return setError(problem);
         setError(null);
 
+        const input = toGameLogInput(draft);
+        let saved;
         try {
-            await save.mutateAsync({
-                gameId,
-                input: toGameLogInput(draft),
-            });
-        } catch {
+            saved = existing
+                ? await mutations.update.mutateAsync({
+                      logId: existing.id,
+                      input,
+                  })
+                : await mutations.create.mutateAsync({ gameId, ...input });
+        } catch (failure) {
+            if (
+                failure instanceof ApiError &&
+                failure.code === "platform_taken"
+            ) {
+                setConsoleError(
+                    `You've already logged this on ${consoleName ?? "that platform"}.`
+                );
+                return;
+            }
             notify("Couldn't save that entry", "error");
             return;
         }
         if (draft.system) writeLastSystem(draft.system);
 
         const body = draft.reviewBody.trim();
-        const hadReview = !!review;
+        const hadReview = !!existing?.review;
         try {
             if (body) {
-                await saveReview.mutateAsync({
-                    gameId,
+                await mutations.saveReview.mutateAsync({
+                    logId: saved.id,
                     input: {
                         body,
                         isPublic: draft.reviewIsPublic,
@@ -179,7 +241,7 @@ const CreateOrEditGameLogPopup = ({
                     },
                 });
             } else if (hadReview) {
-                await removeReview.mutateAsync(gameId);
+                await mutations.removeReview.mutateAsync(saved.id);
             }
         } catch {
             // The log did save, so don't imply a blanket failure. Critical
@@ -190,25 +252,32 @@ const CreateOrEditGameLogPopup = ({
                 "error",
                 "critical"
             );
-            viewUpdatedLog();
+            onClose();
             return;
         }
 
-        // A new log that lands on a milestone says so: the moment people
-        // remember a site by. Ordinary saves stay plain.
-        const milestone = existing
-            ? null
-            : logMilestone((loggedIds?.length ?? 0) + 1);
+        // A new game that lands on a milestone says so: the moment people
+        // remember a site by. Another console of a game already logged isn't
+        // a new game, and ordinary saves stay plain.
+        const milestone =
+            logs.length === 0
+                ? logMilestone((loggedIds?.length ?? 0) + 1)
+                : null;
         notify(
-            milestone ?? (existing ? "Entry updated" : "Entry saved"),
+            milestone ??
+                (existing
+                    ? "Entry updated"
+                    : logs.length > 0
+                      ? `Added ${consoleName ?? "another platform"} to your logs`
+                      : "Entry saved"),
             "success"
         );
-        viewUpdatedLog();
+        onClose();
     };
 
     return (
         <Modal
-            onClose={closePopup}
+            onClose={onClose}
             labelledBy="log-editor-title"
             showCloseButton={false}
             className="w-full max-w-[880px] p-0! sm:p-0!"
@@ -223,10 +292,19 @@ const CreateOrEditGameLogPopup = ({
                     >
                         {game?.title ?? "…"}
                     </h2>
+                    {(perConsole || logId === null) && (
+                        <p className="mt-0.5 text-body-sm text-content-muted">
+                            {existing
+                                ? existing.system
+                                    ? `Your log on ${consoleName ?? "this platform"}`
+                                    : "Your log"
+                                : "A log on another platform"}
+                        </p>
+                    )}
                 </div>
                 <button
                     type="button"
-                    onClick={closePopup}
+                    onClick={onClose}
                     aria-label="Close"
                     className="flex size-11 shrink-0 items-center justify-center rounded-sm text-content-muted lift hover:bg-surface-hover hover:text-content sm:size-auto sm:p-2"
                 >
@@ -235,6 +313,36 @@ const CreateOrEditGameLogPopup = ({
             </header>
 
             <div className="flex flex-col gap-5 px-5 py-5 sm:px-6">
+                {perConsole && (
+                    <div>
+                        <span
+                            id="log-console-label"
+                            className="mb-2 block text-label text-content-muted"
+                        >
+                            Platform
+                        </span>
+                        <SystemPicker
+                            systems={available}
+                            value={draft.system}
+                            onChange={chooseSystem}
+                            logged={logged}
+                            labelledBy="log-console-label"
+                            describedBy={
+                                consoleError ? "log-console-error" : undefined
+                            }
+                        />
+                        {consoleError && (
+                            <p
+                                id="log-console-error"
+                                role="alert"
+                                className="mt-2 text-body-sm text-danger"
+                            >
+                                {consoleError}
+                            </p>
+                        )}
+                    </div>
+                )}
+
                 <StatusPlates
                     value={draft.status}
                     onChange={(value) => dispatch({ type: "status", value })}
@@ -253,6 +361,11 @@ const CreateOrEditGameLogPopup = ({
                             }
                             label="Your rating"
                         />
+                        {otherRatings.length > 0 && (
+                            <p className="mt-2 text-label-sm text-content-muted">
+                                You gave it {otherRatings.join(", ")}
+                            </p>
+                        )}
                     </div>
                 )}
 
@@ -308,7 +421,11 @@ const CreateOrEditGameLogPopup = ({
                                 })
                             }
                             className="min-h-[74px] leading-relaxed"
-                            placeholder="What stayed with you?"
+                            placeholder={
+                                perConsole && consoleName
+                                    ? `What was it like on ${consoleName}?`
+                                    : "What stayed with you?"
+                            }
                         />
                     </div>
                 )}
@@ -439,34 +556,34 @@ const CreateOrEditGameLogPopup = ({
                             </div>
 
                             <div className="grid gap-5 lg:grid-cols-2">
-                                <div>
-                                    <span
-                                        id="log-platform-label"
-                                        className="mb-2 block text-label text-content-muted"
-                                    >
-                                        Platform
-                                    </span>
-                                    <Dropdown
-                                        options={systemOptions(
-                                            available,
-                                            "Not set"
+                                {!perConsole && (
+                                    <div>
+                                        <span
+                                            id="log-platform-label"
+                                            className="mb-2 block text-label text-content-muted"
+                                        >
+                                            Platform
+                                        </span>
+                                        <Dropdown
+                                            options={systemOptions(
+                                                available,
+                                                "Not set"
+                                            )}
+                                            value={draft.system}
+                                            placeholder="Not set"
+                                            aria-labelledby="log-platform-label"
+                                            onChange={chooseSystem}
+                                        />
+                                        {consoleError && (
+                                            <p
+                                                role="alert"
+                                                className="mt-2 text-body-sm text-danger"
+                                            >
+                                                {consoleError}
+                                            </p>
                                         )}
-                                        value={draft.system}
-                                        placeholder="Not set"
-                                        aria-labelledby="log-platform-label"
-                                        onChange={(value) =>
-                                            dispatch({
-                                                type: "system",
-                                                value,
-                                                platform:
-                                                    familyOf(
-                                                        available,
-                                                        value
-                                                    ) ?? "",
-                                            })
-                                        }
-                                    />
-                                </div>
+                                    </div>
+                                )}
 
                                 {fields.has("achievements") && (
                                     <div>
@@ -553,7 +670,7 @@ const CreateOrEditGameLogPopup = ({
                 <div className="flex w-full gap-2.5 sm:ml-auto sm:w-auto">
                     <Button
                         variant="secondary"
-                        onClick={closePopup}
+                        onClick={onClose}
                         disabled={busy}
                         className="flex-1 sm:flex-none"
                     >
@@ -573,9 +690,11 @@ const CreateOrEditGameLogPopup = ({
                 it asks first — the same dialog the profile uses. */}
             {confirmingDelete && existing && (
                 <DeleteGameLogPopup
-                    gameLog={existing}
+                    log={existing}
+                    gameTitle={game?.title}
+                    othersCount={others.length}
                     closePopup={() => setConfirmingDelete(false)}
-                    onDeleted={closePopup}
+                    onDeleted={onClose}
                 />
             )}
         </Modal>

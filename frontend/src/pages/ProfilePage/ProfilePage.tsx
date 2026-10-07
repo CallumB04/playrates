@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Flag, Pencil, Settings } from "lucide-react";
 import ReportDialog from "../../components/ReportDialog";
-import type { GameLogWithGame } from "../../api";
+import type { ShelfEntry } from "@playrates/shared";
+import { useLogFlow } from "../../components/gamelog/useLogFlow";
 import {
     GAME_LOG_SORTS,
     PLAYED_STATUSES,
@@ -16,7 +17,7 @@ import { useNotify } from "../../contexts/NotificationContext";
 import { useProfile } from "../../hooks/queries/useProfiles";
 import {
     useMyGameLogIds,
-    useUserGameLogs,
+    useUserShelf,
     useUserStats,
 } from "../../hooks/queries/useGameLogs";
 import {
@@ -62,7 +63,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const { user: currentUser } = useAuth();
     const { openLogin } = useAccountForm();
     const notify = useNotify();
-    const navigate = useNavigate();
+    const flow = useLogFlow();
     const { width } = useWindowSize();
     const [params, setParams] = useSearchParams();
 
@@ -113,7 +114,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
         !!currentUser && currentUser.username === targetUsername;
 
     // Each tab pages independently.
-    const { data: logsPage, isLoading: logsLoading } = useUserGameLogs(
+    const { data: logsPage, isLoading: logsLoading } = useUserShelf(
         targetUsername,
         activeSection,
         {
@@ -143,7 +144,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     );
     const { data: myLogIds } = useMyGameLogIds();
 
-    const logs = useMemo(() => logsPage?.data ?? [], [logsPage]);
+    const entries = useMemo(() => logsPage?.data ?? [], [logsPage]);
     const total = logsPage?.meta.total ?? 0;
 
     const pagination = usePagination({
@@ -216,12 +217,17 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
         if (targetUserError) notify("Failed to fetch user data", "error");
     }, [targetUserError, notify]);
 
-    // deep link: /user/x?log=<gameId> opens that log
+    /* deep link: /user/x?log=<gameId> opens their logs of that game, from
+       whichever page of the shelf it's on. Once per link. */
+    const openedLink = useRef<string | null>(null);
     useEffect(() => {
-        if (!deepLinkedLog || logs.length === 0) return;
-        const log = logs.find((l) => l.gameId === Number(deepLinkedLog));
-        if (log) setModal({ kind: "view", log });
-    }, [deepLinkedLog, logs]);
+        const gameId = Number(deepLinkedLog);
+        if (!deepLinkedLog || !gameId || openedLink.current === deepLinkedLog) {
+            return;
+        }
+        openedLink.current = deepLinkedLog;
+        flow.view(gameId, { owner: targetUsername });
+    }, [deepLinkedLog, flow, targetUsername]);
 
     const guard = (action: () => void) => () => {
         if (!currentUser) return openLogin();
@@ -239,13 +245,14 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
         }
     };
 
-    const buildTileActions = (log: GameLogWithGame): TileAction[] => {
+    const buildTileActions = (entry: ShelfEntry): TileAction[] => {
+        const { gameId } = entry;
         const actions: TileAction[] = [
             {
                 key: "view",
-                label: "View log",
+                label: entry.logs.length > 1 ? "View logs" : "View log",
                 tone: "primary",
-                onSelect: () => setModal({ kind: "view", log }),
+                onSelect: () => flow.view(gameId, { owner: targetUsername }),
             },
         ];
 
@@ -255,20 +262,19 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
             actions.push({
                 key: "edit",
                 label: "Edit",
-                onSelect: () => setModal({ kind: "edit", log }),
+                onSelect: () => flow.open(gameId),
             });
-        } else if (myLogGameIds.has(log.gameId)) {
+        } else if (myLogGameIds.has(gameId)) {
             actions.push({
                 key: "myLog",
                 label: "My log",
-                onSelect: () =>
-                    navigate(`/user/${currentUser.username}?log=${log.gameId}`),
+                onSelect: () => flow.view(gameId),
             });
         } else {
             actions.push({
                 key: "add",
                 label: "Log it",
-                onSelect: () => setModal({ kind: "create", log }),
+                onSelect: () => flow.open(gameId),
             });
         }
 
@@ -358,7 +364,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 // Every tab's count: the stats endpoint returns the whole breakdown.
                 counts={stats?.byStatus ?? { [activeSection]: total }}
                 onSelect={setSection}
-                logs={logs}
+                entries={entries}
                 platforms={platforms ?? []}
                 isLoading={logsLoading}
                 pagination={pagination}
@@ -371,8 +377,8 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                         {!isMyAccount && myLogIds && (
                             <span className="text-label text-accent max-sm:hidden">
                                 {formatCount(
-                                    logs.filter((l) =>
-                                        myLogGameIds.has(l.gameId)
+                                    entries.filter((e) =>
+                                        myLogGameIds.has(e.gameId)
                                     ).length
                                 )}{" "}
                                 in common
@@ -430,9 +436,6 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 setModal={setModal}
                 targetUser={targetUser}
                 isMyAccount={isMyAccount}
-                isSignedIn={!!currentUser}
-                currentUsername={currentUser?.username}
-                myLogGameIds={myLogGameIds}
                 allFriendEdges={friends ?? []}
                 friendsLoading={friendsLoading}
                 onRemoveFriend={async () => {
@@ -443,7 +446,6 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                         notify("That action failed, please try again", "error");
                     }
                 }}
-                navigate={navigate}
             />
 
             {reportingProfile && targetUser && (

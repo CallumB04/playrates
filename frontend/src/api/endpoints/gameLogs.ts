@@ -1,33 +1,43 @@
 import type {
-    Game,
     GameLog,
-    GameLogSort,
-    PlayedStatusFilter,
-    SortDirection,
+    GameLogCreate,
     GameLogInput,
-    GameLogPatch,
+    GameLogSort,
     GameLogSummary,
+    LogBundle,
     Paginated,
+    PlayedStatusFilter,
+    Review,
+    ReviewInput,
+    ShelfEntry,
+    ShelfGame,
+    SortDirection,
     UserStats,
 } from "@playrates/shared";
-import { api, isNotFound } from "../client";
+import { api } from "../client";
 import { compactParams } from "./games";
 
-/** The game is embedded, so a grid of tiles needs no request per tile. */
+/** One log with its game, for the places that show a single run: the game
+ *  you're playing now, say. */
 export interface GameLogWithGame extends GameLog {
-    game: Pick<
-        Game,
-        | "id"
-        | "title"
-        | "slug"
-        | "coverUrl"
-        | "artworkUrl"
-        | "releaseDate"
-        | "platforms"
-        | "avgRating"
-        | "criticScore"
-    > | null;
+    game: ShelfGame | null;
 }
+
+/** A shelf entry's log in a given status, with the game beside it. */
+export const logOnShelf = (
+    entry: ShelfEntry,
+    status: string
+): GameLogWithGame | undefined => {
+    const log = entry.logs.find((l) => l.status === status);
+    return log && { ...log, game: entry.game };
+};
+
+/** A game's most recent run, so a chart of the year counts it once. */
+export const latestRun = (entry: ShelfEntry): GameLogWithGame => {
+    const when = (l: GameLog) => l.finishDate ?? l.startDate ?? "";
+    const log = entry.logs.reduce((a, b) => (when(b) > when(a) ? b : a));
+    return { ...log, game: entry.game };
+};
 
 export interface GameLogPage {
     status?: string;
@@ -38,24 +48,24 @@ export interface GameLogPage {
     playedStatus?: PlayedStatusFilter;
 }
 
-export const fetchMyGameLogs = async (
+/** A page of games, each with every console it was logged on. */
+export const fetchMyShelf = async (
     status?: string,
     page?: GameLogPage
-): Promise<Paginated<GameLogWithGame>> => {
-    const { data } = await api.get<Paginated<GameLogWithGame>>(
-        "/me/game-logs",
-        { params: compactParams({ status, limit: 25, ...page }) }
-    );
+): Promise<Paginated<ShelfEntry>> => {
+    const { data } = await api.get<Paginated<ShelfEntry>>("/me/shelf", {
+        params: compactParams({ status, limit: 25, ...page }),
+    });
     return data;
 };
 
-export const fetchUserGameLogs = async (
+export const fetchUserShelf = async (
     username: string,
     status?: string,
     page?: GameLogPage
-): Promise<Paginated<GameLogWithGame>> => {
-    const { data } = await api.get<Paginated<GameLogWithGame>>(
-        `/users/${username}/game-logs`,
+): Promise<Paginated<ShelfEntry>> => {
+    const { data } = await api.get<Paginated<ShelfEntry>>(
+        `/users/${username}/shelf`,
         { params: compactParams({ status, limit: 25, ...page }) }
     );
     return data;
@@ -80,45 +90,50 @@ export const fetchUserStats = async (
     return data;
 };
 
-/** The caller's own log for one game, or null where there is none. A 404 is
- *  the answer to "have I logged this?", not a failure. */
-export const fetchMyGameLog = async (
+/** The caller's logs of one game, with their reviews and the totals. A game
+ *  not logged comes back with no logs, not as a 404. */
+export const fetchMyLogBundle = async (gameId: number): Promise<LogBundle> => {
+    const { data } = await api.get<LogBundle>("/me/logs", {
+        params: { gameId },
+    });
+    return data;
+};
+
+export const fetchUserLogBundle = async (
+    username: string,
     gameId: number
-): Promise<GameLogWithGame | null> => {
-    try {
-        const { data } = await api.get<GameLogWithGame>(
-            `/me/game-logs/${gameId}`
-        );
-        return data;
-    } catch (error) {
-        if (isNotFound(error)) return null;
-        throw error;
-    }
+): Promise<LogBundle> => {
+    const { data } = await api.get<LogBundle>(`/users/${username}/logs`, {
+        params: { gameId },
+    });
+    return data;
 };
 
-/** Idempotent: creates the log, or updates it if one already exists. */
-export const saveGameLog = async (
-    gameId: number,
+export const createLog = async (input: GameLogCreate): Promise<GameLog> => {
+    const { data } = await api.post<GameLog>("/me/logs", input);
+    return data;
+};
+
+export const updateLog = async (
+    logId: number,
     input: GameLogInput
-): Promise<GameLogWithGame> => {
-    const { data } = await api.put<GameLogWithGame>(
-        `/me/game-logs/${gameId}`,
-        input
-    );
+): Promise<GameLog> => {
+    const { data } = await api.put<GameLog>(`/me/logs/${logId}`, input);
     return data;
 };
 
-export const patchGameLog = async (
-    gameId: number,
-    input: GameLogPatch
-): Promise<GameLogWithGame> => {
-    const { data } = await api.patch<GameLogWithGame>(
-        `/me/game-logs/${gameId}`,
-        input
-    );
+export const deleteLog = async (logId: number): Promise<void> => {
+    await api.delete(`/me/logs/${logId}`);
+};
+
+export const saveLogReview = async (
+    logId: number,
+    input: ReviewInput
+): Promise<Review> => {
+    const { data } = await api.put<Review>(`/me/logs/${logId}/review`, input);
     return data;
 };
 
-export const deleteGameLog = async (gameId: number): Promise<void> => {
-    await api.delete(`/me/game-logs/${gameId}`);
+export const deleteLogReview = async (logId: number): Promise<void> => {
+    await api.delete(`/me/logs/${logId}/review`);
 };

@@ -1,29 +1,28 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { ReviewSort } from "@playrates/shared";
-import type { GameLogWithGame } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
-import { useNotify } from "../../contexts/NotificationContext";
 import {
     useGame,
     useGameStats,
     useGenres,
+    usePlatformSystems,
     usePlatforms,
 } from "../../hooks/queries/useGames";
 import {
-    useGameLogMutations,
     useMyGameLogIds,
-    useMyGameLogs,
+    useMyLogBundle,
+    useQuickAdd,
 } from "../../hooks/queries/useGameLogs";
+import { useLogFlow } from "../../components/gamelog/useLogFlow";
+import { remainingSystems, systemsForGame } from "../../lib/gameSystems";
 import { useGameReviews } from "../../hooks/queries/useReviews";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import { gameDescription, gamePageName } from "@playrates/shared";
-import CreateOrEditGameLogPopup from "../../components/CreateOrEditGameLogPopup";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../components/ui/Skeleton";
 import GameCoverPlate from "./components/GameCoverPlate";
-import ViewGameLogPopup from "../../components/ViewGameLogPopup";
 import { useReviewVote } from "../../hooks/queries/useReviews";
 import RatingPlate from "./components/RatingPlate";
 import CirculationPlate from "./components/CirculationPlate";
@@ -44,28 +43,23 @@ const GamePage = () => {
     const gameId = Number(gameID);
     const { user } = useAuth();
     const { openLogin } = useAccountForm();
-    const notify = useNotify();
+    const flow = useLogFlow();
+    const quickAdd = useQuickAdd();
+    const [quickSaving, setQuickSaving] = useState(false);
 
     const [sort, setSort] = useState<ReviewSort>("recent");
-    const [editing, setEditing] = useState(false);
-    const [editIntent, setEditIntent] = useState<"log" | "review">("log");
-    const openEditor = (intent: "log" | "review" = "log") => {
-        setEditIntent(intent);
-        setEditing(true);
-    };
-    const [viewing, setViewing] = useState(false);
     const vote = useReviewVote();
 
     const { data: game, isLoading, isError } = useGame(gameId);
     const { data: stats } = useGameStats(gameId);
     const { data: platforms } = usePlatforms();
     const { data: genres } = useGenres();
+    const { data: systems } = usePlatformSystems();
     const { data: myLogIds } = useMyGameLogIds();
     const { data: reviews, isLoading: reviewsLoading } = useGameReviews(
         gameId,
         sort
     );
-    const { save } = useGameLogMutations();
     const navigate = useNavigate();
     const { data: threads, isLoading: threadsLoading } = useThreads(
         { gameId, limit: 5 },
@@ -93,12 +87,15 @@ const GamePage = () => {
         [myLogIds, gameId]
     );
 
-    /* Only needed once the editor opens, so it rides along with the list the
-       page already holds rather than adding a request per view. */
-    const { data: myLogs } = useMyGameLogs(undefined, { limit: 100 });
-    const fullLog: GameLogWithGame | undefined = (myLogs?.data ?? []).find(
-        (entry) => entry.gameId === gameId
-    );
+    const logCount = log?.logs.length ?? 0;
+    // In full only once there are two to add up.
+    const { data: bundle } = useMyLogBundle(gameId, logCount > 1);
+    const canAddPlatform =
+        !!log &&
+        remainingSystems(
+            systemsForGame(systems ?? [], game?.systems ?? []),
+            log.logs.map((l) => l.system)
+        ).length > 0;
 
     const facts = useMemo(
         () =>
@@ -108,13 +105,12 @@ const GamePage = () => {
 
     const quickLog = async (status: "backlog" | "wishlist") => {
         if (!game) return;
-        try {
-            await save.mutateAsync({ gameId, input: { status } });
-            notify(`${game.title} moved to your ${status}`, "success");
-        } catch {
-            notify("Couldn't update your shelf", "error");
-        }
+        setQuickSaving(true);
+        // quickAdd says how it went itself
+        await quickAdd(gameId, game.title, status).catch(() => undefined);
+        setQuickSaving(false);
     };
+    const openLog = () => (user ? flow.open(gameId) : openLogin());
 
     if (isLoading) {
         return (
@@ -147,14 +143,16 @@ const GamePage = () => {
             <StickyLogBar
                 anchor={actionsEnd}
                 label={
-                    log
-                        ? "Edit your log"
-                        : user
-                          ? "Log this game"
-                          : "Log in to add"
+                    logCount > 1
+                        ? `Your logs · ${logCount}`
+                        : log
+                          ? "Edit your log"
+                          : user
+                            ? "Log this game"
+                            : "Log in to add"
                 }
-                onPress={() => (user ? openEditor() : openLogin())}
-                disabled={save.isPending}
+                onPress={openLog}
+                disabled={quickSaving}
             />
             {/* auto then 1fr: when the cover column is the taller, the spare
                 height goes below the description, not between it and the
@@ -166,10 +164,14 @@ const GamePage = () => {
                         log={log}
                         isSignedIn={!!user}
                         facts={facts}
-                        onViewLog={fullLog ? () => setViewing(true) : undefined}
-                        onPrimary={() => (user ? openEditor() : openLogin())}
+                        onViewLog={() => flow.view(gameId)}
+                        onPrimary={openLog}
+                        bundle={bundle}
+                        canAdd={canAddPlatform}
+                        onAddPlatform={() => flow.add(gameId)}
+                        onEditLog={(logId) => flow.edit(gameId, logId)}
                         onQuickLog={(status) => void quickLog(status)}
-                        isSaving={save.isPending}
+                        isSaving={quickSaving}
                         actionsEndRef={actionsEnd}
                     />
                 </div>
@@ -215,11 +217,9 @@ const GamePage = () => {
 
                     <GameReviews
                         reviews={reviews?.data ?? []}
-                        hasLog={!!log}
+                        logCount={logCount}
                         onWriteReview={
-                            user
-                                ? () => openEditor("review")
-                                : () => openLogin()
+                            user ? () => flow.review(gameId) : () => openLogin()
                         }
                         viewerId={user?.id}
                         onVote={(reviewId) => vote.mutateAsync(reviewId)}
@@ -242,27 +242,6 @@ const GamePage = () => {
             </div>
 
             <RelatedGames gameId={gameId} platforms={platforms ?? []} />
-
-            {viewing && fullLog && (
-                <ViewGameLogPopup
-                    gamelog={fullLog}
-                    closePopup={() => setViewing(false)}
-                    primaryAction={{
-                        label: "Edit your log",
-                        onSelect: () => openEditor(),
-                    }}
-                />
-            )}
-
-            {editing && (
-                <CreateOrEditGameLogPopup
-                    closePopup={() => setEditing(false)}
-                    viewUpdatedLog={() => setEditing(false)}
-                    gamelog={fullLog ?? null}
-                    gameID={gameId}
-                    focusReview={editIntent === "review"}
-                />
-            )}
         </article>
     );
 };

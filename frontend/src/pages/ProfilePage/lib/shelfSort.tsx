@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { GameLogSort, SortDirection } from "@playrates/shared";
-import type { GameLogWithGame } from "../../../api";
+import type { ShelfEntry } from "@playrates/shared";
 import {
     formatMonthYearShort,
     formatPercent,
@@ -58,14 +58,6 @@ export const directionLabel = (
     return direction === "asc" ? option.ascending : option.descending;
 };
 
-/** The later of the two dates, which is what the shelf orders by. Both are
- *  ISO, so a string sort is a date sort. */
-export const lastPlayed = (log: GameLogWithGame): string | null =>
-    [log.startDate, log.finishDate]
-        .filter((date): date is string => !!date)
-        .sort()
-        .at(-1) ?? null;
-
 /**
  * What a tile prints under its cover. A rating is handed back as a number for
  * the rating badge; everything else is already formatted text.
@@ -79,33 +71,31 @@ export interface ShelfFoot {
     value?: ReactNode;
 }
 
-export const shelfFoot = (
-    log: GameLogWithGame,
-    sort: GameLogSort
-): ShelfFoot => {
+/* A game logged on several consoles shows what it was ordered by: the
+   mean rating, the latest play, the best completion. */
+export const shelfFoot = (entry: ShelfEntry, sort: GameLogSort): ShelfFoot => {
+    const { game, rollup } = entry;
     switch (sort) {
         case "gameRating":
-            return { rating: log.game?.avgRating ?? null };
+            return { rating: game?.avgRating ?? null };
         case "critic":
             // The same coloured box as on the game page.
             return {
-                value: <CriticScore score={log.game?.criticScore ?? null} />,
+                value: <CriticScore score={game?.criticScore ?? null} />,
             };
         case "played":
-            return { value: formatMonthYearShort(lastPlayed(log)) };
+            return { value: formatMonthYearShort(rollup.lastPlayed) };
         case "released":
-            return { value: releaseYear(log.game?.releaseDate) };
+            return { value: releaseYear(game?.releaseDate) };
         case "completion":
             return {
-                value: log.achievementsTotal
-                    ? formatPercent(
-                          (log.achievementsCompleted ?? 0) /
-                              log.achievementsTotal
-                      )
-                    : "—",
+                value:
+                    rollup.completion === null
+                        ? "—"
+                        : formatPercent(rollup.completion),
             };
         case "rating":
         case "title":
-            return { rating: log.rating };
+            return { rating: rollup.rating };
     }
 };

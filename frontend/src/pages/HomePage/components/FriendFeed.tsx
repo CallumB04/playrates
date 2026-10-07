@@ -14,6 +14,7 @@ import {
 import RatingBadge from "../../../components/ui/RatingBadge";
 import { relativeTime } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
+import { usePlayedOn } from "../../../components/gamelog/usePlayedOn";
 
 /** What the actor did, as a sentence rather than a status word. */
 const VERB: Record<string, string> = {
@@ -36,6 +37,10 @@ const Row = ({ item }: { item: FriendActivity }) => {
         ? STATUS_PRESENTATION[display]
         : null;
     const Icon = presentation?.icon;
+    const playedOn = usePlayedOn()({
+        system: item.system,
+        platform: null,
+    }).name;
 
     return (
         <Link
@@ -79,6 +84,7 @@ const Row = ({ item }: { item: FriendActivity }) => {
                             {presentation.label}
                         </span>
                     )}
+                    {playedOn && <span>on {playedOn}</span>}
                     {item.hoursPlayed !== null && (
                         <span className="font-mono">{item.hoursPlayed}h</span>
                     )}

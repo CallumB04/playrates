@@ -74,7 +74,8 @@ const ScoreCards = ({
 
             <ScoreCard
                 label="On PlayRates"
-                hint={`${logCount} ${logCount === 1 ? "log" : "logs"}`}
+                // People, not logs: one player can log it on several consoles.
+                hint={`${logCount} ${logCount === 1 ? "player" : "players"}`}
             >
                 <div className="grid w-full grid-cols-3 gap-3">
                     <Stat

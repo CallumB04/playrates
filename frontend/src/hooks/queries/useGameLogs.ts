@@ -4,16 +4,25 @@ import {
     useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
-import type { GameLogInput, GameLogSummary } from "@playrates/shared";
+import type {
+    GameLogCreate,
+    GameLogInput,
+    GameLogSummary,
+    ReviewInput,
+} from "@playrates/shared";
 import {
-    deleteGameLog,
-    fetchMyGameLog,
+    createLog,
+    deleteLog,
+    deleteLogReview,
     fetchMyGameLogIds,
-    fetchMyGameLogs,
-    fetchUserGameLogs,
+    fetchMyLogBundle,
+    fetchMyShelf,
+    fetchUserLogBundle,
+    fetchUserShelf,
     fetchUserStats,
     queryKeys,
-    saveGameLog,
+    saveLogReview,
+    updateLog,
     type GameLogPage,
 } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -22,19 +31,19 @@ import { STATUS_PRESENTATION } from "../../constants/gameStatus";
 
 /** The ordering, flattened for a cache key. */
 const orderKey = (page?: GameLogPage) =>
-    `${page?.sort ?? ""}:${page?.direction ?? ""}:${page?.playedStatus ?? ""}`;
+    `${page?.sort ?? ""}:${page?.direction ?? ""}:${page?.playedStatus ?? ""}:${page?.limit ?? ""}`;
 
-export const useMyGameLogs = (status?: string, page?: GameLogPage) => {
+export const useMyShelf = (status?: string, page?: GameLogPage) => {
     const { user } = useAuth();
     return useQuery({
         queryKey: queryKeys.gameLogs.mine(status, page?.page, orderKey(page)),
-        queryFn: () => fetchMyGameLogs(status, page),
+        queryFn: () => fetchMyShelf(status, page),
         enabled: !!user,
         placeholderData: keepPreviousData,
     });
 };
 
-export const useUserGameLogs = (
+export const useUserShelf = (
     username: string,
     status?: string,
     page?: GameLogPage
@@ -46,21 +55,31 @@ export const useUserGameLogs = (
             page?.page,
             orderKey(page)
         ),
-        queryFn: () => fetchUserGameLogs(username, status, page),
+        queryFn: () => fetchUserShelf(username, status, page),
         enabled: !!username,
         placeholderData: keepPreviousData,
     });
 
-/** The caller's own log for one game, so an editor opened with nothing but a
- *  game id still knows what is already recorded. Null means none. */
-export const useMyGameLog = (gameId: number, enabled = true) => {
+/** The caller's logs of one game, a review on each, and the totals. */
+export const useMyLogBundle = (gameId: number, enabled = true) => {
     const { user } = useAuth();
     return useQuery({
         queryKey: queryKeys.gameLogs.mineForGame(gameId),
-        queryFn: () => fetchMyGameLog(gameId),
+        queryFn: () => fetchMyLogBundle(gameId),
         enabled: enabled && !!user && gameId > 0,
     });
 };
+
+export const useUserLogBundle = (
+    username: string | undefined,
+    gameId: number,
+    enabled = true
+) =>
+    useQuery({
+        queryKey: queryKeys.gameLogs.forUserAndGame(username ?? "", gameId),
+        queryFn: () => fetchUserLogBundle(username!, gameId),
+        enabled: enabled && !!username && gameId > 0,
+    });
 
 /** Every game the caller has logged, as a lookup. Unpaginated: a tile asking
  *  "have I logged this?" needs a complete answer. */
@@ -83,7 +102,7 @@ export const useUserStats = (username: string, year?: number) =>
 
 /** Writes invalidate the lists, the game's stats and the site totals, so no
  *  caller has to know what else went stale. */
-export const useGameLogMutations = () => {
+export const useLogMutations = () => {
     const queryClient = useQueryClient();
 
     const invalidate = () => {
@@ -92,25 +111,43 @@ export const useGameLogMutations = () => {
         queryClient.invalidateQueries({ queryKey: ["userStats"] });
         queryClient.invalidateQueries({ queryKey: ["games"] });
         queryClient.invalidateQueries({ queryKey: queryKeys.stats });
+        // a review card shows its log's rating and hours
+        queryClient.invalidateQueries({ queryKey: ["reviews"] });
     };
 
-    const save = useMutation({
+    const create = useMutation({
+        mutationFn: (input: GameLogCreate) => createLog(input),
+        onSuccess: invalidate,
+    });
+
+    const update = useMutation({
         mutationFn: ({
-            gameId,
+            logId,
             input,
         }: {
-            gameId: number;
+            logId: number;
             input: GameLogInput;
-        }) => saveGameLog(gameId, input),
+        }) => updateLog(logId, input),
         onSuccess: invalidate,
     });
 
     const remove = useMutation({
-        mutationFn: (gameId: number) => deleteGameLog(gameId),
+        mutationFn: (logId: number) => deleteLog(logId),
         onSuccess: invalidate,
     });
 
-    return { save, remove };
+    const saveReview = useMutation({
+        mutationFn: ({ logId, input }: { logId: number; input: ReviewInput }) =>
+            saveLogReview(logId, input),
+        onSuccess: invalidate,
+    });
+
+    const removeReview = useMutation({
+        mutationFn: (logId: number) => deleteLogReview(logId),
+        onSuccess: invalidate,
+    });
+
+    return { create, update, remove, saveReview, removeReview };
 };
 
 export type QuickAddStatus = "backlog" | "wishlist";
@@ -121,7 +158,7 @@ export type QuickAddStatus = "backlog" | "wishlist";
  * other buttons still until it hears back, and has to know when to let go.
  */
 export const useQuickAdd = () => {
-    const { save } = useGameLogMutations();
+    const { create } = useLogMutations();
     const notify = useNotify();
     const queryClient = useQueryClient();
 
@@ -136,12 +173,27 @@ export const useQuickAdd = () => {
         if (before && !before.some((log) => log.gameId === gameId)) {
             queryClient.setQueryData<GameLogSummary[]>(key, [
                 ...before,
-                { gameId, status, playedStatus: null, rating: null, logs: [] },
+                {
+                    gameId,
+                    status,
+                    playedStatus: null,
+                    rating: null,
+                    // A real id comes with the refetch the save sets off.
+                    logs: [
+                        {
+                            id: -gameId,
+                            system: null,
+                            status,
+                            playedStatus: null,
+                            rating: null,
+                        },
+                    ],
+                },
             ]);
         }
 
         try {
-            await save.mutateAsync({ gameId, input: { status } });
+            await create.mutateAsync({ gameId, status });
             notify(`${title} added to your ${shelf}`, "success");
         } catch (error) {
             queryClient.setQueryData(key, before);
