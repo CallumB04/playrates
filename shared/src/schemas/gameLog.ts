@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { GameLogRollup } from "../logs/rollup.js";
+import type { GameLogRollup } from "../logRollup.js";
 import type { Review } from "./review.js";
 import type { Game } from "./game.js";
 
