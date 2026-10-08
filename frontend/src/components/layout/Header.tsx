@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { env } from "../../lib/env";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, Search } from "lucide-react";
+import { Database, Menu, Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import Button from "../ui/Button";
@@ -100,8 +100,8 @@ const Header = () => {
     return (
         <>
             <header className="sticky top-0 z-40 w-full border-b border-subtle bg-surface/75 backdrop-blur-lg">
-                <div className="mx-auto flex h-navbar w-full max-w-[1240px] items-center justify-between gap-6 px-5 sm:px-8 lg:px-12">
-                    <div className="flex items-center gap-3 sm:gap-4 lg:gap-8">
+                <div className="mx-auto flex h-navbar w-full max-w-[1240px] items-center justify-between gap-3 px-5 sm:gap-6 sm:px-8 lg:px-12">
+                    <div className="flex items-center gap-2 sm:gap-4 lg:gap-8">
                         <button
                             type="button"
                             onClick={() => setMenuOpen(true)}
@@ -117,13 +117,20 @@ const Header = () => {
                         >
                             PlayRates
                         </Link>
-                        {/* So a test run is never mistaken for the live site. */}
+                        {/* So a test run is never mistaken for the live site.
+                            An icon on a phone: the word pushed a signed-in
+                            header 33px past a 375px screen. */}
                         {env.localData && (
                             <span
                                 title="Running against the local database. Nothing here touches live."
-                                className="rounded-sm border border-dashed border-warning-border px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-warning-content uppercase"
+                                className="flex items-center rounded-sm border border-dashed border-warning-border px-1 py-0.5 text-[10px] font-semibold tracking-wide text-warning-content uppercase sm:px-1.5"
                             >
-                                Local
+                                <Database
+                                    size={12}
+                                    aria-hidden
+                                    className="sm:hidden"
+                                />
+                                <span className="max-sm:sr-only">Local</span>
                             </span>
                         )}
 
@@ -161,7 +168,10 @@ const Header = () => {
                         </nav>
                     </div>
 
-                    <div className="flex items-center gap-1 sm:gap-4">
+                    {/* No gap on a phone: the 44px boxes already hold the icons
+                        24px apart, and a gap here was what pushed the header
+                        past a 320px screen. */}
+                    <div className="flex items-center sm:gap-4">
                         <button
                             type="button"
                             onClick={() => setSearchOpen(true)}
