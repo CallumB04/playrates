@@ -55,9 +55,7 @@ describe("the page head", () => {
     expect(head).toContain(
       '<link rel="canonical" href="https://playrates.app/game/1" />',
     );
-    expect(head).toContain(
-      'property="og:url" content="https://playrates.app/game/1"',
-    );
+    expect(head).toContain('property="og:url" content="https://playrates.app/game/1"');
     expect(head).toContain('name="twitter:card" content="summary_large_image"');
     expect(head).not.toContain("robots");
   });

@@ -18,9 +18,7 @@ describe("searchKey", () => {
     expect(searchKey("The Witcher 3: Wild Hunt")).toContain(
       searchKey("witcher iii"),
     );
-    expect(searchKey("Pokémon Legends: Arceus")).toContain(
-      searchKey("pokemon"),
-    );
+    expect(searchKey("Pokémon Legends: Arceus")).toContain(searchKey("pokemon"));
     expect(searchKey("Marvel's Spider-Man")).toContain(searchKey("spider man"));
   });
 

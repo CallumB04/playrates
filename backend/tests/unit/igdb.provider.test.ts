@@ -18,10 +18,7 @@ const upstream = (responses: (() => Response)[], editions = false) => {
     const url = String(input);
     if (url.startsWith("https://id.twitch.tv/")) {
       tokens += 1;
-      return Response.json({
-        access_token: `token-${tokens}`,
-        expires_in: 5_000_000,
-      });
+      return Response.json({ access_token: `token-${tokens}`, expires_in: 5_000_000 });
     }
     // The edition-cover lookup that follows every listing: no editions,
     // unless a test queues them itself.
@@ -79,9 +76,7 @@ describe("IGDB provider", () => {
       () => Response.json([game(1)]),
     ]);
     const onRequest = vi.fn();
-    const igdb = createIgdbProvider("id", "secret", api.fetchImpl, {
-      onRequest,
-    });
+    const igdb = createIgdbProvider("id", "secret", api.fetchImpl, { onRequest });
 
     await igdb.getById(1);
 
@@ -156,17 +151,8 @@ describe("IGDB provider", () => {
         () => Response.json([{ ...game(1942), cover: { image_id: "main" } }]),
         () =>
           Response.json([
-            {
-              version_parent: 1942,
-              version_title: "Complete Edition",
-              name: "x",
-              cover: { image_id: "co5uct" },
-            },
-            {
-              version_parent: 1942,
-              name: "The Witcher 3 - GOTY",
-              cover: { image_id: "co1wz4" },
-            },
+            { version_parent: 1942, version_title: "Complete Edition", name: "x", cover: { image_id: "co5uct" } },
+            { version_parent: 1942, name: "The Witcher 3 - GOTY", cover: { image_id: "co1wz4" } },
           ]),
       ],
       true,
@@ -179,9 +165,7 @@ describe("IGDB provider", () => {
       { imageId: "co5uct", label: "Complete Edition" },
       { imageId: "co1wz4", label: "The Witcher 3 - GOTY" },
     ]);
-    expect(api.queries[1]!.body).toContain(
-      "where version_parent = (1942) & cover != null",
-    );
+    expect(api.queries[1]!.body).toContain("where version_parent = (1942) & cover != null");
   });
 
   it("takes what is trending from Steam's players over the last day", async () => {
@@ -259,9 +243,7 @@ describe("IGDB provider", () => {
 
     expect(page.games.map((g) => g.externalId)).toEqual([30, 10]);
     expect(page.hasNext).toBe(true);
-    expect(api.queries[0]!.body).toContain(
-      "where popularity_type = 1; sort value desc; limit 3; offset 0;",
-    );
+    expect(api.queries[0]!.body).toContain("where popularity_type = 1; sort value desc; limit 3; offset 0;");
     expect(api.queries[1]!.body).toContain("& id = (30,10,20)");
   });
 
