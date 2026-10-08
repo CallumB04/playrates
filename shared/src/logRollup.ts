@@ -44,7 +44,9 @@ export const headlineOf = <T extends Ranked>(logs: readonly T[]): T | null =>
   }, null);
 
 /** The mean, rounded to two places as games.avg_rating is. */
-export const meanRating = (ratings: readonly (number | null)[]): number | null => {
+export const meanRating = (
+  ratings: readonly (number | null)[],
+): number | null => {
   const rated = ratings.filter((r): r is number => r !== null);
   if (rated.length === 0) return null;
   const sum = rated.reduce((a, b) => a + b, 0);
@@ -70,6 +72,9 @@ export interface GameLogRollup {
   completion: number | null;
   lastPlayed: string | null;
   updatedAt: string;
+  /** When the first of its logs was made. A second console logged later
+   *  does not make the game newly added. */
+  addedAt: string;
 }
 
 const completionOf = (log: GameLog): number | null =>
@@ -125,5 +130,9 @@ export const rollupLogs = (logs: readonly GameLog[]): GameLogRollup | null => {
     completion: completions.length === 0 ? null : Math.max(...completions),
     lastPlayed: latest(logs.map((l) => l.finishDate ?? l.startDate)),
     updatedAt: latest(logs.map((l) => l.updatedAt)) as string,
+    addedAt: logs.reduce(
+      (first, l) => (l.createdAt < first ? l.createdAt : first),
+      logs[0]!.createdAt,
+    ),
   };
 };

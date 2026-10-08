@@ -20,6 +20,8 @@ import { cn } from "../../../lib/cn";
 interface MemberFileHeaderProps {
     profile: Profile;
     stats: UserStats | undefined;
+    /** Past the card is not this viewer's to see, figures included. */
+    profileHidden?: boolean;
     reviewCount: number | undefined;
     friendCount: number | undefined;
     /** The friend button, or the owner's controls. */
@@ -86,6 +88,7 @@ const ShelfBar = ({
 const MemberFileHeader = ({
     profile,
     stats,
+    profileHidden = false,
     reviewCount,
     friendCount,
     action,
@@ -173,37 +176,39 @@ const MemberFileHeader = ({
                     </p>
                 )}
 
-                <div className="mt-5 grid gap-5 border-t border-subtle pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-8">
-                    <div className="grid grid-cols-2 gap-x-7 gap-y-4 sm:flex sm:flex-wrap">
-                        <Stat
-                            label="Hours played"
-                            loading={!stats}
-                            value={formatHours(stats?.hoursPlayed)}
-                        />
-                        <Stat
-                            label="Average rating"
-                            loading={!stats}
-                            value={
-                                <RatingBadge
-                                    value={stats?.averageRating ?? null}
-                                    size="md"
-                                />
-                            }
-                        />
-                        <Stat
-                            label="Reviews"
-                            loading={reviewCount === undefined}
-                            value={formatCount(reviewCount)}
-                        />
-                        <Stat
-                            label="Friends"
-                            loading={friendCount === undefined}
-                            value={formatCount(friendCount)}
-                        />
-                    </div>
+                {!profileHidden && (
+                    <div className="mt-5 grid gap-5 border-t border-subtle pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-8">
+                        <div className="grid grid-cols-2 gap-x-7 gap-y-4 sm:flex sm:flex-wrap">
+                            <Stat
+                                label="Hours played"
+                                loading={!stats}
+                                value={formatHours(stats?.hoursPlayed)}
+                            />
+                            <Stat
+                                label="Average rating"
+                                loading={!stats}
+                                value={
+                                    <RatingBadge
+                                        value={stats?.averageRating ?? null}
+                                        size="md"
+                                    />
+                                }
+                            />
+                            <Stat
+                                label="Reviews"
+                                loading={reviewCount === undefined}
+                                value={formatCount(reviewCount)}
+                            />
+                            <Stat
+                                label="Friends"
+                                loading={friendCount === undefined}
+                                value={formatCount(friendCount)}
+                            />
+                        </div>
 
-                    <ShelfBar byStatus={byStatus} total={shelfTotal} />
-                </div>
+                        <ShelfBar byStatus={byStatus} total={shelfTotal} />
+                    </div>
+                )}
             </div>
         </section>
     );

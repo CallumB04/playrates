@@ -6,17 +6,23 @@ import type {
   ReviewWithAuthor,
 } from "@playrates/shared";
 import type { ReviewSort } from "@playrates/shared";
-import { isUpvoteMilestone } from "@playrates/shared";
+import { canSeeProfile, isUpvoteMilestone } from "@playrates/shared";
 import type { NotificationsRepository } from "../notifications/notifications.repository.js";
 import { reviewUpvotesKey } from "../notifications/notifications.mapper.js";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
-import { isOnline, toAccent } from "../profiles/profiles.mapper.js";
+import {
+  isOnline,
+  toAccent,
+  toProfileVisibility,
+} from "../profiles/profiles.mapper.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type { GamesRepository } from "../games/games.repository.js";
 import type { GameLogsRepository } from "../game-logs/gameLogs.repository.js";
 import { pickLegacyLog } from "../game-logs/legacyLog.js";
 import { toReview } from "./reviews.mapper.js";
+import type { ProfileGate } from "../profiles/profileGate.js";
+import type { FriendsRepository } from "../friends/friends.repository.js";
 import type {
   ReviewRowJoined,
   ReviewsRepository,
@@ -34,6 +40,8 @@ export const createReviewsService = (
   games: GamesRepository,
   gameLogs: GameLogsRepository,
   notifications: NotificationsRepository,
+  gate: ProfileGate,
+  friends: FriendsRepository,
 ) => {
   /** Opt-in, so signed out and unknown both mean no. */
   const canSeeExplicit = async (viewerId?: string): Promise<boolean> =>
@@ -46,38 +54,89 @@ export const createReviewsService = (
    * missing author falls back to a placeholder — the FK should prevent it, but
    * one bad row shouldn't take down the listing.
    */
+  /** The authors among these rows whose profiles the viewer may see. One
+   *  friends lookup for the page, and only when a friends-only author is on
+   *  it. */
+  const visibleAuthors = async (
+    viewerId: string | undefined,
+    rows: ReviewRowJoined[],
+  ): Promise<Set<string>> => {
+    const visible = new Set<string>();
+    const friendsOnly: string[] = [];
+    for (const row of rows) {
+      const visibility = toProfileVisibility(
+        row.author_profile_visibility ?? undefined,
+      );
+      const isOwner = row.user_id === viewerId;
+      if (canSeeProfile(visibility, { isOwner, isFriend: false })) {
+        visible.add(row.user_id);
+      } else if (visibility === "friends" && viewerId) {
+        friendsOnly.push(row.user_id);
+      }
+    }
+    if (viewerId && friendsOnly.length > 0) {
+      const accepted = new Set(
+        (await friends.listForUser(viewerId))
+          .filter((f) => f.status === "accepted")
+          .map((f) => (f.user_a_id === viewerId ? f.user_b_id : f.user_a_id)),
+      );
+      for (const id of friendsOnly) if (accepted.has(id)) visible.add(id);
+    }
+    return visible;
+  };
+
   /** Per-viewer, so it can't live on the view. One query for the page rather
    *  than one per review. */
   const withAuthors = (
     rows: ReviewRowJoined[],
-    votedIds: Set<number> = new Set(),
+    votedIds: Set<number>,
+    visible: Set<string>,
   ): ReviewWithAuthor[] =>
-    rows.map((row) => ({
-      ...toReview(row),
-      author: {
-        id: row.user_id,
-        username: row.author_username ?? "Unknown user",
-        firstName: row.author_first_name,
-        avatarUrl: row.author_avatar_url ?? null,
-        accent: toAccent(row.author_accent),
-        online: row.author_last_seen_at
-          ? isOnline(row.author_last_seen_at)
-          : false,
-      },
-      rating: row.rating === null ? null : Number(row.rating),
-      hoursPlayed: row.hours_played === null ? null : Number(row.hours_played),
-      status: row.status,
-      playedStatus: row.played_status,
-      platform: row.platform_slug,
-      system: row.system_slug,
-      game: {
-        id: row.game_id,
-        title: row.game_title,
-        coverUrl: row.game_cover_url,
-      },
-      voteCount: Number(row.vote_count ?? 0),
-      votedByViewer: votedIds.has(row.id),
-    }));
+    rows.map((row) => {
+      const shown = visible.has(row.user_id);
+      return {
+        ...toReview(row),
+        author: shown
+          ? {
+              id: row.user_id,
+              username: row.author_username ?? "Unknown user",
+              firstName: row.author_first_name,
+              avatarUrl: row.author_avatar_url ?? null,
+              accent: toAccent(row.author_accent),
+              online: row.author_last_seen_at
+                ? isOnline(row.author_last_seen_at)
+                : false,
+            }
+          : null,
+        // The verdict stays with the review; the log behind it is profile.
+        rating: row.rating === null ? null : Number(row.rating),
+        hoursPlayed:
+          shown && row.hours_played !== null ? Number(row.hours_played) : null,
+        status: shown ? row.status : null,
+        playedStatus: shown ? row.played_status : null,
+        platform: shown ? row.platform_slug : null,
+        system: shown ? row.system_slug : null,
+        game: {
+          id: row.game_id,
+          title: row.game_title,
+          coverUrl: row.game_cover_url,
+        },
+        voteCount: Number(row.vote_count ?? 0),
+        votedByViewer: votedIds.has(row.id),
+      };
+    });
+
+  /** The page's votes and visible authors, side by side. */
+  const present = async (
+    viewerId: string | undefined,
+    rows: ReviewRowJoined[],
+  ): Promise<ReviewWithAuthor[]> => {
+    const [voted, visible] = await Promise.all([
+      votesFor(viewerId, rows),
+      visibleAuthors(viewerId, rows),
+    ]);
+    return withAuthors(rows, voted, visible);
+  };
 
   const votesFor = async (
     viewerId: string | undefined,
@@ -108,11 +167,7 @@ export const createReviewsService = (
         to,
         sort,
       );
-      return paginate(
-        withAuthors(rows, await votesFor(viewerId, rows)),
-        pagination,
-        total,
-      );
+      return paginate(await present(viewerId, rows), pagination, total);
     },
 
     async listByUsername(
@@ -120,8 +175,7 @@ export const createReviewsService = (
       viewerId: string | undefined,
       pagination: Pagination,
     ): Promise<Paginated<ReviewWithAuthor>> {
-      const profile = await profiles.findByUsername(username);
-      if (!profile) throw AppError.notFound("Profile");
+      const profile = await gate(username, viewerId);
 
       const { from, to } = toRange(pagination);
       const { rows, total } = await repo.listByUser(
@@ -130,11 +184,7 @@ export const createReviewsService = (
         from,
         to,
       );
-      return paginate(
-        withAuthors(rows, await votesFor(viewerId, rows)),
-        pagination,
-        total,
-      );
+      return paginate(await present(viewerId, rows), pagination, total);
     },
 
     /** The site-wide feed. Public reviews only, newest first. */
@@ -148,11 +198,7 @@ export const createReviewsService = (
         to,
         await canSeeExplicit(viewerId),
       );
-      return paginate(
-        withAuthors(rows, await votesFor(viewerId, rows)),
-        pagination,
-        total,
-      );
+      return paginate(await present(viewerId, rows), pagination, total);
     },
 
     /** Idempotent by primary key: a duplicate vote collides on

@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { EmptyNote } from "../../../components/ui/EmptyPlate";
 import type { ReviewWithAuthor } from "@playrates/shared";
-import ProfilePicture from "../../../components/ProfilePicture";
+import ProfilePicture, {
+    PrivateProfilePicture,
+} from "../../../components/ProfilePicture";
 import { SpoilerNote } from "../../../components/ui/SpoilerCover";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import RatingBadge from "../../../components/ui/RatingBadge";
@@ -26,6 +28,7 @@ const reviewStatus = (review: ReviewWithAuthor): DisplayStatus | null => {
 
 const Row = ({ review }: { review: ReviewWithAuthor }) => {
     const status = reviewStatus(review);
+    const { author } = review;
 
     return (
         <Link
@@ -33,16 +36,20 @@ const Row = ({ review }: { review: ReviewWithAuthor }) => {
             className="block rounded-md px-2.5 py-2.5 lift hover:bg-surface-hover"
         >
             <span className="flex items-center gap-2">
-                <ProfilePicture
-                    variant="nav"
-                    file={review.author.avatarUrl ?? ""}
-                    accent={review.author.accent}
-                    username={review.author.username}
-                    link={false}
-                />
+                {author ? (
+                    <ProfilePicture
+                        variant="nav"
+                        file={author.avatarUrl ?? ""}
+                        accent={author.accent}
+                        username={author.username}
+                        link={false}
+                    />
+                ) : (
+                    <PrivateProfilePicture variant="nav" />
+                )}
                 <span className="min-w-0 flex-1 truncate text-body-sm text-content-secondary">
                     <span className="font-medium text-content">
-                        {review.author.username}
+                        {author?.username ?? "Private account"}
                     </span>{" "}
                     on{" "}
                     <span className="font-medium text-content">

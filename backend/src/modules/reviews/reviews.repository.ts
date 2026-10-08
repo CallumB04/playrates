@@ -24,6 +24,7 @@ export interface ReviewRowJoined extends ReviewRow {
   game_title: string;
   game_slug: string;
   game_cover_url: string | null;
+  author_profile_visibility: string | null;
 }
 
 const CARDS = "review_cards";
@@ -239,14 +240,12 @@ export const createReviewsRepository = (db: Db): ReviewsRepository => ({
 
     const { error } = existing
       ? await db.from("reviews").update(patch).eq("id", existing.id)
-      : await db
-          .from("reviews")
-          .insert({
-            ...patch,
-            user_id: userId,
-            game_id: gameId,
-            log_id: logId,
-          });
+      : await db.from("reviews").insert({
+          ...patch,
+          user_id: userId,
+          game_id: gameId,
+          log_id: logId,
+        });
     if (error) throw error;
 
     const row = await this.findByLog(logId);

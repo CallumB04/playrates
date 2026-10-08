@@ -4,6 +4,7 @@
  * the local stack's address and keys, which win over backend/.env.
  *
  *   npm run dev:local        reset, then run the app on :5173 and :3000
+ *                            (PORT moves the app, for when 5173 is taken)
  *   npm run db:reset:local   reset only, with the app left running
  *
  * Needs Docker. See docs/local-development.md.
@@ -13,6 +14,7 @@ import { existsSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+const appPort = process.env.PORT || "5173";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const resetOnly = process.argv.includes("--reset-only");
 
@@ -85,7 +87,7 @@ writeFileSync(
 
 console.log(`
 ✓ Local database ready
-  App          http://localhost:5173
+  App          http://localhost:${appPort}
   Studio       ${keys.STUDIO_URL ?? "http://127.0.0.1:55323"}
   Emails       ${keys.INBUCKET_URL ?? keys.MAILPIT_URL ?? "http://127.0.0.1:55324"}
   Accounts     docs/local-development.md
@@ -96,6 +98,7 @@ const backendEnv = {
   // Pinned: a PORT set for the frontend (a preview runner sets one) would
   // otherwise put the API on the same port.
   PORT: "3000",
+  CORS_ORIGINS: `http://localhost:${appPort}`,
   SUPABASE_URL: keys.API_URL,
   SUPABASE_SERVICE_ROLE_KEY: keys.SERVICE_ROLE_KEY,
   // Empty, not unset: an empty value still wins over backend/.env, and
@@ -111,10 +114,25 @@ const children = [
     stdio: "inherit",
     env: backendEnv,
   }),
-  spawn("npm", ["run", "dev", "-w", "frontend", "--", "--mode", "localdb"], {
-    cwd: root,
-    stdio: "inherit",
-  }),
+  spawn(
+    "npm",
+    [
+      "run",
+      "dev",
+      "-w",
+      "frontend",
+      "--",
+      "--mode",
+      "localdb",
+      "--port",
+      appPort,
+      "--strictPort",
+    ],
+    {
+      cwd: root,
+      stdio: "inherit",
+    },
+  ),
 ];
 
 const stop = () => {

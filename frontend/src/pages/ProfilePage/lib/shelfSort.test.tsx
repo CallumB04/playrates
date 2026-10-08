@@ -104,7 +104,7 @@ describe("shelfFoot", () => {
        formatReleaseShort already prints elsewhere. */
     it("shows a month and year for recently played", () => {
         const played = log({ startDate: "2026-09-14", finishDate: null });
-        expect(shelfFoot(played, "played").value).toBe("Sept 26");
+        expect(shelfFoot(played, "played").value).toBe("Sept ’26");
     });
 
     /* The later of the two, and never updated_at — editing an old log must
@@ -115,7 +115,7 @@ describe("shelfFoot", () => {
             finishDate: "2024-06-11",
             updatedAt: "2026-09-14T00:00:00.000Z",
         });
-        expect(shelfFoot(both, "played").value).toBe("Jun 24");
+        expect(shelfFoot(both, "played").value).toBe("Jun ’24");
     });
 
     it("falls back to whichever date the log actually has", () => {
@@ -124,13 +124,13 @@ describe("shelfFoot", () => {
                 log({ startDate: "2021-02-01", finishDate: null }),
                 "played"
             ).value
-        ).toBe("Feb 21");
+        ).toBe("Feb ’21");
         expect(
             shelfFoot(
                 log({ startDate: null, finishDate: "2019-12-25" }),
                 "played"
             ).value
-        ).toBe("Dec 19");
+        ).toBe("Dec ’19");
     });
 
     it("shows a dash for a log with neither date", () => {
@@ -156,6 +156,21 @@ describe("shelfFoot", () => {
        claim the opposite of what the log says. */
     it("shows a dash rather than 0% for a game with no achievements", () => {
         expect(shelfFoot(log(), "completion").value).toBe("—");
+    });
+
+    it("shows the month the game was added", () => {
+        expect(shelfFoot(log(), "added").value).toBe("Jan ’26");
+    });
+
+    it("shows hours for time played and time to beat", () => {
+        const timed = log({ hoursPlayed: 42.5, hoursToBeat: 30 });
+        expect(shelfFoot(timed, "hoursPlayed").value).toBe("42.5h");
+        expect(shelfFoot(timed, "hoursToBeat").value).toBe("30h");
+    });
+
+    it("shows a dash for a game with no hours logged", () => {
+        expect(shelfFoot(log(), "hoursPlayed").value).toBe("—");
+        expect(shelfFoot(log(), "hoursToBeat").value).toBe("—");
     });
 
     it("keeps the rating when sorting by title, which shows itself", () => {
@@ -187,12 +202,16 @@ describe("shelfFoot, a game logged on more than one console", () => {
             finishDate: "2024-06-11",
             achievementsTotal: 10,
             achievementsCompleted: 5,
+            hoursPlayed: 60,
+            hoursToBeat: 45,
         });
         const second = log({
             rating: 7,
             startDate: "2026-02-01",
             achievementsTotal: 4,
             achievementsCompleted: 4,
+            hoursPlayed: 25,
+            hoursToBeat: 20,
         });
         const logs = [first.logs[0]!, { ...second.logs[0]!, id: 2 }];
         return { ...first, logs, rollup: rollupLogs(logs)! };
@@ -203,7 +222,29 @@ describe("shelfFoot, a game logged on more than one console", () => {
     });
 
     it("dates it by the latest play on any of them", () => {
-        expect(shelfFoot(both(), "played").value).toBe("Feb 26");
+        expect(shelfFoot(both(), "played").value).toBe("Feb ’26");
+    });
+
+    it("dates it by the first console it was logged on", () => {
+        const entry = both();
+        const logs = [
+            { ...entry.logs[0]!, createdAt: "2025-11-05T12:00:00.000Z" },
+            { ...entry.logs[1]!, createdAt: "2026-03-01T12:00:00.000Z" },
+        ];
+        expect(
+            shelfFoot({ ...entry, logs, rollup: rollupLogs(logs)! }, "added")
+                .value
+        ).toBe("Nov ’25");
+    });
+
+    it("counts its hours across every console", () => {
+        expect(shelfFoot(both(), "hoursPlayed").value).toBe("85h");
+    });
+
+    /* A second run is usually the quicker one, and that is how long the game
+       takes this person now. */
+    it("times it by the quickest beat", () => {
+        expect(shelfFoot(both(), "hoursToBeat").value).toBe("20h");
     });
 
     it("shows the best completion, as trophy lists differ by console", () => {

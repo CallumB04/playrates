@@ -15,7 +15,8 @@ export type ErrorCode =
   | "self_friend"
   | "not_configured"
   | "platform_taken"
-  | "several_logs";
+  | "several_logs"
+  | "profile_private";
 
 /**
  * Errors the API returns on purpose. `expose` keeps internals in: a 5xx logs

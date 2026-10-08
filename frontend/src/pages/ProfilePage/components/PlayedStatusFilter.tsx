@@ -37,7 +37,7 @@ const PlayedStatusFilter = ({ value, onChange }: PlayedStatusFilterProps) => (
         value={value ?? ""}
         onChange={(next) => onChange((next || undefined) as Filter | undefined)}
         aria-label="Filter by how it ended"
-        className="min-w-0 flex-1 sm:w-40 sm:flex-none"
+        className="min-w-0 flex-1 max-sm:basis-full sm:w-40 sm:flex-none"
     />
 );
 

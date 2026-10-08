@@ -92,7 +92,9 @@ export const createUserFriendsRouter = ({
     async (req, res) => {
       const { username } = req.valid!.params as { username: string };
       const { status } = req.valid!.query as z.infer<typeof FriendQuerySchema>;
-      res.json({ data: await service.listForUsername(username, status) });
+      res.json({
+        data: await service.listForUsername(username, req.auth?.userId, status),
+      });
     },
   );
 

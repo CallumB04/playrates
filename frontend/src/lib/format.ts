@@ -130,13 +130,20 @@ export const formatMonthYear = (iso: string | null | undefined): string =>
           )
         : "—";
 
-/** "Sep 26" — the tightest a month and year go, for a figure under a tile. */
-export const formatMonthYearShort = (iso: string | null | undefined): string =>
-    iso
-        ? formatter({ month: "short", year: "2-digit" }, zoneFor(iso)).format(
-              new Date(iso)
-          )
-        : "—";
+/** "Sept ’26" — the tightest a month and year go, for a figure under a tile.
+ *  Without the apostrophe "Aug 26" reads as the 26th of August. */
+export const formatMonthYearShort = (
+    iso: string | null | undefined
+): string => {
+    if (!iso) return "—";
+    const parts = formatter(
+        { month: "short", year: "2-digit" },
+        zoneFor(iso)
+    ).formatToParts(new Date(iso));
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+        parts.find((p) => p.type === type)?.value ?? "";
+    return `${part("month")} ’${part("year")}`;
+};
 
 /** "11 Feb 2026". */
 export const formatDate = (iso: string | null | undefined): string =>

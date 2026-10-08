@@ -36,6 +36,11 @@ import ProfileError from "./components/ProfileError";
 import MemberFileHeader from "./components/MemberFileHeader";
 import FriendAction from "./components/FriendAction";
 import ShelfPanel from "./components/ShelfPanel";
+import {
+    OwnProfileVisibility,
+    PrivateProfile,
+} from "./components/PrivateProfile";
+import { profileAccess } from "./lib/profileAccess";
 import ShelfSort from "./components/ShelfSort";
 import PlayedStatusFilterControl from "./components/PlayedStatusFilter";
 import RecentReviews from "./components/RecentReviews";
@@ -113,6 +118,19 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
     const isMyAccount =
         !!currentUser && currentUser.username === targetUsername;
 
+    const { data: myFriends } = useMyFriends();
+    const { relation, send, accept, remove, isPending } = useFriendRelation(
+        targetUser?.id
+    );
+    const access = targetUser
+        ? profileAccess(targetUser.profileVisibility, {
+              isOwner: isMyAccount,
+              signedIn: !!currentUser,
+              relation: currentUser && !myFriends ? undefined : relation,
+          })
+        : "unknown";
+    const canSee = access === "visible";
+
     // Each tab pages independently.
     const { data: logsPage, isLoading: logsLoading } = useUserShelf(
         targetUsername,
@@ -124,23 +142,28 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
             direction,
             // Only the played shelf has endings to filter by.
             playedStatus: activeSection === "played" ? playedStatus : undefined,
-        }
+        },
+        canSee
     );
-    const { data: stats } = useUserStats(targetUsername);
+    const { data: stats } = useUserStats(targetUsername, undefined, canSee);
     const { data: platforms } = usePlatforms();
-    const { data: friends, isLoading: friendsLoading } =
-        useUserFriends(targetUsername);
-    const { data: myFriends } = useMyFriends();
-    const { data: reviewsPage, isLoading: reviewsLoading } =
-        useUserReviews(targetUsername);
+    const { data: friends, isLoading: friendsLoading } = useUserFriends(
+        targetUsername,
+        canSee
+    );
+    const { data: reviewsPage, isLoading: reviewsLoading } = useUserReviews(
+        targetUsername,
+        canSee
+    );
     const { data: threads, isLoading: threadsLoading } = useUserThreads(
         targetUsername,
-        COMMUNITY_THREADS_SHOWN
+        COMMUNITY_THREADS_SHOWN,
+        canSee
     );
     // One row, for its total: "See all" says how many there are.
     const { data: threadTotal } = useThreads(
         { participant: targetUsername, limit: 1 },
-        !!targetUsername
+        canSee && !!targetUsername
     );
     const { data: myLogIds } = useMyGameLogIds();
 
@@ -205,9 +228,6 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
         [myLogIds]
     );
 
-    const { relation, send, accept, remove, isPending } = useFriendRelation(
-        targetUser?.id
-    );
     const friendEdge = useMemo(
         () => (myFriends ?? []).find((e) => e.user.id === targetUser?.id),
         [myFriends, targetUser]
@@ -289,6 +309,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
             <MemberFileHeader
                 profile={targetUser}
                 stats={stats}
+                profileHidden={access === "hidden"}
                 reviewCount={reviewsPage?.meta.total}
                 friendCount={
                     friendsLoading ? undefined : acceptedFriends.length
@@ -359,77 +380,108 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 }
             />
 
-            <ShelfPanel
-                active={activeSection}
-                // Every tab's count: the stats endpoint returns the whole breakdown.
-                counts={stats?.byStatus ?? { [activeSection]: total }}
-                onSelect={setSection}
-                entries={entries}
-                platforms={platforms ?? []}
-                isLoading={logsLoading}
-                pagination={pagination}
-                perPage={perPage}
-                buildTileActions={buildTileActions}
-                isMyAccount={isMyAccount}
-                sort={sort}
-                trailing={
-                    <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
-                        {!isMyAccount && myLogIds && (
-                            <span className="text-label text-accent max-sm:hidden">
-                                {formatCount(
-                                    entries.filter((e) =>
-                                        myLogGameIds.has(e.gameId)
-                                    ).length
-                                )}{" "}
-                                in common
-                            </span>
-                        )}
-                        {activeSection === "played" && (
-                            <PlayedStatusFilterControl
-                                value={playedStatus}
-                                onChange={setEnding}
-                            />
-                        )}
-                        <ShelfSort
-                            sort={sort}
-                            direction={direction}
+            {/* Past the card, nothing: not the games, the reviews, the
+                friends or the threads. */}
+            {access === "hidden" &&
+            targetUser.profileVisibility !== "everyone" ? (
+                <PrivateProfile
+                    username={targetUser.username}
+                    visibility={targetUser.profileVisibility}
+                    signedIn={!!currentUser}
+                    relation={relation}
+                />
+            ) : (
+                <>
+                    <div className="flex flex-col gap-3">
+                        {isMyAccount &&
+                            targetUser.profileVisibility !== "everyone" && (
+                                <OwnProfileVisibility
+                                    visibility={targetUser.profileVisibility}
+                                />
+                            )}
+                        <ShelfPanel
+                            active={activeSection}
+                            // Every tab's count: the stats endpoint returns the whole breakdown.
+                            counts={
+                                stats?.byStatus ?? { [activeSection]: total }
+                            }
+                            onSelect={setSection}
+                            entries={entries}
+                            platforms={platforms ?? []}
+                            isLoading={logsLoading || access === "unknown"}
+                            pagination={pagination}
+                            perPage={perPage}
+                            buildTileActions={buildTileActions}
                             isMyAccount={isMyAccount}
-                            onChange={setOrder}
+                            sort={sort}
+                            trailing={
+                                /* A row each below sm: side by side, the sort label had
+                               60px and "Time played" and "Time to beat" both read
+                               "Time…". */
+                                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
+                                    {!isMyAccount && myLogIds && (
+                                        <span className="text-label text-accent max-sm:hidden">
+                                            {formatCount(
+                                                entries.filter((e) =>
+                                                    myLogGameIds.has(e.gameId)
+                                                ).length
+                                            )}{" "}
+                                            in common
+                                        </span>
+                                    )}
+                                    {activeSection === "played" && (
+                                        <PlayedStatusFilterControl
+                                            value={playedStatus}
+                                            onChange={setEnding}
+                                        />
+                                    )}
+                                    <ShelfSort
+                                        sort={sort}
+                                        direction={direction}
+                                        isMyAccount={isMyAccount}
+                                        onChange={setOrder}
+                                    />
+                                </div>
+                            }
                         />
                     </div>
-                }
-            />
 
-            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-                <div className="flex min-w-0 flex-col gap-6">
-                    <RecentReviews
-                        reviews={reviewsPage?.data ?? []}
-                        isLoading={reviewsLoading}
-                        isOwner={isMyAccount}
-                    />
-                    <CommunityThreads
-                        username={targetUser?.username ?? targetUsername}
-                        threads={threads ?? []}
-                        total={threadTotal?.meta.total ?? 0}
-                        isLoading={threadsLoading}
-                        isOwner={isMyAccount}
-                    />
-                </div>
-                <FriendsPanel
-                    friends={acceptedFriends}
-                    isLoading={friendsLoading}
-                    sharedCount={sharedFriendCount}
-                    pendingCount={
-                        isMyAccount
-                            ? (friends ?? []).filter(
-                                  (e) => e.status === "request-received"
-                              ).length
-                            : 0
-                    }
-                    onOpenFriends={() => setModal({ kind: "friends" })}
-                    onOpenRequests={() => setModal({ kind: "friendRequests" })}
-                />
-            </div>
+                    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+                        <div className="flex min-w-0 flex-col gap-6">
+                            <RecentReviews
+                                reviews={reviewsPage?.data ?? []}
+                                isLoading={reviewsLoading}
+                                isOwner={isMyAccount}
+                            />
+                            <CommunityThreads
+                                username={
+                                    targetUser?.username ?? targetUsername
+                                }
+                                threads={threads ?? []}
+                                total={threadTotal?.meta.total ?? 0}
+                                isLoading={threadsLoading}
+                                isOwner={isMyAccount}
+                            />
+                        </div>
+                        <FriendsPanel
+                            friends={acceptedFriends}
+                            isLoading={friendsLoading}
+                            sharedCount={sharedFriendCount}
+                            pendingCount={
+                                isMyAccount
+                                    ? (friends ?? []).filter(
+                                          (e) => e.status === "request-received"
+                                      ).length
+                                    : 0
+                            }
+                            onOpenFriends={() => setModal({ kind: "friends" })}
+                            onOpenRequests={() =>
+                                setModal({ kind: "friendRequests" })
+                            }
+                        />
+                    </div>
+                </>
+            )}
 
             <ProfileModals
                 modal={modal}

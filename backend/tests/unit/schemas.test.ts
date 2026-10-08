@@ -9,6 +9,7 @@ import {
   UsernameSchema,
 } from "@playrates/shared";
 import { toRange } from "../../src/lib/pagination.js";
+import { canSeeProfile } from "@playrates/shared";
 
 describe("boolean query parameters", () => {
   /**
@@ -148,5 +149,25 @@ describe("review input", () => {
 
   it("trims and rejects a whitespace-only body", () => {
     expect(() => ReviewInputSchema.parse({ body: "   " })).toThrow();
+  });
+});
+
+describe("canSeeProfile", () => {
+  const stranger = { isOwner: false, isFriend: false };
+  const friend = { isOwner: false, isFriend: true };
+  const owner = { isOwner: true, isFriend: false };
+
+  it("shows everyone's games to anyone", () => {
+    expect(canSeeProfile("everyone", stranger)).toBe(true);
+  });
+
+  it("shows friends-only games to friends alone", () => {
+    expect(canSeeProfile("friends", friend)).toBe(true);
+    expect(canSeeProfile("friends", stranger)).toBe(false);
+  });
+
+  it("shows private games to no one but their owner", () => {
+    expect(canSeeProfile("private", friend)).toBe(false);
+    expect(canSeeProfile("private", owner)).toBe(true);
   });
 });

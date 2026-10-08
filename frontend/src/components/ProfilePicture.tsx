@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Camera } from "lucide-react";
+import { Camera, Lock } from "lucide-react";
 import type { ProfileAccent } from "@playrates/shared";
 import { accentHue, avatarGradient } from "../lib/profileAccent";
 import { cn } from "../lib/cn";
@@ -127,5 +127,21 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
         <div className={className}>{body}</div>
     );
 };
+
+/** For a private account: no picture, no initial, nothing to link to. */
+export const PrivateProfilePicture = ({
+    variant,
+}: {
+    variant: AvatarVariant;
+}) => (
+    <div
+        className={cn(
+            "grid aspect-square shrink-0 place-items-center rounded-full border border-subtle bg-surface-sunken text-content-muted",
+            AVATAR_VARIANT[variant].box
+        )}
+    >
+        <Lock className="size-[40%]" aria-hidden />
+    </div>
+);
 
 export default ProfilePicture;

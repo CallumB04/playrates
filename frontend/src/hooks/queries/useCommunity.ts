@@ -72,11 +72,15 @@ export const useThread = (threadId: number | undefined) =>
 
 /** Most recently posted in first, which the full list cannot do: it sorts
  *  by the threads' own activity. */
-export const useUserThreads = (username: string | undefined, limit: number) =>
+export const useUserThreads = (
+    username: string | undefined,
+    limit: number,
+    enabled = true
+) =>
     useQuery({
         queryKey: queryKeys.community.byUsername(username ?? "", limit),
         queryFn: () => fetchUserThreads(username!, limit),
-        enabled: !!username,
+        enabled: enabled && !!username,
     });
 
 /** Refetch rather than patch, as reviews do: one message moves a thread's

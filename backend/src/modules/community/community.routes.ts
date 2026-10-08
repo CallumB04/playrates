@@ -199,16 +199,20 @@ export const createCommunityRouter = ({
 };
 
 /** Mounted at /users/:username/community-threads. */
-export const createUserThreadsRouter = ({ service }: Deps): Router => {
+export const createUserThreadsRouter = ({
+  service,
+  optionalAuth,
+}: Deps): Router => {
   const router = Router({ mergeParams: true });
 
   router.get(
     "/",
+    optionalAuth,
     validate({ params: UsernameParamSchema, query: UserThreadsQuerySchema }),
     async (req, res) => {
       const { username } = req.valid!.params as { username: string };
       const { limit } = req.valid!.query as { limit: number };
-      res.json(await service.listByUsername(username, limit));
+      res.json(await service.listByUsername(username, limit, req.auth?.userId));
     },
   );
 

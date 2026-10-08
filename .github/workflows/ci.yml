@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, refactor]
+    branches: [main, refactor, "release/**"]
   pull_request:
-    branches: [main]
+    branches: [main, "release/**"]
 
 # A new push to the same branch cancels the run already in flight, so CI
 # reports on the latest commit rather than queueing behind stale ones.

@@ -28,11 +28,11 @@ export const useRecentReviews = (limit: number) =>
         staleTime: 60_000,
     });
 
-export const useUserReviews = (username: string | undefined) =>
+export const useUserReviews = (username: string | undefined, enabled = true) =>
     useQuery({
         queryKey: queryKeys.reviews.byUsername(username ?? ""),
         queryFn: () => fetchUserReviews(username!),
-        enabled: !!username,
+        enabled: enabled && !!username,
     });
 
 /** Refetch rather than patch: the same review sits in the game list, the site
