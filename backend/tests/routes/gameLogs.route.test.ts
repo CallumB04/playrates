@@ -256,6 +256,7 @@ describe("game logs", () => {
           achievements_completed: 1,
           hours_played: 50,
           hours_to_beat: 40,
+          created_at: "2026-03-01T00:00:00.000Z",
         }),
         buildGameLog({
           id: 2,
@@ -268,6 +269,7 @@ describe("game logs", () => {
           achievements_completed: 9,
           hours_played: 10,
           hours_to_beat: 8,
+          created_at: "2026-01-01T00:00:00.000Z",
         }),
         buildGameLog({
           id: 3,
@@ -276,6 +278,7 @@ describe("game logs", () => {
           start_date: "2020-05-01",
           updated_at: "2026-02-01T00:00:00.000Z",
           hours_played: null,
+          created_at: "2026-02-01T00:00:00.000Z",
         }),
       ],
     });
@@ -363,6 +366,14 @@ describe("game logs", () => {
         "Beta",
         "Alpha",
         "Gamma",
+      ]);
+    });
+
+    it("orders by when the log was made", async () => {
+      expect(await titles("sort=added&direction=desc")).toEqual([
+        "Alpha",
+        "Gamma",
+        "Beta",
       ]);
     });
 

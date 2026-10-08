@@ -408,6 +408,32 @@ describe("shelves of games", () => {
     expect(await shelfOrder("sort=hoursPlayed&direction=desc")).toEqual([1, 2]);
   });
 
+  /* Game 1's Switch log is the newest row, but its Steam log is the oldest:
+     the game was added first, so it is not the most recently added. */
+  it("sorts by when a game's first log was made", async () => {
+    const created: Record<number, string> = {
+      1: "2026-01-01T00:00:00.000Z",
+      2: "2026-09-01T00:00:00.000Z",
+      3: "2026-05-01T00:00:00.000Z",
+    };
+    const base = shelfSeed();
+    const { app } = buildTestApp({
+      seed: {
+        ...base,
+        gameLogs: base.gameLogs.map((l) => ({
+          ...l,
+          created_at: created[l.id]!,
+        })),
+      },
+    });
+    const response = await request(app)
+      .get("/api/v1/me/shelf?sort=added&direction=desc")
+      .set(as(USER_A));
+    expect(response.body.data.map((e: { gameId: number }) => e.gameId)).toEqual(
+      [2, 1],
+    );
+  });
+
   it("sorts by the quickest time to beat", async () => {
     expect(await shelfOrder("sort=hoursToBeat&direction=asc")).toEqual([2, 1]);
   });

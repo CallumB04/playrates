@@ -804,6 +804,8 @@ export const createInMemoryRepos = (
               return l.hours_played;
             case "hoursToBeat":
               return l.hours_to_beat;
+            case "added":
+              return l.created_at;
           }
         };
 
@@ -885,6 +887,8 @@ export const createInMemoryRepos = (
               const hours = present(logs.map((l) => l.hours_to_beat));
               return hours.length ? Math.min(...hours) : null;
             }
+            case "added":
+              return logs.map((l) => l.created_at).sort()[0]!;
           }
         };
         const latest = (g: (typeof games)[number]) =>

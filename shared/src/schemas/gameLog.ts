@@ -118,6 +118,7 @@ export const GAME_LOG_SORTS = [
   "completion",
   "hoursPlayed",
   "hoursToBeat",
+  "added",
 ] as const;
 
 export const GameLogSortSchema = z.enum(GAME_LOG_SORTS).default("rating");

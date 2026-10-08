@@ -163,6 +163,7 @@ export interface GameLogRollupRow {
   game_critic_score: number | null;
   game_release_date: string | null;
   hours_to_beat: number | null;
+  first_added_at: string;
 }
 
 /** What user_log_stats() returns. */

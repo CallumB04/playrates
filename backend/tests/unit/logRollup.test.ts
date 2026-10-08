@@ -141,6 +141,15 @@ describe("rollupLogs", () => {
     expect(rollup?.lastPlayed).toBe("2026-05-01");
     expect(rollup?.updatedAt).toBe("2026-05-02T00:00:00.000Z");
   });
+
+  /* Logging a second console is not adding the game. */
+  it("dates the game's adding from its first log", () => {
+    const later = { ...nsw, createdAt: "2026-04-01T00:00:00.000Z" };
+    const first = { ...ps5, createdAt: "2026-02-01T00:00:00.000Z" };
+    expect(rollupLogs([later, first])?.addedAt).toBe(
+      "2026-02-01T00:00:00.000Z",
+    );
+  });
 });
 
 describe("pickLegacyLog", () => {

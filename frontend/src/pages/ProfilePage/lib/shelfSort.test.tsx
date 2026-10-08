@@ -158,6 +158,10 @@ describe("shelfFoot", () => {
         expect(shelfFoot(log(), "completion").value).toBe("—");
     });
 
+    it("shows the month the game was added", () => {
+        expect(shelfFoot(log(), "added").value).toBe("Jan ’26");
+    });
+
     it("shows hours for time played and time to beat", () => {
         const timed = log({ hoursPlayed: 42.5, hoursToBeat: 30 });
         expect(shelfFoot(timed, "hoursPlayed").value).toBe("42.5h");
@@ -219,6 +223,18 @@ describe("shelfFoot, a game logged on more than one console", () => {
 
     it("dates it by the latest play on any of them", () => {
         expect(shelfFoot(both(), "played").value).toBe("Feb ’26");
+    });
+
+    it("dates it by the first console it was logged on", () => {
+        const entry = both();
+        const logs = [
+            { ...entry.logs[0]!, createdAt: "2025-11-05T12:00:00.000Z" },
+            { ...entry.logs[1]!, createdAt: "2026-03-01T12:00:00.000Z" },
+        ];
+        expect(
+            shelfFoot({ ...entry, logs, rollup: rollupLogs(logs)! }, "added")
+                .value
+        ).toBe("Nov ’25");
     });
 
     it("counts its hours across every console", () => {

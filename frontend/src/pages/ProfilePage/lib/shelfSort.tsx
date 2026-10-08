@@ -35,6 +35,7 @@ export const shelfSortOptions = (isMyAccount: boolean): SortOption[] => [
     { value: "gameRating", label: "PlayRates average", ...HIGH_LOW },
     { value: "critic", label: "Critic score", ...HIGH_LOW },
     { value: "played", label: "Recently played", ...OLD_NEW },
+    { value: "added", label: "Recently added", ...OLD_NEW },
     {
         value: "hoursPlayed",
         label: "Time played",
@@ -99,6 +100,8 @@ export const shelfFoot = (entry: ShelfEntry, sort: GameLogSort): ShelfFoot => {
             };
         case "played":
             return { value: formatMonthYearShort(rollup.lastPlayed) };
+        case "added":
+            return { value: formatMonthYearShort(rollup.addedAt) };
         case "hoursPlayed":
             return { value: formatHours(rollup.hoursPlayed) };
         case "hoursToBeat":
