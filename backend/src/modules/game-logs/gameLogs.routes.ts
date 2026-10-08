@@ -167,6 +167,7 @@ export const createUserShelfRouter = ({
           username,
           { status, playedStatus, sort, direction },
           pagination,
+          req.auth?.userId,
         ),
       );
     },
@@ -292,6 +293,7 @@ export const createUserGameLogsRouter = ({
           username,
           { status, playedStatus, sort, direction },
           pagination,
+          req.auth?.userId,
         ),
       );
     },
@@ -314,7 +316,9 @@ export const createUserStatsRouter = ({
     async (req, res) => {
       const { username } = req.valid!.params as { username: string };
       const { year } = req.valid!.query as z.infer<typeof UserStatsQuerySchema>;
-      res.json(await service.statsForUsername(username, year));
+      res.json(
+        await service.statsForUsername(username, req.auth?.userId, year),
+      );
     },
   );
 

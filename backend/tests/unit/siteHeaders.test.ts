@@ -4,7 +4,9 @@ import { SITE_HEADERS } from "../../src/config/siteHeaders.js";
 
 const vercel = JSON.parse(
   readFileSync(new URL("../../../vercel.json", import.meta.url), "utf8"),
-) as { headers: { source: string; headers: { key: string; value: string }[] }[] };
+) as {
+  headers: { source: string; headers: { key: string; value: string }[] }[];
+};
 
 describe("site headers", () => {
   /* Static pages get them from vercel.json and rendered pages from the

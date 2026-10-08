@@ -89,7 +89,9 @@ describe("error handler", () => {
   });
 
   it("always includes the request id", async () => {
-    expect((await runHandler(AppError.notFound())).body.error.requestId).toBe("req-1");
+    expect((await runHandler(AppError.notFound())).body.error.requestId).toBe(
+      "req-1",
+    );
   });
 
   it("records a 5xx with the original message, for the admin error feed", async () => {

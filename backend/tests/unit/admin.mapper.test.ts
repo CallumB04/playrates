@@ -30,7 +30,10 @@ import type {
 // A Saturday.
 const TODAY = new Date("2026-09-26T15:00:00Z");
 
-const row = (bucket: string, fields: Partial<AdminSeriesRow> = {}): AdminSeriesRow => ({
+const row = (
+  bucket: string,
+  fields: Partial<AdminSeriesRow> = {},
+): AdminSeriesRow => ({
   bucket,
   signups: 0,
   logs: 0,
@@ -43,8 +46,18 @@ const row = (bucket: string, fields: Partial<AdminSeriesRow> = {}): AdminSeriesR
 });
 
 const totals = {
-  users: 0, onboarded: 0, logs: 0, reviews: 0, threads: 0, messages: 0,
-  games: 0, friendships: 0, online: 0, dau: 0, wau: 0, mau: 0,
+  users: 0,
+  onboarded: 0,
+  logs: 0,
+  reviews: 0,
+  threads: 0,
+  messages: 0,
+  games: 0,
+  friendships: 0,
+  online: 0,
+  dau: 0,
+  wau: 0,
+  mau: 0,
 };
 
 describe("rangeWindow", () => {
@@ -96,9 +109,20 @@ describe("toOverview", () => {
 
     const overview = toOverview(window, totals, rows);
 
-    expect(overview.series.map((p) => p.bucket)).toEqual(["2026-09-20", "2026-09-26"]);
-    expect(overview.period.signups).toEqual({ current: 6, previous: 4, change: 0.5 });
-    expect(overview.period.logs).toEqual({ current: 2, previous: 4, change: -0.5 });
+    expect(overview.series.map((p) => p.bucket)).toEqual([
+      "2026-09-20",
+      "2026-09-26",
+    ]);
+    expect(overview.period.signups).toEqual({
+      current: 6,
+      previous: 4,
+      change: 0.5,
+    });
+    expect(overview.period.logs).toEqual({
+      current: 2,
+      previous: 4,
+      change: -0.5,
+    });
   });
 
   it("compares weekly active people with seven days earlier", () => {
@@ -117,13 +141,20 @@ describe("toOverview", () => {
 
   it("compares a weekly series with the week before", () => {
     const weekly = rangeWindow("12m", TODAY);
-    const rows = [row("2026-09-14", { active_week: 10 }), row("2026-09-21", { active_week: 5 })];
+    const rows = [
+      row("2026-09-14", { active_week: 10 }),
+      row("2026-09-21", { active_week: 5 }),
+    ];
     expect(toOverview(weekly, totals, rows).activeWeek.change).toBe(-0.5);
   });
 });
 
 describe("toIgdbUsage", () => {
-  const day = (d: string, requests: number, extra: Partial<IgdbUsageDayRow> = {}) => ({
+  const day = (
+    d: string,
+    requests: number,
+    extra: Partial<IgdbUsageDayRow> = {},
+  ) => ({
     day: d,
     requests,
     failures: 0,
@@ -136,8 +167,16 @@ describe("toIgdbUsage", () => {
   it("gives thirty days of bars, zero-filled, ending today", () => {
     const usage = toIgdbUsage([day("2026-09-26", 3)], TODAY);
     expect(usage.days).toHaveLength(30);
-    expect(usage.days.at(-1)).toEqual({ day: "2026-09-26", requests: 3, failures: 0 });
-    expect(usage.days[0]).toEqual({ day: "2026-08-28", requests: 0, failures: 0 });
+    expect(usage.days.at(-1)).toEqual({
+      day: "2026-09-26",
+      requests: 3,
+      failures: 0,
+    });
+    expect(usage.days[0]).toEqual({
+      day: "2026-08-28",
+      requests: 0,
+      failures: 0,
+    });
   });
 
   it("says what today has seen, and nothing when it has seen nothing", () => {
@@ -153,8 +192,16 @@ describe("toIgdbUsage", () => {
   it("surfaces the most recent failure", () => {
     const usage = toIgdbUsage(
       [
-        day("2026-09-20", 5, { failures: 1, last_failure_at: "2026-09-20T08:00:00Z", last_error: "IGDB responded 502" }),
-        day("2026-09-26", 5, { failures: 1, last_failure_at: "2026-09-26T09:00:00Z", last_error: "IGDB responded 429" }),
+        day("2026-09-20", 5, {
+          failures: 1,
+          last_failure_at: "2026-09-20T08:00:00Z",
+          last_error: "IGDB responded 502",
+        }),
+        day("2026-09-26", 5, {
+          failures: 1,
+          last_failure_at: "2026-09-26T09:00:00Z",
+          last_error: "IGDB responded 429",
+        }),
       ],
       TODAY,
     );
@@ -162,7 +209,6 @@ describe("toIgdbUsage", () => {
     expect(usage.lastRequestAt).toBe("2026-09-26T12:00:00Z");
   });
 });
-
 
 describe("toActivityEvent", () => {
   const base: AdminActivityFeedRow = {
@@ -203,8 +249,14 @@ describe("toActivityEvent", () => {
 describe("toCursorPage", () => {
   it("uses the extra row only to say there is more", () => {
     const rows = [{ id: 9 }, { id: 8 }, { id: 7 }];
-    expect(toCursorPage(rows, 2, (r) => r.id)).toEqual({ data: [9, 8], nextBefore: 8 });
-    expect(toCursorPage(rows, 3, (r) => r.id)).toEqual({ data: [9, 8, 7], nextBefore: null });
+    expect(toCursorPage(rows, 2, (r) => r.id)).toEqual({
+      data: [9, 8],
+      nextBefore: 8,
+    });
+    expect(toCursorPage(rows, 3, (r) => r.id)).toEqual({
+      data: [9, 8, 7],
+      nextBefore: null,
+    });
   });
 });
 
@@ -213,10 +265,14 @@ describe("toMetricDetail", () => {
     const detail = toMetricDetail("users", {
       lastSeen: { online: 1, today: 1, week: 2, month: 2, total: 3 },
       onboarded: 2,
-      mostActive: [{ username: "bee", avatarUrl: null, accent: null, count: 4 }],
+      mostActive: [
+        { username: "bee", avatarUrl: null, accent: null, count: 4 },
+      ],
     });
     expect(detail.metric).toBe("users");
-    expect(detail.metric === "users" && detail.mostActive[0]!.accent).toBe("indigo");
+    expect(detail.metric === "users" && detail.mostActive[0]!.accent).toBe(
+      "indigo",
+    );
   });
 
   it("passes the other metrics through as the SQL shaped them", () => {
@@ -286,7 +342,11 @@ describe("toUserSummary", () => {
       },
       now,
     );
-    expect(summary).toMatchObject({ online: true, logCount: 4, activeDayCount: 9 });
+    expect(summary).toMatchObject({
+      online: true,
+      logCount: 4,
+      activeDayCount: 9,
+    });
   });
 });
 
@@ -305,7 +365,11 @@ describe("toAnnouncement", () => {
       patch_note_message_id: null,
       read_count: 1,
     });
-    expect(announcement).toMatchObject({ tone: "info", link: "/community", readCount: 1 });
+    expect(announcement).toMatchObject({
+      tone: "info",
+      link: "/community",
+      readCount: 1,
+    });
   });
 });
 
@@ -314,17 +378,27 @@ const heading = (level: 1 | 2 | 3, text: string) => ({
   attrs: { level },
   content: [{ type: "text", text }],
 });
-const para = (text: string) => ({ type: "paragraph", content: [{ type: "text", text }] });
+const para = (text: string) => ({
+  type: "paragraph",
+  content: [{ type: "text", text }],
+});
 
 describe("patchNoteTitle", () => {
   it("is the first h1, even under a smaller heading", () => {
-    const body = { type: "doc", content: [heading(2, "Fixes"), para("…"), heading(1, "v1.2 Lists")] };
+    const body = {
+      type: "doc",
+      content: [heading(2, "Fixes"), para("…"), heading(1, "v1.2 Lists")],
+    };
     expect(patchNoteTitle(body)).toBe("v1.2 Lists");
   });
 
   it("falls back to the first heading, then to nothing", () => {
-    expect(patchNoteTitle({ type: "doc", content: [heading(2, "v1.1"), para("x")] })).toBe("v1.1");
-    expect(patchNoteTitle({ type: "doc", content: [para("no heading")] })).toBeNull();
+    expect(
+      patchNoteTitle({ type: "doc", content: [heading(2, "v1.1"), para("x")] }),
+    ).toBe("v1.1");
+    expect(
+      patchNoteTitle({ type: "doc", content: [para("no heading")] }),
+    ).toBeNull();
     expect(patchNoteTitle(null)).toBeNull();
   });
 });
@@ -349,7 +423,9 @@ describe("toPatchNote", () => {
 
 describe("patchNoteAnnouncement", () => {
   it("names the release in the title and opens the notes at it", () => {
-    expect(patchNoteAnnouncement("v1.2 Lists", "/community/thread/1#message-41")).toEqual({
+    expect(
+      patchNoteAnnouncement("v1.2 Lists", "/community/thread/1#message-41"),
+    ).toEqual({
       tone: "update",
       title: "New patch notes: v1.2 Lists",
       body: expect.any(String),

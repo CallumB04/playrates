@@ -93,6 +93,7 @@ export const buildRoutes = ({
     repos.profiles,
     repos.games,
     repos.reviews,
+    repos.friends,
   );
   const reviews = createReviewsService(
     repos.reviews,

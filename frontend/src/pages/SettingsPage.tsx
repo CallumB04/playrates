@@ -8,7 +8,7 @@ import {
     TriangleAlert,
     UserRound,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
 import { useAccountForm } from "../contexts/AccountFormContext";
@@ -25,7 +25,7 @@ import { useUserFriends } from "../hooks/queries/useFriends";
 import { usePageMeta } from "../hooks/usePageMeta";
 import { deleteMyAccount, fetchMyData } from "../api";
 import { saveFile } from "../lib/saveFile";
-import { FALLBACK_ACCENT } from "@playrates/shared";
+import { FALLBACK_ACCENT, type GamesVisibility } from "@playrates/shared";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
 import Button from "../components/ui/Button";
@@ -111,7 +111,12 @@ const SettingsPage = () => {
     const { data: reviews } = useUserReviews(user?.username);
     const { data: friends } = useUserFriends(user?.username ?? "");
     const [confirmingDelete, setConfirmingDelete] = useState(false);
-    const [section, setSection] = useState("account");
+    const [params] = useSearchParams();
+    // ?section= so a link elsewhere can open the row it is about.
+    const [section, setSection] = useState(() => {
+        const asked = params.get("section");
+        return SECTIONS.some((s) => s.id === asked) ? asked! : "account";
+    });
 
     /* requireAuth verifies signatures locally and never checks revocation, so
        the token outlives the account. Sign out straight away. */
@@ -146,6 +151,9 @@ const SettingsPage = () => {
     const [hideFromSearch, setHideFromSearch] = useState(
         user?.hideFromSearch ?? false
     );
+    const [gamesVisibility, setGamesVisibility] = useState<GamesVisibility>(
+        user?.gamesVisibility ?? "everyone"
+    );
     const [accent, setAccent] = useState(user?.accent ?? FALLBACK_ACCENT);
     const updateAvatar = useUpdateAvatar();
     const removeAvatar = useRemoveAvatar();
@@ -156,6 +164,7 @@ const SettingsPage = () => {
         setShowSexual(user?.showSexualContent ?? false);
         setHideOnline(user?.hideOnline ?? false);
         setHideFromSearch(user?.hideFromSearch ?? false);
+        setGamesVisibility(user?.gamesVisibility ?? "everyone");
         setAccent(user?.accent ?? FALLBACK_ACCENT);
     }, [user]);
 
@@ -318,6 +327,28 @@ const SettingsPage = () => {
                             )
                         }
                         disabled={update.isPending}
+                    />
+                </Row>
+                <Row
+                    label="Who can see your games"
+                    help="Your shelves, hours and ratings. Reviews you post stay public."
+                >
+                    <SegmentedChoice
+                        label="Who can see your games"
+                        segments={[
+                            { value: "everyone", label: "Everyone" },
+                            { value: "friends", label: "Friends" },
+                            { value: "private", label: "Only me" },
+                        ]}
+                        value={gamesVisibility}
+                        onChange={(next) =>
+                            saveToggle(
+                                { gamesVisibility: next },
+                                next,
+                                setGamesVisibility,
+                                gamesVisibility
+                            )
+                        }
                     />
                 </Row>
                 <Row

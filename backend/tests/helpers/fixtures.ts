@@ -29,6 +29,7 @@ export const buildProfile = (
   timezone: "UTC",
   hide_online: false,
   hide_from_search: false,
+  games_visibility: "everyone",
   accent: "indigo",
   // An account from before the welcome existed; a new one overrides to null.
   onboarded_at: LONG_AGO,

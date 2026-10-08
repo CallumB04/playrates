@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isOnline,
+  toGamesVisibility,
   toProfile,
 } from "../../src/modules/profiles/profiles.mapper.js";
 import {
@@ -37,6 +38,17 @@ describe("profile mapper", () => {
 
     expect(profile).not.toHaveProperty("password");
     expect(profile).not.toHaveProperty("email");
+  });
+
+  it("reads back who can see the games", () => {
+    expect(toGamesVisibility("friends")).toBe("friends");
+  });
+
+  /* The opposite of the accent's fallback: guessing wrong here shows
+     someone's games to people they chose to hide them from. */
+  it("hides the games when the value is not one it knows", () => {
+    expect(toGamesVisibility("secret")).toBe("private");
+    expect(toGamesVisibility(undefined)).toBe("private");
   });
 
   describe("online derivation", () => {

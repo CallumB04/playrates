@@ -11,6 +11,7 @@ import type {
   UserStats,
 } from "@playrates/shared";
 import {
+  canSeeGames,
   headlineOf,
   loggableSystems,
   meanRating,
@@ -19,6 +20,8 @@ import {
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
+import { toGamesVisibility } from "../profiles/profiles.mapper.js";
+import type { FriendsRepository } from "../friends/friends.repository.js";
 import type { GamesRepository } from "../games/games.repository.js";
 import type { ReviewsRepository } from "../reviews/reviews.repository.js";
 import { toReview } from "../reviews/reviews.mapper.js";
@@ -43,10 +46,32 @@ export const createGameLogsService = (
   profiles: ProfilesRepository,
   games: GamesRepository,
   reviews: ReviewsRepository,
+  friends: FriendsRepository,
 ) => {
-  const profileId = async (username: string): Promise<string> => {
+  /** The profile's id, if the viewer may see its games. Every route that
+   *  shows someone's games to someone else comes through here. */
+  const visibleProfileId = async (
+    username: string,
+    viewerId: string | undefined,
+  ): Promise<string> => {
     const profile = await profiles.findByUsername(username);
     if (!profile) throw AppError.notFound("Profile");
+
+    const visibility = toGamesVisibility(profile.games_visibility);
+    const isOwner = profile.id === viewerId;
+    // Only worth the lookup when friendship is what decides it.
+    const isFriend =
+      !isOwner && visibility === "friends" && viewerId !== undefined
+        ? (await friends.find(profile.id, viewerId))?.status === "accepted"
+        : false;
+
+    if (!canSeeGames(visibility, { isOwner, isFriend })) {
+      throw new AppError(
+        403,
+        "games_private",
+        "This person keeps their games private",
+      );
+    }
     return profile.id;
   };
 
@@ -135,8 +160,13 @@ export const createGameLogsService = (
       username: string,
       query: ShelfQuery,
       pagination: Pagination,
+      viewerId: string | undefined,
     ): Promise<Paginated<GameLogWithGame>> {
-      return this.listForUser(await profileId(username), query, pagination);
+      return this.listForUser(
+        await visibleProfileId(username, viewerId),
+        query,
+        pagination,
+      );
     },
 
     async listForUser(
@@ -161,8 +191,13 @@ export const createGameLogsService = (
       username: string,
       query: ShelfQuery,
       pagination: Pagination,
+      viewerId: string | undefined,
     ): Promise<Paginated<ShelfEntry>> {
-      return shelfFor(await profileId(username), query, pagination);
+      return shelfFor(
+        await visibleProfileId(username, viewerId),
+        query,
+        pagination,
+      );
     },
 
     async bundleForUser(userId: string, gameId: number): Promise<LogBundle> {
@@ -176,7 +211,7 @@ export const createGameLogsService = (
       gameId: number,
       viewerId: string | undefined,
     ): Promise<LogBundle> {
-      const userId = await profileId(username);
+      const userId = await visibleProfileId(username, viewerId);
       return bundleFor(userId, gameId, userId !== viewerId);
     },
 
@@ -209,9 +244,10 @@ export const createGameLogsService = (
 
     async statsForUsername(
       username: string,
+      viewerId: string | undefined,
       year?: number,
     ): Promise<UserStats> {
-      return repo.statsByUser(await profileId(username), year);
+      return repo.statsByUser(await visibleProfileId(username, viewerId), year);
     },
 
     async create(userId: string, input: GameLogCreate): Promise<GameLog> {

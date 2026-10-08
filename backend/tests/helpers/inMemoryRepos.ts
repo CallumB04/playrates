@@ -1179,8 +1179,15 @@ export const createInMemoryRepos = (
             .map((f) => (f.user_a_id === viewerId ? f.user_b_id : f.user_a_id)),
         );
 
+        // Mirrors friend_activity: "only me" leaves the feed.
+        const hidden = new Set(
+          state.profiles
+            .filter((p) => p.games_visibility === "private")
+            .map((p) => p.id),
+        );
+
         const rows = state.gameLogs
-          .filter((l) => friendIds.has(l.user_id))
+          .filter((l) => friendIds.has(l.user_id) && !hidden.has(l.user_id))
           .sort(
             (a, b) =>
               Date.parse(b.updated_at) - Date.parse(a.updated_at) ||

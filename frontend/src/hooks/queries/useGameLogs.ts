@@ -46,7 +46,9 @@ export const useMyShelf = (status?: string, page?: GameLogPage) => {
 export const useUserShelf = (
     username: string,
     status?: string,
-    page?: GameLogPage
+    page?: GameLogPage,
+    // Off when the games are private to this viewer, so it never asks.
+    enabled = true
 ) =>
     useQuery({
         queryKey: queryKeys.gameLogs.byUsername(
@@ -56,7 +58,7 @@ export const useUserShelf = (
             orderKey(page)
         ),
         queryFn: () => fetchUserShelf(username, status, page),
-        enabled: !!username,
+        enabled: enabled && !!username,
         placeholderData: keepPreviousData,
     });
 
@@ -93,11 +95,11 @@ export const useMyGameLogIds = () => {
     });
 };
 
-export const useUserStats = (username: string, year?: number) =>
+export const useUserStats = (username: string, year?: number, enabled = true) =>
     useQuery({
         queryKey: queryKeys.userStats(username, year),
         queryFn: () => fetchUserStats(username, year),
-        enabled: !!username,
+        enabled: enabled && !!username,
     });
 
 /** Writes invalidate the lists, the game's stats and the site totals, so no

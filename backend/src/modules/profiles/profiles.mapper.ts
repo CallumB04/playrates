@@ -1,5 +1,14 @@
-import type { MyProfile, Profile, ProfileAccent } from "@playrates/shared";
-import { FALLBACK_ACCENT, PROFILE_ACCENT_SLUGS } from "@playrates/shared";
+import type {
+  GamesVisibility,
+  MyProfile,
+  Profile,
+  ProfileAccent,
+} from "@playrates/shared";
+import {
+  FALLBACK_ACCENT,
+  GAMES_VISIBILITIES,
+  PROFILE_ACCENT_SLUGS,
+} from "@playrates/shared";
 import type { ProfileRow } from "../../types/database.types.js";
 
 /** How recently a user must have been seen to count as online. */
@@ -16,6 +25,15 @@ export const toAccent = (value: string | null): ProfileAccent =>
     ? (value as ProfileAccent)
     : FALLBACK_ACCENT;
 
+/* Fails closed, unlike the accent: a value this code does not know should
+   hide someone's games, not show them. */
+export const toGamesVisibility = (
+  value: string | undefined,
+): GamesVisibility =>
+  (GAMES_VISIBILITIES as readonly string[]).includes(value ?? "")
+    ? (value as GamesVisibility)
+    : "private";
+
 /** Rows are snake_case, the API is camelCase. Pure, so it's testable without
  *  a database. */
 export const toProfile = (row: ProfileRow, now = Date.now()): Profile => ({
@@ -28,6 +46,7 @@ export const toProfile = (row: ProfileRow, now = Date.now()): Profile => ({
   // Opting out hides presence from everyone, the owner included.
   online: !row.hide_online && isOnline(row.last_seen_at, now),
   hideFromSearch: row.hide_from_search,
+  gamesVisibility: toGamesVisibility(row.games_visibility),
   createdAt: row.created_at,
 });
 

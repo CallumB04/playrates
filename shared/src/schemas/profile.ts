@@ -30,6 +30,22 @@ export const TimeZoneSchema = z
     }
   }, "Unknown time zone");
 
+/** Who can see someone's games: their shelves, their logs, and the hours
+ *  and ratings worked out from them. Reviews are published separately and
+ *  stay public. */
+export const GAMES_VISIBILITIES = ["everyone", "friends", "private"] as const;
+export const GamesVisibilitySchema = z.enum(GAMES_VISIBILITIES);
+export type GamesVisibility = z.infer<typeof GamesVisibilitySchema>;
+
+/** The one rule, so the API's gate and the page's "private" plate agree. */
+export const canSeeGames = (
+  visibility: GamesVisibility,
+  viewer: { isOwner: boolean; isFriend: boolean },
+): boolean =>
+  viewer.isOwner ||
+  visibility === "everyone" ||
+  (visibility === "friends" && viewer.isFriend);
+
 /** `.strict()` rejects unknown keys, so only these fields are editable. */
 export const UpdateProfileSchema = z
   .object({
@@ -48,6 +64,7 @@ export const UpdateProfileSchema = z
     hideOnline: z.boolean().optional(),
     /** Asks search engines to leave the profile page out. */
     hideFromSearch: z.boolean().optional(),
+    gamesVisibility: GamesVisibilitySchema.optional(),
   })
   .strict();
 
@@ -71,6 +88,8 @@ export interface Profile {
   online: boolean;
   /** Public because the page has to say it: a noindex is read by anyone. */
   hideFromSearch: boolean;
+  /** Public so the page can say why the shelves are missing. */
+  gamesVisibility: GamesVisibility;
   createdAt: string;
 }
 

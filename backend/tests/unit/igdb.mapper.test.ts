@@ -73,15 +73,18 @@ describe("toExternalGame", () => {
       igdbImage("sc1", "1080p"),
     );
     expect(
-      toExternalGame({ ...witcher, artworks: undefined, screenshots: undefined })
-        .coverUrl,
+      toExternalGame({
+        ...witcher,
+        artworks: undefined,
+        screenshots: undefined,
+      }).coverUrl,
     ).toBe(igdbImage("co1wyy", "cover_big_2x"));
   });
 
   it("uses the storyline when there is no summary, and empty when neither", () => {
-    expect(
-      toExternalGame({ ...witcher, summary: undefined }).description,
-    ).toBe("Geralt searches for Ciri.");
+    expect(toExternalGame({ ...witcher, summary: undefined }).description).toBe(
+      "Geralt searches for Ciri.",
+    );
     expect(
       toExternalGame({ ...witcher, summary: undefined, storyline: undefined })
         .description,
@@ -124,9 +127,9 @@ describe("toExternalGame", () => {
   });
 
   it("skips machines PlayRates has no place for", () => {
-    expect(toExternalGame({ ...witcher, platforms: [9999] }).systemSlugs).toEqual(
-      [],
-    );
+    expect(
+      toExternalGame({ ...witcher, platforms: [9999] }).systemSlugs,
+    ).toEqual([]);
   });
 
   it("keeps IGDB's genres as they are", () => {
@@ -154,9 +157,9 @@ describe("toExternalGame", () => {
   });
 
   it("flags a game with IGDB's Erotic theme", () => {
-    expect(
-      toExternalGame({ ...witcher, themes: [42] }).hasSexualContent,
-    ).toBe(true);
+    expect(toExternalGame({ ...witcher, themes: [42] }).hasSexualContent).toBe(
+      true,
+    );
   });
 
   it("flags a game whose title says what it is, and not a carved-out one", () => {
@@ -180,7 +183,9 @@ describe("toExternalGame", () => {
     expect(
       toExternalGame({
         ...witcher,
-        collections: [{ id: 8993, name: "The Legend of Zelda: Ocarina of Time" }],
+        collections: [
+          { id: 8993, name: "The Legend of Zelda: Ocarina of Time" },
+        ],
         franchises: [{ id: 596, name: "The Legend of Zelda" }],
       }).series,
     ).toEqual({ id: -596, name: "The Legend of Zelda" });
@@ -188,8 +193,10 @@ describe("toExternalGame", () => {
 
   it("falls back to a collection, kept apart from franchises by sign", () => {
     expect(
-      toExternalGame({ ...witcher, collections: [{ id: 62, name: "The Witcher" }] })
-        .series,
+      toExternalGame({
+        ...witcher,
+        collections: [{ id: 62, name: "The Witcher" }],
+      }).series,
     ).toEqual({ id: 62, name: "The Witcher" });
     expect(toExternalGame(witcher).series).toBeNull();
   });
@@ -227,7 +234,9 @@ describe("toExternalGame", () => {
     expect(
       toExternalGame({
         ...witcher,
-        game_localizations: [{ cover: { image_id: "jp" }, region: { name: "Japan" } }],
+        game_localizations: [
+          { cover: { image_id: "jp" }, region: { name: "Japan" } },
+        ],
       }).altCovers,
     ).toEqual([{ imageId: "jp", label: "Japan" }]);
   });

@@ -95,7 +95,12 @@ describe("nullGamesProvider", () => {
       hasNext: false,
     });
     await expect(
-      nullGamesProvider.listByDate({ from: "2026-09-01", to: "2026-09-26", page: 1, pageSize: 40 }),
+      nullGamesProvider.listByDate({
+        from: "2026-09-01",
+        to: "2026-09-26",
+        page: 1,
+        pageSize: 40,
+      }),
     ).resolves.toEqual({ games: [], total: 0, hasNext: false });
   });
 });
