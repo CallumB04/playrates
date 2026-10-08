@@ -104,7 +104,7 @@ describe("shelfFoot", () => {
        formatReleaseShort already prints elsewhere. */
     it("shows a month and year for recently played", () => {
         const played = log({ startDate: "2026-09-14", finishDate: null });
-        expect(shelfFoot(played, "played").value).toBe("Sept 26");
+        expect(shelfFoot(played, "played").value).toBe("Sept ’26");
     });
 
     /* The later of the two, and never updated_at — editing an old log must
@@ -115,7 +115,7 @@ describe("shelfFoot", () => {
             finishDate: "2024-06-11",
             updatedAt: "2026-09-14T00:00:00.000Z",
         });
-        expect(shelfFoot(both, "played").value).toBe("Jun 24");
+        expect(shelfFoot(both, "played").value).toBe("Jun ’24");
     });
 
     it("falls back to whichever date the log actually has", () => {
@@ -124,13 +124,13 @@ describe("shelfFoot", () => {
                 log({ startDate: "2021-02-01", finishDate: null }),
                 "played"
             ).value
-        ).toBe("Feb 21");
+        ).toBe("Feb ’21");
         expect(
             shelfFoot(
                 log({ startDate: null, finishDate: "2019-12-25" }),
                 "played"
             ).value
-        ).toBe("Dec 19");
+        ).toBe("Dec ’19");
     });
 
     it("shows a dash for a log with neither date", () => {
@@ -203,7 +203,7 @@ describe("shelfFoot, a game logged on more than one console", () => {
     });
 
     it("dates it by the latest play on any of them", () => {
-        expect(shelfFoot(both(), "played").value).toBe("Feb 26");
+        expect(shelfFoot(both(), "played").value).toBe("Feb ’26");
     });
 
     it("shows the best completion, as trophy lists differ by console", () => {

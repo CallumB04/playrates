@@ -7,6 +7,7 @@ import {
     formatFraction,
     formatHours,
     formatMonthYear,
+    formatMonthYearShort,
     formatPercent,
     formatRating,
     formatRatingOutOfTen,
@@ -176,6 +177,16 @@ describe("formatMonthYear", () => {
 
     it("renders an em dash when there is no date", () => {
         expect(formatMonthYear(null)).toBe("—");
+    });
+});
+
+describe("formatMonthYearShort", () => {
+    it("marks the year as elided, so it cannot read as a day", () => {
+        expect(formatMonthYearShort("2026-08-14T12:00:00Z")).toBe("Aug ’26");
+    });
+
+    it("renders an em dash when there is no date", () => {
+        expect(formatMonthYearShort(null)).toBe("—");
     });
 });
 
