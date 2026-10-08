@@ -215,6 +215,7 @@ export const createInMemoryRepos = (
       game_title: game?.title ?? "",
       game_slug: game?.slug ?? "",
       game_cover_url: game?.cover_url ?? null,
+      author_profile_visibility: author?.profile_visibility ?? null,
     };
   };
 

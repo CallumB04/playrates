@@ -12,6 +12,7 @@ import {
   buildFriendship,
   buildGameLog,
   buildProfile,
+  buildReview,
 } from "../helpers/fixtures.js";
 
 const STRANGER = "33333333-3333-3333-3333-333333333333";
@@ -150,5 +151,73 @@ describe("choosing who can see your profile", () => {
       .set("Authorization", authHeader(USER_A))
       .send({ profileVisibility: "secret" });
     expect(response.status).toBe(422);
+  });
+});
+
+describe("reviews away from a hidden profile", () => {
+  const reviewSeed = (visibility: ProfileVisibility) => ({
+    ...seed(visibility, "accepted"),
+    gameLogs: [
+      buildGameLog({
+        id: 1,
+        user_id: USER_A,
+        rating: 8,
+        hours_played: 40,
+        system_slug: "steam",
+      }),
+    ],
+    reviews: [buildReview({ id: 1, user_id: USER_A, log_id: 1 })],
+  });
+
+  const first = async (
+    visibility: ProfileVisibility,
+    route: string,
+    viewer: string | null,
+  ) => {
+    const { app } = buildTestApp({ seed: reviewSeed(visibility) });
+    const req = request(app).get(route);
+    const response = viewer
+      ? await req.set("Authorization", authHeader(viewer))
+      : await req;
+    expect(response.status).toBe(200);
+    return response.body.data[0];
+  };
+
+  /* No name, no picture, no id to look them up by, and none of the log:
+     which console, how far in, how long. The words and the score stay. */
+  it("reads as a private account on the game page and in the feed", async () => {
+    for (const route of ["/api/v1/games/1/reviews", "/api/v1/reviews"]) {
+      const review = await first("private", route, STRANGER);
+      expect(review.author).toBeNull();
+      expect(review).toMatchObject({
+        hoursPlayed: null,
+        status: null,
+        playedStatus: null,
+        platform: null,
+        system: null,
+        rating: 8,
+        body: expect.any(String),
+      });
+    }
+  });
+
+  it("names a friends-only author to their friends and nobody else", async () => {
+    const route = "/api/v1/games/1/reviews";
+    expect((await first("friends", route, USER_B)).author.username).toBe(
+      "devuser",
+    );
+    expect((await first("friends", route, STRANGER)).author).toBeNull();
+    expect((await first("friends", route, null)).author).toBeNull();
+  });
+
+  it("still names the author to themselves", async () => {
+    const review = await first("private", "/api/v1/games/1/reviews", USER_A);
+    expect(review.author.username).toBe("devuser");
+    expect(review.hoursPlayed).toBe(40);
+  });
+
+  it("leaves a public author as they were", async () => {
+    const review = await first("everyone", "/api/v1/reviews", null);
+    expect(review.author.username).toBe("devuser");
   });
 });

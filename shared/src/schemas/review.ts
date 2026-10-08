@@ -48,7 +48,9 @@ export interface ReviewGame {
 
 /** A review with its author, and the rating from that author's log. */
 export interface ReviewWithAuthor extends Review {
-  author: ReviewAuthor;
+  /** Null for a private account the viewer cannot see: no name, no picture,
+   *  and none of the log details below. */
+  author: ReviewAuthor | null;
   /** Joined from the author's log of this game, if they have one. */
   rating: number | null;
   /** Hours on the clock when the review was written — a 9.0 after eighty hours

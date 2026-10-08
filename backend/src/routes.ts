@@ -103,6 +103,7 @@ export const buildRoutes = ({
     repos.gameLogs,
     repos.notifications,
     profileGate,
+    repos.friends,
   );
   const friends = createFriendsService(
     repos.friends,

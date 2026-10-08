@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReviewSort, ReviewWithAuthor } from "@playrates/shared";
 import { Link } from "react-router-dom";
-import ProfilePicture from "../../../components/ProfilePicture";
+import ProfilePicture, {
+    PrivateProfilePicture,
+} from "../../../components/ProfilePicture";
 import EmptyPlate from "../../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import Dropdown from "../../../components/ui/Dropdown";
@@ -147,16 +149,20 @@ const GameReviews = ({
             ) : (
                 groupByAuthor(reviews).map(({ author, reviews: theirs }) => (
                     <article
-                        key={`${author.id}-${theirs[0]!.id}`}
+                        key={`${author?.id ?? "private"}-${theirs[0]!.id}`}
                         className="grid grid-cols-[38px_minmax(0,1fr)] gap-4 border-b border-subtle py-4 last:border-b-0"
                     >
-                        <ProfilePicture
-                            variant="friendRow"
-                            file={author.avatarUrl ?? ""}
-                            accent={author.accent}
-                            username={author.username}
-                            link={false}
-                        />
+                        {author ? (
+                            <ProfilePicture
+                                variant="friendRow"
+                                file={author.avatarUrl ?? ""}
+                                accent={author.accent}
+                                username={author.username}
+                                link={false}
+                            />
+                        ) : (
+                            <PrivateProfilePicture variant="friendRow" />
+                        )}
                         <div className="flex min-w-0 flex-col">
                             {theirs.map((review, index) => {
                                 const PlatformIcon = playedOn(review).Icon;
@@ -176,14 +182,19 @@ const GameReviews = ({
                                     >
                                         <div className="min-w-0">
                                             <div className="mb-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                                                {index === 0 && (
-                                                    <Link
-                                                        to={`/user/${author.username}`}
-                                                        className="text-body-sm font-semibold text-content hover:text-brand"
-                                                    >
-                                                        {author.username}
-                                                    </Link>
-                                                )}
+                                                {index === 0 &&
+                                                    (author ? (
+                                                        <Link
+                                                            to={`/user/${author.username}`}
+                                                            className="text-body-sm font-semibold text-content hover:text-brand"
+                                                        >
+                                                            {author.username}
+                                                        </Link>
+                                                    ) : (
+                                                        <span className="text-body-sm font-semibold text-content-secondary">
+                                                            Private account
+                                                        </span>
+                                                    ))}
                                                 {/* Which console the take is
                                                     about: a port can be a
                                                     different game. */}
@@ -242,7 +253,7 @@ const GameReviews = ({
                                                 />
                                             </SpoilerCover>
                                             {viewerId &&
-                                                viewerId !== author.id && (
+                                                viewerId !== author?.id && (
                                                     <Button
                                                         type="button"
                                                         variant="ghost"
@@ -272,7 +283,7 @@ const GameReviews = ({
                                                 voted={review.votedByViewer}
                                                 disabledReason={whyCannotVote(
                                                     viewerId,
-                                                    author.id
+                                                    author?.id
                                                 )}
                                                 onToggle={() =>
                                                     onVote?.(review.id)

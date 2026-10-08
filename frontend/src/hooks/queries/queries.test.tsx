@@ -240,7 +240,7 @@ describe("query hooks", () => {
         const review = result.current.data?.data[0];
         expect(review?.rating).toBe(9.5);
         expect(review?.hoursPlayed).toBe(41);
-        expect(review?.author.username).toBe("devuser");
+        expect(review?.author?.username).toBe("devuser");
         // The game rides along, so a review can link back to it from a feed.
         expect(review?.game.title).toBe("The Witcher 3: Wild Hunt");
     });
