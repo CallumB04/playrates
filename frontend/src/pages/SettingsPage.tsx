@@ -25,7 +25,7 @@ import { useUserFriends } from "../hooks/queries/useFriends";
 import { usePageMeta } from "../hooks/usePageMeta";
 import { deleteMyAccount, fetchMyData } from "../api";
 import { saveFile } from "../lib/saveFile";
-import { FALLBACK_ACCENT, type GamesVisibility } from "@playrates/shared";
+import { FALLBACK_ACCENT, type ProfileVisibility } from "@playrates/shared";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
 import Button from "../components/ui/Button";
@@ -151,9 +151,8 @@ const SettingsPage = () => {
     const [hideFromSearch, setHideFromSearch] = useState(
         user?.hideFromSearch ?? false
     );
-    const [gamesVisibility, setGamesVisibility] = useState<GamesVisibility>(
-        user?.gamesVisibility ?? "everyone"
-    );
+    const [profileVisibility, setProfileVisibility] =
+        useState<ProfileVisibility>(user?.profileVisibility ?? "everyone");
     const [accent, setAccent] = useState(user?.accent ?? FALLBACK_ACCENT);
     const updateAvatar = useUpdateAvatar();
     const removeAvatar = useRemoveAvatar();
@@ -164,7 +163,7 @@ const SettingsPage = () => {
         setShowSexual(user?.showSexualContent ?? false);
         setHideOnline(user?.hideOnline ?? false);
         setHideFromSearch(user?.hideFromSearch ?? false);
-        setGamesVisibility(user?.gamesVisibility ?? "everyone");
+        setProfileVisibility(user?.profileVisibility ?? "everyone");
         setAccent(user?.accent ?? FALLBACK_ACCENT);
     }, [user]);
 
@@ -330,23 +329,23 @@ const SettingsPage = () => {
                     />
                 </Row>
                 <Row
-                    label="Who can see your games"
-                    help="Your shelves, hours and ratings. Reviews you post stay public."
+                    label="Who can see your profile"
+                    help="Your games, reviews, friends and threads. Your name, picture and bio always show."
                 >
                     <SegmentedChoice
-                        label="Who can see your games"
+                        label="Who can see your profile"
                         segments={[
                             { value: "everyone", label: "Everyone" },
                             { value: "friends", label: "Friends" },
                             { value: "private", label: "Only me" },
                         ]}
-                        value={gamesVisibility}
+                        value={profileVisibility}
                         onChange={(next) =>
                             saveToggle(
-                                { gamesVisibility: next },
+                                { profileVisibility: next },
                                 next,
-                                setGamesVisibility,
-                                gamesVisibility
+                                setProfileVisibility,
+                                profileVisibility
                             )
                         }
                     />

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import request from "supertest";
-import type { GamesVisibility } from "@playrates/shared";
+import type { ProfileVisibility } from "@playrates/shared";
 import {
   authHeader,
   buildTestApp,
@@ -16,16 +16,16 @@ import {
 
 const STRANGER = "33333333-3333-3333-3333-333333333333";
 
-/** devuser (USER_A) owns the games; frienduser (USER_B) is who is asking. */
+/** devuser (USER_A) owns the profile; frienduser (USER_B) is who is asking. */
 const seed = (
-  visibility: GamesVisibility,
+  visibility: ProfileVisibility,
   friendship: "accepted" | "pending" | null = null,
 ) => {
   const base = baseSeed();
   return {
     ...base,
     profiles: [
-      buildProfile({ games_visibility: visibility }),
+      buildProfile({ profile_visibility: visibility }),
       base.profiles[1]!,
       buildProfile({ id: STRANGER, username: "stranger" }),
     ],
@@ -34,16 +34,22 @@ const seed = (
   };
 };
 
-/* Every route that shows someone's games to someone else. */
+/* Everything on a profile past its card. */
 const ROUTES = [
   "/api/v1/users/devuser/shelf",
   "/api/v1/users/devuser/game-logs",
   "/api/v1/users/devuser/logs?gameId=1",
   "/api/v1/users/devuser/stats",
+  "/api/v1/users/devuser/reviews",
+  "/api/v1/users/devuser/friends",
+  "/api/v1/users/devuser/community-threads",
+  "/api/v1/community/threads?participant=devuser",
 ];
 
+const all = (status: number) => ROUTES.map(() => status);
+
 const statuses = async (
-  visibility: GamesVisibility,
+  visibility: ProfileVisibility,
   viewer: string | null,
   friendship: "accepted" | "pending" | null = null,
 ) => {
@@ -59,40 +65,34 @@ const statuses = async (
   );
 };
 
-describe("who can see someone's games", () => {
-  it("shows them to anyone, signed in or not, by default", async () => {
-    expect(await statuses("everyone", null)).toEqual([200, 200, 200, 200]);
+describe("who can see past a profile's card", () => {
+  it("shows everything to anyone, signed in or not, by default", async () => {
+    expect(await statuses("everyone", null)).toEqual(all(200));
   });
 
-  it("shows friends-only games to an accepted friend", async () => {
-    expect(await statuses("friends", USER_B, "accepted")).toEqual([
-      200, 200, 200, 200,
-    ]);
+  it("shows a friends-only profile to an accepted friend", async () => {
+    expect(await statuses("friends", USER_B, "accepted")).toEqual(all(200));
   });
 
   /* A request is not a friendship: sending one must not unlock the shelf. */
-  it("hides friends-only games from a pending friend, a stranger and a visitor", async () => {
-    expect(await statuses("friends", USER_B, "pending")).toEqual([
-      403, 403, 403, 403,
-    ]);
-    expect(await statuses("friends", STRANGER)).toEqual([403, 403, 403, 403]);
-    expect(await statuses("friends", null)).toEqual([403, 403, 403, 403]);
+  it("hides a friends-only profile from a pending friend, a stranger and a visitor", async () => {
+    expect(await statuses("friends", USER_B, "pending")).toEqual(all(403));
+    expect(await statuses("friends", STRANGER)).toEqual(all(403));
+    expect(await statuses("friends", null)).toEqual(all(403));
   });
 
-  it("hides private games even from friends", async () => {
-    expect(await statuses("private", USER_B, "accepted")).toEqual([
-      403, 403, 403, 403,
-    ]);
+  it("hides a private profile even from friends", async () => {
+    expect(await statuses("private", USER_B, "accepted")).toEqual(all(403));
   });
 
-  it("always shows the owner their own games", async () => {
-    expect(await statuses("private", USER_A)).toEqual([200, 200, 200, 200]);
+  it("always shows the owner their own profile", async () => {
+    expect(await statuses("private", USER_A)).toEqual(all(200));
   });
 
   it("says why, so the page can tell private from broken", async () => {
     const { app } = buildTestApp({ seed: seed("private") });
     const response = await request(app).get("/api/v1/users/devuser/shelf");
-    expect(response.body.error.code).toBe("games_private");
+    expect(response.body.error.code).toBe("profile_private");
   });
 
   it("still finds no one for a username that does not exist", async () => {
@@ -100,10 +100,18 @@ describe("who can see someone's games", () => {
     const response = await request(app).get("/api/v1/users/nobody/shelf");
     expect(response.status).toBe(404);
   });
+
+  /* The card itself is how a visitor learns the rest is private. */
+  it("still shows the profile card", async () => {
+    const { app } = buildTestApp({ seed: seed("private") });
+    const response = await request(app).get("/api/v1/profiles/devuser");
+    expect(response.status).toBe(200);
+    expect(response.body.profileVisibility).toBe("private");
+  });
 });
 
 describe("the friends activity feed", () => {
-  const feed = async (visibility: GamesVisibility) => {
+  const feed = async (visibility: ProfileVisibility) => {
     const { app } = buildTestApp({ seed: seed(visibility, "accepted") });
     const response = await request(app)
       .get("/api/v1/me/friends/activity")
@@ -116,23 +124,23 @@ describe("the friends activity feed", () => {
     expect(await feed("friends")).toBe(1);
   });
 
-  it("leaves out a friend who keeps their games to themselves", async () => {
+  it("leaves out a friend whose profile is only theirs", async () => {
     expect(await feed("private")).toBe(0);
   });
 });
 
-describe("choosing who can see your games", () => {
+describe("choosing who can see your profile", () => {
   it("saves the choice and shows it on the profile", async () => {
     const { app } = buildTestApp({ seed: seed("everyone") });
 
     const saved = await request(app)
       .patch("/api/v1/profiles/me")
       .set("Authorization", authHeader(USER_A))
-      .send({ gamesVisibility: "friends" });
+      .send({ profileVisibility: "friends" });
     expect(saved.status).toBe(200);
 
     const profile = await request(app).get("/api/v1/profiles/devuser");
-    expect(profile.body.gamesVisibility).toBe("friends");
+    expect(profile.body.profileVisibility).toBe("friends");
   });
 
   it("refuses a choice that is not one", async () => {
@@ -140,7 +148,7 @@ describe("choosing who can see your games", () => {
     const response = await request(app)
       .patch("/api/v1/profiles/me")
       .set("Authorization", authHeader(USER_A))
-      .send({ gamesVisibility: "secret" });
+      .send({ profileVisibility: "secret" });
     expect(response.status).toBe(422);
   });
 });

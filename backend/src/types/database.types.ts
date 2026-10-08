@@ -20,8 +20,8 @@ export interface ProfileRow {
   hide_online: boolean;
   /** When true, the profile page asks search engines not to index it. */
   hide_from_search: boolean;
-  /** everyone, friends or private: who can see this person's games. */
-  games_visibility: string;
+  /** everyone, friends or private: who sees past this person's profile card. */
+  profile_visibility: string;
   /** Chosen profile colour. Null falls back to the hash of the username. */
   accent: string | null;
   /** When the first-login welcome was dismissed. Null shows it. */

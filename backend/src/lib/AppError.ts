@@ -16,7 +16,7 @@ export type ErrorCode =
   | "not_configured"
   | "platform_taken"
   | "several_logs"
-  | "games_private";
+  | "profile_private";
 
 /**
  * Errors the API returns on purpose. `expose` keeps internals in: a 5xx logs

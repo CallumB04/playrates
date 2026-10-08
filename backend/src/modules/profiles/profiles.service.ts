@@ -144,8 +144,8 @@ export const createProfilesService = (
     if (input.hideFromSearch !== undefined) {
       patch.hide_from_search = input.hideFromSearch;
     }
-    if (input.gamesVisibility !== undefined) {
-      patch.games_visibility = input.gamesVisibility;
+    if (input.profileVisibility !== undefined) {
+      patch.profile_visibility = input.profileVisibility;
     }
     if (input.accent !== undefined) patch.accent = input.accent;
 

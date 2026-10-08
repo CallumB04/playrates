@@ -44,6 +44,7 @@ import {
   toThreadCard,
   type MessageViewer,
 } from "./community.mapper.js";
+import type { ProfileGate } from "../profiles/profileGate.js";
 import type {
   CommunityRepository,
   MessageCardRow,
@@ -56,6 +57,7 @@ export const createCommunityService = (
   games: GamesRepository,
   images: CommunityImageStore,
   notifications: NotificationsRepository,
+  gate: ProfileGate,
 ) => {
   const viewerProfile = async (
     viewerId: string | undefined,
@@ -148,12 +150,10 @@ export const createCommunityService = (
       if (gameId !== undefined && !(await games.findById(gameId))) {
         throw AppError.notFound("Game");
       }
+      // One person's threads are part of their profile, so theirs to hide.
       const participantProfile = participant
-        ? await profiles.findByUsername(participant)
+        ? await gate(participant, viewerId)
         : null;
-      if (participant && !participantProfile) {
-        throw AppError.notFound("Profile");
-      }
       const { from, to } = toRange(pagination);
       const { rows, total } = await repo.listThreads({
         gameId,
@@ -233,9 +233,9 @@ export const createCommunityService = (
     async listByUsername(
       username: string,
       limit: number,
+      viewerId: string | undefined,
     ): Promise<ThreadCard[]> {
-      const profile = await profiles.findByUsername(username);
-      if (!profile) throw AppError.notFound("Profile");
+      const profile = await gate(username, viewerId);
       return (await repo.listThreadsByParticipant(profile.id, limit)).map(
         toThreadCard,
       );

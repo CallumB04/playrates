@@ -6,6 +6,7 @@ import type { CommunityImageStore } from "./config/communityImageStore.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
 import { createProfilesService } from "./modules/profiles/profiles.service.js";
 import { createProfilesRouter } from "./modules/profiles/profiles.routes.js";
+import { createProfileGate } from "./modules/profiles/profileGate.js";
 import { createGamesService } from "./modules/games/games.service.js";
 import { createGamesRouter } from "./modules/games/games.routes.js";
 import { createCronRouter } from "./modules/games/cron.routes.js";
@@ -88,12 +89,12 @@ export const buildRoutes = ({
     },
     repos.gameEvents,
   );
+  const profileGate = createProfileGate(repos.profiles, repos.friends);
   const gameLogs = createGameLogsService(
     repos.gameLogs,
-    repos.profiles,
     repos.games,
     repos.reviews,
-    repos.friends,
+    profileGate,
   );
   const reviews = createReviewsService(
     repos.reviews,
@@ -101,11 +102,13 @@ export const buildRoutes = ({
     repos.games,
     repos.gameLogs,
     repos.notifications,
+    profileGate,
   );
   const friends = createFriendsService(
     repos.friends,
     repos.profiles,
     repos.notifications,
+    profileGate,
   );
   const notifications = createNotificationsService(
     repos.notifications,
@@ -118,6 +121,7 @@ export const buildRoutes = ({
     repos.games,
     communityImages,
     repos.notifications,
+    profileGate,
   );
 
   const reports = createReportsService({

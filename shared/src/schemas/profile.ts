@@ -30,16 +30,16 @@ export const TimeZoneSchema = z
     }
   }, "Unknown time zone");
 
-/** Who can see someone's games: their shelves, their logs, and the hours
- *  and ratings worked out from them. Reviews are published separately and
- *  stay public. */
-export const GAMES_VISIBILITIES = ["everyone", "friends", "private"] as const;
-export const GamesVisibilitySchema = z.enum(GAMES_VISIBILITIES);
-export type GamesVisibility = z.infer<typeof GamesVisibilitySchema>;
+/** Who can see the rest of a profile: games, reviews, friends and threads,
+ *  and the figures worked out from them. The card with the name, picture and
+ *  bio is always public. Reviews still show on the games they review. */
+export const PROFILE_VISIBILITIES = ["everyone", "friends", "private"] as const;
+export const ProfileVisibilitySchema = z.enum(PROFILE_VISIBILITIES);
+export type ProfileVisibility = z.infer<typeof ProfileVisibilitySchema>;
 
 /** The one rule, so the API's gate and the page's "private" plate agree. */
-export const canSeeGames = (
-  visibility: GamesVisibility,
+export const canSeeProfile = (
+  visibility: ProfileVisibility,
   viewer: { isOwner: boolean; isFriend: boolean },
 ): boolean =>
   viewer.isOwner ||
@@ -64,7 +64,7 @@ export const UpdateProfileSchema = z
     hideOnline: z.boolean().optional(),
     /** Asks search engines to leave the profile page out. */
     hideFromSearch: z.boolean().optional(),
-    gamesVisibility: GamesVisibilitySchema.optional(),
+    profileVisibility: ProfileVisibilitySchema.optional(),
   })
   .strict();
 
@@ -88,8 +88,8 @@ export interface Profile {
   online: boolean;
   /** Public because the page has to say it: a noindex is read by anyone. */
   hideFromSearch: boolean;
-  /** Public so the page can say why the shelves are missing. */
-  gamesVisibility: GamesVisibility;
+  /** Public so the page can say why the rest of it is missing. */
+  profileVisibility: ProfileVisibility;
   createdAt: string;
 }
 

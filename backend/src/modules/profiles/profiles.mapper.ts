@@ -1,12 +1,12 @@
 import type {
-  GamesVisibility,
+  ProfileVisibility,
   MyProfile,
   Profile,
   ProfileAccent,
 } from "@playrates/shared";
 import {
   FALLBACK_ACCENT,
-  GAMES_VISIBILITIES,
+  PROFILE_VISIBILITIES,
   PROFILE_ACCENT_SLUGS,
 } from "@playrates/shared";
 import type { ProfileRow } from "../../types/database.types.js";
@@ -26,12 +26,12 @@ export const toAccent = (value: string | null): ProfileAccent =>
     : FALLBACK_ACCENT;
 
 /* Fails closed, unlike the accent: a value this code does not know should
-   hide someone's games, not show them. */
-export const toGamesVisibility = (
+   hide someone's profile, not show it. */
+export const toProfileVisibility = (
   value: string | undefined,
-): GamesVisibility =>
-  (GAMES_VISIBILITIES as readonly string[]).includes(value ?? "")
-    ? (value as GamesVisibility)
+): ProfileVisibility =>
+  (PROFILE_VISIBILITIES as readonly string[]).includes(value ?? "")
+    ? (value as ProfileVisibility)
     : "private";
 
 /** Rows are snake_case, the API is camelCase. Pure, so it's testable without
@@ -46,7 +46,7 @@ export const toProfile = (row: ProfileRow, now = Date.now()): Profile => ({
   // Opting out hides presence from everyone, the owner included.
   online: !row.hide_online && isOnline(row.last_seen_at, now),
   hideFromSearch: row.hide_from_search,
-  gamesVisibility: toGamesVisibility(row.games_visibility),
+  profileVisibility: toProfileVisibility(row.profile_visibility),
   createdAt: row.created_at,
 });
 

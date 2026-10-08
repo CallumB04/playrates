@@ -16,6 +16,7 @@ import {
 } from "../notifications/notifications.mapper.js";
 import type { NotificationsRepository } from "../notifications/notifications.repository.js";
 import { toFriendUser } from "./friends.mapper.js";
+import type { ProfileGate } from "../profiles/profileGate.js";
 import type {
   FriendshipWithUsers,
   FriendsRepository,
@@ -41,6 +42,7 @@ export const createFriendsService = (
   repo: FriendsRepository,
   profiles: ProfilesRepository,
   notifications: NotificationsRepository,
+  gate: ProfileGate,
 ) => {
   /** Opt-in, so signed out and unknown both mean no. */
   const canSeeExplicit = async (viewerId?: string): Promise<boolean> =>
@@ -63,10 +65,10 @@ export const createFriendsService = (
 
     async listForUsername(
       username: string,
+      viewerId: string | undefined,
       status?: FriendRelation,
     ): Promise<FriendEdge[]> {
-      const profile = await profiles.findByUsername(username);
-      if (!profile) throw AppError.notFound("Profile");
+      const profile = await gate(username, viewerId);
       return this.listForUser(profile.id, status);
     },
 

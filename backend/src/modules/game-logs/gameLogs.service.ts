@@ -11,7 +11,6 @@ import type {
   UserStats,
 } from "@playrates/shared";
 import {
-  canSeeGames,
   headlineOf,
   loggableSystems,
   meanRating,
@@ -19,9 +18,7 @@ import {
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
-import type { ProfilesRepository } from "../profiles/profiles.repository.js";
-import { toGamesVisibility } from "../profiles/profiles.mapper.js";
-import type { FriendsRepository } from "../friends/friends.repository.js";
+import type { ProfileGate } from "../profiles/profileGate.js";
 import type { GamesRepository } from "../games/games.repository.js";
 import type { ReviewsRepository } from "../reviews/reviews.repository.js";
 import { toReview } from "../reviews/reviews.mapper.js";
@@ -43,37 +40,14 @@ const severalLogs = () =>
 
 export const createGameLogsService = (
   repo: GameLogsRepository,
-  profiles: ProfilesRepository,
   games: GamesRepository,
   reviews: ReviewsRepository,
-  friends: FriendsRepository,
+  gate: ProfileGate,
 ) => {
-  /** The profile's id, if the viewer may see its games. Every route that
-   *  shows someone's games to someone else comes through here. */
   const visibleProfileId = async (
     username: string,
     viewerId: string | undefined,
-  ): Promise<string> => {
-    const profile = await profiles.findByUsername(username);
-    if (!profile) throw AppError.notFound("Profile");
-
-    const visibility = toGamesVisibility(profile.games_visibility);
-    const isOwner = profile.id === viewerId;
-    // Only worth the lookup when friendship is what decides it.
-    const isFriend =
-      !isOwner && visibility === "friends" && viewerId !== undefined
-        ? (await friends.find(profile.id, viewerId))?.status === "accepted"
-        : false;
-
-    if (!canSeeGames(visibility, { isOwner, isFriend })) {
-      throw new AppError(
-        403,
-        "games_private",
-        "This person keeps their games private",
-      );
-    }
-    return profile.id;
-  };
+  ): Promise<string> => (await gate(username, viewerId)).id;
 
   /* Checked only when the console changes: the catalogue can drop a console
      after a log names it, and that log should still save. A game listing no

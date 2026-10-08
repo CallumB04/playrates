@@ -31,11 +31,11 @@ export const useFriendActivity = (limit: number) => {
     });
 };
 
-export const useUserFriends = (username: string) =>
+export const useUserFriends = (username: string, enabled = true) =>
     useQuery({
         queryKey: queryKeys.friends.byUsername(username),
         queryFn: () => fetchUserFriends(username),
-        enabled: !!username,
+        enabled: enabled && !!username,
     });
 
 /** Each action invalidates the friends queries, so callers never refetch. */

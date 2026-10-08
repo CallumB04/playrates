@@ -1182,7 +1182,7 @@ export const createInMemoryRepos = (
         // Mirrors friend_activity: "only me" leaves the feed.
         const hidden = new Set(
           state.profiles
-            .filter((p) => p.games_visibility === "private")
+            .filter((p) => p.profile_visibility === "private")
             .map((p) => p.id),
         );
 

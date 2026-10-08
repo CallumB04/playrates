@@ -17,6 +17,7 @@ import type { GamesRepository } from "../games/games.repository.js";
 import type { GameLogsRepository } from "../game-logs/gameLogs.repository.js";
 import { pickLegacyLog } from "../game-logs/legacyLog.js";
 import { toReview } from "./reviews.mapper.js";
+import type { ProfileGate } from "../profiles/profileGate.js";
 import type {
   ReviewRowJoined,
   ReviewsRepository,
@@ -34,6 +35,7 @@ export const createReviewsService = (
   games: GamesRepository,
   gameLogs: GameLogsRepository,
   notifications: NotificationsRepository,
+  gate: ProfileGate,
 ) => {
   /** Opt-in, so signed out and unknown both mean no. */
   const canSeeExplicit = async (viewerId?: string): Promise<boolean> =>
@@ -120,8 +122,7 @@ export const createReviewsService = (
       viewerId: string | undefined,
       pagination: Pagination,
     ): Promise<Paginated<ReviewWithAuthor>> {
-      const profile = await profiles.findByUsername(username);
-      if (!profile) throw AppError.notFound("Profile");
+      const profile = await gate(username, viewerId);
 
       const { from, to } = toRange(pagination);
       const { rows, total } = await repo.listByUser(
