@@ -162,6 +162,7 @@ export interface GameLogRollupRow {
   game_avg_rating: number | null;
   game_critic_score: number | null;
   game_release_date: string | null;
+  hours_to_beat: number | null;
 }
 
 /** What user_log_stats() returns. */

@@ -158,6 +158,17 @@ describe("shelfFoot", () => {
         expect(shelfFoot(log(), "completion").value).toBe("—");
     });
 
+    it("shows hours for time played and time to beat", () => {
+        const timed = log({ hoursPlayed: 42.5, hoursToBeat: 30 });
+        expect(shelfFoot(timed, "hoursPlayed").value).toBe("42.5h");
+        expect(shelfFoot(timed, "hoursToBeat").value).toBe("30h");
+    });
+
+    it("shows a dash for a game with no hours logged", () => {
+        expect(shelfFoot(log(), "hoursPlayed").value).toBe("—");
+        expect(shelfFoot(log(), "hoursToBeat").value).toBe("—");
+    });
+
     it("keeps the rating when sorting by title, which shows itself", () => {
         expect(shelfFoot(log(), "title")).toEqual({ rating: 8.5 });
     });
@@ -187,12 +198,16 @@ describe("shelfFoot, a game logged on more than one console", () => {
             finishDate: "2024-06-11",
             achievementsTotal: 10,
             achievementsCompleted: 5,
+            hoursPlayed: 60,
+            hoursToBeat: 45,
         });
         const second = log({
             rating: 7,
             startDate: "2026-02-01",
             achievementsTotal: 4,
             achievementsCompleted: 4,
+            hoursPlayed: 25,
+            hoursToBeat: 20,
         });
         const logs = [first.logs[0]!, { ...second.logs[0]!, id: 2 }];
         return { ...first, logs, rollup: rollupLogs(logs)! };
@@ -204,6 +219,16 @@ describe("shelfFoot, a game logged on more than one console", () => {
 
     it("dates it by the latest play on any of them", () => {
         expect(shelfFoot(both(), "played").value).toBe("Feb ’26");
+    });
+
+    it("counts its hours across every console", () => {
+        expect(shelfFoot(both(), "hoursPlayed").value).toBe("85h");
+    });
+
+    /* A second run is usually the quicker one, and that is how long the game
+       takes this person now. */
+    it("times it by the quickest beat", () => {
+        expect(shelfFoot(both(), "hoursToBeat").value).toBe("20h");
     });
 
     it("shows the best completion, as trophy lists differ by console", () => {

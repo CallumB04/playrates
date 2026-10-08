@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { GameLogSort, SortDirection } from "@playrates/shared";
 import type { ShelfEntry } from "@playrates/shared";
 import {
+    formatHours,
     formatMonthYearShort,
     formatPercent,
     releaseYear,
@@ -34,6 +35,18 @@ export const shelfSortOptions = (isMyAccount: boolean): SortOption[] => [
     { value: "gameRating", label: "PlayRates average", ...HIGH_LOW },
     { value: "critic", label: "Critic score", ...HIGH_LOW },
     { value: "played", label: "Recently played", ...OLD_NEW },
+    {
+        value: "hoursPlayed",
+        label: "Time played",
+        ascending: "Least first",
+        descending: "Most first",
+    },
+    {
+        value: "hoursToBeat",
+        label: "Time to beat",
+        ascending: "Shortest first",
+        descending: "Longest first",
+    },
     {
         value: "title",
         label: "Title",
@@ -72,7 +85,8 @@ export interface ShelfFoot {
 }
 
 /* A game logged on several consoles shows what it was ordered by: the
-   mean rating, the latest play, the best completion. */
+   mean rating, the latest play, the best completion, the total hours, the
+   quickest beat. */
 export const shelfFoot = (entry: ShelfEntry, sort: GameLogSort): ShelfFoot => {
     const { game, rollup } = entry;
     switch (sort) {
@@ -85,6 +99,10 @@ export const shelfFoot = (entry: ShelfEntry, sort: GameLogSort): ShelfFoot => {
             };
         case "played":
             return { value: formatMonthYearShort(rollup.lastPlayed) };
+        case "hoursPlayed":
+            return { value: formatHours(rollup.hoursPlayed) };
+        case "hoursToBeat":
+            return { value: formatHours(rollup.quickestBeat?.hours) };
         case "released":
             return { value: releaseYear(game?.releaseDate) };
         case "completion":

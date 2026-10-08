@@ -1,11 +1,7 @@
 import type { ExternalGame } from "../../src/providers/games/GamesProvider.js";
 import { searchKey } from "../../src/lib/searchKey.js";
 import { AppError } from "../../src/lib/AppError.js";
-import {
-  logRank,
-  type GameStatus,
-  type PlayedStatus,
-} from "@playrates/shared";
+import { logRank, type GameStatus, type PlayedStatus } from "@playrates/shared";
 import type { Repositories } from "../../src/repositories.js";
 import type { AuthAdmin } from "../../src/config/authAdmin.js";
 import type { AvatarStore } from "../../src/config/avatarStore.js";
@@ -42,7 +38,10 @@ import { orderPair } from "../../src/modules/friends/friends.repository.js";
 import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.repository.js";
 import type { NotificationRowWithActor } from "../../src/modules/notifications/notifications.repository.js";
 import { createInMemoryCommunity } from "./inMemoryCommunity.js";
-import { createInMemoryAdmin, createInMemoryGameEvents } from "./inMemoryAdmin.js";
+import {
+  createInMemoryAdmin,
+  createInMemoryGameEvents,
+} from "./inMemoryAdmin.js";
 
 /**
  * Behaviour-equivalent in-memory repositories.
@@ -287,7 +286,9 @@ export const createInMemoryRepos = (
     state.gamePlatforms = state.gamePlatforms.filter(
       (gp) => gp.game_id !== game.id,
     );
-    state.gameSystems = state.gameSystems.filter((gs) => gs.game_id !== game.id);
+    state.gameSystems = state.gameSystems.filter(
+      (gs) => gs.game_id !== game.id,
+    );
     for (const slug of external.platformSlugs) {
       state.gamePlatforms.push({ game_id: game.id, platform_slug: slug });
     }
@@ -355,14 +356,19 @@ export const createInMemoryRepos = (
       },
       async closeOpenFor(type, id, status, by) {
         for (const r of state.contentReports) {
-          if (r.target_type === type && r.target_id === id && r.status === "open") {
+          if (
+            r.target_type === type &&
+            r.target_id === id &&
+            r.status === "open"
+          ) {
             Object.assign(r, { status, resolved_by: by, resolved_at: now() });
           }
         }
       },
       async close(id, status, by) {
         const r = state.contentReports.find((x) => x.id === id);
-        if (r) Object.assign(r, { status, resolved_by: by, resolved_at: now() });
+        if (r)
+          Object.assign(r, { status, resolved_by: by, resolved_at: now() });
       },
     },
     accountExport: {
@@ -605,11 +611,15 @@ export const createInMemoryRepos = (
       },
       async listByDeveloper(developer, exceptIds, limit, showSexualContent) {
         return state.games
-          .filter((g) => g.developers.includes(developer) && !exceptIds.includes(g.id))
+          .filter(
+            (g) =>
+              g.developers.includes(developer) && !exceptIds.includes(g.id),
+          )
           .filter((g) => showSexualContent || !g.has_sexual_content)
           .sort(
             (a, b) =>
-              (b.igdb_rating_count ?? -1) - (a.igdb_rating_count ?? -1) || a.id - b.id,
+              (b.igdb_rating_count ?? -1) - (a.igdb_rating_count ?? -1) ||
+              a.id - b.id,
           )
           .slice(0, limit)
           .map(withPlatforms);
@@ -790,6 +800,10 @@ export const createInMemoryRepos = (
               return game?.release_date ?? null;
             case "completion":
               return completion(l);
+            case "hoursPlayed":
+              return l.hours_played;
+            case "hoursToBeat":
+              return l.hours_to_beat;
           }
         };
 
@@ -829,7 +843,7 @@ export const createInMemoryRepos = (
           logs,
           game,
         }: (typeof games)[number]): string | number | null => {
-          const present = <T,>(values: (T | null)[]) =>
+          const present = <T>(values: (T | null)[]) =>
             values.filter((v): v is T => v !== null);
           switch (query.sort) {
             case "rating": {
@@ -861,6 +875,15 @@ export const createInMemoryRepos = (
                 ),
               );
               return done.length ? Math.max(...done) : null;
+            }
+            // Summed and the quickest, as the rollup view has them.
+            case "hoursPlayed": {
+              const hours = present(logs.map((l) => l.hours_played));
+              return hours.length ? hours.reduce((a, b) => a + b, 0) : null;
+            }
+            case "hoursToBeat": {
+              const hours = present(logs.map((l) => l.hours_to_beat));
+              return hours.length ? Math.min(...hours) : null;
             }
           }
         };
@@ -896,8 +919,7 @@ export const createInMemoryRepos = (
         return state.gameLogs
           .filter((l) => l.user_id === userId && gameIds.includes(l.game_id))
           .sort(
-            (a, b) =>
-              a.created_at.localeCompare(b.created_at) || a.id - b.id,
+            (a, b) => a.created_at.localeCompare(b.created_at) || a.id - b.id,
           )
           .map(withGame);
       },

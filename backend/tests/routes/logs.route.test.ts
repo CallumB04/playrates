@@ -375,6 +375,43 @@ describe("shelves of games", () => {
     );
   });
 
+  /* Game 1 is 10h on Steam and 30h on Switch, beaten in 25h on Switch;
+     game 2 is 35h, beaten in 20h. Summed, 1 is the longer played; at its
+     quickest, 2 is the shorter to beat. */
+  const timedSeed = () => {
+    const base = shelfSeed();
+    const hours: Record<number, [number, number | null]> = {
+      1: [10, null],
+      2: [30, 25],
+      3: [35, 20],
+    };
+    return {
+      ...base,
+      gameLogs: base.gameLogs.map((l) => ({
+        ...l,
+        hours_played: hours[l.id]![0],
+        hours_to_beat: hours[l.id]![1],
+      })),
+    };
+  };
+
+  const shelfOrder = async (query: string) => {
+    const { app } = buildTestApp({ seed: timedSeed() });
+    const response = await request(app)
+      .get(`/api/v1/me/shelf?${query}`)
+      .set(as(USER_A));
+    expect(response.status).toBe(200);
+    return response.body.data.map((e: { gameId: number }) => e.gameId);
+  };
+
+  it("sorts by hours played across every console", async () => {
+    expect(await shelfOrder("sort=hoursPlayed&direction=desc")).toEqual([1, 2]);
+  });
+
+  it("sorts by the quickest time to beat", async () => {
+    expect(await shelfOrder("sort=hoursToBeat&direction=asc")).toEqual([2, 1]);
+  });
+
   /* The tab counts and the shelf's pages have to agree. */
   it("counts games per shelf the way the shelves list them", async () => {
     const { app } = buildTestApp({ seed: shelfSeed() });

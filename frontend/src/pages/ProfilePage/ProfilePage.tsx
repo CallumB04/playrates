@@ -373,7 +373,10 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 isMyAccount={isMyAccount}
                 sort={sort}
                 trailing={
-                    <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
+                    /* A row each below sm: side by side, the sort label had
+                       60px and "Time played" and "Time to beat" both read
+                       "Time…". */
+                    <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
                         {!isMyAccount && myLogIds && (
                             <span className="text-label text-accent max-sm:hidden">
                                 {formatCount(
