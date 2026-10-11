@@ -19,6 +19,7 @@ import SettingsPage from "./pages/SettingsPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AdminGate from "./pages/admin/AdminGate";
+import { useReloadOnNewBuild } from "./hooks/useReloadOnNewBuild";
 
 /** Layout shell and route table. State lives in the providers. */
 
@@ -29,6 +30,8 @@ const LibraryRedirect = () => {
 };
 
 function App() {
+    useReloadOnNewBuild();
+
     return (
         <div className="flex min-h-dvh flex-col">
             <Header />

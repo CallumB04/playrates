@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
     plugins: [react()],
+    define: { __BUILD_ID__: JSON.stringify("test") },
     test: {
         environment: "jsdom",
         globals: false,
@@ -33,7 +34,12 @@ export default defineConfig({
                 "src/lib/assets.ts",
                 "src/hooks/queries/**",
             ],
-            thresholds: { statements: 95, branches: 90, functions: 95, lines: 95 },
+            thresholds: {
+                statements: 95,
+                branches: 90,
+                functions: 95,
+                lines: 95,
+            },
         },
     },
 });
