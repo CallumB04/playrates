@@ -29,7 +29,7 @@ interface MoreSheetProps {
 }
 
 const ROW =
-    "flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-md px-3 text-left text-body text-content-secondary transition-colors hover:bg-surface-hover hover:text-content";
+    "flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-md px-3 text-left text-body-sm text-content-secondary transition-colors hover:bg-surface-hover hover:text-content";
 
 /* Word left, icon at the far edge, as the old menu had them: the icon across
    the row keeps a short one from reading as empty. */
@@ -74,7 +74,7 @@ const MoreSheet = ({
                         className={cn(ROW, "text-content")}
                     >
                         <ListChecks
-                            size={18}
+                            size={16}
                             aria-hidden
                             className="shrink-0 text-brand"
                         />
@@ -126,7 +126,7 @@ const MoreSheet = ({
                                     className={cn(ROW, "text-content")}
                                 >
                                     <Icon
-                                        size={18}
+                                        size={16}
                                         aria-hidden
                                         className={cn("shrink-0", markTone)}
                                     />
@@ -146,7 +146,7 @@ const MoreSheet = ({
                         className={ACCOUNT_ROW}
                     >
                         Settings
-                        <Settings size={18} aria-hidden />
+                        <Settings size={16} aria-hidden />
                     </Link>
                 )}
                 {/* Stays open, so the change is seen to have taken. */}
@@ -157,15 +157,15 @@ const MoreSheet = ({
                 >
                     {theme === "dark" ? "Day mode" : "Night mode"}
                     {theme === "dark" ? (
-                        <Sun size={18} aria-hidden />
+                        <Sun size={16} aria-hidden />
                     ) : (
-                        <Moon size={18} aria-hidden />
+                        <Moon size={16} aria-hidden />
                     )}
                 </button>
                 {user?.isAdmin && (
                     <Link to="/admin" onClick={onClose} className={ACCOUNT_ROW}>
                         Admin
-                        <Shield size={18} aria-hidden />
+                        <Shield size={16} aria-hidden />
                     </Link>
                 )}
                 {user && (
@@ -181,7 +181,7 @@ const MoreSheet = ({
                         )}
                     >
                         Sign out
-                        <LogOut size={18} aria-hidden />
+                        <LogOut size={16} aria-hidden />
                     </button>
                 )}
             </div>

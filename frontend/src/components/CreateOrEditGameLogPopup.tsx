@@ -345,7 +345,7 @@ const CreateOrEditGameLogPopup = ({
                 <div className="flex items-center gap-4">
                     <h2
                         id="log-editor-title"
-                        className="min-w-0 flex-1 font-display text-[28px] leading-tight text-content"
+                        className="min-w-0 flex-1 font-display text-[22px] leading-tight text-content sm:text-[28px]"
                     >
                         {game?.title ?? "…"}
                     </h2>

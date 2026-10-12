@@ -26,8 +26,13 @@ mobile behaviour alongside the desktop one, in the same change.
 - **44px minimum for anything tappable.** Where the control should stay small
   visually, grow the hit area instead of the glyph:
   `relative before:absolute before:-inset-2 before:content-['']`.
-- **Form fields are 16px on a phone** (`text-base sm:text-body-sm`). Below 16px
-  iOS Safari zooms the page in on focus and never zooms back out.
+- **Form fields use the page's own sizes** (`text-body-sm`), phones included.
+  iOS Safari zooms the page in on focus below 16px and never zooms back out;
+  `public/viewport-init.js` stops that by pinning `maximum-scale=1` on iOS
+  only, where pinch-zoom still works. Do not reach for `text-base` on a field.
+- **Type steps down on a phone.** The display tokens clamp to smaller minimums,
+  and a fixed size (`text-[28px]`) gets a smaller phone value with the larger
+  one from `sm:`. Check 375px for anything that reads as shouting.
 - **`dvh`, not `vh`**, for anything sized to the viewport. `vh` measures
   against the viewport with the browser chrome retracted.
 - Primary actions go full width on a phone: `w-full sm:w-auto`.

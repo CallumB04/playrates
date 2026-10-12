@@ -309,7 +309,7 @@ const Dropdown = ({
                                     onKeyDown={onKeyDown}
                                     placeholder="Search"
                                     aria-label="Filter options"
-                                    className="min-w-0 flex-1 bg-transparent text-base text-content placeholder:text-content-muted focus:outline-none sm:text-body-sm"
+                                    className="min-w-0 flex-1 bg-transparent text-body-sm text-content placeholder:text-content-muted focus:outline-none"
                                 />
                             </li>
                         )}

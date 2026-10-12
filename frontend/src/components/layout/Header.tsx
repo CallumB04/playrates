@@ -55,7 +55,7 @@ const Header = () => {
                     <div className="flex items-center gap-2 sm:gap-4 lg:gap-8">
                         <Link
                             to="/"
-                            className="font-display text-2xl font-bold text-content"
+                            className="font-display text-xl font-bold text-content sm:text-2xl"
                         >
                             PlayRates
                         </Link>
