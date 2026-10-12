@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { GameStatus, PlayedStatus } from "../../constants/gameStatus";
@@ -22,9 +22,9 @@ const plates = (
         />
     );
 
-const endings = () => screen.queryByRole("group", { name: /how it ended/i });
-const ending = (name: string) =>
-    within(endings()!).getByRole("button", { name: new RegExp(name) });
+const played = () => screen.getByRole("button", { name: /^Played/ });
+const option = (name: string) =>
+    screen.getByRole("option", { name: new RegExp(name) });
 
 describe("StatusPlates", () => {
     it("keeps the four statuses in one row", () => {
@@ -34,59 +34,79 @@ describe("StatusPlates", () => {
         }
     });
 
-    it("chooses played like any other status", async () => {
+    /* As a plain plate until chosen, testers never found the endings. */
+    it("is a menu even before played is chosen", () => {
+        plates({ value: "backlog" });
+        expect(played()).toHaveAttribute("aria-haspopup", "listbox");
+    });
+
+    it("chooses played and opens the endings in one press", async () => {
         const onChange = vi.fn();
         plates({ value: "backlog", onChange });
 
-        const plate = screen.getByRole("button", { name: "Played" });
-        expect(plate).toHaveAttribute("aria-pressed", "false");
-        await userEvent.click(plate);
+        await userEvent.click(played());
         expect(onChange).toHaveBeenCalledWith("played");
+        expect(screen.getAllByRole("option")).toHaveLength(5);
     });
 
-    it("shows the endings only once played is chosen", () => {
-        const { rerender } = plates({ value: "playing" });
-        expect(endings()).not.toBeInTheDocument();
+    /* Ticked, so leaving it there is plainly an answer. */
+    it("opens on plain played, with the four endings beside it", async () => {
+        plates({ value: "played", playedStatus: null });
+        await userEvent.click(played());
+
+        expect(option("^Played")).toHaveAttribute("aria-selected", "true");
+        for (const name of ["Finished", "Mastered", "Shelved", "Retired"]) {
+            expect(option(name)).toHaveAttribute("aria-selected", "false");
+        }
+    });
+
+    it("leaves the status alone when it is already played", async () => {
+        const onChange = vi.fn();
+        plates({ value: "played", onChange });
+
+        await userEvent.click(played());
+        await userEvent.click(option("Shelved"));
+        expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it("names the ending on the plate once there is one", () => {
+        plates({ value: "played", playedStatus: "mastered" });
+        expect(played()).toHaveTextContent("Mastered");
+        expect(played()).toHaveAccessibleName("Played, Mastered");
+    });
+
+    /* The plate wears the chosen ending, so it reads as the badge that log
+       will carry. Lucide names its own marks, which is the one part of the
+       presentation worth pinning; the hues are class strings, not behaviour. */
+    it("wears the ending's mark rather than the played one", () => {
+        const { rerender } = plates({ value: "played", playedStatus: null });
+        expect(played().querySelector("svg")).toHaveClass(
+            "lucide-circle-check"
+        );
 
         rerender(
             <StatusPlates
                 value="played"
-                playedStatus={null}
+                playedStatus="retired"
                 onChange={vi.fn()}
                 onPlayedStatusChange={vi.fn()}
             />
         );
-        expect(endings()).toBeInTheDocument();
+        expect(played().querySelector("svg")).toHaveClass("lucide-archive");
     });
 
-    /* In plain sight, not behind a menu: testers never found the dropdown. */
-    it("lays all four endings out at once, none chosen yet", () => {
-        plates({ value: "played", playedStatus: null });
-
-        for (const name of ["Finished", "Mastered", "Shelved", "Retired"]) {
-            expect(ending(name)).toHaveAttribute("aria-pressed", "false");
-        }
-    });
-
-    it("marks the chosen ending", () => {
-        plates({ value: "played", playedStatus: "mastered" });
-        expect(ending("Mastered")).toHaveAttribute("aria-pressed", "true");
-        expect(ending("Finished")).toHaveAttribute("aria-pressed", "false");
-    });
-
-    it("reports an ending by name, without changing the status", async () => {
-        const onChange = vi.fn();
+    it("reports an ending by name", async () => {
         const onPlayedStatusChange = vi.fn();
-        plates({ value: "played", onChange, onPlayedStatusChange });
+        plates({ value: "played", onPlayedStatusChange });
 
-        await userEvent.click(ending("Retired"));
+        await userEvent.click(played());
+        await userEvent.click(option("Retired"));
         expect(onPlayedStatusChange).toHaveBeenCalledWith("retired");
-        expect(onChange).not.toHaveBeenCalled();
     });
 
-    /* Null, not a fifth status — played_status has a CHECK constraint listing
-       only the four, and plain Played is a real answer. */
-    it("clears the ending when the chosen one is pressed again", async () => {
+    /* Null, not a fifth status — nothing new reaches played_status, which has
+       a CHECK constraint listing only the four. */
+    it("reports plain played as nothing at all", async () => {
         const onPlayedStatusChange = vi.fn();
         plates({
             value: "played",
@@ -94,7 +114,8 @@ describe("StatusPlates", () => {
             onPlayedStatusChange,
         });
 
-        await userEvent.click(ending("Finished"));
+        await userEvent.click(played());
+        await userEvent.click(option("^Played"));
         expect(onPlayedStatusChange).toHaveBeenCalledWith(null);
     });
 });
