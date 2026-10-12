@@ -230,9 +230,9 @@ const AccountMenu = ({
     });
 
     return (
-        // Measured from the bell's unread badge, which reaches towards it:
-        // from the bell itself it sat visibly closer than the search icon.
-        <div ref={wrapRef} className="relative max-sm:ml-4">
+        // The bell glyph's padding on this side, as margin: 8px in a 36px
+        // box plus the glyph's own 1.7px, 12px plus it in a 44px one.
+        <div ref={wrapRef} className="relative ml-2.5 sm:ml-3.5 xl:ml-0">
             <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}

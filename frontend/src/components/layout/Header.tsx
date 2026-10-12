@@ -178,11 +178,13 @@ const Header = () => {
                         </nav>
                     </div>
 
-                    {/* On a phone the icons sit in 36px boxes, the avatar's
-                        size, with 44px hit areas around them: in 44px boxes the
-                        search and bell glyphs floated in space the avatar
-                        fills, and the three never looked evenly spaced. */}
-                    <div className="flex items-center gap-2 sm:gap-4">
+                    {/* Spaced by what is drawn, not by the boxes: each glyph
+                        sits inside padding the avatar does not have, so the
+                        avatar takes that padding as margin (AccountMenu) and
+                        the three read evenly. Phones use 36px boxes with 44px
+                        hit areas. From xl search is a field, already even at
+                        gap-4. */}
+                    <div className="flex items-center gap-2 xl:gap-4">
                         <button
                             type="button"
                             onClick={() => setSearchOpen(true)}
