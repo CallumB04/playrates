@@ -97,6 +97,10 @@ export const formatRatingOutOfTen = (
 export const formatCount = (value: number | null | undefined): string =>
     value === null || value === undefined ? "—" : value.toLocaleString("en-GB");
 
+/** "1 log", "1,284 logs": a bare figure reads as a rating or a year. */
+export const formatLogCount = (value: number): string =>
+    `${formatCount(value)} ${value === 1 ? "log" : "logs"}`;
+
 /** Messages and replies stop at 99: past that the exact figure tells a
  *  reader nothing "busy" does not, and it keeps every count one width. */
 export const formatMessageCount = (value: number): string =>

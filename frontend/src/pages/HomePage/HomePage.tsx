@@ -1,5 +1,9 @@
 import { useMemo } from "react";
-import { formatCount, formatReleaseShort, releaseYear } from "../../lib/format";
+import {
+    formatLogCount,
+    formatReleaseShort,
+    releaseYear,
+} from "../../lib/format";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import {
@@ -155,9 +159,7 @@ const HomePage = () => {
                 statusFor={statusFor}
                 footValueFor={(game) =>
                     game.logCount > 0
-                        ? `${formatCount(game.logCount)} ${
-                              game.logCount === 1 ? "player" : "players"
-                          }`
+                        ? formatLogCount(game.logCount)
                         : releaseYear(game.releaseDate)
                 }
             />

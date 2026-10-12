@@ -6,6 +6,7 @@ import {
     formatDate,
     formatFraction,
     formatHours,
+    formatLogCount,
     formatMonthYear,
     formatMonthYearShort,
     formatPercent,
@@ -147,6 +148,14 @@ describe("formatMessageCount", () => {
         expect(formatMessageCount(99)).toBe("99");
         expect(formatMessageCount(100)).toBe("99+");
         expect(formatMessageCount(4321)).toBe("99+");
+    });
+});
+
+describe("formatLogCount", () => {
+    it("says logs, one to a person's console", () => {
+        expect(formatLogCount(1)).toBe("1 log");
+        expect(formatLogCount(3)).toBe("3 logs");
+        expect(formatLogCount(1284)).toBe("1,284 logs");
     });
 });
 
