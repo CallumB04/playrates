@@ -230,7 +230,8 @@ const AccountMenu = ({
     });
 
     return (
-        <div ref={wrapRef} className="relative">
+        // A glyph sits 8px inside its box; the avatar fills its own.
+        <div ref={wrapRef} className="relative max-sm:ml-2">
             <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}

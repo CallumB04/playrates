@@ -114,9 +114,11 @@ const Header = () => {
                             <Menu size={22} />
                         </button>
 
+                        {/* Off below 360px, where it cannot fit beside the
+                            icons; the menu it sits next to shows it. */}
                         <Link
                             to="/"
-                            className="font-display text-2xl font-bold text-content"
+                            className="font-display text-2xl font-bold text-content max-[360px]:hidden"
                         >
                             PlayRates
                         </Link>
@@ -171,15 +173,16 @@ const Header = () => {
                         </nav>
                     </div>
 
-                    {/* No gap on a phone: the 44px boxes already hold the icons
-                        24px apart, and a gap here was what pushed the header
-                        past a 320px screen. */}
-                    <div className="flex items-center sm:gap-4">
+                    {/* On a phone the icons sit in 36px boxes, the avatar's
+                        size, with 44px hit areas around them: in 44px boxes the
+                        search and bell glyphs floated in space the avatar
+                        fills, and the three never looked evenly spaced. */}
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <button
                             type="button"
                             onClick={() => setSearchOpen(true)}
                             aria-label="Search"
-                            className="flex size-11 items-center justify-center rounded-sm text-content lift hover:text-brand xl:hidden"
+                            className="relative flex size-9 items-center justify-center rounded-sm text-content lift before:absolute before:-inset-1 before:content-[''] hover:text-brand sm:size-11 sm:before:hidden xl:hidden"
                         >
                             <Search size={20} />
                         </button>
