@@ -3,8 +3,6 @@ import { popoverClass } from "../ui/popover";
 import { Link } from "react-router-dom";
 import {
     Check,
-    ChevronDown,
-    ChevronLeft,
     ListChecks,
     LogOut,
     Moon,
@@ -26,37 +24,37 @@ import type { SetupStep } from "../../lib/setupChecklist";
 const ITEM =
     "flex min-h-11 w-full items-center gap-2.5 rounded-sm px-2.5 py-2.5 text-left text-body-sm leading-none text-content-secondary transition-colors hover:bg-surface-hover hover:text-content sm:min-h-0";
 
-/* Around the avatar, drawn as an arc: enough to notice something is
-   unfinished without a badge shouting about it. 42px across a 36px avatar. */
-const RING_RADIUS = 19;
-const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
-
-const SetupRing = ({ share }: { share: number }) => (
-    <svg
-        aria-hidden
-        viewBox="0 0 42 42"
-        className="pointer-events-none absolute -inset-[3px] -rotate-90"
-    >
-        <circle
-            cx="21"
-            cy="21"
-            r={RING_RADIUS}
-            fill="none"
-            strokeWidth="2.5"
-            className="stroke-subtle"
-        />
-        <circle
-            cx="21"
-            cy="21"
-            r={RING_RADIUS}
-            fill="none"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeDasharray={`${share * RING_LENGTH} ${RING_LENGTH}`}
-            className="stroke-brand transition-[stroke-dasharray] duration-500"
-        />
-    </svg>
-);
+/** How far along setup is, drawn as an arc where a chevron would sit. */
+const ProgressRing = ({ share }: { share: number }) => {
+    const radius = 6.5;
+    const length = 2 * Math.PI * radius;
+    return (
+        <svg
+            aria-hidden
+            viewBox="0 0 16 16"
+            className="size-4 shrink-0 -rotate-90"
+        >
+            <circle
+                cx="8"
+                cy="8"
+                r={radius}
+                fill="none"
+                strokeWidth="2.5"
+                className="stroke-subtle"
+            />
+            <circle
+                cx="8"
+                cy="8"
+                r={radius}
+                fill="none"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeDasharray={`${share * length} ${length}`}
+                className="stroke-brand"
+            />
+        </svg>
+    );
+};
 
 /** Long enough to cross the gap into the list on a diagonal. */
 const HOVER_CLOSE_MS = 150;
@@ -73,11 +71,17 @@ const SetupSteps = ({
     onNavigate: () => void;
 }) => (
     <>
+        <p className="mx-2.5 mt-1 text-label text-content-muted">
+            <span className="font-mono text-content">
+                {Math.round((done / steps.length) * 100)}%
+            </span>{" "}
+            complete
+        </p>
         <Progress
             value={done / steps.length}
             size="sm"
             label={`${done} of ${steps.length} setup steps done`}
-            className="mx-2.5 mt-1 mb-1.5"
+            className="mx-2.5 mt-1.5 mb-1.5"
         />
         <ul>
             {steps.map((step) => (
@@ -168,26 +172,11 @@ const SetupRow = ({
                     aria-hidden
                     className="shrink-0 text-brand"
                 />
-                <span className="min-w-0 flex-1">Set up your profile</span>
+                <span className="min-w-0 flex-1">Get started</span>
                 <span className="font-mono text-label text-content-muted">
                     {done}/{steps.length}
                 </span>
-                {isPhone ? (
-                    <ChevronDown
-                        size={14}
-                        aria-hidden
-                        className={cn(
-                            "shrink-0 text-content-muted transition-transform duration-200",
-                            open && "rotate-180"
-                        )}
-                    />
-                ) : (
-                    <ChevronLeft
-                        size={14}
-                        aria-hidden
-                        className="shrink-0 text-content-muted"
-                    />
-                )}
+                <ProgressRing share={done / steps.length} />
             </button>
 
             {open &&
@@ -231,7 +220,6 @@ const AccountMenu = ({
     /** Steps left in setting up the profile; null once there are none. */
     setup?: SetupStep[] | null;
 }) => {
-    const setupDone = setup ? setup.filter((step) => step.done).length : 0;
     const [open, setOpen] = useState(false);
     const wrapRef = useRef<HTMLDivElement>(null);
     const { theme, toggleTheme } = useTheme();
@@ -248,23 +236,15 @@ const AccountMenu = ({
                 onClick={() => setOpen((v) => !v)}
                 aria-expanded={open}
                 aria-haspopup="menu"
-                aria-label={
-                    setup
-                        ? `Account menu, profile setup ${setupDone} of ${setup.length} done`
-                        : "Account menu"
-                }
+                aria-label="Account menu"
                 className={cn(
                     "relative block rounded-full ring-offset-2 ring-offset-surface transition-shadow lift",
                     "before:absolute before:-inset-1 before:content-[''] sm:before:hidden",
-                    // The setup ring sits where the focus ring would.
-                    setup
-                        ? null
-                        : open
-                          ? "ring-2 ring-brand"
-                          : "hover:ring-2 hover:ring-subtle"
+                    open
+                        ? "ring-2 ring-brand"
+                        : "hover:ring-2 hover:ring-subtle"
                 )}
             >
-                {setup && <SetupRing share={setupDone / setup.length} />}
                 <ProfilePicture
                     variant="nav"
                     file={user.avatarUrl ?? ""}

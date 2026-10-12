@@ -63,13 +63,14 @@ describe("AccountMenu", () => {
         };
 
         const row = () =>
-            screen.getByRole("menuitem", { name: /set up your profile/i });
+            screen.getByRole("menuitem", { name: /get started/i });
 
-        it("says on the avatar how far along it is", async () => {
+        /* The avatar stays plain: the progress lives in the menu. */
+        it("leaves the avatar as it was", async () => {
             await openWith(setup);
             expect(
                 screen.getByRole("button", { name: /^Account menu/ })
-            ).toHaveAccessibleName("Account menu, profile setup 2 of 4 done");
+            ).toHaveAccessibleName("Account menu");
         });
 
         it("is one row until it is opened", async () => {
@@ -83,6 +84,7 @@ describe("AccountMenu", () => {
         it("opens on a tap on a phone, as places to go", async () => {
             await openWith(setup);
             await userEvent.click(row());
+            expect(screen.getByText("50%")).toBeInTheDocument();
             expect(
                 screen.getByRole("menuitem", { name: /add a profile picture/i })
             ).toHaveAttribute("href", "/settings?section=profile");
@@ -130,9 +132,7 @@ describe("AccountMenu", () => {
         /* Not dismissable: finishing it is the only way it goes. */
         it("is gone once there is nothing left", async () => {
             await openWith(null);
-            expect(
-                screen.queryByText("Set up your profile")
-            ).not.toBeInTheDocument();
+            expect(screen.queryByText("Get started")).not.toBeInTheDocument();
         });
     });
 });
