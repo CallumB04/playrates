@@ -31,9 +31,11 @@ describe("AccountMenu", () => {
 
     describe("profile setup", () => {
         const setup = setupSteps({
-            profile: { avatarUrl: null, bio: "Hello" },
+            profile: { username: "devuser", avatarUrl: null, bio: "Hello" },
             logCount: 2,
+            reviewCount: 0,
             friendCount: 0,
+            postCount: 0,
         });
 
         /* The tests' matchMedia matches nothing, which is a phone; sm and
@@ -75,7 +77,7 @@ describe("AccountMenu", () => {
 
         it("is one row until it is opened", async () => {
             await openWith(setup);
-            expect(row()).toHaveTextContent("2/4");
+            expect(row()).toHaveTextContent("2/6");
             expect(
                 screen.queryByRole("menuitem", { name: /add a friend/i })
             ).not.toBeInTheDocument();
@@ -84,7 +86,7 @@ describe("AccountMenu", () => {
         it("opens on a tap on a phone, as places to go", async () => {
             await openWith(setup);
             await userEvent.click(row());
-            expect(screen.getByText("50%")).toBeInTheDocument();
+            expect(screen.getByText("33%")).toBeInTheDocument();
             expect(
                 screen.getByRole("menuitem", { name: /add a profile picture/i })
             ).toHaveAttribute("href", "/settings?section=profile");

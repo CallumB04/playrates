@@ -258,7 +258,14 @@ const AccountMenu = ({
                 <div
                     role="menu"
                     className={popoverClass(
-                        "absolute top-[calc(100%+0.6rem)] right-0 z-40 w-60 p-1.5",
+                        cn(
+                            "absolute top-[calc(100%+0.6rem)] right-0 z-40 w-60 p-1.5",
+                            /* In the sticky header the page cannot scroll to
+                               a tall menu, so on a phone it scrolls itself.
+                               Not from sm, where scrolling would clip the
+                               setup steps that sit beside it. */
+                            "max-sm:max-h-[calc(100dvh-5.5rem)] max-sm:overflow-y-auto"
+                        ),
                         "menu"
                     )}
                 >

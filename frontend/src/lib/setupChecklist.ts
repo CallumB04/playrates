@@ -1,6 +1,7 @@
 import type { MyProfile } from "@playrates/shared";
 
-export type SetupStepKey = "picture" | "bio" | "log" | "friend";
+export type SetupStepKey =
+    "picture" | "bio" | "log" | "review" | "friend" | "post";
 
 export interface SetupStep {
     key: SetupStepKey;
@@ -11,14 +12,17 @@ export interface SetupStep {
 }
 
 interface SetupFacts {
-    profile: Pick<MyProfile, "avatarUrl" | "bio">;
-    /** Undefined while still loading. */
+    profile: Pick<MyProfile, "username" | "avatarUrl" | "bio">;
+    /** Each undefined while still loading. */
     logCount: number | undefined;
+    reviewCount: number | undefined;
     friendCount: number | undefined;
+    /** Threads they have a message in: one started counts, as does a reply. */
+    postCount: number | undefined;
 }
 
 /**
- * The four things that make a profile worth visiting, worked out from what
+ * The things that make a profile worth visiting, worked out from what
  * the account already holds rather than tracked as steps of their own, so a
  * picture added anywhere ticks the box here.
  *
@@ -27,9 +31,18 @@ interface SetupFacts {
 export const setupSteps = ({
     profile,
     logCount,
+    reviewCount,
     friendCount,
+    postCount,
 }: SetupFacts): SetupStep[] | null => {
-    if (logCount === undefined || friendCount === undefined) return null;
+    if (
+        logCount === undefined ||
+        reviewCount === undefined ||
+        friendCount === undefined ||
+        postCount === undefined
+    ) {
+        return null;
+    }
     return [
         {
             key: "picture",
@@ -50,11 +63,24 @@ export const setupSteps = ({
             done: logCount > 0,
         },
         {
+            // A review hangs off a log, and the played shelf is where they are.
+            key: "review",
+            label: "Write your first review",
+            to: `/user/${profile.username}?type=played`,
+            done: reviewCount > 0,
+        },
+        {
             // No directory of people: the community is where they are met.
             key: "friend",
             label: "Add a friend",
             to: "/community",
             done: friendCount > 0,
+        },
+        {
+            key: "post",
+            label: "Post in the community",
+            to: "/community",
+            done: postCount > 0,
         },
     ];
 };
