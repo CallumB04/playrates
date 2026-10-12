@@ -1,7 +1,7 @@
 import type { GameQuery } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
-import { searchKey } from "../../lib/searchKey.js";
-import { likeTerm } from "../../lib/likeTerm.js";
+import { matchesFromStart, searchKey } from "../../lib/searchKey.js";
+import { likePrefix, likeTerm } from "../../lib/likeTerm.js";
 import type { ExternalGame } from "../../providers/games/GamesProvider.js";
 import type { GameRowWithPlatforms } from "./games.mapper.js";
 
@@ -86,14 +86,21 @@ export interface GamesRepository {
 
 /** Matches on the search key, so "witcher iii" finds "The Witcher 3". A
  *  term of nothing but punctuation has no key, and falls back to the title. */
-const matchTitle = <B extends { ilike: (column: string, pattern: string) => B }>(
+const matchTitle = <
+  B extends {
+    ilike: (column: string, pattern: string) => B;
+    like: (column: string, pattern: string) => B;
+  },
+>(
   builder: B,
   term: string,
 ): B => {
   const key = searchKey(term);
-  return key
-    ? builder.ilike("search_title", likeTerm(key))
-    : builder.ilike("title", likeTerm(term));
+  if (!key) return builder.ilike("title", likeTerm(term));
+  // The key is lower case already, so LIKE, which the prefix index serves.
+  return matchesFromStart(key)
+    ? builder.like("search_title", likePrefix(key))
+    : builder.ilike("search_title", likeTerm(key));
 };
 
 /** Every column an upstream game decides. Ours (log counts, ratings, the
@@ -153,7 +160,10 @@ const replaceLinks = async (
     [
       "game_platforms",
       games.flatMap(({ id, game }) =>
-        game.platformSlugs.map((slug) => ({ game_id: id, platform_slug: slug })),
+        game.platformSlugs.map((slug) => ({
+          game_id: id,
+          platform_slug: slug,
+        })),
       ),
     ],
     [

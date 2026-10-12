@@ -1,5 +1,15 @@
 import type { ExternalGame } from "../../src/providers/games/GamesProvider.js";
-import { searchKey } from "../../src/lib/searchKey.js";
+import { matchesFromStart, searchKey } from "../../src/lib/searchKey.js";
+
+/** Mirrors matchTitle in the games repository. */
+const titleMatches = (title: string, term: string): boolean => {
+  const key = searchKey(term);
+  const titleKey = searchKey(title);
+  if (!key) return title.toLowerCase().includes(term.toLowerCase());
+  return matchesFromStart(key)
+    ? titleKey.startsWith(key)
+    : titleKey.includes(key);
+};
 import { AppError } from "../../src/lib/AppError.js";
 import { logRank, type GameStatus, type PlayedStatus } from "@playrates/shared";
 import type { Repositories } from "../../src/repositories.js";
@@ -470,8 +480,7 @@ export const createInMemoryRepos = (
         let rows = state.games;
 
         if (query.search) {
-          const term = searchKey(query.search);
-          rows = rows.filter((g) => searchKey(g.title).includes(term));
+          rows = rows.filter((g) => titleMatches(g.title, query.search!));
         }
         if (query.trending !== undefined) {
           rows = rows.filter((g) => g.is_trending === query.trending);
@@ -545,7 +554,7 @@ export const createInMemoryRepos = (
       },
       async searchLocal(term, limit, showSexualContent) {
         return state.games
-          .filter((g) => searchKey(g.title).includes(searchKey(term)))
+          .filter((g) => titleMatches(g.title, term))
           .filter((g) => showSexualContent || !g.has_sexual_content)
           .slice(0, limit)
           .map(withPlatforms);
