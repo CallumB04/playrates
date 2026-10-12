@@ -323,6 +323,9 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 friendCount={
                     friendsLoading ? undefined : acceptedFriends.length
                 }
+                friendsSince={
+                    relation === "friend" ? friendEdge?.createdAt : undefined
+                }
                 onEditPicture={
                     isMyAccount
                         ? () => setModal({ kind: "editProfile" })
@@ -373,7 +376,6 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                             )}
                             <FriendAction
                                 relation={relation}
-                                since={friendEdge?.createdAt}
                                 isPending={isPending}
                                 onAdd={guard(() => void send.mutateAsync())}
                                 onAccept={guard(

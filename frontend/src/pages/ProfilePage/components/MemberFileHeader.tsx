@@ -24,6 +24,8 @@ interface MemberFileHeaderProps {
     profileHidden?: boolean;
     reviewCount: number | undefined;
     friendCount: number | undefined;
+    /** When the viewer and this member became friends, if they are. */
+    friendsSince?: string;
     /** The friend button, or the owner's controls. */
     action: ReactNode;
     /** Set only on your own profile: makes the picture and the banner open
@@ -91,6 +93,7 @@ const MemberFileHeader = ({
     profileHidden = false,
     reviewCount,
     friendCount,
+    friendsSince,
     action,
     onEditPicture,
 }: MemberFileHeaderProps) => {
@@ -157,10 +160,7 @@ const MemberFileHeader = ({
                         <PresenceDot online={profile.online} size="lg" />
                     </span>
 
-                    {/* Top, not centre: the friend button can carry a note
-                        under it ("Since 2026"), and centring on the pair sat
-                        the report button halfway down it. */}
-                    <div className="mt-3 flex items-start gap-2">{action}</div>
+                    <div className="mt-3 flex items-center gap-2">{action}</div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
@@ -171,6 +171,13 @@ const MemberFileHeader = ({
                     <span className="text-label text-content-muted">
                         Member since {formatMonthYear(profile.createdAt)}
                     </span>
+                    {/* Here, not under the friend button, where it moved the
+                        buttons each time the friendship changed. */}
+                    {friendsSince && (
+                        <span className="text-label text-content-muted">
+                            Friends since {new Date(friendsSince).getFullYear()}
+                        </span>
+                    )}
                 </div>
 
                 {profile.bio && (
