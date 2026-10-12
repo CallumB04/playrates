@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { pendingSetup } from "./setupChecklist";
+import { setupMessage, setupSteps, unfinished } from "./setupChecklist";
 
 const facts = (
-    overrides: Partial<Parameters<typeof pendingSetup>[0]> = {},
-    profile: Partial<Parameters<typeof pendingSetup>[0]["profile"]> = {}
+    overrides: Partial<Parameters<typeof setupSteps>[0]> = {},
+    profile: Partial<Parameters<typeof setupSteps>[0]["profile"]> = {}
 ) => ({
     profile: { avatarUrl: null, bio: "", ...profile },
     logCount: 0,
@@ -11,10 +11,17 @@ const facts = (
     ...overrides,
 });
 
-const done = (f: ReturnType<typeof facts>) =>
-    Object.fromEntries((pendingSetup(f) ?? []).map((s) => [s.key, s.done]));
+const steps = (f = facts()) => setupSteps(f)!;
 
-describe("pendingSetup", () => {
+const done = (f: ReturnType<typeof facts>) =>
+    Object.fromEntries(steps(f).map((s) => [s.key, s.done]));
+
+const allDone = facts(
+    { logCount: 1, friendCount: 1 },
+    { avatarUrl: "a", bio: "b" }
+);
+
+describe("setupSteps", () => {
     it("starts a new account on nothing done", () => {
         expect(done(facts())).toEqual({
             picture: false,
@@ -34,22 +41,54 @@ describe("pendingSetup", () => {
         expect(done(facts({}, { bio: "   " })).bio).toBe(false);
     });
 
-    /* Not dismissable: the only way to make it go is to finish it. */
-    it("has nothing to show once all four are done", () => {
-        expect(
-            pendingSetup(
-                facts(
-                    { logCount: 1, friendCount: 1 },
-                    { avatarUrl: "a", bio: "b" }
-                )
-            )
-        ).toBeNull();
+    /* Judging on a guess would toast, or flash the menu row, wrongly. */
+    it("waits for the counts before deciding", () => {
+        expect(setupSteps(facts({ logCount: undefined }))).toBeNull();
+        expect(setupSteps(facts({ friendCount: undefined }))).toBeNull();
+    });
+});
+
+describe("unfinished", () => {
+    it("keeps the list while anything is left", () => {
+        expect(unfinished(steps())).toHaveLength(4);
     });
 
-    /* A finished account would otherwise flash the list while its counts
-       load. */
-    it("waits for the counts before deciding", () => {
-        expect(pendingSetup(facts({ logCount: undefined }))).toBeNull();
-        expect(pendingSetup(facts({ friendCount: undefined }))).toBeNull();
+    /* Not dismissable: finishing it is the only way it goes. */
+    it("has nothing once all four are done", () => {
+        expect(unfinished(steps(allDone))).toBeNull();
+        expect(unfinished(null)).toBeNull();
+    });
+});
+
+describe("setupMessage", () => {
+    it("says which step was done and where that leaves them", () => {
+        expect(setupMessage(steps(), steps(facts({}, { bio: "Hello" })))).toBe(
+            "Bio written. Get started: 1 of 4 done."
+        );
+    });
+
+    it("counts rather than names two steps done at once", () => {
+        expect(
+            setupMessage(
+                steps(),
+                steps(facts({}, { bio: "Hello", avatarUrl: "a" }))
+            )
+        ).toBe("2 steps done. Get started: 2 of 4 done.");
+    });
+
+    it("says it is all done on the last one", () => {
+        const threeDone = facts(
+            { logCount: 1, friendCount: 0 },
+            { avatarUrl: "a", bio: "b" }
+        );
+        expect(setupMessage(steps(threeDone), steps(allDone))).toBe(
+            "You're all set! Every Get started step is done."
+        );
+    });
+
+    /* Deleting the only log un-ticks a step; that is not news. */
+    it("says nothing when nothing new is done", () => {
+        expect(setupMessage(steps(), steps())).toBeNull();
+        expect(setupMessage(steps(facts({ logCount: 1 })), steps())).toBeNull();
     });
 });

@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { buildProfile } from "../../test/msw/handlers";
 import AccountMenu from "./AccountMenu";
-import { pendingSetup } from "../../lib/setupChecklist";
+import { setupSteps } from "../../lib/setupChecklist";
 
 const open = async (isAdmin: boolean) => {
     renderWithProviders(
@@ -30,7 +30,7 @@ describe("AccountMenu", () => {
     });
 
     describe("profile setup", () => {
-        const setup = pendingSetup({
+        const setup = setupSteps({
             profile: { avatarUrl: null, bio: "Hello" },
             logCount: 2,
             friendCount: 0,
