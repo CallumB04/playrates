@@ -118,4 +118,27 @@ describe("StatusPlates", () => {
         await userEvent.click(option("^Played"));
         expect(onPlayedStatusChange).toHaveBeenCalledWith(null);
     });
+
+    /* In the log editor the plates sit inside a Modal, which stops mousedown
+       at its panel; the menu has to close all the same. */
+    it("closes the menu when another status is chosen", async () => {
+        const onChange = vi.fn();
+        render(
+            <div onMouseDown={(e) => e.stopPropagation()}>
+                <StatusPlates
+                    value="played"
+                    playedStatus={null}
+                    onChange={onChange}
+                    onPlayedStatusChange={vi.fn()}
+                />
+            </div>
+        );
+
+        await userEvent.click(played());
+        expect(screen.getByRole("listbox")).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole("button", { name: "Playing" }));
+        expect(onChange).toHaveBeenCalledWith("playing");
+        expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    });
 });
