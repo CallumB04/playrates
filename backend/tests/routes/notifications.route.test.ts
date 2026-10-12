@@ -227,6 +227,103 @@ describe("notifications", () => {
     expect(response.status).toBe(401);
   });
 
+  /* An unanswered request is a task, not news: it cannot be read or filed
+     away, and no bulk action touches it, until it is accepted or declined. */
+  describe("a friend request still waiting on an answer", () => {
+    const waiting = (
+      extra: Parameters<typeof buildNotification>[0][] = [],
+    ) => ({
+      ...baseSeed(),
+      // USER_B asked USER_A, who has not answered.
+      friendships: [buildFriendship({ requested_by: USER_B })],
+      notifications: [
+        buildNotification({
+          id: 10,
+          kind: "friend_request",
+          actor_id: USER_B,
+          dedupe_key: `friend_request:${USER_B}`,
+        }),
+        ...extra.map((n) => buildNotification(n)),
+      ],
+    });
+    const request10 = (state: ReturnType<typeof buildTestApp>["state"]) =>
+      state.notifications.find((n) => n.id === 10)!;
+
+    it("cannot be read or archived by hand", async () => {
+      const { app, state } = buildTestApp({ seed: waiting() });
+      for (const body of [{ read: true }, { archived: true }]) {
+        const response = await request(app)
+          .patch("/api/v1/me/notifications/10")
+          .set("Authorization", authHeader(USER_A))
+          .send(body);
+        expect(response.status).toBe(409);
+        expect(response.body.error.code).toBe("request_unanswered");
+      }
+      expect(request10(state)).toMatchObject({
+        read_at: null,
+        archived_at: null,
+      });
+    });
+
+    it("is left out of mark all read and archive all", async () => {
+      const { app, state } = buildTestApp({
+        seed: waiting([{ id: 11, dedupe_key: "w" }]),
+      });
+      const post = (path: string) =>
+        request(app)
+          .post(`/api/v1/me/notifications/${path}`)
+          .set("Authorization", authHeader(USER_A));
+
+      await post("read-all");
+      await post("archive-all");
+
+      expect(request10(state)).toMatchObject({
+        read_at: null,
+        archived_at: null,
+      });
+      // The welcome beside it was read and filed as usual.
+      expect(
+        state.notifications.find((n) => n.id === 11)!.archived_at,
+      ).not.toBeNull();
+    });
+
+    it("is counted apart, so the panel knows what bulk actions can do", async () => {
+      const { app } = buildTestApp({
+        seed: waiting([{ id: 11, dedupe_key: "w" }]),
+      });
+      const response = await request(app)
+        .get("/api/v1/me/notifications")
+        .set("Authorization", authHeader(USER_A));
+      expect(response.body).toMatchObject({ unread: 2, awaitingAnswer: 1 });
+    });
+
+    it("is ordinary again once answered", async () => {
+      const { app } = buildTestApp({
+        seed: {
+          ...waiting(),
+          friendships: [
+            buildFriendship({ requested_by: USER_B, status: "accepted" }),
+          ],
+        },
+      });
+      const response = await request(app)
+        .patch("/api/v1/me/notifications/10")
+        .set("Authorization", authHeader(USER_A))
+        .send({ archived: true });
+      expect(response.status).toBe(200);
+    });
+
+    /* Otherwise it would sit unread, waiting on an answer nobody can give. */
+    it("is read for the other party when its sender withdraws it", async () => {
+      const { app, state } = buildTestApp({ seed: waiting() });
+      const response = await request(app)
+        .delete(`/api/v1/me/friends/${USER_A}`)
+        .set("Authorization", authHeader(USER_B));
+      expect(response.status).toBe(204);
+      expect(request10(state).read_at).not.toBeNull();
+    });
+  });
+
   describe("friend requests", () => {
     it("raises one for the recipient when a request is sent", async () => {
       const { app, state } = buildTestApp({ seed: baseSeed() });

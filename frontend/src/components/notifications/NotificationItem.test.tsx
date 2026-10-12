@@ -5,7 +5,13 @@ import { http, HttpResponse } from "msw";
 import type { AppNotification } from "@playrates/shared";
 import { server } from "../../test/msw/server";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { buildProfile } from "../../test/msw/handlers";
 import NotificationItem from "./NotificationItem";
+
+// A friend request's Accept and Decline belong to someone signed in.
+vi.mock("../../contexts/AuthContext", () => ({
+    useAuth: () => ({ user: buildProfile() }),
+}));
 
 const API = "http://localhost:3000/api/v1";
 
@@ -232,7 +238,9 @@ describe("NotificationItem", () => {
         it("shows the words it was sent with, and no link without one", () => {
             renderItem(announcement());
 
-            expect(screen.getByText("Down for maintenance")).toBeInTheDocument();
+            expect(
+                screen.getByText("Down for maintenance")
+            ).toBeInTheDocument();
             expect(screen.getByText("Back in an hour.")).toBeInTheDocument();
             expect(screen.queryByRole("link")).not.toBeInTheDocument();
         });
@@ -241,11 +249,15 @@ describe("NotificationItem", () => {
             const seen = capturePatch();
             renderItem(announcement({ link: "/community" }));
 
-            const link = screen.getByRole("link", { name: /Down for maintenance/ });
+            const link = screen.getByRole("link", {
+                name: /Down for maintenance/,
+            });
             await userEvent.click(link);
 
             expect(link).toHaveAttribute("href", "/community");
-            await waitFor(() => expect(seen).toHaveBeenCalledWith({ read: true }));
+            await waitFor(() =>
+                expect(seen).toHaveBeenCalledWith({ read: true })
+            );
         });
 
         it("says when it is only a test", () => {
@@ -263,8 +275,48 @@ describe("NotificationItem", () => {
                     />
                 </ul>
             );
-            expect(screen.getByRole("button", { name: "Mark as read" })).toBeDisabled();
-            expect(screen.getByRole("button", { name: "Archive" })).toBeDisabled();
+            expect(
+                screen.getByRole("button", { name: "Mark as read" })
+            ).toBeDisabled();
+            expect(
+                screen.getByRole("button", { name: "Archive" })
+            ).toBeDisabled();
+        });
+    });
+
+    /* Its Accept and Decline are the way out of the inbox; until then it
+       stays unread, with nothing else to press. */
+    describe("a friend request", () => {
+        const request = (relation: string | null) =>
+            welcome({
+                kind: "friend_request",
+                actor: {
+                    id: "u2",
+                    username: "frostbyte",
+                    avatarUrl: null,
+                    accent: "indigo",
+                },
+                relation,
+            } as unknown as Partial<AppNotification>);
+
+        it("offers no read or archive while it waits on an answer", () => {
+            renderItem(request("request-received"));
+            expect(
+                screen.queryByRole("button", { name: "Mark as read" })
+            ).not.toBeInTheDocument();
+            expect(
+                screen.queryByRole("button", { name: "Archive" })
+            ).not.toBeInTheDocument();
+        });
+
+        it("offers both once it has been answered", () => {
+            renderItem(request("friend"));
+            expect(
+                screen.getByRole("button", { name: "Mark as read" })
+            ).toBeInTheDocument();
+            expect(
+                screen.getByRole("button", { name: "Archive" })
+            ).toBeInTheDocument();
         });
     });
 });

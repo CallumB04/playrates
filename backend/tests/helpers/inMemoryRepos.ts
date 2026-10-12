@@ -61,6 +61,15 @@ import {
  * than on behaviour, and breaks whenever a query is rewritten. These survive
  * query rewrites because they implement the same contract.
  */
+
+/** Mirrors exceptRequestsFrom in the notifications repository. */
+const keptRequest = (
+  n: { kind: string; actor_id: string | null },
+  keepRequestsFrom: string[],
+) =>
+  n.kind === "friend_request" &&
+  n.actor_id !== null &&
+  keepRequestsFrom.includes(n.actor_id);
 export interface SeedData {
   profiles?: ProfileRow[];
   games?: GameRow[];
@@ -1402,23 +1411,40 @@ export const createInMemoryRepos = (
           (n) => n.dedupe_key !== dedupeKey,
         );
       },
-      async markAllRead(userId) {
+      async markAllRead(userId, keepRequestsFrom) {
         for (const n of state.notifications) {
-          if (n.user_id === userId && n.archived_at === null) {
+          if (
+            n.user_id === userId &&
+            n.archived_at === null &&
+            !keptRequest(n, keepRequestsFrom)
+          ) {
             n.read_at ??= now();
           }
         }
       },
-      async archiveAllRead(userId) {
+      async archiveAllRead(userId, keepRequestsFrom) {
         for (const n of state.notifications) {
           if (
             n.user_id === userId &&
             n.read_at !== null &&
-            n.archived_at === null
+            n.archived_at === null &&
+            !keptRequest(n, keepRequestsFrom)
           ) {
             n.archived_at = now();
           }
         }
+      },
+      async unreadRequestActors(userId) {
+        return state.notifications
+          .filter(
+            (n) =>
+              n.user_id === userId &&
+              n.kind === "friend_request" &&
+              n.read_at === null &&
+              n.archived_at === null &&
+              n.actor_id !== null,
+          )
+          .map((n) => n.actor_id!);
       },
       async markReadByKey(userId, dedupeKey) {
         for (const n of state.notifications) {

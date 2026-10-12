@@ -33,6 +33,14 @@ export const createNotificationsService = (
     return (actorId) => byOther.get(actorId) ?? null;
   };
 
+  /** Whose friend requests to the caller are still waiting on an answer:
+   *  those stay unread, and out of every bulk action, until answered. */
+  const awaitingFrom = async (userId: string): Promise<string[]> => {
+    const relationOf = await relationLookup(userId, true);
+    const actors = await repo.unreadRequestActors(userId);
+    return actors.filter((id) => relationOf(id) === "request-received");
+  };
+
   /** Everything the caller owns; a notification is never visible to anyone
    *  else, so ownership is the whole authorization story here. */
   const ownedOrThrow = async (id: number, callerId: string) => {
@@ -47,25 +55,41 @@ export const createNotificationsService = (
       { archived, ...pagination }: Pagination & { archived: boolean },
     ): Promise<NotificationFeed> {
       const { from, to } = toRange(pagination);
-      const [{ rows, total }, unread] = await Promise.all([
+      const [{ rows, total }, unread, requestActors] = await Promise.all([
         repo.listForUser(userId, archived, from, to),
         repo.countUnread(userId),
+        repo.unreadRequestActors(userId),
       ]);
 
       const relationOf = await relationLookup(
         userId,
-        rows.some((row) => row.kind === "friend_request"),
+        requestActors.length > 0 ||
+          rows.some((row) => row.kind === "friend_request"),
       );
 
       return {
         data: rows.map((row) => toNotification(row, relationOf)),
         meta: { page: pagination.page, limit: pagination.limit, total },
         unread,
+        awaitingAnswer: requestActors.filter(
+          (id) => relationOf(id) === "request-received",
+        ).length,
       };
     },
 
     async patch(id: number, callerId: string, patch: NotificationPatch) {
-      await ownedOrThrow(id, callerId);
+      const owned = await ownedOrThrow(id, callerId);
+
+      if (owned.kind === "friend_request" && owned.actor_id) {
+        const relationOf = await relationLookup(callerId, true);
+        if (relationOf(owned.actor_id) === "request-received") {
+          throw new AppError(
+            409,
+            "request_unanswered",
+            "Answer the friend request first",
+          );
+        }
+      }
 
       const now = new Date().toISOString();
       const fields: { read_at?: string | null; archived_at?: string | null } =
@@ -88,11 +112,11 @@ export const createNotificationsService = (
     },
 
     async markAllRead(userId: string): Promise<void> {
-      await repo.markAllRead(userId);
+      await repo.markAllRead(userId, await awaitingFrom(userId));
     },
 
     async archiveAllRead(userId: string): Promise<void> {
-      await repo.archiveAllRead(userId);
+      await repo.archiveAllRead(userId, await awaitingFrom(userId));
     },
   };
 };

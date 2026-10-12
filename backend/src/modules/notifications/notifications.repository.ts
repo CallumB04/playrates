@@ -34,16 +34,21 @@ export interface NotificationsRepository {
     to: number,
   ): Promise<{ rows: NotificationRowWithActor[]; total: number }>;
   countUnread(userId: string): Promise<number>;
+  /** Who sent the unread friend requests still in the inbox. */
+  unreadRequestActors(userId: string): Promise<string[]>;
   findById(id: number): Promise<NotificationRow | null>;
   update(
     id: number,
     patch: Partial<NotificationRow>,
   ): Promise<NotificationRowWithActor>;
   raise(draft: NotificationDraft): Promise<void>;
-  markAllRead(userId: string): Promise<void>;
+  /** Leaves alone the friend requests from `keepRequestsFrom`, which are
+   *  still waiting on an answer. */
+  markAllRead(userId: string, keepRequestsFrom: string[]): Promise<void>;
   /** Files away the inbox's read rows. Unread ones stay, so one that lands
-   *  as the button is pressed is not archived unseen. */
-  archiveAllRead(userId: string): Promise<void>;
+   *  as the button is pressed is not archived unseen; so do the requests
+   *  from `keepRequestsFrom`. */
+  archiveAllRead(userId: string, keepRequestsFrom: string[]): Promise<void>;
   /** No-op when the user has no notification under that key. */
   markReadByKey(userId: string, dedupeKey: string): Promise<void>;
   /** Counts a thread's activity notification up while it is unread, or
@@ -69,6 +74,11 @@ export interface NotificationsRepository {
 /** Postgres' unique_violation. The insert in `raise` races against itself
  *  whenever the same notification is raised twice at once. */
 const UNIQUE_VIOLATION = "23505";
+
+/** Everything but friend requests from these people, as a PostgREST
+ *  filter. Ids are UUIDs, so they are safe inside the string. */
+const exceptRequestsFrom = (ids: string[]): string =>
+  `kind.neq.friend_request,actor_id.not.in.(${ids.join(",")})`;
 
 export const createNotificationsRepository = (
   db: Db,
@@ -159,24 +169,46 @@ export const createNotificationsRepository = (
     if (resurfaceError) throw resurfaceError;
   },
 
-  async markAllRead(userId) {
-    const { error } = await db
+  async markAllRead(userId, keepRequestsFrom) {
+    let query = db
       .from("notifications")
       .update({ read_at: new Date().toISOString() })
       .eq("user_id", userId)
       .is("read_at", null)
       .is("archived_at", null);
+    if (keepRequestsFrom.length > 0) {
+      query = query.or(exceptRequestsFrom(keepRequestsFrom));
+    }
+    const { error } = await query;
     if (error) throw error;
   },
 
-  async archiveAllRead(userId) {
-    const { error } = await db
+  async archiveAllRead(userId, keepRequestsFrom) {
+    let query = db
       .from("notifications")
       .update({ archived_at: new Date().toISOString() })
       .eq("user_id", userId)
       .not("read_at", "is", null)
       .is("archived_at", null);
+    if (keepRequestsFrom.length > 0) {
+      query = query.or(exceptRequestsFrom(keepRequestsFrom));
+    }
+    const { error } = await query;
     if (error) throw error;
+  },
+
+  async unreadRequestActors(userId) {
+    const { data, error } = await db
+      .from("notifications")
+      .select("actor_id")
+      .eq("user_id", userId)
+      .eq("kind", "friend_request")
+      .is("read_at", null)
+      .is("archived_at", null);
+    if (error) throw error;
+    return ((data ?? []) as { actor_id: string | null }[])
+      .map((row) => row.actor_id)
+      .filter((id): id is string => id !== null);
   },
 
   async bumpThreadActivity(userId, dedupeKey, data) {

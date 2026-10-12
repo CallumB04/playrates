@@ -187,9 +187,13 @@ export const createFriendsService = (
       await repo.remove(callerId, otherId);
 
       /* Acting on a request reads its notification, wherever you acted from.
-         A no-op when the caller is the one who sent it — the notification
-         belongs to the other party, under a key naming the caller. */
+         Withdrawing one reads the other party's, which would otherwise wait
+         unread for an answer there is no longer anything to give. Each is a
+         no-op where there is no such notification. */
       await notifications.markReadByKey(callerId, friendRequestKey(otherId));
+      if (existing.status === "pending" && existing.requested_by === callerId) {
+        await notifications.markReadByKey(otherId, friendRequestKey(callerId));
+      }
     },
   };
 };

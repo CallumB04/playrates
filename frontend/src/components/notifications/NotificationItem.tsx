@@ -7,7 +7,7 @@ import {
     type LucideIcon,
 } from "lucide-react";
 import IconMark from "./IconMark";
-import type { AppNotification } from "@playrates/shared";
+import { awaitingAnswer, type AppNotification } from "@playrates/shared";
 import { usePatchNotification } from "../../hooks/queries/useNotifications";
 import { relativeTime } from "../../lib/format";
 import { cn } from "../../lib/cn";
@@ -75,6 +75,8 @@ const NotificationItem = ({
 
     const unread = notification.readAt === null;
     const archived = notification.archivedAt !== null;
+    // Its Accept and Decline are the way out; it stays unread until then.
+    const task = awaitingAnswer(notification);
 
     return (
         <li
@@ -109,30 +111,32 @@ const NotificationItem = ({
                 </time>
             </div>
 
-            <div className="flex shrink-0 flex-col items-center gap-2 pt-0.5">
-                <RowAction
-                    icon={unread ? Circle : CircleCheck}
-                    label={unread ? "Mark as read" : "Mark as unread"}
-                    disabled={preview || patch.isPending}
-                    onClick={() =>
-                        patch.mutate({
-                            id: notification.id,
-                            patch: { read: unread },
-                        })
-                    }
-                />
-                <RowAction
-                    icon={archived ? ArchiveRestore : Archive}
-                    label={archived ? "Move back to inbox" : "Archive"}
-                    disabled={preview || patch.isPending}
-                    onClick={() =>
-                        patch.mutate({
-                            id: notification.id,
-                            patch: { archived: !archived },
-                        })
-                    }
-                />
-            </div>
+            {!task && (
+                <div className="flex shrink-0 flex-col items-center gap-2 pt-0.5">
+                    <RowAction
+                        icon={unread ? Circle : CircleCheck}
+                        label={unread ? "Mark as read" : "Mark as unread"}
+                        disabled={preview || patch.isPending}
+                        onClick={() =>
+                            patch.mutate({
+                                id: notification.id,
+                                patch: { read: unread },
+                            })
+                        }
+                    />
+                    <RowAction
+                        icon={archived ? ArchiveRestore : Archive}
+                        label={archived ? "Move back to inbox" : "Archive"}
+                        disabled={preview || patch.isPending}
+                        onClick={() =>
+                            patch.mutate({
+                                id: notification.id,
+                                patch: { archived: !archived },
+                            })
+                        }
+                    />
+                </div>
+            )}
         </li>
     );
 };

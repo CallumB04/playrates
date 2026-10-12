@@ -7,6 +7,7 @@ import {
     useMarkAllNotificationsRead,
     useNotifications,
 } from "../../hooks/queries/useNotifications";
+import { awaitingAnswer } from "@playrates/shared";
 import NotificationItem from "./NotificationItem";
 
 type Tab = "inbox" | "archive";
@@ -57,7 +58,10 @@ const NotificationPanel = ({
     const archiveAll = useArchiveAllNotifications();
 
     const notifications = data?.data ?? [];
-    const unread = data?.unread ?? 0;
+    // Requests waiting on an answer stay unread, and out of both bulk
+    // actions, until they are answered.
+    const markable = (data?.unread ?? 0) - (data?.awaitingAnswer ?? 0);
+    const archivable = notifications.some((n) => !awaitingAnswer(n));
 
     return (
         <>
@@ -74,7 +78,7 @@ const NotificationPanel = ({
                     that are not on screen. Read first, then filed: once
                     nothing is left unread, the same place clears the inbox. */}
                 {tab === "inbox" &&
-                    (unread > 0 ? (
+                    (markable > 0 ? (
                         <HeaderAction
                             onClick={() => markAll.mutate()}
                             disabled={markAll.isPending}
@@ -82,7 +86,7 @@ const NotificationPanel = ({
                             Mark all read
                         </HeaderAction>
                     ) : (
-                        notifications.length > 0 && (
+                        archivable && (
                             <HeaderAction
                                 onClick={() => archiveAll.mutate()}
                                 disabled={archiveAll.isPending}

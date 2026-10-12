@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import type { AppNotification } from "@playrates/shared";
+import { awaitingAnswer, type AppNotification } from "@playrates/shared";
 import { server } from "../../test/msw/server";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { buildProfile } from "../../test/msw/handlers";
@@ -31,6 +31,7 @@ const inbox = (data: AppNotification[]) =>
             HttpResponse.json({
                 data,
                 unread: data.filter((n) => n.readAt === null).length,
+                awaitingAnswer: data.filter(awaitingAnswer).length,
                 meta: { page: 1, limit: 20, total: data.length },
             })
         )
@@ -75,6 +76,31 @@ describe("NotificationPanel", () => {
         expect(
             screen.queryByRole("button", { name: "Mark all read" })
         ).not.toBeInTheDocument();
+    });
+
+    /* A request waiting on an answer stays unread whatever is pressed, so
+       counting it would leave "Mark all read" there for good. */
+    it("does not count a waiting friend request as something to read", async () => {
+        const request = welcome({
+            id: 3,
+            kind: "friend_request",
+            relation: "request-received",
+            actor: {
+                id: "u2",
+                username: "frostbyte",
+                avatarUrl: null,
+                accent: "indigo",
+            },
+        } as unknown as Partial<AppNotification>);
+        inbox([request, welcome({ readAt: READ })]);
+        panel();
+
+        expect(
+            await screen.findByRole("button", { name: "Archive all" })
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: "Mark all read" })
+        ).toBeNull();
     });
 
     it("offers neither with nothing in the inbox", async () => {
