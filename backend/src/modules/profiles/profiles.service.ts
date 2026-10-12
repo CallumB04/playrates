@@ -167,6 +167,19 @@ export const createProfilesService = (
     );
   },
 
+  /** The setup checklist has been put away. Keeps the first time, as the
+   *  welcome does. */
+  async dismissChecklist(callerId: string): Promise<MyProfile> {
+    const row = await repo.findById(callerId);
+    if (!row) throw AppError.notFound("Profile");
+    if (row.checklist_dismissed_at) return toMyProfile(row);
+    return toMyProfile(
+      await repo.update(callerId, {
+        checklist_dismissed_at: new Date().toISOString(),
+      }),
+    );
+  },
+
   async heartbeat(callerId: string): Promise<void> {
     await repo.touchLastSeen(callerId);
   },

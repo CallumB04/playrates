@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Game } from "@playrates/shared";
 import { formatCount, formatReleaseShort, releaseYear } from "../../lib/format";
 import { useAuth } from "../../contexts/AuthContext";
@@ -17,7 +17,13 @@ import {
 } from "../../hooks/queries/useGameLogs";
 import { latestRun, logOnShelf } from "../../api";
 import { useLogFlow } from "../../components/gamelog/useLogFlow";
-import { useFriendActivity } from "../../hooks/queries/useFriends";
+import {
+    useFriendActivity,
+    useMyFriends,
+} from "../../hooks/queries/useFriends";
+import { useDismissChecklist } from "../../hooks/queries/useProfiles";
+import SetupChecklist from "./components/SetupChecklist";
+import { setupSteps, showSetupChecklist } from "./lib/setupChecklist";
 import { useRecentReviews } from "../../hooks/queries/useReviews";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import {
@@ -106,6 +112,21 @@ const HomePage = () => {
 
     // Ids only: the rails show whether you logged something, not what's in it.
     const { data: myLogIds } = useMyGameLogIds();
+    const { data: myFriends } = useMyFriends();
+    const dismissChecklist = useDismissChecklist();
+    // Gone on the press, not when the round trip comes back.
+    const [checklistDismissed, setChecklistDismissed] = useState(false);
+    const setupFacts = user && {
+        profile: user,
+        logCount: myLogIds?.length,
+        friendCount: myFriends?.filter((edge) => edge.status === "friend")
+            .length,
+    };
+    const steps = setupFacts ? setupSteps(setupFacts) : [];
+    const showChecklist =
+        !!setupFacts &&
+        !checklistDismissed &&
+        showSetupChecklist(setupFacts, steps);
     const logByGameId = useMemo(
         () => new Map((myLogIds ?? []).map((log) => [log.gameId, log])),
         [myLogIds]
@@ -196,6 +217,16 @@ const HomePage = () => {
                     siteStats={siteStats}
                     covers={trending?.data ?? []}
                     onStart={openSignup}
+                />
+            )}
+
+            {showChecklist && (
+                <SetupChecklist
+                    steps={steps}
+                    onDismiss={() => {
+                        setChecklistDismissed(true);
+                        dismissChecklist.mutate();
+                    }}
                 />
             )}
 

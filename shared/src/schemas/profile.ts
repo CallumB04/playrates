@@ -105,6 +105,8 @@ export interface MyProfile extends Profile {
   hideOnline: boolean;
   /** When the first-login welcome was dismissed. Null until it has been. */
   onboardedAt: string | null;
+  /** When the home page's setup checklist was put away. Null until it is. */
+  checklistDismissedAt: string | null;
   /** Can post patch notes and remove anything in the community. */
   isAdmin: boolean;
 }

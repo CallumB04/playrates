@@ -178,9 +178,7 @@ describe("closing an account", () => {
     ...baseSeed(),
     gameLogs: [buildGameLog({ id: 1, user_id: USER_A, game_id: 1 })],
     reviews: [buildReview({ id: 1, user_id: USER_A, game_id: 1 })],
-    friendships: [
-      buildFriendship({ user_a_id: USER_A, user_b_id: USER_B }),
-    ],
+    friendships: [buildFriendship({ user_a_id: USER_A, user_b_id: USER_B })],
   });
 
   it("takes the logs, reviews and friendships with it", async () => {
@@ -319,9 +317,7 @@ describe("profile colour", () => {
       .send({ accent: "crimson" });
 
     expect(response.body.accent).toBe("crimson");
-    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe(
-      "crimson",
-    );
+    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe("crimson");
   });
 
   it("refuses a colour that is not one of ours", async () => {
@@ -333,9 +329,7 @@ describe("profile colour", () => {
       .send({ accent: "chartreuse" });
 
     expect(response.status).toBe(422);
-    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe(
-      "indigo",
-    );
+    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe("indigo");
   });
 
   it("shows the colour on the public profile too, so everyone sees it", async () => {
@@ -372,9 +366,9 @@ describe("profile picture", () => {
     expect(response.status).toBe(200);
     expect(response.body.avatarUrl).toContain(`avatars/${USER_A}/avatar.webp`);
     expect(isWebp(state.avatars.get(USER_A)!)).toBe(true);
-    expect(
-      state.profiles.find((p) => p.id === USER_A)?.avatar_url,
-    ).toBe(response.body.avatarUrl);
+    expect(state.profiles.find((p) => p.id === USER_A)?.avatar_url).toBe(
+      response.body.avatarUrl,
+    );
   });
 
   it("takes a JPEG from a browser that cannot encode WebP, and stores WebP", async () => {
@@ -395,7 +389,10 @@ describe("profile picture", () => {
   it("refuses a body that is not a WebP or JPEG", async () => {
     const { app, state } = buildTestApp({ seed: baseSeed() });
 
-    const response = await upload(app, Buffer.from("\x89PNG\r\n\x1a\n and more"));
+    const response = await upload(
+      app,
+      Buffer.from("\x89PNG\r\n\x1a\n and more"),
+    );
 
     expect(response.status).toBe(400);
     expect(state.avatars.has(USER_A)).toBe(false);
@@ -594,7 +591,9 @@ describe("exporting an account", () => {
     );
     expect(response.body.email).toBe(`${USER_A}@example.test`);
     expect(response.body.profile.username).toBe("devuser");
-    expect(response.body.gameLogs.map((l: { id: number }) => l.id)).toEqual([1]);
+    expect(response.body.gameLogs.map((l: { id: number }) => l.id)).toEqual([
+      1,
+    ]);
     expect(response.body.reviews).toHaveLength(1);
   });
 
@@ -620,5 +619,46 @@ describe("hiding from search engines", () => {
 
     expect(before.body.hideFromSearch).toBe(false);
     expect(after.body.hideFromSearch).toBe(true);
+  });
+});
+
+describe("the setup checklist", () => {
+  const dismiss = (app: Parameters<typeof request>[0], user = USER_A) =>
+    request(app)
+      .post("/api/v1/profiles/me/checklist-dismissed")
+      .set("Authorization", authHeader(user));
+
+  it("shows until it is put away", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+    const me = await request(app)
+      .get("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A));
+    expect(me.body.checklistDismissedAt).toBeNull();
+  });
+
+  /* On the account, not in the browser: closed on a phone is closed on the
+     laptop too. */
+  it("stays put away once dismissed", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await dismiss(app);
+    expect(response.status).toBe(200);
+    expect(response.body.checklistDismissedAt).not.toBeNull();
+    expect(state.profiles[0]!.checklist_dismissed_at).not.toBeNull();
+  });
+
+  it("keeps the first time it was put away", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+    const first = (await dismiss(app)).body.checklistDismissedAt;
+    await new Promise((r) => setTimeout(r, 5));
+    expect((await dismiss(app)).body.checklistDismissedAt).toBe(first);
+  });
+
+  it("requires a signed-in caller", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+    const response = await request(app).post(
+      "/api/v1/profiles/me/checklist-dismissed",
+    );
+    expect(response.status).toBe(401);
   });
 });
