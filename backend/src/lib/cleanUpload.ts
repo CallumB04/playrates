@@ -29,10 +29,7 @@ export const cleanUpload = async (
     throw AppError.badRequest("A picture must be a WebP or JPEG image");
   }
 
-  const image = sharp(bytes, {
-    failOn: "error",
-    limitInputPixels: maxEdge ** 2,
-  });
+  const image = sharp(bytes, { failOn: "error", limitInputPixels: maxEdge ** 2 });
   const meta = await image.metadata().catch(() => null);
   if (
     !meta ||
