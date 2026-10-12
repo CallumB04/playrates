@@ -15,6 +15,10 @@ interface FriendActionProps {
     onCancel: () => void;
 }
 
+/* 44px on a phone like the report button beside it, which also left the
+   two different heights in one row. */
+const TAP = "max-sm:min-h-11";
+
 /** All three friend states in one place. */
 const FriendAction = ({
     relation,
@@ -39,6 +43,7 @@ const FriendAction = ({
                 <Button
                     variant="secondary"
                     size="sm"
+                    className={TAP}
                     onClick={onRemove}
                     disabled={isPending}
                 >
@@ -53,12 +58,18 @@ const FriendAction = ({
         return (
             <div className="flex flex-col gap-2">
                 <div className="flex gap-2">
-                    <Button size="sm" onClick={onAccept} disabled={isPending}>
+                    <Button
+                        size="sm"
+                        className={TAP}
+                        onClick={onAccept}
+                        disabled={isPending}
+                    >
                         Accept
                     </Button>
                     <Button
                         variant="ghost"
                         size="sm"
+                        className={TAP}
                         onClick={onRemove}
                         disabled={isPending}
                     >
@@ -76,6 +87,7 @@ const FriendAction = ({
                 <Button
                     variant="secondary"
                     size="sm"
+                    className={TAP}
                     onClick={onCancel}
                     disabled={isPending}
                 >
@@ -87,7 +99,7 @@ const FriendAction = ({
     }
 
     return (
-        <Button size="sm" onClick={onAdd} disabled={isPending}>
+        <Button size="sm" className={TAP} onClick={onAdd} disabled={isPending}>
             Add friend
         </Button>
     );

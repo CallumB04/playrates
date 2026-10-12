@@ -157,7 +157,10 @@ const MemberFileHeader = ({
                         <PresenceDot online={profile.online} size="lg" />
                     </span>
 
-                    <div className="mt-3 flex items-center gap-2">{action}</div>
+                    {/* Top, not centre: the friend button can carry a note
+                        under it ("Since 2026"), and centring on the pair sat
+                        the report button halfway down it. */}
+                    <div className="mt-3 flex items-start gap-2">{action}</div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
