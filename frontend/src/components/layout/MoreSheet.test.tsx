@@ -34,10 +34,8 @@ describe("MoreSheet", () => {
             "href",
             "/user/devuser?type=backlog"
         );
-        expect(screen.getByRole("link", { name: /devuser/ })).toHaveAttribute(
-            "href",
-            "/user/devuser"
-        );
+        // The bar's Profile tab is the way there; not twice.
+        expect(screen.queryByRole("link", { name: /devuser$/ })).toBeNull();
         expect(screen.getByRole("link", { name: "Settings" })).toBeVisible();
         expect(screen.getByRole("link", { name: "Admin" })).toHaveAttribute(
             "href",

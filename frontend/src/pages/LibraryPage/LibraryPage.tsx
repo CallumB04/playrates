@@ -17,8 +17,9 @@ import EmptyPlate from "../../components/ui/EmptyPlate";
 import LibraryFilters from "./components/LibraryFilters";
 import { getLibraryGamesPerPage } from "./lib/gamesPerPage";
 import { useLibraryQuery } from "./lib/useLibraryQuery";
+import { logMeta } from "./lib/logMeta";
 import { libraryFoot } from "./lib/libraryFoot";
-import { formatCount, formatRatingOutOfTen } from "../../lib/format";
+import { formatCount } from "../../lib/format";
 
 const LibraryPage = () => {
     usePageTitle("Library");
@@ -67,17 +68,6 @@ const LibraryPage = () => {
     });
 
     const { actionsFor, statusFor, logFor } = useTileActions();
-
-    const logMeta = (gameId: number): string | undefined => {
-        const log = logFor(gameId);
-        if (!log) return undefined;
-        const parts =
-            log.logs.length > 1
-                ? ["Your logs", `${log.logs.length} platforms`]
-                : ["Your log"];
-        if (log.rating !== null) parts.push(formatRatingOutOfTen(log.rating));
-        return parts.join(" · ");
-    };
 
     const showSkeletons =
         isLoading || (isPlaceholderData && games.length === 0);
@@ -147,7 +137,7 @@ const LibraryPage = () => {
                                 rating={foot.rating}
                                 footValue={foot.value}
                                 status={statusFor(game)}
-                                meta={logMeta(game.id)}
+                                meta={logMeta(logFor(game.id))}
                                 actions={actionsFor(game)}
                                 narrowFoot
                             />

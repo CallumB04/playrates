@@ -8,7 +8,6 @@ import {
     Settings,
     Shield,
     Sun,
-    UserRound,
 } from "lucide-react";
 import type { MyProfile } from "@playrates/shared";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -17,7 +16,6 @@ import type { SetupStep } from "../../lib/setupChecklist";
 import { cn } from "../../lib/cn";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
-import ProfilePicture from "../ProfilePicture";
 import { ProgressRing, SetupSteps } from "./SetupSteps";
 
 interface MoreSheetProps {
@@ -141,25 +139,6 @@ const MoreSheet = ({
             )}
 
             <div className="mt-3 border-t border-subtle pt-3">
-                {user && (
-                    <Link
-                        to={`/user/${user.username}`}
-                        onClick={onClose}
-                        className={cn(ACCOUNT_ROW, "text-content")}
-                    >
-                        <span className="flex min-w-0 items-center gap-3">
-                            <ProfilePicture
-                                variant="friendRow"
-                                file={user.avatarUrl ?? ""}
-                                accent={user.accent}
-                                username={user.username}
-                                link={false}
-                            />
-                            <span className="truncate">{user.username}</span>
-                        </span>
-                        <UserRound size={18} aria-hidden className="shrink-0" />
-                    </Link>
-                )}
                 {user && (
                     <Link
                         to="/settings"

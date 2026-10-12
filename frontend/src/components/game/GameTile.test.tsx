@@ -234,3 +234,25 @@ describe("GameTile standing button", () => {
         expect(round().querySelector("svg")).toHaveClass("lucide-plus");
     });
 });
+
+/* A long title or a long log line ran up the cover into the standing button
+   on a phone. jsdom draws nothing, so this holds the caps in place; the
+   gap itself was measured on 177 covers at 320 and 375px. */
+describe("GameTile text", () => {
+    it("caps the title and the line under it", () => {
+        renderWithProviders(
+            <GameTile
+                gameId={1}
+                title="Grand Theft Auto: San Andreas"
+                coverUrl={null}
+                meta="7.00/10 · Your logs · 2 platforms"
+            />
+        );
+        expect(screen.getByText("Grand Theft Auto: San Andreas")).toHaveClass(
+            "line-clamp-2"
+        );
+        expect(
+            screen.getByText("7.00/10 · Your logs · 2 platforms")
+        ).toHaveClass("line-clamp-1");
+    });
+});

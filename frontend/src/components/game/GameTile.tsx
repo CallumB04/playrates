@@ -381,11 +381,13 @@ const GameTile = ({
                         </span>
                     )}
 
-                    <span className="block text-[13px] leading-tight font-medium text-content-on-media">
+                    {/* Capped, so a long title never climbs into the
+                        standing button at the top of a phone's cover. */}
+                    <span className="line-clamp-2 text-[13px] leading-tight font-medium text-content-on-media sm:line-clamp-3">
                         {title}
                     </span>
                     {meta && (
-                        <span className="mt-1 block text-[10px] text-content-on-media/70">
+                        <span className="mt-1 line-clamp-1 text-[10px] text-content-on-media/70">
                             {meta}
                         </span>
                     )}
