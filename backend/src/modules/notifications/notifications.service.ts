@@ -90,6 +90,10 @@ export const createNotificationsService = (
     async markAllRead(userId: string): Promise<void> {
       await repo.markAllRead(userId);
     },
+
+    async archiveAllRead(userId: string): Promise<void> {
+      await repo.archiveAllRead(userId);
+    },
   };
 };
 

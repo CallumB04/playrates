@@ -168,7 +168,11 @@ describe("notifications", () => {
         ...baseSeed(),
         notifications: [
           buildNotification(),
-          buildNotification({ id: 3, kind: "friend_request", dedupe_key: null }),
+          buildNotification({
+            id: 3,
+            kind: "friend_request",
+            dedupe_key: null,
+          }),
         ],
       },
     });
@@ -179,6 +183,48 @@ describe("notifications", () => {
 
     expect(response.status).toBe(204);
     expect(state.notifications.every((n) => n.read_at !== null)).toBe(true);
+  });
+
+  const READ = "2026-01-02T00:00:00.000Z";
+
+  /* Offered once the inbox is all read, but a notification can land
+     between the panel drawing and the press: that one stays. */
+  it("archives everything read, and nothing unread", async () => {
+    const { app, state } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        notifications: [
+          buildNotification({ read_at: READ }),
+          buildNotification({ id: 3, dedupe_key: "a", read_at: READ }),
+          buildNotification({ id: 4, dedupe_key: "b" }),
+          buildNotification({
+            id: 5,
+            dedupe_key: "c",
+            user_id: USER_B,
+            read_at: READ,
+          }),
+        ],
+      },
+    });
+
+    const response = await request(app)
+      .post("/api/v1/me/notifications/archive-all")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(204);
+    const archived = (id: number) =>
+      state.notifications.find((n) => n.id === id)!.archived_at !== null;
+    expect([archived(1), archived(3)]).toEqual([true, true]);
+    // Still unread, and someone else's.
+    expect([archived(4), archived(5)]).toEqual([false, false]);
+  });
+
+  it("needs someone signed in to archive", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+    const response = await request(app).post(
+      "/api/v1/me/notifications/archive-all",
+    );
+    expect(response.status).toBe(401);
   });
 
   describe("friend requests", () => {

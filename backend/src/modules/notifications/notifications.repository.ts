@@ -41,6 +41,9 @@ export interface NotificationsRepository {
   ): Promise<NotificationRowWithActor>;
   raise(draft: NotificationDraft): Promise<void>;
   markAllRead(userId: string): Promise<void>;
+  /** Files away the inbox's read rows. Unread ones stay, so one that lands
+   *  as the button is pressed is not archived unseen. */
+  archiveAllRead(userId: string): Promise<void>;
   /** No-op when the user has no notification under that key. */
   markReadByKey(userId: string, dedupeKey: string): Promise<void>;
   /** Counts a thread's activity notification up while it is unread, or
@@ -162,6 +165,16 @@ export const createNotificationsRepository = (
       .update({ read_at: new Date().toISOString() })
       .eq("user_id", userId)
       .is("read_at", null)
+      .is("archived_at", null);
+    if (error) throw error;
+  },
+
+  async archiveAllRead(userId) {
+    const { error } = await db
+      .from("notifications")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .not("read_at", "is", null)
       .is("archived_at", null);
     if (error) throw error;
   },

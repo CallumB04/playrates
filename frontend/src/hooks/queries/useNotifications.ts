@@ -3,6 +3,7 @@ import type { NotificationPatch } from "@playrates/shared";
 import {
     fetchNotifications,
     markAllNotificationsRead,
+    archiveAllNotifications,
     patchNotification,
     queryKeys,
 } from "../../api";
@@ -39,6 +40,14 @@ export const usePatchNotification = () => {
     return useMutation({
         mutationFn: ({ id, patch }: { id: number; patch: NotificationPatch }) =>
             patchNotification(id, patch),
+        onSuccess: invalidate,
+    });
+};
+
+export const useArchiveAllNotifications = () => {
+    const invalidate = useNotificationsInvalidator();
+    return useMutation({
+        mutationFn: archiveAllNotifications,
         onSuccess: invalidate,
     });
 };

@@ -1409,6 +1409,17 @@ export const createInMemoryRepos = (
           }
         }
       },
+      async archiveAllRead(userId) {
+        for (const n of state.notifications) {
+          if (
+            n.user_id === userId &&
+            n.read_at !== null &&
+            n.archived_at === null
+          ) {
+            n.archived_at = now();
+          }
+        }
+      },
       async markReadByKey(userId, dedupeKey) {
         for (const n of state.notifications) {
           if (n.user_id === userId && n.dedupe_key === dedupeKey) {
