@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { setupMessage, setupSteps, unfinished } from "./setupChecklist";
+import { setupSteps, unfinished } from "./setupChecklist";
 
 const facts = (
     overrides: Partial<Parameters<typeof setupSteps>[0]> = {},
@@ -41,7 +41,7 @@ describe("setupSteps", () => {
         expect(done(facts({}, { bio: "   " })).bio).toBe(false);
     });
 
-    /* Judging on a guess would toast, or flash the menu row, wrongly. */
+    /* Judging on a guess would flash the menu row at a finished account. */
     it("waits for the counts before deciding", () => {
         expect(setupSteps(facts({ logCount: undefined }))).toBeNull();
         expect(setupSteps(facts({ friendCount: undefined }))).toBeNull();
@@ -57,38 +57,5 @@ describe("unfinished", () => {
     it("has nothing once all four are done", () => {
         expect(unfinished(steps(allDone))).toBeNull();
         expect(unfinished(null)).toBeNull();
-    });
-});
-
-describe("setupMessage", () => {
-    it("says which step was done and where that leaves them", () => {
-        expect(setupMessage(steps(), steps(facts({}, { bio: "Hello" })))).toBe(
-            "Bio written. Get started: 1 of 4 done."
-        );
-    });
-
-    it("counts rather than names two steps done at once", () => {
-        expect(
-            setupMessage(
-                steps(),
-                steps(facts({}, { bio: "Hello", avatarUrl: "a" }))
-            )
-        ).toBe("2 steps done. Get started: 2 of 4 done.");
-    });
-
-    it("says it is all done on the last one", () => {
-        const threeDone = facts(
-            { logCount: 1, friendCount: 0 },
-            { avatarUrl: "a", bio: "b" }
-        );
-        expect(setupMessage(steps(threeDone), steps(allDone))).toBe(
-            "You're all set! Every Get started step is done."
-        );
-    });
-
-    /* Deleting the only log un-ticks a step; that is not news. */
-    it("says nothing when nothing new is done", () => {
-        expect(setupMessage(steps(), steps())).toBeNull();
-        expect(setupMessage(steps(facts({ logCount: 1 })), steps())).toBeNull();
     });
 });

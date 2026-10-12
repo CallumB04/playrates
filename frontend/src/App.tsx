@@ -5,7 +5,6 @@ import Footer from "./components/Footer";
 import ToastStack from "./components/feedback/ToastStack";
 import AccountFormModal from "./components/auth/AccountFormModal";
 import FirstLoginWelcome from "./components/onboarding/FirstLoginWelcome";
-import SetupProgressToasts from "./components/onboarding/SetupProgressToasts";
 import HomePage from "./pages/HomePage/HomePage";
 import CommunityPage from "./pages/CommunityPage/CommunityPage";
 import NewThreadPage from "./pages/CommunityPage/NewThreadPage";
@@ -83,7 +82,6 @@ function App() {
             <Footer />
             <AccountFormModal />
             <FirstLoginWelcome />
-            <SetupProgressToasts />
             <ToastStack />
         </div>
     );
