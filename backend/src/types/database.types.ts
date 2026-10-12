@@ -26,8 +26,6 @@ export interface ProfileRow {
   accent: string | null;
   /** When the first-login welcome was dismissed. Null shows it. */
   onboarded_at: string | null;
-  /** When the home page's setup checklist was put away. Null shows it. */
-  checklist_dismissed_at: string | null;
   /** Can post patch notes and remove anything in the community. */
   is_admin: boolean;
   created_at: string;

@@ -58,6 +58,5 @@ export const toMyProfile = (row: ProfileRow, now = Date.now()): MyProfile => ({
   timezone: row.timezone,
   hideOnline: row.hide_online,
   onboardedAt: row.onboarded_at,
-  checklistDismissedAt: row.checklist_dismissed_at,
   isAdmin: row.is_admin,
 });

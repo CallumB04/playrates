@@ -35,7 +35,6 @@ export const buildProfile = (
     hideFromSearch: false,
     profileVisibility: "everyone",
     onboardedAt: "2026-01-01T00:00:00.000Z",
-    checklistDismissedAt: null,
     isAdmin: false,
     avatarUrl: null,
     accent: "indigo",

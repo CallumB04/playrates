@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { env } from "../../lib/env";
+import { useSetupSteps } from "../../hooks/useSetupSteps";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Database, Menu, Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -37,6 +38,7 @@ const isCurrent = (
 /** Stays at the top at every width, translucent so a page's own colours
  *  (a game's art, say) carry up behind it. */
 const Header = () => {
+    const setup = useSetupSteps();
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
     const { openLogin, openSignup } = useAccountForm();
@@ -189,6 +191,7 @@ const Header = () => {
                                 <AccountMenu
                                     user={user}
                                     onSignOut={handleSignOut}
+                                    setup={setup}
                                 />
                             </>
                         ) : (

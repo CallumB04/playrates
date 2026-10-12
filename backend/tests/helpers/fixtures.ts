@@ -33,7 +33,6 @@ export const buildProfile = (
   accent: "indigo",
   // An account from before the welcome existed; a new one overrides to null.
   onboarded_at: LONG_AGO,
-  checklist_dismissed_at: null,
   is_admin: false,
   last_seen_at: NOW,
   created_at: LONG_AGO,

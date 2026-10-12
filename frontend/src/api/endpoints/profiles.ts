@@ -56,14 +56,6 @@ export const markOnboarded = async (): Promise<MyProfile> => {
     return data;
 };
 
-/** The setup checklist on the home page has been put away. */
-export const dismissChecklist = async (): Promise<MyProfile> => {
-    const { data } = await api.post<MyProfile>(
-        "/profiles/me/checklist-dismissed"
-    );
-    return data;
-};
-
 export const sendHeartbeat = async (): Promise<void> => {
     await api.post("/profiles/me/heartbeat");
 };

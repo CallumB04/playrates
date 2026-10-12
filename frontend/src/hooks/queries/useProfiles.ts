@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Profile, UpdateProfileInput } from "@playrates/shared";
 import {
     deleteMyAvatar,
-    dismissChecklist,
     fetchProfileByUsername,
     markOnboarded,
     queryKeys,
@@ -55,15 +54,6 @@ export const useMarkOnboarded = () => {
 
     return useMutation({
         mutationFn: markOnboarded,
-        onSuccess: (profile) => seedProfile(queryClient, profile),
-    });
-};
-
-export const useDismissChecklist = () => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: dismissChecklist,
         onSuccess: (profile) => seedProfile(queryClient, profile),
     });
 };
