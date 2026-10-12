@@ -1,4 +1,4 @@
-import { Palette } from "lucide-react";
+import { Palette, UserPlus } from "lucide-react";
 import { cardClass } from "../../../components/ui/Card";
 import type { Profile, UserStats } from "@playrates/shared";
 import type { ReactNode } from "react";
@@ -26,6 +26,8 @@ interface MemberFileHeaderProps {
     friendCount: number | undefined;
     /** When the viewer and this member became friends, if they are. */
     friendsSince?: string;
+    /** They have asked the viewer to be friends, still unanswered. */
+    requestReceived?: boolean;
     /** The friend button, or the owner's controls. */
     action: ReactNode;
     /** Set only on your own profile: makes the picture and the banner open
@@ -94,6 +96,7 @@ const MemberFileHeader = ({
     reviewCount,
     friendCount,
     friendsSince,
+    requestReceived = false,
     action,
     onEditPicture,
 }: MemberFileHeaderProps) => {
@@ -179,6 +182,14 @@ const MemberFileHeader = ({
                         </span>
                     )}
                 </div>
+
+                {/* The buttons alone read as any other profile's. */}
+                {requestReceived && (
+                    <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-brand-subtle px-2.5 py-1 text-label-sm font-medium text-brand">
+                        <UserPlus className="size-3.5" aria-hidden />
+                        Sent you a friend request
+                    </p>
+                )}
 
                 {profile.bio && (
                     <p className="mt-2.5 max-w-[52ch] text-sm leading-relaxed text-content-secondary">

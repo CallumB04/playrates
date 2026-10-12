@@ -326,6 +326,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 friendsSince={
                     relation === "friend" ? friendEdge?.createdAt : undefined
                 }
+                requestReceived={relation === "request-received"}
                 onEditPicture={
                     isMyAccount
                         ? () => setModal({ kind: "editProfile" })
@@ -376,6 +377,7 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                             )}
                             <FriendAction
                                 relation={relation}
+                                username={targetUser.username}
                                 isPending={isPending}
                                 onAdd={guard(() => void send.mutateAsync())}
                                 onAccept={guard(
