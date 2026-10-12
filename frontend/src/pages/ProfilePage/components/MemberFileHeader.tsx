@@ -1,4 +1,4 @@
-import { Palette, UserPlus } from "lucide-react";
+import { Palette } from "lucide-react";
 import { cardClass } from "../../../components/ui/Card";
 import type { Profile, UserStats } from "@playrates/shared";
 import type { ReactNode } from "react";
@@ -26,8 +26,8 @@ interface MemberFileHeaderProps {
     friendCount: number | undefined;
     /** When the viewer and this member became friends, if they are. */
     friendsSince?: string;
-    /** They have asked the viewer to be friends, still unanswered. */
-    requestReceived?: boolean;
+    /** A friend request from them, waiting on the viewer's answer. */
+    request?: ReactNode;
     /** The friend button, or the owner's controls. */
     action: ReactNode;
     /** Set only on your own profile: makes the picture and the banner open
@@ -96,7 +96,7 @@ const MemberFileHeader = ({
     reviewCount,
     friendCount,
     friendsSince,
-    requestReceived = false,
+    request,
     action,
     onEditPicture,
 }: MemberFileHeaderProps) => {
@@ -163,17 +163,8 @@ const MemberFileHeader = ({
                         <PresenceDot online={profile.online} size="lg" />
                     </span>
 
-                    <div className="mt-3 flex flex-col items-end gap-2 self-start">
-                        <div className="flex items-center gap-2">{action}</div>
-                        {/* Without it the buttons read as any other
-                            profile's. Hung from the top, so the buttons stay
-                            put when it goes. */}
-                        {requestReceived && (
-                            <p className="inline-flex items-center gap-1.5 rounded-full bg-brand-subtle px-2.5 py-1 text-label-sm font-medium text-brand">
-                                <UserPlus className="size-3.5" aria-hidden />
-                                Sent you a friend request
-                            </p>
-                        )}
+                    <div className="mt-3 flex items-center gap-2 self-start">
+                        {action}
                     </div>
                 </div>
 
@@ -199,6 +190,8 @@ const MemberFileHeader = ({
                         {profile.bio}
                     </p>
                 )}
+
+                {request}
 
                 {!profileHidden && (
                     <div className="mt-5 grid gap-5 border-t border-subtle pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-8">

@@ -35,6 +35,7 @@ import Button, { buttonClass } from "../../components/ui/Button";
 import ProfileError from "./components/ProfileError";
 import MemberFileHeader from "./components/MemberFileHeader";
 import FriendAction from "./components/FriendAction";
+import FriendRequestBand from "./components/FriendRequestBand";
 import ShelfPanel from "./components/ShelfPanel";
 import {
     OwnProfileVisibility,
@@ -326,7 +327,18 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 friendsSince={
                     relation === "friend" ? friendEdge?.createdAt : undefined
                 }
-                requestReceived={relation === "request-received"}
+                request={
+                    relation === "request-received" && (
+                        <FriendRequestBand
+                            profile={targetUser}
+                            isPending={isPending}
+                            onAccept={guard(() => void accept.mutateAsync())}
+                            onDecline={guard(() =>
+                                setModal({ kind: "removeFriend" })
+                            )}
+                        />
+                    )
+                }
                 onEditPicture={
                     isMyAccount
                         ? () => setModal({ kind: "editProfile" })
@@ -379,9 +391,6 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                                 relation={relation}
                                 isPending={isPending}
                                 onAdd={guard(() => void send.mutateAsync())}
-                                onAccept={guard(
-                                    () => void accept.mutateAsync()
-                                )}
                                 onRemove={guard(() =>
                                     setModal({ kind: "removeFriend" })
                                 )}
