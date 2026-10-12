@@ -8,6 +8,7 @@ import {
     Settings,
     Shield,
     Sun,
+    UserRound,
 } from "lucide-react";
 import type { MyProfile } from "@playrates/shared";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -16,6 +17,7 @@ import type { SetupStep } from "../../lib/setupChecklist";
 import { cn } from "../../lib/cn";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
+import ProfilePicture from "../ProfilePicture";
 import { ProgressRing, SetupSteps } from "./SetupSteps";
 
 interface MoreSheetProps {
@@ -30,6 +32,10 @@ interface MoreSheetProps {
 
 const ROW =
     "flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-md px-3 text-left text-body text-content-secondary transition-colors hover:bg-surface-hover hover:text-content";
+
+/* Word left, icon at the far edge, as the old menu had them: the icon across
+   the row keeps a short one from reading as empty. */
+const ACCOUNT_ROW = cn(ROW, "justify-between gap-4");
 
 /** Everything the bar has no tab for: what the menu and the account menu
  *  held, less the destinations the bar now carries. */
@@ -56,7 +62,7 @@ const MoreSheet = ({
                 id={titleId}
                 className="pr-10 font-display text-section text-content"
             >
-                {user ? user.username : "PlayRates"}
+                More
             </h2>
 
             {setup && (
@@ -136,24 +142,51 @@ const MoreSheet = ({
 
             <div className="mt-3 border-t border-subtle pt-3">
                 {user && (
-                    <Link to="/settings" onClick={onClose} className={ROW}>
-                        <Settings size={18} aria-hidden />
+                    <Link
+                        to={`/user/${user.username}`}
+                        onClick={onClose}
+                        className={cn(ACCOUNT_ROW, "text-content")}
+                    >
+                        <span className="flex min-w-0 items-center gap-3">
+                            <ProfilePicture
+                                variant="friendRow"
+                                file={user.avatarUrl ?? ""}
+                                accent={user.accent}
+                                username={user.username}
+                                link={false}
+                            />
+                            <span className="truncate">{user.username}</span>
+                        </span>
+                        <UserRound size={18} aria-hidden className="shrink-0" />
+                    </Link>
+                )}
+                {user && (
+                    <Link
+                        to="/settings"
+                        onClick={onClose}
+                        className={ACCOUNT_ROW}
+                    >
                         Settings
+                        <Settings size={18} aria-hidden />
                     </Link>
                 )}
                 {/* Stays open, so the change is seen to have taken. */}
-                <button type="button" onClick={toggleTheme} className={ROW}>
+                <button
+                    type="button"
+                    onClick={toggleTheme}
+                    className={ACCOUNT_ROW}
+                >
+                    {theme === "dark" ? "Day mode" : "Night mode"}
                     {theme === "dark" ? (
                         <Sun size={18} aria-hidden />
                     ) : (
                         <Moon size={18} aria-hidden />
                     )}
-                    {theme === "dark" ? "Day mode" : "Night mode"}
                 </button>
                 {user?.isAdmin && (
-                    <Link to="/admin" onClick={onClose} className={ROW}>
-                        <Shield size={18} aria-hidden />
+                    <Link to="/admin" onClick={onClose} className={ACCOUNT_ROW}>
                         Admin
+                        <Shield size={18} aria-hidden />
                     </Link>
                 )}
                 {user && (
@@ -164,12 +197,12 @@ const MoreSheet = ({
                             onSignOut();
                         }}
                         className={cn(
-                            ROW,
+                            ACCOUNT_ROW,
                             "text-danger hover:bg-danger-subtle hover:text-danger"
                         )}
                     >
-                        <LogOut size={18} aria-hidden />
                         Sign out
+                        <LogOut size={18} aria-hidden />
                     </button>
                 )}
             </div>

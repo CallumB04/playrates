@@ -65,7 +65,7 @@ describe("TabBar", () => {
     /* The menu's contents moved behind More; the header lost its button. */
     it("opens the rest behind More", async () => {
         await userEvent.click(bar().getByRole("button", { name: /^More/ }));
-        const sheet = screen.getByRole("dialog", { name: "devuser" });
+        const sheet = screen.getByRole("dialog", { name: "More" });
         expect(
             within(sheet).getByRole("link", { name: "Settings" })
         ).toBeInTheDocument();

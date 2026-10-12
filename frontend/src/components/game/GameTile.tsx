@@ -8,7 +8,7 @@ import {
     type ReactNode,
     type SVGProps,
 } from "react";
-import { Check, Ellipsis, Plus } from "lucide-react";
+import { Check, EllipsisVertical, Plus } from "lucide-react";
 import { cn } from "../../lib/cn";
 import type { DisplayStatus } from "../../constants/gameStatus";
 import type { Platform } from "@playrates/shared";
@@ -146,7 +146,7 @@ const GameTile = ({
     const several = actions.length > 1;
     const primary = rows[0] ?? icons[0];
     const PrimaryIcon = several
-        ? Ellipsis
+        ? EllipsisVertical
         : (primary?.standing ?? primary?.icon ?? Plus);
 
     return (
@@ -181,7 +181,8 @@ const GameTile = ({
                         status={status}
                         size="stamp"
                         onMedia
-                        className="absolute top-1.5 right-1.5"
+                        // Not on a phone, where it ran into the standing button.
+                        className="absolute top-1.5 right-1.5 max-sm:hidden"
                     />
                 )}
 

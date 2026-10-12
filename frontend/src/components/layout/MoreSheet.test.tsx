@@ -34,6 +34,10 @@ describe("MoreSheet", () => {
             "href",
             "/user/devuser?type=backlog"
         );
+        expect(screen.getByRole("link", { name: /devuser/ })).toHaveAttribute(
+            "href",
+            "/user/devuser"
+        );
         expect(screen.getByRole("link", { name: "Settings" })).toBeVisible();
         expect(screen.getByRole("link", { name: "Admin" })).toHaveAttribute(
             "href",

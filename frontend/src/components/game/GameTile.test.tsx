@@ -182,7 +182,9 @@ describe("GameTile standing button", () => {
         ]);
 
         expect(round()).toHaveAccessibleName("Actions for Lanternfall");
-        expect(round().querySelector("svg")).toHaveClass("lucide-ellipsis");
+        expect(round().querySelector("svg")).toHaveClass(
+            "lucide-ellipsis-vertical"
+        );
         await userEvent.click(round());
 
         const sheet = screen.getByRole("dialog");
