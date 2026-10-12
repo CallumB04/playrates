@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import type { FriendRelation } from "@playrates/shared";
 import Button from "../../../components/ui/Button";
 import { cn } from "../../../lib/cn";
@@ -16,9 +17,11 @@ interface FriendActionProps {
    two different heights in one row. */
 const TAP = "max-sm:min-h-11";
 
-/* One width for Add friend, Request sent and Friends, so pressing one does
-   not slide the report button beside it. */
-const STEADY = cn(TAP, "min-w-28");
+/* One width for every state, Accept and Decline together included, so
+   pressing any of them moves nothing: not the report button beside it, and
+   on a phone not the whole row, which drops under the avatar when wider. */
+const WIDTH = "w-30";
+const STEADY = cn(TAP, WIDTH);
 
 /** All three friend states in one place. */
 const FriendAction = ({
@@ -45,23 +48,25 @@ const FriendAction = ({
 
     if (relation === "request-received") {
         return (
-            <div className="flex gap-2">
+            <div className={cn("flex gap-2", WIDTH)}>
                 <Button
                     size="sm"
-                    className={TAP}
+                    className={cn(TAP, "flex-1 px-0")}
                     onClick={onAccept}
                     disabled={isPending}
                 >
                     Accept
                 </Button>
                 <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className={TAP}
+                    aria-label="Decline"
+                    title="Decline"
+                    className="size-9 px-0 max-sm:size-11"
                     onClick={onRemove}
                     disabled={isPending}
                 >
-                    Decline
+                    <X size={15} aria-hidden />
                 </Button>
             </div>
         );
