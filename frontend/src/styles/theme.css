@@ -356,6 +356,8 @@
     --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
 
     --spacing-navbar: 5rem;
+    /* The phone's bottom bar, without the home indicator under it. */
+    --spacing-tabbar: 3.75rem;
     --container-measure: 52ch; /* ~65 rendered characters in Geist */
 
     /* Type scale. Zilla Slab displays, IBM Plex Sans sets prose, IBM Plex

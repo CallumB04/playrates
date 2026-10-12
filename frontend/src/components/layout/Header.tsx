@@ -2,71 +2,35 @@ import { useEffect, useState } from "react";
 import { env } from "../../lib/env";
 import { useSetupSteps } from "../../hooks/useSetupSteps";
 import { unfinished } from "../../lib/setupChecklist";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Database, Menu, Search } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { Database, Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import Button from "../ui/Button";
 import AccountMenu from "./AccountMenu";
 import NotificationMenu from "./NotificationMenu";
 import GlobalSearch from "./GlobalSearch";
-import MobileMenu, { type NavItem } from "./MobileMenu";
 import MobileSearch from "./MobileSearch";
 import { cn } from "../../lib/cn";
+import { isCurrent } from "../../lib/navMatch";
+import { useSignOut } from "../../hooks/useSignOut";
 import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
-
-/** Whether a nav link points at where we already are. NavLink matches on
- *  pathname only, and some links carry a query string that matters. */
-const isCurrent = (
-    to: string,
-    exact: boolean,
-    pathname: string,
-    search: string
-): boolean => {
-    const [path, query] = to.split("?");
-
-    const pathMatches = exact
-        ? pathname === path
-        : pathname === path || pathname.startsWith(`${path}/`);
-    if (!pathMatches) return false;
-    if (!query) return true;
-
-    const wanted = new URLSearchParams(query);
-    const actual = new URLSearchParams(search);
-    return [...wanted].every(([key, value]) => actual.get(key) === value);
-};
 
 /** Stays at the top at every width, translucent so a page's own colours
  *  (a game's art, say) carry up behind it. */
 const Header = () => {
     const setup = unfinished(useSetupSteps());
-    const { user, signOut } = useAuth();
-    const navigate = useNavigate();
+    const { user } = useAuth();
+    const handleSignOut = useSignOut();
     const { openLogin, openSignup } = useAccountForm();
     const location = useLocation();
 
-    const [menuOpen, setMenuOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
-
-    /* Home, not wherever you were: signing out on a settings page or somebody's
-       profile leaves you looking at something you can no longer load. */
-    const handleSignOut = () => {
-        void signOut();
-        navigate("/");
-    };
 
     useEffect(() => {
         window.scrollTo(0, 0);
-        setMenuOpen(false);
         setSearchOpen(false);
     }, [location.pathname, location.search]);
-
-    /* Close on the way up past `lg`: the menu hides there, and its scroll lock
-       would stay on with nothing left to turn it off. */
-    const pastLg = useMediaQuery(BREAKPOINT.lg);
-    useEffect(() => {
-        if (pastLg) setMenuOpen(false);
-    }, [pastLg]);
 
     /* Same for the search overlay, which gives way at `xl`. */
     const pastXl = useMediaQuery(BREAKPOINT.xl);
@@ -74,27 +38,11 @@ const Header = () => {
         if (pastXl) setSearchOpen(false);
     }, [pastXl]);
 
-    const links: NavItem[] = (
-        user
-            ? [
-                  { to: "/", label: "Home", exact: true },
-                  { to: "/library", label: "Library", exact: false },
-                  {
-                      to: "/community",
-                      label: "Community",
-                      exact: false,
-                  },
-              ]
-            : [
-                  { to: "/", label: "Home", exact: true },
-                  { to: "/library", label: "Library", exact: false },
-                  {
-                      to: "/community",
-                      label: "Community",
-                      exact: false,
-                  },
-              ]
-    ).map(({ to, label, exact }) => ({
+    const links = [
+        { to: "/", label: "Home", exact: true },
+        { to: "/library", label: "Library", exact: false },
+        { to: "/community", label: "Community", exact: false },
+    ].map(({ to, label, exact }) => ({
         to,
         label,
         active: isCurrent(to, exact, location.pathname, location.search),
@@ -105,25 +53,9 @@ const Header = () => {
             <header className="sticky top-0 z-40 w-full border-b border-subtle bg-surface/75 backdrop-blur-lg">
                 <div className="mx-auto flex h-navbar w-full max-w-[1240px] items-center justify-between gap-3 px-5 sm:gap-6 sm:px-8 lg:px-12">
                     <div className="flex items-center gap-2 sm:gap-4 lg:gap-8">
-                        <button
-                            type="button"
-                            onClick={() => setMenuOpen(true)}
-                            aria-label="Open menu"
-                            className="-ml-[11px] flex size-11 items-center justify-center rounded-sm text-content lift hover:text-brand lg:hidden"
-                        >
-                            <Menu size={22} />
-                        </button>
-
-                        {/* Off below 360px, where it cannot fit beside the
-                            icons; the menu it sits next to shows it. The
-                            local build's badge needs the room from 380px,
-                            and it is the badge that has to stay. */}
                         <Link
                             to="/"
-                            className={cn(
-                                "font-display text-2xl font-bold text-content max-[360px]:hidden",
-                                env.localData && "max-[380px]:hidden"
-                            )}
+                            className="font-display text-2xl font-bold text-content"
                         >
                             PlayRates
                         </Link>
@@ -183,8 +115,14 @@ const Header = () => {
                         avatar takes that padding as margin (AccountMenu) and
                         the three read evenly. Phones use 36px boxes with 44px
                         hit areas. From xl search is a field, already even at
-                        gap-4. */}
-                    <div className="flex items-center gap-2 xl:gap-4">
+                        gap-4. Below lg the bell ends the row, so the row
+                        gives back its padding to meet the gutter. */}
+                    <div
+                        className={cn(
+                            "flex items-center gap-2 xl:gap-4",
+                            user && "-mr-2 sm:-mr-3 lg:mr-0"
+                        )}
+                    >
                         <button
                             type="button"
                             onClick={() => setSearchOpen(true)}
@@ -199,11 +137,15 @@ const Header = () => {
                         {user ? (
                             <>
                                 <NotificationMenu />
-                                <AccountMenu
-                                    user={user}
-                                    onSignOut={handleSignOut}
-                                    setup={setup}
-                                />
+                                {/* From lg only: below it the bar's Profile
+                                    and More tabs hold all of this. */}
+                                <span className="hidden lg:contents">
+                                    <AccountMenu
+                                        user={user}
+                                        onSignOut={handleSignOut}
+                                        setup={setup}
+                                    />
+                                </span>
                             </>
                         ) : (
                             <div className="flex items-center gap-3">
@@ -230,17 +172,6 @@ const Header = () => {
 
             {searchOpen && (
                 <MobileSearch onClose={() => setSearchOpen(false)} />
-            )}
-
-            {menuOpen && (
-                <MobileMenu
-                    links={links}
-                    user={user}
-                    onClose={() => setMenuOpen(false)}
-                    onSignIn={openLogin}
-                    onSignUp={openSignup}
-                    onSignOut={handleSignOut}
-                />
             )}
         </>
     );
