@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { act, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Heart, Layers, Pencil } from "lucide-react";
+import { Eye, Heart, Layers } from "lucide-react";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import GameTile, { type TileAction } from "./GameTile";
 
@@ -153,7 +153,7 @@ describe("GameTile prefetch", () => {
 
 /* The round button a phone shows in place of the hover rows. */
 describe("GameTile standing button", () => {
-    const standing = (actions: TileAction[]) => {
+    const render = (actions: TileAction[]) =>
         renderWithProviders(
             <GameTile
                 gameId={1}
@@ -162,41 +162,73 @@ describe("GameTile standing button", () => {
                 actions={actions}
             />
         );
-        const label =
-            actions.find((a) => a.standing)?.label ?? actions[0]!.label;
-        // The hover row has a button of the same name; this one is round.
-        return screen
-            .getAllByRole("button", { name: label })
-            .find((b) => b.className.includes("rounded-full"))!;
-    };
+    // The hover rows have buttons of the same names; this one is round.
+    const round = () =>
+        document.querySelector<HTMLButtonElement>("button.rounded-full")!;
 
-    /* A logged game showed + like every other, and the + opened the log. */
-    it("is the action marked for it, drawn with its own icon", async () => {
-        const edit = vi.fn();
-        const button = standing([
+    /* On someone else's profile a phone needs both their log and its own. */
+    it("opens every action in a sheet when there are several", async () => {
+        const view = vi.fn();
+        const mine = vi.fn();
+        render([
+            { key: "view", label: "View log", tone: "primary", onSelect: view },
+            { key: "add", label: "Log it", onSelect: mine },
             {
-                key: "view",
-                label: "View your log",
-                tone: "primary",
+                key: "backlog",
+                label: "Add to backlog",
+                icon: Layers,
                 onSelect: vi.fn(),
             },
-            { key: "edit", label: "Edit", onSelect: edit, standing: Pencil },
         ]);
 
-        expect(button.querySelector("svg")).toHaveClass("lucide-pencil");
-        await userEvent.click(button);
-        expect(edit).toHaveBeenCalled();
+        expect(round()).toHaveAccessibleName("Actions for Lanternfall");
+        expect(round().querySelector("svg")).toHaveClass("lucide-ellipsis");
+        await userEvent.click(round());
+
+        const sheet = screen.getByRole("dialog");
+        expect(sheet).toHaveTextContent("Lanternfall");
+        for (const label of ["View log", "Log it", "Add to backlog"]) {
+            expect(
+                within(sheet).getByRole("button", { name: label })
+            ).toBeInTheDocument();
+        }
+
+        await userEvent.click(
+            within(sheet).getByRole("button", { name: "Log it" })
+        );
+        expect(mine).toHaveBeenCalled();
+        expect(view).not.toHaveBeenCalled();
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
 
-    it("falls back to the first action, as a plus", () => {
-        const button = standing([
+    it("presses a lone action directly, with its own icon", async () => {
+        const view = vi.fn();
+        render([
             {
-                key: "log",
-                label: "Create log",
+                key: "view",
+                label: "View log",
+                tone: "primary",
+                onSelect: view,
+                standing: Eye,
+            },
+        ]);
+
+        expect(round()).toHaveAccessibleName("View log");
+        expect(round().querySelector("svg")).toHaveClass("lucide-eye");
+        await userEvent.click(round());
+        expect(view).toHaveBeenCalled();
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("falls back to a plus for a lone action without one", () => {
+        render([
+            {
+                key: "signin",
+                label: "Log in to add",
                 tone: "primary",
                 onSelect: vi.fn(),
             },
         ]);
-        expect(button.querySelector("svg")).toHaveClass("lucide-plus");
+        expect(round().querySelector("svg")).toHaveClass("lucide-plus");
     });
 });

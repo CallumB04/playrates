@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Eye, Flag, Pencil, Plus, Settings } from "lucide-react";
+import { Eye, Flag, Pencil, Settings } from "lucide-react";
 import ReportDialog from "../../components/ReportDialog";
 import type { ShelfEntry } from "@playrates/shared";
 import { useLogFlow } from "../../components/gamelog/useLogFlow";
@@ -270,7 +270,15 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
         const actions: TileAction[] = [
             {
                 key: "view",
-                label: entry.logs.length > 1 ? "View logs" : "View log",
+                // Beside "My log" on someone else's shelf, "View log" said
+                // nothing of whose.
+                label: isMyAccount
+                    ? entry.logs.length > 1
+                        ? "View logs"
+                        : "View log"
+                    : entry.logs.length > 1
+                      ? "Their logs"
+                      : "Their log",
                 tone: "primary",
                 onSelect: () => flow.view(gameId, { owner: targetUsername }),
             },
@@ -284,21 +292,18 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 key: "edit",
                 label: "Edit",
                 onSelect: () => flow.open(gameId),
-                standing: Pencil,
             });
         } else if (myLogGameIds.has(gameId)) {
             actions.push({
                 key: "myLog",
                 label: "My log",
                 onSelect: () => flow.view(gameId),
-                standing: Eye,
             });
         } else {
             actions.push({
                 key: "add",
                 label: "Log it",
                 onSelect: () => flow.open(gameId),
-                standing: Plus,
             });
         }
 

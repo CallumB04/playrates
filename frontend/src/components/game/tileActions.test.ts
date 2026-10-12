@@ -65,18 +65,6 @@ describe("tileActions", () => {
         expect(on.view).toHaveBeenCalledWith(7);
     });
 
-    /* A phone shows one button: for a logged game, straight into the editor. */
-    it("puts a logged game's phone button on Edit", () => {
-        const actions = tileActions(
-            game,
-            { signedIn: true, log: logged(1) },
-            handlers()
-        );
-        expect(actions.filter((a) => a.standing).map((a) => a.key)).toEqual([
-            "edit",
-        ]);
-    });
-
     it("says logs when the game is logged on more than one console", () => {
         const actions = tileActions(
             game,

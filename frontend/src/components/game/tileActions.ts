@@ -1,5 +1,4 @@
 import type { GameLogSummary } from "@playrates/shared";
-import { Pencil } from "lucide-react";
 import { STATUS_PRESENTATION } from "../../constants/gameStatus";
 import type { TileAction } from "./GameTile";
 
@@ -49,8 +48,6 @@ export const tileActions = (
                 key: "edit",
                 label: "Edit",
                 onSelect: () => on.open(game.id),
-                // On a phone, the editor in one tap beats the viewer.
-                standing: Pencil,
             },
         ];
     }
