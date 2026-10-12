@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Heart, Layers } from "lucide-react";
+import { Heart, Layers, Pencil } from "lucide-react";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import GameTile, { type TileAction } from "./GameTile";
 
@@ -148,5 +148,55 @@ describe("GameTile prefetch", () => {
 
         await userEvent.hover(link);
         await waitFor(() => expect(fetched).toHaveBeenCalledWith("7"));
+    });
+});
+
+/* The round button a phone shows in place of the hover rows. */
+describe("GameTile standing button", () => {
+    const standing = (actions: TileAction[]) => {
+        renderWithProviders(
+            <GameTile
+                gameId={1}
+                title="Lanternfall"
+                coverUrl={null}
+                actions={actions}
+            />
+        );
+        const label =
+            actions.find((a) => a.standing)?.label ?? actions[0]!.label;
+        // The hover row has a button of the same name; this one is round.
+        return screen
+            .getAllByRole("button", { name: label })
+            .find((b) => b.className.includes("rounded-full"))!;
+    };
+
+    /* A logged game showed + like every other, and the + opened the log. */
+    it("is the action marked for it, drawn with its own icon", async () => {
+        const edit = vi.fn();
+        const button = standing([
+            {
+                key: "view",
+                label: "View your log",
+                tone: "primary",
+                onSelect: vi.fn(),
+            },
+            { key: "edit", label: "Edit", onSelect: edit, standing: Pencil },
+        ]);
+
+        expect(button.querySelector("svg")).toHaveClass("lucide-pencil");
+        await userEvent.click(button);
+        expect(edit).toHaveBeenCalled();
+    });
+
+    it("falls back to the first action, as a plus", () => {
+        const button = standing([
+            {
+                key: "log",
+                label: "Create log",
+                tone: "primary",
+                onSelect: vi.fn(),
+            },
+        ]);
+        expect(button.querySelector("svg")).toHaveClass("lucide-plus");
     });
 });

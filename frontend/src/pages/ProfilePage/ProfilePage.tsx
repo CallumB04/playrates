@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Flag, Pencil, Settings } from "lucide-react";
+import { Eye, Flag, Pencil, Plus, Settings } from "lucide-react";
 import ReportDialog from "../../components/ReportDialog";
 import type { ShelfEntry } from "@playrates/shared";
 import { useLogFlow } from "../../components/gamelog/useLogFlow";
@@ -276,25 +276,29 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
             },
         ];
 
-        if (!currentUser) return actions;
+        // Signed out, theirs is the only log on offer to a phone.
+        if (!currentUser) return [{ ...actions[0]!, standing: Eye }];
 
         if (isMyAccount) {
             actions.push({
                 key: "edit",
                 label: "Edit",
                 onSelect: () => flow.open(gameId),
+                standing: Pencil,
             });
         } else if (myLogGameIds.has(gameId)) {
             actions.push({
                 key: "myLog",
                 label: "My log",
                 onSelect: () => flow.view(gameId),
+                standing: Eye,
             });
         } else {
             actions.push({
                 key: "add",
                 label: "Log it",
                 onSelect: () => flow.open(gameId),
+                standing: Plus,
             });
         }
 

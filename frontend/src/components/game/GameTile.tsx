@@ -30,6 +30,11 @@ export interface TileAction {
     icon?: ComponentType<SVGProps<SVGSVGElement> & { size?: number | string }>;
     /** What an icon action's button says once it has worked. */
     doneLabel?: string;
+    /** Makes this the standing button on a phone, drawn with this icon, so
+     *  it says what it does: edit your log, view one, or add it. */
+    standing?: ComponentType<
+        SVGProps<SVGSVGElement> & { size?: number | string }
+    >;
 }
 
 /** A quick-add in flight, then landed. The icons are kept as they were when
@@ -128,8 +133,11 @@ const GameTile = ({
         }
     };
 
-    const primary = rows[0] ?? icons[0];
-    const PrimaryIcon = primary?.icon ?? Plus;
+    /* Plus when nothing says otherwise: it read as "add" on every tile,
+       logged ones included, where it opened the log instead. */
+    const primary =
+        actions.find((action) => action.standing) ?? rows[0] ?? icons[0];
+    const PrimaryIcon = primary?.standing ?? primary?.icon ?? Plus;
 
     return (
         <div className="group/tile">
