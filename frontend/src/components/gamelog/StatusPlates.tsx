@@ -1,6 +1,5 @@
-import type { ComponentType, SVGProps } from "react";
+import { Fragment } from "react";
 import {
-    displayStatusFor,
     GAME_STATUSES,
     PLAYED_STATUSES,
     STATUS_PRESENTATION,
@@ -8,9 +7,7 @@ import {
     type GameStatus,
     type PlayedStatus,
 } from "../../constants/gameStatus";
-import { ChevronDown } from "lucide-react";
 import { cn } from "../../lib/cn";
-import Dropdown, { type DropdownOption } from "../ui/Dropdown";
 
 /* Selected fills with its own hue and lifts; the fill itself is the status's
    chip. Only the focus ring lives here — complete class strings, because
@@ -59,39 +56,67 @@ const Disc = ({
     );
 };
 
-type IconProps = SVGProps<SVGSVGElement> & { size?: number | string };
+/* Endings are order-3 on a phone and order-5 from sm, so they land under
+   the row Played is in: after Playing on a phone, after all four from sm. */
+const PLATE_ORDER = ["order-1", "order-2", "order-4", "order-4"];
 
-/** The mark keeps its own hue in the menu, the way it does on a plate. Built
- *  once at module scope: a component rebuilt per render remounts the icon. */
-const tonedMark = (status: DisplayStatus): ComponentType<IconProps> => {
-    const { icon: Icon, markTone } = STATUS_PRESENTATION[status];
-    const Mark = ({ className, ...props }: IconProps) => (
-        <Icon {...props} className={cn(markTone, className)} />
-    );
-    Mark.displayName = `${status}Mark`;
-    return Mark;
-};
-
-const PLAYED_OPTIONS: DropdownOption[] = [
-    {
-        /* Empty rather than a fifth status: played_status stays null, and its
-           CHECK constraint still lists only the four below. Same word as
-           the plate, so choosing it is visibly choosing nothing further. */
-        value: "",
-        label: "Played",
-        icon: tonedMark("played"),
-        /* About the entry, not the game. The played status's own hint reads as
-           a verdict here, and anything about being done with it trespasses on
-           Shelved and Retired. */
-        hint: "No further detail",
-    },
-    ...PLAYED_STATUSES.map((status) => ({
-        value: status,
-        label: STATUS_PRESENTATION[status].label,
-        icon: tonedMark(status),
-        hint: STATUS_PRESENTATION[status].hint,
-    })),
-];
+/** Picks how a played run ended. In plain sight under the plates rather than
+ *  in a menu: as a dropdown on the Played plate, testers never found it. */
+const Endings = ({
+    value,
+    onChange,
+}: {
+    value: PlayedStatus | null;
+    onChange: (status: PlayedStatus | null) => void;
+}) => (
+    <div
+        role="group"
+        aria-label="How it ended"
+        className="relative order-3 col-span-2 animate-rise rounded-md border border-subtle bg-surface-sunken p-2 sm:order-5 sm:col-span-4"
+    >
+        {/* Points at the Played plate: the first of two columns on a phone,
+            of four from sm. The row sits under whichever row Played is in. */}
+        <span
+            aria-hidden
+            className="absolute -top-[7px] left-[calc(25%-12px)] size-3 rotate-45 border-t border-l border-subtle bg-surface-sunken sm:left-[calc(12.5%-12px)]"
+        />
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {PLAYED_STATUSES.map((status) => {
+                const { label, hint } = STATUS_PRESENTATION[status];
+                const selected = status === value;
+                return (
+                    <button
+                        key={status}
+                        type="button"
+                        aria-pressed={selected}
+                        // Again to clear it: plain Played is a real answer.
+                        onClick={() => onChange(selected ? null : status)}
+                        className={cn(
+                            "group flex min-h-11 items-center gap-2 rounded-md border px-2.5 py-2 text-left lift focus-visible:outline-2 focus-visible:outline-offset-2",
+                            RING[status],
+                            selected
+                                ? cn(
+                                      STATUS_PRESENTATION[status].chip,
+                                      "shadow-plate"
+                                  )
+                                : RESTING
+                        )}
+                    >
+                        <Disc status={status} selected={selected} size={26} />
+                        <span className="flex min-w-0 flex-col">
+                            <span className="truncate text-body-sm font-medium">
+                                {label}
+                            </span>
+                            <span className="truncate text-label-sm text-content-muted">
+                                {hint}
+                            </span>
+                        </span>
+                    </button>
+                );
+            })}
+        </div>
+    </div>
+);
 
 export const StatusPlates = ({
     value,
@@ -107,55 +132,10 @@ export const StatusPlates = ({
     <fieldset>
         <legend className="mb-2.5 text-label text-content-muted">Status</legend>
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-            {GAME_STATUSES.map((status) => {
+            {GAME_STATUSES.map((status, index) => {
                 const { label } = STATUS_PRESENTATION[status];
                 const selected = status === value;
-
-                /* The chosen played plate opens onto its substatuses in
-                   place, rather than a second row appearing below, and wears
-                   whichever one is chosen — mark, fill and focus ring — the
-                   way a badge for that log would. */
-                if (status === "played" && selected) {
-                    const shown = displayStatusFor("played", playedStatus);
-
-                    return (
-                        <Dropdown
-                            key={status}
-                            options={PLAYED_OPTIONS}
-                            value={playedStatus ?? ""}
-                            aria-label="How it ended"
-                            onChange={(next) =>
-                                onPlayedStatusChange(
-                                    (next || null) as PlayedStatus | null
-                                )
-                            }
-                            triggerClassName={cn(
-                                BASE,
-                                "w-full shadow-plate",
-                                RING[shown],
-                                STATUS_PRESENTATION[shown].chip
-                            )}
-                            renderTrigger={(chosen, open) => (
-                                <>
-                                    <Disc status={shown} selected />
-                                    <span className="min-w-0 flex-1 truncate text-body-sm font-medium">
-                                        {chosen?.label ?? label}
-                                    </span>
-                                    <ChevronDown
-                                        size={14}
-                                        aria-hidden
-                                        className={cn(
-                                            "shrink-0 text-content-secondary transition-transform duration-200",
-                                            open && "rotate-180"
-                                        )}
-                                    />
-                                </>
-                            )}
-                        />
-                    );
-                }
-
-                return (
+                const plate = (
                     <button
                         key={status}
                         type="button"
@@ -163,6 +143,7 @@ export const StatusPlates = ({
                         onClick={() => onChange(status)}
                         className={cn(
                             BASE,
+                            PLATE_ORDER[index],
                             RING[status],
                             selected
                                 ? cn(
@@ -177,6 +158,18 @@ export const StatusPlates = ({
                             {label}
                         </span>
                     </button>
+                );
+                // Next to its plate in the reading order: it refines it.
+                return status === "played" && selected ? (
+                    <Fragment key={status}>
+                        {plate}
+                        <Endings
+                            value={playedStatus}
+                            onChange={onPlayedStatusChange}
+                        />
+                    </Fragment>
+                ) : (
+                    plate
                 );
             })}
         </div>

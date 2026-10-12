@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { GameStatus, PlayedStatus } from "../../constants/gameStatus";
@@ -22,9 +22,9 @@ const plates = (
         />
     );
 
-const played = () => screen.getByRole("button", { name: /how it ended/i });
-const option = (name: string) =>
-    screen.getByRole("option", { name: new RegExp(name) });
+const endings = () => screen.queryByRole("group", { name: /how it ended/i });
+const ending = (name: string) =>
+    within(endings()!).getByRole("button", { name: new RegExp(name) });
 
 describe("StatusPlates", () => {
     it("keeps the four statuses in one row", () => {
@@ -34,73 +34,59 @@ describe("StatusPlates", () => {
         }
     });
 
-    it("leaves played a plain plate until it is the chosen status", async () => {
+    it("chooses played like any other status", async () => {
         const onChange = vi.fn();
         plates({ value: "backlog", onChange });
 
         const plate = screen.getByRole("button", { name: "Played" });
         expect(plate).toHaveAttribute("aria-pressed", "false");
-        expect(plate).not.toHaveAttribute("aria-haspopup");
-
         await userEvent.click(plate);
         expect(onChange).toHaveBeenCalledWith("played");
     });
 
-    it("opens in place once played is chosen", () => {
-        plates({ value: "played" });
-
-        expect(played()).toHaveAttribute("aria-haspopup", "listbox");
-        expect(played()).toHaveTextContent("Played");
-    });
-
-    it("rests on plain played, with the four refinements under it", async () => {
-        plates({ value: "played", playedStatus: null });
-        await userEvent.click(played());
-
-        expect(screen.getAllByRole("option")).toHaveLength(5);
-        expect(option("^Played")).toHaveAttribute("aria-selected", "true");
-        for (const name of ["Finished", "Mastered", "Shelved", "Retired"]) {
-            expect(option(name)).toHaveAttribute("aria-selected", "false");
-        }
-    });
-
-    it("names the substatus on the plate once there is one", () => {
-        plates({ value: "played", playedStatus: "mastered" });
-        expect(played()).toHaveTextContent("Mastered");
-    });
-
-    /* The plate wears the chosen substatus, so it reads as the badge that log
-       will carry. Lucide names its own marks, which is the one part of the
-       presentation worth pinning; the hues are class strings, not behaviour. */
-    it("wears the substatus mark rather than the played one", () => {
-        const { rerender } = plates({ value: "played", playedStatus: null });
-        expect(played().querySelector("svg")).toHaveClass(
-            "lucide-circle-check"
-        );
+    it("shows the endings only once played is chosen", () => {
+        const { rerender } = plates({ value: "playing" });
+        expect(endings()).not.toBeInTheDocument();
 
         rerender(
             <StatusPlates
                 value="played"
-                playedStatus="retired"
+                playedStatus={null}
                 onChange={vi.fn()}
                 onPlayedStatusChange={vi.fn()}
             />
         );
-        expect(played().querySelector("svg")).toHaveClass("lucide-archive");
+        expect(endings()).toBeInTheDocument();
     });
 
-    it("reports a substatus by name", async () => {
+    /* In plain sight, not behind a menu: testers never found the dropdown. */
+    it("lays all four endings out at once, none chosen yet", () => {
+        plates({ value: "played", playedStatus: null });
+
+        for (const name of ["Finished", "Mastered", "Shelved", "Retired"]) {
+            expect(ending(name)).toHaveAttribute("aria-pressed", "false");
+        }
+    });
+
+    it("marks the chosen ending", () => {
+        plates({ value: "played", playedStatus: "mastered" });
+        expect(ending("Mastered")).toHaveAttribute("aria-pressed", "true");
+        expect(ending("Finished")).toHaveAttribute("aria-pressed", "false");
+    });
+
+    it("reports an ending by name, without changing the status", async () => {
+        const onChange = vi.fn();
         const onPlayedStatusChange = vi.fn();
-        plates({ value: "played", onPlayedStatusChange });
+        plates({ value: "played", onChange, onPlayedStatusChange });
 
-        await userEvent.click(played());
-        await userEvent.click(option("Retired"));
+        await userEvent.click(ending("Retired"));
         expect(onPlayedStatusChange).toHaveBeenCalledWith("retired");
+        expect(onChange).not.toHaveBeenCalled();
     });
 
-    /* Null, not a fifth status — nothing new reaches played_status, which has
-       a CHECK constraint listing only the four. */
-    it("reports plain played as nothing at all", async () => {
+    /* Null, not a fifth status — played_status has a CHECK constraint listing
+       only the four, and plain Played is a real answer. */
+    it("clears the ending when the chosen one is pressed again", async () => {
         const onPlayedStatusChange = vi.fn();
         plates({
             value: "played",
@@ -108,17 +94,7 @@ describe("StatusPlates", () => {
             onPlayedStatusChange,
         });
 
-        await userEvent.click(played());
-        await userEvent.click(option("^Played"));
+        await userEvent.click(ending("Finished"));
         expect(onPlayedStatusChange).toHaveBeenCalledWith(null);
-    });
-
-    it("does not change the status when the open plate is used", async () => {
-        const onChange = vi.fn();
-        plates({ value: "played", onChange });
-
-        await userEvent.click(played());
-        await userEvent.click(option("Shelved"));
-        expect(onChange).not.toHaveBeenCalled();
     });
 });
