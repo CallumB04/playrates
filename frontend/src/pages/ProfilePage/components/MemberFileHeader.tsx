@@ -163,7 +163,18 @@ const MemberFileHeader = ({
                         <PresenceDot online={profile.online} size="lg" />
                     </span>
 
-                    <div className="mt-3 flex items-center gap-2">{action}</div>
+                    <div className="mt-3 flex flex-col items-end gap-2 self-start">
+                        <div className="flex items-center gap-2">{action}</div>
+                        {/* Without it the buttons read as any other
+                            profile's. Hung from the top, so the buttons stay
+                            put when it goes. */}
+                        {requestReceived && (
+                            <p className="inline-flex items-center gap-1.5 rounded-full bg-brand-subtle px-2.5 py-1 text-label-sm font-medium text-brand">
+                                <UserPlus className="size-3.5" aria-hidden />
+                                Sent you a friend request
+                            </p>
+                        )}
+                    </div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
@@ -182,14 +193,6 @@ const MemberFileHeader = ({
                         </span>
                     )}
                 </div>
-
-                {/* The buttons alone read as any other profile's. */}
-                {requestReceived && (
-                    <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-brand-subtle px-2.5 py-1 text-label-sm font-medium text-brand">
-                        <UserPlus className="size-3.5" aria-hidden />
-                        Sent you a friend request
-                    </p>
-                )}
 
                 {profile.bio && (
                     <p className="mt-2.5 max-w-[52ch] text-sm leading-relaxed text-content-secondary">

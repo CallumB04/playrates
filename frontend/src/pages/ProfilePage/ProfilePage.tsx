@@ -377,7 +377,6 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                             )}
                             <FriendAction
                                 relation={relation}
-                                username={targetUser.username}
                                 isPending={isPending}
                                 onAdd={guard(() => void send.mutateAsync())}
                                 onAccept={guard(
