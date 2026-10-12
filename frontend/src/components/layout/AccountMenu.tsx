@@ -1,9 +1,11 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { popoverClass } from "../ui/popover";
 import { Link } from "react-router-dom";
 import {
     Check,
-    ChevronRight,
+    ChevronDown,
+    ChevronLeft,
+    ListChecks,
     LogOut,
     Moon,
     Settings,
@@ -17,6 +19,7 @@ import type { MyProfile } from "@playrates/shared";
 import ProfilePicture from "../ProfilePicture";
 import { cn } from "../../lib/cn";
 import { useDismiss } from "../../hooks/useDismiss";
+import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
 import Progress from "../ui/Progress";
 import type { SetupStep } from "../../lib/setupChecklist";
 
@@ -55,67 +58,164 @@ const SetupRing = ({ share }: { share: number }) => (
     </svg>
 );
 
-/** What is left before the profile is worth visiting. Done steps stay,
- *  ticked: two of four already done is the pull to finish the other two. */
-const SetupSection = ({
+/** Long enough to cross the gap into the list on a diagonal. */
+const HOVER_CLOSE_MS = 150;
+
+/** The steps themselves, with a bar and a count. Done steps stay, ticked:
+ *  two of four already done is the pull to finish the other two. */
+const SetupSteps = ({
+    steps,
+    done,
+    onNavigate,
+}: {
+    steps: SetupStep[];
+    done: number;
+    onNavigate: () => void;
+}) => (
+    <>
+        <Progress
+            value={done / steps.length}
+            size="sm"
+            label={`${done} of ${steps.length} setup steps done`}
+            className="mx-2.5 mt-1 mb-1.5"
+        />
+        <ul>
+            {steps.map((step) => (
+                <li key={step.key}>
+                    {step.done ? (
+                        <span className="flex min-h-11 items-center gap-2.5 px-2.5 text-body-sm text-content-muted line-through decoration-content-muted/60 sm:min-h-8">
+                            <Check
+                                size={15}
+                                aria-hidden
+                                className="shrink-0 text-brand"
+                            />
+                            {step.label}
+                            <span className="sr-only">(done)</span>
+                        </span>
+                    ) : (
+                        <Link
+                            to={step.to}
+                            onClick={onNavigate}
+                            role="menuitem"
+                            className={cn(ITEM, "sm:min-h-8 sm:py-1.5")}
+                        >
+                            <span
+                                aria-hidden
+                                className="size-[15px] shrink-0 rounded-full border-[1.5px] border-strong"
+                            />
+                            {step.label}
+                        </Link>
+                    )}
+                </li>
+            ))}
+        </ul>
+    </>
+);
+
+/**
+ * One row in the menu; the steps open off it. From sm a pointer resting on
+ * the row opens them beside the menu, and they stay open while the pointer
+ * is on either, so the steps can be reached. A phone has no hover and no
+ * room beside the menu, so a tap opens them under the row instead.
+ */
+const SetupRow = ({
     steps,
     onNavigate,
 }: {
     steps: SetupStep[];
     onNavigate: () => void;
 }) => {
+    const [open, setOpen] = useState(false);
+    const isPhone = !useMediaQuery(BREAKPOINT.sm);
+    const closing = useRef<number | undefined>(undefined);
     const done = steps.filter((step) => step.done).length;
+
+    useEffect(() => () => window.clearTimeout(closing.current), []);
+
+    const hover = (entering: boolean) => {
+        if (isPhone) return;
+        window.clearTimeout(closing.current);
+        if (entering) setOpen(true);
+        else
+            closing.current = window.setTimeout(
+                () => setOpen(false),
+                HOVER_CLOSE_MS
+            );
+    };
+
     return (
-        <div className="mb-1.5 border-b border-subtle px-2.5 pb-2.5">
-            <p className="flex items-baseline justify-between gap-2 text-label">
-                <span className="text-content">Set up your profile</span>
-                <span className="font-mono text-content-muted">
+        <div
+            className="relative mb-1.5 border-b border-subtle pb-1.5"
+            onMouseEnter={() => hover(true)}
+            onMouseLeave={() => hover(false)}
+        >
+            <button
+                type="button"
+                role="menuitem"
+                aria-haspopup="menu"
+                aria-expanded={open}
+                // Opens rather than toggles from sm: a tap on a tablet
+                // fires the hover first, and a toggle would shut it again.
+                onClick={() => setOpen((was) => (isPhone ? !was : true))}
+                className={cn(
+                    ITEM,
+                    "cursor-pointer",
+                    open && "bg-surface-hover text-content"
+                )}
+            >
+                <ListChecks
+                    size={15}
+                    aria-hidden
+                    className="shrink-0 text-brand"
+                />
+                <span className="min-w-0 flex-1">Set up your profile</span>
+                <span className="font-mono text-label text-content-muted">
                     {done}/{steps.length}
                 </span>
-            </p>
-            <Progress
-                value={done / steps.length}
-                size="sm"
-                label={`${done} of ${steps.length} setup steps done`}
-                className="mt-2"
-            />
-            <ul className="-mx-2.5 mt-1.5">
-                {steps.map((step) => (
-                    <li key={step.key}>
-                        {step.done ? (
-                            <span className="flex min-h-11 items-center gap-2.5 px-2.5 text-body-sm text-content-muted line-through decoration-content-muted/60 sm:min-h-8">
-                                <Check
-                                    size={15}
-                                    aria-hidden
-                                    className="shrink-0 text-brand"
-                                />
-                                {step.label}
-                                <span className="sr-only">(done)</span>
-                            </span>
-                        ) : (
-                            <Link
-                                to={step.to}
-                                onClick={onNavigate}
-                                role="menuitem"
-                                className={cn(ITEM, "sm:min-h-8 sm:py-1.5")}
-                            >
-                                <span
-                                    aria-hidden
-                                    className="size-[15px] shrink-0 rounded-full border-[1.5px] border-strong"
-                                />
-                                <span className="min-w-0 flex-1">
-                                    {step.label}
-                                </span>
-                                <ChevronRight
-                                    size={14}
-                                    aria-hidden
-                                    className="shrink-0 text-content-muted"
-                                />
-                            </Link>
+                {isPhone ? (
+                    <ChevronDown
+                        size={14}
+                        aria-hidden
+                        className={cn(
+                            "shrink-0 text-content-muted transition-transform duration-200",
+                            open && "rotate-180"
                         )}
-                    </li>
+                    />
+                ) : (
+                    <ChevronLeft
+                        size={14}
+                        aria-hidden
+                        className="shrink-0 text-content-muted"
+                    />
+                )}
+            </button>
+
+            {open &&
+                (isPhone ? (
+                    <div role="menu" aria-label="Profile setup">
+                        <SetupSteps
+                            steps={steps}
+                            done={done}
+                            onNavigate={onNavigate}
+                        />
+                    </div>
+                ) : (
+                    /* Its padding is the bridge: still inside the hovered
+                       element while the pointer crosses the gap. */
+                    <div className="absolute top-[-0.375rem] right-full pr-3">
+                        <div
+                            role="menu"
+                            aria-label="Profile setup"
+                            className={popoverClass("w-60 p-1.5", "menu")}
+                        >
+                            <SetupSteps
+                                steps={steps}
+                                done={done}
+                                onNavigate={onNavigate}
+                            />
+                        </div>
+                    </div>
                 ))}
-            </ul>
         </div>
     );
 };
@@ -178,7 +278,7 @@ const AccountMenu = ({
                 <div
                     role="menu"
                     className={popoverClass(
-                        "absolute top-[calc(100%+0.6rem)] right-0 z-40 w-60 overflow-hidden p-1.5",
+                        "absolute top-[calc(100%+0.6rem)] right-0 z-40 w-60 p-1.5",
                         "menu"
                     )}
                 >
@@ -186,7 +286,7 @@ const AccountMenu = ({
                         {user.username}
                     </p>
                     {setup && (
-                        <SetupSection
+                        <SetupRow
                             steps={setup}
                             onNavigate={() => setOpen(false)}
                         />

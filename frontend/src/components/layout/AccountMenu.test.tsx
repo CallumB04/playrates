@@ -36,6 +36,19 @@ describe("AccountMenu", () => {
             friendCount: 0,
         });
 
+        /* The tests' matchMedia matches nothing, which is a phone; sm and
+           up is put in place for the hover tests. */
+        const asDesktop = () => {
+            const original = window.matchMedia;
+            window.matchMedia = ((query: string) => ({
+                ...original(query),
+                matches: true,
+            })) as typeof window.matchMedia;
+            return () => {
+                window.matchMedia = original;
+            };
+        };
+
         const openWith = async (steps: typeof setup) => {
             renderWithProviders(
                 <AccountMenu
@@ -49,6 +62,9 @@ describe("AccountMenu", () => {
             );
         };
 
+        const row = () =>
+            screen.getByRole("menuitem", { name: /set up your profile/i });
+
         it("says on the avatar how far along it is", async () => {
             await openWith(setup);
             expect(
@@ -56,9 +72,17 @@ describe("AccountMenu", () => {
             ).toHaveAccessibleName("Account menu, profile setup 2 of 4 done");
         });
 
-        it("lists what is left as places to go", async () => {
+        it("is one row until it is opened", async () => {
             await openWith(setup);
-            expect(screen.getByText("2/4")).toBeInTheDocument();
+            expect(row()).toHaveTextContent("2/4");
+            expect(
+                screen.queryByRole("menuitem", { name: /add a friend/i })
+            ).not.toBeInTheDocument();
+        });
+
+        it("opens on a tap on a phone, as places to go", async () => {
+            await openWith(setup);
+            await userEvent.click(row());
             expect(
                 screen.getByRole("menuitem", { name: /add a profile picture/i })
             ).toHaveAttribute("href", "/settings?section=profile");
@@ -69,6 +93,38 @@ describe("AccountMenu", () => {
             expect(
                 screen.queryByRole("menuitem", { name: /write a bio/i })
             ).not.toBeInTheDocument();
+        });
+
+        /* The list has to stay open while the pointer crosses into it and
+           while it is on it, or the steps could never be clicked. */
+        it("opens on hover from sm, and stays open on the list", async () => {
+            const restore = asDesktop();
+            await openWith(setup);
+
+            await userEvent.hover(row());
+            const list = screen.getByRole("menu", { name: "Profile setup" });
+            await userEvent.unhover(row());
+            await userEvent.hover(list);
+            await new Promise((r) => setTimeout(r, 200));
+            expect(
+                screen.getByRole("menuitem", { name: /add a friend/i })
+            ).toBeInTheDocument();
+
+            restore();
+        });
+
+        it("closes once the pointer leaves both", async () => {
+            const restore = asDesktop();
+            await openWith(setup);
+
+            await userEvent.hover(row());
+            await userEvent.unhover(row());
+            await new Promise((r) => setTimeout(r, 200));
+            expect(
+                screen.queryByRole("menu", { name: "Profile setup" })
+            ).not.toBeInTheDocument();
+
+            restore();
         });
 
         /* Not dismissable: finishing it is the only way it goes. */
