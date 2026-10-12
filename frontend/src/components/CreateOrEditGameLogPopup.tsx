@@ -24,6 +24,7 @@ import { usePlayedOn } from "./gamelog/usePlayedOn";
 import { StatusPlates } from "./gamelog/StatusPlates";
 import Progress from "./ui/Progress";
 import DeleteGameLogPopup from "./gamelog/DeleteGameLogPopup";
+import TodayButton from "./gamelog/TodayButton";
 import {
     achievementFraction,
     fieldsFor,
@@ -603,7 +604,7 @@ const CreateOrEditGameLogPopup = ({
                             id="log-details"
                             className="mt-3 flex flex-col gap-5"
                         >
-                            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+                            <div className="grid grid-cols-2 gap-x-3.5 gap-y-6 sm:grid-cols-4 sm:gap-3.5">
                                 {fields.has("hoursPlayed") && (
                                     <Field
                                         label="Hours played"
@@ -659,7 +660,21 @@ const CreateOrEditGameLogPopup = ({
                                     )}
                                 </Field>
                                 {fields.has("startDate") && (
-                                    <Field label="Started">
+                                    <Field
+                                        label="Started"
+                                        action={
+                                            <TodayButton
+                                                field="started"
+                                                onPick={(today) =>
+                                                    dispatch({
+                                                        type: "set",
+                                                        field: "startDate",
+                                                        value: today,
+                                                    })
+                                                }
+                                            />
+                                        }
+                                    >
                                         {(a11y) => (
                                             <Input
                                                 type="date"
@@ -677,7 +692,21 @@ const CreateOrEditGameLogPopup = ({
                                     </Field>
                                 )}
                                 {fields.has("finishDate") && (
-                                    <Field label="Finished">
+                                    <Field
+                                        label="Finished"
+                                        action={
+                                            <TodayButton
+                                                field="finished"
+                                                onPick={(today) =>
+                                                    dispatch({
+                                                        type: "set",
+                                                        field: "finishDate",
+                                                        value: today,
+                                                    })
+                                                }
+                                            />
+                                        }
+                                    >
                                         {(a11y) => (
                                             <Input
                                                 type="date"

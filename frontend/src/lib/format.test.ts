@@ -17,6 +17,7 @@ import {
     releaseYear,
     setDisplayTimeZone,
     timeZones,
+    todayIsoDate,
 } from "./format";
 import { cn } from "./cn";
 
@@ -148,6 +149,25 @@ describe("formatMessageCount", () => {
         expect(formatMessageCount(99)).toBe("99");
         expect(formatMessageCount(100)).toBe("99+");
         expect(formatMessageCount(4321)).toBe("99+");
+    });
+});
+
+describe("todayIsoDate", () => {
+    /* 21:30 UTC on 12 Oct is already the 13th further east. */
+    const lateEvening = new Date("2026-10-12T21:30:00Z");
+
+    it("is the day where the viewer is, not in UTC", () => {
+        setDisplayTimeZone("Europe/London");
+        expect(todayIsoDate(lateEvening)).toBe("2026-10-12");
+        setDisplayTimeZone("Europe/Tallinn");
+        expect(todayIsoDate(lateEvening)).toBe("2026-10-13");
+    });
+
+    it("pads to the shape a date field takes", () => {
+        setDisplayTimeZone("UTC");
+        expect(todayIsoDate(new Date("2026-03-04T12:00:00Z"))).toBe(
+            "2026-03-04"
+        );
     });
 });
 
