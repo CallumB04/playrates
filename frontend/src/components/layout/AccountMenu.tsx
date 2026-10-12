@@ -230,8 +230,9 @@ const AccountMenu = ({
     });
 
     return (
-        // A glyph sits 8px inside its box; the avatar fills its own.
-        <div ref={wrapRef} className="relative max-sm:ml-2">
+        // Measured from the bell's unread badge, which reaches towards it:
+        // from the bell itself it sat visibly closer than the search icon.
+        <div ref={wrapRef} className="relative max-sm:ml-4">
             <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}

@@ -115,10 +115,15 @@ const Header = () => {
                         </button>
 
                         {/* Off below 360px, where it cannot fit beside the
-                            icons; the menu it sits next to shows it. */}
+                            icons; the menu it sits next to shows it. The
+                            local build's badge needs the room from 380px,
+                            and it is the badge that has to stay. */}
                         <Link
                             to="/"
-                            className="font-display text-2xl font-bold text-content max-[360px]:hidden"
+                            className={cn(
+                                "font-display text-2xl font-bold text-content max-[360px]:hidden",
+                                env.localData && "max-[380px]:hidden"
+                            )}
                         >
                             PlayRates
                         </Link>
