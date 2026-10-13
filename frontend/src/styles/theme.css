@@ -719,6 +719,68 @@
     }
 }
 
+/* The server's plain copy of a page (backend/src/modules/pages/body.ts), for
+   readers that never run the app. React replaces it on mount; held back a
+   moment so that swap is never seen, and readable if the app is slow. */
+@layer components {
+    .prerender {
+        max-width: 46rem;
+        margin-inline: auto;
+        padding: 2rem 1.25rem 4rem;
+        font-size: var(--text-body);
+        line-height: 1.6;
+        color: var(--content-secondary);
+        visibility: hidden;
+        animation: prerender-reveal 0s 1.2s forwards;
+    }
+
+    .prerender h1 {
+        font-family: var(--font-display);
+        font-size: var(--text-title);
+        line-height: 1.1;
+        color: var(--content);
+    }
+
+    .prerender h2 {
+        margin-top: 2rem;
+        font-family: var(--font-display);
+        font-size: var(--text-section);
+        color: var(--content);
+    }
+
+    .prerender > * + * {
+        margin-top: 1rem;
+    }
+
+    .prerender dl {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.25rem 1rem;
+    }
+
+    .prerender dt {
+        color: var(--content-muted);
+    }
+
+    .prerender li + li {
+        margin-top: 1rem;
+    }
+
+    .prerender strong {
+        color: var(--content);
+    }
+
+    .prerender a {
+        color: var(--brand);
+    }
+}
+
+@keyframes prerender-reveal {
+    to {
+        visibility: visible;
+    }
+}
+
 /* Long reading: the about, privacy and terms pages. Set for reading a page
    top to bottom rather than a message in passing, so more air than
    .rich-text and headings that can be linked to. */

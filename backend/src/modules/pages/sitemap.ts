@@ -48,7 +48,8 @@ export const sitemapIndex = (paths: string[]): string =>
     XML,
     `<sitemapindex ${NS}>`,
     ...paths.map(
-      (path) => `<sitemap><loc>${escapeXml(SITE_ORIGIN + path)}</loc></sitemap>`,
+      (path) =>
+        `<sitemap><loc>${escapeXml(SITE_ORIGIN + path)}</loc></sitemap>`,
     ),
     "</sitemapindex>",
   ].join("\n");
@@ -70,14 +71,43 @@ export const threadEntries = (threads: SitemapEntry[]): UrlEntry[] =>
 
 /** Somewhere that isn't the live site (a preview deployment, a laptop)
  *  asks for nothing to be crawled at all. */
+/** Out of bounds for every crawler. */
+const DISALLOW = ["/admin", "/settings", "/community/new", "/api/"];
+
+/**
+ * AI crawlers, named so a later change to the wildcard can't shut them out by
+ * accident. The search and answer engines fetch a page to cite it; the
+ * training crawlers read the site for their models. Both are welcome.
+ */
+export const AI_CRAWLERS = [
+  // search and answers
+  "OAI-SearchBot",
+  "ChatGPT-User",
+  "PerplexityBot",
+  "Perplexity-User",
+  "Claude-SearchBot",
+  "Claude-User",
+  // training
+  "GPTBot",
+  "ClaudeBot",
+  "CCBot",
+  "Google-Extended",
+  "Applebot-Extended",
+];
+
+/* A crawler follows the group naming it and ignores "*", so the named group
+   repeats the same rules rather than inheriting them. */
+const group = (agents: string[]) => [
+  ...agents.map((agent) => `User-agent: ${agent}`),
+  ...DISALLOW.map((path) => `Disallow: ${path}`),
+];
+
 export const robotsTxt = (production: boolean): string =>
   production
     ? [
-        "User-agent: *",
-        "Disallow: /admin",
-        "Disallow: /settings",
-        "Disallow: /community/new",
-        "Disallow: /api/",
+        ...group(["*"]),
+        "",
+        ...group(AI_CRAWLERS),
         "",
         `Sitemap: ${SITE_ORIGIN}/sitemap.xml`,
         "",

@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { pageTitle, SITE_DESCRIPTION } from "@playrates/shared";
 import { SITE_HEADERS } from "../../config/siteHeaders.js";
 import type { Logger } from "../../lib/logger.js";
+import { buildBody, injectBody } from "./body.js";
 import { buildHead, DEFAULT_IMAGE, injectHead, type HeadMeta } from "./head.js";
 import type { PagesService } from "./pages.service.js";
 import type { SitemapRepository } from "./sitemap.repository.js";
@@ -28,7 +29,8 @@ interface Deps {
 
 // Long enough to spare the database a crawler's attention; short enough
 // that an edit shows in a preview the same day.
-const PAGE_CACHE = "public, max-age=0, s-maxage=300, stale-while-revalidate=86400";
+const PAGE_CACHE =
+  "public, max-age=0, s-maxage=300, stale-while-revalidate=86400";
 const SITEMAP_CACHE = "public, max-age=3600, s-maxage=86400";
 
 const NOT_FOUND: Omit<HeadMeta, "path"> = {
@@ -91,7 +93,8 @@ export const createPagesRouter = ({
       }
 
       res.setHeader("Cache-Control", PAGE_CACHE);
-      res.send(injectHead(html, buildHead(meta)));
+      const page = injectHead(html, buildHead(meta));
+      res.send(meta.body ? injectBody(page, buildBody(meta.body)) : page);
     };
 
   router.get(

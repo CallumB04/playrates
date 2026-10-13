@@ -1,0 +1,29 @@
+# PlayRates
+
+> PlayRates (https://playrates.app) is a video game tracker. People log the games they play, one log per platform, with a status (playing, played, backlog or wishlist), how a played game ended (finished, mastered, retired or shelved), hours played, a rating out of 10 and a written review. They follow friends and talk about games in community threads.
+
+Every game, public profile and community thread has its own page, and each page carries its content as plain HTML, so it can be read without running the app.
+
+- Game ratings are averages of PlayRates members' own ratings, out of 10, with the number of ratings beside them.
+- "Logged" counts every log, so one person playing on two consoles counts twice.
+- Average hours played and to beat come from members' logs.
+- Critic scores, release dates, platforms, genres and descriptions come from IGDB.
+- Private profiles and spoiler reviews are kept out of what the site shows to anyone not allowed to see them.
+
+## Pages
+
+- [Library](https://playrates.app/library): every game in the catalogue, searchable, sortable by most logged, rating, critic score and release date.
+- [Community](https://playrates.app/community): threads about the games people here are playing.
+
+Each game, profile and thread is at an address of its own, all listed in the sitemap:
+
+- Games, `https://playrates.app/game/{id}`: the game's facts, the PlayRates rating, average hours and recent reviews.
+- Profiles, `https://playrates.app/user/{username}`: a member's bio and recent reviews, unless the profile is private.
+- Threads, `https://playrates.app/community/thread/{id}`: the opening post and its replies.
+
+## Optional
+
+- [Sitemap](https://playrates.app/sitemap.xml): every game, thread and fixed page.
+- [Contact](https://playrates.app/contact)
+- [Privacy](https://playrates.app/privacy)
+- [Terms](https://playrates.app/terms)

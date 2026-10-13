@@ -1,4 +1,5 @@
 import { SITE_NAME, SITE_ORIGIN } from "@playrates/shared";
+import type { PageBody } from "./body.js";
 
 /** Everything a page says about itself before the app has run. */
 export interface HeadMeta {
@@ -13,6 +14,8 @@ export interface HeadMeta {
   type?: "website" | "profile" | "article";
   noindex?: boolean;
   jsonLd?: Record<string, unknown>;
+  /** The content itself, for readers that never run the app. */
+  body?: PageBody;
 }
 
 export const DEFAULT_IMAGE = `${SITE_ORIGIN}/og-default.png`;
