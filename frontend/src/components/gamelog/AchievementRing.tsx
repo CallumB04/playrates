@@ -20,13 +20,19 @@ const AchievementRing = ({ done, total, size = 76 }: AchievementRingProps) => {
     const circumference = 2 * Math.PI * radius;
     // Gradients are referenced by id, and a page can hold more than one ring.
     const sweep = useId();
+    const glow = useId();
 
     return (
         <div
             className="relative grid shrink-0 place-items-center"
             style={{ width: size, height: size }}
         >
-            <svg viewBox="0 0 80 80" className="size-full -rotate-90">
+            {/* Visible overflow: the arc runs to 78 of 80, so its glow
+                spills past the box and was cut off square. */}
+            <svg
+                viewBox="0 0 80 80"
+                className="size-full -rotate-90 overflow-visible"
+            >
                 <defs>
                     <linearGradient
                         id={sweep}
@@ -35,15 +41,31 @@ const AchievementRing = ({ done, total, size = 76 }: AchievementRingProps) => {
                         x2="100%"
                         y2="100%"
                     >
-                        <stop
-                            offset="0%"
-                            stopColor="var(--status-mastered)"
-                        />
+                        <stop offset="0%" stopColor="var(--status-mastered)" />
                         <stop
                             offset="100%"
                             stopColor="var(--status-mastered-sheen)"
                         />
                     </linearGradient>
+                    {/* Not CSS drop-shadow, which only draws a tenth past
+                        the arc's own box and squared off its glow. This
+                        region covers the whole ring and the blur around it,
+                        whatever length the arc is. */}
+                    <filter
+                        id={glow}
+                        filterUnits="userSpaceOnUse"
+                        x="-12"
+                        y="-12"
+                        width="104"
+                        height="104"
+                    >
+                        <feDropShadow
+                            dx="0"
+                            dy="0"
+                            stdDeviation="3"
+                            className="[flood-color:color-mix(in_srgb,var(--status-mastered)_45%,transparent)]"
+                        />
+                    </filter>
                 </defs>
 
                 <circle
@@ -65,10 +87,8 @@ const AchievementRing = ({ done, total, size = 76 }: AchievementRingProps) => {
                     strokeLinecap="round"
                     strokeDasharray={circumference}
                     strokeDashoffset={circumference * (1 - pct)}
+                    filter={`url(#${glow})`}
                     className="transition-[stroke-dashoffset] duration-700 ease-[var(--ease-glide)]"
-                    style={{
-                        filter: "drop-shadow(0 0 6px color-mix(in srgb, var(--status-mastered) 45%, transparent))",
-                    }}
                 />
             </svg>
             <span className="absolute font-mono text-figure-row text-content">

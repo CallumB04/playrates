@@ -129,8 +129,7 @@ const RichTextEditor = ({
                 "aria-label": label,
                 "aria-multiline": "true",
                 role: "textbox",
-                // 16px: iOS Safari zooms the page in on a smaller field and never back out.
-                class: "rich-text min-h-32 px-3.5 py-3 text-base sm:text-body",
+                class: "rich-text min-h-32 px-3.5 py-3 text-body",
             },
             /* A picture pasted from another site would point at that site;
                the API only shows ones uploaded here, so they are left out

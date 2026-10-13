@@ -294,16 +294,31 @@ describe("platforms and stats", () => {
       const response = await request(app).get(
         `/api/v1/games?search=${encodeURIComponent(q)}`,
       );
-      expect(response.body.data.map((g: { title: string }) => g.title)).toEqual([
-        "The Witcher 3: Wild Hunt",
-      ]);
+      expect(response.body.data.map((g: { title: string }) => g.title)).toEqual(
+        ["The Witcher 3: Wild Hunt"],
+      );
     }
+  });
+
+  it("matches a one or two letter search from the start of the title", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+    const titles = async (q: string) =>
+      (await request(app).get(`/api/v1/games?search=${q}`)).body.data.map(
+        (g: { title: string }) => g.title,
+      );
+
+    expect(await titles("th")).toEqual(["The Witcher 3: Wild Hunt"]);
+    // Inside the title, two letters are not enough; three are.
+    expect(await titles("wi")).toEqual([]);
+    expect(await titles("wit")).toEqual(["The Witcher 3: Wild Hunt"]);
   });
 
   it("lists games without counting them when asked not to", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 
-    const response = await request(app).get("/api/v1/games?count=false&limit=1");
+    const response = await request(app).get(
+      "/api/v1/games?count=false&limit=1",
+    );
 
     expect(response.status).toBe(200);
     expect(response.body.data).toHaveLength(1);
@@ -627,13 +642,45 @@ describe("related games", () => {
         developers: ["CD Projekt RED"],
         similar_igdb_ids: [900, 901, 777, 999],
       }),
-      related({ id: 2, title: "The Witcher 2", igdb_id: 500, series_id: 62, release_date: "2011-05-17", igdb_rating_count: 1500 }),
-      related({ id: 3, title: "The Witcher", igdb_id: 501, series_id: 62, release_date: "2007-10-26", igdb_rating_count: 900 }),
+      related({
+        id: 2,
+        title: "The Witcher 2",
+        igdb_id: 500,
+        series_id: 62,
+        release_date: "2011-05-17",
+        igdb_rating_count: 1500,
+      }),
+      related({
+        id: 3,
+        title: "The Witcher",
+        igdb_id: 501,
+        series_id: 62,
+        release_date: "2007-10-26",
+        igdb_rating_count: 900,
+      }),
       // Newer, but a side-game hardly anyone has rated.
-      related({ id: 7, title: "Roach Race", igdb_id: 502, series_id: 62, release_date: "2022-09-06", igdb_rating_count: 3 }),
-      related({ id: 4, title: "Cyberpunk 2077", igdb_id: 777, developers: ["CD Projekt RED"], igdb_rating_count: 900 }),
+      related({
+        id: 7,
+        title: "Roach Race",
+        igdb_id: 502,
+        series_id: 62,
+        release_date: "2022-09-06",
+        igdb_rating_count: 3,
+      }),
+      related({
+        id: 4,
+        title: "Cyberpunk 2077",
+        igdb_id: 777,
+        developers: ["CD Projekt RED"],
+        igdb_rating_count: 900,
+      }),
       related({ id: 5, title: "Dragon Age", igdb_id: 900 }),
-      related({ id: 6, title: "Explicit", igdb_id: 901, has_sexual_content: true }),
+      related({
+        id: 6,
+        title: "Explicit",
+        igdb_id: 901,
+        has_sexual_content: true,
+      }),
     ],
   });
 
@@ -663,11 +710,17 @@ describe("related games", () => {
 
     const response = await request(app).get("/api/v1/games/1/related");
 
-    expect(response.body).toEqual({ series: null, developer: null, similar: [] });
+    expect(response.body).toEqual({
+      series: null,
+      developer: null,
+      similar: [],
+    });
   });
 
   it("404s a game that isn't there", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
-    expect((await request(app).get("/api/v1/games/999/related")).status).toBe(404);
+    expect((await request(app).get("/api/v1/games/999/related")).status).toBe(
+      404,
+    );
   });
 });

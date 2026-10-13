@@ -39,3 +39,15 @@ export const searchKey = (text: string): string =>
     .split(" ")
     .map((word) => ROMAN[word] ?? word)
     .join("");
+
+/**
+ * Below three characters a title search matches from the start of the title.
+ * A contains-match needs trigrams, and one or two characters make none, so
+ * the database read all hundred thousand titles for it, and timed out. Two
+ * letters are almost always the start of a word still being typed; the third
+ * brings back matching anywhere.
+ */
+export const SUBSTRING_MATCH_FROM = 3;
+
+export const matchesFromStart = (key: string): boolean =>
+  key.length < SUBSTRING_MATCH_FROM;

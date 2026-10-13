@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { act, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Heart, Layers } from "lucide-react";
+import { Eye, Heart, Layers } from "lucide-react";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import GameTile, { type TileAction } from "./GameTile";
 
@@ -148,5 +148,111 @@ describe("GameTile prefetch", () => {
 
         await userEvent.hover(link);
         await waitFor(() => expect(fetched).toHaveBeenCalledWith("7"));
+    });
+});
+
+/* The round button a phone shows in place of the hover rows. */
+describe("GameTile standing button", () => {
+    const render = (actions: TileAction[]) =>
+        renderWithProviders(
+            <GameTile
+                gameId={1}
+                title="Lanternfall"
+                coverUrl={null}
+                actions={actions}
+            />
+        );
+    // The hover rows have buttons of the same names; this one is round.
+    const round = () =>
+        document.querySelector<HTMLButtonElement>("button.rounded-full")!;
+
+    /* On someone else's profile a phone needs both their log and its own. */
+    it("opens every action in a sheet when there are several", async () => {
+        const view = vi.fn();
+        const mine = vi.fn();
+        render([
+            { key: "view", label: "View log", tone: "primary", onSelect: view },
+            { key: "add", label: "Log it", onSelect: mine },
+            {
+                key: "backlog",
+                label: "Add to backlog",
+                icon: Layers,
+                onSelect: vi.fn(),
+            },
+        ]);
+
+        expect(round()).toHaveAccessibleName("Actions for Lanternfall");
+        expect(round().querySelector("svg")).toHaveClass(
+            "lucide-ellipsis-vertical"
+        );
+        await userEvent.click(round());
+
+        const sheet = screen.getByRole("dialog");
+        expect(sheet).toHaveTextContent("Lanternfall");
+        for (const label of ["View log", "Log it", "Add to backlog"]) {
+            expect(
+                within(sheet).getByRole("button", { name: label })
+            ).toBeInTheDocument();
+        }
+
+        await userEvent.click(
+            within(sheet).getByRole("button", { name: "Log it" })
+        );
+        expect(mine).toHaveBeenCalled();
+        expect(view).not.toHaveBeenCalled();
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("presses a lone action directly, with its own icon", async () => {
+        const view = vi.fn();
+        render([
+            {
+                key: "view",
+                label: "View log",
+                tone: "primary",
+                onSelect: view,
+                standing: Eye,
+            },
+        ]);
+
+        expect(round()).toHaveAccessibleName("View log");
+        expect(round().querySelector("svg")).toHaveClass("lucide-eye");
+        await userEvent.click(round());
+        expect(view).toHaveBeenCalled();
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("falls back to a plus for a lone action without one", () => {
+        render([
+            {
+                key: "signin",
+                label: "Log in to add",
+                tone: "primary",
+                onSelect: vi.fn(),
+            },
+        ]);
+        expect(round().querySelector("svg")).toHaveClass("lucide-plus");
+    });
+});
+
+/* A long title or a long log line ran up the cover into the standing button
+   on a phone. jsdom draws nothing, so this holds the caps in place; the
+   gap itself was measured on 177 covers at 320 and 375px. */
+describe("GameTile text", () => {
+    it("caps the title and the line under it", () => {
+        renderWithProviders(
+            <GameTile
+                gameId={1}
+                title="Grand Theft Auto: San Andreas"
+                coverUrl={null}
+                meta="7.00/10 · Your logs · 2 platforms"
+            />
+        );
+        expect(screen.getByText("Grand Theft Auto: San Andreas")).toHaveClass(
+            "line-clamp-2"
+        );
+        expect(
+            screen.getByText("7.00/10 · Your logs · 2 platforms")
+        ).toHaveClass("line-clamp-1");
     });
 });

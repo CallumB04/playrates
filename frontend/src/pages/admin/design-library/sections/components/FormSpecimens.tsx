@@ -137,8 +137,8 @@ const FormSpecimens = () => {
             <Specimen
                 title="Status plates"
                 stack
-                notes="Segmented. The selected plate lifts and lights, with a status-hue top edge; the rest sit flat. Played opens in place onto its substatuses, since they refine it rather than standing beside it — it rests on plain Played, which saves as no substatus at all. Choosing a status that cannot carry one clears it rather than dropping it silently at save."
-                meta="StatusPlates — aria-pressed per plate, listbox on the chosen played plate"
+                notes="Segmented. The selected plate lifts and lights, with a status-hue top edge; the rest sit flat. Played is always a menu, chevron showing, because its endings refine it rather than standing beside it; as a plain plate until chosen, testers never found them. One press chooses Played and opens the menu with Played ticked — a full answer, saved as no substatus. Chosen, the plate wears its ending. Choosing a status that cannot carry one clears it rather than dropping it silently at save."
+                meta="StatusPlates — aria-pressed per plate, listbox on the played plate · Dropdown onOpen"
             >
                 <StatusPlates
                     value={status}

@@ -30,3 +30,8 @@ export const patchNotification = async (
 export const markAllNotificationsRead = async (): Promise<void> => {
     await api.post("/me/notifications/read-all");
 };
+
+/** Files away every read notification in the inbox. */
+export const archiveAllNotifications = async (): Promise<void> => {
+    await api.post("/me/notifications/archive-all");
+};

@@ -157,4 +157,15 @@ export type NotificationPatch = z.infer<typeof NotificationPatchSchema>;
  *  counted the first page would stop climbing at 25. */
 export interface NotificationFeed extends Paginated<AppNotification> {
   unread: number;
+  /** Of those, friend requests still waiting on an answer: unread until
+   *  answered, so the bulk actions leave them be. */
+  awaitingAnswer: number;
 }
+
+/**
+ * A friend request still waiting on an answer is a task, not news: it cannot
+ * be read or filed away, and stays unread until accepted or declined.
+ */
+export const awaitingAnswer = (notification: AppNotification): boolean =>
+  notification.kind === "friend_request" &&
+  notification.relation === "request-received";

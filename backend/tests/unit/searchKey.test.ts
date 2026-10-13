@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { searchKey } from "../../src/lib/searchKey.js";
+import { matchesFromStart, searchKey } from "../../src/lib/searchKey.js";
 
 describe("searchKey", () => {
   /* The same strings were checked against public.search_key in the
@@ -18,7 +18,9 @@ describe("searchKey", () => {
     expect(searchKey("The Witcher 3: Wild Hunt")).toContain(
       searchKey("witcher iii"),
     );
-    expect(searchKey("Pokémon Legends: Arceus")).toContain(searchKey("pokemon"));
+    expect(searchKey("Pokémon Legends: Arceus")).toContain(
+      searchKey("pokemon"),
+    );
     expect(searchKey("Marvel's Spider-Man")).toContain(searchKey("spider man"));
   });
 
@@ -28,5 +30,15 @@ describe("searchKey", () => {
 
   it("leaves nothing to match when there's nothing but punctuation", () => {
     expect(searchKey("!!!")).toBe("");
+  });
+});
+
+describe("matchesFromStart", () => {
+  /* Two characters make no trigram, so the index cannot find them inside a
+     title; the third can. */
+  it("matches one or two characters from the start, three anywhere", () => {
+    expect(matchesFromStart("b")).toBe(true);
+    expect(matchesFromStart("br")).toBe(true);
+    expect(matchesFromStart("bro")).toBe(false);
   });
 });

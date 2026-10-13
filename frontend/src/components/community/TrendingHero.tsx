@@ -52,7 +52,7 @@ const TrendingHero = ({ thread }: { thread: TrendingThread }) => {
                         <span className="line-clamp-3 font-display text-section text-content group-hover:text-brand">
                             {thread.title}
                         </span>
-                        <span className="flex items-center gap-2.5 text-label-sm text-content-muted">
+                        <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-label-sm text-content-muted">
                             <ContributorStack
                                 contributors={thread.contributors}
                                 total={thread.contributorCount}

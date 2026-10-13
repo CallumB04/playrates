@@ -3,9 +3,11 @@ import { Archive, Inbox } from "lucide-react";
 import SegmentedChoice from "../ui/SegmentedChoice";
 import { TextSkeleton } from "../ui/Skeleton";
 import {
+    useArchiveAllNotifications,
     useMarkAllNotificationsRead,
     useNotifications,
 } from "../../hooks/queries/useNotifications";
+import { awaitingAnswer } from "@playrates/shared";
 import NotificationItem from "./NotificationItem";
 
 type Tab = "inbox" | "archive";
@@ -20,6 +22,27 @@ const EMPTY: Record<Tab, string> = {
     archive: "Nothing filed away yet.",
 };
 
+const HeaderAction = ({
+    onClick,
+    disabled,
+    children,
+}: {
+    onClick: () => void;
+    disabled: boolean;
+    children: string;
+}) => (
+    <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        /* The label stays small; the tap target does not. Padding would push
+           the heading's baseline. */
+        className="relative shrink-0 cursor-pointer rounded-sm text-label text-content-secondary transition-colors before:absolute before:-inset-x-2 before:-inset-y-3.5 before:content-[''] hover:text-brand disabled:cursor-not-allowed disabled:opacity-60"
+    >
+        {children}
+    </button>
+);
+
 /** The list itself, shared by the desktop popover and the mobile sheet. */
 const NotificationPanel = ({
     onNavigate,
@@ -32,9 +55,13 @@ const NotificationPanel = ({
     const [tab, setTab] = useState<Tab>("inbox");
     const { data, isLoading } = useNotifications(tab === "archive");
     const markAll = useMarkAllNotificationsRead();
+    const archiveAll = useArchiveAllNotifications();
 
     const notifications = data?.data ?? [];
-    const unread = data?.unread ?? 0;
+    // Requests waiting on an answer stay unread, and out of both bulk
+    // actions, until they are answered.
+    const markable = (data?.unread ?? 0) - (data?.awaitingAnswer ?? 0);
+    const archivable = notifications.some((n) => !awaitingAnswer(n));
 
     return (
         <>
@@ -48,19 +75,26 @@ const NotificationPanel = ({
                     Notifications
                 </h2>
                 {/* Only on the inbox: from the archive it would act on rows
-                    that are not on screen. */}
-                {tab === "inbox" && unread > 0 && (
-                    <button
-                        type="button"
-                        onClick={() => markAll.mutate()}
-                        disabled={markAll.isPending}
-                        /* The label stays small; the tap target does not.
-                           Padding would push the heading's baseline. */
-                        className="relative shrink-0 cursor-pointer rounded-sm text-label text-content-secondary transition-colors before:absolute before:-inset-x-2 before:-inset-y-3.5 before:content-[''] hover:text-brand disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        Mark all read
-                    </button>
-                )}
+                    that are not on screen. Read first, then filed: once
+                    nothing is left unread, the same place clears the inbox. */}
+                {tab === "inbox" &&
+                    (markable > 0 ? (
+                        <HeaderAction
+                            onClick={() => markAll.mutate()}
+                            disabled={markAll.isPending}
+                        >
+                            Mark all read
+                        </HeaderAction>
+                    ) : (
+                        archivable && (
+                            <HeaderAction
+                                onClick={() => archiveAll.mutate()}
+                                disabled={archiveAll.isPending}
+                            >
+                                Archive all
+                            </HeaderAction>
+                        )
+                    ))}
             </div>
 
             <SegmentedChoice

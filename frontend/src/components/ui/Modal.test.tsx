@@ -112,4 +112,19 @@ describe("Modal", () => {
             "bg-overlay-backdrop"
         );
     });
+
+    /* A caller's max-w is for the dialog; on a phone it left the sheet short
+       of the screen's edges. */
+    it("spans the screen as a sheet whatever width the dialog asks for", () => {
+        render(
+            <Modal onClose={vi.fn()} className="w-full max-w-sm">
+                <p>content</p>
+            </Modal>
+        );
+
+        const dialog = screen.getByRole("dialog");
+        expect(dialog.className).toContain("max-w-sm");
+        expect(dialog.className).toContain("max-sm:max-w-none");
+        expect(dialog.className).toContain("max-sm:w-full");
+    });
 });

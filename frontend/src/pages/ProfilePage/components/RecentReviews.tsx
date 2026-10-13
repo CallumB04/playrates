@@ -86,7 +86,7 @@ const RecentReviews = ({ reviews, isLoading, isOwner }: RecentReviewsProps) => {
 
                         <span className="min-w-0 flex-1">
                             <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                                <span className="font-display text-lg leading-tight text-content">
+                                <span className="font-display text-base leading-tight text-content sm:text-lg">
                                     {review.game.title}
                                 </span>
                                 {review.rating !== null && (

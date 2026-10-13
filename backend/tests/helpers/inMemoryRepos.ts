@@ -1,5 +1,15 @@
 import type { ExternalGame } from "../../src/providers/games/GamesProvider.js";
-import { searchKey } from "../../src/lib/searchKey.js";
+import { matchesFromStart, searchKey } from "../../src/lib/searchKey.js";
+
+/** Mirrors matchTitle in the games repository. */
+const titleMatches = (title: string, term: string): boolean => {
+  const key = searchKey(term);
+  const titleKey = searchKey(title);
+  if (!key) return title.toLowerCase().includes(term.toLowerCase());
+  return matchesFromStart(key)
+    ? titleKey.startsWith(key)
+    : titleKey.includes(key);
+};
 import { AppError } from "../../src/lib/AppError.js";
 import { logRank, type GameStatus, type PlayedStatus } from "@playrates/shared";
 import type { Repositories } from "../../src/repositories.js";
@@ -51,6 +61,15 @@ import {
  * than on behaviour, and breaks whenever a query is rewritten. These survive
  * query rewrites because they implement the same contract.
  */
+
+/** Mirrors exceptRequestsFrom in the notifications repository. */
+const keptRequest = (
+  n: { kind: string; actor_id: string | null },
+  keepRequestsFrom: string[],
+) =>
+  n.kind === "friend_request" &&
+  n.actor_id !== null &&
+  keepRequestsFrom.includes(n.actor_id);
 export interface SeedData {
   profiles?: ProfileRow[];
   games?: GameRow[];
@@ -470,8 +489,7 @@ export const createInMemoryRepos = (
         let rows = state.games;
 
         if (query.search) {
-          const term = searchKey(query.search);
-          rows = rows.filter((g) => searchKey(g.title).includes(term));
+          rows = rows.filter((g) => titleMatches(g.title, query.search!));
         }
         if (query.trending !== undefined) {
           rows = rows.filter((g) => g.is_trending === query.trending);
@@ -545,7 +563,7 @@ export const createInMemoryRepos = (
       },
       async searchLocal(term, limit, showSexualContent) {
         return state.games
-          .filter((g) => searchKey(g.title).includes(searchKey(term)))
+          .filter((g) => titleMatches(g.title, term))
           .filter((g) => showSexualContent || !g.has_sexual_content)
           .slice(0, limit)
           .map(withPlatforms);
@@ -1393,12 +1411,40 @@ export const createInMemoryRepos = (
           (n) => n.dedupe_key !== dedupeKey,
         );
       },
-      async markAllRead(userId) {
+      async markAllRead(userId, keepRequestsFrom) {
         for (const n of state.notifications) {
-          if (n.user_id === userId && n.archived_at === null) {
+          if (
+            n.user_id === userId &&
+            n.archived_at === null &&
+            !keptRequest(n, keepRequestsFrom)
+          ) {
             n.read_at ??= now();
           }
         }
+      },
+      async archiveAllRead(userId, keepRequestsFrom) {
+        for (const n of state.notifications) {
+          if (
+            n.user_id === userId &&
+            n.read_at !== null &&
+            n.archived_at === null &&
+            !keptRequest(n, keepRequestsFrom)
+          ) {
+            n.archived_at = now();
+          }
+        }
+      },
+      async unreadRequestActors(userId) {
+        return state.notifications
+          .filter(
+            (n) =>
+              n.user_id === userId &&
+              n.kind === "friend_request" &&
+              n.read_at === null &&
+              n.archived_at === null &&
+              n.actor_id !== null,
+          )
+          .map((n) => n.actor_id!);
       },
       async markReadByKey(userId, dedupeKey) {
         for (const n of state.notifications) {

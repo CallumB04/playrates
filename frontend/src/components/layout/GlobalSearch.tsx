@@ -249,7 +249,7 @@ const GlobalSearch = ({ variant = "bar", onClose }: GlobalSearchProps) => {
                 placeholder={
                     isOverlay ? "Games and people" : "Search games and people"
                 }
-                className="min-w-0 flex-1 bg-transparent text-base text-content placeholder:text-content-muted focus:outline-none sm:text-body-sm"
+                className="min-w-0 flex-1 bg-transparent text-body-sm text-content placeholder:text-content-muted focus:outline-none"
             />
             {searching ? (
                 <LoadingSpinner

@@ -1,44 +1,37 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import {
+    useCatalogueReach,
     useGames,
     useGenres,
     usePlatforms,
 } from "../../hooks/queries/useGames";
-import { useMyGameLogIds, useQuickAdd } from "../../hooks/queries/useGameLogs";
-import { useLogFlow } from "../../components/gamelog/useLogFlow";
-import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { usePagination } from "../../hooks/usePagination";
 import { usePageTitle } from "../../hooks/usePageTitle";
-import GameTile, { type TileAction } from "../../components/game/GameTile";
+import GameTile from "../../components/game/GameTile";
+import { useTileActions } from "../../components/game/useTileActions";
 import Pagination, { PaginationSummary } from "../../components/ui/Pagination";
 import { Skeleton, TileSkeleton } from "../../components/ui/Skeleton";
 import EmptyPlate from "../../components/ui/EmptyPlate";
+import LoadingSpinner from "../../components/LoadingSpinner";
 import LibraryFilters from "./components/LibraryFilters";
 import { getLibraryGamesPerPage } from "./lib/gamesPerPage";
 import { useLibraryQuery } from "./lib/useLibraryQuery";
+import { logMeta } from "./lib/logMeta";
 import { libraryFoot } from "./lib/libraryFoot";
-import {
-    STATUS_PRESENTATION,
-    displayStatusFor,
-} from "../../constants/gameStatus";
-import { formatCount, formatRatingOutOfTen } from "../../lib/format";
+import { formatCount } from "../../lib/format";
 
 const LibraryPage = () => {
     usePageTitle("Library");
 
     const { user } = useAuth();
-    const { openLogin } = useAccountForm();
     const { width } = useWindowSize();
     const { query, setQuery } = useLibraryQuery();
 
     const { data: platforms } = usePlatforms();
     const { data: genres } = useGenres();
-    const { data: myLogIds } = useMyGameLogIds();
-
-    const flow = useLogFlow();
 
     /* The input is local so typing is instant; the query trails it. */
     const [searchDraft, setSearchDraft] = useState(query.search);
@@ -55,6 +48,7 @@ const LibraryPage = () => {
     const {
         data: page,
         isLoading,
+        isFetching,
         isPlaceholderData,
     } = useGames({
         page: query.page,
@@ -67,6 +61,18 @@ const LibraryPage = () => {
     });
 
     const games = page?.data ?? [];
+
+    /* Nothing here for the search: look past the catalogue, as the
+       masthead's search does, and bring back what turns up. */
+    const searchTerm = query.search.trim();
+    const settledEmpty = !!page && !isPlaceholderData && page.meta.total === 0;
+    const { reaching, found } = useCatalogueReach(
+        searchTerm,
+        !!user && settledEmpty
+    );
+    // Until the list has been asked again for what was just added.
+    const lookingFurther =
+        settledEmpty && !!searchTerm && (reaching || (found > 0 && isFetching));
     const total = page?.meta.total ?? 0;
 
     const pagination = usePagination({
@@ -76,76 +82,7 @@ const LibraryPage = () => {
         onPageChange: (next) => setQuery({ page: next }),
     });
 
-    const logByGameId = useMemo(
-        () => new Map((myLogIds ?? []).map((log) => [log.gameId, log])),
-        [myLogIds]
-    );
-
-    const quickAdd = useQuickAdd();
-
-    const buildActions = (gameId: number, title: string): TileAction[] => {
-        if (!user) {
-            return [
-                {
-                    key: "signin",
-                    label: "Log in to add",
-                    tone: "primary",
-                    onSelect: openLogin,
-                },
-            ];
-        }
-
-        const log = logByGameId.get(gameId);
-        if (!log) {
-            return [
-                {
-                    key: "log",
-                    label: "Create log",
-                    tone: "primary",
-                    onSelect: () => flow.open(gameId),
-                },
-                {
-                    key: "backlog",
-                    label: "Add to backlog",
-                    icon: STATUS_PRESENTATION.backlog.icon,
-                    onSelect: () => quickAdd(gameId, title, "backlog"),
-                    doneLabel: "In your backlog",
-                },
-                {
-                    key: "wishlist",
-                    label: "Add to wishlist",
-                    icon: STATUS_PRESENTATION.wishlist.icon,
-                    onSelect: () => quickAdd(gameId, title, "wishlist"),
-                    doneLabel: "On your wishlist",
-                },
-            ];
-        }
-
-        return [
-            {
-                key: "view",
-                label: log.logs.length > 1 ? "View your logs" : "View your log",
-                tone: "primary",
-                onSelect: () => flow.view(gameId),
-            },
-            {
-                key: "edit",
-                label: "Edit",
-                onSelect: () => flow.open(gameId),
-            },
-        ];
-    };
-
-    const logMeta = (gameId: number): string | undefined => {
-        const log = logByGameId.get(gameId);
-        if (!log) return undefined;
-        const parts =
-            log.logs.length > 1
-                ? ["Your logs", `${log.logs.length} platforms`]
-                : ["Your log"];
-        if (log.rating !== null) parts.push(formatRatingOutOfTen(log.rating));
-        return parts.join(" · ");
-    };
+    const { actionsFor, statusFor, logFor } = useTileActions();
 
     const showSkeletons =
         isLoading || (isPlaceholderData && games.length === 0);
@@ -186,6 +123,12 @@ const LibraryPage = () => {
                         <TileSkeleton key={i} />
                     ))}
                 </div>
+            ) : games.length === 0 && lookingFurther ? (
+                <EmptyPlate
+                    title={`Looking further for “${searchTerm}”`}
+                    body="It isn't in the library yet, so we're checking the wider catalogue. Anything found is added here."
+                    action={<LoadingSpinner size="md" label="Searching" />}
+                />
             ) : games.length === 0 ? (
                 <EmptyPlate
                     title="No titles match those filters"
@@ -200,7 +143,7 @@ const LibraryPage = () => {
                     }
                 >
                     {games.map((game) => {
-                        const log = logByGameId.get(game.id);
+                        const log = logFor(game.id);
                         // The grid shows whatever it is ordered by.
                         const foot = libraryFoot(game, query.sort, log);
                         return (
@@ -214,16 +157,9 @@ const LibraryPage = () => {
                                 // Brand figure only with a real rating behind it.
                                 rating={foot.rating}
                                 footValue={foot.value}
-                                status={
-                                    log
-                                        ? displayStatusFor(
-                                              log.status,
-                                              log.playedStatus
-                                          )
-                                        : null
-                                }
-                                meta={logMeta(game.id)}
-                                actions={buildActions(game.id, game.title)}
+                                status={statusFor(game)}
+                                meta={logMeta(logFor(game.id))}
+                                actions={actionsFor(game)}
                                 narrowFoot
                             />
                         );

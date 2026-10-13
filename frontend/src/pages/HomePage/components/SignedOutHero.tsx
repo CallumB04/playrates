@@ -41,7 +41,7 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
                 {BRAND_NAME}
             </h1>
 
-            <p className="mt-4 max-w-[48ch] text-[17px] leading-relaxed text-content-secondary">
+            <p className="mt-4 max-w-[48ch] text-body leading-relaxed text-content-secondary sm:text-[17px]">
                 <span className="text-content">{BRAND_MOTTO}.</span>{" "}
                 {BRAND_PITCH_TEXT}
             </p>

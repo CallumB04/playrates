@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { Game, GameSort } from "@playrates/shared";
 import type { GameLogSummary } from "@playrates/shared";
-import { formatCount, releaseYear } from "../../../lib/format";
+import { formatLogCount, releaseYear } from "../../../lib/format";
 import CriticScore from "../../../lib/criticScore";
 
 /** What a tile prints under its cover, the way a profile shelf does. A rating
@@ -25,12 +25,7 @@ export const libraryFoot = (
 ): LibraryFoot => {
     switch (sort) {
         case "logged":
-            return {
-                // The bare number reads as a rating or a year otherwise.
-                value: `${formatCount(game.logCount)} ${
-                    game.logCount === 1 ? "log" : "logs"
-                }`,
-            };
+            return { value: formatLogCount(game.logCount) };
         case "rating":
             return { rating: game.avgRating };
         case "critic":

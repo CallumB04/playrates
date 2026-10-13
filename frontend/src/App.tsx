@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Header from "./components/layout/Header";
+import TabBar from "./components/layout/TabBar";
 import PageShell from "./components/layout/PageShell";
 import Footer from "./components/Footer";
 import ToastStack from "./components/feedback/ToastStack";
@@ -19,6 +20,7 @@ import SettingsPage from "./pages/SettingsPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AdminGate from "./pages/admin/AdminGate";
+import { useReloadOnNewBuild } from "./hooks/useReloadOnNewBuild";
 
 /** Layout shell and route table. State lives in the providers. */
 
@@ -29,8 +31,11 @@ const LibraryRedirect = () => {
 };
 
 function App() {
+    useReloadOnNewBuild();
+
     return (
-        <div className="flex min-h-dvh flex-col">
+        // Below lg the page ends above the tab bar, footer included.
+        <div className="flex min-h-dvh flex-col max-lg:pb-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom))]">
             <Header />
             {/* A full screen at least, so a short page (an empty community, a
                 search with no results) doesn't end on the footer. */}
@@ -77,6 +82,7 @@ function App() {
                 </PageShell>
             </main>
             <Footer />
+            <TabBar />
             <AccountFormModal />
             <FirstLoginWelcome />
             <ToastStack />

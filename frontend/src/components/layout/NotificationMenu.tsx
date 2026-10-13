@@ -49,7 +49,7 @@ const NotificationMenu = () => {
                         : "Notifications"
                 }
                 className={cn(
-                    "relative flex size-11 items-center justify-center rounded-sm lift hover:text-brand",
+                    "relative flex size-9 items-center justify-center rounded-sm lift before:absolute before:-inset-1 before:content-[''] hover:text-brand sm:size-11 sm:before:hidden",
                     open ? "text-brand" : "text-content"
                 )}
             >
@@ -57,7 +57,7 @@ const NotificationMenu = () => {
                 {unread > 0 && (
                     <span
                         aria-hidden
-                        className="absolute top-1.5 right-1.5 grid min-w-4 place-items-center rounded-full border border-surface bg-brand px-1 text-stamp font-semibold text-content-on-solid"
+                        className="absolute top-0.5 right-0.5 grid min-w-4 place-items-center rounded-full border border-surface bg-brand px-1 text-stamp font-semibold text-content-on-solid sm:top-1.5 sm:right-1.5"
                     >
                         {unread > BADGE_CAP ? `${BADGE_CAP}+` : unread}
                     </span>

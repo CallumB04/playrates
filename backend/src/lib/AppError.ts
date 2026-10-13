@@ -16,7 +16,8 @@ export type ErrorCode =
   | "not_configured"
   | "platform_taken"
   | "several_logs"
-  | "profile_private";
+  | "profile_private"
+  | "request_unanswered";
 
 /**
  * Errors the API returns on purpose. `expose` keeps internals in: a 5xx logs

@@ -47,6 +47,8 @@ interface DropdownProps {
         open: boolean
     ) => ReactNode;
     disabled?: boolean;
+    /** Called as the menu opens, before anything is chosen in it. */
+    onOpen?: () => void;
     id?: string;
     "aria-label"?: string;
     "aria-labelledby"?: string;
@@ -69,10 +71,16 @@ const Dropdown = ({
     triggerClassName,
     renderTrigger,
     disabled = false,
+    onOpen,
     id,
     ...aria
 }: DropdownProps) => {
     const [open, setOpen] = useState(false);
+
+    const openMenu = () => {
+        onOpen?.();
+        setOpen(true);
+    };
     const [active, setActive] = useState(0);
     const [query, setQuery] = useState("");
     const [rect, setRect] = useState<DOMRect | null>(null);
@@ -164,7 +172,7 @@ const Dropdown = ({
         if (!open) {
             if (["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) {
                 event.preventDefault();
-                setOpen(true);
+                openMenu();
             }
             return;
         }
@@ -206,7 +214,7 @@ const Dropdown = ({
                 type="button"
                 id={id}
                 disabled={disabled}
-                onClick={() => setOpen((v) => !v)}
+                onClick={() => (open ? setOpen(false) : openMenu())}
                 onKeyDown={onKeyDown}
                 aria-haspopup="listbox"
                 aria-expanded={open}
@@ -301,7 +309,7 @@ const Dropdown = ({
                                     onKeyDown={onKeyDown}
                                     placeholder="Search"
                                     aria-label="Filter options"
-                                    className="min-w-0 flex-1 bg-transparent text-base text-content placeholder:text-content-muted focus:outline-none sm:text-body-sm"
+                                    className="min-w-0 flex-1 bg-transparent text-body-sm text-content placeholder:text-content-muted focus:outline-none"
                                 />
                             </li>
                         )}

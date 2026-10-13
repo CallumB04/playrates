@@ -80,10 +80,10 @@ const PLAYED_OPTIONS: DropdownOption[] = [
         value: "",
         label: "Played",
         icon: tonedMark("played"),
-        /* About the entry, not the game. The played status's own hint reads as
-           a verdict here, and anything about being done with it trespasses on
-           Shelved and Retired. */
-        hint: "No further detail",
+        /* An answer in its own right, not a gap: "No further detail" read as
+           something left unfinished. Its own hint, "Done with it", would
+           trespass on Shelved and Retired. */
+        hint: "That's all",
     },
     ...PLAYED_STATUSES.map((status) => ({
         value: status,
@@ -111,19 +111,31 @@ export const StatusPlates = ({
                 const { label } = STATUS_PRESENTATION[status];
                 const selected = status === value;
 
-                /* The chosen played plate opens onto its substatuses in
-                   place, rather than a second row appearing below, and wears
-                   whichever one is chosen — mark, fill and focus ring — the
-                   way a badge for that log would. */
-                if (status === "played" && selected) {
-                    const shown = displayStatusFor("played", playedStatus);
+                /* Played is a menu whether or not it is chosen, its chevron
+                   always showing: as a plain plate until chosen, testers never
+                   learned the endings existed. One press chooses Played and
+                   opens the menu on it, ticked, so leaving it there is
+                   plainly an answer. Chosen, it wears the ending, the way a
+                   badge for that log would. */
+                if (status === "played") {
+                    const shown = selected
+                        ? displayStatusFor("played", playedStatus)
+                        : "played";
+                    const ending = selected && playedStatus;
 
                     return (
                         <Dropdown
                             key={status}
                             options={PLAYED_OPTIONS}
-                            value={playedStatus ?? ""}
-                            aria-label="How it ended"
+                            value={selected ? (playedStatus ?? "") : ""}
+                            aria-label={
+                                ending
+                                    ? `Played, ${STATUS_PRESENTATION[ending].label}`
+                                    : "Played"
+                            }
+                            onOpen={() => {
+                                if (!selected) onChange("played");
+                            }}
                             onChange={(next) =>
                                 onPlayedStatusChange(
                                     (next || null) as PlayedStatus | null
@@ -131,21 +143,31 @@ export const StatusPlates = ({
                             }
                             triggerClassName={cn(
                                 BASE,
-                                "w-full shadow-plate",
+                                "w-full",
                                 RING[shown],
-                                STATUS_PRESENTATION[shown].chip
+                                selected
+                                    ? cn(
+                                          STATUS_PRESENTATION[shown].chip,
+                                          "shadow-plate"
+                                      )
+                                    : RESTING
                             )}
                             renderTrigger={(chosen, open) => (
                                 <>
-                                    <Disc status={shown} selected />
+                                    <Disc status={shown} selected={selected} />
                                     <span className="min-w-0 flex-1 truncate text-body-sm font-medium">
-                                        {chosen?.label ?? label}
+                                        {selected
+                                            ? (chosen?.label ?? label)
+                                            : label}
                                     </span>
                                     <ChevronDown
-                                        size={14}
+                                        size={16}
                                         aria-hidden
                                         className={cn(
-                                            "shrink-0 text-content-secondary transition-transform duration-200",
+                                            "shrink-0 transition-transform duration-200",
+                                            selected
+                                                ? "text-content-secondary"
+                                                : "text-content-muted group-hover:text-content-secondary",
                                             open && "rotate-180"
                                         )}
                                     />

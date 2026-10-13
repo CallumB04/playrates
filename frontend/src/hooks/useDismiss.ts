@@ -13,7 +13,9 @@ interface DismissOptions {
  * several refs because a portalled menu is not inside its trigger in the DOM.
  *
  * mousedown rather than click, so the menu is gone before a click lands on
- * whatever was underneath it.
+ * whatever was underneath it. In the capture phase, because Modal stops
+ * mousedown at its panel: listening as it bubbled, a dropdown in a popup
+ * never heard a press anywhere else in that popup.
  */
 export const useDismiss = (
     refs: RefObject<HTMLElement | null>[],
@@ -39,10 +41,10 @@ export const useDismiss = (
             if (event.key === "Escape") dismiss.current();
         };
 
-        document.addEventListener("mousedown", onPointerDown);
+        document.addEventListener("mousedown", onPointerDown, true);
         if (escape) document.addEventListener("keydown", onKeyDown);
         return () => {
-            document.removeEventListener("mousedown", onPointerDown);
+            document.removeEventListener("mousedown", onPointerDown, true);
             document.removeEventListener("keydown", onKeyDown);
         };
     }, [enabled, escape]);

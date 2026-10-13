@@ -66,6 +66,19 @@ const isDateOnly = (iso: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(iso);
 const zoneFor = (iso: string): string =>
     isDateOnly(iso) ? "UTC" : displayZone;
 
+/** Today as a date field's value, in the viewer's zone: in UTC it is
+ *  already tomorrow for anyone east of it after their evening begins. */
+export const todayIsoDate = (now: Date = new Date()): string => {
+    const part = (type: string) =>
+        formatter(
+            { year: "numeric", month: "2-digit", day: "2-digit" },
+            displayZone
+        )
+            .formatToParts(now)
+            .find((p) => p.type === type)!.value;
+    return `${part("year")}-${part("month")}-${part("day")}`;
+};
+
 /** "12 Mar" — enough to place a new release without spelling the year. */
 export const formatReleaseShort = (
     isoDate: string | null | undefined
@@ -96,6 +109,10 @@ export const formatRatingOutOfTen = (
 /** A count with thousands separators. */
 export const formatCount = (value: number | null | undefined): string =>
     value === null || value === undefined ? "—" : value.toLocaleString("en-GB");
+
+/** "1 log", "1,284 logs": a bare figure reads as a rating or a year. */
+export const formatLogCount = (value: number): string =>
+    `${formatCount(value)} ${value === 1 ? "log" : "logs"}`;
 
 /** Messages and replies stop at 99: past that the exact figure tells a
  *  reader nothing "busy" does not, and it keeps every count one width. */

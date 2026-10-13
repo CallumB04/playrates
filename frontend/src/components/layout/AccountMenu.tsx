@@ -1,24 +1,133 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { popoverClass } from "../ui/popover";
 import { Link } from "react-router-dom";
-import { LogOut, Moon, Settings, Shield, Sun, UserRound } from "lucide-react";
+import {
+    ListChecks,
+    LogOut,
+    Moon,
+    Settings,
+    Shield,
+    Sun,
+    UserRound,
+} from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { GAME_STATUSES, STATUS_PRESENTATION } from "../../constants/gameStatus";
 import type { MyProfile } from "@playrates/shared";
 import ProfilePicture from "../ProfilePicture";
 import { cn } from "../../lib/cn";
 import { useDismiss } from "../../hooks/useDismiss";
+import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
+import type { SetupStep } from "../../lib/setupChecklist";
+import { MENU_ITEM as ITEM, ProgressRing, SetupSteps } from "./SetupSteps";
 
-const ITEM =
-    "flex min-h-11 w-full items-center gap-2.5 rounded-sm px-2.5 py-2.5 text-left text-body-sm leading-none text-content-secondary transition-colors hover:bg-surface-hover hover:text-content sm:min-h-0";
+/** Long enough to cross the gap into the list on a diagonal. */
+const HOVER_CLOSE_MS = 150;
+
+/**
+ * One row in the menu; the steps open off it. From sm a pointer resting on
+ * the row opens them beside the menu, and they stay open while the pointer
+ * is on either, so the steps can be reached. A phone has no hover and no
+ * room beside the menu, so a tap opens them under the row instead.
+ */
+const SetupRow = ({
+    steps,
+    onNavigate,
+}: {
+    steps: SetupStep[];
+    onNavigate: () => void;
+}) => {
+    const [open, setOpen] = useState(false);
+    const isPhone = !useMediaQuery(BREAKPOINT.sm);
+    const closing = useRef<number | undefined>(undefined);
+    const done = steps.filter((step) => step.done).length;
+
+    useEffect(() => () => window.clearTimeout(closing.current), []);
+
+    const hover = (entering: boolean) => {
+        if (isPhone) return;
+        window.clearTimeout(closing.current);
+        if (entering) setOpen(true);
+        else
+            closing.current = window.setTimeout(
+                () => setOpen(false),
+                HOVER_CLOSE_MS
+            );
+    };
+
+    return (
+        <div
+            className="relative mb-1.5 border-b border-subtle pb-1.5"
+            onMouseEnter={() => hover(true)}
+            onMouseLeave={() => hover(false)}
+        >
+            <button
+                type="button"
+                role="menuitem"
+                aria-haspopup="menu"
+                aria-expanded={open}
+                // Opens rather than toggles from sm: a tap on a tablet
+                // fires the hover first, and a toggle would shut it again.
+                onClick={() => setOpen((was) => (isPhone ? !was : true))}
+                className={cn(
+                    ITEM,
+                    "cursor-pointer",
+                    open && "bg-surface-hover text-content"
+                )}
+            >
+                <ListChecks
+                    size={15}
+                    aria-hidden
+                    className="shrink-0 text-brand"
+                />
+                <span className="min-w-0 flex-1">Get started</span>
+                <span className="font-mono text-label text-content-muted">
+                    {done}/{steps.length}
+                </span>
+                <ProgressRing share={done / steps.length} />
+            </button>
+
+            {open &&
+                (isPhone ? (
+                    <div role="menu" aria-label="Profile setup">
+                        <SetupSteps
+                            steps={steps}
+                            done={done}
+                            onNavigate={onNavigate}
+                            itemRole="menuitem"
+                        />
+                    </div>
+                ) : (
+                    /* Its padding is the bridge: still inside the hovered
+                       element while the pointer crosses the gap. */
+                    <div className="absolute top-[-0.375rem] right-full pr-3">
+                        <div
+                            role="menu"
+                            aria-label="Profile setup"
+                            className={popoverClass("w-60 p-1.5", "menu")}
+                        >
+                            <SetupSteps
+                                steps={steps}
+                                done={done}
+                                onNavigate={onNavigate}
+                                itemRole="menuitem"
+                            />
+                        </div>
+                    </div>
+                ))}
+        </div>
+    );
+};
 
 /** The avatar, and the account menu behind it. */
 const AccountMenu = ({
     user,
     onSignOut,
+    setup = null,
 }: {
     user: MyProfile;
     onSignOut: () => void;
+    /** Steps left in setting up the profile; null once there are none. */
+    setup?: SetupStep[] | null;
 }) => {
     const [open, setOpen] = useState(false);
     const wrapRef = useRef<HTMLDivElement>(null);
@@ -30,7 +139,9 @@ const AccountMenu = ({
     });
 
     return (
-        <div ref={wrapRef} className="relative">
+        // The bell glyph's padding on this side, as margin: 8px in a 36px
+        // box plus the glyph's own 1.7px, 12px plus it in a 44px one.
+        <div ref={wrapRef} className="relative ml-2.5 sm:ml-3.5 xl:ml-0">
             <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
@@ -58,13 +169,26 @@ const AccountMenu = ({
                 <div
                     role="menu"
                     className={popoverClass(
-                        "absolute top-[calc(100%+0.6rem)] right-0 z-40 w-56 overflow-hidden p-1.5",
+                        cn(
+                            "absolute top-[calc(100%+0.6rem)] right-0 z-40 w-60 p-1.5",
+                            /* In the sticky header the page cannot scroll to
+                               a tall menu, so on a phone it scrolls itself.
+                               Not from sm, where scrolling would clip the
+                               setup steps that sit beside it. */
+                            "max-sm:max-h-[calc(100dvh-5.5rem)] max-sm:overflow-y-auto"
+                        ),
                         "menu"
                     )}
                 >
                     <p className="mb-1.5 truncate border-b border-subtle px-2.5 pt-1.5 pb-2.5 text-label text-content-muted">
                         {user.username}
                     </p>
+                    {setup && (
+                        <SetupRow
+                            steps={setup}
+                            onNavigate={() => setOpen(false)}
+                        />
+                    )}
                     <Link
                         to={`/user/${user.username}`}
                         onClick={() => setOpen(false)}

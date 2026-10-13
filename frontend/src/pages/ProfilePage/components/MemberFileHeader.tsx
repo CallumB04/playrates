@@ -24,6 +24,10 @@ interface MemberFileHeaderProps {
     profileHidden?: boolean;
     reviewCount: number | undefined;
     friendCount: number | undefined;
+    /** When the viewer and this member became friends, if they are. */
+    friendsSince?: string;
+    /** A friend request from them, waiting on the viewer's answer. */
+    request?: ReactNode;
     /** The friend button, or the owner's controls. */
     action: ReactNode;
     /** Set only on your own profile: makes the picture and the banner open
@@ -91,6 +95,8 @@ const MemberFileHeader = ({
     profileHidden = false,
     reviewCount,
     friendCount,
+    friendsSince,
+    request,
     action,
     onEditPicture,
 }: MemberFileHeaderProps) => {
@@ -157,7 +163,9 @@ const MemberFileHeader = ({
                         <PresenceDot online={profile.online} size="lg" />
                     </span>
 
-                    <div className="mt-3 flex items-center gap-2">{action}</div>
+                    <div className="mt-3 flex items-center gap-2 self-start">
+                        {action}
+                    </div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
@@ -168,6 +176,13 @@ const MemberFileHeader = ({
                     <span className="text-label text-content-muted">
                         Member since {formatMonthYear(profile.createdAt)}
                     </span>
+                    {/* Here, not under the friend button, where it moved the
+                        buttons each time the friendship changed. */}
+                    {friendsSince && (
+                        <span className="text-label text-content-muted">
+                            Friends since {new Date(friendsSince).getFullYear()}
+                        </span>
+                    )}
                 </div>
 
                 {profile.bio && (
@@ -175,6 +190,8 @@ const MemberFileHeader = ({
                         {profile.bio}
                     </p>
                 )}
+
+                {request}
 
                 {!profileHidden && (
                     <div className="mt-5 grid gap-5 border-t border-subtle pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-8">

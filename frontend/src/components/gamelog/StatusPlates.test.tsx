@@ -22,7 +22,7 @@ const plates = (
         />
     );
 
-const played = () => screen.getByRole("button", { name: /how it ended/i });
+const played = () => screen.getByRole("button", { name: /^Played/ });
 const option = (name: string) =>
     screen.getByRole("option", { name: new RegExp(name) });
 
@@ -34,45 +34,51 @@ describe("StatusPlates", () => {
         }
     });
 
-    it("leaves played a plain plate until it is the chosen status", async () => {
+    /* As a plain plate until chosen, testers never found the endings. */
+    it("is a menu even before played is chosen", () => {
+        plates({ value: "backlog" });
+        expect(played()).toHaveAttribute("aria-haspopup", "listbox");
+    });
+
+    it("chooses played and opens the endings in one press", async () => {
         const onChange = vi.fn();
         plates({ value: "backlog", onChange });
 
-        const plate = screen.getByRole("button", { name: "Played" });
-        expect(plate).toHaveAttribute("aria-pressed", "false");
-        expect(plate).not.toHaveAttribute("aria-haspopup");
-
-        await userEvent.click(plate);
+        await userEvent.click(played());
         expect(onChange).toHaveBeenCalledWith("played");
+        expect(screen.getAllByRole("option")).toHaveLength(5);
     });
 
-    it("opens in place once played is chosen", () => {
-        plates({ value: "played" });
-
-        expect(played()).toHaveAttribute("aria-haspopup", "listbox");
-        expect(played()).toHaveTextContent("Played");
-    });
-
-    it("rests on plain played, with the four refinements under it", async () => {
+    /* Ticked, so leaving it there is plainly an answer. */
+    it("opens on plain played, with the four endings beside it", async () => {
         plates({ value: "played", playedStatus: null });
         await userEvent.click(played());
 
-        expect(screen.getAllByRole("option")).toHaveLength(5);
         expect(option("^Played")).toHaveAttribute("aria-selected", "true");
         for (const name of ["Finished", "Mastered", "Shelved", "Retired"]) {
             expect(option(name)).toHaveAttribute("aria-selected", "false");
         }
     });
 
-    it("names the substatus on the plate once there is one", () => {
-        plates({ value: "played", playedStatus: "mastered" });
-        expect(played()).toHaveTextContent("Mastered");
+    it("leaves the status alone when it is already played", async () => {
+        const onChange = vi.fn();
+        plates({ value: "played", onChange });
+
+        await userEvent.click(played());
+        await userEvent.click(option("Shelved"));
+        expect(onChange).not.toHaveBeenCalled();
     });
 
-    /* The plate wears the chosen substatus, so it reads as the badge that log
+    it("names the ending on the plate once there is one", () => {
+        plates({ value: "played", playedStatus: "mastered" });
+        expect(played()).toHaveTextContent("Mastered");
+        expect(played()).toHaveAccessibleName("Played, Mastered");
+    });
+
+    /* The plate wears the chosen ending, so it reads as the badge that log
        will carry. Lucide names its own marks, which is the one part of the
        presentation worth pinning; the hues are class strings, not behaviour. */
-    it("wears the substatus mark rather than the played one", () => {
+    it("wears the ending's mark rather than the played one", () => {
         const { rerender } = plates({ value: "played", playedStatus: null });
         expect(played().querySelector("svg")).toHaveClass(
             "lucide-circle-check"
@@ -89,7 +95,7 @@ describe("StatusPlates", () => {
         expect(played().querySelector("svg")).toHaveClass("lucide-archive");
     });
 
-    it("reports a substatus by name", async () => {
+    it("reports an ending by name", async () => {
         const onPlayedStatusChange = vi.fn();
         plates({ value: "played", onPlayedStatusChange });
 
@@ -113,12 +119,26 @@ describe("StatusPlates", () => {
         expect(onPlayedStatusChange).toHaveBeenCalledWith(null);
     });
 
-    it("does not change the status when the open plate is used", async () => {
+    /* In the log editor the plates sit inside a Modal, which stops mousedown
+       at its panel; the menu has to close all the same. */
+    it("closes the menu when another status is chosen", async () => {
         const onChange = vi.fn();
-        plates({ value: "played", onChange });
+        render(
+            <div onMouseDown={(e) => e.stopPropagation()}>
+                <StatusPlates
+                    value="played"
+                    playedStatus={null}
+                    onChange={onChange}
+                    onPlayedStatusChange={vi.fn()}
+                />
+            </div>
+        );
 
         await userEvent.click(played());
-        await userEvent.click(option("Shelved"));
-        expect(onChange).not.toHaveBeenCalled();
+        expect(screen.getByRole("listbox")).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole("button", { name: "Playing" }));
+        expect(onChange).toHaveBeenCalledWith("playing");
+        expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     });
 });

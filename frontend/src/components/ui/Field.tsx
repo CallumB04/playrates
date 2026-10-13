@@ -12,6 +12,8 @@ interface FieldProps {
     /** Keeps the label for assistive tech but takes it off the page. */
     labelHidden?: boolean;
     help?: ReactNode;
+    /** A shortcut beside the label, e.g. "Today" on a date. */
+    action?: ReactNode;
     error?: string;
     /** Receives the wiring to spread onto the control. */
     children: (a11y: FieldA11y) => ReactNode;
@@ -27,6 +29,7 @@ const Field = ({
     label,
     labelHidden = false,
     help,
+    action,
     error,
     children,
     className,
@@ -37,18 +40,26 @@ const Field = ({
 
     return (
         <div className={cn("group flex flex-col", className)}>
-            <label
-                htmlFor={id}
+            <div
                 className={cn(
-                    "mb-2 text-label-sm",
-                    labelHidden && "sr-only",
-                    error
-                        ? "text-danger"
-                        : "text-content-muted group-focus-within:text-brand"
+                    "mb-2 flex items-baseline justify-between gap-2",
+                    labelHidden && !action && "mb-0"
                 )}
             >
-                {label}
-            </label>
+                <label
+                    htmlFor={id}
+                    className={cn(
+                        "text-label-sm",
+                        labelHidden && "sr-only",
+                        error
+                            ? "text-danger"
+                            : "text-content-muted group-focus-within:text-brand"
+                    )}
+                >
+                    {label}
+                </label>
+                {action}
+            </div>
 
             {children({
                 id,

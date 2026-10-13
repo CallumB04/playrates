@@ -247,7 +247,7 @@ const ReEntryPlate = ({
                     </p>
                     <h1
                         id="home-greeting"
-                        className="mt-2 font-display text-[34px] leading-[1.05] text-content sm:text-[44px] lg:text-[52px]"
+                        className="mt-2 font-display text-[28px] leading-[1.05] text-content sm:text-[44px] lg:text-[52px]"
                     >
                         {isNew ? "Welcome" : "Welcome back"}, {displayName}
                     </h1>

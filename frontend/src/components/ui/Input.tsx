@@ -8,11 +8,11 @@ import { cn } from "../../lib/cn";
 /**
  * A field sits level with the page and lights up when you're in it.
  *
- * 16px on a phone, not 13.5: iOS Safari zooms the whole page in when you
- * focus a field set any smaller, and never zooms back out.
+ * The page's own size on a phone too: public/viewport-init.js stops iOS
+ * zooming in on a field under 16px, which is what used to hold them at 16.
  */
 const FIELD =
-    "lift min-h-11 w-full rounded-sm border border-subtle bg-surface-field px-3.5 py-2.5 text-base text-content sm:text-body-sm " +
+    "lift min-h-11 w-full rounded-sm border border-subtle bg-surface-field px-3.5 py-2.5 text-body-sm text-content " +
     "placeholder:text-content-muted hover:border-strong " +
     "focus-visible:border-brand focus-visible:shadow-glow focus-visible:outline-none " +
     "aria-[invalid=true]:border-danger aria-[invalid=true]:bg-danger-subtle " +

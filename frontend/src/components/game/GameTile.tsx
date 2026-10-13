@@ -1,13 +1,14 @@
 import { Link } from "react-router-dom";
 import {
     useEffect,
+    useId,
     useRef,
     useState,
     type ComponentType,
     type ReactNode,
     type SVGProps,
 } from "react";
-import { Check, Plus } from "lucide-react";
+import { Check, EllipsisVertical, Plus } from "lucide-react";
 import { cn } from "../../lib/cn";
 import type { DisplayStatus } from "../../constants/gameStatus";
 import type { Platform } from "@playrates/shared";
@@ -16,6 +17,8 @@ import { usePrefetchGame } from "../../hooks/queries/useGames";
 import PlatformMarks from "./PlatformMarks";
 import StatusBadge from "../ui/StatusBadge";
 import RatingBadge from "../ui/RatingBadge";
+import Modal from "../ui/Modal";
+import Button from "../ui/Button";
 
 export interface TileAction {
     key: string;
@@ -30,6 +33,12 @@ export interface TileAction {
     icon?: ComponentType<SVGProps<SVGSVGElement> & { size?: number | string }>;
     /** What an icon action's button says once it has worked. */
     doneLabel?: string;
+    /** The icon for a phone's standing button when this is the tile's only
+     *  action, so it says what it does. With several, a phone gets them all
+     *  in a sheet instead. */
+    standing?: ComponentType<
+        SVGProps<SVGSVGElement> & { size?: number | string }
+    >;
 }
 
 /** A quick-add in flight, then landed. The icons are kept as they were when
@@ -128,8 +137,17 @@ const GameTile = ({
         }
     };
 
+    /* With more than one action a phone gets them all in a sheet: one
+       standing button cannot both view someone's log and add it to yours,
+       and the shelf quick-adds are otherwise hover-only. A lone action is
+       pressed directly, with an icon that says what it does. */
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const sheetTitleId = useId();
+    const several = actions.length > 1;
     const primary = rows[0] ?? icons[0];
-    const PrimaryIcon = primary?.icon ?? Plus;
+    const PrimaryIcon = several
+        ? EllipsisVertical
+        : (primary?.standing ?? primary?.icon ?? Plus);
 
     return (
         <div className="group/tile">
@@ -163,7 +181,8 @@ const GameTile = ({
                         status={status}
                         size="stamp"
                         onMedia
-                        className="absolute top-1.5 right-1.5"
+                        // Not on a phone, where it ran into the standing button.
+                        className="absolute top-1.5 right-1.5 max-sm:hidden"
                     />
                 )}
 
@@ -172,11 +191,15 @@ const GameTile = ({
                 {primary && (
                     <button
                         type="button"
-                        aria-label={primary.label}
+                        aria-label={
+                            several ? `Actions for ${title}` : primary.label
+                        }
+                        aria-haspopup={several ? "dialog" : undefined}
                         disabled={!!busy}
                         onClick={(event) => {
                             event.preventDefault();
-                            void primary.onSelect();
+                            if (several) setSheetOpen(true);
+                            else void primary.onSelect();
                         }}
                         className={cn(
                             "absolute top-1.5 left-1.5 grid size-9 place-items-center rounded-full",
@@ -358,11 +381,13 @@ const GameTile = ({
                         </span>
                     )}
 
-                    <span className="block text-[13px] leading-tight font-medium text-content-on-media">
+                    {/* Capped, so a long title never climbs into the
+                        standing button at the top of a phone's cover. */}
+                    <span className="line-clamp-2 text-[13px] leading-tight font-medium text-content-on-media sm:line-clamp-3">
                         {title}
                     </span>
                     {meta && (
-                        <span className="mt-1 block text-[10px] text-content-on-media/70">
+                        <span className="mt-1 line-clamp-1 text-[10px] text-content-on-media/70">
                             {meta}
                         </span>
                     )}
@@ -404,6 +429,47 @@ const GameTile = ({
                         />
                     )}
                 </div>
+            )}
+
+            {/* Outside the link: a click in a portal still bubbles through
+                its React parents, and inside it would open the game. */}
+            {sheetOpen && (
+                <Modal
+                    onClose={() => setSheetOpen(false)}
+                    labelledBy={sheetTitleId}
+                    className="w-full max-w-sm"
+                >
+                    <h2
+                        id={sheetTitleId}
+                        className="pr-10 font-display text-section text-content"
+                    >
+                        {title}
+                    </h2>
+                    <div className="mt-4 flex flex-col gap-2">
+                        {actions.map((action) => {
+                            const Icon = action.icon ?? action.standing;
+                            return (
+                                <Button
+                                    key={action.key}
+                                    variant={
+                                        action.tone === "primary"
+                                            ? "primary"
+                                            : "secondary"
+                                    }
+                                    size="touch"
+                                    className="w-full"
+                                    onClick={() => {
+                                        setSheetOpen(false);
+                                        void action.onSelect();
+                                    }}
+                                >
+                                    {Icon && <Icon size={16} aria-hidden />}
+                                    {action.label}
+                                </Button>
+                            );
+                        })}
+                    </div>
+                </Modal>
             )}
         </div>
     );

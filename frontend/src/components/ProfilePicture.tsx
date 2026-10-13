@@ -18,6 +18,8 @@ const AVATAR_VARIANT = {
     review: { box: "size-16", text: "text-2xl" },
     /** The header. */
     nav: { box: "size-9", text: "text-sm" },
+    /** The phone's bottom bar, in an icon's place. */
+    tab: { box: "size-6", text: "text-[11px]" },
     /** Friend list in the profile sidebar. */
     friendRow: { box: "size-10", text: "text-base" },
     /** Friend list inside the friends popup. */

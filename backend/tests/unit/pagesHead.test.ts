@@ -6,6 +6,12 @@ import {
   truncateDescription,
 } from "@playrates/shared";
 import {
+  buildBody,
+  excerpt,
+  injectBody,
+  toParagraphs,
+} from "../../src/modules/pages/body.js";
+import {
   buildHead,
   escapeHtml,
   injectHead,
@@ -13,6 +19,7 @@ import {
 } from "../../src/modules/pages/head.js";
 import {
   gamePages,
+  AI_CRAWLERS,
   robotsTxt,
   sitemapIndex,
   urlSet,
@@ -55,7 +62,9 @@ describe("the page head", () => {
     expect(head).toContain(
       '<link rel="canonical" href="https://playrates.app/game/1" />',
     );
-    expect(head).toContain('property="og:url" content="https://playrates.app/game/1"');
+    expect(head).toContain(
+      'property="og:url" content="https://playrates.app/game/1"',
+    );
     expect(head).toContain('name="twitter:card" content="summary_large_image"');
     expect(head).not.toContain("robots");
   });
@@ -174,5 +183,62 @@ describe("sitemaps", () => {
     );
     expect(robotsTxt(true)).toContain("Disallow: /admin");
     expect(robotsTxt(false)).toBe("User-agent: *\nDisallow: /\n");
+  });
+
+  /* A crawler named in a group ignores "*" entirely, so its group must carry
+     the same rules: an empty one would open /admin, a slip would shut it out. */
+  it("names the AI crawlers, with the same rules as everyone", () => {
+    const groups = robotsTxt(true)
+      .split("\n\n")
+      .map((block) => block.split("\n").filter(Boolean));
+    const rules = (lines: string[]) =>
+      lines.filter((l) => l.startsWith("Disallow:"));
+    const wildcard = groups.find((g) => g.includes("User-agent: *"))!;
+    const named = groups.find((g) => g.includes("User-agent: GPTBot"))!;
+
+    for (const agent of AI_CRAWLERS) {
+      expect(named).toContain(`User-agent: ${agent}`);
+    }
+    expect(rules(named)).toEqual(rules(wildcard));
+    expect(rules(named)).not.toContain("Disallow: /");
+  });
+});
+
+describe("the page body", () => {
+  it("cuts a long text at a word, and leaves a short one whole", () => {
+    expect(excerpt("short and sweet", 50)).toBe("short and sweet");
+    expect(excerpt("one two three four", 9)).toBe("one two…");
+    expect(excerpt("unbroken", 4)).toBe("unbr…");
+  });
+
+  it("splits prose into paragraphs on blank lines", () => {
+    expect(toParagraphs("First line\nstill first.\n\n\nSecond.")).toEqual([
+      "First line still first.",
+      "Second.",
+    ]);
+  });
+
+  it("escapes everything, links and sections included", () => {
+    const html = buildBody({
+      heading: "<script>",
+      facts: [{ label: "A&B", value: '"x"' }],
+      sections: [
+        { heading: "Empty", items: [] },
+        { heading: "Reviews", items: [{ title: "<i>me</i>", text: "<b>" }] },
+      ],
+      links: [{ href: '/x"y', label: "<go>" }],
+    });
+    expect(html).not.toMatch(/<(script|i|b|go)>/);
+    expect(html).toContain("<dt>A&amp;B</dt><dd>&quot;x&quot;</dd>");
+    expect(html).toContain('href="/x&quot;y"');
+    // A section with nothing in it is left out.
+    expect(html).not.toContain("Empty");
+  });
+
+  it("fills the root, and leaves a template without one alone", () => {
+    expect(injectBody('<div id="root"></div>', "<p>hi</p>")).toBe(
+      '<div id="root"><p>hi</p></div>',
+    );
+    expect(injectBody("<main></main>", "<p>hi</p>")).toBe("<main></main>");
   });
 });

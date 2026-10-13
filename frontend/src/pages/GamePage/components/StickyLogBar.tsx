@@ -42,8 +42,11 @@ const StickyLogBar = ({
         <div
             aria-hidden={!shown}
             className={cn(
-                "fixed inset-x-0 bottom-0 z-30 border-t border-subtle bg-surface/90 px-4 pt-3 pb-[calc(--spacing(3)+env(safe-area-inset-bottom))] backdrop-blur-lg transition-transform duration-200 sm:hidden",
-                shown ? "translate-y-0" : "translate-y-full"
+                // Sits on the tab bar, and slides away behind it.
+                "fixed inset-x-0 bottom-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom))] z-30 border-t border-subtle bg-surface/90 px-4 py-3 backdrop-blur-lg transition-transform duration-200 sm:hidden",
+                shown
+                    ? "translate-y-0"
+                    : "translate-y-[calc(100%+var(--spacing-tabbar)+env(safe-area-inset-bottom))]"
             )}
         >
             <Button

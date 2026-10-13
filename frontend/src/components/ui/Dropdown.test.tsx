@@ -13,6 +13,29 @@ const open = async (label = "Time zone") =>
     userEvent.click(screen.getByRole("button", { name: label }));
 
 describe("Dropdown", () => {
+    it("says when it opens, by click or by key, and not when it closes", async () => {
+        const onOpen = vi.fn();
+        render(
+            <Dropdown
+                options={OPTIONS}
+                value="Europe/London"
+                onChange={vi.fn()}
+                onOpen={onOpen}
+                aria-label="Pick"
+            />
+        );
+        const trigger = screen.getByRole("button", { name: "Pick" });
+
+        await userEvent.click(trigger);
+        expect(onOpen).toHaveBeenCalledTimes(1);
+        await userEvent.click(trigger);
+        expect(onOpen).toHaveBeenCalledTimes(1);
+
+        trigger.focus();
+        await userEvent.keyboard("{ArrowDown}");
+        expect(onOpen).toHaveBeenCalledTimes(2);
+    });
+
     it("shows the chosen option on the closed control", () => {
         render(
             <Dropdown

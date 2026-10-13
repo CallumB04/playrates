@@ -7,6 +7,13 @@ import { buildGame } from "../../../test/msw/handlers";
 import { renderWithProviders } from "../../../test/renderWithProviders";
 import RelatedGames from "./RelatedGames";
 
+/* The actions are the shared hook's to work out (tileActions.test); here it
+   only matters that the rails are handed them. */
+const actionsFor = vi.hoisted(() => vi.fn());
+vi.mock("../../../components/game/useTileActions", () => ({
+    useTileActions: () => ({ actionsFor, statusFor: () => null }),
+}));
+
 const API = "http://localhost:3000/api/v1";
 
 // The rails measure themselves; jsdom has nothing to measure with.
@@ -81,5 +88,26 @@ describe("RelatedGames", () => {
 
         await new Promise((r) => setTimeout(r, 50));
         expect(container).toBeEmptyDOMElement();
+    });
+
+    /* They had none, so a game found here could not be logged from here. */
+    it("gives every cover the same quick actions as anywhere else", async () => {
+        actionsFor.mockReturnValue([
+            { key: "log", label: "Create log", onSelect: () => {} },
+        ]);
+        answer({
+            series: null,
+            developer: null,
+            similar: [buildGame({ id: 4, title: "Portal 2" })],
+        });
+        renderWithProviders(<RelatedGames gameId={1} platforms={[]} />);
+
+        // Drawn twice by the tile: on hover, and standing for touch.
+        expect(
+            await screen.findAllByRole("button", { name: /create log/i })
+        ).not.toHaveLength(0);
+        expect(actionsFor).toHaveBeenCalledWith(
+            expect.objectContaining({ id: 4, title: "Portal 2" })
+        );
     });
 });

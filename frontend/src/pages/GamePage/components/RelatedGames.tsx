@@ -1,6 +1,7 @@
 import type { Platform } from "@playrates/shared";
 import GameRail from "../../../components/game/GameRail";
 import { useGameRelated } from "../../../hooks/queries/useGames";
+import { useTileActions } from "../../../components/game/useTileActions";
 
 interface RelatedGamesProps {
     gameId: number;
@@ -15,6 +16,7 @@ interface RelatedGamesProps {
  */
 const RelatedGames = ({ gameId, platforms }: RelatedGamesProps) => {
     const { data } = useGameRelated(gameId);
+    const { actionsFor, statusFor } = useTileActions();
     if (!data) return null;
 
     const rows = [
@@ -49,6 +51,8 @@ const RelatedGames = ({ gameId, platforms }: RelatedGamesProps) => {
                     games={row.games}
                     platforms={platforms}
                     isLoading={false}
+                    actionsFor={actionsFor}
+                    statusFor={statusFor}
                 />
             ))}
         </section>

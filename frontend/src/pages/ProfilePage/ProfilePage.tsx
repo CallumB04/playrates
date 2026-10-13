@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Flag, Pencil, Settings } from "lucide-react";
+import { Eye, Flag, Pencil, Settings } from "lucide-react";
 import ReportDialog from "../../components/ReportDialog";
 import type { ShelfEntry } from "@playrates/shared";
 import { useLogFlow } from "../../components/gamelog/useLogFlow";
@@ -35,6 +35,7 @@ import Button, { buttonClass } from "../../components/ui/Button";
 import ProfileError from "./components/ProfileError";
 import MemberFileHeader from "./components/MemberFileHeader";
 import FriendAction from "./components/FriendAction";
+import FriendRequestBand from "./components/FriendRequestBand";
 import ShelfPanel from "./components/ShelfPanel";
 import {
     OwnProfileVisibility,
@@ -270,13 +271,22 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
         const actions: TileAction[] = [
             {
                 key: "view",
-                label: entry.logs.length > 1 ? "View logs" : "View log",
+                // Beside "My log" on someone else's shelf, "View log" said
+                // nothing of whose.
+                label: isMyAccount
+                    ? entry.logs.length > 1
+                        ? "View logs"
+                        : "View log"
+                    : entry.logs.length > 1
+                      ? "Their logs"
+                      : "Their log",
                 tone: "primary",
                 onSelect: () => flow.view(gameId, { owner: targetUsername }),
             },
         ];
 
-        if (!currentUser) return actions;
+        // Signed out, theirs is the only log on offer to a phone.
+        if (!currentUser) return [{ ...actions[0]!, standing: Eye }];
 
         if (isMyAccount) {
             actions.push({
@@ -313,6 +323,21 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                 reviewCount={reviewsPage?.meta.total}
                 friendCount={
                     friendsLoading ? undefined : acceptedFriends.length
+                }
+                friendsSince={
+                    relation === "friend" ? friendEdge?.createdAt : undefined
+                }
+                request={
+                    relation === "request-received" && (
+                        <FriendRequestBand
+                            profile={targetUser}
+                            isPending={isPending}
+                            onAccept={guard(() => void accept.mutateAsync())}
+                            onDecline={guard(() =>
+                                setModal({ kind: "removeFriend" })
+                            )}
+                        />
+                    )
                 }
                 onEditPicture={
                     isMyAccount
@@ -364,12 +389,8 @@ const ProfilePage = ({ username: targetUsername }: ProfilePageProps) => {
                             )}
                             <FriendAction
                                 relation={relation}
-                                since={friendEdge?.createdAt}
                                 isPending={isPending}
                                 onAdd={guard(() => void send.mutateAsync())}
-                                onAccept={guard(
-                                    () => void accept.mutateAsync()
-                                )}
                                 onRemove={guard(() =>
                                     setModal({ kind: "removeFriend" })
                                 )}

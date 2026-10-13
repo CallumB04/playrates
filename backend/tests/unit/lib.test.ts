@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AppError } from "../../src/lib/AppError.js";
-import { likeTerm } from "../../src/lib/likeTerm.js";
+import { likePrefix, likeTerm } from "../../src/lib/likeTerm.js";
 import { paginate, toRange } from "../../src/lib/pagination.js";
 import { nullGamesProvider } from "../../src/providers/games/GamesProvider.js";
 
@@ -95,7 +95,12 @@ describe("nullGamesProvider", () => {
       hasNext: false,
     });
     await expect(
-      nullGamesProvider.listByDate({ from: "2026-09-01", to: "2026-09-26", page: 1, pageSize: 40 }),
+      nullGamesProvider.listByDate({
+        from: "2026-09-01",
+        to: "2026-09-26",
+        page: 1,
+        pageSize: 40,
+      }),
     ).resolves.toEqual({ games: [], total: 0, hasNext: false });
   });
 });
@@ -109,5 +114,12 @@ describe("likeTerm", () => {
     expect(likeTerm("%%")).toBe("%\\%\\%%");
     expect(likeTerm("dev_user")).toBe("%dev\\_user%");
     expect(likeTerm("a\\b")).toBe("%a\\\\b%");
+  });
+});
+
+describe("likePrefix", () => {
+  it("matches from the start, wildcards taken literally", () => {
+    expect(likePrefix("br")).toBe("br%");
+    expect(likePrefix("a_")).toBe("a\\_%");
   });
 });

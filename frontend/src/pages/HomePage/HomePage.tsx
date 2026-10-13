@@ -1,6 +1,9 @@
 import { useMemo } from "react";
-import type { Game } from "@playrates/shared";
-import { formatCount, formatReleaseShort, releaseYear } from "../../lib/format";
+import {
+    formatLogCount,
+    formatReleaseShort,
+    releaseYear,
+} from "../../lib/format";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import {
@@ -12,7 +15,6 @@ import {
 import {
     useMyGameLogIds,
     useMyShelf,
-    useQuickAdd,
     useUserStats,
 } from "../../hooks/queries/useGameLogs";
 import { latestRun, logOnShelf } from "../../api";
@@ -20,11 +22,7 @@ import { useLogFlow } from "../../components/gamelog/useLogFlow";
 import { useFriendActivity } from "../../hooks/queries/useFriends";
 import { useRecentReviews } from "../../hooks/queries/useReviews";
 import { usePageTitle } from "../../hooks/usePageTitle";
-import {
-    STATUS_PRESENTATION,
-    displayStatusFor,
-} from "../../constants/gameStatus";
-import type { TileAction } from "../../components/game/GameTile";
+import { useTileActions } from "../../components/game/useTileActions";
 import SignedOutHero from "./components/SignedOutHero";
 import ReEntryPlate from "./components/ReEntryPlate";
 import Rail from "../../components/game/GameRail";
@@ -50,7 +48,7 @@ const HomePage = () => {
     usePageTitle();
 
     const { user } = useAuth();
-    const { openSignup, openLogin } = useAccountForm();
+    const { openSignup } = useAccountForm();
     const flow = useLogFlow();
 
     const { data: siteStats } = useSiteStats();
@@ -104,77 +102,10 @@ const HomePage = () => {
         [played]
     );
 
-    // Ids only: the rails show whether you logged something, not what's in it.
     const { data: myLogIds } = useMyGameLogIds();
-    const logByGameId = useMemo(
-        () => new Map((myLogIds ?? []).map((log) => [log.gameId, log])),
-        [myLogIds]
-    );
-
-    const quickAdd = useQuickAdd();
 
     // Every cover on the page can be logged from where it sits.
-    const statusFor = (game: Game) => {
-        const log = logByGameId.get(game.id);
-        return log ? displayStatusFor(log.status, log.playedStatus) : null;
-    };
-
-    const actionsFor = (game: Game): TileAction[] => {
-        if (!user) {
-            return [
-                {
-                    key: "signin",
-                    label: "Log in to add",
-                    tone: "primary",
-                    onSelect: openLogin,
-                },
-            ];
-        }
-
-        // Already logged, so "add to backlog" would overwrite the status.
-        const logged = logByGameId.get(game.id);
-        if (logged) {
-            return [
-                {
-                    key: "view",
-                    label:
-                        logged.logs.length > 1
-                            ? "View your logs"
-                            : "View your log",
-                    tone: "primary",
-                    onSelect: () => flow.view(game.id),
-                },
-                {
-                    key: "edit",
-                    label: "Edit",
-                    onSelect: () => flow.open(game.id),
-                },
-            ];
-        }
-
-        return [
-            {
-                key: "log",
-                label: "Create log",
-                tone: "primary",
-                onSelect: () => flow.open(game.id),
-            },
-            {
-                key: "backlog",
-                label: "Add to backlog",
-                icon: STATUS_PRESENTATION.backlog.icon,
-                onSelect: () => quickAdd(game.id, game.title, "backlog"),
-                doneLabel: "In your backlog",
-            },
-            {
-                key: "wishlist",
-                label: "Add to wishlist",
-                icon: STATUS_PRESENTATION.wishlist.icon,
-                onSelect: () => quickAdd(game.id, game.title, "wishlist"),
-                doneLabel: "On your wishlist",
-            },
-        ];
-    };
+    const { actionsFor, statusFor } = useTileActions();
 
     return (
         <div className="flex flex-col gap-11">
@@ -228,9 +159,7 @@ const HomePage = () => {
                 statusFor={statusFor}
                 footValueFor={(game) =>
                     game.logCount > 0
-                        ? `${formatCount(game.logCount)} ${
-                              game.logCount === 1 ? "player" : "players"
-                          }`
+                        ? formatLogCount(game.logCount)
                         : releaseYear(game.releaseDate)
                 }
             />

@@ -45,6 +45,11 @@ export const createMyNotificationsRouter = ({
     res.status(204).end();
   });
 
+  router.post("/archive-all", async (req, res) => {
+    await service.archiveAllRead(callerId(req));
+    res.status(204).end();
+  });
+
   router.patch(
     "/:id",
     validate({ params: NotificationIdSchema, body: NotificationPatchSchema }),

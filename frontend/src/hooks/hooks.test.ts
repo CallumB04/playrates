@@ -258,6 +258,17 @@ describe("useDismiss", () => {
         cleanup();
     });
 
+    /* Modal stops mousedown at its panel, so a dropdown in the log editor
+       stayed open while another status was chosen beside it. */
+    it("still hears a press whose bubbling something stopped", () => {
+        const { outside, onDismiss, cleanup } = setup(true);
+        outside.addEventListener("mousedown", (e) => e.stopPropagation());
+
+        outside.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+        expect(onDismiss).toHaveBeenCalledTimes(1);
+        cleanup();
+    });
+
     it("does nothing while disabled", () => {
         const { outside, onDismiss, cleanup } = setup(false);
 

@@ -17,9 +17,10 @@ const ToastStack = () => {
             aria-label="Notifications"
             className={[
                 "pointer-events-none fixed inset-x-4 z-50 flex flex-col",
-                // Clears the home indicator; plain bottom-4 without an inset.
-                "bottom-[calc(--spacing(4)+env(safe-area-inset-bottom))]",
-                "sm:inset-x-auto sm:right-8 sm:bottom-8 sm:w-96",
+                // Above the tab bar and the home indicator, until lg.
+                "bottom-[calc(--spacing(4)+var(--spacing-tabbar)+env(safe-area-inset-bottom))]",
+                "sm:inset-x-auto sm:right-8 sm:bottom-[calc(--spacing(8)+var(--spacing-tabbar)+env(safe-area-inset-bottom))] sm:w-96",
+                "lg:bottom-8",
             ].join(" ")}
         >
             {toasts.map((toast) => (
