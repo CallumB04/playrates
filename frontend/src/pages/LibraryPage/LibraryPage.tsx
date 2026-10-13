@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import {
+    useCatalogueReach,
     useGames,
     useGenres,
     usePlatforms,
@@ -14,6 +15,7 @@ import { useTileActions } from "../../components/game/useTileActions";
 import Pagination, { PaginationSummary } from "../../components/ui/Pagination";
 import { Skeleton, TileSkeleton } from "../../components/ui/Skeleton";
 import EmptyPlate from "../../components/ui/EmptyPlate";
+import LoadingSpinner from "../../components/LoadingSpinner";
 import LibraryFilters from "./components/LibraryFilters";
 import { getLibraryGamesPerPage } from "./lib/gamesPerPage";
 import { useLibraryQuery } from "./lib/useLibraryQuery";
@@ -46,6 +48,7 @@ const LibraryPage = () => {
     const {
         data: page,
         isLoading,
+        isFetching,
         isPlaceholderData,
     } = useGames({
         page: query.page,
@@ -58,6 +61,18 @@ const LibraryPage = () => {
     });
 
     const games = page?.data ?? [];
+
+    /* Nothing here for the search: look past the catalogue, as the
+       masthead's search does, and bring back what turns up. */
+    const searchTerm = query.search.trim();
+    const settledEmpty = !!page && !isPlaceholderData && page.meta.total === 0;
+    const { reaching, found } = useCatalogueReach(
+        searchTerm,
+        !!user && settledEmpty
+    );
+    // Until the list has been asked again for what was just added.
+    const lookingFurther =
+        settledEmpty && !!searchTerm && (reaching || (found > 0 && isFetching));
     const total = page?.meta.total ?? 0;
 
     const pagination = usePagination({
@@ -108,6 +123,12 @@ const LibraryPage = () => {
                         <TileSkeleton key={i} />
                     ))}
                 </div>
+            ) : games.length === 0 && lookingFurther ? (
+                <EmptyPlate
+                    title={`Looking further for “${searchTerm}”`}
+                    body="It isn't in the library yet, so we're checking the wider catalogue. Anything found is added here."
+                    action={<LoadingSpinner size="md" label="Searching" />}
+                />
             ) : games.length === 0 ? (
                 <EmptyPlate
                     title="No titles match those filters"

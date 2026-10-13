@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import {
     keepPreviousData,
     useQuery,
@@ -14,6 +15,7 @@ import {
     fetchPlatformSystems,
     fetchSiteStats,
     queryKeys,
+    searchGames,
     type GameListFilters,
 } from "../../api";
 
@@ -25,6 +27,35 @@ export const useGames = (filters: GameListFilters = {}) =>
         // Hold the previous page while the next loads, or the grid blanks.
         placeholderData: keepPreviousData,
     });
+
+/**
+ * When the library's search comes back empty, the search the masthead uses:
+ * it reaches IGDB and adds what it finds to the catalogue. The library's own
+ * list is then fetched again, so the new games turn up in the grid with its
+ * filters still applied. Signed in only, like the endpoint.
+ */
+export const useCatalogueReach = (term: string, enabled: boolean) => {
+    const queryClient = useQueryClient();
+    const { data, isFetching } = useQuery({
+        queryKey: queryKeys.games.reach(term),
+        queryFn: () => searchGames(term),
+        enabled: enabled && term.length >= 2,
+        staleTime: 5 * 60_000,
+    });
+
+    // Once per term: the list coming back empty again must not loop.
+    const refreshedFor = useRef<string | null>(null);
+    const found = data?.data.length ?? 0;
+    useEffect(() => {
+        if (!found || refreshedFor.current === term) return;
+        refreshedFor.current = term;
+        void queryClient.invalidateQueries({
+            queryKey: ["games", "list"],
+        });
+    }, [found, term, queryClient]);
+
+    return { reaching: isFetching, found };
+};
 
 export const useGame = (id: number | undefined) =>
     useQuery<Game>({
