@@ -5,9 +5,8 @@ import { cn } from "../../lib/cn";
 /**
  * Add a view by adding an entry here and a route in AdminApp.tsx.
  *
- * Grouped by what it's for, since nine tabs in a row are nine things to
- * read through: watching the site, its people, what goes on it, and getting
- * the word out. On a phone each group takes a line of its own.
+ * Grouped by what it's for, since eight tabs in a row are eight things to
+ * read through: watching the site, its people, and what goes on it.
  */
 const ADMIN_GROUPS = [
     [
@@ -24,7 +23,6 @@ const ADMIN_GROUPS = [
         { to: "/admin/announcements", label: "Announcements" },
         { to: "/admin/design", label: "Design library" },
     ],
-    [{ to: "/admin/tiktok", label: "TikTok" }],
 ];
 
 /**

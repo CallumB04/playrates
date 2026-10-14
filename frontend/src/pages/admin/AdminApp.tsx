@@ -8,7 +8,6 @@ import GamesPage from "./games/GamesPage";
 import AnnouncementsPage from "./announcements/AnnouncementsPage";
 import HealthPage from "./health/HealthPage";
 import DesignLibraryPage from "./design-library/DesignLibraryPage";
-import TikTokPage from "./tiktok/TikTokPage";
 
 /** Everything under /admin, loaded as one chunk behind AdminGate. */
 const AdminApp = () => (
@@ -22,7 +21,6 @@ const AdminApp = () => (
             <Route path="games" element={<GamesPage />} />
             <Route path="announcements" element={<AnnouncementsPage />} />
             <Route path="health" element={<HealthPage />} />
-            <Route path="tiktok" element={<TikTokPage />} />
             <Route path="design" element={<DesignLibraryPage />} />
             <Route path="*" element={<Navigate to="overview" replace />} />
         </Route>
