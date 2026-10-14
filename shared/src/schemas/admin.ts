@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { PaginationSchema } from "./common.js";
 import type { ProfileAccent } from "./profileAccent.js";
+import {
+  announcementBodyBadLinks,
+  announcementBodyText,
+} from "../announcementBody.js";
 
 // Ranges and overview ------------------------------------------------------------
 
@@ -417,6 +421,9 @@ export type AnnouncementTone = (typeof ANNOUNCEMENT_TONES)[number];
  *  against these, and the API holds to them. */
 export const ANNOUNCEMENT_TITLE_MAX = 60;
 export const ANNOUNCEMENT_BODY_MAX = 160;
+/** The message as written, links' addresses and all, which the reader never
+ *  sees. The table holds 400. */
+export const ANNOUNCEMENT_BODY_SOURCE_MAX = 400;
 
 /** In-app paths only. Protocol-relative ("//host") would leave the site. */
 export const InAppPathSchema = z
@@ -429,7 +436,19 @@ export const AnnouncementInputSchema = z
   .object({
     tone: z.enum(ANNOUNCEMENT_TONES),
     title: z.string().trim().min(1).max(ANNOUNCEMENT_TITLE_MAX),
-    body: z.string().trim().min(1).max(ANNOUNCEMENT_BODY_MAX),
+    body: z
+      .string()
+      .trim()
+      .min(1)
+      .max(ANNOUNCEMENT_BODY_SOURCE_MAX)
+      .refine(
+        (body) => announcementBodyText(body).length <= ANNOUNCEMENT_BODY_MAX,
+        `At most ${ANNOUNCEMENT_BODY_MAX} characters`,
+      )
+      .refine(
+        (body) => announcementBodyBadLinks(body).length === 0,
+        "Links go to an https:// address or a page on PlayRates",
+      ),
     link: InAppPathSchema.nullable().default(null),
   })
   .strict();
@@ -495,7 +514,9 @@ export const patchNoteAnnouncement = (
     title: !name
       ? "New patch notes"
       : PATCH_NOTE_PREFIX +
-        (name.length > room ? `${name.slice(0, room - 1).trimEnd()}\u2026` : name),
+        (name.length > room
+          ? `${name.slice(0, room - 1).trimEnd()}\u2026`
+          : name),
     body: "What\u2019s new and what\u2019s fixed in PlayRates. Open it to read the notes.",
     link,
   };

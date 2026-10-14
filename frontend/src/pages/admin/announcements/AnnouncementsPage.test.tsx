@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { ANNOUNCEMENT_TITLE_MAX } from "@playrates/shared";
+import {
+    ANNOUNCEMENT_BODY_MAX,
+    ANNOUNCEMENT_TITLE_MAX,
+} from "@playrates/shared";
 import { server } from "../../../test/msw/server";
 import { renderWithProviders } from "../../../test/renderWithProviders";
 import AnnouncementsPage from "./AnnouncementsPage";
@@ -95,6 +98,39 @@ describe("AnnouncementsPage", () => {
 
         expect(
             screen.getByText("An in-app path, like /community")
+        ).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Send to/ })).toBeDisabled();
+    });
+
+    // Pasted, because user.type reads "[" as the start of a key name.
+    const writeMessage = async (body: string) => {
+        const user = await write({ title: "PlayRates has a Discord" });
+        await user.click(screen.getByLabelText("Message"));
+        await user.paste(body);
+    };
+
+    it("counts only a link's words, and shows the link in the preview", async () => {
+        renderWithProviders(<AnnouncementsPage />);
+        await writeMessage("[Join the Discord](https://discord.gg/abc) today");
+
+        expect(
+            screen.getByText(`22/${ANNOUNCEMENT_BODY_MAX}`)
+        ).toBeInTheDocument();
+        const bell = screen.getByText("How it will look").parentElement!;
+        expect(
+            within(bell).getByRole("link", { name: "Join the Discord" })
+        ).toHaveAttribute("href", "https://discord.gg/abc");
+        expect(screen.getByRole("button", { name: /Send to/ })).toBeEnabled();
+    });
+
+    it("refuses a link in the message that isn't https or a page here", async () => {
+        renderWithProviders(<AnnouncementsPage />);
+        await writeMessage("[our site](http://example.com)");
+
+        expect(
+            screen.getByText(
+                "Links go to an https:// address or a page on PlayRates"
+            )
         ).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /Send to/ })).toBeDisabled();
     });

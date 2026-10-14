@@ -43,6 +43,13 @@ if (!window.matchMedia) {
     })) as unknown as typeof window.matchMedia;
 }
 
+// jsdom has no layout to observe; a test that needs a resize stubs its own
+window.ResizeObserver ??= class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+};
+
 if (!window.requestAnimationFrame) {
     window.requestAnimationFrame = ((cb: FrameRequestCallback) =>
         setTimeout(

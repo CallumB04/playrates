@@ -4,6 +4,8 @@ import {
     ANNOUNCEMENT_TITLE_MAX,
     ANNOUNCEMENT_TONES,
     AnnouncementInputSchema,
+    announcementBodyBadLinks,
+    announcementBodyText,
     type Announcement,
     type AnnouncementNotification,
     type AnnouncementTone,
@@ -19,6 +21,7 @@ import { TextSkeleton } from "../../../components/ui/Skeleton";
 import { popoverClass } from "../../../components/ui/popover";
 import IconMark from "../../../components/notifications/IconMark";
 import NotificationItem from "../../../components/notifications/NotificationItem";
+import AnnouncementBody from "../../../components/notifications/AnnouncementBody";
 import { ANNOUNCEMENT_PRESENTATION } from "../../../components/notifications/announcementTones";
 import { useNotify } from "../../../contexts/NotificationContext";
 import { cn } from "../../../lib/cn";
@@ -77,7 +80,7 @@ const HistoryRow = ({ announcement }: { announcement: Announcement }) => {
                         {announcement.title}
                     </p>
                     <p className="mt-0.5 text-body-sm break-words text-content-secondary">
-                        {announcement.body}
+                        <AnnouncementBody body={announcement.body} />
                     </p>
                     <p className="mt-1.5 text-label-sm text-content-muted">
                         {formatDate(announcement.createdAt)} · to{" "}
@@ -169,6 +172,11 @@ const AnnouncementsPage = () => {
         !parsed.success &&
         parsed.error.flatten().fieldErrors.link
             ? "An in-app path, like /community"
+            : undefined;
+    const bodyLength = announcementBodyText(body.trim()).length;
+    const bodyError =
+        announcementBodyBadLinks(body).length > 0
+            ? "Links go to an https:// address or a page on PlayRates"
             : undefined;
 
     const preview = useMemo<AnnouncementNotification>(
@@ -272,7 +280,23 @@ const AnnouncementsPage = () => {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                        <Field label="Message">
+                        <Field
+                            label="Message"
+                            help={
+                                <>
+                                    Link words with{" "}
+                                    <span className="font-mono">
+                                        [words](https://…)
+                                    </span>{" "}
+                                    or{" "}
+                                    <span className="font-mono">
+                                        [words](/page)
+                                    </span>
+                                    . Only the words count.
+                                </>
+                            }
+                            error={bodyError}
+                        >
                             {(a11y) => (
                                 <Textarea
                                     {...a11y}
@@ -281,15 +305,17 @@ const AnnouncementsPage = () => {
                                     rows={3}
                                     placeholder="Make a list of anything, and share it with your friends."
                                     aria-invalid={
-                                        body.trim().length >
-                                            ANNOUNCEMENT_BODY_MAX || undefined
+                                        bodyError ||
+                                        bodyLength > ANNOUNCEMENT_BODY_MAX
+                                            ? true
+                                            : undefined
                                     }
                                 />
                             )}
                         </Field>
                         <span className="self-end">
                             <Counter
-                                length={body.trim().length}
+                                length={bodyLength}
                                 max={ANNOUNCEMENT_BODY_MAX}
                             />
                         </span>
@@ -297,7 +323,7 @@ const AnnouncementsPage = () => {
 
                     <Field
                         label="Link (optional)"
-                        help="A page on PlayRates, like /community"
+                        help="Where tapping it goes: a page on PlayRates, like /community"
                         error={linkError}
                     >
                         {(a11y) => (

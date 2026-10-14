@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+import { useRef, useState, type ComponentType } from "react";
 import { Link } from "react-router-dom";
 import {
     ArrowBigUp,
@@ -36,6 +36,10 @@ import { threadPath } from "../community/paths";
 import { formatCount, formatMessageCount } from "../../lib/format";
 import { friendRequestState } from "./friendRequestState";
 import IconMark from "./IconMark";
+import AnnouncementBody from "./AnnouncementBody";
+import ShowMoreToggle from "../ui/ShowMoreToggle";
+import { useClamped } from "../../hooks/useClamped";
+import { cn } from "../../lib/cn";
 import { ANNOUNCEMENT_PRESENTATION } from "./announcementTones";
 
 export interface ContentProps<T extends AppNotification> {
@@ -257,34 +261,61 @@ const AnnouncementContent = ({
     onNavigate,
 }: ContentProps<AnnouncementNotification>) => {
     const open = useOpen(notification, onNavigate);
-    const words = (
-        <>
-            <p className={`${TITLE} line-clamp-2 break-words`}>
+    const [expanded, setExpanded] = useState(false);
+    const titleRef = useRef<HTMLParagraphElement>(null);
+    const bodyRef = useRef<HTMLParagraphElement>(null);
+    const titleClipped = useClamped(titleRef, notification.title);
+    const bodyClipped = useClamped(bodyRef, notification.body);
+
+    const title = (
+        <span className="group-hover:underline">{notification.title}</span>
+    );
+
+    // The message can hold links of its own, and a link can't sit inside
+    // another, so the title's link is stretched over the block instead.
+    return (
+        <div className="group relative">
+            <p
+                ref={titleRef}
+                className={cn(
+                    TITLE,
+                    "break-words",
+                    !expanded && "line-clamp-2"
+                )}
+            >
                 {notification.isTest && (
                     <span className="mr-1.5 rounded-sm bg-surface-sunken px-1 py-px align-[1px] text-label-sm font-medium text-content-muted">
                         Test
                     </span>
                 )}
-                <span
-                    className={
-                        notification.link ? "group-hover:underline" : undefined
-                    }
-                >
-                    {notification.title}
-                </span>
+                {notification.link ? (
+                    <Link
+                        to={notification.link}
+                        onClick={open}
+                        className="after:absolute after:inset-0 after:content-['']"
+                    >
+                        {title}
+                    </Link>
+                ) : (
+                    notification.title
+                )}
             </p>
-            <p className={`${BODY} line-clamp-3 break-words`}>
-                {notification.body}
+            <p
+                ref={bodyRef}
+                className={cn(BODY, "break-words", !expanded && "line-clamp-3")}
+            >
+                <AnnouncementBody body={notification.body} onNavigate={open} />
             </p>
-        </>
-    );
-
-    return notification.link ? (
-        <Link to={notification.link} onClick={open} className="group block">
-            {words}
-        </Link>
-    ) : (
-        words
+            {/* Nothing else holds the rest of an announcement, so a narrow
+                bell has to be able to show all of it. */}
+            {(titleClipped || bodyClipped || expanded) && (
+                <ShowMoreToggle
+                    open={expanded}
+                    onToggle={() => setExpanded((v) => !v)}
+                    className="relative z-10"
+                />
+            )}
+        </div>
     );
 };
 

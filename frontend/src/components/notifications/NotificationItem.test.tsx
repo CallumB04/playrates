@@ -260,6 +260,59 @@ describe("NotificationItem", () => {
             );
         });
 
+        it("opens a link in its message in a new tab, apart from its own link", () => {
+            const { container } = renderItem(
+                announcement({
+                    link: "/community",
+                    body: "Say hi on [Discord](https://discord.gg/abc).",
+                })
+            );
+
+            const discord = screen.getByRole("link", { name: "Discord" });
+            expect(discord).toHaveAttribute("href", "https://discord.gg/abc");
+            expect(discord).toHaveAttribute("target", "_blank");
+            expect(
+                screen.getByRole("link", { name: /Down for maintenance/ })
+            ).toHaveAttribute("href", "/community");
+            expect(container.querySelector("a a")).toBeNull();
+        });
+
+        it("offers nothing to expand when all of it fits", () => {
+            renderItem(announcement());
+            expect(
+                screen.queryByRole("button", { name: /Show more/ })
+            ).not.toBeInTheDocument();
+        });
+
+        it("can be read in full when the bell cuts it off", async () => {
+            // jsdom has no layout: say the clamp is hiding a line.
+            vi.spyOn(
+                HTMLElement.prototype,
+                "scrollHeight",
+                "get"
+            ).mockReturnValue(80);
+            vi.spyOn(
+                HTMLElement.prototype,
+                "clientHeight",
+                "get"
+            ).mockReturnValue(60);
+            renderItem(announcement());
+
+            const more = screen.getByRole("button", { name: /Show more/ });
+            expect(screen.getByText("Back in an hour.")).toHaveClass(
+                "line-clamp-3"
+            );
+            await userEvent.click(more);
+
+            expect(
+                screen.getByRole("button", { name: /Show less/ })
+            ).toHaveAttribute("aria-expanded", "true");
+            expect(screen.getByText("Back in an hour.")).not.toHaveClass(
+                "line-clamp-3"
+            );
+            vi.restoreAllMocks();
+        });
+
         it("says when it is only a test", () => {
             renderItem(announcement({ isTest: true }));
             expect(screen.getByText("Test")).toBeInTheDocument();

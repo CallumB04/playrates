@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useRef, useState } from "react";
 import { cn } from "../../../lib/cn";
+import { useClamped } from "../../../hooks/useClamped";
+import ShowMoreToggle from "../../../components/ui/ShowMoreToggle";
 
 /** Complete class strings — Tailwind only emits what it finds literally. */
 const CLAMP = {
@@ -22,9 +23,7 @@ interface ExpandableTextProps {
  * Prose, a few lines at a time: a game description can run to a dozen paragraphs
  * on a big release, and a review can run as long as someone likes.
  *
- * The expander only appears when there is something behind it, which is
- * measured rather than guessed — a character count is not a line count, and it
- * is wrong at every width but one.
+ * The expander only appears when there is something behind it.
  */
 const ExpandableText = ({
     text,
@@ -33,23 +32,8 @@ const ExpandableText = ({
     className,
 }: ExpandableTextProps) => {
     const [open, setOpen] = useState(false);
-    const [clipped, setClipped] = useState(false);
     const bodyRef = useRef<HTMLParagraphElement>(null);
-
-    useEffect(() => {
-        const el = bodyRef.current;
-        if (!el) return;
-
-        const measure = () => {
-            // Measured while clamped: is there more than fits?
-            setClipped(el.scrollHeight > el.clientHeight + 1);
-        };
-
-        measure();
-        const observer = new ResizeObserver(measure);
-        observer.observe(el);
-        return () => observer.disconnect();
-    }, [text]);
+    const clipped = useClamped(bodyRef, text);
 
     return (
         <div>
@@ -66,22 +50,12 @@ const ExpandableText = ({
             </p>
 
             {(clipped || open) && (
-                <button
-                    type="button"
-                    onClick={() => setOpen((v) => !v)}
-                    aria-expanded={open}
-                    className="mt-2 inline-flex min-h-11 cursor-pointer items-center gap-1 text-label text-brand lift hover:text-brand-hover sm:min-h-0"
-                >
-                    {open ? "Show less" : moreLabel}
-                    <ChevronDown
-                        size={14}
-                        aria-hidden
-                        className={cn(
-                            "transition-transform duration-200",
-                            open && "rotate-180"
-                        )}
-                    />
-                </button>
+                <ShowMoreToggle
+                    open={open}
+                    onToggle={() => setOpen((v) => !v)}
+                    moreLabel={moreLabel}
+                    className="mt-2"
+                />
             )}
         </div>
     );
