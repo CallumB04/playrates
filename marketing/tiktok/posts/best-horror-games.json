@@ -1,5 +1,21 @@
 {
-  "caption": "Which one still keeps you up at night? 👻 Log every horror game you've played on PlayRates, free at playrates.app #horrorgames #survivalhorror #silenthill2 #residentevil #gaming #gamingtiktok #halloween",
+  "tiktok": {
+    "title": "The 10 best horror games ever made 👻",
+    "description": "Number one still haunts us. Which one kept you up at night? Log every horror game you've played on PlayRates, free at playrates.app (link in bio) #horrorgames #survivalhorror #silenthill2 #residentevil #gaming",
+    "song": {
+      "track": "Theme of Laura",
+      "artist": "Akira Yamaoka",
+      "why": "Silent Hill 2's theme, so the music pays off the #1 reveal for anyone who knows it."
+    },
+    "altSong": {
+      "track": "Little Dark Age",
+      "artist": "MGMT",
+      "why": "Eerie, and a long-running favourite for dark edits."
+    },
+    "musicSearch": "dark ambient, horror, suspense",
+    "pinnedComment": "Which one would you put at number one? 👇",
+    "when": "This week. It rides on Halloween, so it wants to be out well before the 31st."
+  },
   "order": "countdown",
   "showCriticScore": true,
   "hook": {
@@ -13,9 +29,19 @@
     "body": "Log them on PlayRates. Rate every game, track your backlog and see what friends are playing.",
     "button": "Join free at playrates.app",
     "library": [
-      { "slug": "until-dawn", "status": "finished", "rating": 8.5 },
-      { "slug": "dredge", "status": "playing" },
-      { "slug": "signalis", "status": "wishlist" }
+      {
+        "slug": "until-dawn",
+        "status": "finished",
+        "rating": 8.5
+      },
+      {
+        "slug": "dredge",
+        "status": "playing"
+      },
+      {
+        "slug": "signalis",
+        "status": "wishlist"
+      }
     ]
   },
   "games": [

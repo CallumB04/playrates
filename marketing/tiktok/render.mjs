@@ -13,6 +13,7 @@ import { copyFile, mkdir, readFile, writeFile, access } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { postingNotes } from "./posting.mjs";
 import { renderPost } from "./slides.mjs";
 
 const require = createRequire(import.meta.url);
@@ -106,6 +107,10 @@ const localImage = async (url) => {
 
 // The mock library should only show a rating the site would accept: 0.5-10
 // in steps of 0.5, as RatingSchema in shared/src/schemas/gameLog.ts.
+if (post.tiktok.title.length > 90) {
+  throw new Error("tiktok.title is over the 90 characters TikTok allows");
+}
+
 for (const { slug, rating } of post.cta.library ?? []) {
   if (
     rating !== undefined &&
@@ -174,8 +179,14 @@ await writeFile(
   path.join(outDir, "sheet.html"),
   html.replace("<body>", '<body class="sheet">'),
 );
-if (post.caption)
-  await writeFile(path.join(outDir, "caption.txt"), `${post.caption}\n`);
+await writeFile(
+  path.join(outDir, "posting.md"),
+  postingNotes(post, (html.match(/class="slide /g) ?? []).length),
+);
+await writeFile(
+  path.join(outDir, "description.txt"),
+  `${post.tiktok.description}\n`,
+);
 console.log(`wrote ${path.relative(root, outDir)}/index.html`);
 if (htmlOnly) process.exit(0);
 

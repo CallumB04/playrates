@@ -1,5 +1,21 @@
 {
-  "caption": "Tiny teams, huge games. Which indie deserves the top spot? ✨ Wishlist them on PlayRates, free at playrates.app #indiegames #hades #hollowknight #outerwilds #stardewvalley #gaming #gamingtiktok",
+  "tiktok": {
+    "title": "10 indie masterpieces ✨",
+    "description": "Tiny teams, huge games. Which indie deserves the top spot? Wishlist them on PlayRates, free at playrates.app (link in bio) #indiegames #hades #hollowknight #outerwilds #gaming",
+    "song": {
+      "track": "Travelers",
+      "artist": "Andrew Prahlow",
+      "why": "From Outer Wilds, the #1. Gentle enough to sit under ten slides of reading."
+    },
+    "altSong": {
+      "track": "Resurrections",
+      "artist": "Lena Raine",
+      "why": "Celeste's best-known track, with more drive if Travelers feels too quiet."
+    },
+    "musicSearch": "whimsical, lofi, acoustic",
+    "pinnedComment": "Which indie should have made the list? 👇",
+    "when": "Any day. Leave a few days between this and the other posts rather than posting them together."
+  },
   "order": "countdown",
   "showCriticScore": true,
   "hook": {

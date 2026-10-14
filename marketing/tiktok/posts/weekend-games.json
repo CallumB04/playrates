@@ -1,5 +1,21 @@
 {
-  "caption": "Every one of these takes under ten hours. Which are you starting this weekend? ⏳ Track your backlog on PlayRates, free at playrates.app #shortgames #portal2 #backlog #indiegames #gaming #gamingtiktok #weekendvibes",
+  "tiktok": {
+    "title": "10 great games you can finish in a weekend ⏳",
+    "description": "Every one of these takes under ten hours. Which are you starting this weekend? Track your backlog on PlayRates, free at playrates.app (link in bio) #shortgames #backlog #portal2 #indiegames #gaming",
+    "song": {
+      "track": "Want You Gone",
+      "artist": "Jonathan Coulton",
+      "why": "Portal 2's end-credits song: upbeat, a little funny, and it lands on the #1."
+    },
+    "altSong": {
+      "track": "snowfall",
+      "artist": "øneheart & reidenshi",
+      "why": "Calm and wordless, for a cosier weekend feel."
+    },
+    "musicSearch": "chill, lofi, cosy",
+    "pinnedComment": "What's your favourite game you can finish in a weekend? 👇",
+    "when": "A Friday, so \"this weekend\" means this weekend."
+  },
   "order": "countdown",
   "showCriticScore": true,
   "statIcon": "Clock",

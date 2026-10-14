@@ -9,7 +9,9 @@ npm run tiktok -- marketing/tiktok/posts/best-horror-games.json
 ```
 
 That writes `out/<post>/`: `01-hook.png` … `12-rank-01.png` (1080×1920, in
-upload order), `caption.txt`, and `contact-sheet.png` for checking the set at
+upload order), `posting.md` (title, description, sound, comment to pin, when
+to post and a checklist), `description.txt` for pasting, and
+`contact-sheet.png` for checking the set at
 a glance. `--html` writes only `index.html`, which opens in a browser and is
 quicker while tweaking copy. `out/` is gitignored.
 
@@ -20,6 +22,11 @@ per machine). Art comes from IGDB's CDN, so a post costs no RAWG requests.
 ## Making a new post
 
 Copy `posts/best-horror-games.json` and change:
+
+- `tiktok` — what goes in the app with the slides: `title` (90 characters at
+  most), `description` (keep it to about five hashtags), `song` and
+  `altSong`, `musicSearch` (keywords for the Commercial Music Library, which
+  is all a business account can use), `pinnedComment` and `when`.
 
 - `hook.title`, `cta.title` — wrap one word in `*stars*` to colour it, and
   use `\n` to force a line break if the wrapping strands a word.
