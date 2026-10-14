@@ -1,15 +1,24 @@
 import { Link } from "react-router-dom";
 import { ArrowUp, ArrowUpRight } from "lucide-react";
 import { SiGithub } from "@icons-pack/react-simple-icons";
-import { BRAND_MOTTO, BRAND_NAME } from "../constants/brand";
+import {
+    BRAND_MOTTO,
+    BRAND_NAME,
+    DISCORD_INVITE_URL,
+} from "../constants/brand";
 import { cn } from "../lib/cn";
 
-const COLUMNS = [
+type FooterLink = { label: string } & (
+    { to: string; href?: never } | { href: string; to?: never }
+);
+
+const COLUMNS: { heading: string; links: FooterLink[] }[] = [
     {
         heading: "Explore",
         links: [
             { to: "/library", label: "Library" },
             { to: "/community", label: "Community" },
+            { href: DISCORD_INVITE_URL, label: "Discord" },
         ],
     },
     {
@@ -62,10 +71,25 @@ const Footer = () => (
                             </h2>
                             <ul className="mt-2 flex flex-col">
                                 {column.links.map((link) => (
-                                    <li key={link.to}>
-                                        <Link to={link.to} className={LINK}>
-                                            {link.label}
-                                        </Link>
+                                    <li key={link.to ?? link.href}>
+                                        {link.to ? (
+                                            <Link to={link.to} className={LINK}>
+                                                {link.label}
+                                            </Link>
+                                        ) : (
+                                            <a
+                                                href={link.href}
+                                                target="_blank"
+                                                rel="noreferrer noopener"
+                                                className={cn(LINK, "gap-1.5")}
+                                            >
+                                                {link.label}
+                                                <ArrowUpRight
+                                                    size={13}
+                                                    aria-hidden
+                                                />
+                                            </a>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
