@@ -104,6 +104,17 @@ const localImage = async (url) => {
   return `img/${path.basename(target)}`;
 };
 
+// The mock library should only show a rating the site would accept: 0.5-10
+// in steps of 0.5, as RatingSchema in shared/src/schemas/gameLog.ts.
+for (const { slug, rating } of post.cta.library ?? []) {
+  if (
+    rating !== undefined &&
+    !(rating >= 0.5 && rating <= 10 && Number.isInteger(rating * 2))
+  ) {
+    throw new Error(`${slug}: rating ${rating} isn't 0.5-10 in steps of 0.5`);
+  }
+}
+
 const librarySlugs = (post.cta.library ?? []).map((entry) => entry.slug);
 const rows = await fetchGames([
   ...new Set([...post.games.map((g) => g.slug), ...librarySlugs]),
