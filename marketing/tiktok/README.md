@@ -8,8 +8,9 @@ fills in the rest from the games table.
 npm run tiktok -- marketing/tiktok/posts/best-horror-games.json
 ```
 
-That writes `out/<post>/`: `01-hook.png` … `12-rank-01.png` (1080×1920, in
-upload order), `posting.md` (title, description, sound, comment to pin, when
+That writes `out/<post>/`: `slides/01-hook.png` … `slides/12-rank-01.png`
+(1080×1920, in upload order, alone in their folder so uploading is
+select-all), `posting.md` (title, description, sound, comment to pin, when
 to post and a checklist), `description.txt` for pasting, and
 `contact-sheet.png` for checking the set at
 a glance. `--html` writes only `index.html`, which opens in a browser and is
@@ -19,14 +20,22 @@ It needs `backend/.env` (it reads the games table the same way the backend's
 scripts do) and Playwright's Chromium (`npx playwright install chromium` once
 per machine). Art comes from IGDB's CDN, so a post costs no RAWG requests.
 
+## What's been posted
+
+[`POSTS.md`](POSTS.md) is the checklist: every post in the order it should go
+out, ticked with its date and link once it's live. `/admin/tiktok` on the
+site reads it (and the post files) at build time, with copy buttons for the
+title, description and pinned comment, so posting from a phone is a matter of
+opening that page.
+
 ## Making a new post
 
-Copy `posts/best-horror-games.json` and change:
+Copy `posts/best-horror-games.json`, add it to `POSTS.md`, and change:
 
 - `tiktok` — what goes in the app with the slides: `title` (90 characters at
   most), `description` (keep it to about five hashtags), `song` and
-  `altSong`, `musicSearch` (keywords for the Commercial Music Library, which
-  is all a business account can use), `pinnedComment` and `when`.
+  `altSong`, `musicSearch` (keywords to search for if neither song is
+  available), `pinnedComment` and `when`.
 
 - `hook.title`, `cta.title` — wrap one word in `*stars*` to colour it, and
   use `\n` to force a line break if the wrapping strands a word.

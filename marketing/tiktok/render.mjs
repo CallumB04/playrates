@@ -9,7 +9,14 @@
  * the backend's own scripts are (the table isn't open to the anon key), and
  * from IGDB's image CDN, so a post costs no RAWG requests.
  */
-import { copyFile, mkdir, readFile, writeFile, access } from "node:fs/promises";
+import {
+  access,
+  copyFile,
+  mkdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -118,6 +125,13 @@ for (const { slug, rating } of post.cta.library ?? []) {
   ) {
     throw new Error(`${slug}: rating ${rating} isn't 0.5-10 in steps of 0.5`);
   }
+}
+
+// POSTS.md is the posting checklist the admin page reads; a post left off it
+// shows there as unlisted.
+const checklist = await readFile(path.join(here, "POSTS.md"), "utf8");
+if (!checklist.includes(`(posts/${name}.json)`)) {
+  console.warn(`warning: ${name} isn't on the checklist in POSTS.md`);
 }
 
 const librarySlugs = (post.cta.library ?? []).map((entry) => entry.slug);
@@ -241,11 +255,16 @@ const problems = await page.evaluate(() =>
   }),
 );
 for (const problem of problems) console.warn(`warning: ${problem}`);
+// A folder of nothing but the slides, so uploading is select-all. Cleared
+// first, or a post that loses a slide would still upload the old one.
+const slidesDir = path.join(outDir, "slides");
+await rm(slidesDir, { recursive: true, force: true });
+await mkdir(slidesDir);
 const slides = await page.locator(".slide").all();
 for (const [i, slide] of slides.entries()) {
   const file = `${String(i + 1).padStart(2, "0")}-${await slide.getAttribute("data-name")}.png`;
-  await slide.screenshot({ path: path.join(outDir, file) });
-  console.log(`wrote ${path.relative(root, outDir)}/${file}`);
+  await slide.screenshot({ path: path.join(slidesDir, file) });
+  console.log(`wrote ${path.relative(root, slidesDir)}/${file}`);
 }
 
 await settle("sheet.html");
