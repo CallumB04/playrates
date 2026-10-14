@@ -1,0 +1,67 @@
+{
+  "caption": "Which one still keeps you up at night? 👻 Log every horror game you've played on PlayRates, free at playrates.app #horrorgames #survivalhorror #silenthill2 #residentevil #gaming #gamingtiktok #halloween",
+  "order": "countdown",
+  "showCriticScore": true,
+  "hook": {
+    "kicker": "Ranked",
+    "icon": "Skull",
+    "title": "The 10 best *horror* games ever made",
+    "subtitle": "Turn the lights off for number one."
+  },
+  "cta": {
+    "title": "How many have you *played?*",
+    "body": "Log them on PlayRates. Rate every game, track your backlog and see what friends are playing.",
+    "button": "Join free at playrates.app",
+    "library": [
+      { "slug": "until-dawn", "status": "finished", "rating": 8.5 },
+      { "slug": "dredge", "status": "playing" },
+      { "slug": "signalis", "status": "wishlist" }
+    ]
+  },
+  "games": [
+    {
+      "slug": "silent-hill-2",
+      "blurb": "The one every horror game is still chasing. Twenty-five years on, nothing comes close."
+    },
+    {
+      "slug": "resident-evil-2--1",
+      "developer": "Capcom",
+      "blurb": "Mr. X is somewhere in the police station, and you can hear every single footstep."
+    },
+    {
+      "slug": "resident-evil-7-biohazard",
+      "developer": "Capcom",
+      "banner": "artwork",
+      "blurb": "The Baker family has invited you to dinner. You don't get to say no."
+    },
+    {
+      "slug": "dead-space",
+      "blurb": "Cut off the limbs, not the head. The Ishimura is still the scariest ship in gaming."
+    },
+    {
+      "slug": "alien-isolation",
+      "blurb": "One alien you can't kill, and it learns exactly where you like to hide."
+    },
+    {
+      "slug": "alan-wake-ii",
+      "blurb": "Half detective story, half nightmare, and a writer trapped inside his own book."
+    },
+    {
+      "slug": "amnesia-the-dark-descent",
+      "blurb": "No weapons and no fighting back. Just you, the dark and a lantern running low."
+    },
+    {
+      "slug": "signalis",
+      "blurb": "Survival horror the way the PS1 did it, with a story that stays with you for weeks."
+    },
+    {
+      "slug": "dredge",
+      "blurb": "A cosy fishing game, right up until the fog rolls in and the catch stares back."
+    },
+    {
+      "slug": "until-dawn",
+      "banner": "artwork",
+      "blurb": "Eight friends, one mountain, and every choice you make decides who sees sunrise."
+    }
+  ]
+}

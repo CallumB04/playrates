@@ -20,7 +20,8 @@
         "typecheck": "npm run typecheck -w @playrates/shared && npm run typecheck -w frontend && npm run typecheck -w backend && tsc -p api/tsconfig.json",
         "test": "npm run test -w frontend && npm run test -w backend",
         "test:coverage": "npm run test:coverage -w frontend && npm run test:coverage -w backend",
-        "seed:games": "npm run seed:games -w backend"
+        "seed:games": "npm run seed:games -w backend",
+        "tiktok": "node marketing/tiktok/render.mjs"
     },
     "repository": {
         "type": "git",
@@ -37,6 +38,7 @@
         "node": ">=20.6"
     },
     "devDependencies": {
-        "concurrently": "^9.1.2"
+        "concurrently": "^9.1.2",
+        "playwright": "^1.63.0"
     }
 }

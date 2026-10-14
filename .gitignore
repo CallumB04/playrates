@@ -48,3 +48,6 @@ support.js
 
 # The local stack's data, copied from live and generated from it
 supabase/seed/
+
+# Rendered TikTok slides; the post files are the source
+/marketing/tiktok/out
