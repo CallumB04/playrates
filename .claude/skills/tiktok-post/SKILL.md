@@ -37,6 +37,9 @@ Filter on `igdb_id`, or the query scans the table:
 npx --no-install supabase db query --linked -o csv "select slug, title, release_date, critic_score, igdb_rating_count from games where igdb_id is not null and title ilike '%silent hill%' order by igdb_rating_count desc nulls last"
 ```
 
+If `npx --no-install` refuses because a newer CLI is out, run a cached one
+directly: `~/.npm/_npx/*/node_modules/.bin/supabase`.
+
 Prefer the version with the most ratings. A slug that's missing from the
 table can be imported through the site's admin; don't invent one.
 
@@ -57,6 +60,9 @@ Copy an existing post and change everything. Rules learned the hard way:
 - **`cta.library`** ratings: 0.5–10 in steps of 0.5, as the site allows (the
   renderer refuses anything else). Use games from the bottom of the list so
   the top isn't spoiled.
+- **`tiktok.when`**: the day only, if one suits (a Friday for a weekend
+  list, well before Halloween for horror). Every post goes out at **21:00
+  Estonian time**.
 - Add the post to `POSTS.md` in the order it should go out.
 
 ## 4. Render and check
@@ -103,12 +109,24 @@ Callum opens TikTok in the browser pane. On the upload page, choose the
   character counter before doing anything else. Screenshots can lag behind
   what was typed, and retyping doubles it. To start again: ctrl+a, Delete.
 - **Hashtags**: type each one and click TikTok's exact-match suggestion, so
-  it becomes a real tag.
+  it becomes a real tag. Some tags have no match (`#baldursgate3`,
+  `#shortgames`), and a long tag sometimes gets no list at all: backspace
+  to a short prefix, pick the nearest real tag, and update the post file to
+  match. A tag left as plain text runs into the next one.
 - **Sound**: Add sound, search the track, pick the original artist's
   version, and tell Callum which version you chose so he can preview it.
+- **Schedule** every post for **21:00 Estonian time**, the time zone the
+  picker shows. Unless Callum names a date, take the next day that leaves a
+  day clear after the last scheduled post in `POSTS.md`. In the time picker,
+  click the hour, then keep clicking the topmost minute until 00 shows and
+  click that; scrolling moves one step at a time. Check the inputs read
+  `21:00` and the right date, then note it in `POSTS.md`:
+  `— scheduled 2026-10-22 21:00`.
+- A click that misses can open a photo's preview. Click the dark overlay to
+  close it, not Replace or Delete.
 - Leave **Disclose post content** for Callum to decide. The post promotes
   PlayRates, and TikTok may expect it on with "Your brand".
-- **Stop before Post.** Callum posts it himself.
+- **Stop before Post or Schedule.** Callum presses it himself.
 
 ## 6. After posting
 

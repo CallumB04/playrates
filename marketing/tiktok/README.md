@@ -40,7 +40,8 @@ format), add it to `POSTS.md`, and set:
 - `tiktok` — what goes in the app with the slides: `title` (90 characters at
   most), `description` (keep it to about five hashtags), `song` and
   `altSong`, `musicSearch` (keywords to search for if neither song is
-  available), `pinnedComment` and `when`.
+  available), `pinnedComment` and `when` (the day; every post goes out
+  at 21:00 Estonian time).
 
 - `hook.title`, `cta.title` — wrap one word in `*stars*` to colour it, and
   use `\n` to force a line break if the wrapping strands a word.

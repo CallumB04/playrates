@@ -30,7 +30,7 @@ ${post.tiktok.pinnedComment}
 
 ## When
 
-${post.tiktok.when}
+21:00 Estonian time. ${post.tiktok.when}
 
 ## Checklist
 
