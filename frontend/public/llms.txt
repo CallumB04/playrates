@@ -25,5 +25,6 @@ Each game, profile and thread is at an address of its own, all listed in the sit
 
 - [Sitemap](https://playrates.app/sitemap.xml): every game, thread and fixed page.
 - [Contact](https://playrates.app/contact)
+- [Discord](https://discord.gg/apYMWgjYBa): the PlayRates community server, for chat, bug reports and feature ideas.
 - [Privacy](https://playrates.app/privacy)
 - [Terms](https://playrates.app/terms)

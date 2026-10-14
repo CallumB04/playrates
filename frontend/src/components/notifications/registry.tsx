@@ -23,7 +23,11 @@ import type {
     WelcomeNotification,
 } from "@playrates/shared";
 import Button from "../ui/Button";
-import { BRAND_NAME, BRAND_PITCH } from "../../constants/brand";
+import {
+    BRAND_NAME,
+    BRAND_PITCH,
+    DISCORD_INVITE_URL,
+} from "../../constants/brand";
 import ProfilePicture from "../ProfilePicture";
 import { useFriendRelation } from "../../hooks/queries/useFriends";
 import { usePatchNotification } from "../../hooks/queries/useNotifications";
@@ -72,6 +76,19 @@ const WelcomeContent = ({ onNavigate }: ContentProps<WelcomeNotification>) => (
                     part.text
                 )
             )}
+        </p>
+        <p className={BODY}>
+            Come say hi on the{" "}
+            <a
+                href={DISCORD_INVITE_URL}
+                target="_blank"
+                rel="noreferrer noopener"
+                onClick={onNavigate}
+                className="text-brand underline-offset-2 hover:underline"
+            >
+                PlayRates Discord
+            </a>
+            .
         </p>
     </>
 );
@@ -248,7 +265,11 @@ const AnnouncementContent = ({
                         Test
                     </span>
                 )}
-                <span className={notification.link ? "group-hover:underline" : undefined}>
+                <span
+                    className={
+                        notification.link ? "group-hover:underline" : undefined
+                    }
+                >
                     {notification.title}
                 </span>
             </p>

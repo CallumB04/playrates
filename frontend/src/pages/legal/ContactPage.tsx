@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Mail } from "lucide-react";
 import { CONTACT_EMAIL } from "@playrates/shared";
 import { buttonClass } from "../../components/ui/Button";
+import { DISCORD_INVITE_URL } from "../../constants/brand";
 import ProsePage from "./ProsePage";
 
 const ContactPage = () => (
@@ -31,7 +32,15 @@ const ContactPage = () => (
         <h2>Found a bug?</h2>
         <p>
             Tell me what you were doing and what went wrong. A screenshot helps
-            a lot. If you’re happy using GitHub, you can{" "}
+            a lot. You can also post it in #help-and-bugs on the{" "}
+            <a
+                href={DISCORD_INVITE_URL}
+                target="_blank"
+                rel="noreferrer noopener"
+            >
+                PlayRates Discord
+            </a>
+            , where other players can say if they’ve hit it too, or{" "}
             <a
                 href="https://github.com/CallumB04/playrates/issues"
                 target="_blank"
@@ -39,7 +48,20 @@ const ContactPage = () => (
             >
                 open an issue
             </a>{" "}
-            instead.
+            on GitHub.
+        </p>
+
+        <h2>Got an idea?</h2>
+        <p>
+            Post it in #feature-reqs on the{" "}
+            <a
+                href={DISCORD_INVITE_URL}
+                target="_blank"
+                rel="noreferrer noopener"
+            >
+                Discord
+            </a>
+            , where other players can vote for it, or email me.
         </p>
 
         <h2>Your data</h2>

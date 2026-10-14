@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { PenLine, Plus, Search } from "lucide-react";
+import { SiDiscord } from "@icons-pack/react-simple-icons";
+import { DISCORD_INVITE_URL } from "../../constants/brand";
 import { hasContent, readThreadDraft } from "../../lib/drafts";
 import type { ThreadSort } from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
@@ -17,7 +19,7 @@ import { usePagination } from "../../hooks/usePagination";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useUrlSearchTerm } from "../../hooks/useUrlSearchTerm";
 import { SearchInput } from "../../components/ui/Input";
-import Button from "../../components/ui/Button";
+import Button, { buttonClass } from "../../components/ui/Button";
 import { cardClass } from "../../components/ui/Card";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import Pagination from "../../components/ui/Pagination";
@@ -119,10 +121,27 @@ const CommunityPage = () => {
                     </p>
                 </div>
                 <div className="flex flex-col items-stretch gap-2 sm:items-end">
-                    <Button onClick={startThread} className="w-full sm:w-auto">
-                        <Plus size={16} aria-hidden />
-                        Start a thread
-                    </Button>
+                    <div className="flex flex-col gap-2 sm:flex-row-reverse">
+                        <Button
+                            onClick={startThread}
+                            className="w-full sm:w-auto"
+                        >
+                            <Plus size={16} aria-hidden />
+                            Start a thread
+                        </Button>
+                        <a
+                            href={DISCORD_INVITE_URL}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className={buttonClass(
+                                "secondary",
+                                "w-full sm:w-auto"
+                            )}
+                        >
+                            <SiDiscord size={16} aria-hidden />
+                            Join the Discord
+                        </a>
+                    </div>
                     {/* An unfinished thread is easier to come back to when it's
                         pointed at, right where a new one would start. */}
                     {draft && (
