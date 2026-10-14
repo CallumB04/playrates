@@ -51,6 +51,9 @@ const fetchGames = async (slugs) => {
     "slug,title,release_date,critic_score,developers,box_art_url,cover_url,banner_url",
   );
   url.searchParams.set("slug", `in.(${slugs.join(",")})`);
+  // The slug index is partial on igdb_id; without this the lookup scans the
+  // whole table and can hit the statement timeout.
+  url.searchParams.set("igdb_id", "not.is.null");
   const response = await fetch(url, {
     headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
   });
@@ -124,6 +127,7 @@ const toGame = async (slug, extra = {}) => {
     releaseDate: row.release_date,
     criticScore: row.critic_score,
     developer: extra.developer ?? row.developers?.[0],
+    stat: extra.stat,
     blurb: extra.blurb ?? "",
     bannerPosition: extra.bannerPosition ?? "center",
     cover: await localImage(cover),
@@ -179,6 +183,42 @@ const settle = async (file) => {
 };
 
 await settle("index.html");
+
+/** What the contact sheet is too small to show: copy that runs out of the
+ *  safe area or under the rail, a name cut to an ellipsis, a blurb that wraps
+ *  to a third line. Each is fixed in the post, with shorter copy or an
+ *  override. */
+const problems = await page.evaluate(() =>
+  [...document.querySelectorAll(".slide")].flatMap((slide) => {
+    const name = slide.dataset.name;
+    const box = slide.getBoundingClientRect();
+    const style = getComputedStyle(slide);
+    const bottom = box.bottom - parseFloat(style.paddingBottom);
+    const right = box.right - parseFloat(style.paddingRight);
+    const found = [];
+    for (const el of slide.querySelectorAll(
+      ".brand, .hook-copy > *, .cta > *, .game-body > *, .rank",
+    )) {
+      const r = el.getBoundingClientRect();
+      if (r.bottom > bottom + 1)
+        found.push(`${name}: runs into the caption area`);
+      if (r.right > right + 1)
+        found.push(`${name}: runs under the right-hand rail`);
+    }
+    for (const el of slide.querySelectorAll(".dev, .row-title")) {
+      if (el.scrollWidth > el.clientWidth)
+        found.push(`${name}: "${el.textContent}" is cut off`);
+    }
+    for (const el of slide.querySelectorAll(".blurb")) {
+      const lines = Math.round(
+        el.clientHeight / parseFloat(getComputedStyle(el).lineHeight),
+      );
+      if (lines > 2) found.push(`${name}: blurb runs to ${lines} lines`);
+    }
+    return [...new Set(found)];
+  }),
+);
+for (const problem of problems) console.warn(`warning: ${problem}`);
 const slides = await page.locator(".slide").all();
 for (const [i, slide] of slides.entries()) {
   const file = `${String(i + 1).padStart(2, "0")}-${await slide.getAttribute("data-name")}.png`;

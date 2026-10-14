@@ -21,7 +21,8 @@ per machine). Art comes from IGDB's CDN, so a post costs no RAWG requests.
 
 Copy `posts/best-horror-games.json` and change:
 
-- `hook.title`, `cta.title` — wrap one word in `*stars*` to colour it.
+- `hook.title`, `cta.title` — wrap one word in `*stars*` to colour it, and
+  use `\n` to force a line break if the wrapping strands a word.
 - `hook.icon` — any [Lucide](https://lucide.dev/icons) name, e.g. `Swords`
   for RPGs, `Skull` for horror. Defaults to `Trophy`.
 - `games` — **#1 first**, by slug. Remakes and ports share a title, so look
@@ -46,6 +47,19 @@ characters):
 - `bannerPosition` — CSS `background-position`, if the crop misses.
 - `title`, `developer`, `cover` — overrides for when the stored value reads
   badly (`"developer": "Capcom"` rather than "Capcom Development Division 1").
+  A `cta.library` entry takes a `title` too, for a name too long for its row.
+- `stat` — a short figure shown with an icon in the details line, like
+  `"~8h"` for the weekend post; set the post's `statIcon` to a Lucide name
+  (default `Clock`).
+
+To find a better banner than the stored one, list the game's IGDB screenshots
+with the credentials in `backend/.env` (`POST https://api.igdb.com/v4/screenshots`,
+body `fields image_id; where game = <igdb_id>;`) and use an `image_id`.
+
+The script warns about anything it can measure: copy running into the caption
+area or under the rail, a name cut to an ellipsis, a blurb past two lines. A
+clean run prints no warnings; the contact sheet is for everything else (HUDs,
+letterboxing, logo-only artwork, a crop that misses).
 
 ## Layout rules
 

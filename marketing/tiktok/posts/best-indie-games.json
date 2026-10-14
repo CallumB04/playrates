@@ -1,0 +1,75 @@
+{
+  "caption": "Tiny teams, huge games. Which indie deserves the top spot? ✨ Wishlist them on PlayRates, free at playrates.app #indiegames #hades #hollowknight #outerwilds #stardewvalley #gaming #gamingtiktok",
+  "order": "countdown",
+  "showCriticScore": true,
+  "hook": {
+    "kicker": "Ranked",
+    "icon": "Sparkles",
+    "title": "10 *indie* masterpieces",
+    "subtitle": "Tiny teams, no blockbuster budgets, and they still put AAA to shame."
+  },
+  "cta": {
+    "title": "Found your next *favourite?*",
+    "body": "Wishlist it on PlayRates, rate the ones you've played and see what your friends are loving.",
+    "button": "Join free at playrates.app",
+    "library": [
+      {
+        "slug": "cuphead",
+        "status": "finished",
+        "rating": 8.5
+      },
+      {
+        "slug": "slay-the-spire",
+        "status": "playing"
+      },
+      {
+        "slug": "return-of-the-obra-dinn",
+        "status": "wishlist"
+      }
+    ]
+  },
+  "games": [
+    {
+      "slug": "outer-wilds",
+      "blurb": "A solar system that ends every 22 minutes, and a mystery you'll never forget."
+    },
+    {
+      "slug": "hades--1",
+      "blurb": "Die, go home, try again. Supergiant made failing feel like the best part."
+    },
+    {
+      "slug": "hollow-knight",
+      "blurb": "Three developers built a haunted kingdom that rivals anything Nintendo makes."
+    },
+    {
+      "slug": "stardew-valley",
+      "blurb": "One developer, four years of work, and the farming game that takes over your life."
+    },
+    {
+      "slug": "celeste",
+      "blurb": "A brutally hard platformer with the kindest heart in gaming."
+    },
+    {
+      "slug": "balatro",
+      "blurb": "Poker, but you get to break the rules. One more run turns into 3am, every time."
+    },
+    {
+      "slug": "undertale",
+      "banner": "artwork",
+      "blurb": "The RPG where you never have to fight anyone, and it remembers if you do."
+    },
+    {
+      "slug": "slay-the-spire",
+      "banner": "artwork",
+      "blurb": "The deckbuilder that started a genre. No two climbs ever play out the same."
+    },
+    {
+      "slug": "return-of-the-obra-dinn",
+      "blurb": "Sixty souls, one ghost ship and a pocket watch. Detective work at its very best."
+    },
+    {
+      "slug": "cuphead",
+      "blurb": "Hand-drawn like a 1930s cartoon, with every single boss out to ruin your day."
+    }
+  ]
+}

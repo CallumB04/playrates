@@ -133,8 +133,8 @@ em {
       180deg,
       rgba(15, 14, 18, 0.7) 0%,
       rgba(15, 14, 18, 0.1) 16%,
-      rgba(15, 14, 18, 0.25) 34%,
-      var(--surface) 62%
+      rgba(15, 14, 18, 0.35) 34%,
+      var(--surface) 58%
     ),
     radial-gradient(
       ellipse 90% 40% at 0% 72%,
@@ -213,8 +213,8 @@ em {
     var(--surface);
 }
 .cta h2 {
-  margin-top: 84px;
-  font-size: 112px;
+  margin-top: 72px;
+  font-size: 104px;
   font-weight: 700;
   line-height: 0.96;
   letter-spacing: -0.045em;
@@ -230,6 +230,7 @@ em {
 }
 
 .library {
+  flex: none;
   margin-top: 52px;
   margin-bottom: 48px;
   padding: 14px 36px;
@@ -244,13 +245,13 @@ em {
   display: flex;
   align-items: center;
   gap: 32px;
-  padding: 22px 0;
+  padding: 18px 0;
 }
 .row + .row {
   border-top: 2px solid rgba(255, 255, 255, 0.06);
 }
 .row img {
-  width: 108px;
+  width: 96px;
   aspect-ratio: 264 / 374;
   object-fit: cover;
   border-radius: 12px;
@@ -306,6 +307,7 @@ em {
 }
 
 .button {
+  flex: none;
   margin-top: auto;
   align-self: stretch;
   display: flex;
@@ -364,7 +366,7 @@ em {
 .lead {
   display: flex;
   align-items: flex-end;
-  gap: 44px;
+  gap: 32px;
 }
 .box {
   flex: none;
@@ -429,6 +431,18 @@ em {
 .meta .dev {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  color: var(--content);
+}
+.stat svg {
+  width: 34px;
+  height: 34px;
+  color: var(--iris-400);
 }
 .critic {
   display: inline-flex;

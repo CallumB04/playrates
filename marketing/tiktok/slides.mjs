@@ -31,8 +31,12 @@ const escape = (text) =>
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
 
-/** `*word*` marks the one word a headline leans on. */
-const headline = (text) => escape(text).replace(/\*(.+?)\*/g, "<em>$1</em>");
+/** `*word*` marks the one word a headline leans on; `\n` forces a break
+ *  where the browser's own wrapping strands a word. */
+const headline = (text) =>
+  escape(text)
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replaceAll("\n", "<br>");
 
 const brand = `<div class="brand">${logo}PlayRates</div>`;
 
@@ -65,11 +69,11 @@ const hookSlide = (hook, games) => `
     </div>
 </section>`;
 
-const libraryRow = ({ game, status, rating }) => `
+const libraryRow = ({ game, title, status, rating }) => `
 <div class="row">
     <img src="${game.cover}" alt="">
     <div class="row-main">
-        <div class="row-title">${escape(game.title)}</div>
+        <div class="row-title">${escape(title ?? game.title)}</div>
         ${chip(status)}
     </div>
     ${
@@ -88,11 +92,13 @@ const ctaSlide = (cta, library) => `
     <div class="button">${escape(cta.button)} ${icon(ArrowRight)}</div>
 </section>`;
 
-const gameSlide = (game, rank, { showCriticScore }) => {
+const gameSlide = (game, rank, { showCriticScore, statIcon }) => {
   const year = game.releaseDate?.slice(0, 4);
   const meta = [
     year && `<span class="mono">${year}</span>`,
     game.developer && `<span class="dev">${escape(game.developer)}</span>`,
+    game.stat &&
+      `<span class="stat">${icon(Lucide[statIcon ?? "Clock"])}<span class="mono">${escape(game.stat)}</span></span>`,
   ].filter(Boolean);
   const critic =
     showCriticScore && game.criticScore !== null
