@@ -44,8 +44,6 @@ format), add it to `POSTS.md`, and set:
 
 - `hook.title`, `cta.title` — wrap one word in `*stars*` to colour it, and
   use `\n` to force a line break if the wrapping strands a word.
-- `hook.icon` — any [Lucide](https://lucide.dev/icons) name, e.g. `Swords`
-  for RPGs, `Skull` for horror. Defaults to `Trophy`.
 - `games` — **#1 first**, by slug. Remakes and ports share a title, so look
   the slug up rather than guessing it (`resident-evil-2--1` is the 2019
   remake):

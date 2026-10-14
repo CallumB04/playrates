@@ -148,24 +148,7 @@ em {
   flex-direction: column;
   align-items: flex-start;
 }
-.kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 26px 12px 20px;
-  border-radius: 999px;
-  border: 2px solid color-mix(in srgb, var(--iris-500) 60%, transparent);
-  background: color-mix(in srgb, var(--iris-500) 18%, transparent);
-  color: var(--iris-300);
-  font-size: 32px;
-  font-weight: 600;
-}
-.kicker svg {
-  width: 32px;
-  height: 32px;
-}
 .hook h1 {
-  margin-top: 36px;
   font-size: 132px;
   font-weight: 700;
   line-height: 0.95;

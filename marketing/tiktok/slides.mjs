@@ -62,7 +62,6 @@ const hookSlide = (hook, games) => `
     <div class="shade"></div>
     ${brand}
     <div class="hook-copy">
-        <span class="kicker">${icon(Lucide[hook.icon ?? "Trophy"])}${escape(hook.kicker)}</span>
         <h1>${headline(hook.title)}</h1>
         ${hook.subtitle ? `<p>${headline(hook.subtitle)}</p>` : ""}
         <span class="swipe">Swipe ${icon(ArrowRight)}</span>
