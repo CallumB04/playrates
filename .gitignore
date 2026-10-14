@@ -49,5 +49,8 @@ support.js
 # The local stack's data, copied from live and generated from it
 supabase/seed/
 
-# Rendered TikTok slides; the post files are the source
+# TikTok posts are kept on the machine that makes them, not in the repo: the
+# generator is shared, the post files, their checklist and the slides aren't
 /marketing/tiktok/out
+/marketing/tiktok/posts
+/marketing/tiktok/POSTS.md

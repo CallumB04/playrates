@@ -2,7 +2,10 @@
 
 Ranked-list photo posts in the site's own design: a hook, a sign-up slide,
 then one slide per game. Each post is a JSON file in `posts/`; the script
-fills in the rest from the games table.
+fills in the rest from the games table. The post files and their checklist,
+`POSTS.md`, live only on the machine that makes them (they're gitignored);
+the generator is what's shared. The `/tiktok-post` skill walks through making
+one end to end.
 
 ```bash
 npm run tiktok -- marketing/tiktok/posts/best-horror-games.json
@@ -22,15 +25,17 @@ per machine). Art comes from IGDB's CDN, so a post costs no RAWG requests.
 
 ## What's been posted
 
-[`POSTS.md`](POSTS.md) is the checklist: every post in the order it should go
-out, ticked with its date and link once it's live. `/admin/tiktok` on the
-site reads it (and the post files) at build time, with copy buttons for the
-title, description and pinned comment, so posting from a phone is a matter of
-opening that page.
+`POSTS.md`, beside `posts/`, is the checklist: every post in the order it
+should go out, ticked with its date and link once it's live:
+
+    - [x] [best-horror-games](posts/best-horror-games.json) — 2026-10-14 — https://www.tiktok.com/@playratesapp/photo/…
+
+`npm run tiktok` warns about a post that isn't on it.
 
 ## Making a new post
 
-Copy `posts/best-horror-games.json`, add it to `POSTS.md`, and change:
+Start from an existing post in `posts/` (the fields below are the whole
+format), add it to `POSTS.md`, and set:
 
 - `tiktok` — what goes in the app with the slides: `title` (90 characters at
   most), `description` (keep it to about five hashtags), `song` and

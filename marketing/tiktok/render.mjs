@@ -127,9 +127,11 @@ for (const { slug, rating } of post.cta.library ?? []) {
   }
 }
 
-// POSTS.md is the posting checklist the admin page reads; a post left off it
-// shows there as unlisted.
-const checklist = await readFile(path.join(here, "POSTS.md"), "utf8");
+// POSTS.md is the posting checklist, kept locally beside the posts. A post
+// left off it is easy to forget to post.
+const checklist = await readFile(path.join(here, "POSTS.md"), "utf8").catch(
+  () => "",
+);
 if (!checklist.includes(`(posts/${name}.json)`)) {
   console.warn(`warning: ${name} isn't on the checklist in POSTS.md`);
 }
