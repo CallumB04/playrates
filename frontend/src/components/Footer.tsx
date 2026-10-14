@@ -5,6 +5,7 @@ import {
     BRAND_MOTTO,
     BRAND_NAME,
     DISCORD_INVITE_URL,
+    TIKTOK_URL,
 } from "../constants/brand";
 import { cn } from "../lib/cn";
 
@@ -19,6 +20,7 @@ const COLUMNS: { heading: string; links: FooterLink[] }[] = [
             { to: "/library", label: "Library" },
             { to: "/community", label: "Community" },
             { href: DISCORD_INVITE_URL, label: "Discord" },
+            { href: TIKTOK_URL, label: "TikTok" },
         ],
     },
     {
