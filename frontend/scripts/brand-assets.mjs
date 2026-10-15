@@ -144,7 +144,10 @@ const card = async () => {
 /** 2800x400, exactly 7:1, the header of the project's card on a portfolio.
  *  The details sit on the card below it, so it carries only the name. */
 const banner = async () => {
-    const mark = `data:image/svg+xml;base64,${Buffer.from(favicon).toString("base64")}`;
+    // The mark inverted: on a field of the brand colour, the tile goes white.
+    const inverted = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+        <rect width="64" height="64" rx="14" fill="${TEXT}"/>${glyph.replace('fill="#fff"', `fill="${IRIS}"`)}</svg>`;
+    const mark = `data:image/svg+xml;base64,${Buffer.from(inverted).toString("base64")}`;
 
     const tree = el(
         "div",
@@ -154,21 +157,14 @@ const banner = async () => {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 28,
-            backgroundColor: INK,
-            backgroundImage: [
-                `radial-gradient(circle at 50% 0%, ${IRIS}55 0%, transparent 45%)`,
-                `radial-gradient(circle at 100% 100%, ${EMBER}1f 0%, transparent 30%)`,
-            ].join(", "),
+            gap: 24,
+            backgroundImage: `linear-gradient(180deg, ${IRIS} 0%, ${IRIS} 35%, #2e1d6e 100%)`,
             fontFamily: "Geist",
             color: TEXT,
         },
         [
             el("div", { alignItems: "center", gap: 44 }, [
-                {
-                    type: "img",
-                    props: { src: mark, width: 140, height: 140, style: { borderRadius: 32 } },
-                },
+                { type: "img", props: { src: mark, width: 136, height: 136 } },
                 el(
                     "div",
                     { fontSize: 136, fontWeight: 700, letterSpacing: -5, lineHeight: 1 },
@@ -177,7 +173,7 @@ const banner = async () => {
             ]),
             el(
                 "div",
-                { fontSize: 44, fontWeight: 500, color: TEXT_MUTED, letterSpacing: -0.5 },
+                { fontSize: 44, fontWeight: 500, color: `${TEXT}b3`, letterSpacing: -0.5 },
                 "playrates.app"
             ),
         ]
