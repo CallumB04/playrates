@@ -141,9 +141,8 @@ const card = async () => {
     return png(svg, 1200);
 };
 
-/** 2800x400, exactly 7:1, for the project strip on a portfolio. A strip this
- *  thin is shown a few hundred pixels tall at most, so it carries the name,
- *  the motto and nothing that needs reading closely. */
+/** 2800x400, exactly 7:1, the header of the project's card on a portfolio.
+ *  The details sit on the card below it, so it carries only the name. */
 const banner = async () => {
     const mark = `data:image/svg+xml;base64,${Buffer.from(favicon).toString("base64")}`;
 
@@ -152,46 +151,35 @@ const banner = async () => {
         {
             width: 2800,
             height: 400,
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "space-between",
-            padding: "0 160px",
+            justifyContent: "center",
+            gap: 28,
             backgroundColor: INK,
             backgroundImage: [
-                `radial-gradient(circle at 6% 0%, ${IRIS}66 0%, transparent 38%)`,
-                `radial-gradient(circle at 100% 100%, ${EMBER}26 0%, transparent 30%)`,
+                `radial-gradient(circle at 50% 0%, ${IRIS}55 0%, transparent 45%)`,
+                `radial-gradient(circle at 100% 100%, ${EMBER}1f 0%, transparent 30%)`,
             ].join(", "),
             fontFamily: "Geist",
             color: TEXT,
         },
         [
-            el("div", { alignItems: "center", gap: 56 }, [
+            el("div", { alignItems: "center", gap: 44 }, [
                 {
                     type: "img",
-                    props: { src: mark, width: 168, height: 168, style: { borderRadius: 38 } },
+                    props: { src: mark, width: 140, height: 140, style: { borderRadius: 32 } },
                 },
                 el(
                     "div",
-                    { fontSize: 156, fontWeight: 700, letterSpacing: -6, lineHeight: 1 },
+                    { fontSize: 136, fontWeight: 700, letterSpacing: -5, lineHeight: 1 },
                     "PlayRates"
                 ),
-                el("div", { width: 3, height: 140, backgroundColor: `${TEXT_MUTED}66`, marginLeft: 24 }, []),
-                el(
-                    "div",
-                    { flexDirection: "column", marginLeft: 24, gap: 12 },
-                    [
-                        el("div", { fontSize: 60, fontWeight: 500, color: TEXT_SOFT, letterSpacing: -1.5 }, MOTTO),
-                        el("div", { fontSize: 40, fontWeight: 500, color: TEXT_MUTED, letterSpacing: -0.5 }, "Video game tracker"),
-                    ]
-                ),
             ]),
-            el("div", { alignItems: "center", gap: 28, fontSize: 44, color: TEXT_MUTED }, [
-                el("div", {}, "playrates.app"),
-                el("div", { gap: 14 }, [
-                    el("div", { width: 18, height: 18, borderRadius: 9, backgroundColor: IRIS_BRIGHT }, []),
-                    el("div", { width: 18, height: 18, borderRadius: 9, backgroundColor: EMBER }, []),
-                    el("div", { width: 18, height: 18, borderRadius: 9, backgroundColor: TEXT_MUTED }, []),
-                ]),
-            ]),
+            el(
+                "div",
+                { fontSize: 44, fontWeight: 500, color: TEXT_MUTED, letterSpacing: -0.5 },
+                "playrates.app"
+            ),
         ]
     );
 
