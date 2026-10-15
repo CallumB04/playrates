@@ -141,6 +141,71 @@ const card = async () => {
     return png(svg, 1200);
 };
 
+/** 2800x400, exactly 7:1, for the project strip on a portfolio. A strip this
+ *  thin is shown a few hundred pixels tall at most, so it carries the name,
+ *  the motto and nothing that needs reading closely. */
+const banner = async () => {
+    const mark = `data:image/svg+xml;base64,${Buffer.from(favicon).toString("base64")}`;
+
+    const tree = el(
+        "div",
+        {
+            width: 2800,
+            height: 400,
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 160px",
+            backgroundColor: INK,
+            backgroundImage: [
+                `radial-gradient(circle at 6% 0%, ${IRIS}66 0%, transparent 38%)`,
+                `radial-gradient(circle at 100% 100%, ${EMBER}26 0%, transparent 30%)`,
+            ].join(", "),
+            fontFamily: "Geist",
+            color: TEXT,
+        },
+        [
+            el("div", { alignItems: "center", gap: 56 }, [
+                {
+                    type: "img",
+                    props: { src: mark, width: 168, height: 168, style: { borderRadius: 38 } },
+                },
+                el(
+                    "div",
+                    { fontSize: 156, fontWeight: 700, letterSpacing: -6, lineHeight: 1 },
+                    "PlayRates"
+                ),
+                el("div", { width: 3, height: 140, backgroundColor: `${TEXT_MUTED}66`, marginLeft: 24 }, []),
+                el(
+                    "div",
+                    { flexDirection: "column", marginLeft: 24, gap: 12 },
+                    [
+                        el("div", { fontSize: 60, fontWeight: 500, color: TEXT_SOFT, letterSpacing: -1.5 }, MOTTO),
+                        el("div", { fontSize: 40, fontWeight: 500, color: TEXT_MUTED, letterSpacing: -0.5 }, "Video game tracker"),
+                    ]
+                ),
+            ]),
+            el("div", { alignItems: "center", gap: 28, fontSize: 44, color: TEXT_MUTED }, [
+                el("div", {}, "playrates.app"),
+                el("div", { gap: 14 }, [
+                    el("div", { width: 18, height: 18, borderRadius: 9, backgroundColor: IRIS_BRIGHT }, []),
+                    el("div", { width: 18, height: 18, borderRadius: 9, backgroundColor: EMBER }, []),
+                    el("div", { width: 18, height: 18, borderRadius: 9, backgroundColor: TEXT_MUTED }, []),
+                ]),
+            ]),
+        ]
+    );
+
+    const svg = await satori(tree, {
+        width: 2800,
+        height: 400,
+        fonts: [
+            { name: "Geist", data: await font(500), weight: 500, style: "normal" },
+            { name: "Geist", data: await font(700), weight: 700, style: "normal" },
+        ],
+    });
+    return png(svg, 2800);
+};
+
 /** The glyph on a full square. Maskable icons are cropped to a circle or a
  *  squircle by the phone, so the glyph keeps to the middle 60%. */
 const squareIcon = (glyphScale) => {
@@ -188,7 +253,12 @@ for (const [name, data] of Object.entries(outputs)) {
     console.log(`wrote public/${name} (${Math.round(data.length / 1024)} KB)`);
 }
 
-// Not served by the site; uploaded by hand as the Discord and TikTok picture.
-const avatarPng = png(avatar, 1024);
-await writeFile(path.join(here, "../../marketing/avatar.png"), avatarPng);
-console.log(`wrote marketing/avatar.png (${Math.round(avatarPng.length / 1024)} KB)`);
+// Not served by the site; uploaded by hand to Discord, TikTok and the portfolio.
+const marketing = {
+    "avatar.png": png(avatar, 1024),
+    "portfolio-banner.png": await banner(),
+};
+for (const [name, data] of Object.entries(marketing)) {
+    await writeFile(path.join(here, "../../marketing", name), data);
+    console.log(`wrote marketing/${name} (${Math.round(data.length / 1024)} KB)`);
+}
