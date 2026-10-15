@@ -1,7 +1,7 @@
 /**
  * Draws the pictures the site hands to other apps: the link-preview card,
  * the home-screen icons and favicon.ico. Run it after changing the logo, the motto or
- * the palette, and commit what it writes to public/.
+ * the palette, and commit what it writes to public/ and marketing/.
  *
  *   node scripts/brand-assets.mjs
  */
@@ -171,6 +171,10 @@ const ico = (sizes) => {
     return Buffer.concat([header, ...images]);
 };
 
+/* Discord and TikTok crop the picture to a circle and show it far larger than
+   a tab does, where the favicon's edge-to-edge glyph reads as shouting. */
+const avatar = squareIcon(0.7);
+
 const outputs = {
     "og-default.png": await card(),
     "favicon.ico": ico([16, 32, 48]),
@@ -183,3 +187,8 @@ for (const [name, data] of Object.entries(outputs)) {
     await writeFile(path.join(publicDir, name), data);
     console.log(`wrote public/${name} (${Math.round(data.length / 1024)} KB)`);
 }
+
+// Not served by the site; uploaded by hand as the Discord and TikTok picture.
+const avatarPng = png(avatar, 1024);
+await writeFile(path.join(here, "../../marketing/avatar.png"), avatarPng);
+console.log(`wrote marketing/avatar.png (${Math.round(avatarPng.length / 1024)} KB)`);
