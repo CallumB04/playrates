@@ -158,7 +158,8 @@ const banner = async () => {
             alignItems: "center",
             justifyContent: "center",
             gap: 24,
-            backgroundImage: `linear-gradient(180deg, ${IRIS} 0%, ${IRIS} 35%, #2e1d6e 100%)`,
+            // Flat: the portfolio lays its own shade over the bottom of the card.
+            backgroundColor: IRIS,
             fontFamily: "Geist",
             color: TEXT,
         },
