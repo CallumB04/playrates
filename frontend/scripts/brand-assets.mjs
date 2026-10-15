@@ -173,7 +173,7 @@ const ico = (sizes) => {
 
 /* Discord and TikTok crop the picture to a circle and show it far larger than
    a tab does, where the favicon's edge-to-edge glyph reads as shouting. */
-const avatar = squareIcon(0.7);
+const avatar = squareIcon(0.8);
 
 const outputs = {
     "og-default.png": await card(),
