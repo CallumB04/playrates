@@ -1,27 +1,31 @@
-# TikTok slideshows
+# TikTok posts
 
-Photo posts in the site's own design, in one of five formats: every one has
-a hook, then a sign-up slide, then the format's own slides. Each post is a
-JSON file in `posts/`; the script fills in the rest from the games table. The post files and their checklist,
-`POSTS.md`, live only on the machine that makes them (they're gitignored);
-the generator is what's shared. The `/tiktok-post` skill walks through making
-one end to end.
+Posts for @playratesapp in the site's own design, in one of seven formats:
+five photo slideshows and two quiz videos. Each post is a JSON file in
+`posts/`; the script fills in the rest from the games table. The post files
+and their checklist, `POSTS.md`, live only on the machine that makes them
+(they're gitignored); the generator is what's shared. The `/tiktok-post`
+skill walks through making one end to end.
 
 ```bash
 npm run tiktok -- marketing/tiktok/posts/best-horror-games.json
+npm run tiktok:next     # every post so far, and a suggestion for the next
+npm run test:tiktok     # the date and scheduling logic
 ```
 
-That writes `out/<post>/`: `slides/01-hook.png` onwards (1080×1920, in
-upload order, alone in their folder so uploading is
-select-all), `posting.md` (title, description, sound, comment to pin, when
-to post and a checklist), `description.txt` for pasting, and
-`contact-sheet.png` for checking the set at
-a glance. `--html` writes only `index.html`, which opens in a browser and is
-quicker while tweaking copy. `out/` is gitignored.
+For a photo post that writes `out/<post>/`: `slides/01-hook.png` onwards
+(1080×1920, in upload order, alone in their folder so uploading is
+select-all), `contact-sheet.png` for checking the set at a glance,
+`posting.md` (title, description, sound, comment to pin, when to post and a
+checklist) and `description.txt` for pasting. A video post writes
+`video.mp4` and `cover.png` instead of the slides and contact sheet.
+`--html` writes only `index.html`, which opens in a browser and is quicker
+while tweaking copy. `out/` is gitignored.
 
 It needs `backend/.env` (it reads the games table the same way the backend's
-scripts do) and Playwright's Chromium (`npx playwright install chromium` once
-per machine). Art comes from IGDB's CDN, so a post costs no RAWG requests.
+scripts do), Playwright's Chromium (`npx playwright install chromium` once
+per machine) and, for videos, ffmpeg. Art comes from IGDB's CDN, so a post
+costs no RAWG requests.
 
 ## Formats
 
@@ -33,12 +37,16 @@ random format of that kind other than the one it used last. The skill
 treats it as a starting point and picks what suits the day. A format added
 to `formats/index.mjs` joins the rotation.
 
+Every photo post opens on a hook, then the sign-up slide (`cta`, below),
+then the format's own slides:
+
 - **`ranked`** — `games`, #1 first, one slide each. The original format;
   everything under "Making a new post" below.
 - **`hottake`** — a claim and ten games that make the case, counted down.
-  `hook`: `mark` (a year or name, cut out of `art`, a game entry), `take`,
-  `kicker`, optional `stamp`. Each game's blurb is set as a pull quote (three
-  lines allowed) over an empty rating meter. `outro`: `title`, `games` (one
+  `hook`: `mark` (a year or name, set solid across the art of `art`, a game
+  entry), `take`, `kicker`, and an optional `label` in place of "Hot
+  take". Each game's blurb is set as a pull quote (three lines allowed)
+  over an empty rating meter. `outro`: `title`, `games` (one
   to four covers of what the take left out), `body`, and `rate` (a game with
   a `rating` and `label` for the meter on the last slide).
 - **`pairs`** — "if you liked this, play that". `pairs`: six of
@@ -55,8 +63,9 @@ to `formats/index.mjs` joins the rotation.
   `short` shortens a title for the hook's timeline and the outro's list.
 
 Two formats are videos. They render to `out/<post>/video.mp4` (and a
-`cover.png` still) instead of slides, recorded frame by frame from the page,
-silent, with the sound added in TikTok. They need ffmpeg on the PATH.
+`cover.png` still) instead of slides, recorded frame by frame from the page
+(`record.mjs`), silent, with the sound added in TikTok. They take no `cta`:
+an intro card states the quiz and an outro card makes the pitch.
 
 - **`guess`** — `rounds`: eight game entries, easiest first, each with a
   `banner` IGDB screenshot id. The screenshot starts as large blocks and
@@ -81,13 +90,16 @@ should go out, ticked with its date and link once it's live:
 
     - [x] [best-horror-games](posts/best-horror-games.json) — 2026-10-14 — https://www.tiktok.com/@playratesapp/photo/…
 
-`npm run tiktok` warns about a post that isn't on it. Dates on a line, posted
-or planned, are what `npm run tiktok:next` treats as taken.
+`npm run tiktok` warns about a post that isn't on it. A line scheduled in
+TikTok but not live yet ends `— scheduled 2026-10-22 21:00`. Dates on a
+line, posted or planned, are what `npm run tiktok:next` treats as taken; an
+indented line is an example and isn't read.
 
 ## Making a new post
 
-Start from an existing post in `posts/` (the fields below are the whole
-format), add it to `POSTS.md`, and set:
+Start from an existing post of the same format in `posts/`, add it to
+`POSTS.md`, and set the fields below; for a ranked post they're the whole
+format, and the others share them:
 
 - `tiktok` — what goes in the app with the slides: `title` (90 characters at
   most), `description` (keep it to about five hashtags), `song` and
@@ -100,7 +112,8 @@ format), add it to `POSTS.md`, and set:
 - `games` — **#1 first**, by slug. Remakes and ports share a title, so look
   the slug up rather than guessing it (`resident-evil-2--1` is the 2019
   remake):
-  `npx supabase db query --linked "select slug, title, release_date from games where title ilike '%resident evil 2%'"`.
+  `npx --no-install supabase db query --linked -o csv "select slug, title, release_date from games where igdb_id is not null and title ilike '%resident evil 2%'"`
+  (the `igdb_id` filter keeps it on the slug index rather than a full scan).
   `order: "countdown"` shows #10 first so the reveal is the last swipe;
   `"ranked"` shows #1 first.
 - `cta.library` — the three games in the mock library on slide 2, with a
@@ -139,7 +152,7 @@ What reads as made by a person rather than generated, learned from posts
 that didn't:
 
 - **No outlined, tinted pills.** A status is its mark and word in the status
-  hue (`statusMark`, the site's `StatusBadge plain`); a game slide ends on
+  hue (`statusMark`, like the site's `StatusBadge`); a game slide ends on
   `footer()`, an action and the address under a hairline. A row of pills
   reads as stickers.
 - **The button is light on dark**: near-white fill, dark text, the arrow in

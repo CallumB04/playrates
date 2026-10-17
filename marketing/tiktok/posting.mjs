@@ -6,16 +6,23 @@ const song = ({ track, artist, why }) => `**${track}** by ${artist}. ${why}`;
  */
 export const postingNotes = (post, slideCount, video = false) => {
   const { title, description, song: first, altSong, musicSearch } = post.tiktok;
-  return `# ${title}
+  // A video has no title field in TikTok: both go in the caption.
+  const copy = video
+    ? `## Caption
 
-## Title
+${title} ${description}
+`
+    : `## Title
 
 ${title}
 
 ## Description
 
 ${description}
+`;
+  return `# ${title}
 
+${copy}
 ## Sound
 
 - ${song(first)}
@@ -34,8 +41,8 @@ ${post.tiktok.pinnedComment}
 
 ## Checklist
 
-${video ? "- [ ] Upload video.mp4 on the Videos tab, and pick its cover frame." : `- [ ] Upload all ${slideCount} slides in order, 01 first. Slide 1 is the cover.`}
-- [ ] Paste the title and description, and add the sound.
+${video ? "- [ ] Upload video.mp4 on the Videos tab, and check the cover is the intro card." : `- [ ] Upload all ${slideCount} slides in order, 01 first. Slide 1 is the cover.`}
+- [ ] ${video ? "Replace the caption TikTok fills in with the one above" : "Paste the title and description"}, and add the sound.
 - [ ] playrates.app is still written in the profile bio. Descriptions aren't
       clickable, and a personal account can't add a bio link until 1,000
       followers.
