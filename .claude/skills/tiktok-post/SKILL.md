@@ -160,6 +160,12 @@ Callum opens TikTok in the browser pane. On the upload page, choose the
   every slide is in, in order (the count is in `posting.md`). A video post
   goes on the **Videos** tab instead: he selects `out/<name>/video.mp4`, and
   the cover is the intro card a second in (`cover.png` shows it).
+- **A video has no title field.** TikTok fills the description with the
+  file name ("video"): ctrl+a, Delete, then type `tiktok.title`, a space
+  and `tiktok.description` as one caption. Its sound is added in the
+  editor, not under the description: the **Sounds** button below the
+  preview, search, the + on a track, then **Save** at the top right. The
+  preview then says "Original sound", because the track is mixed in.
 - **Title** goes in the "Add a catchy title" field.
 - **Description**: click into the box and type it once, then check the
   character counter before doing anything else. Screenshots can lag behind
