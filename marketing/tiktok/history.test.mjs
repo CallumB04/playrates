@@ -29,18 +29,38 @@ test("the first free day skips every taken day, across a month end", () => {
   assert.equal(firstFreeDay(posts, "2026-10-30"), "2026-11-01");
 });
 
-test("a format is never the last one used", () => {
-  const formats = ["ranked", "hottake", "pairs"];
+const formats = {
+  ranked: {},
+  pairs: {},
+  guess: { video: true },
+  higherlower: { video: true },
+};
+
+test("a photo post is followed by a video, at random", () => {
   assert.equal(
     pickFormat(formats, "ranked", () => 0),
-    "hottake",
-  );
-  assert.equal(
-    pickFormat(formats, "ranked", () => 0.99),
-    "pairs",
+    "guess",
   );
   assert.equal(
     pickFormat(formats, "pairs", () => 0.99),
-    "hottake",
+    "higherlower",
+  );
+});
+
+test("a video is followed by a photo post, at random", () => {
+  assert.equal(
+    pickFormat(formats, "guess", () => 0),
+    "ranked",
+  );
+  assert.equal(
+    pickFormat(formats, "higherlower", () => 0.99),
+    "pairs",
+  );
+});
+
+test("with no posts yet, the first is a video", () => {
+  assert.equal(
+    pickFormat(formats, undefined, () => 0),
+    "guess",
   );
 });

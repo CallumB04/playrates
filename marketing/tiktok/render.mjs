@@ -1,6 +1,7 @@
 /**
- * Renders a TikTok slideshow from a post file, in whichever of the formats in
- * formats/ the post names, as 1080x1920 PNGs ready to upload as a photo post.
+ * Renders a TikTok post from a post file, in whichever of the formats in
+ * formats/ the post names: 1080x1920 PNGs ready to upload as a photo post,
+ * or, for a video format, an MP4 recorded frame by frame.
  *
  *   npm run tiktok -- marketing/tiktok/posts/best-horror-games.json
  *   npm run tiktok -- <post> --html     # write the page only, no PNGs
@@ -21,7 +22,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { postingNotes } from "./posting.mjs";
-import { renderPost } from "./formats/index.mjs";
+import { FORMATS, formatOf, renderPost } from "./formats/index.mjs";
 
 const require = createRequire(import.meta.url);
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -118,7 +119,7 @@ if (post.tiktok.title.length > 90) {
   throw new Error("tiktok.title is over the 90 characters TikTok allows");
 }
 
-for (const { slug, rating } of post.cta.library ?? []) {
+for (const { slug, rating } of post.cta?.library ?? []) {
   if (
     rating !== undefined &&
     !(rating >= 0.5 && rating <= 10 && Number.isInteger(rating * 2))
@@ -213,9 +214,10 @@ await writeFile(
   path.join(outDir, "sheet.html"),
   html.replace("<body>", '<body class="sheet">'),
 );
+const isVideo = !!FORMATS[formatOf(post)].video;
 await writeFile(
   path.join(outDir, "posting.md"),
-  postingNotes(post, (html.match(/class="slide /g) ?? []).length),
+  postingNotes(post, (html.match(/class="slide /g) ?? []).length, isVideo),
 );
 await writeFile(
   path.join(outDir, "description.txt"),
@@ -225,6 +227,7 @@ console.log(`wrote ${path.relative(root, outDir)}/index.html`);
 if (htmlOnly) process.exit(0);
 
 const { chromium } = await import("playwright");
+const { recordVideo } = await import("./record.mjs");
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
 
@@ -240,6 +243,12 @@ const settle = async (file) => {
 };
 
 await settle("index.html");
+
+if (isVideo) {
+  await recordVideo(page, outDir);
+  await browser.close();
+  process.exit(0);
+}
 
 /** What the contact sheet is too small to show: copy that runs out of the
  *  safe area or under the rail, a name cut to an ellipsis, a blurb that wraps

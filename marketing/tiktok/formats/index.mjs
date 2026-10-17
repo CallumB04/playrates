@@ -1,3 +1,5 @@
+import { renderGuess } from "./guess.mjs";
+import { renderHigherLower } from "./higherlower.mjs";
 import { renderHotTake } from "./hottake.mjs";
 import { renderPairs } from "./pairs.mjs";
 import { renderRanked } from "./ranked.mjs";
@@ -7,7 +9,8 @@ import { renderUpcoming } from "./upcoming.mjs";
 /**
  * Every format a post can take, keyed by the post's `format`. A post without
  * one is ranked, as every post was before there were others. `npm run
- * tiktok:next` picks among these, so a format added here joins the rotation.
+ * tiktok:next` alternates video and photo formats and picks at random
+ * within each, so a format added here joins the rotation.
  */
 export const FORMATS = {
   ranked: {
@@ -29,6 +32,16 @@ export const FORMATS = {
   upcoming: {
     render: renderUpcoming,
     summary: "Releases still to come, in date order, for the wishlist",
+  },
+  guess: {
+    render: renderGuess,
+    video: true,
+    summary: "Video: name the game from a screenshot as it sharpens",
+  },
+  higherlower: {
+    render: renderHigherLower,
+    video: true,
+    summary: "Video: which of two games got the higher critic score",
   },
 };
 

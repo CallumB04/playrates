@@ -28,10 +28,15 @@ export const firstFreeDay = (posts, today) => {
 };
 
 /**
- * A format at random, never the one the last post used, so two in a row
- * never look alike. `random` is Math.random, or a fixed value in a test.
+ * A format at random from the other kind to the last post's: a video after
+ * a photo post, a photo post after a video, so the feed alternates. Within
+ * the kind it's random. `formats` maps a name to `{ video }`; `random` is
+ * Math.random, or a fixed value in a test.
  */
 export const pickFormat = (formats, last, random = Math.random) => {
-  const choices = formats.filter((format) => format !== last);
+  const lastWasVideo = !!formats[last]?.video;
+  const choices = Object.keys(formats).filter(
+    (name) => !!formats[name].video !== lastWasVideo,
+  );
   return choices[Math.floor(random() * choices.length)];
 };

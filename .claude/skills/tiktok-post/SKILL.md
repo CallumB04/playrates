@@ -1,6 +1,6 @@
 ---
 name: tiktok-post
-description: Make a PlayRates TikTok slideshow post end to end — pick a format (ranked list, hot take, pairs, tier list or upcoming releases), choose a topic and its games, write the post file, render and check the slides, prepare it in TikTok Studio up to the Post button, and track it in the posting checklist. Use when asked for a new TikTok post or ranked list, or to prepare or post one that already exists.
+description: Make a PlayRates TikTok post end to end — pick a format (photo: ranked list, hot take, pairs, tier list, upcoming releases; video: guess the game, higher or lower), choose a topic and its games, write the post file, render and check the slides, prepare it in TikTok Studio up to the Post button, and track it in the posting checklist. Use when asked for a new TikTok post or ranked list, or to prepare or post one that already exists.
 ---
 
 # TikTok post
@@ -25,8 +25,9 @@ npm run tiktok:next
 ```
 
 prints every post on `POSTS.md` with its format, hook and games, the first
-free day, and a format picked at random from `formats/index.mjs` (never the
-last post's). Use that format unless Callum names one; don't re-roll for a
+free day, and a format picked at random from `formats/index.mjs`: a video
+format after a photo post, a photo format after a video, so the feed
+alternates. Use that format unless Callum names one; don't re-roll for a
 topic you'd rather write.
 
 Read the whole history before choosing a topic. The same genre or series in
@@ -50,6 +51,12 @@ What each format needs from the topic:
 - **tiers** — a series or genre in S/A/B/C, two to four games a tier, with a
   name and a one-line note per tier. A C-tier pick fans will argue about is
   the hook.
+- **guess** (video) — eight games, easiest first, each with an IGDB
+  screenshot that has no logo or HUD and its subject near the middle.
+  List screenshots and artworks (below) and look at them before choosing.
+- **higherlower** (video) — eight pairs whose critic scores you've read
+  from the games table, getting closer each round; a tie or a surprising
+  score late on is the hook.
 - **upcoming** — eight to ten unreleased games, `date` set to the day it
   posts. Anything announced after your knowledge cutoff: read IGDB's summary
   (the `games` endpoint, with the credentials below) before writing about it,
@@ -141,7 +148,9 @@ Callum opens TikTok in the browser pane. On the upload page, choose the
   content security policy blocks fetching from localhost, and the pane won't
   open a tab a script asks for. Ask him to click Select photos, open
   `marketing/tiktok/out/<name>/slides`, press Ctrl+A and Open. Check that
-  every slide is in, in order (the count is in `posting.md`).
+  every slide is in, in order (the count is in `posting.md`). A video post
+  goes on the **Videos** tab instead: he selects `out/<name>/video.mp4`, and
+  the cover is the intro card a second in (`cover.png` shows it).
 - **Title** goes in the "Add a catchy title" field.
 - **Description**: click into the box and type it once, then check the
   character counter before doing anything else. Screenshots can lag behind

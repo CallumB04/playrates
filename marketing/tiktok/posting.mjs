@@ -4,7 +4,7 @@ const song = ({ track, artist, why }) => `**${track}** by ${artist}. ${why}`;
  * Everything typed into TikTok alongside the slides, plus the steps that are
  * easy to forget, as a checklist to work through while posting.
  */
-export const postingNotes = (post, slideCount) => {
+export const postingNotes = (post, slideCount, video = false) => {
   const { title, description, song: first, altSong, musicSearch } = post.tiktok;
   return `# ${title}
 
@@ -34,7 +34,7 @@ ${post.tiktok.pinnedComment}
 
 ## Checklist
 
-- [ ] Upload all ${slideCount} slides in order, 01 first. Slide 1 is the cover.
+${video ? "- [ ] Upload video.mp4 on the Videos tab, and pick its cover frame." : `- [ ] Upload all ${slideCount} slides in order, 01 first. Slide 1 is the cover.`}
 - [ ] Paste the title and description, and add the sound.
 - [ ] playrates.app is still written in the profile bio. Descriptions aren't
       clickable, and a personal account can't add a bio link until 1,000

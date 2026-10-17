@@ -26,9 +26,9 @@ per machine). Art comes from IGDB's CDN, so a post costs no RAWG requests.
 ## Formats
 
 A post's `format` picks one of `formats/`; without one it's `ranked`.
-`npm run tiktok:next` lists every post so far and picks the next format at
-random (never the last one's). A format added to `formats/index.mjs` joins
-the rotation.
+`npm run tiktok:next` lists every post so far and picks the next format:
+a video after a photo post and a photo post after a video, at random within
+each. A format added to `formats/index.mjs` joins the rotation.
 
 - **`ranked`** — `games`, #1 first, one slide each. The original format;
   everything under "Making a new post" below.
@@ -50,6 +50,23 @@ the rotation.
   page with a countdown from the post's `date` (the day it goes out). A game
   IGDB only has a year or month for takes `"date": "2027"` or `"2027-03"`;
   `short` shortens a title for the hook's timeline and the outro's list.
+
+Two formats are videos. They render to `out/<post>/video.mp4` (and a
+`cover.png` still) instead of slides, recorded frame by frame from the page,
+silent, with the sound added in TikTok. They need ffmpeg on the PATH.
+
+- **`guess`** — `rounds`: eight game entries, easiest first, each with a
+  `banner` IGDB screenshot id. The screenshot starts as large blocks and
+  only clears when the five-second count ends and the answer shows. Pick
+  shots with no logo, HUD or title text, and the subject near the middle:
+  the frame is portrait, so a landscape shot loses its sides.
+- **`higherlower`** — `rounds`: eight of `{ a, b }`, two game entries whose
+  critic scores (IGDB's, from the games table) are compared after a
+  five-second think. Ties show as "Same score". Order them so they get
+  closer, and check the scores first: IGDB's can differ from the Metacritic
+  number people remember.
+
+Both take `hook` (`title`, `subtitle`) and `outro` (`title`, `body`).
 
 Every format's game entries take the same overrides as ranked ones below
 (`title`, `developer`, `banner`, `bannerPosition`, `cover`).

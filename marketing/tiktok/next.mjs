@@ -1,7 +1,7 @@
 /**
  * What the next post should be: every post so far with its format, hook and
  * games, so a new one can avoid repeating them, then the first free day and
- * a format picked at random.
+ * a format picked at random, video after photo and photo after video.
  *
  *   npm run tiktok:next
  */
@@ -45,6 +45,6 @@ for (const { name, done, dates } of posts) {
 }
 
 const today = new Date().toISOString().slice(0, 10);
-const format = pickFormat(Object.keys(FORMATS), last);
+const format = pickFormat(FORMATS, last);
 console.log(`\nnext free day: ${firstFreeDay(posts, today)}`);
 console.log(`format: ${format} — ${FORMATS[format].summary}`);
