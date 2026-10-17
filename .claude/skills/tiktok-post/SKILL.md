@@ -171,14 +171,26 @@ Callum opens TikTok in the browser pane. On the upload page, choose the
   character counter before doing anything else. Screenshots can lag behind
   what was typed, and retyping doubles it. To start again: ctrl+a, Delete.
 - **Hashtags**: type each one and click TikTok's exact-match suggestion, so
-  it becomes a real tag. Some tags have no match (`#baldursgate3`,
+  it becomes a real tag. The suggestions are `.hashtag-suggestion-item`
+  elements: a script can pick the one whose first line is exactly the tag
+  and fire mousedown/mouseup/click on it, then check each tag sits inside a
+  `[class*="mention"]` span. On a video, wait until the upload has
+  finished before typing, or TikTok resets the caption and drops tags.
+  Long tags often get no list (`#underratedgames`, `#upcominggames`,
+  `#gamerecommendations`): try the History row under the box, else use the
+  nearest real tag (`#underrated`, `#gamingnews`, `#videogame`) and change
+  the post file to match. Some tags have no match (`#baldursgate3`,
   `#shortgames`), and a long tag sometimes gets no list at all: backspace
   to a short prefix, pick the nearest real tag, and update the post file to
   match. A tag left as plain text runs into the next one.
 - **Sound**: Add sound, search the track, pick the original artist's
   version, and tell Callum which version you chose so he can preview it.
 - **Schedule** every post for **21:00 Estonian time**, the time zone the
-  picker shows. A post goes out every day: unless Callum names a date,
+  picker shows. The date cells are `span.day.valid` and take a scripted
+  click; the time lists only draw a few options at a time and ignore
+  scripted clicks, so click real coordinates, reading which options are
+  visible inside the list's scroll box before each step. A post goes out
+  every day: unless Callum names a date,
   take the first day from today with nothing scheduled in `POSTS.md`.
   When posts are moved, spread the videos evenly among the slideshows
   rather than bunching them. In the time picker,
