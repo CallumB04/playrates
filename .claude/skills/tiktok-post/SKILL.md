@@ -190,7 +190,13 @@ Callum opens TikTok in the browser pane. On the upload page, choose the
   close it, not Replace or Delete.
 - Leave **Disclose post content** for Callum to decide. The post promotes
   PlayRates, and TikTok may expect it on with "Your brand".
-- **Stop before Post or Schedule.** Callum presses it himself.
+- **Press Schedule yourself** once everything checks out (Callum said so
+  on 2026-10-17), then go straight on to the next post. Never press
+  **Post**, which publishes now.
+- **Work through a queue without stopping.** Open the next upload page on
+  the right tab, then ask Callum with AskUserQuestion (one option: "Files
+  are uploaded") which files to select. His click is the go-ahead; don't
+  end the turn to wait. Uploading is the only part he does.
 
 ## 6. After posting
 
