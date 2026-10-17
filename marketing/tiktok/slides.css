@@ -198,7 +198,7 @@ em {
     var(--surface);
 }
 .cta h2 {
-  margin-top: 72px;
+  margin-top: 60px;
   font-size: 104px;
   font-weight: 700;
   line-height: 0.96;
@@ -206,111 +206,151 @@ em {
   text-wrap: balance;
 }
 .cta p {
-  margin-top: 34px;
-  font-size: 42px;
+  margin-top: 28px;
+  font-size: 40px;
   line-height: 1.35;
   color: var(--content-secondary);
   max-width: 880px;
   text-wrap: pretty;
 }
 
-.library {
+/* The library plate: shelf counts across the top, then logged games. */
+.app {
   flex: none;
-  margin-top: 52px;
-  margin-bottom: 48px;
-  padding: 14px 36px;
-  border-radius: 32px;
+  margin: 44px 0 40px;
+  border-radius: 34px;
+  overflow: hidden;
   background: var(--surface-raised);
   box-shadow:
     0 2px 0 var(--rim) inset,
-    0 4px 8px -4px rgba(0, 0, 0, 0.4),
-    0 40px 80px -30px rgba(0, 0, 0, 0.8);
+    0 0 0 2px rgba(255, 255, 255, 0.04),
+    0 50px 90px -30px rgba(0, 0, 0, 0.9);
 }
-.row {
+.app-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--surface-sunken);
+}
+.app-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 22px 36px 20px;
+}
+.app-stats > div + div {
+  border-left: 2px solid var(--surface-raised);
+}
+.app-stats b {
+  font-size: 52px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.app-stats span {
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--content-muted);
+}
+.app-row {
   display: flex;
   align-items: center;
-  gap: 32px;
-  padding: 18px 0;
+  gap: 30px;
+  padding: 18px 36px;
 }
-.row + .row {
-  border-top: 2px solid rgba(255, 255, 255, 0.06);
+.app-row + .app-row {
+  border-top: 2px solid rgba(255, 255, 255, 0.05);
 }
-.row img {
-  width: 96px;
+.app-row img {
+  flex: none;
+  width: 92px;
   aspect-ratio: 264 / 374;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.8);
 }
-.row-main {
+.app-main {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  align-items: flex-start;
+  gap: 12px;
 }
 .row-title {
-  font-size: 42px;
+  font-size: 40px;
   font-weight: 600;
   letter-spacing: -0.02em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
 }
-.row-rating {
-  font-size: 48px;
+.app-rating {
+  flex: none;
+  font-size: 46px;
   font-weight: 600;
   letter-spacing: -0.03em;
-  color: var(--iris-500);
+  color: var(--iris-400);
 }
-.row-rating small {
-  font-size: 0.72em;
+.app-rating small {
+  font-size: 0.66em;
   color: var(--content-muted);
 }
-.row-rating.empty {
+.app-rating.empty {
   color: var(--content-muted);
 }
 
-.chip {
+/* StatusBadge plain: the hue carries the mark and the word, nothing else. */
+.mark {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 22px 8px 16px;
-  border-radius: 999px;
-  border: 2px solid var(--hue);
-  background: color-mix(in srgb, var(--hue) 18%, transparent);
-  color: var(--content);
-  font-size: 28px;
+  gap: 10px;
+  font-size: 30px;
   font-weight: 500;
+  color: color-mix(in srgb, var(--hue) 70%, white);
 }
-.chip svg {
-  width: 28px;
-  height: 28px;
+.mark svg {
+  width: 30px;
+  height: 30px;
   color: var(--hue);
 }
 
+/* Light on dark: the one thing on the slide brighter than the headline.
+   The arrow sits in a brand disc, so the brand is still what it's wearing. */
 .button {
   flex: none;
   margin-top: auto;
   align-self: stretch;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 18px;
-  height: 128px;
-  border-radius: 28px;
-  background: var(--iris-500);
+  justify-content: space-between;
+  height: 136px;
+  padding: 0 18px 0 52px;
+  border-radius: 999px;
+  background: var(--ink-50);
   color: var(--ink-950);
   font-size: 44px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  box-shadow: 0 24px 60px -18px rgba(124, 92, 255, 0.8);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+  box-shadow:
+    0 -3px 0 rgba(0, 0, 0, 0.12) inset,
+    0 30px 60px -24px rgba(0, 0, 0, 0.9);
+}
+.button em {
+  color: var(--iris-600);
+}
+.button i {
+  display: grid;
+  place-items: center;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--iris-500);
+  color: #fff;
+  box-shadow: 0 2px 0 rgba(255, 255, 255, 0.25) inset;
 }
 .button svg {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
 }
 
 /* ---- Game -------------------------------------------------------------- */
@@ -460,26 +500,39 @@ em {
   text-wrap: pretty;
 }
 
-.log-it {
-  margin-top: 52px;
+/* Under a hairline: the action on the left, the address on the right. */
+.foot {
+  margin-top: 48px;
+  padding-top: 30px;
+  border-top: 2px solid rgba(255, 255, 255, 0.09);
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.foot-action {
+  display: inline-flex;
+  align-items: center;
   gap: 14px;
-  font-size: 30px;
-  font-weight: 500;
-  color: var(--content-muted);
 }
-.log-it .chip {
-  font-size: 26px;
-  padding: 6px 18px 6px 14px;
+.foot-action svg {
+  width: 36px;
+  height: 36px;
+  color: var(--hue);
 }
-.log-it .chip svg {
-  width: 24px;
-  height: 24px;
-}
-.log-it .url {
-  margin-left: auto;
+.foot-url {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--content-secondary);
+  font-weight: 500;
+}
+.foot-url svg {
+  width: 32px;
+  height: 32px;
+  color: var(--content-muted);
 }
 
 /* ---- Shared by the formats ---------------------------------------------- */
@@ -545,20 +598,6 @@ em {
   background: var(--iris-500);
 }
 
-/* The site's stamp: lands a few degrees off square, as a real one does. */
-.stamp {
-  display: inline-block;
-  transform: rotate(-4deg);
-  padding: 10px 26px 12px;
-  border: 4px solid var(--ember-500);
-  border-radius: 14px;
-  color: var(--ember-300);
-  font-size: 40px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  background: color-mix(in srgb, var(--ember-500) 10%, transparent);
-}
-
 .url {
   font-size: 30px;
   font-weight: 500;
@@ -608,46 +647,37 @@ em {
 
 /* ---- Hot take ------------------------------------------------------------- */
 
-.take-hook {
-  background: #08070a;
-}
-.take-wash {
+.take-art {
   position: absolute;
-  inset: -80px;
+  inset: 0 0 auto 0;
+  height: 1060px;
   background-size: cover;
-  background-position: center;
-  filter: blur(48px) saturate(1.2) brightness(0.22);
 }
-.take-wash::after {
+.take-art::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    ellipse 120% 70% at 50% 30%,
-    transparent 30%,
-    rgba(8, 7, 10, 0.75)
+  background: linear-gradient(
+    180deg,
+    rgba(15, 14, 18, 0.7) 0%,
+    rgba(15, 14, 18, 0) 18%,
+    rgba(15, 14, 18, 0) 46%,
+    rgba(15, 14, 18, 0.7) 76%,
+    var(--surface) 100%
   );
 }
-/* The word is cut from the art, not laid over it, so the year or the name
-   carries the picture. */
+/* Solid, and in the flow above the label, so it lands across the bottom of
+   the art however long the claim runs. */
 .take-mark {
-  position: absolute;
-  top: 330px;
-  left: 50%;
+  margin: 0 0 56px -0.03em;
   width: max-content;
-  transform: translateX(-50%);
   white-space: nowrap;
   font-weight: 800;
-  line-height: 0.82;
-  letter-spacing: -0.06em;
-  /* The tracking comes off after the last letter too, which would leave its
-     right edge outside the box, where the art isn't painted. */
-  padding-right: 0.06em;
-  background-size: cover;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 30px 50px rgba(0, 0, 0, 0.6));
+  line-height: 0.8;
+  letter-spacing: -0.055em;
+  padding-right: 0.055em;
+  color: var(--ink-50);
+  text-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
 }
 .take-copy {
   margin-top: auto;
@@ -655,17 +685,41 @@ em {
   flex-direction: column;
   align-items: flex-start;
 }
-.take-hook h1 {
-  margin-top: 48px;
-  font-size: 116px;
+/* A rule and a word, the way a magazine flags an opinion column. */
+.take-label {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-size: 38px;
+  font-weight: 650;
+  color: var(--ember-300);
+}
+.take-label::before {
+  content: "";
+  width: 64px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ember-500);
+}
+.take-claim {
+  position: relative;
+  margin-top: 34px;
+  font-size: 108px;
   font-weight: 700;
-  line-height: 0.95;
+  line-height: 0.96;
   letter-spacing: -0.045em;
   text-wrap: balance;
 }
+.take-claim::before {
+  content: "\201C";
+  position: absolute;
+  left: -0.42em;
+  top: -0.02em;
+  color: var(--ember-500);
+}
 .take-hook p {
-  margin-top: 34px;
-  font-size: 46px;
+  margin-top: 30px;
+  font-size: 44px;
   line-height: 1.28;
   color: var(--content-secondary);
   text-wrap: pretty;
@@ -1014,7 +1068,7 @@ em {
   letter-spacing: -0.04em;
   text-wrap: balance;
 }
-.pair-to .log-it {
+.pair-to .foot {
   margin-top: 44px;
 }
 
@@ -1028,7 +1082,7 @@ em {
     var(--surface);
 }
 .pairs-outro h2 {
-  margin-top: 64px;
+  margin-top: 52px;
   font-size: 96px;
   font-weight: 700;
   line-height: 0.96;
@@ -1036,30 +1090,47 @@ em {
   text-wrap: balance;
 }
 .pairs-grid {
-  margin-top: 44px;
-  width: 720px;
+  margin-top: 40px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 34px 32px;
+  gap: 28px 30px;
 }
 .pairs-grid figure {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
+  position: relative;
   margin: 0;
 }
 .pairs-grid img {
+  display: block;
   width: 100%;
   aspect-ratio: 264 / 374;
   object-fit: cover;
-  border-radius: 16px;
+  border-radius: 18px;
   box-shadow:
     0 0 0 2px rgba(255, 255, 255, 0.08),
     0 30px 60px -24px rgba(0, 0, 0, 0.9);
 }
+/* GameTile's on-media treatment: a scrim disc, the mark in the light end of
+   the wishlist ramp. */
+.heart {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(15, 14, 18, 0.72);
+  backdrop-filter: blur(8px);
+  color: #fbcfe8;
+}
+.heart svg {
+  width: 32px;
+  height: 32px;
+  fill: currentColor;
+}
 .pairs-outro p {
-  margin-top: 36px;
+  margin: 30px 0 34px;
   font-size: 40px;
   line-height: 1.35;
   color: var(--content-secondary);
@@ -1083,6 +1154,9 @@ em {
   align-items: center;
   gap: 22px;
 }
+/* Lit from above like the site's plates, the letter in a deep shade of its
+   own hue rather than flat black. Trimmed to the cap height so it centres on
+   the capital, not on the line box with its empty descender. */
 .ghost-letter,
 .tier-letter,
 .placed-letter,
@@ -1090,17 +1164,30 @@ em {
   flex: none;
   display: grid;
   place-items: center;
-  background: var(--tier);
-  color: var(--ink-950);
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  box-shadow: 0 2px 0 rgba(255, 255, 255, 0.3) inset;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tier) 80%, white),
+    var(--tier) 70%
+  );
+  color: color-mix(in srgb, var(--tier) 25%, #0b0a0d);
+  font-weight: 750;
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.4) inset,
+    0 -4px 0 rgba(0, 0, 0, 0.16) inset;
+}
+.ghost-letter > span,
+.tier-letter > span,
+.placed-letter > span,
+.board-letter > span {
+  display: block;
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
 }
 .ghost-letter {
   width: 180px;
   height: 180px;
-  border-radius: 30px;
-  font-size: 130px;
+  border-radius: 34px;
+  font-size: 112px;
 }
 .ghost-covers {
   display: flex;
@@ -1174,11 +1261,12 @@ em {
 .tier-letter {
   width: 250px;
   height: 250px;
-  border-radius: 42px;
-  font-size: 200px;
+  border-radius: 46px;
+  font-size: 156px;
   box-shadow:
-    0 2px 0 rgba(255, 255, 255, 0.3) inset,
-    0 40px 80px -30px color-mix(in srgb, var(--tier) 70%, transparent);
+    0 2px 0 rgba(255, 255, 255, 0.4) inset,
+    0 -5px 0 rgba(0, 0, 0, 0.16) inset,
+    0 40px 80px -30px color-mix(in srgb, var(--tier) 60%, transparent);
 }
 .tier-name {
   font-size: 76px;
@@ -1563,16 +1651,15 @@ em {
   letter-spacing: -0.045em;
   text-wrap: balance;
 }
-.library.dated {
+.app.dated {
   margin-top: 44px;
-  padding: 6px 34px;
 }
-.dated .row {
+.dated .app-row {
   gap: 28px;
-  padding: 7px 0;
+  padding: 9px 34px;
 }
-.dated .row img {
-  width: 54px;
+.dated .app-row img {
+  width: 52px;
   border-radius: 7px;
 }
 .dated .row-title {

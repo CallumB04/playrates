@@ -2,7 +2,9 @@ import {
   brand,
   brandWith,
   button,
-  chip,
+  footer,
+  icon,
+  Lucide,
   ctaSlide,
   developer,
   escape,
@@ -12,6 +14,8 @@ import {
   swipe,
   year,
 } from "../slides.mjs";
+
+const { Heart } = Lucide;
 
 /** The first pairs, with what to play next hidden behind a blur. */
 const hookSlide = ({ title, subtitle }, pairs) => `
@@ -55,10 +59,12 @@ const pairSlide = ({ from, to, why }, i, total) => `
         <h3>${escape(to.game.title)}</h3>
         ${metaLine([year(to.game), developer(to.game)])}
         <p class="blurb">${escape(to.game.blurb)}</p>
-        <div class="log-it">${chip("wishlist", "Add to wishlist")}<span class="url">playrates.app</span></div>
+        ${footer("Wishlist it", "wishlist")}
     </div>
 </section>`;
 
+/** Every recommendation as covers on a shelf, each wearing the heart the
+ *  site puts on a wishlisted tile. */
 const outroSlide = ({ title, body }, pairs) => `
 <section class="slide pairs-outro" data-name="outro">
     ${brand}
@@ -68,12 +74,12 @@ const outroSlide = ({ title, body }, pairs) => `
         ({ to }) => `
         <figure>
             <img src="${to.game.cover}" alt="">
-            ${chip("wishlist")}
+            <span class="heart">${icon(Heart, 2.5)}</span>
         </figure>`,
       )
       .join("")}</div>
     ${body ? `<p>${headline(body)}</p>` : ""}
-    ${button("Wishlist them free at playrates.app")}
+    ${button("Wishlist them at playrates.app")}
 </section>`;
 
 /**

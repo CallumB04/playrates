@@ -3,7 +3,8 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as Lucide from "lucide-react";
 
-const { ArrowRight, CircleCheck, Flag, Heart, Layers, Play } = Lucide;
+const { ArrowRight, ArrowUpRight, CircleCheck, Flag, Heart, Layers, Play } =
+  Lucide;
 
 export { Lucide };
 
@@ -46,15 +47,24 @@ export const brand = `<div class="brand">${logo}PlayRates</div>`;
 export const brandWith = (aside) =>
   `<div class="brand">${logo}PlayRates<span class="brand-aside mono">${aside}</span></div>`;
 
-export const chip = (status, label) => {
-  const { label: name, Icon, hue } = STATUS[status];
-  return `<span class="chip" style="--hue:${hue}">${icon(Icon)}${label ?? name}</span>`;
+/** StatusBadge's `plain` form: mark and word in the status hue, no pill.
+ *  A row of outlined pills read as stickers, not as the product. */
+export const statusMark = (status) => {
+  const { label, Icon, hue } = STATUS[status];
+  return `<span class="mark" style="--hue:${hue}">${icon(Icon)}${label}</span>`;
+};
+
+/** The last line of a game slide: what to do about it on the left, where to
+ *  do it on the right, under a hairline. */
+export const footer = (action, status) => {
+  const { Icon, hue } = STATUS[status];
+  return `<div class="foot"><span class="foot-action" style="--hue:${hue}">${icon(Icon)}${escape(action)}</span><span class="foot-url">playrates.app${icon(ArrowUpRight)}</span></div>`;
 };
 
 export const swipe = `<span class="swipe">Swipe ${icon(ArrowRight)}</span>`;
 
 export const button = (text) =>
-  `<div class="button">${escape(text)} ${icon(ArrowRight)}</div>`;
+  `<div class="button"><span>${headline(text)}</span><i>${icon(ArrowRight, 2.5)}</i></div>`;
 
 /** Bands from frontend/src/lib/criticVerdict.ts. */
 const criticTone = (score) =>
@@ -89,7 +99,7 @@ export const meter = (value = null, label = "Your rating") => {
     <div class="meter-head"><span>${escape(label)}</span>${
       value === null
         ? `<span class="meter-value empty mono">—<small>/10</small></span>`
-        : `<span class="meter-value mono">${value.toFixed(1)}<small>/10</small></span>`
+        : `<span class="meter-value mono">${value.toFixed(2)}<small>/10</small></span>`
     }</div>
     <div class="meter-track">${Array.from(
       { length: 20 },
@@ -99,26 +109,41 @@ export const meter = (value = null, label = "Your rating") => {
 };
 
 const libraryRow = ({ game, title, status, rating }) => `
-<div class="row">
+<div class="app-row">
     <img src="${game.cover}" alt="">
-    <div class="row-main">
+    <div class="app-main">
         <div class="row-title">${escape(title ?? game.title)}</div>
-        ${chip(status)}
+        ${statusMark(status)}
     </div>
     ${
       rating === undefined
-        ? `<div class="row-rating empty mono">—</div>`
-        : `<div class="row-rating mono">${rating.toFixed(2)}<small>/10</small></div>`
+        ? `<div class="app-rating empty mono">—</div>`
+        : `<div class="app-rating mono">${rating.toFixed(2)}<small>/10</small></div>`
     }
 </div>`;
 
-/** Slide 2 of every format: the sign-up pitch over a mock library. */
+// Plausible shelf sizes for someone who logs a lot; the point is the shape
+// of a profile, not the numbers.
+const STATS = [
+  ["Played", 128],
+  ["Backlog", 34],
+  ["Wishlist", 19],
+];
+
+/** Slide 2 of every format: the sign-up pitch over a library as the site
+ *  draws one, shelf counts across the top and a few logged games. */
 export const ctaSlide = (cta) => `
 <section class="slide cta" data-name="cta">
     ${brand}
     <h2>${headline(cta.title)}</h2>
     <p>${headline(cta.body)}</p>
-    <div class="library">${(cta.library ?? []).map(libraryRow).join("")}</div>
+    <div class="app">
+        <div class="app-stats">${STATS.map(
+          ([label, n]) =>
+            `<div><b class="mono">${n}</b><span>${label}</span></div>`,
+        ).join("")}</div>
+        ${(cta.library ?? []).map(libraryRow).join("")}
+    </div>
     ${button(cta.button)}
 </section>`;
 

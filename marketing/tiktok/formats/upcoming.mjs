@@ -8,7 +8,7 @@ import {
   brand,
   brandWith,
   button,
-  chip,
+  footer,
   ctaSlide,
   developer,
   escape,
@@ -76,7 +76,7 @@ const releaseSlide = ({ game }, i, total, postDate) => `
         <h3>${escape(game.title)}</h3>
         ${metaLine([developer(game)])}
         <p class="blurb">${escape(game.blurb)}</p>
-        <div class="log-it">${chip("wishlist", "Add to wishlist")}<span class="url">playrates.app</span></div>
+        ${footer("Wishlist it", "wishlist")}
     </div>
 </section>`;
 
@@ -84,10 +84,10 @@ const outroSlide = ({ title, body }, games) => `
 <section class="slide upcoming-outro" data-name="outro">
     ${brand}
     <h2>${headline(title)}</h2>
-    <div class="library dated">${games
+    <div class="app dated">${games
       .map(
         ({ game }) => `
-        <div class="row">
+        <div class="app-row">
             <img src="${game.cover}" alt="">
             <div class="row-title">${escape(game.short)}</div>
             <span class="row-date mono">${shortDate(game.date)}</span>
@@ -95,7 +95,7 @@ const outroSlide = ({ title, body }, games) => `
       )
       .join("")}</div>
     ${body ? `<p>${headline(body)}</p>` : ""}
-    ${button("Wishlist them free at playrates.app")}
+    ${button("Wishlist them at playrates.app")}
 </section>`;
 
 /**

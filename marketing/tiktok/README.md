@@ -113,6 +113,28 @@ area or under the rail, a name cut to an ellipsis, a blurb past two lines. A
 clean run prints no warnings; the contact sheet is for everything else (HUDs,
 letterboxing, logo-only artwork, a crop that misses).
 
+## Design rules
+
+What reads as made by a person rather than generated, learned from posts
+that didn't:
+
+- **No outlined, tinted pills.** A status is its mark and word in the status
+  hue (`statusMark`, the site's `StatusBadge plain`); a game slide ends on
+  `footer()`, an action and the address under a hairline. A row of pills
+  reads as stickers.
+- **The button is light on dark**: near-white fill, dark text, the arrow in
+  an iris disc. Iris with dark text disappears on these backgrounds. Keep
+  its label to about 30 characters so it stays on one line.
+- **No boxed labels.** A stamp or tag around a word ("Hot take") looks
+  templated; use a short rule and the word, the way a magazine flags a
+  column.
+- **Text over art is solid.** Never let art show through lettering or set
+  copy over a blurred wash; put the art behind, sharp, and the type on top.
+- **A letter in a tile is trimmed to its cap height** (`text-box: trim-both
+  cap alphabetic`) and tracked at zero, or it sits off-centre.
+- **Grids fill the content width**, or line up with the headline's left
+  edge; a narrower grid floating in the column looks misplaced.
+
 ## Layout rules
 
 TikTok draws its own UI over a photo post, so everything that has to be read

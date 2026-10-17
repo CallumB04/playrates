@@ -1,7 +1,7 @@
 import {
   Lucide,
   brand,
-  chip,
+  footer,
   critic,
   ctaSlide,
   developer,
@@ -48,7 +48,7 @@ const gameSlide = (game, rank, { showCriticScore, statIcon }) => {
         <h3>${escape(game.title)}</h3>
         ${metaLine([year(game), developer(game), stat, score])}
         <p class="blurb">${escape(game.blurb)}</p>
-        <div class="log-it"><span>Log it</span>${chip("played")}${chip("backlog")}${chip("wishlist")}<span class="url">playrates.app</span></div>
+        ${footer("Played it? Rate it", "played")}
     </div>
 </section>`;
 };

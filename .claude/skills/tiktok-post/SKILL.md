@@ -57,6 +57,10 @@ What each format needs from the topic:
   IGDB files those under the period's last day. Every release date goes to
   Callum to check.
 
+Changing or adding slides: follow the design rules in the README (no
+outlined pills, light button, no boxed labels, solid type over art, tiles
+trimmed to cap height). Callum has turned down each of those once already.
+
 ## 2. Games
 
 Look slugs up rather than guessing them;

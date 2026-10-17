@@ -12,10 +12,10 @@ import {
 // Status hues from the site, so a tier reads in the same colours as a log.
 const TIER_HUE = {
   S: "var(--ember-500)",
-  A: "var(--iris-500)",
+  A: "var(--iris-400)",
   B: "var(--status-backlog)",
-  C: "var(--ink-400)",
-  D: "var(--status-wishlist)",
+  C: "var(--status-wishlist)",
+  D: "var(--ink-400)",
 };
 
 const hue = (tier) => {
@@ -25,7 +25,7 @@ const hue = (tier) => {
 };
 
 const letter = (tier, className = "tier-letter") =>
-  `<div class="${className}" style="--tier:${hue(tier)}">${escape(tier.tier)}</div>`;
+  `<div class="${className}" style="--tier:${hue(tier)}"><span>${escape(tier.tier)}</span></div>`;
 
 const covers = (tier) =>
   tier.games.map(({ game }) => `<img src="${game.cover}" alt="">`).join("");
@@ -89,7 +89,7 @@ const boardSlide = ({ title, body }, tiers) => `
       )
       .join("")}</div>
     ${body ? `<p>${headline(body)}</p>` : ""}
-    ${button("Rate them free at playrates.app")}
+    ${button("Rate them at playrates.app")}
 </section>`;
 
 /**

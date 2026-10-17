@@ -14,15 +14,18 @@ import {
   year,
 } from "../slides.mjs";
 
-/** The claim, set against a word cut out of the art: a year, a name. */
-const hookSlide = ({ mark, art, take, kicker, stamp }) => `
+/**
+ * The subject's art, sharp, with the year or name set solid across its
+ * lower edge, then the claim in quotes under a plain "Hot take" label.
+ */
+const hookSlide = ({ mark, art, take, kicker, label }) => `
 <section class="slide take-hook" data-name="hook">
-    <div class="take-wash bleed" style="background-image:url('${art.game.banner}')"></div>
+    <div class="take-art bleed" style="background-image:url('${art.game.banner}');background-position:${art.game.bannerPosition}"></div>
     ${brand}
-    <div class="take-mark bleed fit" data-fill="0.92" style="background-image:url('${art.game.banner}');background-position:${art.game.bannerPosition}">${escape(mark)}</div>
     <div class="take-copy">
-        <span class="stamp">${escape(stamp ?? "Hot take")}</span>
-        <h1>${headline(take)}</h1>
+        <div class="take-mark fit">${escape(mark)}</div>
+        <span class="take-label">${escape(label ?? "Hot take")}</span>
+        <h1 class="take-claim">${headline(take)}</h1>
         ${kicker ? `<p>${headline(kicker)}</p>` : ""}
         ${swipe}
     </div>
@@ -57,7 +60,7 @@ const outroSlide = ({ title, body, games, rate }) => `
             ${meter(rate.rating, rate.label)}
         </div>
     </div>
-    ${button("Rate them free at playrates.app")}
+    ${button(`Rate ${games.length === 1 ? "it" : "them"} at playrates.app`)}
 </section>`;
 
 /**
