@@ -48,7 +48,7 @@ export interface StatusPresentation {
     markTone: string;
     /** The solid hue, for bars, tab edges and dots. */
     accent: string;
-    /** Border and text over box art. The chip hues wash out on a photograph,
+    /** The mark's tone over box art. The chip hues wash out on a photograph,
      *  so this is the light end of each ramp against a scrim. */
     onMediaTone: string;
 }
@@ -63,7 +63,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
         chip: "border-status-played bg-status-played-quiet text-content",
         markTone: "text-status-played",
         accent: "bg-status-played",
-        onMediaTone: "border-status-played/60 text-[#c9bcff]",
+        onMediaTone: "text-[#c9bcff]",
     },
     playing: {
         label: "Playing",
@@ -72,7 +72,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
         chip: "border-status-playing bg-status-playing-quiet text-content",
         markTone: "text-status-playing",
         accent: "bg-status-playing",
-        onMediaTone: "border-status-playing/70 text-[#ffc08a]",
+        onMediaTone: "text-[#ffc08a]",
     },
     backlog: {
         label: "Backlog",
@@ -81,7 +81,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
         chip: "border-status-backlog bg-status-backlog-quiet text-content",
         markTone: "text-status-backlog",
         accent: "bg-status-backlog",
-        onMediaTone: "border-status-backlog/70 text-[#a5f3fc]",
+        onMediaTone: "text-[#a5f3fc]",
     },
     wishlist: {
         label: "Wishlist",
@@ -90,7 +90,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
         chip: "border-status-wishlist bg-status-wishlist-quiet text-content",
         markTone: "text-status-wishlist",
         accent: "bg-status-wishlist",
-        onMediaTone: "border-status-wishlist/70 text-[#fbcfe8]",
+        onMediaTone: "text-[#fbcfe8]",
     },
     finished: {
         label: "Finished",
@@ -99,7 +99,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
         chip: "border-status-finished bg-status-finished-quiet text-content",
         markTone: "text-status-finished",
         accent: "bg-status-finished",
-        onMediaTone: "border-status-finished/60 text-[#a7f3d0]",
+        onMediaTone: "text-[#a7f3d0]",
     },
     mastered: {
         label: "Mastered",
@@ -108,7 +108,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
         chip: "border-status-mastered bg-status-mastered-quiet text-content",
         markTone: "text-status-mastered",
         accent: "bg-status-mastered",
-        onMediaTone: "border-status-mastered/70 text-[#f2d98a]",
+        onMediaTone: "text-[#f2d98a]",
     },
     shelved: {
         label: "Shelved",
@@ -117,7 +117,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
         chip: "border-status-shelved bg-status-shelved-quiet text-content",
         markTone: "text-status-shelved",
         accent: "bg-status-shelved",
-        onMediaTone: "border-status-shelved/70 text-[#cbd5e1]",
+        onMediaTone: "text-[#cbd5e1]",
     },
     retired: {
         label: "Retired",
@@ -126,7 +126,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
         chip: "border-status-retired bg-status-retired-quiet text-content",
         markTone: "text-status-retired",
         accent: "bg-status-retired",
-        onMediaTone: "border-status-retired/70 text-[#fecaca]",
+        onMediaTone: "text-[#fecaca]",
     },
 };
 

@@ -22,9 +22,9 @@ const SIZES = {
  */
 const VARIANTS = {
     primary:
-        "font-semibold text-content-on-solid bg-brand border-brand-deep shadow-solid " +
-        "hover:-translate-y-px hover:bg-brand-hover hover:shadow-glow " +
-        "active:translate-y-0 active:bg-brand-active active:shadow-none " +
+        "font-semibold text-action-ink bg-action border-action-edge shadow-solid [&_svg]:text-action-mark " +
+        "hover:-translate-y-px hover:bg-action-hover hover:shadow-glow " +
+        "active:translate-y-0 active:bg-action-active active:shadow-none " +
         "disabled:bg-surface-sunken disabled:text-content-muted disabled:border-subtle disabled:shadow-none " +
         "aria-disabled:bg-surface-sunken aria-disabled:text-content-muted aria-disabled:border-subtle aria-disabled:shadow-none",
 
@@ -49,9 +49,9 @@ const VARIANTS = {
         "disabled:text-content-muted aria-disabled:text-content-muted",
 
     danger:
-        "font-semibold text-content-on-solid bg-danger border-danger shadow-solid " +
-        "hover:-translate-y-px hover:shadow-lifted " +
-        "active:translate-y-0 active:shadow-none " +
+        "font-semibold text-destructive-ink bg-destructive border-destructive shadow-solid " +
+        "hover:-translate-y-px hover:bg-destructive-hover hover:border-destructive-hover hover:shadow-lifted " +
+        "active:translate-y-0 active:bg-destructive-active active:border-destructive-active active:shadow-none " +
         "disabled:bg-surface-sunken disabled:text-content-muted disabled:border-subtle disabled:shadow-none " +
         "aria-disabled:bg-surface-sunken aria-disabled:text-content-muted aria-disabled:border-subtle aria-disabled:shadow-none",
 

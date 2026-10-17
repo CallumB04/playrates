@@ -212,7 +212,6 @@ const GameReviews = ({
                                                         status={reviewStatus(
                                                             review
                                                         )!}
-                                                        plain
                                                     />
                                                 )}
                                                 {review.hoursPlayed !==

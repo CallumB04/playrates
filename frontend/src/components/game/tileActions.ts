@@ -65,6 +65,7 @@ export const tileActions = (
             icon: STATUS_PRESENTATION.backlog.icon,
             onSelect: () => on.quickAdd(game.id, game.title, "backlog"),
             doneLabel: "In your backlog",
+            doneTone: STATUS_PRESENTATION.backlog.onMediaTone,
         },
         {
             key: "wishlist",
@@ -72,6 +73,7 @@ export const tileActions = (
             icon: STATUS_PRESENTATION.wishlist.icon,
             onSelect: () => on.quickAdd(game.id, game.title, "wishlist"),
             doneLabel: "On your wishlist",
+            doneTone: STATUS_PRESENTATION.wishlist.onMediaTone,
         },
     ];
 };

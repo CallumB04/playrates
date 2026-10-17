@@ -94,7 +94,7 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
             <span aria-hidden className="absolute inset-0 hatch" />
             <span
                 className={cn(
-                    "relative font-display font-semibold text-white/95",
+                    "relative cap-box font-display font-semibold text-white/95",
                     text
                 )}
             >

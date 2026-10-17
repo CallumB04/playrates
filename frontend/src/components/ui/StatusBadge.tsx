@@ -10,13 +10,8 @@ export type StatusBadgeSize = "stamp" | "base";
 interface StatusBadgeProps {
     status: DisplayStatus;
     size?: StatusBadgeSize;
-    /**
-     * Drops the rule and the fill, leaving the mark and the word in the
-     * status hue. For rows that are already a list of small things, where a
-     * pill turns one more piece of metadata into a component.
-     */
-    plain?: boolean;
-    /** The rotated, scrim-backed treatment that sits on box art. */
+    /** Over box art: the word on a scrim, the mark in the light end of its
+     *  ramp. */
     onMedia?: boolean;
     /** Play the 90ms stamp once when the status actually changes. */
     animateOnChange?: boolean;
@@ -24,19 +19,23 @@ interface StatusBadgeProps {
 }
 
 const SIZE: Record<StatusBadgeSize, string> = {
-    stamp: "gap-1.5 px-2 py-[3px] text-[10px] font-semibold",
-    base: "gap-1.5 px-2.5 py-1 text-xs",
+    stamp: "gap-1.5 text-[10px] font-semibold",
+    base: "gap-1.5 text-xs",
 };
 
 /**
  * Eight states told apart by mark, word and hue at once, so the badge still
  * reads with the colour removed. The mark is redundant, so it stays hidden
  * from screen readers.
+ *
+ * The mark and the word in the status hue, with no pill around them: an
+ * outlined, tinted pill on every row read as a sticker rather than as
+ * information. Over art the word needs something behind it, so it gets a
+ * scrim, still with no rule.
  */
 const StatusBadge = ({
     status,
     size = "base",
-    plain = false,
     onMedia = false,
     animateOnChange = false,
     className,
@@ -44,7 +43,6 @@ const StatusBadge = ({
     const {
         label,
         icon: Mark,
-        chip,
         markTone,
         onMediaTone,
     } = STATUS_PRESENTATION[status];
@@ -65,26 +63,19 @@ const StatusBadge = ({
         <span
             className={cn(
                 "inline-flex items-center font-medium",
-                plain
-                    ? cn("gap-1.5 text-xs", markTone)
-                    : cn(
-                          "rounded-full border",
-                          SIZE[size],
-                          onMedia
-                              ? cn(
-                                    onMediaTone,
-                                    "bg-media-scrim shadow-cover backdrop-blur-sm"
-                                )
-                              : chip
-                      ),
+                SIZE[size],
+                onMedia
+                    ? "rounded-full bg-media-scrim-strong py-[3px] pr-2.5 pl-2 text-content-on-media shadow-cover backdrop-blur-md"
+                    : markTone,
                 stamping && "animate-stamp",
                 className
             )}
         >
             <Mark
                 size={size === "stamp" ? 11 : 13}
+                strokeWidth={2.25}
                 aria-hidden
-                className="shrink-0"
+                className={cn("shrink-0", onMedia && onMediaTone)}
             />
             {label}
         </span>

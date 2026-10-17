@@ -70,7 +70,7 @@ const Row = ({ review }: { review: ReviewWithAuthor }) => {
             )}
 
             <span className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label-sm text-content-muted">
-                {status && <StatusBadge status={status} plain />}
+                {status && <StatusBadge status={status} />}
                 {review.hoursPlayed !== null && (
                     <span>
                         Reviewed at{" "}

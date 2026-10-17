@@ -33,6 +33,9 @@ export interface TileAction {
     icon?: ComponentType<SVGProps<SVGSVGElement> & { size?: number | string }>;
     /** What an icon action's button says once it has worked. */
     doneLabel?: string;
+    /** The hue its check lands in once it has: the status it set, from
+     *  STATUS_PRESENTATION's onMediaTone. */
+    doneTone?: string;
     /** The icon for a phone's standing button when this is the tile's only
      *  action, so it says what it does. With several, a phone gets them all
      *  in a sheet instead. */
@@ -81,10 +84,12 @@ interface GameTileProps {
 
 const ACTION_TONE = {
     primary:
-        "bg-brand text-content-on-solid border-brand-deep hover:bg-brand-hover active:bg-brand-active",
+        "bg-action text-action-ink border-action-edge hover:bg-action-hover active:bg-action-active [&_svg]:text-action-mark",
+    /* No rule: an outline over box art read as a sticker. The scrim alone
+       parts it from the art. */
     secondary:
-        "border-content-on-media/50 text-content-on-media hover:border-content-on-media hover:bg-overlay-chip-light active:bg-overlay-chip-light",
-    danger: "bg-danger text-content-on-solid border-danger hover:brightness-110 active:brightness-95",
+        "border-transparent bg-media-scrim-strong text-content-on-media backdrop-blur-sm hover:bg-overlay-chip-light active:bg-overlay-chip-light",
+    danger: "bg-destructive text-destructive-ink border-destructive hover:bg-destructive-hover active:bg-destructive-active",
 } as const;
 
 /** The shelf tile: box art, one line underneath, actions over it on hover. */
@@ -204,7 +209,7 @@ const GameTile = ({
                         className={cn(
                             "absolute top-1.5 left-1.5 grid size-9 place-items-center rounded-full",
                             "border border-content-on-media/30 bg-overlay-tile text-content-on-media backdrop-blur-sm",
-                            "active:bg-brand active:text-content-on-solid",
+                            "active:bg-action active:text-action-ink",
                             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-on-media",
                             "before:absolute before:-inset-1 before:content-['']",
                             "sm:hidden"
@@ -343,16 +348,20 @@ const GameTile = ({
                                                             ),
                                                         active &&
                                                             !done &&
-                                                            "sweep cursor-wait border-brand bg-brand/70 text-content-on-solid",
+                                                            "sweep cursor-wait border-transparent bg-media-scrim-strong text-content-on-media",
                                                         done &&
-                                                            "animate-stamp cursor-default border-brand bg-brand text-content-on-solid shadow-glow"
+                                                            "animate-stamp cursor-default border-transparent bg-overlay-chip-light text-content-on-media backdrop-blur-sm"
                                                     )}
                                                 >
                                                     {done ? (
                                                         <Check
                                                             size={14}
+                                                            strokeWidth={2.5}
                                                             aria-hidden
-                                                            className="shrink-0 animate-stamp"
+                                                            className={cn(
+                                                                "shrink-0 animate-stamp",
+                                                                action.doneTone
+                                                            )}
                                                         />
                                                     ) : (
                                                         <Icon

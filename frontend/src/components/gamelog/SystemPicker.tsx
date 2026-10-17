@@ -49,7 +49,7 @@ const SystemPicker = ({
                         "flex min-h-11 min-w-0 items-center gap-2 rounded-sm border px-3 text-left text-label-sm lift sm:min-h-10",
                         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
                         selected
-                            ? "border-brand-deep bg-brand text-content-on-solid shadow-plate"
+                            ? "border-action-edge bg-action text-action-ink shadow-plate"
                             : taken
                               ? "cursor-not-allowed border-dashed border-subtle bg-transparent text-content-muted"
                               : "cursor-pointer border-subtle bg-surface-raised text-content-secondary hover:border-strong hover:text-content"

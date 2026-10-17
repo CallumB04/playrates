@@ -75,6 +75,15 @@
     --brand-muted: var(--iris-300);
     --brand-subtle: color-mix(in srgb, var(--iris-500) 12%, transparent);
 
+    /* The filled action: primary buttons, a selected chip, the tile's loud
+       action. By day it is the brand itself. */
+    --action: var(--brand);
+    --action-edge: var(--brand-deep);
+    --action-hover: var(--brand-hover);
+    --action-active: var(--brand-active);
+    --action-ink: var(--content-on-solid);
+    --action-mark: currentColor;
+
     /* Accent — Ember. Sparingly, for what should feel earned. */
     --accent: var(--ember-600);
     --accent-quiet: color-mix(in srgb, var(--ember-500) 14%, transparent);
@@ -124,6 +133,9 @@
     --surface-media: var(--ink-900);
     --on-media: #ffffff;
     --media-scrim: rgba(12, 10, 18, 0.45);
+    /* For a label with no rule around it: the scrim alone has to part it
+       from the art. */
+    --media-scrim-strong: rgba(12, 10, 18, 0.72);
     --overlay-backdrop: rgba(12, 10, 18, 0.55);
     --overlay-loading: color-mix(in srgb, var(--ink-950) 55%, transparent);
     --overlay-tile: rgba(12, 10, 18, 0.82);
@@ -171,6 +183,11 @@
     --success: #15803d;
     --danger: #dc2626;
     --danger-subtle: color-mix(in srgb, #ef4444 12%, transparent);
+    /* The filled destructive button. By day, the danger red itself. */
+    --destructive: var(--danger);
+    --destructive-hover: #c42020;
+    --destructive-active: #a81b1b;
+    --destructive-ink: #ffffff;
     --info: #0369a1;
     --warning: var(--ember-600);
     --gold: var(--ember-500);
@@ -196,6 +213,17 @@
     --brand-active: var(--iris-300);
     --brand-muted: var(--iris-700);
     --brand-subtle: color-mix(in srgb, var(--iris-500) 18%, transparent);
+
+    /* By night the brand fill lost its label: violet is mid-tone, so dark
+       ink on it and white ink on it both sit too close to it. The action
+       goes near-white with dark ink instead, the brightest thing on the
+       page, and the brand moves into its icon and its glow. */
+    --action: var(--ink-50);
+    --action-edge: var(--ink-200);
+    --action-hover: #ffffff;
+    --action-active: var(--ink-200);
+    --action-ink: var(--ink-950);
+    --action-mark: var(--iris-600);
 
     --accent: var(--ember-400);
     --accent-quiet: color-mix(in srgb, var(--ember-500) 18%, transparent);
@@ -261,6 +289,14 @@
     --success: #4ade80;
     --danger: #ff6b6b;
     --danger-subtle: color-mix(in srgb, #ef4444 20%, transparent);
+    /* By night the danger red is a light coral, made to be read as text; as
+       a fill it took dark ink and looked like a warning sticker. The button
+       takes a deep red with white ink instead, quieter than the action
+       beside it and plainly not a mistake to press. */
+    --destructive: #c4302f;
+    --destructive-hover: #d23c3c;
+    --destructive-active: #a82626;
+    --destructive-ink: #ffffff;
     --info: #56ccf2;
     --warning: var(--ember-400);
     --gold: var(--ember-300);
@@ -498,6 +534,12 @@
     --color-brand-active: var(--brand-active);
     --color-brand-muted: var(--brand-muted);
     --color-brand-subtle: var(--brand-subtle);
+    --color-action: var(--action);
+    --color-action-edge: var(--action-edge);
+    --color-action-hover: var(--action-hover);
+    --color-action-active: var(--action-active);
+    --color-action-ink: var(--action-ink);
+    --color-action-mark: var(--action-mark);
 
     --color-accent: var(--accent);
     --color-accent-quiet: var(--accent-quiet);
@@ -525,6 +567,7 @@
     --color-content-disabled: var(--content-disabled);
 
     --color-media-scrim: var(--media-scrim);
+    --color-media-scrim-strong: var(--media-scrim-strong);
     --color-overlay-backdrop: var(--overlay-backdrop);
     --color-overlay-loading: var(--overlay-loading);
     --color-overlay-tile: var(--overlay-tile);
@@ -539,6 +582,10 @@
     --color-danger-muted: var(--danger-muted);
     --color-danger-soft: var(--danger-soft);
     --color-danger: var(--danger);
+    --color-destructive: var(--destructive);
+    --color-destructive-hover: var(--destructive-hover);
+    --color-destructive-active: var(--destructive-active);
+    --color-destructive-ink: var(--destructive-ink);
     --color-danger-strong: var(--danger-strong);
     --color-danger-tint: var(--danger-tint);
 
@@ -642,12 +689,12 @@
 }
 
 /* Something is on its way: a band of light crossing the control. Drawn from
-   the on-solid ink, so it reads on whatever fill the control has. */
+   the control's own ink, so it reads on whatever fill the control has. */
 @utility sweep {
     background-image: linear-gradient(
         90deg,
         transparent 30%,
-        color-mix(in oklab, var(--color-content-on-solid) 28%, transparent) 50%,
+        color-mix(in oklab, currentColor 28%, transparent) 50%,
         transparent 70%
     );
     background-size: 200% 100%;
@@ -686,6 +733,16 @@
             pointer-events: none;
         }
     }
+}
+
+/* A letter or figure centred in a box. The line box carries the ascender
+   and descender space as well as the glyph, so centring that leaves a
+   capital sitting high and off-centre; trimmed to cap height and baseline,
+   the box is the glyph. */
+@utility cap-box {
+    display: block;
+    line-height: 1;
+    text-box: trim-both cap alphabetic;
 }
 
 /* A stamp lands slightly off-square, the way a real one does. */

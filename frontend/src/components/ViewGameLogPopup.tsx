@@ -312,7 +312,6 @@ const ViewGameLogPopup = ({
                                 selected.status,
                                 selected.playedStatus
                             )}
-                            plain
                         />
                         {meta?.name && MetaIcon && (
                             <>

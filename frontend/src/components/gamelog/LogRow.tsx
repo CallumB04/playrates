@@ -53,7 +53,6 @@ export const LogRow = ({ log, onSelect, aside, className }: LogRowProps) => {
                 </span>
                 <StatusBadge
                     status={displayStatusFor(log.status, log.playedStatus)}
-                    plain
                     className="text-label-sm"
                 />
             </span>

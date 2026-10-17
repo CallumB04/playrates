@@ -86,7 +86,7 @@ const Pagination = ({ pagination, onChange, className }: PaginationProps) => {
                         className={cn(
                             SLOT,
                             slot === page
-                                ? "border-brand-deep bg-brand text-content-on-solid shadow-plate"
+                                ? "border-action-edge bg-action text-action-ink shadow-plate"
                                 : STEP
                         )}
                     >

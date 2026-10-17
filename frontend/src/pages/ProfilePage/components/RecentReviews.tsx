@@ -106,7 +106,6 @@ const RecentReviews = ({ reviews, isLoading, isOwner }: RecentReviewsProps) => {
                                 {reviewStatus(review) && (
                                     <StatusBadge
                                         status={reviewStatus(review)!}
-                                        plain
                                     />
                                 )}
                                 {/* The hours are what the rating was worth at

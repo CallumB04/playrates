@@ -20,7 +20,7 @@ export const chipClass = (
         shape === "pill" ? "rounded-full" : "rounded-sm",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
         selected
-            ? "border-brand-deep bg-brand text-content-on-solid shadow-plate"
+            ? "border-action-edge bg-action text-action-ink shadow-plate"
             : "border-subtle bg-surface-raised text-content-secondary hover:-translate-y-px hover:border-strong hover:text-content",
         className
     );

@@ -30,6 +30,7 @@ const UNLOGGED: TileAction[] = [
         icon: STATUS_PRESENTATION.backlog.icon,
         onSelect: aMoment,
         doneLabel: "In your backlog",
+        doneTone: STATUS_PRESENTATION.backlog.onMediaTone,
     },
     {
         key: "wishlist",
@@ -37,6 +38,7 @@ const UNLOGGED: TileAction[] = [
         icon: STATUS_PRESENTATION.wishlist.icon,
         onSelect: aMoment,
         doneLabel: "On your wishlist",
+        doneTone: STATUS_PRESENTATION.wishlist.onMediaTone,
     },
 ];
 const LOGGED: TileAction[] = [
