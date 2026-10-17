@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { firstFreeDay, parseChecklist, pickFormat } from "./history.mjs";
+import {
+  firstFreeDay,
+  parseChecklist,
+  pickFormat,
+  pickKind,
+} from "./history.mjs";
 
 const checklist = `# TikTok posts
 
@@ -36,31 +41,53 @@ const formats = {
   higherlower: { video: true },
 };
 
-test("a photo post is followed by a video, at random", () => {
+test("never three of one kind in a row", () => {
+  assert.equal(pickKind([true, false, false]), true);
+  assert.equal(pickKind([false, true, true]), false);
+});
+
+test("otherwise the kind the recent posts have fewer of", () => {
+  assert.equal(pickKind([false, false, true, false, true, false]), true);
+  // Only the last ten count: the early run of photos is forgotten.
+  const early = Array(8).fill(false);
+  const recent = [
+    true,
+    false,
+    true,
+    true,
+    false,
+    true,
+    false,
+    true,
+    false,
+    true,
+  ];
+  assert.equal(pickKind([...early, ...recent]), false);
+});
+
+test("a tie is a coin toss", () => {
   assert.equal(
-    pickFormat(formats, "ranked", () => 0),
-    "guess",
+    pickKind([true, false], () => 0.2),
+    true,
   );
   assert.equal(
-    pickFormat(formats, "pairs", () => 0.99),
+    pickKind([true, false], () => 0.8),
+    false,
+  );
+  assert.equal(
+    pickKind([], () => 0.2),
+    true,
+  );
+});
+
+test("a format of the kind, not the one that kind used last", () => {
+  const history = ["ranked", "guess", "pairs"];
+  assert.equal(
+    pickFormat(formats, true, history, () => 0),
     "higherlower",
   );
-});
-
-test("a video is followed by a photo post, at random", () => {
   assert.equal(
-    pickFormat(formats, "guess", () => 0),
+    pickFormat(formats, false, history, () => 0.99),
     "ranked",
-  );
-  assert.equal(
-    pickFormat(formats, "higherlower", () => 0.99),
-    "pairs",
-  );
-});
-
-test("with no posts yet, the first is a video", () => {
-  assert.equal(
-    pickFormat(formats, undefined, () => 0),
-    "guess",
   );
 });

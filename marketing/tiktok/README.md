@@ -26,9 +26,12 @@ per machine). Art comes from IGDB's CDN, so a post costs no RAWG requests.
 ## Formats
 
 A post's `format` picks one of `formats/`; without one it's `ranked`.
-`npm run tiktok:next` lists every post so far and picks the next format:
-a video after a photo post and a photo post after a video, at random within
-each. A format added to `formats/index.mjs` joins the rotation.
+`npm run tiktok:next` lists every post so far and suggests the next kind
+and format. The aim is half video, half slideshow: never three of one kind
+in a row, otherwise the kind the last ten posts have fewer of, then a
+random format of that kind other than the one it used last. The skill
+treats it as a starting point and picks what suits the day. A format added
+to `formats/index.mjs` joins the rotation.
 
 - **`ranked`** — `games`, #1 first, one slide each. The original format;
   everything under "Making a new post" below.

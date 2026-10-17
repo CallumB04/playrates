@@ -25,10 +25,19 @@ npm run tiktok:next
 ```
 
 prints every post on `POSTS.md` with its format, hook and games, the first
-free day, and a format picked at random from `formats/index.mjs`: a video
-format after a photo post, a photo format after a video, so the feed
-alternates. Use that format unless Callum names one; don't re-roll for a
-topic you'd rather write.
+free day, the video/photo split of the last ten posts, and a suggested
+kind and format. Over time posts should be **half video, half slideshow**.
+The script never suggests three of one kind in a row, and otherwise
+suggests whichever kind the last ten have fewer of.
+
+If Callum names a format, use it. Otherwise decide the kind yourself for
+that day, starting from the suggestion: read the whole history, then pick
+what will work best on the day. A Friday suits a weekend list, a date near
+a big release suits upcoming or a hot take about that series, a quiz suits
+a quiet weekday, and a kind that's had several posts in a row is due a
+rest. Stay near half and half. Within the kind, the suggested format is a
+random one, not the one that kind used last; pick another of the same kind
+only for a reason you can name.
 
 Read the whole history before choosing a topic. The same genre or series in
 a different format is fine (a ranked RPG list, then an RPG tier list), but
@@ -164,7 +173,9 @@ Callum opens TikTok in the browser pane. On the upload page, choose the
   version, and tell Callum which version you chose so he can preview it.
 - **Schedule** every post for **21:00 Estonian time**, the time zone the
   picker shows. A post goes out every day: unless Callum names a date,
-  take the first day from today with nothing scheduled in `POSTS.md`. In the time picker,
+  take the first day from today with nothing scheduled in `POSTS.md`.
+  When posts are moved, spread the videos evenly among the slideshows
+  rather than bunching them. In the time picker,
   click the hour, then keep clicking the topmost minute until 00 shows and
   click that; scrolling moves one step at a time. Check the inputs read
   `21:00` and the right date, then note it in `POSTS.md`:

@@ -1,7 +1,7 @@
 /**
  * What the next post should be: every post so far with its format, hook and
  * games, so a new one can avoid repeating them, then the first free day and
- * a format picked at random, video after photo and photo after video.
+ * a suggested kind (video or photo, kept near half and half) and format.
  *
  *   npm run tiktok:next
  */
@@ -9,7 +9,13 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { FORMATS, formatOf } from "./formats/index.mjs";
-import { firstFreeDay, parseChecklist, pickFormat } from "./history.mjs";
+import {
+  WINDOW,
+  firstFreeDay,
+  parseChecklist,
+  pickFormat,
+  pickKind,
+} from "./history.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const posts = parseChecklist(
@@ -29,22 +35,31 @@ const slugsIn = (node) =>
         ]
       : [];
 
-let last;
+const used = [];
 for (const { name, done, dates } of posts) {
   const post = JSON.parse(
     await readFile(path.join(here, "posts", `${name}.json`), "utf8"),
   );
-  last = formatOf(post);
+  const format = formatOf(post);
+  used.push(format);
   const hook = post.hook.title ?? post.hook.take;
   console.log(
-    `${done ? "posted " : "planned"} ${dates[0] ?? "          "}  ${last.padEnd(8)}  ${hook.replaceAll("*", "")}`,
+    `${done ? "posted " : "planned"} ${dates[0] ?? "          "}  ${format.padEnd(11)}  ${hook.replaceAll("*", "")}`,
   );
   console.log(
-    `                              ${[...new Set(slugsIn(post))].join(", ")}`,
+    `                                 ${[...new Set(slugsIn(post))].join(", ")}`,
   );
 }
 
+const kinds = used.map((format) => !!FORMATS[format].video);
+const recent = kinds.slice(-WINDOW);
+const video = pickKind(kinds);
+const format = pickFormat(FORMATS, video, used);
 const today = new Date().toISOString().slice(0, 10);
-const format = pickFormat(FORMATS, last);
 console.log(`\nnext free day: ${firstFreeDay(posts, today)}`);
-console.log(`format: ${format} — ${FORMATS[format].summary}`);
+console.log(
+  `last ${recent.length}: ${recent.filter(Boolean).length} video, ${recent.filter((v) => !v).length} photo`,
+);
+console.log(
+  `suggested: ${video ? "video" : "photo"}, ${format} — ${FORMATS[format].summary}`,
+);

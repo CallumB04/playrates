@@ -9,8 +9,8 @@ import { renderUpcoming } from "./upcoming.mjs";
 /**
  * Every format a post can take, keyed by the post's `format`. A post without
  * one is ranked, as every post was before there were others. `npm run
- * tiktok:next` alternates video and photo formats and picks at random
- * within each, so a format added here joins the rotation.
+ * tiktok:next` suggests from these, keeping video and photo near half and
+ * half, so a format added here joins the rotation.
  */
 export const FORMATS = {
   ranked: {

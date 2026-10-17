@@ -27,16 +27,35 @@ export const firstFreeDay = (posts, today) => {
   return day;
 };
 
+/** How many recent posts the video/photo balance is judged over. */
+export const WINDOW = 10;
+
 /**
- * A format at random from the other kind to the last post's: a video after
- * a photo post, a photo post after a video, so the feed alternates. Within
- * the kind it's random. `formats` maps a name to `{ video }`; `random` is
- * Math.random, or a fixed value in a test.
+ * Video or photo for the next post, aiming at half and half: never three of
+ * one kind in a row, otherwise whichever kind the last WINDOW posts have
+ * fewer of, and a coin toss on a tie. `kinds` is `true` for each video so
+ * far, in posting order. The skill can overrule it for the day.
  */
-export const pickFormat = (formats, last, random = Math.random) => {
-  const lastWasVideo = !!formats[last]?.video;
-  const choices = Object.keys(formats).filter(
-    (name) => !!formats[name].video !== lastWasVideo,
+export const pickKind = (kinds, random = Math.random) => {
+  const [a, b] = kinds.slice(-2);
+  if (kinds.length >= 2 && a === b) return !a;
+  const recent = kinds.slice(-WINDOW);
+  const videos = recent.filter(Boolean).length;
+  const photos = recent.length - videos;
+  if (videos !== photos) return videos < photos;
+  return random() < 0.5;
+};
+
+/**
+ * A format of the given kind at random, not the one that kind last used if
+ * there's another. `formats` maps a name to `{ video }`; `history` is the
+ * formats used so far, in order.
+ */
+export const pickFormat = (formats, video, history, random = Math.random) => {
+  const ofKind = Object.keys(formats).filter(
+    (name) => !!formats[name].video === video,
   );
+  const last = [...history].reverse().find((name) => ofKind.includes(name));
+  const choices = ofKind.length > 1 ? ofKind.filter((n) => n !== last) : ofKind;
   return choices[Math.floor(random() * choices.length)];
 };
