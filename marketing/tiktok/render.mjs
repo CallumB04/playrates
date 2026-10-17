@@ -1,6 +1,6 @@
 /**
- * Renders a TikTok slideshow from a post file: a hook, a sign-up slide, then
- * one slide per game, as 1080x1920 PNGs ready to upload as a photo post.
+ * Renders a TikTok slideshow from a post file, in whichever of the formats in
+ * formats/ the post names, as 1080x1920 PNGs ready to upload as a photo post.
  *
  *   npm run tiktok -- marketing/tiktok/posts/best-horror-games.json
  *   npm run tiktok -- <post> --html     # write the page only, no PNGs
@@ -21,7 +21,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { postingNotes } from "./posting.mjs";
-import { renderPost } from "./slides.mjs";
+import { renderPost } from "./formats/index.mjs";
 
 const require = createRequire(import.meta.url);
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -136,10 +136,19 @@ if (!checklist.includes(`(posts/${name}.json)`)) {
   console.warn(`warning: ${name} isn't on the checklist in POSTS.md`);
 }
 
-const librarySlugs = (post.cta.library ?? []).map((entry) => entry.slug);
-const rows = await fetchGames([
-  ...new Set([...post.games.map((g) => g.slug), ...librarySlugs]),
-]);
+/** Every game a post names, wherever its format keeps them: anything with a
+ *  `slug` is a game, and the fields beside it are overrides for that game. */
+const slugsIn = (node) =>
+  Array.isArray(node)
+    ? node.flatMap(slugsIn)
+    : node && typeof node === "object"
+      ? [
+          ...(typeof node.slug === "string" ? [node.slug] : []),
+          ...Object.values(node).flatMap(slugsIn),
+        ]
+      : [];
+
+const rows = await fetchGames([...new Set(slugsIn(post))]);
 
 await mkdir(imgDir, { recursive: true });
 await mkdir(path.join(outDir, "fonts"), { recursive: true });
@@ -156,7 +165,11 @@ const toGame = async (slug, extra = {}) => {
   return {
     slug,
     title: extra.title ?? row.title,
+    // For a list row, where a long title would be cut off.
+    short: extra.short ?? extra.title ?? row.title,
     releaseDate: row.release_date,
+    // IGDB stands in the end of the year for a game with no date yet.
+    date: extra.date ?? row.release_date,
     criticScore: row.critic_score,
     developer: extra.developer ?? row.developers?.[0],
     stat: extra.stat,
@@ -167,17 +180,22 @@ const toGame = async (slug, extra = {}) => {
   };
 };
 
-const games = await Promise.all(
-  post.games.map((entry) => toGame(entry.slug, entry)),
-);
-const library = await Promise.all(
-  (post.cta.library ?? []).map(async (entry) => ({
-    ...entry,
-    game:
-      games.find((game) => game.slug === entry.slug) ??
-      (await toGame(entry.slug)),
-  })),
-);
+/** The post with each game entry given its `game`: the row, the art saved
+ *  locally and the entry's overrides applied. */
+const resolve = async (node) => {
+  if (Array.isArray(node)) return Promise.all(node.map(resolve));
+  if (!node || typeof node !== "object") return node;
+  const entries = await Promise.all(
+    Object.entries(node).map(async ([key, value]) => [
+      key,
+      await resolve(value),
+    ]),
+  );
+  const resolved = Object.fromEntries(entries);
+  if (typeof node.slug === "string")
+    resolved.game = await toGame(node.slug, node);
+  return resolved;
+};
 
 await copyFile(path.join(here, "slides.css"), path.join(outDir, "slides.css"));
 await copyFile(
@@ -189,7 +207,7 @@ await copyFile(
   path.join(outDir, "fonts/geist-mono.woff2"),
 );
 
-const html = renderPost(post, games, library);
+const html = renderPost(await resolve(post));
 await writeFile(path.join(outDir, "index.html"), html);
 await writeFile(
   path.join(outDir, "sheet.html"),
@@ -214,6 +232,7 @@ const settle = async (file) => {
   await page.goto(pathToFileURL(path.join(outDir, file)).href);
   await page.evaluate(async () => {
     await document.fonts.ready;
+    await window.fitted;
     await Promise.all(
       [...document.images].map((img) => img.decode().catch(() => {})),
     );
@@ -234,8 +253,9 @@ const problems = await page.evaluate(() =>
     const bottom = box.bottom - parseFloat(style.paddingBottom);
     const right = box.right - parseFloat(style.paddingRight);
     const found = [];
+    // Everything but the full-bleed art and washes has to be read.
     for (const el of slide.querySelectorAll(
-      ".brand, .hook-copy > *, .cta > *, .game-body > *, .rank",
+      ":scope > :not(.bleed), :scope > :not(.bleed) > *, .rank",
     )) {
       const r = el.getBoundingClientRect();
       if (r.bottom > bottom + 1)
@@ -243,15 +263,16 @@ const problems = await page.evaluate(() =>
       if (r.right > right + 1)
         found.push(`${name}: runs under the right-hand rail`);
     }
-    for (const el of slide.querySelectorAll(".dev, .row-title")) {
+    for (const el of slide.querySelectorAll(".dev, .row-title, .clip")) {
       if (el.scrollWidth > el.clientWidth)
         found.push(`${name}: "${el.textContent}" is cut off`);
     }
-    for (const el of slide.querySelectorAll(".blurb")) {
+    for (const el of slide.querySelectorAll(".blurb, [data-max-lines]")) {
+      const max = Number(el.dataset.maxLines ?? 2);
       const lines = Math.round(
         el.clientHeight / parseFloat(getComputedStyle(el).lineHeight),
       );
-      if (lines > 2) found.push(`${name}: blurb runs to ${lines} lines`);
+      if (lines > max) found.push(`${name}: blurb runs to ${lines} lines`);
     }
     return [...new Set(found)];
   }),

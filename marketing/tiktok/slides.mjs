@@ -5,9 +5,11 @@ import * as Lucide from "lucide-react";
 
 const { ArrowRight, CircleCheck, Flag, Heart, Layers, Play } = Lucide;
 
-const icon = (Icon) =>
+export { Lucide };
+
+export const icon = (Icon, strokeWidth = 2.25) =>
   renderToStaticMarkup(
-    createElement(Icon, { strokeWidth: 2.25, "aria-hidden": true }),
+    createElement(Icon, { strokeWidth, "aria-hidden": true }),
   );
 
 // Same hues and marks as constants/gameStatus.ts, night theme.
@@ -24,7 +26,7 @@ const logo = readFileSync(
   "utf8",
 ).replace(/ role="img" aria-label="PlayRates"/, "");
 
-const escape = (text) =>
+export const escape = (text) =>
   String(text)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -33,17 +35,26 @@ const escape = (text) =>
 
 /** `*word*` marks the one word a headline leans on; `\n` forces a break
  *  where the browser's own wrapping strands a word. */
-const headline = (text) =>
+export const headline = (text) =>
   escape(text)
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replaceAll("\n", "<br>");
 
-const brand = `<div class="brand">${logo}PlayRates</div>`;
+export const brand = `<div class="brand">${logo}PlayRates</div>`;
 
-const chip = (status) => {
-  const { label, Icon, hue } = STATUS[status];
-  return `<span class="chip" style="--hue:${hue}">${icon(Icon)}${label}</span>`;
+/** The brand line with a figure at the far end, like "3/6" on a pair. */
+export const brandWith = (aside) =>
+  `<div class="brand">${logo}PlayRates<span class="brand-aside mono">${aside}</span></div>`;
+
+export const chip = (status, label) => {
+  const { label: name, Icon, hue } = STATUS[status];
+  return `<span class="chip" style="--hue:${hue}">${icon(Icon)}${label ?? name}</span>`;
 };
+
+export const swipe = `<span class="swipe">Swipe ${icon(ArrowRight)}</span>`;
+
+export const button = (text) =>
+  `<div class="button">${escape(text)} ${icon(ArrowRight)}</div>`;
 
 /** Bands from frontend/src/lib/criticVerdict.ts. */
 const criticTone = (score) =>
@@ -53,20 +64,39 @@ const criticTone = (score) =>
       ? "var(--critic-mixed)"
       : "var(--critic-poor)";
 
-const hookSlide = (hook, games) => `
-<section class="slide hook" data-name="hook">
-    <div class="wall">${games
-      .concat(games)
-      .map((game) => `<img src="${game.cover}" alt="">`)
-      .join("")}</div>
-    <div class="shade"></div>
-    ${brand}
-    <div class="hook-copy">
-        <h1>${headline(hook.title)}</h1>
-        ${hook.subtitle ? `<p>${headline(hook.subtitle)}</p>` : ""}
-        <span class="swipe">Swipe ${icon(ArrowRight)}</span>
-    </div>
-</section>`;
+export const critic = (score) =>
+  `<span class="critic" style="--tone:${criticTone(score)}"><b class="mono">${score}</b><span>Critics</span></span>`;
+
+/** Year, developer and whatever else a slide wants in its details line. */
+export const metaLine = (parts) =>
+  `<div class="meta">${parts.filter(Boolean).join('<span class="dot"></span>')}</div>`;
+
+export const year = (game) =>
+  game.releaseDate &&
+  `<span class="mono">${game.releaseDate.slice(0, 4)}</span>`;
+
+export const developer = (game) =>
+  game.developer && `<span class="dev">${escape(game.developer)}</span>`;
+
+/**
+ * The site's rating control: twenty segments, one per half point. Empty, it
+ * asks for the viewer's own rating, which is the thing PlayRates is for.
+ */
+export const meter = (value = null, label = "Your rating") => {
+  const filled = value === null ? 0 : Math.round(value * 2);
+  return `
+<div class="meter">
+    <div class="meter-head"><span>${escape(label)}</span>${
+      value === null
+        ? `<span class="meter-value empty mono">—<small>/10</small></span>`
+        : `<span class="meter-value mono">${value.toFixed(1)}<small>/10</small></span>`
+    }</div>
+    <div class="meter-track">${Array.from(
+      { length: 20 },
+      (_, i) => `<i${i < filled ? ' class="on"' : ""}></i>`,
+    ).join("")}</div>
+</div>`;
+};
 
 const libraryRow = ({ game, title, status, rating }) => `
 <div class="row">
@@ -82,67 +112,34 @@ const libraryRow = ({ game, title, status, rating }) => `
     }
 </div>`;
 
-const ctaSlide = (cta, library) => `
+/** Slide 2 of every format: the sign-up pitch over a mock library. */
+export const ctaSlide = (cta) => `
 <section class="slide cta" data-name="cta">
     ${brand}
     <h2>${headline(cta.title)}</h2>
     <p>${headline(cta.body)}</p>
-    <div class="library">${library.map(libraryRow).join("")}</div>
-    <div class="button">${escape(cta.button)} ${icon(ArrowRight)}</div>
+    <div class="library">${(cta.library ?? []).map(libraryRow).join("")}</div>
+    ${button(cta.button)}
 </section>`;
 
-const gameSlide = (game, rank, { showCriticScore, statIcon }) => {
-  const year = game.releaseDate?.slice(0, 4);
-  const meta = [
-    year && `<span class="mono">${year}</span>`,
-    game.developer && `<span class="dev">${escape(game.developer)}</span>`,
-    game.stat &&
-      `<span class="stat">${icon(Lucide[statIcon ?? "Clock"])}<span class="mono">${escape(game.stat)}</span></span>`,
-  ].filter(Boolean);
-  const critic =
-    showCriticScore && game.criticScore !== null
-      ? `<span class="critic" style="--tone:${criticTone(game.criticScore)}"><b class="mono">${game.criticScore}</b><span>Critics</span></span>`
-      : "";
-
-  return `
-<section class="slide game" data-name="rank-${String(rank).padStart(2, "0")}">
-    <div class="hero" style="background-image:url('${game.banner}');background-position:${game.bannerPosition}"></div>
-    ${brand}
-    <div class="game-body">
-        <div class="lead">
-            <img class="box" src="${game.cover}" alt="">
-            <div class="rank${rank === 1 ? " top" : ""}"><span class="hash">#</span><span class="n">${rank}</span></div>
-        </div>
-        <h3>${escape(game.title)}</h3>
-        <div class="meta">${meta.join('<span class="dot"></span>')}${critic ? '<span class="dot"></span>' + critic : ""}</div>
-        <p class="blurb">${escape(game.blurb)}</p>
-        <div class="log-it"><span>Log it</span>${chip("played")}${chip("backlog")}${chip("wishlist")}<span class="url">playrates.app</span></div>
-    </div>
-</section>`;
-};
-
-/**
- * The whole post as one page, a 1080x1920 section per slide. `games` arrive
- * ranked, #1 first; a countdown shows them from the bottom up so the reveal
- * is the last swipe.
- */
-export const renderPost = (post, games, library) => {
-  const ranked = games.map((game, i) => ({ game, rank: i + 1 }));
-  const shown = post.order === "countdown" ? [...ranked].reverse() : ranked;
-
-  return `<!doctype html>
+export const page = (slides) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <link rel="stylesheet" href="slides.css">
 </head>
 <body>
-${hookSlide(
-  post.hook,
-  shown.map(({ game }) => game),
-)}
-${ctaSlide(post.cta, library)}
-${shown.map(({ game, rank }) => gameSlide(game, rank, post)).join("\n")}
+${slides.join("\n")}
+<script>
+// A word set to fill the slide's width, whatever its length. Measured once
+// the fonts are in, or it fits the fallback face; render.mjs waits on this.
+window.fitted = document.fonts.ready.then(() => {
+  for (const el of document.querySelectorAll(".fit")) {
+    el.style.fontSize = "100px";
+    const width = el.parentElement.clientWidth * (Number(el.dataset.fill) || 1);
+    el.style.fontSize = (100 * width) / el.scrollWidth + "px";
+  }
+});
+</script>
 </body>
 </html>`;
-};

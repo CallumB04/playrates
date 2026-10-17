@@ -22,12 +22,14 @@
   --ink-50: #f9f8fc;
   --ink-300: #bdb7c7;
   --ink-400: #948da3;
+  --ink-800: #25222b;
   --ink-850: #1d1b22;
   --ink-900: #17151a;
   --ink-950: #0f0e12;
 
   --surface: var(--ink-950);
   --surface-raised: var(--ink-900);
+  --surface-sunken: var(--ink-850);
   --content: var(--ink-50);
   --content-secondary: var(--ink-300);
   --content-muted: var(--ink-400);
@@ -478,6 +480,1116 @@ em {
 .log-it .url {
   margin-left: auto;
   color: var(--content-secondary);
+}
+
+/* ---- Shared by the formats ---------------------------------------------- */
+
+.brand-aside {
+  margin-left: auto;
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--content-secondary);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
+}
+
+/* RatingMeter at slide scale: whole points full brand, halves a shade
+   lighter, so the scale reads without numbers. */
+.meter {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--content-muted);
+}
+.meter-value {
+  font-size: 44px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--iris-500);
+}
+.meter-value small {
+  font-size: 0.72em;
+  color: var(--content-muted);
+}
+.meter-value.empty {
+  color: var(--content-muted);
+}
+.meter-track {
+  display: flex;
+  gap: 6px;
+  height: 44px;
+}
+.meter-track i {
+  flex: 1;
+  border-radius: 6px;
+  background: var(--surface-sunken);
+  box-shadow: 0 2px 0 var(--rim) inset;
+}
+.meter-track i:first-child {
+  border-radius: 10px 6px 6px 10px;
+}
+.meter-track i:last-child {
+  border-radius: 6px 10px 10px 6px;
+}
+.meter-track i.on {
+  background: color-mix(in srgb, var(--iris-500) 70%, var(--surface));
+}
+.meter-track i.on:nth-child(even) {
+  background: var(--iris-500);
+}
+
+/* The site's stamp: lands a few degrees off square, as a real one does. */
+.stamp {
+  display: inline-block;
+  transform: rotate(-4deg);
+  padding: 10px 26px 12px;
+  border: 4px solid var(--ember-500);
+  border-radius: 14px;
+  color: var(--ember-300);
+  font-size: 40px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  background: color-mix(in srgb, var(--ember-500) 10%, transparent);
+}
+
+.url {
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--content-secondary);
+}
+
+/* Covers dealt into a hand, overlapping, the outer ones turned out. */
+.fan {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 8px;
+}
+.fan img {
+  width: 228px;
+  aspect-ratio: 264 / 374;
+  object-fit: cover;
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.08),
+    0 40px 70px -24px rgba(0, 0, 0, 0.95);
+}
+.fan img + img {
+  margin-left: -56px;
+}
+.fan-4 img:nth-child(1) {
+  transform: rotate(-9deg) translateY(30px);
+}
+.fan-4 img:nth-child(2) {
+  transform: rotate(-3deg) translateY(4px);
+}
+.fan-4 img:nth-child(3) {
+  transform: rotate(3deg) translateY(4px);
+}
+.fan-4 img:nth-child(4) {
+  transform: rotate(9deg) translateY(30px);
+}
+.fan-3 img:nth-child(1) {
+  transform: rotate(-7deg) translateY(20px);
+}
+.fan-3 img:nth-child(3) {
+  transform: rotate(7deg) translateY(20px);
+}
+.fan-1 img {
+  width: 330px;
+  transform: rotate(-3deg);
+}
+
+/* ---- Hot take ------------------------------------------------------------- */
+
+.take-hook {
+  background: #08070a;
+}
+.take-wash {
+  position: absolute;
+  inset: -80px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(48px) saturate(1.2) brightness(0.22);
+}
+.take-wash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 120% 70% at 50% 30%,
+    transparent 30%,
+    rgba(8, 7, 10, 0.75)
+  );
+}
+/* The word is cut from the art, not laid over it, so the year or the name
+   carries the picture. */
+.take-mark {
+  position: absolute;
+  top: 330px;
+  left: 50%;
+  width: max-content;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-weight: 800;
+  line-height: 0.82;
+  letter-spacing: -0.06em;
+  /* The tracking comes off after the last letter too, which would leave its
+     right edge outside the box, where the art isn't painted. */
+  padding-right: 0.06em;
+  background-size: cover;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 30px 50px rgba(0, 0, 0, 0.6));
+}
+.take-copy {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.take-hook h1 {
+  margin-top: 48px;
+  font-size: 116px;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.take-hook p {
+  margin-top: 34px;
+  font-size: 46px;
+  line-height: 1.28;
+  color: var(--content-secondary);
+  text-wrap: pretty;
+}
+
+.take-hero {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1280px;
+  background-size: cover;
+}
+.take-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 14, 18, 0.7) 0%,
+    rgba(15, 14, 18, 0) 18%,
+    rgba(15, 14, 18, 0) 38%,
+    rgba(15, 14, 18, 0.82) 74%,
+    var(--surface) 100%
+  );
+}
+/* Drawn as an outline so the art shows through it; the winner is filled.
+   In the flow above the title, so a two-line title pushes it up, not under. */
+.take-numeral {
+  margin: 0 0 -24px -18px;
+  font-size: 560px;
+  font-weight: 800;
+  line-height: 0.74;
+  letter-spacing: -0.07em;
+  color: transparent;
+  -webkit-text-stroke: 4px rgba(255, 255, 255, 0.8);
+}
+.take-numeral.top {
+  -webkit-text-stroke: 0;
+  background: linear-gradient(180deg, #fff 30%, var(--iris-300));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.take-body {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+}
+.take-body h3 {
+  font-size: 92px;
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+.take-quote {
+  position: relative;
+  margin-top: 36px;
+  font-size: 46px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  color: var(--content);
+  text-wrap: pretty;
+}
+.take-quote::before {
+  content: "\201C";
+  position: absolute;
+  left: -60px;
+  top: -14px;
+  font-size: 110px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--iris-400);
+}
+.take-foot {
+  margin-top: 56px;
+  display: flex;
+  align-items: flex-end;
+  gap: 44px;
+}
+.take-foot .meter {
+  flex: 1;
+}
+.take-foot .url {
+  padding-bottom: 6px;
+}
+
+.take-outro {
+  background:
+    radial-gradient(
+      ellipse 80% 40% at 50% 34%,
+      rgba(106, 68, 240, 0.32),
+      transparent 70%
+    ),
+    var(--surface);
+}
+.take-outro h2 {
+  margin-top: 64px;
+  font-size: 96px;
+  font-weight: 700;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.take-outro .fan {
+  margin-top: 40px;
+}
+.take-outro p {
+  margin-top: 56px;
+  font-size: 42px;
+  line-height: 1.35;
+  color: var(--content-secondary);
+  text-wrap: pretty;
+}
+.take-card {
+  margin: 44px 0 48px;
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  padding: 26px 34px 26px 26px;
+  border-radius: 28px;
+  background: var(--surface-raised);
+  box-shadow:
+    0 2px 0 var(--rim) inset,
+    0 40px 80px -30px rgba(0, 0, 0, 0.8);
+}
+.take-card img {
+  width: 104px;
+  aspect-ratio: 264 / 374;
+  object-fit: cover;
+  border-radius: 12px;
+}
+.take-card > div {
+  flex: 1;
+  min-width: 0;
+}
+.take-card-title {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.take-card .meter-track {
+  height: 36px;
+}
+
+/* ---- Pairs ------------------------------------------------------------- */
+
+.pairs-hook-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 70% 40% at 85% 22%,
+      rgba(106, 68, 240, 0.34),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 60% 30% at 0% 88%,
+      rgba(255, 138, 181, 0.12),
+      transparent 70%
+    );
+}
+.pairs-teaser {
+  margin-top: 72px;
+  display: flex;
+  gap: 70px;
+}
+.teaser {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.teaser:nth-child(2) {
+  margin-top: 64px;
+}
+.teaser:nth-child(3) {
+  margin-top: 22px;
+}
+.teaser-from,
+.teaser-to {
+  width: 196px;
+  aspect-ratio: 264 / 374;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.08),
+    0 30px 60px -20px rgba(0, 0, 0, 0.9);
+}
+.teaser-from {
+  object-fit: cover;
+}
+.teaser-thread {
+  width: 3px;
+  height: 64px;
+  background: linear-gradient(rgba(255, 255, 255, 0.35), var(--iris-400));
+}
+/* SpoilerCover's treatment: the art is there, just not readable yet. */
+.teaser-to {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--surface-raised);
+}
+.teaser-to img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(16px) brightness(0.55) saturate(1.2);
+  transform: scale(1.2);
+}
+.teaser-to::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.055) 0 2px,
+    transparent 2px 9px
+  );
+}
+.teaser-to span {
+  position: relative;
+  font-size: 120px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+.pairs-copy {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.pairs-copy h1 {
+  font-size: 112px;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.pairs-copy p {
+  margin-top: 32px;
+  font-size: 44px;
+  line-height: 1.3;
+  color: var(--content-secondary);
+  text-wrap: pretty;
+}
+
+.pair-art {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+}
+.pair-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 14, 18, 0.88) 0%,
+    rgba(15, 14, 18, 0.5) 22%,
+    rgba(15, 14, 18, 0.05) 36%,
+    rgba(15, 14, 18, 0.12) 46%,
+    rgba(15, 14, 18, 0.86) 62%,
+    var(--surface) 76%
+  );
+}
+.pair-from {
+  margin-top: 44px;
+  align-self: flex-start;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 20px 40px 20px 20px;
+  border-radius: 26px;
+  background: rgba(15, 14, 18, 0.62);
+  backdrop-filter: blur(24px);
+  box-shadow:
+    0 2px 0 var(--rim) inset,
+    0 30px 60px -30px rgba(0, 0, 0, 0.8);
+}
+.pair-from img {
+  width: 116px;
+  aspect-ratio: 264 / 374;
+  object-fit: cover;
+  border-radius: 12px;
+  filter: saturate(0.7);
+}
+.pair-from > div {
+  min-width: 0;
+}
+.pair-label {
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--content-muted);
+}
+.pair-from-title {
+  margin-top: 6px;
+  font-size: 46px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--content-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Down from the middle of the first cover to the top of the next. */
+.pair-thread {
+  flex: 1;
+  min-height: 96px;
+  margin-left: 77px;
+  display: flex;
+  align-items: center;
+  border-left: 3px solid transparent;
+  border-image: linear-gradient(rgba(255, 255, 255, 0.5), var(--iris-400)) 1;
+}
+.pair-why {
+  margin-left: 30px;
+  padding: 14px 30px;
+  border-radius: 999px;
+  background: rgba(15, 14, 18, 0.8);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 2px 0 var(--rim) inset;
+  font-size: 32px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.pair-to {
+  display: flex;
+  flex-direction: column;
+}
+.pair-to .box {
+  width: 290px;
+}
+.pair-to h3 {
+  margin-top: 40px;
+  font-size: 88px;
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+.pair-to .log-it {
+  margin-top: 44px;
+}
+
+.pairs-outro {
+  background:
+    radial-gradient(
+      ellipse 80% 40% at 50% 45%,
+      rgba(255, 138, 181, 0.1),
+      transparent 70%
+    ),
+    var(--surface);
+}
+.pairs-outro h2 {
+  margin-top: 64px;
+  font-size: 96px;
+  font-weight: 700;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.pairs-grid {
+  margin-top: 44px;
+  width: 720px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 34px 32px;
+}
+.pairs-grid figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  margin: 0;
+}
+.pairs-grid img {
+  width: 100%;
+  aspect-ratio: 264 / 374;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.08),
+    0 30px 60px -24px rgba(0, 0, 0, 0.9);
+}
+.pairs-outro p {
+  margin-top: 36px;
+  font-size: 40px;
+  line-height: 1.35;
+  color: var(--content-secondary);
+  text-wrap: pretty;
+}
+
+/* ---- Tiers ------------------------------------------------------------- */
+
+.ghost-board {
+  position: absolute;
+  top: 250px;
+  left: -60px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  transform: rotate(-7deg);
+  transform-origin: top left;
+}
+.ghost-row {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.ghost-letter,
+.tier-letter,
+.placed-letter,
+.board-letter {
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--tier);
+  color: var(--ink-950);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  box-shadow: 0 2px 0 rgba(255, 255, 255, 0.3) inset;
+}
+.ghost-letter {
+  width: 180px;
+  height: 180px;
+  border-radius: 30px;
+  font-size: 130px;
+}
+.ghost-covers {
+  display: flex;
+  gap: 16px;
+}
+.ghost-covers img {
+  width: 150px;
+  aspect-ratio: 264 / 374;
+  object-fit: cover;
+  border-radius: 14px;
+  filter: blur(6px) saturate(0.8) brightness(0.75);
+}
+.ghost-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(15, 14, 18, 0.8) 0%,
+      rgba(15, 14, 18, 0.15) 14%,
+      rgba(15, 14, 18, 0.25) 30%,
+      var(--surface) 54%
+    ),
+    radial-gradient(
+      ellipse 90% 40% at 0% 70%,
+      rgba(255, 132, 56, 0.18),
+      transparent 70%
+    );
+}
+.tiers-copy {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.tiers-copy h1 {
+  font-size: 116px;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.tiers-copy p {
+  margin-top: 32px;
+  font-size: 44px;
+  line-height: 1.3;
+  color: var(--content-secondary);
+  text-wrap: pretty;
+}
+
+.tier-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 36% at 0% 14%,
+    color-mix(in srgb, var(--tier) 30%, transparent),
+    transparent 70%
+  );
+}
+/* Centred between the brand and the caption, so a top tier with the board
+   under it and a bottom tier on its own both sit in the middle. */
+.tier-head {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 44px;
+}
+.tier > :last-child {
+  margin-bottom: auto;
+}
+.tier-letter {
+  width: 250px;
+  height: 250px;
+  border-radius: 42px;
+  font-size: 200px;
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.3) inset,
+    0 40px 80px -30px color-mix(in srgb, var(--tier) 70%, transparent);
+}
+.tier-name {
+  font-size: 76px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.tier-note {
+  margin-top: 18px;
+  font-size: 36px;
+  line-height: 1.32;
+  color: var(--content-secondary);
+  text-wrap: pretty;
+}
+.tier-games {
+  margin-top: 56px;
+  display: grid;
+  grid-template-columns: repeat(var(--count), minmax(0, 300px));
+  gap: 28px;
+}
+.tier-games figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tier-games img {
+  width: 100%;
+  aspect-ratio: 264 / 374;
+  object-fit: cover;
+  border-radius: 16px;
+  margin-bottom: 8px;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.08),
+    0 30px 60px -24px rgba(0, 0, 0, 0.9);
+}
+.tier-games figcaption {
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.tier-games .mono {
+  font-size: 26px;
+  color: var(--content-muted);
+}
+.placed-stack {
+  margin-top: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.placed {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 12px;
+  border-radius: 22px;
+  background: var(--surface-raised);
+  box-shadow: 0 2px 0 var(--rim) inset;
+}
+.placed-letter {
+  width: 76px;
+  height: 76px;
+  border-radius: 16px;
+  font-size: 50px;
+}
+.placed-covers {
+  display: flex;
+  gap: 10px;
+}
+.placed-covers img {
+  width: 54px;
+  aspect-ratio: 264 / 374;
+  object-fit: cover;
+  border-radius: 7px;
+}
+
+.tier-board {
+  background:
+    radial-gradient(
+      ellipse 80% 36% at 100% 0%,
+      rgba(255, 132, 56, 0.16),
+      transparent 70%
+    ),
+    var(--surface);
+}
+.tier-board h2 {
+  margin-top: 64px;
+  font-size: 96px;
+  font-weight: 700;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.board {
+  margin-top: 48px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: var(--surface-raised);
+  box-shadow:
+    0 2px 0 var(--rim) inset,
+    0 40px 80px -30px rgba(0, 0, 0, 0.8);
+}
+.board-row {
+  display: flex;
+}
+.board-row + .board-row {
+  border-top: 2px solid var(--surface);
+}
+.board-letter {
+  width: 124px;
+  font-size: 84px;
+  box-shadow: none;
+}
+.board-covers {
+  display: flex;
+  gap: 14px;
+  padding: 16px 18px;
+}
+.board-covers img {
+  width: 104px;
+  aspect-ratio: 264 / 374;
+  object-fit: cover;
+  border-radius: 10px;
+}
+.tier-board p {
+  margin-top: 40px;
+  font-size: 40px;
+  line-height: 1.35;
+  color: var(--content-secondary);
+  text-wrap: pretty;
+}
+
+/* ---- Upcoming ---------------------------------------------------------- */
+
+.upcoming-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 80% 40% at 0% 20%,
+      rgba(106, 68, 240, 0.3),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 60% 30% at 100% 80%,
+      rgba(255, 138, 181, 0.1),
+      transparent 70%
+    );
+}
+.timeline {
+  position: relative;
+  margin-top: 60px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+/* The spine runs between the dates and the covers, a dot at each release. */
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 167px;
+  top: 40px;
+  bottom: 30px;
+  width: 2px;
+  background: linear-gradient(
+    var(--iris-400),
+    var(--border-strong) 70%,
+    transparent
+  );
+}
+.timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 150px 92px minmax(0, 1fr);
+  align-items: center;
+  gap: 36px;
+}
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: 161px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--iris-400);
+  box-shadow: 0 0 0 6px var(--surface);
+}
+.timeline li.timeline-more::before {
+  background: var(--border-strong);
+}
+.timeline-date {
+  font-size: 34px;
+  font-weight: 500;
+  color: var(--content-secondary);
+  white-space: nowrap;
+}
+.timeline img {
+  width: 92px;
+  aspect-ratio: 264 / 374;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 16px 30px -12px rgba(0, 0, 0, 0.8);
+}
+.timeline-title {
+  font-size: 44px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.timeline-dev {
+  margin-top: 6px;
+  font-size: 28px;
+  color: var(--content-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.timeline-more span:last-child {
+  grid-column: 2 / -1;
+  font-size: 34px;
+  font-weight: 500;
+  color: var(--content-muted);
+}
+.upcoming-copy {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.upcoming-copy h1 {
+  font-size: 112px;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.upcoming-copy p {
+  margin-top: 32px;
+  font-size: 44px;
+  line-height: 1.3;
+  color: var(--content-secondary);
+  text-wrap: pretty;
+}
+
+.release-hero {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1200px;
+  background-size: cover;
+}
+.release-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 14, 18, 0.72) 0%,
+    rgba(15, 14, 18, 0) 18%,
+    rgba(15, 14, 18, 0) 36%,
+    rgba(15, 14, 18, 0.8) 70%,
+    var(--surface) 100%
+  );
+}
+.release-body {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+}
+.release-when {
+  display: flex;
+  align-items: flex-end;
+  gap: 48px;
+}
+/* A tear-off desk calendar page. */
+.cal {
+  flex: none;
+  width: 236px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 30px;
+  overflow: hidden;
+  background: var(--surface-raised);
+  box-shadow:
+    0 2px 0 var(--rim) inset,
+    0 0 0 2px rgba(255, 255, 255, 0.05),
+    0 40px 80px -30px rgba(0, 0, 0, 0.9);
+}
+.cal-month {
+  align-self: stretch;
+  padding: 14px 0 12px;
+  text-align: center;
+  background: var(--iris-500);
+  color: var(--ink-950);
+  font-size: 42px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+.cal-day {
+  padding-top: 18px;
+  font-size: 150px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.06em;
+}
+.cal-year {
+  padding: 4px 0 22px;
+  font-size: 28px;
+  color: var(--content-muted);
+}
+.cal.loose .cal-month {
+  background: var(--surface-sunken);
+  color: var(--content-secondary);
+  font-size: 36px;
+  padding: 18px 0 16px;
+}
+.cal.loose .cal-day {
+  padding-top: 34px;
+  font-size: 92px;
+}
+.count {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 14px;
+}
+.count span:first-child {
+  font-size: 40px;
+  font-weight: 500;
+  color: var(--content-muted);
+}
+.count b {
+  font-size: 200px;
+  font-weight: 700;
+  line-height: 0.86;
+  letter-spacing: -0.06em;
+}
+.count span:last-child {
+  margin-top: 8px;
+  font-size: 46px;
+  font-weight: 600;
+  color: var(--content-secondary);
+}
+.count.word b,
+.count.loose b {
+  margin-top: 6px;
+  font-size: 104px;
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+.release-body h3 {
+  margin-top: 56px;
+  font-size: 92px;
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.upcoming-outro {
+  background:
+    radial-gradient(
+      ellipse 80% 36% at 100% 0%,
+      rgba(106, 68, 240, 0.32),
+      transparent 70%
+    ),
+    var(--surface);
+}
+.upcoming-outro h2 {
+  margin-top: 64px;
+  font-size: 96px;
+  font-weight: 700;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.library.dated {
+  margin-top: 44px;
+  padding: 6px 34px;
+}
+.dated .row {
+  gap: 28px;
+  padding: 7px 0;
+}
+.dated .row img {
+  width: 54px;
+  border-radius: 7px;
+}
+.dated .row-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 36px;
+}
+.row-date {
+  flex: none;
+  font-size: 30px;
+  color: var(--content-secondary);
+}
+.upcoming-outro p {
+  font-size: 40px;
+  line-height: 1.35;
+  color: var(--content-secondary);
+  text-wrap: pretty;
 }
 
 /* ---- Contact sheet ----------------------------------------------------- */

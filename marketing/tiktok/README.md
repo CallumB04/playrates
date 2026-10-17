@@ -1,8 +1,8 @@
 # TikTok slideshows
 
-Ranked-list photo posts in the site's own design: a hook, a sign-up slide,
-then one slide per game. Each post is a JSON file in `posts/`; the script
-fills in the rest from the games table. The post files and their checklist,
+Photo posts in the site's own design, in one of five formats: every one has
+a hook, then a sign-up slide, then the format's own slides. Each post is a
+JSON file in `posts/`; the script fills in the rest from the games table. The post files and their checklist,
 `POSTS.md`, live only on the machine that makes them (they're gitignored);
 the generator is what's shared. The `/tiktok-post` skill walks through making
 one end to end.
@@ -11,8 +11,8 @@ one end to end.
 npm run tiktok -- marketing/tiktok/posts/best-horror-games.json
 ```
 
-That writes `out/<post>/`: `slides/01-hook.png` … `slides/12-rank-01.png`
-(1080×1920, in upload order, alone in their folder so uploading is
+That writes `out/<post>/`: `slides/01-hook.png` onwards (1080×1920, in
+upload order, alone in their folder so uploading is
 select-all), `posting.md` (title, description, sound, comment to pin, when
 to post and a checklist), `description.txt` for pasting, and
 `contact-sheet.png` for checking the set at
@@ -23,6 +23,37 @@ It needs `backend/.env` (it reads the games table the same way the backend's
 scripts do) and Playwright's Chromium (`npx playwright install chromium` once
 per machine). Art comes from IGDB's CDN, so a post costs no RAWG requests.
 
+## Formats
+
+A post's `format` picks one of `formats/`; without one it's `ranked`.
+`npm run tiktok:next` lists every post so far and picks the next format at
+random (never the last one's). A format added to `formats/index.mjs` joins
+the rotation.
+
+- **`ranked`** — `games`, #1 first, one slide each. The original format;
+  everything under "Making a new post" below.
+- **`hottake`** — a claim and ten games that make the case, counted down.
+  `hook`: `mark` (a year or name, cut out of `art`, a game entry), `take`,
+  `kicker`, optional `stamp`. Each game's blurb is set as a pull quote (three
+  lines allowed) over an empty rating meter. `outro`: `title`, `games` (one
+  to four covers of what the take left out), `body`, and `rate` (a game with
+  a `rating` and `label` for the meter on the last slide).
+- **`pairs`** — "if you liked this, play that". `pairs`: six of
+  `{ from, why, to }`, where `from` and `to` are game entries and `why` is
+  the short reason on the thread between them; `to` carries the blurb. The
+  hook blurs the first three `to` covers; `outro` (`title`, `body`) gathers
+  every `to` as a wishlist.
+- **`tiers`** — `tiers`, best first: `{ tier: "S", name, note, games }`, two
+  to four games a tier, revealed bottom tier first, then the whole board.
+  `outro`: `title`, `body`.
+- **`upcoming`** — unreleased `games`, sorted by release, each on a calendar
+  page with a countdown from the post's `date` (the day it goes out). A game
+  IGDB only has a year or month for takes `"date": "2027"` or `"2027-03"`;
+  `short` shortens a title for the hook's timeline and the outro's list.
+
+Every format's game entries take the same overrides as ranked ones below
+(`title`, `developer`, `banner`, `bannerPosition`, `cover`).
+
 ## What's been posted
 
 `POSTS.md`, beside `posts/`, is the checklist: every post in the order it
@@ -30,7 +61,8 @@ should go out, ticked with its date and link once it's live:
 
     - [x] [best-horror-games](posts/best-horror-games.json) — 2026-10-14 — https://www.tiktok.com/@playratesapp/photo/…
 
-`npm run tiktok` warns about a post that isn't on it.
+`npm run tiktok` warns about a post that isn't on it. Dates on a line, posted
+or planned, are what `npm run tiktok:next` treats as taken.
 
 ## Making a new post
 
