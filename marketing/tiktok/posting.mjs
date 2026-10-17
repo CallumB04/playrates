@@ -1,6 +1,13 @@
 const song = ({ track, artist, why }) => `**${track}** by ${artist}. ${why}`;
 
 /**
+ * A video's caption: the title runs straight into the description, so a
+ * title that ends mid-sentence gets a full stop rather than "everyone Eight".
+ */
+export const videoCaption = ({ title, description }) =>
+  `${/(\p{P}|\p{Extended_Pictographic}\uFE0F?)$/u.test(title) ? title : `${title}.`} ${description}`;
+
+/**
  * Everything typed into TikTok alongside the slides, plus the steps that are
  * easy to forget, as a checklist to work through while posting.
  */
@@ -10,7 +17,7 @@ export const postingNotes = (post, slideCount, video = false) => {
   const copy = video
     ? `## Caption
 
-${title} ${description}
+${videoCaption(post.tiktok)}
 `
     : `## Title
 
