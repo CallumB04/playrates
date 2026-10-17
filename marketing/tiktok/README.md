@@ -91,6 +91,13 @@ an intro card states the quiz and an outro card makes the pitch.
 `higherlower` and `whichfirst` share their layout and timing
 (`formats/versus.mjs`), which compares whatever number a format gives it.
 All four take `hook` (`title`, `subtitle`) and `outro` (`title`, `body`).
+A video opens on a card that's also its cover: a picture of the quiz above
+the title, a ruled "Gaming quiz" label (`hook.label` replaces it) and the
+rules as a line of marks. The picture must never give an answer away: guess
+the game shows its first screenshots as coarse as each round starts, the
+head-to-head formats show the last pair (`hook.pair` picks another) with "?"
+for the figures, and guess the year fans out its covers over "19?? or 20??".
+The picture shrinks to whatever height the copy leaves.
 Release dates come from the games table, the first release anywhere; a game
 without an exact date is refused.
 
@@ -121,8 +128,11 @@ format, and the others share them:
   available), `pinnedComment` and `when` (the day; every post goes out
   at 21:00 Estonian time).
 
-- `hook.title`, `cta.title` — wrap one word in `*stars*` to colour it, and
-  use `\n` to force a line break if the wrapping strands a word.
+- `hook.title`, `cta.title` — wrap the phrase the post is about in
+  `*stars*` to colour it: the whole subject (`The *10 best horror games*`),
+  not one word of it. Two separate parts can each take stars
+  (`*Original* or *sequel*?`); never the whole headline. Use `\n` to force
+  a line break if the wrapping strands a word.
 - `games` — **#1 first**, by slug. Remakes and ports share a title, so look
   the slug up rather than guessing it (`resident-evil-2--1` is the 2019
   remake):

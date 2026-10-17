@@ -32,6 +32,11 @@ export const renderHigherLower = (post) => {
       tone: tone(game.criticScore),
     }),
     meta: year,
+    facts: (n) => [
+      ["Timer", "5 seconds to pick"],
+      ["ListOrdered", `${n} rounds`],
+      ["ChevronsDownUp", "They get closer"],
+    ],
     win: `${icon(ArrowUp, 2.75)}Higher`,
     tie: `${icon(Equal, 2.75)}Same score`,
   });

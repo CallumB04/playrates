@@ -1,4 +1,5 @@
-import { brand, button, escape, headline } from "../slides.mjs";
+import * as Lucide from "lucide-react";
+import { brand, button, escape, headline, icon } from "../slides.mjs";
 
 /**
  * What every video scene's script starts with. `at(t, start, length)` is how
@@ -21,11 +22,39 @@ const show = (el, p, dy = 0, scale = 1) => {
 export const INTRO = 2.4;
 export const OUTRO = 3.6;
 
-/** The opening card: the claim of the video, over whatever it's about. */
-export const intro = ({ title, subtitle }) => `
+/**
+ * The opening card, which is also the video's cover: a picture of the quiz
+ * that gives nothing away (`visual`), then the claim, and the rules as a
+ * line of marks (`facts`: `[LucideName, text]` pairs).
+ */
+export const intro = ({ title, subtitle, label }, visual, facts = []) => `
 <div class="v-intro">
-    <h1>${headline(title)}</h1>
-    ${subtitle ? `<p>${headline(subtitle)}</p>` : ""}
+    <div class="v-visual">${visual}</div>
+    <div class="v-copy">
+        <span class="v-label">${escape(label ?? "Gaming quiz")}</span>
+        <h1>${headline(title)}</h1>
+        ${subtitle ? `<p>${headline(subtitle)}</p>` : ""}
+        ${
+          facts.length
+            ? `<div class="v-facts">${facts
+                .map(
+                  ([name, text]) =>
+                    `<span>${icon(Lucide[name], 2.25)}${escape(text)}</span>`,
+                )
+                .join("")}</div>`
+            : ""
+        }
+    </div>
+</div>`;
+
+/** Covers face to face with a "?" on each: the featured pair, unscored. */
+export const faceOff = (a, b) => `
+<div class="v-faceoff">
+    <div class="v-half" style="background-image:url('${a.banner}')"></div>
+    <div class="v-half" style="background-image:url('${b.banner}')"></div>
+    <figure><img src="${a.cover}" alt=""><b class="mono">?</b></figure>
+    <span class="v-or">or</span>
+    <figure><img src="${b.cover}" alt=""><b class="mono">?</b></figure>
 </div>`;
 
 /** The last card: what to do now, and where. */
@@ -41,6 +70,9 @@ export const BOOKENDS = `
 const bookends = (t, end) => {
   const i = $(".v-intro");
   if (i) show(i, 1 - at(t, ${INTRO} - 0.35, 0.35), 0, 1);
+  // The picture settles in over the first second, so the opening moves.
+  const v = $(".v-visual");
+  if (v) v.style.transform = "scale(" + (1.06 - 0.06 * out(at(t, 0, 1.1))) + ")";
   const o = $(".v-outro");
   if (o) show(o, out(at(t, end, 0.5)), 60, 0.98);
 };

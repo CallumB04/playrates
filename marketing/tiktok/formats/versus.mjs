@@ -1,5 +1,5 @@
 import { escape } from "../slides.mjs";
-import { INTRO, OUTRO, intro, outro, videoPage } from "./video.mjs";
+import { INTRO, OUTRO, faceOff, intro, outro, videoPage } from "./video.mjs";
 
 // Seconds a round takes: both in, five to choose, the figures, the verdict.
 const THINK = 5.0;
@@ -15,6 +15,7 @@ const PER = 0.35 + THINK + 1.85;
  * - `figure(game)` — `{ from, to, sub?, tone? }`: the count and what's under it
  * - `meta(game)` — the details line, which must not give the answer away
  * - `win`, `tie` — the verdict labels, as HTML
+ * - `facts(rounds)` — the rules on the opening card
  */
 export const renderVersus = (post, kind, spec) => {
   const { rounds } = post;
@@ -55,7 +56,11 @@ ${rounds
 </div>`,
   )
   .join("")}
-${intro(post.hook)}
+${(() => {
+  // The pair the hook teases: the last round's unless the hook names one.
+  const { a, b } = rounds[post.hook.pair ?? rounds.length - 1];
+  return intro(post.hook, faceOff(a.game, b.game), spec.facts(rounds.length));
+})()}
 ${outro(post.outro, "Rate them at playrates.app")}`;
 
   const end = INTRO + rounds.length * PER;

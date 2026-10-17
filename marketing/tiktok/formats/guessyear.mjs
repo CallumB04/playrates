@@ -43,7 +43,20 @@ ${rounds
 </div>`;
   })
   .join("")}
-${intro(post.hook)}
+${intro(
+  post.hook,
+  `<div class="v-hand"><div class="v-fan">${rounds
+    .slice(0, 5)
+    .map(({ game }) => `<img src="${game.cover}" alt="">`)
+    .join(
+      "",
+    )}</div><div class="v-years mono">19<span>??</span> or 20<span>??</span></div></div>`,
+  [
+    ["Timer", "5 seconds a round"],
+    ["Target", "Within 2 years scores"],
+    ["ListOrdered", `${rounds.length} games`],
+  ],
+)}
 ${outro(post.outro, "Rate them at playrates.app")}`;
 
   const end = INTRO + rounds.length * PER;

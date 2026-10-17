@@ -26,9 +26,18 @@ export const renderWhichFirst = (post) => {
       const { day, month, year } = releaseParts(game.date);
       // Spun up from a dozen years before, so the count lands rather than
       // flicking a digit.
-      return { from: Number(year) - 12, to: Number(year), sub: `${day} ${month}` };
+      return {
+        from: Number(year) - 12,
+        to: Number(year),
+        sub: `${day} ${month}`,
+      };
     },
     meta: (game) => developer(game) || "",
+    facts: (n) => [
+      ["Timer", "5 seconds to pick"],
+      ["ListOrdered", `${n} rounds`],
+      ["CalendarRange", "They get closer"],
+    ],
     win: `${icon(History, 2.5)}First`,
     tie: `${icon(Equal, 2.75)}Same day`,
   });

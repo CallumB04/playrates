@@ -130,6 +130,15 @@ learned the hard way:
   site allows (the renderer refuses anything else). Use games from the
   bottom of the list so the top isn't spoiled. Video posts have no `cta`;
   their `outro` card carries the pitch.
+- **The coloured words**: `*stars*` in a headline go round the phrase the
+  post is about, the whole of it: `The *10 best horror games*`, not
+  `The 10 best *horror* games`. Two parts can each take stars (`*Original*
+  or *sequel*?`), but never the whole headline.
+- **A video's opening card is its cover**, so it has to stop the scroll
+  without answering anything. Each format draws its own picture for it
+  (see the README); check the frame at 1.2 seconds before recording, and
+  keep `hook.subtitle` to the rules people need ("Eight rounds, five
+  seconds each").
 - **Copy that repeats**: check the last post in the same format and don't
   reuse its hook phrasing, title opener, sign-up title or outro title.
 - **`tiktok.when`**: the day, with a reason if one suits (a Friday for a
