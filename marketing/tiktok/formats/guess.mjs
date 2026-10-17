@@ -38,8 +38,8 @@ ${rounds
 ${intro(
   post.hook,
   `<div class="v-mosaic">${rounds
-    .slice(0, 4)
-    .map(() => `<canvas width="420" height="380"></canvas>`)
+    .slice(0, 3)
+    .map(() => `<canvas width="300" height="400"></canvas>`)
     .join("")}<span class="v-ring mono">5</span></div>`,
   [
     ["Timer", "5 seconds a round"],
@@ -61,17 +61,17 @@ const draw = (c, img, w, h) => {
   const sw = w / scale, sh = h / scale;
   c.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, 0, 0, w, h);
 };
-// The opening's tiles: the first rounds' screenshots as coarse as each
-// round starts, so they look like the game's colours and nothing more.
+// The opening's cards: the first rounds' screenshots about as coarse as
+// each round starts, so they show the game's colours and nothing more.
 let mosaic = false;
 const drawMosaic = () => {
   $$(".v-mosaic canvas").forEach((c, j) => {
-    const w = Math.ceil(c.width / 46), h = Math.ceil(c.height / 46);
+    const w = Math.ceil(c.width / 34), h = Math.ceil(c.height / 34);
     small.width = w; small.height = h;
     draw(sctx, srcs[j], w, h);
     const x = c.getContext("2d");
     x.imageSmoothingEnabled = false;
-    x.drawImage(small, 0, 0, w, h, 0, 0, w * 46, h * 46);
+    x.drawImage(small, 0, 0, w, h, 0, 0, w * 34, h * 34);
   });
   mosaic = true;
 };

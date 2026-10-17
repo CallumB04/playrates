@@ -1701,16 +1701,19 @@ em {
 }
 /* The picture takes whatever height the copy leaves, so a long title
    shrinks it rather than running into it. */
+/* The picture is capped so it supports the title rather than swamping it,
+   and the pair sits centred in the space under TikTok's tabs. */
 .v-intro {
   display: flex;
   flex-direction: column;
-  padding: 230px 140px 380px 72px;
+  justify-content: center;
+  padding: 260px 140px 380px 72px;
 }
 .v-visual {
   position: relative;
-  flex: 1;
+  flex: 0 1 600px;
   min-height: 0;
-  margin-bottom: 48px;
+  margin-bottom: 56px;
   transform-origin: 50% 60%;
 }
 .v-copy {
@@ -1769,31 +1772,44 @@ em {
   color: var(--iris-400);
 }
 
-/* Guess the game's opening: four tiles of colour, and the count. */
+/* Guess the game's opening: three face-down cards, fanned, and the count. */
 .v-mosaic {
   position: absolute;
   inset: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .v-mosaic canvas {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  border-radius: 26px;
+  height: 72%;
+  aspect-ratio: 3 / 4;
+  border-radius: 22px;
   box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.06),
-    0 40px 70px -30px rgba(0, 0, 0, 0.9);
+    0 0 0 3px rgba(255, 255, 255, 0.1),
+    0 40px 70px -24px rgba(0, 0, 0, 0.95);
+}
+.v-mosaic canvas + canvas {
+  margin-left: -60px;
+}
+.v-mosaic canvas:nth-child(1) {
+  transform: rotate(-10deg) translateY(30px);
+}
+.v-mosaic canvas:nth-child(2) {
+  position: relative;
+  z-index: 1;
+  transform: translateY(-10px);
+}
+.v-mosaic canvas:nth-child(3) {
+  transform: rotate(10deg) translateY(30px);
 }
 .v-ring {
   position: absolute;
+  z-index: 2;
   left: 50%;
-  top: 50%;
-  width: 190px;
-  height: 190px;
-  margin: -95px 0 0 -95px;
+  bottom: 10px;
+  width: 140px;
+  height: 140px;
+  margin-left: -70px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -1802,7 +1818,7 @@ em {
     0 0 0 10px var(--iris-400),
     0 0 0 22px rgba(15, 14, 18, 0.9),
     0 30px 70px -10px rgba(0, 0, 0, 0.8);
-  font-size: 100px;
+  font-size: 80px;
   font-weight: 600;
 }
 
