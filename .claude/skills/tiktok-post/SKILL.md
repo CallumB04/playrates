@@ -202,8 +202,9 @@ Callum opens TikTok in the browser pane; the upload page is
 - **Video post**: there's no title field, and TikTok fills the description
   with the file name ("video"). Wait until the upload has finished (the
   page says "Uploaded"), or TikTok resets the box later and drops what you
-  typed. Then ctrl+a, Delete, and type `tiktok.title`, an emoji or a space,
-  and `tiktok.description` as one caption.
+  typed; it can still do so a second or two after. Then ctrl+a, Delete, and
+  type the "Caption" from `posting.md`, which puts a full stop after a
+  title that needs one.
 - **Type the description once**, then check what's in the box (read it
   from the page, not a screenshot, which can lag). Retyping doubles it.
 - **Hashtags**: type each one and pick TikTok's exact-match suggestion, so
