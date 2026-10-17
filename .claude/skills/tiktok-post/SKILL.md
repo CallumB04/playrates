@@ -1,6 +1,6 @@
 ---
 name: tiktok-post
-description: Make a PlayRates TikTok post end to end — pick a format (photo: ranked list, hot take, pairs, tier list, upcoming releases; video: guess the game, higher or lower), choose a topic and its games, write the post file, render and check it, schedule it in TikTok Studio, and track it in the posting checklist. Use when asked for a new TikTok post or ranked list, or to prepare, schedule or post one that already exists.
+description: Make a PlayRates TikTok post end to end — pick a format (photo: ranked list, hot take, pairs, tier list, upcoming releases; video: guess the game, higher or lower, guess the year, which came first), choose a topic and its games, write the post file, render and check it, schedule it in TikTok Studio, and track it in the posting checklist. Use when asked for a new TikTok post or ranked list, or to prepare, schedule or post one that already exists.
 ---
 
 # TikTok post
@@ -76,6 +76,17 @@ What each format needs from the topic:
   from the games table, getting closer each round; a tie or a surprising
   score late on is the hook. IGDB's scores can differ from the Metacritic
   number people remember, so say so to Callum when one will look wrong.
+- **guessyear** (video) — eight well-known games across the decades, in no
+  particular year order. Read each date from the games table; where the
+  year people remember isn't the first release (Minecraft's full release
+  was 2011, its alpha 2009), give the round a `note` saying which it is.
+- **whichfirst** (video) — eight pairs from the same era, gaps shrinking
+  each round, ending on two releases days or weeks apart (Skyrim beat
+  Minecraft by eight days). Work the pairs out from the games table's
+  dates, not from memory: memory gets these wrong.
+
+New video formats go in as `demo: true` (see the README) and stay out of
+the rotation until Callum has seen a demo and said yes.
 
 Changing or adding slides: follow the design rules in the README (no
 outlined pills, light button, no boxed labels, solid type over art, tiles

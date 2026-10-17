@@ -1,10 +1,12 @@
 import { renderGuess } from "./guess.mjs";
+import { renderGuessYear } from "./guessyear.mjs";
 import { renderHigherLower } from "./higherlower.mjs";
 import { renderHotTake } from "./hottake.mjs";
 import { renderPairs } from "./pairs.mjs";
 import { renderRanked } from "./ranked.mjs";
 import { renderTiers } from "./tiers.mjs";
 import { renderUpcoming } from "./upcoming.mjs";
+import { renderWhichFirst } from "./whichfirst.mjs";
 
 /**
  * Every format a post can take, keyed by the post's `format`. A post without
@@ -42,6 +44,16 @@ export const FORMATS = {
     render: renderHigherLower,
     video: true,
     summary: "Video: which of two games got the higher critic score",
+  },
+  guessyear: {
+    render: renderGuessYear,
+    video: true,
+    summary: "Video: guess the year a game came out",
+  },
+  whichfirst: {
+    render: renderWhichFirst,
+    video: true,
+    summary: "Video: which of two games came out first",
   },
 };
 

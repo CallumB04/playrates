@@ -54,7 +54,11 @@ for (const { name, done, dates } of posts) {
 const kinds = used.map((format) => !!FORMATS[format].video);
 const recent = kinds.slice(-WINDOW);
 const video = pickKind(kinds);
-const format = pickFormat(FORMATS, video, used);
+// A demo format waits for Callum's yes before it joins the rotation.
+const inRotation = Object.fromEntries(
+  Object.entries(FORMATS).filter(([, f]) => !f.demo),
+);
+const format = pickFormat(inRotation, video, used);
 const today = new Date().toISOString().slice(0, 10);
 console.log(`\nnext free day: ${firstFreeDay(posts, today)}`);
 console.log(

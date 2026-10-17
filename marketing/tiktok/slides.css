@@ -1968,6 +1968,132 @@ em {
   color: var(--content-secondary);
 }
 
+/* Which came first: the year with its day and month under it. */
+.hl-score.has-sub {
+  flex-direction: column;
+  gap: 4px;
+  min-width: 230px;
+  font-size: 84px;
+}
+.hl-score small {
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--content-secondary);
+  opacity: 0;
+}
+.hl-score.counted small {
+  opacity: 1;
+}
+.hl-score.has-sub {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Guess the year */
+.gy-round {
+  top: 168px;
+  right: 140px;
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--content-secondary);
+}
+.gy-game {
+  inset: 0;
+  opacity: 0;
+}
+.gy-art {
+  position: absolute;
+  top: 250px;
+  left: 72px;
+  right: 140px;
+  height: 560px;
+  border-radius: 34px;
+  background-size: cover;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.06),
+    0 50px 90px -30px rgba(0, 0, 0, 0.9);
+}
+.gy-who {
+  position: absolute;
+  top: 740px;
+  left: 112px;
+  right: 180px;
+  display: flex;
+  align-items: flex-end;
+  gap: 34px;
+}
+.gy-who .box {
+  width: 190px;
+  border-radius: 16px;
+}
+.gy-who > div {
+  min-width: 0;
+  padding-bottom: 8px;
+}
+.gy-who h3 {
+  font-size: 66px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.gy-who .meta {
+  margin-top: 14px;
+  font-size: 32px;
+}
+.gy-year {
+  position: absolute;
+  top: 1110px;
+  left: 72px;
+  right: 140px;
+}
+.gy-q {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.gy-count {
+  font-size: 46px;
+  font-weight: 600;
+  color: var(--iris-300);
+}
+.gy-timer {
+  margin-top: 22px;
+  height: 10px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.gy-timer i {
+  display: block;
+  height: 100%;
+  background: var(--iris-500);
+  transform-origin: left center;
+}
+.gy-n {
+  margin-top: 26px;
+  font-size: 220px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--content-muted);
+}
+.gy-n.landed {
+  color: var(--content);
+}
+.gy-date {
+  margin-top: 10px;
+  font-size: 36px;
+  font-weight: 500;
+  color: var(--content-secondary);
+  opacity: 0;
+}
+
 /* ---- Contact sheet ----------------------------------------------------- */
 
 body.sheet {

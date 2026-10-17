@@ -1,7 +1,7 @@
 # TikTok posts
 
-Posts for @playratesapp in the site's own design, in one of seven formats:
-five photo slideshows and two quiz videos. Each post is a JSON file in
+Posts for @playratesapp in the site's own design, in one of nine formats:
+five photo slideshows and four quiz videos. Each post is a JSON file in
 `posts/`; the script fills in the rest from the games table. The post files
 and their checklist, `POSTS.md`, live only on the machine that makes them
 (they're gitignored); the generator is what's shared. The `/tiktok-post`
@@ -35,7 +35,8 @@ and format. The aim is half video, half slideshow: never three of one kind
 in a row, otherwise the kind the last ten posts have fewer of, then a
 random format of that kind other than the one it used last. The skill
 treats it as a starting point and picks what suits the day. A format added
-to `formats/index.mjs` joins the rotation.
+to `formats/index.mjs` joins the rotation, unless it's marked `demo: true`,
+which keeps it out until Callum has seen it and said yes.
 
 Every photo post opens on a hook, then the sign-up slide (`cta`, below),
 then the format's own slides:
@@ -62,7 +63,7 @@ then the format's own slides:
   IGDB only has a year or month for takes `"date": "2027"` or `"2027-03"`;
   `short` shortens a title for the hook's timeline and the outro's list.
 
-Two formats are videos. They render to `out/<post>/video.mp4` (and a
+Four formats are videos. They render to `out/<post>/video.mp4` (and a
 `cover.png` still) instead of slides, recorded frame by frame from the page
 (`record.mjs`), silent, with the sound added in TikTok. They take no `cta`:
 an intro card states the quiz and an outro card makes the pitch.
@@ -78,7 +79,20 @@ an intro card states the quiz and an outro card makes the pitch.
   closer, and check the scores first: IGDB's can differ from the Metacritic
   number people remember.
 
-Both take `hook` (`title`, `subtitle`) and `outro` (`title`, `body`).
+- **`guessyear`** — `rounds`: eight game entries, each named on screen with
+  its art and cover; five seconds to guess, then the year spins up and lands
+  with the full date under it. A round's `note` adds a word to the date line
+  ("the full release") where the year people remember differs.
+- **`whichfirst`** — `rounds`: eight of `{ a, b }`; five seconds to pick,
+  then each year spins up with its day and month under it, and the earlier
+  is marked "First". The details line shows the developer, never the year.
+  Order the pairs so the gaps shrink; the last can be days apart.
+
+`higherlower` and `whichfirst` share their layout and timing
+(`formats/versus.mjs`), which compares whatever number a format gives it.
+All four take `hook` (`title`, `subtitle`) and `outro` (`title`, `body`).
+Release dates come from the games table, the first release anywhere; a game
+without an exact date is refused.
 
 Every format's game entries take the same overrides as ranked ones below
 (`title`, `developer`, `banner`, `bannerPosition`, `cover`).
