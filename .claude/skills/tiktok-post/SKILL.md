@@ -116,8 +116,8 @@ Callum opens TikTok in the browser pane. On the upload page, choose the
 - **Sound**: Add sound, search the track, pick the original artist's
   version, and tell Callum which version you chose so he can preview it.
 - **Schedule** every post for **21:00 Estonian time**, the time zone the
-  picker shows. Unless Callum names a date, take the next day that leaves a
-  day clear after the last scheduled post in `POSTS.md`. In the time picker,
+  picker shows. A post goes out every day: unless Callum names a date,
+  take the first day from today with nothing scheduled in `POSTS.md`. In the time picker,
   click the hour, then keep clicking the topmost minute until 00 shows and
   click that; scrolling moves one step at a time. Check the inputs read
   `21:00` and the right date, then note it in `POSTS.md`:
