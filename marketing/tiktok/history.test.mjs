@@ -4,7 +4,7 @@ import {
   firstFreeDay,
   parseChecklist,
   pickFormat,
-  pickKind,
+  videoSlot,
 } from "./history.mjs";
 
 const checklist = `# TikTok posts
@@ -41,43 +41,33 @@ const formats = {
   higherlower: { video: true },
 };
 
-test("never three of one kind in a row", () => {
-  assert.equal(pickKind([true, false, false]), true);
-  assert.equal(pickKind([false, true, true]), false);
-});
-
-test("otherwise the kind the recent posts have fewer of", () => {
-  assert.equal(pickKind([false, false, true, false, true, false]), true);
-  // Only the last ten count: the early run of photos is forgotten.
-  const early = Array(8).fill(false);
-  const recent = [
-    true,
-    false,
-    true,
-    true,
-    false,
-    true,
-    false,
-    true,
-    false,
-    true,
+test("the video swaps slots with the photo from one day to the next", () => {
+  const day = (date, videoTime, photoTime) => [
+    { dates: [date], time: videoTime, video: true },
+    { dates: [date], time: photoTime, video: false },
   ];
-  assert.equal(pickKind([...early, ...recent]), false);
+  assert.equal(videoSlot(day("2026-10-19", "16:00", "21:00")), "21:00");
+  assert.equal(videoSlot(day("2026-10-19", "21:00", "16:00")), "16:00");
+  // The latest full day decides, whatever order the checklist lists them in.
+  assert.equal(
+    videoSlot([
+      ...day("2026-10-20", "21:00", "16:00"),
+      ...day("2026-10-19", "16:00", "21:00"),
+    ]),
+    "16:00",
+  );
 });
 
-test("a tie is a coin toss", () => {
+test("a day with one post doesn't count, and a post without a time is 21:00", () => {
   assert.equal(
-    pickKind([true, false], () => 0.2),
-    true,
+    videoSlot([
+      { dates: ["2026-10-18"], time: "16:00", video: true },
+      { dates: ["2026-10-18"], video: false },
+      { dates: ["2026-10-19"], time: "21:00", video: true },
+    ]),
+    "21:00",
   );
-  assert.equal(
-    pickKind([true, false], () => 0.8),
-    false,
-  );
-  assert.equal(
-    pickKind([], () => 0.2),
-    true,
-  );
+  assert.equal(videoSlot([]), "16:00");
 });
 
 test("a format of the kind, not the one that kind used last", () => {

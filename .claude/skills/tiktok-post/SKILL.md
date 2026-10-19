@@ -1,13 +1,17 @@
 ---
 name: tiktok-post
-description: Make a PlayRates TikTok post end to end — pick a format (photo: ranked list, hot take, pairs, tier list, upcoming releases; video: guess the game, higher or lower, guess the year, which came first), choose a topic and its games, write the post file, render and check it, schedule it in TikTok Studio, and track it in the posting checklist. Use when asked for a new TikTok post or ranked list, or to prepare, schedule or post one that already exists.
+description: Make PlayRates TikTok posts end to end, a photo and a video for the next free day — check the account for posts that went live, pick a format (photo: ranked list, hot take, pairs, tier list, upcoming releases; video: guess the game, higher or lower, guess the year, which came first), choose a topic and its games, write the post file, render and check it, schedule them in TikTok Studio, and track them in the posting checklist. Use when asked for a new TikTok post or ranked list, or to prepare, schedule or post one that already exists.
 ---
 
 # TikTok post
 
-PlayRates posts to TikTok as **@playratesapp**, a personal account, one post
-a day at 21:00 Estonian time: photo slideshows and short quiz videos, about
-half and half. The generator lives in `marketing/tiktok/`; read its
+PlayRates posts to TikTok as **@playratesapp**, a personal account, **two
+posts a day: one photo slideshow and one quiz video, at 16:00 and 21:00
+Estonian time**. The two kinds swap slots from one day to the next, so
+neither always gets the evening.
+
+**Every run makes a pair**: a photo and a video for the first free day,
+both scheduled. Make a single post only when Callum asks for exactly one. The generator lives in `marketing/tiktok/`; read its
 `README.md` for the post formats before writing one.
 
 - `marketing/tiktok/posts/<name>.json` — one file per post.
@@ -20,26 +24,46 @@ half and half. The generator lives in `marketing/tiktok/`; read its
 The post files and `POSTS.md` are **local and gitignored**. Never commit
 them. Changes to the generator itself are code: commit and push as usual.
 
-## 1. Format and topic
+## 0. Check the account first
+
+Every run starts here, before making anything. Open
+`https://www.tiktok.com/@playratesapp` in the browser pane and read the
+post links from the page (`a[href*="/video/"], a[href*="/photo/"]`; the
+grid takes a few seconds to load, and it also links other accounts' videos,
+so keep the ids that appear more than once or open each one). Then:
+
+- **Tick what went live.** Match each post to its line in `POSTS.md` by the
+  caption (the page title starts with it) and tick it with the date and
+  link: `- [x] [best-rpgs](posts/best-rpgs.json) — 2026-10-18 — https://www.tiktok.com/@playratesapp/photo/…`.
+- **Check the comment.** On each post live since the last run, open the
+  **Comments** tab beside the post and read the comments
+  (`[class*="CommentObjectWrapper"]`). If there's no comment from
+  "PlayRates / Game Rankings · Creator" with the post's `pinnedComment`,
+  post it yourself in the "Add comment..." box at the bottom of the panel
+  (Callum asked for this, 2026-10-19). Read the panel afterwards to check
+  it went in once.
+- **Pinning can't be done on the web**: the comment's … menu only offers
+  Delete. Tell Callum which posts' comments still need pinning in the app.
+
+## 1. Formats and topics
 
 ```bash
 npm run tiktok:next
 ```
 
-prints every post on `POSTS.md` with its format, hook and games, the first
-free day, the video/photo split of the last ten posts, and a suggested
-kind and format. Over time posts should be **half video, half slideshow**.
-The script never suggests three of one kind in a row, and otherwise
-suggests whichever kind the last ten have fewer of.
+prints every post on `POSTS.md` with its format, hook and games, then the
+first free day with a suggested format for its photo and its video, and
+which slot each takes (the video takes whichever slot it didn't have on the
+last full day).
 
-If Callum names a format, use it. Otherwise decide the kind yourself for
-that day, starting from the suggestion: read the whole history, then pick
-what will work best on the day. A Friday suits a weekend list, a date near
-a big release suits upcoming or a hot take about that series, a quiz suits
-a quiet weekday, and a kind that's had several posts in a row is due a
-rest. Stay near half and half. Within the kind, the suggested format is a
-random one, not the one that kind used last; pick another of the same kind
-only for a reason you can name.
+If Callum names a format, use it. Otherwise decide each format yourself,
+starting from the suggestion: read the whole history, then pick what will
+work best on the day. A Friday suits a weekend list, a date near a big
+release suits upcoming or a hot take about that series, and a format that's
+had several posts in the last week is due a rest. The suggested format is a
+random one of its kind, not the one that kind used last; pick another of
+the same kind only for a reason you can name. The day's two posts should
+differ in genre or angle, so they don't compete with each other.
 
 Read the whole history before choosing a topic. The same genre or series in
 a different format is fine (a ranked RPG list, then an RPG tier list), but
@@ -142,9 +166,10 @@ learned the hard way:
 - **Copy that repeats**: check the last post in the same format and don't
   reuse its hook phrasing, title opener, sign-up title or outro title.
 - **`tiktok.when`**: the day, with a reason if one suits (a Friday for a
-  weekend list, well before Halloween for horror). Every post goes out at
-  **21:00 Estonian time**.
-- Add the post to `POSTS.md` in the order it should go out.
+  weekend list, well before Halloween for horror). **`tiktok.time`** is the
+  slot, `"16:00"` or `"21:00"`, from `npm run tiktok:next`.
+- Add both posts to `POSTS.md` in the order they go out, the 16:00 one
+  first.
 
 ## 4. Render and check
 
@@ -224,21 +249,21 @@ Callum opens TikTok in the browser pane; the upload page is
   "Original sound", because the track is mixed in. Pick the original
   artist's version where there is one, the closest cover where there isn't,
   and tell Callum which you chose.
-- **Schedule** at **21:00 Estonian time**, the time zone the picker shows.
-  A post goes out every day: unless Callum names a date, take the first day
-  from today with nothing scheduled in `POSTS.md`; when posts are moved,
-  spread the videos evenly among the slideshows. The date cells are
+- **Schedule** at the post's `tiktok.time` (16:00 or 21:00 Estonian time,
+  the time zone the picker shows) on its day. Unless Callum names a date,
+  that's the first day from today with nothing scheduled in `POSTS.md`.
+  When posts are moved, keep one photo and one video on each day. The date cells are
   `span.day.valid` and take a scripted click. The time lists only draw a
   few options at a time and ignore scripted clicks: click real coordinates,
   reading which options are visible inside the list's scroll box before
   each step. Clicking the last visible hour scrolls the list on; clicking
   the first visible minute steps back towards 00. Check the inputs read
-  `21:00` and the right date before scheduling.
+  the post's time and the right date before scheduling.
 - **Disclose post content** stays off (Callum's decision, 2026-10-17).
 - **Press Schedule yourself** once everything checks out, then confirm the
   date in the post list (`/tiktokstudio/content`; a video shows
   "Processing..." for a minute first), note it in `POSTS.md`
-  (`— scheduled 2026-10-22 21:00`) and go straight on to the next post.
+  (`— scheduled 2026-10-22 16:00`) and go straight on to the next post.
   Never press **Post**, which publishes now.
 - A click that misses can open a photo's preview. Click the dark overlay to
   close it, not Replace or Delete.
@@ -249,6 +274,7 @@ Callum opens TikTok in the browser pane; the upload page is
 
 ## 6. After posting
 
-When Callum shares the link, tick the post in `POSTS.md` with the date and
-the link. It's local, so there's nothing to commit. Remind him to pin the
-comment from the post file and to reply to comments in the first hour.
+Section 0 ticks posts and checks their comments at the start of the next
+run. If Callum shares a link sooner, tick that post then. `POSTS.md` is
+local, so there's nothing to commit. Remind him to pin the comments (only
+the app can) and to reply to comments in the first hour.

@@ -21,6 +21,7 @@ import {
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { SLOTS } from "./history.mjs";
 import { postingNotes } from "./posting.mjs";
 import { FORMATS, formatOf, renderPost } from "./formats/index.mjs";
 
@@ -117,6 +118,11 @@ const localImage = async (url) => {
 // in steps of 0.5, as RatingSchema in shared/src/schemas/gameLog.ts.
 if (post.tiktok.title.length > 90) {
   throw new Error("tiktok.title is over the 90 characters TikTok allows");
+}
+if (post.tiktok.time && !SLOTS.includes(post.tiktok.time)) {
+  throw new Error(
+    `tiktok.time is ${post.tiktok.time}, not one of ${SLOTS.join(" or ")}`,
+  );
 }
 
 for (const { slug, rating } of post.cta?.library ?? []) {

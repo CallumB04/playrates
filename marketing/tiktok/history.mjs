@@ -27,23 +27,28 @@ export const firstFreeDay = (posts, today) => {
   return day;
 };
 
-/** How many recent posts the video/photo balance is judged over. */
-export const WINDOW = 10;
+/** A day's two posts go out at these times, Estonian time: one photo and
+ *  one video, swapping slots from one day to the next. */
+export const SLOTS = ["16:00", "21:00"];
 
 /**
- * Video or photo for the next post, aiming at half and half: never three of
- * one kind in a row, otherwise whichever kind the last WINDOW posts have
- * fewer of, and a coin toss on a tie. `kinds` is `true` for each video so
- * far, in posting order. The skill can overrule it for the day.
+ * Which slot the next day's video takes: the one the video didn't have on
+ * the last day with both kinds, so neither kind keeps the evening. Each post
+ * is `{ dates, time, video }`, `time` from its post file (21:00 if unset).
  */
-export const pickKind = (kinds, random = Math.random) => {
-  const [a, b] = kinds.slice(-2);
-  if (kinds.length >= 2 && a === b) return !a;
-  const recent = kinds.slice(-WINDOW);
-  const videos = recent.filter(Boolean).length;
-  const photos = recent.length - videos;
-  if (videos !== photos) return videos < photos;
-  return random() < 0.5;
+export const videoSlot = (posts) => {
+  const days = new Map();
+  for (const { dates, time = SLOTS[1], video } of posts) {
+    if (!dates[0]) continue;
+    days.set(dates[0], [...(days.get(dates[0]) ?? []), { time, video }]);
+  }
+  const last = [...days.keys()]
+    .sort()
+    .reverse()
+    .map((day) => days.get(day))
+    .find((day) => day.some((p) => p.video) && day.some((p) => !p.video));
+  const was = last?.find((p) => p.video).time;
+  return was === SLOTS[0] ? SLOTS[1] : SLOTS[0];
 };
 
 /**

@@ -44,7 +44,7 @@ ${post.tiktok.pinnedComment}
 
 ## When
 
-21:00 Estonian time. ${post.tiktok.when}
+${post.tiktok.time ?? "21:00"} Estonian time. ${post.tiktok.when}
 
 ## Checklist
 

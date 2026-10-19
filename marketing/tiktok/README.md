@@ -30,11 +30,12 @@ costs no RAWG requests.
 ## Formats
 
 A post's `format` picks one of `formats/`; without one it's `ranked`.
-`npm run tiktok:next` lists every post so far and suggests the next kind
-and format. The aim is half video, half slideshow: never three of one kind
-in a row, otherwise the kind the last ten posts have fewer of, then a
-random format of that kind other than the one it used last. The skill
-treats it as a starting point and picks what suits the day. A format added
+Two posts go out a day, one photo and one video, at 16:00 and 21:00
+Estonian time; they swap slots from one day to the next. `npm run
+tiktok:next` lists every post so far, then the first free day with a
+format for each slot: a random one of that kind, other than the one it
+used last. The skill treats it as a starting point and picks what suits
+the day. A format added
 to `formats/index.mjs` joins the rotation, unless it's marked `demo: true`,
 which keeps it out until Callum has seen it and said yes.
 
@@ -112,7 +113,8 @@ should go out, ticked with its date and link once it's live:
     - [x] [best-horror-games](posts/best-horror-games.json) — 2026-10-14 — https://www.tiktok.com/@playratesapp/photo/…
 
 `npm run tiktok` warns about a post that isn't on it. A line scheduled in
-TikTok but not live yet ends `— scheduled 2026-10-22 21:00`. Dates on a
+TikTok but not live yet ends `— scheduled 2026-10-22 21:00`; the day's
+16:00 post sits above its 21:00 one. Dates on a
 line, posted or planned, are what `npm run tiktok:next` treats as taken; an
 indented line is an example and isn't read.
 
@@ -125,8 +127,8 @@ format, and the others share them:
 - `tiktok` — what goes in the app with the slides: `title` (90 characters at
   most), `description` (keep it to about five hashtags), `song` and
   `altSong`, `musicSearch` (keywords to search for if neither song is
-  available), `pinnedComment` and `when` (the day; every post goes out
-  at 21:00 Estonian time).
+  available), `pinnedComment`, `when` (the day) and `time` (`"16:00"` or
+  `"21:00"`, the post's slot; 21:00 if it's left out).
 
 - `hook.title`, `cta.title` — wrap the phrase the post is about in
   `*stars*` to colour it: the whole subject (`The *10 best horror games*`),
