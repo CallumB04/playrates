@@ -237,7 +237,9 @@ Callum opens TikTok in the browser pane; the upload page is
   The suggestions are `.hashtag-suggestion-item` elements: a script can
   pick the one whose first line is exactly the tag and fire
   mousedown/mouseup/click on it, then check each tag sits inside a
-  `[class*="mention"]` span. Some tags never match (`#baldursgate3`,
+  `[class*="mention"]` span. Wait about two seconds after typing each tag
+  before picking: the list still shows the last tag's matches for a moment,
+  and a pick from it drops the tag without an error. Some tags never match (`#baldursgate3`,
   `#shortgames`, `#underratedgames`, `#videogames`), and long ones often
   get no list (`#upcominggames`, `#gamerecommendations`): backspace to a
   shorter prefix to bring the list back, try the History row under the box,
