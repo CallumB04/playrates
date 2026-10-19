@@ -232,6 +232,8 @@ Callum opens TikTok in the browser pane; the upload page is
   title that needs one.
 - **Type the description once**, then check what's in the box (read it
   from the page, not a screenshot, which can lag). Retyping doubles it.
+  If the reset lands after the hashtags, the box keeps the tags and drops
+  the text: focus it, ctrl+Home, and type the caption in front of them.
 - **Hashtags**: type each one and pick TikTok's exact-match suggestion, so
   it becomes a real tag; a tag left as plain text runs into the next one.
   The suggestions are `.hashtag-suggestion-item` elements: a script can
@@ -262,6 +264,16 @@ Callum opens TikTok in the browser pane; the upload page is
   the first visible minute steps back towards 00. Check the inputs read
   the post's time and the right date before scheduling.
 - **Disclose post content** stays off (Callum's decision, 2026-10-17).
+- **A video's content check** has to finish ("No issues found") before
+  Schedule. Pressed sooner, TikTok asks "Continue to post?" with a **Post
+  now** button: Cancel, never Post now. If the check says "Something went
+  wrong", press its Retry; a check stuck for over ten minutes in a
+  background tab usually turns out to have failed. While one waits, open the
+  next post in a second tab (`tabs_create`), front it for Callum's upload,
+  and come back.
+- **Near the bottom of the hour list sits the Now radio**: a click that
+  misses the list switches the post to Now and the button to Post. Check
+  the button still reads Schedule before pressing it.
 - **Press Schedule yourself** once everything checks out, then confirm the
   date in the post list (`/tiktokstudio/content`; a video shows
   "Processing..." for a minute first), note it in `POSTS.md`
