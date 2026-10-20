@@ -22,10 +22,11 @@ const STATUS = {
   finished: { label: "Finished", Icon: Flag, hue: "var(--status-finished)" },
 };
 
-const logo = readFileSync(
+// An image rather than inline SVG: the logo's gradients are found by id, and
+// a page of slides repeats it.
+const logo = `<img class="logo" alt="" src="data:image/svg+xml;base64,${readFileSync(
   new URL("../../frontend/public/favicon.svg", import.meta.url),
-  "utf8",
-).replace(/ role="img" aria-label="PlayRates"/, "");
+).toString("base64")}">`;
 
 export const escape = (text) =>
   String(text)

@@ -101,7 +101,7 @@ em {
   font-weight: 700;
   letter-spacing: -0.03em;
 }
-.brand svg {
+.brand .logo {
   width: 64px;
   height: 64px;
   border-radius: 15px;
