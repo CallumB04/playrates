@@ -59,7 +59,7 @@ winner filled), the title, a caption line and one sentence.
   `hook`: `art` (a game entry), `title` (the promise, after the count, which
   is drawn from the number of tips), `kicker`, optional `label`. `tips`:
   five to seven of `{ title, body, art }`, `art` a game the tip applies to.
-  `outro`: `title`, `body`, over a hand of the tips' covers. `demo` for now.
+  `outro`: `title`, `body`, over a hand of the tips' covers.
 - **`pairs`** — "if you liked this, play that". `pairs`: six of
   `{ from, why, to }`, where `from` and `to` are game entries and `why` is
   the short reason on the thread between them; `to` carries the blurb. The

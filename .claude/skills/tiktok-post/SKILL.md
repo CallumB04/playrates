@@ -100,8 +100,7 @@ What each format needs from the topic:
   picture. Use it as the model for every cover.
 - **tips** — five to seven tips, habits or mistakes, each with a short
   `title` (five words or so), a one-sentence `body`, and `art`: a game it
-  applies to, shown big behind the tip. The hook's number is the count. In
-  `demo` until Callum approves it.
+  applies to, shown big behind the tip. The hook's number is the count.
 - **pairs** — six "if you liked X, play Y" with a reason on each thread
   (`why`, short). The Y should be the lesser-known one.
 - **tiers** — a series or genre in S/A/B/C, two to four games a tier, with a
@@ -151,7 +150,9 @@ review of the first two weeks (2026-10-21):
   sign-off. Iris stays the main colour.
 - **Fill the frame.** Covers of a collection of games should be mostly
   covers, not black; videos put the picture edge to edge (guess the game
-  does), never a small card on a dark stage.
+  does), never a small card on a dark stage. Over bright art, coloured
+  words go a step lighter and copy takes a soft shadow; check the cover at
+  1.2s for anything that sinks into the picture.
 
 ## 2. Games
 
