@@ -136,10 +136,10 @@ em {
     linear-gradient(
       180deg,
       rgba(15, 14, 18, 0.6) 0%,
-      rgba(15, 14, 18, 0) 18%,
-      rgba(15, 14, 18, 0.1) 44%,
-      rgba(15, 14, 18, 0.85) 66%,
-      var(--surface) 80%
+      rgba(15, 14, 18, 0) 16%,
+      rgba(15, 14, 18, 0.3) 34%,
+      rgba(15, 14, 18, 0.88) 50%,
+      var(--surface) 64%
     ),
     radial-gradient(
       ellipse 90% 40% at 0% 72%,
@@ -814,269 +814,44 @@ em {
 }
 /* ---- Pairs ------------------------------------------------------------- */
 
-.pairs-hook-glow {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(
-      ellipse 70% 40% at 85% 22%,
-      rgba(106, 68, 240, 0.34),
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 60% 30% at 0% 88%,
-      rgba(255, 138, 181, 0.12),
-      transparent 70%
-    );
+.feature-kicker {
+  margin: 40px 0 18px;
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ember-500);
 }
-.pairs-teaser {
-  margin-top: 72px;
-  display: flex;
-  gap: 70px;
-}
-.teaser {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.teaser:nth-child(2) {
-  margin-top: 64px;
-}
-.teaser:nth-child(3) {
-  margin-top: 22px;
-}
-.teaser-from,
-.teaser-to {
-  width: 196px;
-  aspect-ratio: 264 / 374;
-  border-radius: 16px;
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.08),
-    0 30px 60px -20px rgba(0, 0, 0, 0.9);
-}
-.teaser-from {
-  object-fit: cover;
-}
-.teaser-thread {
-  width: 3px;
-  height: 64px;
-  background: linear-gradient(rgba(255, 255, 255, 0.35), var(--iris-400));
-}
-/* SpoilerCover's treatment: the art is there, just not readable yet. */
-.teaser-to {
-  position: relative;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  background: var(--surface-raised);
-}
-.teaser-to img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: blur(16px) brightness(0.55) saturate(1.2);
-  transform: scale(1.2);
-}
-.teaser-to::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: repeating-linear-gradient(
-    115deg,
-    rgba(255, 255, 255, 0.055) 0 2px,
-    transparent 2px 9px
-  );
-}
-.teaser-to span {
-  position: relative;
-  font-size: 120px;
+.feature-kicker b {
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.92);
-  text-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  color: var(--content);
 }
-.pairs-copy {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-.pairs-copy h1 {
-  font-size: 112px;
-  font-weight: 700;
-  line-height: 0.95;
-  letter-spacing: -0.045em;
-  text-wrap: balance;
-}
-.pairs-copy p {
-  margin-top: 32px;
-  font-size: 44px;
-  line-height: 1.3;
-  color: var(--content-secondary);
-  text-wrap: pretty;
-}
-
-.pair-art {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-}
-.pair-art::after {
-  content: "";
+/* The covers fill the top, and the shade only starts where the words do. */
+.pairs-outro .shade {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(15, 14, 18, 0.88) 0%,
-    rgba(15, 14, 18, 0.5) 22%,
-    rgba(15, 14, 18, 0.05) 36%,
-    rgba(15, 14, 18, 0.12) 46%,
-    rgba(15, 14, 18, 0.86) 62%,
-    var(--surface) 76%
+    rgba(15, 14, 18, 0.6) 0%,
+    rgba(15, 14, 18, 0) 10%,
+    rgba(15, 14, 18, 0.2) 22%,
+    rgba(15, 14, 18, 0.94) 34%,
+    var(--surface) 42%
   );
 }
-.pair-from {
-  margin-top: 44px;
-  align-self: flex-start;
-  max-width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  padding: 20px 40px 20px 20px;
-  border-radius: 26px;
-  background: rgba(15, 14, 18, 0.62);
-  backdrop-filter: blur(24px);
-  box-shadow:
-    0 2px 0 var(--rim) inset,
-    0 30px 60px -30px rgba(0, 0, 0, 0.8);
-}
-.pair-from img {
-  width: 116px;
-  aspect-ratio: 264 / 374;
-  object-fit: cover;
-  border-radius: 12px;
-  filter: saturate(0.7);
-}
-.pair-from > div {
-  min-width: 0;
-}
-.pair-label {
-  font-size: 30px;
-  font-weight: 500;
-  color: var(--content-muted);
-}
-.pair-from-title {
-  margin-top: 6px;
-  font-size: 46px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--content-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* Down from the middle of the first cover to the top of the next. */
-.pair-thread {
-  flex: 1;
-  min-height: 96px;
-  margin-left: 77px;
-  display: flex;
-  align-items: center;
-  border-left: 3px solid transparent;
-  border-image: linear-gradient(rgba(255, 255, 255, 0.5), var(--iris-400)) 1;
-}
-.pair-why {
-  margin-left: 30px;
-  padding: 14px 30px;
-  border-radius: 999px;
-  background: rgba(15, 14, 18, 0.8);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 2px 0 var(--rim) inset;
-  font-size: 32px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-.pair-to {
-  display: flex;
-  flex-direction: column;
-}
-.pair-to .box {
-  width: 290px;
-}
-.pair-to h3 {
-  margin-top: 40px;
-  font-size: 88px;
-  font-weight: 700;
-  line-height: 0.98;
-  letter-spacing: -0.04em;
-  text-wrap: balance;
-}
-.pair-to .foot {
-  margin-top: 44px;
-}
-
-.pairs-outro {
-  background:
-    radial-gradient(
-      ellipse 80% 40% at 50% 45%,
-      rgba(255, 138, 181, 0.1),
-      transparent 70%
-    ),
-    var(--surface);
+.pairs-outro .cta-copy {
+  margin-top: auto;
 }
 .pairs-outro h2 {
-  margin-top: 52px;
-  font-size: 96px;
+  font-size: 108px;
   font-weight: 700;
   line-height: 0.96;
   letter-spacing: -0.045em;
   text-wrap: balance;
 }
-.pairs-grid {
-  margin-top: 40px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px 30px;
-}
-.pairs-grid figure {
-  position: relative;
-  margin: 0;
-}
-.pairs-grid img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 264 / 374;
-  object-fit: cover;
-  border-radius: 18px;
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.08),
-    0 30px 60px -24px rgba(0, 0, 0, 0.9);
-}
-/* GameTile's on-media treatment: a scrim disc, the mark in the light end of
-   the wishlist ramp. */
-.heart {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  display: grid;
-  place-items: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: rgba(15, 14, 18, 0.72);
-  backdrop-filter: blur(8px);
-  color: #fbcfe8;
-}
-.heart svg {
-  width: 32px;
-  height: 32px;
-  fill: currentColor;
-}
 .pairs-outro p {
-  margin: 30px 0 34px;
-  font-size: 40px;
-  line-height: 1.35;
+  margin-top: 30px;
+  font-size: 44px;
+  line-height: 1.3;
   color: var(--content-secondary);
   text-wrap: pretty;
 }
@@ -2170,11 +1945,13 @@ em {
     rgba(15, 14, 18, 0.95) 100%
   );
 }
+/* Pinned by its foot, so a title that wraps grows up into the art rather
+   than down into the question. */
 .gy-who {
   position: absolute;
   left: 72px;
   right: 140px;
-  top: 1060px;
+  bottom: 700px;
 }
 .gy-who h3 {
   font-size: 104px;

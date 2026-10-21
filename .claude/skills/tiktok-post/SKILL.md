@@ -69,8 +69,13 @@ upcoming or a hot take about that series, and a format that's had several
 posts in the last week is due a rest. The suggested format is a random one
 of its kind, not the one that kind used last; pick another of the same kind
 only for a reason you can name. Avoid two of the same format on
-consecutive days where the mix allows. `POSTS.md` lists the posts still to
-rebuild in the new style under "To rebuild".
+consecutive days where the mix allows.
+
+**Recommendations count as benefit.** A list that tells the viewer what to
+play (co-op, short games, cosy, "if you liked X" pairs) is on the benefit
+side with tips; best-of rankings, hot takes, tier lists and the quizzes are
+fun (Callum, 2026-10-21). Plans run ten days at a time, then Callum reviews
+what's working before the next batch: don't keep a long list of ideas.
 
 **Give the viewer something.** A list of games with no point to it is the
 weakest kind of post. Every few posts should promise the viewer a benefit
@@ -106,8 +111,8 @@ What each format needs from the topic:
 - **tips** — five to seven tips, habits or mistakes, each with a short
   `title` (five words or so), a one-sentence `body`, and `art`: a game it
   applies to, shown big behind the tip. The hook's number is the count.
-- **pairs** — six "if you liked X, play Y" with a reason on each thread
-  (`why`, short). The Y should be the lesser-known one.
+- **pairs** — six "if you liked X, play Y". The Y should be the
+  lesser-known one, and gets the slide; X is the line above its name.
 - **tiers** — a series or genre in S/A/B/C, two to four games a tier, with a
   name and a one-line note per tier. A C-tier pick fans will argue about is
   the hook.
@@ -224,8 +229,7 @@ learned the hard way:
 - **`tiktok.when`**: the day, with a reason if one suits (a Friday for a
   weekend list, well before Halloween for horror). Every post goes out at
   **21:00 Estonian time**.
-- Add the post to `POSTS.md` in the order it goes out, and take it off "To
-  rebuild" if it was there.
+- Add the post to `POSTS.md` in the order it goes out.
 
 ## 4. Render and check
 
@@ -297,7 +301,7 @@ Callum opens TikTok in the browser pane; the upload page is
   mousedown/mouseup/click on it, then check each tag sits inside a
   `[class*="mention"]` span. Wait about two seconds after typing each tag
   before picking: the list still shows the last tag's matches for a moment,
-  and a pick from it drops the tag without an error. Some tags never match (`#baldursgate3`,
+  and a pick from it drops the tag without an error. Some tags never match (`#baldursgate3`, `#gamingtips`, `#gamingtip`,
   `#shortgames`, `#underratedgames`, `#videogames`), and long ones often
   get no list (`#upcominggames`, `#gamerecommendations`): backspace to a
   shorter prefix to bring the list back, try the History row under the box,

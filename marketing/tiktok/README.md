@@ -41,8 +41,8 @@ which keeps it out until Callum has seen it and said yes.
 Every photo post opens on a hook, then the format's own slides. The
 sign-up slide (`cta`, below) comes late: in a top 10 (`ranked`, `hottake`)
 and `upcoming`, `withCta` in `slides.mjs` drops it in before the last
-three or two; a short post puts it at the end instead (pairs and tiers add
-it after their outro, tips fold its library plate into the last slide).
+three or two; a short post puts it at the end instead (tiers add it after
+their outro; tips and pairs fold its library plate into the last slide).
 
 The list formats (ranked, hottake, tips) share one slide, `featureSlide`:
 the art behind the whole slide, the number in outline across it (the
@@ -62,10 +62,10 @@ winner filled), the title, a caption line and one sentence.
   five to seven of `{ title, body, art }`, `art` a game the tip applies to.
   `outro`: `title`, `body`, over a hand of the tips' covers.
 - **`pairs`** — "if you liked this, play that". `pairs`: six of
-  `{ from, why, to }`, where `from` and `to` are game entries and `why` is
-  the short reason on the thread between them; `to` carries the blurb. The
-  hook blurs the first three `to` covers; `outro` (`title`, `body`) gathers
-  every `to` as a wishlist.
+  `{ from, to }`, game entries; `to` carries the blurb and gets the slide,
+  in the feature layout, with "If you liked" and `from`'s title above its
+  name. The hook is a wall of every cover; `outro` (`title`, optional
+  `body`) stands on the `to` covers and carries the sign-up plate.
 - **`tiers`** — `tiers`, best first: `{ tier: "S", name, note, games }`, two
   to four games a tier, revealed bottom tier first, then the whole board.
   `outro`: `title`, `body`.

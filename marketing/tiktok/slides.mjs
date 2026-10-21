@@ -167,6 +167,7 @@ export const featureSlide = ({
   position,
   rank,
   filled = rank === 1,
+  kicker,
   title,
   caption,
   body,
@@ -176,6 +177,7 @@ export const featureSlide = ({
     ${brand}
     <div class="feature-body">
         ${rank !== undefined ? `<div class="numeral${filled ? " top" : ""}">${rank}</div>` : ""}
+        ${kicker ? `<span class="feature-kicker">${kicker}</span>` : ""}
         <h3>${headline(title)}</h3>
         ${caption ? `<div class="caption">${caption}</div>` : ""}
         ${body ? `<p class="line" data-max-lines="2">${headline(body)}</p>` : ""}
