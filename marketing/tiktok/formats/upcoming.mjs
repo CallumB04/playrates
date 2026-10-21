@@ -9,7 +9,7 @@ import {
   brandWith,
   button,
   footer,
-  ctaSlide,
+  withCta,
   developer,
   escape,
   headline,
@@ -112,9 +112,13 @@ export const renderUpcoming = (post) => {
   );
   return page([
     hookSlide(post.hook, games),
-    ctaSlide(post.cta),
-    ...games.map((entry, i) =>
-      releaseSlide(entry, i + 1, games.length, post.date),
+    ...withCta(
+      games.map((entry, i) =>
+        releaseSlide(entry, i + 1, games.length, post.date),
+      ),
+      post.cta,
+      2,
+      "Before the last two",
     ),
     outroSlide(post.outro, games),
   ]);

@@ -1,8 +1,7 @@
 /**
- * What the next day's posts should be: every post so far with its format,
- * hook and games, so new ones can avoid repeating them, then the first free
- * day, a suggested format for its photo and its video, and which slot each
- * takes.
+ * What the next post should be: every post so far with its format, hook and
+ * games, so a new one can avoid repeating them, then the first free day and
+ * a suggested kind (the other one from last time) and format.
  *
  *   npm run tiktok:next
  */
@@ -11,11 +10,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { FORMATS, formatOf } from "./formats/index.mjs";
 import {
-  SLOTS,
   firstFreeDay,
   parseChecklist,
   pickFormat,
-  videoSlot,
+  nextKind,
 } from "./history.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -37,18 +35,12 @@ const slugsIn = (node) =>
       : [];
 
 const used = [];
-const slotted = [];
 for (const { name, done, dates } of posts) {
   const post = JSON.parse(
     await readFile(path.join(here, "posts", `${name}.json`), "utf8"),
   );
   const format = formatOf(post);
   used.push(format);
-  slotted.push({
-    dates,
-    time: post.tiktok.time,
-    video: !!FORMATS[format].video,
-  });
   const hook = post.hook.title ?? post.hook.take;
   console.log(
     `${done ? "posted " : "planned"} ${dates[0] ?? "          "}  ${format.padEnd(11)}  ${hook.replaceAll("*", "")}`,
@@ -63,15 +55,9 @@ const inRotation = Object.fromEntries(
   Object.entries(FORMATS).filter(([, f]) => !f.demo),
 );
 const today = new Date().toISOString().slice(0, 10);
-const videoTime = videoSlot(slotted);
-const photoTime = SLOTS.find((slot) => slot !== videoTime);
+const video = nextKind(used.map((format) => !!FORMATS[format].video));
+const format = pickFormat(inRotation, video, used);
 console.log(`\nnext free day: ${firstFreeDay(posts, today)}`);
-for (const [video, time] of [
-  [false, photoTime],
-  [true, videoTime],
-].sort((a, b) => a[1].localeCompare(b[1]))) {
-  const format = pickFormat(inRotation, video, used);
-  console.log(
-    `  ${time}  ${video ? "video" : "photo"}, ${format} — ${FORMATS[format].summary}`,
-  );
-}
+console.log(
+  `suggested: ${video ? "video" : "photo"}, ${format} — ${FORMATS[format].summary}`,
+);

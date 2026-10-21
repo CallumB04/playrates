@@ -47,8 +47,10 @@
 
   /* TikTok lays its own UI over a photo post: tabs along the top, the
        caption and username along the bottom, the like/comment rail down the
-       right. Everything that has to be read stays inside these. */
-  --safe-top: 150px;
+       right. Everything that has to be read stays inside these. The top is
+       deeper than TikTok's tabs alone: on most phones the status bar sits
+       above them, and the brand line was cut off at 150. */
+  --safe-top: 250px;
   --safe-bottom: 380px;
   --safe-x: 72px;
   --rail: 140px;
@@ -114,17 +116,17 @@ em {
   position: absolute;
   inset: -260px -320px auto -220px;
   display: grid;
-  grid-template-columns: repeat(5, 340px);
-  gap: 28px;
+  grid-template-columns: repeat(4, 420px);
+  gap: 30px;
   transform: rotate(-9deg);
   transform-origin: top left;
-  opacity: 0.72;
+  opacity: 0.92;
 }
 .wall img {
-  width: 340px;
+  width: 420px;
   aspect-ratio: 264 / 374;
   object-fit: cover;
-  border-radius: 18px;
+  border-radius: 22px;
   box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.9);
 }
 .hook .shade {
@@ -133,10 +135,11 @@ em {
   background:
     linear-gradient(
       180deg,
-      rgba(15, 14, 18, 0.7) 0%,
-      rgba(15, 14, 18, 0.1) 16%,
-      rgba(15, 14, 18, 0.35) 34%,
-      var(--surface) 58%
+      rgba(15, 14, 18, 0.6) 0%,
+      rgba(15, 14, 18, 0) 18%,
+      rgba(15, 14, 18, 0.1) 44%,
+      rgba(15, 14, 18, 0.85) 66%,
+      var(--surface) 80%
     ),
     radial-gradient(
       ellipse 90% 40% at 0% 72%,
@@ -197,27 +200,39 @@ em {
     ),
     var(--surface);
 }
+.cta-copy {
+  margin-top: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.kicker {
+  font-size: 40px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ember-500);
+}
 .cta h2 {
-  margin-top: 60px;
-  font-size: 104px;
+  margin-top: 24px;
+  font-size: 108px;
   font-weight: 700;
   line-height: 0.96;
   letter-spacing: -0.045em;
   text-wrap: balance;
 }
 .cta p {
-  margin-top: 28px;
-  font-size: 40px;
-  line-height: 1.35;
+  margin-top: 30px;
+  font-size: 44px;
+  line-height: 1.3;
   color: var(--content-secondary);
-  max-width: 880px;
+  max-width: 860px;
   text-wrap: pretty;
 }
 
 /* The library plate: shelf counts across the top, then logged games. */
 .app {
   flex: none;
-  margin: 44px 0 40px;
+  margin: 64px 0 48px;
   border-radius: 34px;
   overflow: hidden;
   background: var(--surface-raised);
@@ -225,31 +240,6 @@ em {
     0 2px 0 var(--rim) inset,
     0 0 0 2px rgba(255, 255, 255, 0.04),
     0 50px 90px -30px rgba(0, 0, 0, 0.9);
-}
-.app-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  background: var(--surface-sunken);
-}
-.app-stats > div {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 22px 36px 20px;
-}
-.app-stats > div + div {
-  border-left: 2px solid var(--surface-raised);
-}
-.app-stats b {
-  font-size: 52px;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: -0.04em;
-}
-.app-stats span {
-  font-size: 28px;
-  font-weight: 500;
-  color: var(--content-muted);
 }
 .app-row {
   display: flex;
@@ -313,44 +303,24 @@ em {
   color: var(--hue);
 }
 
-/* Light on dark: the one thing on the slide brighter than the headline.
-   The arrow sits in a brand disc, so the brand is still what it's wearing. */
-.button {
+/* The address as words, with the logo's ember full stop after it. Nothing
+   on a photo post can be tapped, so it isn't drawn as something to tap. */
+.signoff {
   flex: none;
   margin-top: auto;
-  align-self: stretch;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 136px;
-  padding: 0 18px 0 52px;
-  border-radius: 999px;
-  background: var(--ink-50);
-  color: var(--ink-950);
-  font-size: 44px;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 50px;
   font-weight: 650;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.03em;
   white-space: nowrap;
-  box-shadow:
-    0 -3px 0 rgba(0, 0, 0, 0.12) inset,
-    0 30px 60px -24px rgba(0, 0, 0, 0.9);
 }
-.button em {
-  color: var(--iris-600);
-}
-.button i {
-  display: grid;
-  place-items: center;
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  background: var(--iris-500);
-  color: #fff;
-  box-shadow: 0 2px 0 rgba(255, 255, 255, 0.25) inset;
-}
-.button svg {
-  width: 48px;
-  height: 48px;
+.signoff i {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--ember-500);
 }
 
 /* ---- Game -------------------------------------------------------------- */
@@ -535,6 +505,113 @@ em {
   color: var(--content-muted);
 }
 
+/* ---- Feature: one item of a list at full size ---------------------------- */
+
+/* The art fills the slide down to where the words start; the fade is late
+   and short so the picture stays the point of the slide. */
+.feature-art {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1500px;
+  background-size: cover;
+}
+.feature-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 14, 18, 0.6) 0%,
+    rgba(15, 14, 18, 0) 16%,
+    rgba(15, 14, 18, 0) 48%,
+    rgba(15, 14, 18, 0.8) 80%,
+    var(--surface) 100%
+  );
+}
+.feature-body {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+}
+/* Drawn as an outline so the art shows through it; the winner is filled.
+   In the flow above the title, so a two-line title pushes it up, not under. */
+.numeral {
+  margin: 0 0 -24px -18px;
+  font-size: 560px;
+  font-weight: 800;
+  line-height: 0.74;
+  letter-spacing: -0.07em;
+  color: transparent;
+  -webkit-text-stroke: 4px rgba(255, 255, 255, 0.85);
+}
+.numeral.top {
+  -webkit-text-stroke: 0;
+  background: linear-gradient(180deg, #fff 30%, var(--iris-300));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.feature-body h3 {
+  font-size: 100px;
+  font-weight: 700;
+  line-height: 0.97;
+  letter-spacing: -0.042em;
+  text-wrap: balance;
+}
+.feature .caption .meta {
+  margin-top: 26px;
+}
+/* The one dot of ember on a slide, between the year and the studio. */
+.feature .meta .dot {
+  background: var(--ember-500);
+}
+.feature .line {
+  margin-top: 34px;
+  font-size: 48px;
+  font-weight: 500;
+  line-height: 1.28;
+  letter-spacing: -0.018em;
+  color: var(--content);
+  text-wrap: pretty;
+}
+
+/* ---- Tips -------------------------------------------------------------- */
+
+/* The count alone, at the size the hot take sets its year. */
+.tips-mark {
+  font-size: 620px;
+  margin-bottom: 20px;
+}
+.feature .caption .dev {
+  font-size: 34px;
+  color: var(--content-muted);
+}
+.tips-outro {
+  background:
+    radial-gradient(
+      ellipse 80% 45% at 100% 0%,
+      rgba(106, 68, 240, 0.42),
+      transparent 70%
+    ),
+    var(--surface);
+}
+.tips-outro h2 {
+  font-size: 108px;
+  font-weight: 700;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.tips-outro .fan {
+  margin-top: 90px;
+}
+.tips-outro p {
+  margin-top: 30px;
+  font-size: 44px;
+  line-height: 1.3;
+  color: var(--content-secondary);
+  text-wrap: pretty;
+}
+
 /* ---- Shared by the formats ---------------------------------------------- */
 
 .brand-aside {
@@ -685,21 +762,11 @@ em {
   flex-direction: column;
   align-items: flex-start;
 }
-/* A rule and a word, the way a magazine flags an opinion column. */
 .take-label {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  font-size: 38px;
+  font-size: 40px;
   font-weight: 650;
-  color: var(--ember-300);
-}
-.take-label::before {
-  content: "";
-  width: 64px;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--ember-500);
+  letter-spacing: -0.01em;
+  color: var(--ember-500);
 }
 .take-claim {
   position: relative;
@@ -710,100 +777,12 @@ em {
   letter-spacing: -0.045em;
   text-wrap: balance;
 }
-.take-claim::before {
-  content: "\201C";
-  position: absolute;
-  left: -0.42em;
-  top: -0.02em;
-  color: var(--ember-500);
-}
 .take-hook p {
   margin-top: 30px;
   font-size: 44px;
   line-height: 1.28;
   color: var(--content-secondary);
   text-wrap: pretty;
-}
-
-.take-hero {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1280px;
-  background-size: cover;
-}
-.take-hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(15, 14, 18, 0.7) 0%,
-    rgba(15, 14, 18, 0) 18%,
-    rgba(15, 14, 18, 0) 38%,
-    rgba(15, 14, 18, 0.82) 74%,
-    var(--surface) 100%
-  );
-}
-/* Drawn as an outline so the art shows through it; the winner is filled.
-   In the flow above the title, so a two-line title pushes it up, not under. */
-.take-numeral {
-  margin: 0 0 -24px -18px;
-  font-size: 560px;
-  font-weight: 800;
-  line-height: 0.74;
-  letter-spacing: -0.07em;
-  color: transparent;
-  -webkit-text-stroke: 4px rgba(255, 255, 255, 0.8);
-}
-.take-numeral.top {
-  -webkit-text-stroke: 0;
-  background: linear-gradient(180deg, #fff 30%, var(--iris-300));
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-.take-body {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-}
-.take-body h3 {
-  font-size: 92px;
-  font-weight: 700;
-  line-height: 0.98;
-  letter-spacing: -0.04em;
-  text-wrap: balance;
-}
-.take-quote {
-  position: relative;
-  margin-top: 36px;
-  font-size: 46px;
-  font-weight: 500;
-  line-height: 1.3;
-  letter-spacing: -0.015em;
-  color: var(--content);
-  text-wrap: pretty;
-}
-.take-quote::before {
-  content: "\201C";
-  position: absolute;
-  left: -60px;
-  top: -14px;
-  font-size: 110px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--iris-400);
-}
-.take-foot {
-  margin-top: 56px;
-  display: flex;
-  align-items: flex-end;
-  gap: 44px;
-}
-.take-foot .meter {
-  flex: 1;
-}
-.take-foot .url {
-  padding-bottom: 6px;
 }
 
 .take-outro {
@@ -833,41 +812,6 @@ em {
   color: var(--content-secondary);
   text-wrap: pretty;
 }
-.take-card {
-  margin: 44px 0 48px;
-  display: flex;
-  align-items: center;
-  gap: 34px;
-  padding: 26px 34px 26px 26px;
-  border-radius: 28px;
-  background: var(--surface-raised);
-  box-shadow:
-    0 2px 0 var(--rim) inset,
-    0 40px 80px -30px rgba(0, 0, 0, 0.8);
-}
-.take-card img {
-  width: 104px;
-  aspect-ratio: 264 / 374;
-  object-fit: cover;
-  border-radius: 12px;
-}
-.take-card > div {
-  flex: 1;
-  min-width: 0;
-}
-.take-card-title {
-  font-size: 40px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-bottom: 18px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.take-card .meter-track {
-  height: 36px;
-}
-
 /* ---- Pairs ------------------------------------------------------------- */
 
 .pairs-hook-glow {
@@ -1686,6 +1630,10 @@ em {
 .stage > *:not(.brand) {
   position: absolute;
 }
+/* Above the full-bleed picture a format can lay across the whole stage. */
+.stage > .brand {
+  z-index: 3;
+}
 .v-intro,
 .v-outro {
   display: flex;
@@ -1723,19 +1671,10 @@ em {
   align-items: flex-start;
 }
 .v-label {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  font-size: 36px;
+  font-size: 40px;
   font-weight: 650;
-  color: var(--ember-300);
-}
-.v-label::before {
-  content: "";
-  width: 56px;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--ember-500);
+  letter-spacing: -0.01em;
+  color: var(--ember-500);
 }
 .v-intro h1 {
   margin-top: 28px;
@@ -1970,8 +1909,11 @@ em {
   letter-spacing: -0.045em;
   text-wrap: balance;
 }
-.v-outro .button {
-  margin-top: 48px;
+.v-outro .fan {
+  margin-bottom: 72px;
+}
+.v-outro .signoff {
+  margin-top: 56px;
 }
 .hl-timer {
   height: 10px;
@@ -1987,8 +1929,8 @@ em {
   transform-origin: left center;
 }
 
-/* Guess the game */
-.gs-round,
+/* Guess the game: the screenshot fills the stage, under a shade at top and
+   bottom for the brand line and the words. */
 .hl-round {
   top: 168px;
   right: 140px;
@@ -1997,66 +1939,71 @@ em {
   color: var(--content-secondary);
 }
 .gs-frame {
-  top: 250px;
-  left: 72px;
-  width: 868px;
-  height: 980px;
-  border-radius: 34px;
-  overflow: hidden;
-  background: var(--surface-raised);
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.06),
-    0 50px 90px -30px rgba(0, 0, 0, 0.9);
+  inset: 0;
   opacity: 0;
 }
 .gs-frame canvas {
   display: block;
 }
-.gs-count {
+.gs-shade,
+.gs .v-intro::before {
+  content: "";
   position: absolute;
-  top: 28px;
-  right: 28px;
-  width: 136px;
-  height: 136px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: conic-gradient(
-    rgba(255, 255, 255, 0.14) calc(var(--p, 0) * 360deg),
-    var(--iris-400) 0
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 14, 18, 0.7) 0%,
+    rgba(15, 14, 18, 0) 16%,
+    rgba(15, 14, 18, 0) 50%,
+    rgba(15, 14, 18, 0.85) 74%,
+    rgba(15, 14, 18, 0.95) 100%
   );
   opacity: 0;
 }
-.gs-count::before {
-  content: "";
-  position: absolute;
-  inset: 8px;
-  border-radius: 50%;
-  background: rgba(15, 14, 18, 0.86);
+.gs .v-intro::before {
+  opacity: 1;
+  z-index: 1;
 }
-.gs-count b {
-  position: relative;
-  font-size: 66px;
-  font-weight: 600;
-  line-height: 1;
-  text-box: trim-both cap alphabetic;
+/* The count in outline, the size the list slides set their numbers, over
+   the picture's middle. */
+.gs-count {
+  left: 72px;
+  top: 640px;
+  font-family: "Geist", sans-serif;
+  font-size: 560px;
+  font-weight: 800;
+  line-height: 0.74;
+  letter-spacing: -0.07em;
+  color: transparent;
+  -webkit-text-stroke: 5px rgba(255, 255, 255, 0.9);
+  text-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  opacity: 0;
 }
 .gs-src {
   display: none;
 }
 .gs-below {
-  top: 1270px;
+  top: 1250px;
   left: 72px;
   right: 140px;
-  height: 270px;
+  height: 290px;
+}
+.gs-round {
+  position: absolute;
+  top: -70px;
+  font-size: 40px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ember-500);
+  opacity: 0;
 }
 .gs-prompt {
   position: absolute;
   top: 0;
-  font-size: 60px;
+  font-size: 104px;
   font-weight: 700;
-  letter-spacing: -0.035em;
-  color: var(--content-secondary);
+  line-height: 0.96;
+  letter-spacing: -0.045em;
   opacity: 0;
 }
 .gs-answer {
@@ -2067,11 +2014,31 @@ em {
   opacity: 0;
 }
 .gs-answer h3 {
-  font-size: 88px;
+  font-size: 112px;
   font-weight: 700;
-  line-height: 0.98;
-  letter-spacing: -0.04em;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
   text-wrap: balance;
+}
+/* The opening: the first screenshot at its coarsest, edge to edge, and the
+   words at the bottom where the list posts put theirs. */
+.gs .v-intro {
+  justify-content: flex-end;
+}
+.gs .v-visual {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+}
+.gs .v-copy {
+  position: relative;
+  z-index: 2;
+}
+.gs .v-intro h1 {
+  font-size: 120px;
+}
+.gs .v-outro {
+  justify-content: flex-end;
 }
 
 /* Higher or lower */

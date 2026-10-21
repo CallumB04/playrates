@@ -2,7 +2,7 @@ import {
   brand,
   brandWith,
   button,
-  ctaSlide,
+  withCta,
   escape,
   headline,
   page,
@@ -102,14 +102,18 @@ export const renderTiers = (post) => {
   const reveal = [...tiers].reverse();
   return page([
     hookSlide(post.hook, tiers),
-    ctaSlide(post.cta),
-    ...reveal.map((tier, i) =>
-      tierSlide(
-        tier,
-        tiers.slice(tiers.indexOf(tier) + 1),
-        i + 1,
-        tiers.length,
+    ...withCta(
+      reveal.map((tier, i) =>
+        tierSlide(
+          tier,
+          tiers.slice(tiers.indexOf(tier) + 1),
+          i + 1,
+          tiers.length,
+        ),
       ),
+      post.cta,
+      1,
+      `Before the ${tiers[0].tier} tier`,
     ),
     boardSlide(post.outro, tiers),
   ]);

@@ -1,16 +1,16 @@
 import {
   Lucide,
   brand,
-  footer,
   critic,
-  ctaSlide,
   developer,
   escape,
+  featureSlide,
   headline,
   icon,
   metaLine,
   page,
   swipe,
+  withCta,
   year,
 } from "../slides.mjs";
 
@@ -29,44 +29,42 @@ const hookSlide = (hook, games) => `
     </div>
 </section>`;
 
-const gameSlide = (game, rank, { showCriticScore, statIcon }) => {
-  const stat =
-    game.stat &&
-    `<span class="stat">${icon(Lucide[statIcon ?? "Clock"])}<span class="mono">${escape(game.stat)}</span></span>`;
-  const score =
-    showCriticScore && game.criticScore !== null && critic(game.criticScore);
-
-  return `
-<section class="slide game" data-name="rank-${String(rank).padStart(2, "0")}">
-    <div class="hero bleed" style="background-image:url('${game.banner}');background-position:${game.bannerPosition}"></div>
-    ${brand}
-    <div class="game-body">
-        <div class="lead">
-            <img class="box" src="${game.cover}" alt="">
-            <div class="rank${rank === 1 ? " top" : ""}"><span class="hash">#</span><span class="n">${rank}</span></div>
-        </div>
-        <h3>${escape(game.title)}</h3>
-        ${metaLine([year(game), developer(game), stat, score])}
-        <p class="blurb">${escape(game.blurb)}</p>
-        ${footer("Played it? Rate it", "played")}
-    </div>
-</section>`;
-};
+const gameSlide = (game, rank, { showCriticScore, statIcon }) =>
+  featureSlide({
+    name: `rank-${String(rank).padStart(2, "0")}`,
+    art: game.banner,
+    position: game.bannerPosition,
+    rank,
+    title: escape(game.title),
+    caption: metaLine([
+      year(game),
+      developer(game),
+      game.stat &&
+        `<span class="stat">${icon(Lucide[statIcon ?? "Clock"])}<span class="mono">${escape(game.stat)}</span></span>`,
+      showCriticScore && game.criticScore !== null && critic(game.criticScore),
+    ]),
+    body: escape(game.blurb),
+  });
 
 /**
- * A hook, the sign-up slide, then one slide per game. `games` arrive ranked,
- * #1 first; a countdown shows them from the bottom up so the reveal is the
- * last swipe.
+ * A hook, then one slide per game, with the sign-up slide in front of the
+ * last three. `games` arrive ranked, #1 first; a countdown shows them from
+ * the bottom up so the reveal is the last swipe.
  */
 export const renderRanked = (post) => {
   const ranked = post.games.map(({ game }, i) => ({ game, rank: i + 1 }));
-  const shown = post.order === "countdown" ? [...ranked].reverse() : ranked;
+  const countdown = post.order === "countdown";
+  const shown = countdown ? [...ranked].reverse() : ranked;
   return page([
     hookSlide(
       post.hook,
       shown.map(({ game }) => game),
     ),
-    ctaSlide(post.cta),
-    ...shown.map(({ game, rank }) => gameSlide(game, rank, post)),
+    ...withCta(
+      shown.map(({ game, rank }) => gameSlide(game, rank, post)),
+      post.cta,
+      3,
+      countdown ? undefined : "Before the last three",
+    ),
   ]);
 };

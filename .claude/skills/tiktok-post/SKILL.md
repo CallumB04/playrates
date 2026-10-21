@@ -1,18 +1,20 @@
 ---
 name: tiktok-post
-description: Make PlayRates TikTok posts end to end, a photo and a video for the next free day — check the account for posts that went live, pick a format (photo: ranked list, hot take, pairs, tier list, upcoming releases; video: guess the game, higher or lower, guess the year, which came first), choose a topic and its games, write the post file, render and check it, schedule them in TikTok Studio, and track them in the posting checklist. Use when asked for a new TikTok post or ranked list, or to prepare, schedule or post one that already exists.
+description: Make PlayRates TikTok posts end to end, one a day at 21:00, alternating slideshows and videos — check the account for posts that went live, pick a format (photo: ranked list, hot take, tips, pairs, tier list, upcoming releases; video: guess the game, higher or lower, guess the year, which came first), choose a topic and its games, write the post file, render and check it, schedule it in TikTok Studio, and track it in the posting checklist. Use when asked for a new TikTok post or ranked list, or to prepare, schedule or post one that already exists.
 ---
 
 # TikTok post
 
-PlayRates posts to TikTok as **@playratesapp**, a personal account, **two
-posts a day: one photo slideshow and one quiz video, at 16:00 and 21:00
-Estonian time**. The two kinds swap slots from one day to the next, so
-neither always gets the evening.
+PlayRates posts to TikTok as **@playratesapp**, a personal account, **one
+post a day at 21:00 Estonian time, alternating photo slideshow and video**.
+A 16:00 slot was tried for three days in October 2026 and dropped: those
+posts drew 5–10 views against 500–600 in the evening, and Callum didn't
+want them on the profile. Mix the newer "useful to the viewer" formats in
+between the fun ones to see what lands (section 1).
 
-**Every run makes a pair**: a photo and a video for the first free day,
-both scheduled. Make a single post only when Callum asks for exactly one. The generator lives in `marketing/tiktok/`; read its
-`README.md` for the post formats before writing one.
+Make one post for the first free day unless Callum asks for a batch. The
+generator lives in `marketing/tiktok/`; read its `README.md` for the post
+formats and design rules before writing one.
 
 - `marketing/tiktok/posts/<name>.json` — one file per post.
 - `marketing/tiktok/POSTS.md` — the checklist: posts in posting order, marked
@@ -52,18 +54,31 @@ npm run tiktok:next
 ```
 
 prints every post on `POSTS.md` with its format, hook and games, then the
-first free day with a suggested format for its photo and its video, and
-which slot each takes (the video takes whichever slot it didn't have on the
-last full day).
+first free day and a suggestion: the other kind from the last post (photo
+after video, video after photo) and a format of that kind.
 
-If Callum names a format, use it. Otherwise decide each format yourself,
-starting from the suggestion: read the whole history, then pick what will
-work best on the day. A Friday suits a weekend list, a date near a big
-release suits upcoming or a hot take about that series, and a format that's
-had several posts in the last week is due a rest. The suggested format is a
-random one of its kind, not the one that kind used last; pick another of
-the same kind only for a reason you can name. The day's two posts should
-differ in genre or angle, so they don't compete with each other.
+If Callum names a format, use it. Otherwise decide yourself, starting from
+the suggestion: read the whole history, then pick what will work best on
+the day. A Friday suits a weekend list, a date near a big release suits
+upcoming or a hot take about that series, and a format that's had several
+posts in the last week is due a rest. The suggested format is a random one
+of its kind, not the one that kind used last; pick another of the same kind
+only for a reason you can name. Keep the alternation unless Callum says
+otherwise; `POSTS.md` lists the posts still to rebuild in the new style
+under "To rebuild".
+
+**Give the viewer something.** A list of games with no point to it is the
+weakest kind of post. Every few posts should promise the viewer a benefit
+in the hook, and the `tips` format exists for these:
+
+- a pain point: "7 habits making you worse at Souls games"
+- advice: "5 things to do first in Baldur's Gate 3"
+- insider knowledge: "6 settings nobody tells you to change"
+- surprise: "5 weird tricks that make you better at shooters"
+
+Mix and match these with the fun formats (rankings, hot takes, quizzes).
+Every tip has to be true and checkable: write only what you're sure of, and
+list anything approximate for Callum to check.
 
 Read the whole history before choosing a topic. The same genre or series in
 a different format is fine (a ranked RPG list, then an RPG tier list), but
@@ -80,7 +95,13 @@ What each format needs from the topic:
 - **hottake** — a claim people will argue with but you can defend, and ten
   games that make the case. The hook's `mark` (a year or name) is set solid
   across the art of `art`'s game, so pick art that's bright and sharp near
-  its lower half; the outro shows what the take left out.
+  its lower half; the outro shows what the take left out. Its cover is the
+  strongest we have (the 2017, GTA V and PS2 posts): big words over a big
+  picture. Use it as the model for every cover.
+- **tips** — five to seven tips, habits or mistakes, each with a short
+  `title` (five words or so), a one-sentence `body`, and `art`: a game it
+  applies to, shown big behind the tip. The hook's number is the count. In
+  `demo` until Callum approves it.
 - **pairs** — six "if you liked X, play Y" with a reason on each thread
   (`why`, short). The Y should be the lesser-known one.
 - **tiers** — a series or genre in S/A/B/C, two to four games a tier, with a
@@ -112,9 +133,25 @@ What each format needs from the topic:
 New video formats go in as `demo: true` (see the README) and stay out of
 the rotation until Callum has seen a demo and said yes.
 
-Changing or adding slides: follow the design rules in the README (no
-outlined pills, light button, no boxed labels, solid type over art, tiles
-trimmed to cap height). Callum has turned down each of those once already.
+Changing or adding slides: follow the design rules in the README. Callum
+has turned each of those down once already. The short version, from his
+review of the first two weeks (2026-10-21):
+
+- **One big picture, big type, little else.** The 2017 hot take's slides
+  are the reference: art behind the whole slide, the number huge, the title,
+  one line. Too much on screen at once reads as AI-made.
+- **No "Your rating" meter** on the list slides; the viewer hasn't rated
+  anything. The content does the work; the pitch comes later.
+- **The sign-up slide comes late**, in front of the top 3 or the last few
+  ("Before the top 3"), never second, where it drove people off. Its address
+  is a line of text, not a button: nothing on a photo post can be tapped.
+- **No em-dash rules or quote marks** dressing a label ("— Hot take"): a
+  word in ember is enough.
+- **Ember in small doses**, as in the logo's full stop: a label, a dot, the
+  sign-off. Iris stays the main colour.
+- **Fill the frame.** Covers of a collection of games should be mostly
+  covers, not black; videos put the picture edge to edge (guess the game
+  does), never a small card on a dark stage.
 
 ## 2. Games
 
@@ -137,8 +174,8 @@ table can be imported through the site's admin; don't invent one.
 Copy an existing post of the same format and change everything. Rules
 learned the hard way:
 
-- **Blurbs**: your own words, about 85 characters at most (two lines; a hot
-  take's quote can run to three), and only facts you're sure of. Anything
+- **Blurbs**: one sentence in your own words, about 70 characters at most
+  (two lines at the slide's size), and only facts you're sure of. Anything
   approximate (hours to beat, team sizes) goes to Callum as something to
   check.
 - **`tiktok.title`**: 90 characters at most (the renderer enforces it).
@@ -150,10 +187,12 @@ learned the hard way:
   its soundtrack has a well-known track, and give an alternative. Nintendo's
   originals are almost never in TikTok's library, so a Nintendo pick means a
   cover. Say they need checking in the app.
-- **`cta.library`** (photo posts) ratings: 0.5–10 in steps of 0.5, as the
-  site allows (the renderer refuses anything else). Use games from the
-  bottom of the list so the top isn't spoiled. Video posts have no `cta`;
-  their `outro` card carries the pitch.
+- **`cta`** (photo posts): `title`, an optional `body`, `library` (three
+  games with a status and an optional rating, 0.5–10 in steps of 0.5; the
+  renderer refuses anything else), and `kicker`, the line that sets the
+  moment ("Before the top 3" by default). Use library games already shown,
+  so the top isn't spoiled. Video posts have no `cta`; their `outro` card
+  carries the pitch over a hand of the round's covers.
 - **The coloured words**: `*stars*` in a headline go round the phrase the
   post is about, the whole of it: `The *10 best horror games*`, not
   `The 10 best *horror* games`. Two parts can each take stars (`*Original*
@@ -166,10 +205,10 @@ learned the hard way:
 - **Copy that repeats**: check the last post in the same format and don't
   reuse its hook phrasing, title opener, sign-up title or outro title.
 - **`tiktok.when`**: the day, with a reason if one suits (a Friday for a
-  weekend list, well before Halloween for horror). **`tiktok.time`** is the
-  slot, `"16:00"` or `"21:00"`, from `npm run tiktok:next`.
-- Add both posts to `POSTS.md` in the order they go out, the 16:00 one
-  first.
+  weekend list, well before Halloween for horror). Every post goes out at
+  **21:00 Estonian time**.
+- Add the post to `POSTS.md` in the order it goes out, and take it off "To
+  rebuild" if it was there.
 
 ## 4. Render and check
 
@@ -253,10 +292,10 @@ Callum opens TikTok in the browser pane; the upload page is
   "Original sound", because the track is mixed in. Pick the original
   artist's version where there is one, the closest cover where there isn't,
   and tell Callum which you chose.
-- **Schedule** at the post's `tiktok.time` (16:00 or 21:00 Estonian time,
-  the time zone the picker shows) on its day. Unless Callum names a date,
-  that's the first day from today with nothing scheduled in `POSTS.md`.
-  When posts are moved, keep one photo and one video on each day. The date cells are
+- **Schedule** at **21:00 Estonian time** (the time zone the picker shows)
+  on its day. Unless Callum names a date, that's the first day from today
+  with nothing scheduled in `POSTS.md`. When posts are moved, keep photos
+  and videos alternating. The date cells are
   `span.day.valid` and take a scripted click. The time lists only draw a
   few options at a time and ignore scripted clicks: click real coordinates,
   reading which options are visible inside the list's scroll box before
@@ -277,14 +316,19 @@ Callum opens TikTok in the browser pane; the upload page is
 - **Press Schedule yourself** once everything checks out, then confirm the
   date in the post list (`/tiktokstudio/content`; a video shows
   "Processing..." for a minute first), note it in `POSTS.md`
-  (`— scheduled 2026-10-22 16:00`) and go straight on to the next post.
+  (`— scheduled 2026-10-22 21:00`) and go straight on to the next post.
   Never press **Post**, which publishes now.
 - A click that misses can open a photo's preview. Click the dark overlay to
   close it, not Replace or Delete.
 - TikTok's time picker sometimes writes to the clipboard on a synthetic
   click; tell Callum to check his clipboard before pasting.
-- **Unscheduling** a post means deleting it from the post list (… → Delete).
-  TikTok keeps it in Recently deleted for 30 days. Only on Callum's say-so.
+- **Unscheduling** a post means deleting it from the post list: hover the
+  row's … (a real hover after a click; scripted hovers don't open it), then
+  Delete, then Delete in "Delete post?". TikTok says it can't be recovered,
+  so only on Callum's say-so, and only for a post whose files are still in
+  `out/`. A post that's already **live** is never deleted, because its views
+  and comments go with it: set it to **Private** from the row's Privacy
+  dropdown instead, and leave deleting it to Callum.
 
 ## 6. After posting
 

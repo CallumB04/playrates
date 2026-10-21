@@ -5,6 +5,7 @@ import { renderHotTake } from "./hottake.mjs";
 import { renderPairs } from "./pairs.mjs";
 import { renderRanked } from "./ranked.mjs";
 import { renderTiers } from "./tiers.mjs";
+import { renderTips } from "./tips.mjs";
 import { renderUpcoming } from "./upcoming.mjs";
 import { renderWhichFirst } from "./whichfirst.mjs";
 
@@ -30,6 +31,11 @@ export const FORMATS = {
   tiers: {
     render: renderTiers,
     summary: "A series or genre sorted into S, A, B and C",
+  },
+  tips: {
+    render: renderTips,
+    demo: true,
+    summary: "Tips, habits or mistakes the viewer takes away, one a slide",
   },
   upcoming: {
     render: renderUpcoming,

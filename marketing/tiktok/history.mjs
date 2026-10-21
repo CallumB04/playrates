@@ -27,29 +27,17 @@ export const firstFreeDay = (posts, today) => {
   return day;
 };
 
-/** A day's two posts go out at these times, Estonian time: one photo and
- *  one video, swapping slots from one day to the next. */
-export const SLOTS = ["16:00", "21:00"];
+/** One post a day, in the evening, Estonian time. A 16:00 slot was tried
+ *  for three days in October and drew a hundredth of the evening's views. */
+export const SLOTS = ["21:00"];
 
 /**
- * Which slot the next day's video takes: the one the video didn't have on
- * the last day with both kinds, so neither kind keeps the evening. Each post
- * is `{ dates, time, video }`, `time` from its post file (21:00 if unset).
+ * Photo or video for the next post: the other kind from the last one, so the
+ * two alternate. `kinds` is `true` for each video so far, in posting order.
+ * The skill can overrule it to try a new format.
  */
-export const videoSlot = (posts) => {
-  const days = new Map();
-  for (const { dates, time = SLOTS[1], video } of posts) {
-    if (!dates[0]) continue;
-    days.set(dates[0], [...(days.get(dates[0]) ?? []), { time, video }]);
-  }
-  const last = [...days.keys()]
-    .sort()
-    .reverse()
-    .map((day) => days.get(day))
-    .find((day) => day.some((p) => p.video) && day.some((p) => !p.video));
-  const was = last?.find((p) => p.video).time;
-  return was === SLOTS[0] ? SLOTS[1] : SLOTS[0];
-};
+export const nextKind = (kinds) =>
+  kinds.length ? !kinds[kinds.length - 1] : false;
 
 /**
  * A format of the given kind at random, not the one that kind last used if

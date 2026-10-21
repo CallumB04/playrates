@@ -4,7 +4,7 @@ import {
   firstFreeDay,
   parseChecklist,
   pickFormat,
-  videoSlot,
+  nextKind,
 } from "./history.mjs";
 
 const checklist = `# TikTok posts
@@ -41,33 +41,10 @@ const formats = {
   higherlower: { video: true },
 };
 
-test("the video swaps slots with the photo from one day to the next", () => {
-  const day = (date, videoTime, photoTime) => [
-    { dates: [date], time: videoTime, video: true },
-    { dates: [date], time: photoTime, video: false },
-  ];
-  assert.equal(videoSlot(day("2026-10-19", "16:00", "21:00")), "21:00");
-  assert.equal(videoSlot(day("2026-10-19", "21:00", "16:00")), "16:00");
-  // The latest full day decides, whatever order the checklist lists them in.
-  assert.equal(
-    videoSlot([
-      ...day("2026-10-20", "21:00", "16:00"),
-      ...day("2026-10-19", "16:00", "21:00"),
-    ]),
-    "16:00",
-  );
-});
-
-test("a day with one post doesn't count, and a post without a time is 21:00", () => {
-  assert.equal(
-    videoSlot([
-      { dates: ["2026-10-18"], time: "16:00", video: true },
-      { dates: ["2026-10-18"], video: false },
-      { dates: ["2026-10-19"], time: "21:00", video: true },
-    ]),
-    "21:00",
-  );
-  assert.equal(videoSlot([]), "16:00");
+test("photo and video alternate, starting with a photo", () => {
+  assert.equal(nextKind([]), false);
+  assert.equal(nextKind([false]), true);
+  assert.equal(nextKind([true, false, true]), false);
 });
 
 test("a format of the kind, not the one that kind used last", () => {

@@ -64,8 +64,7 @@ export const footer = (action, status) => {
 
 export const swipe = `<span class="swipe">Swipe ${icon(ArrowRight)}</span>`;
 
-export const button = (text) =>
-  `<div class="button"><span>${headline(text)}</span><i>${icon(ArrowRight, 2.5)}</i></div>`;
+export const button = (text) => signoff(text);
 
 /** Bands from frontend/src/lib/criticVerdict.ts. */
 const criticTone = (score) =>
@@ -123,29 +122,60 @@ const libraryRow = ({ game, title, status, rating }) => `
     }
 </div>`;
 
-// Plausible shelf sizes for someone who logs a lot; the point is the shape
-// of a profile, not the numbers.
-const STATS = [
-  ["Played", 128],
-  ["Backlog", 34],
-  ["Wishlist", 19],
-];
-
-/** Slide 2 of every format: the sign-up pitch over a library as the site
- *  draws one, shelf counts across the top and a few logged games. */
-export const ctaSlide = (cta) => `
+/**
+ * The sign-up slide, dropped in before the last few slides rather than
+ * second: someone who has swiped that far is invested, where on slide 2 it
+ * reads as an ad and they leave. `kicker` names the moment ("Before the top
+ * 3"), the plate shows the product, and the address is a line of text, not a
+ * button, because nothing on a photo post can be tapped.
+ */
+export const ctaSlide = (cta, kicker = cta.kicker ?? "Before the top 3") => `
 <section class="slide cta" data-name="cta">
     ${brand}
-    <h2>${headline(cta.title)}</h2>
-    <p>${headline(cta.body)}</p>
-    <div class="app">
-        <div class="app-stats">${STATS.map(
-          ([label, n]) =>
-            `<div><b class="mono">${n}</b><span>${label}</span></div>`,
-        ).join("")}</div>
-        ${(cta.library ?? []).map(libraryRow).join("")}
+    <div class="cta-copy">
+        <span class="kicker">${escape(kicker)}</span>
+        <h2>${headline(cta.title)}</h2>
+        ${cta.body ? `<p>${headline(cta.body)}</p>` : ""}
     </div>
-    ${button(cta.button)}
+    <div class="app">${(cta.library ?? []).map(libraryRow).join("")}</div>
+    ${signoff(cta.button ?? "Free at playrates.app")}
+</section>`;
+
+/** The address, as words. Ember marks it, the way it marks the logo. */
+export const signoff = (text) =>
+  `<div class="signoff">${headline(text)}<i></i></div>`;
+
+/** Puts the sign-up slide in front of the last `last` slides. */
+export const withCta = (slides, cta, last = 3, kicker) =>
+  cta
+    ? [...slides.slice(0, -last), ctaSlide(cta, kicker), ...slides.slice(-last)]
+    : slides;
+
+/**
+ * One item of a list at full size: the art behind the whole slide, the
+ * number drawn in outline across it (the winner filled), then the title and
+ * a single line. Nothing else: a rating nobody has given yet, a footer or a
+ * row of badges all made the slide read as generated.
+ */
+export const featureSlide = ({
+  name,
+  art,
+  position,
+  rank,
+  filled = rank === 1,
+  title,
+  caption,
+  body,
+}) => `
+<section class="slide feature" data-name="${name}">
+    <div class="feature-art bleed" style="background-image:url('${art}');background-position:${position ?? "center"}"></div>
+    ${brand}
+    <div class="feature-body">
+        ${rank !== undefined ? `<div class="numeral${filled ? " top" : ""}">${rank}</div>` : ""}
+        <h3>${headline(title)}</h3>
+        ${caption ? `<div class="caption">${caption}</div>` : ""}
+        ${body ? `<p class="line" data-max-lines="2">${headline(body)}</p>` : ""}
+    </div>
 </section>`;
 
 export const page = (slides) => `<!doctype html>

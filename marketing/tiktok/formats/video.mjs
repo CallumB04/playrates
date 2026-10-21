@@ -1,5 +1,5 @@
 import * as Lucide from "lucide-react";
-import { brand, button, escape, headline, icon } from "../slides.mjs";
+import { brand, escape, headline, icon, signoff } from "../slides.mjs";
 
 /**
  * What every video scene's script starts with. `at(t, start, length)` is how
@@ -57,12 +57,20 @@ export const faceOff = (a, b) => `
     <figure><img src="${b.cover}" alt=""><b class="mono">?</b></figure>
 </div>`;
 
-/** The last card: what to do now, and where. */
-export const outro = ({ title, body }, action) => `
+/** The last card: the question for the comments over a hand of the games
+ *  just played, then where to rate them. */
+export const outro = ({ title, body }, action, covers = []) => `
 <div class="v-outro">
+    ${
+      covers.length
+        ? `<div class="fan fan-${covers.length}">${covers
+            .map((cover) => `<img src="${cover}" alt="">`)
+            .join("")}</div>`
+        : ""
+    }
     <h2>${headline(title)}</h2>
     ${body ? `<p>${headline(body)}</p>` : ""}
-    ${button(action)}
+    ${signoff(action)}
 </div>`;
 
 /** Fades the intro out and the outro in; every scene shares the bookends. */

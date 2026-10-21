@@ -5,7 +5,7 @@ import {
   footer,
   icon,
   Lucide,
-  ctaSlide,
+  withCta,
   developer,
   escape,
   headline,
@@ -91,8 +91,12 @@ export const renderPairs = (post) => {
   const { pairs } = post;
   return page([
     hookSlide(post.hook, pairs),
-    ctaSlide(post.cta),
-    ...pairs.map((pair, i) => pairSlide(pair, i + 1, pairs.length)),
+    ...withCta(
+      pairs.map((pair, i) => pairSlide(pair, i + 1, pairs.length)),
+      post.cta,
+      2,
+      "Before the last two",
+    ),
     outroSlide(post.outro, pairs),
   ]);
 };
