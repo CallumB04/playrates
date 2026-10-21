@@ -47,14 +47,12 @@ export const intro = ({ title, subtitle, label }, visual, facts = []) => `
     </div>
 </div>`;
 
-/** Covers face to face with a "?" on each: the featured pair, unscored. */
+/** The featured pair side by side, edge to edge, "or" on the seam. */
 export const faceOff = (a, b) => `
 <div class="v-faceoff">
-    <div class="v-half" style="background-image:url('${a.banner}')"></div>
-    <div class="v-half" style="background-image:url('${b.banner}')"></div>
-    <figure><img src="${a.cover}" alt=""><b class="mono">?</b></figure>
-    <span class="v-or">or</span>
-    <figure><img src="${b.cover}" alt=""><b class="mono">?</b></figure>
+    <div class="v-half" style="background-image:url('${a.banner}');background-position:${a.bannerPosition}"></div>
+    <div class="v-half" style="background-image:url('${b.banner}');background-position:${b.bannerPosition}"></div>
+    <span class="v-or mono">or</span>
 </div>`;
 
 /** The last card: the question for the comments over a hand of the games

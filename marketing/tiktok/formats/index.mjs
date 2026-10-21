@@ -34,7 +34,6 @@ export const FORMATS = {
   },
   tips: {
     render: renderTips,
-    demo: true,
     summary: "Tips, habits or mistakes the viewer takes away, one a slide",
   },
   upcoming: {

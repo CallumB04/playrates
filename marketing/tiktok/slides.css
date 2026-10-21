@@ -1711,196 +1711,95 @@ em {
   color: var(--iris-400);
 }
 
-/* Guess the game's opening: three face-down cards, fanned, and the count. */
-.v-mosaic {
+/* Every opening, which is also the cover: its picture edge to edge, the
+   words at the bottom over a shade deep enough for them to read on the
+   brightest art. The coloured word goes a step lighter, and the copy takes
+   a soft shadow, for the same reason. */
+.stage .v-intro {
+  justify-content: flex-end;
+}
+.stage .v-visual {
   position: absolute;
   inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  margin: 0;
 }
-.v-mosaic canvas {
-  height: 72%;
-  aspect-ratio: 3 / 4;
-  border-radius: 22px;
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.1),
-    0 40px 70px -24px rgba(0, 0, 0, 0.95);
-}
-.v-mosaic canvas + canvas {
-  margin-left: -60px;
-}
-.v-mosaic canvas:nth-child(1) {
-  transform: rotate(-10deg) translateY(30px);
-}
-.v-mosaic canvas:nth-child(2) {
-  position: relative;
-  z-index: 1;
-  transform: translateY(-10px);
-}
-.v-mosaic canvas:nth-child(3) {
-  transform: rotate(10deg) translateY(30px);
-}
-.v-ring {
-  position: absolute;
-  z-index: 2;
-  left: 50%;
-  bottom: 10px;
-  width: 140px;
-  height: 140px;
-  margin-left: -70px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: rgba(15, 14, 18, 0.9);
-  box-shadow:
-    0 0 0 10px var(--iris-400),
-    0 0 0 22px rgba(15, 14, 18, 0.9),
-    0 30px 70px -10px rgba(0, 0, 0, 0.8);
-  font-size: 80px;
-  font-weight: 600;
-}
-
-/* Head to head: the two games' art side by side, covers facing off. */
-.v-faceoff {
-  position: absolute;
-  inset: 0;
-  border-radius: 34px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 36px;
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.06),
-    0 50px 90px -30px rgba(0, 0, 0, 0.9);
-}
-.v-half {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 50%;
-  background-size: cover;
-  background-position: center;
-}
-.v-half:first-child {
-  left: 0;
-}
-.v-half:nth-child(2) {
-  right: 0;
-}
-.v-half::after {
+.stage .v-intro::before {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 1;
   background: linear-gradient(
     180deg,
-    rgba(15, 14, 18, 0.25),
-    rgba(15, 14, 18, 0.75)
+    rgba(15, 14, 18, 0.7) 0%,
+    rgba(15, 14, 18, 0) 15%,
+    rgba(15, 14, 18, 0) 40%,
+    rgba(15, 14, 18, 0.88) 62%,
+    rgba(15, 14, 18, 0.96) 100%
   );
 }
-.v-faceoff figure {
+.stage .v-copy {
   position: relative;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  z-index: 2;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.55);
 }
-.v-faceoff figure:first-of-type {
-  transform: rotate(-5deg);
-}
-.v-faceoff figure:last-of-type {
-  transform: rotate(5deg);
-}
-.v-faceoff img {
-  width: auto;
-  height: 66%;
-  max-width: 300px;
-  aspect-ratio: 264 / 374;
-  object-fit: cover;
-  border-radius: 20px;
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.12),
-    0 40px 80px -20px rgba(0, 0, 0, 0.95);
-}
-.v-faceoff b {
-  margin-top: -50px;
-  width: 120px;
-  height: 100px;
-  border-radius: 24px;
-  display: grid;
-  place-items: center;
-  background: rgba(15, 14, 18, 0.92);
-  box-shadow: 0 2px 0 var(--rim) inset;
-  font-size: 64px;
-  font-weight: 600;
+.stage .v-intro em {
   color: var(--iris-300);
 }
-.v-or {
-  position: relative;
-  z-index: 1;
-  width: 104px;
-  height: 104px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--ink-50);
-  color: var(--ink-950);
-  font-size: 36px;
-  font-weight: 700;
-  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.8);
+.stage .v-intro h1 {
+  font-size: 118px;
 }
 
-/* Guess the year's opening: the games in a hand, the years hidden. */
-.v-hand {
+/* Head to head: the two games side by side, full height, "or" on the seam. */
+.v-faceoff {
   position: absolute;
   inset: 0;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 70px;
 }
-.v-fan {
-  display: flex;
-  justify-content: center;
+.v-half {
+  flex: 1;
+  background-size: cover;
+  background-position: center;
 }
-.v-fan img {
-  width: 220px;
-  aspect-ratio: 264 / 374;
-  object-fit: cover;
-  border-radius: 18px;
+.v-half + .v-half {
+  box-shadow: -6px 0 0 var(--surface);
+}
+.v-or,
+.hl-vs {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--content);
+  font-size: 52px;
+  font-weight: 600;
   box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.1),
-    0 40px 70px -24px rgba(0, 0, 0, 0.95);
+    0 0 0 6px var(--surface),
+    0 20px 60px rgba(0, 0, 0, 0.6);
 }
-.v-fan img + img {
-  margin-left: -120px;
+.v-or {
+  left: calc(50% - 75px);
+  top: 520px;
 }
-.v-fan img:nth-child(1) {
-  transform: rotate(-14deg) translateY(70px);
-}
-.v-fan img:nth-child(2) {
-  transform: rotate(-7deg) translateY(18px);
-}
-.v-fan img:nth-child(3) {
-  transform: translateY(0);
-  z-index: 1;
-}
-.v-fan img:nth-child(4) {
-  transform: rotate(7deg) translateY(18px);
-}
-.v-fan img:nth-child(5) {
-  transform: rotate(14deg) translateY(70px);
+
+/* Guess the year's opening: a wall of the games' covers, the years hidden. */
+.gy-wall {
+  opacity: 1;
 }
 .v-years {
-  white-space: nowrap;
-  font-size: 104px;
-  font-weight: 600;
-  letter-spacing: -0.05em;
+  position: absolute;
+  z-index: 2;
+  left: 72px;
+  top: 560px;
+  font-size: 150px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
 }
 .v-years span {
-  color: var(--iris-400);
+  color: var(--ember-500);
 }
 .v-outro h2 {
   font-size: 96px;
@@ -1945,8 +1844,7 @@ em {
 .gs-frame canvas {
   display: block;
 }
-.gs-shade,
-.gs .v-intro::before {
+.gs-shade {
   content: "";
   position: absolute;
   inset: 0;
@@ -1959,10 +1857,6 @@ em {
     rgba(15, 14, 18, 0.95) 100%
   );
   opacity: 0;
-}
-.gs .v-intro::before {
-  opacity: 1;
-  z-index: 1;
 }
 /* The count in outline, the size the list slides set their numbers, over
    the picture's middle. */
@@ -2020,88 +1914,35 @@ em {
   letter-spacing: -0.045em;
   text-wrap: balance;
 }
-/* The opening: the first screenshot at its coarsest, edge to edge, and the
-   words at the bottom where the list posts put theirs. */
-.gs .v-intro {
-  justify-content: flex-end;
-}
-.gs .v-visual {
-  position: absolute;
-  inset: 0;
-  margin: 0;
-}
-.gs .v-copy {
-  position: relative;
-  z-index: 2;
-}
-.gs .v-intro h1 {
-  font-size: 120px;
-}
-.gs .v-outro {
+.stage .v-outro {
   justify-content: flex-end;
 }
 
-/* Higher or lower */
-.hl-q {
-  top: 236px;
-  left: 72px;
-  right: 140px;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 50px;
-  font-weight: 700;
-  letter-spacing: -0.035em;
-  opacity: 0;
-}
-.hl-count {
-  font-size: 50px;
-  font-weight: 600;
-  color: var(--iris-300);
-}
-.hl-timer {
-  top: 318px;
-  left: 72px;
-  right: 140px;
-  opacity: 0;
-}
+/* Higher or lower, and which came first: a split screen, one game's art
+   filling each half, its figure set big across it. */
 .hl-pair {
-  top: 360px;
-  left: 72px;
-  right: 140px;
-  bottom: 380px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  inset: 0;
   opacity: 0;
 }
 .hl-card {
-  position: relative;
-  height: 548px;
-  border-radius: 32px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 960px;
   overflow: hidden;
-  display: flex;
-  align-items: flex-end;
-  gap: 30px;
-  padding: 32px;
-  box-shadow:
-    0 0 0 calc(var(--decided, 0) * 5px) transparent,
-    0 40px 80px -30px rgba(0, 0, 0, 0.9);
+  --decided: 0;
 }
-.hl-card.win {
-  box-shadow:
-    0 0 0 calc(var(--decided, 0) * 5px) var(--iris-400),
-    0 40px 80px -30px rgba(0, 0, 0, 0.9);
+.hl-card:first-child {
+  top: 0;
 }
-.hl-card.lose .hl-art,
-.hl-card.lose .box {
-  filter: saturate(calc(1 - var(--decided) * 0.7))
-    brightness(calc(1 - var(--decided) * 0.45));
+.hl-card:last-child {
+  top: 960px;
 }
 .hl-art {
   position: absolute;
   inset: 0;
   background-size: cover;
+  transition: none;
 }
 .hl-art::after {
   content: "";
@@ -2109,113 +1950,141 @@ em {
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(15, 14, 18, 0.1) 20%,
-    rgba(15, 14, 18, 0.9) 100%
+    rgba(15, 14, 18, 0.1) 30%,
+    rgba(15, 14, 18, 0.85) 100%
   );
 }
-.hl-card .box {
-  position: relative;
-  width: 168px;
-  border-radius: 16px;
+.hl-card:first-child .hl-art::after {
+  background: linear-gradient(
+    180deg,
+    rgba(15, 14, 18, 0.85) 0%,
+    rgba(15, 14, 18, 0.7) 42%,
+    rgba(15, 14, 18, 0.15) 62%,
+    rgba(15, 14, 18, 0.85) 100%
+  );
+}
+/* The loser fades back once the verdict is in. */
+.hl-card.lose .hl-art {
+  filter: grayscale(calc(var(--decided) * 0.9))
+    brightness(calc(1 - var(--decided) * 0.45));
 }
 .hl-text {
-  position: relative;
-  flex: 1;
-  min-width: 0;
+  position: absolute;
+  left: 72px;
+  right: 420px;
+  bottom: 90px;
+}
+.hl-card:last-child .hl-text,
+.hl-card:last-child .hl-score {
+  bottom: 450px;
 }
 .hl-text h3 {
-  font-size: 60px;
+  font-size: 84px;
   font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.035em;
+  line-height: 0.96;
+  letter-spacing: -0.04em;
   text-wrap: balance;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.55);
 }
 .hl-text .meta {
-  margin-top: 14px;
-  font-size: 30px;
+  margin-top: 18px;
+  font-size: 34px;
 }
 .hl-verdict {
-  margin-top: 16px;
-  height: 44px;
-  display: flex;
+  margin-top: 22px;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-size: 36px;
+  gap: 12px;
+  font-size: 40px;
   font-weight: 700;
-  color: var(--iris-300);
-  opacity: var(--decided, 0);
+  color: var(--ember-500);
+  opacity: var(--decided);
+}
+.hl-card.lose .hl-verdict {
+  display: none;
 }
 .hl-verdict svg {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
 }
 .hl-score {
-  position: relative;
-  flex: none;
-  min-width: 196px;
-  height: 156px;
-  padding: 0 24px;
-  border-radius: 28px;
-  display: grid;
-  place-items: center;
-  font-size: 100px;
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  color: var(--content-muted);
-  background: rgba(15, 14, 18, 0.78);
-  backdrop-filter: blur(12px);
+  position: absolute;
+  right: 150px;
+  bottom: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: "Geist", sans-serif;
+  font-size: 260px;
+  font-weight: 800;
+  line-height: 0.8;
+  letter-spacing: -0.06em;
+  color: transparent;
+  -webkit-text-stroke: 4px rgba(255, 255, 255, 0.9);
+  text-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 .hl-score.counted {
+  -webkit-text-stroke: 0;
   color: var(--tone);
-  background: color-mix(in srgb, var(--tone) 16%, rgba(15, 14, 18, 0.85));
 }
-.hl-vs {
-  position: relative;
-  z-index: 2;
-  align-self: center;
-  margin: -46px 0;
-  width: 92px;
-  height: 92px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--surface-raised);
-  box-shadow: 0 0 0 8px var(--surface);
-  font-size: 32px;
-  font-weight: 650;
-  color: var(--content-secondary);
-}
-
-/* Which came first: the year with its day and month under it. */
 .hl-score.has-sub {
-  flex-direction: column;
-  gap: 4px;
-  min-width: 230px;
-  font-size: 84px;
+  font-size: 190px;
 }
 .hl-score small {
-  font-size: 28px;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--content-secondary);
+  margin-top: 18px;
+  font-size: 44px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--content);
+  -webkit-text-stroke: 0;
   opacity: 0;
 }
 .hl-score.counted small {
   opacity: 1;
 }
-.hl-score.has-sub {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.hl-head {
+  top: 340px;
+  left: 72px;
+  right: 140px;
+  opacity: 0;
+}
+.hl-round {
+  display: block;
+  font-size: 40px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ember-500);
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6);
+}
+.hl-q {
+  margin-top: 12px;
+  font-size: 64px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+}
+.hl-vs {
+  left: calc(50% - 75px);
+  top: 885px;
+  opacity: 0;
+}
+.hl-vs.counting {
+  background: var(--iris-600);
+  box-shadow:
+    0 0 0 6px var(--surface),
+    0 20px 60px rgba(106, 68, 240, 0.5);
+  font-size: 76px;
 }
 
-/* Guess the year */
+/* Guess the year: the game's art fills the stage, the year spins in big. */
 .gy-round {
-  top: 168px;
-  right: 140px;
-  font-size: 32px;
-  font-weight: 500;
-  color: var(--content-secondary);
+  z-index: 2;
+  top: 340px;
+  left: 72px;
+  font-size: 40px;
+  font-weight: 650;
+  color: var(--ember-500);
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6);
 }
 .gy-game {
   inset: 0;
@@ -2223,89 +2092,70 @@ em {
 }
 .gy-art {
   position: absolute;
-  top: 250px;
-  left: 72px;
-  right: 140px;
-  height: 560px;
-  border-radius: 34px;
+  inset: 0;
   background-size: cover;
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.06),
-    0 50px 90px -30px rgba(0, 0, 0, 0.9);
+}
+.gy-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 14, 18, 0.7) 0%,
+    rgba(15, 14, 18, 0) 16%,
+    rgba(15, 14, 18, 0) 42%,
+    rgba(15, 14, 18, 0.85) 66%,
+    rgba(15, 14, 18, 0.95) 100%
+  );
 }
 .gy-who {
   position: absolute;
-  top: 740px;
-  left: 112px;
-  right: 180px;
-  display: flex;
-  align-items: flex-end;
-  gap: 34px;
-}
-.gy-who .box {
-  width: 190px;
-  border-radius: 16px;
-}
-.gy-who > div {
-  min-width: 0;
-  padding-bottom: 8px;
+  left: 72px;
+  right: 140px;
+  top: 1060px;
 }
 .gy-who h3 {
-  font-size: 66px;
+  font-size: 104px;
   font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.035em;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
   text-wrap: balance;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.55);
 }
 .gy-who .meta {
-  margin-top: 14px;
-  font-size: 32px;
+  margin-top: 18px;
 }
 .gy-year {
   position: absolute;
-  top: 1110px;
   left: 72px;
   right: 140px;
+  top: 1300px;
 }
 .gy-q {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 46px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 44px;
+  font-weight: 600;
+  color: var(--content-secondary);
 }
 .gy-count {
-  font-size: 46px;
-  font-weight: 600;
-  color: var(--iris-300);
-}
-.gy-timer {
-  margin-top: 22px;
-  height: 10px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-}
-.gy-timer i {
-  display: block;
-  height: 100%;
-  background: var(--iris-500);
-  transform-origin: left center;
+  margin-left: 18px;
+  color: var(--ember-500);
 }
 .gy-n {
-  margin-top: 26px;
-  font-size: 220px;
-  font-weight: 600;
-  line-height: 1;
+  margin-top: 6px;
+  font-family: "Geist", sans-serif;
+  font-size: 200px;
+  font-weight: 800;
+  line-height: 0.9;
   letter-spacing: -0.05em;
-  color: var(--content-muted);
+  color: transparent;
+  -webkit-text-stroke: 4px rgba(255, 255, 255, 0.85);
 }
 .gy-n.landed {
-  color: var(--content);
+  -webkit-text-stroke: 0;
+  color: #fff;
 }
 .gy-date {
-  margin-top: 10px;
+  margin-top: 8px;
   font-size: 36px;
   font-weight: 500;
   color: var(--content-secondary);

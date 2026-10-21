@@ -28,15 +28,11 @@ ${rounds
 <div class="gy-game" data-year="${year}">
     <div class="gy-art" style="background-image:url('${game.banner}');background-position:${game.bannerPosition}"></div>
     <div class="gy-who">
-        <img class="box" src="${game.cover}" alt="">
-        <div>
-            <h3>${escape(game.title)}</h3>
-            <div class="meta">${developer(game) || ""}</div>
-        </div>
+        <h3>${escape(game.title)}</h3>
+        <div class="meta">${developer(game) || ""}</div>
     </div>
     <div class="gy-year">
         <div class="gy-q">What year did it come out?<b class="gy-count mono"></b></div>
-        <div class="gy-timer"><i></i></div>
         <div class="gy-n mono">????</div>
         <div class="gy-date">${escape(`${day} ${month} ${year}`)}${note ? ` · ${escape(note)}` : ""}</div>
     </div>
@@ -45,19 +41,22 @@ ${rounds
   .join("")}
 ${intro(
   post.hook,
-  `<div class="v-hand"><div class="v-fan">${rounds
-    .slice(0, 5)
+  `<div class="wall gy-wall">${[...rounds, ...rounds, ...rounds]
     .map(({ game }) => `<img src="${game.cover}" alt="">`)
     .join(
       "",
-    )}</div><div class="v-years mono">19<span>??</span> or 20<span>??</span></div></div>`,
+    )}</div><div class="v-years mono">19<span>??</span> or 20<span>??</span></div>`,
   [
     ["Timer", "5 seconds a round"],
     ["Target", "Within 2 years scores"],
     ["ListOrdered", `${rounds.length} games`],
   ],
 )}
-${outro(post.outro, "Rate them at playrates.app")}`;
+${outro(
+  post.outro,
+  "Rate them at playrates.app",
+  rounds.slice(0, 4).map(({ game }) => game.cover),
+)}`;
 
   const end = INTRO + rounds.length * PER;
   const script = `
@@ -71,15 +70,13 @@ window.scene = {
     const playing = t >= INTRO && t < ${end};
     const i = Math.min(N - 1, Math.max(0, Math.floor((t - INTRO) / PER)));
     const local = t - INTRO - i * PER;
-    $(".gy-round").textContent = playing ? (i + 1) + "/" + N : "";
+    $(".gy-round").textContent = playing ? "Round " + (i + 1) + " of " + N : "";
     games.forEach((g, j) => {
       const on = playing && j === i;
       g.style.opacity = on ? out(at(local, 0, 0.4)) * (1 - at(local, PER - 0.3, 0.3)) : 0;
       if (!on) return;
       $(".gy-who", g).style.transform = "translateY(" + 50 * (1 - out(at(local, 0.05, 0.45))) + "px)";
       const thinking = local >= 0.4 && local < REVEAL;
-      $(".gy-timer", g).style.opacity = thinking ? 1 : 0;
-      $(".gy-timer i", g).style.transform = "scaleX(" + (thinking ? 1 - at(local, 0.4, THINK_LEN) : 0) + ")";
       $(".gy-count", g).textContent = thinking ? Math.ceil(REVEAL - local) : "";
       const year = +g.dataset.year, spin = at(local, REVEAL, 0.9);
       const n = $(".gy-n", g);
