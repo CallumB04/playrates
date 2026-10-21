@@ -1865,7 +1865,14 @@ em {
   color: var(--tone);
 }
 .hl-score.has-sub {
-  font-size: 190px;
+  font-size: 150px;
+}
+/* A year is twice as wide as a score: keep the title clear of it. */
+.hl-card:has(.has-sub) .hl-text {
+  right: 520px;
+}
+.hl-card:has(.has-sub) .hl-text h3 {
+  font-size: 72px;
 }
 .hl-score small {
   margin-top: 18px;
