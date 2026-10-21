@@ -88,7 +88,11 @@ export const useUserThreads = (
 export const useCommunityMutations = () => {
     const client = useQueryClient();
     const invalidate = () =>
-        client.invalidateQueries({ queryKey: queryKeys.community.all });
+        Promise.all([
+            client.invalidateQueries({ queryKey: queryKeys.community.all }),
+            // A patch notes entry is only sendable once it is in this list.
+            client.invalidateQueries({ queryKey: queryKeys.admin.patchNotes }),
+        ]);
 
     return {
         createThread: useMutation({
