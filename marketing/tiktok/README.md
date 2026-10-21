@@ -38,10 +38,11 @@ starting point and picks what suits the day. A format added
 to `formats/index.mjs` joins the rotation, unless it's marked `demo: true`,
 which keeps it out until Callum has seen it and said yes.
 
-Every photo post opens on a hook, then the format's own slides, with the
-sign-up slide (`cta`, below) dropped in before the last few: before the top
-3 of a countdown, the top tier of a tier list, the last two of anything
-else. `withCta` in `slides.mjs` places it.
+Every photo post opens on a hook, then the format's own slides. The
+sign-up slide (`cta`, below) comes late: in a top 10 (`ranked`, `hottake`)
+and `upcoming`, `withCta` in `slides.mjs` drops it in before the last
+three or two; a short post puts it at the end instead (pairs and tiers add
+it after their outro, tips fold its library plate into the last slide).
 
 The list formats (ranked, hottake, tips) share one slide, `featureSlide`:
 the art behind the whole slide, the number in outline across it (the

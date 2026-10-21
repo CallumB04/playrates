@@ -24,7 +24,7 @@ const STATUS = {
 
 // An image rather than inline SVG: the logo's gradients are found by id, and
 // a page of slides repeats it.
-const logo = `<img class="logo" alt="" src="data:image/svg+xml;base64,${readFileSync(
+export const logo = `<img class="logo" alt="" src="data:image/svg+xml;base64,${readFileSync(
   new URL("../../frontend/public/favicon.svg", import.meta.url),
 ).toString("base64")}">`;
 
@@ -133,13 +133,17 @@ export const ctaSlide = (cta, kicker = cta.kicker ?? "Before the top 3") => `
 <section class="slide cta" data-name="cta">
     ${brand}
     <div class="cta-copy">
-        <span class="kicker">${escape(kicker)}</span>
+        ${kicker ? `<span class="kicker">${escape(kicker)}</span>` : ""}
         <h2>${headline(cta.title)}</h2>
         ${cta.body ? `<p>${headline(cta.body)}</p>` : ""}
     </div>
     <div class="app">${(cta.library ?? []).map(libraryRow).join("")}</div>
     ${signoff(cta.button ?? "Free at playrates.app")}
 </section>`;
+
+/** The library plate alone, for an ending that carries the pitch itself. */
+export const appPlate = (cta) =>
+  `<div class="app">${(cta.library ?? []).map(libraryRow).join("")}</div>`;
 
 /** The address, as words. Ember marks it, the way it marks the logo. */
 export const signoff = (text) =>

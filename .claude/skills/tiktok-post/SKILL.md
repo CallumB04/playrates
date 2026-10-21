@@ -6,7 +6,11 @@ description: Make PlayRates TikTok posts end to end, one a day at 21:00, alterna
 # TikTok post
 
 PlayRates posts to TikTok as **@playratesapp**, a personal account, **one
-post a day at 21:00 Estonian time, alternating photo slideshow and video**.
+post a day at 21:00 Estonian time**. From 2026-10-22 the mix Callum wants
+is **60/40 slideshows to videos**, and **60/40 posts that benefit the viewer
+(tips, mistakes, habits) to fun ones (rankings, hot takes, tier lists,
+quizzes)**: over any five days, three of each majority. Videos are on trial;
+he may drop them if they don't land.
 A 16:00 slot was tried for three days in October 2026 and dropped: those
 posts drew 5–10 views against 500–600 in the evening, and Callum didn't
 want them on the profile. Mix the newer "useful to the viewer" formats in
@@ -54,8 +58,9 @@ npm run tiktok:next
 ```
 
 prints every post on `POSTS.md` with its format, hook and games, then the
-first free day and a suggestion: the other kind from the last post (photo
-after video, video after photo) and a format of that kind.
+first free day and a suggestion: the other kind from the last post and a
+format of that kind. The script only alternates; hold it to the 60/40 mixes
+above yourself, looking at the last five posts.
 
 If Callum names a format, use it. Otherwise decide yourself, starting from
 the suggestion: read the whole history, then pick what will work best on
@@ -63,9 +68,9 @@ the day. A Friday suits a weekend list, a date near a big release suits
 upcoming or a hot take about that series, and a format that's had several
 posts in the last week is due a rest. The suggested format is a random one
 of its kind, not the one that kind used last; pick another of the same kind
-only for a reason you can name. Keep the alternation unless Callum says
-otherwise; `POSTS.md` lists the posts still to rebuild in the new style
-under "To rebuild".
+only for a reason you can name. Avoid two of the same format on
+consecutive days where the mix allows. `POSTS.md` lists the posts still to
+rebuild in the new style under "To rebuild".
 
 **Give the viewer something.** A list of games with no point to it is the
 weakest kind of post. Every few posts should promise the viewer a benefit
@@ -141,18 +146,29 @@ review of the first two weeks (2026-10-21):
   one line. Too much on screen at once reads as AI-made.
 - **No "Your rating" meter** on the list slides; the viewer hasn't rated
   anything. The content does the work; the pitch comes later.
-- **The sign-up slide comes late**, in front of the top 3 or the last few
-  ("Before the top 3"), never second, where it drove people off. Its address
-  is a line of text, not a button: nothing on a photo post can be tapped.
+- **The sign-up slide comes late**, never second, where it drove people
+  off. In a long post (a top 10, eight or more items) it goes in front of
+  the top 3 ("Before the top 3"). A short post (tips, pairs, a tier list)
+  has no sign-up slide in the middle: tips fold it into the last slide, the
+  others add it at the end. Its address is a line of text, not a button:
+  nothing on a photo post can be tapped.
 - **No em-dash rules or quote marks** dressing a label ("— Hot take"): a
   word in ember is enough.
 - **Ember in small doses**, as in the logo's full stop: a label, a dot, the
-  sign-off. Iris stays the main colour.
+  sign-off. Iris stays the main colour, and its shade never changes: it's
+  the brand's. Where iris text struggles on bright art, darken what's behind
+  it instead.
 - **Fill the frame.** Covers of a collection of games should be mostly
   covers, not black; videos put the picture edge to edge (guess the game
-  does), never a small card on a dark stage. Over bright art, coloured
-  words go a step lighter and copy takes a soft shadow; check the cover at
-  1.2s for anything that sinks into the picture.
+  does), never a small card on a dark stage. Check the cover at 1.2s for
+  anything that sinks into the picture, and deepen the shade if it does.
+- **A video's cover shows the game being played.** The remakes cover is
+  the model: the two games side by side, "or" between them, the art running
+  the full height and fading out under the words. Guess the game shows its
+  first screenshots a step clearer each; guess the year shows a round with
+  the year still blank.
+- **A video's ending is the one pitch.** It stands on a wall of the
+  video's covers with the logo set large, never words on black.
 
 ## 2. Games
 

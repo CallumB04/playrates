@@ -17,8 +17,8 @@ const COARSEST = 150;
  * blocks and sharpens while a five-second count runs down, then the answer.
  * Played along with, and counted up in the comments. `rounds` run easiest
  * first; each round's `banner` is the screenshot, an IGDB image id like a
- * slide's. The opening is the first round's screenshot at its coarsest,
- * edge to edge, so the cover is all colour rather than a card on black.
+ * slide's. The opening is the first four rounds' screenshots in a grid,
+ * edge to edge, so the cover shows the game being played.
  */
 export const renderGuess = (post) => {
   const { rounds } = post;
@@ -44,7 +44,10 @@ ${rounds
 </div>
 ${intro(
   post.hook,
-  `<canvas class="gs-cover" width="${W}" height="${H}"></canvas>`,
+  `<div class="gs-grid">${rounds
+    .slice(0, 4)
+    .map(() => `<canvas width="${W / 2}" height="580"></canvas>`)
+    .join("")}</div><span class="v-or mono">?</span>`,
   [
     ["Timer", "5 seconds a round"],
     ["ListOrdered", `${rounds.length} rounds`],
@@ -53,7 +56,7 @@ ${intro(
 ${outro(
   post.outro,
   "Rate them at playrates.app",
-  rounds.slice(0, 4).map(({ game }) => game.cover),
+  rounds.map(({ game }) => game.cover),
 )}`;
 
   const end = INTRO + rounds.length * PER;
@@ -69,15 +72,15 @@ const draw = (c, img, w, h) => {
   const sw = w / scale, sh = h / scale;
   c.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, 0, 0, w, h);
 };
-const blocks = (target, img, block) => {
+const blocks = (target, img, block, w = W, h = H) => {
   const x = target.getContext("2d");
   if (block <= 1) {
     x.imageSmoothingEnabled = true;
-    draw(x, img, W, H);
+    draw(x, img, w, h);
     return;
   }
-  small.width = Math.ceil(W / block);
-  small.height = Math.ceil(H / block);
+  small.width = Math.ceil(w / block);
+  small.height = Math.ceil(h / block);
   draw(sctx, img, small.width, small.height);
   x.imageSmoothingEnabled = false;
   x.drawImage(small, 0, 0, small.width, small.height, 0, 0, small.width * block, small.height * block);
@@ -87,7 +90,12 @@ window.scene = {
   duration: ${end + OUTRO},
   cover: 1.2,
   frameAt(t) {
-    if (!cover) { blocks($(".gs-cover"), srcs[0], ${COARSEST}); cover = true; }
+    // The cover: the first four rounds' screenshots, each a step clearer
+    // than the last, so it reads as "these sharpen" before anyone presses play.
+    if (!cover) {
+      $$(".gs-grid canvas").forEach((c, j) => blocks(c, srcs[j], [70, 48, 32, 22][j], W / 2, 580));
+      cover = true;
+    }
     bookends(t, ${end});
     const i = Math.min(N - 1, Math.max(0, Math.floor((t - INTRO) / PER)));
     const local = t - INTRO - i * PER;

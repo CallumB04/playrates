@@ -2,7 +2,7 @@ import {
   brand,
   brandWith,
   button,
-  withCta,
+  ctaSlide,
   escape,
   headline,
   page,
@@ -102,19 +102,16 @@ export const renderTiers = (post) => {
   const reveal = [...tiers].reverse();
   return page([
     hookSlide(post.hook, tiers),
-    ...withCta(
-      reveal.map((tier, i) =>
-        tierSlide(
-          tier,
-          tiers.slice(tiers.indexOf(tier) + 1),
-          i + 1,
-          tiers.length,
-        ),
+    ...reveal.map((tier, i) =>
+      tierSlide(
+        tier,
+        tiers.slice(tiers.indexOf(tier) + 1),
+        i + 1,
+        tiers.length,
       ),
-      post.cta,
-      1,
-      `Before the ${tiers[0].tier} tier`,
     ),
     boardSlide(post.outro, tiers),
+    // A short post: the sign-up slide goes last, not into the middle.
+    ...(post.cta ? [ctaSlide(post.cta, "")] : []),
   ]);
 };

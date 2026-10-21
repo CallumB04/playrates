@@ -41,11 +41,8 @@ ${rounds
   .join("")}
 ${intro(
   post.hook,
-  `<div class="wall gy-wall">${[...rounds, ...rounds, ...rounds]
-    .map(({ game }) => `<img src="${game.cover}" alt="">`)
-    .join(
-      "",
-    )}</div><div class="v-years mono">19<span>??</span> or 20<span>??</span></div>`,
+  // The round as it plays: a game's art edge to edge, its year still blank.
+  `<div class="gy-cover" style="background-image:url('${rounds[0].game.banner}');background-position:${rounds[0].game.bannerPosition}"></div><div class="gy-cover-n">????</div>`,
   [
     ["Timer", "5 seconds a round"],
     ["Target", "Within 2 years scores"],
@@ -55,7 +52,7 @@ ${intro(
 ${outro(
   post.outro,
   "Rate them at playrates.app",
-  rounds.slice(0, 4).map(({ game }) => game.cover),
+  rounds.map(({ game }) => game.cover),
 )}`;
 
   const end = INTRO + rounds.length * PER;

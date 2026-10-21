@@ -1,5 +1,5 @@
 import * as Lucide from "lucide-react";
-import { brand, escape, headline, icon, signoff } from "../slides.mjs";
+import { brand, escape, headline, icon, logo, signoff } from "../slides.mjs";
 
 /**
  * What every video scene's script starts with. `at(t, start, length)` is how
@@ -55,20 +55,28 @@ export const faceOff = (a, b) => `
     <span class="v-or mono">or</span>
 </div>`;
 
-/** The last card: the question for the comments over a hand of the games
- *  just played, then where to rate them. */
+/**
+ * The last card, and the one moment a video asks anything of the viewer:
+ * the games just played as a wall of covers behind, then the logo, the
+ * question for the comments and where to rate them. Never words on black.
+ */
 export const outro = ({ title, body }, action, covers = []) => `
 <div class="v-outro">
-    ${
-      covers.length
-        ? `<div class="fan fan-${covers.length}">${covers
-            .map((cover) => `<img src="${cover}" alt="">`)
-            .join("")}</div>`
-        : ""
-    }
-    <h2>${headline(title)}</h2>
-    ${body ? `<p>${headline(body)}</p>` : ""}
-    ${signoff(action)}
+    <div class="v-outro-art"><div class="wall">${[
+      ...covers,
+      ...covers,
+      ...covers,
+      ...covers,
+    ]
+      .slice(0, 16)
+      .map((cover) => `<img src="${cover}" alt="">`)
+      .join("")}</div></div>
+    <div class="v-outro-copy">
+        <div class="v-outro-mark">${logo}</div>
+        <h2>${headline(title)}</h2>
+        ${body ? `<p>${headline(body)}</p>` : ""}
+        ${signoff(action)}
+    </div>
 </div>`;
 
 /** Fades the intro out and the outro in; every scene shares the bookends. */

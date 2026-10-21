@@ -5,7 +5,7 @@ import {
   footer,
   icon,
   Lucide,
-  withCta,
+  ctaSlide,
   developer,
   escape,
   headline,
@@ -91,12 +91,9 @@ export const renderPairs = (post) => {
   const { pairs } = post;
   return page([
     hookSlide(post.hook, pairs),
-    ...withCta(
-      pairs.map((pair, i) => pairSlide(pair, i + 1, pairs.length)),
-      post.cta,
-      2,
-      "Before the last two",
-    ),
+    ...pairs.map((pair, i) => pairSlide(pair, i + 1, pairs.length)),
     outroSlide(post.outro, pairs),
+    // A short post: the sign-up slide goes last, not into the middle.
+    ...(post.cta ? [ctaSlide(post.cta, "")] : []),
   ]);
 };

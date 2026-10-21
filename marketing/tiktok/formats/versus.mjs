@@ -63,7 +63,7 @@ ${(() => {
 ${outro(
   post.outro,
   "Rate them at playrates.app",
-  rounds.slice(-2).flatMap(({ a, b }) => [a.game.cover, b.game.cover]),
+  rounds.flatMap(({ a, b }) => [a.game.cover, b.game.cover]),
 )}`;
 
   const end = INTRO + rounds.length * PER;

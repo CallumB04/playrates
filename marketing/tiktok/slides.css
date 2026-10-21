@@ -1642,7 +1642,49 @@ em {
   opacity: 0;
 }
 .stage > .v-outro {
-  inset: 214px 140px 380px 72px;
+  inset: 0;
+  padding: 0 var(--rail) var(--safe-bottom) var(--safe-x);
+}
+/* The ending: the video's games as a bright wall, the shade only where the
+   words are, and the logo set large, the one time it asks for attention. */
+.v-outro-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.v-outro-art .wall {
+  opacity: 1;
+}
+.v-outro-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 14, 18, 0.6) 0%,
+    rgba(15, 14, 18, 0) 16%,
+    rgba(15, 14, 18, 0.1) 34%,
+    rgba(15, 14, 18, 0.92) 56%,
+    rgba(15, 14, 18, 0.98) 100%
+  );
+}
+.v-outro-copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.55);
+}
+.v-outro-mark .logo {
+  display: block;
+  width: 150px;
+  height: 150px;
+  border-radius: 34px;
+  box-shadow: 0 24px 60px -16px rgba(106, 68, 240, 0.8);
+}
+.v-outro-copy h2 {
+  margin-top: 48px;
 }
 .stage > .v-intro {
   inset: 0;
@@ -1712,9 +1754,8 @@ em {
 }
 
 /* Every opening, which is also the cover: its picture edge to edge, the
-   words at the bottom over a shade deep enough for them to read on the
-   brightest art. The coloured word goes a step lighter, and the copy takes
-   a soft shadow, for the same reason. */
+   words at the bottom over a shade deep enough for the brand's iris to
+   read on the brightest art. The colour stays; the ground under it darkens. */
 .stage .v-intro {
   justify-content: flex-end;
 }
@@ -1732,18 +1773,15 @@ em {
     180deg,
     rgba(15, 14, 18, 0.7) 0%,
     rgba(15, 14, 18, 0) 15%,
-    rgba(15, 14, 18, 0) 40%,
-    rgba(15, 14, 18, 0.88) 62%,
-    rgba(15, 14, 18, 0.96) 100%
+    rgba(15, 14, 18, 0) 34%,
+    rgba(15, 14, 18, 0.92) 55%,
+    rgba(15, 14, 18, 0.98) 100%
   );
 }
 .stage .v-copy {
   position: relative;
   z-index: 2;
   text-shadow: 0 4px 30px rgba(0, 0, 0, 0.55);
-}
-.stage .v-intro em {
-  color: var(--iris-300);
 }
 .stage .v-intro h1 {
   font-size: 118px;
@@ -1784,32 +1822,56 @@ em {
   top: 520px;
 }
 
-/* Guess the year's opening: a wall of the games' covers, the years hidden. */
-.gy-wall {
-  opacity: 1;
+/* Guess the game's opening: the first four screenshots in a grid, each a
+   step clearer, "?" where they meet. */
+.gs-grid {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1160px;
+  display: grid;
+  grid-template: 1fr 1fr / 1fr 1fr;
+  gap: 6px;
+  background: var(--surface);
 }
-.v-years {
+.gs-grid canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.gs .v-or {
+  top: 505px;
+  font-family: "Geist", sans-serif;
+  font-size: 84px;
+  font-weight: 800;
+}
+
+/* Guess the year's opening: a round as it plays, the art edge to edge and
+   the year still blank in outline. */
+.gy-cover {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+}
+.gy-cover-n {
   position: absolute;
   z-index: 2;
-  left: 72px;
-  top: 560px;
-  font-size: 150px;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  text-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
+  left: 60px;
+  top: 470px;
+  font-size: 330px;
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  color: transparent;
+  -webkit-text-stroke: 6px rgba(255, 255, 255, 0.95);
+  text-shadow: 0 20px 70px rgba(0, 0, 0, 0.5);
 }
-.v-years span {
-  color: var(--ember-500);
-}
+
 .v-outro h2 {
   font-size: 96px;
   font-weight: 700;
   line-height: 0.96;
   letter-spacing: -0.045em;
   text-wrap: balance;
-}
-.v-outro .fan {
-  margin-bottom: 72px;
 }
 .v-outro .signoff {
   margin-top: 56px;

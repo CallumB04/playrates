@@ -6,7 +6,7 @@ import {
   page,
   signoff,
   swipe,
-  withCta,
+  appPlate,
 } from "../slides.mjs";
 
 /**
@@ -39,39 +39,30 @@ const tipSlide = ({ title, body, art }, n) =>
     body,
   });
 
-/** The question for the comments, over a hand of the games the tips came
- *  from, so the last slide isn't a page of words. */
-const outroSlide = ({ title, body }, tips) => {
-  const covers = [
-    ...new Map(tips.map(({ art }) => [art.game.slug, art.game])).values(),
-  ].slice(0, 4);
-  return `
+/**
+ * The one slide that asks anything: the question for the comments, then the
+ * product and where to find it. A short post has no room for a sign-up slide
+ * of its own in the middle, so it comes here, at the end.
+ */
+const outroSlide = ({ title, body }, cta) => `
 <section class="slide tips-outro" data-name="outro">
     ${brand}
     <div class="cta-copy">
         <h2>${headline(title)}</h2>
         ${body ? `<p>${headline(body)}</p>` : ""}
     </div>
-    <div class="fan fan-${covers.length}">${covers
-      .map((game) => `<img src="${game.cover}" alt="">`)
-      .join("")}</div>
-    ${signoff("Free at playrates.app")}
+    ${cta ? appPlate(cta) : ""}
+    ${signoff(cta?.button ?? "Free at playrates.app")}
 </section>`;
-};
 
 /**
  * Something the viewer takes away: tips, habits, mistakes, things nobody
  * tells you. Each tip is a slide in the feature layout, its art from a game
- * it applies to, with the sign-up slide before the last two.
+ * it applies to, and the pitch on the last slide, not a slide of its own.
  */
 export const renderTips = (post) =>
   page([
     hookSlide(post.hook, post.tips.length),
-    ...withCta(
-      post.tips.map((tip, i) => tipSlide(tip, i + 1)),
-      post.cta,
-      2,
-      post.cta?.kicker ?? "Before the last two",
-    ),
-    outroSlide(post.outro, post.tips),
+    ...post.tips.map((tip, i) => tipSlide(tip, i + 1)),
+    outroSlide(post.outro, post.cta),
   ]);
