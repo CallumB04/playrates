@@ -290,6 +290,10 @@ Callum opens TikTok in the browser pane; the upload page is
   typed; it can still do so a second or two after. Then ctrl+a, Delete, and
   type the "Caption" from `posting.md`, which puts a full stop after a
   title that needs one.
+- **On a video, wait for the content check** ("No issues found") before
+  typing anything: when it lands it can reset the box again, keeping some
+  tags and dropping the rest. And never ctrl+End into a box that ends in a
+  tag: the caret lands inside it, and the next pick replaces that tag.
 - **Type the description once**, then check what's in the box (read it
   from the page, not a screenshot, which can lag). Retyping doubles it.
   If the reset lands after the hashtags, the box keeps the tags and drops
@@ -301,7 +305,7 @@ Callum opens TikTok in the browser pane; the upload page is
   mousedown/mouseup/click on it, then check each tag sits inside a
   `[class*="mention"]` span. Wait about two seconds after typing each tag
   before picking: the list still shows the last tag's matches for a moment,
-  and a pick from it drops the tag without an error. Some tags never match (`#baldursgate3`, `#gamingtips`, `#gamingtip`,
+  and a pick from it drops the tag without an error. Some tags never match (`#baldursgate3`, `#gamingtips`, `#gamingtip`, `#2010s`, `#gamingdeals`,
   `#shortgames`, `#underratedgames`, `#videogames`), and long ones often
   get no list (`#upcominggames`, `#gamerecommendations`): backspace to a
   shorter prefix to bring the list back, try the History row under the box,
