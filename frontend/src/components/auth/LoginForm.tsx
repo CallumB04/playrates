@@ -4,6 +4,7 @@ import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import Button from "../ui/Button";
 import FormField from "./FormField";
+import OAuthButtons from "./OAuthButtons";
 import PasswordField from "./PasswordField";
 
 interface LoginFormProps {
@@ -49,6 +50,7 @@ const LoginForm = ({ initialEmail = "", onForgot }: LoginFormProps) => {
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <OAuthButtons />
             <FormField
                 label="Email"
                 name="email"

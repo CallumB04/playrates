@@ -14,6 +14,7 @@ import {
 import type { MyProfile } from "@playrates/shared";
 import { fetchMyProfile, queryKeys, sendHeartbeat } from "../api";
 import { supabase } from "../lib/supabase";
+import { readAuthRedirectError } from "../lib/authRedirect";
 import { useNotify } from "./NotificationContext";
 
 interface AuthContextValue {
@@ -26,6 +27,9 @@ interface AuthContextValue {
         username: string
     ) => Promise<void>;
     signIn: (email: string, password: string) => Promise<void>;
+    /** Leaves for the provider's sign-in page and comes back here. Signing
+     *  in and signing up are the same thing this way. */
+    signInWithProvider: (provider: OAuthProvider) => Promise<void>;
     signOut: () => Promise<void>;
     /** Emails a link to set a new password. Says nothing about whether the
      *  address has an account. */
@@ -33,6 +37,8 @@ interface AuthContextValue {
     /** Sets a new password for whoever followed that link. */
     updatePassword: (password: string) => Promise<void>;
 }
+
+export type OAuthProvider = "google" | "discord";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -53,6 +59,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (!active) return;
             setSession(data.session);
             setIsRestoring(false);
+
+            const redirectError = readAuthRedirectError(window.location.href);
+            if (redirectError) {
+                window.history.replaceState(
+                    window.history.state,
+                    "",
+                    redirectError.cleanUrl
+                );
+                notify(
+                    redirectError.cancelled
+                        ? "Sign-in cancelled"
+                        : "Couldn't sign you in. Please try again.",
+                    redirectError.cancelled ? "info" : "error"
+                );
+            }
         });
 
         const {
@@ -70,7 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             active = false;
             subscription.unsubscribe();
         };
-    }, []);
+    }, [notify]);
 
     /* The server marks you online for five minutes after the last beat, so
        beat well inside that window. The first one clears the profile caches,
@@ -125,6 +146,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     password,
                     // read by the handle_new_user trigger to seed the profile
                     options: { data: { username } },
+                });
+                if (error) throw error;
+            },
+
+            async signInWithProvider(provider) {
+                const { error } = await supabase.auth.signInWithOAuth({
+                    provider,
+                    options: { redirectTo: window.location.href },
                 });
                 if (error) throw error;
             },

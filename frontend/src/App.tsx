@@ -5,6 +5,7 @@ import PageShell from "./components/layout/PageShell";
 import Footer from "./components/Footer";
 import ToastStack from "./components/feedback/ToastStack";
 import AccountFormModal from "./components/auth/AccountFormModal";
+import ChooseUsername from "./components/onboarding/ChooseUsername";
 import FirstLoginWelcome from "./components/onboarding/FirstLoginWelcome";
 import HomePage from "./pages/HomePage/HomePage";
 import CommunityPage from "./pages/CommunityPage/CommunityPage";
@@ -84,6 +85,7 @@ function App() {
             <Footer />
             <TabBar />
             <AccountFormModal />
+            <ChooseUsername />
             <FirstLoginWelcome />
             <ToastStack />
         </div>

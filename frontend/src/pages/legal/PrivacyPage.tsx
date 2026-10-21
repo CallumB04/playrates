@@ -11,7 +11,7 @@ const External = ({ href, children }: { href: string; children: string }) => (
 );
 
 /* When the substance of this page changes, move the date. */
-const UPDATED = "2026-10-06";
+const UPDATED = "2026-10-22";
 
 const PrivacyPage = () => (
     <ProsePage
@@ -43,6 +43,13 @@ const PrivacyPage = () => (
             <li>
                 Your email address and a password. The password is stored as a
                 hash by Supabase, so I never see it.
+            </li>
+            <li>
+                If you sign in with Google or Discord instead, no password. That
+                service tells me your email address and your account ID there.
+                It also sends your name and profile picture, which Supabase
+                keeps with your sign-in record, but PlayRates doesn’t use them:
+                your username and picture are the ones you choose here.
             </li>
             <li>
                 A username, and if you add them, a first name, a bio, a profile
@@ -152,6 +159,11 @@ const PrivacyPage = () => (
             anything on:
         </p>
         <ul>
+            <li>
+                <strong>Google</strong> and <strong>Discord</strong>, if you
+                sign in with one of them. They know you signed in to PlayRates,
+                under their own privacy policies.
+            </li>
             <li>
                 <strong>IGDB</strong>, which Twitch runs, supplies game details.
                 When a search needs to look beyond the PlayRates catalogue, my

@@ -571,6 +571,73 @@ describe("the first-login welcome", () => {
   });
 });
 
+describe("choosing a username", () => {
+  // A Google or Discord signup, still on its generated name.
+  const unchosen = () => ({
+    ...baseSeed(),
+    profiles: [
+      buildProfile({ username: "user_1a2b3c4d", username_chosen_at: null }),
+      buildProfile({ id: USER_B, username: "frienduser" }),
+    ],
+  });
+
+  const rename = (app: Parameters<typeof request>[0], username: string) =>
+    request(app)
+      .patch("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A))
+      .send({ username });
+
+  it("is owed to an account that has not picked one", async () => {
+    const { app } = buildTestApp({ seed: unchosen() });
+
+    const response = await request(app)
+      .get("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.body.usernameChosenAt).toBeNull();
+  });
+
+  it("is settled by the first rename", async () => {
+    const { app, state } = buildTestApp({ seed: unchosen() });
+
+    const response = await rename(app, "picked_name");
+
+    expect(response.status).toBe(200);
+    expect(response.body.usernameChosenAt).not.toBeNull();
+    expect(state.profiles[0]!.username_chosen_at).not.toBeNull();
+  });
+
+  it("keeps the first time through later renames", async () => {
+    const { app, state } = buildTestApp({ seed: unchosen() });
+
+    const first = (await rename(app, "picked_name")).body.usernameChosenAt;
+    await new Promise((r) => setTimeout(r, 5));
+    await rename(app, "another_name");
+
+    expect(state.profiles[0]!.username_chosen_at).toBe(first);
+  });
+
+  it("is not settled by a name someone else has", async () => {
+    const { app, state } = buildTestApp({ seed: unchosen() });
+
+    const response = await rename(app, "frienduser");
+
+    expect(response.status).toBe(409);
+    expect(state.profiles[0]!.username_chosen_at).toBeNull();
+  });
+
+  it("leaves other settings alone", async () => {
+    const { app, state } = buildTestApp({ seed: unchosen() });
+
+    await request(app)
+      .patch("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A))
+      .send({ bio: "hello" });
+
+    expect(state.profiles[0]!.username_chosen_at).toBeNull();
+  });
+});
+
 describe("exporting an account", () => {
   const seed = () => ({
     ...baseSeed(),
