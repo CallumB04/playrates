@@ -1,9 +1,9 @@
 /**
- * Draws the logo and every picture the site hands to other apps: the
- * favicon, the home-screen icons, the link-preview card, and the avatars and
- * banners uploaded by hand to TikTok, Discord and the rest. Run it after
- * changing the logo, the motto or the palette, and commit what it writes to
- * public/ and marketing/brand/.
+ * Draws every picture the site hands to other apps from the logo masters in
+ * marketing/brand/logo: the favicon, the home-screen icons, the link-preview
+ * card, and the avatars and banners uploaded by hand to TikTok, Discord and
+ * the rest. Run it after changing the logo, the motto or the palette, and
+ * commit what it writes to public/ and marketing/brand/.
  *
  *   npm run brand-assets -w frontend
  */
@@ -18,12 +18,12 @@ const require = createRequire(import.meta.url);
 const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(here, "../public");
 const brandDir = path.join(here, "../../marketing/brand");
+const logoDir = path.join(brandDir, "logo");
 
 // Vellum's own values (src/styles/theme.css). A picture can't read tokens.
 const INK = "#0f0e12";
 const IRIS = "#6a44f0";
 const IRIS_LIGHT = "#8f74ff";
-const IRIS_DEEP = "#4a2bc4";
 const EMBER = "#ff8438";
 const TEXT = "#f4f2f8";
 const TEXT_SOFT = "#b9b3c7";
@@ -39,8 +39,6 @@ const font = (weight) =>
     );
 const fonts = [
     { name: "Geist", data: await font(500), weight: 500, style: "normal" },
-    { name: "Geist", data: await font(700), weight: 700, style: "normal" },
-    { name: "Geist", data: await font(800), weight: 800, style: "normal" },
 ];
 
 // Satori lays out with flexbox only, so every box says so.
@@ -54,71 +52,34 @@ const svgOf = (tree, width, height) => satori(tree, { width, height, fonts });
 const png = (svg, width) =>
     new Resvg(svg, { fitTo: { mode: "width", value: width } }).render().asPng();
 
-/**
- * The mark: "PR." in heavy Geist on an iris gradient, lit from the top left,
- * the full stop in ember. `scale` shrinks the letters inside the square for
- * the crops that cut into it (a maskable icon's circle); `radius` rounds the
- * square for the places nothing else will round it.
- */
-const markTree = (size, { scale = 1, radius = 0 } = {}) => {
-    const type = size * 0.48 * scale;
-    return el(
-        "div",
-        {
-            width: size,
-            height: size,
-            position: "relative",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: radius,
-            overflow: "hidden",
-            backgroundImage: `linear-gradient(140deg, ${IRIS_LIGHT} 0%, ${IRIS} 50%, ${IRIS_DEEP} 100%)`,
-        },
-        [
-            el(
-                "div",
-                {
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: size,
-                    height: size,
-                    backgroundImage:
-                        "radial-gradient(ellipse at 18% 8%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 55%)",
-                },
-                []
-            ),
-            el(
-                "div",
-                {
-                    // The dot weighs the word to the left; this sets it back.
-                    marginLeft: type * 0.14,
-                    fontFamily: "Geist",
-                    fontWeight: 800,
-                    fontSize: type,
-                    lineHeight: 1,
-                    letterSpacing: type * -0.06,
-                    color: "#ffffff",
-                    textShadow: `0 ${size * 0.009}px ${size * 0.028}px rgba(24,8,70,0.35)`,
-                },
-                [
-                    "PR",
-                    el("span", { color: EMBER, marginLeft: type * 0.01 }, "."),
-                ]
-            ),
-        ]
-    );
-};
+const master = (name) => readFile(path.join(logoDir, name), "utf8");
 
-const mark = (size, options) => svgOf(markTree(size, options), size, size);
+/** The white P. as the app icon master draws it, without the tile. */
+const markOf = async (name) =>
+    (await master(name)).match(/<g id="mark">[\s\S]*<\/g>/)[0];
+
+const MARK = await markOf("app-icon.svg");
+// Drawn on a 16-unit grid so every edge lands on a pixel at 16, 32 and 48.
+const MARK_SMALL = await markOf("app-icon-small.svg");
+
+/**
+ * The P. in white on a flat iris square. `scale` shrinks the mark inside the
+ * square for the crops that cut into it (a maskable icon's circle); `radius`
+ * rounds the square for the places nothing else will round it.
+ */
+const mark = (size, { scale = 1, radius = 0, small = false } = {}) => {
+    const unit = small ? 16 : 256;
+    const half = unit / 2;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${unit} ${unit}" width="${size}" height="${size}"><rect width="${unit}" height="${unit}" rx="${(radius / size) * unit}" fill="${IRIS}"/><g transform="translate(${half} ${half}) scale(${scale}) translate(-${half} -${half})">${small ? MARK_SMALL : MARK}</g></svg>`;
+};
 
 /* favicon.svg is square: a bookmark bar or tab strip shows it as drawn, and
    the footer, the preview card and the TikTok slides round it themselves. */
-const favicon = await mark(64);
+const favicon = mark(64);
 
 /** PNG-in-ICO, which every browser that still asks for an .ico can read. */
 const ico = (sizes) => {
-    const images = sizes.map((size) => png(favicon, size));
+    const images = sizes.map((size) => png(mark(size, { small: true }), size));
     const header = Buffer.alloc(6 + 16 * images.length);
     header.writeUInt16LE(1, 2);
     header.writeUInt16LE(images.length, 4);
@@ -139,33 +100,20 @@ const ico = (sizes) => {
 const dataUri = (svg) =>
     `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 
-/** The mark beside the name, for anywhere the name isn't already written. */
-const lockupTree = (height, color) =>
-    el("div", { alignItems: "center", gap: height * 0.32 }, [
-        {
-            type: "img",
-            props: {
-                src: dataUri(favicon),
-                width: height,
-                height,
-                style: { borderRadius: height * 0.23 },
-            },
-        },
-        el(
-            "div",
-            {
-                fontFamily: "Geist",
-                fontSize: height * 0.86,
-                fontWeight: 700,
-                letterSpacing: height * -0.03,
-                lineHeight: 1,
-                color,
-            },
-            "PlayRates"
-        ),
-    ]);
+/** A master as an image `height` tall, for satori to place. */
+const artwork = async (name, height) => {
+    const svg = await master(name);
+    const [, , w, h] = svg
+        .match(/viewBox="([^"]+)"/)[1]
+        .split(" ")
+        .map(Number);
+    return {
+        type: "img",
+        props: { src: dataUri(svg), width: (w / h) * height, height },
+    };
+};
 
-const lockup = (color) => svgOf(lockupTree(200, color), 1100, 200);
+const lockup = async (name) => png(await master(name), 2200);
 
 // The night page with the brand's light falling on it, as the site wears it.
 const night = {
@@ -213,20 +161,11 @@ const card = async () => {
                 ),
             ]),
             el("div", { flexDirection: "column" }, [
+                await artwork("wordmark-reversed.svg", 140),
                 el(
                     "div",
                     {
-                        fontSize: 148,
-                        fontWeight: 700,
-                        letterSpacing: -6,
-                        lineHeight: 1,
-                    },
-                    "PlayRates"
-                ),
-                el(
-                    "div",
-                    {
-                        marginTop: 28,
+                        marginTop: 20,
                         fontSize: 46,
                         fontWeight: 500,
                         color: TEXT_SOFT,
@@ -305,7 +244,7 @@ const banner = async (width, height, markHeight) => {
             fontFamily: "Geist",
         },
         [
-            lockupTree(markHeight, TEXT),
+            await artwork("lockup-horizontal-reversed.svg", markHeight),
             el(
                 "div",
                 {
@@ -325,14 +264,14 @@ const site = {
     "favicon.svg": Buffer.from(favicon),
     "favicon.ico": ico([16, 32, 48]),
     // iOS rounds it itself and wants no transparency.
-    "apple-touch-icon.png": png(await mark(180), 180),
+    "apple-touch-icon.png": png(mark(180), 180),
     // An installed app's icon sits on a desktop with nothing to round it.
-    "icon-192.png": png(await mark(192, { radius: 40 }), 192),
-    "icon-512.png": png(await mark(512, { radius: 106 }), 512),
+    "icon-192.png": png(mark(192, { radius: 40 }), 192),
+    "icon-512.png": png(mark(512, { radius: 106 }), 512),
     // Cropped to a circle or a squircle by the phone: the letters keep to the middle.
-    "icon-maskable-512.png": png(await mark(512, { scale: 0.7 }), 512),
+    "icon-maskable-512.png": png(mark(512, { scale: 0.7 }), 512),
     // Square and opaque, for search engines' logo slots (Organization in index.html).
-    "logo.png": png(await mark(512), 512),
+    "logo.png": png(mark(512), 512),
     "og-default.png": await card(),
 };
 
@@ -344,11 +283,11 @@ for (const [name, data] of Object.entries(site)) {
 // Not served by the site; uploaded by hand. Every size is the platform's own.
 const kit = {
     // TikTok, Discord, Instagram, YouTube and X all crop it to a circle.
-    "avatar.png": png(await mark(1080), 1080),
-    "logo.svg": Buffer.from(await mark(1080)),
-    "logo-rounded.png": png(await mark(1024, { radius: 230 }), 1024),
-    "lockup-on-dark.png": png(await lockup(TEXT), 2200),
-    "lockup-on-light.png": png(await lockup(INK), 2200),
+    "avatar.png": png(mark(1080), 1080),
+    "logo.svg": Buffer.from(mark(1080)),
+    "logo-rounded.png": png(mark(1024, { radius: 230 }), 1024),
+    "lockup-on-dark.png": await lockup("lockup-horizontal-reversed.svg"),
+    "lockup-on-light.png": await lockup("lockup-horizontal.svg"),
     "discord-banner.png": await banner(960, 540, 110),
     "x-header.png": await banner(1500, 500, 110),
     // YouTube shows only the middle 1546x423 on every screen.
