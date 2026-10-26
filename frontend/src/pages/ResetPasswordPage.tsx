@@ -20,6 +20,7 @@ const ResetPasswordPage = () => {
     const { openReset } = useAccountForm();
     const navigate = useNavigate();
     const [error, setError] = useState<string>();
+    const [confirmError, setConfirmError] = useState<string>();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     if (isLoading) return <TextSkeleton lines={4} />;
@@ -36,15 +37,21 @@ const ResetPasswordPage = () => {
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        const password = String(
-            new FormData(event.currentTarget).get("password") ?? ""
-        );
+        const data = new FormData(event.currentTarget);
+        const password = String(data.get("password") ?? "");
+        const confirmPassword = String(data.get("confirmPassword") ?? "");
         const checked = PasswordSchema.safeParse(password);
         if (!checked.success) {
             setError(checked.error.issues[0]?.message);
+            setConfirmError(undefined);
             return;
         }
         setError(undefined);
+        if (confirmPassword !== password) {
+            setConfirmError("The passwords don't match.");
+            return;
+        }
+        setConfirmError(undefined);
         setIsSubmitting(true);
         try {
             await updatePassword(password);
@@ -70,6 +77,12 @@ const ResetPasswordPage = () => {
                     autoComplete="new-password"
                     autoFocus
                     error={error}
+                />
+                <PasswordField
+                    label="Confirm new password"
+                    name="confirmPassword"
+                    autoComplete="new-password"
+                    error={confirmError}
                 />
                 <Button
                     type="submit"
