@@ -96,6 +96,37 @@ describe("RichTextEditor", () => {
         expect(RichTextDocSchema.safeParse(doc).success).toBe(true);
     });
 
+    /* The thread page saves every change as a draft, and posting disables
+       then re-enables the editor around the request. */
+    it("doesn't report a change when it is only disabled and enabled", () => {
+        const onChange = vi.fn();
+        const { rerender } = renderWithProviders(
+            <RichTextEditor
+                label="Message"
+                initial={START}
+                onChange={onChange}
+            />
+        );
+
+        rerender(
+            <RichTextEditor
+                label="Message"
+                initial={START}
+                onChange={onChange}
+                disabled
+            />
+        );
+        rerender(
+            <RichTextEditor
+                label="Message"
+                initial={START}
+                onChange={onChange}
+            />
+        );
+
+        expect(onChange).not.toHaveBeenCalled();
+    });
+
     it("sends on Ctrl+Enter or Cmd+Enter, and not on Enter alone", () => {
         const onSubmit = vi.fn();
         renderWithProviders(
