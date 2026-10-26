@@ -7,6 +7,7 @@ interface PasswordFieldProps {
     name?: string;
     error?: string;
     help?: string;
+    placeholder?: string;
     autoComplete?: string;
     autoFocus?: boolean;
 }
@@ -16,6 +17,7 @@ const PasswordField = ({
     name = "password",
     error,
     help,
+    placeholder,
     autoComplete = "current-password",
     autoFocus,
 }: PasswordFieldProps) => {
@@ -31,6 +33,7 @@ const PasswordField = ({
             autoFocus={autoFocus}
             error={error}
             help={help}
+            placeholder={placeholder}
             adornment={
                 <button
                     type="button"

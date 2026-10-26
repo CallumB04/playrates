@@ -62,23 +62,40 @@ const OAuthButtons = () => {
     };
 
     return (
-        <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-                {PROVIDERS.map(({ id, label, Mark }) => (
-                    <Button
-                        key={id}
-                        type="button"
-                        variant="secondary"
-                        size="lg"
-                        onClick={() => void go(id)}
-                        disabled={leavingFor !== null}
-                    >
-                        <Mark />
-                        {leavingFor === id
-                            ? `Opening ${label}…`
-                            : `Continue with ${label}`}
-                    </Button>
-                ))}
+        <div className="flex flex-col gap-3 sm:gap-4">
+            {/* Side by side on a phone, where a row each pushed the signup
+                form past the sheet, so the words shorten there; the label
+                keeps the whole phrase for screen readers. */}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
+                {PROVIDERS.map(({ id, label, Mark }) => {
+                    const leaving = leavingFor === id;
+                    return (
+                        <Button
+                            key={id}
+                            type="button"
+                            variant="secondary"
+                            size="lg"
+                            className="max-sm:px-3"
+                            aria-label={
+                                leaving
+                                    ? `Opening ${label}…`
+                                    : `Continue with ${label}`
+                            }
+                            onClick={() => void go(id)}
+                            disabled={leavingFor !== null}
+                        >
+                            <Mark />
+                            <span className="max-sm:hidden">
+                                {leaving
+                                    ? `Opening ${label}…`
+                                    : `Continue with ${label}`}
+                            </span>
+                            <span className="sm:hidden">
+                                {leaving ? "Opening…" : label}
+                            </span>
+                        </Button>
+                    );
+                })}
             </div>
             <div
                 role="separator"
