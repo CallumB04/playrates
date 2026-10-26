@@ -18,6 +18,7 @@ interface FieldErrors {
     username?: string;
     email?: string;
     password?: string;
+    confirmPassword?: string;
     agree?: string;
 }
 
@@ -37,6 +38,7 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
         const username = String(data.get("username") ?? "");
         const email = String(data.get("email") ?? "").toLowerCase();
         const password = String(data.get("password") ?? "");
+        const confirmPassword = String(data.get("confirmPassword") ?? "");
         const agreed = data.get("agree") === "on";
 
         // the same schemas the backend validates with, so the rules cannot drift
@@ -50,6 +52,8 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
         const passwordResult = PasswordSchema.safeParse(password);
         if (!passwordResult.success) {
             next.password = passwordResult.error.issues[0]?.message;
+        } else if (confirmPassword !== password) {
+            next.confirmPassword = "The passwords don't match.";
         }
 
         if (!agreed) {
@@ -119,6 +123,12 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
                 autoComplete="new-password"
                 help="At least 8 characters."
                 error={errors.password}
+            />
+            <PasswordField
+                label="Confirm password"
+                name="confirmPassword"
+                autoComplete="new-password"
+                error={errors.confirmPassword}
             />
 
             <AgreeToTerms name="agree" error={errors.agree} />

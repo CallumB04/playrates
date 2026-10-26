@@ -4,6 +4,7 @@ import FormField from "./FormField";
 
 interface PasswordFieldProps {
     label?: string;
+    name?: string;
     error?: string;
     help?: string;
     autoComplete?: string;
@@ -12,6 +13,7 @@ interface PasswordFieldProps {
 
 const PasswordField = ({
     label = "Password",
+    name = "password",
     error,
     help,
     autoComplete = "current-password",
@@ -22,7 +24,7 @@ const PasswordField = ({
     return (
         <FormField
             label={label}
-            name="password"
+            name={name}
             type={visible ? "text" : "password"}
             autoComplete={autoComplete}
             required
