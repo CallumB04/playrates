@@ -394,9 +394,15 @@ const ViewGameLogPopup = ({
                 </div>
             )}
 
-            <footer className="flex flex-wrap gap-3 border-t border-subtle px-5 py-4">
+            {/* The action names the platform ("Edit Nintendo Switch 2 log"),
+                too long for half a phone's width, so it gets a row of its
+                own there and the room Close doesn't need from sm. */}
+            <footer className="flex flex-col gap-3 border-t border-subtle px-5 py-4 sm:flex-row">
                 {action && (
-                    <Button className="flex-1" onClick={action.onSelect}>
+                    <Button
+                        className="w-full sm:w-auto sm:flex-1"
+                        onClick={action.onSelect}
+                    >
                         {action.label}
                     </Button>
                 )}
@@ -404,7 +410,7 @@ const ViewGameLogPopup = ({
                     type="button"
                     className={buttonClass(
                         "secondary",
-                        action ? "flex-1" : "w-full"
+                        action ? "w-full sm:w-auto" : "w-full"
                     )}
                     onClick={onClose}
                 >
