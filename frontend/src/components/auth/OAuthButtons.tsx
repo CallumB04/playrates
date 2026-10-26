@@ -62,11 +62,11 @@ const OAuthButtons = () => {
     };
 
     return (
-        <div className="flex flex-col gap-3 sm:gap-4">
-            {/* Side by side on a phone, where a row each pushed the signup
-                form past the sheet, so the words shorten there; the label
-                keeps the whole phrase for screen readers. */}
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
+        <div className="flex flex-col gap-3">
+            {/* Side by side, since a row each pushed the signup form past the
+                sheet. The words shorten to fit; the label keeps the whole
+                phrase for screen readers. */}
+            <div className="grid grid-cols-2 gap-2">
                 {PROVIDERS.map(({ id, label, Mark }) => {
                     const leaving = leavingFor === id;
                     return (
@@ -75,7 +75,7 @@ const OAuthButtons = () => {
                             type="button"
                             variant="secondary"
                             size="lg"
-                            className="max-sm:px-3"
+                            className="px-3"
                             aria-label={
                                 leaving
                                     ? `Opening ${label}…`
@@ -85,14 +85,7 @@ const OAuthButtons = () => {
                             disabled={leavingFor !== null}
                         >
                             <Mark />
-                            <span className="max-sm:hidden">
-                                {leaving
-                                    ? `Opening ${label}…`
-                                    : `Continue with ${label}`}
-                            </span>
-                            <span className="sm:hidden">
-                                {leaving ? "Opening…" : label}
-                            </span>
+                            {leaving ? "Opening…" : label}
                         </Button>
                     );
                 })}

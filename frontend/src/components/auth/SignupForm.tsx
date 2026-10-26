@@ -9,7 +9,6 @@ import OAuthButtons from "./OAuthButtons";
 import PasswordField from "./PasswordField";
 import AgreeToTerms from "./AgreeToTerms";
 import { useCaptcha } from "./useCaptcha";
-import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
 
 interface SignupFormProps {
     onSignedUp: (email: string) => void;
@@ -27,8 +26,6 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
     const { signUp } = useAuth();
     const notify = useNotify();
     const captcha = useCaptcha();
-    // Help lines cost the phone sheet the room to show the whole form.
-    const isPhone = !useMediaQuery(BREAKPOINT.sm);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<FieldErrors>({});
@@ -100,14 +97,13 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <OAuthButtons />
             <FormField
                 label="Username"
                 name="username"
                 type="text"
                 placeholder="yourname"
-                help={isPhone ? undefined : "This is your profile's address."}
                 autoComplete="username"
                 required
                 autoFocus
@@ -124,8 +120,7 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
             />
             <PasswordField
                 autoComplete="new-password"
-                help={isPhone ? undefined : "At least 8 characters."}
-                placeholder={isPhone ? "At least 8 characters" : undefined}
+                placeholder="At least 8 characters"
                 error={errors.password}
             />
             <PasswordField

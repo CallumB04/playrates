@@ -54,7 +54,7 @@ const LoginForm = ({ initialEmail = "", onForgot }: LoginFormProps) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <OAuthButtons />
             <FormField
                 label="Email"
