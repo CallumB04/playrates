@@ -275,9 +275,10 @@ const ViewGameLogPopup = ({
                 : { label: "Add this game", onSelect: () => flow.open(gameId) };
         }
         if (selected) {
-            const name = playedOn(selected).name;
             return {
-                label: several && name ? `Edit ${name} log` : "Edit your log",
+                // The tab above names the platform, and half a phone's width
+                // has no room for "Edit Nintendo Switch 2 log".
+                label: "Edit log",
                 onSelect: () => flow.edit(gameId, selected.id),
             };
         }
@@ -394,15 +395,9 @@ const ViewGameLogPopup = ({
                 </div>
             )}
 
-            {/* The action names the platform ("Edit Nintendo Switch 2 log"),
-                too long for half a phone's width, so it gets a row of its
-                own there and the room Close doesn't need from sm. */}
-            <footer className="flex flex-col gap-3 border-t border-subtle px-5 py-4 sm:flex-row">
+            <footer className="flex flex-wrap gap-3 border-t border-subtle px-5 py-4">
                 {action && (
-                    <Button
-                        className="w-full sm:w-auto sm:flex-1"
-                        onClick={action.onSelect}
-                    >
+                    <Button className="flex-1" onClick={action.onSelect}>
                         {action.label}
                     </Button>
                 )}
@@ -410,7 +405,7 @@ const ViewGameLogPopup = ({
                     type="button"
                     className={buttonClass(
                         "secondary",
-                        action ? "w-full sm:w-auto" : "w-full"
+                        action ? "flex-1" : "w-full"
                     )}
                     onClick={onClose}
                 >
