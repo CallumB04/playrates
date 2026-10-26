@@ -3,14 +3,13 @@
     "configurations": [
         {
             "name": "playrates",
-            "runtimeExecutable": "npm",
+            "runtimeExecutable": "sh",
             "runtimeArgs": [
-                "run",
-                "dev",
-                "-w",
-                "frontend"
+                "-c",
+                "npx concurrently -k -n frontend,backend -c cyan,magenta \"npm run dev -w frontend\" \"PORT=3000 CORS_ORIGINS=http://localhost:${PORT:-5173} npm run dev -w backend\""
             ],
-            "port": 5173
+            "port": 5173,
+            "autoPort": true
         },
         {
             "name": "playrates-api",
