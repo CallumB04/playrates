@@ -21,19 +21,28 @@ interface AuthContextValue {
     session: Session | null;
     user: MyProfile | null;
     isLoading: boolean;
+    /* captchaToken: from useCaptcha, once Supabase is set to require one. */
     signUp: (
         email: string,
         password: string,
-        username: string
+        username: string,
+        captchaToken?: string
     ) => Promise<void>;
-    signIn: (email: string, password: string) => Promise<void>;
+    signIn: (
+        email: string,
+        password: string,
+        captchaToken?: string
+    ) => Promise<void>;
     /** Leaves for the provider's sign-in page and comes back here. Signing
      *  in and signing up are the same thing this way. */
     signInWithProvider: (provider: OAuthProvider) => Promise<void>;
     signOut: () => Promise<void>;
     /** Emails a link to set a new password. Says nothing about whether the
      *  address has an account. */
-    requestPasswordReset: (email: string) => Promise<void>;
+    requestPasswordReset: (
+        email: string,
+        captchaToken?: string
+    ) => Promise<void>;
     /** Sets a new password for whoever followed that link. */
     updatePassword: (password: string) => Promise<void>;
 }
@@ -140,12 +149,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             user: session ? (user ?? null) : null,
             isLoading: isRestoring || (!!session && isProfileLoading),
 
-            async signUp(email, password, username) {
+            async signUp(email, password, username, captchaToken) {
                 const { error } = await supabase.auth.signUp({
                     email,
                     password,
                     // read by the handle_new_user trigger to seed the profile
-                    options: { data: { username } },
+                    options: { data: { username }, captchaToken },
                 });
                 if (error) throw error;
             },
@@ -158,19 +167,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 if (error) throw error;
             },
 
-            async signIn(email, password) {
+            async signIn(email, password, captchaToken) {
                 const { error } = await supabase.auth.signInWithPassword({
                     email,
                     password,
+                    options: { captchaToken },
                 });
                 if (error) throw error;
                 notify("You are now logged in", "success");
             },
 
-            async requestPasswordReset(email) {
+            async requestPasswordReset(email, captchaToken) {
                 const { error } = await supabase.auth.resetPasswordForEmail(
                     email,
-                    { redirectTo: `${window.location.origin}/reset-password` }
+                    {
+                        redirectTo: `${window.location.origin}/reset-password`,
+                        captchaToken,
+                    }
                 );
                 if (error) throw error;
             },

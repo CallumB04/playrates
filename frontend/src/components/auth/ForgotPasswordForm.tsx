@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import Button from "../ui/Button";
 import FormField from "./FormField";
+import { useCaptcha } from "./useCaptcha";
 
 interface ForgotPasswordFormProps {
     /** Whatever was typed into the login form, so it isn't typed twice. */
@@ -15,6 +16,7 @@ interface ForgotPasswordFormProps {
  */
 const ForgotPasswordForm = ({ initialEmail = "" }: ForgotPasswordFormProps) => {
     const { requestPasswordReset } = useAuth();
+    const captcha = useCaptcha();
     const [sentTo, setSentTo] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string>();
@@ -22,14 +24,17 @@ const ForgotPasswordForm = ({ initialEmail = "" }: ForgotPasswordFormProps) => {
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(undefined);
+        if (!captcha.ready()) return;
         setIsSubmitting(true);
         const email = String(
             new FormData(event.currentTarget).get("email") ?? ""
         );
         try {
-            await requestPasswordReset(email);
+            await requestPasswordReset(email, captcha.token);
             setSentTo(email);
-        } catch {
+        } catch (err) {
+            captcha.reset();
+            if (captcha.handled(err)) return;
             setError("That didn't send. Try again in a minute.");
         } finally {
             setIsSubmitting(false);
@@ -63,6 +68,7 @@ const ForgotPasswordForm = ({ initialEmail = "" }: ForgotPasswordFormProps) => {
                 autoFocus
                 error={error}
             />
+            {captcha.field}
             <Button type="submit" size="lg" disabled={isSubmitting}>
                 {isSubmitting ? "Sending…" : "Send the link"}
             </Button>

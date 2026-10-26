@@ -95,7 +95,8 @@ describe("SignupForm", () => {
         expect(signUp).toHaveBeenCalledWith(
             "new@example.test",
             "longenough1",
-            "brandnew"
+            "brandnew",
+            undefined
         );
         expect(onSignedUp).toHaveBeenCalledWith("new@example.test");
     });
@@ -216,7 +217,11 @@ describe("LoginForm", () => {
         await user.click(screen.getByRole("button", { name: "Log in" }));
 
         await waitFor(() => expect(signIn).toHaveBeenCalledOnce());
-        expect(signIn).toHaveBeenCalledWith("dev@example.test", "password123");
+        expect(signIn).toHaveBeenCalledWith(
+            "dev@example.test",
+            "password123",
+            undefined
+        );
         expect(close).toHaveBeenCalledOnce();
     });
 

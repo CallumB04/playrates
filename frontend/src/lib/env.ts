@@ -22,4 +22,7 @@ export const env = {
         import.meta.env.VITE_SUPABASE_ANON_KEY
     ),
     localData: import.meta.env.VITE_LOCAL_DATA === "true",
+    /* Optional: without it the forms skip the bot check, which is only
+       right where Supabase isn't asking for one, as on the local stack. */
+    turnstileSiteKey: import.meta.env.VITE_TURNSTILE_SITE_KEY || null,
 } as const;

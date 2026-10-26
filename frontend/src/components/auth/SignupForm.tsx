@@ -8,6 +8,7 @@ import FormField from "./FormField";
 import OAuthButtons from "./OAuthButtons";
 import PasswordField from "./PasswordField";
 import AgreeToTerms from "./AgreeToTerms";
+import { useCaptcha } from "./useCaptcha";
 
 interface SignupFormProps {
     onSignedUp: (email: string) => void;
@@ -23,6 +24,7 @@ interface FieldErrors {
 const SignupForm = ({ onSignedUp }: SignupFormProps) => {
     const { signUp } = useAuth();
     const notify = useNotify();
+    const captcha = useCaptcha();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<FieldErrors>({});
@@ -67,12 +69,18 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
         }
 
         setErrors({});
+        if (!captcha.ready()) {
+            setIsSubmitting(false);
+            return;
+        }
 
         try {
-            await signUp(email, password, username);
+            await signUp(email, password, username, captcha.token);
             notify("Account successfully created", "success");
             onSignedUp(email);
         } catch (error) {
+            captcha.reset();
+            if (captcha.handled(error)) return;
             const message =
                 error instanceof Error ? error.message : "Please try again.";
             // Supabase reports a duplicate email rather than us probing for it
@@ -114,6 +122,7 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
             />
 
             <AgreeToTerms name="agree" error={errors.agree} />
+            {captcha.field}
 
             <Button type="submit" size="lg" disabled={isSubmitting}>
                 {isSubmitting ? "Creating your account…" : "Create account"}
