@@ -31,7 +31,9 @@ import GameThreads from "./components/GameThreads";
 import { useThreads } from "../../hooks/queries/useCommunity";
 import { newThreadPath } from "../../components/community/paths";
 import { buildGameFacts } from "./lib/gameFacts";
-import GameBackdrop from "./components/GameBackdrop";
+import PageBackdrop, {
+    BACKDROP_OFFSET,
+} from "../../components/layout/PageBackdrop";
 import StickyLogBar from "./components/StickyLogBar";
 import { cn } from "../../lib/cn";
 import ScoreCards from "./components/ScoreCards";
@@ -135,11 +137,10 @@ const GamePage = () => {
             className={cn(
                 // max-sm:pb-20: room at the very bottom for the sticky bar
                 "flex flex-col gap-7 max-sm:pb-20",
-                // room for the banner to be seen before the page starts
-                game.artworkUrl && "pt-16 sm:pt-28 lg:pt-32"
+                game.artworkUrl && BACKDROP_OFFSET
             )}
         >
-            <GameBackdrop url={game.artworkUrl} />
+            <PageBackdrop url={game.artworkUrl} />
             <StickyLogBar
                 anchor={actionsEnd}
                 label={

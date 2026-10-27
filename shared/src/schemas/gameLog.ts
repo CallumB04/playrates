@@ -139,6 +139,11 @@ export const GameLogQuerySchema = z.object({
   direction: SortDirectionSchema,
 });
 
+/** A shelf's query: a game log query, and a title to narrow it to. */
+export const ShelfQuerySchema = GameLogQuerySchema.extend({
+  q: z.string().trim().min(1).max(100).optional(),
+});
+
 /** `id` is the log's own id; `gameId` is the game it refers to. */
 export interface GameLog {
   id: number;

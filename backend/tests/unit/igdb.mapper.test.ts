@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   altNames,
   igdbImage,
+  MAX_BACKDROPS,
+  pickBackdrops,
   pickBanner,
   toExternalGame,
   type IgdbGame,
@@ -277,6 +279,37 @@ describe("pickBanner", () => {
   it("falls back to artwork, then to nothing", () => {
     expect(pickBanner({ artworks: [art] })).toContain("/ar1.jpg");
     expect(pickBanner({})).toBeNull();
+  });
+});
+
+describe("pickBackdrops", () => {
+  it("offers the screenshots, then the artworks, each large and small", () => {
+    expect(
+      pickBackdrops({
+        artworks: [{ image_id: "ar1" }],
+        screenshots: [{ image_id: "sc1" }, { image_id: "sc2" }],
+      }),
+    ).toEqual([
+      {
+        url: "https://images.igdb.com/igdb/image/upload/t_1080p/sc1.jpg",
+        thumbUrl:
+          "https://images.igdb.com/igdb/image/upload/t_screenshot_med/sc1.jpg",
+      },
+      expect.objectContaining({ url: expect.stringContaining("/sc2.jpg") }),
+      expect.objectContaining({ url: expect.stringContaining("/ar1.jpg") }),
+    ]);
+  });
+
+  it("offers a picture once, and no more than the cap", () => {
+    const shots = Array.from({ length: 20 }, (_, i) => ({
+      image_id: `sc${i}`,
+    }));
+    const offered = pickBackdrops({
+      screenshots: [...shots, { image_id: "sc0" }],
+    });
+    expect(offered).toHaveLength(MAX_BACKDROPS);
+    expect(new Set(offered.map((b) => b.url)).size).toBe(MAX_BACKDROPS);
+    expect(pickBackdrops({})).toEqual([]);
   });
 });
 

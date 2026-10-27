@@ -1,5 +1,6 @@
 import type {
     Game,
+    GameBackdrop,
     GameRelated,
     GameSort,
     GameStats,
@@ -55,6 +56,14 @@ export const fetchGameRelated = async (id: number): Promise<GameRelated> => {
 
 export const fetchGameStats = async (id: number): Promise<GameStats> => {
     const { data } = await api.get<GameStats>(`/games/${id}/stats`);
+    return data;
+};
+
+/** The pictures a profile can take from this game for its background. */
+export const fetchGameBackdrops = async (
+    id: number
+): Promise<GameBackdrop[]> => {
+    const { data } = await api.get<GameBackdrop[]>(`/games/${id}/backdrops`);
     return data;
 };
 

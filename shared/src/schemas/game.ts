@@ -39,6 +39,13 @@ export interface Game {
   ratingCount: number;
 }
 
+/** One of a game's wide pictures, offered as a profile's background. */
+export interface GameBackdrop {
+  url: string;
+  /** The same picture small, for choosing between them. */
+  thumbUrl: string;
+}
+
 /** Where a game page points onwards. Each part is empty or null when there
  *  is nothing for it in the catalogue. */
 export interface GameRelated {

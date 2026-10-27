@@ -43,6 +43,9 @@ export const toProfile = (row: ProfileRow, now = Date.now()): Profile => ({
   bio: row.bio,
   avatarUrl: row.avatar_url,
   accent: toAccent(row.accent),
+  background: row.background_url
+    ? { url: row.background_url, gameId: row.background_game_id }
+    : null,
   // Opting out hides presence from everyone, the owner included.
   online: !row.hide_online && isOnline(row.last_seen_at, now),
   hideFromSearch: row.hide_from_search,

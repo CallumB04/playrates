@@ -1,3 +1,4 @@
+import type { GameBackdrop } from "@playrates/shared";
 import type { AltCover, ExternalGame } from "../GamesProvider.js";
 import { isSexualContent } from "../explicitContent.js";
 import { IGDB_PC, IGDB_SYSTEMS, SYSTEM_FAMILY } from "./igdb.platforms.js";
@@ -134,6 +135,28 @@ export const pickBanner = (
 ): string | null => {
   const scene = game.screenshots?.[0] ?? game.artworks?.[0];
   return scene ? igdbImage(scene.image_id, "1080p") : null;
+};
+
+/** Enough to choose from without a wall of near-identical frames. */
+export const MAX_BACKDROPS = 12;
+
+/**
+ * The pictures a profile can take for its background. Screenshots first, as
+ * for the banner, then the artworks: key art makes a fine background even
+ * where its title lettering would crowd a game page.
+ */
+export const pickBackdrops = (
+  game: Pick<IgdbGame, "screenshots" | "artworks">,
+): GameBackdrop[] => {
+  const ids = [...(game.screenshots ?? []), ...(game.artworks ?? [])].map(
+    (image) => image.image_id,
+  );
+  return unique(ids)
+    .slice(0, MAX_BACKDROPS)
+    .map((id) => ({
+      url: igdbImage(id, "1080p"),
+      thumbUrl: igdbImage(id, "screenshot_med"),
+    }));
 };
 
 /** Edition covers first, then regional ones, never the main cover twice. */

@@ -36,6 +36,8 @@ export const buildProfile = (
   // Typed at signup; a Google or Discord account overrides to null.
   username_chosen_at: LONG_AGO,
   is_admin: false,
+  background_url: null,
+  background_game_id: null,
   last_seen_at: NOW,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,

@@ -1,11 +1,15 @@
 import type { Profile } from "@playrates/shared";
 import RemoveFriendPopup from "./RemoveFriendPopup";
 import EditProfilePopup from "./EditProfilePopup";
+import BackgroundPicker from "./BackgroundPicker";
 
 /* A union rather than a flag each, so two open at once isn't representable.
    Logs open through the log flow, as they do everywhere else. */
 export type ProfileModal =
-    { kind: "removeFriend" } | { kind: "editProfile" } | null;
+    | { kind: "removeFriend" }
+    | { kind: "editProfile" }
+    | { kind: "background" }
+    | null;
 
 interface ProfileModalsProps {
     modal: ProfileModal;
@@ -30,6 +34,13 @@ const ProfileModals = ({
                     closePopup={() => setModal(null)}
                     confirmRemove={onRemoveFriend}
                     friendName={targetUser.username}
+                />
+            )}
+
+            {modal.kind === "background" && (
+                <BackgroundPicker
+                    profile={targetUser}
+                    onClose={() => setModal(null)}
                 />
             )}
 

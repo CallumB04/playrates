@@ -1,4 +1,4 @@
-import type { GameQuery } from "@playrates/shared";
+import type { GameBackdrop, GameQuery } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
 import { matchesFromStart, searchWords } from "../../lib/searchKey.js";
 import { likePrefix, likeTerm } from "../../lib/likeTerm.js";
@@ -42,6 +42,8 @@ export interface GamesRepository {
     showSexualContent: boolean,
   ): Promise<{ rows: GameRowWithPlatforms[]; exact: number }>;
   upsertMany(games: ExternalGame[]): Promise<number[]>;
+  /** Keeps a game's pictures once fetched, so IGDB is asked once a game. */
+  setBackdrops(id: number, backdrops: GameBackdrop[]): Promise<void>;
   statusCounts(gameId: number): Promise<{
     byStatus: Record<string, number>;
     byPlayedStatus: Record<string, number>;
@@ -403,6 +405,11 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
 
   /** Upserts a batch on the IGDB id and replaces their platform, system and
    *  genre links. */
+  async setBackdrops(id, backdrops) {
+    const { error } = await db.from("games").update({ backdrops }).eq("id", id);
+    if (error) throw error;
+  },
+
   async upsertMany(games) {
     if (games.length === 0) return [];
 

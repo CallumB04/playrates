@@ -1,10 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Profile, UpdateProfileInput } from "@playrates/shared";
+import type {
+    Profile,
+    SetProfileBackgroundInput,
+    UpdateProfileInput,
+} from "@playrates/shared";
 import {
+    clearMyBackground,
     deleteMyAvatar,
     fetchProfileByUsername,
     markOnboarded,
     queryKeys,
+    setMyBackground,
     updateMyProfile,
     uploadMyAvatar,
 } from "../../api";
@@ -63,6 +69,25 @@ export const useUpdateProfile = () => {
 
     return useMutation({
         mutationFn: (input: UpdateProfileInput) => updateMyProfile(input),
+        onSuccess: (profile) => seedProfile(queryClient, profile),
+    });
+};
+
+export const useSetBackground = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (input: SetProfileBackgroundInput) =>
+            setMyBackground(input),
+        onSuccess: (profile) => seedProfile(queryClient, profile),
+    });
+};
+
+export const useClearBackground = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: clearMyBackground,
         onSuccess: (profile) => seedProfile(queryClient, profile),
     });
 };

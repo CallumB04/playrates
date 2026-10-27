@@ -480,6 +480,10 @@ export const createInMemoryRepos = (
         const game = state.games.find((g) => g.igdb_id === igdbId);
         return game ? withPlatforms(game) : null;
       },
+      async setBackdrops(id, backdrops) {
+        const game = state.games.find((g) => g.id === id);
+        if (game) game.backdrops = backdrops;
+      },
       async list(query, from, to, excludeLoggedForUser, showSexualContent) {
         let rows = state.games;
 
@@ -866,7 +870,12 @@ export const createInMemoryRepos = (
                 (l.played_status ?? "none") === query.playedStatus,
             );
           })
-          .map((logs) => ({ logs, game: findGame(logs[0]!.game_id) }));
+          .map((logs) => ({ logs, game: findGame(logs[0]!.game_id) }))
+          .filter(
+            ({ game }) =>
+              !query.q ||
+              (game?.title ?? "").toLowerCase().includes(query.q.toLowerCase()),
+          );
 
         const sortKey = ({
           logs,

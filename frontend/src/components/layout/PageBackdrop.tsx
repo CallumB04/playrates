@@ -1,14 +1,15 @@
 import { createPortal } from "react-dom";
 
 /**
- * The game's wide art as a banner across the top of its page, under the
- * translucent header, fading into the page at the bottom. The page starts
- * part way down it, over the fade, so the picture is seen before anything
- * else without pushing the game itself below the fold.
+ * A wide picture across the top of a page, under the translucent header,
+ * fading into the page at the bottom: a game's art on its page, the one a
+ * profile chose on a profile. The page starts part way down it, over the
+ * fade, so the picture is seen before anything else without pushing the
+ * page itself below the fold — see BACKDROP_OFFSET.
  *
  * Into the body, so it spans the window rather than the page column.
  */
-const GameBackdrop = ({ url }: { url: string | null }) => {
+const PageBackdrop = ({ url }: { url: string | null }) => {
     if (!url) return null;
     return createPortal(
         <div
@@ -30,4 +31,7 @@ const GameBackdrop = ({ url }: { url: string | null }) => {
     );
 };
 
-export default GameBackdrop;
+/** Room above a page for its backdrop to be seen before the page starts. */
+export const BACKDROP_OFFSET = "pt-16 sm:pt-28 lg:pt-32";
+
+export default PageBackdrop;

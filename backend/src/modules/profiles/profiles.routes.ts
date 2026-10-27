@@ -5,6 +5,7 @@ import {
   UPLOAD_IMAGE_MIMES,
   CheckUsernameSchema,
   PaginationSchema,
+  SetProfileBackgroundSchema,
   UpdateProfileSchema,
   UsernameParamSchema,
 } from "@playrates/shared";
@@ -108,6 +109,22 @@ export const createProfilesRouter = ({
 
   router.delete("/me/avatar", requireAuth, async (req, res) => {
     res.json(await service.clearAvatar(callerId(req)));
+  });
+
+  router.put(
+    "/me/background",
+    requireAuth,
+    validate({ body: SetProfileBackgroundSchema }),
+    async (req, res) => {
+      const input = req.valid!.body as z.infer<
+        typeof SetProfileBackgroundSchema
+      >;
+      res.json(await service.setBackground(callerId(req), input));
+    },
+  );
+
+  router.delete("/me/background", requireAuth, async (req, res) => {
+    res.json(await service.clearBackground(callerId(req)));
   });
 
   router.post("/me/onboarded", requireAuth, async (req, res) => {

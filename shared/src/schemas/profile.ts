@@ -60,6 +60,20 @@ export type ProfileView = (typeof PROFILE_VIEWS)[number];
 export const isProfileView = (value: string): value is ProfileView =>
   (PROFILE_VIEWS as readonly string[]).includes(value);
 
+/** A picture from one of the game's backdrops. Set on its own route rather
+ *  than with the rest of the profile, since it is checked against the game
+ *  and the owner's logs of it. */
+export const SetProfileBackgroundSchema = z
+  .object({
+    gameId: z.number().int().positive(),
+    url: z.string().url().max(500),
+  })
+  .strict();
+
+export type SetProfileBackgroundInput = z.infer<
+  typeof SetProfileBackgroundSchema
+>;
+
 /** `.strict()` rejects unknown keys, so only these fields are editable. */
 export const UpdateProfileSchema = z
   .object({
@@ -98,6 +112,9 @@ export interface Profile {
   avatarUrl: string | null;
   /** The colour this profile wears. Every profile has one. */
   accent: ProfileAccent;
+  /** A game's picture across the top of the page, in place of the colour.
+   *  The game is null once it has left the catalogue. */
+  background: { url: string; gameId: number | null } | null;
   /** Derived from last_seen_at, not stored. */
   online: boolean;
   /** Public because the page has to say it: a noindex is read by anyone. */

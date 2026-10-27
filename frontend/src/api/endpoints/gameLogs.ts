@@ -46,6 +46,8 @@ export interface GameLogPage {
     sort?: GameLogSort;
     direction?: SortDirection;
     playedStatus?: PlayedStatusFilter;
+    /** Narrows a shelf to games whose title has this in it. */
+    q?: string;
 }
 
 /** A page of games, each with every console it was logged on. */

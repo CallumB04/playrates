@@ -71,12 +71,6 @@ export const buildRoutes = ({
 }: Deps): Router => {
   const router = Router();
 
-  const profiles = createProfilesService(
-    repos.profiles,
-    authAdmin,
-    avatars,
-    repos.accountExport,
-  );
   const games = createGamesService(
     repos.games,
     provider,
@@ -85,6 +79,17 @@ export const buildRoutes = ({
       return { showSexualContent: row?.show_sexual_content ?? false };
     },
     repos.gameEvents,
+  );
+  const profiles = createProfilesService(
+    repos.profiles,
+    authAdmin,
+    avatars,
+    repos.accountExport,
+    {
+      backdrops: (gameId) => games.backdrops(gameId),
+      hasLogged: async (userId, gameId) =>
+        (await repos.gameLogs.listByUserAndGame(userId, gameId)).length > 0,
+    },
   );
   const profileGate = createProfileGate(repos.profiles, repos.friends);
   const gameLogs = createGameLogsService(

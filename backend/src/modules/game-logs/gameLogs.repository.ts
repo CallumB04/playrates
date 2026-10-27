@@ -1,3 +1,4 @@
+import { likeTerm } from "../../lib/likeTerm.js";
 import type {
   GameLogSort,
   PlayedStatusFilter,
@@ -70,6 +71,8 @@ export interface ShelfQuery {
   playedStatus?: PlayedStatusFilter;
   sort: GameLogSort;
   direction: SortDirection;
+  /** Narrows to games whose title has this in it. */
+  q?: string;
 }
 
 export interface GameLogsRepository {
@@ -161,11 +164,30 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
   },
 
   async shelfByUser(userId, query, from, to) {
+    /* The rollups carry no title, so a search finds its games through the
+       logs first, as the community list does through its messages. */
+    let matched: number[] | undefined;
+    if (query.q) {
+      const { data, error } = await db
+        .from("game_logs")
+        .select("game_id, games!inner(title)")
+        .eq("user_id", userId)
+        .ilike("games.title", likeTerm(query.q));
+      if (error) throw error;
+      matched = [
+        ...new Set(
+          ((data ?? []) as { game_id: number }[]).map((r) => r.game_id),
+        ),
+      ];
+      if (matched.length === 0) return { gameIds: [], total: 0 };
+    }
+
     let builder = db
       .from("game_log_rollups")
       .select("game_id", { count: "exact" })
       .eq("user_id", userId);
 
+    if (matched) builder = builder.in("game_id", matched);
     if (query.status) builder = builder.contains("statuses", [query.status]);
     if (query.playedStatus) {
       builder = builder.contains("played_endings", [query.playedStatus]);

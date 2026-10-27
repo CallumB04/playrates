@@ -3,6 +3,7 @@ import {
   type AdminPullInput,
   type AdminPullResult,
   type Game,
+  type GameBackdrop,
   type GameEventSource,
   type GameQuery,
   type GameRelated,
@@ -102,6 +103,34 @@ export const createGamesService = (
      * Fetches a game from IGDB again and writes it over the row. Failures
      * are recorded and reported, not thrown: the row keeps what it had.
      */
+    /**
+     * The pictures a profile can take from this game. IGDB is asked the
+     * first time and the answer kept, so it is asked once a game. An adult
+     * game offers none: a profile's top is public, and shown to people who
+     * have chosen not to see such games.
+     */
+    async backdrops(id: number): Promise<GameBackdrop[]> {
+      const row = await repo.findById(id);
+      if (!row) throw AppError.notFound("Game");
+      if (row.has_sexual_content) return [];
+
+      let found = row.backdrops ?? null;
+      if (found === null && provider.isConfigured && row.igdb_id !== null) {
+        try {
+          found = await provider.backdropsOf(row.igdb_id);
+          await repo.setBackdrops(id, found);
+        } catch {
+          // Not kept, so the next ask tries again.
+          found = null;
+        }
+      }
+      if (found && found.length > 0) return found;
+      // The banner, where there is nothing else: one choice beats none.
+      return row.banner_url
+        ? [{ url: row.banner_url, thumbUrl: row.banner_url }]
+        : [];
+    },
+
     async refreshFromIgdb(
       id: number,
       igdbId: number,

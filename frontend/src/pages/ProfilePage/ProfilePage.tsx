@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Flag, Pencil, Settings } from "lucide-react";
+import { Flag, Image as ImageIcon, Pencil, Settings } from "lucide-react";
 import ReportDialog from "../../components/ReportDialog";
 import { useLogFlow } from "../../components/gamelog/useLogFlow";
 import { useAuth } from "../../contexts/AuthContext";
@@ -18,6 +18,10 @@ import { useThreads } from "../../hooks/queries/useCommunity";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import { profileDescription } from "@playrates/shared";
 import Button, { buttonClass } from "../../components/ui/Button";
+import PageBackdrop, {
+    BACKDROP_OFFSET,
+} from "../../components/layout/PageBackdrop";
+import { cn } from "../../lib/cn";
 import ProfileError from "./components/ProfileError";
 import MemberFileHeader from "./components/MemberFileHeader";
 import FriendAction from "./components/FriendAction";
@@ -174,7 +178,15 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
     if (targetUserError || !targetUser) return <ProfileError />;
 
     return (
-        <div className="flex flex-col gap-6">
+        <div
+            className={cn(
+                "flex flex-col gap-6",
+                targetUser.background && BACKDROP_OFFSET
+            )}
+        >
+            {targetUser.background && (
+                <PageBackdrop url={targetUser.background.url} />
+            )}
             <MemberFileHeader
                 profile={targetUser}
                 friendsSince={
@@ -210,6 +222,18 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                             >
                                 <Pencil size={15} aria-hidden />
                                 Edit profile
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                aria-label="Profile background"
+                                onClick={() => setModal({ kind: "background" })}
+                                className="max-sm:size-11 max-sm:px-0"
+                            >
+                                <ImageIcon size={15} aria-hidden />
+                                <span className="hidden sm:inline">
+                                    Background
+                                </span>
                             </Button>
                             <Link
                                 to="/settings"

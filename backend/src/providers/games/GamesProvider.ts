@@ -3,6 +3,8 @@
  * Everything above deals in `ExternalGame`, so another source would be a
  * new folder beside igdb/.
  */
+
+import type { GameBackdrop } from "@playrates/shared";
 export interface ExternalGenre {
   slug: string;
   name: string;
@@ -78,6 +80,8 @@ export interface GamesProvider {
   }): Promise<GamePage>;
   /** Upstream ids of what is trending now, most first. */
   trendingIds(limit: number): Promise<number[]>;
+  /** A game's wide pictures, the ones a profile can wear. */
+  backdropsOf(externalId: number): Promise<GameBackdrop[]>;
 }
 
 /** Used when no credentials are set. Returns empty results rather than throwing,
@@ -98,6 +102,9 @@ export const nullGamesProvider: GamesProvider = {
     return { games: [], total: 0, hasNext: false };
   },
   async trendingIds() {
+    return [];
+  },
+  async backdropsOf() {
     return [];
   },
 };

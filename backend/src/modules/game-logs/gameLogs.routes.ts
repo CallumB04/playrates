@@ -8,6 +8,7 @@ import {
   ReviewInputSchema,
   GameLogPatchSchema,
   GameLogQuerySchema,
+  ShelfQuerySchema,
   PaginationSchema,
   UsernameParamSchema,
   UserStatsQuerySchema,
@@ -31,6 +32,7 @@ const callerId = (req: Parameters<RequestHandler>[0]): string => {
 };
 
 const ListQuerySchema = PaginationSchema.merge(GameLogQuerySchema);
+const ShelfListQuerySchema = PaginationSchema.merge(ShelfQuerySchema);
 
 /** Mounted at /me/logs. A log per console, so each is addressed by its own
  *  id, and its review hangs off it. */
@@ -130,14 +132,14 @@ export const createMyShelfRouter = ({ service, requireAuth }: Deps): Router => {
   router.get(
     "/",
     requireAuth,
-    validate({ query: ListQuerySchema }),
+    validate({ query: ShelfListQuerySchema }),
     async (req, res) => {
-      const { status, playedStatus, sort, direction, ...pagination } = req
-        .valid!.query as z.infer<typeof ListQuerySchema>;
+      const { status, playedStatus, q, sort, direction, ...pagination } = req
+        .valid!.query as z.infer<typeof ShelfListQuerySchema>;
       res.json(
         await service.shelfForUser(
           callerId(req),
-          { status, playedStatus, sort, direction },
+          { status, playedStatus, q, sort, direction },
           pagination,
         ),
       );
@@ -157,15 +159,15 @@ export const createUserShelfRouter = ({
   router.get(
     "/",
     optionalAuth,
-    validate({ params: UsernameParamSchema, query: ListQuerySchema }),
+    validate({ params: UsernameParamSchema, query: ShelfListQuerySchema }),
     async (req, res) => {
       const { username } = req.valid!.params as { username: string };
-      const { status, playedStatus, sort, direction, ...pagination } = req
-        .valid!.query as z.infer<typeof ListQuerySchema>;
+      const { status, playedStatus, q, sort, direction, ...pagination } = req
+        .valid!.query as z.infer<typeof ShelfListQuerySchema>;
       res.json(
         await service.shelfForUsername(
           username,
-          { status, playedStatus, sort, direction },
+          { status, playedStatus, q, sort, direction },
           pagination,
           req.auth?.userId,
         ),

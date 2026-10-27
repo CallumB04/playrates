@@ -5,6 +5,8 @@
  *   npm run db:types -w backend
  */
 
+import type { GameBackdrop } from "@playrates/shared";
+
 export interface ProfileRow {
   id: string;
   username: string;
@@ -30,6 +32,10 @@ export interface ProfileRow {
   username_chosen_at: string | null;
   /** Can post patch notes and remove anything in the community. */
   is_admin: boolean;
+  /** A game's picture in place of the colour band; null shows the colour. */
+  background_url: string | null;
+  /** The game it came from. Null when the game has since gone. */
+  background_game_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -53,6 +59,9 @@ export interface GameRow {
   cover_url: string | null;
   /** The picture across the top of the game page; a screenshot first. */
   banner_url: string | null;
+  /** The pictures a profile can take as its background. Null until someone
+   *  first asks for them; empty when IGDB has none. */
+  backdrops?: GameBackdrop[] | null;
   /** The portrait cover. Preferred whenever the API hands a game out. */
   box_art_url: string | null;
   release_date: string | null;

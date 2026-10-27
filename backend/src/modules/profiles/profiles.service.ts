@@ -1,8 +1,10 @@
 import type {
+  GameBackdrop,
   MyProfile,
   Paginated,
   Pagination,
   Profile,
+  SetProfileBackgroundInput,
   UpdateProfileInput,
 } from "@playrates/shared";
 import { AVATAR_MAX_BYTES, AVATAR_PIXELS } from "@playrates/shared";
@@ -23,11 +25,19 @@ export interface AccountExport extends AccountData {
   email: string | null;
 }
 
+/** What a background is checked against, from the games and logs side. */
+export interface BackgroundSource {
+  /** The pictures the game offers; throws not found for no such game. */
+  backdrops(gameId: number): Promise<GameBackdrop[]>;
+  hasLogged(userId: string, gameId: number): Promise<boolean>;
+}
+
 export const createProfilesService = (
   repo: ProfilesRepository,
   authAdmin: AuthAdmin,
   avatars: AvatarStore,
   exports: AccountExportRepository,
+  backgrounds: BackgroundSource,
 ) => ({
   /** The caller's own, so it carries their settings. */
   async getById(id: string): Promise<MyProfile> {
@@ -161,6 +171,38 @@ export const createProfilesService = (
     }
 
     return toMyProfile(await repo.update(callerId, patch));
+  },
+
+  /** A picture from a game the caller has logged, and only one that game
+   *  offers: anything else would put any URL at all on a public page. */
+  async setBackground(
+    callerId: string,
+    { gameId, url }: SetProfileBackgroundInput,
+  ): Promise<MyProfile> {
+    if (!(await backgrounds.hasLogged(callerId, gameId))) {
+      throw AppError.forbidden(
+        "You can only use pictures from games you've logged",
+      );
+    }
+    const offered = await backgrounds.backdrops(gameId);
+    if (!offered.some((b) => b.url === url)) {
+      throw AppError.validation("That picture isn't one of this game's");
+    }
+    return toMyProfile(
+      await repo.update(callerId, {
+        background_url: url,
+        background_game_id: gameId,
+      }),
+    );
+  },
+
+  async clearBackground(callerId: string): Promise<MyProfile> {
+    return toMyProfile(
+      await repo.update(callerId, {
+        background_url: null,
+        background_game_id: null,
+      }),
+    );
   },
 
   /** The first-login welcome has been seen. Keeps the first time it was, so a

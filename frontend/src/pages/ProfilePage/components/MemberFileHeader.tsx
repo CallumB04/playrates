@@ -31,17 +31,22 @@ const MemberFileHeader = ({
     onEditPicture,
 }: MemberFileHeaderProps) => {
     const banner = bannerGradient(accentHue(profile.accent));
+    /* A chosen picture spans the top of the page instead, and the card
+       steps aside so the profile sits on it, as a game's title does. */
+    const band = !profile.background;
 
     return (
         <section
-            className={cardClass("relative overflow-hidden", {
-                padding: "none",
-            })}
+            className={
+                band
+                    ? cardClass("relative overflow-hidden", { padding: "none" })
+                    : "relative"
+            }
         >
             {/* A band behind the avatar, so a profile opens with something
                 other than a white rectangle. It carries the profile's colour,
                 which is also the avatar's. */}
-            {onEditPicture ? (
+            {!band ? null : onEditPicture ? (
                 <button
                     type="button"
                     aria-label="Change your profile colour"
@@ -66,12 +71,19 @@ const MemberFileHeader = ({
                 />
             )}
 
-            <div className="px-5 pb-5 sm:px-6 sm:pb-6">
+            <div className={cn(band && "px-5 pb-5 sm:px-6 sm:pb-6")}>
                 {/* Only the avatar reaches up into the banner. On a phone the
                     44px buttons are taller than the part of it below the
                     band, so lifted with it they would sit on the colour. */}
                 <div className="flex flex-wrap items-end justify-between gap-4">
-                    <span className="relative -mt-12 inline-block self-start rounded-full ring-4 ring-surface-raised sm:-mt-14">
+                    <span
+                        className={cn(
+                            "relative inline-block self-start rounded-full ring-4",
+                            band
+                                ? "-mt-12 ring-surface-raised sm:-mt-14"
+                                : "ring-surface"
+                        )}
+                    >
                         <ProfilePicture
                             variant="profileHeader"
                             file={profile.avatarUrl ?? ""}
