@@ -432,12 +432,6 @@
     --text-figure--letter-spacing: -0.04em;
     --text-figure--font-weight: 600;
 
-    /* A card's one figure: the profile's hours and rating. */
-    --text-figure-stat: clamp(1.5625rem, 3.6vw, 2.125rem); /* 25 → 34 */
-    --text-figure-stat--line-height: 1;
-    --text-figure-stat--letter-spacing: -0.03em;
-    --text-figure-stat--font-weight: 600;
-
     --text-figure-lg: clamp(1.25rem, 3vw, 1.5rem); /* 20 → 24 */
     --text-figure-lg--line-height: 1;
     --text-figure-lg--letter-spacing: -0.02em;

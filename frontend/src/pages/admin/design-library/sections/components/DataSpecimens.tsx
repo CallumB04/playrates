@@ -100,7 +100,7 @@ const DataSpecimens = () => {
             <Specimen
                 title="Figures"
                 notes="Every number in the product is a ledger figure, set tabular. roll counts up over 320ms when the value changes and simply swaps under reduced motion — for a figure someone is watching change, like a library count ticking up during an import. figureClass gives the same type to a value that isn't a plain number."
-                meta='value · format · size="display" | "stat" | "lg" | "row" | "label" · roll — figureClass(size, className)'
+                meta='value · format · size="display" | "lg" | "row" | "label" · roll — figureClass(size, className)'
             >
                 <Figure value={count} size="display" roll />
                 <Figure value={1284} size="lg" />

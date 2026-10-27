@@ -19,43 +19,34 @@ interface OverviewViewProps {
 const plural = (n: number, one: string, many: string) =>
     `${formatCount(n)} ${n === 1 ? one : many}`;
 
-const CardLabel = ({ children }: { children: ReactNode }) => (
-    <h2 className="text-label text-content-muted">{children}</h2>
+const Pending = ({ className }: { className: string }) => (
+    <Skeleton className={`inline-block h-[1em] align-top ${className}`} />
 );
 
-const FigureCard = ({
+/** One figure: what it is, the figure, what it is made of. */
+const Figure = ({
     label,
-    figure,
+    value,
     note,
 }: {
     label: string;
-    /** Undefined while it loads. */
-    figure: ReactNode | undefined;
+    /** Undefined while it loads, as is the note. */
+    value: ReactNode | undefined;
     note: string | undefined;
 }) => (
-    /* Label at the top and figure at the foot, as the year card has its
-       chart: the row is as tall as that card, and this one fills it. */
-    <section
-        className={cardClass("flex flex-col justify-between gap-2 p-4", {
-            padding: "none",
-        })}
-    >
-        <CardLabel>{label}</CardLabel>
-        <div className="flex flex-col gap-2">
-            <p className={figureClass("stat", "truncate")}>
-                {figure ?? (
-                    <Skeleton className="inline-block h-[1em] w-20 align-top" />
-                )}
-            </p>
-            <p className="truncate text-label-sm text-content-muted">
-                {note ?? <Skeleton className="inline-block h-[1em] w-16" />}
-            </p>
-        </div>
-    </section>
+    <div className="min-w-0">
+        <dt className="text-label-sm text-content-muted">{label}</dt>
+        <dd className={figureClass("lg", "mt-1.5 truncate")}>
+            {value ?? <Pending className="w-16" />}
+        </dd>
+        <dd className="mt-1 truncate text-label-sm text-content-muted">
+            {note ?? <Pending className="w-14" />}
+        </dd>
+    </div>
 );
 
 /** The profile at a glance: what spans every view, rather than any one of
- *  them. Two figures, and the year so far in played games. */
+ *  them. One card: two figures, and the year so far in played games. */
 const OverviewView = ({
     username,
     isOwner,
@@ -83,50 +74,57 @@ const OverviewView = ({
     const yearLoading = isLoading || !canSee;
 
     return (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.2fr)] lg:gap-4">
-            <FigureCard
-                label="Hours played"
-                figure={stats && formatHours(stats.hoursPlayed)}
-                note={
-                    stats &&
-                    `Across ${plural(stats.gameCount, "game", "games")}`
-                }
-            />
+        /* The figures beside the year from lg, above it on anything
+           narrower, so the card is one band rather than three. */
+        <section
+            className={cardClass(
+                "flex flex-col gap-4 lg:flex-row lg:items-center"
+            )}
+        >
+            <dl className="grid grid-cols-2 gap-4 lg:flex lg:shrink-0 lg:items-center lg:gap-8 lg:self-stretch lg:border-r lg:border-subtle lg:pr-8">
+                <Figure
+                    label="Hours played"
+                    value={stats && formatHours(stats.hoursPlayed)}
+                    note={
+                        stats &&
+                        `Across ${plural(stats.gameCount, "game", "games")}`
+                    }
+                />
+                <Figure
+                    label="Average rating"
+                    value={
+                        stats && (
+                            <RatingBadge
+                                value={stats.averageRating}
+                                size="md"
+                            />
+                        )
+                    }
+                    note={
+                        stats &&
+                        (stats.ratingCount > 0
+                            ? `From ${plural(stats.ratingCount, "rating", "ratings")}`
+                            : "Nothing rated yet")
+                    }
+                />
+            </dl>
 
-            <FigureCard
-                label="Average rating"
-                figure={
-                    stats && (
-                        <RatingBadge value={stats.averageRating} size="stat" />
-                    )
-                }
-                note={
-                    stats &&
-                    (stats.ratingCount > 0
-                        ? `From ${plural(stats.ratingCount, "rating", "ratings")}`
-                        : "Nothing rated yet")
-                }
-            />
-
-            {/* The count says what the bars add up to, so the bars need no
-                legend: each is a month's share of it. */}
-            <section
-                className={cardClass(
-                    "col-span-2 flex flex-col gap-2 p-4 lg:col-span-1",
-                    { padding: "none" }
-                )}
-            >
-                <CardLabel>Played in {year}</CardLabel>
-                <div className="flex items-end gap-4 sm:gap-6">
+            <div className="min-w-0 flex-1 border-t border-subtle pt-4 lg:border-t-0 lg:pt-0 lg:pl-8">
+                <h2 className="text-label-sm text-content-muted">
+                    Played in {year}
+                </h2>
+                {/* The count says what the bars add up to, so they need no
+                    legend: each is a month's share of it. */}
+                <div className="mt-1.5 flex items-end gap-4 sm:gap-6">
                     <div className="shrink-0">
-                        <p className={figureClass("stat")}>
+                        <p className={figureClass("lg")}>
                             {yearLoading ? (
-                                <Skeleton className="inline-block h-[1em] w-10 align-top" />
+                                <Pending className="w-8" />
                             ) : (
                                 formatCount(playedThisYear)
                             )}
                         </p>
-                        <p className="mt-2 text-label-sm text-content-muted">
+                        <p className="mt-1 text-label-sm text-content-muted">
                             {playedThisYear === 1 ? "game" : "games"}
                         </p>
                     </div>
@@ -147,8 +145,8 @@ const OverviewView = ({
                         )}
                     </div>
                 </div>
-            </section>
-        </div>
+            </div>
+        </section>
     );
 };
 
