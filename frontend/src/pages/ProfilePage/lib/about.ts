@@ -1,3 +1,24 @@
+import { Link2, MapPin, Speech, UserRound } from "lucide-react";
+import { SiDiscord, SiSteam } from "@icons-pack/react-simple-icons";
+import type { AboutField } from "@playrates/shared";
+import type { IconComponent } from "../../../lib/icons";
+
+/** The About fields as a profile shows them, in its order: who someone is,
+ *  then where else to find them. */
+export const ABOUT_ROWS: {
+    field: AboutField;
+    label: string;
+    icon: IconComponent;
+    group: "about" | "socials";
+}[] = [
+    { field: "firstName", label: "Name", icon: UserRound, group: "about" },
+    { field: "pronouns", label: "Pronouns", icon: Speech, group: "about" },
+    { field: "location", label: "Location", icon: MapPin, group: "about" },
+    { field: "website", label: "Website", icon: Link2, group: "socials" },
+    { field: "discord", label: "Discord", icon: SiDiscord, group: "socials" },
+    { field: "steam", label: "Steam", icon: SiSteam, group: "socials" },
+];
+
 /** A web address as a link reads it: no scheme, no www, no trailing slash. */
 export const linkLabel = (url: string): string =>
     url

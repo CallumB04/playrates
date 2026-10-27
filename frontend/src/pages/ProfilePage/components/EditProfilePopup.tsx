@@ -149,7 +149,7 @@ const PrivacyNote = () => (
     <p className="text-label-sm text-content-muted">
         You choose who sees each of these, beside it on your profile or in{" "}
         <Link
-            to="/settings?section=profile"
+            to="/settings?section=privacy"
             className="text-content underline hover:text-brand"
         >
             Settings

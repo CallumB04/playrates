@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-    Eye,
+    IdCard,
+    Lock,
     Monitor,
     Moon,
     SlidersHorizontal,
@@ -28,7 +29,6 @@ import { saveFile } from "../lib/saveFile";
 import {
     DEFAULT_ABOUT_VISIBILITY,
     FALLBACK_ACCENT,
-    type AboutField,
     type AboutVisibility,
     type ProfileVisibility,
 } from "@playrates/shared";
@@ -40,6 +40,8 @@ import Toggle from "../components/ui/Toggle";
 import EmptyPlate from "../components/ui/EmptyPlate";
 import { Input, Textarea } from "../components/ui/Input";
 import UsernameRow from "./settings/UsernameRow";
+import AboutPrivacy from "./settings/AboutPrivacy";
+import { profilePath } from "../lib/profilePaths";
 import Dropdown from "../components/ui/Dropdown";
 import SegmentedChoice from "../components/ui/SegmentedChoice";
 import AccentPicker from "../components/ui/AccentPicker";
@@ -50,18 +52,10 @@ import { cn } from "../lib/cn";
 /* Only what can be used today. Sections and rows that were all "coming
    soon" were choices that led nowhere; Row's `soon` is there for when one
    is close enough to show. */
-const ABOUT_PRIVACY_ROWS: { field: AboutField; label: string }[] = [
-    { field: "firstName", label: "Name" },
-    { field: "pronouns", label: "Pronouns" },
-    { field: "location", label: "Location" },
-    { field: "website", label: "Website" },
-    { field: "discord", label: "Discord" },
-    { field: "steam", label: "Steam" },
-];
-
 const SECTIONS: SettingsSection[] = [
     { id: "account", label: "Account", icon: UserRound },
-    { id: "profile", label: "Profile", icon: Eye },
+    { id: "profile", label: "Profile", icon: IdCard },
+    { id: "privacy", label: "Privacy", icon: Lock },
     { id: "content", label: "Content", icon: SlidersHorizontal },
     { id: "account-closure", label: "Close account", icon: TriangleAlert },
 ];
@@ -72,11 +66,20 @@ interface RowProps {
     help?: ReactNode;
     /** Rendered, disabled and labelled, so the page shows the shape of the thing. */
     soon?: boolean;
+    /** Holds the label to the top beside a control much taller than it,
+     *  where centring left it floating mid-list. */
+    top?: boolean;
     children: ReactNode;
 }
 
-const Row = ({ label, help, soon, children }: RowProps) => (
-    <div className="grid items-center gap-3 border-b border-subtle px-5 py-4 last:border-b-0 sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)] sm:gap-8">
+const Row = ({ label, help, soon, top, children }: RowProps) => (
+    <div
+        className={cn(
+            "grid gap-3",
+            top ? "items-start" : "items-center",
+            "border-b border-subtle px-5 py-4 last:border-b-0 sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)] sm:gap-8"
+        )}
+    >
         <div>
             <div className="flex flex-wrap items-baseline gap-2">
                 <span
@@ -351,6 +354,11 @@ const SettingsPage = () => {
                         />
                     </Row>
                 )}
+            </SettingsCard>
+        ),
+
+        privacy: (
+            <SettingsCard>
                 <Row
                     label="Who can see your profile"
                     help="Your games, favourites, reviews, friends and threads. Your name, picture and bio always show; your About details each have their own setting below."
@@ -374,49 +382,24 @@ const SettingsPage = () => {
                     />
                 </Row>
                 <Row
+                    top
                     label="Your About details"
-                    help="Who sees each line of the About card on your profile. Your bio always shows. Fill them in from Edit profile."
+                    help="Who sees each line of the About card on your profile. Your bio always shows."
                 >
-                    <div className="flex flex-col gap-3">
-                        {ABOUT_PRIVACY_ROWS.map(({ field, label }) => (
-                            <div
-                                key={field}
-                                className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
-                            >
-                                <span className="text-body-sm text-content-secondary">
-                                    {label}
-                                </span>
-                                <SegmentedChoice
-                                    label={`Who sees your ${label.toLowerCase()}`}
-                                    segments={[
-                                        {
-                                            value: "everyone",
-                                            label: "Everyone",
-                                        },
-                                        { value: "friends", label: "Friends" },
-                                        { value: "private", label: "Only me" },
-                                    ]}
-                                    value={aboutVisibility[field]}
-                                    onChange={(next) =>
-                                        saveToggle<AboutVisibility>(
-                                            {
-                                                aboutVisibility: {
-                                                    ...aboutVisibility,
-                                                    [field]: next,
-                                                },
-                                            },
-                                            {
-                                                ...aboutVisibility,
-                                                [field]: next,
-                                            },
-                                            setAboutVisibility,
-                                            aboutVisibility
-                                        )
-                                    }
-                                />
-                            </div>
-                        ))}
-                    </div>
+                    <AboutPrivacy
+                        about={user.about}
+                        visibility={aboutVisibility}
+                        onChange={(next) =>
+                            saveToggle<AboutVisibility>(
+                                { aboutVisibility: next },
+                                next,
+                                setAboutVisibility,
+                                aboutVisibility
+                            )
+                        }
+                        disabled={update.isPending}
+                        profileHref={profilePath(user.username)}
+                    />
                 </Row>
                 <Row
                     label="Hide online status"

@@ -56,7 +56,7 @@ export const OwnProfileVisibility = ({
                 ? "Only you can see your profile."
                 : "Only your friends can see your profile."}
             <Link
-                to="/settings?section=profile"
+                to="/settings?section=privacy"
                 className="relative font-medium text-brand underline-offset-2 before:absolute before:-inset-3 before:content-[''] hover:underline"
             >
                 Change

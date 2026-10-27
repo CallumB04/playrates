@@ -1,5 +1,4 @@
-import { Link2, MapPin, Pencil, Speech, UserRound } from "lucide-react";
-import { SiDiscord, SiSteam } from "@icons-pack/react-simple-icons";
+import { Pencil } from "lucide-react";
 import type {
     AboutField,
     AboutVisibility,
@@ -8,22 +7,8 @@ import type {
 } from "@playrates/shared";
 import Panel from "../../../components/ui/Panel";
 import Button from "../../../components/ui/Button";
-import type { IconComponent } from "../../../lib/icons";
-import { linkLabel, steamLabel } from "../lib/about";
+import { ABOUT_ROWS, linkLabel, steamLabel } from "../lib/about";
 import PrivacySelect, { PRIVACY_OPTIONS } from "./PrivacySelect";
-
-const ROWS: {
-    field: AboutField;
-    label: string;
-    icon: IconComponent;
-}[] = [
-    { field: "firstName", label: "Name", icon: UserRound },
-    { field: "pronouns", label: "Pronouns", icon: Speech },
-    { field: "location", label: "Location", icon: MapPin },
-    { field: "website", label: "Website", icon: Link2 },
-    { field: "discord", label: "Discord", icon: SiDiscord },
-    { field: "steam", label: "Steam", icon: SiSteam },
-];
 
 const Value = ({ field, value }: { field: AboutField; value: string }) => {
     if (field === "website" || field === "steam") {
@@ -60,7 +45,9 @@ interface AboutCardProps {
 /** Who they are, in their words: the bio, then what they've chosen to
  *  share. The owner sees every field, set or not, and who it shows to. */
 const AboutCard = ({ profile, owner }: AboutCardProps) => {
-    const rows = ROWS.filter(({ field }) => owner || profile.about[field]);
+    const rows = ABOUT_ROWS.filter(
+        ({ field }) => owner || profile.about[field]
+    );
     if (!owner && !profile.bio && rows.length === 0) return null;
 
     return (
