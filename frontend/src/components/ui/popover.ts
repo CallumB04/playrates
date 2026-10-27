@@ -23,3 +23,20 @@ export const popoverClass = (
         SHAPE[shape],
         className
     );
+
+/**
+ * Where a menu hangs off its trigger, across. As wide as the trigger,
+ * unless it sets a width of its own, when the trigger's is only its least;
+ * then a trigger in the right half of the window has it hang from its right
+ * edge, or a wide menu off a control near that edge runs off the screen.
+ */
+export const menuAcross = (
+    trigger: { left: number; right: number; width: number },
+    viewportWidth: number,
+    ownWidth: boolean
+): { left?: number; right?: number; width?: number; minWidth?: number } => {
+    if (!ownWidth) return { left: trigger.left, width: trigger.width };
+    return trigger.left + trigger.width / 2 > viewportWidth / 2
+        ? { right: viewportWidth - trigger.right, minWidth: trigger.width }
+        : { left: trigger.left, minWidth: trigger.width };
+};

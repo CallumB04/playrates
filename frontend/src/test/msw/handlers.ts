@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
 import {
+    DEFAULT_ABOUT_VISIBILITY,
     rollupLogs,
     type FriendEdge,
     type GameLog,
@@ -40,6 +41,8 @@ export const buildProfile = (
     avatarUrl: null,
     accent: "indigo",
     background: null,
+    about: {},
+    aboutVisibility: { ...DEFAULT_ABOUT_VISIBILITY },
     online: true,
     createdAt: "2026-01-01T00:00:00.000Z",
     ...overrides,
@@ -148,7 +151,6 @@ export const buildReview = (
     author: {
         id: "11111111-1111-1111-1111-111111111111",
         username: "devuser",
-        firstName: null,
         avatarUrl: null,
         accent: "indigo",
         online: true,

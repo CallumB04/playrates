@@ -72,12 +72,6 @@ const MemberFileHeader = ({
                     )}
                 </div>
 
-                {profile.bio && (
-                    <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-content-secondary">
-                        {profile.bio}
-                    </p>
-                )}
-
                 {stats && (
                     <p className="mt-3 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-label text-content-muted">
                         <span className="flex items-baseline gap-1.5">

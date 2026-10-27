@@ -1,6 +1,11 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import type { Profile, ProfileAccent } from "@playrates/shared";
+import {
+    AboutFieldsSchema,
+    type AboutField,
+    type Profile,
+    type ProfileAccent,
+} from "@playrates/shared";
 import {
     useRemoveAvatar,
     useUpdateAvatar,
@@ -17,6 +22,41 @@ import AvatarField, {
 } from "../../../components/AvatarField";
 import AccentPicker from "../../../components/ui/AccentPicker";
 import { willShowPicture } from "../../../components/avatarChoice";
+
+const ABOUT_INPUTS: {
+    field: AboutField;
+    label: string;
+    placeholder: string;
+    type?: "url";
+}[] = [
+    { field: "firstName", label: "Name", placeholder: "Callum" },
+    { field: "pronouns", label: "Pronouns", placeholder: "he/him" },
+    { field: "location", label: "Location", placeholder: "Leeds, UK" },
+    {
+        field: "website",
+        label: "Website",
+        placeholder: "https://example.com",
+        type: "url",
+    },
+    { field: "discord", label: "Discord", placeholder: "username" },
+    {
+        field: "steam",
+        label: "Steam",
+        placeholder: "Profile address or custom name",
+    },
+];
+
+type AboutValues = Record<AboutField, string>;
+
+/** What is wrong with a field as typed, by the rule the server holds it to.
+ *  The first name is not an About field there, so its one rule is here. */
+const aboutError = (field: AboutField, value: string): string | undefined => {
+    if (field === "firstName") {
+        return value.trim().length > 40 ? "40 characters at most" : undefined;
+    }
+    const checked = AboutFieldsSchema.shape[field].safeParse(value.trim());
+    return checked.success ? undefined : checked.error.issues[0]?.message;
+};
 
 interface EditProfilePopupProps {
     closePopup: () => void;
@@ -62,12 +102,29 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     const [avatar, setAvatar] = useState<AvatarChoice>({ kind: "unchanged" });
     const [accent, setAccent] = useState<ProfileAccent>(user.accent);
     const [pictureError, setPictureError] = useState<string | null>(null);
+    const initialAbout = Object.fromEntries(
+        ABOUT_INPUTS.map(({ field }) => [field, user.about[field] ?? ""])
+    ) as AboutValues;
+    const [about, setAbout] = useState<AboutValues>(initialAbout);
+    const aboutErrors = Object.fromEntries(
+        ABOUT_INPUTS.map(({ field }) => [
+            field,
+            aboutError(field, about[field]),
+        ])
+    ) as Record<AboutField, string | undefined>;
+    const aboutInvalid = Object.values(aboutErrors).some(Boolean);
+    const changedAbout = Object.fromEntries(
+        ABOUT_INPUTS.filter(
+            ({ field }) => about[field].trim() !== initialAbout[field]
+        ).map(({ field }) => [field, about[field].trim()])
+    );
 
     const sameLetters = username.toLowerCase() === user.username.toLowerCase();
     const fieldsDirty =
         bio !== user.bio ||
         username !== user.username ||
-        accent !== user.accent;
+        accent !== user.accent ||
+        Object.keys(changedAbout).length > 0;
     const dirty = fieldsDirty || avatar.kind !== "unchanged";
     const saving =
         updateProfile.isPending ||
@@ -83,7 +140,12 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
         try {
             // the mutation seeds the profile caches, so the page updates straight away
             if (fieldsDirty) {
-                await updateProfile.mutateAsync({ username, bio, accent });
+                await updateProfile.mutateAsync({
+                    username,
+                    bio,
+                    accent,
+                    ...changedAbout,
+                });
             }
         } catch (error) {
             notify(reasonFor(error, "Couldn't update your profile"), "error");
@@ -169,6 +231,46 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     )}
                 </Field>
 
+                <Group label="About you">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        {ABOUT_INPUTS.map(
+                            ({ field, label, placeholder, type }) => (
+                                <Field
+                                    key={field}
+                                    label={label}
+                                    error={aboutErrors[field]}
+                                >
+                                    {(a11y) => (
+                                        <Input
+                                            type={type ?? "text"}
+                                            value={about[field]}
+                                            placeholder={placeholder}
+                                            onChange={(e) =>
+                                                setAbout({
+                                                    ...about,
+                                                    [field]: e.target.value,
+                                                })
+                                            }
+                                            {...a11y}
+                                        />
+                                    )}
+                                </Field>
+                            )
+                        )}
+                    </div>
+                    <p className="mt-2 text-label-sm text-content-muted">
+                        You choose who sees each of these, beside it on your
+                        profile or in{" "}
+                        <Link
+                            to="/settings?section=profile"
+                            className="text-content underline hover:text-brand"
+                        >
+                            Settings
+                        </Link>
+                        . Your name starts hidden.
+                    </p>
+                </Group>
+
                 <Field
                     label="Username capitalisation"
                     help={
@@ -203,7 +305,9 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     <Button
                         className="flex-1"
                         onClick={() => void save()}
-                        disabled={!dirty || !sameLetters || saving}
+                        disabled={
+                            !dirty || !sameLetters || aboutInvalid || saving
+                        }
                     >
                         {saving ? "Saving…" : "Save changes"}
                     </Button>

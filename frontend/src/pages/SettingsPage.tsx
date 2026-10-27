@@ -25,7 +25,13 @@ import { useUserFriends } from "../hooks/queries/useFriends";
 import { usePageMeta } from "../hooks/usePageMeta";
 import { deleteMyAccount, fetchMyData } from "../api";
 import { saveFile } from "../lib/saveFile";
-import { FALLBACK_ACCENT, type ProfileVisibility } from "@playrates/shared";
+import {
+    DEFAULT_ABOUT_VISIBILITY,
+    FALLBACK_ACCENT,
+    type AboutField,
+    type AboutVisibility,
+    type ProfileVisibility,
+} from "@playrates/shared";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
 import Button from "../components/ui/Button";
@@ -44,6 +50,15 @@ import { cn } from "../lib/cn";
 /* Only what can be used today. Sections and rows that were all "coming
    soon" were choices that led nowhere; Row's `soon` is there for when one
    is close enough to show. */
+const ABOUT_PRIVACY_ROWS: { field: AboutField; label: string }[] = [
+    { field: "firstName", label: "Name" },
+    { field: "pronouns", label: "Pronouns" },
+    { field: "location", label: "Location" },
+    { field: "website", label: "Website" },
+    { field: "discord", label: "Discord" },
+    { field: "steam", label: "Steam" },
+];
+
 const SECTIONS: SettingsSection[] = [
     { id: "account", label: "Account", icon: UserRound },
     { id: "profile", label: "Profile", icon: Eye },
@@ -154,6 +169,9 @@ const SettingsPage = () => {
     const [profileVisibility, setProfileVisibility] =
         useState<ProfileVisibility>(user?.profileVisibility ?? "everyone");
     const [accent, setAccent] = useState(user?.accent ?? FALLBACK_ACCENT);
+    const [aboutVisibility, setAboutVisibility] = useState<AboutVisibility>(
+        user?.aboutVisibility ?? DEFAULT_ABOUT_VISIBILITY
+    );
     const updateAvatar = useUpdateAvatar();
     const removeAvatar = useRemoveAvatar();
 
@@ -165,6 +183,7 @@ const SettingsPage = () => {
         setHideFromSearch(user?.hideFromSearch ?? false);
         setProfileVisibility(user?.profileVisibility ?? "everyone");
         setAccent(user?.accent ?? FALLBACK_ACCENT);
+        setAboutVisibility(user?.aboutVisibility ?? DEFAULT_ABOUT_VISIBILITY);
     }, [user]);
 
     const zone = effectiveTimeZone(user?.timezone);
@@ -334,7 +353,7 @@ const SettingsPage = () => {
                 )}
                 <Row
                     label="Who can see your profile"
-                    help="Your games, reviews, friends and threads. Your name, picture and bio always show."
+                    help="Your games, favourites, reviews, friends and threads. Your name, picture and bio always show; your About details each have their own setting below."
                 >
                     <SegmentedChoice
                         label="Who can see your profile"
@@ -353,6 +372,51 @@ const SettingsPage = () => {
                             )
                         }
                     />
+                </Row>
+                <Row
+                    label="Your About details"
+                    help="Who sees each line of the About card on your profile. Your bio always shows. Fill them in from Edit profile."
+                >
+                    <div className="flex flex-col gap-3">
+                        {ABOUT_PRIVACY_ROWS.map(({ field, label }) => (
+                            <div
+                                key={field}
+                                className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                            >
+                                <span className="text-body-sm text-content-secondary">
+                                    {label}
+                                </span>
+                                <SegmentedChoice
+                                    label={`Who sees your ${label.toLowerCase()}`}
+                                    segments={[
+                                        {
+                                            value: "everyone",
+                                            label: "Everyone",
+                                        },
+                                        { value: "friends", label: "Friends" },
+                                        { value: "private", label: "Only me" },
+                                    ]}
+                                    value={aboutVisibility[field]}
+                                    onChange={(next) =>
+                                        saveToggle<AboutVisibility>(
+                                            {
+                                                aboutVisibility: {
+                                                    ...aboutVisibility,
+                                                    [field]: next,
+                                                },
+                                            },
+                                            {
+                                                ...aboutVisibility,
+                                                [field]: next,
+                                            },
+                                            setAboutVisibility,
+                                            aboutVisibility
+                                        )
+                                    }
+                                />
+                            </div>
+                        ))}
+                    </div>
                 </Row>
                 <Row
                     label="Hide online status"

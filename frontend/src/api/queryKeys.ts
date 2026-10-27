@@ -71,6 +71,10 @@ export const queryKeys = {
             ["reviews", "user", username, page ?? 1, limit ?? null] as const,
     },
 
+    favourites: {
+        byUsername: (username: string) => ["favourites", username] as const,
+    },
+
     friends: {
         mine: ["friends", "me"] as const,
         activity: ["friends", "me", "activity"] as const,

@@ -36,6 +36,7 @@ import type { ProfileTab } from "./lib/profileViews";
 import ProfileModals, { type ProfileModal } from "./components/ProfileModals";
 import { TextSkeleton } from "../../components/ui/Skeleton";
 import GamesView from "./views/GamesView";
+import ProfileView, { ProfileAbout } from "./views/ProfileView";
 import ReviewList, { REVIEWS_PER_PAGE } from "./components/ReviewList";
 import ThreadList, { THREADS_PER_PAGE } from "./components/ThreadList";
 import FriendsView from "./views/FriendsView";
@@ -288,12 +289,19 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                 friends or the threads. */}
             {access === "hidden" &&
             targetUser.profileVisibility !== "everyone" ? (
-                <PrivateProfile
-                    username={targetUser.username}
-                    visibility={targetUser.profileVisibility}
-                    signedIn={!!currentUser}
-                    relation={relation}
-                />
+                <div className="flex flex-col gap-4">
+                    <ProfileAbout
+                        profile={targetUser}
+                        isOwner={isMyAccount}
+                        onEditProfile={() => setModal({ kind: "editProfile" })}
+                    />
+                    <PrivateProfile
+                        username={targetUser.username}
+                        visibility={targetUser.profileVisibility}
+                        signedIn={!!currentUser}
+                        relation={relation}
+                    />
+                </div>
             ) : (
                 <div className="flex flex-col gap-4">
                     <ProfileNav
@@ -315,6 +323,16 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                                 visibility={targetUser.profileVisibility}
                             />
                         )}
+                    {tab === "profile" && (
+                        <ProfileView
+                            profile={targetUser}
+                            isOwner={isMyAccount}
+                            canSee={canSee}
+                            onEditProfile={() =>
+                                setModal({ kind: "editProfile" })
+                            }
+                        />
+                    )}
                     {tab === "games" && (
                         <GamesView
                             username={targetUsername}
