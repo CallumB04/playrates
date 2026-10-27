@@ -86,7 +86,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
     const onRemove = async () => {
         try {
             await clear.mutateAsync();
-            notify("Back to your colour", "success");
+            notify("Background removed", "success");
             onClose();
         } catch {
             notify("That didn't save, please try again", "error");
@@ -270,7 +270,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                         disabled={busy}
                         className="w-full sm:w-auto"
                     >
-                        Use your colour instead
+                        Remove background
                     </Button>
                 ) : (
                     <span />

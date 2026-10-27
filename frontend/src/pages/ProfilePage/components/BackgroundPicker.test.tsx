@@ -106,15 +106,15 @@ describe("BackgroundPicker", () => {
         ).toHaveAttribute("aria-pressed", "true");
     });
 
-    it("offers the colour back only once there is a picture", async () => {
+    it("offers removal only once there is a picture", async () => {
         setup();
         await screen.findByRole("button", { name: /The Witcher 3/ });
         expect(
-            screen.queryByRole("button", { name: "Use your colour instead" })
+            screen.queryByRole("button", { name: "Remove background" })
         ).toBeNull();
     });
 
-    it("goes back to the colour", async () => {
+    it("removes the picture", async () => {
         const { onClose, user } = setup(
             buildProfile({
                 background: { url: PICTURES[0]!.url, gameId: 1 },
@@ -122,7 +122,7 @@ describe("BackgroundPicker", () => {
         );
 
         await user.click(
-            screen.getByRole("button", { name: "Use your colour instead" })
+            screen.getByRole("button", { name: "Remove background" })
         );
 
         await waitFor(() => expect(onClose).toHaveBeenCalled());

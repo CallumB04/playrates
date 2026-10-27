@@ -112,8 +112,8 @@ export interface Profile {
   avatarUrl: string | null;
   /** The colour this profile wears. Every profile has one. */
   accent: ProfileAccent;
-  /** A game's picture across the top of the page, in place of the colour.
-   *  The game is null once it has left the catalogue. */
+  /** A game's picture across the top of the page. None by default. The
+   *  game is null once it has left the catalogue. */
   background: { url: string; gameId: number | null } | null;
   /** Derived from last_seen_at, not stored. */
   online: boolean;

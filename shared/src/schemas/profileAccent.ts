@@ -1,12 +1,11 @@
 import { z } from "zod";
 
 /**
- * The colour a profile wears — its banner, and the generated avatar behind a
- * username's initial.
+ * The colour a profile wears: the generated avatar behind a username's
+ * initial.
  *
  * A hue rather than a pair of hex values, because the gradient either end of
- * it is derived: one formula draws the avatar and the banner, so the two can
- * never drift apart. Every hue here is one that stays legible against both
+ * it is derived by one formula. Every hue here is one that stays legible against both
  * themes at the lightness the formula picks.
  *
  * A sweep round the wheel from red to violet. The brand is deliberately not

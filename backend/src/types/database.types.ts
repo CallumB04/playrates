@@ -32,7 +32,7 @@ export interface ProfileRow {
   username_chosen_at: string | null;
   /** Can post patch notes and remove anything in the community. */
   is_admin: boolean;
-  /** A game's picture in place of the colour band; null shows the colour. */
+  /** A game's picture across the top of the profile; null shows none. */
   background_url: string | null;
   /** The game it came from. Null when the game has since gone. */
   background_game_id: number | null;

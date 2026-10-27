@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FALLBACK_ACCENT, PROFILE_ACCENTS } from "@playrates/shared";
-import { accentHue, avatarGradient, bannerGradient } from "./profileAccent";
+import { accentHue, avatarGradient } from "./profileAccent";
 
 describe("accentHue", () => {
     it("gives every colour in the palette its own hue", () => {
@@ -32,30 +32,13 @@ describe("accentHue", () => {
     });
 });
 
-describe("gradients", () => {
-    it("draws the avatar and the banner from the one hue", () => {
+describe("avatarGradient", () => {
+    it("draws from the profile's hue", () => {
         expect(avatarGradient(200)).toContain("hsl(200");
-        expect(bannerGradient(200)).toContain("hsl(200");
     });
 
     /* 350 + 45 is 395, which is not a hue. */
     it("wraps the second stop round the wheel", () => {
         expect(avatarGradient(350)).toContain("hsl(35 ");
-        expect(bannerGradient(350)).toContain("hsl(30 ");
-    });
-
-    /* Running out to transparent left the right-hand half reading as an
-       unpainted rectangle. Every stop keeps some colour in it. */
-    it("never lets the banner fade out to nothing", () => {
-        const banner = bannerGradient(200);
-        expect(banner).not.toContain("transparent");
-        for (const [, alpha] of banner.matchAll(/\/ (0\.\d+)\)/g)) {
-            expect(Number(alpha)).toBeGreaterThan(0.2);
-        }
-    });
-
-    it("keeps the banner softer than the avatar it sits behind", () => {
-        expect(bannerGradient(200)).toMatch(/\/ 0\.\d+/);
-        expect(avatarGradient(200)).not.toMatch(/\/ 0\.\d+/);
     });
 });

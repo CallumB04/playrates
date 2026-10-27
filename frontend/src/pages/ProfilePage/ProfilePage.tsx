@@ -19,7 +19,7 @@ import { usePageMeta } from "../../hooks/usePageMeta";
 import { profileDescription } from "@playrates/shared";
 import Button, { buttonClass } from "../../components/ui/Button";
 import PageBackdrop, {
-    BACKDROP_OFFSET,
+    SHORT_BACKDROP_OFFSET,
 } from "../../components/layout/PageBackdrop";
 import { cn } from "../../lib/cn";
 import ProfileError from "./components/ProfileError";
@@ -181,11 +181,11 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
         <div
             className={cn(
                 "flex flex-col gap-6",
-                targetUser.background && BACKDROP_OFFSET
+                targetUser.background && SHORT_BACKDROP_OFFSET
             )}
         >
             {targetUser.background && (
-                <PageBackdrop url={targetUser.background.url} />
+                <PageBackdrop url={targetUser.background.url} size="short" />
             )}
             <MemberFileHeader
                 profile={targetUser}
@@ -209,11 +209,13 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                         ? () => setModal({ kind: "editProfile" })
                         : undefined
                 }
+                /* Solid, not outlined: they can sit on a picture, where an
+                   outline vanishes into a busy or a light one. */
                 action={
                     isMyAccount ? (
                         <>
                             <Button
-                                variant="outline"
+                                variant="secondary"
                                 size="sm"
                                 onClick={() =>
                                     setModal({ kind: "editProfile" })
@@ -224,7 +226,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                                 Edit profile
                             </Button>
                             <Button
-                                variant="outline"
+                                variant="secondary"
                                 size="sm"
                                 aria-label="Profile background"
                                 onClick={() => setModal({ kind: "background" })}
@@ -239,7 +241,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                                 to="/settings"
                                 aria-label="Settings"
                                 className={buttonClass(
-                                    "outline",
+                                    "secondary",
                                     "max-sm:size-11 max-sm:px-0",
                                     "sm"
                                 )}
@@ -254,7 +256,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                         <>
                             {currentUser && targetUser && (
                                 <Button
-                                    variant="outline"
+                                    variant="secondary"
                                     size="sm"
                                     aria-label="Report this profile"
                                     title="Report this profile"

@@ -32,7 +32,7 @@ import { useThreads } from "../../hooks/queries/useCommunity";
 import { newThreadPath } from "../../components/community/paths";
 import { buildGameFacts } from "./lib/gameFacts";
 import PageBackdrop, {
-    BACKDROP_OFFSET,
+    TALL_BACKDROP_OFFSET,
 } from "../../components/layout/PageBackdrop";
 import StickyLogBar from "./components/StickyLogBar";
 import { cn } from "../../lib/cn";
@@ -137,7 +137,7 @@ const GamePage = () => {
             className={cn(
                 // max-sm:pb-20: room at the very bottom for the sticky bar
                 "flex flex-col gap-7 max-sm:pb-20",
-                game.artworkUrl && BACKDROP_OFFSET
+                game.artworkUrl && TALL_BACKDROP_OFFSET
             )}
         >
             <PageBackdrop url={game.artworkUrl} />
