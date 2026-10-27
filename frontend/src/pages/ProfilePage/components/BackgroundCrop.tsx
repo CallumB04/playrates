@@ -2,7 +2,12 @@ import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { GripHorizontal } from "lucide-react";
 import { useWindowSize } from "../../../hooks/useWindowSize";
 import { cn } from "../../../lib/cn";
-import { backdropAspect, cropWindow, dragPosition } from "../lib/cropPosition";
+import {
+    backdropAspect,
+    cropWindow,
+    dragPosition,
+    REFERENCE_WIDTH,
+} from "../lib/cropPosition";
 
 const PRESETS = [
     { position: 0, label: "Top" },
@@ -26,9 +31,8 @@ const clamp = (p: number) => Math.min(100, Math.max(0, p));
 
 /* Below lg the backdrop is deep enough to show nearly a whole screenshot,
    so the outline there would barely move. A computer's strip is the one
-   that crops, so a phone is shown that one, at a common laptop's width. */
+   that crops, so a phone is shown that one. */
 const DESKTOP = 1024;
-const REFERENCE_WIDTH = 1440;
 
 /** What a backdrop leaves out, dimmed above and below the outline. */
 const Shade = ({ crop }: { crop: { top: number; height: number } }) => (

@@ -44,6 +44,7 @@ import { Textarea } from "../components/ui/Input";
 import Field from "../components/ui/Field";
 import UsernameRow from "./settings/UsernameRow";
 import AboutPrivacy from "./settings/AboutPrivacy";
+import BackgroundSetting from "./settings/BackgroundSetting";
 import AboutFieldInput from "./ProfilePage/components/AboutFieldInput";
 import {
     ABOUT_ROWS,
@@ -406,6 +407,9 @@ const SettingsPage = () => {
                             </div>
                         )}
                     </div>
+                </Group>
+                <Group title="Background">
+                    <BackgroundSetting profile={user} />
                 </Group>
                 <Group title="Bio">
                     <div className="max-w-xl">

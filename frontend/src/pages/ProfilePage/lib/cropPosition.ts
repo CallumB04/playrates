@@ -6,6 +6,10 @@ const BACKDROP_HEIGHTS = [
     { minWidth: 0, height: 230 },
 ];
 
+/** The window width a computer's backdrop is previewed at: a common
+ *  laptop's, where the strip crops the picture most. */
+export const REFERENCE_WIDTH = 1440;
+
 /** The backdrop's width over its height on a window this wide. It spans
  *  the window, so a wider screen is a thinner strip of the picture. */
 export const backdropAspect = (viewportWidth: number): number => {
