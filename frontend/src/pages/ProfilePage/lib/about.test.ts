@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { linkLabel, moveItem, steamLabel } from "./about";
+import { linkLabel, moveItem, rankTone, steamLabel } from "./about";
 
 describe("linkLabel", () => {
     it("reads an address without its scheme, www or trailing slash", () => {
@@ -30,5 +30,17 @@ describe("moveItem", () => {
         const list = ["a", "b"];
         expect(moveItem(list, 0, -1)).toBe(list);
         expect(moveItem(list, 1, 2)).toBe(list);
+    });
+});
+
+describe("rankTone", () => {
+    it("gives the top three their medals and leaves the rest plain", () => {
+        expect([1, 2, 3, 4, 5].map(rankTone)).toEqual([
+            "text-medal-gold",
+            "text-medal-silver",
+            "text-medal-bronze",
+            "text-content-muted",
+            "text-content-muted",
+        ]);
     });
 });

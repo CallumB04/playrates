@@ -10,7 +10,8 @@ import GamePicker, {
 import { useSetFavourites } from "../../../hooks/queries/useFavourites";
 import { useNotify } from "../../../contexts/NotificationContext";
 import { ApiError } from "../../../api";
-import { moveItem } from "../lib/about";
+import { moveItem, rankTone } from "../lib/about";
+import { cn } from "../../../lib/cn";
 
 const ICON_BUTTON =
     "relative grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-content-secondary lift before:absolute before:-inset-1.5 before:content-[''] hover:bg-surface-hover hover:text-content disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-brand";
@@ -74,8 +75,13 @@ const FavouritesEditor = ({ current, onClose }: FavouritesEditorProps) => {
                             key={game.id}
                             className="flex items-center gap-3 rounded-sm bg-surface-sunken p-2"
                         >
-                            <span className="w-4 shrink-0 text-center font-mono text-label-sm text-content-muted">
-                                {i + 1}
+                            <span
+                                className={cn(
+                                    "w-6 shrink-0 text-center font-mono text-label-sm font-semibold",
+                                    rankTone(i + 1)
+                                )}
+                            >
+                                #{i + 1}
                             </span>
                             <GameCover
                                 coverUrl={game.coverUrl}

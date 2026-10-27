@@ -191,6 +191,12 @@
     --info: #0369a1;
     --warning: var(--ember-600);
     --gold: var(--ember-500);
+    /* A podium, for a profile's favourites. Its own gold: the one above is
+       the brand's ember, which beside bronze read as a second bronze. Dark
+       enough by day to read on the page. */
+    --medal-gold: #a87400;
+    --medal-silver: #6b7685;
+    --medal-bronze: #a35a26;
 
     /* Chart series, in this order and never cycled. Checked as a set for
        colour-blind separation and contrast on the raised surface; the night
@@ -300,6 +306,9 @@
     --info: #56ccf2;
     --warning: var(--ember-400);
     --gold: var(--ember-300);
+    --medal-gold: #f2c94c;
+    --medal-silver: #c5ccd6;
+    --medal-bronze: #d9915a;
 
     --chart-1: #7c5cff;
     --chart-2: #0aa2c2;
@@ -614,6 +623,9 @@
     --color-info-strong: var(--info-strong);
 
     --color-gold: var(--gold);
+    --color-medal-gold: var(--medal-gold);
+    --color-medal-silver: var(--medal-silver);
+    --color-medal-bronze: var(--medal-bronze);
 
     --color-chart-1: var(--chart-1);
     --color-chart-2: var(--chart-2);

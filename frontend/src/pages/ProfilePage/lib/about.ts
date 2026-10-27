@@ -18,3 +18,10 @@ export const moveItem = <T>(list: T[], from: number, to: number): T[] => {
     next.splice(to, 0, item!);
     return next;
 };
+
+const PODIUM = ["text-medal-gold", "text-medal-silver", "text-medal-bronze"];
+
+/** A favourite's place as a colour: gold, silver and bronze for the top
+ *  three, the rest left plain. Places count from 1. */
+export const rankTone = (place: number): string =>
+    PODIUM[place - 1] ?? "text-content-muted";

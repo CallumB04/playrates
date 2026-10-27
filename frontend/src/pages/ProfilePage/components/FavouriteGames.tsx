@@ -8,6 +8,8 @@ import { usePlatforms } from "../../../hooks/queries/useGames";
 import { releaseYear } from "../../../lib/format";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { useUserFavourites } from "../../../hooks/queries/useFavourites";
+import { cn } from "../../../lib/cn";
+import { rankTone } from "../lib/about";
 
 interface FavouriteGamesProps {
     username: string;
@@ -17,6 +19,20 @@ interface FavouriteGamesProps {
 }
 
 // Three across a phone: five there were too small to tell apart.
+/* The list is ordered, so a screen reader already counts it; the number
+   here is for the eye, and its colour for the podium. */
+const Rank = ({ place }: { place: number }) => (
+    <span
+        aria-hidden
+        className={cn(
+            "mb-1.5 block font-mono text-label font-semibold tabular-nums",
+            rankTone(place)
+        )}
+    >
+        #{place}
+    </span>
+);
+
 const GRID = "grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3";
 
 /** Up to five covers, in the order their owner put them. */
@@ -56,8 +72,9 @@ const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {
                 </div>
             ) : (
                 <ol className={GRID}>
-                    {(games ?? []).map((game) => (
+                    {(games ?? []).map((game, i) => (
                         <li key={game.id}>
+                            <Rank place={i + 1} />
                             <GameTile
                                 gameId={game.id}
                                 title={game.title}
@@ -80,6 +97,9 @@ const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {
                             },
                             (_, i) => (
                                 <li key={`free-${i}`}>
+                                    <Rank
+                                        place={(games?.length ?? 0) + i + 1}
+                                    />
                                     <button
                                         type="button"
                                         onClick={onEdit}
