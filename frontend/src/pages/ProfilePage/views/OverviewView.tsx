@@ -33,18 +33,24 @@ const FigureCard = ({
     figure: ReactNode | undefined;
     note: string | undefined;
 }) => (
+    /* Label at the top and figure at the foot, as the year card has its
+       chart: the row is as tall as that card, and this one fills it. */
     <section
-        className={cardClass("flex flex-col gap-2 p-4", { padding: "none" })}
+        className={cardClass("flex flex-col justify-between gap-2 p-4", {
+            padding: "none",
+        })}
     >
         <CardLabel>{label}</CardLabel>
-        <p className={figureClass("stat", "truncate")}>
-            {figure ?? (
-                <Skeleton className="inline-block h-[1em] w-20 align-top" />
-            )}
-        </p>
-        <p className="truncate text-label-sm text-content-muted">
-            {note ?? <Skeleton className="inline-block h-[1em] w-16" />}
-        </p>
+        <div className="flex flex-col gap-2">
+            <p className={figureClass("stat", "truncate")}>
+                {figure ?? (
+                    <Skeleton className="inline-block h-[1em] w-20 align-top" />
+                )}
+            </p>
+            <p className="truncate text-label-sm text-content-muted">
+                {note ?? <Skeleton className="inline-block h-[1em] w-16" />}
+            </p>
+        </div>
     </section>
 );
 

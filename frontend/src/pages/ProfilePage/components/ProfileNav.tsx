@@ -76,11 +76,13 @@ const ProfileNav = ({
                 aria-haspopup="dialog"
                 aria-expanded={sheetOpen}
                 onClick={() => setSheetOpen(true)}
-                className="flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-md border border-subtle bg-surface-raised py-2 pr-3 pl-2 text-left shadow-lip lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:hidden"
+                className="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-md border border-subtle bg-surface-raised py-2 pr-3 pl-2 text-left shadow-lip lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:hidden"
             >
-                <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-brand-subtle text-brand">
-                    <CurrentIcon size={18} aria-hidden />
-                </span>
+                <CurrentIcon
+                    size={18}
+                    aria-hidden
+                    className="ml-1.5 shrink-0 text-content-secondary"
+                />
                 <span className="flex min-w-0 flex-1 flex-col">
                     <span className="text-label-sm text-content-muted">
                         Showing
@@ -128,23 +130,23 @@ const ProfileNav = ({
                                         end
                                         onClick={() => setSheetOpen(false)}
                                         className={cn(
-                                            "flex min-h-14 items-center gap-3 rounded-md p-2 pr-3 lift",
+                                            "flex min-h-12 items-center gap-3 rounded-md p-2 pr-3 lift",
                                             "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                                             isActive
-                                                ? "bg-brand-subtle text-content"
+                                                ? "bg-surface-sunken text-content"
                                                 : "text-content-secondary hover:bg-surface-hover hover:text-content"
                                         )}
                                     >
-                                        <span
+                                        <Icon
+                                            size={18}
+                                            aria-hidden
                                             className={cn(
-                                                "grid size-10 shrink-0 place-items-center rounded-sm",
+                                                "ml-1 shrink-0",
                                                 isActive
-                                                    ? "bg-brand text-content-on-solid"
-                                                    : "bg-surface-sunken text-content-secondary"
+                                                    ? "text-content"
+                                                    : "text-content-muted"
                                             )}
-                                        >
-                                            <Icon size={18} aria-hidden />
-                                        </span>
+                                        />
                                         <span
                                             className={cn(
                                                 "flex-1 text-body",
@@ -155,7 +157,7 @@ const ProfileNav = ({
                                         </span>
                                         {tab === "friends" &&
                                             requestCount > 0 && (
-                                                <span className="rounded-full bg-brand px-2 py-0.5 text-label-sm font-medium text-content-on-solid">
+                                                <span className="text-label-sm text-brand">
                                                     {formatCount(requestCount)}{" "}
                                                     new
                                                 </span>
