@@ -38,6 +38,7 @@ export const buildProfile = (
   is_admin: false,
   background_url: null,
   background_game_id: null,
+  background_position: null,
   last_seen_at: NOW,
   created_at: LONG_AGO,
   updated_at: LONG_AGO,

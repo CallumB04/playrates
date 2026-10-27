@@ -185,7 +185,11 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
             )}
         >
             {targetUser.background && (
-                <PageBackdrop url={targetUser.background.url} size="short" />
+                <PageBackdrop
+                    url={targetUser.background.url}
+                    position={targetUser.background.position}
+                    size="short"
+                />
             )}
             <MemberFileHeader
                 profile={targetUser}

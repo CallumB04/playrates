@@ -19,33 +19,65 @@ const HEIGHT: Record<BackdropSize, string> = {
     short: "h-[200px] sm:h-[260px] lg:h-[300px]",
 };
 
+/**
+ * The picture as a backdrop draws it: faded out at the bottom, dimmed, and
+ * shaded at the sides. Its own component so a preview of a crop is the
+ * backdrop itself rather than an approximation of it.
+ */
+export const BackdropArt = ({
+    url,
+    position,
+    className,
+    onLoad,
+}: {
+    url: string;
+    position: number;
+    className?: string;
+    onLoad?: (img: HTMLImageElement) => void;
+}) => (
+    <div
+        aria-hidden
+        className={cn(
+            "overflow-hidden [mask-image:linear-gradient(to_bottom,black_30%,transparent)]",
+            className
+        )}
+    >
+        <img
+            src={url}
+            alt=""
+            draggable={false}
+            onLoad={onLoad && ((e) => onLoad(e.currentTarget))}
+            style={{ objectPosition: `center ${position}%` }}
+            className="size-full object-cover"
+        />
+        {/* Dims it enough for the title over its lower half, in either
+            theme, and darkens the sides so a wide window has no hard edge
+            where the picture stops. */}
+        <span className="absolute inset-0 bg-surface/45" />
+        <span className="absolute inset-0 bg-linear-to-r from-surface/70 via-transparent to-surface/70" />
+    </div>
+);
+
 const PageBackdrop = ({
     url,
     size = "tall",
+    position = 30,
 }: {
     url: string | null;
     size?: BackdropSize;
+    /** Which part of the picture shows, 0 the top to 100 the bottom. */
+    position?: number;
 }) => {
     if (!url) return null;
     return createPortal(
-        <div
-            aria-hidden
+        <BackdropArt
+            url={url}
+            position={position}
             className={cn(
-                "pointer-events-none absolute inset-x-0 top-0 -z-10 overflow-hidden [mask-image:linear-gradient(to_bottom,black_30%,transparent)]",
+                "pointer-events-none absolute inset-x-0 top-0 -z-10",
                 HEIGHT[size]
             )}
-        >
-            <img
-                src={url}
-                alt=""
-                className="size-full object-cover object-[center_30%]"
-            />
-            {/* Dims it enough for the title over its lower half, in either
-                theme, and darkens the sides so a wide window has no hard
-                edge where the picture stops. */}
-            <span className="absolute inset-0 bg-surface/45" />
-            <span className="absolute inset-0 bg-linear-to-r from-surface/70 via-transparent to-surface/70" />
-        </div>,
+        />,
         document.body
     );
 };

@@ -177,7 +177,7 @@ export const createProfilesService = (
    *  offers: anything else would put any URL at all on a public page. */
   async setBackground(
     callerId: string,
-    { gameId, url }: SetProfileBackgroundInput,
+    { gameId, url, position }: SetProfileBackgroundInput,
   ): Promise<MyProfile> {
     if (!(await backgrounds.hasLogged(callerId, gameId))) {
       throw AppError.forbidden(
@@ -192,6 +192,7 @@ export const createProfilesService = (
       await repo.update(callerId, {
         background_url: url,
         background_game_id: gameId,
+        background_position: position ?? null,
       }),
     );
   },
@@ -201,6 +202,7 @@ export const createProfilesService = (
       await repo.update(callerId, {
         background_url: null,
         background_game_id: null,
+        background_position: null,
       }),
     );
   },

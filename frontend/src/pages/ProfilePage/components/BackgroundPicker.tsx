@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, ChevronLeft } from "lucide-react";
-import type { Profile } from "@playrates/shared";
+import { DEFAULT_BACKGROUND_POSITION, type Profile } from "@playrates/shared";
 import Modal from "../../../components/ui/Modal";
 import Button, { buttonClass } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
@@ -18,6 +18,7 @@ import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
 import { usePagination } from "../../../hooks/usePagination";
 import { useNotify } from "../../../contexts/NotificationContext";
 import { cn } from "../../../lib/cn";
+import BackgroundCrop from "./BackgroundCrop";
 
 const GAMES_PER_PAGE = 18;
 
@@ -27,13 +28,16 @@ interface BackgroundPickerProps {
     onClose: () => void;
 }
 
-/** First a game you've logged, then one of its pictures. */
+/** A game you've logged, then one of its pictures, then which part of it
+ *  shows. */
 const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
     const notify = useNotify();
     const [game, setGame] = useState<{ id: number; title: string } | null>(
         null
     );
     const [chosen, setChosen] = useState<string | null>(null);
+    const [cropping, setCropping] = useState(false);
+    const [position, setPosition] = useState(DEFAULT_BACKGROUND_POSITION);
     const [term, setTerm] = useState("");
     const [page, setPage] = useState(1);
     const q = useDebouncedValue(term.trim());
@@ -72,10 +76,21 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
         );
     };
 
+    const pickPicture = (url: string) => {
+        setChosen(url);
+        // Back on the one it wears, where its owner last left it.
+        setPosition(
+            profile.background?.url === url
+                ? profile.background.position
+                : DEFAULT_BACKGROUND_POSITION
+        );
+        setCropping(true);
+    };
+
     const onSave = async () => {
         if (!game || !chosen) return;
         try {
-            await save.mutateAsync({ gameId: game.id, url: chosen });
+            await save.mutateAsync({ gameId: game.id, url: chosen, position });
             notify("Background updated", "success");
             onClose();
         } catch {
@@ -106,8 +121,14 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                 {game && (
                     <button
                         type="button"
-                        onClick={() => setGame(null)}
-                        aria-label="Back to your games"
+                        onClick={() =>
+                            cropping ? setCropping(false) : setGame(null)
+                        }
+                        aria-label={
+                            cropping
+                                ? "Back to the pictures"
+                                : "Back to your games"
+                        }
                         className="relative -ml-1.5 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-content-secondary lift before:absolute before:-inset-1.5 before:content-[''] hover:bg-surface-hover hover:text-content focus-visible:outline-2 focus-visible:outline-brand"
                     >
                         <ChevronLeft size={18} aria-hidden />
@@ -121,13 +142,21 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                 </h2>
             </div>
             <p className="mt-1 text-body-sm text-content-secondary">
-                {game
-                    ? "Pick a picture to put across the top of your profile."
-                    : "Choose from a game you've logged."}
+                {!game
+                    ? "Choose from a game you've logged."
+                    : cropping
+                      ? "Drag the picture, or slide, to choose the part that shows."
+                      : "Pick a picture to put across the top of your profile."}
             </p>
 
             <div className="mt-4">
-                {game ? (
+                {game && cropping && chosen ? (
+                    <BackgroundCrop
+                        url={chosen}
+                        position={position}
+                        onChange={setPosition}
+                    />
+                ) : game ? (
                     picturesLoading ? (
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                             {Array.from({ length: 6 }, (_, i) => (
@@ -151,7 +180,9 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                                         type="button"
                                         aria-pressed={selected}
                                         aria-label={`Picture ${i + 1}`}
-                                        onClick={() => setChosen(backdrop.url)}
+                                        onClick={() =>
+                                            pickPicture(backdrop.url)
+                                        }
                                         className={cn(
                                             "relative aspect-video cursor-pointer overflow-hidden rounded-sm bg-surface-sunken lift",
                                             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
@@ -275,10 +306,10 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                 ) : (
                     <span />
                 )}
-                {game && (
+                {cropping && (
                     <Button
                         onClick={() => void onSave()}
-                        disabled={!chosen || busy}
+                        disabled={busy}
                         className="w-full sm:w-auto"
                     >
                         {save.isPending ? "Saving…" : "Use this picture"}

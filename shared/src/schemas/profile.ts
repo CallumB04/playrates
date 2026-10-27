@@ -67,8 +67,14 @@ export const SetProfileBackgroundSchema = z
   .object({
     gameId: z.number().int().positive(),
     url: z.string().url().max(500),
+    /** Which part of the picture shows, 0 the top to 100 the bottom. */
+    position: z.number().int().min(0).max(100).optional(),
   })
   .strict();
+
+/** Just above the middle, where a game page sits its own art: the subject
+ *  of a screenshot is rarely at the very top or bottom. */
+export const DEFAULT_BACKGROUND_POSITION = 30;
 
 export type SetProfileBackgroundInput = z.infer<
   typeof SetProfileBackgroundSchema
@@ -114,7 +120,12 @@ export interface Profile {
   accent: ProfileAccent;
   /** A game's picture across the top of the page. None by default. The
    *  game is null once it has left the catalogue. */
-  background: { url: string; gameId: number | null } | null;
+  background: {
+    url: string;
+    gameId: number | null;
+    /** 0 shows the top of the picture, 100 the bottom. */
+    position: number;
+  } | null;
   /** Derived from last_seen_at, not stored. */
   online: boolean;
   /** Public because the page has to say it: a noindex is read by anyone. */

@@ -5,6 +5,7 @@ import type {
   ProfileAccent,
 } from "@playrates/shared";
 import {
+  DEFAULT_BACKGROUND_POSITION,
   FALLBACK_ACCENT,
   PROFILE_VISIBILITIES,
   PROFILE_ACCENT_SLUGS,
@@ -44,7 +45,11 @@ export const toProfile = (row: ProfileRow, now = Date.now()): Profile => ({
   avatarUrl: row.avatar_url,
   accent: toAccent(row.accent),
   background: row.background_url
-    ? { url: row.background_url, gameId: row.background_game_id }
+    ? {
+        url: row.background_url,
+        gameId: row.background_game_id,
+        position: row.background_position ?? DEFAULT_BACKGROUND_POSITION,
+      }
     : null,
   // Opting out hides presence from everyone, the owner included.
   online: !row.hide_online && isOnline(row.last_seen_at, now),

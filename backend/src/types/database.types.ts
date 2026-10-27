@@ -36,6 +36,8 @@ export interface ProfileRow {
   background_url: string | null;
   /** The game it came from. Null when the game has since gone. */
   background_game_id: number | null;
+  /** 0 to 100, top to bottom; null for the default. */
+  background_position: number | null;
   created_at: string;
   updated_at: string;
 }

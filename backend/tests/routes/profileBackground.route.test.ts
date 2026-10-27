@@ -104,9 +104,28 @@ describe("a profile's background", () => {
     const response = await put(app, { gameId: 1, url: SHOT.url });
 
     expect(response.status).toBe(200);
-    expect(response.body.background).toEqual({ url: SHOT.url, gameId: 1 });
+    // No position given, so the default one.
+    const worn = { url: SHOT.url, gameId: 1, position: 30 };
+    expect(response.body.background).toEqual(worn);
     const visitor = await request(app).get("/api/v1/profiles/devuser");
-    expect(visitor.body.background).toEqual({ url: SHOT.url, gameId: 1 });
+    expect(visitor.body.background).toEqual(worn);
+  });
+
+  it("keeps the part of the picture its owner chose", async () => {
+    const { app } = buildTestApp({ seed: seed(), provider: igdb().provider });
+
+    const response = await put(app, { gameId: 1, url: SHOT.url, position: 85 });
+
+    expect(response.body.background.position).toBe(85);
+  });
+
+  it("refuses a position off the picture", async () => {
+    const { app } = buildTestApp({ seed: seed(), provider: igdb().provider });
+
+    for (const position of [-1, 101, 40.5]) {
+      const response = await put(app, { gameId: 1, url: SHOT.url, position });
+      expect(response.status, String(position)).toBe(422);
+    }
   });
 
   it("refuses a game the owner hasn't logged", async () => {
