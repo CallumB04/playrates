@@ -45,7 +45,7 @@ function App() {
                     <Routes>
                         <Route path="/" element={<HomePage />} />
                         <Route
-                            path="/user/:targetUsername?"
+                            path="/user/:targetUsername?/:view?"
                             element={<ProfilePageRoute />}
                         />
                         <Route path="/library" element={<LibraryPage />} />

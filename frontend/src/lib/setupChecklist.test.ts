@@ -56,7 +56,7 @@ describe("setupSteps", () => {
     /* A review hangs off a log, and their played shelf is where those are. */
     it("sends a first review to their own played shelf", () => {
         expect(steps().find((s) => s.key === "review")?.to).toBe(
-            "/user/devuser?type=played"
+            "/user/devuser/games?type=played"
         );
     });
 

@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from "express";
-import { pageTitle, SITE_DESCRIPTION } from "@playrates/shared";
+import { isProfileView, pageTitle, SITE_DESCRIPTION } from "@playrates/shared";
 import { SITE_HEADERS } from "../../config/siteHeaders.js";
 import type { Logger } from "../../lib/logger.js";
 import { buildBody, injectBody } from "./body.js";
@@ -108,6 +108,16 @@ export const createPagesRouter = ({
   router.get(
     "/user/:username",
     render((req) => service.profile(String(req.params.username))),
+  );
+
+  // A view of a profile previews as the profile; an unknown one is a 404.
+  router.get(
+    "/user/:username/:view",
+    render(async (req) =>
+      isProfileView(String(req.params.view))
+        ? service.profile(String(req.params.username))
+        : null,
+    ),
   );
 
   router.get(

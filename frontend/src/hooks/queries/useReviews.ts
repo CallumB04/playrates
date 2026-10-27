@@ -28,11 +28,22 @@ export const useRecentReviews = (limit: number) =>
         staleTime: 60_000,
     });
 
-export const useUserReviews = (username: string | undefined, enabled = true) =>
+interface UserReviewsOptions {
+    page?: number;
+    /** Left out, the server's default page size. */
+    limit?: number;
+    enabled?: boolean;
+}
+
+export const useUserReviews = (
+    username: string | undefined,
+    { page, limit, enabled = true }: UserReviewsOptions = {}
+) =>
     useQuery({
-        queryKey: queryKeys.reviews.byUsername(username ?? ""),
-        queryFn: () => fetchUserReviews(username!),
+        queryKey: queryKeys.reviews.byUsername(username ?? "", page, limit),
+        queryFn: () => fetchUserReviews(username!, { page, limit }),
         enabled: enabled && !!username,
+        placeholderData: keepPreviousData,
     });
 
 /** Refetch rather than patch: the same review sits in the game list, the site

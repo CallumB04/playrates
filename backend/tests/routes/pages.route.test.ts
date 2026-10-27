@@ -96,6 +96,17 @@ describe("rendered pages", () => {
     expect(response.text).toContain('<meta name="robots" content="noindex" />');
   });
 
+  it("previews a profile's views as the profile, and 404s any other", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const view = await request(app).get("/user/devuser/reviews");
+    expect(view.status).toBe(200);
+    expect(view.text).toContain("<title>devuser / PlayRates</title>");
+
+    const unknown = await request(app).get("/user/devuser/lists");
+    expect(unknown.status).toBe(404);
+  });
+
   it("describes a thread by its opening message, escaped", async () => {
     const { app } = buildTestApp({
       seed: {

@@ -46,6 +46,20 @@ export const canSeeProfile = (
   visibility === "everyone" ||
   (visibility === "friends" && viewer.isFriend);
 
+/** The views under a profile, each at /user/:username/:view. The profile
+ *  itself is the bare /user/:username. Here so the server renders the same
+ *  set the app routes. */
+export const PROFILE_VIEWS = [
+  "games",
+  "reviews",
+  "threads",
+  "friends",
+] as const;
+export type ProfileView = (typeof PROFILE_VIEWS)[number];
+
+export const isProfileView = (value: string): value is ProfileView =>
+  (PROFILE_VIEWS as readonly string[]).includes(value);
+
 /** `.strict()` rejects unknown keys, so only these fields are editable. */
 export const UpdateProfileSchema = z
   .object({

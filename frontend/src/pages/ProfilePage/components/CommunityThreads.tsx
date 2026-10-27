@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import type { ThreadCard as ThreadCardData } from "@playrates/shared";
 import Panel, { panelButtonClass } from "../../../components/ui/Panel";
-import { buttonClass } from "../../../components/ui/Button";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import ThreadCard from "../../../components/community/ThreadCard";
-import { participantThreadsPath } from "../../../components/community/paths";
+import { profilePath } from "../../../lib/profilePaths";
 import { formatCount } from "../../../lib/format";
+import { NoThreads } from "./ListEmpty";
 
 export const COMMUNITY_THREADS_SHOWN = 3;
 
@@ -18,7 +18,8 @@ interface CommunityThreadsProps {
     isOwner: boolean;
 }
 
-/** The last few threads this person started or replied to. */
+/** The last few threads this person started or replied to; the rest are
+ *  on their threads view. */
 const CommunityThreads = ({
     username,
     threads,
@@ -35,25 +36,7 @@ const CommunityThreads = ({
                     <TextSkeleton lines={4} />
                 </div>
             ) : shown.length === 0 ? (
-                <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
-                    <p className="text-body-sm text-content-muted">
-                        {isOwner
-                            ? "Threads you start or reply to will show here."
-                            : `${username} hasn't posted in any threads yet.`}
-                    </p>
-                    {isOwner && (
-                        <Link
-                            to="/community"
-                            className={buttonClass(
-                                "secondary",
-                                "min-h-11 sm:min-h-9",
-                                "sm"
-                            )}
-                        >
-                            Browse the community
-                        </Link>
-                    )}
-                </div>
+                <NoThreads username={username} isOwner={isOwner} />
             ) : (
                 <>
                     {shown.map((thread) => (
@@ -62,7 +45,7 @@ const CommunityThreads = ({
                     {total > shown.length && (
                         <div className="flex p-2 pt-1">
                             <Link
-                                to={participantThreadsPath(username)}
+                                to={profilePath(username, "threads")}
                                 className={panelButtonClass()}
                             >
                                 See all {formatCount(total)}

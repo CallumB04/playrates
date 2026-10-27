@@ -40,11 +40,11 @@ describe("ReEntryPlate", () => {
 
         expect(screen.getByRole("link", { name: /12\s*$/ })).toHaveAttribute(
             "href",
-            "/user/devuser?type=played"
+            "/user/devuser/games?type=played"
         );
         expect(
             screen.getByRole("link", { name: "+2 more on the go" })
-        ).toHaveAttribute("href", "/user/devuser?type=playing");
+        ).toHaveAttribute("href", "/user/devuser/games?type=playing");
         await userEvent.click(screen.getByRole("button", { name: "Update" }));
         expect(onUpdateLog).toHaveBeenCalledOnce();
     });

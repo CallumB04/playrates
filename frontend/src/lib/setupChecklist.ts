@@ -1,4 +1,5 @@
 import type { MyProfile } from "@playrates/shared";
+import { shelfPath } from "./profilePaths";
 
 export type SetupStepKey =
     "picture" | "bio" | "log" | "review" | "friend" | "post";
@@ -66,7 +67,7 @@ export const setupSteps = ({
             // A review hangs off a log, and the played shelf is where they are.
             key: "review",
             label: "Write your first review",
-            to: `/user/${profile.username}?type=played`,
+            to: shelfPath(profile.username, "played"),
             done: reviewCount > 0,
         },
         {

@@ -15,6 +15,7 @@ import { GAME_STATUSES, STATUS_PRESENTATION } from "../../constants/gameStatus";
 import type { MyProfile } from "@playrates/shared";
 import ProfilePicture from "../ProfilePicture";
 import { cn } from "../../lib/cn";
+import { shelfPath } from "../../lib/profilePaths";
 import { useDismiss } from "../../hooks/useDismiss";
 import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
 import type { SetupStep } from "../../lib/setupChecklist";
@@ -211,7 +212,7 @@ const AccountMenu = ({
                             return (
                                 <Link
                                     key={status}
-                                    to={`/user/${user.username}?type=${status}`}
+                                    to={shelfPath(user.username, status)}
                                     onClick={() => setOpen(false)}
                                     className={ITEM}
                                     role="menuitem"

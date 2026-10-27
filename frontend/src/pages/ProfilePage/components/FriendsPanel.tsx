@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { FriendEdge } from "@playrates/shared";
 import FriendProfile from "../../../components/FriendProfile";
@@ -9,6 +8,7 @@ import Panel, {
 import { buttonClass } from "../../../components/ui/Button";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import { formatCount } from "../../../lib/format";
+import { profilePath } from "../../../lib/profilePaths";
 
 interface FriendsPanelProps {
     friends: FriendEdge[];
@@ -17,38 +17,19 @@ interface FriendsPanelProps {
     /** Requests waiting on the owner. Only ever passed on your own profile. */
     pendingCount?: number;
     isLoading: boolean;
-    onOpenFriends: () => void;
-    onOpenRequests: () => void;
+    username: string;
 }
 
 const SHOWN = 6;
 
-const PanelButton = ({
-    onClick,
-    accent = false,
-    children,
-}: {
-    onClick: () => void;
-    accent?: boolean;
-    children: ReactNode;
-}) => (
-    <button
-        type="button"
-        onClick={onClick}
-        className={panelButtonClass(accent)}
-    >
-        {children}
-    </button>
-);
-
-/** The friends summary. The full list and any requests open from here. */
+/** The friends summary. The full list and any requests are on the friends
+ *  view. */
 const FriendsPanel = ({
     friends,
     sharedCount,
     pendingCount = 0,
     isLoading,
-    onOpenFriends,
-    onOpenRequests,
+    username,
 }: FriendsPanelProps) => (
     <Panel
         title="Friends"
@@ -96,15 +77,21 @@ const FriendsPanel = ({
         {!isLoading && (friends.length > 0 || pendingCount > 0) && (
             <div className="mt-1 flex gap-2">
                 {friends.length > 0 && (
-                    <PanelButton onClick={onOpenFriends}>
+                    <Link
+                        to={profilePath(username, "friends")}
+                        className={panelButtonClass()}
+                    >
                         See all {formatCount(friends.length)}
-                    </PanelButton>
+                    </Link>
                 )}
                 {pendingCount > 0 && (
-                    <PanelButton onClick={onOpenRequests} accent>
+                    <Link
+                        to={profilePath(username, "friends")}
+                        className={panelButtonClass(true)}
+                    >
                         {formatCount(pendingCount)} request
                         {pendingCount === 1 ? "" : "s"}
-                    </PanelButton>
+                    </Link>
                 )}
             </div>
         )}

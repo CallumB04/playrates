@@ -32,7 +32,7 @@ describe("MoreSheet", () => {
         sheet({ user: buildProfile({ username: "devuser", isAdmin: true }) });
         expect(screen.getByRole("link", { name: /Backlog/ })).toHaveAttribute(
             "href",
-            "/user/devuser?type=backlog"
+            "/user/devuser/games?type=backlog"
         );
         // The bar's Profile tab is the way there; not twice.
         expect(screen.queryByRole("link", { name: /devuser$/ })).toBeNull();

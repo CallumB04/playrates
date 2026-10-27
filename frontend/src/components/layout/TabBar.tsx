@@ -102,7 +102,8 @@ const TabBar = () => {
     const here = (to: string, exact = false) =>
         isCurrent(to, exact, pathname, search);
     const profileTo = user ? `/user/${user.username}` : "";
-    const onProfile = !!user && here(profileTo, true);
+    // Lit on its views too, not only the profile itself.
+    const onProfile = !!user && here(profileTo);
     // The pages only More leads to, so somewhere on the bar is lit.
     const onMore = here("/settings") || here("/admin");
 

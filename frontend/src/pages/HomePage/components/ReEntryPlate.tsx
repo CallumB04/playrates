@@ -13,6 +13,7 @@ import {
 } from "../../../constants/gameStatus";
 import { formatCount, formatHours, relativeTime } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
+import { shelfPath } from "../../../lib/profilePaths";
 
 interface ReEntryPlateProps {
     username: string;
@@ -73,7 +74,7 @@ const NowPlaying = ({
                     <Link
                         to={
                             backlog > 0
-                                ? `/user/${username}?type=backlog`
+                                ? shelfPath(username, "backlog")
                                 : "/library"
                         }
                         className="relative mt-1 inline-flex items-center gap-1 text-label text-brand before:absolute before:-inset-2.5 before:content-[''] hover:underline sm:before:hidden"
@@ -136,7 +137,7 @@ const NowPlaying = ({
                     </Button>
                     {others > 0 && (
                         <Link
-                            to={`/user/${username}?type=playing`}
+                            to={shelfPath(username, "playing")}
                             className="text-label text-content-secondary hover:text-content"
                         >
                             +{formatCount(others)} more on the go
@@ -165,7 +166,7 @@ const Shelves = ({
             return (
                 <Link
                     key={status}
-                    to={`/user/${username}?type=${status}`}
+                    to={shelfPath(username, status)}
                     className="group flex min-h-11 flex-col items-center justify-center gap-1 px-1 py-3 transition-colors hover:bg-surface-hover/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand lg:items-start lg:justify-center lg:gap-2 lg:px-5 lg:py-5"
                 >
                     <span className="flex items-center gap-1.5 text-label-sm text-content-muted group-hover:text-content-secondary lg:text-label">

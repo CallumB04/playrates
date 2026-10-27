@@ -39,10 +39,12 @@ export const fetchRecentReviews = async (
 };
 
 export const fetchUserReviews = async (
-    username: string
+    username: string,
+    page?: { page?: number; limit?: number }
 ): Promise<Paginated<ReviewWithAuthor>> => {
     const { data } = await api.get<Paginated<ReviewWithAuthor>>(
-        `/users/${username}/reviews`
+        `/users/${username}/reviews`,
+        { params: compactParams(page ?? {}) }
     );
     return data;
 };

@@ -1,18 +1,16 @@
 import { Link } from "react-router-dom";
 import { cardClass } from "../../../components/ui/Card";
-import { headlineOf, type ShelfEntry } from "@playrates/shared";
+import type { ShelfEntry } from "@playrates/shared";
 import type { GameLogSort, Platform } from "@playrates/shared";
 import type { GameStatus } from "../../../constants/gameStatus";
 import type { PaginationState } from "../../../hooks/usePagination";
-import GameTile, { type TileAction } from "../../../components/game/GameTile";
-import Pagination from "../../../components/ui/Pagination";
+import type { TileAction } from "../../../components/game/GameTile";
 import { buttonClass } from "../../../components/ui/Button";
 import { TileSkeleton } from "../../../components/ui/Skeleton";
 import EmptyPlate from "../../../components/ui/EmptyPlate";
 import DrawerTabs from "./DrawerTabs";
-import { displayStatusFor } from "../../../constants/gameStatus";
-import { formatCount } from "../../../lib/format";
-import { shelfFoot } from "../lib/shelfSort";
+import ShelfTile from "./ShelfTile";
+import ListFoot from "./ListFoot";
 import type { ReactNode } from "react";
 
 interface ShelfPanelProps {
@@ -111,70 +109,21 @@ const ShelfPanel = ({
                     />
                 ) : (
                     <div className="grid grid-cols-2 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
-                        {entries.map((entry) => {
-                            // The shelf shows whatever it is ordered by.
-                            const foot = shelfFoot(entry, sort);
-                            // The best ending of its played runs.
-                            const played = headlineOf(
-                                entry.logs.filter((l) => l.status === "played")
-                            );
-                            /* The consoles it was logged on, where the logs
-                               say; the game's own where none do. */
-                            const logged = [
-                                ...new Set(
-                                    entry.logs
-                                        .map((l) => l.platform)
-                                        .filter((p): p is string => !!p)
-                                ),
-                            ];
-
-                            return (
-                                <GameTile
-                                    key={entry.gameId}
-                                    gameId={entry.gameId}
-                                    title={entry.game?.title ?? "Unknown game"}
-                                    coverUrl={entry.game?.coverUrl ?? null}
-                                    platformSlugs={
-                                        logged.length > 0
-                                            ? logged
-                                            : (entry.game?.platforms ?? [])
-                                    }
-                                    platforms={platforms}
-                                    rating={foot.rating}
-                                    footValue={foot.value}
-                                    // Only the played tab carries a substatus.
-                                    status={
-                                        active === "played" && played
-                                            ? displayStatusFor(
-                                                  played.status,
-                                                  played.playedStatus
-                                              )
-                                            : null
-                                    }
-                                    actions={buildTileActions(entry)}
-                                />
-                            );
-                        })}
+                        {entries.map((entry) => (
+                            <ShelfTile
+                                key={entry.gameId}
+                                entry={entry}
+                                shelf={active}
+                                sort={sort}
+                                platforms={platforms}
+                                actions={buildTileActions(entry)}
+                            />
+                        ))}
                     </div>
                 )}
             </div>
 
-            {pagination.total > 0 && (
-                <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-label text-content-muted">
-                        Entries{" "}
-                        {formatCount((pagination.page - 1) * perPage + 1)}–
-                        {formatCount(
-                            Math.min(
-                                pagination.page * perPage,
-                                pagination.total
-                            )
-                        )}{" "}
-                        of {formatCount(pagination.total)}
-                    </p>
-                    <Pagination pagination={pagination} />
-                </div>
-            )}
+            <ListFoot pagination={pagination} />
         </section>
     );
 };

@@ -42,7 +42,7 @@ describe("TabBar", () => {
 
     it("lights Profile on your own profile only", () => {
         expect(
-            bar("/user/devuser?type=backlog").getByRole("link", {
+            bar("/user/devuser/games?type=backlog").getByRole("link", {
                 name: "Profile",
             })
         ).toHaveAttribute("aria-current", "page");

@@ -14,6 +14,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { GAME_STATUSES, STATUS_PRESENTATION } from "../../constants/gameStatus";
 import type { SetupStep } from "../../lib/setupChecklist";
 import { cn } from "../../lib/cn";
+import { shelfPath } from "../../lib/profilePaths";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import { ProgressRing, SetupSteps } from "./SetupSteps";
@@ -121,7 +122,7 @@ const MoreSheet = ({
                             return (
                                 <Link
                                     key={status}
-                                    to={`/user/${user.username}?type=${status}`}
+                                    to={shelfPath(user.username, status)}
                                     onClick={onClose}
                                     className={cn(ROW, "text-content")}
                                 >
