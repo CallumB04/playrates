@@ -2,10 +2,7 @@ import { Link } from "react-router-dom";
 import type { FriendEdge, ReviewWithAuthor } from "@playrates/shared";
 import { useUserShelf } from "../../../hooks/queries/useGameLogs";
 import { usePlatforms } from "../../../hooks/queries/useGames";
-import {
-    useThreads,
-    useUserThreads,
-} from "../../../hooks/queries/useCommunity";
+import { useUserThreads } from "../../../hooks/queries/useCommunity";
 import Panel, { panelButtonClass } from "../../../components/ui/Panel";
 import { TileSkeleton } from "../../../components/ui/Skeleton";
 import { shelfPath } from "../../../lib/profilePaths";
@@ -29,6 +26,7 @@ interface OverviewViewProps {
     reviews: ReviewWithAuthor[];
     reviewTotal: number;
     reviewsLoading: boolean;
+    threadTotal: number;
     friends: FriendEdge[];
     friendsLoading: boolean;
     sharedFriendCount?: number;
@@ -111,6 +109,7 @@ const OverviewView = ({
     reviews,
     reviewTotal,
     reviewsLoading,
+    threadTotal,
     friends,
     friendsLoading,
     sharedFriendCount,
@@ -119,11 +118,6 @@ const OverviewView = ({
     const { data: threads, isLoading: threadsLoading } = useUserThreads(
         username,
         COMMUNITY_THREADS_SHOWN,
-        canSee
-    );
-    // One row, for its total: "See all" says how many there are.
-    const { data: threadTotal } = useThreads(
-        { participant: username, limit: 1 },
         canSee
     );
 
@@ -145,7 +139,7 @@ const OverviewView = ({
                 <CommunityThreads
                     username={username}
                     threads={threads ?? []}
-                    total={threadTotal?.meta.total ?? 0}
+                    total={threadTotal}
                     isLoading={threadsLoading || !canSee}
                     isOwner={isOwner}
                 />

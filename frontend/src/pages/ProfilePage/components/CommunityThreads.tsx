@@ -3,7 +3,7 @@ import type { ThreadCard as ThreadCardData } from "@playrates/shared";
 import Panel, { panelButtonClass } from "../../../components/ui/Panel";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import ThreadCard from "../../../components/community/ThreadCard";
-import { profilePath } from "../../../lib/profilePaths";
+import { postsPath } from "../../../lib/profilePaths";
 import { formatCount } from "../../../lib/format";
 import { NoThreads } from "./ListEmpty";
 
@@ -19,7 +19,7 @@ interface CommunityThreadsProps {
 }
 
 /** The last few threads this person started or replied to; the rest are
- *  on their threads view. */
+ *  on their posts view. */
 const CommunityThreads = ({
     username,
     threads,
@@ -45,7 +45,7 @@ const CommunityThreads = ({
                     {total > shown.length && (
                         <div className="flex p-2 pt-1">
                             <Link
-                                to={profilePath(username, "threads")}
+                                to={postsPath(username, "threads")}
                                 className={panelButtonClass()}
                             >
                                 See all {formatCount(total)}

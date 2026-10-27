@@ -99,7 +99,7 @@ describe("rendered pages", () => {
   it("previews a profile's views as the profile, and 404s any other", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 
-    const view = await request(app).get("/user/devuser/reviews");
+    const view = await request(app).get("/user/devuser/posts");
     expect(view.status).toBe(200);
     expect(view.text).toContain("<title>devuser / PlayRates</title>");
 

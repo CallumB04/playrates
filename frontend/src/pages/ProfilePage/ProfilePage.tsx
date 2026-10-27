@@ -14,6 +14,7 @@ import {
     useUserFriends,
 } from "../../hooks/queries/useFriends";
 import { useUserReviews } from "../../hooks/queries/useReviews";
+import { useThreads } from "../../hooks/queries/useCommunity";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import { profileDescription } from "@playrates/shared";
 import Button, { buttonClass } from "../../components/ui/Button";
@@ -32,8 +33,8 @@ import ProfileModals, { type ProfileModal } from "./components/ProfileModals";
 import { TextSkeleton } from "../../components/ui/Skeleton";
 import OverviewView from "./views/OverviewView";
 import GamesView from "./views/GamesView";
-import ReviewsView, { REVIEWS_PER_PAGE } from "./views/ReviewsView";
-import ThreadsView from "./views/ThreadsView";
+import PostsView from "./views/PostsView";
+import { REVIEWS_PER_PAGE } from "./components/ReviewList";
 import FriendsView from "./views/FriendsView";
 
 interface ProfilePageProps {
@@ -98,6 +99,16 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
         targetUsername,
         { limit: REVIEWS_PER_PAGE, enabled: canSee }
     );
+    // One row, for its total: the tab and "See all" say how many there are.
+    const { data: threadsPage } = useThreads(
+        { participant: targetUsername, limit: 1 },
+        canSee
+    );
+    const reviewCount = reviewsPage?.meta.total;
+    const gameCount =
+        stats &&
+        Object.values(stats.byStatus).reduce((sum, n) => sum + (n ?? 0), 0);
+    const threadCount = threadsPage?.meta.total;
 
     const acceptedFriends = useMemo(
         () => (friends ?? []).filter((edge) => edge.status === "friend"),
@@ -162,7 +173,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                 profile={targetUser}
                 stats={stats}
                 profileHidden={access === "hidden"}
-                reviewCount={reviewsPage?.meta.total}
+                reviewCount={reviewCount}
                 friendCount={
                     friendsLoading ? undefined : acceptedFriends.length
                 }
@@ -255,7 +266,20 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                 />
             ) : (
                 <div className="flex flex-col gap-4">
-                    <ProfileNav username={targetUser.username} />
+                    <ProfileNav
+                        username={targetUser.username}
+                        counts={{
+                            games: gameCount,
+                            posts:
+                                reviewCount === undefined ||
+                                threadCount === undefined
+                                    ? undefined
+                                    : reviewCount + threadCount,
+                            friends: friends
+                                ? acceptedFriends.length
+                                : undefined,
+                        }}
+                    />
                     {isMyAccount &&
                         targetUser.profileVisibility !== "everyone" && (
                             <OwnProfileVisibility
@@ -269,7 +293,8 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                             isOwner={isMyAccount}
                             canSee={canSee}
                             reviews={reviewsPage?.data ?? []}
-                            reviewTotal={reviewsPage?.meta.total ?? 0}
+                            reviewTotal={reviewCount ?? 0}
+                            threadTotal={threadCount ?? 0}
                             reviewsLoading={reviewsLoading}
                             friends={acceptedFriends}
                             friendsLoading={friendsLoading}
@@ -285,18 +310,13 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                             canSee={canSee}
                         />
                     )}
-                    {tab === "reviews" && (
-                        <ReviewsView
+                    {tab === "posts" && (
+                        <PostsView
                             username={targetUsername}
                             isOwner={isMyAccount}
                             canSee={canSee}
-                        />
-                    )}
-                    {tab === "threads" && (
-                        <ThreadsView
-                            username={targetUsername}
-                            isOwner={isMyAccount}
-                            canSee={canSee}
+                            reviewCount={reviewCount}
+                            threadCount={threadCount}
                         />
                     )}
                     {tab === "friends" && (

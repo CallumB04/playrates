@@ -2,19 +2,26 @@ import { NavLink } from "react-router-dom";
 import { profilePath } from "../../../lib/profilePaths";
 import { useOverflowFade } from "../../../hooks/useOverflowFade";
 import { cn } from "../../../lib/cn";
+import type { ProfileView } from "@playrates/shared";
+import { formatCount } from "../../../lib/format";
 import type { ProfileTab } from "../lib/profileViews";
 
 const TABS: { tab: ProfileTab; label: string }[] = [
     { tab: "profile", label: "Profile" },
     { tab: "games", label: "Games" },
-    { tab: "reviews", label: "Reviews" },
-    { tab: "threads", label: "Threads" },
+    { tab: "posts", label: "Posts" },
     { tab: "friends", label: "Friends" },
 ];
 
 /** The views of one profile. Links rather than tabs, so each has a URL to
  *  share and the back button steps between them. */
-const ProfileNav = ({ username }: { username: string }) => {
+interface ProfileNavProps {
+    username: string;
+    /** How many are behind each view, once known. The profile has none. */
+    counts: Partial<Record<ProfileView, number>>;
+}
+
+const ProfileNav = ({ username, counts }: ProfileNavProps) => {
     const fade = useOverflowFade<HTMLDivElement>();
 
     return (
@@ -25,28 +32,36 @@ const ProfileNav = ({ username }: { username: string }) => {
                 style={fade.style}
                 className="-mb-px flex [scrollbar-width:none] overflow-x-auto [contain:layout] sm:gap-1 [&::-webkit-scrollbar]:hidden"
             >
-                {TABS.map(({ tab, label }) => (
-                    <NavLink
-                        key={tab}
-                        to={profilePath(
-                            username,
-                            tab === "profile" ? undefined : tab
-                        )}
-                        end
-                        className={({ isActive }) =>
-                            cn(
-                                // Shares a phone's width five ways rather than scrolling.
-                                "flex min-h-11 flex-1 shrink-0 items-center justify-center border-b-2 px-2 text-body-sm whitespace-nowrap transition-colors sm:flex-none sm:px-4",
-                                "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
-                                isActive
-                                    ? "border-brand font-medium text-content"
-                                    : "border-transparent text-content-secondary hover:text-content"
-                            )
-                        }
-                    >
-                        {label}
-                    </NavLink>
-                ))}
+                {TABS.map(({ tab, label }) => {
+                    const count = tab === "profile" ? undefined : counts[tab];
+                    return (
+                        <NavLink
+                            key={tab}
+                            to={profilePath(
+                                username,
+                                tab === "profile" ? undefined : tab
+                            )}
+                            end
+                            className={({ isActive }) =>
+                                cn(
+                                    // Shares a phone's width rather than scrolling.
+                                    "flex min-h-11 flex-1 shrink-0 items-center justify-center gap-1.5 border-b-2 px-2 text-body-sm whitespace-nowrap transition-colors sm:flex-none sm:px-4",
+                                    "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
+                                    isActive
+                                        ? "border-brand font-medium text-content"
+                                        : "border-transparent text-content-secondary hover:text-content"
+                                )
+                            }
+                        >
+                            {label}
+                            {count !== undefined && (
+                                <span className="font-mono text-label-sm text-content-muted tabular-nums">
+                                    {formatCount(count)}
+                                </span>
+                            )}
+                        </NavLink>
+                    );
+                })}
             </div>
         </nav>
     );

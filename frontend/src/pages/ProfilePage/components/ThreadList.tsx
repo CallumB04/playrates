@@ -1,23 +1,22 @@
 import { useThreads } from "../../../hooks/queries/useCommunity";
 import { usePagination } from "../../../hooks/usePagination";
-import Panel, { PanelCount } from "../../../components/ui/Panel";
+import { cardClass } from "../../../components/ui/Card";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import ThreadCard from "../../../components/community/ThreadCard";
-import { formatCount } from "../../../lib/format";
-import ListFoot from "../components/ListFoot";
-import { NoThreads } from "../components/ListEmpty";
+import ListFoot from "./ListFoot";
+import { NoThreads } from "./ListEmpty";
 import { usePageParam } from "../lib/usePageParam";
 
 const THREADS_PER_PAGE = 10;
 
-interface ThreadsViewProps {
+interface ThreadListProps {
     username: string;
     isOwner: boolean;
     canSee: boolean;
 }
 
 /** Every thread they started or replied to, most recently active first. */
-const ThreadsView = ({ username, isOwner, canSee }: ThreadsViewProps) => {
+const ThreadList = ({ username, isOwner, canSee }: ThreadListProps) => {
     const [page, setPage] = usePageParam();
     const { data, isLoading } = useThreads(
         {
@@ -29,21 +28,18 @@ const ThreadsView = ({ username, isOwner, canSee }: ThreadsViewProps) => {
         canSee
     );
     const threads = data?.data ?? [];
-    const total = data?.meta.total ?? 0;
 
     const pagination = usePagination({
-        total,
+        total: data?.meta.total ?? 0,
         perPage: THREADS_PER_PAGE,
         page,
         onPageChange: setPage,
     });
 
     return (
-        <section>
-            <Panel
-                title="Community threads"
-                trailing={data && <PanelCount value={formatCount(total)} />}
-                bodyClassName="flex flex-col p-1"
+        <>
+            <div
+                className={cardClass("flex flex-col p-1", { padding: "none" })}
             >
                 {isLoading || !canSee ? (
                     <div className="px-3 py-3">
@@ -56,10 +52,10 @@ const ThreadsView = ({ username, isOwner, canSee }: ThreadsViewProps) => {
                         <ThreadCard key={thread.id} thread={thread} />
                     ))
                 )}
-            </Panel>
+            </div>
             <ListFoot pagination={pagination} />
-        </section>
+        </>
     );
 };
 
-export default ThreadsView;
+export default ThreadList;

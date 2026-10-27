@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import type { ReviewWithAuthor } from "@playrates/shared";
 import Panel, { panelButtonClass } from "../../../components/ui/Panel";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
-import { profilePath } from "../../../lib/profilePaths";
+import { postsPath } from "../../../lib/profilePaths";
 import { formatCount } from "../../../lib/format";
 import ReviewRow from "./ReviewRow";
 import { NoReviews } from "./ListEmpty";
@@ -19,7 +19,7 @@ interface RecentReviewsProps {
 
 const SHOWN = 3;
 
-/** Somebody's last few reviews; the rest are on their reviews view. */
+/** Somebody's last few reviews; the rest are on their posts view. */
 const RecentReviews = ({
     username,
     reviews,
@@ -47,7 +47,7 @@ const RecentReviews = ({
                     {total > shown.length && (
                         <div className="flex pt-1">
                             <Link
-                                to={profilePath(username, "reviews")}
+                                to={postsPath(username, "reviews")}
                                 className={panelButtonClass()}
                             >
                                 See all {formatCount(total)}

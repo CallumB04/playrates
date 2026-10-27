@@ -5,6 +5,8 @@ export interface Segment<T extends string> {
     value: T;
     label: string;
     icon?: LucideIcon;
+    /** A figure after the label, already formatted: how many are behind it. */
+    count?: string;
 }
 
 interface SegmentedChoiceProps<T extends string> {
@@ -37,7 +39,7 @@ const SegmentedChoice = <T extends string>({
             className
         )}
     >
-        {segments.map(({ value: option, label: text, icon: Icon }) => {
+        {segments.map(({ value: option, label: text, icon: Icon, count }) => {
             const isActive = option === value;
             return (
                 <button
@@ -51,10 +53,10 @@ const SegmentedChoice = <T extends string>({
                         fill && "flex-1 justify-center",
                         "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                         isActive
-                            /* Flat, no inset rim: a highlight along the top
+                            ? /* Flat, no inset rim: a highlight along the top
                                edge alone shrinks the pill against the sunken
                                track it sits in. */
-                            ? "bg-surface-raised font-medium text-content"
+                              "bg-surface-raised font-medium text-content"
                             : "text-content-secondary hover:text-content"
                     )}
                 >
@@ -66,6 +68,18 @@ const SegmentedChoice = <T extends string>({
                         />
                     )}
                     {text}
+                    {count !== undefined && (
+                        <span
+                            className={cn(
+                                "rounded-full px-1.5 font-mono text-label-sm tabular-nums",
+                                isActive
+                                    ? "bg-surface-sunken text-content-secondary"
+                                    : "text-content-muted"
+                            )}
+                        >
+                            {count}
+                        </span>
+                    )}
                 </button>
             );
         })}
