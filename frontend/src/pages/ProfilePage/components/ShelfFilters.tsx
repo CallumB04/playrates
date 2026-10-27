@@ -120,13 +120,13 @@ const ShelfFilters = ({
                 </Field>
             )}
             {showConsoles && (
-                <Field label="Console">
+                <Field label="Platform">
                     {({ id }) => (
                         <Dropdown
                             id={id}
                             options={systemOptions(
                                 shelfSystems,
-                                "All consoles"
+                                "All platforms"
                             )}
                             value={consoleSlug ?? ""}
                             onChange={(next) =>

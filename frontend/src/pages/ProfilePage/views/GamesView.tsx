@@ -71,7 +71,7 @@ const GamesView = ({
     )
         ? (rawSort as WishlistSort)
         : "rank";
-    const consoleSlug = params.get("console") || undefined;
+    const consoleSlug = params.get("platform") || undefined;
 
     const rawPlayed = params.get("ending");
     const playedStatus: PlayedStatusFilter | undefined =
@@ -157,8 +157,8 @@ const GamesView = ({
 
     const setConsole = (next: string | undefined) => {
         const updated = new URLSearchParams(params);
-        if (next) updated.set("console", next);
-        else updated.delete("console");
+        if (next) updated.set("platform", next);
+        else updated.delete("platform");
         updated.delete("page");
         setParams(updated);
     };
@@ -166,7 +166,7 @@ const GamesView = ({
     const clearFilters = () => {
         const updated = new URLSearchParams(params);
         updated.delete("ending");
-        updated.delete("console");
+        updated.delete("platform");
         updated.delete("page");
         setParams(updated);
     };
@@ -182,7 +182,7 @@ const GamesView = ({
         updated.set("type", status);
         updated.delete("page"); // a new drawer opens at its own first page
         // Each shelf has its own consoles.
-        updated.delete("console");
+        updated.delete("platform");
         // The wishlist sorts its own way; neither set means much to the other.
         if ((status === "wishlist") !== isWishlist) {
             updated.delete("sort");

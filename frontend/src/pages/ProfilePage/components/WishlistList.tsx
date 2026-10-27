@@ -142,7 +142,7 @@ const WishlistList = ({
         : sort !== "rank"
           ? "Sort by your order to rearrange."
           : consoleSlug
-            ? "Clear the console filter to rearrange."
+            ? "Clear the platform filter to rearrange."
             : undefined;
     const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
     const [overId, setOverId] = useState<UniqueIdentifier | null>(null);

@@ -39,7 +39,7 @@ export const ConsoleChips = ({
             })}
             {any && (
                 <li className="inline-flex items-center rounded-xs border border-dashed border-subtle px-1.5 py-0.5 text-label-sm whitespace-nowrap text-content-muted">
-                    Any console
+                    Any platform
                 </li>
             )}
         </ul>

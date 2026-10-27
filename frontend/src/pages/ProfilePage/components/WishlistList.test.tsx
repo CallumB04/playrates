@@ -150,7 +150,7 @@ describe("WishlistList", () => {
         ).toBeInTheDocument();
         expect(
             within(screen.getByText("Game 4").closest("li")!).getByText(
-                "Any console"
+                "Any platform"
             )
         ).toBeInTheDocument();
     });
@@ -201,7 +201,7 @@ describe("WishlistList", () => {
         );
     });
 
-    it("offers no reordering while a console filter hides some of it", async () => {
+    it("offers no reordering while a platform filter hides some of it", async () => {
         const user = await setup({ console: "steam" });
 
         expect(shown()).toEqual(["#1 Game 1", "#2 Game 2"]);
@@ -209,7 +209,7 @@ describe("WishlistList", () => {
             screen.queryByRole("button", { name: /^Move Game/ })
         ).not.toBeInTheDocument();
         expect(
-            screen.getByText("Clear the console filter to rearrange.")
+            screen.getByText("Clear the platform filter to rearrange.")
         ).toBeInTheDocument();
         const sheet = await openSheet(user, "Game 2");
         expect(
