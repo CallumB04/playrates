@@ -433,7 +433,7 @@
     --text-figure--font-weight: 600;
 
     /* A card's one figure: the profile's hours and rating. */
-    --text-figure-stat: clamp(1.5rem, 3.4vw, 2rem); /* 24 → 32 */
+    --text-figure-stat: clamp(1.5625rem, 3.6vw, 2.125rem); /* 25 → 34 */
     --text-figure-stat--line-height: 1;
     --text-figure-stat--letter-spacing: -0.03em;
     --text-figure-stat--font-weight: 600;

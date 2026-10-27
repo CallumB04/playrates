@@ -83,16 +83,11 @@ const ProfileNav = ({
                     aria-hidden
                     className="ml-1.5 shrink-0 text-content-secondary"
                 />
-                <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="text-label-sm text-content-muted">
-                        Showing
-                    </span>
-                    <span className="flex items-center gap-2 text-body font-medium text-content">
-                        {current.label}
-                        {currentCount !== undefined && (
-                            <CountPill value={currentCount} />
-                        )}
-                    </span>
+                <span className="flex min-w-0 flex-1 items-center gap-2 text-body font-medium text-content">
+                    {current.label}
+                    {currentCount !== undefined && (
+                        <CountPill value={currentCount} />
+                    )}
                 </span>
                 {/* Requests wait in Friends; from anywhere else, say so. */}
                 {requestCount > 0 && current.tab !== "friends" && (
