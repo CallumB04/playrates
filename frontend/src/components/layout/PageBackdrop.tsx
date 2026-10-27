@@ -16,7 +16,7 @@ type BackdropSize = "tall" | "short";
 
 const HEIGHT: Record<BackdropSize, string> = {
     tall: "h-[300px] sm:h-[420px] lg:h-[500px]",
-    short: "h-[200px] sm:h-[260px] lg:h-[300px]",
+    short: "h-[230px] sm:h-[320px] lg:h-[380px]",
 };
 
 /**
@@ -80,6 +80,6 @@ const PageBackdrop = ({
 
 /** Room above a page for its backdrop to be seen before the page starts. */
 export const TALL_BACKDROP_OFFSET = "pt-16 sm:pt-28 lg:pt-32";
-export const SHORT_BACKDROP_OFFSET = "pt-10 sm:pt-14 lg:pt-16";
+export const SHORT_BACKDROP_OFFSET = "pt-12 sm:pt-20 lg:pt-24";
 
 export default PageBackdrop;

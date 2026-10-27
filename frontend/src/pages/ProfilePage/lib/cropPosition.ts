@@ -1,9 +1,9 @@
 /* The profile backdrop's height at each breakpoint, as PageBackdrop's
-   "short" size draws it: h-[200px] sm:h-[260px] lg:h-[300px]. */
+   "short" size draws it: h-[230px] sm:h-[320px] lg:h-[380px]. */
 const BACKDROP_HEIGHTS = [
-    { minWidth: 1024, height: 300 },
-    { minWidth: 640, height: 260 },
-    { minWidth: 0, height: 200 },
+    { minWidth: 1024, height: 380 },
+    { minWidth: 640, height: 320 },
+    { minWidth: 0, height: 230 },
 ];
 
 /** The backdrop's width over its height on a window this wide. It spans
