@@ -139,7 +139,7 @@ export const createAdminService = (deps: {
     async searchGames(term: string) {
       // The admin looks after every game, including the ones filtered out
       // of everyone's listings by default.
-      const rows = await games.searchLocal(term, 12, true);
+      const { rows } = await games.searchLocal(term, 12, true);
       return rows.map(toGameSummary);
     },
 

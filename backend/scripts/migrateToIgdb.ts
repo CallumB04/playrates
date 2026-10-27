@@ -29,6 +29,10 @@
  *     Asks IGDB for every game's banner again, after the rule that picks
  *     one changes.
  *
+ *   npm run migrate:igdb -w backend -- --refresh-alt-names
+ *     Asks IGDB for every game's other names ("GTA V", "BotW"), which search
+ *     matches too, and writes the ones that have changed.
+ *
  *   npm run migrate:igdb -w backend -- --trending
  *     Sets the trending games from IGDB now, as the daily job does.
  *
@@ -341,6 +345,60 @@ const refreshBanners = async () => {
   }
 };
 
+/* Each row rewrites its search keys and five trigram indexes with them, so
+   a batch can run past the API's eight second statement timeout. One that
+   does is halved and tried again, down to a single row. */
+const writeAltNames = async (
+  rows: { id: unknown; alt_names: string[] }[],
+): Promise<number> => {
+  // Quietly: it leaves updated_at, and so the sitemap, alone.
+  const { data, error } = await db.rpc("set_game_alt_names", { p_rows: rows });
+  if (!error) return Number(data);
+  if (error.code !== "57014" || rows.length === 1) throw error;
+  const half = Math.ceil(rows.length / 2);
+  return (
+    (await writeAltNames(rows.slice(0, half))) +
+    (await writeAltNames(rows.slice(half)))
+  );
+};
+
+const refreshAltNames = async () => {
+  const provider = requireProvider();
+  let checked = 0;
+  let changed = 0;
+  /* By id rather than by offset: this rewrites the rows it pages through,
+     and an offset deep into a table full of their old versions ran past the
+     timeout on the read alone. */
+  for (let after = 0; ; ) {
+    const { data, error } = await db
+      .from("games")
+      .select("id, igdb_id, alt_names")
+      .not("igdb_id", "is", null)
+      .gt("id", after)
+      .order("id")
+      .limit(PAGE_SIZE);
+    if (error) throw error;
+    const rows = data ?? [];
+    if (rows.length === 0) break;
+    after = rows[rows.length - 1]!.id as number;
+
+    const names = await provider.altNamesOf(
+      rows.map((r) => r.igdb_id as number),
+    );
+    const updates = rows.flatMap((r) => {
+      const next = names.get(r.igdb_id as number) ?? [];
+      const current = (r.alt_names as string[] | null) ?? [];
+      return next.join("\n") === current.join("\n")
+        ? []
+        : [{ id: r.id, alt_names: next }];
+    });
+    changed += await writeAltNames(updates);
+    checked += rows.length;
+    console.log(`${checked} checked, ${changed} changed`);
+    if (rows.length < PAGE_SIZE) break;
+  }
+};
+
 const cleanup = async () => {
   let total = 0;
   for (;;) {
@@ -361,6 +419,7 @@ const steps: [string, () => Promise<void>][] = [
   ["--import", importCatalogue],
   ["--refresh-series", refreshSeries],
   ["--refresh-banners", refreshBanners],
+  ["--refresh-alt-names", refreshAltNames],
   [
     "--trending",
     async () => console.log(await refreshTrending(requireProvider(), repo)),

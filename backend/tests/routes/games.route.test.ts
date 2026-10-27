@@ -56,6 +56,7 @@ const externalGame: ExternalGame = {
   similarIds: [],
   series: null,
   altCovers: [],
+  altNames: [],
 };
 
 describe("games", () => {
@@ -209,6 +210,81 @@ describe("games", () => {
 
     expect(response.status).toBe(200);
     expect(provider.search).not.toHaveBeenCalled();
+  });
+
+  it("puts the title that matches outright above more popular ones", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        games: [
+          buildGame({
+            id: 1,
+            igdb_id: 1,
+            title: "Portal 2",
+            igdb_rating_count: 5000,
+          }),
+          buildGame({
+            id: 2,
+            igdb_id: 2,
+            title: "Portal",
+            igdb_rating_count: 3000,
+          }),
+          buildGame({
+            id: 3,
+            igdb_id: 3,
+            title: "Portal Knights",
+            igdb_rating_count: 900,
+          }),
+        ],
+      },
+    });
+
+    const response = await request(app)
+      .get("/api/v1/games/search?q=portal&remote=false")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.body.data.map((g: { title: string }) => g.title)).toEqual([
+      "Portal",
+      "Portal 2",
+      "Portal Knights",
+    ]);
+  });
+
+  it("finds a game by an abbreviation IGDB lists for it", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        games: [
+          buildGame({
+            id: 1,
+            igdb_id: 1,
+            title: "The Legend of Zelda: Breath of the Wild",
+            alt_names: ["BotW", "TLoZ BotW"],
+          }),
+        ],
+      },
+    });
+
+    const response = await request(app)
+      .get("/api/v1/games/search?q=botw&remote=false")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0].title).toBe(
+      "The Legend of Zelda: Breath of the Wild",
+    );
+  });
+
+  it("finds the words of a title in any order", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .get("/api/v1/games?search=wild%20hunt%20witcher")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.body.data.map((g: { title: string }) => g.title)).toContain(
+      "The Witcher 3: Wild Hunt",
+    );
   });
 
   /**

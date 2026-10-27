@@ -68,6 +68,36 @@ describe("LibraryPage search past the catalogue", () => {
         ).toBeInTheDocument();
     });
 
+    /* A near miss isn't the game meant: say so, and still look further,
+       since the catalogue may not have it yet. */
+    it("shows the closest titles for a near miss, and still looks further", async () => {
+        const searched = vi.fn();
+        const witcher = buildGame({ id: 5, title: "The Witcher 3: Wild Hunt" });
+        server.use(
+            http.get(`${API}/games`, () =>
+                HttpResponse.json({
+                    data: [witcher],
+                    meta: { page: 1, limit: 24, total: 1, approximate: true },
+                })
+            ),
+            http.get(`${API}/games/search`, ({ request }) => {
+                searched(new URL(request.url).searchParams.get("q"));
+                return HttpResponse.json(page([witcher]));
+            })
+        );
+        renderWithProviders(<LibraryPage />, { route: "/library?q=witchr" });
+
+        expect(
+            await screen.findByText("The Witcher 3: Wild Hunt")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText(
+                "Nothing is called “witchr”, so these are the closest titles."
+            )
+        ).toBeInTheDocument();
+        await vi.waitFor(() => expect(searched).toHaveBeenCalledWith("witchr"));
+    });
+
     /* The endpoint is behind a session, as the masthead's typeahead is. */
     it("does not reach past the catalogue for someone signed out", async () => {
         user = null;

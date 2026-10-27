@@ -44,6 +44,8 @@ export interface ExternalGame {
   /** Other covers: special editions, then regional releases. Image ids,
    *  with what each one is. */
   altCovers: AltCover[];
+  /** Other names it goes by, for search: "GTA V", "BotW", other languages. */
+  altNames: string[];
 }
 
 export interface AltCover {

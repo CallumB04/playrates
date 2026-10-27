@@ -75,6 +75,10 @@ export interface GameRow {
   series_name: string | null;
   /** Other covers: IGDB image ids, with what each one is. */
   alt_covers: { imageId: string; label: string }[];
+  /** IGDB's other names for it ("GTA V"), which search also matches. */
+  alt_names: string[];
+  /** Their search keys, space apart; kept by a trigger, never written. */
+  search_alt?: string;
   /** PlayRates logs for this game, maintained by a trigger. */
   log_count: number;
   /** Mean PlayRates rating, also maintained by a trigger. */

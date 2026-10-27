@@ -65,6 +65,7 @@ export const buildGame = (overrides: Partial<GameRow> = {}): GameRow => ({
   series_id: null,
   series_name: null,
   alt_covers: [],
+  alt_names: [],
   log_count: 0,
   avg_rating: null,
   rating_count: 0,

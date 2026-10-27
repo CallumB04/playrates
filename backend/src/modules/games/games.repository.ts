@@ -1,6 +1,6 @@
 import type { GameQuery } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
-import { matchesFromStart, searchKey } from "../../lib/searchKey.js";
+import { matchesFromStart, searchWords } from "../../lib/searchKey.js";
 import { likePrefix, likeTerm } from "../../lib/likeTerm.js";
 import type { ExternalGame } from "../../providers/games/GamesProvider.js";
 import type { GameRowWithPlatforms } from "./games.mapper.js";
@@ -28,12 +28,19 @@ export interface GamesRepository {
     excludeLoggedForUser?: string,
     /** Opt-in, read from the caller's profile. Off hides flagged games. */
     showSexualContent?: boolean,
-  ): Promise<{ rows: GameRowWithPlatforms[]; total: number }>;
+  ): Promise<{
+    rows: GameRowWithPlatforms[];
+    total: number;
+    /** Nothing matched the search, and these are the titles nearest it. */
+    approximate?: boolean;
+  }>;
+  /** Ranked best first. `exact` is how many matched outright rather than
+   *  by being close to what was typed. */
   searchLocal(
     term: string,
     limit: number,
     showSexualContent: boolean,
-  ): Promise<GameRowWithPlatforms[]>;
+  ): Promise<{ rows: GameRowWithPlatforms[]; exact: number }>;
   upsertMany(games: ExternalGame[]): Promise<number[]>;
   statusCounts(gameId: number): Promise<{
     byStatus: Record<string, number>;
@@ -84,24 +91,47 @@ export interface GamesRepository {
   replaceTrending(ids: number[]): Promise<void>;
 }
 
-/** Matches on the search key, so "witcher iii" finds "The Witcher 3". A
- *  term of nothing but punctuation has no key, and falls back to the title. */
+/**
+ * Matches by the rules in lib/gameMatch.ts: the search key within the title
+ * or one of the game's other names, or every word of it within the title. A
+ * term of nothing but punctuation has no key, and falls back to the title.
+ */
 const matchTitle = <
   B extends {
     ilike: (column: string, pattern: string) => B;
     like: (column: string, pattern: string) => B;
+    or: (filters: string) => B;
   },
 >(
   builder: B,
   term: string,
 ): B => {
-  const key = searchKey(term);
+  const words = searchWords(term);
+  const key = words.join("");
   if (!key) return builder.ilike("title", likeTerm(term));
   // The key is lower case already, so LIKE, which the prefix index serves.
-  return matchesFromStart(key)
-    ? builder.like("search_title", likePrefix(key))
-    : builder.ilike("search_title", likeTerm(key));
+  if (matchesFromStart(key)) {
+    return builder.like("search_title", likePrefix(key));
+  }
+  // Keys are a-z and 0-9 alone, so nothing here needs quoting.
+  const anyOrder =
+    words.length > 1
+      ? [`and(${words.map((w) => `search_title.like.*${w}*`).join(",")})`]
+      : [];
+  return builder.or(
+    [
+      `search_title.like.*${key}*`,
+      `search_alt.like.*${key}*`,
+      ...anyOrder,
+    ].join(","),
+  );
 };
+
+/** What public.search_games returns as the tier of a typo match. */
+const CLOSE_TIER = 3;
+
+/** Fewer library matches than this, and typo matches join them. */
+const THIN_RESULTS = 8;
 
 /** Every column an upstream game decides. Ours (log counts, ratings, the
  *  trending flag) are left alone. */
@@ -126,6 +156,7 @@ const toRow = (g: ExternalGame, now: string) => ({
   series_id: g.series?.id ?? null,
   series_name: g.series?.name ?? null,
   alt_covers: g.altCovers,
+  alt_names: g.altNames,
   synced_at: now,
 });
 
@@ -208,131 +239,166 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
   },
 
   async list(query, from, to, excludeLoggedForUser, showSexualContent) {
-    /* Genre and platform filter through an aliased inner join. Collecting ids
-       and passing them to .in() truncates at PostgREST's 1000-row cap, and
-       filtering the embed directly strips a game's other genres. */
-    const select = [SELECT_WITH_RELATIONS];
-    if (query.genre) {
-      select.push("genre_filter:game_genres!inner(genre_slug)");
-    }
-    if (query.platform) {
-      select.push("platform_filter:game_platforms!inner(platform_slug)");
-    }
-
-    let builder = db
-      .from("games")
-      .select(
-        select.join(", "),
-        query.count === false ? undefined : { count: "exact" },
-      );
-
-    if (query.search) builder = matchTitle(builder, query.search);
-    if (query.trending !== undefined) {
-      builder = builder.eq("is_trending", query.trending);
-    }
-    if (!showSexualContent) {
-      builder = builder.eq("has_sexual_content", false);
-    }
-
-    if (query.genre) {
-      builder = builder.eq("genre_filter.genre_slug", query.genre);
-    }
-
-    if (query.platform) {
-      builder = builder.eq("platform_filter.platform_slug", query.platform);
-    }
-
-    // "hide games I have already logged"
-    if (excludeLoggedForUser) {
-      const { data: logged, error: logError } = await db
-        .from("game_logs")
-        .select("game_id")
-        .eq("user_id", excludeLoggedForUser);
-      if (logError) throw logError;
-      const loggedIds = (logged ?? []).map(
-        (r) => (r as { game_id: number }).game_id,
-      );
-      if (loggedIds.length > 0) {
-        builder = builder.not("id", "in", `(${loggedIds.join(",")})`);
+    const run = async (closeIds?: number[]) => {
+      /* Genre and platform filter through an aliased inner join. Collecting ids
+         and passing them to .in() truncates at PostgREST's 1000-row cap, and
+         filtering the embed directly strips a game's other genres. */
+      const select = [SELECT_WITH_RELATIONS];
+      if (query.genre) {
+        select.push("genre_filter:game_genres!inner(genre_slug)");
       }
-    }
+      if (query.platform) {
+        select.push("platform_filter:game_platforms!inner(platform_slug)");
+      }
 
-    if (query.releasedAfter) {
-      builder = builder.gte("release_date", query.releasedAfter);
-    }
-    if (query.releasedBefore) {
-      builder = builder.lte("release_date", query.releasedBefore);
-    }
+      let builder = db
+        .from("games")
+        .select(
+          select.join(", "),
+          query.count === false ? undefined : { count: "exact" },
+        );
 
-    /* "Newest" means newest *released*: an announced game's date is a plan,
-       not a release, and those would take the whole front of this sort. A
-       caller's own releasedBefore still narrows it further, since both
-       bounds apply. */
-    if (query.sort === "released") {
-      builder = builder.lte("release_date", today());
-    }
+      if (closeIds) builder = builder.in("id", closeIds);
+      else if (query.search) builder = matchTitle(builder, query.search);
+      if (query.trending !== undefined) {
+        builder = builder.eq("is_trending", query.trending);
+      }
+      if (!showSexualContent) {
+        builder = builder.eq("has_sexual_content", false);
+      }
 
-    /* Log count is the default: this site's own figures should order it.
-       IGDB's rating count sits underneath as a hidden second key, because
-       almost nothing is logged yet and log_count alone leaves a hundred
-       thousand rows of zero ordered by id. It isn't offered as a sort of its
-       own — somebody else's popularity figure would read as ours. */
-    const desc = { ascending: false, nullsFirst: false } as const;
-    switch (query.sort) {
-      case "title":
-        builder = builder.order("title");
-        break;
-      case "released":
-        builder = builder.order("release_date", desc);
-        break;
-      case "rating":
-        /* Our ratings, not IGDB's. The count is a second key so one lone
-           10.0 doesn't outrank a game fifty people settled at 9.2. */
-        builder = builder.order("avg_rating", desc).order("rating_count", desc);
-        break;
-      case "critic":
-        builder = builder.order("critic_score", desc);
-        break;
-      default:
-        // The trending set comes ranked from IGDB; keep its order.
-        if (query.trending === true) {
-          builder = builder.order("trending_rank", {
-            ascending: true,
-            nullsFirst: false,
-          });
+      if (query.genre) {
+        builder = builder.eq("genre_filter.genre_slug", query.genre);
+      }
+
+      if (query.platform) {
+        builder = builder.eq("platform_filter.platform_slug", query.platform);
+      }
+
+      // "hide games I have already logged"
+      if (excludeLoggedForUser) {
+        const { data: logged, error: logError } = await db
+          .from("game_logs")
+          .select("game_id")
+          .eq("user_id", excludeLoggedForUser);
+        if (logError) throw logError;
+        const loggedIds = (logged ?? []).map(
+          (r) => (r as { game_id: number }).game_id,
+        );
+        if (loggedIds.length > 0) {
+          builder = builder.not("id", "in", `(${loggedIds.join(",")})`);
         }
-        builder = builder
-          .order("log_count", desc)
-          .order("igdb_rating_count", desc);
+      }
+
+      if (query.releasedAfter) {
+        builder = builder.gte("release_date", query.releasedAfter);
+      }
+      if (query.releasedBefore) {
+        builder = builder.lte("release_date", query.releasedBefore);
+      }
+
+      /* "Newest" means newest *released*: an announced game's date is a plan,
+         not a release, and those would take the whole front of this sort. A
+         caller's own releasedBefore still narrows it further, since both
+         bounds apply. */
+      if (query.sort === "released") {
+        builder = builder.lte("release_date", today());
+      }
+
+      /* Log count is the default: this site's own figures should order it.
+         IGDB's rating count sits underneath as a hidden second key, because
+         almost nothing is logged yet and log_count alone leaves a hundred
+         thousand rows of zero ordered by id. It isn't offered as a sort of its
+         own — somebody else's popularity figure would read as ours. */
+      const desc = { ascending: false, nullsFirst: false } as const;
+      switch (query.sort) {
+        case "title":
+          builder = builder.order("title");
+          break;
+        case "released":
+          builder = builder.order("release_date", desc);
+          break;
+        case "rating":
+          /* Our ratings, not IGDB's. The count is a second key so one lone
+             10.0 doesn't outrank a game fifty people settled at 9.2. */
+          builder = builder
+            .order("avg_rating", desc)
+            .order("rating_count", desc);
+          break;
+        case "critic":
+          builder = builder.order("critic_score", desc);
+          break;
+        default:
+          // The trending set comes ranked from IGDB; keep its order.
+          if (query.trending === true) {
+            builder = builder.order("trending_rank", {
+              ascending: true,
+              nullsFirst: false,
+            });
+          }
+          builder = builder
+            .order("log_count", desc)
+            .order("igdb_rating_count", desc);
+      }
+
+      /* The tiebreaker is not optional. Every sort key above collides, and
+         Postgres gives no stable order among equal rows — so deep paging would
+         show some rows twice and skip others. */
+      const { data, error, count } = await builder.order("id").range(from, to);
+      if (error) throw error;
+      // the select string is built at runtime, so supabase-js cannot infer it
+      const rows = (data ?? []) as unknown as GameRowWithPlatforms[];
+      // Uncounted, the total is only what this page reached.
+      return { rows, total: count ?? from + rows.length };
+    };
+
+    const result = await run();
+    if (!query.search || from > 0 || result.total >= THIN_RESULTS) {
+      return result;
     }
 
-    /* The tiebreaker is not optional. Every sort key above collides, and
-       Postgres gives no stable order among equal rows — so deep paging would
-       show some rows twice and skip others. */
-    const { data, error, count } = await builder.order("id").range(from, to);
+    /* Thin, or nothing: what search_games finds instead, which adds the
+       titles nearest what was typed, typos and all, so "witchr" brings The
+       Witcher and not only Witch Rise. With nothing matched outright it is
+       flagged, so the page says so and still looks upstream for a game the
+       catalogue may simply not have. */
+    const { data: hits, error } = await db.rpc("search_games", {
+      p_query: query.search,
+      p_limit: 50,
+      p_include_sexual: showSexualContent ?? false,
+    });
     if (error) throw error;
-    // the select string is built at runtime, so supabase-js cannot infer it
-    const rows = (data ?? []) as unknown as GameRowWithPlatforms[];
-    // Uncounted, the total is only what this page reached.
-    return { rows, total: count ?? from + rows.length };
+    const ids = ((hits ?? []) as { id: number }[]).map((h) => h.id);
+    if (ids.length <= result.total) return result;
+    const wider = await run(ids);
+    return result.total === 0 ? { ...wider, approximate: true } : wider;
   },
 
   async searchLocal(term, limit, showSexualContent) {
-    let builder = matchTitle(
-      db.from("games").select(SELECT_WITH_RELATIONS),
-      term,
-    );
-
-    // The same rule the listing runs. Search had been the way round it.
-    if (!showSexualContent) {
-      builder = builder.eq("has_sexual_content", false);
-    }
-
-    const { data, error } = await builder
-      .order("igdb_rating_count", { ascending: false, nullsFirst: false })
-      .limit(limit);
+    const { data: hits, error } = await db.rpc("search_games", {
+      p_query: term,
+      p_limit: limit,
+      p_include_sexual: showSexualContent,
+    });
     if (error) throw error;
-    return (data ?? []) as GameRowWithPlatforms[];
+    const ranked = (hits ?? []) as { id: number; tier: number }[];
+    if (ranked.length === 0) return { rows: [], exact: 0 };
+
+    const { data, error: readError } = await db
+      .from("games")
+      .select(SELECT_WITH_RELATIONS)
+      .in(
+        "id",
+        ranked.map((h) => h.id),
+      );
+    if (readError) throw readError;
+    const byId = new Map(
+      ((data ?? []) as GameRowWithPlatforms[]).map((row) => [row.id, row]),
+    );
+    return {
+      rows: ranked.flatMap((h) => byId.get(h.id) ?? []),
+      exact: ranked.filter((h) => h.tier < CLOSE_TIER).length,
+    };
   },
 
   /** Upserts a batch on the IGDB id and replaces their platform, system and

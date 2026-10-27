@@ -23,7 +23,9 @@ import { toGame, type GameRowWithRelations } from "./games.mapper.js";
 /** Enough to fill a row on a wide screen without it scrolling forever. */
 const RELATED_PER_ROW = 8;
 
-/** Below this many local hits, a search falls through to the provider. */
+/** Below this many local hits, a search falls through to the provider. Typo
+ *  matches don't count: close to what was typed is not what was meant, and
+ *  a page of them would stop a missing game from ever being fetched. */
 const LOCAL_RESULT_THRESHOLD = 8;
 
 /** A trending rail shorter than this looks broken rather than curated. */
@@ -135,7 +137,7 @@ export const createGamesService = (
 
       const showSexualContent = await canSeeExplicit(callerId);
 
-      const { rows, total } = await repo.list(
+      const { rows, total, approximate } = await repo.list(
         query,
         from,
         to,
@@ -143,6 +145,10 @@ export const createGamesService = (
         showSexualContent,
       );
 
+      if (approximate) {
+        const page = paginate(rows.map(toGame), pagination, total);
+        return { ...page, meta: { ...page.meta, approximate } };
+      }
       if (!needsTopUp(query, pagination, rows.length)) {
         return paginate(rows.map(toGame), pagination, total);
       }
@@ -270,10 +276,10 @@ export const createGamesService = (
       const shouldGoRemote =
         allowRemote &&
         provider.isConfigured &&
-        local.length < LOCAL_RESULT_THRESHOLD;
+        local.exact < LOCAL_RESULT_THRESHOLD;
 
       if (!shouldGoRemote) {
-        return paginate(local.map(toGame), pagination, local.length);
+        return paginate(local.rows.map(toGame), pagination, local.rows.length);
       }
 
       /* The provider is an enrichment, not the source: an outage upstream
@@ -289,7 +295,7 @@ export const createGamesService = (
           actorId: callerId,
           data: { term, failed: true, error: errorText(error) },
         });
-        return paginate(local.map(toGame), pagination, local.length);
+        return paginate(local.rows.map(toGame), pagination, local.rows.length);
       }
 
       const { added } = await upsertCounting(external);
@@ -297,10 +303,10 @@ export const createGamesService = (
         kind: "search_pull",
         source: "search",
         actorId: callerId,
-        data: { term, fetched: external.length, added, localHits: local.length },
+        data: { term, fetched: external.length, added, localHits: local.exact },
       });
 
-      const refreshed = await repo.searchLocal(
+      const { rows: refreshed } = await repo.searchLocal(
         term,
         pagination.limit,
         showSexualContent,
