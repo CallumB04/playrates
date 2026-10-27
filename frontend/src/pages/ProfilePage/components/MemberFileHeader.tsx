@@ -1,12 +1,16 @@
-import type { Profile } from "@playrates/shared";
+import type { Profile, UserStats } from "@playrates/shared";
 import type { ReactNode } from "react";
 import ProfilePicture from "../../../components/ProfilePicture";
 import PresenceDot from "../../../components/ui/PresenceDot";
 import UserStatus from "../../../components/UserStatus";
-import { formatMonthYear } from "../../../lib/format";
+import RatingBadge from "../../../components/ui/RatingBadge";
+import { figureClass } from "../../../components/ui/Figure";
+import { formatHours, formatMonthYear } from "../../../lib/format";
 
 interface MemberFileHeaderProps {
     profile: Profile;
+    /** Their figures, once this viewer may see them and they have loaded. */
+    stats?: UserStats;
     /** When the viewer and this member became friends, if they are. */
     friendsSince?: string;
     /** A friend request from them, waiting on the viewer's answer. */
@@ -20,6 +24,7 @@ interface MemberFileHeaderProps {
 /** The top of a profile: who they are, and what you can do about it. */
 const MemberFileHeader = ({
     profile,
+    stats,
     friendsSince,
     request,
     action,
@@ -70,6 +75,24 @@ const MemberFileHeader = ({
                 {profile.bio && (
                     <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-content-secondary">
                         {profile.bio}
+                    </p>
+                )}
+
+                {stats && (
+                    <p className="mt-3 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-label text-content-muted">
+                        <span className="flex items-baseline gap-1.5">
+                            <span className={figureClass("row")}>
+                                {formatHours(stats.hoursPlayed)}
+                            </span>
+                            played
+                        </span>
+                        <span className="flex items-baseline gap-1.5">
+                            <RatingBadge
+                                value={stats.averageRating}
+                                size="row"
+                            />
+                            average rating
+                        </span>
                     </p>
                 )}
             </div>

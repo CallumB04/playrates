@@ -192,6 +192,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
             )}
             <MemberFileHeader
                 profile={targetUser}
+                stats={canSee ? stats : undefined}
                 friendsSince={
                     relation === "friend" ? friendEdge?.createdAt : undefined
                 }
@@ -321,7 +322,6 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                             username={targetUsername}
                             isOwner={isMyAccount}
                             canSee={canSee}
-                            stats={stats}
                         />
                     )}
                     {tab === "games" && (
