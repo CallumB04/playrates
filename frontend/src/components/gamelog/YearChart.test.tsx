@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { buildGameLog } from "../../../test/msw/handlers";
+import { buildGameLog } from "../../test/msw/handlers";
 import YearChart from "./YearChart";
 
 const NOTE = "Games you finish this year chart here";

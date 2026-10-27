@@ -5,7 +5,7 @@ import type { GameLogWithGame } from "../../../api";
 import Button from "../../../components/ui/Button";
 import GameCover from "../../../components/game/GameCover";
 import RatingBadge from "../../../components/ui/RatingBadge";
-import YearChart from "./YearChart";
+import YearChart from "../../../components/gamelog/YearChart";
 import { usePlayedOn } from "../../../components/gamelog/usePlayedOn";
 import {
     GAME_STATUSES,

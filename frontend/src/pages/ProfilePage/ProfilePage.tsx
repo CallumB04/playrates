@@ -115,9 +115,8 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
         canSee
     );
     const reviewCount = reviewsPage?.meta.total;
-    const gameCount =
-        stats &&
-        Object.values(stats.byStatus).reduce((sum, n) => sum + (n ?? 0), 0);
+    // Each game once, though it can sit on more than one shelf.
+    const gameCount = stats?.gameCount;
     const threadCount = threadsPage?.meta.total;
 
     const acceptedFriends = useMemo(
@@ -299,6 +298,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                 <div className="flex flex-col gap-4">
                     <ProfileNav
                         username={targetUser.username}
+                        active={tab}
                         counts={{
                             games: gameCount,
                             reviews: reviewCount,
@@ -316,7 +316,14 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                             />
                         )}
 
-                    {tab === "profile" && <OverviewView stats={stats} />}
+                    {tab === "profile" && (
+                        <OverviewView
+                            username={targetUsername}
+                            isOwner={isMyAccount}
+                            canSee={canSee}
+                            stats={stats}
+                        />
+                    )}
                     {tab === "games" && (
                         <GamesView
                             username={targetUsername}

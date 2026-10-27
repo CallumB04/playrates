@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import type { GameLogWithGame } from "../../../api";
-import { cn } from "../../../lib/cn";
+import type { GameLogWithGame } from "../../api";
+import { cn } from "../../lib/cn";
 
 const MONTHS = [
     "J",
