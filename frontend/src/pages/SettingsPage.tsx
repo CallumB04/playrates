@@ -111,7 +111,7 @@ const Setting = ({
 const FieldSetting = ({ label, help, children }: SettingProps) => (
     <div className="flex flex-col gap-2.5 py-4 first:pt-0 last:pb-0">
         <Title label={label} help={help} />
-        <div className="max-w-md">{children}</div>
+        <div>{children}</div>
     </div>
 );
 
@@ -412,7 +412,7 @@ const SettingsPage = () => {
                     <BackgroundSetting profile={user} />
                 </Group>
                 <Group title="Bio">
-                    <div className="max-w-xl">
+                    <div>
                         <Field
                             label="Bio"
                             labelHidden
@@ -439,7 +439,7 @@ const SettingsPage = () => {
                     </div>
                 </Group>
                 <Group title="About you">
-                    <div className="flex max-w-xl flex-col gap-4">
+                    <div className="flex flex-col gap-4">
                         <div className="grid gap-4 sm:grid-cols-2">
                             {aboutInputs("about", true)}
                         </div>
@@ -447,7 +447,7 @@ const SettingsPage = () => {
                     </div>
                 </Group>
                 <Group title="Socials">
-                    <div className="flex max-w-xl flex-col gap-4">
+                    <div className="flex flex-col gap-4">
                         {aboutInputs("socials")}
                         <p className="text-label-sm text-content-muted">
                             Choose who sees each in{" "}
@@ -524,7 +524,7 @@ const SettingsPage = () => {
                     </Setting>
                 </Group>
                 <Group title="About details">
-                    <div className="max-w-xl">
+                    <div>
                         <AboutPrivacy
                             about={user.about}
                             visibility={aboutVisibility}
@@ -626,7 +626,9 @@ const SettingsPage = () => {
                     active={section}
                     onSelect={setSection}
                 />
-                <div className="max-w-2xl min-w-0 divide-y divide-subtle">
+                {/* One width for every section, so switching between them
+                    doesn't move the edge things line up to. */}
+                <div className="max-w-xl min-w-0 divide-y divide-subtle">
                     {panels[section]}
                 </div>
             </div>

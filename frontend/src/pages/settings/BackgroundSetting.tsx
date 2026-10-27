@@ -25,7 +25,7 @@ const BackgroundSetting = ({ profile }: { profile: MyProfile }) => {
         });
 
     return (
-        <div className="flex max-w-xl flex-col gap-3">
+        <div className="flex flex-col gap-3">
             <div
                 style={{ aspectRatio: backdropAspect(REFERENCE_WIDTH) }}
                 className="overflow-hidden rounded-md border border-subtle bg-surface-sunken"
