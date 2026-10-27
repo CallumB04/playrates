@@ -628,7 +628,7 @@ const SettingsPage = () => {
                 />
                 {/* One width for every section, so switching between them
                     doesn't move the edge things line up to. */}
-                <div className="max-w-xl min-w-0 divide-y divide-subtle">
+                <div className="max-w-2xl min-w-0 divide-y divide-subtle">
                     {panels[section]}
                 </div>
             </div>
