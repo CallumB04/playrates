@@ -4,6 +4,11 @@ import type { AuthAdmin } from "./config/authAdmin.js";
 import type { AvatarStore } from "./config/avatarStore.js";
 import type { CommunityImageStore } from "./config/communityImageStore.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
+import { createFavouritesService } from "./modules/favourites/favourites.service.js";
+import {
+  createMyFavouritesRouter,
+  createUserFavouritesRouter,
+} from "./modules/favourites/favourites.routes.js";
 import { createProfilesService } from "./modules/profiles/profiles.service.js";
 import { createProfilesRouter } from "./modules/profiles/profiles.routes.js";
 import { createProfileGate } from "./modules/profiles/profileGate.js";
@@ -90,8 +95,14 @@ export const buildRoutes = ({
       hasLogged: async (userId, gameId) =>
         (await repos.gameLogs.listByUserAndGame(userId, gameId)).length > 0,
     },
+    async (a, b) => (await repos.friends.find(a, b))?.status === "accepted",
   );
   const profileGate = createProfileGate(repos.profiles, repos.friends);
+  const favourites = createFavouritesService(
+    repos.favourites,
+    repos.games,
+    profileGate,
+  );
   const gameLogs = createGameLogsService(
     repos.gameLogs,
     repos.games,
@@ -173,7 +184,7 @@ export const buildRoutes = ({
 
   router.use(
     "/profiles",
-    createProfilesRouter({ service: profiles, requireAuth }),
+    createProfilesRouter({ service: profiles, requireAuth, optionalAuth }),
   );
 
   // "me" routes are grouped so the acting user always comes from the token
@@ -197,6 +208,14 @@ export const buildRoutes = ({
   router.use(
     "/me/reviews",
     createMyReviewsRouter({ service: reviews, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/me/favourites",
+    createMyFavouritesRouter({
+      service: favourites,
+      requireAuth,
+      optionalAuth,
+    }),
   );
   router.use(
     "/me/friends",
@@ -231,6 +250,14 @@ export const buildRoutes = ({
   router.use(
     "/users/:username/friends",
     createUserFriendsRouter({ service: friends, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/users/:username/favourites",
+    createUserFavouritesRouter({
+      service: favourites,
+      requireAuth,
+      optionalAuth,
+    }),
   );
 
   router.use(

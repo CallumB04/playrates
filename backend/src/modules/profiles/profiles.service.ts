@@ -7,7 +7,11 @@ import type {
   SetProfileBackgroundInput,
   UpdateProfileInput,
 } from "@playrates/shared";
-import { AVATAR_MAX_BYTES, AVATAR_PIXELS } from "@playrates/shared";
+import {
+  AVATAR_MAX_BYTES,
+  AVATAR_PIXELS,
+  steamProfileUrl,
+} from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { cleanUpload } from "../../lib/cleanUpload.js";
 import { paginate, toRange } from "../../lib/pagination.js";
@@ -18,7 +22,12 @@ import type {
   AccountData,
   AccountExportRepository,
 } from "./accountExport.repository.js";
-import { toMyProfile, toProfile } from "./profiles.mapper.js";
+import {
+  aboutNeedsFriendship,
+  aboutVisibilityOf,
+  toMyProfile,
+  toProfile,
+} from "./profiles.mapper.js";
 
 export interface AccountExport extends AccountData {
   exportedAt: string;
@@ -38,6 +47,8 @@ export const createProfilesService = (
   avatars: AvatarStore,
   exports: AccountExportRepository,
   backgrounds: BackgroundSource,
+  /** Whether two people are friends, for the About fields kept to friends. */
+  areFriends: (a: string, b: string) => Promise<boolean>,
 ) => ({
   /** The caller's own, so it carries their settings. */
   async getById(id: string): Promise<MyProfile> {
@@ -97,10 +108,17 @@ export const createProfilesService = (
     return toMyProfile(await repo.update(callerId, { avatar_url: null }));
   },
 
-  async getByUsername(username: string): Promise<Profile> {
+  /** Anyone's profile, its About fields cut to what this viewer may see. */
+  async getByUsername(username: string, viewerId?: string): Promise<Profile> {
     const row = await repo.findByUsername(username);
     if (!row) throw AppError.notFound("Profile");
-    return toProfile(row);
+    const isOwner = row.id === viewerId;
+    // Only worth the lookup when a field kept to friends has something in it.
+    const isFriend =
+      !isOwner && viewerId !== undefined && aboutNeedsFriendship(row)
+        ? await areFriends(row.id, viewerId)
+        : false;
+    return toProfile(row, Date.now(), { isOwner, isFriend });
   },
 
   async search(
@@ -165,6 +183,24 @@ export const createProfilesService = (
       patch.profile_visibility = input.profileVisibility;
     }
     if (input.accent !== undefined) patch.accent = input.accent;
+
+    // An empty string clears a field, as it does the first name.
+    if (input.pronouns !== undefined) patch.pronouns = input.pronouns || null;
+    if (input.location !== undefined) patch.location = input.location || null;
+    if (input.website !== undefined) patch.website = input.website || null;
+    if (input.discord !== undefined) patch.discord = input.discord || null;
+    if (input.steam !== undefined) {
+      // Stored as the profile's address, whichever form was typed.
+      patch.steam = input.steam ? steamProfileUrl(input.steam) : null;
+    }
+    if (input.aboutVisibility !== undefined) {
+      const row = await repo.findById(callerId);
+      if (!row) throw AppError.notFound("Profile");
+      patch.about_visibility = {
+        ...aboutVisibilityOf(row),
+        ...input.aboutVisibility,
+      };
+    }
 
     if (Object.keys(patch).length === 0) {
       return this.getById(callerId);

@@ -38,6 +38,15 @@ export interface ProfileRow {
   background_game_id: number | null;
   /** 0 to 100, top to bottom; null for the default. */
   background_position: number | null;
+  pronouns: string | null;
+  location: string | null;
+  /** http(s) only; the check on the column holds it there. */
+  website: string | null;
+  discord: string | null;
+  /** Always a steamcommunity.com profile address, whatever was typed. */
+  steam: string | null;
+  /** Each About field's visibility where it differs from the default. */
+  about_visibility: Record<string, string>;
   created_at: string;
   updated_at: string;
 }

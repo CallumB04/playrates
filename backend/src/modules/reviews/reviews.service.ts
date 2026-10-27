@@ -100,7 +100,6 @@ export const createReviewsService = (
           ? {
               id: row.user_id,
               username: row.author_username ?? "Unknown user",
-              firstName: row.author_first_name,
               avatarUrl: row.author_avatar_url ?? null,
               accent: toAccent(row.author_accent),
               online: row.author_last_seen_at

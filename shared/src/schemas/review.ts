@@ -32,7 +32,6 @@ export interface Review {
 export interface ReviewAuthor {
   id: string;
   username: string;
-  firstName: string | null;
   avatarUrl: string | null;
   /** Colours the generated avatar where there is no picture. */
   accent: ProfileAccent;

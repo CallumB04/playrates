@@ -18,6 +18,7 @@ import type { ProfilesService } from "./profiles.service.js";
 interface Deps {
   service: ProfilesService;
   requireAuth: RequestHandler;
+  optionalAuth: RequestHandler;
 }
 
 /** Every authenticated route has req.auth set by the time it runs. */
@@ -57,6 +58,7 @@ const avatarLimiter = rateLimit({
 export const createProfilesRouter = ({
   service,
   requireAuth,
+  optionalAuth,
 }: Deps): Router => {
   const router = Router();
   const usernameCheckLimiter = perMinute(30);
@@ -173,10 +175,11 @@ export const createProfilesRouter = ({
 
   router.get(
     "/:username",
+    optionalAuth,
     validate({ params: UsernameParamSchema }),
     async (req, res) => {
       const { username } = req.valid!.params as { username: string };
-      res.json(await service.getByUsername(username));
+      res.json(await service.getByUsername(username, req.auth?.userId));
     },
   );
 

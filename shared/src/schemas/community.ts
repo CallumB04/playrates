@@ -77,7 +77,6 @@ export const COMMUNITY_IMAGE_MAX_EDGE = 1600;
 export interface CommunityAuthor {
   id: string;
   username: string;
-  firstName: string | null;
   avatarUrl: string | null;
   accent: ProfileAccent;
 }

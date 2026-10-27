@@ -29,7 +29,6 @@ const toAuthor = (
     ? {
         id,
         username: row.author_username,
-        firstName: row.author_first_name,
         avatarUrl: row.author_avatar_url,
         accent: toAccent(row.author_accent),
       }

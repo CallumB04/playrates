@@ -21,6 +21,8 @@ export interface GameStatsRow {
 export interface GamesRepository {
   findById(id: number): Promise<GameRowWithPlatforms | null>;
   findByIgdbId(igdbId: number): Promise<GameRowWithPlatforms | null>;
+  /** In no particular order; ids with no game are left out. */
+  findByIds(ids: number[]): Promise<GameRowWithPlatforms[]>;
   list(
     query: GameQuery,
     from: number,
@@ -228,6 +230,16 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       .maybeSingle();
     if (error) throw error;
     return (data as GameRowWithPlatforms | null) ?? null;
+  },
+
+  async findByIds(ids) {
+    if (ids.length === 0) return [];
+    const { data, error } = await db
+      .from("games")
+      .select(SELECT_WITH_RELATIONS)
+      .in("id", ids);
+    if (error) throw error;
+    return (data ?? []) as GameRowWithPlatforms[];
   },
 
   async findByIgdbId(igdbId) {

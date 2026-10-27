@@ -84,6 +84,7 @@ export interface SeedData {
   igdbUsage?: IgdbUsageDayRow[];
   serverErrors?: ServerErrorRow[];
   contentReports?: ContentReportRow[];
+  favouriteGames?: { user_id: string; game_id: number; position: number }[];
 }
 
 export interface InMemoryState {
@@ -113,6 +114,7 @@ export interface InMemoryState {
   serverErrors: ServerErrorRow[];
   announcements: AnnouncementRow[];
   contentReports: ContentReportRow[];
+  favouriteGames: { user_id: string; game_id: number; position: number }[];
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
@@ -150,6 +152,7 @@ export const createInMemoryRepos = (
     serverErrors: [...(seed.serverErrors ?? [])],
     announcements: [],
     contentReports: [...(seed.contentReports ?? [])],
+    favouriteGames: [...(seed.favouriteGames ?? [])],
   };
 
   let nextLogId = 1000;
@@ -479,6 +482,9 @@ export const createInMemoryRepos = (
       async findByIgdbId(igdbId) {
         const game = state.games.find((g) => g.igdb_id === igdbId);
         return game ? withPlatforms(game) : null;
+      },
+      async findByIds(ids) {
+        return state.games.filter((g) => ids.includes(g.id)).map(withPlatforms);
       },
       async setBackdrops(id, backdrops) {
         const game = state.games.find((g) => g.id === id);
@@ -1484,6 +1490,24 @@ export const createInMemoryRepos = (
     },
 
     community: createInMemoryCommunity(state),
+    favourites: {
+      async listIds(userId) {
+        return state.favouriteGames
+          .filter((f) => f.user_id === userId)
+          .sort((a, b) => a.position - b.position)
+          .map((f) => f.game_id);
+      },
+      async set(userId, gameIds) {
+        state.favouriteGames = [
+          ...state.favouriteGames.filter((f) => f.user_id !== userId),
+          ...gameIds.map((game_id, position) => ({
+            user_id: userId,
+            game_id,
+            position,
+          })),
+        ];
+      },
+    },
     gameEvents: createInMemoryGameEvents(state),
     admin: createInMemoryAdmin(state),
 

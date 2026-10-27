@@ -1,5 +1,6 @@
 export * from "./schemas/common.js";
 export * from "./schemas/profile.js";
+export * from "./schemas/about.js";
 export * from "./schemas/avatar.js";
 export * from "./schemas/profileAccent.js";
 export * from "./schemas/game.js";

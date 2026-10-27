@@ -1,5 +1,11 @@
 import { z } from "zod";
 import { ProfileAccentSchema, type ProfileAccent } from "./profileAccent.js";
+import {
+  AboutFieldsSchema,
+  AboutVisibilitySchema,
+  type AboutVisibility,
+  type ProfileAbout,
+} from "./about.js";
 
 export const UsernameSchema = z
   .string()
@@ -99,7 +105,10 @@ export const UpdateProfileSchema = z
     /** Asks search engines to leave the profile page out. */
     hideFromSearch: z.boolean().optional(),
     profileVisibility: ProfileVisibilitySchema.optional(),
+    /** Who sees each About field; only the ones named change. */
+    aboutVisibility: AboutVisibilitySchema.optional(),
   })
+  .merge(AboutFieldsSchema)
   .strict();
 
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
@@ -112,8 +121,6 @@ export const CheckUsernameSchema = z.object({
 export interface Profile {
   id: string;
   username: string;
-  /** Optional. Greetings use this before falling back to the username. */
-  firstName: string | null;
   bio: string;
   avatarUrl: string | null;
   /** The colour this profile wears. Every profile has one. */
@@ -132,6 +139,8 @@ export interface Profile {
   hideFromSearch: boolean;
   /** Public so the page can say why the rest of it is missing. */
   profileVisibility: ProfileVisibility;
+  /** The About fields this viewer may see, and only those filled in. */
+  about: ProfileAbout;
   createdAt: string;
 }
 
@@ -141,6 +150,10 @@ export interface Profile {
  * carries only what a profile page shows.
  */
 export interface MyProfile extends Profile {
+  /** Optional. Greetings use this before falling back to the username. */
+  firstName: string | null;
+  /** Who sees each About field. `about` here is every field filled in. */
+  aboutVisibility: AboutVisibility;
   showSexualContent: boolean;
   /** IANA zone name. Timestamps render in this; dates you picked do not move. */
   timezone: string;
