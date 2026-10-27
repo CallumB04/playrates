@@ -46,11 +46,13 @@ const BackdropArt = ({
             style={{ objectPosition: `center ${position}%` }}
             className="size-full object-cover"
         />
-        {/* Dims it enough for the title over its lower half, in either
-            theme, and darkens the sides so a wide window has no hard edge
-            where the picture stops. */}
-        <span className="absolute inset-0 bg-surface/45" />
-        <span className="absolute inset-0 bg-linear-to-r from-surface/70 via-transparent to-surface/70" />
+        {/* Dims it enough for the title over its lower half, and fades
+            the sides so a wide window has no hard edge where the picture
+            stops. Lighter by day: the page's colour there is near white, so
+            the night's wash turned a picture to milk. The fade at the foot
+            still sets the title on the page. */}
+        <span className="absolute inset-0 bg-surface/15 dark:bg-surface/45" />
+        <span className="absolute inset-0 bg-linear-to-r from-surface/40 via-transparent to-surface/40 dark:from-surface/70 dark:to-surface/70" />
     </div>
 );
 
