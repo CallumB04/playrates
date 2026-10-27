@@ -1,4 +1,5 @@
-import { Pencil } from "lucide-react";
+import { Link2, MapPin, Pencil, Speech, UserRound } from "lucide-react";
+import { SiDiscord, SiSteam } from "@icons-pack/react-simple-icons";
 import type {
     AboutField,
     AboutVisibility,
@@ -7,17 +8,22 @@ import type {
 } from "@playrates/shared";
 import Panel from "../../../components/ui/Panel";
 import Button from "../../../components/ui/Button";
+import type { IconComponent } from "../../../lib/icons";
 import { linkLabel, steamLabel } from "../lib/about";
 import PrivacySelect from "./PrivacySelect";
 import { cn } from "../../../lib/cn";
 
-const ROWS: { field: AboutField; label: string }[] = [
-    { field: "firstName", label: "Name" },
-    { field: "pronouns", label: "Pronouns" },
-    { field: "location", label: "Location" },
-    { field: "website", label: "Website" },
-    { field: "discord", label: "Discord" },
-    { field: "steam", label: "Steam" },
+const ROWS: {
+    field: AboutField;
+    label: string;
+    icon: IconComponent;
+}[] = [
+    { field: "firstName", label: "Name", icon: UserRound },
+    { field: "pronouns", label: "Pronouns", icon: Speech },
+    { field: "location", label: "Location", icon: MapPin },
+    { field: "website", label: "Website", icon: Link2 },
+    { field: "discord", label: "Discord", icon: SiDiscord },
+    { field: "steam", label: "Steam", icon: SiSteam },
 ];
 
 const Value = ({ field, value }: { field: AboutField; value: string }) => {
@@ -89,7 +95,7 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
 
             {rows.length > 0 && (
                 <dl className="mt-4 flex flex-col gap-2.5 border-t border-subtle pt-4">
-                    {rows.map(({ field, label }) => {
+                    {rows.map(({ field, label, icon: Icon }) => {
                         const value = profile.about[field];
                         return (
                             <div
@@ -100,15 +106,19 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
                                     owner && "max-sm:min-h-11"
                                 )}
                             >
-                                <dt className="w-20 shrink-0 text-content-muted">
-                                    {label}
+                                {/* The mark says which it is, Discord's and
+                                    Steam's above all; the word is for a
+                                    screen reader. */}
+                                <dt className="flex w-5 shrink-0 justify-center text-content-muted">
+                                    <Icon size={16} aria-hidden />
+                                    <span className="sr-only">{label}</span>
                                 </dt>
                                 <dd className="min-w-0 flex-1">
                                     {value ? (
                                         <Value field={field} value={value} />
                                     ) : (
                                         <span className="text-content-muted">
-                                            Not set
+                                            {label} not set
                                         </span>
                                     )}
                                 </dd>

@@ -14,7 +14,8 @@ interface FavouriteGamesProps {
     onEdit?: () => void;
 }
 
-const GRID = "grid grid-cols-5 gap-2 sm:gap-3";
+// Three across a phone: five there were too small to tell apart.
+const GRID = "grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3";
 
 /** Up to five covers, in the order their owner put them. */
 const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {

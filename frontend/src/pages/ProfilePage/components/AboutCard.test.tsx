@@ -21,7 +21,7 @@ describe("AboutCard", () => {
         expect(screen.getByText("Soulslikes, mostly.")).toBeInTheDocument();
         expect(screen.getByText("they/them")).toBeInTheDocument();
         expect(screen.queryByText("Location")).toBeNull();
-        expect(screen.queryByText("Not set")).toBeNull();
+        expect(screen.queryByText(/not set/)).toBeNull();
         expect(screen.queryByRole("button", { name: /Who sees/ })).toBeNull();
     });
 
@@ -57,7 +57,8 @@ describe("AboutCard", () => {
             />
         );
 
-        expect(screen.getAllByText("Not set")).toHaveLength(3);
+        expect(screen.getAllByText(/ not set$/)).toHaveLength(3);
+        expect(screen.getByText("Name not set")).toBeInTheDocument();
         expect(
             screen.getByRole("button", { name: "Who sees your name" })
         ).toHaveTextContent("Only me");
