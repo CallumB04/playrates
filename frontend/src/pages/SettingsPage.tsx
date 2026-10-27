@@ -313,21 +313,25 @@ const SettingsPage = () => {
                         disabled={savingAvatar}
                     />
                 </Row>
-                <Row label="Profile Colour">
-                    <AccentPicker
-                        label="Profile Colour"
-                        value={accent}
-                        onChange={(next) =>
-                            saveToggle(
-                                { accent: next },
-                                next,
-                                setAccent,
-                                accent
-                            )
-                        }
-                        disabled={update.isPending}
-                    />
-                </Row>
+                {/* The colour fills the initial in place of a picture, so it
+                    is offered only while there is none. */}
+                {!user.avatarUrl && (
+                    <Row label="Colour behind your initial">
+                        <AccentPicker
+                            label="Colour behind your initial"
+                            value={accent}
+                            onChange={(next) =>
+                                saveToggle(
+                                    { accent: next },
+                                    next,
+                                    setAccent,
+                                    accent
+                                )
+                            }
+                            disabled={update.isPending}
+                        />
+                    </Row>
+                )}
                 <Row
                     label="Who can see your profile"
                     help="Your games, reviews, friends and threads. Your name, picture and bio always show."

@@ -91,4 +91,30 @@ describe("EditProfilePopup", () => {
         expect(calls).toEqual(["patch:New bio", "avatar:image/jpeg"]);
         expect(closePopup).not.toHaveBeenCalled();
     });
+
+    /* The colour only fills the initial a profile shows without a picture. */
+    it("offers a colour only while there is no picture", async () => {
+        const user = userEvent.setup();
+        renderWithProviders(
+            <EditProfilePopup
+                closePopup={vi.fn()}
+                user={buildProfile({ avatarUrl: "https://cdn/avatar.webp" })}
+            />
+        );
+        const colour = () =>
+            screen.queryByRole("radiogroup", {
+                name: "Colour behind your initial",
+            });
+
+        expect(colour()).toBeNull();
+        await user.click(screen.getByRole("button", { name: /Remove/ }));
+        expect(colour()).toBeInTheDocument();
+
+        await user.upload(
+            document.querySelector<HTMLInputElement>("input[type=file]")!,
+            new File(["bytes"], "IMG_0001.HEIC", { type: "image/heic" })
+        );
+        await screen.findByText("Save changes to apply this.");
+        expect(colour()).toBeNull();
+    });
 });

@@ -16,6 +16,7 @@ import AvatarField, {
     type AvatarChoice,
 } from "../../../components/AvatarField";
 import AccentPicker from "../../../components/ui/AccentPicker";
+import { willShowPicture } from "../../../components/avatarChoice";
 
 interface EditProfilePopupProps {
     closePopup: () => void;
@@ -135,15 +136,21 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                         disabled={saving}
                         saveError={pictureError}
                     />
-                </Group>
-
-                <Group label="Profile Colour">
-                    <AccentPicker
-                        label="Profile Colour"
-                        value={accent}
-                        onChange={setAccent}
-                        disabled={saving}
-                    />
+                    {/* The colour fills the initial in place of a picture,
+                        so it is offered only while there is none. */}
+                    {!willShowPicture(user.avatarUrl, avatar) && (
+                        <div className="mt-4">
+                            <p className="mb-2 text-label text-content-muted">
+                                Or a colour behind your initial
+                            </p>
+                            <AccentPicker
+                                label="Colour behind your initial"
+                                value={accent}
+                                onChange={setAccent}
+                                disabled={saving}
+                            />
+                        </div>
+                    )}
                 </Group>
 
                 <Field
