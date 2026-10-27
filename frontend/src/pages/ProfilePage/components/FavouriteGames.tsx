@@ -21,7 +21,7 @@ interface FavouriteGamesProps {
 // Three across a phone: five there were too small to tell apart.
 /* The list is ordered, so a screen reader already counts it; the number
    here is for the eye, and its colour for the podium. */
-const Rank = ({ place }: { place: number }) => (
+export const Rank = ({ place }: { place: number }) => (
     <span
         aria-hidden
         className={cn(

@@ -41,6 +41,19 @@ export const queryKeys = {
                 order ?? "",
             ] as const,
         mineIds: ["gamelogs", "me", "ids"] as const,
+        /* Under "gamelogs", so every log write refreshes it with the rest. */
+        wishlist: (username: string, system?: string, limit?: number) =>
+            [
+                "gamelogs",
+                "wishlist",
+                username,
+                system ?? "",
+                limit ?? null,
+            ] as const,
+        wishlistAll: (username: string) =>
+            ["gamelogs", "wishlist", username] as const,
+        shelfConsoles: (username: string, status: string) =>
+            ["gamelogs", "consoles", username, status] as const,
         mineForGame: (gameId: number) =>
             ["gamelogs", "me", "game", gameId] as const,
         forUserAndGame: (username: string, gameId: number) =>

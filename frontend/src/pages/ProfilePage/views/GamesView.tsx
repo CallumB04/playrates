@@ -9,6 +9,10 @@ import {
     type UserStats,
 } from "@playrates/shared";
 import { useUserShelf } from "../../../hooks/queries/useGameLogs";
+import {
+    useShelfConsoles,
+    useUserWishlist,
+} from "../../../hooks/queries/useWishlist";
 import { usePlatforms } from "../../../hooks/queries/useGames";
 import { useWindowSize } from "../../../hooks/useWindowSize";
 import { usePagination } from "../../../hooks/usePagination";
@@ -17,6 +21,10 @@ import { formatCount } from "../../../lib/format";
 import ShelfPanel from "../components/ShelfPanel";
 import ShelfSort from "../components/ShelfSort";
 import PlayedStatusFilterControl from "../components/PlayedStatusFilter";
+import ConsoleFilter from "../components/ConsoleFilter";
+import WishlistList from "../components/WishlistList";
+import WishlistSortControl from "../components/WishlistSortControl";
+import { WISHLIST_SORTS, type WishlistSort } from "../lib/wishlist";
 import { getProfileGamesPerPage } from "../lib/friendRelation";
 import { usePageParam } from "../lib/usePageParam";
 import { useShelfTileActions } from "../lib/useShelfTileActions";
@@ -58,6 +66,14 @@ const GamesView = ({
     const direction: SortDirection =
         params.get("direction") === "asc" ? "asc" : "desc";
 
+    const isWishlist = activeSection === "wishlist";
+    const wishlistSort: WishlistSort = WISHLIST_SORTS.includes(
+        rawSort as WishlistSort
+    )
+        ? (rawSort as WishlistSort)
+        : "rank";
+    const consoleSlug = params.get("console") || undefined;
+
     const rawPlayed = params.get("ending");
     const playedStatus: PlayedStatusFilter | undefined =
         rawPlayed === "none" ||
@@ -81,13 +97,38 @@ const GamesView = ({
             direction,
             // Only the played shelf has endings to filter by.
             playedStatus: activeSection === "played" ? playedStatus : undefined,
+            system: consoleSlug,
         },
-        canSee
+        canSee && !isWishlist
     );
+    /* The wishlist comes whole and filters here: a move made while it is
+       filtered still has to save the order of all of it. */
+    const { data: wishlistPage, isLoading: wishlistLoading } = useUserWishlist(
+        username,
+        {},
+        canSee && isWishlist
+    );
+    const { data: shelfConsoles } = useShelfConsoles(
+        username,
+        activeSection,
+        canSee && !isWishlist
+    );
+    const consoles =
+        (isWishlist ? wishlistPage?.consoles : shelfConsoles) ?? [];
     const { data: platforms } = usePlatforms();
 
-    const entries = useMemo(() => logsPage?.data ?? [], [logsPage]);
-    const total = logsPage?.meta.total ?? 0;
+    const wishlist = useMemo(() => wishlistPage?.data ?? [], [wishlistPage]);
+    const entries = useMemo(
+        () =>
+            isWishlist
+                ? consoleSlug
+                    ? wishlist.filter((e) => e.consoles.includes(consoleSlug))
+                    : wishlist
+                : (logsPage?.data ?? []),
+        [isWishlist, consoleSlug, wishlist, logsPage]
+    );
+    // Unpaged, so the wishlist gives the foot nothing to count.
+    const total = isWishlist ? 0 : (logsPage?.meta.total ?? 0);
 
     const pagination = usePagination({
         total,
@@ -115,10 +156,31 @@ const GamesView = ({
         setParams(updated);
     };
 
+    const setConsole = (next: string | undefined) => {
+        const updated = new URLSearchParams(params);
+        if (next) updated.set("console", next);
+        else updated.delete("console");
+        updated.delete("page");
+        setParams(updated);
+    };
+
+    const setWishlistSort = (next: WishlistSort) => {
+        const updated = new URLSearchParams(params);
+        updated.set("sort", next);
+        setParams(updated);
+    };
+
     const setSection = (status: GameStatus) => {
         const updated = new URLSearchParams(params);
         updated.set("type", status);
         updated.delete("page"); // a new drawer opens at its own first page
+        // Each shelf has its own consoles.
+        updated.delete("console");
+        // The wishlist sorts its own way; neither set means much to the other.
+        if ((status === "wishlist") !== isWishlist) {
+            updated.delete("sort");
+            updated.delete("direction");
+        }
         // No other shelf has endings, so the filter would be a lie in the URL.
         if (status !== "played") updated.delete("ending");
         setParams(updated);
@@ -128,20 +190,38 @@ const GamesView = ({
         <ShelfPanel
             active={activeSection}
             // Every tab's count: the stats endpoint returns the whole breakdown.
-            counts={stats?.byStatus ?? { [activeSection]: total }}
+            counts={
+                stats?.byStatus ?? {
+                    [activeSection]: isWishlist ? wishlist.length : total,
+                }
+            }
             onSelect={setSection}
             entries={entries}
             platforms={platforms ?? []}
-            isLoading={isLoading || !canSee}
+            isLoading={(isWishlist ? wishlistLoading : isLoading) || !canSee}
             pagination={pagination}
             perPage={perPage}
             buildTileActions={buildTileActions}
             isMyAccount={isMyAccount}
             sort={sort}
+            filtered={
+                !!consoleSlug || (activeSection === "played" && !!playedStatus)
+            }
+            list={
+                isWishlist && (
+                    <WishlistList
+                        wishlist={wishlist}
+                        console={consoleSlug}
+                        sort={wishlistSort}
+                        isMyAccount={isMyAccount}
+                        buildTileActions={buildTileActions}
+                    />
+                )
+            }
             trailing={
-                /* A row each below sm: side by side, the sort label had
-                   60px and "Time played" and "Time to beat" both read
-                   "Time…". */
+                /* Below sm the filters share a row and the sort has the
+                   next to itself: beside anything, the sort label had 60px
+                   and "Time played" and "Time to beat" both read "Time…". */
                 <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
                     {!isMyAccount && myLogGameIds && (
                         <span className="text-label text-accent max-sm:hidden">
@@ -153,18 +233,33 @@ const GamesView = ({
                             in common
                         </span>
                     )}
-                    {activeSection === "played" && (
-                        <PlayedStatusFilterControl
-                            value={playedStatus}
-                            onChange={setEnding}
+                    <div className="flex w-full gap-2 empty:hidden sm:contents">
+                        {activeSection === "played" && (
+                            <PlayedStatusFilterControl
+                                value={playedStatus}
+                                onChange={setEnding}
+                            />
+                        )}
+                        <ConsoleFilter
+                            consoles={consoles}
+                            value={consoleSlug}
+                            onChange={setConsole}
+                        />
+                    </div>
+                    {isWishlist ? (
+                        <WishlistSortControl
+                            sort={wishlistSort}
+                            isMyAccount={isMyAccount}
+                            onChange={setWishlistSort}
+                        />
+                    ) : (
+                        <ShelfSort
+                            sort={sort}
+                            direction={direction}
+                            isMyAccount={isMyAccount}
+                            onChange={setOrder}
                         />
                     )}
-                    <ShelfSort
-                        sort={sort}
-                        direction={direction}
-                        isMyAccount={isMyAccount}
-                        onChange={setOrder}
-                    />
                 </div>
             }
         />

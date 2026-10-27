@@ -27,6 +27,11 @@ interface ShelfPanelProps {
     /** Decides the figure each tile prints, as well as the order. */
     sort: GameLogSort;
     trailing?: ReactNode;
+    /** Shown in place of the grid, for a shelf laid out its own way. */
+    list?: ReactNode;
+    /** A filter is narrowing it, so an empty shelf may only be filtered
+     *  empty. */
+    filtered?: boolean;
 }
 
 // Every empty shelf sends you somewhere.
@@ -70,6 +75,8 @@ const ShelfPanel = ({
     isMyAccount,
     sort,
     trailing,
+    list,
+    filtered = false,
 }: ShelfPanelProps) => {
     const empty = EMPTY_COPY[active];
 
@@ -82,7 +89,11 @@ const ShelfPanel = ({
                 trailing={trailing}
             />
 
-            <div className={cardClass("mt-3 p-5", { padding: "none" })}>
+            <div
+                className={cardClass(list ? "mt-3 p-1.5 sm:p-2" : "mt-3 p-5", {
+                    padding: "none",
+                })}
+            >
                 {isLoading ? (
                     <div className="grid grid-cols-2 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
                         {Array.from(
@@ -92,6 +103,11 @@ const ShelfPanel = ({
                             )
                         )}
                     </div>
+                ) : entries.length === 0 && filtered ? (
+                    <EmptyPlate
+                        title="Nothing matches"
+                        body="No games on this shelf match the filters."
+                    />
                 ) : entries.length === 0 ? (
                     <EmptyPlate
                         title={empty.title}
@@ -107,6 +123,8 @@ const ShelfPanel = ({
                             ) : undefined
                         }
                     />
+                ) : list ? (
+                    list
                 ) : (
                     <div className="grid grid-cols-2 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
                         {entries.map((entry) => (

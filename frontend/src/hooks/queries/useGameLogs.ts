@@ -31,7 +31,7 @@ import { STATUS_PRESENTATION } from "../../constants/gameStatus";
 
 /** The ordering, flattened for a cache key. */
 const orderKey = (page?: GameLogPage) =>
-    `${page?.sort ?? ""}:${page?.direction ?? ""}:${page?.playedStatus ?? ""}:${page?.limit ?? ""}:${page?.q ?? ""}`;
+    `${page?.sort ?? ""}:${page?.direction ?? ""}:${page?.playedStatus ?? ""}:${page?.limit ?? ""}:${page?.q ?? ""}:${page?.system ?? ""}`;
 
 export const useMyShelf = (status?: string, page?: GameLogPage) => {
     const { user } = useAuth();

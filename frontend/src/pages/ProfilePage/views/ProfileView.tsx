@@ -7,6 +7,7 @@ import { useUserFavourites } from "../../../hooks/queries/useFavourites";
 import AboutCard from "../components/AboutCard";
 import FavouriteGames from "../components/FavouriteGames";
 import FavouritesEditor from "../components/FavouritesEditor";
+import WishlistTop from "../components/WishlistTop";
 
 interface ProfileViewProps {
     profile: Profile;
@@ -71,11 +72,18 @@ const ProfileView = ({
                     onEditProfile={onEditProfile}
                 />
             </div>
-            <FavouriteGames
-                username={profile.username}
-                canSee={canSee}
-                onEdit={isOwner ? () => setEditing(true) : undefined}
-            />
+            <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
+                <FavouriteGames
+                    username={profile.username}
+                    canSee={canSee}
+                    onEdit={isOwner ? () => setEditing(true) : undefined}
+                />
+                <WishlistTop
+                    username={profile.username}
+                    isMyAccount={isOwner}
+                    canSee={canSee}
+                />
+            </div>
 
             {editing && (
                 <FavouritesEditor

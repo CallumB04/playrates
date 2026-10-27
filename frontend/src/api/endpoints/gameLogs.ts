@@ -13,6 +13,7 @@ import type {
     ShelfGame,
     SortDirection,
     UserStats,
+    WishlistPage,
 } from "@playrates/shared";
 import { api } from "../client";
 import { compactParams } from "./games";
@@ -48,6 +49,8 @@ export interface GameLogPage {
     playedStatus?: PlayedStatusFilter;
     /** Narrows a shelf to games whose title has this in it. */
     q?: string;
+    /** Narrows a shelf to games logged on it for this console. */
+    system?: string;
 }
 
 /** A page of games, each with every console it was logged on. */
@@ -138,4 +141,33 @@ export const saveLogReview = async (
 
 export const deleteLogReview = async (logId: number): Promise<void> => {
     await api.delete(`/me/logs/${logId}/review`);
+};
+
+/** Someone's whole wishlist, in their order. */
+export const fetchUserWishlist = async (
+    username: string,
+    options: { system?: string; limit?: number } = {}
+): Promise<WishlistPage> => {
+    const { data } = await api.get<WishlistPage>(
+        `/users/${username}/wishlist`,
+        { params: compactParams(options) }
+    );
+    return data;
+};
+
+/** The caller's whole wishlist, in its new order. */
+export const setMyWishlistOrder = async (gameIds: number[]): Promise<void> => {
+    await api.put("/me/wishlist/order", { gameIds });
+};
+
+/** The consoles on one of someone's shelves. */
+export const fetchShelfConsoles = async (
+    username: string,
+    status: string
+): Promise<string[]> => {
+    const { data } = await api.get<string[]>(
+        `/users/${username}/shelf/consoles`,
+        { params: { status } }
+    );
+    return data;
 };
