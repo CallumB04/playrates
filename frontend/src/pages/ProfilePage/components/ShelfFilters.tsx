@@ -169,7 +169,7 @@ const ShelfFilters = ({
                 Filters
                 {active > 0 && (
                     <span className="-mr-1 grid size-5 place-items-center rounded-full bg-action font-mono text-label-sm text-action-ink tabular-nums">
-                        {active}
+                        <span className="cap-box">{active}</span>
                     </span>
                 )}
             </button>
