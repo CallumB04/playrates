@@ -24,13 +24,17 @@ const ForgotPasswordForm = ({ initialEmail = "" }: ForgotPasswordFormProps) => {
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(undefined);
-        if (!captcha.ready()) return;
         setIsSubmitting(true);
         const email = String(
             new FormData(event.currentTarget).get("email") ?? ""
         );
+        const captchaToken = await captcha.getToken();
+        if (captchaToken === null) {
+            setIsSubmitting(false);
+            return;
+        }
         try {
-            await requestPasswordReset(email, captcha.token);
+            await requestPasswordReset(email, captchaToken);
             setSentTo(email);
         } catch (err) {
             captcha.reset();

@@ -27,17 +27,22 @@ const LoginForm = ({ initialEmail = "", onForgot }: LoginFormProps) => {
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setFormError(undefined);
-        if (!captcha.ready()) return;
         setIsSubmitting(true);
 
         const data = new FormData(event.currentTarget);
         const email = String(data.get("email") ?? "");
         const password = String(data.get("password") ?? "");
 
+        const captchaToken = await captcha.getToken();
+        if (captchaToken === null) {
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             // Supabase verifies the password. It never reaches this client,
             // and no user record is downloaded to compare it against.
-            await signIn(email, password, captcha.token);
+            await signIn(email, password, captchaToken);
             close();
         } catch (error) {
             captcha.reset();

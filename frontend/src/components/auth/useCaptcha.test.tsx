@@ -57,15 +57,26 @@ const fillAndSubmit = async (user: ReturnType<typeof userEvent.setup>) => {
 };
 
 describe("the bot check on the email forms", () => {
-    it("holds the request until the check has passed", async () => {
+    /* Pressing the button a second after the sheet opens, before the check
+       has finished, waits for it rather than asking to be pressed again. */
+    it("waits for a check still running, then sends", async () => {
         const user = userEvent.setup();
         renderWithProviders(<LoginForm />);
 
         await fillAndSubmit(user);
-
         expect(signIn).not.toHaveBeenCalled();
-        expect(screen.getByRole("alert")).toHaveTextContent(
-            /Still checking you're not a bot/
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+        await user.click(
+            screen.getByRole("button", { name: "pass the check" })
+        );
+
+        await vi.waitFor(() =>
+            expect(signIn).toHaveBeenCalledWith(
+                "a@b.co",
+                "hunter2hunter2",
+                "token-1"
+            )
         );
     });
 
@@ -95,7 +106,7 @@ describe("the bot check on the email forms", () => {
         await fillAndSubmit(user);
 
         expect(screen.getByRole("alert")).toHaveTextContent(
-            /didn't load. Refresh the page/
+            /didn't finish. Refresh the page/
         );
     });
 

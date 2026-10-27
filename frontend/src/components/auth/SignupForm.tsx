@@ -73,13 +73,14 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
         }
 
         setErrors({});
-        if (!captcha.ready()) {
+        const captchaToken = await captcha.getToken();
+        if (captchaToken === null) {
             setIsSubmitting(false);
             return;
         }
 
         try {
-            await signUp(email, password, username, captcha.token);
+            await signUp(email, password, username, captchaToken);
             notify("Account successfully created", "success");
             onSignedUp(email);
         } catch (error) {
