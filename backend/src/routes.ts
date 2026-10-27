@@ -24,6 +24,8 @@ import {
   createUserGameLogsRouter,
   createUserLogsRouter,
   createUserShelfRouter,
+  createUserWishlistRouter,
+  createMyWishlistRouter,
   createUserStatsRouter,
 } from "./modules/game-logs/gameLogs.routes.js";
 import { createReviewsService } from "./modules/reviews/reviews.service.js";
@@ -202,6 +204,10 @@ export const buildRoutes = ({
     }),
   );
   router.use(
+    "/me/wishlist",
+    createMyWishlistRouter({ service: gameLogs, requireAuth, optionalAuth }),
+  );
+  router.use(
     "/me/shelf",
     createMyShelfRouter({ service: gameLogs, requireAuth, optionalAuth }),
   );
@@ -230,6 +236,10 @@ export const buildRoutes = ({
   router.use(
     "/users/:username/game-logs",
     createUserGameLogsRouter({ service: gameLogs, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/users/:username/wishlist",
+    createUserWishlistRouter({ service: gameLogs, requireAuth, optionalAuth }),
   );
   router.use(
     "/users/:username/shelf",

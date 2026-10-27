@@ -85,6 +85,7 @@ export interface SeedData {
   serverErrors?: ServerErrorRow[];
   contentReports?: ContentReportRow[];
   favouriteGames?: { user_id: string; game_id: number; position: number }[];
+  wishlistRanks?: { user_id: string; game_id: number; position: number }[];
 }
 
 export interface InMemoryState {
@@ -115,9 +116,38 @@ export interface InMemoryState {
   announcements: AnnouncementRow[];
   contentReports: ContentReportRow[];
   favouriteGames: { user_id: string; game_id: number; position: number }[];
+  wishlistRanks: { user_id: string; game_id: number; position: number }[];
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
+
+/** What the game_logs_wishlist_ranks trigger does in Postgres: a game newly
+ *  wished for takes the bottom place, and loses it with its last wish. */
+const syncWishlistRank = (
+  state: InMemoryState,
+  userId: string,
+  gameId: number,
+) => {
+  const wished = state.gameLogs.some(
+    (l) =>
+      l.user_id === userId && l.game_id === gameId && l.status === "wishlist",
+  );
+  const ranked = state.wishlistRanks.some(
+    (r) => r.user_id === userId && r.game_id === gameId,
+  );
+  if (wished && !ranked) {
+    const mine = state.wishlistRanks.filter((r) => r.user_id === userId);
+    state.wishlistRanks.push({
+      user_id: userId,
+      game_id: gameId,
+      position: mine.length ? Math.max(...mine.map((r) => r.position)) + 1 : 0,
+    });
+  } else if (!wished && ranked) {
+    state.wishlistRanks = state.wishlistRanks.filter(
+      (r) => !(r.user_id === userId && r.game_id === gameId),
+    );
+  }
+};
 
 export const createInMemoryRepos = (
   seed: SeedData = {},
@@ -153,6 +183,7 @@ export const createInMemoryRepos = (
     announcements: [],
     contentReports: [...(seed.contentReports ?? [])],
     favouriteGames: [...(seed.favouriteGames ?? [])],
+    wishlistRanks: [...(seed.wishlistRanks ?? [])],
   };
 
   let nextLogId = 1000;
@@ -415,6 +446,12 @@ export const createInMemoryRepos = (
           activeDays: [],
           reportsFiled: state.contentReports.filter(
             (r) => r.reporter_id === userId,
+          ),
+          favouriteGames: state.favouriteGames.filter(
+            (f) => f.user_id === userId,
+          ),
+          wishlistOrder: state.wishlistRanks.filter(
+            (r) => r.user_id === userId,
           ),
         };
       },
@@ -881,6 +918,15 @@ export const createInMemoryRepos = (
             ({ game }) =>
               !query.q ||
               (game?.title ?? "").toLowerCase().includes(query.q.toLowerCase()),
+          )
+          .filter(
+            ({ logs }) =>
+              !query.system ||
+              logs.some(
+                (l) =>
+                  l.system_slug === query.system &&
+                  (!query.status || l.status === query.status),
+              ),
           );
 
         const sortKey = ({
@@ -993,22 +1039,52 @@ export const createInMemoryRepos = (
         };
         assertConsoleFree(row);
         state.gameLogs.push(row);
+        syncWishlistRank(state, userId, gameId);
         return withGame(row);
       },
       async update(id, patch) {
         const log = state.gameLogs.find((l) => l.id === id);
         if (!log) throw new Error("game log not found");
         assertConsoleFree({ ...log, ...patch });
+        const before = log.game_id;
         Object.assign(log, patch, { updated_at: now() });
+        syncWishlistRank(state, log.user_id, before);
+        syncWishlistRank(state, log.user_id, log.game_id);
         return withGame(log);
       },
       async remove(id) {
+        const gone = state.gameLogs.find((l) => l.id === id);
         state.gameLogs = state.gameLogs.filter((l) => l.id !== id);
+        if (gone) syncWishlistRank(state, gone.user_id, gone.game_id);
         // reviews_log_fk cascades
         for (const r of state.reviews) {
           if (r.log_id === id) clearReviewNotifications(r.id);
         }
         state.reviews = state.reviews.filter((r) => r.log_id !== id);
+      },
+      async wishlistGameIds(userId) {
+        return state.wishlistRanks
+          .filter((r) => r.user_id === userId)
+          .sort((a, b) => a.position - b.position)
+          .map((r) => r.game_id);
+      },
+      async setWishlistOrder(userId, gameIds) {
+        for (const r of state.wishlistRanks) {
+          const at = gameIds.indexOf(r.game_id);
+          if (r.user_id === userId && at >= 0) r.position = at;
+        }
+      },
+      async shelfConsoles(userId, status) {
+        return [
+          ...new Set(
+            state.gameLogs
+              .filter(
+                (l) =>
+                  l.user_id === userId && l.status === status && l.system_slug,
+              )
+              .map((l) => l.system_slug as string),
+          ),
+        ].sort();
       },
       async count() {
         return state.gameLogs.length;

@@ -15,6 +15,8 @@ export interface AccountData {
   communityVotes: unknown[];
   activeDays: unknown[];
   reportsFiled: unknown[];
+  favouriteGames: unknown[];
+  wishlistOrder: unknown[];
 }
 
 export interface AccountExportRepository {
@@ -73,6 +75,8 @@ export const createAccountExportRepository = (
         communityVotes,
         activeDays,
         reportsFiled,
+        favouriteGames,
+        wishlistOrder,
       ] = await Promise.all([
         everything("profiles", "id", own("id")),
         everything("game_logs", "id", own("user_id")),
@@ -87,6 +91,8 @@ export const createAccountExportRepository = (
         everything("community_message_votes", "message_id", own("user_id")),
         everything("user_active_days", "day", own("user_id")),
         everything("content_reports", "id", own("reporter_id")),
+        everything("favourite_games", "position", own("user_id")),
+        everything("wishlist_ranks", "position", own("user_id")),
       ]);
 
       return {
@@ -101,6 +107,8 @@ export const createAccountExportRepository = (
         communityVotes,
         activeDays,
         reportsFiled,
+        favouriteGames,
+        wishlistOrder,
       };
     },
   };

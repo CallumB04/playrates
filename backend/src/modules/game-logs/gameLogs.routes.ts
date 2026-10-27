@@ -9,11 +9,15 @@ import {
   GameLogPatchSchema,
   GameLogQuerySchema,
   ShelfQuerySchema,
+  GameStatusSchema,
   PaginationSchema,
+  SetWishlistOrderSchema,
+  WishlistQuerySchema,
+  type SetWishlistOrderInput,
   UsernameParamSchema,
   UserStatsQuerySchema,
 } from "@playrates/shared";
-import type { z } from "zod";
+import { z } from "zod";
 import { validate } from "../../middleware/validate.js";
 import { AppError } from "../../lib/AppError.js";
 import type { GameLogsService } from "./gameLogs.service.js";
@@ -134,12 +138,19 @@ export const createMyShelfRouter = ({ service, requireAuth }: Deps): Router => {
     requireAuth,
     validate({ query: ShelfListQuerySchema }),
     async (req, res) => {
-      const { status, playedStatus, q, sort, direction, ...pagination } = req
-        .valid!.query as z.infer<typeof ShelfListQuerySchema>;
+      const {
+        status,
+        playedStatus,
+        q,
+        system,
+        sort,
+        direction,
+        ...pagination
+      } = req.valid!.query as z.infer<typeof ShelfListQuerySchema>;
       res.json(
         await service.shelfForUser(
           callerId(req),
-          { status, playedStatus, q, sort, direction },
+          { status, playedStatus, q, system, sort, direction },
           pagination,
         ),
       );
@@ -156,18 +167,46 @@ export const createUserShelfRouter = ({
 }: Deps): Router => {
   const router = Router({ mergeParams: true });
 
+  // The consoles on one shelf, for its filter.
+  router.get(
+    "/consoles",
+    optionalAuth,
+    validate({
+      params: UsernameParamSchema,
+      query: z.object({ status: GameStatusSchema }),
+    }),
+    async (req, res) => {
+      const { username } = req.valid!.params as { username: string };
+      const { status } = req.valid!.query as { status: string };
+      res.json(
+        await service.shelfConsolesForUsername(
+          username,
+          status,
+          req.auth?.userId,
+        ),
+      );
+    },
+  );
+
   router.get(
     "/",
     optionalAuth,
     validate({ params: UsernameParamSchema, query: ShelfListQuerySchema }),
     async (req, res) => {
       const { username } = req.valid!.params as { username: string };
-      const { status, playedStatus, q, sort, direction, ...pagination } = req
-        .valid!.query as z.infer<typeof ShelfListQuerySchema>;
+      const {
+        status,
+        playedStatus,
+        q,
+        system,
+        sort,
+        direction,
+        ...pagination
+      } = req.valid!.query as z.infer<typeof ShelfListQuerySchema>;
       res.json(
         await service.shelfForUsername(
           username,
-          { status, playedStatus, q, sort, direction },
+          { status, playedStatus, q, system, sort, direction },
           pagination,
           req.auth?.userId,
         ),
@@ -321,6 +360,50 @@ export const createUserStatsRouter = ({
       res.json(
         await service.statsForUsername(username, req.auth?.userId, year),
       );
+    },
+  );
+
+  return router;
+};
+
+/** Mounted at /users/:username/wishlist. */
+export const createUserWishlistRouter = ({
+  service,
+  optionalAuth,
+}: Deps): Router => {
+  const router = Router({ mergeParams: true });
+
+  router.get(
+    "/",
+    optionalAuth,
+    validate({ params: UsernameParamSchema, query: WishlistQuerySchema }),
+    async (req, res) => {
+      const { username } = req.valid!.params as { username: string };
+      const query = req.valid!.query as z.infer<typeof WishlistQuerySchema>;
+      res.json(
+        await service.wishlistForUsername(username, req.auth?.userId, query),
+      );
+    },
+  );
+
+  return router;
+};
+
+/** Mounted at /me/wishlist. */
+export const createMyWishlistRouter = ({
+  service,
+  requireAuth,
+}: Deps): Router => {
+  const router = Router();
+
+  router.put(
+    "/order",
+    requireAuth,
+    validate({ body: SetWishlistOrderSchema }),
+    async (req, res) => {
+      const { gameIds } = req.valid!.body as SetWishlistOrderInput;
+      await service.setWishlistOrder(callerId(req), gameIds);
+      res.status(204).end();
     },
   );
 

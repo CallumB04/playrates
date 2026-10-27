@@ -142,7 +142,31 @@ export const GameLogQuerySchema = z.object({
 /** A shelf's query: a game log query, and a title to narrow it to. */
 export const ShelfQuerySchema = GameLogQuerySchema.extend({
   q: z.string().trim().min(1).max(100).optional(),
+  /** Narrows to games with a log on this shelf for this console. */
+  system: z.string().trim().min(1).max(60).optional(),
 });
+
+/** The most a wishlist holds in one answer: it is read whole, to be put in
+ *  order, and nobody's is near this. */
+export const MAX_WISHLIST = 1000;
+
+export const WishlistQuerySchema = z.object({
+  /** Only the games wished for on this console. */
+  system: z.string().trim().min(1).max(60).optional(),
+  limit: z.coerce.number().int().min(1).max(MAX_WISHLIST).optional(),
+});
+
+/** The whole wishlist, in the order wanted: every game in it, once each. */
+export const SetWishlistOrderSchema = z
+  .object({
+    gameIds: z
+      .array(z.number().int().positive())
+      .max(MAX_WISHLIST)
+      .refine((ids) => new Set(ids).size === ids.length, "Each game once"),
+  })
+  .strict();
+
+export type SetWishlistOrderInput = z.infer<typeof SetWishlistOrderSchema>;
 
 /** `id` is the log's own id; `gameId` is the game it refers to. */
 export interface GameLog {
@@ -235,3 +259,19 @@ export interface UserStats {
 export const UserStatsQuerySchema = z.object({
   year: z.coerce.number().int().min(1970).max(2200).optional(),
 });
+
+/** A game on someone's wishlist: its place, and the consoles it is wished
+ *  for, however many. A null console is a wish with none chosen. */
+export interface WishlistEntry extends ShelfEntry {
+  /** From 1, in the owner's order. */
+  rank: number;
+  consoles: (string | null)[];
+}
+
+export interface WishlistPage {
+  data: WishlistEntry[];
+  /** Every game on the wishlist, whatever the filter. */
+  total: number;
+  /** The consoles across the whole wishlist, to filter by. */
+  consoles: string[];
+}
