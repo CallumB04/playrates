@@ -15,6 +15,7 @@ import PrivacyPage from "./pages/legal/PrivacyPage";
 import TermsPage from "./pages/legal/TermsPage";
 import ContactPage from "./pages/legal/ContactPage";
 import ProfilePageRoute from "./pages/ProfilePage/ProfilePageRoute";
+import ListPage from "./pages/ListPage/ListPage";
 import LibraryPage from "./pages/LibraryPage/LibraryPage";
 import GamePage from "./pages/GamePage/GamePage";
 import SettingsPage from "./pages/SettingsPage";
@@ -44,6 +45,10 @@ function App() {
                 <PageShell>
                     <Routes>
                         <Route path="/" element={<HomePage />} />
+                        <Route
+                            path="/user/:username/lists/:listId"
+                            element={<ListPage />}
+                        />
                         <Route
                             path="/user/:targetUsername?/:view?"
                             element={<ProfilePageRoute />}

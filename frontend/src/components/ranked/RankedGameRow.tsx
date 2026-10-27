@@ -1,64 +1,37 @@
-import { forwardRef, type CSSProperties, type HTMLAttributes } from "react";
+import {
+    forwardRef,
+    type CSSProperties,
+    type HTMLAttributes,
+    type ReactNode,
+} from "react";
 import { Link } from "react-router-dom";
 import { EllipsisVertical, GripVertical } from "lucide-react";
-import type { PlatformSystem, WishlistEntry } from "@playrates/shared";
-import GameCover from "../../../components/game/GameCover";
-import type { TileAction } from "../../../components/game/GameTile";
-import Button from "../../../components/ui/Button";
-import { releaseYear } from "../../../lib/format";
-import { systemIcon } from "../../../lib/platformIcons";
-import { cn } from "../../../lib/cn";
-import { rankTone } from "../lib/about";
+import GameCover from "../game/GameCover";
+import type { TileAction } from "../game/GameTile";
+import Button from "../ui/Button";
+import { releaseYear } from "../../lib/format";
+import { cn } from "../../lib/cn";
+import { rankTone } from "../../pages/ProfilePage/lib/about";
 
-/** The console chips: the machine's mark and its name. */
-export const ConsoleChips = ({
-    consoles,
-    systems,
-}: {
-    consoles: (string | null)[];
-    systems: Map<string, PlatformSystem>;
-}) => {
-    const named = consoles.filter((slug): slug is string => !!slug);
-    // A wish with no console set is for the game wherever it comes out.
-    const any = named.length < consoles.length;
-
-    return (
-        <ul className="flex min-w-0 flex-wrap gap-1">
-            {named.map((slug) => {
-                const system = systems.get(slug);
-                const Icon = systemIcon(slug, system?.platformSlug ?? "");
-                return (
-                    <li
-                        key={slug}
-                        className="inline-flex items-center gap-1 rounded-xs bg-surface-sunken px-1.5 py-0.5 text-label-sm whitespace-nowrap text-content-secondary"
-                    >
-                        <Icon size={11} aria-hidden />
-                        {system?.displayName ?? slug}
-                    </li>
-                );
-            })}
-            {any && (
-                <li className="inline-flex items-center rounded-xs border border-dashed border-subtle px-1.5 py-0.5 text-label-sm whitespace-nowrap text-content-muted">
-                    Any platform
-                </li>
-            )}
-        </ul>
-    );
+export type RankedRowHandle = HTMLAttributes<HTMLButtonElement> & {
+    ref?: (node: HTMLElement | null) => void;
 };
 
-export interface WishlistRowProps extends HTMLAttributes<HTMLLIElement> {
-    entry: WishlistEntry;
+export interface RankedGameRowProps extends HTMLAttributes<HTMLLIElement> {
+    gameId: number;
+    title: string;
+    coverUrl: string | null;
+    releaseDate?: string | null;
     /** Its place as shown, which moves with a drag before it lands. */
     rank: number;
-    systems: Map<string, PlatformSystem>;
+    /** Under the title, after the year: the platforms it's wished for, say. */
+    detail?: ReactNode;
     actions: TileAction[];
     /** Opens the sheet with the moves and, on a phone, the log actions. */
     onMore?: () => void;
     moreOnPhoneOnly?: boolean;
     /** The drag handle's props; no handle without them. */
-    handle?: HTMLAttributes<HTMLButtonElement> & {
-        ref?: (node: HTMLElement | null) => void;
-    };
+    handle?: RankedRowHandle;
     /** The copy that follows the pointer while the real row holds its gap. */
     lifted?: boolean;
     /** The real row while its copy is lifted. */
@@ -66,13 +39,16 @@ export interface WishlistRowProps extends HTMLAttributes<HTMLLIElement> {
     style?: CSSProperties;
 }
 
-/** One game on a wishlist, at its place in its owner's order. */
-const WishlistRow = forwardRef<HTMLLIElement, WishlistRowProps>(
+/** One game at its place in someone's order: a wishlist, a ranked list. */
+const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
     (
         {
-            entry,
+            gameId,
+            title,
+            coverUrl,
+            releaseDate,
             rank,
-            systems,
+            detail,
             actions,
             onMore,
             moreOnPhoneOnly = false,
@@ -84,8 +60,7 @@ const WishlistRow = forwardRef<HTMLLIElement, WishlistRowProps>(
         },
         ref
     ) => {
-        const title = entry.game?.title ?? "Unknown game";
-        const year = releaseYear(entry.game?.releaseDate);
+        const year = releaseYear(releaseDate);
 
         return (
             <li
@@ -129,13 +104,13 @@ const WishlistRow = forwardRef<HTMLLIElement, WishlistRowProps>(
                 </span>
 
                 <Link
-                    to={`/game/${entry.gameId}`}
+                    to={`/game/${gameId}`}
                     tabIndex={-1}
                     aria-hidden
                     className="shrink-0"
                 >
                     <GameCover
-                        coverUrl={entry.game?.coverUrl ?? null}
+                        coverUrl={coverUrl}
                         title={title}
                         className="aspect-3/4 w-10 rounded-xs sm:w-12"
                     />
@@ -143,23 +118,22 @@ const WishlistRow = forwardRef<HTMLLIElement, WishlistRowProps>(
 
                 <div className="min-w-0 flex-1">
                     <Link
-                        to={`/game/${entry.gameId}`}
+                        to={`/game/${gameId}`}
                         className="line-clamp-2 text-body-sm font-medium text-content hover:text-brand sm:line-clamp-1 sm:text-body"
                     >
                         <span className="sr-only">#{rank} </span>
                         {title}
                     </Link>
-                    <div className="mt-1 flex min-w-0 items-center gap-2">
-                        {year && (
-                            <span className="shrink-0 font-mono text-label text-content-muted tabular-nums">
-                                {year}
-                            </span>
-                        )}
-                        <ConsoleChips
-                            consoles={entry.consoles}
-                            systems={systems}
-                        />
-                    </div>
+                    {(year || detail) && (
+                        <div className="mt-1 flex min-w-0 items-center gap-2">
+                            {year && (
+                                <span className="shrink-0 font-mono text-label text-content-muted tabular-nums">
+                                    {year}
+                                </span>
+                            )}
+                            {detail}
+                        </div>
+                    )}
                 </div>
 
                 {/* On a phone these live in the sheet behind ⋯ instead. */}
@@ -200,6 +174,6 @@ const WishlistRow = forwardRef<HTMLLIElement, WishlistRowProps>(
         );
     }
 );
-WishlistRow.displayName = "WishlistRow";
+RankedGameRow.displayName = "RankedGameRow";
 
-export default WishlistRow;
+export default RankedGameRow;

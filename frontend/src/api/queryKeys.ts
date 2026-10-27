@@ -88,6 +88,24 @@ export const queryKeys = {
         byUsername: (username: string) => ["favourites", username] as const,
     },
 
+    /* All under "lists", so one invalidation after a change reaches every
+       card, page and picker that might show it. */
+    lists: {
+        all: ["lists"] as const,
+        byUsername: (
+            username: string,
+            sort: string,
+            page: number,
+            limit: number
+        ) => ["lists", "user", username, sort, page, limit] as const,
+        detail: (listId: number) => ["lists", "detail", listId] as const,
+        popular: (page: number, limit: number) =>
+            ["lists", "popular", page, limit] as const,
+        forGame: (gameId: number, limit: number) =>
+            ["lists", "game", gameId, limit] as const,
+        mine: (gameId?: number) => ["lists", "mine", gameId ?? null] as const,
+    },
+
     friends: {
         mine: ["friends", "me"] as const,
         activity: ["friends", "me", "activity"] as const,

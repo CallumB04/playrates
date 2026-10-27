@@ -1,13 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { FALLBACK_ACCENT, PROFILE_ACCENTS } from "@playrates/shared";
+import {
+    FALLBACK_ACCENT,
+    PROFILE_ACCENTS,
+    type ProfileAccent,
+} from "@playrates/shared";
 import AccentPicker from "./AccentPicker";
 import { accentHue } from "../../lib/profileAccent";
 
-const setup = (
-    value: Parameters<typeof AccentPicker>[0]["value"] = FALLBACK_ACCENT
-) => {
+const setup = (value: ProfileAccent = FALLBACK_ACCENT) => {
     const onChange = vi.fn();
     const view = render(
         <AccentPicker label="Profile Colour" value={value} onChange={onChange} />
@@ -86,5 +88,22 @@ describe("AccentPicker", () => {
         for (const label of container.querySelectorAll("label")) {
             expect(label.className).toContain("size-11");
         }
+    });
+
+    /* A list starts neutral, so None is a colour of its own to go back to. */
+    it("offers no colour first, where it's allowed", async () => {
+        const onChange = vi.fn();
+        render(
+            <AccentPicker
+                allowNone
+                label="List colour"
+                value={null}
+                onChange={onChange}
+            />
+        );
+
+        expect(screen.getByRole("radio", { name: "None" })).toBeChecked();
+        await userEvent.click(screen.getByRole("radio", { name: "Jade" }));
+        expect(onChange).toHaveBeenCalledWith("jade");
     });
 });

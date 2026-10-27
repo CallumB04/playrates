@@ -27,6 +27,7 @@ import { useReviewVote } from "../../hooks/queries/useReviews";
 import RatingPlate from "./components/RatingPlate";
 import CirculationPlate from "./components/CirculationPlate";
 import GameReviews from "./components/GameReviews";
+import GameLists from "./components/GameLists";
 import GameThreads from "./components/GameThreads";
 import { useThreads } from "../../hooks/queries/useCommunity";
 import { newThreadPath } from "../../components/community/paths";
@@ -172,6 +173,7 @@ const GamePage = () => {
                         onAddPlatform={() => flow.add(gameId)}
                         onEditLog={(logId) => flow.edit(gameId, logId)}
                         onQuickLog={(status) => void quickLog(status)}
+                        onAddToList={() => flow.addToList(gameId)}
                         isSaving={quickSaving}
                         actionsEndRef={actionsEnd}
                     />
@@ -229,6 +231,8 @@ const GamePage = () => {
                         onSortChange={setSort}
                         isLoading={reviewsLoading}
                     />
+
+                    <GameLists gameId={gameId} />
 
                     <GameThreads
                         gameId={gameId}

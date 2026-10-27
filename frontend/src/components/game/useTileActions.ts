@@ -40,6 +40,7 @@ export const useTileActions = () => {
                 open: (id) => flow.open(id),
                 view: (id) => flow.view(id),
                 quickAdd,
+                addToList: (id) => flow.addToList(id),
             }
         );
 

@@ -12,11 +12,21 @@ export interface TileActionHandlers {
         title: string,
         status: "backlog" | "wishlist"
     ) => void;
+    addToList: (gameId: number) => void;
 }
+
+/** A row rather than an icon: the icons shelve in one tap, and this opens
+ *  a choice of lists. */
+const addToList = (gameId: number, on: TileActionHandlers): TileAction => ({
+    key: "list",
+    label: "Add to list",
+    onSelect: () => on.addToList(gameId),
+});
 
 /**
  * What a cover offers wherever it sits: sign in when signed out; log it or
- * shelve it in one tap when not logged yet; view or edit it once it is.
+ * shelve it in one tap when not logged yet; view or edit it once it is; and
+ * put it in a list either way.
  * Shelving is not offered on a logged game, where it would overwrite the
  * status it already has.
  */
@@ -49,6 +59,7 @@ export const tileActions = (
                 label: "Edit",
                 onSelect: () => on.open(game.id),
             },
+            addToList(game.id, on),
         ];
     }
 
@@ -59,6 +70,7 @@ export const tileActions = (
             tone: "primary",
             onSelect: () => on.open(game.id),
         },
+        addToList(game.id, on),
         {
             key: "backlog",
             label: "Add to backlog",

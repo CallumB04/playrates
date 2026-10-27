@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { Plus } from "lucide-react";
+import { ListPlus, Plus } from "lucide-react";
 import type { Game, GameLogSummary, LogBundle } from "@playrates/shared";
 import MyLogsPlate from "../../../components/gamelog/MyLogsPlate";
 import CoverCarousel from "./CoverCarousel";
@@ -28,6 +28,7 @@ interface GameCoverPlateProps {
     onAddPlatform: () => void;
     onEditLog: (logId: number) => void;
     onQuickLog: (status: "backlog" | "wishlist") => void;
+    onAddToList: () => void;
     isSaving: boolean;
     /** Marks where the log buttons end, for the phone's sticky bar. */
     actionsEndRef?: RefObject<HTMLSpanElement>;
@@ -58,6 +59,7 @@ const GameCoverPlate = ({
     onAddPlatform,
     onEditLog,
     onQuickLog,
+    onAddToList,
     isSaving,
     actionsEndRef,
 }: GameCoverPlateProps) => {
@@ -163,6 +165,13 @@ const GameCoverPlate = ({
                         );
                     })}
                 </div>
+            )}
+
+            {isSignedIn && (
+                <Button variant="secondary" onClick={onAddToList}>
+                    <ListPlus size={15} aria-hidden />
+                    Add to list
+                </Button>
             )}
 
             <span ref={actionsEndRef} aria-hidden />

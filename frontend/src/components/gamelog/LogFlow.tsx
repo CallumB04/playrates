@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import CreateOrEditGameLogPopup from "../CreateOrEditGameLogPopup";
 import ViewGameLogPopup from "../ViewGameLogPopup";
+import AddToListPopup from "../lists/AddToListPopup";
 import { LogFlowContext, type LogFlow } from "./useLogFlow";
 
 type Open =
@@ -13,11 +14,13 @@ type Open =
           focusReview: boolean;
       }
     | { kind: "viewer"; gameId: number; owner?: string; logId?: number }
+    | { kind: "lists"; gameId: number }
     | null;
 
 /**
  * Every page opens logs the same way: the editor, with a tab for each
- * console the game is logged on, or the viewer.
+ * console the game is logged on, or the viewer. Adding a game to a list
+ * opens from here too, so every cover offers it alike.
  */
 export const LogFlowProvider = ({ children }: { children: ReactNode }) => {
     const [current, setCurrent] = useState<Open>(null);
@@ -38,6 +41,7 @@ export const LogFlowProvider = ({ children }: { children: ReactNode }) => {
                 setCurrent({ kind: "editor", gameId, logId, focusReview }),
             view: (gameId, options) =>
                 setCurrent({ kind: "viewer", gameId, ...options }),
+            addToList: (gameId) => setCurrent({ kind: "lists", gameId }),
         }),
         []
     );
@@ -66,6 +70,9 @@ export const LogFlowProvider = ({ children }: { children: ReactNode }) => {
                     initialLogId={current.logId}
                     onClose={close}
                 />
+            )}
+            {current?.kind === "lists" && (
+                <AddToListPopup gameId={current.gameId} onClose={close} />
             )}
         </LogFlowContext.Provider>
     );

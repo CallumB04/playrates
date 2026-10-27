@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import {
     ChevronDown,
     Gamepad2,
+    ListOrdered,
     MessagesSquare,
     PenLine,
     UserRound,
@@ -20,6 +21,7 @@ const TABS: { tab: ProfileTab; label: string; icon: IconComponent }[] = [
     { tab: "profile", label: "Profile", icon: UserRound },
     { tab: "games", label: "Games", icon: Gamepad2 },
     { tab: "reviews", label: "Reviews", icon: PenLine },
+    { tab: "lists", label: "Lists", icon: ListOrdered },
     { tab: "community", label: "Community", icon: MessagesSquare },
     { tab: "friends", label: "Friends", icon: Users },
 ];

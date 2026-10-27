@@ -7,3 +7,7 @@ export const profilePath = (username: string, view?: ProfileView) =>
 /** One of someone's four shelves, on their games view. */
 export const shelfPath = (username: string, status: GameStatus) =>
     `${profilePath(username, "games")}?type=${status}`;
+
+/** One list's own page, under its owner. */
+export const listPath = (username: string, listId: number) =>
+    `${profilePath(username, "lists")}/${listId}`;

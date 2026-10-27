@@ -40,6 +40,11 @@ import ProfileView, { ProfileAbout } from "./views/ProfileView";
 import ReviewList, { REVIEWS_PER_PAGE } from "./components/ReviewList";
 import ThreadList, { THREADS_PER_PAGE } from "./components/ThreadList";
 import FriendsView from "./views/FriendsView";
+import ListsView, {
+    DEFAULT_LIST_SORT,
+    LISTS_PER_PAGE,
+} from "./views/ListsView";
+import { useUserLists } from "../../hooks/queries/useLists";
 
 interface ProfilePageProps {
     /** Guaranteed by ProfilePageRoute, so no hook here runs conditionally. */
@@ -114,6 +119,12 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
         },
         canSee
     );
+    const { data: listsPage } = useUserLists(targetUsername, {
+        sort: DEFAULT_LIST_SORT,
+        page: 1,
+        limit: LISTS_PER_PAGE,
+        enabled: canSee,
+    });
     const reviewCount = reviewsPage?.meta.total;
     // Each game once, though it can sit on more than one shelf.
     const gameCount = stats?.gameCount;
@@ -310,6 +321,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                         counts={{
                             games: gameCount,
                             reviews: reviewCount,
+                            lists: listsPage?.meta.total,
                             community: threadCount,
                             friends: friends
                                 ? acceptedFriends.length
@@ -343,6 +355,13 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                     )}
                     {tab === "reviews" && (
                         <ReviewList
+                            username={targetUsername}
+                            isOwner={isMyAccount}
+                            canSee={canSee}
+                        />
+                    )}
+                    {tab === "lists" && (
+                        <ListsView
                             username={targetUsername}
                             isOwner={isMyAccount}
                             canSee={canSee}
