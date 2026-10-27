@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
-    Check,
     ChevronDown,
     Gamepad2,
     MessagesSquare,
@@ -37,6 +36,12 @@ interface ProfileNavProps {
 const pathOf = (username: string, tab: ProfileTab) =>
     profilePath(username, tab === "profile" ? undefined : tab);
 
+const CountPill = ({ value }: { value: number }) => (
+    <span className="rounded-full bg-surface-sunken px-2 py-0.5 font-mono text-label-sm text-content-secondary tabular-nums">
+        {formatCount(value)}
+    </span>
+);
+
 const RequestsDot = ({ count }: { count: number }) => (
     <>
         <span aria-hidden className="size-1.5 rounded-full bg-brand" />
@@ -71,23 +76,32 @@ const ProfileNav = ({
                 aria-haspopup="dialog"
                 aria-expanded={sheetOpen}
                 onClick={() => setSheetOpen(true)}
-                className="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-md border border-subtle bg-surface-raised px-3.5 text-left shadow-lip lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:hidden"
+                className="flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-md border border-subtle bg-surface-raised py-2 pr-3 pl-2 text-left shadow-lip lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:hidden"
             >
-                <CurrentIcon size={18} aria-hidden className="text-brand" />
-                <span className="font-medium text-content">
-                    {current.label}
+                <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-brand-subtle text-brand">
+                    <CurrentIcon size={18} aria-hidden />
                 </span>
-                <span className="flex items-center gap-1.5 font-mono text-label-sm text-content-muted tabular-nums">
-                    {currentCount !== undefined && formatCount(currentCount)}
-                    {/* Requests wait in Friends; from anywhere else, say so. */}
-                    {requestCount > 0 && <RequestsDot count={requestCount} />}
+                <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="text-label-sm text-content-muted">
+                        Showing
+                    </span>
+                    <span className="flex items-center gap-2 text-body font-medium text-content">
+                        {current.label}
+                        {currentCount !== undefined && (
+                            <CountPill value={currentCount} />
+                        )}
+                    </span>
                 </span>
-                <ChevronDown
-                    size={18}
-                    aria-hidden
-                    className="ml-auto text-content-muted"
-                />
-                <span className="sr-only">, change view</span>
+                {/* Requests wait in Friends; from anywhere else, say so. */}
+                {requestCount > 0 && current.tab !== "friends" && (
+                    <span className="flex items-center">
+                        <RequestsDot count={requestCount} />
+                    </span>
+                )}
+                <span className="flex items-center gap-1 rounded-full bg-surface-sunken py-1 pr-2 pl-2.5 text-label-sm text-content-secondary">
+                    Views
+                    <ChevronDown size={14} aria-hidden />
+                </span>
             </button>
 
             {sheetOpen && (
@@ -98,11 +112,12 @@ const ProfileNav = ({
                 >
                     <h2
                         id="profile-views-title"
-                        className="font-display text-section text-content"
+                        className="pr-10 font-display text-section text-content"
                     >
                         {username}
+                        <span className="text-content-muted">’s profile</span>
                     </h2>
-                    <ul className="mt-3 flex flex-col gap-1">
+                    <ul className="mt-4 flex flex-col gap-1.5">
                         {TABS.map(({ tab, label, icon: Icon }) => {
                             const count = countOf(tab);
                             const isActive = tab === active;
@@ -113,46 +128,41 @@ const ProfileNav = ({
                                         end
                                         onClick={() => setSheetOpen(false)}
                                         className={cn(
-                                            "flex min-h-12 items-center gap-3 rounded-sm px-3 lift",
+                                            "flex min-h-14 items-center gap-3 rounded-md p-2 pr-3 lift",
                                             "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                                             isActive
-                                                ? "bg-surface-sunken font-medium text-content"
+                                                ? "bg-brand-subtle text-content"
                                                 : "text-content-secondary hover:bg-surface-hover hover:text-content"
                                         )}
                                     >
-                                        <Icon
-                                            size={18}
-                                            aria-hidden
+                                        <span
                                             className={cn(
-                                                "shrink-0",
+                                                "grid size-10 shrink-0 place-items-center rounded-sm",
                                                 isActive
-                                                    ? "text-brand"
-                                                    : "text-content-muted"
+                                                    ? "bg-brand text-content-on-solid"
+                                                    : "bg-surface-sunken text-content-secondary"
                                             )}
-                                        />
-                                        <span className="flex-1">{label}</span>
+                                        >
+                                            <Icon size={18} aria-hidden />
+                                        </span>
+                                        <span
+                                            className={cn(
+                                                "flex-1 text-body",
+                                                isActive && "font-medium"
+                                            )}
+                                        >
+                                            {label}
+                                        </span>
                                         {tab === "friends" &&
                                             requestCount > 0 && (
-                                                <span className="text-label-sm text-brand">
+                                                <span className="rounded-full bg-brand px-2 py-0.5 text-label-sm font-medium text-content-on-solid">
                                                     {formatCount(requestCount)}{" "}
-                                                    {requestCount === 1
-                                                        ? "request"
-                                                        : "requests"}
+                                                    new
                                                 </span>
                                             )}
                                         {count !== undefined && (
-                                            <span className="font-mono text-label-sm text-content-muted tabular-nums">
-                                                {formatCount(count)}
-                                            </span>
+                                            <CountPill value={count} />
                                         )}
-                                        <Check
-                                            size={16}
-                                            aria-hidden
-                                            className={cn(
-                                                "shrink-0 text-brand",
-                                                !isActive && "invisible"
-                                            )}
-                                        />
                                     </NavLink>
                                 </li>
                             );

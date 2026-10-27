@@ -1,14 +1,15 @@
 import { useMemo, type ReactNode } from "react";
-import { Clock, Star } from "lucide-react";
+import { CalendarDays, Clock, Star } from "lucide-react";
 import type { UserStats } from "@playrates/shared";
 import { latestRun } from "../../../api";
 import { useUserShelf } from "../../../hooks/queries/useGameLogs";
 import { cardClass } from "../../../components/ui/Card";
-import Stat from "../../../components/ui/Stat";
+import { figureClass } from "../../../components/ui/Figure";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import YearChart from "../../../components/gamelog/YearChart";
 import { formatCount, formatHours } from "../../../lib/format";
+import type { IconComponent } from "../../../lib/icons";
 
 interface OverviewViewProps {
     username: string;
@@ -20,18 +21,45 @@ interface OverviewViewProps {
 const plural = (n: number, one: string, many: string) =>
     `${formatCount(n)} ${n === 1 ? one : many}`;
 
-/** A figure, and a line under it saying what it is made of. */
-const FigureCard = ({
+/** What a card is, as a mark and a name across its top. */
+const CardLabel = ({
+    icon: Icon,
     children,
+}: {
+    icon: IconComponent;
+    children: ReactNode;
+}) => (
+    <h2 className="flex items-center gap-2 text-label text-content-secondary">
+        <span className="grid size-6 shrink-0 place-items-center rounded-xs bg-brand-subtle text-brand">
+            <Icon size={13} aria-hidden />
+        </span>
+        {children}
+    </h2>
+);
+
+const FigureCard = ({
+    icon,
+    label,
+    figure,
     note,
 }: {
-    children: ReactNode;
+    icon: IconComponent;
+    label: string;
+    /** Undefined while it loads. */
+    figure: ReactNode | undefined;
     note: string | undefined;
 }) => (
-    <section className={cardClass("flex flex-col justify-between gap-3")}>
-        {children}
-        <p className="text-label-sm text-content-muted">
-            {note ?? <Skeleton className="inline-block h-[1em] w-20" />}
+    <section
+        className={cardClass("flex flex-col gap-2 p-4", { padding: "none" })}
+    >
+        <CardLabel icon={icon}>{label}</CardLabel>
+        <p className={figureClass("display", "truncate leading-none")}>
+            {figure ?? (
+                <Skeleton className="inline-block h-[1em] w-20 align-top" />
+            )}
+        </p>
+        <p className="truncate text-label-sm text-content-muted">
+            {note ?? <Skeleton className="inline-block h-[1em] w-16" />}
         </p>
     </section>
 );
@@ -62,73 +90,75 @@ const OverviewView = ({
         const when = log.finishDate ?? log.startDate;
         return !!when && new Date(when).getFullYear() === year;
     }).length;
+    const yearLoading = isLoading || !canSee;
 
     return (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.6fr)] lg:gap-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.2fr)] lg:gap-4">
             <FigureCard
+                icon={Clock}
+                label="Hours played"
+                figure={stats && formatHours(stats.hoursPlayed)}
                 note={
                     stats &&
                     `Across ${plural(stats.gameCount, "game", "games")}`
                 }
-            >
-                <Stat
-                    icon={Clock}
-                    label="Hours played"
-                    loading={!stats}
-                    value={formatHours(stats?.hoursPlayed)}
-                />
-            </FigureCard>
+            />
 
             <FigureCard
+                icon={Star}
+                label="Average rating"
+                figure={
+                    stats && (
+                        <RatingBadge value={stats.averageRating} size="lg" />
+                    )
+                }
                 note={
                     stats &&
                     (stats.ratingCount > 0
                         ? `From ${plural(stats.ratingCount, "rating", "ratings")}`
                         : "Nothing rated yet")
                 }
-            >
-                <Stat
-                    icon={Star}
-                    label="Average rating"
-                    loading={!stats}
-                    value={
-                        <RatingBadge
-                            value={stats?.averageRating ?? null}
-                            size="md"
-                        />
-                    }
-                />
-            </FigureCard>
+            />
 
+            {/* The count says what the bars add up to, so the bars need no
+                legend: each is a month's share of it. */}
             <section
-                // Under both figures on a phone; beside them from lg.
                 className={cardClass(
-                    "col-span-2 flex flex-col gap-3 lg:col-span-1"
+                    "col-span-2 flex flex-col gap-2 p-4 lg:col-span-1",
+                    { padding: "none" }
                 )}
             >
-                <header className="flex items-baseline justify-between gap-3">
-                    <h2 className="font-display text-base font-semibold text-content">
-                        {year} so far
-                    </h2>
-                    {!isLoading && canSee && (
-                        <span className="text-label-sm text-content-muted">
-                            {plural(playedThisYear, "game", "games")} played
-                        </span>
-                    )}
-                </header>
-                {isLoading || !canSee ? (
-                    <Skeleton className="h-24 w-full rounded-xs" />
-                ) : (
-                    <YearChart
-                        logs={yearLogs}
-                        barsClassName="h-24"
-                        emptyNote={
-                            isOwner
-                                ? "Games you finish this year chart here."
-                                : "Nothing played yet this year."
-                        }
-                    />
-                )}
+                <CardLabel icon={CalendarDays}>Played in {year}</CardLabel>
+                <div className="flex items-end gap-4 sm:gap-6">
+                    <div className="shrink-0">
+                        <p className={figureClass("display", "leading-none")}>
+                            {yearLoading ? (
+                                <Skeleton className="inline-block h-[1em] w-10 align-top" />
+                            ) : (
+                                formatCount(playedThisYear)
+                            )}
+                        </p>
+                        <p className="mt-2 text-label-sm text-content-muted">
+                            {playedThisYear === 1 ? "game" : "games"}
+                        </p>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        {yearLoading ? (
+                            <Skeleton className="h-16 w-full rounded-xs" />
+                        ) : (
+                            <YearChart
+                                logs={yearLogs}
+                                barsClassName="h-16"
+                                labelled
+                                emptyNote={
+                                    isOwner
+                                        ? "Games you finish this year chart here, by month."
+                                        : "Nothing played yet this year."
+                                }
+                            />
+                        )}
+                    </div>
+                </div>
             </section>
         </div>
     );
