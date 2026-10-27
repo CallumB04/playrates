@@ -60,9 +60,14 @@ const ListEditor = ({ list, startWith, onClose, onSaved }: ListEditorProps) => {
     const [colour, setColour] = useState<ProfileAccent | null>(
         list?.colour ?? null
     );
-    const [covers, setCovers] = useState<number[]>(list?.coverGameIds ?? []);
-
     const games = list?.games ?? [];
+    const firstFour = games.slice(0, MAX_LIST_COVERS).map((e) => e.game.id);
+    /* What its picture shows now, ticked: the picks and the first games
+       that fill in around them, so the default four read as chosen too. */
+    const [covers, setCovers] = useState<number[]>(() =>
+        coversFor(list?.coverGameIds ?? [], games).map((c) => c.id)
+    );
+    const isFirstFour = covers.join() === firstFour.join();
     const nameMissing = name.trim().length === 0;
 
     const toggleCover = (gameId: number) =>
@@ -87,13 +92,14 @@ const ListEditor = ({ list, startWith, onClose, onSaved }: ListEditorProps) => {
             colour,
         };
         const changes = (from: GameListDetail): UpdateListInput => {
-            const picked = from.coverGameIds ?? [];
-            return covers.join() === picked.join()
-                ? fields
-                : {
-                      ...fields,
-                      coverGameIds: covers.length > 0 ? covers : null,
-                  };
+            const shown = coversFor(from.coverGameIds ?? [], from.games);
+            if (covers.join() === shown.map((c) => c.id).join()) return fields;
+            // The first four are the default, not a pick to hold on to.
+            return {
+                ...fields,
+                coverGameIds:
+                    isFirstFour || covers.length === 0 ? null : covers,
+            };
         };
         try {
             /* Awaited before onSaved: `onSaved?.(await …)` skips its own
@@ -204,7 +210,7 @@ const ListEditor = ({ list, startWith, onClose, onSaved }: ListEditorProps) => {
                     <div className="flex items-center justify-between gap-4">
                         <div>
                             <p className="text-body-sm font-medium text-content">
-                                Ranked
+                                Ranked list
                             </p>
                             <p className="text-label-sm text-content-muted">
                                 Numbers the games, in your order.
@@ -213,7 +219,7 @@ const ListEditor = ({ list, startWith, onClose, onSaved }: ListEditorProps) => {
                         <Toggle
                             checked={ranked}
                             onChange={setRanked}
-                            label="Ranked"
+                            label="Ranked list"
                             labelPosition="hidden"
                         />
                     </div>
@@ -240,56 +246,70 @@ const ListEditor = ({ list, startWith, onClose, onSaved }: ListEditorProps) => {
                         />
                     </div>
                     <div>
-                        <div className="mb-2 flex items-baseline justify-between gap-3">
-                            <p className="text-label-sm text-content-muted">
-                                Covers
-                            </p>
-                            {covers.length > 0 && (
-                                <button
-                                    type="button"
-                                    onClick={() => setCovers([])}
-                                    className="relative cursor-pointer text-label-sm text-content underline before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:text-brand"
-                                >
-                                    Use the first four
-                                </button>
-                            )}
-                        </div>
+                        <p className="mb-2 text-label-sm text-content-muted">
+                            Covers
+                        </p>
                         {games.length === 0 ? (
                             <p className="text-body-sm text-content-muted">
                                 Its first four games make its picture. Once it
                                 has some, you can pick others here.
                             </p>
                         ) : (
-                            <div className="flex gap-3">
-                                <CoverGrid
-                                    covers={coversFor(covers, games)}
-                                    className="w-20 shrink-0"
-                                />
+                            <>
+                                <div className="flex items-start gap-3">
+                                    <CoverGrid
+                                        covers={coversFor(covers, games)}
+                                        className="w-20 shrink-0 shadow-plate sm:w-24"
+                                    />
+                                    <div className="min-w-0 pt-0.5">
+                                        <p className="text-body-sm text-content">
+                                            {isFirstFour
+                                                ? "Its first four games."
+                                                : `${covers.length} of ${MAX_LIST_COVERS} picked.`}
+                                        </p>
+                                        <p className="mt-1 text-label-sm text-content-muted">
+                                            Tap up to four, in the order you
+                                            want them. Any left fill from the
+                                            top of the list.
+                                        </p>
+                                        {!isFirstFour && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setCovers(firstFour)
+                                                }
+                                                className="relative mt-2 cursor-pointer text-label-sm text-content underline before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:text-brand"
+                                            >
+                                                Use the first four
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
                                 <ul
                                     aria-label="Pick up to four covers"
-                                    className="grid max-h-48 flex-1 grid-cols-4 content-start gap-1.5 overflow-y-auto pr-1 sm:grid-cols-6"
+                                    className="mt-3 grid max-h-44 grid-cols-5 content-start gap-2 overflow-y-auto p-1 sm:grid-cols-7"
                                 >
                                     {games.map(({ game }) => {
                                         const at = covers.indexOf(game.id);
+                                        const full =
+                                            covers.length >= MAX_LIST_COVERS;
                                         return (
                                             <li key={game.id}>
                                                 <button
                                                     type="button"
                                                     aria-pressed={at >= 0}
                                                     aria-label={game.title}
-                                                    disabled={
-                                                        at < 0 &&
-                                                        covers.length >=
-                                                            MAX_LIST_COVERS
-                                                    }
+                                                    disabled={at < 0 && full}
                                                     onClick={() =>
                                                         toggleCover(game.id)
                                                     }
                                                     className={cn(
-                                                        "relative block w-full cursor-pointer overflow-hidden rounded-xs disabled:cursor-not-allowed disabled:opacity-40",
+                                                        "relative block w-full cursor-pointer overflow-hidden rounded-xs transition-opacity",
                                                         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
-                                                        at >= 0 &&
-                                                            "ring-2 ring-brand"
+                                                        at >= 0
+                                                            ? "ring-2 ring-brand ring-offset-2 ring-offset-surface-raised"
+                                                            : // The picked ones stand out; the rest wait.
+                                                              "opacity-60 hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-30"
                                                     )}
                                                 >
                                                     <GameCover
@@ -298,7 +318,7 @@ const ListEditor = ({ list, startWith, onClose, onSaved }: ListEditorProps) => {
                                                         className="aspect-3/4 w-full"
                                                     />
                                                     {at >= 0 && (
-                                                        <span className="absolute top-1 left-1 grid size-5 place-items-center rounded-full bg-brand text-label-sm font-semibold text-content-on-solid">
+                                                        <span className="absolute top-1 left-1 grid size-5 place-items-center rounded-full bg-brand text-label-sm font-semibold text-content-on-solid shadow-plate">
                                                             <span className="cap-box">
                                                                 {at + 1}
                                                             </span>
@@ -309,7 +329,7 @@ const ListEditor = ({ list, startWith, onClose, onSaved }: ListEditorProps) => {
                                         );
                                     })}
                                 </ul>
-                            </div>
+                            </>
                         )}
                     </div>
                 </div>

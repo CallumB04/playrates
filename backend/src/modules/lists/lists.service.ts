@@ -76,10 +76,14 @@ export const createListsService = (
     const covers = new Map<number, ListCover>(
       (await games.findByIds(wanted))
         .filter((game) => !game.has_sexual_content)
-        .map((game) => [
-          game.id,
-          { id: game.id, title: game.title, coverUrl: game.cover_url },
-        ]),
+        // Through toGame, which picks the box art over the wider cover_url.
+        .map((row) => {
+          const game = toGame(row);
+          return [
+            game.id,
+            { id: game.id, title: game.title, coverUrl: game.coverUrl },
+          ];
+        }),
     );
     const voted = viewerId
       ? await repo.votedListIds(

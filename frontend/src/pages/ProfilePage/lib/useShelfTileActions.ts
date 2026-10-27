@@ -43,7 +43,7 @@ export const useShelfTileActions = (username: string, isMyAccount: boolean) => {
         if (isMyAccount) {
             actions.push({
                 key: "edit",
-                label: "Edit",
+                label: entry.logs.length > 1 ? "Edit logs" : "Edit log",
                 onSelect: () => flow.open(gameId),
             });
         } else if (myLogGameIds.has(gameId)) {

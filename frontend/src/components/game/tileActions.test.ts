@@ -88,5 +88,6 @@ describe("tileActions", () => {
             handlers()
         );
         expect(actions[0]!.label).toBe("View your logs");
+        expect(actions[1]!.label).toBe("Edit logs");
     });
 });

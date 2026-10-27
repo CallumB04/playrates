@@ -56,7 +56,8 @@ export const tileActions = (
             },
             {
                 key: "edit",
-                label: "Edit",
+                // Beside "View your log", "Edit" alone read as editing the game.
+                label: log.logs.length > 1 ? "Edit logs" : "Edit log",
                 onSelect: () => on.open(game.id),
             },
             addToList(game.id, on),

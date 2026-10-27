@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { Flag, Lock, Pencil, Trash2, Users } from "lucide-react";
+import { Flag, ListPlus, Lock, Pencil, Trash2, Users } from "lucide-react";
 import type { GameListDetail, GameListEntry } from "@playrates/shared";
 import NotFoundPage from "../NotFoundPage";
 import { ApiError } from "../../api";
@@ -18,7 +18,6 @@ import { usePageMeta } from "../../hooks/usePageMeta";
 import Button from "../../components/ui/Button";
 import ConfirmPopup from "../../components/ui/ConfirmPopup";
 import VoteButton from "../../components/ui/VoteButton";
-import Field from "../../components/ui/Field";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { cardClass } from "../../components/ui/Card";
@@ -78,6 +77,7 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
             : list.visibility === "friends"
               ? Users
               : null;
+    const colour = list.colour ? avatarGradient(accentHue(list.colour)) : null;
 
     return (
         <div className="flex flex-col gap-6">
@@ -86,24 +86,29 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
                     padding: "none",
                 })}
             >
-                {list.colour && (
-                    // The list's colour, washing down from the top and gone
-                    // before the words.
-                    <div
+                {colour && (
+                    // Its colour down the edge, as on its card.
+                    <span
                         aria-hidden
-                        className="absolute inset-x-0 top-0 h-32 [mask-image:linear-gradient(to_bottom,black,transparent)] opacity-35"
-                        style={{
-                            backgroundImage: avatarGradient(
-                                accentHue(list.colour)
-                            ),
-                        }}
+                        className="absolute inset-y-0 left-0 w-1.5"
+                        style={{ backgroundImage: colour }}
                     />
                 )}
                 <div className="relative flex gap-4 p-4 sm:gap-6 sm:p-6">
-                    <CoverGrid
-                        covers={list.covers}
-                        className="w-24 shrink-0 shadow-plate sm:w-36"
-                    />
+                    {/* Matted in its colour, where it has one: a wash over
+                        the header muddied it, light mode worst. */}
+                    <div
+                        className={cn(
+                            "shrink-0 self-start rounded-md",
+                            colour ? "p-1 shadow-plate" : "shadow-plate"
+                        )}
+                        style={colour ? { backgroundImage: colour } : undefined}
+                    >
+                        <CoverGrid
+                            covers={list.covers}
+                            className="w-24 sm:w-36"
+                        />
+                    </div>
                     <div className="flex min-w-0 flex-1 flex-col">
                         <p className="flex flex-wrap items-center gap-2 text-label-sm text-content-muted">
                             <span>{list.ranked ? "Ranked list" : "List"}</span>
@@ -236,43 +241,49 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
     );
 };
 
-/** A search box that puts what you pick on the end of the list. */
+/** A search that puts what you pick on the end of the list. Set apart and
+ *  said in so many words: as a bare box above the games it read as a way
+ *  to search the list. */
 const AddGames = ({ list }: { list: GameListDetail }) => {
     const notify = useNotify();
     const add = useAddToList(list.id);
+    const fieldId = useId();
     const inList = new Set(list.games.map((e) => e.game.id));
 
     return (
-        <Field label="Add a game">
-            {({ id }) => (
-                <GamePicker
-                    id={id}
-                    value={null}
-                    onChange={(game) => {
-                        if (!game) return;
-                        if (inList.has(game.id)) {
+        <section className="rounded-lg border border-dashed border-strong bg-surface-sunken/40 p-3 sm:p-4">
+            <label
+                htmlFor={fieldId}
+                className="mb-2 flex items-center gap-2 text-body-sm font-medium text-content"
+            >
+                <ListPlus size={16} aria-hidden className="text-brand" />
+                Add a game to this list
+            </label>
+            <GamePicker
+                id={fieldId}
+                value={null}
+                placeholder="Search for a game to add"
+                onChange={(game) => {
+                    if (!game) return;
+                    if (inList.has(game.id)) {
+                        notify(`${game.title} is in the list already`, "info");
+                        return;
+                    }
+                    add.mutate(game.id, {
+                        onSuccess: () =>
+                            notify(`Added ${game.title}`, "success"),
+                        onError: (error) =>
                             notify(
-                                `${game.title} is in the list already`,
-                                "info"
-                            );
-                            return;
-                        }
-                        add.mutate(game.id, {
-                            onSuccess: () =>
-                                notify(`Added ${game.title}`, "success"),
-                            onError: (error) =>
-                                notify(
-                                    error instanceof ApiError &&
-                                        error.status === 422
-                                        ? error.message
-                                        : "Couldn't add that game",
-                                    "error"
-                                ),
-                        });
-                    }}
-                />
-            )}
-        </Field>
+                                error instanceof ApiError &&
+                                    error.status === 422
+                                    ? error.message
+                                    : "Couldn't add that game",
+                                "error"
+                            ),
+                    });
+                }}
+            />
+        </section>
     );
 };
 
@@ -288,7 +299,10 @@ const ListGames = ({
     const notify = useNotify();
     const setGames = useSetListGames(list.id);
     const { data: platforms } = usePlatforms();
-    const { actionsFor, statusFor } = useTileActions();
+    const { actionsFor: tileActionsFor, statusFor } = useTileActions();
+    // Not "Add to list" here: it's what the page is already for.
+    const actionsFor = (game: GameListEntry["game"]) =>
+        tileActionsFor(game).filter((a) => a.key !== "list");
     const order = list.games.map((e) => e.game.id);
 
     const removeGame = (gameId: number) =>

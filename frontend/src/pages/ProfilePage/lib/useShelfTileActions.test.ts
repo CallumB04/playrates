@@ -44,7 +44,7 @@ describe("useShelfTileActions", () => {
 
         expect(actions.map((a) => [a.key, a.label])).toEqual([
             ["view", "View logs"],
-            ["edit", "Edit"],
+            ["edit", "Edit logs"],
             ["list", "Add to list"],
         ]);
         actions[1]!.onSelect();

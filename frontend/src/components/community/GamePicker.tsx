@@ -24,6 +24,8 @@ interface GamePickerProps {
     id?: string;
     "aria-describedby"?: string;
     "aria-invalid"?: true;
+    /** What the empty box says it's for. */
+    placeholder?: string;
 }
 
 const RESULTS = 6;
@@ -33,7 +35,12 @@ const RESULTS = 6;
  * field, with a way to change it — the common arrival is from a game's own
  * page with the choice already made.
  */
-const GamePicker = ({ value, onChange, ...a11y }: GamePickerProps) => {
+const GamePicker = ({
+    value,
+    onChange,
+    placeholder = "Search for a game",
+    ...a11y
+}: GamePickerProps) => {
     const listId = useId();
     const [term, setTerm] = useState("");
     const [open, setOpen] = useState(false);
@@ -134,7 +141,7 @@ const GamePicker = ({ value, onChange, ...a11y }: GamePickerProps) => {
                         : undefined
                 }
                 autoComplete="off"
-                placeholder="Search for a game"
+                placeholder={placeholder}
                 value={term}
                 onChange={(event) => {
                     setTerm(event.target.value);

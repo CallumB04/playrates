@@ -165,6 +165,24 @@ describe("a list's games and covers", () => {
     expect(coverIds((await get(id, USER_A)).body)).toEqual([1, 2, 3, 4]);
   });
 
+  /* cover_url is often a wide artwork; a cover wants the box art, as the
+     rest of the app shows it. */
+  it("covers itself with each game's box art", async () => {
+    const { create } = setup({
+      games: [
+        buildGame({
+          id: 1,
+          cover_url: "https://img/artwork.jpg",
+          box_art_url: "https://img/box.jpg",
+        }),
+      ],
+    });
+
+    const list = await create({ name: "x", gameIds: [1] });
+
+    expect(list.covers[0].coverUrl).toBe("https://img/box.jpg");
+  });
+
   it("takes only its own games for covers", async () => {
     const { create, patch } = setup();
     const { id } = await create({ name: "x", gameIds: [1, 2] });
