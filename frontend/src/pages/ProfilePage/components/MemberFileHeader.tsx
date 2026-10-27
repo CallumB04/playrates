@@ -28,8 +28,11 @@ const MemberFileHeader = ({
     /* No card: it sits on the page, or on the picture a profile chose, as a
        game's title sits on its art. */
     <section>
-        <div className="flex flex-wrap items-end justify-between gap-4">
-            <span className="relative inline-block self-start rounded-full ring-4 ring-surface">
+        {/* Stacked until there is room beside the name for the buttons;
+            then the buttons sit at the foot of it, by what they act on,
+            rather than up on the picture by the avatar. */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-6">
+            <span className="relative inline-block shrink-0 self-start rounded-full ring-4 ring-surface">
                 <ProfilePicture
                     variant="profileHeader"
                     file={profile.avatarUrl ?? ""}
@@ -46,33 +49,33 @@ const MemberFileHeader = ({
                 <PresenceDot online={profile.online} size="lg" />
             </span>
 
-            <div className="mt-3 flex items-center gap-2 self-start">
-                {action}
+            <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+                    <h1 className="font-display text-title break-words text-content">
+                        {profile.username}
+                    </h1>
+                    <UserStatus online={profile.online} />
+                    <span className="text-label text-content-muted">
+                        Member since {formatMonthYear(profile.createdAt)}
+                    </span>
+                    {/* Here, not under the friend button, where it moved
+                        the buttons each time the friendship changed. */}
+                    {friendsSince && (
+                        <span className="text-label text-content-muted">
+                            Friends since {new Date(friendsSince).getFullYear()}
+                        </span>
+                    )}
+                </div>
+
+                {profile.bio && (
+                    <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-content-secondary">
+                        {profile.bio}
+                    </p>
+                )}
             </div>
-        </div>
 
-        <div className="mt-4 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
-            <h1 className="font-display text-title text-content">
-                {profile.username}
-            </h1>
-            <UserStatus online={profile.online} />
-            <span className="text-label text-content-muted">
-                Member since {formatMonthYear(profile.createdAt)}
-            </span>
-            {/* Here, not under the friend button, where it moved the
-                        buttons each time the friendship changed. */}
-            {friendsSince && (
-                <span className="text-label text-content-muted">
-                    Friends since {new Date(friendsSince).getFullYear()}
-                </span>
-            )}
+            <div className="flex gap-2 lg:shrink-0">{action}</div>
         </div>
-
-        {profile.bio && (
-            <p className="mt-2.5 max-w-[52ch] text-sm leading-relaxed text-content-secondary">
-                {profile.bio}
-            </p>
-        )}
 
         {request}
     </section>

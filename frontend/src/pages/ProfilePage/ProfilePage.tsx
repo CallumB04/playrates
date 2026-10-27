@@ -224,7 +224,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                                 onClick={() =>
                                     setModal({ kind: "editProfile" })
                                 }
-                                className="max-sm:min-h-11"
+                                className="max-sm:min-h-11 max-sm:flex-1"
                             >
                                 <Pencil size={15} aria-hidden />
                                 Edit profile
@@ -258,6 +258,16 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                         </>
                     ) : (
                         <>
+                            <FriendAction
+                                relation={relation}
+                                isPending={isPending}
+                                onAdd={guard(() => void send.mutateAsync())}
+                                onRemove={guard(() =>
+                                    setModal({ kind: "removeFriend" })
+                                )}
+                                onCancel={guard(() => void cancelRequest())}
+                                className="max-sm:flex-1"
+                            />
                             {currentUser && targetUser && (
                                 <Button
                                     variant="secondary"
@@ -270,15 +280,6 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                                     <Flag size={15} aria-hidden />
                                 </Button>
                             )}
-                            <FriendAction
-                                relation={relation}
-                                isPending={isPending}
-                                onAdd={guard(() => void send.mutateAsync())}
-                                onRemove={guard(() =>
-                                    setModal({ kind: "removeFriend" })
-                                )}
-                                onCancel={guard(() => void cancelRequest())}
-                            />
                         </>
                     )
                 }
