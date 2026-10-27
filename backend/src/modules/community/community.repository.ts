@@ -91,13 +91,6 @@ export interface CommunityRepository {
   ): Promise<LatestReplyRow[]>;
   /** Messages per day over the trending window, oldest first. */
   threadActivity(threadId: number): Promise<number[]>;
-  /** Game threads this person has posted in, most recent post first. The
-   *  patch notes are left out: they have a place of their own, and a row in
-   *  a profile list would pass them off as an ordinary thread. */
-  listThreadsByParticipant(
-    userId: string,
-    limit: number,
-  ): Promise<ThreadCardRow[]>;
   findThread(id: number): Promise<ThreadCardRow | null>;
   findPatchNotes(): Promise<ThreadCardRow | null>;
   listMessages(threadId: number): Promise<MessageCardRow[]>;
@@ -243,39 +236,6 @@ export const createCommunityRepository = (db: Db): CommunityRepository => ({
     return ((data ?? []) as { message_count: number }[]).map((d) =>
       Number(d.message_count),
     );
-  },
-
-  async listThreadsByParticipant(userId, limit) {
-    /* Newest posts first, then the first `limit` distinct threads among them.
-       A page of posts is plenty: nobody's five most recent threads are more
-       than a hundred posts apart. */
-    const { data, error } = await db
-      .from("community_messages")
-      .select("thread_id")
-      .eq("author_id", userId)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(100);
-    if (error) throw error;
-
-    const ids = [
-      ...new Set(
-        (data ?? []).map((r) => (r as { thread_id: number }).thread_id),
-      ),
-    ];
-    if (ids.length === 0) return [];
-
-    // Filtered before the cut to `limit`, so a skipped thread leaves no gap.
-    const cards = await db
-      .from(THREADS)
-      .select("*")
-      .eq("subject_kind", "game")
-      .in("id", ids);
-    if (cards.error) throw cards.error;
-    const byId = new Map(
-      ((cards.data ?? []) as ThreadCardRow[]).map((row) => [row.id, row]),
-    );
-    return ids.flatMap((id) => byId.get(id) ?? []).slice(0, limit);
   },
 
   async findThread(id) {

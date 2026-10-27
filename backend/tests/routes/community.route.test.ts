@@ -585,35 +585,6 @@ describe("trending", () => {
   });
 });
 
-describe("threads by participant", () => {
-  it("lists the threads someone posted in, most recent first", async () => {
-    const seed = communitySeed();
-    const { app } = buildTestApp({
-      seed: {
-        ...seed,
-        communityThreads: [...seed.communityThreads, buildThread({ id: 3 })],
-        communityMessages: [
-          buildMessage({ id: 1, is_opening: true, created_at: daysAgo(5) }),
-          buildMessage({
-            id: 2,
-            thread_id: 3,
-            author_id: USER_B,
-            created_at: daysAgo(1),
-          }),
-          buildMessage({ id: 3, author_id: USER_B, created_at: daysAgo(3) }),
-        ],
-      },
-    });
-
-    const response = await request(app).get(
-      "/api/v1/users/frienduser/community-threads",
-    );
-
-    expect(response.status).toBe(200);
-    expect(response.body.map((t: { id: number }) => t.id)).toEqual([3, 1]);
-  });
-});
-
 describe("the thread list filtered to one person", () => {
   it("keeps only threads they started or replied to, with the total", async () => {
     const seed = communitySeed();
@@ -658,55 +629,17 @@ describe("the thread list filtered to one person", () => {
 
     expect(response.status).toBe(404);
   });
-});
 
-describe("threads by participant, patch notes", () => {
-  it("leaves the patch notes off the admin's profile", async () => {
+  it("leaves the patch notes off, so an admin's profile doesn't list them", async () => {
     const { app } = buildTestApp({ seed: communitySeed() });
 
     const response = await request(app).get(
-      "/api/v1/users/admin/community-threads",
+      "/api/v1/community/threads?participant=admin",
     );
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual([]);
-  });
-
-  it("still fills the list when the newest post was a patch note", async () => {
-    const seed = communitySeed();
-    const { app } = buildTestApp({
-      seed: {
-        ...seed,
-        communityThreads: [...seed.communityThreads, buildThread({ id: 3 })],
-        communityMessages: [
-          buildMessage({
-            id: 1,
-            is_opening: true,
-            author_id: ADMIN,
-            created_at: daysAgo(3),
-          }),
-          buildMessage({
-            id: 5,
-            thread_id: 3,
-            author_id: ADMIN,
-            created_at: daysAgo(2),
-          }),
-          buildMessage({
-            id: 2,
-            thread_id: 2,
-            author_id: ADMIN,
-            is_opening: true,
-            created_at: daysAgo(0),
-          }),
-        ],
-      },
-    });
-
-    const response = await request(app).get(
-      "/api/v1/users/admin/community-threads?limit=2",
-    );
-
-    expect(response.body.map((t: { id: number }) => t.id)).toEqual([3, 1]);
+    expect(response.body.data).toEqual([]);
+    expect(response.body.meta.total).toBe(0);
   });
 });
 
@@ -736,7 +669,9 @@ describe("community images", () => {
       .send(await realJpeg());
 
     expect(response.status).toBe(201);
-    expect(isWebp(state.communityImages.get(response.body.url)!.bytes)).toBe(true);
+    expect(isWebp(state.communityImages.get(response.body.url)!.bytes)).toBe(
+      true,
+    );
   });
 
   it("refuses bytes that are not a picture", async () => {

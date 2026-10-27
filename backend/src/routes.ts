@@ -36,10 +36,7 @@ import {
 import { createNotificationsService } from "./modules/notifications/notifications.service.js";
 import { createMyNotificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { createCommunityService } from "./modules/community/community.service.js";
-import {
-  createCommunityRouter,
-  createUserThreadsRouter,
-} from "./modules/community/community.routes.js";
+import { createCommunityRouter } from "./modules/community/community.routes.js";
 import { createPlatformsRouter } from "./modules/platforms/platforms.js";
 import { createGenresRouter } from "./modules/genres/genres.js";
 import { createStatsRouter } from "./modules/stats/stats.js";
@@ -157,7 +154,10 @@ export const buildRoutes = ({
     createAdminRouter({ service: admin }),
   );
 
-  router.use("/reports", createReportsRouter({ service: reports, requireAuth }));
+  router.use(
+    "/reports",
+    createReportsRouter({ service: reports, requireAuth }),
+  );
 
   router.use("/platforms", createPlatformsRouter(repos.platforms));
   router.use("/genres", createGenresRouter(repos.genres));
@@ -178,7 +178,12 @@ export const buildRoutes = ({
   );
   router.use(
     "/me/logs",
-    createMyLogsRouter({ service: gameLogs, reviews, requireAuth, optionalAuth }),
+    createMyLogsRouter({
+      service: gameLogs,
+      reviews,
+      requireAuth,
+      optionalAuth,
+    }),
   );
   router.use(
     "/me/shelf",
@@ -221,11 +226,6 @@ export const buildRoutes = ({
   router.use(
     "/users/:username/friends",
     createUserFriendsRouter({ service: friends, requireAuth, optionalAuth }),
-  );
-
-  router.use(
-    "/users/:username/community-threads",
-    createUserThreadsRouter({ service: community, requireAuth, optionalAuth }),
   );
 
   router.use(

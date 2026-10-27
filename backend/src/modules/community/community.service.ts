@@ -230,17 +230,6 @@ export const createCommunityService = (
       };
     },
 
-    async listByUsername(
-      username: string,
-      limit: number,
-      viewerId: string | undefined,
-    ): Promise<ThreadCard[]> {
-      const profile = await gate(username, viewerId);
-      return (await repo.listThreadsByParticipant(profile.id, limit)).map(
-        toThreadCard,
-      );
-    },
-
     async getThread(
       threadId: number,
       viewerId?: string,

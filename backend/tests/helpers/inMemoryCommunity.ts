@@ -245,21 +245,6 @@ export const createInMemoryCommunity = (
       );
     },
 
-    async listThreadsByParticipant(userId, limit) {
-      const ids = [
-        ...new Set(
-          state.communityMessages
-            .filter((m) => m.author_id === userId && !m.deleted_at)
-            .sort((a, b) => b.created_at.localeCompare(a.created_at))
-            .map((m) => m.thread_id),
-        ),
-      ];
-      return ids
-        .flatMap((id) => card(id) ?? [])
-        .filter((c) => c.subject_kind === "game")
-        .slice(0, limit);
-    },
-
     async findThread(id) {
       return card(id);
     },

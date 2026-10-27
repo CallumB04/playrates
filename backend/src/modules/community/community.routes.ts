@@ -9,7 +9,6 @@ import {
   ThreadIdParamSchema,
   ThreadListQuerySchema,
   UpdateMessageInputSchema,
-  UsernameParamSchema,
   type CreateMessageInput,
   type CreateThreadInput,
   type ThreadListQuery,
@@ -38,10 +37,6 @@ const TrendingQuerySchema = z.object({
 
 const SidebarQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(10).default(5),
-});
-
-const UserThreadsQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(20).default(5),
 });
 
 // Same shape as the avatar upload: one already-compressed image, raw bytes.
@@ -192,27 +187,6 @@ export const createCommunityRouter = ({
       // express.raw leaves an empty object where the type did not match.
       const body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
       res.status(201).json(await service.uploadImage(callerId(req), body));
-    },
-  );
-
-  return router;
-};
-
-/** Mounted at /users/:username/community-threads. */
-export const createUserThreadsRouter = ({
-  service,
-  optionalAuth,
-}: Deps): Router => {
-  const router = Router({ mergeParams: true });
-
-  router.get(
-    "/",
-    optionalAuth,
-    validate({ params: UsernameParamSchema, query: UserThreadsQuerySchema }),
-    async (req, res) => {
-      const { username } = req.valid!.params as { username: string };
-      const { limit } = req.valid!.query as { limit: number };
-      res.json(await service.listByUsername(username, limit, req.auth?.userId));
     },
   );
 
