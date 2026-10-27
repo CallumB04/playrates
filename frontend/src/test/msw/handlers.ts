@@ -270,9 +270,6 @@ export const handlers = [
     http.get(`${API}/community/trending`, () => HttpResponse.json([])),
     http.get(`${API}/community/games`, () => HttpResponse.json([])),
     http.get(`${API}/community/latest`, () => HttpResponse.json([])),
-    http.get(`${API}/users/:username/community-threads`, () =>
-        HttpResponse.json([])
-    ),
 
     http.get(`${API}/me/friends`, () =>
         HttpResponse.json({ data: [buildFriendEdge()] })

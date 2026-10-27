@@ -85,8 +85,6 @@ export const queryKeys = {
         games: (limit: number) => ["community", "games", limit] as const,
         latest: (limit: number) => ["community", "latest", limit] as const,
         thread: (id: number) => ["community", "thread", id] as const,
-        byUsername: (username: string, limit: number) =>
-            ["community", "user", username, limit] as const,
     },
 
     admin: {

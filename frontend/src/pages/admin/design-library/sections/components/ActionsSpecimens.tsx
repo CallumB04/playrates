@@ -134,8 +134,8 @@ const ActionsSpecimens = () => {
             <Specimen
                 title="Segmented choice"
                 stack
-                notes="A short, fixed set where seeing every option beats opening a menu. The selected segment is flat — an inset rim along its top edge alone made it read a shade shorter than its neighbours. Segments reach 44px below sm. fill splits the width equally, for a control that spans its container. A segment can carry a count, as the posts on a profile do."
-                meta="segments (value · label · icon · count) · value · onChange · label · fill"
+                notes="A short, fixed set where seeing every option beats opening a menu. The selected segment is flat — an inset rim along its top edge alone made it read a shade shorter than its neighbours. Segments reach 44px below sm. fill splits the width equally, for a control that spans its container."
+                meta="segments · value · onChange · label · fill"
             >
                 <SegmentedChoice
                     label="Theme"
@@ -151,17 +151,11 @@ const ActionsSpecimens = () => {
                     <SegmentedChoice
                         label="Which notifications to show"
                         segments={[
-                            {
-                                value: "inbox",
-                                label: "Inbox",
-                                icon: Inbox,
-                                count: "4",
-                            },
+                            { value: "inbox", label: "Inbox", icon: Inbox },
                             {
                                 value: "archive",
                                 label: "Archive",
                                 icon: Archive,
-                                count: "28",
                             },
                         ]}
                         value={tab}

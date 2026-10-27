@@ -5,8 +5,6 @@ export interface Segment<T extends string> {
     value: T;
     label: string;
     icon?: LucideIcon;
-    /** A figure after the label, already formatted: how many are behind it. */
-    count?: string;
 }
 
 interface SegmentedChoiceProps<T extends string> {
@@ -39,7 +37,7 @@ const SegmentedChoice = <T extends string>({
             className
         )}
     >
-        {segments.map(({ value: option, label: text, icon: Icon, count }) => {
+        {segments.map(({ value: option, label: text, icon: Icon }) => {
             const isActive = option === value;
             return (
                 <button
@@ -68,18 +66,6 @@ const SegmentedChoice = <T extends string>({
                         />
                     )}
                     {text}
-                    {count !== undefined && (
-                        <span
-                            className={cn(
-                                "rounded-full px-1.5 font-mono text-label-sm tabular-nums",
-                                isActive
-                                    ? "bg-surface-sunken text-content-secondary"
-                                    : "text-content-muted"
-                            )}
-                        >
-                            {count}
-                        </span>
-                    )}
                 </button>
             );
         })}

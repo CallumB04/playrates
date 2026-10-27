@@ -7,7 +7,7 @@ import ListFoot from "./ListFoot";
 import { NoThreads } from "./ListEmpty";
 import { usePageParam } from "../lib/usePageParam";
 
-const THREADS_PER_PAGE = 10;
+export const THREADS_PER_PAGE = 10;
 
 interface ThreadListProps {
     username: string;

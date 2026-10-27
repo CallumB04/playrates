@@ -1,29 +1,16 @@
 import { Palette } from "lucide-react";
 import { cardClass } from "../../../components/ui/Card";
-import type { Profile, UserStats } from "@playrates/shared";
+import type { Profile } from "@playrates/shared";
 import type { ReactNode } from "react";
 import ProfilePicture from "../../../components/ProfilePicture";
 import PresenceDot from "../../../components/ui/PresenceDot";
-import Stat from "../../../components/ui/Stat";
-import Progress from "../../../components/ui/Progress";
 import UserStatus from "../../../components/UserStatus";
-import RatingBadge from "../../../components/ui/RatingBadge";
-import {
-    GAME_STATUSES,
-    STATUS_PRESENTATION,
-    type GameStatus,
-} from "../../../constants/gameStatus";
-import { formatCount, formatHours, formatMonthYear } from "../../../lib/format";
+import { formatMonthYear } from "../../../lib/format";
 import { accentHue, bannerGradient } from "../../../lib/profileAccent";
 import { cn } from "../../../lib/cn";
 
 interface MemberFileHeaderProps {
     profile: Profile;
-    stats: UserStats | undefined;
-    /** Past the card is not this viewer's to see, figures included. */
-    profileHidden?: boolean;
-    reviewCount: number | undefined;
-    friendCount: number | undefined;
     /** When the viewer and this member became friends, if they are. */
     friendsSince?: string;
     /** A friend request from them, waiting on the viewer's answer. */
@@ -35,77 +22,15 @@ interface MemberFileHeaderProps {
     onEditPicture?: () => void;
 }
 
-/** The split of a shelf across the four states, as one stacked bar. */
-const ShelfBar = ({
-    byStatus,
-    total,
-}: {
-    byStatus: Partial<Record<GameStatus, number>>;
-    total: number;
-}) => {
-    if (total === 0) return null;
-
-    return (
-        <div>
-            <Progress
-                size="lg"
-                label={GAME_STATUSES.map(
-                    (status) =>
-                        `${STATUS_PRESENTATION[status].label}: ${byStatus[status] ?? 0}`
-                ).join(", ")}
-                segments={GAME_STATUSES.map((status) => {
-                    const count = byStatus[status] ?? 0;
-                    return {
-                        key: status,
-                        value: count / total,
-                        className: STATUS_PRESENTATION[status].accent,
-                        title: `${STATUS_PRESENTATION[status].label}: ${count}`,
-                    };
-                })}
-            />
-
-            <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5">
-                {GAME_STATUSES.map((status) => {
-                    const { label, accent } = STATUS_PRESENTATION[status];
-                    return (
-                        <span
-                            key={status}
-                            className="flex items-center gap-1.5 text-label-sm text-content-muted"
-                        >
-                            <span
-                                aria-hidden
-                                className={cn("size-2 rounded-full", accent)}
-                            />
-                            {label}
-                            <span className="font-mono text-content">
-                                {formatCount(byStatus[status] ?? 0)}
-                            </span>
-                        </span>
-                    );
-                })}
-            </div>
-        </div>
-    );
-};
-
-/** The profile header: four figures and the shelf bar. */
+/** The profile card: who they are, and what you can do about it. */
 const MemberFileHeader = ({
     profile,
-    stats,
-    profileHidden = false,
-    reviewCount,
-    friendCount,
     friendsSince,
     request,
     action,
     onEditPicture,
 }: MemberFileHeaderProps) => {
     const banner = bannerGradient(accentHue(profile.accent));
-    const byStatus = stats?.byStatus ?? {};
-    const shelfTotal = GAME_STATUSES.reduce(
-        (sum, status) => sum + (byStatus[status] ?? 0),
-        0
-    );
 
     return (
         <section
@@ -192,40 +117,6 @@ const MemberFileHeader = ({
                 )}
 
                 {request}
-
-                {!profileHidden && (
-                    <div className="mt-5 grid gap-5 border-t border-subtle pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-8">
-                        <div className="grid grid-cols-2 gap-x-7 gap-y-4 sm:flex sm:flex-wrap">
-                            <Stat
-                                label="Hours played"
-                                loading={!stats}
-                                value={formatHours(stats?.hoursPlayed)}
-                            />
-                            <Stat
-                                label="Average rating"
-                                loading={!stats}
-                                value={
-                                    <RatingBadge
-                                        value={stats?.averageRating ?? null}
-                                        size="md"
-                                    />
-                                }
-                            />
-                            <Stat
-                                label="Reviews"
-                                loading={reviewCount === undefined}
-                                value={formatCount(reviewCount)}
-                            />
-                            <Stat
-                                label="Friends"
-                                loading={friendCount === undefined}
-                                value={formatCount(friendCount)}
-                            />
-                        </div>
-
-                        <ShelfBar byStatus={byStatus} total={shelfTotal} />
-                    </div>
-                )}
             </div>
         </section>
     );

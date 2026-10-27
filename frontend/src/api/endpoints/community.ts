@@ -74,17 +74,6 @@ export const fetchThread = async (threadId: number): Promise<ThreadDetail> => {
     return data;
 };
 
-export const fetchUserThreads = async (
-    username: string,
-    limit = 5
-): Promise<ThreadCard[]> => {
-    const { data } = await api.get<ThreadCard[]>(
-        `/users/${username}/community-threads`,
-        { params: { limit } }
-    );
-    return data;
-};
-
 export const createThread = async (
     input: CreateThreadInput
 ): Promise<ThreadDetail> => {

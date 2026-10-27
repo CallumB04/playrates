@@ -7,7 +7,7 @@ describe("parseProfileTab", () => {
     });
 
     it("knows each view", () => {
-        for (const view of ["games", "posts", "friends"]) {
+        for (const view of ["games", "reviews", "community", "friends"]) {
             expect(parseProfileTab(view)).toBe(view);
         }
     });

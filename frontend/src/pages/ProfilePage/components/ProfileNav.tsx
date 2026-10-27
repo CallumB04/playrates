@@ -9,19 +9,26 @@ import type { ProfileTab } from "../lib/profileViews";
 const TABS: { tab: ProfileTab; label: string }[] = [
     { tab: "profile", label: "Profile" },
     { tab: "games", label: "Games" },
-    { tab: "posts", label: "Posts" },
+    { tab: "reviews", label: "Reviews" },
+    { tab: "community", label: "Community" },
     { tab: "friends", label: "Friends" },
 ];
 
-/** The views of one profile. Links rather than tabs, so each has a URL to
- *  share and the back button steps between them. */
 interface ProfileNavProps {
     username: string;
     /** How many are behind each view, once known. The profile has none. */
     counts: Partial<Record<ProfileView, number>>;
+    /** Friend requests waiting on the owner. Only ever set on your own. */
+    requestCount?: number;
 }
 
-const ProfileNav = ({ username, counts }: ProfileNavProps) => {
+/** The views of one profile. Links rather than tabs, so each has a URL to
+ *  share and the back button steps between them. */
+const ProfileNav = ({
+    username,
+    counts,
+    requestCount = 0,
+}: ProfileNavProps) => {
     const fade = useOverflowFade<HTMLDivElement>();
 
     return (
@@ -44,8 +51,9 @@ const ProfileNav = ({ username, counts }: ProfileNavProps) => {
                             end
                             className={({ isActive }) =>
                                 cn(
-                                    // Shares a phone's width rather than scrolling.
-                                    "flex min-h-11 flex-1 shrink-0 items-center justify-center gap-1.5 border-b-2 px-2 text-body-sm whitespace-nowrap transition-colors sm:flex-none sm:px-4",
+                                    /* Count under the label on a phone, so five
+                                       share its width rather than scrolling. */
+                                    "flex min-h-11 flex-1 shrink-0 flex-col items-center justify-center border-b-2 px-1 py-1 text-label whitespace-nowrap transition-colors sm:flex-none sm:flex-row sm:gap-1.5 sm:px-4 sm:text-body-sm",
                                     "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                                     isActive
                                         ? "border-brand font-medium text-content"
@@ -54,11 +62,24 @@ const ProfileNav = ({ username, counts }: ProfileNavProps) => {
                             }
                         >
                             {label}
-                            {count !== undefined && (
-                                <span className="font-mono text-label-sm text-content-muted tabular-nums">
-                                    {formatCount(count)}
-                                </span>
-                            )}
+                            <span className="flex min-h-4 items-center gap-1 font-mono text-label-sm text-content-muted tabular-nums sm:empty:hidden">
+                                {count !== undefined && formatCount(count)}
+                                {tab === "friends" && requestCount > 0 && (
+                                    <>
+                                        <span
+                                            aria-hidden
+                                            className="size-1.5 rounded-full bg-brand"
+                                        />
+                                        <span className="sr-only">
+                                            , {formatCount(requestCount)}{" "}
+                                            {requestCount === 1
+                                                ? "request"
+                                                : "requests"}{" "}
+                                            waiting
+                                        </span>
+                                    </>
+                                )}
+                            </span>
                         </NavLink>
                     );
                 })}
