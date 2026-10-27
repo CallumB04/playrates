@@ -21,19 +21,16 @@ const HEIGHT: Record<BackdropSize, string> = {
 
 /**
  * The picture as a backdrop draws it: faded out at the bottom, dimmed, and
- * shaded at the sides. Its own component so a preview of a crop is the
- * backdrop itself rather than an approximation of it.
+ * shaded at the sides.
  */
-export const BackdropArt = ({
+const BackdropArt = ({
     url,
     position,
     className,
-    onLoad,
 }: {
     url: string;
     position: number;
     className?: string;
-    onLoad?: (img: HTMLImageElement) => void;
 }) => (
     <div
         aria-hidden
@@ -46,7 +43,6 @@ export const BackdropArt = ({
             src={url}
             alt=""
             draggable={false}
-            onLoad={onLoad && ((e) => onLoad(e.currentTarget))}
             style={{ objectPosition: `center ${position}%` }}
             className="size-full object-cover"
         />

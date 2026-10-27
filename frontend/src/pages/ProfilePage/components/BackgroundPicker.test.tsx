@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import type { GameBackdrop } from "@playrates/shared";
@@ -79,8 +79,12 @@ describe("BackgroundPicker", () => {
             name: "Which part of the picture shows",
         });
         // A fresh picture starts just above the middle.
-        expect(slider).toHaveValue("30");
-        fireEvent.change(slider, { target: { value: "80" } });
+        expect(slider).toHaveAttribute("aria-valuenow", "30");
+        slider.focus();
+        await user.keyboard(
+            "{PageDown}{PageDown}{PageDown}{PageDown}{PageDown}"
+        );
+        expect(slider).toHaveAttribute("aria-valuenow", "80");
         await user.click(
             screen.getByRole("button", { name: "Use this picture" })
         );
@@ -102,7 +106,7 @@ describe("BackgroundPicker", () => {
             screen.getByRole("slider", {
                 name: "Which part of the picture shows",
             })
-        ).toHaveValue("100");
+        ).toHaveAttribute("aria-valuenow", "100");
         expect(screen.getByRole("radio", { name: "Bottom" })).toBeChecked();
     });
 
@@ -162,7 +166,7 @@ describe("BackgroundPicker", () => {
             screen.getByRole("slider", {
                 name: "Which part of the picture shows",
             })
-        ).toHaveValue("70");
+        ).toHaveAttribute("aria-valuenow", "70");
     });
 
     it("offers removal only once there is a picture", async () => {

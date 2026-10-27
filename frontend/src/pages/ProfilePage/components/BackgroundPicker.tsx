@@ -145,7 +145,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                 {!game
                     ? "Choose from a game you've logged."
                     : cropping
-                      ? "Drag the picture, or slide, to choose the part that shows."
+                      ? "Move the outline over the part to show on your profile."
                       : "Pick a picture to put across the top of your profile."}
             </p>
 
