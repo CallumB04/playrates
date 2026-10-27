@@ -195,7 +195,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             },
 
             async signOut() {
-                await supabase.auth.signOut();
+                /* This device only. Supabase's default signs out everywhere,
+                   so leaving on a laptop logged the phone out too. */
+                await supabase.auth.signOut({ scope: "local" });
                 // drop every cached response so the next user starts clean
                 queryClient.clear();
                 notify("You have been logged out", "success");
