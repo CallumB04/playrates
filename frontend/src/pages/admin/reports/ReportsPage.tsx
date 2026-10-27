@@ -31,6 +31,7 @@ const TARGET_NOUNS: Record<AdminReport["targetType"], string> = {
     message: "Message",
     review: "Review",
     profile: "Profile",
+    list: "List",
 };
 
 /** What taking it down does, said on the button that does it. */
@@ -39,6 +40,7 @@ const REMOVE_LABELS: Record<AdminReport["targetType"], string> = {
     message: "Delete message",
     review: "Delete review",
     profile: "Clear bio and picture",
+    list: "Delete list",
 };
 
 const ReportRow = ({

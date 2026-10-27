@@ -21,6 +21,7 @@ const NOUNS: Record<ReportTarget, string> = {
     message: "message",
     review: "review",
     profile: "profile",
+    list: "list",
 };
 
 interface ReportDialogProps {

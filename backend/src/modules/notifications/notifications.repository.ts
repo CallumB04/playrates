@@ -62,7 +62,10 @@ export interface NotificationsRepository {
    *  already reached, or passed, is left alone. */
   raiseMilestone(
     userId: string,
-    kind: "community_upvote_milestone" | "review_upvote_milestone",
+    kind:
+      | "community_upvote_milestone"
+      | "review_upvote_milestone"
+      | "list_upvote_milestone",
     dedupeKey: string,
     milestone: number,
     data: Record<string, unknown>,

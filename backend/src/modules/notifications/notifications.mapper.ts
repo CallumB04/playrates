@@ -28,6 +28,9 @@ export const communityUpvotesKey = (messageId: number): string =>
   `community_upvotes:${messageId}`;
 export const reviewUpvotesKey = (reviewId: number): string =>
   `review_upvotes:${reviewId}`;
+/** The migration's game_list_clear_notifications matches this form. */
+export const listUpvotesKey = (listId: number): string =>
+  `list_upvotes:${listId}`;
 
 const num = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -162,6 +165,24 @@ export const toNotification = (
         gameId,
         gameTitle,
         coverUrl: str(row.data.coverUrl),
+        milestone,
+      };
+    }
+
+    case "list_upvote_milestone": {
+      const listId = num(row.data.listId);
+      const milestone = num(row.data.milestone);
+      const listName = str(row.data.listName);
+      const username = str(row.data.username);
+      if (listId === null || milestone === null || !listName || !username) {
+        return { ...base, kind: "unknown" };
+      }
+      return {
+        ...base,
+        kind: "list_upvote_milestone",
+        listId,
+        listName,
+        username,
         milestone,
       };
     }

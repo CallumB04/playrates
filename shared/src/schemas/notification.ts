@@ -17,6 +17,7 @@ export const NOTIFICATION_KINDS = [
   "community_thread_activity",
   "community_upvote_milestone",
   "review_upvote_milestone",
+  "list_upvote_milestone",
   "announcement",
 ] as const;
 
@@ -101,6 +102,16 @@ export interface ReviewUpvoteMilestoneNotification extends NotificationBase {
   milestone: number;
 }
 
+/** A list of yours reached an upvote milestone. */
+export interface ListUpvoteMilestoneNotification extends NotificationBase {
+  kind: "list_upvote_milestone";
+  listId: number;
+  listName: string;
+  /** The list's page lives under its owner, who is the one told. */
+  username: string;
+  milestone: number;
+}
+
 /** A message from PlayRates to everyone, sent from the admin dashboard. */
 export interface AnnouncementNotification extends NotificationBase {
   kind: "announcement";
@@ -128,6 +139,7 @@ export type AppNotification =
   | CommunityThreadActivityNotification
   | CommunityUpvoteMilestoneNotification
   | ReviewUpvoteMilestoneNotification
+  | ListUpvoteMilestoneNotification
   | AnnouncementNotification
   | UnknownNotification;
 

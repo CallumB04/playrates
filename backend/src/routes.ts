@@ -12,6 +12,13 @@ import {
 import { createProfilesService } from "./modules/profiles/profiles.service.js";
 import { createProfilesRouter } from "./modules/profiles/profiles.routes.js";
 import { createProfileGate } from "./modules/profiles/profileGate.js";
+import { createListsService } from "./modules/lists/lists.service.js";
+import {
+  createGameListsRouter,
+  createListsRouter,
+  createMyListsRouter,
+  createUserListsRouter,
+} from "./modules/lists/lists.routes.js";
 import { createGamesService } from "./modules/games/games.service.js";
 import { createGamesRouter } from "./modules/games/games.routes.js";
 import { createCronRouter } from "./modules/games/cron.routes.js";
@@ -105,6 +112,13 @@ export const buildRoutes = ({
     repos.games,
     profileGate,
   );
+  const lists = createListsService(
+    repos.lists,
+    repos.games,
+    repos.friends,
+    repos.notifications,
+    profileGate,
+  );
   const gameLogs = createGameLogsService(
     repos.gameLogs,
     repos.games,
@@ -146,6 +160,7 @@ export const buildRoutes = ({
     communityService: community,
     reviews: repos.reviews,
     profiles: repos.profiles,
+    lists: repos.lists,
     avatars,
   });
 
@@ -224,6 +239,10 @@ export const buildRoutes = ({
     }),
   );
   router.use(
+    "/me/lists",
+    createMyListsRouter({ service: lists, requireAuth, optionalAuth }),
+  );
+  router.use(
     "/me/friends",
     createMyFriendsRouter({ service: friends, requireAuth, optionalAuth }),
   );
@@ -271,6 +290,15 @@ export const buildRoutes = ({
   );
 
   router.use(
+    "/users/:username/lists",
+    createUserListsRouter({ service: lists, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/lists",
+    createListsRouter({ service: lists, requireAuth, optionalAuth }),
+  );
+
+  router.use(
     "/community",
     createCommunityRouter({ service: community, requireAuth, optionalAuth }),
   );
@@ -280,6 +308,10 @@ export const buildRoutes = ({
     createReviewsFeedRouter({ service: reviews, requireAuth, optionalAuth }),
   );
 
+  router.use(
+    "/games/:gameId/lists",
+    createGameListsRouter({ service: lists, requireAuth, optionalAuth }),
+  );
   router.use(
     "/games/:gameId/reviews",
     createGameReviewsRouter({ service: reviews, requireAuth, optionalAuth }),

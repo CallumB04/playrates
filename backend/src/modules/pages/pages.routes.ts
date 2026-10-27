@@ -121,6 +121,14 @@ export const createPagesRouter = ({
   );
 
   router.get(
+    "/user/:username/lists/:id",
+    render(async (req) => {
+      const id = numericParam(req.params.id);
+      return id === null ? null : service.list(String(req.params.username), id);
+    }),
+  );
+
+  router.get(
     "/community/thread/:id",
     render(async (req) => {
       const id = numericParam(req.params.id);

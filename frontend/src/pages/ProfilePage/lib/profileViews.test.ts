@@ -7,13 +7,19 @@ describe("parseProfileTab", () => {
     });
 
     it("knows each view", () => {
-        for (const view of ["games", "reviews", "community", "friends"]) {
+        for (const view of [
+            "games",
+            "reviews",
+            "lists",
+            "community",
+            "friends",
+        ]) {
             expect(parseProfileTab(view)).toBe(view);
         }
     });
 
     it("refuses a view that doesn't exist, the profile's own name included", () => {
-        expect(parseProfileTab("lists")).toBeNull();
+        expect(parseProfileTab("trophies")).toBeNull();
         expect(parseProfileTab("profile")).toBeNull();
     });
 });

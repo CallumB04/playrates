@@ -58,6 +58,7 @@ export const canSeeProfile = (
 export const PROFILE_VIEWS = [
   "games",
   "reviews",
+  "lists",
   "community",
   "friends",
 ] as const;

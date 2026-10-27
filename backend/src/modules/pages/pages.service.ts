@@ -22,7 +22,13 @@ const MIN_RATINGS_FOR_STARS = 3;
 
 type Repos = Pick<
   Repositories,
-  "games" | "platforms" | "genres" | "profiles" | "community" | "reviews"
+  | "games"
+  | "platforms"
+  | "genres"
+  | "profiles"
+  | "community"
+  | "reviews"
+  | "lists"
 >;
 
 /** How many reviews or replies a page carries in its HTML. */
@@ -285,6 +291,35 @@ export const createPagesService = (repos: Repos) => {
         noindex: row.hide_from_search,
         // Hidden from search means hidden from this too.
         body: row.hide_from_search ? undefined : await profileBody(row),
+      };
+    },
+
+    /** A list says what it is only where anyone may see it; one kept to
+     *  friends or its owner previews as nothing in particular. */
+    async list(username: string, id: number): Promise<HeadMeta | null> {
+      const row = await repos.lists.card(id);
+      if (!row || row.owner_username !== username) return null;
+      const open =
+        row.visibility === "everyone" && row.owner_visibility === "everyone";
+      if (!open) {
+        return {
+          title: pageTitle("A list"),
+          description: SITE_DESCRIPTION,
+          path: `/user/${row.owner_username}/lists/${row.id}`,
+          image: DEFAULT_IMAGE,
+          card: "summary",
+          noindex: true,
+        };
+      }
+      return {
+        title: pageTitle(`${row.name}, a list by ${row.owner_username}`),
+        description: row.description
+          ? truncateDescription(row.description)
+          : `${row.game_count} ${row.game_count === 1 ? "game" : "games"} chosen by ${row.owner_username} on PlayRates.`,
+        path: `/user/${row.owner_username}/lists/${row.id}`,
+        image: DEFAULT_IMAGE,
+        card: "summary",
+        type: "article",
       };
     },
 

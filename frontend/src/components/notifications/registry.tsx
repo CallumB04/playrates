@@ -17,6 +17,7 @@ import type {
     CommunityThreadActivityNotification,
     CommunityUpvoteMilestoneNotification,
     ReviewUpvoteMilestoneNotification,
+    ListUpvoteMilestoneNotification,
     FriendAcceptedNotification,
     FriendRequestNotification,
     FriendUser,
@@ -372,6 +373,28 @@ const ReviewMilestoneContent = ({
     );
 };
 
+const ListMilestoneContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<ListUpvoteMilestoneNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    return (
+        <Link
+            to={`/user/${notification.username}/lists/${notification.listId}`}
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <Upvotes count={notification.milestone} />{" "}
+                <span className="font-normal text-content-secondary">
+                    on your list
+                </span>{" "}
+                {notification.listName}
+            </p>
+        </Link>
+    );
+};
+
 /** The game it is about, where the row has no one to show. */
 const CoverLeading = ({
     notification,
@@ -443,6 +466,11 @@ export const NOTIFICATION_RENDERERS: {
         tone: "text-brand",
         Content: ReviewMilestoneContent,
         Leading: CoverLeading,
+    },
+    list_upvote_milestone: {
+        icon: ArrowBigUp,
+        tone: "text-brand",
+        Content: ListMilestoneContent,
     },
     announcement: {
         icon: ANNOUNCEMENT_PRESENTATION.update.icon,

@@ -103,7 +103,7 @@ describe("rendered pages", () => {
     expect(view.status).toBe(200);
     expect(view.text).toContain("<title>devuser / PlayRates</title>");
 
-    const unknown = await request(app).get("/user/devuser/lists");
+    const unknown = await request(app).get("/user/devuser/trophies");
     expect(unknown.status).toBe(404);
   });
 

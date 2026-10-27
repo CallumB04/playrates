@@ -14,5 +14,6 @@ export * from "./schemas/community.js";
 export * from "./announcementBody.js";
 export * from "./schemas/admin.js";
 export * from "./schemas/report.js";
+export * from "./schemas/list.js";
 export * from "./constants/site.js";
 export * from "./seo.js";

@@ -43,6 +43,11 @@ import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.reposito
 import type { NotificationRowWithActor } from "../../src/modules/notifications/notifications.repository.js";
 import { createInMemoryCommunity } from "./inMemoryCommunity.js";
 import {
+  createInMemoryLists,
+  type ListItem,
+  type ListRow,
+} from "./inMemoryLists.js";
+import {
   createInMemoryAdmin,
   createInMemoryGameEvents,
 } from "./inMemoryAdmin.js";
@@ -86,6 +91,9 @@ export interface SeedData {
   contentReports?: ContentReportRow[];
   favouriteGames?: { user_id: string; game_id: number; position: number }[];
   wishlistRanks?: { user_id: string; game_id: number; position: number }[];
+  gameLists?: ListRow[];
+  gameListItems?: ListItem[];
+  gameListVotes?: { list_id: number; user_id: string }[];
 }
 
 export interface InMemoryState {
@@ -117,6 +125,9 @@ export interface InMemoryState {
   contentReports: ContentReportRow[];
   favouriteGames: { user_id: string; game_id: number; position: number }[];
   wishlistRanks: { user_id: string; game_id: number; position: number }[];
+  gameLists: ListRow[];
+  gameListItems: ListItem[];
+  gameListVotes: { list_id: number; user_id: string }[];
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
@@ -184,6 +195,9 @@ export const createInMemoryRepos = (
     contentReports: [...(seed.contentReports ?? [])],
     favouriteGames: [...(seed.favouriteGames ?? [])],
     wishlistRanks: [...(seed.wishlistRanks ?? [])],
+    gameLists: (seed.gameLists ?? []).map((l) => ({ ...l })),
+    gameListItems: [...(seed.gameListItems ?? [])],
+    gameListVotes: [...(seed.gameListVotes ?? [])],
   };
 
   let nextLogId = 1000;
@@ -452,6 +466,15 @@ export const createInMemoryRepos = (
           ),
           wishlistOrder: state.wishlistRanks.filter(
             (r) => r.user_id === userId,
+          ),
+          gameLists: state.gameLists.filter((l) => l.user_id === userId),
+          gameListItems: state.gameListItems.filter((i) =>
+            state.gameLists.some(
+              (l) => l.id === i.list_id && l.user_id === userId,
+            ),
+          ),
+          gameListVotes: state.gameListVotes.filter(
+            (v) => v.user_id === userId,
           ),
         };
       },
@@ -1566,6 +1589,7 @@ export const createInMemoryRepos = (
     },
 
     community: createInMemoryCommunity(state),
+    lists: createInMemoryLists(state),
     favourites: {
       async listIds(userId) {
         return state.favouriteGames
@@ -1623,6 +1647,23 @@ export const createInMemoryRepos = (
       }
       state.communityVotes = state.communityVotes.filter(
         (v) => v.user_id !== userId,
+      );
+      state.reviewVotes = state.reviewVotes.filter((v) => v.user_id !== userId);
+      state.favouriteGames = state.favouriteGames.filter(
+        (f) => f.user_id !== userId,
+      );
+      state.wishlistRanks = state.wishlistRanks.filter(
+        (r) => r.user_id !== userId,
+      );
+      const theirLists = new Set(
+        state.gameLists.filter((l) => l.user_id === userId).map((l) => l.id),
+      );
+      state.gameLists = state.gameLists.filter((l) => l.user_id !== userId);
+      state.gameListItems = state.gameListItems.filter(
+        (i) => !theirLists.has(i.list_id),
+      );
+      state.gameListVotes = state.gameListVotes.filter(
+        (v) => v.user_id !== userId && !theirLists.has(v.list_id),
       );
     },
   };

@@ -3,7 +3,13 @@ import { PaginationSchema } from "./common.js";
 
 /** What can be reported. A thread is reported through its opening message's
  *  place on the page, but it is the thread that goes. */
-export const REPORT_TARGETS = ["thread", "message", "review", "profile"] as const;
+export const REPORT_TARGETS = [
+  "thread",
+  "message",
+  "review",
+  "profile",
+  "list",
+] as const;
 export type ReportTarget = (typeof REPORT_TARGETS)[number];
 
 export const REPORT_REASONS = [
@@ -31,7 +37,7 @@ export const REPORT_DETAILS_MAX = 1000;
 export const CreateReportSchema = z
   .object({
     targetType: z.enum(REPORT_TARGETS),
-    /** A thread, message or review id, or a profile's user id. */
+    /** A thread, message, review or list id, or a profile's user id. */
     targetId: z.string().trim().min(1).max(64),
     reason: z.enum(REPORT_REASONS),
     details: z.string().trim().max(REPORT_DETAILS_MAX).optional(),
