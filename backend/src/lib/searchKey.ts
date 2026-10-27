@@ -23,12 +23,10 @@ const SPELLED: Record<string, string> = {
 };
 
 /**
- * What a title is matched on: no accents, no punctuation or spaces, roman
- * numerals as digits, so "witcher iii" finds "The Witcher 3" and "pokemon"
- * finds "Pokémon". Must agree with public.search_key in the database, which
- * builds the same key for every title.
+ * The words a title or query is matched on: no accents or punctuation,
+ * roman numerals as digits. Must agree with public.search_words.
  */
-export const searchKey = (text: string): string =>
+export const searchWords = (text: string): string[] =>
   text
     .toLowerCase()
     .replace(/[æœøßđłþ]/g, (c) => SPELLED[c]!)
@@ -37,8 +35,16 @@ export const searchKey = (text: string): string =>
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .split(" ")
-    .map((word) => ROMAN[word] ?? word)
-    .join("");
+    .filter((word) => word !== "")
+    .map((word) => ROMAN[word] ?? word);
+
+/**
+ * What a title is matched on: its words run together, so "witcher iii" finds
+ * "The Witcher 3" and "pokemon" finds "Pokémon". Must agree with
+ * public.search_key in the database, which builds the same key for every
+ * title.
+ */
+export const searchKey = (text: string): string => searchWords(text).join("");
 
 /**
  * Below three characters a title search matches from the start of the title.

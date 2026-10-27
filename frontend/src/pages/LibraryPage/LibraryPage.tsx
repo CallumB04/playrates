@@ -66,9 +66,12 @@ const LibraryPage = () => {
        masthead's search does, and bring back what turns up. */
     const searchTerm = query.search.trim();
     const settledEmpty = !!page && !isPlaceholderData && page.meta.total === 0;
+    /* Only near misses ("witchr" for The Witcher) still look further: the
+       game meant may be one the catalogue doesn't have yet. */
+    const approximate = !!page && !isPlaceholderData && !!page.meta.approximate;
     const { reaching, found } = useCatalogueReach(
         searchTerm,
-        !!user && settledEmpty
+        !!user && (settledEmpty || approximate)
     );
     // Until the list has been asked again for what was just added.
     const lookingFurther =
@@ -116,6 +119,17 @@ const LibraryPage = () => {
                 genres={genres ?? []}
                 isSignedIn={!!user}
             />
+
+            {approximate && !showSkeletons && (
+                <p
+                    role="status"
+                    className="flex items-center gap-2 text-body-sm text-content-secondary"
+                >
+                    {reaching && <LoadingSpinner size="sm" label="Searching" />}
+                    Nothing is called “{searchTerm}”, so these are the closest
+                    titles.
+                </p>
+            )}
 
             {showSkeletons ? (
                 <div className="grid grid-cols-3 gap-x-4 gap-y-5 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">

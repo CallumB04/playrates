@@ -6,6 +6,7 @@ import type {
 } from "../GamesProvider.js";
 import type { AltCover } from "../GamesProvider.js";
 import {
+  altNames,
   pickBanner,
   pickSeries,
   toExternalGame,
@@ -53,6 +54,8 @@ export const GAME_FIELDS = [
   "franchises.name",
   "game_localizations.cover.image_id",
   "game_localizations.region.name",
+  "alternative_names.name",
+  "alternative_names.comment",
 ].join(",");
 
 /**
@@ -84,6 +87,8 @@ export interface IgdbProvider extends GamesProvider {
   seriesOf(igdbIds: number[]): Promise<Map<number, ExternalGame["series"]>>;
   /** Just the banner of each game, for when the rule that picks it changes. */
   bannersOf(igdbIds: number[]): Promise<Map<number, string | null>>;
+  /** Just the other names of up to 500 games, for filling them in alone. */
+  altNamesOf(igdbIds: number[]): Promise<Map<number, string[]>>;
 }
 
 export interface IgdbRequestOutcome {
@@ -347,6 +352,14 @@ export const createIgdbProvider = (
         `fields screenshots.image_id,artworks.image_id; where id = (${igdbIds.join(",")}); limit ${MAX_LIMIT};`,
       );
       return new Map(found.map((g) => [g.id, pickBanner(g)]));
+    },
+
+    async altNamesOf(igdbIds) {
+      const found = await query<IgdbGame[]>(
+        "games",
+        `fields name,alternative_names.name,alternative_names.comment; where id = (${igdbIds.join(",")}); limit ${MAX_LIMIT};`,
+      );
+      return new Map(found.map((g) => [g.id, altNames(g)]));
     },
 
     listByDate({ from, to, page: pageNumber, pageSize }) {

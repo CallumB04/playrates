@@ -40,6 +40,8 @@ export interface IgdbGame {
     cover?: { image_id: string };
     region?: { name: string };
   }[];
+  /** IGDB's comment says what each is: "Acronym", "Russian title". */
+  alternative_names?: { name: string; comment?: string }[];
 }
 
 /** How many other covers a game keeps, so a page shows a few, not forty. */
@@ -147,6 +149,24 @@ const altCovers = (game: IgdbGame, editions: AltCover[]): AltCover[] => {
     .slice(0, MAX_ALT_COVERS);
 };
 
+/* An .exe's name, or IGDB's grab-bag "Other" (Elden Ring's is "Great Rune"),
+   would only turn up games nobody searched for. */
+const UNSEARCHABLE_NAME = /executable|^other$/i;
+
+/** The names a game is also searched by: acronyms, other spellings, titles
+ *  in other languages. */
+export const altNames = (game: IgdbGame): string[] =>
+  unique(
+    (game.alternative_names ?? [])
+      .filter(
+        ({ name, comment }) =>
+          !UNSEARCHABLE_NAME.test(comment?.trim() ?? "") &&
+          !/\.exe$/i.test(name.trim()),
+      )
+      .map(({ name }) => name.trim())
+      .filter((name) => name !== "" && name !== game.name),
+  );
+
 export const toExternalGame = (
   game: IgdbGame,
   /** Covers of the game's editions, which IGDB keeps as games of their own. */
@@ -186,5 +206,6 @@ export const toExternalGame = (
     similarIds: game.similar_games ?? [],
     series: pickSeries(game),
     altCovers: altCovers(game, editions),
+    altNames: altNames(game),
   };
 };

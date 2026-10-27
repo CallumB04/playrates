@@ -275,9 +275,10 @@ const ViewGameLogPopup = ({
                 : { label: "Add this game", onSelect: () => flow.open(gameId) };
         }
         if (selected) {
-            const name = playedOn(selected).name;
             return {
-                label: several && name ? `Edit ${name} log` : "Edit your log",
+                // The tab above names the platform, and half a phone's width
+                // has no room for "Edit Nintendo Switch 2 log".
+                label: "Edit log",
                 onSelect: () => flow.edit(gameId, selected.id),
             };
         }

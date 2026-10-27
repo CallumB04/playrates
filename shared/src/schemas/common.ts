@@ -44,6 +44,8 @@ export interface Paginated<T> {
     page: number;
     limit: number;
     total: number;
+    /** Nothing matched the search outright; these are the nearest titles. */
+    approximate?: boolean;
   };
 }
 

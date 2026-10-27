@@ -1,15 +1,9 @@
 import type { ExternalGame } from "../../src/providers/games/GamesProvider.js";
-import { matchesFromStart, searchKey } from "../../src/lib/searchKey.js";
+import { matchTier } from "../../src/lib/gameMatch.js";
 
-/** Mirrors matchTitle in the games repository. */
-const titleMatches = (title: string, term: string): boolean => {
-  const key = searchKey(term);
-  const titleKey = searchKey(title);
-  if (!key) return title.toLowerCase().includes(term.toLowerCase());
-  return matchesFromStart(key)
-    ? titleKey.startsWith(key)
-    : titleKey.includes(key);
-};
+/** The rules public.search_games and the library's filter both apply. */
+const tierOf = (g: { title: string; alt_names: string[] }, term: string) =>
+  matchTier({ title: g.title, altNames: g.alt_names }, term);
 import { AppError } from "../../src/lib/AppError.js";
 import { logRank, type GameStatus, type PlayedStatus } from "@playrates/shared";
 import type { Repositories } from "../../src/repositories.js";
@@ -301,6 +295,7 @@ export const createInMemoryRepos = (
       series_id: external.series?.id ?? null,
       series_name: external.series?.name ?? null,
       alt_covers: external.altCovers,
+      alt_names: external.altNames,
       synced_at: now(),
     });
     state.gamePlatforms = state.gamePlatforms.filter(
@@ -489,7 +484,7 @@ export const createInMemoryRepos = (
         let rows = state.games;
 
         if (query.search) {
-          rows = rows.filter((g) => titleMatches(g.title, query.search!));
+          rows = rows.filter((g) => tierOf(g, query.search!) !== null);
         }
         if (query.trending !== undefined) {
           rows = rows.filter((g) => g.is_trending === query.trending);
@@ -562,11 +557,23 @@ export const createInMemoryRepos = (
         };
       },
       async searchLocal(term, limit, showSexualContent) {
-        return state.games
-          .filter((g) => titleMatches(g.title, term))
+        // No typo matches here: only the database can find those.
+        const rows = state.games
           .filter((g) => showSexualContent || !g.has_sexual_content)
+          .flatMap((g) => {
+            const tier = tierOf(g, term);
+            return tier === null ? [] : [{ g, tier }];
+          })
+          // Loose matches rank with typos, by popularity, as in the database.
+          .sort(
+            (a, b) =>
+              Math.min(a.tier, 2) - Math.min(b.tier, 2) ||
+              (b.g.igdb_rating_count ?? -1) - (a.g.igdb_rating_count ?? -1) ||
+              a.g.id - b.g.id,
+          )
           .slice(0, limit)
-          .map(withPlatforms);
+          .map(({ g }) => withPlatforms(g));
+        return { rows, exact: rows.length };
       },
       async upsertMany(games) {
         const ids: number[] = [];
@@ -599,6 +606,7 @@ export const createInMemoryRepos = (
               series_id: null,
               series_name: null,
               alt_covers: [],
+              alt_names: [],
               log_count: 0,
               avg_rating: null,
               rating_count: 0,

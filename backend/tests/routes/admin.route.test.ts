@@ -102,6 +102,7 @@ const external = (id: number, title = `Game ${id}`): ExternalGame => ({
   similarIds: [],
   series: null,
   altCovers: [],
+  altNames: [],
 });
 
 const stubProvider = (overrides: Partial<GamesProvider> = {}): GamesProvider => ({

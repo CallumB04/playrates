@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { matchesFromStart, searchKey } from "../../src/lib/searchKey.js";
+import {
+  matchesFromStart,
+  searchKey,
+  searchWords,
+} from "../../src/lib/searchKey.js";
 
 describe("searchKey", () => {
   /* The same strings were checked against public.search_key in the
@@ -40,5 +44,25 @@ describe("matchesFromStart", () => {
     expect(matchesFromStart("b")).toBe(true);
     expect(matchesFromStart("br")).toBe(true);
     expect(matchesFromStart("bro")).toBe(false);
+  });
+});
+
+describe("searchWords", () => {
+  /* Checked against public.search_words: every title's words, joined,
+     came back as its search_title. */
+  it("is the key's words, kept apart", () => {
+    expect(searchWords("The Witcher III: Wild Hunt")).toEqual([
+      "the",
+      "witcher",
+      "3",
+      "wild",
+      "hunt",
+    ]);
+    expect(searchWords("Pokémon  —  Arceus")).toEqual(["pokemon", "arceus"]);
+  });
+
+  it("has no words for nothing but punctuation", () => {
+    expect(searchWords(" :- ")).toEqual([]);
+    expect(searchKey(" :- ")).toBe("");
   });
 });

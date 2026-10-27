@@ -4,16 +4,20 @@ import FormField from "./FormField";
 
 interface PasswordFieldProps {
     label?: string;
+    name?: string;
     error?: string;
     help?: string;
+    placeholder?: string;
     autoComplete?: string;
     autoFocus?: boolean;
 }
 
 const PasswordField = ({
     label = "Password",
+    name = "password",
     error,
     help,
+    placeholder,
     autoComplete = "current-password",
     autoFocus,
 }: PasswordFieldProps) => {
@@ -22,13 +26,14 @@ const PasswordField = ({
     return (
         <FormField
             label={label}
-            name="password"
+            name={name}
             type={visible ? "text" : "password"}
             autoComplete={autoComplete}
             required
             autoFocus={autoFocus}
             error={error}
             help={help}
+            placeholder={placeholder}
             adornment={
                 <button
                     type="button"

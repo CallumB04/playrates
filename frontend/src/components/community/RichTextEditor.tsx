@@ -184,7 +184,10 @@ const RichTextEditor = ({
     });
 
     useEffect(() => {
-        editor?.setEditable(!disabled);
+        /* Quietly: by default Tiptap reports this as an update, which handed
+           the page the text again as the post finished and saved it as a
+           draft of a thread that had just gone up. */
+        editor?.setEditable(!disabled, false);
     }, [editor, disabled]);
 
     useEffect(() => {

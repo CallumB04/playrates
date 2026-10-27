@@ -1,30 +1,12 @@
 import { useEffect, useState } from "react";
 import { Check, X } from "lucide-react";
 import LoadingSpinner from "../../components/LoadingSpinner";
-import { checkUsernameAvailable } from "../../api";
 import { useUpdateProfile } from "../../hooks/queries/useProfiles";
 import { useNotify } from "../../contexts/NotificationContext";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { useUsernameAvailability } from "../../hooks/useUsernameAvailability";
 import Button from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { cn } from "../../lib/cn";
-
-type Availability =
-    | { state: "idle" }
-    | { state: "checking" }
-    | { state: "free" }
-    | { state: "taken" }
-    | { state: "invalid"; reason: string };
-
-/** Mirrors UsernameSchema, so the field says no before the request does. */
-const validate = (value: string): string | null => {
-    if (value.length < 3) return "At least 3 characters.";
-    if (value.length > 20) return "At most 20 characters.";
-    if (!/^[a-zA-Z0-9_]+$/.test(value)) {
-        return "Letters, numbers and underscores only.";
-    }
-    return null;
-};
 
 /**
  * The username field, checked as you type and saved on its own. A rename
@@ -36,53 +18,23 @@ const UsernameRow = ({ current }: { current: string }) => {
     const update = useUpdateProfile();
 
     const [value, setValue] = useState(current);
-    const [availability, setAvailability] = useState<Availability>({
-        state: "idle",
-    });
-
-    const debounced = useDebouncedValue(value, 400);
+    const availability = useUsernameAvailability(value, current);
     const changed = value.trim() !== current;
 
     useEffect(() => {
         setValue(current);
     }, [current]);
 
-    useEffect(() => {
-        const name = debounced.trim();
-        if (name === current || name === "") {
-            return setAvailability({ state: "idle" });
-        }
-
-        const reason = validate(name);
-        if (reason) return setAvailability({ state: "invalid", reason });
-
-        let active = true;
-        setAvailability({ state: "checking" });
-        checkUsernameAvailable(name)
-            .then((free) => {
-                if (active) setAvailability({ state: free ? "free" : "taken" });
-            })
-            .catch(() => {
-                // A failed check is not a taken name; let the save decide.
-                if (active) setAvailability({ state: "idle" });
-            });
-
-        return () => {
-            active = false;
-        };
-    }, [debounced, current]);
-
     const save = async () => {
         try {
             await update.mutateAsync({ username: value.trim() });
             notify("Username updated", "success");
-            setAvailability({ state: "idle" });
         } catch {
             notify("Couldn't change your username", "error");
         }
     };
 
-    const message: Record<Availability["state"], string> = {
+    const message: Record<typeof availability.state, string> = {
         idle: `Your profile lives at /user/${value.trim() || "…"}`,
         checking: "Checking…",
         free: `${value.trim()} is free.`,

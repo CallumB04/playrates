@@ -33,6 +33,8 @@ export const buildProfile = (
   accent: "indigo",
   // An account from before the welcome existed; a new one overrides to null.
   onboarded_at: LONG_AGO,
+  // Typed at signup; a Google or Discord account overrides to null.
+  username_chosen_at: LONG_AGO,
   is_admin: false,
   last_seen_at: NOW,
   created_at: LONG_AGO,
@@ -63,6 +65,7 @@ export const buildGame = (overrides: Partial<GameRow> = {}): GameRow => ({
   series_id: null,
   series_name: null,
   alt_covers: [],
+  alt_names: [],
   log_count: 0,
   avg_rating: null,
   rating_count: 0,

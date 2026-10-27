@@ -34,6 +34,8 @@ describe("SignupForm", () => {
             username?: string;
             email?: string;
             password?: string;
+            /** Defaults to the password, as someone typing it twice would. */
+            confirmPassword?: string;
             agree?: boolean;
         }
     ) => {
@@ -46,12 +48,36 @@ describe("SignupForm", () => {
         if (values.password !== undefined) {
             await user.type(screen.getByLabelText("Password"), values.password);
         }
+        const confirm = values.confirmPassword ?? values.password;
+        if (confirm !== undefined) {
+            await user.type(screen.getByLabelText("Confirm password"), confirm);
+        }
         if (values.agree ?? true) {
             await user.click(
                 screen.getByRole("checkbox", { name: /13 or older/ })
             );
         }
     };
+
+    it("won't sign up when the passwords don't match", async () => {
+        const user = userEvent.setup();
+        renderWithProviders(<SignupForm onSignedUp={vi.fn()} />);
+
+        await fill(user, {
+            username: "brandnew",
+            email: "new@example.test",
+            password: "longenough1",
+            confirmPassword: "longenough2",
+        });
+        await user.click(
+            screen.getByRole("button", { name: "Create account" })
+        );
+
+        expect(
+            await screen.findByText("The passwords don't match.")
+        ).toBeVisible();
+        expect(signUp).not.toHaveBeenCalled();
+    });
 
     it("won't sign up without the age and terms box ticked", async () => {
         const user = userEvent.setup();
@@ -95,7 +121,8 @@ describe("SignupForm", () => {
         expect(signUp).toHaveBeenCalledWith(
             "new@example.test",
             "longenough1",
-            "brandnew"
+            "brandnew",
+            undefined
         );
         expect(onSignedUp).toHaveBeenCalledWith("new@example.test");
     });
@@ -216,7 +243,11 @@ describe("LoginForm", () => {
         await user.click(screen.getByRole("button", { name: "Log in" }));
 
         await waitFor(() => expect(signIn).toHaveBeenCalledOnce());
-        expect(signIn).toHaveBeenCalledWith("dev@example.test", "password123");
+        expect(signIn).toHaveBeenCalledWith(
+            "dev@example.test",
+            "password123",
+            undefined
+        );
         expect(close).toHaveBeenCalledOnce();
     });
 

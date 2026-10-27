@@ -30,7 +30,10 @@ describe("ForgotPasswordForm", () => {
             screen.getByRole("button", { name: "Send the link" })
         );
 
-        expect(requestPasswordReset).toHaveBeenCalledWith("kai@example.com");
+        expect(requestPasswordReset).toHaveBeenCalledWith(
+            "kai@example.com",
+            undefined
+        );
         expect(await screen.findByRole("status")).toHaveTextContent(
             "If an account uses kai@example.com"
         );

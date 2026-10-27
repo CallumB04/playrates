@@ -9,6 +9,8 @@ interface ImportMetaEnv {
     readonly VITE_SUPABASE_ANON_KEY: string;
     /** "true" under npm run dev:local, which points at a local database. */
     readonly VITE_LOCAL_DATA?: string;
+    /** Cloudflare Turnstile site key. Public, like the anon key. */
+    readonly VITE_TURNSTILE_SITE_KEY?: string;
 }
 
 interface ImportMeta {

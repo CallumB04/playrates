@@ -4,7 +4,9 @@ import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import Button from "../ui/Button";
 import FormField from "./FormField";
+import OAuthButtons from "./OAuthButtons";
 import PasswordField from "./PasswordField";
+import { useCaptcha } from "./useCaptcha";
 
 interface LoginFormProps {
     /** Carried over when the user has just signed up. */
@@ -17,6 +19,7 @@ const LoginForm = ({ initialEmail = "", onForgot }: LoginFormProps) => {
     const { signIn } = useAuth();
     const { close } = useAccountForm();
     const notify = useNotify();
+    const captcha = useCaptcha();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formError, setFormError] = useState<string>();
@@ -24,6 +27,7 @@ const LoginForm = ({ initialEmail = "", onForgot }: LoginFormProps) => {
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setFormError(undefined);
+        if (!captcha.ready()) return;
         setIsSubmitting(true);
 
         const data = new FormData(event.currentTarget);
@@ -33,9 +37,11 @@ const LoginForm = ({ initialEmail = "", onForgot }: LoginFormProps) => {
         try {
             // Supabase verifies the password. It never reaches this client,
             // and no user record is downloaded to compare it against.
-            await signIn(email, password);
+            await signIn(email, password, captcha.token);
             close();
         } catch (error) {
+            captcha.reset();
+            if (captcha.handled(error)) return;
             setFormError(
                 error instanceof Error
                     ? "Those login details are not correct."
@@ -48,7 +54,8 @@ const LoginForm = ({ initialEmail = "", onForgot }: LoginFormProps) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <OAuthButtons />
             <FormField
                 label="Email"
                 name="email"
@@ -79,6 +86,8 @@ const LoginForm = ({ initialEmail = "", onForgot }: LoginFormProps) => {
                     </button>
                 )}
             </div>
+
+            {captcha.field}
 
             {/* The button carries the pending state rather than a spinner
                 covering the panel, which hid the fields you were correcting. */}

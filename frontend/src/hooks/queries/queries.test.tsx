@@ -16,6 +16,8 @@ import { useLogMutations, useQuickAdd, useUserShelf } from "./useGameLogs";
 import { NotificationProvider } from "../../contexts/NotificationContext";
 import { useUserReviews } from "./useReviews";
 import { useProfile } from "./useProfiles";
+import { useCommunityMutations } from "./useCommunity";
+import { queryKeys } from "../../api";
 
 const API = "http://localhost:3000/api/v1";
 
@@ -54,6 +56,35 @@ describe("log mutations", () => {
 
         expect(
             client.getQueryState(["userStats", "devuser", "all"])?.isInvalidated
+        ).toBe(true);
+    });
+});
+
+describe("community mutations", () => {
+    it("refreshes the sendable patch notes after an entry is posted", async () => {
+        const client = createTestQueryClient();
+        const Wrapper = ({ children }: { children: ReactNode }) => (
+            <QueryClientProvider client={client}>
+                {children}
+            </QueryClientProvider>
+        );
+        server.use(
+            http.post(`${API}/community/threads/1/messages`, () =>
+                HttpResponse.json({})
+            )
+        );
+        client.setQueryData(queryKeys.admin.patchNotes, []);
+
+        const { result } = renderHook(() => useCommunityMutations(), {
+            wrapper: Wrapper,
+        });
+        await result.current.post.mutateAsync({
+            threadId: 1,
+            input: { body: { type: "doc", content: [] } },
+        });
+
+        expect(
+            client.getQueryState(queryKeys.admin.patchNotes)?.isInvalidated
         ).toBe(true);
     });
 });

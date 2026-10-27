@@ -130,7 +130,14 @@ export const createProfilesService = (
     }
 
     const patch: Record<string, unknown> = {};
-    if (input.username !== undefined) patch.username = input.username;
+    if (input.username !== undefined) {
+      patch.username = input.username;
+      // Keeps the first time, as markOnboarded does.
+      const row = await repo.findById(callerId);
+      if (row && !row.username_chosen_at) {
+        patch.username_chosen_at = new Date().toISOString();
+      }
+    }
     if (input.bio !== undefined) patch.bio = input.bio;
     if (input.showSexualContent !== undefined) {
       patch.show_sexual_content = input.showSexualContent;

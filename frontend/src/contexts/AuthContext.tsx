@@ -14,25 +14,40 @@ import {
 import type { MyProfile } from "@playrates/shared";
 import { fetchMyProfile, queryKeys, sendHeartbeat } from "../api";
 import { supabase } from "../lib/supabase";
+import { readAuthRedirectError } from "../lib/authRedirect";
 import { useNotify } from "./NotificationContext";
 
 interface AuthContextValue {
     session: Session | null;
     user: MyProfile | null;
     isLoading: boolean;
+    /* captchaToken: from useCaptcha, once Supabase is set to require one. */
     signUp: (
         email: string,
         password: string,
-        username: string
+        username: string,
+        captchaToken?: string
     ) => Promise<void>;
-    signIn: (email: string, password: string) => Promise<void>;
+    signIn: (
+        email: string,
+        password: string,
+        captchaToken?: string
+    ) => Promise<void>;
+    /** Leaves for the provider's sign-in page and comes back here. Signing
+     *  in and signing up are the same thing this way. */
+    signInWithProvider: (provider: OAuthProvider) => Promise<void>;
     signOut: () => Promise<void>;
     /** Emails a link to set a new password. Says nothing about whether the
      *  address has an account. */
-    requestPasswordReset: (email: string) => Promise<void>;
+    requestPasswordReset: (
+        email: string,
+        captchaToken?: string
+    ) => Promise<void>;
     /** Sets a new password for whoever followed that link. */
     updatePassword: (password: string) => Promise<void>;
 }
+
+export type OAuthProvider = "google" | "discord";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -53,6 +68,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (!active) return;
             setSession(data.session);
             setIsRestoring(false);
+
+            const redirectError = readAuthRedirectError(window.location.href);
+            if (redirectError) {
+                window.history.replaceState(
+                    window.history.state,
+                    "",
+                    redirectError.cleanUrl
+                );
+                notify(
+                    redirectError.cancelled
+                        ? "Sign-in cancelled"
+                        : "Couldn't sign you in. Please try again.",
+                    redirectError.cancelled ? "info" : "error"
+                );
+            }
         });
 
         const {
@@ -70,7 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             active = false;
             subscription.unsubscribe();
         };
-    }, []);
+    }, [notify]);
 
     /* The server marks you online for five minutes after the last beat, so
        beat well inside that window. The first one clears the profile caches,
@@ -119,29 +149,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             user: session ? (user ?? null) : null,
             isLoading: isRestoring || (!!session && isProfileLoading),
 
-            async signUp(email, password, username) {
+            async signUp(email, password, username, captchaToken) {
                 const { error } = await supabase.auth.signUp({
                     email,
                     password,
                     // read by the handle_new_user trigger to seed the profile
-                    options: { data: { username } },
+                    options: { data: { username }, captchaToken },
                 });
                 if (error) throw error;
             },
 
-            async signIn(email, password) {
+            async signInWithProvider(provider) {
+                const { error } = await supabase.auth.signInWithOAuth({
+                    provider,
+                    options: { redirectTo: window.location.href },
+                });
+                if (error) throw error;
+            },
+
+            async signIn(email, password, captchaToken) {
                 const { error } = await supabase.auth.signInWithPassword({
                     email,
                     password,
+                    options: { captchaToken },
                 });
                 if (error) throw error;
                 notify("You are now logged in", "success");
             },
 
-            async requestPasswordReset(email) {
+            async requestPasswordReset(email, captchaToken) {
                 const { error } = await supabase.auth.resetPasswordForEmail(
                     email,
-                    { redirectTo: `${window.location.origin}/reset-password` }
+                    {
+                        redirectTo: `${window.location.origin}/reset-password`,
+                        captchaToken,
+                    }
                 );
                 if (error) throw error;
             },

@@ -5,7 +5,10 @@ import { checkUsernameAvailable } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import FormField from "./FormField";
+import OAuthButtons from "./OAuthButtons";
 import PasswordField from "./PasswordField";
+import AgreeToTerms from "./AgreeToTerms";
+import { useCaptcha } from "./useCaptcha";
 
 interface SignupFormProps {
     onSignedUp: (email: string) => void;
@@ -15,12 +18,14 @@ interface FieldErrors {
     username?: string;
     email?: string;
     password?: string;
+    confirmPassword?: string;
     agree?: string;
 }
 
 const SignupForm = ({ onSignedUp }: SignupFormProps) => {
     const { signUp } = useAuth();
     const notify = useNotify();
+    const captcha = useCaptcha();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<FieldErrors>({});
@@ -33,6 +38,7 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
         const username = String(data.get("username") ?? "");
         const email = String(data.get("email") ?? "").toLowerCase();
         const password = String(data.get("password") ?? "");
+        const confirmPassword = String(data.get("confirmPassword") ?? "");
         const agreed = data.get("agree") === "on";
 
         // the same schemas the backend validates with, so the rules cannot drift
@@ -46,6 +52,8 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
         const passwordResult = PasswordSchema.safeParse(password);
         if (!passwordResult.success) {
             next.password = passwordResult.error.issues[0]?.message;
+        } else if (confirmPassword !== password) {
+            next.confirmPassword = "The passwords don't match.";
         }
 
         if (!agreed) {
@@ -65,12 +73,18 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
         }
 
         setErrors({});
+        if (!captcha.ready()) {
+            setIsSubmitting(false);
+            return;
+        }
 
         try {
-            await signUp(email, password, username);
+            await signUp(email, password, username, captcha.token);
             notify("Account successfully created", "success");
             onSignedUp(email);
         } catch (error) {
+            captcha.reset();
+            if (captcha.handled(error)) return;
             const message =
                 error instanceof Error ? error.message : "Please try again.";
             // Supabase reports a duplicate email rather than us probing for it
@@ -83,13 +97,13 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <OAuthButtons />
             <FormField
                 label="Username"
                 name="username"
                 type="text"
                 placeholder="yourname"
-                help="This is your profile's address."
                 autoComplete="username"
                 required
                 autoFocus
@@ -106,54 +120,18 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
             />
             <PasswordField
                 autoComplete="new-password"
-                help="At least 8 characters."
+                placeholder="At least 8 characters"
                 error={errors.password}
             />
+            <PasswordField
+                label="Confirm password"
+                name="confirmPassword"
+                autoComplete="new-password"
+                error={errors.confirmPassword}
+            />
 
-            <div>
-                <label className="flex min-h-11 cursor-pointer items-start gap-3 py-1 text-body-sm text-content-secondary">
-                    <input
-                        type="checkbox"
-                        name="agree"
-                        aria-invalid={errors.agree ? true : undefined}
-                        aria-describedby={
-                            errors.agree ? "signup-agree-error" : undefined
-                        }
-                        className="mt-0.5 size-4.5 shrink-0 accent-brand"
-                    />
-                    <span>
-                        I’m 13 or older and I agree to the{" "}
-                        {/* A new tab, so reading them doesn't lose what has
-                            been typed here. */}
-                        <a
-                            href="/terms"
-                            target="_blank"
-                            rel="noopener"
-                            className="text-content underline underline-offset-2 hover:text-brand"
-                        >
-                            Terms
-                        </a>{" "}
-                        and{" "}
-                        <a
-                            href="/privacy"
-                            target="_blank"
-                            rel="noopener"
-                            className="text-content underline underline-offset-2 hover:text-brand"
-                        >
-                            Privacy Policy
-                        </a>
-                        .
-                    </span>
-                </label>
-                {errors.agree && (
-                    <p
-                        id="signup-agree-error"
-                        className="mt-1 text-label text-danger"
-                    >
-                        {errors.agree}
-                    </p>
-                )}
-            </div>
+            <AgreeToTerms name="agree" error={errors.agree} />
+            {captcha.field}
 
             <Button type="submit" size="lg" disabled={isSubmitting}>
                 {isSubmitting ? "Creating your account…" : "Create account"}

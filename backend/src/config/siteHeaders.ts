@@ -8,10 +8,14 @@
 
 // The one Supabase project the browser talks to, for auth.
 const SUPABASE = "byctkyrrrtosivvzfrro.supabase.co";
+const TURNSTILE = "https://challenges.cloudflare.com";
 
 export const SITE_CSP = [
   "default-src 'self'",
-  "script-src 'self'",
+  // Cloudflare Turnstile, the bot check on the sign-in forms: its script,
+  // and the iframe the challenge runs in.
+  `script-src 'self' ${TURNSTILE}`,
+  `frame-src ${TURNSTILE}`,
   // Tiptap and React set inline styles.
   "style-src 'self' 'unsafe-inline'",
   // Cover art comes from IGDB's image servers, and game websites vary.

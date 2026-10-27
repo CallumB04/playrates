@@ -32,6 +32,10 @@ describe("ResetPasswordPage", () => {
             screen.getByLabelText("New password"),
             "a-much-longer-one"
         );
+        await userEvent.type(
+            screen.getByLabelText("Confirm new password"),
+            "a-much-longer-one"
+        );
         await userEvent.click(
             screen.getByRole("button", { name: "Save new password" })
         );
@@ -45,12 +49,37 @@ describe("ResetPasswordPage", () => {
         renderWithProviders(<ResetPasswordPage />);
 
         await userEvent.type(screen.getByLabelText("New password"), "short");
+        await userEvent.type(
+            screen.getByLabelText("Confirm new password"),
+            "short"
+        );
         await userEvent.click(
             screen.getByRole("button", { name: "Save new password" })
         );
 
         expect(updatePassword).not.toHaveBeenCalled();
         expect(screen.getByRole("alert")).toBeInTheDocument();
+    });
+
+    it("refuses two passwords that don't match", async () => {
+        renderWithProviders(<ResetPasswordPage />);
+
+        await userEvent.type(
+            screen.getByLabelText("New password"),
+            "a-much-longer-one"
+        );
+        await userEvent.type(
+            screen.getByLabelText("Confirm new password"),
+            "a-much-longer-two"
+        );
+        await userEvent.click(
+            screen.getByRole("button", { name: "Save new password" })
+        );
+
+        expect(updatePassword).not.toHaveBeenCalled();
+        expect(
+            screen.getByText("The passwords don't match.")
+        ).toBeInTheDocument();
     });
 
     it("offers a new link when this one has expired", async () => {

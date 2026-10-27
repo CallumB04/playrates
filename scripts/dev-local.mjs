@@ -81,6 +81,8 @@ writeFileSync(
     `VITE_SUPABASE_URL=${keys.API_URL}`,
     `VITE_SUPABASE_ANON_KEY=${keys.ANON_KEY}`,
     `VITE_LOCAL_DATA=true`,
+    // Empty, so .env's live site key doesn't show a check nobody verifies.
+    `VITE_TURNSTILE_SITE_KEY=`,
     "",
   ].join("\n"),
 );
