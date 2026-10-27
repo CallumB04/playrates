@@ -9,6 +9,7 @@ import Panel from "../../../components/ui/Panel";
 import Button from "../../../components/ui/Button";
 import { ABOUT_ROWS, linkLabel, steamLabel } from "../lib/about";
 import PrivacySelect, { PRIVACY_OPTIONS } from "./PrivacySelect";
+import { cn } from "../../../lib/cn";
 
 const Value = ({ field, value }: { field: AboutField; value: string }) => {
     if (field === "website" || field === "steam") {
@@ -89,7 +90,11 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
                                lines to wrap in. */
                             <div
                                 key={field}
-                                className="flex items-center gap-3"
+                                className={cn(
+                                    "flex items-center gap-3",
+                                    // Nothing in it to show or hide yet.
+                                    !value && "opacity-60"
+                                )}
                             >
                                 <span className="flex w-4 shrink-0 justify-center text-content-muted">
                                     <Icon size={16} aria-hidden />
@@ -111,7 +116,7 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
                                         )}
                                     </dd>
                                 </div>
-                                {owner && (
+                                {owner && value && (
                                     <dd className="shrink-0">
                                         <PrivacySelect
                                             field={label}
@@ -132,7 +137,7 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
                 </dl>
             )}
 
-            {owner && rows.length > 0 && (
+            {owner && rows.some(({ field }) => profile.about[field]) && (
                 <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-label-sm text-content-muted">
                     <span>Who sees each:</span>
                     {PRIVACY_OPTIONS.map(({ value, label, icon: Icon }) => (

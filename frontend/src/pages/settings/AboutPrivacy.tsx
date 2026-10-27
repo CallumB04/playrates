@@ -6,6 +6,7 @@ import type {
     ProfileVisibility,
 } from "@playrates/shared";
 import Dropdown from "../../components/ui/Dropdown";
+import { cn } from "../../lib/cn";
 import { PRIVACY_OPTIONS } from "../ProfilePage/components/PrivacySelect";
 import { ABOUT_ROWS, linkLabel, steamLabel } from "../ProfilePage/lib/about";
 
@@ -59,8 +60,9 @@ const PrivacyDropdown = ({
 
 /**
  * Who sees each line of the About card, laid out as the card is: each
- * field with its mark and what it says now, beside who sees it. One control
- * sets them all at once.
+ * field with its mark and what it says now, beside who sees it. An empty
+ * field has nothing to show or hide, so it is greyed out with no choice to
+ * make. One control sets every filled-in field at once.
  */
 const AboutPrivacy = ({
     about,
@@ -69,31 +71,33 @@ const AboutPrivacy = ({
     disabled,
     profileHref,
 }: AboutPrivacyProps) => {
-    const levels = new Set(ABOUT_ROWS.map(({ field }) => visibility[field]));
+    const filled = ABOUT_ROWS.filter(({ field }) => about[field]);
+    const levels = new Set(filled.map(({ field }) => visibility[field]));
     // Blank when they differ, which the dropdown shows as its placeholder.
     const all = levels.size === 1 ? [...levels][0]! : "";
 
     const setAll = (next: ProfileVisibility) =>
-        onChange(
-            Object.fromEntries(
-                ABOUT_ROWS.map(({ field }) => [field, next])
-            ) as AboutVisibility
-        );
+        onChange({
+            ...visibility,
+            ...Object.fromEntries(filled.map(({ field }) => [field, next])),
+        });
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-3 rounded-md bg-surface-sunken/60 py-1.5 pr-1.5 pl-3">
-                <span className="text-body-sm font-medium text-content">
-                    All of them
-                </span>
-                <PrivacyDropdown
-                    label="Who sees all your About details"
-                    value={all}
-                    placeholder="Mixed"
-                    onChange={setAll}
-                    disabled={disabled}
-                />
-            </div>
+            {filled.length > 1 && (
+                <div className="flex items-center justify-between gap-3 rounded-md bg-surface-sunken/60 py-1.5 pr-1.5 pl-3">
+                    <span className="text-body-sm font-medium text-content">
+                        All of them
+                    </span>
+                    <PrivacyDropdown
+                        label="Who sees all your About details"
+                        value={all}
+                        placeholder="Mixed"
+                        onChange={setAll}
+                        disabled={disabled}
+                    />
+                </div>
+            )}
 
             {GROUPS.map(({ id, title }) => (
                 <section key={id} aria-label={title}>
@@ -107,7 +111,10 @@ const AboutPrivacy = ({
                                 return (
                                     <li
                                         key={field}
-                                        className="flex items-center gap-3 py-1.5 pr-1.5 pl-3"
+                                        className={cn(
+                                            "flex items-center gap-3 py-1.5 pr-1.5 pl-3",
+                                            !value && "bg-surface-sunken/40"
+                                        )}
                                     >
                                         <Icon
                                             size={16}
@@ -130,17 +137,28 @@ const AboutPrivacy = ({
                                                     : "Not set"}
                                             </p>
                                         </div>
-                                        <PrivacyDropdown
-                                            label={`Who sees your ${label.toLowerCase()}`}
-                                            value={visibility[field]}
-                                            onChange={(next) =>
-                                                onChange({
-                                                    ...visibility,
-                                                    [field]: next,
-                                                })
-                                            }
-                                            disabled={disabled}
-                                        />
+                                        {value ? (
+                                            <PrivacyDropdown
+                                                label={`Who sees your ${label.toLowerCase()}`}
+                                                value={visibility[field]}
+                                                onChange={(next) =>
+                                                    onChange({
+                                                        ...visibility,
+                                                        [field]: next,
+                                                    })
+                                                }
+                                                disabled={disabled}
+                                            />
+                                        ) : (
+                                            /* The dropdown's place, greyed:
+                                               the row says why already. */
+                                            <span
+                                                aria-hidden
+                                                className="flex min-h-11 w-36 shrink-0 items-center justify-center rounded-sm border border-dashed border-subtle text-label-sm text-content-muted"
+                                            >
+                                                Empty
+                                            </span>
+                                        )}
                                     </li>
                                 );
                             }

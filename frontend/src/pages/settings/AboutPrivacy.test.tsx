@@ -50,18 +50,32 @@ describe("AboutPrivacy", () => {
     it("changes one field and leaves the rest", async () => {
         const { onChange, user } = setup(DEFAULT_ABOUT_VISIBILITY);
 
-        await pick(user, "Who sees your location", /^Only me/);
+        await pick(user, "Who sees your website", /^Only me/);
 
         expect(onChange).toHaveBeenCalledWith({
             ...DEFAULT_ABOUT_VISIBILITY,
-            location: "private",
+            website: "private",
         });
     });
 
-    it("sets them all at once, and says when they differ", async () => {
+    it("offers no choice for a field that's empty", () => {
+        setup(DEFAULT_ABOUT_VISIBILITY);
+
+        expect(
+            screen.queryByRole("button", { name: "Who sees your location" })
+        ).toBeNull();
+        expect(
+            screen.getByRole("button", { name: "Who sees your name" })
+        ).toBeInTheDocument();
+    });
+
+    /* Discord is empty, so its setting neither makes them Mixed nor
+       changes with the rest. */
+    it("sets every filled-in field at once, and says when they differ", async () => {
         const { onChange, user } = setup({
             ...DEFAULT_ABOUT_VISIBILITY,
-            discord: "friends",
+            website: "friends",
+            discord: "private",
         });
 
         expect(
@@ -70,15 +84,13 @@ describe("AboutPrivacy", () => {
             })
         ).toHaveTextContent("Mixed");
 
-        await pick(user, "Who sees all your About details", /^Friends/);
+        await pick(user, "Who sees all your About details", /^Only me/);
 
         expect(onChange).toHaveBeenCalledWith({
-            firstName: "friends",
-            pronouns: "friends",
-            location: "friends",
-            website: "friends",
-            discord: "friends",
-            steam: "friends",
+            ...DEFAULT_ABOUT_VISIBILITY,
+            firstName: "private",
+            website: "private",
+            discord: "private",
         });
     });
 });

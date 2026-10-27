@@ -44,7 +44,7 @@ describe("AboutCard", () => {
         expect(container).toBeEmptyDOMElement();
     });
 
-    it("shows its owner every field, set or not, with who sees each", () => {
+    it("shows its owner every field, and who sees each one filled in", () => {
         renderWithProviders(
             <AboutCard
                 profile={profile}
@@ -61,9 +61,10 @@ describe("AboutCard", () => {
         );
 
         expect(screen.getAllByText("Not set")).toHaveLength(3);
+        // Nothing to show or hide in an empty field.
         expect(
-            screen.getByRole("button", { name: "Who sees your name: Only me" })
-        ).toBeInTheDocument();
+            screen.queryByRole("button", { name: /Who sees your name/ })
+        ).toBeNull();
         expect(
             screen.getByRole("button", {
                 name: "Who sees your pronouns: Everyone",
