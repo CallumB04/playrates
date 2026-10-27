@@ -32,7 +32,7 @@ interface PrivacySelectProps {
 }
 
 /** Who sees one thing on a profile, as its icon alone: beside a value, a
- *  worded pill left the value too little room. The card carries a key. */
+ *  worded pill left the value too little room. The menu names each. */
 const PrivacySelect = ({
     value,
     onChange,

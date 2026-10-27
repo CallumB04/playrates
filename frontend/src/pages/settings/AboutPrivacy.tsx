@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import type {
     AboutField,
     AboutVisibility,
@@ -21,8 +20,8 @@ interface AboutPrivacyProps {
     visibility: AboutVisibility;
     onChange: (next: AboutVisibility) => void;
     disabled?: boolean;
-    /** Where the fields themselves are edited. */
-    profileHref: string;
+    /** Takes you to where the fields themselves are edited. */
+    onFillIn: () => void;
 }
 
 /** What a field reads as on the card, so the row says what it is hiding. */
@@ -69,7 +68,7 @@ const AboutPrivacy = ({
     visibility,
     onChange,
     disabled,
-    profileHref,
+    onFillIn,
 }: AboutPrivacyProps) => {
     const filled = ABOUT_ROWS.filter(({ field }) => about[field]);
     const levels = new Set(filled.map(({ field }) => visibility[field]));
@@ -168,13 +167,14 @@ const AboutPrivacy = ({
             ))}
 
             <p className="text-label-sm text-content-muted">
-                Fill them in from Edit profile, on{" "}
-                <Link
-                    to={profileHref}
-                    className="text-content underline hover:text-brand"
+                Fill them in under{" "}
+                <button
+                    type="button"
+                    onClick={onFillIn}
+                    className="relative cursor-pointer text-content underline before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:text-brand"
                 >
-                    your profile
-                </Link>
+                    Profile
+                </button>
                 .
             </p>
         </div>

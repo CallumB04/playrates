@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
     IdCard,
     Lock,
@@ -29,7 +29,9 @@ import { saveFile } from "../lib/saveFile";
 import {
     DEFAULT_ABOUT_VISIBILITY,
     FALLBACK_ACCENT,
+    type AboutField,
     type AboutVisibility,
+    type MyProfile,
     type ProfileVisibility,
 } from "@playrates/shared";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
@@ -38,10 +40,17 @@ import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import Toggle from "../components/ui/Toggle";
 import EmptyPlate from "../components/ui/EmptyPlate";
-import { Input, Textarea } from "../components/ui/Input";
+import { Textarea } from "../components/ui/Input";
+import Field from "../components/ui/Field";
 import UsernameRow from "./settings/UsernameRow";
 import AboutPrivacy from "./settings/AboutPrivacy";
-import { profilePath } from "../lib/profilePaths";
+import AboutFieldInput from "./ProfilePage/components/AboutFieldInput";
+import {
+    ABOUT_ROWS,
+    aboutError,
+    mergeSaved,
+    type AboutRow,
+} from "./ProfilePage/lib/about";
 import Dropdown from "../components/ui/Dropdown";
 import SegmentedChoice from "../components/ui/SegmentedChoice";
 import AccentPicker from "../components/ui/AccentPicker";
@@ -50,8 +59,7 @@ import { effectiveTimeZone, formatCount, timeZones } from "../lib/format";
 import { cn } from "../lib/cn";
 
 /* Only what can be used today. Sections and rows that were all "coming
-   soon" were choices that led nowhere; Row's `soon` is there for when one
-   is close enough to show. */
+   soon" were choices that led nowhere. */
 const SECTIONS: SettingsSection[] = [
     { id: "account", label: "Account", icon: UserRound },
     { id: "profile", label: "Profile", icon: IdCard },
@@ -60,61 +68,94 @@ const SECTIONS: SettingsSection[] = [
     { id: "account-closure", label: "Close account", icon: TriangleAlert },
 ];
 
-interface RowProps {
+interface SettingProps {
     label: string;
-    /** Only where the control alone doesn't say it. Most rows need none. */
+    /** Only where the title alone doesn't say it, and short. */
     help?: ReactNode;
-    /** Rendered, disabled and labelled, so the page shows the shape of the thing. */
-    soon?: boolean;
-    /** Holds the label to the top beside a control much taller than it,
-     *  where centring left it floating mid-list. */
-    top?: boolean;
     children: ReactNode;
 }
 
-const Row = ({ label, help, soon, top, children }: RowProps) => (
-    <div
-        className={cn(
-            "grid gap-3",
-            top ? "items-start" : "items-center",
-            "border-b border-subtle px-5 py-4 last:border-b-0 sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)] sm:gap-8"
+const Title = ({ label, help }: Omit<SettingProps, "children">) => (
+    <div className="min-w-0">
+        <p className="text-body-sm font-medium text-content">{label}</p>
+        {help && (
+            <p className="mt-0.5 text-label-sm text-content-muted">{help}</p>
         )}
-    >
-        <div>
-            <div className="flex flex-wrap items-baseline gap-2">
-                <span
-                    className={cn(
-                        "text-body-sm font-medium",
-                        soon ? "text-content-muted" : "text-content"
-                    )}
-                >
-                    {label}
-                </span>
-                {soon && (
-                    <span className="rounded-full border border-subtle px-2 py-0.5 text-[10px] text-content-muted">
-                        Coming soon
-                    </span>
-                )}
-            </div>
-            {help && (
-                <p className="mt-1 max-w-[46ch] text-xs leading-relaxed text-content-muted">
-                    {help}
-                </p>
-            )}
-        </div>
-        <div className={cn(soon && "pointer-events-none opacity-50")}>
-            {children}
-        </div>
     </div>
 );
 
-/* Its rows run edge to edge with a rule between them, so the card sets no
-   padding of its own. */
-const SettingsCard = ({ children }: { children: ReactNode }) => (
-    <Card padding="none" className="overflow-hidden">
-        {children}
-    </Card>
+/** A setting whose control is small enough to sit beside its title: a
+ *  switch, a short choice. `wide` drops a wider control under the title on
+ *  a phone, where the two would crowd. */
+const Setting = ({
+    label,
+    help,
+    wide = false,
+    children,
+}: SettingProps & { wide?: boolean }) => (
+    <div
+        className={cn(
+            "flex gap-3 py-4 first:pt-0 last:pb-0",
+            wide
+                ? "flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+                : "items-center justify-between gap-6"
+        )}
+    >
+        <Title label={label} help={help} />
+        <div className="shrink-0">{children}</div>
+    </div>
 );
+
+/** A setting edited in a field, which goes under its title. */
+const FieldSetting = ({ label, help, children }: SettingProps) => (
+    <div className="flex flex-col gap-2.5 py-4 first:pt-0 last:pb-0">
+        <Title label={label} help={help} />
+        <div className="max-w-md">{children}</div>
+    </div>
+);
+
+/** Settings that belong together, under a heading where the section has
+ *  more than one kind. Rules between groups, not cards around them. */
+const Group = ({
+    title,
+    children,
+}: {
+    title?: string;
+    children: ReactNode;
+}) => (
+    <section className="py-7 first:pt-0 last:pb-0">
+        {title && (
+            <h2 className="mb-4 font-display text-base font-semibold text-content">
+                {title}
+            </h2>
+        )}
+        <div className="divide-y divide-subtle">{children}</div>
+    </section>
+);
+
+/** A link-styled button to another section of Settings. */
+const SectionLink = ({
+    onClick,
+    children,
+}: {
+    onClick: () => void;
+    children: ReactNode;
+}) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className="relative cursor-pointer text-content underline before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:text-brand"
+    >
+        {children}
+    </button>
+);
+
+type AboutValues = Record<AboutField, string>;
+
+const aboutFrom = (user: MyProfile | null | undefined): AboutValues =>
+    Object.fromEntries(
+        ABOUT_ROWS.map(({ field }) => [field, user?.about[field] ?? ""])
+    ) as AboutValues;
 
 const SettingsPage = () => {
     usePageMeta({ title: "Settings", noindex: true });
@@ -135,6 +176,11 @@ const SettingsPage = () => {
         const asked = params.get("section");
         return SECTIONS.some((s) => s.id === asked) ? asked! : "account";
     });
+    // From a link partway down one section, to the top of another.
+    const goTo = (id: string) => {
+        setSection(id);
+        window.scrollTo({ top: 0 });
+    };
 
     /* requireAuth verifies signatures locally and never checks revocation, so
        the token outlives the account. Sign out straight away. */
@@ -161,7 +207,13 @@ const SettingsPage = () => {
     });
 
     const [bio, setBio] = useState(user?.bio ?? "");
-    const [firstName, setFirstName] = useState(user?.firstName ?? "");
+    const [about, setAbout] = useState<AboutValues>(() => aboutFrom(user));
+    const savedAbout = useRef(about);
+    useEffect(() => {
+        const saved = aboutFrom(user);
+        setAbout((drafts) => mergeSaved(drafts, savedAbout.current, saved));
+        savedAbout.current = saved;
+    }, [user]);
     const [showSexual, setShowSexual] = useState(
         user?.showSexualContent ?? false
     );
@@ -180,7 +232,6 @@ const SettingsPage = () => {
 
     useEffect(() => {
         setBio(user?.bio ?? "");
-        setFirstName(user?.firstName ?? "");
         setShowSexual(user?.showSexualContent ?? false);
         setHideOnline(user?.hideOnline ?? false);
         setHideFromSearch(user?.hideFromSearch ?? false);
@@ -206,7 +257,7 @@ const SettingsPage = () => {
 
     // Saved on blur. One value with one owner needs no second action.
     const saveText = (
-        patch: { firstName: string } | { bio: string },
+        patch: Partial<Record<AboutField, string>> | { bio: string },
         unchanged: boolean,
         message: string
     ) => {
@@ -254,34 +305,47 @@ const SettingsPage = () => {
         );
     }
 
+    const aboutErrors = Object.fromEntries(
+        ABOUT_ROWS.map(({ field }) => [field, aboutError(field, about[field])])
+    ) as Partial<Record<AboutField, string>>;
+
+    // Saved on blur like the bio, once it's something the server will take.
+    const aboutInputs = (group: AboutRow["group"], half = false) =>
+        ABOUT_ROWS.filter(
+            (row) => row.group === group && !!row.half === half
+        ).map((row) => (
+            <AboutFieldInput
+                key={row.field}
+                row={row}
+                value={about[row.field]}
+                onChange={(value) =>
+                    setAbout((was) => ({ ...was, [row.field]: value }))
+                }
+                onBlur={() => {
+                    const value = about[row.field].trim();
+                    if (aboutErrors[row.field]) return;
+                    saveText(
+                        { [row.field]: value },
+                        value === (user.about[row.field] ?? ""),
+                        `Couldn't save your ${row.label.toLowerCase()}`
+                    );
+                }}
+                error={aboutErrors[row.field]}
+            />
+        ));
+
     const panels: Record<string, ReactNode> = {
         account: (
-            <SettingsCard>
-                <Row label="Username">
+            <Group>
+                <FieldSetting label="Username">
                     <UsernameRow current={user.username} />
-                </Row>
-                <Row label="First name">
-                    <Input
-                        value={firstName}
-                        maxLength={40}
-                        placeholder="Optional"
-                        onChange={(e) => setFirstName(e.target.value)}
-                        onBlur={() =>
-                            saveText(
-                                { firstName: firstName.trim() },
-                                firstName.trim() === (user.firstName ?? ""),
-                                "Couldn't save your name"
-                            )
-                        }
-                        aria-label="First name"
-                    />
-                </Row>
-                <Row
+                </FieldSetting>
+                <FieldSetting
                     label="Time zone"
                     help={
                         zoneIsDetected
-                            ? "Dates and times render in this. Detected from your device. Choose it to save it to your account."
-                            : "Dates and times render in this."
+                            ? "Detected from your device."
+                            : undefined
                     }
                 >
                     <Dropdown
@@ -302,150 +366,183 @@ const SettingsPage = () => {
                         }
                         aria-label="Time zone"
                     />
-                </Row>
-            </SettingsCard>
+                </FieldSetting>
+            </Group>
         ),
 
         profile: (
-            <SettingsCard>
-                <Row label="Bio" help={`${bio.length} of 160 characters`}>
-                    <Textarea
-                        rows={3}
-                        value={bio}
-                        maxLength={160}
-                        placeholder="I love PlayRates."
-                        onChange={(e) => setBio(e.target.value)}
-                        onBlur={() =>
-                            saveText(
-                                { bio },
-                                bio === (user.bio ?? ""),
-                                "Couldn't save your bio"
-                            )
-                        }
-                        aria-label="Bio"
-                    />
-                </Row>
-                <Row label="Profile picture">
-                    <AvatarField
-                        username={user.username}
-                        accent={user.accent}
-                        current={user.avatarUrl}
-                        choice={{ kind: "unchanged" }}
-                        onChange={saveAvatar}
-                        disabled={savingAvatar}
-                    />
-                </Row>
-                {/* The colour fills the initial in place of a picture, so it
-                    is offered only while there is none. */}
-                {!user.avatarUrl && (
-                    <Row label="Colour behind your initial">
-                        <AccentPicker
-                            label="Colour behind your initial"
-                            value={accent}
-                            onChange={(next) =>
-                                saveToggle(
-                                    { accent: next },
-                                    next,
-                                    setAccent,
-                                    accent
-                                )
-                            }
-                            disabled={update.isPending}
+            <>
+                <Group title="Picture">
+                    <div>
+                        <AvatarField
+                            username={user.username}
+                            accent={user.accent}
+                            current={user.avatarUrl}
+                            choice={{ kind: "unchanged" }}
+                            onChange={saveAvatar}
+                            disabled={savingAvatar}
                         />
-                    </Row>
-                )}
-            </SettingsCard>
+                        {/* The colour fills the initial in place of a
+                            picture, so it is offered only while there is
+                            none. */}
+                        {!user.avatarUrl && (
+                            <div className="mt-4">
+                                <p className="mb-2 text-label-sm text-content-muted">
+                                    Or a colour behind your initial
+                                </p>
+                                <AccentPicker
+                                    label="Colour behind your initial"
+                                    value={accent}
+                                    onChange={(next) =>
+                                        saveToggle(
+                                            { accent: next },
+                                            next,
+                                            setAccent,
+                                            accent
+                                        )
+                                    }
+                                    disabled={update.isPending}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </Group>
+                <Group title="Bio">
+                    <div className="max-w-xl">
+                        <Field
+                            label="Bio"
+                            labelHidden
+                            help={`${bio.length} of 160 characters`}
+                        >
+                            {(a11y) => (
+                                <Textarea
+                                    {...a11y}
+                                    rows={3}
+                                    value={bio}
+                                    maxLength={160}
+                                    placeholder="I love PlayRates."
+                                    onChange={(e) => setBio(e.target.value)}
+                                    onBlur={() =>
+                                        saveText(
+                                            { bio },
+                                            bio === user.bio,
+                                            "Couldn't save your bio"
+                                        )
+                                    }
+                                />
+                            )}
+                        </Field>
+                    </div>
+                </Group>
+                <Group title="About you">
+                    <div className="flex max-w-xl flex-col gap-4">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            {aboutInputs("about", true)}
+                        </div>
+                        {aboutInputs("about")}
+                    </div>
+                </Group>
+                <Group title="Socials">
+                    <div className="flex max-w-xl flex-col gap-4">
+                        {aboutInputs("socials")}
+                        <p className="text-label-sm text-content-muted">
+                            Choose who sees each in{" "}
+                            <SectionLink onClick={() => goTo("privacy")}>
+                                Privacy
+                            </SectionLink>
+                            .
+                        </p>
+                    </div>
+                </Group>
+            </>
         ),
 
         privacy: (
-            <SettingsCard>
-                <Row
-                    label="Who can see your profile"
-                    help="Your games, favourites, reviews, friends and threads. Your name, picture and bio always show; your About details each have their own setting below."
-                >
-                    <SegmentedChoice
+            <>
+                <Group>
+                    <Setting
+                        wide
                         label="Who can see your profile"
-                        segments={[
-                            { value: "everyone", label: "Everyone" },
-                            { value: "friends", label: "Friends" },
-                            { value: "private", label: "Only me" },
-                        ]}
-                        value={profileVisibility}
-                        onChange={(next) =>
-                            saveToggle(
-                                { profileVisibility: next },
-                                next,
-                                setProfileVisibility,
-                                profileVisibility
-                            )
-                        }
-                    />
-                </Row>
-                <Row
-                    top
-                    label="Your About details"
-                    help="Who sees each line of the About card on your profile. Your bio always shows."
-                >
-                    <AboutPrivacy
-                        about={user.about}
-                        visibility={aboutVisibility}
-                        onChange={(next) =>
-                            saveToggle<AboutVisibility>(
-                                { aboutVisibility: next },
-                                next,
-                                setAboutVisibility,
-                                aboutVisibility
-                            )
-                        }
-                        disabled={update.isPending}
-                        profileHref={profilePath(user.username)}
-                    />
-                </Row>
-                <Row
-                    label="Hide online status"
-                    help="Your profile reads as offline to everyone."
-                >
-                    <Toggle
-                        checked={hideOnline}
-                        onChange={(next) =>
-                            saveToggle(
-                                { hideOnline: next },
-                                next,
-                                setHideOnline,
-                                hideOnline
-                            )
-                        }
-                        label={hideOnline ? "On" : "Off"}
-                        disabled={update.isPending}
-                    />
-                </Row>
-                <Row
-                    label="Hide from search engines"
-                    help="Asks Google and the like to leave your profile out of their results. It stays public here."
-                >
-                    <Toggle
-                        checked={hideFromSearch}
-                        onChange={(next) =>
-                            saveToggle(
-                                { hideFromSearch: next },
-                                next,
-                                setHideFromSearch,
-                                hideFromSearch
-                            )
-                        }
-                        label={hideFromSearch ? "On" : "Off"}
-                        disabled={update.isPending}
-                    />
-                </Row>
-            </SettingsCard>
+                        help="Your picture and bio always show."
+                    >
+                        <SegmentedChoice
+                            label="Who can see your profile"
+                            segments={[
+                                { value: "everyone", label: "Everyone" },
+                                { value: "friends", label: "Friends" },
+                                { value: "private", label: "Only me" },
+                            ]}
+                            value={profileVisibility}
+                            onChange={(next) =>
+                                saveToggle(
+                                    { profileVisibility: next },
+                                    next,
+                                    setProfileVisibility,
+                                    profileVisibility
+                                )
+                            }
+                        />
+                    </Setting>
+                    <Setting label="Hide online status">
+                        <Toggle
+                            checked={hideOnline}
+                            onChange={(next) =>
+                                saveToggle(
+                                    { hideOnline: next },
+                                    next,
+                                    setHideOnline,
+                                    hideOnline
+                                )
+                            }
+                            label="Hide online status"
+                            labelPosition="hidden"
+                            disabled={update.isPending}
+                        />
+                    </Setting>
+                    <Setting
+                        label="Hide from search engines"
+                        help="You stay visible on PlayRates."
+                    >
+                        <Toggle
+                            checked={hideFromSearch}
+                            onChange={(next) =>
+                                saveToggle(
+                                    { hideFromSearch: next },
+                                    next,
+                                    setHideFromSearch,
+                                    hideFromSearch
+                                )
+                            }
+                            label="Hide from search engines"
+                            labelPosition="hidden"
+                            disabled={update.isPending}
+                        />
+                    </Setting>
+                </Group>
+                <Group title="About details">
+                    <div className="max-w-xl">
+                        <AboutPrivacy
+                            about={user.about}
+                            visibility={aboutVisibility}
+                            onChange={(next) =>
+                                saveToggle<AboutVisibility>(
+                                    { aboutVisibility: next },
+                                    next,
+                                    setAboutVisibility,
+                                    aboutVisibility
+                                )
+                            }
+                            disabled={update.isPending}
+                            onFillIn={() => goTo("profile")}
+                        />
+                    </div>
+                </Group>
+            </>
         ),
 
         content: (
-            <SettingsCard>
-                <Row
-                    label="Sexual content"
-                    help="Games tagged as sexually explicit stay out of the library, search and every rail."
-                >
+            <Group>
+                <Setting label="Show sexually explicit games">
                     <Toggle
                         checked={showSexual}
                         onChange={(next) =>
@@ -456,11 +553,12 @@ const SettingsPage = () => {
                                 showSexual
                             )
                         }
-                        label={showSexual ? "On" : "Off"}
+                        label="Show sexually explicit games"
+                        labelPosition="hidden"
                         disabled={update.isPending}
                     />
-                </Row>
-                <Row label="Theme">
+                </Setting>
+                <Setting wide label="Theme">
                     <SegmentedChoice
                         label="Theme"
                         segments={[
@@ -475,8 +573,8 @@ const SettingsPage = () => {
                         value={preference}
                         onChange={setPreference}
                     />
-                </Row>
-            </SettingsCard>
+                </Setting>
+            </Group>
         ),
 
         "account-closure": (
@@ -524,7 +622,9 @@ const SettingsPage = () => {
                     active={section}
                     onSelect={setSection}
                 />
-                {panels[section]}
+                <div className="max-w-2xl min-w-0 divide-y divide-subtle">
+                    {panels[section]}
+                </div>
             </div>
 
             {confirmingDelete && (

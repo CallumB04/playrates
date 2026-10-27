@@ -19,7 +19,7 @@ const setup = (visibility: AboutVisibility) => {
                 }}
                 visibility={visibility}
                 onChange={onChange}
-                profileHref="/user/devuser"
+                onFillIn={vi.fn()}
             />
         </MemoryRouter>
     );

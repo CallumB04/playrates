@@ -8,7 +8,7 @@ import type {
 import Panel from "../../../components/ui/Panel";
 import Button from "../../../components/ui/Button";
 import { ABOUT_ROWS, linkLabel, steamLabel } from "../lib/about";
-import PrivacySelect, { PRIVACY_OPTIONS } from "./PrivacySelect";
+import PrivacySelect from "./PrivacySelect";
 import { cn } from "../../../lib/cn";
 
 const Value = ({ field, value }: { field: AboutField; value: string }) => {
@@ -50,6 +50,7 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
         ({ field }) => owner || profile.about[field]
     );
     if (!owner && !profile.bio && rows.length === 0) return null;
+    const showBio = !!profile.bio || !!owner;
 
     return (
         <Panel
@@ -68,20 +69,30 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
                 )
             }
         >
-            {profile.bio ? (
-                <p className="text-body-sm leading-relaxed text-content-secondary">
-                    {profile.bio}
-                </p>
-            ) : (
-                owner && (
-                    <p className="text-body-sm text-content-muted">
-                        No bio yet. Say a little about yourself.
-                    </p>
-                )
+            {showBio && (
+                <div>
+                    <h3 className="mb-1 text-label-sm text-content-muted">
+                        Bio
+                    </h3>
+                    {profile.bio ? (
+                        <p className="text-body-sm leading-relaxed text-content-secondary">
+                            {profile.bio}
+                        </p>
+                    ) : (
+                        <p className="text-body-sm text-content-muted">
+                            No bio yet. Say a little about yourself.
+                        </p>
+                    )}
+                </div>
             )}
 
             {rows.length > 0 && (
-                <dl className="mt-4 flex flex-col gap-3 border-t border-subtle pt-4">
+                <dl
+                    className={cn(
+                        "flex flex-col gap-3",
+                        showBio && "mt-4 border-t border-subtle pt-4"
+                    )}
+                >
                     {rows.map(({ field, label, icon: Icon }) => {
                         const value = profile.about[field];
                         return (
@@ -135,21 +146,6 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
                         );
                     })}
                 </dl>
-            )}
-
-            {owner && rows.some(({ field }) => profile.about[field]) && (
-                <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-label-sm text-content-muted">
-                    <span>Who sees each:</span>
-                    {PRIVACY_OPTIONS.map(({ value, label, icon: Icon }) => (
-                        <span
-                            key={value}
-                            className="inline-flex items-center gap-1"
-                        >
-                            <Icon size={12} aria-hidden />
-                            {label}
-                        </span>
-                    ))}
-                </p>
             )}
         </Panel>
     );

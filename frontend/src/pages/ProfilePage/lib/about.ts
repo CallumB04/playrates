@@ -1,23 +1,97 @@
 import { Link2, MapPin, Speech, UserRound } from "lucide-react";
 import { SiDiscord, SiSteam } from "@icons-pack/react-simple-icons";
-import type { AboutField } from "@playrates/shared";
+import { AboutFieldsSchema, type AboutField } from "@playrates/shared";
 import type { IconComponent } from "../../../lib/icons";
 
-/** The About fields as a profile shows them, in its order: who someone is,
- *  then where else to find them. */
-export const ABOUT_ROWS: {
+export interface AboutRow {
     field: AboutField;
     label: string;
     icon: IconComponent;
     group: "about" | "socials";
-}[] = [
-    { field: "firstName", label: "Name", icon: UserRound, group: "about" },
-    { field: "pronouns", label: "Pronouns", icon: Speech, group: "about" },
-    { field: "location", label: "Location", icon: MapPin, group: "about" },
-    { field: "website", label: "Website", icon: Link2, group: "socials" },
-    { field: "discord", label: "Discord", icon: SiDiscord, group: "socials" },
-    { field: "steam", label: "Steam", icon: SiSteam, group: "socials" },
+    placeholder: string;
+    type?: "url";
+    /** Short enough to share a row with its neighbour where they're edited. */
+    half?: true;
+}
+
+/** The About fields as a profile shows them, in its order: who someone is,
+ *  then where else to find them. */
+export const ABOUT_ROWS: AboutRow[] = [
+    {
+        field: "firstName",
+        label: "Name",
+        icon: UserRound,
+        group: "about",
+        placeholder: "Callum",
+        half: true,
+    },
+    {
+        field: "pronouns",
+        label: "Pronouns",
+        icon: Speech,
+        group: "about",
+        placeholder: "he/him",
+        half: true,
+    },
+    {
+        field: "location",
+        label: "Location",
+        icon: MapPin,
+        group: "about",
+        placeholder: "Leeds, UK",
+    },
+    {
+        field: "website",
+        label: "Website",
+        icon: Link2,
+        group: "socials",
+        placeholder: "https://example.com",
+        type: "url",
+    },
+    {
+        field: "discord",
+        label: "Discord",
+        icon: SiDiscord,
+        group: "socials",
+        placeholder: "Your username, not display name",
+    },
+    {
+        field: "steam",
+        label: "Steam",
+        icon: SiSteam,
+        group: "socials",
+        placeholder: "Profile address or custom name",
+    },
 ];
+
+/** What is wrong with a field as typed, by the rule the server holds it to.
+ *  The first name is not an About field there, so its one rule is here. */
+export const aboutError = (
+    field: AboutField,
+    value: string
+): string | undefined => {
+    if (field === "firstName") {
+        return value.trim().length > 40 ? "40 characters at most" : undefined;
+    }
+    const checked = AboutFieldsSchema.shape[field].safeParse(value.trim());
+    return checked.success ? undefined : checked.error.issues[0]?.message;
+};
+
+/** Drafts of the About fields, brought up to date with the saved ones:
+ *  only a field whose saved value moved takes it. Saving one field reloads
+ *  the profile, and taking all of them wiped whatever was being typed in
+ *  the next. */
+export const mergeSaved = <K extends string>(
+    drafts: Record<K, string>,
+    before: Record<K, string>,
+    after: Record<K, string>
+): Record<K, string> => {
+    const next = { ...drafts };
+    for (const key of Object.keys(after) as K[]) {
+        if (after[key] !== before[key]) next[key] = after[key];
+    }
+    return next;
+};
 
 /** A web address as a link reads it: no scheme, no www, no trailing slash. */
 export const linkLabel = (url: string): string =>

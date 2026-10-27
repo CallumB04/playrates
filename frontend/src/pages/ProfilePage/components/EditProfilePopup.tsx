@@ -1,9 +1,6 @@
-import { useId, useState, type ChangeEvent, type ReactNode } from "react";
-import { Link2 } from "lucide-react";
-import { SiDiscord, SiSteam } from "@icons-pack/react-simple-icons";
+import { useId, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
-    AboutFieldsSchema,
     type AboutField,
     type Profile,
     type ProfileAccent,
@@ -18,8 +15,9 @@ import { ApiError } from "../../../api/client";
 import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 import Field from "../../../components/ui/Field";
-import { IconInput, Input, Textarea } from "../../../components/ui/Input";
-import type { IconComponent } from "../../../lib/icons";
+import { Input, Textarea } from "../../../components/ui/Input";
+import { ABOUT_ROWS, aboutError } from "../lib/about";
+import AboutFieldInput from "./AboutFieldInput";
 import AvatarField, {
     type AvatarChoice,
 } from "../../../components/AvatarField";
@@ -30,72 +28,7 @@ import { willShowPicture } from "../../../components/avatarChoice";
 
 type View = "profile" | "about" | "socials";
 
-const ABOUT_INPUTS: {
-    field: AboutField;
-    label: string;
-    placeholder: string;
-    type?: "url";
-    view: Exclude<View, "profile">;
-    /** Short enough to share a row with its neighbour. */
-    half?: true;
-    /** The account's own mark, inside the field. */
-    icon?: IconComponent;
-}[] = [
-    {
-        field: "firstName",
-        label: "Name",
-        placeholder: "Callum",
-        view: "about",
-        half: true,
-    },
-    {
-        field: "pronouns",
-        label: "Pronouns",
-        placeholder: "he/him",
-        view: "about",
-        half: true,
-    },
-    {
-        field: "location",
-        label: "Location",
-        placeholder: "Leeds, UK",
-        view: "about",
-    },
-    {
-        field: "website",
-        label: "Website",
-        placeholder: "https://example.com",
-        type: "url",
-        view: "socials",
-        icon: Link2,
-    },
-    {
-        field: "discord",
-        label: "Discord",
-        placeholder: "Your username, not display name",
-        view: "socials",
-        icon: SiDiscord,
-    },
-    {
-        field: "steam",
-        label: "Steam",
-        placeholder: "Profile address or custom name",
-        view: "socials",
-        icon: SiSteam,
-    },
-];
-
 type AboutValues = Record<AboutField, string>;
-
-/** What is wrong with a field as typed, by the rule the server holds it to.
- *  The first name is not an About field there, so its one rule is here. */
-const aboutError = (field: AboutField, value: string): string | undefined => {
-    if (field === "firstName") {
-        return value.trim().length > 40 ? "40 characters at most" : undefined;
-    }
-    const checked = AboutFieldsSchema.shape[field].safeParse(value.trim());
-    return checked.success ? undefined : checked.error.issues[0]?.message;
-};
 
 interface EditProfilePopupProps {
     closePopup: () => void;
@@ -182,48 +115,37 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     const [accent, setAccent] = useState<ProfileAccent>(user.accent);
     const [pictureError, setPictureError] = useState<string | null>(null);
     const initialAbout = Object.fromEntries(
-        ABOUT_INPUTS.map(({ field }) => [field, user.about[field] ?? ""])
+        ABOUT_ROWS.map(({ field }) => [field, user.about[field] ?? ""])
     ) as AboutValues;
     const [about, setAbout] = useState<AboutValues>(initialAbout);
     const aboutErrors = Object.fromEntries(
-        ABOUT_INPUTS.map(({ field }) => [
-            field,
-            aboutError(field, about[field]),
-        ])
+        ABOUT_ROWS.map(({ field }) => [field, aboutError(field, about[field])])
     ) as Record<AboutField, string | undefined>;
     const aboutInvalid = Object.values(aboutErrors).some(Boolean);
     const invalidIn = (of: View) =>
-        ABOUT_INPUTS.some(
-            ({ field, view: on }) => on === of && aboutErrors[field]
+        ABOUT_ROWS.some(
+            ({ field, group }) => group === of && aboutErrors[field]
         );
     const changedAbout = Object.fromEntries(
-        ABOUT_INPUTS.filter(
+        ABOUT_ROWS.filter(
             ({ field }) => about[field].trim() !== initialAbout[field]
         ).map(({ field }) => [field, about[field].trim()])
     );
 
     const inputsFor = (of: View, half = false) =>
-        ABOUT_INPUTS.filter(
-            (input) => input.view === of && !!input.half === half
-        ).map(({ field, label, placeholder, type, icon }) => (
-            <Field key={field} label={label} error={aboutErrors[field]}>
-                {(a11y) => {
-                    const props = {
-                        ...a11y,
-                        type: type ?? "text",
-                        value: about[field],
-                        placeholder,
-                        onChange: (e: ChangeEvent<HTMLInputElement>) =>
-                            setAbout({ ...about, [field]: e.target.value }),
-                    };
-                    return icon ? (
-                        <IconInput icon={icon} {...props} />
-                    ) : (
-                        <Input {...props} />
-                    );
-                }}
-            </Field>
-        ));
+        ABOUT_ROWS.filter((row) => row.group === of && !!row.half === half).map(
+            (row) => (
+                <AboutFieldInput
+                    key={row.field}
+                    row={row}
+                    value={about[row.field]}
+                    onChange={(value) =>
+                        setAbout({ ...about, [row.field]: value })
+                    }
+                    error={aboutErrors[row.field]}
+                />
+            )
+        );
 
     const sameLetters = username.toLowerCase() === user.username.toLowerCase();
     const fieldsDirty =
