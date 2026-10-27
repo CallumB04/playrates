@@ -57,8 +57,7 @@ describe("AboutCard", () => {
             />
         );
 
-        expect(screen.getAllByText(/ not set$/)).toHaveLength(3);
-        expect(screen.getByText("Name not set")).toBeInTheDocument();
+        expect(screen.getAllByText("Not set")).toHaveLength(3);
         expect(
             screen.getByRole("button", { name: "Who sees your name" })
         ).toHaveTextContent("Only me");

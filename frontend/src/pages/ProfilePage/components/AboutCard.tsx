@@ -106,19 +106,18 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
                                     owner && "max-sm:min-h-11"
                                 )}
                             >
-                                {/* The mark says which it is, Discord's and
-                                    Steam's above all; the word is for a
-                                    screen reader. */}
-                                <dt className="flex w-5 shrink-0 justify-center text-content-muted">
-                                    <Icon size={16} aria-hidden />
-                                    <span className="sr-only">{label}</span>
+                                <dt className="flex w-28 shrink-0 items-center gap-2.5 text-content-muted">
+                                    <span className="flex w-4 justify-center">
+                                        <Icon size={16} aria-hidden />
+                                    </span>
+                                    {label}
                                 </dt>
                                 <dd className="min-w-0 flex-1">
                                     {value ? (
                                         <Value field={field} value={value} />
                                     ) : (
                                         <span className="text-content-muted">
-                                            {label} not set
+                                            Not set
                                         </span>
                                     )}
                                 </dd>

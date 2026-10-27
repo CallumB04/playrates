@@ -1,9 +1,11 @@
-import { Link } from "react-router-dom";
 import { Pencil, Plus } from "lucide-react";
 import { MAX_FAVOURITE_GAMES } from "@playrates/shared";
 import Panel from "../../../components/ui/Panel";
 import Button from "../../../components/ui/Button";
-import GameCover from "../../../components/game/GameCover";
+import GameTile from "../../../components/game/GameTile";
+import { useTileActions } from "../../../components/game/useTileActions";
+import { usePlatforms } from "../../../hooks/queries/useGames";
+import { releaseYear } from "../../../lib/format";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { useUserFavourites } from "../../../hooks/queries/useFavourites";
 
@@ -20,6 +22,9 @@ const GRID = "grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3";
 /** Up to five covers, in the order their owner put them. */
 const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {
     const { data: games, isLoading } = useUserFavourites(username, canSee);
+    const { data: platforms } = usePlatforms();
+    // The viewer's own log of each, as on every other cover.
+    const { actionsFor, statusFor } = useTileActions();
     const owner = !!onEdit;
 
     // Nothing to say to a visitor about favourites nobody has chosen.
@@ -53,18 +58,17 @@ const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {
                 <ol className={GRID}>
                     {(games ?? []).map((game) => (
                         <li key={game.id}>
-                            <Link
-                                to={`/game/${game.id}`}
-                                aria-label={game.title}
+                            <GameTile
+                                gameId={game.id}
                                 title={game.title}
-                                className="block rounded-xs lift hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                            >
-                                <GameCover
-                                    coverUrl={game.coverUrl}
-                                    title={game.title}
-                                    className="aspect-3/4 w-full overflow-hidden rounded-xs shadow-cover"
-                                />
-                            </Link>
+                                coverUrl={game.coverUrl}
+                                platformSlugs={game.platforms}
+                                platforms={platforms ?? []}
+                                footValue={releaseYear(game.releaseDate)}
+                                status={statusFor(game)}
+                                actions={actionsFor(game)}
+                                narrowFoot
+                            />
                         </li>
                     ))}
                     {/* The places still free, each a way to fill one. */}

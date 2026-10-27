@@ -37,7 +37,8 @@ const pathOf = (username: string, tab: ProfileTab) =>
     profilePath(username, tab === "profile" ? undefined : tab);
 
 const CountPill = ({ value }: { value: number }) => (
-    <span className="rounded-full bg-surface-sunken px-2 py-0.5 font-mono text-label-sm text-content-secondary tabular-nums">
+    // Leading off, so the pill sits on the word's centre, not its baseline.
+    <span className="rounded-full bg-surface-sunken px-2 py-1 font-mono text-label-sm leading-none text-content-secondary tabular-nums">
         {formatCount(value)}
     </span>
 );
@@ -179,7 +180,7 @@ const ProfileNav = ({
                             end
                             className={({ isActive }) =>
                                 cn(
-                                    "-mb-px flex min-h-11 items-center gap-1.5 border-b-2 px-4 text-body-sm whitespace-nowrap transition-colors",
+                                    "-mb-px flex min-h-11 items-center gap-2 border-b-2 px-4 text-body-sm whitespace-nowrap transition-colors",
                                     "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                                     isActive
                                         ? "border-brand font-medium text-content"
@@ -189,8 +190,10 @@ const ProfileNav = ({
                         >
                             {label}
                             {(count !== undefined || flagged) && (
-                                <span className="flex items-center gap-1 font-mono text-label-sm text-content-muted tabular-nums">
-                                    {count !== undefined && formatCount(count)}
+                                <span className="flex items-center gap-1.5">
+                                    {count !== undefined && (
+                                        <CountPill value={count} />
+                                    )}
                                     {flagged && (
                                         <RequestsDot count={requestCount} />
                                     )}
