@@ -4,6 +4,7 @@ import {
     type TextareaHTMLAttributes,
 } from "react";
 import { cn } from "../../lib/cn";
+import type { IconComponent } from "../../lib/icons";
 
 /**
  * A field sits level with the page and lights up when you're in it.
@@ -69,3 +70,26 @@ export const SearchInput = forwardRef<
     />
 ));
 SearchInput.displayName = "SearchInput";
+
+/** A field with a mark inside its left edge, for one the mark says more
+ *  about than its label: a social account, say. The mark is quiet while the
+ *  field is empty and full colour once something is in it. */
+export const IconInput = forwardRef<
+    HTMLInputElement,
+    InputHTMLAttributes<HTMLInputElement> & { icon: IconComponent }
+>(({ icon: Icon, className, ...props }, ref) => (
+    <div className="relative">
+        {/* The input first, so the mark can follow it as a peer. */}
+        <input
+            ref={ref}
+            className={fieldClass(cn("peer pl-10", className))}
+            {...props}
+        />
+        <Icon
+            size={16}
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-content peer-placeholder-shown:text-content-muted"
+        />
+    </div>
+));
+IconInput.displayName = "IconInput";

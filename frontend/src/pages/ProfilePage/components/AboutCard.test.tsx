@@ -49,7 +49,10 @@ describe("AboutCard", () => {
             <AboutCard
                 profile={profile}
                 owner={{
-                    visibility: DEFAULT_ABOUT_VISIBILITY,
+                    visibility: {
+                        ...DEFAULT_ABOUT_VISIBILITY,
+                        firstName: "private",
+                    },
                     onChangeVisibility: vi.fn(),
                     onEdit: vi.fn(),
                     saving: false,

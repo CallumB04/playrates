@@ -45,9 +45,9 @@ describe("a profile's About fields", () => {
     about_visibility: { discord: "friends" },
   });
 
-  it("starts the first name hidden and the rest public", () => {
+  it("starts every field public, the first name too", () => {
     expect(aboutVisibilityOf(row)).toEqual({
-      firstName: "private",
+      firstName: "everyone",
       pronouns: "everyone",
       location: "everyone",
       website: "everyone",
@@ -58,9 +58,11 @@ describe("a profile's About fields", () => {
 
   it("shows each viewer what its field's visibility allows, filled in only", () => {
     expect(aboutFor(row, { isOwner: false, isFriend: false })).toEqual({
+      firstName: "Callum",
       pronouns: "he/him",
     });
     expect(aboutFor(row, { isOwner: false, isFriend: true })).toEqual({
+      firstName: "Callum",
       pronouns: "he/him",
       discord: "callum",
     });

@@ -5,6 +5,7 @@ import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import Field from "../ui/Field";
 import { Input } from "../ui/Input";
+import Toggle from "../ui/Toggle";
 import AvatarField, { type AvatarChoice } from "../AvatarField";
 import {
     useUpdateAvatar,
@@ -31,6 +32,8 @@ const WelcomePopup = ({
     const titleId = useId();
     const pictureLabelId = useId();
     const [firstName, setFirstName] = useState(profile.firstName ?? "");
+    // Public by default, like the rest of a profile; hidden is one tap.
+    const [showName, setShowName] = useState(true);
     const [avatar, setAvatar] = useState<AvatarChoice>({ kind: "unchanged" });
 
     const updateProfile = useUpdateProfile();
@@ -44,7 +47,12 @@ const WelcomePopup = ({
         const name = firstName.trim();
         try {
             if (name && name !== (profile.firstName ?? "")) {
-                await updateProfile.mutateAsync({ firstName: name });
+                await updateProfile.mutateAsync({
+                    firstName: name,
+                    aboutVisibility: {
+                        firstName: showName ? "everyone" : "private",
+                    },
+                });
             }
             if (avatar.kind === "picked") {
                 await updateAvatar.mutateAsync(avatar.image);
@@ -94,18 +102,27 @@ const WelcomePopup = ({
                     />
                 </div>
 
-                <Field label="First name">
-                    {(a11y) => (
-                        <Input
-                            {...a11y}
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                            maxLength={40}
-                            autoComplete="given-name"
-                            disabled={saving}
-                        />
-                    )}
-                </Field>
+                <div className="flex flex-col gap-1">
+                    <Field label="First name">
+                        {(a11y) => (
+                            <Input
+                                {...a11y}
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                                maxLength={40}
+                                autoComplete="given-name"
+                                disabled={saving}
+                            />
+                        )}
+                    </Field>
+                    <Toggle
+                        checked={showName}
+                        onChange={setShowName}
+                        label="Show it on my profile"
+                        disabled={saving}
+                        className="self-start text-body-sm text-content-secondary"
+                    />
+                </div>
 
                 <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-center text-label-sm text-content-muted sm:text-left">

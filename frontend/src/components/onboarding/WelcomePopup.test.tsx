@@ -59,7 +59,27 @@ describe("WelcomePopup", () => {
         await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
         await waitFor(() => expect(onClose).toHaveBeenCalled());
-        expect(patches).toHaveBeenCalledWith({ firstName: "Callum" });
+        expect(patches).toHaveBeenCalledWith({
+            firstName: "Callum",
+            aboutVisibility: { firstName: "everyone" },
+        });
+    });
+
+    it("keeps the name hidden when asked to as it's given", async () => {
+        const patches = captureWrites();
+        const { onClose } = renderPopup();
+
+        await userEvent.type(screen.getByLabelText("First name"), "Callum");
+        await userEvent.click(
+            screen.getByRole("switch", { name: "Show it on my profile" })
+        );
+        await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+        await waitFor(() => expect(onClose).toHaveBeenCalled());
+        expect(patches).toHaveBeenCalledWith({
+            firstName: "Callum",
+            aboutVisibility: { firstName: "private" },
+        });
     });
 
     /* Both fields are optional: saving with neither is not a write. */

@@ -138,13 +138,13 @@ describe("EditProfilePopup", () => {
         setup();
         const user = userEvent.setup();
 
-        await user.click(screen.getByRole("tab", { name: "Links" }));
+        await user.click(screen.getByRole("tab", { name: "Socials" }));
         await user.type(screen.getByLabelText("Website"), "not a website");
         await user.click(screen.getByRole("tab", { name: "Profile" }));
 
         expect(
-            screen.getByRole("tab", { name: /^Links/ })
-        ).toHaveAccessibleName("Links (needs a look)");
+            screen.getByRole("tab", { name: /^Socials/ })
+        ).toHaveAccessibleName("Socials (needs a look)");
         expect(
             screen.getByRole("button", { name: "Save changes" })
         ).toBeDisabled();

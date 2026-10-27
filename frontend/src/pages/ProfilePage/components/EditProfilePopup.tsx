@@ -1,4 +1,6 @@
-import { useId, useState, type ReactNode } from "react";
+import { useId, useState, type ChangeEvent, type ReactNode } from "react";
+import { Link2 } from "lucide-react";
+import { SiDiscord, SiSteam } from "@icons-pack/react-simple-icons";
 import { Link } from "react-router-dom";
 import {
     AboutFieldsSchema,
@@ -16,7 +18,8 @@ import { ApiError } from "../../../api/client";
 import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 import Field from "../../../components/ui/Field";
-import { Input, Textarea } from "../../../components/ui/Input";
+import { IconInput, Input, Textarea } from "../../../components/ui/Input";
+import type { IconComponent } from "../../../lib/icons";
 import AvatarField, {
     type AvatarChoice,
 } from "../../../components/AvatarField";
@@ -25,7 +28,7 @@ import SegmentedChoice from "../../../components/ui/SegmentedChoice";
 import { cn } from "../../../lib/cn";
 import { willShowPicture } from "../../../components/avatarChoice";
 
-type View = "profile" | "about" | "links";
+type View = "profile" | "about" | "socials";
 
 const ABOUT_INPUTS: {
     field: AboutField;
@@ -35,6 +38,8 @@ const ABOUT_INPUTS: {
     view: Exclude<View, "profile">;
     /** Short enough to share a row with its neighbour. */
     half?: true;
+    /** The account's own mark, inside the field. */
+    icon?: IconComponent;
 }[] = [
     {
         field: "firstName",
@@ -61,19 +66,22 @@ const ABOUT_INPUTS: {
         label: "Website",
         placeholder: "https://example.com",
         type: "url",
-        view: "links",
+        view: "socials",
+        icon: Link2,
     },
     {
         field: "discord",
         label: "Discord",
-        placeholder: "username",
-        view: "links",
+        placeholder: "Your username, not display name",
+        view: "socials",
+        icon: SiDiscord,
     },
     {
         field: "steam",
         label: "Steam",
         placeholder: "Profile address or custom name",
-        view: "links",
+        view: "socials",
+        icon: SiSteam,
     },
 ];
 
@@ -146,7 +154,7 @@ const PrivacyNote = () => (
         >
             Settings
         </Link>
-        . Your name starts hidden.
+        .
     </p>
 );
 
@@ -197,19 +205,23 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     const inputsFor = (of: View, half = false) =>
         ABOUT_INPUTS.filter(
             (input) => input.view === of && !!input.half === half
-        ).map(({ field, label, placeholder, type }) => (
+        ).map(({ field, label, placeholder, type, icon }) => (
             <Field key={field} label={label} error={aboutErrors[field]}>
-                {(a11y) => (
-                    <Input
-                        type={type ?? "text"}
-                        value={about[field]}
-                        placeholder={placeholder}
-                        onChange={(e) =>
-                            setAbout({ ...about, [field]: e.target.value })
-                        }
-                        {...a11y}
-                    />
-                )}
+                {(a11y) => {
+                    const props = {
+                        ...a11y,
+                        type: type ?? "text",
+                        value: about[field],
+                        placeholder,
+                        onChange: (e: ChangeEvent<HTMLInputElement>) =>
+                            setAbout({ ...about, [field]: e.target.value }),
+                    };
+                    return icon ? (
+                        <IconInput icon={icon} {...props} />
+                    ) : (
+                        <Input {...props} />
+                    );
+                }}
             </Field>
         ));
 
@@ -288,9 +300,9 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                         flagged: invalidIn("about") || !sameLetters,
                     },
                     {
-                        value: "links",
-                        label: "Links",
-                        flagged: invalidIn("links"),
+                        value: "socials",
+                        label: "Socials",
+                        flagged: invalidIn("socials"),
                     },
                 ]}
                 value={view}
@@ -386,8 +398,8 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     </Field>
                     <PrivacyNote />
                 </Panel>
-                <Panel id={panelId("links")} shown={view === "links"}>
-                    {inputsFor("links")}
+                <Panel id={panelId("socials")} shown={view === "socials"}>
+                    {inputsFor("socials")}
                     <PrivacyNote />
                 </Panel>
             </div>

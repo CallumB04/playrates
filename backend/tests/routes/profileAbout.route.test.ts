@@ -24,7 +24,12 @@ const seed = (friends = false) => ({
       pronouns: "they/them",
       discord: "devuser",
       location: "Leeds",
-      about_visibility: { discord: "friends", location: "private" },
+      // Hidden as an account from before the name showed by default.
+      about_visibility: {
+        firstName: "private",
+        discord: "friends",
+        location: "private",
+      },
     }),
     buildProfile({ id: USER_B, username: "frienduser" }),
     buildProfile({ id: STRANGER, username: "stranger" }),
@@ -42,9 +47,20 @@ const aboutAs = async (viewer: string | null, friends = false) => {
 };
 
 describe("a profile's About fields, by who is looking", () => {
-  it("shows a stranger only what is public, and never the first name by default", async () => {
+  it("shows a stranger only what is public, and not a name kept hidden", async () => {
     expect(await aboutAs(null)).toEqual({ pronouns: "they/them" });
     expect(await aboutAs(STRANGER)).toEqual({ pronouns: "they/them" });
+  });
+
+  it("shows a first name to anyone when nothing says otherwise", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        profiles: [buildProfile({ first_name: "Dev" })],
+      },
+    });
+    const response = await request(app).get("/api/v1/profiles/devuser");
+    expect(response.body.about).toEqual({ firstName: "Dev" });
   });
 
   it("shows a friend the fields kept to friends too", async () => {

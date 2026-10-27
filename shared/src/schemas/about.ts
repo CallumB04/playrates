@@ -23,11 +23,11 @@ export type AboutField = (typeof ABOUT_FIELDS)[number];
 
 export type AboutVisibility = Record<AboutField, ProfileVisibility>;
 
-/** The first name was never shown to anyone before it had a setting, so it
- *  starts hidden; the rest are blank until filled in, and public once they
- *  are, which is why anyone fills them in. */
+/** Each field is blank until filled in, and public once it is, which is
+ *  why anyone fills them in. The first name can be kept hidden as it's
+ *  given, at sign-up; accounts from before that were pinned hidden. */
 export const DEFAULT_ABOUT_VISIBILITY: AboutVisibility = {
-  firstName: "private",
+  firstName: "everyone",
   pronouns: "everyone",
   location: "everyone",
   website: "everyone",
