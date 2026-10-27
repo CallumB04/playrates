@@ -70,15 +70,15 @@ const setup = (route: string) => {
 const search = () =>
     new URLSearchParams(screen.getByRole("status").textContent!);
 
-describe("GamesView's console filter", () => {
+describe("GamesView's filters", () => {
     it("puts the console in the URL and starts the shelf again", async () => {
         const user = setup("/user/devuser/games?type=played&page=2");
 
         await user.click(
-            await screen.findByRole("button", { name: "Filter by console" })
+            await screen.findByRole("button", { name: /Filters/ })
         );
         await user.click(
-            await screen.findByRole("option", { name: /PlayStation 5/ })
+            await screen.findByRole("button", { name: /PlayStation 5/ })
         );
 
         expect(search().get("console")).toBe("playstation5");
@@ -95,5 +95,20 @@ describe("GamesView's console filter", () => {
 
         expect(search().get("type")).toBe("backlog");
         expect(search().get("console")).toBeNull();
+    });
+
+    it("clears the ending and the console together", async () => {
+        const user = setup(
+            "/user/devuser/games?type=played&ending=finished&console=steam"
+        );
+
+        await user.click(
+            await screen.findByRole("button", { name: "Filters, 2 on" })
+        );
+        await user.click(screen.getByRole("button", { name: "Clear" }));
+
+        expect(search().get("ending")).toBeNull();
+        expect(search().get("console")).toBeNull();
+        expect(search().get("type")).toBe("played");
     });
 });

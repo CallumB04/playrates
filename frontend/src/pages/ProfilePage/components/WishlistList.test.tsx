@@ -201,18 +201,29 @@ describe("WishlistList", () => {
         );
     });
 
-    /* Game 3 is hidden. Up one past Game 2 lands Game 4 just before it in
-       the whole list, so it jumps the hidden game too. */
-    it("moves among the games a console filter leaves showing", async () => {
-        consolesOf[4] = ["steam"];
+    it("offers no reordering while a console filter hides some of it", async () => {
         const user = await setup({ console: "steam" });
-        consolesOf[4] = [null];
 
-        expect(shown()).toEqual(["#1 Game 1", "#2 Game 2", "#4 Game 4"]);
-        const sheet = await openSheet(user, "Game 4");
-        await user.click(sheet.getByRole("button", { name: /Up one/ }));
+        expect(shown()).toEqual(["#1 Game 1", "#2 Game 2"]);
+        expect(
+            screen.queryByRole("button", { name: /^Move Game/ })
+        ).not.toBeInTheDocument();
+        expect(
+            screen.getByText("Clear the console filter to rearrange.")
+        ).toBeInTheDocument();
+        const sheet = await openSheet(user, "Game 2");
+        expect(
+            sheet.queryByRole("button", { name: /To the top/ })
+        ).not.toBeInTheDocument();
+    });
 
-        await waitFor(() => expect(saved).toEqual([1, 4, 2, 3]));
+    it("moves a game one place down", async () => {
+        const user = await setup();
+
+        const sheet = await openSheet(user, "Game 2");
+        await user.click(sheet.getByRole("button", { name: /Down one/ }));
+
+        await waitFor(() => expect(saved).toEqual([1, 3, 2, 4]));
     });
 
     it("offers no reordering in another sort, and says how to get it", async () => {

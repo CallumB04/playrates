@@ -16,32 +16,6 @@ export const moveTo = (
     return next;
 };
 
-/**
- * A move made in a filtered list, applied to the whole wishlist. The game
- * goes just before the one now after it in the filtered list, or just after
- * the one now before it when it went last, so the games the filter hides
- * keep their places around it.
- */
-export const moveAmong = (
-    order: number[],
-    gameId: number,
-    shownAfter: number[]
-): number[] => {
-    const at = shownAfter.indexOf(gameId);
-    if (at < 0 || !order.includes(gameId)) return order;
-    const rest = order.filter((id) => id !== gameId);
-    const next = shownAfter[at + 1];
-    const previous = shownAfter[at - 1];
-    if (next !== undefined) {
-        rest.splice(rest.indexOf(next), 0, gameId);
-    } else if (previous !== undefined) {
-        rest.splice(rest.indexOf(previous) + 1, 0, gameId);
-    } else {
-        return order;
-    }
-    return rest;
-};
-
 export const WISHLIST_SORTS = ["rank", "added", "released", "title"] as const;
 export type WishlistSort = (typeof WISHLIST_SORTS)[number];
 

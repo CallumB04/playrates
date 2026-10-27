@@ -9,7 +9,7 @@ import { releaseYear } from "../../../lib/format";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { useUserFavourites } from "../../../hooks/queries/useFavourites";
 import { cn } from "../../../lib/cn";
-import { rankTone } from "../lib/about";
+import { podiumOnPhone, rankTone } from "../lib/about";
 
 interface FavouriteGamesProps {
     username: string;
@@ -18,7 +18,6 @@ interface FavouriteGamesProps {
     onEdit?: () => void;
 }
 
-// Three across a phone: five there were too small to tell apart.
 /* The list is ordered, so a screen reader already counts it; the number
    here is for the eye, and its colour for the podium. */
 export const Rank = ({ place }: { place: number }) => (
@@ -67,13 +66,19 @@ const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {
             {isLoading || !canSee ? (
                 <div className={GRID}>
                     {Array.from({ length: MAX_FAVOURITE_GAMES }, (_, i) => (
-                        <Skeleton key={i} className="aspect-3/4 rounded-xs" />
+                        <Skeleton
+                            key={i}
+                            className={cn(
+                                "aspect-3/4 rounded-xs",
+                                podiumOnPhone(i + 1)
+                            )}
+                        />
                     ))}
                 </div>
             ) : (
                 <ol className={GRID}>
                     {(games ?? []).map((game, i) => (
-                        <li key={game.id}>
+                        <li key={game.id} className={podiumOnPhone(i + 1)}>
                             <Rank place={i + 1} />
                             <GameTile
                                 gameId={game.id}
@@ -96,7 +101,12 @@ const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {
                                     MAX_FAVOURITE_GAMES - (games?.length ?? 0),
                             },
                             (_, i) => (
-                                <li key={`free-${i}`}>
+                                <li
+                                    key={`free-${i}`}
+                                    className={podiumOnPhone(
+                                        (games?.length ?? 0) + i + 1
+                                    )}
+                                >
                                     <Rank
                                         place={(games?.length ?? 0) + i + 1}
                                     />

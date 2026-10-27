@@ -8,6 +8,8 @@ import { useUserWishlist } from "../../../hooks/queries/useWishlist";
 import { formatCount, releaseYear } from "../../../lib/format";
 import { shelfPath } from "../../../lib/profilePaths";
 import { useShelfTileActions } from "../lib/useShelfTileActions";
+import { cn } from "../../../lib/cn";
+import { podiumOnPhone } from "../lib/about";
 import { Rank } from "./FavouriteGames";
 
 const TOP = 5;
@@ -38,7 +40,13 @@ const WishlistTop = ({ username, isMyAccount, canSee }: WishlistTopProps) => {
             {isLoading || !canSee ? (
                 <div className={GRID}>
                     {Array.from({ length: TOP }, (_, i) => (
-                        <Skeleton key={i} className="aspect-3/4 rounded-xs" />
+                        <Skeleton
+                            key={i}
+                            className={cn(
+                                "aspect-3/4 rounded-xs",
+                                podiumOnPhone(i + 1)
+                            )}
+                        />
                     ))}
                 </div>
             ) : total === 0 ? (
@@ -58,7 +66,10 @@ const WishlistTop = ({ username, isMyAccount, canSee }: WishlistTopProps) => {
                 <>
                     <ol className={GRID}>
                         {games.map((entry) => (
-                            <li key={entry.gameId}>
+                            <li
+                                key={entry.gameId}
+                                className={podiumOnPhone(entry.rank)}
+                            >
                                 <Rank place={entry.rank} />
                                 <GameTile
                                     gameId={entry.gameId}

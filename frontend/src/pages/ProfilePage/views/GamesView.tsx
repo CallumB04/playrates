@@ -20,8 +20,7 @@ import { GAME_STATUSES, type GameStatus } from "../../../constants/gameStatus";
 import { formatCount } from "../../../lib/format";
 import ShelfPanel from "../components/ShelfPanel";
 import ShelfSort from "../components/ShelfSort";
-import PlayedStatusFilterControl from "../components/PlayedStatusFilter";
-import ConsoleFilter from "../components/ConsoleFilter";
+import ShelfFilters from "../components/ShelfFilters";
 import WishlistList from "../components/WishlistList";
 import WishlistSortControl from "../components/WishlistSortControl";
 import { WISHLIST_SORTS, type WishlistSort } from "../lib/wishlist";
@@ -164,6 +163,14 @@ const GamesView = ({
         setParams(updated);
     };
 
+    const clearFilters = () => {
+        const updated = new URLSearchParams(params);
+        updated.delete("ending");
+        updated.delete("console");
+        updated.delete("page");
+        setParams(updated);
+    };
+
     const setWishlistSort = (next: WishlistSort) => {
         const updated = new URLSearchParams(params);
         updated.set("sort", next);
@@ -219,9 +226,9 @@ const GamesView = ({
                 )
             }
             trailing={
-                /* Below sm the filters share a row and the sort has the
-                   next to itself: beside anything, the sort label had 60px
-                   and "Time played" and "Time to beat" both read "Time…". */
+                /* The filters fold into one button so the sort keeps its
+                   width: squeezed beside them, "Time played" and "Time to
+                   beat" both read "Time…". */
                 <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
                     {!isMyAccount && myLogGameIds && (
                         <span className="text-label text-accent max-sm:hidden">
@@ -233,19 +240,17 @@ const GamesView = ({
                             in common
                         </span>
                     )}
-                    <div className="flex w-full gap-2 empty:hidden sm:contents">
-                        {activeSection === "played" && (
-                            <PlayedStatusFilterControl
-                                value={playedStatus}
-                                onChange={setEnding}
-                            />
-                        )}
-                        <ConsoleFilter
-                            consoles={consoles}
-                            value={consoleSlug}
-                            onChange={setConsole}
-                        />
-                    </div>
+                    <ShelfFilters
+                        ending={
+                            activeSection === "played"
+                                ? { value: playedStatus, onChange: setEnding }
+                                : undefined
+                        }
+                        consoles={consoles}
+                        console={consoleSlug}
+                        onConsoleChange={setConsole}
+                        onClear={clearFilters}
+                    />
                     {isWishlist ? (
                         <WishlistSortControl
                             sort={wishlistSort}

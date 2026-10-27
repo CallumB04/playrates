@@ -59,10 +59,12 @@ describe("AboutCard", () => {
 
         expect(screen.getAllByText("Not set")).toHaveLength(3);
         expect(
-            screen.getByRole("button", { name: "Who sees your name" })
-        ).toHaveTextContent("Only me");
+            screen.getByRole("button", { name: "Who sees your name: Only me" })
+        ).toBeInTheDocument();
         expect(
-            screen.getByRole("button", { name: "Who sees your pronouns" })
-        ).toHaveTextContent("Everyone");
+            screen.getByRole("button", {
+                name: "Who sees your pronouns: Everyone",
+            })
+        ).toBeInTheDocument();
     });
 });

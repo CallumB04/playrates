@@ -65,7 +65,7 @@ const ProfileView = ({
     return (
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
             {/* First on a phone: who someone is comes before what they like. */}
-            <div className="lg:order-2">
+            <div className="min-w-0 lg:order-2">
                 <ProfileAbout
                     profile={profile}
                     isOwner={isOwner}

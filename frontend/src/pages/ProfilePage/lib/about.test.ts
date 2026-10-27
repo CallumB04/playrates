@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { linkLabel, moveItem, rankTone, steamLabel } from "./about";
+import {
+    linkLabel,
+    moveItem,
+    podiumOnPhone,
+    rankTone,
+    steamLabel,
+} from "./about";
 
 describe("linkLabel", () => {
     it("reads an address without its scheme, www or trailing slash", () => {
@@ -41,6 +47,18 @@ describe("rankTone", () => {
             "text-medal-bronze",
             "text-content-muted",
             "text-content-muted",
+        ]);
+    });
+});
+
+describe("podiumOnPhone", () => {
+    it("keeps the top three on a phone and hides the rest there", () => {
+        expect([1, 2, 3, 4, 5].map(podiumOnPhone)).toEqual([
+            undefined,
+            undefined,
+            undefined,
+            "max-sm:hidden",
+            "max-sm:hidden",
         ]);
     });
 });

@@ -25,3 +25,8 @@ const PODIUM = ["text-medal-gold", "text-medal-silver", "text-medal-bronze"];
  *  three, the rest left plain. Places count from 1. */
 export const rankTone = (place: number): string =>
     PODIUM[place - 1] ?? "text-content-muted";
+
+/** A phone shows a ranked row's podium only: three across, where five
+ *  wrapped two onto a second row. */
+export const podiumOnPhone = (place: number): string | undefined =>
+    place > PODIUM.length ? "max-sm:hidden" : undefined;

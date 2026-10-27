@@ -10,8 +10,7 @@ import Panel from "../../../components/ui/Panel";
 import Button from "../../../components/ui/Button";
 import type { IconComponent } from "../../../lib/icons";
 import { linkLabel, steamLabel } from "../lib/about";
-import PrivacySelect from "./PrivacySelect";
-import { cn } from "../../../lib/cn";
+import PrivacySelect, { PRIVACY_OPTIONS } from "./PrivacySelect";
 
 const ROWS: {
     field: AboutField;
@@ -34,7 +33,7 @@ const Value = ({ field, value }: { field: AboutField; value: string }) => {
                 target="_blank"
                 // Off the site, and nothing to vouch for: no referrer, no ranking.
                 rel="noopener noreferrer nofollow ugc"
-                className="break-all text-content underline decoration-subtle underline-offset-2 hover:text-brand hover:decoration-brand"
+                className="block truncate text-content underline decoration-subtle underline-offset-2 hover:text-brand hover:decoration-brand"
             >
                 {field === "website" ? linkLabel(value) : steamLabel(value)}
             </a>
@@ -94,33 +93,37 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
             )}
 
             {rows.length > 0 && (
-                <dl className="mt-4 flex flex-col gap-2.5 border-t border-subtle pt-4">
+                <dl className="mt-4 flex flex-col gap-3 border-t border-subtle pt-4">
                     {rows.map(({ field, label, icon: Icon }) => {
                         const value = profile.about[field];
                         return (
+                            /* The label over its value, not beside it: in a
+                               column of its own it left a long location three
+                               lines to wrap in. */
                             <div
                                 key={field}
-                                className={cn(
-                                    "flex min-h-7 items-center gap-3 text-body-sm",
-                                    // Room on a phone for each privacy pill's 44px reach.
-                                    owner && "max-sm:min-h-11"
-                                )}
+                                className="flex items-center gap-3"
                             >
-                                <dt className="flex w-28 shrink-0 items-center gap-2.5 text-content-muted">
-                                    <span className="flex w-4 justify-center">
-                                        <Icon size={16} aria-hidden />
-                                    </span>
-                                    {label}
-                                </dt>
-                                <dd className="min-w-0 flex-1">
-                                    {value ? (
-                                        <Value field={field} value={value} />
-                                    ) : (
-                                        <span className="text-content-muted">
-                                            Not set
-                                        </span>
-                                    )}
-                                </dd>
+                                <span className="flex w-4 shrink-0 justify-center text-content-muted">
+                                    <Icon size={16} aria-hidden />
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                    <dt className="text-label-sm text-content-muted">
+                                        {label}
+                                    </dt>
+                                    <dd className="text-body-sm">
+                                        {value ? (
+                                            <Value
+                                                field={field}
+                                                value={value}
+                                            />
+                                        ) : (
+                                            <span className="text-content-muted">
+                                                Not set
+                                            </span>
+                                        )}
+                                    </dd>
+                                </div>
                                 {owner && (
                                     <dd className="shrink-0">
                                         <PrivacySelect
@@ -140,6 +143,21 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
                         );
                     })}
                 </dl>
+            )}
+
+            {owner && rows.length > 0 && (
+                <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-label-sm text-content-muted">
+                    <span>Who sees each:</span>
+                    {PRIVACY_OPTIONS.map(({ value, label, icon: Icon }) => (
+                        <span
+                            key={value}
+                            className="inline-flex items-center gap-1"
+                        >
+                            <Icon size={12} aria-hidden />
+                            {label}
+                        </span>
+                    ))}
+                </p>
             )}
         </Panel>
     );

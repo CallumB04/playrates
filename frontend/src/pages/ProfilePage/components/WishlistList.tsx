@@ -40,12 +40,7 @@ import { useNotify } from "../../../contexts/NotificationContext";
 import { usePlatformSystems } from "../../../hooks/queries/useGames";
 import { useReorderWishlist } from "../../../hooks/queries/useWishlist";
 import { formatCount } from "../../../lib/format";
-import {
-    moveAmong,
-    moveTo,
-    sortWishlist,
-    type WishlistSort,
-} from "../lib/wishlist";
+import { moveTo, sortWishlist, type WishlistSort } from "../lib/wishlist";
 import WishlistRow, { type WishlistRowProps } from "./WishlistRow";
 
 interface WishlistListProps {
@@ -139,15 +134,22 @@ const WishlistList = ({
     }, [wishlist, order, consoleSlug, sort]);
     const shownIds = shown.map((e) => e.gameId);
 
-    const canReorder = isMyAccount && sort === "rank";
+    /* Only the whole list in its own order: filtered, a move would have to
+       guess where among the hidden games it meant to land. */
+    const canReorder = isMyAccount && sort === "rank" && !consoleSlug;
+    const hint = !isMyAccount
+        ? undefined
+        : sort !== "rank"
+          ? "Sort by your order to rearrange."
+          : consoleSlug
+            ? "Clear the console filter to rearrange."
+            : undefined;
     const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
     const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
     const [sheetFor, setSheetFor] = useState<WishlistEntry | null>(null);
     const [said, setSaid] = useState("");
 
-    /* Mid-drag, each row shows the place it would have if dropped now.
-       Filtered, the places are the ones the shown games hold between them. */
-    const slots = shown.map((e) => e.rank);
+    // Mid-drag, each row shows the place it would have if dropped now.
     const preview =
         activeId !== null && overId !== null
             ? arrayMove(
@@ -156,7 +158,8 @@ const WishlistList = ({
                   shownIds.indexOf(Number(overId))
               )
             : shownIds;
-    const rankNow = (gameId: number) => slots[preview.indexOf(gameId)] ?? 0;
+    const rankNow = (gameId: number) => preview.indexOf(gameId) + 1;
+    const placeOf = (id: UniqueIdentifier) => order.indexOf(Number(id)) + 1;
 
     const titleOf = (id: UniqueIdentifier) =>
         shown.find((e) => e.gameId === Number(id))?.game?.title ?? "Game";
@@ -190,12 +193,7 @@ const WishlistList = ({
         setOverId(null);
         if (!over || active.id === over.id) return;
         const id = Number(active.id);
-        const after = arrayMove(
-            shownIds,
-            shownIds.indexOf(id),
-            shownIds.indexOf(Number(over.id))
-        );
-        save(moveAmong(order, id, after), id, false);
+        save(moveTo(order, id, placeOf(over.id)), id, false);
     };
 
     const announcements: Announcements = {
@@ -203,11 +201,11 @@ const WishlistList = ({
             `Picked up ${titleOf(active.id)}, at #${rankNow(Number(active.id))}.`,
         onDragOver: ({ active, over }) =>
             over
-                ? `${titleOf(active.id)} is at #${slots[shownIds.indexOf(Number(over.id))]}.`
+                ? `${titleOf(active.id)} is at #${placeOf(over.id)}.`
                 : undefined,
         onDragEnd: ({ active, over }) =>
             over
-                ? `${titleOf(active.id)} moved to #${slots[shownIds.indexOf(Number(over.id))]}.`
+                ? `${titleOf(active.id)} moved to #${placeOf(over.id)}.`
                 : undefined,
         onDragCancel: ({ active }) =>
             `${titleOf(active.id)} put back at #${rankNow(Number(active.id))}.`,
@@ -234,9 +232,9 @@ const WishlistList = ({
 
     return (
         <>
-            {isMyAccount && sort !== "rank" && (
+            {hint && (
                 <p className="mb-2 px-2 text-label text-content-muted">
-                    Sort by your order to rearrange.
+                    {hint}
                 </p>
             )}
 
@@ -295,6 +293,7 @@ const WishlistList = ({
                     }
                     total={order.length}
                     canReorder={canReorder}
+                    hint={hint}
                     isMyAccount={isMyAccount}
                     actions={buildTileActions(sheetFor)}
                     onMove={(place) =>
@@ -303,21 +302,6 @@ const WishlistList = ({
                             sheetFor.gameId
                         )
                     }
-                    onStep={(by) => {
-                        const at = shownIds.indexOf(sheetFor.gameId);
-                        const to = at + by;
-                        if (to < 0 || to >= shownIds.length) return;
-                        save(
-                            moveAmong(
-                                order,
-                                sheetFor.gameId,
-                                arrayMove(shownIds, at, to)
-                            ),
-                            sheetFor.gameId
-                        );
-                    }}
-                    isFirstShown={shownIds[0] === sheetFor.gameId}
-                    isLastShown={shownIds.at(-1) === sheetFor.gameId}
                     onClose={() => setSheetFor(null)}
                 />
             )}
@@ -329,14 +313,12 @@ interface RowSheetProps {
     entry: WishlistEntry;
     total: number;
     canReorder: boolean;
+    /** Why it can't be reordered right now, to its owner. */
+    hint?: string;
     isMyAccount: boolean;
     actions: TileAction[];
     /** To a place in the whole list, counted from 1. */
     onMove: (place: number) => void;
-    /** Past the neighbour shown above or below it. */
-    onStep: (by: -1 | 1) => void;
-    isFirstShown: boolean;
-    isLastShown: boolean;
     onClose: () => void;
 }
 
@@ -345,12 +327,10 @@ const RowSheet = ({
     entry,
     total,
     canReorder,
+    hint,
     isMyAccount,
     actions,
     onMove,
-    onStep,
-    isFirstShown,
-    isLastShown,
     onClose,
 }: RowSheetProps) => {
     const [place, setPlace] = useState(String(entry.rank));
@@ -424,8 +404,8 @@ const RowSheet = ({
                             variant="secondary"
                             size="touch"
                             className="sm:min-h-10"
-                            disabled={isFirstShown}
-                            onClick={act(() => onStep(-1))}
+                            disabled={entry.rank === 1}
+                            onClick={act(() => onMove(entry.rank - 1))}
                         >
                             <ArrowUp size={16} aria-hidden />
                             Up one
@@ -434,8 +414,8 @@ const RowSheet = ({
                             variant="secondary"
                             size="touch"
                             className="sm:min-h-10"
-                            disabled={isLastShown}
-                            onClick={act(() => onStep(1))}
+                            disabled={entry.rank === total}
+                            onClick={act(() => onMove(entry.rank + 1))}
                         >
                             <ArrowDown size={16} aria-hidden />
                             Down one
@@ -471,10 +451,8 @@ const RowSheet = ({
                 </>
             )}
 
-            {isMyAccount && !canReorder && (
-                <p className="mt-4 text-body-sm text-content-muted">
-                    Sort by your order to rearrange.
-                </p>
+            {hint && (
+                <p className="mt-4 text-body-sm text-content-muted">{hint}</p>
             )}
 
             {/* From sm up the row carries these itself. */}
