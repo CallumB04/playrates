@@ -14,9 +14,11 @@ const API = "http://localhost:3000/api/v1";
 
 const calls: string[] = [];
 let avatarStatus = 200;
+let sent: Record<string, unknown> | null = null;
 
 beforeEach(() => {
     calls.length = 0;
+    sent = null;
     avatarStatus = 200;
     URL.createObjectURL = vi.fn(() => "blob:preview");
     URL.revokeObjectURL = vi.fn();
@@ -26,6 +28,7 @@ beforeEach(() => {
     server.use(
         http.patch(`${API}/profiles/me`, async ({ request }) => {
             const body = (await request.json()) as { bio: string };
+            sent = body;
             calls.push(`patch:${body.bio}`);
             return HttpResponse.json(buildProfile({ bio: body.bio }));
         }),
@@ -116,5 +119,34 @@ describe("EditProfilePopup", () => {
         );
         await screen.findByText("Save changes to apply this.");
         expect(colour()).toBeNull();
+    });
+
+    it("saves what was typed on another view with the rest", async () => {
+        const { closePopup } = setup();
+        const user = userEvent.setup();
+
+        await user.click(screen.getByRole("tab", { name: "About you" }));
+        await user.type(screen.getByLabelText("Pronouns"), "they/them");
+        await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+        await waitFor(() => expect(closePopup).toHaveBeenCalledOnce());
+        expect(sent).toMatchObject({ pronouns: "they/them" });
+    });
+
+    /* Save is off while a field is wrong; the dot says which view it's on. */
+    it("marks the view holding a field that needs fixing", async () => {
+        setup();
+        const user = userEvent.setup();
+
+        await user.click(screen.getByRole("tab", { name: "Links" }));
+        await user.type(screen.getByLabelText("Website"), "not a website");
+        await user.click(screen.getByRole("tab", { name: "Profile" }));
+
+        expect(
+            screen.getByRole("tab", { name: /^Links/ })
+        ).toHaveAccessibleName("Links (needs a look)");
+        expect(
+            screen.getByRole("button", { name: "Save changes" })
+        ).toBeDisabled();
     });
 });

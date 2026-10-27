@@ -29,7 +29,8 @@ const AccentPicker = ({
         <div
             role="radiogroup"
             aria-label={label}
-            className={cn("flex flex-wrap gap-2", className)}
+            // The 44px labels space the dots already; seven to a phone's row.
+            className={cn("flex flex-wrap gap-0.5 sm:gap-2", className)}
         >
             {PROFILE_ACCENTS.map((swatch) => {
                 const checked = value === swatch.slug;

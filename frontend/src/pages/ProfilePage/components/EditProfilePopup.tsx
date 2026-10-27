@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
     AboutFieldsSchema,
@@ -21,28 +21,59 @@ import AvatarField, {
     type AvatarChoice,
 } from "../../../components/AvatarField";
 import AccentPicker from "../../../components/ui/AccentPicker";
+import SegmentedChoice from "../../../components/ui/SegmentedChoice";
+import { cn } from "../../../lib/cn";
 import { willShowPicture } from "../../../components/avatarChoice";
+
+type View = "profile" | "about" | "links";
 
 const ABOUT_INPUTS: {
     field: AboutField;
     label: string;
     placeholder: string;
     type?: "url";
+    view: Exclude<View, "profile">;
+    /** Short enough to share a row with its neighbour. */
+    half?: true;
 }[] = [
-    { field: "firstName", label: "Name", placeholder: "Callum" },
-    { field: "pronouns", label: "Pronouns", placeholder: "he/him" },
-    { field: "location", label: "Location", placeholder: "Leeds, UK" },
+    {
+        field: "firstName",
+        label: "Name",
+        placeholder: "Callum",
+        view: "about",
+        half: true,
+    },
+    {
+        field: "pronouns",
+        label: "Pronouns",
+        placeholder: "he/him",
+        view: "about",
+        half: true,
+    },
+    {
+        field: "location",
+        label: "Location",
+        placeholder: "Leeds, UK",
+        view: "about",
+    },
     {
         field: "website",
         label: "Website",
         placeholder: "https://example.com",
         type: "url",
+        view: "links",
     },
-    { field: "discord", label: "Discord", placeholder: "username" },
+    {
+        field: "discord",
+        label: "Discord",
+        placeholder: "username",
+        view: "links",
+    },
     {
         field: "steam",
         label: "Steam",
         placeholder: "Profile address or custom name",
+        view: "links",
     },
 ];
 
@@ -84,15 +115,55 @@ const Group = ({ label, children }: { label: string; children: ReactNode }) => (
     </div>
 );
 
+const Panel = ({
+    id,
+    shown,
+    children,
+}: {
+    id: string;
+    shown: boolean;
+    children: ReactNode;
+}) => (
+    <div
+        id={id}
+        role="tabpanel"
+        aria-labelledby={`${id}-tab`}
+        className={cn(
+            "col-start-1 row-start-1 flex flex-col gap-4",
+            !shown && "invisible"
+        )}
+    >
+        {children}
+    </div>
+);
+
+const PrivacyNote = () => (
+    <p className="text-label-sm text-content-muted">
+        You choose who sees each of these, beside it on your profile or in{" "}
+        <Link
+            to="/settings?section=profile"
+            className="text-content underline hover:text-brand"
+        >
+            Settings
+        </Link>
+        . Your name starts hidden.
+    </p>
+);
+
 /**
- * The profile editor. The username only changes capitalisation here — a real
- * rename has to check availability, so it lives in Settings.
+ * The profile editor, in three views so none of them scrolls: the picture
+ * and bio, who you are, and where else to find you. One Save covers all
+ * three. The username only changes capitalisation here — a real rename has
+ * to check availability, so it lives in Settings.
  */
 const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     closePopup,
     user,
 }) => {
     const notify = useNotify();
+    const [view, setView] = useState<View>("profile");
+    const ids = useId();
+    const panelId = (of: View) => `${ids}-${of}`;
     const updateProfile = useUpdateProfile();
     const updateAvatar = useUpdateAvatar();
     const removeAvatar = useRemoveAvatar();
@@ -113,11 +184,34 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
         ])
     ) as Record<AboutField, string | undefined>;
     const aboutInvalid = Object.values(aboutErrors).some(Boolean);
+    const invalidIn = (of: View) =>
+        ABOUT_INPUTS.some(
+            ({ field, view: on }) => on === of && aboutErrors[field]
+        );
     const changedAbout = Object.fromEntries(
         ABOUT_INPUTS.filter(
             ({ field }) => about[field].trim() !== initialAbout[field]
         ).map(({ field }) => [field, about[field].trim()])
     );
+
+    const inputsFor = (of: View, half = false) =>
+        ABOUT_INPUTS.filter(
+            (input) => input.view === of && !!input.half === half
+        ).map(({ field, label, placeholder, type }) => (
+            <Field key={field} label={label} error={aboutErrors[field]}>
+                {(a11y) => (
+                    <Input
+                        type={type ?? "text"}
+                        value={about[field]}
+                        placeholder={placeholder}
+                        onChange={(e) =>
+                            setAbout({ ...about, [field]: e.target.value })
+                        }
+                        {...a11y}
+                    />
+                )}
+            </Field>
+        ));
 
     const sameLetters = username.toLowerCase() === user.username.toLowerCase();
     const fieldsDirty =
@@ -184,123 +278,121 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                 Edit profile
             </h2>
 
-            <div className="flex flex-col gap-5 pt-5">
-                <Group label="Profile Picture">
-                    <AvatarField
-                        username={user.username}
-                        accent={accent}
-                        current={user.avatarUrl}
-                        choice={avatar}
-                        onChange={(choice) => {
-                            setPictureError(null);
-                            setAvatar(choice);
-                        }}
-                        disabled={saving}
-                        saveError={pictureError}
-                    />
-                    {/* The colour fills the initial in place of a picture,
-                        so it is offered only while there is none. */}
-                    {!willShowPicture(user.avatarUrl, avatar) && (
-                        <div className="mt-4">
-                            <p className="mb-2 text-label text-content-muted">
-                                Or a colour behind your initial
-                            </p>
-                            <AccentPicker
-                                label="Colour behind your initial"
-                                value={accent}
-                                onChange={setAccent}
-                                disabled={saving}
-                            />
-                        </div>
-                    )}
-                </Group>
+            <SegmentedChoice
+                label="Edit profile views"
+                segments={[
+                    { value: "profile", label: "Profile" },
+                    {
+                        value: "about",
+                        label: "About you",
+                        flagged: invalidIn("about") || !sameLetters,
+                    },
+                    {
+                        value: "links",
+                        label: "Links",
+                        flagged: invalidIn("links"),
+                    },
+                ]}
+                value={view}
+                onChange={setView}
+                panelId={panelId}
+                fill
+                className="mt-3"
+            />
 
-                <Field
-                    label="Bio"
-                    help={`${bio.length} of ${BIO_LIMIT} characters`}
-                >
-                    {(a11y) => (
-                        <Textarea
-                            rows={3}
-                            value={bio}
-                            maxLength={BIO_LIMIT}
-                            placeholder="I love PlayRates."
-                            onChange={(e) => setBio(e.target.value)}
-                            {...a11y}
+            {/* Stacked in one cell, so the popup is as tall as its tallest
+                view and doesn't jump between them. The hidden ones keep
+                their place, and their state. */}
+            <div className="mt-4 grid">
+                <Panel id={panelId("profile")} shown={view === "profile"}>
+                    <Group label="Profile Picture">
+                        <AvatarField
+                            username={user.username}
+                            accent={accent}
+                            current={user.avatarUrl}
+                            choice={avatar}
+                            onChange={(choice) => {
+                                setPictureError(null);
+                                setAvatar(choice);
+                            }}
+                            disabled={saving}
+                            saveError={pictureError}
                         />
-                    )}
-                </Field>
-
-                <Group label="About you">
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        {ABOUT_INPUTS.map(
-                            ({ field, label, placeholder, type }) => (
-                                <Field
-                                    key={field}
-                                    label={label}
-                                    error={aboutErrors[field]}
-                                >
-                                    {(a11y) => (
-                                        <Input
-                                            type={type ?? "text"}
-                                            value={about[field]}
-                                            placeholder={placeholder}
-                                            onChange={(e) =>
-                                                setAbout({
-                                                    ...about,
-                                                    [field]: e.target.value,
-                                                })
-                                            }
-                                            {...a11y}
-                                        />
-                                    )}
-                                </Field>
-                            )
+                        {/* The colour fills the initial in place of a picture,
+                            so it is offered only while there is none. */}
+                        {!willShowPicture(user.avatarUrl, avatar) && (
+                            <div className="mt-4">
+                                <p className="mb-2 text-label text-content-muted">
+                                    Or a colour behind your initial
+                                </p>
+                                <AccentPicker
+                                    label="Colour behind your initial"
+                                    value={accent}
+                                    onChange={setAccent}
+                                    disabled={saving}
+                                />
+                            </div>
                         )}
+                    </Group>
+                    <Field
+                        label="Bio"
+                        help={`${bio.length} of ${BIO_LIMIT} characters`}
+                    >
+                        {(a11y) => (
+                            <Textarea
+                                rows={3}
+                                value={bio}
+                                maxLength={BIO_LIMIT}
+                                placeholder="I love PlayRates."
+                                onChange={(e) => setBio(e.target.value)}
+                                {...a11y}
+                            />
+                        )}
+                    </Field>
+                </Panel>
+                <Panel id={panelId("about")} shown={view === "about"}>
+                    <div className="grid grid-cols-2 gap-3">
+                        {inputsFor("about", true)}
                     </div>
-                    <p className="mt-2 text-label-sm text-content-muted">
-                        You choose who sees each of these, beside it on your
-                        profile or in{" "}
-                        <Link
-                            to="/settings?section=profile"
-                            className="text-content underline hover:text-brand"
-                        >
-                            Settings
-                        </Link>
-                        . Your name starts hidden.
-                    </p>
-                </Group>
+                    {inputsFor("about")}
+                    <Field
+                        label="Username capitalisation"
+                        help={
+                            <>
+                                Rename in{" "}
+                                <Link
+                                    to="/settings"
+                                    className="text-content underline hover:text-brand"
+                                >
+                                    Settings
+                                </Link>
+                                .
+                            </>
+                        }
+                        error={
+                            sameLetters
+                                ? undefined
+                                : `Keep the same letters as ${user.username}.`
+                        }
+                    >
+                        {(a11y) => (
+                            <Input
+                                value={username}
+                                maxLength={user.username.length}
+                                onChange={(e) => setUsername(e.target.value)}
+                                {...a11y}
+                            />
+                        )}
+                    </Field>
+                    <PrivacyNote />
+                </Panel>
+                <Panel id={panelId("links")} shown={view === "links"}>
+                    {inputsFor("links")}
+                    <PrivacyNote />
+                </Panel>
+            </div>
 
-                <Field
-                    label="Username capitalisation"
-                    help={
-                        <>
-                            Rename in{" "}
-                            <Link
-                                to="/settings"
-                                className="text-content underline hover:text-brand"
-                            >
-                                Settings
-                            </Link>
-                            .
-                        </>
-                    }
-                    error={
-                        sameLetters
-                            ? undefined
-                            : `Keep the same letters as ${user.username}.`
-                    }
-                >
-                    {(a11y) => (
-                        <Input
-                            value={username}
-                            maxLength={user.username.length}
-                            onChange={(e) => setUsername(e.target.value)}
-                            {...a11y}
-                        />
-                    )}
-                </Field>
-
+            <div className="mt-4 border-t border-subtle pt-4">
                 <div className="flex flex-wrap gap-3">
                     <Button
                         className="flex-1"
