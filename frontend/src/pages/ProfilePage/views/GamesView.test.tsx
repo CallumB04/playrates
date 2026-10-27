@@ -77,8 +77,11 @@ describe("GamesView's filters", () => {
         await user.click(
             await screen.findByRole("button", { name: /Filters/ })
         );
+        // The menu is portalled out of the popover; picking in it must not
+        // close the popover before the pick lands.
+        await user.click(screen.getByRole("button", { name: "Console" }));
         await user.click(
-            await screen.findByRole("button", { name: /PlayStation 5/ })
+            await screen.findByRole("option", { name: /PlayStation 5/ })
         );
 
         expect(search().get("console")).toBe("playstation5");
@@ -110,5 +113,21 @@ describe("GamesView's filters", () => {
         expect(search().get("ending")).toBeNull();
         expect(search().get("console")).toBeNull();
         expect(search().get("type")).toBe("played");
+    });
+
+    it("closes on a press outside, but not on a pick inside", async () => {
+        const user = setup("/user/devuser/games?type=played");
+
+        await user.click(
+            await screen.findByRole("button", { name: /Filters/ })
+        );
+        await user.click(screen.getByRole("button", { name: "How it ended" }));
+        await user.click(
+            await screen.findByRole("option", { name: /Finished/ })
+        );
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+        await user.click(document.body);
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
 });

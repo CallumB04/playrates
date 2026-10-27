@@ -1,22 +1,25 @@
-import { useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ListFilter } from "lucide-react";
 import type { PlayedStatusFilter } from "@playrates/shared";
 import Button from "../../../components/ui/Button";
-import Chip from "../../../components/ui/Chip";
+import Dropdown from "../../../components/ui/Dropdown";
+import Field from "../../../components/ui/Field";
+import { fieldClass } from "../../../components/ui/Input";
 import Modal from "../../../components/ui/Modal";
 import { popoverClass } from "../../../components/ui/popover";
 import {
     PLAYED_STATUSES,
     STATUS_PRESENTATION,
 } from "../../../constants/gameStatus";
-import { useDismiss } from "../../../hooks/useDismiss";
 import { usePlatformSystems } from "../../../hooks/queries/useGames";
 import { useWindowSize } from "../../../hooks/useWindowSize";
-import { systemIcon } from "../../../lib/platformIcons";
+import { cn } from "../../../lib/cn";
+import { systemOptions } from "../../../lib/platformIcons";
 
 /** "none" is the played logs carrying no ending, a state of its own rather
  *  than the absence of an answer. */
 const ENDINGS = [
+    { value: "", label: "All played" },
     {
         value: "none",
         label: STATUS_PRESENTATION.played.label,
@@ -43,16 +46,10 @@ interface ShelfFiltersProps {
     onClear: () => void;
 }
 
-const Group = ({ title, children }: { title: string; children: ReactNode }) => (
-    <fieldset>
-        <legend className="mb-2 text-label text-content-muted">{title}</legend>
-        <div className="flex flex-wrap gap-1.5">{children}</div>
-    </fieldset>
-);
-
 /**
  * Everything that narrows a shelf, behind one button: a popover from sm up,
- * a bottom sheet on a phone. Each choice applies as it's made.
+ * a bottom sheet on a phone. A dropdown per filter, so another filter is
+ * another row. Each choice applies as it's made.
  */
 const ShelfFilters = ({
     ending,
@@ -62,7 +59,6 @@ const ShelfFilters = ({
     onClear,
 }: ShelfFiltersProps) => {
     const [open, setOpen] = useState(false);
-    const wrap = useRef<HTMLDivElement>(null);
     const titleId = useId();
     const phone = useWindowSize().width < 640;
     const { data: systems } = usePlatformSystems();
@@ -72,10 +68,32 @@ const ShelfFilters = ({
         return (systems ?? []).filter((s) => present.has(s.slug));
     }, [consoles, systems]);
 
-    useDismiss([wrap], () => setOpen(false), {
-        enabled: open && !phone,
-        escape: true,
-    });
+    /* Not useDismiss: a dropdown's menu is portalled to the body, so to the
+       DOM a pick in it is a press outside. React carries the press up
+       through the portal to the wrapper, which marks it before the document
+       hears it. */
+    const pressedInside = useRef(false);
+    useEffect(() => {
+        if (!open || phone) return;
+        // The press that opened it is behind it.
+        pressedInside.current = false;
+        const onPointerDown = () => {
+            if (!pressedInside.current) setOpen(false);
+            pressedInside.current = false;
+        };
+        // A dropdown closing itself on Escape has had its say.
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && !event.defaultPrevented) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", onPointerDown);
+        document.addEventListener("keydown", onKeyDown);
+        return () => {
+            document.removeEventListener("mousedown", onPointerDown);
+            document.removeEventListener("keydown", onKeyDown);
+        };
+    }, [open, phone]);
 
     const active = (ending?.value ? 1 : 0) + (consoleSlug ? 1 : 0);
     // One console or none is nothing to choose between, unless a link chose.
@@ -83,76 +101,78 @@ const ShelfFilters = ({
     if (!ending && !showConsoles) return null;
 
     const body = (
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4">
             {ending && (
-                <Group title="How it ended">
-                    <Chip
-                        selected={!ending.value}
-                        onClick={() => ending.onChange(undefined)}
-                    >
-                        Any
-                    </Chip>
-                    {ENDINGS.map(({ value, label, icon: Icon }) => (
-                        <Chip
-                            key={value}
-                            selected={ending.value === value}
-                            onClick={() =>
-                                ending.onChange(value as PlayedStatusFilter)
+                <Field label="How it ended">
+                    {({ id }) => (
+                        <Dropdown
+                            id={id}
+                            options={ENDINGS}
+                            value={ending.value ?? ""}
+                            onChange={(next) =>
+                                ending.onChange(
+                                    (next || undefined) as
+                                        PlayedStatusFilter | undefined
+                                )
                             }
-                        >
-                            <Icon size={13} aria-hidden />
-                            {label}
-                        </Chip>
-                    ))}
-                </Group>
+                        />
+                    )}
+                </Field>
             )}
             {showConsoles && (
-                <Group title="Console">
-                    <Chip
-                        selected={!consoleSlug}
-                        onClick={() => onConsoleChange(undefined)}
-                    >
-                        Any
-                    </Chip>
-                    {shelfSystems.map((system) => {
-                        const Icon = systemIcon(
-                            system.slug,
-                            system.platformSlug
-                        );
-                        return (
-                            <Chip
-                                key={system.slug}
-                                selected={consoleSlug === system.slug}
-                                onClick={() => onConsoleChange(system.slug)}
-                            >
-                                <Icon size={13} aria-hidden />
-                                {system.displayName}
-                            </Chip>
-                        );
-                    })}
-                </Group>
+                <Field label="Console">
+                    {({ id }) => (
+                        <Dropdown
+                            id={id}
+                            options={systemOptions(
+                                shelfSystems,
+                                "All consoles"
+                            )}
+                            value={consoleSlug ?? ""}
+                            onChange={(next) =>
+                                onConsoleChange(next || undefined)
+                            }
+                        />
+                    )}
+                </Field>
             )}
         </div>
     );
 
     return (
-        <div ref={wrap} className="relative shrink-0">
-            <Button
-                variant="secondary"
+        <div
+            className="relative shrink-0"
+            onMouseDown={() => {
+                pressedInside.current = true;
+            }}
+        >
+            {/* The field's own skin, so it sits level with the sort beside
+                it rather than as a smaller button. */}
+            <button
+                type="button"
                 onClick={() => setOpen((was) => !was)}
                 aria-expanded={open}
                 aria-haspopup="dialog"
                 aria-label={active > 0 ? `Filters, ${active} on` : "Filters"}
-                className="sm:min-h-9"
+                className={fieldClass(
+                    cn(
+                        "flex cursor-pointer items-center gap-2 whitespace-nowrap",
+                        open && "border-brand shadow-glow"
+                    )
+                )}
             >
-                <ListFilter size={15} aria-hidden />
+                <ListFilter
+                    size={15}
+                    aria-hidden
+                    className="text-content-secondary"
+                />
                 Filters
                 {active > 0 && (
                     <span className="-mr-1 grid size-5 place-items-center rounded-full bg-action font-mono text-label-sm text-action-ink tabular-nums">
                         {active}
                     </span>
                 )}
-            </Button>
+            </button>
 
             {open &&
                 (phone ? (
@@ -184,7 +204,7 @@ const ShelfFilters = ({
                         role="dialog"
                         aria-labelledby={titleId}
                         className={popoverClass(
-                            "absolute top-full right-0 z-30 mt-2 w-[22rem] p-4",
+                            "absolute top-full right-0 z-30 mt-2 w-72 p-4",
                             "menu"
                         )}
                     >
