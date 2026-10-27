@@ -35,7 +35,6 @@ import { profileAccess } from "./lib/profileAccess";
 import type { ProfileTab } from "./lib/profileViews";
 import ProfileModals, { type ProfileModal } from "./components/ProfileModals";
 import { TextSkeleton } from "../../components/ui/Skeleton";
-import OverviewView from "./views/OverviewView";
 import GamesView from "./views/GamesView";
 import ReviewList, { REVIEWS_PER_PAGE } from "./components/ReviewList";
 import ThreadList, { THREADS_PER_PAGE } from "./components/ThreadList";
@@ -316,14 +315,6 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                                 visibility={targetUser.profileVisibility}
                             />
                         )}
-
-                    {tab === "profile" && (
-                        <OverviewView
-                            username={targetUsername}
-                            isOwner={isMyAccount}
-                            canSee={canSee}
-                        />
-                    )}
                     {tab === "games" && (
                         <GamesView
                             username={targetUsername}

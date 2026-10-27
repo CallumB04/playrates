@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import type { GameLogWithGame } from "../../api";
-import { cn } from "../../lib/cn";
+import type { GameLogWithGame } from "../../../api";
+import { cn } from "../../../lib/cn";
 
 const MONTHS = [
     "J",
@@ -30,7 +30,6 @@ const YearChart = ({
     logs,
     barsClassName = "h-20",
     emptyNote,
-    labelled = false,
 }: {
     logs: GameLogWithGame[];
     /** The height of the bars. */
@@ -38,11 +37,7 @@ const YearChart = ({
     /** Shown over placeholder bars while the year has nothing in it.
      *  Without one, an empty year draws nothing. */
     emptyNote?: string;
-    /** Writes each month's count over its bar and marks this month, for a
-     *  chart that has to be read rather than glanced at. */
-    labelled?: boolean;
 }) => {
-    const thisMonth = new Date().getMonth();
     const { counts, peak, total } = useMemo(() => {
         const year = new Date().getFullYear();
         const counts = new Array<number>(12).fill(0);
@@ -88,14 +83,7 @@ const YearChart = ({
 
     return (
         <div>
-            <div
-                className={cn(
-                    "flex items-end gap-1.5",
-                    // Room over the tallest bar for its count.
-                    labelled && "pt-4",
-                    barsClassName
-                )}
-            >
+            <div className={cn("flex items-end gap-1.5", barsClassName)}>
                 {counts.map((count, i) => (
                     <div
                         key={i}
@@ -122,44 +110,27 @@ const YearChart = ({
                     >
                         <span
                             className={cn(
-                                "relative w-full rounded-xs transition-colors duration-200",
+                                "w-full rounded-xs transition-colors duration-200",
                                 count > 0
                                     ? "bg-brand group-hover/bar:bg-brand-hover"
-                                    : "bg-surface-sunken",
-                                // Months still to come are not empty ones.
-                                labelled && i > thisMonth && "opacity-40"
+                                    : "bg-surface-sunken"
                             )}
                             style={{
                                 height: `${Math.max(4, (count / peak) * 100)}%`,
                             }}
-                        >
-                            {labelled && count > 0 && (
-                                <span className="absolute inset-x-0 bottom-full mb-0.5 text-center font-mono text-[10px] text-content-secondary tabular-nums">
-                                    {count}
-                                </span>
-                            )}
-                        </span>
+                        />
                     </div>
                 ))}
             </div>
             <div className="mt-1.5 flex gap-1.5">
-                {MONTHS.map((month, i) => {
-                    const now = labelled && i === thisMonth;
-                    return (
-                        <span
-                            key={i}
-                            aria-current={now ? "date" : undefined}
-                            className={cn(
-                                "flex-1 text-center font-mono text-[10px]",
-                                now
-                                    ? "font-semibold text-brand"
-                                    : "text-content-muted"
-                            )}
-                        >
-                            {month}
-                        </span>
-                    );
-                })}
+                {MONTHS.map((month, i) => (
+                    <span
+                        key={i}
+                        className="flex-1 text-center font-mono text-[10px] text-content-muted"
+                    >
+                        {month}
+                    </span>
+                ))}
             </div>
         </div>
     );
