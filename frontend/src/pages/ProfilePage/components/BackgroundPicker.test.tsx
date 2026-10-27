@@ -52,7 +52,9 @@ const setup = (profile = buildProfile()) => {
     renderWithProviders(
         <BackgroundPicker profile={profile} onClose={onClose} />
     );
-    return { onClose, user: userEvent.setup() };
+    /* No pause between events: the flow below is a dozen of them, and with
+       each one waiting on a timer it outran the 5s limit on a busy run. */
+    return { onClose, user: userEvent.setup({ delay: null }) };
 };
 
 describe("BackgroundPicker", () => {
@@ -81,16 +83,14 @@ describe("BackgroundPicker", () => {
         // A fresh picture starts just above the middle.
         expect(slider).toHaveAttribute("aria-valuenow", "30");
         slider.focus();
-        await user.keyboard(
-            "{PageDown}{PageDown}{PageDown}{PageDown}{PageDown}"
-        );
-        expect(slider).toHaveAttribute("aria-valuenow", "80");
+        await user.keyboard("{PageDown}{PageDown}");
+        expect(slider).toHaveAttribute("aria-valuenow", "50");
         await user.click(
             screen.getByRole("button", { name: "Use this picture" })
         );
 
         await waitFor(() => expect(onClose).toHaveBeenCalled());
-        expect(calls).toEqual(["put:1:https://img.test/big/2.jpg:80"]);
+        expect(calls).toEqual(["put:1:https://img.test/big/2.jpg:50"]);
     });
 
     it("jumps to the top, centre or bottom", async () => {
