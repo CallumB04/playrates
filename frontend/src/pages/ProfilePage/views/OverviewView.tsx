@@ -1,5 +1,4 @@
 import { useMemo, type ReactNode } from "react";
-import { CalendarDays, Clock, Star } from "lucide-react";
 import type { UserStats } from "@playrates/shared";
 import { latestRun } from "../../../api";
 import { useUserShelf } from "../../../hooks/queries/useGameLogs";
@@ -9,7 +8,6 @@ import RatingBadge from "../../../components/ui/RatingBadge";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import YearChart from "../../../components/gamelog/YearChart";
 import { formatCount, formatHours } from "../../../lib/format";
-import type { IconComponent } from "../../../lib/icons";
 
 interface OverviewViewProps {
     username: string;
@@ -21,29 +19,15 @@ interface OverviewViewProps {
 const plural = (n: number, one: string, many: string) =>
     `${formatCount(n)} ${n === 1 ? one : many}`;
 
-/** What a card is, as a mark and a name across its top. */
-const CardLabel = ({
-    icon: Icon,
-    children,
-}: {
-    icon: IconComponent;
-    children: ReactNode;
-}) => (
-    <h2 className="flex items-center gap-2 text-label text-content-secondary">
-        <span className="grid size-6 shrink-0 place-items-center rounded-xs bg-brand-subtle text-brand">
-            <Icon size={13} aria-hidden />
-        </span>
-        {children}
-    </h2>
+const CardLabel = ({ children }: { children: ReactNode }) => (
+    <h2 className="text-label text-content-muted">{children}</h2>
 );
 
 const FigureCard = ({
-    icon,
     label,
     figure,
     note,
 }: {
-    icon: IconComponent;
     label: string;
     /** Undefined while it loads. */
     figure: ReactNode | undefined;
@@ -52,8 +36,8 @@ const FigureCard = ({
     <section
         className={cardClass("flex flex-col gap-2 p-4", { padding: "none" })}
     >
-        <CardLabel icon={icon}>{label}</CardLabel>
-        <p className={figureClass("display", "truncate leading-none")}>
+        <CardLabel>{label}</CardLabel>
+        <p className={figureClass("stat", "truncate")}>
             {figure ?? (
                 <Skeleton className="inline-block h-[1em] w-20 align-top" />
             )}
@@ -95,7 +79,6 @@ const OverviewView = ({
     return (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.2fr)] lg:gap-4">
             <FigureCard
-                icon={Clock}
                 label="Hours played"
                 figure={stats && formatHours(stats.hoursPlayed)}
                 note={
@@ -105,11 +88,10 @@ const OverviewView = ({
             />
 
             <FigureCard
-                icon={Star}
                 label="Average rating"
                 figure={
                     stats && (
-                        <RatingBadge value={stats.averageRating} size="lg" />
+                        <RatingBadge value={stats.averageRating} size="stat" />
                     )
                 }
                 note={
@@ -128,10 +110,10 @@ const OverviewView = ({
                     { padding: "none" }
                 )}
             >
-                <CardLabel icon={CalendarDays}>Played in {year}</CardLabel>
+                <CardLabel>Played in {year}</CardLabel>
                 <div className="flex items-end gap-4 sm:gap-6">
                     <div className="shrink-0">
-                        <p className={figureClass("display", "leading-none")}>
+                        <p className={figureClass("stat")}>
                             {yearLoading ? (
                                 <Skeleton className="inline-block h-[1em] w-10 align-top" />
                             ) : (

@@ -3,10 +3,12 @@ import { formatCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 
-export type FigureSize = "display" | "lg" | "row" | "label";
+export type FigureSize = "display" | "stat" | "lg" | "row" | "label";
 
 const SIZE: Record<FigureSize, string> = {
     display: "text-figure",
+    /** A card that is one figure: big without shouting. */
+    stat: "text-figure-stat",
     /** A stat on a card: the game page's score cards, a profile's counts. */
     lg: "text-figure-lg",
     row: "text-figure-row",
