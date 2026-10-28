@@ -107,6 +107,13 @@ export const queryKeys = {
         mine: (gameId?: number) => ["lists", "mine", gameId ?? null] as const,
     },
 
+    gaming25: {
+        all: ["gaming25"] as const,
+        byUsername: (username: string) => ["gaming25", username] as const,
+        mostLoved: (limit: number) =>
+            ["gaming25", "most-loved", limit] as const,
+    },
+
     friends: {
         mine: ["friends", "me"] as const,
         activity: ["friends", "me", "activity"] as const,

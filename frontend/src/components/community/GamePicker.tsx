@@ -35,6 +35,7 @@ interface GamePickerProps {
     /** Something to say on a game's row: where you've logged it, say. The
      *  games it says something about rise to the top. */
     markFor?: (gameId: number) => ReactNode;
+    autoFocus?: boolean;
 }
 
 const RESULTS = 6;
@@ -53,6 +54,7 @@ const GamePicker = ({
     onChange,
     placeholder = "Search for a game",
     markFor,
+    autoFocus,
     ...a11y
 }: GamePickerProps) => {
     const listId = useId();
@@ -152,6 +154,7 @@ const GamePicker = ({
             <SearchInput
                 ref={inputRef}
                 {...a11y}
+                autoFocus={autoFocus}
                 role="combobox"
                 aria-expanded={showList}
                 aria-controls={listId}

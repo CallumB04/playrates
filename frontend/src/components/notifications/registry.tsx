@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
     ArrowBigUp,
     Bell,
+    Heart,
     MessageSquareReply,
     MessagesSquare,
     PartyPopper,
@@ -18,6 +19,7 @@ import type {
     CommunityUpvoteMilestoneNotification,
     ReviewUpvoteMilestoneNotification,
     ListUpvoteMilestoneNotification,
+    Gaming25LoveMilestoneNotification,
     FriendAcceptedNotification,
     FriendRequestNotification,
     FriendUser,
@@ -34,6 +36,7 @@ import { useFriendRelation } from "../../hooks/queries/useFriends";
 import { usePatchNotification } from "../../hooks/queries/useNotifications";
 import GameCover from "../game/GameCover";
 import { threadPath } from "../community/paths";
+import { gaming25Path } from "../../lib/profilePaths";
 import { formatCount, formatMessageCount } from "../../lib/format";
 import { friendRequestState } from "./friendRequestState";
 import IconMark from "./IconMark";
@@ -395,6 +398,30 @@ const ListMilestoneContent = ({
     );
 };
 
+const Gaming25MilestoneContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<Gaming25LoveMilestoneNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    return (
+        <Link
+            to={gaming25Path(notification.username)}
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <span className="group-hover:underline">
+                    {formatCount(notification.milestone)} loves
+                </span>{" "}
+                <span className="font-normal text-content-secondary">
+                    on your
+                </span>{" "}
+                Gaming 25
+            </p>
+        </Link>
+    );
+};
+
 /** The game it is about, where the row has no one to show. */
 const CoverLeading = ({
     notification,
@@ -471,6 +498,11 @@ export const NOTIFICATION_RENDERERS: {
         icon: ArrowBigUp,
         tone: "text-brand",
         Content: ListMilestoneContent,
+    },
+    gaming_25_love_milestone: {
+        icon: Heart,
+        tone: "text-love",
+        Content: Gaming25MilestoneContent,
     },
     announcement: {
         icon: ANNOUNCEMENT_PRESENTATION.update.icon,

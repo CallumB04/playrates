@@ -13,3 +13,13 @@ export const whyCannotVote = (
     if (viewerId === authorId) return `You can't upvote your own ${noun}`;
     return null;
 };
+
+/** The same for a love, which isn't a vote and doesn't say "upvote". */
+export const whyCannotLove = (
+    viewer: string | undefined,
+    owner: string | undefined
+): string | null => {
+    if (!viewer) return "Sign in to love it";
+    if (viewer === owner) return "You can't love your own";
+    return null;
+};

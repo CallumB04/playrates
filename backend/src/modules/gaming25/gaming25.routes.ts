@@ -121,6 +121,8 @@ export const createGaming25Router = ({ service }: Deps): Router => {
       res
         .type("png")
         .setHeader("Cache-Control", v ? VERSIONED_CACHE : UNVERSIONED_CACHE)
+        // Made to be shown anywhere, not only on the site's own origin.
+        .setHeader("Cross-Origin-Resource-Policy", "cross-origin")
         .send(png);
     },
   );

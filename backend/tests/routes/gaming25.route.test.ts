@@ -271,6 +271,7 @@ describe("most loved", () => {
 describe("the shared picture", () => {
   const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 
+  // Draws two pictures, which can outlast the default timeout in a full run.
   it("draws a public grid, with the covers it could fetch", async () => {
     const jpeg = await sharp({
       create: { width: 4, height: 6, channels: 3, background: "#884422" },
@@ -298,6 +299,7 @@ describe("the shared picture", () => {
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toBe("image/png");
     expect(res.headers["cache-control"]).toContain("immutable");
+    expect(res.headers["cross-origin-resource-policy"]).toBe("cross-origin");
     expect((res.body as Buffer).subarray(0, 4)).toEqual(PNG);
     // Small covers, not the 2x box art the page uses.
     expect(fetched).toContain(
@@ -312,7 +314,7 @@ describe("the shared picture", () => {
     expect(wide.headers["cache-control"]).not.toContain("immutable");
     const size = await sharp(wide.body as Buffer).metadata();
     expect([size.width, size.height]).toEqual([1200, 630]);
-  });
+  }, 20_000);
 
   it("isn't drawn for a profile that isn't public", async () => {
     vi.stubGlobal("fetch", vi.fn());

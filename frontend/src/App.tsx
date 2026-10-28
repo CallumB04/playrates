@@ -16,6 +16,7 @@ import TermsPage from "./pages/legal/TermsPage";
 import ContactPage from "./pages/legal/ContactPage";
 import ProfilePageRoute from "./pages/ProfilePage/ProfilePageRoute";
 import ListPage from "./pages/ListPage/ListPage";
+import Gaming25Page from "./pages/Gaming25Page/Gaming25Page";
 import LibraryPage from "./pages/LibraryPage/LibraryPage";
 import GamePage from "./pages/GamePage/GamePage";
 import SettingsPage from "./pages/SettingsPage";
@@ -48,6 +49,10 @@ function App() {
                         <Route
                             path="/user/:username/lists/:listId"
                             element={<ListPage />}
+                        />
+                        <Route
+                            path="/user/:username/gaming-25"
+                            element={<Gaming25Page />}
                         />
                         <Route
                             path="/user/:targetUsername?/:view?"

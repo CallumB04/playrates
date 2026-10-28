@@ -11,3 +11,7 @@ export const shelfPath = (username: string, status: GameStatus) =>
 /** One list's own page, under its owner. */
 export const listPath = (username: string, listId: number) =>
     `${profilePath(username, "lists")}/${listId}`;
+
+/** Someone's Gaming 25, which lives under them but isn't a tab. */
+export const gaming25Path = (username: string) =>
+    `${profilePath(username)}/gaming-25`;

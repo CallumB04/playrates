@@ -31,6 +31,7 @@ import TrendingRunnerUp from "../../components/community/TrendingRunnerUp";
 import PatchNotesCard from "../../components/community/PatchNotesCard";
 import CommunityPulse from "../../components/community/CommunityPulse";
 import PopularLists from "../../components/lists/PopularLists";
+import MostLovedGaming25s from "../../components/gaming25/MostLovedGaming25s";
 import FilterPill from "../../components/community/FilterPill";
 import GameCover from "../../components/game/GameCover";
 import ProfilePicture from "../../components/ProfilePicture";
@@ -326,6 +327,7 @@ const CommunityPage = () => {
                         replies={latestReplies ?? []}
                     />
                     <PopularLists />
+                    <MostLovedGaming25s />
                 </aside>
             </div>
         </div>

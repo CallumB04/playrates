@@ -7,6 +7,7 @@ export * from "./endpoints/reviews";
 export * from "./endpoints/friends";
 export * from "./endpoints/favourites";
 export * from "./endpoints/lists";
+export * from "./endpoints/gaming25";
 export * from "./endpoints/notifications";
 export * from "./endpoints/community";
 export * from "./endpoints/admin";

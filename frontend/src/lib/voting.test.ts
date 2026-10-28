@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { whyCannotVote } from "./voting";
+import { whyCannotLove, whyCannotVote } from "./voting";
 
 describe("whyCannotVote", () => {
     it("lets a signed-in viewer vote on someone else's review", () => {
@@ -20,5 +20,16 @@ describe("whyCannotVote", () => {
         expect(whyCannotVote("author", "author", "message")).toBe(
             "You can't upvote your own message"
         );
+    });
+});
+
+describe("whyCannotLove", () => {
+    it("lets a signed-in viewer love someone else's", () => {
+        expect(whyCannotLove("viewer", "owner")).toBeNull();
+    });
+
+    it("asks a signed-out viewer to sign in, and stops you loving your own", () => {
+        expect(whyCannotLove(undefined, "owner")).toBe("Sign in to love it");
+        expect(whyCannotLove("owner", "owner")).toBe("You can't love your own");
     });
 });
