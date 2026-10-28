@@ -6,6 +6,7 @@ import {
   GAMING_25_CENTRE,
   GAMING_25_SIZE,
   SITE_ORIGIN,
+  type CardThemeKey,
   type Gaming25ImageLayout,
 } from "@playrates/shared";
 import type { Gaming25Cells } from "./gaming25.service.js";
@@ -23,6 +24,19 @@ const EMBER = "#ff8438";
 const TEXT = "#f4f2f8";
 const TEXT_SOFT = "#b9b3c7";
 const TEXT_MUTED = "#7d778b";
+
+/** The card themes' ground and glow; a picture can't read tokens. */
+export const THEMES: Record<
+  CardThemeKey,
+  { ground: string; glow: string; accent: string }
+> = {
+  default: { ground: INK, glow: "106,68,240", accent: IRIS_LIGHT },
+  gold: { ground: "#15110a", glow: "242,201,76", accent: GOLD },
+  holo: { ground: "#0b0f1c", glow: "120,220,255", accent: "#9fe8ff" },
+  retro: { ground: "#1b120c", glow: "255,132,56", accent: EMBER },
+  night: { ground: "#060a16", glow: "70,120,255", accent: "#7fa8ff" },
+  synthwave: { ground: "#13081f", glow: "255,70,200", accent: "#ff5fd9" },
+};
 
 const COLUMNS = 5;
 const COVER_RATIO = 4 / 3;
@@ -100,7 +114,7 @@ const COVER_TIMEOUT_MS = 4000;
 
 /** A cover as a data URI, or null when it can't be had in time: a missing
  *  cover is an empty well, not a failed picture. */
-const coverData = async (
+export const coverData = async (
   url: string | null | undefined,
   fetchImpl: Fetch,
 ): Promise<string | null> => {
@@ -123,7 +137,7 @@ const require = createRequire(import.meta.url);
 
 type Font = { name: string; data: Buffer; weight: 500 | 700 | 800 };
 let fonts: Promise<Font[]> | undefined;
-const loadFonts = () =>
+export const loadFonts = () =>
   (fonts ??= Promise.all(
     ([500, 700, 800] as const).map(async (weight) => ({
       name: "Geist",
@@ -136,13 +150,13 @@ const loadFonts = () =>
     })),
   ));
 
-interface Node {
+export interface Node {
   type: string;
   props: Record<string, unknown>;
 }
 
 // Satori lays out with flexbox only, so every box says so.
-const el = (
+export const el = (
   type: string,
   style: Record<string, unknown>,
   children: unknown = [],
@@ -152,7 +166,7 @@ const el = (
   props: { ...props, style: { display: "flex", ...style }, children },
 });
 
-const mark = (size: number) =>
+export const mark = (size: number) =>
   el(
     "div",
     {
@@ -313,12 +327,13 @@ const gridNode = (
     ),
   );
 
-const host = new URL(SITE_ORIGIN).host;
+export const host = new URL(SITE_ORIGIN).host;
 
 const portrait = (
   g: Gaming25Geometry,
   grid: Gaming25Cells,
   covers: (string | null)[],
+  theme: CardThemeKey,
 ): Node =>
   el(
     "div",
@@ -326,8 +341,8 @@ const portrait = (
       position: "relative",
       width: g.canvas.width,
       height: g.canvas.height,
-      backgroundColor: INK,
-      backgroundImage: `radial-gradient(ellipse at 50% 0%, rgba(106,68,240,0.32) 0%, rgba(106,68,240,0) 60%)`,
+      backgroundColor: THEMES[theme].ground,
+      backgroundImage: `radial-gradient(ellipse at 50% 0%, rgba(${THEMES[theme].glow},0.32) 0%, rgba(${THEMES[theme].glow},0) 60%)`,
       fontFamily: "Geist",
     },
     [
@@ -394,6 +409,7 @@ const wide = (
   g: Gaming25Geometry,
   grid: Gaming25Cells,
   covers: (string | null)[],
+  theme: CardThemeKey,
 ): Node =>
   el(
     "div",
@@ -401,8 +417,8 @@ const wide = (
       position: "relative",
       width: g.canvas.width,
       height: g.canvas.height,
-      backgroundColor: INK,
-      backgroundImage: `radial-gradient(ellipse at 0% 0%, rgba(106,68,240,0.38) 0%, rgba(106,68,240,0) 60%)`,
+      backgroundColor: THEMES[theme].ground,
+      backgroundImage: `radial-gradient(ellipse at 0% 0%, rgba(${THEMES[theme].glow},0.38) 0%, rgba(${THEMES[theme].glow},0) 60%)`,
       fontFamily: "Geist",
     },
     [
@@ -457,6 +473,7 @@ export const renderGaming25 = async (
   grid: Gaming25Cells,
   layout: Gaming25ImageLayout,
   fetchImpl: Fetch = fetch,
+  theme: CardThemeKey = "default",
 ): Promise<Buffer> => {
   const g = gaming25Geometry(layout);
   const [covers, fontData] = await Promise.all([
@@ -466,7 +483,9 @@ export const renderGaming25 = async (
     loadFonts(),
   ]);
   const tree =
-    layout === "wide" ? wide(g, grid, covers) : portrait(g, grid, covers);
+    layout === "wide"
+      ? wide(g, grid, covers, theme)
+      : portrait(g, grid, covers, theme);
   const svg = await satori(tree as unknown as Parameters<typeof satori>[0], {
     width: g.canvas.width,
     height: g.canvas.height,

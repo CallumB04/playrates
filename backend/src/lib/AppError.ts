@@ -4,6 +4,7 @@ export type ErrorCode =
   | "forbidden"
   | "not_found"
   | "conflict"
+  | "insufficient_tokens"
   | "validation_failed"
   | "payload_too_large"
   | "rate_limited"

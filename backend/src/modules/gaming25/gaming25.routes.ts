@@ -117,7 +117,7 @@ export const createGaming25Router = ({ service }: Deps): Router => {
       };
       const grid = await service.publicCells(username);
       if (!grid) throw AppError.notFound("Gaming 25");
-      const png = await renderGaming25(grid, layout);
+      const png = await renderGaming25(grid, layout, fetch, grid.cardTheme);
       res
         .type("png")
         .setHeader("Cache-Control", v ? VERSIONED_CACHE : UNVERSIONED_CACHE)

@@ -95,6 +95,8 @@ export interface Gaming25Owner {
   username: string;
   avatarUrl: string | null;
   accent: ProfileAccent;
+  /** The card theme its pictures wear. */
+  cardTheme: string;
 }
 
 export interface Gaming25Pick {

@@ -8,6 +8,8 @@ import type {
   ProfileAccent,
 } from "@playrates/shared";
 import {
+  levelFor,
+  levelFrame,
   ABOUT_FIELDS,
   canSeeProfile,
   DEFAULT_ABOUT_VISIBILITY,
@@ -121,6 +123,10 @@ export const toProfile = (
   hideFromSearch: row.hide_from_search,
   profileVisibility: toProfileVisibility(row.profile_visibility),
   about: aboutFor(row, viewer),
+  level: levelFor(row.xp ?? 0).level,
+  frame: row.frame ?? levelFrame(levelFor(row.xp ?? 0).level),
+  effects: row.effects ?? [],
+  pinnedLists: (row.pinned_lists ?? []).map(Number),
   createdAt: row.created_at,
 });
 

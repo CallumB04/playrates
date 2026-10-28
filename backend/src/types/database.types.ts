@@ -47,6 +47,21 @@ export interface ProfileRow {
   steam: string | null;
   /** Each About field's visibility where it differs from the default. */
   about_visibility: Record<string, string>;
+  /** Kept by a trigger as the sum of xp_events. */
+  xp: number;
+  /** Kept by a trigger as the sum of token_events. */
+  tokens: number;
+  /** Chosen frame; null wears the best one the level has earned. */
+  frame: string | null;
+  card_theme: string | null;
+  showcase_badges: string[];
+  showcase_layout: string;
+  effects: string[];
+  pinned_lists: number[];
+  referred_by: string | null;
+  xp_seen_event_id: number;
+  /** Null until a member from before progress has seen their reveal. */
+  revealed_at: string | null;
   created_at: string;
   updated_at: string;
 }

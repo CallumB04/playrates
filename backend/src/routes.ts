@@ -9,6 +9,12 @@ import {
   createMyFavouritesRouter,
   createUserFavouritesRouter,
 } from "./modules/favourites/favourites.routes.js";
+import { createProgressService } from "./modules/progress/progress.service.js";
+import {
+  createMyProgressRouter,
+  createProgressRouter,
+  createShopRouter,
+} from "./modules/progress/progress.routes.js";
 import { createGaming25Service } from "./modules/gaming25/gaming25.service.js";
 import {
   createGaming25Router,
@@ -131,6 +137,13 @@ export const buildRoutes = ({
     repos.profiles,
     repos.notifications,
     profileGate,
+  );
+  const progress = createProgressService(
+    repos.progress,
+    repos.profiles,
+    repos.friends,
+    repos.lists,
+    repos.notifications,
   );
   const gameLogs = createGameLogsService(
     repos.gameLogs,
@@ -260,6 +273,10 @@ export const buildRoutes = ({
     createMyGaming25Router({ service: gaming25, requireAuth, optionalAuth }),
   );
   router.use(
+    "/me",
+    createMyProgressRouter({ service: progress, requireAuth, optionalAuth }),
+  );
+  router.use(
     "/me/friends",
     createMyFriendsRouter({ service: friends, requireAuth, optionalAuth }),
   );
@@ -318,6 +335,14 @@ export const buildRoutes = ({
   router.use(
     "/users/:username/gaming-25",
     createUserGaming25Router({ service: gaming25, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/progress",
+    createProgressRouter({ service: progress, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/shop",
+    createShopRouter({ service: progress, requireAuth, optionalAuth }),
   );
   router.use(
     "/gaming-25",

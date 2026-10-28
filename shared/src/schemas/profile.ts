@@ -59,6 +59,7 @@ export const PROFILE_VIEWS = [
   "games",
   "reviews",
   "lists",
+  "badges",
   "community",
   "friends",
 ] as const;
@@ -142,6 +143,14 @@ export interface Profile {
   profileVisibility: ProfileVisibility;
   /** The About fields this viewer may see, and only those filled in. */
   about: ProfileAbout;
+  /** Progress is on the public card, like the name and picture. */
+  level: number;
+  /** The avatar frame worn, if any has been earned. */
+  frame: string | null;
+  /** Bought profile effects, as worn. */
+  effects: string[];
+  /** Lists pinned to the profile, in order. */
+  pinnedLists: number[];
   createdAt: string;
 }
 

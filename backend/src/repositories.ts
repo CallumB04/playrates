@@ -4,6 +4,10 @@ import {
 } from "./modules/favourites/favourites.repository.js";
 import type { Db } from "./config/supabase.js";
 import {
+  createProgressRepository,
+  type ProgressRepository,
+} from "./modules/progress/progress.repository.js";
+import {
   createGaming25Repository,
   type Gaming25Repository,
 } from "./modules/gaming25/gaming25.repository.js";
@@ -88,6 +92,7 @@ export interface Repositories {
   favourites: FavouritesRepository;
   lists: ListsRepository;
   gaming25: Gaming25Repository;
+  progress: ProgressRepository;
 }
 
 export const createRepositories = (db: Db): Repositories => ({
@@ -108,4 +113,5 @@ export const createRepositories = (db: Db): Repositories => ({
   favourites: createFavouritesRepository(db),
   lists: createListsRepository(db),
   gaming25: createGaming25Repository(db),
+  progress: createProgressRepository(db),
 });

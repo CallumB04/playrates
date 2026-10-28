@@ -190,6 +190,12 @@ export const toNotification = (
       };
     }
 
+    case "referral_joined": {
+      const username = str(row.data.username);
+      if (!username) return { ...base, kind: "unknown" };
+      return { ...base, kind: "referral_joined", username };
+    }
+
     case "gaming_25_love_milestone": {
       const milestone = num(row.data.milestone);
       const username = str(row.data.username);

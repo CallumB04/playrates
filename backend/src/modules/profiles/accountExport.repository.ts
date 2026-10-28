@@ -23,6 +23,10 @@ export interface AccountData {
   gaming25: unknown[];
   gaming25Picks: unknown[];
   gaming25Loves: unknown[];
+  xpEvents: unknown[];
+  tokenEvents: unknown[];
+  badges: unknown[];
+  items: unknown[];
 }
 
 export interface AccountExportRepository {
@@ -88,6 +92,10 @@ export const createAccountExportRepository = (
         gaming25,
         gaming25Picks,
         gaming25Loves,
+        xpEvents,
+        tokenEvents,
+        badges,
+        items,
       ] = await Promise.all([
         everything("profiles", "id", own("id")),
         everything("game_logs", "id", own("user_id")),
@@ -109,6 +117,10 @@ export const createAccountExportRepository = (
         everything("gaming_25s", "user_id", own("user_id")),
         everything("gaming_25_picks", "category", own("user_id")),
         everything("gaming_25_loves", "owner_id", own("user_id")),
+        everything("xp_events", "id", own("user_id")),
+        everything("token_events", "id", own("user_id")),
+        everything("user_badges", "unlocked_at", own("user_id")),
+        everything("user_items", "item", own("user_id")),
       ]);
       // A list's games carry no owner of their own; they're found by list.
       const listIds = (gameLists as { id: number }[]).map((l) => l.id);
@@ -139,6 +151,10 @@ export const createAccountExportRepository = (
         gaming25,
         gaming25Picks,
         gaming25Loves,
+        xpEvents,
+        tokenEvents,
+        badges,
+        items,
       };
     },
   };

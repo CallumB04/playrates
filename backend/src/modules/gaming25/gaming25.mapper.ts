@@ -27,8 +27,10 @@ export const toGaming25Owner = (row: {
   username: string;
   avatar_url: string | null;
   accent: string | null;
+  card_theme?: string | null;
 }): Gaming25Owner => ({
   username: row.username,
   avatarUrl: row.avatar_url,
   accent: toAccent(row.accent),
+  cardTheme: row.card_theme ?? "default",
 });

@@ -43,6 +43,11 @@ import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.reposito
 import type { NotificationRowWithActor } from "../../src/modules/notifications/notifications.repository.js";
 import { createInMemoryCommunity } from "./inMemoryCommunity.js";
 import {
+  createInMemoryProgress,
+  type TokenEventState,
+  type XpEventState,
+} from "./inMemoryProgress.js";
+import {
   createInMemoryGaming25,
   type Gaming25Love,
   type Gaming25PickState,
@@ -140,6 +145,25 @@ export interface InMemoryState {
   gaming25s: Gaming25Row[];
   gaming25Picks: Gaming25PickState[];
   gaming25Loves: Gaming25Love[];
+  xpEvents: XpEventState[];
+  tokenEvents: TokenEventState[];
+  userBadges: {
+    user_id: string;
+    badge: string;
+    metal: number;
+    unlocked_at: string;
+    seen_at: string | null;
+  }[];
+  userItems: { user_id: string; item: string; quantity: number }[];
+  shieldsUsed: { user_id: string; week: string }[];
+  questRerolls: {
+    user_id: string;
+    period: string;
+    slot: number;
+    seed: string;
+  }[];
+  /** What player_metrics would count, per member, set by a test. */
+  progressMetrics: Map<string, Record<string, number>>;
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
@@ -213,6 +237,13 @@ export const createInMemoryRepos = (
     gaming25s: (seed.gaming25s ?? []).map((g) => ({ ...g })),
     gaming25Picks: [...(seed.gaming25Picks ?? [])],
     gaming25Loves: [...(seed.gaming25Loves ?? [])],
+    xpEvents: [],
+    tokenEvents: [],
+    userBadges: [],
+    userItems: [],
+    shieldsUsed: [],
+    questRerolls: [],
+    progressMetrics: new Map(),
   };
 
   let nextLogId = 1000;
@@ -498,6 +529,10 @@ export const createInMemoryRepos = (
           gaming25Loves: state.gaming25Loves.filter(
             (l) => l.user_id === userId,
           ),
+          xpEvents: state.xpEvents.filter((e) => e.user_id === userId),
+          tokenEvents: state.tokenEvents.filter((e) => e.user_id === userId),
+          badges: state.userBadges.filter((b) => b.user_id === userId),
+          items: state.userItems.filter((i) => i.user_id === userId),
         };
       },
     },
@@ -1613,6 +1648,7 @@ export const createInMemoryRepos = (
     community: createInMemoryCommunity(state),
     lists: createInMemoryLists(state),
     gaming25: createInMemoryGaming25(state),
+    progress: createInMemoryProgress(state),
     favourites: {
       async listIds(userId) {
         return state.favouriteGames
@@ -1696,6 +1732,14 @@ export const createInMemoryRepos = (
       state.gaming25Loves = state.gaming25Loves.filter(
         (l) => l.user_id !== userId && l.owner_id !== userId,
       );
+      // Their ledgers, badges and what they bought go with them.
+      state.xpEvents = state.xpEvents.filter((e) => e.user_id !== userId);
+      state.tokenEvents = state.tokenEvents.filter((e) => e.user_id !== userId);
+      state.userBadges = state.userBadges.filter((b) => b.user_id !== userId);
+      state.userItems = state.userItems.filter((i) => i.user_id !== userId);
+      for (const p of state.profiles) {
+        if (p.referred_by === userId) p.referred_by = null;
+      }
     },
   };
 

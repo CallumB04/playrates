@@ -3,6 +3,7 @@ import {
   GAMING_25_CATEGORIES,
   GAMING_25_SHOWCASE_MIN,
   isUpvoteMilestone,
+  type CardThemeKey,
   type Game,
   type Gaming25,
   type Gaming25Category,
@@ -27,6 +28,8 @@ export interface Gaming25Cells {
   cells: { category: Gaming25Category; label: string; game: Game | null }[];
   pickCount: number;
   updatedAt: string | null;
+  /** The owner's card theme, which the picture wears. */
+  cardTheme: CardThemeKey;
 }
 
 export const createGaming25Service = (
@@ -193,6 +196,7 @@ export const createGaming25Service = (
         })),
         pickCount: picks.length,
         updatedAt: card?.updated_at ?? null,
+        cardTheme: (profile.card_theme ?? "default") as CardThemeKey,
       };
     },
   };
