@@ -29,6 +29,7 @@ import GameTile, { type TileAction } from "../../components/game/GameTile";
 import { useTileActions } from "../../components/game/useTileActions";
 import GamePicker from "../../components/community/GamePicker";
 import ListEditor from "../../components/lists/ListEditor";
+import ListVisibilitySelect from "../../components/lists/ListVisibilitySelect";
 import RankedList from "../../components/ranked/RankedList";
 import RankedGameRow from "../../components/ranked/RankedGameRow";
 import ReportDialog from "../../components/ReportDialog";
@@ -103,17 +104,19 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
                         className="w-24 shrink-0 self-start shadow-plate sm:w-36"
                     />
                     <div className="flex min-w-0 flex-1 flex-col">
-                        <p className="flex flex-wrap items-center gap-2 text-label-sm text-content-muted">
+                        <div className="flex flex-wrap items-center gap-2 text-label-sm text-content-muted">
                             <span>{list.ranked ? "Ranked list" : "List"}</span>
-                            {Hidden && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-surface-sunken px-2 py-0.5">
-                                    <Hidden size={11} aria-hidden />
-                                    {list.visibility === "private"
-                                        ? "Only you"
-                                        : "Friends"}
-                                </span>
+                            {isOwner ? (
+                                <ListVisibilitySelect list={list} />
+                            ) : (
+                                Hidden && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-surface-sunken px-2 py-0.5">
+                                        <Hidden size={11} aria-hidden />
+                                        Friends
+                                    </span>
+                                )
                             )}
-                        </p>
+                        </div>
                         <h1 className="mt-1 font-display text-[22px] leading-tight font-semibold break-words text-content sm:text-[30px]">
                             {list.name}
                         </h1>
