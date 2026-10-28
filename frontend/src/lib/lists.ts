@@ -5,14 +5,18 @@ import {
 } from "@playrates/shared";
 
 /** The covers a pick of these games would show: the picks, then the first
- *  games to fill the places left. As the server works them out. */
+ *  games added to fill the places left, in the order they went in, so
+ *  reordering a list leaves its picture alone. As the server works it out. */
 export const coversFor = (
     picked: number[],
     games: GameListEntry[]
 ): ListCover[] => {
+    const byAdded = [...games].sort(
+        (a, b) => a.addedAt.localeCompare(b.addedAt) || a.rank - b.rank
+    );
     const ids = [
         ...picked,
-        ...games.map((e) => e.game.id).filter((id) => !picked.includes(id)),
+        ...byAdded.map((e) => e.game.id).filter((id) => !picked.includes(id)),
     ].slice(0, MAX_LIST_COVERS);
     const byId = new Map(games.map((e) => [e.game.id, e.game]));
     return ids.flatMap((id) => {

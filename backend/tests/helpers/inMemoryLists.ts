@@ -46,7 +46,14 @@ export const createInMemoryLists = (state: InMemoryState): ListsRepository => {
       game_count: items.length,
       vote_count: state.gameListVotes.filter((v) => v.list_id === list.id)
         .length,
-      first_game_ids: items.slice(0, 4).map((i) => i.game_id),
+      // By when they went in, as the view orders them: not by place.
+      first_game_ids: [...items]
+        .sort(
+          (a, b) =>
+            a.added_at.localeCompare(b.added_at) || a.position - b.position,
+        )
+        .slice(0, 4)
+        .map((i) => i.game_id),
       owner_username: owner.username,
       owner_avatar_url: owner.avatar_url,
       owner_accent: owner.accent ?? FALLBACK_ACCENT,

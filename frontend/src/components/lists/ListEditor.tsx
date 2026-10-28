@@ -25,13 +25,16 @@ import { PRIVACY_OPTIONS } from "../../pages/ProfilePage/components/PrivacySelec
 import { cn } from "../../lib/cn";
 import { coversFor } from "../../lib/lists";
 
-type View = "details" | "look";
+export type ListEditorView = "details" | "look";
+type View = ListEditorView;
 
 interface ListEditorProps {
     /** The list to edit; none to make a new one. */
     list?: GameListDetail;
     /** Games to start a new list with: Add to list's "New list" passes one. */
     startWith?: number[];
+    /** The view to open on: the covers, from a press on them. */
+    initialView?: View;
     onClose: () => void;
     onSaved?: (list: GameListDetail) => void;
 }
@@ -41,7 +44,13 @@ interface ListEditorProps {
  * then how it looks. Covers are picked from its own games, so a new list
  * leaves them for later.
  */
-const ListEditor = ({ list, startWith, onClose, onSaved }: ListEditorProps) => {
+const ListEditor = ({
+    list,
+    startWith,
+    initialView = "details",
+    onClose,
+    onSaved,
+}: ListEditorProps) => {
     const notify = useNotify();
     const ids = useId();
     const titleId = `${ids}-title`;
@@ -50,7 +59,7 @@ const ListEditor = ({ list, startWith, onClose, onSaved }: ListEditorProps) => {
     const update = useUpdateList(list?.id ?? 0);
     const saving = create.isPending || update.isPending;
 
-    const [view, setView] = useState<View>("details");
+    const [view, setView] = useState<View>(initialView);
     const [name, setName] = useState(list?.name ?? "");
     const [description, setDescription] = useState(list?.description ?? "");
     const [visibility, setVisibility] = useState<ProfileVisibility>(
@@ -61,7 +70,7 @@ const ListEditor = ({ list, startWith, onClose, onSaved }: ListEditorProps) => {
         list?.colour ?? null
     );
     const games = list?.games ?? [];
-    const firstFour = games.slice(0, MAX_LIST_COVERS).map((e) => e.game.id);
+    const firstFour = coversFor([], games).map((c) => c.id);
     /* What its picture shows now, ticked: the picks and the first games
        that fill in around them, so the default four read as chosen too. */
     const [covers, setCovers] = useState<number[]>(() =>
@@ -263,14 +272,13 @@ const ListEditor = ({ list, startWith, onClose, onSaved }: ListEditorProps) => {
                                     />
                                     <div className="min-w-0 pt-0.5">
                                         <p className="text-body-sm text-content">
-                                            {isFirstFour
-                                                ? "Its first four games."
-                                                : `${covers.length} of ${MAX_LIST_COVERS} picked.`}
+                                            {covers.length} of {MAX_LIST_COVERS}{" "}
+                                            picked.
                                         </p>
                                         <p className="mt-1 text-label-sm text-content-muted">
                                             Tap up to four, in the order you
                                             want them. Any left fill from the
-                                            top of the list.
+                                            first games added.
                                         </p>
                                         {!isFirstFour && (
                                             <button

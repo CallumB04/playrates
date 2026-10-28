@@ -1,6 +1,14 @@
 import { useId, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { Flag, ListPlus, Lock, Pencil, Trash2, Users } from "lucide-react";
+import {
+    Flag,
+    ImageIcon,
+    ListPlus,
+    Lock,
+    Pencil,
+    Trash2,
+    Users,
+} from "lucide-react";
 import type { GameListDetail, GameListEntry } from "@playrates/shared";
 import NotFoundPage from "../NotFoundPage";
 import { ApiError } from "../../api";
@@ -28,7 +36,9 @@ import CoverGrid from "../../components/game/CoverGrid";
 import GameTile, { type TileAction } from "../../components/game/GameTile";
 import { useTileActions } from "../../components/game/useTileActions";
 import GamePicker from "../../components/community/GamePicker";
-import ListEditor from "../../components/lists/ListEditor";
+import ListEditor, {
+    type ListEditorView,
+} from "../../components/lists/ListEditor";
 import ListVisibilitySelect from "../../components/lists/ListVisibilitySelect";
 import RankedList from "../../components/ranked/RankedList";
 import RankedGameRow from "../../components/ranked/RankedGameRow";
@@ -69,7 +79,8 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
     const notify = useNotify();
     const navigate = useNavigate();
     const isOwner = user?.username === list.owner.username;
-    const [editing, setEditing] = useState(false);
+    // Which of the editor's views is open, from Edit or a press on the covers.
+    const [editing, setEditing] = useState<ListEditorView | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [reporting, setReporting] = useState(false);
     const vote = useListVote(list.id);
@@ -99,10 +110,38 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
                     />
                 )}
                 <div className="relative flex gap-4 p-4 sm:gap-6 sm:p-6">
-                    <CoverGrid
-                        covers={list.covers}
-                        className="w-24 shrink-0 self-start shadow-plate sm:w-36"
-                    />
+                    {isOwner ? (
+                        <button
+                            type="button"
+                            onClick={() => setEditing("look")}
+                            aria-label="Change the covers"
+                            className="group/covers relative w-24 shrink-0 cursor-pointer self-start rounded-sm shadow-plate focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:w-36"
+                        >
+                            <CoverGrid covers={list.covers} />
+                            {/* Said over the covers as a pointer rests on them. A
+                                phone has nothing to rest, so its mark stands. */}
+                            <span
+                                aria-hidden
+                                className="absolute inset-0 hidden place-items-center rounded-sm bg-media-scrim-strong text-label font-medium text-content-on-media opacity-0 transition-opacity group-hover/covers:opacity-100 group-focus-visible/covers:opacity-100 sm:grid"
+                            >
+                                <span className="flex items-center gap-1.5">
+                                    <ImageIcon size={14} />
+                                    Change covers
+                                </span>
+                            </span>
+                            <span
+                                aria-hidden
+                                className="absolute right-1 bottom-1 grid size-7 place-items-center rounded-full bg-media-scrim-strong text-content-on-media sm:hidden"
+                            >
+                                <Pencil size={13} />
+                            </span>
+                        </button>
+                    ) : (
+                        <CoverGrid
+                            covers={list.covers}
+                            className="w-24 shrink-0 self-start shadow-plate sm:w-36"
+                        />
+                    )}
                     <div className="flex min-w-0 flex-1 flex-col">
                         <div className="flex flex-wrap items-center gap-2 text-label-sm text-content-muted">
                             <span>{list.ranked ? "Ranked list" : "List"}</span>
@@ -164,7 +203,7 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => setEditing(true)}
+                                    onClick={() => setEditing("details")}
                                     className="max-sm:min-h-11"
                                 >
                                     <Pencil size={14} aria-hidden />
@@ -201,8 +240,12 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
 
             <ListGames list={list} isOwner={isOwner} />
 
-            {editing && (
-                <ListEditor list={list} onClose={() => setEditing(false)} />
+            {editing !== null && (
+                <ListEditor
+                    list={list}
+                    initialView={editing}
+                    onClose={() => setEditing(null)}
+                />
             )}
             {deleting && (
                 <ConfirmPopup

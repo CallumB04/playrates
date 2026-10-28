@@ -130,4 +130,15 @@ describe("ListEditor", () => {
             gameIds: [3],
         });
     });
+
+    it("opens straight on the covers when asked to", () => {
+        renderWithProviders(
+            <ListEditor list={list} initialView="look" onClose={vi.fn()} />
+        );
+
+        expect(
+            screen.getByRole("tab", { name: "Covers & colour" })
+        ).toHaveAttribute("aria-selected", "true");
+        expect(screen.getByText("4 of 4 picked.")).toBeInTheDocument();
+    });
 });

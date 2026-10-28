@@ -183,6 +183,15 @@ describe("a list's games and covers", () => {
     expect(list.covers[0].coverUrl).toBe("https://img/box.jpg");
   });
 
+  it("keeps its picture when its games are reordered", async () => {
+    const { create, setGames } = setup();
+    const { id } = await create({ name: "x", gameIds: [1, 2, 3, 4, 5] });
+
+    const reordered = (await setGames(id, [5, 4, 3, 2, 1])).body;
+
+    expect(coverIds(reordered)).toEqual([1, 2, 3, 4]);
+  });
+
   it("takes only its own games for covers", async () => {
     const { create, patch } = setup();
     const { id } = await create({ name: "x", gameIds: [1, 2] });
@@ -198,7 +207,8 @@ describe("a list's games and covers", () => {
     const after = (await setGames(id, [2, 1])).body;
 
     expect(after.coverGameIds).toBeNull();
-    expect(coverIds(after)).toEqual([2, 1]);
+    // Back to the first added, whatever order they're in now.
+    expect(coverIds(after)).toEqual([1, 2]);
   });
 
   it("is reordered, and changed, only by its owner", async () => {

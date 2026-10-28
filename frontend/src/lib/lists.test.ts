@@ -22,4 +22,15 @@ describe("coversFor", () => {
     it("shows as many as the list has, under four", () => {
         expect(ids(coversFor([], entries.slice(0, 2)))).toEqual([1, 2]);
     });
+
+    it("fills from the first added, not the first placed", () => {
+        const reordered = entries
+            .map((e, i) => ({
+                ...e,
+                rank: entries.length - i,
+                addedAt: `2026-01-0${i + 1}T00:00:00Z`,
+            }))
+            .reverse();
+        expect(ids(coversFor([], reordered))).toEqual([1, 2, 3, 4]);
+    });
 });
