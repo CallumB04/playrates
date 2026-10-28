@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
+    Award,
     ChevronDown,
     Gamepad2,
     ListOrdered,
@@ -22,6 +23,7 @@ const TABS: { tab: ProfileTab; label: string; icon: IconComponent }[] = [
     { tab: "games", label: "Games", icon: Gamepad2 },
     { tab: "reviews", label: "Reviews", icon: PenLine },
     { tab: "lists", label: "Lists", icon: ListOrdered },
+    { tab: "badges", label: "Badges", icon: Award },
     { tab: "community", label: "Community", icon: MessagesSquare },
     { tab: "friends", label: "Friends", icon: Users },
 ];

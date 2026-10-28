@@ -59,11 +59,13 @@ export const fetchMostLovedGaming25s = async (
 export const gaming25ImageUrl = (
     username: string,
     updatedAt: string | null,
-    layout: Gaming25ImageLayout = "portrait"
+    layout: Gaming25ImageLayout = "portrait",
+    theme = "default"
 ): string => {
     const params = new URLSearchParams({
         layout,
-        v: gaming25ImageVersion(updatedAt),
+        // The theme too: wearing another changes the picture, not the grid.
+        v: `${gaming25ImageVersion(updatedAt)}.${theme}`,
     });
     return `${env.apiBaseUrl}/api/v1/gaming-25/${encodeURIComponent(username)}/image.png?${params}`;
 };

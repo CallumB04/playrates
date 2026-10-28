@@ -531,6 +531,14 @@
     --animate-sheet-rise: sheet-rise 280ms cubic-bezier(0.22, 1, 0.36, 1);
     --animate-stamp: stamp 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
     --animate-heart-pop: heart-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* Progress: the moments that are meant to feel like an event. */
+    --animate-level-burst: level-burst 14s linear infinite;
+    --animate-level-pop: level-pop 900ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    --animate-medal-drop: medal-drop 900ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    /* Once, on arrival: a light that keeps crossing something is noise. */
+    --animate-sheen: sheen 1.6s cubic-bezier(0.22, 1, 0.36, 1) 300ms both;
+    --animate-xp-rise: xp-rise 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    --animate-fade-up: fade-up 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
     --animate-tab-raise: tab-raise 200ms cubic-bezier(0.22, 1, 0.36, 1);
     /* A sheen crossing a control while it waits on the server. */
     --animate-sweep: sweep 1.1s linear infinite;
@@ -1145,6 +1153,73 @@
     }
 }
 
+@keyframes level-burst {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes level-pop {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+        filter: blur(12px);
+    }
+    60% {
+        transform: scale(1.12);
+        opacity: 1;
+        filter: blur(0);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes medal-drop {
+    0% {
+        transform: translateY(-48px) scale(0.6) rotateY(180deg);
+        opacity: 0;
+    }
+    60% {
+        opacity: 1;
+    }
+    100% {
+        transform: none;
+    }
+}
+
+@keyframes sheen {
+    0% {
+        background-position: 200% 0;
+    }
+    60%,
+    100% {
+        background-position: -100% 0;
+    }
+}
+
+@keyframes xp-rise {
+    from {
+        transform: translateY(10px) scale(0.92);
+        opacity: 0;
+    }
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+@keyframes fade-up {
+    from {
+        transform: translateY(14px);
+        opacity: 0;
+    }
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
+
 @keyframes heart-pop {
     0% {
         transform: scale(1);
@@ -1283,6 +1358,12 @@
     :root {
         --animate-stamp: none;
         --animate-heart-pop: none;
+        --animate-level-burst: none;
+        --animate-level-pop: none;
+        --animate-medal-drop: none;
+        --animate-sheen: none;
+        --animate-xp-rise: none;
+        --animate-fade-up: none;
         --animate-settle: none;
         --animate-rise: none;
         --animate-sheet-rise: none;
@@ -1296,5 +1377,187 @@
 
     .lift {
         transition-duration: 1ms;
+    }
+}
+
+/* Progress: badge metals and avatar frames. Raw values live here, the one
+   place a colour is defined; components only name the metal or frame. */
+@layer components {
+    .metal-bronze {
+        --metal-ink: rgba(60, 26, 6, 0.7);
+        --metal-hi: #f3c299;
+        --metal-mid: #c47a43;
+        --metal-lo: #6e3a17;
+        --metal-glow: rgba(214, 133, 74, 0.55);
+    }
+    .metal-silver {
+        --metal-ink: rgba(40, 48, 60, 0.7);
+        --metal-hi: #ffffff;
+        --metal-mid: #c3cad5;
+        --metal-lo: #6b7685;
+        --metal-glow: rgba(197, 204, 214, 0.55);
+    }
+    .metal-gold {
+        --metal-ink: rgba(80, 52, 0, 0.72);
+        --metal-hi: #fff1b8;
+        --metal-mid: #f2c94c;
+        --metal-lo: #9a6b00;
+        --metal-glow: rgba(242, 201, 76, 0.6);
+    }
+    .metal-platinum {
+        --metal-ink: rgba(40, 24, 110, 0.7);
+        --metal-hi: #e9fbff;
+        --metal-mid: #a8c7ff;
+        --metal-lo: #7a5cff;
+        --metal-glow: rgba(150, 170, 255, 0.65);
+    }
+    .metal-locked {
+        --metal-ink: var(--content-muted);
+        --metal-hi: var(--surface-raised);
+        --metal-mid: var(--surface-sunken);
+        --metal-lo: var(--surface-sunken);
+        --metal-glow: transparent;
+    }
+
+    /* A ring drawn outside the avatar, in its own gradient, with the
+       faintest glow of its colour. Still: a frame is worn everywhere, and
+       one that moves pulls the eye from everything beside it. */
+    .pr-frame {
+        position: relative;
+        isolation: isolate;
+        border-radius: 9999px;
+        box-shadow: 0 0 10px -3px var(--frame-glow, transparent);
+    }
+    .pr-frame::before {
+        content: "";
+        position: absolute;
+        inset: calc(var(--frame-width, 3px) * -1);
+        z-index: -1;
+        border-radius: inherit;
+        padding: var(--frame-width, 3px);
+        background: var(--frame);
+        -webkit-mask:
+            linear-gradient(#000 0 0) content-box,
+            linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+    }
+    .pr-frame-bronze {
+        --frame: linear-gradient(145deg, #e8b48a, #a35a26 60%, #6e3a17);
+        --frame-glow: rgba(214, 133, 74, 0.45);
+    }
+    .pr-frame-silver {
+        --frame: linear-gradient(145deg, #ffffff, #aab3bf 60%, #6b7685);
+        --frame-glow: rgba(197, 204, 214, 0.45);
+    }
+    .pr-frame-gold {
+        --frame: linear-gradient(145deg, #fff1b8, #f2c94c 55%, #a87400);
+        --frame-glow: rgba(242, 201, 76, 0.5);
+    }
+    .pr-frame-emerald {
+        --frame: linear-gradient(145deg, #b9ffd9, #20c07a 60%, #05603a);
+        --frame-glow: rgba(32, 192, 122, 0.45);
+    }
+    .pr-frame-sapphire {
+        --frame: linear-gradient(145deg, #c9dcff, #3d6bff 60%, #142c8f);
+        --frame-glow: rgba(61, 107, 255, 0.45);
+    }
+    .pr-frame-holo,
+    .pr-frame-prismatic {
+        --frame: linear-gradient(
+            135deg,
+            #ff9ad5,
+            #ad8cff 30%,
+            #94d0ff 60%,
+            #77ffd1 85%,
+            #ffe66d
+        );
+        --frame-glow: rgba(173, 140, 255, 0.5);
+    }
+    .pr-frame-prismatic {
+        --frame-width: 4px;
+    }
+    .pr-frame-legendary {
+        --frame: linear-gradient(
+            135deg,
+            #fff1b8,
+            #f2c94c 35%,
+            #ff8438 65%,
+            #ad8cff
+        );
+        --frame-glow: rgba(242, 201, 76, 0.55);
+    }
+    .pr-frame-aurora {
+        --frame: linear-gradient(135deg, #00ffa3, #00c2ff 50%, #7a5cff);
+        --frame-glow: rgba(0, 194, 255, 0.45);
+    }
+    .pr-frame-neon {
+        --frame: linear-gradient(135deg, #5cff3a, #00e5ff);
+        --frame-glow: rgba(0, 229, 255, 0.5);
+    }
+    .pr-frame-pixel {
+        --frame: repeating-conic-gradient(#ff3d6e 0 25%, #ffe66d 0 50%);
+        --frame-glow: transparent;
+    }
+    .pr-frame-flame {
+        --frame: linear-gradient(135deg, #ffd54f, #ff6d00 50%, #ff1744);
+        --frame-glow: rgba(255, 109, 0, 0.5);
+    }
+
+    /* The card themes' colours, for previews on the page; the pictures
+       themselves are drawn on the server from the same values. */
+    .card-theme-default {
+        --theme-ground: #0f0e12;
+        --theme-glow: rgba(106, 68, 240, 0.55);
+        --theme-accent: #8f74ff;
+    }
+    .card-theme-gold {
+        --theme-ground: #15110a;
+        --theme-glow: rgba(242, 201, 76, 0.5);
+        --theme-accent: #f2c94c;
+    }
+    .card-theme-holo {
+        --theme-ground: #0b0f1c;
+        --theme-glow: rgba(120, 220, 255, 0.5);
+        --theme-accent: #9fe8ff;
+    }
+    .card-theme-retro {
+        --theme-ground: #1b120c;
+        --theme-glow: rgba(255, 132, 56, 0.5);
+        --theme-accent: #ff8438;
+    }
+    .card-theme-night {
+        --theme-ground: #060a16;
+        --theme-glow: rgba(70, 120, 255, 0.5);
+        --theme-accent: #7fa8ff;
+    }
+    .card-theme-synthwave {
+        --theme-ground: #13081f;
+        --theme-glow: rgba(255, 70, 200, 0.5);
+        --theme-accent: #ff5fd9;
+    }
+
+    /* Bought profile effects. */
+    .pr-name-glow {
+        text-shadow:
+            0 0 18px var(--glow-brand),
+            0 0 2px var(--glow-brand);
+    }
+
+    /* Metallic type: a gradient through the text with a light crossing it. */
+    .pr-metal-text {
+        background-image: linear-gradient(
+            100deg,
+            var(--metal-lo) 0%,
+            var(--metal-mid) 35%,
+            var(--metal-hi) 50%,
+            var(--metal-mid) 65%,
+            var(--metal-lo) 100%
+        );
+        background-size: 250% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: var(--animate-sheen);
     }
 }

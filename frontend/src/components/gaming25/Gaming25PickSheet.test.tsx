@@ -21,7 +21,12 @@ const API = "http://localhost:3000/api/v1";
 const portal = buildGame({ id: 4, title: "Portal" });
 
 const gridWith = (picks: Gaming25Pick[]): Gaming25 => ({
-    owner: { username: "devuser", avatarUrl: null, accent: "indigo" },
+    owner: {
+        username: "devuser",
+        avatarUrl: null,
+        accent: "indigo",
+        cardTheme: "default",
+    },
     picks,
     loveCount: 0,
     lovedByViewer: false,

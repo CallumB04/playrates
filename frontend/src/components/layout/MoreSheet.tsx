@@ -7,6 +7,7 @@ import {
     Moon,
     Settings,
     Shield,
+    Trophy,
     Sun,
 } from "lucide-react";
 import type { MyProfile } from "@playrates/shared";
@@ -140,6 +141,16 @@ const MoreSheet = ({
             )}
 
             <div className="mt-3 border-t border-subtle pt-3">
+                {user && (
+                    <Link
+                        to="/progress"
+                        onClick={onClose}
+                        className={ACCOUNT_ROW}
+                    >
+                        Progress
+                        <Trophy size={16} aria-hidden />
+                    </Link>
+                )}
                 {user && (
                     <Link
                         to="/settings"

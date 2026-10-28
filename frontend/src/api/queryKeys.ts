@@ -107,6 +107,18 @@ export const queryKeys = {
         mine: (gameId?: number) => ["lists", "mine", gameId ?? null] as const,
     },
 
+    /* All under "progress", so a purchase or a style change refreshes
+       everything that shows it. */
+    progress: {
+        all: ["progress"] as const,
+        me: ["progress", "me"] as const,
+        badges: (username: string) => ["progress", "badges", username] as const,
+        leaderboard: (period: string) =>
+            ["progress", "leaderboard", period] as const,
+        shop: ["progress", "shop"] as const,
+        rules: ["progress", "rules"] as const,
+    },
+
     gaming25: {
         all: ["gaming25"] as const,
         byUsername: (username: string) => ["gaming25", username] as const,

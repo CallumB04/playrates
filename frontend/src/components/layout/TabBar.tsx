@@ -17,6 +17,7 @@ import { unfinished } from "../../lib/setupChecklist";
 import { isCurrent } from "../../lib/navMatch";
 import { cn } from "../../lib/cn";
 import ProfilePicture from "../ProfilePicture";
+import AvatarFrame from "../progress/AvatarFrame";
 import MoreSheet from "./MoreSheet";
 
 const TAB =
@@ -150,13 +151,15 @@ const TabBar = () => {
                                         onProfile && "ring-2 ring-brand"
                                     )}
                                 >
-                                    <ProfilePicture
-                                        variant="tab"
-                                        file={user.avatarUrl ?? ""}
-                                        accent={user.accent}
-                                        username={user.username}
-                                        link={false}
-                                    />
+                                    <AvatarFrame frame={user.frame} size="sm">
+                                        <ProfilePicture
+                                            variant="tab"
+                                            file={user.avatarUrl ?? ""}
+                                            accent={user.accent}
+                                            username={user.username}
+                                            link={false}
+                                        />
+                                    </AvatarFrame>
                                 </span>
                             </Mark>
                             Profile

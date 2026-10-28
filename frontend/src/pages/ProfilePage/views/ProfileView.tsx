@@ -7,6 +7,7 @@ import { useUserFavourites } from "../../../hooks/queries/useFavourites";
 import AboutCard from "../components/AboutCard";
 import Gaming25Preview from "../../../components/gaming25/Gaming25Preview";
 import FavouriteGames from "../components/FavouriteGames";
+import PinnedLists from "../components/PinnedLists";
 import FavouritesEditor from "../components/FavouritesEditor";
 import WishlistTop from "../components/WishlistTop";
 
@@ -79,6 +80,7 @@ const ProfileView = ({
                 />
             </div>
             <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
+                {canSee && <PinnedLists ids={profile.pinnedLists} />}
                 <FavouriteGames
                     username={profile.username}
                     canSee={canSee}

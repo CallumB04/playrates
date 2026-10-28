@@ -187,7 +187,12 @@ const LoadedGaming25 = ({ grid }: { grid: Gaming25 }) => {
                             ? "My Gaming 25 on PlayRates. What would yours be?"
                             : `${username}'s Gaming 25 on PlayRates`
                     }
-                    imageUrl={gaming25ImageUrl(username, grid.updatedAt)}
+                    imageUrl={gaming25ImageUrl(
+                        username,
+                        grid.updatedAt,
+                        "portrait",
+                        grid.owner.cardTheme
+                    )}
                     fileName={`${username}-gaming-25.png`}
                     noImage="Pictures are made only for profiles everyone can see."
                     onClose={() => setSharing(null)}
@@ -207,7 +212,12 @@ const MakeYourOwn = ({
     username?: string;
     onSignup: () => void;
 }) => (
-    <section className="flex flex-col items-start gap-3 rounded-lg border border-brand/30 bg-brand-subtle p-4 sm:flex-row sm:items-center sm:p-5">
+    <section
+        className={cardClass(
+            "flex flex-col items-start gap-3 sm:flex-row sm:items-center",
+            { tone: "feature" }
+        )}
+    >
         <span
             aria-hidden
             className="grid size-10 shrink-0 place-items-center rounded-md bg-surface-raised text-brand shadow-lip"

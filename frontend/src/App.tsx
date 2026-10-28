@@ -7,6 +7,10 @@ import ToastStack from "./components/feedback/ToastStack";
 import AccountFormModal from "./components/auth/AccountFormModal";
 import ChooseUsername from "./components/onboarding/ChooseUsername";
 import FirstLoginWelcome from "./components/onboarding/FirstLoginWelcome";
+import ProgressMoments from "./components/progress/ProgressMoments";
+import ReferralCapture from "./components/progress/ReferralCapture";
+import ProgressPage from "./pages/ProgressPage/ProgressPage";
+import ShopPage from "./pages/ShopPage/ShopPage";
 import HomePage from "./pages/HomePage/HomePage";
 import CommunityPage from "./pages/CommunityPage/CommunityPage";
 import NewThreadPage from "./pages/CommunityPage/NewThreadPage";
@@ -59,6 +63,8 @@ function App() {
                             element={<ProfilePageRoute />}
                         />
                         <Route path="/library" element={<LibraryPage />} />
+                        <Route path="/progress" element={<ProgressPage />} />
+                        <Route path="/shop" element={<ShopPage />} />
                         {/* The page was briefly called both things. Kept so
                             shared links and bookmarks still land. */}
                         <Route
@@ -97,6 +103,8 @@ function App() {
             <AccountFormModal />
             <ChooseUsername />
             <FirstLoginWelcome />
+            <ProgressMoments />
+            <ReferralCapture />
             <ToastStack />
         </div>
     );

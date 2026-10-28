@@ -8,6 +8,7 @@ import {
     type LogBundle,
     type MyProfile,
     type Paginated,
+    type Progress,
     type ReviewWithAuthor,
     type ShelfEntry,
 } from "@playrates/shared";
@@ -44,6 +45,10 @@ export const buildProfile = (
     about: {},
     aboutVisibility: { ...DEFAULT_ABOUT_VISIBILITY },
     online: true,
+    level: 1,
+    frame: null,
+    effects: [],
+    pinnedLists: [],
     createdAt: "2026-01-01T00:00:00.000Z",
     ...overrides,
 });
@@ -187,11 +192,48 @@ export const buildFriendEdge = (
     ...overrides,
 });
 
+/** A fresh member's progress. */
+export const buildProgress = (overrides: Partial<Progress> = {}): Progress => ({
+    xp: 0,
+    level: { level: 1, xp: 0, floor: 0, next: 100, progress: 0 },
+    tokens: 0,
+    frame: null,
+    streak: {
+        weeks: 0,
+        best: 0,
+        thisWeek: false,
+        freeShield: true,
+        spareShields: 0,
+        history: [],
+    },
+    quests: { week: [], month: [] },
+    periods: {
+        week: { key: "w2026-44", kind: "week", start: "", end: "" },
+        month: { key: "m2026-10", kind: "month", start: "", end: "" },
+    },
+    look: {
+        cardTheme: "default",
+        layout: "row",
+        frames: [],
+        themes: ["default"],
+        showcaseSlots: 5,
+        pinnedListSlots: 1,
+    },
+    swap: { price: 20, held: 0, used: { week: false, month: false } },
+    unseen: { xp: [], badges: [], tokens: 0 },
+    reveal: false,
+    referralCode: "devuser",
+    ...overrides,
+});
+
 /**
  * Default happy-path handlers. Individual tests override one route with
  * server.use(...) rather than redefining the whole set.
  */
 export const handlers = [
+    // A fresh member's progress, for anything that shows it in passing.
+    http.get(`${API}/me/progress`, () => HttpResponse.json(buildProgress())),
+
     http.get(`${API}/stats`, () =>
         HttpResponse.json({ userCount: 2, gameCount: 6, logCount: 1 })
     ),

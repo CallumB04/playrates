@@ -40,6 +40,7 @@ import ProfileView, { ProfileAbout } from "./views/ProfileView";
 import ReviewList, { REVIEWS_PER_PAGE } from "./components/ReviewList";
 import ThreadList, { THREADS_PER_PAGE } from "./components/ThreadList";
 import FriendsView from "./views/FriendsView";
+import BadgesView from "./views/BadgesView";
 import ListsView, {
     DEFAULT_LIST_SORT,
     LISTS_PER_PAGE,
@@ -365,6 +366,12 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                             username={targetUsername}
                             isOwner={isMyAccount}
                             canSee={canSee}
+                        />
+                    )}
+                    {tab === "badges" && (
+                        <BadgesView
+                            username={targetUsername}
+                            isOwner={isMyAccount}
                         />
                     )}
                     {tab === "community" && (

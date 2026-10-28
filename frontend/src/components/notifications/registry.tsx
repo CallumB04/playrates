@@ -20,6 +20,7 @@ import type {
     ReviewUpvoteMilestoneNotification,
     ListUpvoteMilestoneNotification,
     Gaming25LoveMilestoneNotification,
+    ReferralJoinedNotification,
     FriendAcceptedNotification,
     FriendRequestNotification,
     FriendUser,
@@ -422,6 +423,29 @@ const Gaming25MilestoneContent = ({
     );
 };
 
+const ReferralJoinedContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<ReferralJoinedNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    return (
+        <Link
+            to={`/user/${notification.username}`}
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <span className="group-hover:underline">
+                    {notification.username}
+                </span>{" "}
+                <span className="font-normal text-content-secondary">
+                    joined from your invite
+                </span>
+            </p>
+        </Link>
+    );
+};
+
 /** The game it is about, where the row has no one to show. */
 const CoverLeading = ({
     notification,
@@ -503,6 +527,11 @@ export const NOTIFICATION_RENDERERS: {
         icon: Heart,
         tone: "text-love",
         Content: Gaming25MilestoneContent,
+    },
+    referral_joined: {
+        icon: UserPlus,
+        tone: "text-brand",
+        Content: ReferralJoinedContent,
     },
     announcement: {
         icon: ANNOUNCEMENT_PRESENTATION.update.icon,
