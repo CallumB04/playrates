@@ -81,11 +81,11 @@ export interface ListsRepository {
 }
 
 const ORDER: Record<ListSort, { column: string; ascending: boolean }[]> = {
-  top: [
+  popular: [
     { column: "vote_count", ascending: false },
-    { column: "updated_at", ascending: false },
+    { column: "created_at", ascending: false },
   ],
-  recent: [{ column: "updated_at", ascending: false }],
+  new: [{ column: "created_at", ascending: false }],
 };
 
 export const createListsRepository = (db: Db): ListsRepository => {

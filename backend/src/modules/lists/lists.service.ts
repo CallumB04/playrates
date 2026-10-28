@@ -217,7 +217,7 @@ export const createListsService = (
 
     /** Public lists on public profiles, the most upvoted first. */
     async popular(query: Omit<PageQuery, "sort">, viewerId?: string) {
-      const full = { ...query, sort: "top" as const };
+      const full = { ...query, sort: "popular" as const };
       return page(await repo.publicCards(full), full, viewerId);
     },
 
@@ -226,24 +226,20 @@ export const createListsService = (
       const ids = await repo.listIdsWithGame(gameId);
       if (ids.length === 0) return [];
       const { rows } = await repo.publicCards(
-        { sort: "top", page: 1, limit },
+        { sort: "popular", page: 1, limit },
         ids,
       );
       return summaries(rows, viewerId);
     },
 
-    /** Your lists, marked with whether a game is in each. Newest made first
-     *  rather than last changed: ticking one changes it, and by recent the
-     *  list jumped to the top under the pointer. */
+    /** Your lists, marked with whether a game is in each, newest made
+     *  first: by last change, ticking one sent it to the top. */
     async mine(userId: string, gameId?: number): Promise<MyListOption[]> {
-      const { rows: recent } = await repo.cardsByUser(userId, ALL, {
-        sort: "recent",
+      const { rows } = await repo.cardsByUser(userId, ALL, {
+        sort: "new",
         page: 1,
         limit: MAX_LISTS,
       });
-      const rows = [...recent].sort(
-        (a, b) => b.created_at.localeCompare(a.created_at) || b.id - a.id,
-      );
       const holding = new Set(
         gameId === undefined
           ? []

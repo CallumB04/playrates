@@ -55,11 +55,13 @@ export const AddListGameSchema = z
   .object({ gameId: z.number().int().positive() })
   .strict();
 
-export const LIST_SORTS = ["top", "recent"] as const;
+/** New is by when a list was made, not changed, so ticking a game into
+ *  one doesn't send it to the top. */
+export const LIST_SORTS = ["new", "popular"] as const;
 export type ListSort = (typeof LIST_SORTS)[number];
 
 export const ListsQuerySchema = PaginationSchema.extend({
-  sort: z.enum(LIST_SORTS).default("recent"),
+  sort: z.enum(LIST_SORTS).default("new"),
 });
 
 export const MyListsQuerySchema = z.object({

@@ -60,8 +60,8 @@ export const createInMemoryLists = (state: InMemoryState): ListsRepository => {
   ) => {
     const sorted = [...rows].sort(
       (a, b) =>
-        (sort === "top" ? b.vote_count - a.vote_count : 0) ||
-        b.updated_at.localeCompare(a.updated_at) ||
+        (sort === "popular" ? b.vote_count - a.vote_count : 0) ||
+        b.created_at.localeCompare(a.created_at) ||
         b.id - a.id,
     );
     const from = (page - 1) * limit;

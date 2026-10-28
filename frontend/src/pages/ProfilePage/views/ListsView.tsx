@@ -16,7 +16,7 @@ import ListEmpty from "../components/ListEmpty";
 import { usePageParam } from "../lib/usePageParam";
 
 export const LISTS_PER_PAGE = 12;
-export const DEFAULT_LIST_SORT: ListSort = "recent";
+export const DEFAULT_LIST_SORT: ListSort = "new";
 
 interface ListsViewProps {
     username: string;
@@ -24,13 +24,13 @@ interface ListsViewProps {
     canSee: boolean;
 }
 
-/** Someone's lists, the newest or the most upvoted first. */
+/** Someone's lists, the newest made or the most upvoted first. */
 const ListsView = ({ username, isOwner, canSee }: ListsViewProps) => {
     const navigate = useNavigate();
     const [params, setParams] = useSearchParams();
     const [page, setPage] = usePageParam();
     const [creating, setCreating] = useState(false);
-    const sort: ListSort = params.get("sort") === "top" ? "top" : "recent";
+    const sort: ListSort = params.get("sort") === "popular" ? "popular" : "new";
 
     const { data, isLoading } = useUserLists(username, {
         sort,
@@ -60,8 +60,8 @@ const ListsView = ({ username, isOwner, canSee }: ListsViewProps) => {
                 <SegmentedChoice
                     label="Sort lists"
                     segments={[
-                        { value: "recent", label: "Recent" },
-                        { value: "top", label: "Top" },
+                        { value: "new", label: "New" },
+                        { value: "popular", label: "Popular" },
                     ]}
                     value={sort}
                     onChange={setSort}
