@@ -9,6 +9,7 @@ import {
   toGameSummary,
   toMetricDetail,
   toOverview,
+  toAdminProgress,
   toIgdbUsage,
   toServerError,
   toUserSummary,
@@ -383,5 +384,45 @@ describe("toServerError", () => {
         created_at: "2026-09-26T00:00:00Z",
       }),
     ).toMatchObject({ requestId: "req-1", username: "bee" });
+  });
+});
+
+describe("toAdminProgress", () => {
+  const row = {
+    members: 0,
+    xps: [],
+    xp_last_week: "12",
+    tokens_held: 0,
+    tokens_earned: 0,
+    tokens_spent: 0,
+    tokens_gifted: 0,
+    top: [],
+    xp_by_source: [
+      { source: "rate", xp: "5", events: "1" },
+      { source: "finish", xp: "40", events: "2" },
+    ],
+    badges: [],
+    shop: [],
+    reactions: [],
+    tasks_week: 0,
+    tasks_month: 0,
+    referrals_joined: 0,
+    referrals_active: 0,
+    setup_done: 0,
+    reveal_waiting: 0,
+  } as unknown as Parameters<typeof toAdminProgress>[0];
+
+  it("reads Postgres's string counts as numbers, biggest first", () => {
+    const progress = toAdminProgress(row);
+    expect(progress.xp.lastWeek).toBe(12);
+    expect(progress.xpBySource).toEqual([
+      { source: "finish", xp: 40, events: 2 },
+      { source: "rate", xp: 5, events: 1 },
+    ]);
+  });
+
+  it("averages nothing to nought with no members", () => {
+    expect(toAdminProgress(row).xp.average).toBe(0);
+    expect(toAdminProgress(row).levels.every((l) => l.members === 0)).toBe(true);
   });
 });

@@ -32,6 +32,7 @@ import {
   toPatchNote,
   toServerError,
   toUserSummary,
+  toAdminProgress,
 } from "./admin.mapper.js";
 
 /** When this instance started, for "up since" on the health view. */
@@ -84,6 +85,10 @@ export const createAdminService = (deps: {
   };
 
   return {
+    async progress() {
+      return toAdminProgress(await repo.progress());
+    },
+
     async overview(range: AdminRange) {
       const window = rangeWindow(range, now());
       const [totals, rows] = await Promise.all([

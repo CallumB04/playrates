@@ -90,6 +90,92 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
   return {
     async ping() {},
 
+    // As admin_progress counts it, over the same state.
+    async progress() {
+      const since = (days: number) => Date.now() - days * 86_400_000;
+      const bySource = new Map<string, { xp: number; events: number }>();
+      for (const e of state.xpEvents.filter(
+        (e) => Date.parse(e.created_at) > since(30),
+      )) {
+        const was = bySource.get(e.source) ?? { xp: 0, events: 0 };
+        bySource.set(e.source, { xp: was.xp + e.xp, events: was.events + 1 });
+      }
+      const shop = new Map<string, { sold: number; tokens: number }>();
+      for (const e of state.tokenEvents.filter(
+        (e) => (e.source === "purchase" || e.source === "gift") && e.amount < 0,
+      )) {
+        const item = e.key.startsWith("background:")
+          ? "background"
+          : (e.key.split(":")[1] ?? "");
+        const was = shop.get(item) ?? { sold: 0, tokens: 0 };
+        shop.set(item, { sold: was.sold + 1, tokens: was.tokens - e.amount });
+      }
+      const xpOf = (id: string) =>
+        state.xpEvents
+          .filter((e) => e.user_id === id)
+          .reduce((sum, e) => sum + e.xp, 0);
+      const tokens = state.tokenEvents;
+      const reactions = new Map<string, number>();
+      for (const v of [
+        ...state.reviewVotes,
+        ...state.communityVotes,
+        ...state.gameListVotes,
+      ]) {
+        const r = v.reaction ?? "upvote";
+        reactions.set(r, (reactions.get(r) ?? 0) + 1);
+      }
+      const badges = new Map<string, number>();
+      for (const b of state.userBadges) {
+        const key = `${b.badge}:${b.metal}`;
+        badges.set(key, (badges.get(key) ?? 0) + 1);
+      }
+      return {
+        members: state.profiles.length,
+        xps: state.profiles.map((p) => xpOf(p.id)),
+        xp_last_week: state.xpEvents
+          .filter((e) => Date.parse(e.created_at) > since(7))
+          .reduce((sum, e) => sum + e.xp, 0),
+        tokens_held: tokens.reduce((sum, e) => sum + e.amount, 0),
+        tokens_earned: tokens
+          .filter((e) => e.amount > 0)
+          .reduce((sum, e) => sum + e.amount, 0),
+        tokens_spent: -tokens
+          .filter((e) => e.source === "purchase")
+          .reduce((sum, e) => sum + e.amount, 0),
+        tokens_gifted: -tokens
+          .filter((e) => e.source === "gift")
+          .reduce((sum, e) => sum + e.amount, 0),
+        top: [...state.profiles]
+          .sort((a, b) => xpOf(b.id) - xpOf(a.id))
+          .slice(0, 10)
+          .map((p) => ({
+            username: p.username,
+            avatar_url: p.avatar_url,
+            accent: p.accent,
+            xp: xpOf(p.id),
+          })),
+        xp_by_source: [...bySource].map(([source, v]) => ({ source, ...v })),
+        badges: [...badges].map(([key, holders]) => {
+          const [badge, metal] = key.split(":");
+          return { badge: badge!, metal: Number(metal), holders };
+        }),
+        shop: [...shop].map(([item, v]) => ({ item, ...v })),
+        reactions: [...reactions].map(([reaction, count]) => ({
+          reaction,
+          count,
+        })),
+        tasks_week: 0,
+        tasks_month: 0,
+        referrals_joined: state.profiles.filter((p) => p.referred_by).length,
+        referrals_active: state.xpEvents.filter(
+          (e) => e.source === "referral_active",
+        ).length,
+        setup_done: state.xpEvents.filter((e) => e.key === "setup").length,
+        reveal_waiting: state.profiles.filter((p) => p.revealed_at === null)
+          .length,
+      };
+    },
+
     async totals() {
       return {
         users: state.profiles.length,

@@ -151,6 +151,7 @@ const ENDPOINTS: { method: "get" | "post" | "patch" | "put"; path: string; body?
   { method: "post", path: "/api/v1/admin/patch-notes/41/announce" },
   { method: "post", path: "/api/v1/admin/patch-notes/41/test" },
   { method: "get", path: "/api/v1/admin/health" },
+  { method: "get", path: "/api/v1/admin/progress" },
   { method: "get", path: "/api/v1/admin/errors" },
 ];
 
@@ -205,6 +206,35 @@ describe("admin gate", () => {
       .set("Authorization", authHeader(ADMIN));
 
     expect(response.status).toBe(404);
+  });
+});
+
+describe("admin progress", () => {
+  it("counts progress across every member", async () => {
+    const { app, state, repos } = buildTestApp({ seed: seed() });
+    await repos.progress.awardXp(USER_A, "quest", "q", 700);
+    await repos.progress.awardTokens(USER_A, "test", "t", 100);
+    await repos.progress.buy(USER_A, "frame_neon");
+    state.reviewVotes.push({ review_id: 1, user_id: ADMIN, reaction: "fire" });
+
+    const response = await request(app)
+      .get("/api/v1/admin/progress")
+      .set("Authorization", authHeader(ADMIN));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      members: 3,
+      xp: { total: 700 },
+      tokens: { earned: 100, spent: 60, held: 40 },
+      shop: [{ item: "frame_neon", sold: 1, tokens: 60 }],
+      reactions: [{ reaction: "fire", count: 1 }],
+    });
+    // 700 XP is level 5; the other two are still on 1.
+    expect(response.body.levels.slice(0, 2)).toEqual([
+      { label: "1 to 4", members: 2 },
+      { label: "5 to 9", members: 1 },
+    ]);
+    expect(response.body.topPlayers[0]).toMatchObject({ xp: 700, level: 5 });
   });
 });
 

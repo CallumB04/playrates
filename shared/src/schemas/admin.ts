@@ -32,6 +32,34 @@ export interface AdminSeriesPoint {
   activeWeek: number;
 }
 
+/** How progress is going, across every member: for balancing it. */
+export interface AdminProgress {
+  members: number;
+  xp: { total: number; average: number; lastWeek: number };
+  tokens: { held: number; earned: number; spent: number; gifted: number };
+  /** Members in each band of levels, low to high. */
+  levels: { label: string; members: number }[];
+  topPlayers: {
+    username: string;
+    avatarUrl: string | null;
+    accent: ProfileAccent;
+    level: number;
+    xp: number;
+  }[];
+  /** The last 30 days, most XP first. */
+  xpBySource: { source: string; xp: number; events: number }[];
+  /** Holders of each badge at each metal. */
+  badges: { badge: string; metal: number; holders: number }[];
+  /** Bought or gifted, most tokens first. */
+  shop: { item: string; sold: number; tokens: number }[];
+  reactions: { reaction: string; count: number }[];
+  tasks: { thisWeek: number; thisMonth: number };
+  referrals: { joined: number; active: number };
+  setupDone: number;
+  /** Members from before progress still to see their reveal. */
+  revealWaiting: number;
+}
+
 export interface AdminTotals {
   users: number;
   onboarded: number;

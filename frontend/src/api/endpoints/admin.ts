@@ -21,9 +21,13 @@ import type {
     Paginated,
     IgdbUsage,
     ServerErrorEntry,
+    AdminProgress,
 } from "@playrates/shared";
 import { api } from "../client";
 import { compactParams } from "./games";
+
+export const fetchAdminProgress = async (): Promise<AdminProgress> =>
+    (await api.get<AdminProgress>("/admin/progress")).data;
 
 export const fetchAdminOverview = async (
     range: AdminRange

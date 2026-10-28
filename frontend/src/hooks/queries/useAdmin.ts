@@ -20,6 +20,7 @@ import {
     fetchAdminHealth,
     fetchAdminMetric,
     fetchAdminOverview,
+    fetchAdminProgress,
     fetchAdminUser,
     fetchAdminUsers,
     fetchAdminReports,
@@ -45,6 +46,12 @@ import {
 
 /* Every hook here is only mounted inside the admin area, which is only
    rendered for the admin; the API refuses anyone else regardless. */
+
+export const useAdminProgress = () =>
+    useQuery({
+        queryKey: queryKeys.admin.progress,
+        queryFn: fetchAdminProgress,
+    });
 
 export const useAdminOverview = (range: AdminRange) =>
     useQuery({

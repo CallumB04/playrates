@@ -216,6 +216,10 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
 
   // Health ------------------------------------------------------------------
 
+  router.get("/progress", async (_req, res) => {
+    res.json(await service.progress());
+  });
+
   router.get("/health", async (_req, res) => {
     res.json(await service.health());
   });

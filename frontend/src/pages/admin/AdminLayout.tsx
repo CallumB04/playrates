@@ -13,6 +13,7 @@ const ADMIN_GROUPS = [
         { to: "/admin/overview", label: "Overview" },
         { to: "/admin/activity", label: "Activity" },
         { to: "/admin/health", label: "Health" },
+        { to: "/admin/progress", label: "Progress" },
     ],
     [
         { to: "/admin/users", label: "Users" },
