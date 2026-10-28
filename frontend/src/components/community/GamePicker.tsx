@@ -1,4 +1,10 @@
-import { useId, useRef, useState, type KeyboardEvent } from "react";
+import {
+    useId,
+    useRef,
+    useState,
+    type KeyboardEvent,
+    type ReactNode,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, X } from "lucide-react";
 import { queryKeys, searchGames } from "../../api";
@@ -26,9 +32,16 @@ interface GamePickerProps {
     "aria-invalid"?: true;
     /** What the empty box says it's for. */
     placeholder?: string;
+    /** Something to say on a game's row: where you've logged it, say. The
+     *  games it says something about rise to the top. */
+    markFor?: (gameId: number) => ReactNode;
 }
 
 const RESULTS = 6;
+/* With marks to rise, a wider search to rise from: a game you've logged
+   can sit a way down a search for a common word. */
+const MARKED_SEARCH = 24;
+const MARKED_RESULTS = 8;
 
 /**
  * Choose the game a thread is about. Once chosen it shows as the game, not a
@@ -39,6 +52,7 @@ const GamePicker = ({
     value,
     onChange,
     placeholder = "Search for a game",
+    markFor,
     ...a11y
 }: GamePickerProps) => {
     const listId = useId();
@@ -51,13 +65,20 @@ const GamePicker = ({
     const debounced = useDebouncedValue(term.trim(), 250);
     const hasTerm = debounced.length >= 2;
 
+    const fetched = markFor ? MARKED_SEARCH : RESULTS;
     const { data, isFetching } = useQuery({
-        queryKey: queryKeys.games.pick(debounced),
-        queryFn: () => searchGames(debounced, RESULTS),
+        queryKey: queryKeys.games.pick(debounced, fetched),
+        queryFn: () => searchGames(debounced, fetched),
         enabled: hasTerm && !value,
         staleTime: 30_000,
     });
-    const results = hasTerm ? (data?.data ?? []).slice(0, RESULTS) : [];
+    const found = hasTerm ? (data?.data ?? []) : [];
+    const results = markFor
+        ? [
+              ...found.filter((game) => markFor(game.id)),
+              ...found.filter((game) => !markFor(game.id)),
+          ].slice(0, MARKED_RESULTS)
+        : found.slice(0, RESULTS);
 
     useDismiss([wrapRef], () => setOpen(false), { enabled: open });
 
@@ -193,6 +214,7 @@ const GamePicker = ({
                                 <span className="min-w-0 flex-1 truncate">
                                     {game.title}
                                 </span>
+                                {markFor?.(game.id)}
                                 <span className="shrink-0 font-mono text-label-sm text-content-muted">
                                     {releaseYear(game.releaseDate)}
                                 </span>

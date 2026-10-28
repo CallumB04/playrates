@@ -14,6 +14,9 @@ import {
     useSetListGames,
 } from "../../hooks/queries/useLists";
 import { usePlatforms } from "../../hooks/queries/useGames";
+import { useMyGameLogIds } from "../../hooks/queries/useGameLogs";
+import StatusBadge from "../../components/ui/StatusBadge";
+import { displayStatusFor } from "../../constants/gameStatus";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import Button from "../../components/ui/Button";
 import ConfirmPopup from "../../components/ui/ConfirmPopup";
@@ -95,20 +98,10 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
                     />
                 )}
                 <div className="relative flex gap-4 p-4 sm:gap-6 sm:p-6">
-                    {/* Matted in its colour, where it has one: a wash over
-                        the header muddied it, light mode worst. */}
-                    <div
-                        className={cn(
-                            "shrink-0 self-start rounded-md",
-                            colour ? "p-1 shadow-plate" : "shadow-plate"
-                        )}
-                        style={colour ? { backgroundImage: colour } : undefined}
-                    >
-                        <CoverGrid
-                            covers={list.covers}
-                            className="w-24 sm:w-36"
-                        />
-                    </div>
+                    <CoverGrid
+                        covers={list.covers}
+                        className="w-24 shrink-0 self-start shadow-plate sm:w-36"
+                    />
                     <div className="flex min-w-0 flex-1 flex-col">
                         <p className="flex flex-wrap items-center gap-2 text-label-sm text-content-muted">
                             <span>{list.ranked ? "Ranked list" : "List"}</span>
@@ -249,6 +242,10 @@ const AddGames = ({ list }: { list: GameListDetail }) => {
     const add = useAddToList(list.id);
     const fieldId = useId();
     const inList = new Set(list.games.map((e) => e.game.id));
+    // Your own games first: a list is usually of things you've played.
+    const { data: myLogs } = useMyGameLogIds();
+    const logOf = (gameId: number) =>
+        myLogs?.find((log) => log.gameId === gameId);
 
     return (
         <section className="rounded-lg border border-dashed border-strong bg-surface-sunken/40 p-3 sm:p-4">
@@ -263,6 +260,19 @@ const AddGames = ({ list }: { list: GameListDetail }) => {
                 id={fieldId}
                 value={null}
                 placeholder="Search for a game to add"
+                markFor={(id) => {
+                    const log = logOf(id);
+                    return log ? (
+                        <StatusBadge
+                            status={displayStatusFor(
+                                log.status,
+                                log.playedStatus
+                            )}
+                            size="stamp"
+                            className="shrink-0"
+                        />
+                    ) : null;
+                }}
                 onChange={(game) => {
                     if (!game) return;
                     if (inList.has(game.id)) {
@@ -299,10 +309,7 @@ const ListGames = ({
     const notify = useNotify();
     const setGames = useSetListGames(list.id);
     const { data: platforms } = usePlatforms();
-    const { actionsFor: tileActionsFor, statusFor } = useTileActions();
-    // Not "Add to list" here: it's what the page is already for.
-    const actionsFor = (game: GameListEntry["game"]) =>
-        tileActionsFor(game).filter((a) => a.key !== "list");
+    const { actionsFor, statusFor } = useTileActions();
     const order = list.games.map((e) => e.game.id);
 
     const removeGame = (gameId: number) =>

@@ -17,7 +17,8 @@ export const queryKeys = {
         search: (term: string) => ["games", "search", term] as const,
         /* Its own key: the masthead search asks for three, and sharing a
            key would hand the picker that short list. */
-        pick: (term: string) => ["games", "search", term, "pick"] as const,
+        pick: (term: string, limit?: number) =>
+            ["games", "search", term, "pick", limit ?? null] as const,
         /** The library's reach past the catalogue on an empty search. */
         reach: (term: string) => ["games", "search", term, "library"] as const,
     },

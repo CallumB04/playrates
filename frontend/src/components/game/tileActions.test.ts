@@ -9,7 +9,6 @@ const handlers = () => ({
     open: vi.fn(),
     view: vi.fn(),
     quickAdd: vi.fn(),
-    addToList: vi.fn(),
 });
 
 const logged = (platforms: number): GameLogSummary =>
@@ -43,9 +42,9 @@ describe("tileActions", () => {
             { signedIn: true, log: undefined },
             on
         );
-        expect(keys(actions)).toEqual(["log", "list", "backlog", "wishlist"]);
+        expect(keys(actions)).toEqual(["log", "backlog", "wishlist"]);
 
-        actions[2]!.onSelect();
+        actions[1]!.onSelect();
         expect(on.quickAdd).toHaveBeenCalledWith(7, "Portal", "backlog");
         actions[0]!.onSelect();
         expect(on.open).toHaveBeenCalledWith(7);
@@ -59,26 +58,11 @@ describe("tileActions", () => {
             { signedIn: true, log: logged(1) },
             on
         );
-        expect(keys(actions)).toEqual(["view", "edit", "list"]);
+        expect(keys(actions)).toEqual(["view", "edit"]);
         expect(actions[0]!.label).toBe("View your log");
 
         actions[0]!.onSelect();
         expect(on.view).toHaveBeenCalledWith(7);
-    });
-
-    /* A row, not an icon: the icons shelve in one tap and show it done,
-       and this opens a choice instead. */
-    it("offers a list either way, as a row", () => {
-        const on = handlers();
-        const list = tileActions(
-            game,
-            { signedIn: true, log: undefined },
-            on
-        ).find((a) => a.key === "list")!;
-
-        expect(list.icon).toBeUndefined();
-        list.onSelect();
-        expect(on.addToList).toHaveBeenCalledWith(7);
     });
 
     it("says logs when the game is logged on more than one console", () => {

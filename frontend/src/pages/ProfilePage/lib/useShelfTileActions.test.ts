@@ -7,7 +7,7 @@ import { useShelfTileActions } from "./useShelfTileActions";
 const state = vi.hoisted(() => ({
     user: null as { id: string } | null,
     myLogIds: undefined as { gameId: number }[] | undefined,
-    flow: { view: vi.fn(), open: vi.fn(), addToList: vi.fn() },
+    flow: { view: vi.fn(), open: vi.fn() },
 }));
 
 vi.mock("../../../contexts/AuthContext", () => ({
@@ -45,7 +45,6 @@ describe("useShelfTileActions", () => {
         expect(actions.map((a) => [a.key, a.label])).toEqual([
             ["view", "View logs"],
             ["edit", "Edit logs"],
-            ["list", "Add to list"],
         ]);
         actions[1]!.onSelect();
         expect(state.flow.open).toHaveBeenCalledWith(1);
@@ -66,7 +65,6 @@ describe("useShelfTileActions", () => {
         expect(actions.map((a) => [a.key, a.label])).toEqual([
             ["view", "Their logs"],
             ["myLog", "My log"],
-            ["list", "Add to list"],
         ]);
         actions[1]!.onSelect();
         expect(state.flow.view).toHaveBeenCalledWith(7);

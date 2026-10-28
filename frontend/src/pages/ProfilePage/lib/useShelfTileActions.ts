@@ -59,11 +59,6 @@ export const useShelfTileActions = (username: string, isMyAccount: boolean) => {
                 onSelect: () => flow.open(gameId),
             });
         }
-        actions.push({
-            key: "list",
-            label: "Add to list",
-            onSelect: () => flow.addToList(gameId),
-        });
 
         return actions;
     };
