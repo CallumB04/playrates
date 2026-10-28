@@ -82,7 +82,6 @@
     --action-hover: var(--brand-hover);
     --action-active: var(--brand-active);
     --action-ink: var(--content-on-solid);
-    --action-mark: currentColor;
 
     /* Accent — Ember. Sparingly, for what should feel earned. */
     --accent: var(--ember-600);
@@ -226,16 +225,14 @@
     --brand-muted: var(--iris-700);
     --brand-subtle: color-mix(in srgb, var(--iris-500) 18%, transparent);
 
-    /* By night the brand fill lost its label: violet is mid-tone, so dark
-       ink on it and white ink on it both sit too close to it. The action
-       goes near-white with dark ink instead, the brightest thing on the
-       page, and the brand moves into its icon and its glow. */
-    --action: var(--ink-50);
-    --action-edge: var(--ink-200);
-    --action-hover: #ffffff;
-    --action-active: var(--ink-200);
-    --action-ink: var(--ink-950);
-    --action-mark: var(--iris-600);
+    /* By night the action keeps the day's deeper violet rather than the
+       night brand: white ink holds on it, where the lighter iris-500 sat
+       too close to both white and dark. Icon and label share the ink. */
+    --action: var(--iris-600);
+    --action-edge: var(--iris-700);
+    --action-hover: var(--iris-500);
+    --action-active: var(--iris-700);
+    --action-ink: #ffffff;
 
     --accent: var(--ember-400);
     --accent-quiet: color-mix(in srgb, var(--ember-500) 18%, transparent);
@@ -559,7 +556,6 @@
     --color-action-hover: var(--action-hover);
     --color-action-active: var(--action-active);
     --color-action-ink: var(--action-ink);
-    --color-action-mark: var(--action-mark);
 
     --color-accent: var(--accent);
     --color-accent-quiet: var(--accent-quiet);

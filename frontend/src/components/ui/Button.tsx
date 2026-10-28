@@ -22,7 +22,7 @@ const SIZES = {
  */
 const VARIANTS = {
     primary:
-        "font-semibold text-action-ink bg-action border-action-edge shadow-solid [&_svg]:text-action-mark " +
+        "font-semibold text-action-ink bg-action border-action-edge shadow-solid " +
         "hover:-translate-y-px hover:bg-action-hover hover:shadow-glow " +
         "active:translate-y-0 active:bg-action-active active:shadow-none " +
         "disabled:bg-surface-sunken disabled:text-content-muted disabled:border-subtle disabled:shadow-none " +

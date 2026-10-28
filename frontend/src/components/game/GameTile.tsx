@@ -84,7 +84,7 @@ interface GameTileProps {
 
 const ACTION_TONE = {
     primary:
-        "bg-action text-action-ink border-action-edge hover:bg-action-hover active:bg-action-active [&_svg]:text-action-mark",
+        "bg-action text-action-ink border-action-edge hover:bg-action-hover active:bg-action-active",
     /* No rule: an outline over box art read as a sticker. The scrim alone
        parts it from the art. */
     secondary:
