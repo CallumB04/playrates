@@ -32,9 +32,9 @@ export const Rank = ({ place }: { place: number }) => (
     </span>
 );
 
-const GRID = "grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3";
+const GRID = "grid grid-cols-3 gap-2 sm:grid-cols-6 sm:gap-3";
 
-/** Up to five covers, in the order their owner put them. */
+/** Up to six covers, in the order their owner put them. */
 const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {
     const { data: games, isLoading } = useUserFavourites(username, canSee);
     const { data: platforms } = usePlatforms();

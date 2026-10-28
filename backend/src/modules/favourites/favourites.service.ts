@@ -30,7 +30,7 @@ export const createFavouritesService = (
       .map(toGame);
   },
 
-  /** Up to five, from anywhere in the catalogue, logged or not. */
+  /** Up to six, from anywhere in the catalogue, logged or not. */
   async setOwn(userId: string, gameIds: number[]): Promise<Game[]> {
     const rows =
       gameIds.length > 0

@@ -21,7 +21,7 @@ interface FavouritesEditorProps {
     onClose: () => void;
 }
 
-/** Choose up to five, from anywhere in the catalogue, and put them in order. */
+/** Choose up to six, from anywhere in the catalogue, and put them in order. */
 const FavouritesEditor = ({ current, onClose }: FavouritesEditorProps) => {
     const notify = useNotify();
     const save = useSetFavourites();
@@ -65,7 +65,7 @@ const FavouritesEditor = ({ current, onClose }: FavouritesEditorProps) => {
                 Favourite games
             </h2>
             <p className="mt-1 text-body-sm text-content-secondary">
-                Up to five, shown in this order on your profile.
+                Up to six, shown in this order on your profile.
             </p>
 
             {games.length > 0 && (
@@ -133,7 +133,7 @@ const FavouritesEditor = ({ current, onClose }: FavouritesEditorProps) => {
             <div className="mt-4">
                 {full ? (
                     <p className="text-label text-content-muted">
-                        That’s five. Remove one to add another.
+                        That’s six. Remove one to add another.
                     </p>
                 ) : (
                     <GamePicker value={null} onChange={add} />

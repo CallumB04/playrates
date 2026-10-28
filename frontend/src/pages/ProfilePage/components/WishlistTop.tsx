@@ -12,8 +12,8 @@ import { cn } from "../../../lib/cn";
 import { podiumOnPhone } from "../lib/about";
 import { Rank } from "./FavouriteGames";
 
-const TOP = 5;
-const GRID = "grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3";
+const TOP = 6;
+const GRID = "grid grid-cols-3 gap-2 sm:grid-cols-6 sm:gap-3";
 
 interface WishlistTopProps {
     username: string;
@@ -21,7 +21,7 @@ interface WishlistTopProps {
     canSee: boolean;
 }
 
-/** The first five on someone's wishlist, in their order. */
+/** The first six on someone's wishlist, in their order. */
 const WishlistTop = ({ username, isMyAccount, canSee }: WishlistTopProps) => {
     const { data, isLoading } = useUserWishlist(
         username,
@@ -86,7 +86,7 @@ const WishlistTop = ({ username, isMyAccount, canSee }: WishlistTopProps) => {
                             </li>
                         ))}
                     </ol>
-                    {/* Even under five: the whole list is where it's ordered. */}
+                    {/* Even under six: the whole list is where it's ordered. */}
                     <Link
                         to={shelfPath(username, "wishlist")}
                         className={panelButtonClass(

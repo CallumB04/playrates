@@ -51,7 +51,7 @@ const render = (isMyAccount: boolean) =>
     );
 
 describe("WishlistTop", () => {
-    it("shows the first five in order, and the way to the rest", async () => {
+    it("shows the first six in order, and the way to the rest", async () => {
         wished = [7, 3, 9, 1, 4, 2, 8];
         render(false);
 
@@ -60,17 +60,17 @@ describe("WishlistTop", () => {
             "href",
             "/user/devuser/games?type=wishlist"
         );
-        expect(asked).toBe("5");
+        expect(asked).toBe("6");
         expect(
             screen.getAllByText(/^#\d$/).map((el) => el.textContent)
-        ).toEqual(["#1", "#2", "#3", "#4", "#5"]);
+        ).toEqual(["#1", "#2", "#3", "#4", "#5", "#6"]);
     });
 
     it("says nothing on someone else's profile with nothing wished for", async () => {
         wished = [];
         const { container } = render(false);
 
-        await waitFor(() => expect(asked).toBe("5"));
+        await waitFor(() => expect(asked).toBe("6"));
         await waitFor(() => expect(container).toBeEmptyDOMElement());
     });
 

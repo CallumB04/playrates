@@ -3,7 +3,7 @@ import request from "supertest";
 import { authHeader, buildTestApp, USER_A } from "../helpers/buildTestApp.js";
 import { baseSeed, buildGame } from "../helpers/fixtures.js";
 
-const games = Array.from({ length: 6 }, (_, i) =>
+const games = Array.from({ length: 7 }, (_, i) =>
   buildGame({ id: i + 1, slug: `game-${i + 1}`, title: `Game ${i + 1}` }),
 );
 
@@ -17,7 +17,7 @@ const put = (app: ReturnType<typeof setup>, gameIds: number[]) =>
     .send({ gameIds });
 
 describe("favourite games", () => {
-  it("keeps up to five, in the order given, and shows them on the profile", async () => {
+  it("keeps up to six, in the order given, and shows them on the profile", async () => {
     const app = setup();
 
     const saved = await put(app, [3, 1, 5]);
@@ -45,9 +45,9 @@ describe("favourite games", () => {
     ).toEqual([]);
   });
 
-  it("refuses six, or a game twice", async () => {
+  it("refuses seven, or a game twice", async () => {
     const app = setup();
-    expect((await put(app, [1, 2, 3, 4, 5, 6])).status).toBe(422);
+    expect((await put(app, [1, 2, 3, 4, 5, 6, 7])).status).toBe(422);
     expect((await put(app, [1, 1])).status).toBe(422);
   });
 

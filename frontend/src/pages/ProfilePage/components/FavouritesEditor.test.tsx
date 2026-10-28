@@ -63,12 +63,12 @@ describe("FavouritesEditor", () => {
         ).toBeDisabled();
     });
 
-    it("stops offering more at five", () => {
+    it("stops offering more at six", () => {
         setup(
-            [1, 2, 3, 4, 5].map((id) =>
+            [1, 2, 3, 4, 5, 6].map((id) =>
                 buildGame({ id, title: `Game ${id}`, slug: `game-${id}` })
             )
         );
-        expect(screen.getByText(/That’s five/)).toBeInTheDocument();
+        expect(screen.getByText(/That’s six/)).toBeInTheDocument();
     });
 });

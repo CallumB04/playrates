@@ -114,8 +114,8 @@ export const AboutFieldsSchema = z.object({
   ),
 });
 
-/** Favourite games: up to five, in order, each once. */
-export const MAX_FAVOURITE_GAMES = 5;
+/** Favourite games: up to six, in order, each once. */
+export const MAX_FAVOURITE_GAMES = 6;
 
 export const SetFavouriteGamesSchema = z
   .object({
