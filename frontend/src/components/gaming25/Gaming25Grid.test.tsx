@@ -15,7 +15,7 @@ const picks: Gaming25Pick[] = [
 ];
 
 describe("Gaming25Grid", () => {
-    it("lays out all 25, the all-time favourite in the middle", () => {
+    it("lays out all 25, the favourite game in the middle", () => {
         renderWithProviders(<Gaming25Grid picks={picks} />);
         const cells = within(
             screen.getByRole("list", { name: "Gaming 25" })
@@ -23,7 +23,7 @@ describe("Gaming25Grid", () => {
 
         expect(cells).toHaveLength(25);
         expect(cells[12]).toHaveAttribute("data-centre");
-        expect(cells[12]).toHaveTextContent("All-Time Favourite");
+        expect(cells[12]).toHaveTextContent("Favourite Game");
     });
 
     it("links a visitor to each game, leaving the empty cells quiet", () => {
@@ -46,7 +46,7 @@ describe("Gaming25Grid", () => {
         );
         await userEvent.click(
             screen.getByRole("button", {
-                name: "All-Time Favourite: Outer Wilds",
+                name: "Favourite Game: Outer Wilds",
             })
         );
         expect(onPick.mock.calls).toEqual([

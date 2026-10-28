@@ -87,8 +87,7 @@ const Gaming25PickSheet = ({
                 {gaming25Label(current)}
             </h2>
 
-            {/* Room below the field for its results to open into. */}
-            <div className="mt-4 flex min-h-80 flex-col gap-3">
+            <div className="mt-4 flex flex-col gap-3">
                 {picked && (
                     <div className="flex items-center gap-3 rounded-sm bg-surface-sunken p-2">
                         <GameCover
@@ -119,6 +118,7 @@ const Gaming25PickSheet = ({
                     key={current}
                     id={fieldId}
                     autoFocus
+                    inlineResults
                     value={null}
                     placeholder={
                         picked

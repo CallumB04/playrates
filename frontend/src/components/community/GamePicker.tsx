@@ -36,6 +36,9 @@ interface GamePickerProps {
      *  games it says something about rise to the top. */
     markFor?: (gameId: number) => ReactNode;
     autoFocus?: boolean;
+    /** Results in the flow rather than over what's below, for a popup that
+     *  would otherwise have to keep empty room for them. */
+    inlineResults?: boolean;
 }
 
 const RESULTS = 6;
@@ -55,6 +58,7 @@ const GamePicker = ({
     placeholder = "Search for a game",
     markFor,
     autoFocus,
+    inlineResults = false,
     ...a11y
 }: GamePickerProps) => {
     const listId = useId();
@@ -146,42 +150,51 @@ const GamePicker = ({
 
     return (
         <div ref={wrapRef} className="relative">
-            <Search
-                size={15}
-                aria-hidden
-                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-content-muted"
-            />
-            <SearchInput
-                ref={inputRef}
-                {...a11y}
-                autoFocus={autoFocus}
-                role="combobox"
-                aria-expanded={showList}
-                aria-controls={listId}
-                aria-autocomplete="list"
-                aria-activedescendant={
-                    showList && results[active]
-                        ? `${listId}-${results[active].id}`
-                        : undefined
-                }
-                autoComplete="off"
-                placeholder={placeholder}
-                value={term}
-                onChange={(event) => {
-                    setTerm(event.target.value);
-                    setActive(0);
-                    setOpen(true);
-                }}
-                onFocus={() => setOpen(true)}
-                onKeyDown={onKeyDown}
-            />
+            {/* The field in a box of its own, so the icon centres on it and
+                not on the results when they open below in the flow. */}
+            <div className="relative">
+                <Search
+                    size={15}
+                    aria-hidden
+                    className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-content-muted"
+                />
+                <SearchInput
+                    ref={inputRef}
+                    {...a11y}
+                    autoFocus={autoFocus}
+                    role="combobox"
+                    aria-expanded={showList}
+                    aria-controls={listId}
+                    aria-autocomplete="list"
+                    aria-activedescendant={
+                        showList && results[active]
+                            ? `${listId}-${results[active].id}`
+                            : undefined
+                    }
+                    autoComplete="off"
+                    placeholder={placeholder}
+                    value={term}
+                    onChange={(event) => {
+                        setTerm(event.target.value);
+                        setActive(0);
+                        setOpen(true);
+                    }}
+                    onFocus={() => setOpen(true)}
+                    onKeyDown={onKeyDown}
+                />
+            </div>
 
             {showList && (
                 <ul
                     id={listId}
                     role="listbox"
                     aria-label="Games"
-                    className="absolute inset-x-0 top-full z-20 mt-1.5 max-h-80 overflow-y-auto rounded-md border border-subtle bg-surface-overlay p-1 shadow-lifted"
+                    className={cn(
+                        "mt-1.5 max-h-80 overflow-y-auto rounded-md border border-subtle bg-surface-overlay p-1",
+                        inlineResults
+                            ? "max-h-[45dvh]"
+                            : "absolute inset-x-0 top-full z-20 shadow-lifted"
+                    )}
                 >
                     {results.length === 0 ? (
                         <li className="flex items-center gap-2 px-3 py-3 text-body-sm text-content-muted">

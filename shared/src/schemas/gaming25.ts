@@ -22,7 +22,7 @@ export const GAMING_25_CATEGORIES = [
 
   { key: "best_boss_fights", label: "Best Boss Fights" },
   { key: "biggest_letdown", label: "Biggest Letdown" },
-  { key: "all_time_favourite", label: "All-Time Favourite" },
+  { key: "all_time_favourite", label: "Favourite Game" },
   { key: "best_rpg", label: "Best RPG" },
   { key: "best_ending", label: "Best Ending" },
 
@@ -67,6 +67,17 @@ export const SetGaming25PickSchema = z
   .object({ gameId: z.number().int().positive() })
   .strict();
 
+/* Raised whenever the picture's design or wording changes. Its URL is
+   cached for good, so without this a grid nobody has touched would keep
+   its old picture. */
+const GAMING_25_IMAGE_REVISION = 2;
+
+/** The picture's version: what it's drawn from, and how it's drawn. */
+export const gaming25ImageVersion = (updatedAt: string | null): string =>
+  updatedAt
+    ? `${GAMING_25_IMAGE_REVISION}.${Date.parse(updatedAt)}`
+    : String(GAMING_25_IMAGE_REVISION);
+
 export const GAMING_25_IMAGE_LAYOUTS = ["portrait", "wide"] as const;
 export type Gaming25ImageLayout = (typeof GAMING_25_IMAGE_LAYOUTS)[number];
 
@@ -106,7 +117,7 @@ export interface Gaming25Summary {
   owner: Gaming25Owner;
   pickCount: number;
   loveCount: number;
-  /** The All-Time Favourite, when there is one. */
+  /** The Favourite Game, when there is one. */
   centre: { id: number; title: string; coverUrl: string | null } | null;
   updatedAt: string;
 }

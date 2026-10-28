@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Share2, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Grid3x3, Share2 } from "lucide-react";
 import {
     GAMING_25_SIZE,
     type Gaming25,
@@ -72,6 +72,13 @@ const LoadedGaming25 = ({ grid }: { grid: Gaming25 }) => {
 
     return (
         <div className="flex flex-col gap-4 sm:gap-6">
+            <Link
+                to={profilePath(username)}
+                className="-mb-1 inline-flex min-h-11 w-max items-center gap-1.5 text-label font-medium text-content-secondary hover:text-content sm:-mb-2 sm:min-h-0"
+            >
+                <ArrowLeft size={15} aria-hidden />
+                {isOwner ? "Your profile" : `${username}’s profile`}
+            </Link>
             <header
                 className={cardClass(
                     "flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-6",
@@ -105,7 +112,7 @@ const LoadedGaming25 = ({ grid }: { grid: Gaming25 }) => {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-3">
                     <LoveButton
                         count={grid.loveCount}
                         loved={grid.lovedByViewer}
@@ -128,9 +135,8 @@ const LoadedGaming25 = ({ grid }: { grid: Gaming25 }) => {
 
             {isOwner && empty && (
                 <p className="rounded-lg border border-dashed border-strong bg-surface-sunken/40 p-3 text-body-sm text-content-secondary sm:p-4">
-                    Pick a game for each of the 25. Start anywhere — the middle
-                    is your all-time favourite — and each pick takes you on to
-                    the next.
+                    Pick a game for each category. Start anywhere and each pick
+                    takes you on to the next.
                 </p>
             )}
 
@@ -202,7 +208,12 @@ const MakeYourOwn = ({
     onSignup: () => void;
 }) => (
     <section className="flex flex-col items-start gap-3 rounded-lg border border-brand/30 bg-brand-subtle p-4 sm:flex-row sm:items-center sm:p-5">
-        <Sparkles size={20} aria-hidden className="shrink-0 text-brand" />
+        <span
+            aria-hidden
+            className="grid size-10 shrink-0 place-items-center rounded-md bg-surface-raised text-brand shadow-lip"
+        >
+            <Grid3x3 size={20} />
+        </span>
         <div className="min-w-0 flex-1">
             <h2 className="font-display text-base font-semibold text-content">
                 What would yours be?
@@ -217,6 +228,7 @@ const MakeYourOwn = ({
                 className={buttonClass("primary", "w-full sm:w-auto", "touch")}
             >
                 Make your Gaming 25
+                <ArrowRight size={16} aria-hidden />
             </Link>
         ) : (
             <Button
@@ -225,6 +237,7 @@ const MakeYourOwn = ({
                 className="w-full sm:w-auto"
             >
                 Sign up and make yours
+                <ArrowRight size={16} aria-hidden />
             </Button>
         )}
     </section>

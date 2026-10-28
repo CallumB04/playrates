@@ -10,7 +10,7 @@ describe("gridCells", () => {
         expect(cells).toHaveLength(25);
         expect(cells[12]).toMatchObject({
             category: "all_time_favourite",
-            label: "All-Time Favourite",
+            label: "Favourite Game",
             game: "F",
             centre: true,
         });

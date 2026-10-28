@@ -1,13 +1,16 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Heart, Sparkles } from "lucide-react";
-import { GAMING_25_CENTRE, GAMING_25_SIZE } from "@playrates/shared";
-import Panel from "../ui/Panel";
-import { buttonClass } from "../ui/Button";
+import { ArrowRight, Crown, Heart, Plus } from "lucide-react";
+import {
+    GAMING_25_CENTRE,
+    GAMING_25_SIZE,
+    type Gaming25Pick,
+} from "@playrates/shared";
 import { Skeleton } from "../ui/Skeleton";
+import GameCover from "../game/GameCover";
 import { useGaming25 } from "../../hooks/queries/useGaming25";
 import { formatCount } from "../../lib/format";
 import { gaming25Path } from "../../lib/profilePaths";
-import Gaming25Grid from "./Gaming25Grid";
+import { cn } from "../../lib/cn";
 
 interface Gaming25PreviewProps {
     username: string;
@@ -15,10 +18,90 @@ interface Gaming25PreviewProps {
     isOwner: boolean;
 }
 
+const CARD =
+    "group relative flex items-center gap-4 overflow-hidden rounded-lg border border-brand/30 p-4 shadow-plate lift " +
+    "bg-linear-to-br from-brand-subtle via-surface-raised to-medal-gold/10 " +
+    "hover:-translate-y-px hover:border-brand/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+
+/* The back two lean out from behind the front one, a hand of cards. */
+const BEHIND = ["left-1 top-3 -rotate-12", "right-1 top-3 rotate-12"] as const;
+
+/** Three covers fanned, the favourite game in front; dashed outlines with
+ *  a plus where there's nothing picked yet. */
+const Fan = ({
+    front,
+    behind,
+}: {
+    front: Gaming25Pick | null;
+    behind: (Gaming25Pick | null)[];
+}) => (
+    <span aria-hidden className="relative h-24 w-28 shrink-0">
+        {BEHIND.map((place, i) => {
+            const pick = behind[i];
+            return (
+                <span
+                    key={place}
+                    className={cn(
+                        "absolute w-13 overflow-hidden rounded-xs shadow-plate transition-transform duration-200",
+                        place,
+                        i === 0
+                            ? "group-hover:-translate-x-0.5 group-hover:-rotate-15"
+                            : "group-hover:translate-x-0.5 group-hover:rotate-15"
+                    )}
+                >
+                    {pick ? (
+                        <GameCover
+                            coverUrl={pick.game.coverUrl}
+                            title=""
+                            className="aspect-3/4 w-full opacity-80"
+                        />
+                    ) : (
+                        <span className="block aspect-3/4 w-full rounded-xs border border-dashed border-strong bg-surface-raised" />
+                    )}
+                </span>
+            );
+        })}
+        <span className="absolute top-0 left-1/2 z-10 w-15 -translate-x-1/2">
+            {front ? (
+                <GameCover
+                    coverUrl={front.game.coverUrl}
+                    title=""
+                    className={cn(
+                        "aspect-3/4 w-full rounded-xs shadow-lifted",
+                        front.category === GAMING_25_CENTRE &&
+                            "ring-2 ring-medal-gold"
+                    )}
+                />
+            ) : (
+                <span className="grid aspect-3/4 w-full place-items-center rounded-xs border border-dashed border-brand bg-surface-raised text-brand shadow-lifted">
+                    <Plus size={18} />
+                </span>
+            )}
+            {front?.category === GAMING_25_CENTRE && (
+                <span className="absolute -top-2 left-1/2 grid size-5 -translate-x-1/2 place-items-center rounded-full bg-medal-gold text-surface-raised shadow-plate">
+                    <Crown size={11} strokeWidth={2.5} />
+                </span>
+            )}
+        </span>
+    </span>
+);
+
+/** The card's heading, pointing on to the grid. */
+const Heading = ({ children }: { children: string }) => (
+    <span className="flex items-center gap-1.5 font-display text-lg leading-tight font-semibold text-content">
+        {children}
+        <ArrowRight
+            size={16}
+            aria-hidden
+            className="shrink-0 text-brand transition-transform group-hover:translate-x-0.5"
+        />
+    </span>
+);
+
 /**
- * Someone's Gaming 25 in small on their profile, the whole of it one way
- * into the full page. Their own, not yet begun, is an invitation instead;
- * a visitor sees nothing of one that hasn't been.
+ * Someone's Gaming 25 as one small card above their About, the whole of it
+ * the way into the grid. Their own, not yet begun, is an invitation; a
+ * visitor sees nothing of one that hasn't been.
  */
 const Gaming25Preview = ({
     username,
@@ -29,94 +112,62 @@ const Gaming25Preview = ({
     const path = gaming25Path(username);
 
     if (!canSee) return null;
-    if (isLoading) return <Skeleton className="h-56 rounded-lg" />;
-    const count = grid?.picks.length ?? 0;
+    if (isLoading) return <Skeleton className="h-32 rounded-lg" />;
+    const picks = grid?.picks ?? [];
 
-    if (count === 0) {
+    if (picks.length === 0) {
         if (!isOwner) return null;
         return (
-            <section className="flex flex-col items-start gap-3 rounded-lg border border-dashed border-brand/40 bg-brand-subtle p-4 sm:flex-row sm:items-center sm:p-5">
-                <Sparkles
-                    size={22}
-                    aria-hidden
-                    className="shrink-0 text-brand"
-                />
-                <div className="min-w-0 flex-1">
-                    <h2 className="font-display text-base font-semibold text-content">
-                        Make your Gaming 25
-                    </h2>
-                    <p className="text-body-sm text-content-secondary">
-                        25 categories, one game each. Then share it and see who
-                        agrees.
-                    </p>
-                </div>
-                <Link
-                    to={path}
-                    className={buttonClass(
-                        "primary",
-                        "w-full sm:w-auto",
-                        "touch"
-                    )}
-                >
-                    Start yours
-                </Link>
-            </section>
-        );
-    }
-
-    const centre = grid?.picks.find((p) => p.category === GAMING_25_CENTRE);
-
-    return (
-        <Panel
-            title="Gaming 25"
-            trailing={
-                <span
-                    className="inline-flex items-center gap-1 font-mono text-label-sm text-content-muted"
-                    aria-label={`${formatCount(grid?.loveCount ?? 0)} loves`}
-                >
-                    <Heart
-                        size={13}
-                        aria-hidden
-                        className="fill-love text-love"
-                    />
-                    {formatCount(grid?.loveCount ?? 0)}
-                </span>
-            }
-        >
-            <Link
-                to={path}
-                className="group flex flex-col gap-4 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand sm:flex-row sm:items-center"
-            >
-                <Gaming25Grid
-                    picks={grid?.picks ?? []}
-                    compact
-                    className="w-full max-w-64 self-center transition-transform group-hover:scale-[1.02] sm:w-56 sm:self-auto"
-                />
-                <span className="flex min-w-0 flex-1 flex-col gap-1">
-                    {centre && (
-                        <span className="text-body-sm text-content-secondary">
-                            All-time favourite:{" "}
-                            <span className="font-semibold text-content">
-                                {centre.game.title}
-                            </span>
-                        </span>
-                    )}
-                    <span className="font-mono text-label-sm text-content-muted">
-                        {count} of {GAMING_25_SIZE} picked
-                    </span>
-                    <span className="mt-2 inline-flex items-center gap-1.5 text-body-sm font-medium text-brand">
-                        {isOwner && count < GAMING_25_SIZE
-                            ? "Carry on with it"
-                            : "See it in full"}
-                        <ArrowRight
-                            size={14}
-                            aria-hidden
-                            className="transition-transform group-hover:translate-x-0.5"
-                        />
+            <Link to={path} className={CARD}>
+                <Fan front={null} behind={[null, null]} />
+                <span className="min-w-0 flex-1">
+                    <Heading>Make your Gaming 25</Heading>
+                    <span className="mt-0.5 block text-body-sm text-content-secondary">
+                        25 categories, one game each.
                     </span>
                 </span>
             </Link>
-        </Panel>
+        );
+    }
+
+    const favourite = picks.find((p) => p.category === GAMING_25_CENTRE);
+    const others = picks.filter((p) => p !== favourite);
+    const front = favourite ?? others.shift() ?? null;
+
+    return (
+        <Link to={path} aria-label={`${username}’s Gaming 25`} className={CARD}>
+            <Fan
+                front={front}
+                behind={[others[0] ?? null, others[1] ?? null]}
+            />
+            <span className="min-w-0 flex-1">
+                <Heading>Gaming 25</Heading>
+                {favourite && (
+                    <>
+                        <span className="mt-2 block text-label-sm font-semibold text-medal-gold">
+                            Favourite Game
+                        </span>
+                        <span className="block truncate text-body-sm text-content">
+                            {favourite.game.title}
+                        </span>
+                    </>
+                )}
+                <span className="mt-1.5 flex items-center gap-2 font-mono text-label-sm whitespace-nowrap text-content-muted">
+                    <span>
+                        {picks.length} of {GAMING_25_SIZE} picked
+                    </span>
+                    <span aria-hidden>·</span>
+                    <span className="inline-flex items-center gap-1">
+                        <Heart
+                            size={12}
+                            aria-hidden
+                            className="fill-love text-love"
+                        />
+                        {formatCount(grid?.loveCount ?? 0)}
+                    </span>
+                </span>
+            </span>
+        </Link>
     );
 };
 

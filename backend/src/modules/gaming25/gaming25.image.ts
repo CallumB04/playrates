@@ -14,7 +14,8 @@ import type { Gaming25Cells } from "./gaming25.service.js";
 // tokens; these match frontend/scripts/brand-assets.mjs.
 const INK = "#0f0e12";
 const CELL = "#1b1921";
-const WELL = "#141218";
+const GOLD = "#f2c94c";
+const GOLD_TINT = "#2a2517";
 const IRIS = "#6a44f0";
 const IRIS_LIGHT = "#8f74ff";
 const IRIS_DEEP = "#4a2bc4";
@@ -169,6 +170,27 @@ const mark = (size: number) =>
     ["PR", el("span", { color: EMBER }, ".")],
   );
 
+// Lucide's crown, the mark the page puts on the favourite game.
+const crown = (size: number) =>
+  el(
+    "svg",
+    { width: size, height: size },
+    [
+      el("path", {}, [], {
+        d: "M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z",
+      }),
+      el("path", {}, [], { d: "M5 21h14" }),
+    ],
+    {
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: INK,
+      strokeWidth: 2.5,
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+    },
+  );
+
 const cellNode = (
   g: Gaming25Geometry,
   label: string,
@@ -187,12 +209,12 @@ const cellNode = (
           height: g.cover.height,
         },
       )
-    : el("div", {
+    : // Hollow and dashed, as on the page, so it reads as empty.
+      el("div", {
         width: g.cover.width,
         height: g.cover.height,
         borderRadius: 6,
-        backgroundColor: WELL,
-        border: `2px solid ${centre ? IRIS : "#2a2731"}`,
+        border: `2px dashed ${centre ? GOLD : "#3a3644"}`,
       });
 
   if (!g.label) {
@@ -203,8 +225,7 @@ const cellNode = (
         height: g.cell.height,
         borderRadius: radius,
         overflow: "hidden",
-        border: centre ? `3px solid ${IRIS_LIGHT}` : "none",
-        boxShadow: centre ? `0 0 24px ${IRIS}` : "none",
+        border: centre ? `3px solid ${GOLD}` : "none",
       },
       [art],
     );
@@ -213,22 +234,24 @@ const cellNode = (
   return el(
     "div",
     {
+      position: "relative",
       width: g.cell.width,
       height: g.cell.height,
       flexDirection: "column",
       alignItems: "center",
       paddingTop: 8,
+      paddingBottom: 4,
       borderRadius: radius,
-      backgroundColor: centre ? "#241c44" : CELL,
-      border: `2px solid ${centre ? IRIS_LIGHT : CELL}`,
-      boxShadow: centre ? `0 0 32px rgba(106,68,240,0.55)` : "none",
+      backgroundColor: centre ? GOLD_TINT : CELL,
+      border: `2px solid ${centre ? GOLD : CELL}`,
     },
     [
       art,
+      // The rest of the cell, the label centred in it.
       el(
         "div",
         {
-          height: g.label,
+          flexGrow: 1,
           width: "100%",
           paddingLeft: 6,
           paddingRight: 6,
@@ -238,10 +261,29 @@ const cellNode = (
           fontSize: 17,
           lineHeight: 1.15,
           fontWeight: centre ? 800 : 700,
-          color: centre ? IRIS_LIGHT : TEXT,
+          color: centre ? GOLD : TEXT,
         },
         label,
       ),
+      ...(centre
+        ? [
+            el(
+              "div",
+              {
+                position: "absolute",
+                top: -15,
+                left: g.cell.width / 2 - 15,
+                width: 30,
+                height: 30,
+                borderRadius: 15,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: GOLD,
+              },
+              [crown(17)],
+            ),
+          ]
+        : []),
     ],
   );
 };

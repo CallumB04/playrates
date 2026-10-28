@@ -53,7 +53,7 @@ const MostLovedGaming25s = () => {
                                 </span>
                                 <span className="block truncate text-label-sm text-content-muted">
                                     {grid.centre
-                                        ? `All-time favourite: ${grid.centre.title}`
+                                        ? `Favourite game: ${grid.centre.title}`
                                         : `${grid.pickCount} of ${GAMING_25_SIZE} picked`}
                                 </span>
                             </span>

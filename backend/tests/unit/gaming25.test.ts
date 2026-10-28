@@ -12,7 +12,7 @@ import {
 import { inGridOrder } from "../../src/modules/gaming25/gaming25.mapper.js";
 
 describe("the categories", () => {
-  it("are 25, each once, with the all-time favourite in the middle", () => {
+  it("are 25, each once, with the favourite game in the middle", () => {
     const keys = GAMING_25_CATEGORIES.map((c) => c.key);
     expect(GAMING_25_SIZE).toBe(25);
     expect(new Set(keys).size).toBe(25);

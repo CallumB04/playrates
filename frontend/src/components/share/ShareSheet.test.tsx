@@ -26,10 +26,13 @@ describe("ShareSheet", () => {
 
         expect(screen.queryByRole("button", { name: /Share/ })).toBeNull();
         expect(
-            screen.getByRole("button", { name: "Download the picture" })
+            screen.getByRole("button", { name: "Download" })
         ).toBeInTheDocument();
         expect(
-            screen.getByRole("button", { name: "Copy the link" })
+            screen.getByRole("button", { name: "Copy" })
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("playrates.app/user/devuser/gaming-25")
         ).toBeInTheDocument();
         expect(screen.getByRole("link", { name: "X" })).toHaveAttribute(
             "target",

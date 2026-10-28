@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { formatCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
+import { buttonClass } from "./Button";
 
 interface LoveButtonProps {
     count: number;
@@ -16,8 +17,8 @@ interface LoveButtonProps {
 }
 
 /**
- * A love, for the things that are more than a vote. Bigger than VoteButton
- * and in its own warm colour, with a pop as it fills.
+ * A love, for the things that are more than a vote. Button-sized, to sit
+ * with the actions beside it, in its own warm colour, with a pop as it fills.
  *
  * Like VoteButton it answers the press at once rather than after the round
  * trip, and puts it back if the request fails.
@@ -58,28 +59,41 @@ const LoveButton = ({
                       : `Love it, with ${shownCount}`
             }
             title={disabledReason ?? undefined}
-            className={cn(
-                "inline-flex min-h-12 items-center gap-2 rounded-full border px-5 text-body-sm font-semibold transition-colors lift",
-                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-love",
-                shown
-                    ? "border-love bg-love-quiet text-love-content"
-                    : "border-strong bg-surface-raised text-content hover:border-love hover:text-love-content",
-                disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer",
-                className
+            className={buttonClass(
+                "bare",
+                cn(
+                    "gap-2.5 shadow-lip transition-colors",
+                    shown
+                        ? "border-love/60 bg-love-quiet text-love-content"
+                        : "border-subtle bg-surface-raised text-content",
+                    disabled
+                        ? "cursor-not-allowed"
+                        : "hover:-translate-y-px hover:shadow-plate active:translate-y-0 active:shadow-none",
+                    !disabled && !shown && "hover:bg-surface-hover",
+                    className
+                ),
+                "touch"
             )}
         >
             <Heart
                 key={popped}
-                size={20}
+                size={18}
                 aria-hidden
                 className={cn(
-                    "shrink-0",
-                    shown ? "fill-love text-love" : "text-love",
+                    "shrink-0 text-love",
+                    shown && "fill-love",
                     popped > 0 && shown && "animate-heart-pop"
                 )}
             />
-            <span>{shown ? "Loved" : "Love"}</span>
-            <span className="font-mono text-content-muted tabular-nums">
+            {shown ? "Loved" : "Love"}
+            <span
+                className={cn(
+                    "border-l pl-2.5 tabular-nums",
+                    shown
+                        ? "border-love/40 text-love-content"
+                        : "border-subtle text-content-secondary"
+                )}
+            >
                 {formatCount(shownCount)}
             </span>
         </button>

@@ -66,7 +66,12 @@ const ProfileView = ({
     return (
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
             {/* First on a phone: who someone is comes before what they like. */}
-            <div className="min-w-0 lg:order-2">
+            <div className="flex min-w-0 flex-col gap-4 lg:order-2 lg:gap-6">
+                <Gaming25Preview
+                    username={profile.username}
+                    canSee={canSee}
+                    isOwner={isOwner}
+                />
                 <ProfileAbout
                     profile={profile}
                     isOwner={isOwner}
@@ -74,11 +79,6 @@ const ProfileView = ({
                 />
             </div>
             <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
-                <Gaming25Preview
-                    username={profile.username}
-                    canSee={canSee}
-                    isOwner={isOwner}
-                />
                 <FavouriteGames
                     username={profile.username}
                     canSee={canSee}

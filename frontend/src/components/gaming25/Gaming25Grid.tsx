@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Crown, Plus } from "lucide-react";
 import type { Gaming25Category, Gaming25Pick } from "@playrates/shared";
 import { gridCells, type Gaming25Cell } from "../../lib/gaming25";
 import { cn } from "../../lib/cn";
@@ -9,8 +9,6 @@ interface Gaming25GridProps {
     picks: Gaming25Pick[];
     /** Its owner's grid: every cell a button that picks for it. */
     onPick?: (category: Gaming25Category) => void;
-    /** Covers only, for a preview the whole of which is one link. */
-    compact?: boolean;
     className?: string;
 }
 
@@ -27,50 +25,34 @@ const Cover = ({ cell, onPick }: { cell: Cell; onPick: boolean }) =>
             className="aspect-3/4 w-full rounded-xs"
         />
     ) : (
+        /* Dashed and hollow rather than a filled block, so an empty cell
+           can't be taken for a cover still loading. */
         <span
             className={cn(
-                "grid aspect-3/4 w-full place-items-center rounded-xs bg-surface-sunken",
-                onPick &&
-                    "border border-dashed border-strong text-content-muted group-hover/cell:border-brand group-hover/cell:text-brand"
+                "grid aspect-3/4 w-full place-items-center rounded-xs border border-dashed",
+                onPick
+                    ? "border-strong text-content-muted group-hover/cell:border-brand group-hover/cell:text-brand"
+                    : "border-strong text-content-muted"
             )}
         >
-            {onPick && <Plus size={18} aria-hidden />}
+            {onPick ? (
+                <span className="grid size-6 place-items-center rounded-full bg-surface-sunken sm:size-8">
+                    <Plus size={16} aria-hidden />
+                </span>
+            ) : (
+                <span className="px-1 text-center text-[9px] leading-tight sm:text-label-sm">
+                    No pick
+                </span>
+            )}
         </span>
     );
 
 /**
- * The 5×5, at every width, so it keeps its shape and the all-time favourite
+ * The 5×5, at every width, so it keeps its shape and the favourite game
  * stays in the middle. A phone gets small labels rather than fewer columns.
  */
-const Gaming25Grid = ({
-    picks,
-    onPick,
-    compact = false,
-    className,
-}: Gaming25GridProps) => {
+const Gaming25Grid = ({ picks, onPick, className }: Gaming25GridProps) => {
     const cells = gridCells(picks);
-
-    if (compact) {
-        return (
-            <div
-                aria-hidden
-                className={cn("grid grid-cols-5 gap-1", className)}
-            >
-                {cells.map((cell) => (
-                    <div
-                        key={cell.category}
-                        className={cn(
-                            "overflow-hidden rounded-xs",
-                            cell.centre &&
-                                "relative z-10 shadow-glow ring-2 ring-brand"
-                        )}
-                    >
-                        <Cover cell={cell} onPick={false} />
-                    </div>
-                ))}
-            </div>
-        );
-    }
 
     return (
         <ol
@@ -83,23 +65,36 @@ const Gaming25Grid = ({
                     : `${cell.label}: ${onPick ? "choose a game" : "not picked"}`;
                 const body = (
                     <>
+                        {cell.centre && (
+                            <span
+                                aria-hidden
+                                className="absolute -top-2.5 left-1/2 z-10 grid size-5 -translate-x-1/2 place-items-center rounded-full bg-medal-gold text-surface-raised shadow-plate sm:-top-3 sm:size-6"
+                            >
+                                <Crown size={12} strokeWidth={2.5} />
+                            </span>
+                        )}
                         <Cover cell={cell} onPick={!!onPick} />
+                        {/* Fills the cell under the cover and centres the
+                            label in it, so the space above and below it
+                            matches whatever the row's height. */}
                         <span
                             className={cn(
-                                /* The same lines held for every label, so the rows
-                                   line up: three on a phone's narrow cells. */
-                                "mt-1 line-clamp-3 min-h-[3lh] text-center text-[9.5px] leading-tight font-semibold tracking-tight hyphens-auto sm:mt-1.5 sm:line-clamp-2 sm:min-h-[2lh] sm:text-label-sm sm:tracking-normal",
-                                cell.centre ? "text-brand" : "text-content"
+                                "flex flex-1 items-center justify-center pt-1 pb-0.5 sm:px-1 sm:pt-1.5",
+                                cell.centre
+                                    ? "font-bold text-medal-gold"
+                                    : "font-semibold text-content"
                             )}
                         >
-                            {cell.label}
+                            <span className="line-clamp-3 text-center text-[9px] leading-tight tracking-tight hyphens-auto sm:line-clamp-2 sm:text-label-sm sm:tracking-normal">
+                                {cell.label}
+                            </span>
                         </span>
                     </>
                 );
                 const cellClass = cn(
-                    "group/cell flex h-full w-full flex-col rounded-sm border px-0.5 pt-0.5 pb-1 text-left sm:rounded-md sm:p-2",
+                    "group/cell relative flex h-full w-full flex-col rounded-sm border px-0.5 pt-0.5 pb-1 text-left sm:rounded-md sm:p-1.5",
                     cell.centre
-                        ? "relative z-10 scale-[1.05] border-brand bg-brand-subtle shadow-glow sm:scale-[1.08]"
+                        ? "border-medal-gold bg-medal-gold/10 ring-1 ring-medal-gold"
                         : "border-subtle bg-surface-raised"
                 );
 
@@ -115,7 +110,8 @@ const Gaming25Grid = ({
                                 aria-label={name}
                                 className={cn(
                                     cellClass,
-                                    "cursor-pointer lift hover:border-brand",
+                                    "cursor-pointer lift",
+                                    !cell.centre && "hover:border-brand",
                                     FOCUS
                                 )}
                             >
@@ -127,7 +123,8 @@ const Gaming25Grid = ({
                                 aria-label={name}
                                 className={cn(
                                     cellClass,
-                                    "lift hover:border-strong",
+                                    "lift",
+                                    !cell.centre && "hover:border-strong",
                                     FOCUS
                                 )}
                             >

@@ -5,6 +5,7 @@ import {
   GAMING_25_CENTRE,
   GAMING_25_SIZE,
   gameDescription,
+  gaming25ImageVersion,
   gaming25Label,
   gamePageName,
   pageTitle,
@@ -377,7 +378,7 @@ export const createPagesService = (repos: Repos) => {
         title: pageTitle(`${profile.username}'s Gaming 25`),
         description: truncateDescription(description),
         path,
-        image: `${SITE_ORIGIN}/api/v1/gaming-25/${encodeURIComponent(profile.username)}/image.png?layout=wide&v=${Date.parse(card.updated_at)}`,
+        image: `${SITE_ORIGIN}/api/v1/gaming-25/${encodeURIComponent(profile.username)}/image.png?layout=wide&v=${gaming25ImageVersion(card.updated_at)}`,
         card: "summary_large_image",
         type: "article",
       };

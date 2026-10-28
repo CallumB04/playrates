@@ -1,9 +1,10 @@
-import type {
-    Gaming25,
-    Gaming25Category,
-    Gaming25ImageLayout,
-    Gaming25Summary,
-    LoveResult,
+import {
+    gaming25ImageVersion,
+    type Gaming25,
+    type Gaming25Category,
+    type Gaming25ImageLayout,
+    type Gaming25Summary,
+    type LoveResult,
 } from "@playrates/shared";
 import { env } from "../../lib/env";
 import { api } from "../client";
@@ -60,7 +61,9 @@ export const gaming25ImageUrl = (
     updatedAt: string | null,
     layout: Gaming25ImageLayout = "portrait"
 ): string => {
-    const params = new URLSearchParams({ layout });
-    if (updatedAt) params.set("v", String(Date.parse(updatedAt)));
+    const params = new URLSearchParams({
+        layout,
+        v: gaming25ImageVersion(updatedAt),
+    });
     return `${env.apiBaseUrl}/api/v1/gaming-25/${encodeURIComponent(username)}/image.png?${params}`;
 };
