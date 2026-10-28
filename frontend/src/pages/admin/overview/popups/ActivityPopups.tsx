@@ -117,7 +117,7 @@ export const LogsPopup = ({ data, onClose }: PopupProps) => {
                             label="Rated"
                             value={
                                 logs.ratedShare === null
-                                    ? "—"
+                                    ? "–"
                                     : `${Math.round(logs.ratedShare * 100)}%`
                             }
                         />

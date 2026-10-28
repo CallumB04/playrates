@@ -26,7 +26,7 @@ const CriticScore = ({
     className?: string;
 }) =>
     score === null ? (
-        <span className={cn("font-mono text-figure-sm", className)}>—</span>
+        <span className={cn("font-mono text-figure-sm", className)}>–</span>
     ) : (
         <span
             className={cn(

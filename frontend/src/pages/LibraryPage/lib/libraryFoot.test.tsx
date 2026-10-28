@@ -57,7 +57,7 @@ describe("libraryFoot", () => {
         const none = shown(
             libraryFoot(game({ criticScore: null }), "critic").value
         );
-        expect(none).toHaveTextContent("—");
+        expect(none).toHaveTextContent("–");
         expect(none).not.toHaveClass("bg-danger-subtle");
     });
 

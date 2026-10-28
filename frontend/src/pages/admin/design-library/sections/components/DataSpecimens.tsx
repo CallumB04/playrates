@@ -99,8 +99,8 @@ const DataSpecimens = () => {
 
             <Specimen
                 title="Figures"
-                notes="Every number in the product is a ledger figure, set tabular. roll counts up over 320ms when the value changes and simply swaps under reduced motion — for a figure someone is watching change, like a library count ticking up during an import. figureClass gives the same type to a value that isn't a plain number."
-                meta='value · format · size="display" | "lg" | "row" | "label" · roll — figureClass(size, className)'
+                notes="Every number in the product is a ledger figure, set tabular. roll counts up over 320ms when the value changes and simply swaps under reduced motion. It's for a figure someone is watching change, like a library count ticking up during an import. figureClass gives the same type to a value that isn't a plain number."
+                meta='value · format · size="display" | "lg" | "row" | "label" · roll · figureClass(size, className)'
             >
                 <Figure value={count} size="display" roll />
                 <Figure value={1284} size="lg" />
@@ -117,7 +117,7 @@ const DataSpecimens = () => {
 
             <Specimen
                 title="Stat"
-                notes="A figure with its label under it — the game page's score cards, a profile's counts, your year on the home page all use this one. The optional mark above tells a row of them apart. While a figure is loading it holds its place: a figure nobody has fetched yet is not zero, and not an em dash either."
+                notes="A figure with its label under it. The game page's score cards, a profile's counts and your year on the home page all use this one. The optional mark above tells a row of them apart. While a figure is loading it holds its place: a figure nobody has fetched yet is not zero, and not a dash either."
                 meta="label · value (string or node) · icon · loading"
             >
                 <div className="grid w-full max-w-md grid-cols-3 gap-4">
@@ -147,7 +147,7 @@ const DataSpecimens = () => {
                 title="Ledger rows"
                 stack
                 notes="Label left, figure right, hairline between rows. The spacer is decorative, so a screen reader reads 'Status, Mastered' and nothing else."
-                meta="LedgerList + LedgerRow — label · value · rule · size"
+                meta="LedgerList + LedgerRow · label · value · rule · size"
             >
                 <LedgerList className="w-full max-w-sm">
                     <LedgerRow label="Status" value="Mastered" />
@@ -163,7 +163,7 @@ const DataSpecimens = () => {
 
             <Specimen
                 title="Platform badge"
-                notes="A platform named in full, with its mark — for where a platform is the subject rather than a detail of a game: which platforms someone plays on, or a platform picked as a filter. Names come from the /platforms query."
+                notes="A platform named in full, with its mark, for where a platform is the subject rather than a detail of a game: which platforms someone plays on, or a platform picked as a filter. Names come from the /platforms query."
                 meta='platform (slug) · size="xs" | "base"'
             >
                 {["steam", "playstation", "xbox", "nintendo-switch"].map(
@@ -239,7 +239,7 @@ const DataSpecimens = () => {
 
             <Specimen
                 title="User status"
-                notes="Presence said in words, for where there is room — the profile header. Offline is muted rather than red: being away is not an error, and it matches the dot on the same person's avatar."
+                notes="Presence said in words, for where there is room: the profile header. Offline is muted rather than red: being away is not an error, and it matches the dot on the same person's avatar."
                 meta='online · size="sm" | "md"'
             >
                 <UserStatus online />
@@ -249,7 +249,7 @@ const DataSpecimens = () => {
 
             <Specimen
                 title="Friend row"
-                notes="One row, two densities — the popup list and the profile rail use the same component."
+                notes="One row, two densities: the popup list and the profile rail use the same component."
                 meta='user · density="compact" | "comfortable"'
             >
                 <FriendProfile user={demoUser} density="comfortable" />

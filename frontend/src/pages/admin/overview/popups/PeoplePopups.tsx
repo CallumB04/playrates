@@ -117,7 +117,7 @@ export const TotalUsersPopup = ({ data, onClose }: PopupProps) => {
                     label="Growth"
                     value={
                         atStart === 0
-                            ? "—"
+                            ? "–"
                             : `+${Math.round(((totals.users - atStart) / atStart) * 100)}%`
                     }
                 />

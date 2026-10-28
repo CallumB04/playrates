@@ -40,10 +40,10 @@ const EffectTable = () => {
                         {effect.name}
                     </span>
                     <span className="hidden w-[150px] shrink-0 font-mono text-[10px] text-content-secondary sm:block">
-                        {values[effect.cssVar]?.light ?? "—"}
+                        {values[effect.cssVar]?.light ?? "–"}
                     </span>
                     <span className="hidden w-[150px] shrink-0 font-mono text-[10px] text-content-secondary sm:block">
-                        {values[effect.cssVar]?.dark ?? "—"}
+                        {values[effect.cssVar]?.dark ?? "–"}
                     </span>
                     <span className="min-w-0 flex-1 text-xs text-content-muted">
                         {effect.note}
@@ -64,7 +64,7 @@ const ColourSection = () => (
                 Components use the semantic names and nothing else. The raw
                 ramps are deliberately not exposed as utilities, so a component
                 cannot pin itself to one shade and break the other theme. Every
-                semantic row below shows both mappings at once — the values are
+                semantic row below shows both mappings at once. The values are
                 read back from probe elements, so the table reads the same
                 whichever theme you are browsing in.
             </p>
@@ -72,7 +72,7 @@ const ColourSection = () => (
 
         <section className="flex flex-col gap-6">
             <h2 className="border-b border-subtle pb-2 text-label text-content-muted">
-                Ramps — raw, not exposed
+                Ramps: raw, not exposed
             </h2>
             {RAMPS.map((ramp) => (
                 <RampRow key={ramp.name} ramp={ramp} />
@@ -81,7 +81,7 @@ const ColourSection = () => (
 
         <section className="flex flex-col gap-8">
             <h2 className="border-b border-subtle pb-2 text-label text-content-muted">
-                Semantic — one set, two mappings
+                Semantic: one set, two mappings
                 <span className="ml-3 tracking-normal text-content-muted normal-case">
                     light · dark
                 </span>

@@ -44,11 +44,11 @@ const SemanticTable = ({ group }: { group: SemanticGroup }) => {
                             </div>
                             <Chip value={value?.light ?? "transparent"} />
                             <span className="w-[68px] shrink-0 font-mono text-[10px] text-content-secondary">
-                                {value?.light ?? "—"}
+                                {value?.light ?? "–"}
                             </span>
                             <Chip value={value?.dark ?? "transparent"} />
                             <span className="w-[68px] shrink-0 font-mono text-[10px] text-content-secondary">
-                                {value?.dark ?? "—"}
+                                {value?.dark ?? "–"}
                             </span>
                         </div>
                     );

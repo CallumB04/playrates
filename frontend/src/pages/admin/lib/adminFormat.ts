@@ -32,4 +32,4 @@ export const RANGE_LABELS = {
 
 /** 0.4567 → "46%". With nothing to divide it reads as a dash. */
 export const share = (part: number, whole: number): string =>
-    whole === 0 ? "—" : `${Math.round((part / whole) * 100)}%`;
+    whole === 0 ? "–" : `${Math.round((part / whole) * 100)}%`;

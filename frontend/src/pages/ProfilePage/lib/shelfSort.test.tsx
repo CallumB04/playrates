@@ -137,7 +137,7 @@ describe("shelfFoot", () => {
         expect(
             shelfFoot(log({ startDate: null, finishDate: null }), "played")
                 .value
-        ).toBe("—");
+        ).toBe("–");
     });
 
     it("shows a year alone for release date", () => {
@@ -155,7 +155,7 @@ describe("shelfFoot", () => {
     /* No achievements recorded is not nought per cent, and printing 0% would
        claim the opposite of what the log says. */
     it("shows a dash rather than 0% for a game with no achievements", () => {
-        expect(shelfFoot(log(), "completion").value).toBe("—");
+        expect(shelfFoot(log(), "completion").value).toBe("–");
     });
 
     it("shows the month the game was added", () => {
@@ -169,8 +169,8 @@ describe("shelfFoot", () => {
     });
 
     it("shows a dash for a game with no hours logged", () => {
-        expect(shelfFoot(log(), "hoursPlayed").value).toBe("—");
-        expect(shelfFoot(log(), "hoursToBeat").value).toBe("—");
+        expect(shelfFoot(log(), "hoursPlayed").value).toBe("–");
+        expect(shelfFoot(log(), "hoursToBeat").value).toBe("–");
     });
 
     it("keeps the rating when sorting by title, which shows itself", () => {
@@ -180,7 +180,7 @@ describe("shelfFoot", () => {
     it("copes with an entry whose game did not come back", () => {
         const orphan = { ...log(), game: null };
         expect(shelfFoot(orphan, "gameRating")).toEqual({ rating: null });
-        expect(shelfFoot(orphan, "released").value).toBe("—");
+        expect(shelfFoot(orphan, "released").value).toBe("–");
     });
 
     it("gives every sort something to print", () => {
