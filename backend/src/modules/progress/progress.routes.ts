@@ -3,7 +3,8 @@ import {
   CARD_THEME_KEYS,
   LeaderboardQuerySchema,
   ReferralSchema,
-  RerollParamSchema,
+  BuyBackgroundSchema,
+  GiftSchema,
   SeenSchema,
   ShopItemParamSchema,
   StyleSchema,
@@ -81,17 +82,20 @@ export const createMyProgressRouter = ({
     },
   );
 
+  router.get("/backgrounds", requireAuth, async (req, res) => {
+    res.json(await service.backgrounds(callerId(req)));
+  });
+
   router.post(
-    "/quests/:period/:slot/reroll",
+    "/backgrounds",
     requireAuth,
-    validate({ params: RerollParamSchema }),
+    validate({ body: BuyBackgroundSchema }),
     async (req, res) => {
-      const { period, slot } = req.valid!.params as {
-        period: "week" | "month";
-        slot: number;
+      const { gameId, url } = req.valid!.body as {
+        gameId: number;
+        url: string;
       };
-      await service.reroll(callerId(req), period, slot);
-      res.status(204).end();
+      res.json(await service.buyBackground(callerId(req), gameId, url));
     },
   );
 
@@ -124,6 +128,27 @@ export const createShopRouter = ({ service, requireAuth }: Deps): Router => {
     async (req, res) => {
       const { item } = req.valid!.params as { item: string };
       res.json(await service.buy(callerId(req), item));
+    },
+  );
+
+  router.get(
+    "/:item/friends",
+    requireAuth,
+    validate({ params: ShopItemParamSchema }),
+    async (req, res) => {
+      const { item } = req.valid!.params as { item: string };
+      res.json(await service.giftFriends(callerId(req), item));
+    },
+  );
+
+  router.post(
+    "/:item/gift",
+    requireAuth,
+    validate({ params: ShopItemParamSchema, body: GiftSchema }),
+    async (req, res) => {
+      const { item } = req.valid!.params as { item: string };
+      const { username } = req.valid!.body as { username: string };
+      res.json(await service.gift(callerId(req), item, username));
     },
   );
 

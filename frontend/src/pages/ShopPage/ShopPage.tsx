@@ -1,16 +1,21 @@
 import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
-import { levelTokens, type ShopEntry, type ShopKind } from "@playrates/shared";
+import {
+    SHOP_GROUPS,
+    SHOP_KINDS,
+    type ShopEntry,
+    type ShopKind,
+} from "@playrates/shared";
 import SegmentedChoice from "../../components/ui/SegmentedChoice";
 import { cardClass } from "../../components/ui/Card";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { TokenCoin } from "../../components/progress/TokenAmount";
 import ItemSheet, { useWear } from "../../components/shop/ItemSheet";
 import { ItemThumb } from "../../components/shop/ItemPreview";
-import { KIND_LABELS } from "../../components/shop/shopItems";
+import { GROUP_LABELS, KIND_LABELS } from "../../components/shop/shopItems";
 import { useAuth } from "../../contexts/AuthContext";
-import { useProgress, useShop } from "../../hooks/queries/useProgress";
+import { useShop } from "../../hooks/queries/useProgress";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import { formatCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
@@ -19,7 +24,6 @@ import { cn } from "../../lib/cn";
 const ShopPage = () => {
     const { user, isLoading } = useAuth();
     const { data: shop } = useShop();
-    const { data: progress } = useProgress();
     const [kind, setKind] = useState<ShopKind>("cosmetic");
     const [open, setOpen] = useState<ShopEntry | null>(null);
     usePageMeta({ title: "Shop", noindex: true });
@@ -33,11 +37,6 @@ const ShopPage = () => {
             </div>
         );
     }
-
-    const next =
-        progress && progress.level.next !== null
-            ? progress.level.level + 1
-            : null;
 
     return (
         <div className="flex flex-col gap-5 lg:gap-6">
@@ -54,54 +53,58 @@ const ShopPage = () => {
                         Shop
                     </h1>
                 </div>
-                <div className="flex items-center gap-4 sm:flex-col sm:items-end sm:gap-1">
-                    <span
-                        className="inline-flex items-center gap-2 font-mono text-[28px] leading-none font-bold text-content tabular-nums sm:text-[34px]"
-                        aria-label={`${formatCount(shop.tokens)} tokens`}
-                    >
-                        <TokenCoin className="size-6 text-[11px] sm:size-7" />
-                        <span aria-hidden>{formatCount(shop.tokens)}</span>
-                    </span>
-                    {next !== null && (
-                        <span className="font-mono text-label-sm text-content-muted">
-                            Level {next} pays {levelTokens(next)}
-                        </span>
-                    )}
-                </div>
+                <span
+                    className="inline-flex items-center gap-2 font-mono text-[28px] leading-none font-bold text-content tabular-nums sm:text-[34px]"
+                    aria-label={`${formatCount(shop.tokens)} tokens`}
+                >
+                    <TokenCoin className="size-6 sm:size-7" />
+                    <span aria-hidden>{formatCount(shop.tokens)}</span>
+                </span>
             </header>
 
-            <SegmentedChoice
-                label="Shop sections"
-                segments={(["cosmetic", "slot", "helper"] as const).map(
-                    (k) => ({
+            {/* Five sections don't fit a phone's width: the row scrolls
+                sideways there, edge to edge, rather than squeezing them. */}
+            <div className="-mx-4 [scrollbar-width:none] overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
+                <SegmentedChoice
+                    label="Shop sections"
+                    segments={SHOP_KINDS.map((k) => ({
                         value: k,
                         label: KIND_LABELS[k],
-                    })
-                )}
-                value={kind}
-                onChange={setKind}
-                fill
-                className="sm:max-w-md"
-            />
+                    }))}
+                    value={kind}
+                    onChange={setKind}
+                    fill
+                    className="w-max min-w-full sm:w-auto sm:max-w-xl sm:min-w-0"
+                />
+            </div>
 
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                {shop.items
-                    .filter((i) => i.kind === kind)
-                    .map((item) => (
-                        <li key={item.item}>
-                            <ShopTile
-                                item={item}
-                                tokens={shop.tokens}
-                                onOpen={() => setOpen(item)}
-                            />
-                        </li>
-                    ))}
-            </ul>
-
-            <p className="text-label-sm text-content-muted">
-                Level frames and the Gold and Holo card themes can’t be bought:
-                they come with your level.
-            </p>
+            {SHOP_GROUPS.map((group) => {
+                const items = shop.items.filter(
+                    (i) => i.kind === kind && i.group === group
+                );
+                if (items.length === 0) return null;
+                return (
+                    <section key={group} aria-labelledby={`shop-${group}`}>
+                        <h2
+                            id={`shop-${group}`}
+                            className="mb-2 text-label font-semibold text-content-secondary"
+                        >
+                            {GROUP_LABELS[group]}
+                        </h2>
+                        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                            {items.map((item) => (
+                                <li key={item.item}>
+                                    <ShopTile
+                                        item={item}
+                                        tokens={shop.tokens}
+                                        onOpen={() => setOpen(item)}
+                                    />
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                );
+            })}
 
             {open && (
                 <ItemSheet
@@ -151,7 +154,7 @@ const ShopTile = ({
                 {owned || full ? (
                     <span className="inline-flex shrink-0 items-center gap-1 text-label-sm text-content-muted">
                         <Check size={13} className="text-action" aria-hidden />
-                        {worn ? "Wearing" : owned ? "Yours" : "Full"}
+                        {worn ? "Active" : owned ? "Owned" : "Full"}
                     </span>
                 ) : (
                     <span
@@ -162,7 +165,7 @@ const ShopTile = ({
                                 : "text-content"
                         )}
                     >
-                        <TokenCoin className="size-3.5 text-[7px]" />
+                        <TokenCoin className="size-3.5" />
                         {formatCount(item.price)}
                     </span>
                 )}

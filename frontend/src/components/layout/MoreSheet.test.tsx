@@ -6,12 +6,15 @@ import { buildProfile } from "../../test/msw/handlers";
 import { setupSteps } from "../../lib/setupChecklist";
 import MoreSheet from "./MoreSheet";
 
-const steps = setupSteps({
-    profile: { username: "devuser", avatarUrl: null, bio: "Hello" },
-    logCount: 2,
-    reviewCount: 0,
-    friendCount: 0,
-    postCount: 0,
+const steps = setupSteps("devuser", {
+    picture: false,
+    bio: true,
+    log: true,
+    rate: false,
+    review: false,
+    favourites: false,
+    friend: false,
+    post: false,
 });
 
 const sheet = (props: Partial<Parameters<typeof MoreSheet>[0]> = {}) => {
@@ -40,6 +43,16 @@ describe("MoreSheet", () => {
         expect(screen.getByRole("link", { name: "Admin" })).toHaveAttribute(
             "href",
             "/admin"
+        );
+    });
+
+    it("leads with your level and tokens, and has the shop", async () => {
+        sheet();
+        const level = await screen.findByRole("link", { name: /^Level \d+/ });
+        expect(level).toHaveAttribute("href", "/progress");
+        expect(screen.getByRole("link", { name: "Shop" })).toHaveAttribute(
+            "href",
+            "/shop"
         );
     });
 

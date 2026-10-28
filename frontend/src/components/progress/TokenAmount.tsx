@@ -1,12 +1,14 @@
 import { formatCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 
-/** The token: a gold coin struck with the mark. */
+/** The token: a gold coin struck with the mark. The P is drawn rather
+ *  than typed, so it sits in the middle of the coin at any size; a letter
+ *  rides on its font's baseline. */
 export const TokenCoin = ({ className }: { className?: string }) => (
     <span
         aria-hidden
         className={cn(
-            "metal-gold relative inline-grid size-4 shrink-0 place-items-center rounded-full font-display text-[8px] font-extrabold",
+            "metal-gold relative inline-grid size-4 shrink-0 place-items-center rounded-full",
             className
         )}
         style={{
@@ -17,7 +19,16 @@ export const TokenCoin = ({ className }: { className?: string }) => (
             color: "var(--metal-ink)",
         }}
     >
-        P
+        <svg viewBox="0 0 16 16" className="size-full">
+            <path
+                d="M6.2 11.6V4.4h2.6a2.2 2.2 0 0 1 0 4.4H6.2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.9"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </svg>
     </span>
 );
 

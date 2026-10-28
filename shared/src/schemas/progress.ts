@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ReactionKey } from "./reactions.js";
 
 /* ---------------------------------------------------------------- levels */
 
@@ -67,6 +68,11 @@ export const FRAMES = [
 export type FrameKey = (typeof FRAMES)[number]["key"];
 export const FRAME_KEYS = FRAMES.map((f) => f.key) as [FrameKey, ...FrameKey[]];
 
+/** Stored when a member chooses to wear no frame at all; no frame stored
+ *  means the best their level has earned. */
+export const NO_FRAME = "none";
+export const FrameChoiceSchema = z.enum([...FRAME_KEYS, NO_FRAME]);
+
 /** The best frame a level has earned, if any. */
 export const levelFrame = (level: number): FrameKey | null => {
   let best: FrameKey | null = null;
@@ -75,6 +81,15 @@ export const levelFrame = (level: number): FrameKey | null => {
   }
   return best;
 };
+
+/** The frame a member wears, from what they stored. */
+export const wornFrame = (
+  stored: string | null,
+  level: number,
+): FrameKey | null =>
+  stored === NO_FRAME
+    ? null
+    : ((stored as FrameKey | null) ?? levelFrame(level));
 
 /* ------------------------------------------------------------ card themes */
 
@@ -92,6 +107,65 @@ export const CARD_THEME_KEYS = CARD_THEMES.map((t) => t.key) as [
   CardThemeKey,
   ...CardThemeKey[],
 ];
+
+/* ------------------------------------------------------------ name styles */
+
+/** Type for a member's name on their profile and the leaderboards. Each
+ *  comes by level or from the shop, as frames do. */
+export const NAME_FONTS = [
+  { key: "default", label: "Default" },
+  { key: "silkscreen", label: "Arcade", level: 8 },
+  { key: "orbitron", label: "Orbitron", level: 15 },
+  { key: "cinzel", label: "Quest", level: 25 },
+  { key: "vt323", label: "Terminal", item: "font_terminal" },
+  { key: "press_start", label: "Pixel", item: "font_pixel" },
+  { key: "bungee", label: "Bungee", item: "font_bungee" },
+  { key: "marker", label: "Marker", item: "font_marker" },
+] as const satisfies readonly (
+  | { key: string; label: string }
+  | { key: string; label: string; level: number }
+  | { key: string; label: string; item: string }
+)[];
+
+export type NameFontKey = (typeof NAME_FONTS)[number]["key"];
+export const NAME_FONT_KEYS = NAME_FONTS.map((f) => f.key) as [
+  NameFontKey,
+  ...NameFontKey[],
+];
+
+export const NAME_COLOURS = [
+  { key: "default", label: "Default" },
+  { key: "sky", label: "Sky", level: 6 },
+  { key: "gold", label: "Gold", level: 12 },
+  { key: "aurora", label: "Aurora", level: 35 },
+  { key: "ember", label: "Ember", item: "colour_ember" },
+  { key: "mint", label: "Mint", item: "colour_mint" },
+  { key: "rose", label: "Rose", item: "colour_rose" },
+  { key: "sunset", label: "Sunset", item: "colour_sunset" },
+  { key: "holo", label: "Holo", item: "colour_holo" },
+] as const satisfies readonly (
+  | { key: string; label: string }
+  | { key: string; label: string; level: number }
+  | { key: string; label: string; item: string }
+)[];
+
+export type NameColourKey = (typeof NAME_COLOURS)[number]["key"];
+export const NAME_COLOUR_KEYS = NAME_COLOURS.map((c) => c.key) as [
+  NameColourKey,
+  ...NameColourKey[],
+];
+
+/** Whether a level or the items held open a font or colour. */
+export const styleUnlocked = (
+  def: { key: string; level?: number; item?: string },
+  level: number,
+  items: Record<string, number>,
+): boolean =>
+  def.level !== undefined
+    ? level >= def.level
+    : def.item !== undefined
+      ? (items[def.item] ?? 0) > 0
+      : true;
 
 /* ----------------------------------------------------------------- badges */
 
@@ -418,28 +492,91 @@ export const metalsReached = (badge: BadgeDef, value: number): Metal[] =>
 
 /* ------------------------------------------------------------------ shop */
 
-export const SHOP_KINDS = ["cosmetic", "slot", "helper"] as const;
+export const SHOP_KINDS = [
+  "cosmetic",
+  "name",
+  "reaction",
+  "slot",
+  "helper",
+] as const;
 export type ShopKind = (typeof SHOP_KINDS)[number];
 
-export const SHOP_ITEMS = [
-  { item: "frame_neon", kind: "cosmetic", label: "Neon frame" },
-  { item: "frame_pixel", kind: "cosmetic", label: "Pixel frame" },
-  { item: "frame_flame", kind: "cosmetic", label: "Flame frame" },
-  { item: "frame_aurora", kind: "cosmetic", label: "Aurora frame" },
-  { item: "theme_retro", kind: "cosmetic", label: "Retro card" },
-  { item: "theme_night", kind: "cosmetic", label: "Night card" },
-  { item: "theme_synthwave", kind: "cosmetic", label: "Synthwave card" },
-  { item: "effect_sheen", kind: "cosmetic", label: "Banner sheen" },
-  { item: "effect_glow", kind: "cosmetic", label: "Name glow" },
-  { item: "layout_shelf", kind: "cosmetic", label: "Shelf showcase" },
-  { item: "layout_spotlight", kind: "cosmetic", label: "Spotlight showcase" },
-  { item: "slot_showcase", kind: "slot", label: "Showcase slot" },
-  { item: "slot_pinned_list", kind: "slot", label: "Pinned list slot" },
-  { item: "streak_shield", kind: "helper", label: "Streak shield" },
+/** How a tab's items are grouped, under a subheading each. */
+export const SHOP_GROUPS = [
+  "frame",
+  "theme",
+  "font",
+  "colour",
+  "reaction",
+  "slot",
+  "shield",
 ] as const;
+export type ShopGroup = (typeof SHOP_GROUPS)[number];
 
-/** A task's reroll is bought and spent in one go, on the task itself. */
-export const REROLL_ITEM = "quest_reroll";
+/** Each label is the item's own name; its group says what it is. */
+export const SHOP_ITEMS = [
+  { item: "frame_neon", kind: "cosmetic", group: "frame", label: "Neon" },
+  { item: "frame_pixel", kind: "cosmetic", group: "frame", label: "Pixel" },
+  { item: "frame_flame", kind: "cosmetic", group: "frame", label: "Flame" },
+  { item: "frame_aurora", kind: "cosmetic", group: "frame", label: "Aurora" },
+  { item: "theme_retro", kind: "cosmetic", group: "theme", label: "Retro" },
+  { item: "theme_night", kind: "cosmetic", group: "theme", label: "Night" },
+  {
+    item: "theme_synthwave",
+    kind: "cosmetic",
+    group: "theme",
+    label: "Synthwave",
+  },
+  { item: "font_terminal", kind: "name", group: "font", label: "Terminal" },
+  { item: "font_pixel", kind: "name", group: "font", label: "Pixel" },
+  { item: "font_bungee", kind: "name", group: "font", label: "Bungee" },
+  { item: "font_marker", kind: "name", group: "font", label: "Marker" },
+  { item: "colour_ember", kind: "name", group: "colour", label: "Ember" },
+  { item: "colour_mint", kind: "name", group: "colour", label: "Mint" },
+  { item: "colour_rose", kind: "name", group: "colour", label: "Rose" },
+  { item: "colour_sunset", kind: "name", group: "colour", label: "Sunset" },
+  { item: "colour_holo", kind: "name", group: "colour", label: "Holo" },
+  { item: "react_goat", kind: "reaction", group: "reaction", label: "GOAT" },
+  { item: "react_dead", kind: "reaction", group: "reaction", label: "Dead" },
+  { item: "react_hype", kind: "reaction", group: "reaction", label: "Hype" },
+  {
+    item: "react_congrats",
+    kind: "reaction",
+    group: "reaction",
+    label: "Congrats",
+  },
+  {
+    item: "react_big_brain",
+    kind: "reaction",
+    group: "reaction",
+    label: "Big brain",
+  },
+  { item: "react_sad", kind: "reaction", group: "reaction", label: "Sad" },
+  { item: "slot_showcase", kind: "slot", group: "slot", label: "Showcase" },
+  {
+    item: "slot_pinned_list",
+    kind: "slot",
+    group: "slot",
+    label: "Pinned lists",
+  },
+  {
+    item: "slot_pinned_review",
+    kind: "slot",
+    group: "slot",
+    label: "Pinned reviews",
+  },
+  {
+    item: "streak_shield",
+    kind: "helper",
+    group: "shield",
+    label: "Spare shield",
+  },
+] as const satisfies readonly {
+  item: string;
+  kind: ShopKind;
+  group: ShopGroup;
+  label: string;
+}[];
 
 export type ShopItemKey = (typeof SHOP_ITEMS)[number]["item"];
 export const SHOP_ITEM_KEYS = SHOP_ITEMS.map((i) => i.item) as [
@@ -447,17 +584,59 @@ export const SHOP_ITEM_KEYS = SHOP_ITEMS.map((i) => i.item) as [
   ...ShopItemKey[],
 ];
 
-export const BASE_SHOWCASE_SLOTS = 5;
+export const BASE_SHOWCASE_SLOTS = 4;
 export const BASE_PINNED_LISTS = 1;
+export const BASE_PINNED_REVIEWS = 0;
 
-export const EFFECTS = ["effect_sheen", "effect_glow"] as const;
-export type EffectKey = (typeof EFFECTS)[number];
-export const SHOWCASE_LAYOUTS = [
-  "row",
-  "layout_shelf",
-  "layout_spotlight",
+/* ----------------------------------------------------------- backgrounds */
+
+/** Profile backgrounds open at this level, with the first one free. */
+export const BACKGROUND_LEVEL = 3;
+export const BACKGROUND_CREDIT_ITEM = "background_credit";
+
+/** A game's next picture costs a little more for each one already owned
+ *  from that game, so a favourite can be collected without it being cheap. */
+export const backgroundPrice = (ownedFromGame: number): number =>
+  15 + 5 * ownedFromGame;
+
+export interface OwnedBackgroundGame {
+  gameId: number;
+  title: string;
+  coverUrl: string | null;
+  urls: string[];
+}
+
+export interface Backgrounds {
+  unlocked: boolean;
+  /** Free pictures to spend: one comes with the unlock. */
+  credits: number;
+  tokens: number;
+  games: OwnedBackgroundGame[];
+}
+
+export const BuyBackgroundSchema = z
+  .object({
+    gameId: z.number().int().positive(),
+    url: z.string().url().max(500),
+  })
+  .strict();
+
+/* ----------------------------------------------------------------- setup */
+
+/** Getting started: the things that make a profile worth a visit. All of
+ *  them done pays once. */
+export const SETUP_STEPS = [
+  "picture",
+  "bio",
+  "log",
+  "rate",
+  "review",
+  "favourites",
+  "friend",
+  "post",
 ] as const;
-export type ShowcaseLayout = (typeof SHOWCASE_LAYOUTS)[number];
+export type SetupStepKey = (typeof SETUP_STEPS)[number];
+export const SETUP_REWARD = { xp: 150, tokens: 30 } as const;
 
 /* --------------------------------------------------------------- periods */
 
@@ -720,35 +899,28 @@ const pick = <T extends { key: string }>(
     .sort((a, b) => hash(`${seed}:${a.key}`) - hash(`${seed}:${b.key}`))
     .slice(0, count);
 
+/** Tokens for each task done, on top of its XP. */
+export const TASK_TOKENS = { week: 2, month: 5 } as const;
+
 /**
  * This period's tasks for a member: 3 a week, 3 a month, the month's a
- * longer stretch of the same kinds of thing. A swap draws its slot again
- * from the tasks not dealt, so it can't hand back the one it replaced, and
- * the other slots stay put.
+ * longer stretch of the same kinds of thing.
  */
-export const questsFor = (
-  userId: string,
-  period: Period,
-  rerolls: Record<number, string> = {},
-): QuestDef[] => {
+export const questsFor = (userId: string, period: Period): QuestDef[] => {
   const pool = (QUESTS as readonly QuestDef[]).filter(
     (q) => q.period === period.kind,
   );
-  const draw = (taken: QuestDef[], slot: number, reroll = "") =>
-    pick(
-      pool.filter((q) => !taken.some((t) => t.key === q.key)),
-      `${userId}:${period.key}:${slot}:${reroll}`,
-      1,
-    )[0]!;
   const dealt: QuestDef[] = [];
-  for (const slot of [0, 1, 2]) dealt.push(draw(dealt, slot));
-  const swapped: QuestDef[] = [];
-  return dealt.map((q, slot) => {
-    if (!rerolls[slot]) return q;
-    const next = draw([...dealt, ...swapped], slot, rerolls[slot]);
-    swapped.push(next);
-    return next;
-  });
+  for (const slot of [0, 1, 2]) {
+    dealt.push(
+      pick(
+        pool.filter((q) => !dealt.some((t) => t.key === q.key)),
+        `${userId}:${period.key}:${slot}:`,
+        1,
+      )[0]!,
+    );
+  }
+  return dealt;
 };
 
 /* ----------------------------------------------------------------- types */
@@ -760,6 +932,7 @@ export interface QuestState {
   target: number;
   count: number;
   xp: number;
+  tokens: number;
   done: boolean;
 }
 
@@ -803,19 +976,24 @@ export interface Progress {
   quests: { week: QuestState[]; month: QuestState[] };
   periods: { week: Period; month: Period };
   look: {
+    /** What's stored: a frame, "none", or null for the level's best. */
+    frameChoice: string | null;
     cardTheme: CardThemeKey;
-    layout: ShowcaseLayout;
+    nameFont: NameFontKey;
+    nameColour: NameColourKey;
     /** Unlocked, by level, badge or the shop. */
     frames: FrameKey[];
     themes: CardThemeKey[];
+    fonts: NameFontKey[];
+    colours: NameColourKey[];
+    reactions: ReactionKey[];
     showcaseSlots: number;
     pinnedListSlots: number;
+    pinnedReviewSlots: number;
   };
-  /** Swapping a task: bought on the spot, one a period. */
-  swap: {
-    price: number;
-    held: number;
-    used: { week: boolean; month: boolean };
+  setup: {
+    steps: Record<SetupStepKey, boolean>;
+    reward: { xp: number; tokens: number };
   };
   /** Not yet celebrated. */
   unseen: {
@@ -847,7 +1025,6 @@ export interface PlayerBadges {
   frame: FrameKey | null;
   held: BadgeHolding[];
   showcase: string[];
-  layout: ShowcaseLayout;
   /** Only for the owner: how far towards each badge's next metal. */
   progress?: BadgeProgress[];
 }
@@ -855,6 +1032,7 @@ export interface PlayerBadges {
 export interface ShopEntry {
   item: ShopItemKey;
   kind: ShopKind;
+  group: ShopGroup;
   label: string;
   price: number;
   owned: number;
@@ -873,6 +1051,8 @@ export interface LeaderboardRow {
   accent: string;
   level: number;
   frame: FrameKey | null;
+  nameFont: NameFontKey;
+  nameColour: NameColourKey;
   xp: number;
   rank: number;
   isYou: boolean;
@@ -910,12 +1090,13 @@ export const SeenSchema = z
 
 export const StyleSchema = z
   .object({
-    frame: z.enum(FRAME_KEYS).nullable().optional(),
+    frame: FrameChoiceSchema.nullable().optional(),
     cardTheme: z.enum(CARD_THEME_KEYS).optional(),
+    nameFont: z.enum(NAME_FONT_KEYS).optional(),
+    nameColour: z.enum(NAME_COLOUR_KEYS).optional(),
     showcase: z.array(z.enum(BADGE_KEYS)).max(8).optional(),
-    layout: z.enum(SHOWCASE_LAYOUTS).optional(),
-    effects: z.array(z.enum(EFFECTS)).max(EFFECTS.length).optional(),
     pinnedLists: z.array(z.number().int().positive()).max(3).optional(),
+    pinnedReviews: z.array(z.number().int().positive()).max(3).optional(),
   })
   .strict();
 export type StyleInput = z.infer<typeof StyleSchema>;
@@ -926,7 +1107,17 @@ export const ReferralSchema = z
 
 export const ShopItemParamSchema = z.object({ item: z.enum(SHOP_ITEM_KEYS) });
 
-export const RerollParamSchema = z.object({
-  period: z.enum(["week", "month"]),
-  slot: z.coerce.number().int().min(0).max(2),
-});
+/** Buying an item for a friend. */
+export const GiftSchema = z
+  .object({ username: z.string().trim().min(1).max(40) })
+  .strict();
+
+/** A friend as a gift's recipient: `full` when they can't hold another,
+ *  and the price theirs would cost, as a slot's goes up with each held. */
+export interface GiftFriend {
+  username: string;
+  avatarUrl: string | null;
+  accent: string;
+  full: boolean;
+  price: number;
+}

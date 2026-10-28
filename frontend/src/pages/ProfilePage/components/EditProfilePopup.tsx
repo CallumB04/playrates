@@ -4,6 +4,8 @@ import {
     type AboutField,
     type Profile,
     type ProfileAccent,
+    type ProfileSection,
+    type StyleInput,
 } from "@playrates/shared";
 import {
     useRemoveAvatar,
@@ -11,6 +13,8 @@ import {
     useUpdateProfile,
 } from "../../../hooks/queries/useProfiles";
 import { useNotify } from "../../../contexts/NotificationContext";
+import { useProgress, useSetStyle } from "../../../hooks/queries/useProgress";
+import LookFields, { type LookChoice } from "./LookFields";
 import { ApiError } from "../../../api/client";
 import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
@@ -26,7 +30,7 @@ import SegmentedChoice from "../../../components/ui/SegmentedChoice";
 import { cn } from "../../../lib/cn";
 import { willShowPicture } from "../../../components/avatarChoice";
 
-type View = "profile" | "about" | "socials";
+type View = "profile" | "about" | "socials" | "look";
 
 type AboutValues = Record<AboutField, string>;
 
@@ -92,9 +96,9 @@ const PrivacyNote = () => (
 );
 
 /**
- * The profile editor, in three views so none of them scrolls: the picture
- * and bio, who you are, and where else to find you. One Save covers all
- * three. The username only changes capitalisation here — a real rename has
+ * The profile editor, in four views so none of them scrolls: the picture
+ * and bio, who you are, where else to find you, and how you look. One Save
+ * covers all four. The username only changes capitalisation here — a real rename has
  * to check availability, so it lives in Settings.
  */
 const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
@@ -108,6 +112,31 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     const updateProfile = useUpdateProfile();
     const updateAvatar = useUpdateAvatar();
     const removeAvatar = useRemoveAvatar();
+    const setStyle = useSetStyle();
+    const { data: progress } = useProgress();
+    const wornLook: LookChoice | null = progress
+        ? {
+              frame: progress.look.frameChoice,
+              cardTheme: progress.look.cardTheme,
+              nameFont: progress.look.nameFont,
+              nameColour: progress.look.nameColour,
+          }
+        : null;
+    // Null until changed, so progress arriving late fills it in.
+    const [look, setLook] = useState<LookChoice | null>(null);
+    const shownLook = look ?? wornLook;
+    const lookChanges = (
+        shownLook && wornLook
+            ? Object.fromEntries(
+                  (Object.keys(shownLook) as (keyof LookChoice)[])
+                      .filter((k) => shownLook[k] !== wornLook[k])
+                      .map((k) => [k, shownLook[k]])
+              )
+            : {}
+    ) as Partial<LookChoice>;
+    const lookDirty = Object.keys(lookChanges).length > 0;
+    const [order, setOrder] = useState<ProfileSection[]>(user.sectionOrder);
+    const orderDirty = order.join() !== user.sectionOrder.join();
 
     const [bio, setBio] = useState(user.bio);
     const [username, setUsername] = useState(user.username);
@@ -152,10 +181,12 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
         bio !== user.bio ||
         username !== user.username ||
         accent !== user.accent ||
+        orderDirty ||
         Object.keys(changedAbout).length > 0;
-    const dirty = fieldsDirty || avatar.kind !== "unchanged";
+    const dirty = fieldsDirty || lookDirty || avatar.kind !== "unchanged";
     const saving =
         updateProfile.isPending ||
+        setStyle.isPending ||
         updateAvatar.isPending ||
         removeAvatar.isPending;
 
@@ -172,7 +203,17 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     username,
                     bio,
                     accent,
+                    ...(orderDirty ? { sectionOrder: order } : {}),
                     ...changedAbout,
+                });
+            }
+            if (lookDirty) {
+                const { frame, ...rest } = lookChanges;
+                await setStyle.mutateAsync({
+                    ...rest,
+                    ...(frame !== undefined
+                        ? { frame: frame as StyleInput["frame"] }
+                        : {}),
                 });
             }
         } catch (error) {
@@ -226,6 +267,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                         label: "Socials",
                         flagged: invalidIn("socials"),
                     },
+                    { value: "look", label: "Look" },
                 ]}
                 value={view}
                 onChange={setView}
@@ -323,6 +365,21 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                 <Panel id={panelId("socials")} shown={view === "socials"}>
                     {inputsFor("socials")}
                     <PrivacyNote />
+                </Panel>
+                <Panel id={panelId("look")} shown={view === "look"}>
+                    {progress && shownLook ? (
+                        <LookFields
+                            username={user.username}
+                            avatarUrl={user.avatarUrl}
+                            accent={accent}
+                            level={progress.level.level}
+                            choice={shownLook}
+                            onChange={setLook}
+                            owned={progress.look}
+                            order={order}
+                            onOrder={setOrder}
+                        />
+                    ) : null}
                 </Panel>
             </div>
 

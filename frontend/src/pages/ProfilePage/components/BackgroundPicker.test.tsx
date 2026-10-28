@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import type { GameBackdrop } from "@playrates/shared";
+import type { Backgrounds, GameBackdrop } from "@playrates/shared";
 import { server } from "../../../test/msw/server";
 import { buildProfile } from "../../../test/msw/handlers";
 import { renderWithProviders } from "../../../test/renderWithProviders";
@@ -17,9 +17,40 @@ const PICTURES: GameBackdrop[] = [
 
 const calls: string[] = [];
 
+vi.mock("../../../contexts/AuthContext", () => ({
+    useAuth: () => ({ user: buildProfile() }),
+    useUser: () => buildProfile(),
+}));
+
+/** What GET /me/backgrounds answers: both pictures owned by default. */
+let backgrounds: Backgrounds;
+
 beforeEach(() => {
     calls.length = 0;
+    backgrounds = {
+        unlocked: true,
+        credits: 0,
+        tokens: 30,
+        games: [
+            {
+                gameId: 1,
+                title: "The Witcher 3: Wild Hunt",
+                coverUrl: null,
+                urls: PICTURES.map((p) => p.url),
+            },
+        ],
+    };
     server.use(
+        http.get(`${API}/me/backgrounds`, () => HttpResponse.json(backgrounds)),
+        http.post(`${API}/me/backgrounds`, async ({ request }) => {
+            const body = (await request.json()) as {
+                gameId: number;
+                url: string;
+            };
+            calls.push(`buy:${body.gameId}:${body.url}`);
+            backgrounds.games[0]!.urls.push(body.url);
+            return HttpResponse.json({ tokens: 10, cost: 20 });
+        }),
         http.get(`${API}/games/:id/backdrops`, () =>
             HttpResponse.json(PICTURES)
         ),
@@ -138,9 +169,7 @@ describe("BackgroundPicker", () => {
             screen.getByRole("button", { name: "Back to your games" })
         );
 
-        expect(
-            screen.getByRole("searchbox", { name: "Search your games" })
-        ).toBeInTheDocument();
+        expect(screen.getByRole("radio", { name: "Yours" })).toBeChecked();
         expect(calls).toEqual([]);
     });
 
@@ -175,6 +204,49 @@ describe("BackgroundPicker", () => {
         expect(
             screen.queryByRole("button", { name: "Remove background" })
         ).toBeNull();
+    });
+
+    it("stays shut below its level, and says when it opens", async () => {
+        backgrounds = { ...backgrounds, unlocked: false, games: [] };
+        setup(buildProfile({ level: 2 }));
+
+        expect(
+            await screen.findByRole("heading", { name: /open at level 3/ })
+        ).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /Witcher/ })).toBeNull();
+    });
+
+    it("buys a picture not yet owned before cropping it", async () => {
+        backgrounds.games[0]!.urls = [PICTURES[0]!.url];
+        const { user } = setup();
+
+        await openGame(user);
+        // One owned from this game already, so the next costs 20.
+        await user.click(
+            await screen.findByRole("button", { name: "Picture 2, 20 tokens" })
+        );
+        expect(screen.getByText("10 left after")).toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: /Buy for/ }));
+
+        expect(
+            await screen.findByRole("slider", {
+                name: "Which part of the picture shows",
+            })
+        ).toBeInTheDocument();
+        expect(calls).toEqual([`buy:1:${PICTURES[1]!.url}`]);
+    });
+
+    it("offers the free picture first", async () => {
+        backgrounds = { ...backgrounds, credits: 1, games: [] };
+        const { user } = setup();
+
+        await openGame(user);
+        await user.click(
+            await screen.findByRole("button", { name: "Picture 1, free" })
+        );
+        expect(
+            screen.getByRole("button", { name: "Use your free picture" })
+        ).toBeInTheDocument();
     });
 
     it("removes the picture", async () => {

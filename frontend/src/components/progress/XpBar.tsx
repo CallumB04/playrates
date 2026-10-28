@@ -11,7 +11,8 @@ interface XpBarProps {
     className?: string;
 }
 
-/** Progress through a level, the fill lit from within. */
+/** Progress through a level: a flat fill on a track that reads on any
+ *  surface, the account menu's included. */
 const XpBar = ({
     level,
     labelled = true,
@@ -29,12 +30,12 @@ const XpBar = ({
                 aria-valuemax={span ?? 1}
                 aria-valuenow={span === null ? 1 : level.xp - level.floor}
                 className={cn(
-                    "relative overflow-hidden rounded-full bg-surface-sunken inset-shadow-press",
+                    "relative overflow-hidden rounded-full bg-content-muted/25",
                     size === "sm" ? "h-1.5" : "h-2.5"
                 )}
             >
                 <span
-                    className="absolute inset-y-0 left-0 rounded-full bg-linear-to-r from-brand-deep via-brand to-accent shadow-glow transition-[width] duration-700 ease-out"
+                    className="absolute inset-y-0 left-0 rounded-full bg-brand transition-[width] duration-700 ease-out"
                     style={{ width: `${Math.max(2, level.progress * 100)}%` }}
                 />
             </div>

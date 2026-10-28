@@ -9,7 +9,7 @@ import type {
 } from "@playrates/shared";
 import {
   levelFor,
-  levelFrame,
+  wornFrame,
   ABOUT_FIELDS,
   canSeeProfile,
   DEFAULT_ABOUT_VISIBILITY,
@@ -17,6 +17,7 @@ import {
   FALLBACK_ACCENT,
   PROFILE_VISIBILITIES,
   PROFILE_ACCENT_SLUGS,
+  sectionOrder,
 } from "@playrates/shared";
 import type { ProfileRow } from "../../types/database.types.js";
 
@@ -124,9 +125,12 @@ export const toProfile = (
   profileVisibility: toProfileVisibility(row.profile_visibility),
   about: aboutFor(row, viewer),
   level: levelFor(row.xp ?? 0).level,
-  frame: row.frame ?? levelFrame(levelFor(row.xp ?? 0).level),
-  effects: row.effects ?? [],
+  frame: wornFrame(row.frame ?? null, levelFor(row.xp ?? 0).level),
+  nameFont: row.name_font ?? "default",
+  nameColour: row.name_colour ?? "default",
   pinnedLists: (row.pinned_lists ?? []).map(Number),
+  pinnedReviews: (row.pinned_reviews ?? []).map(Number),
+  sectionOrder: sectionOrder(row.section_order ?? []),
   createdAt: row.created_at,
 });
 

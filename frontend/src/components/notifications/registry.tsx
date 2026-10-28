@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
     ArrowBigUp,
     Bell,
+    Gift,
     Heart,
     MessageSquareReply,
     MessagesSquare,
@@ -21,6 +22,7 @@ import type {
     ListUpvoteMilestoneNotification,
     Gaming25LoveMilestoneNotification,
     ReferralJoinedNotification,
+    GiftReceivedNotification,
     FriendAcceptedNotification,
     FriendRequestNotification,
     FriendUser,
@@ -33,6 +35,8 @@ import {
     DISCORD_INVITE_URL,
 } from "../../constants/brand";
 import ProfilePicture from "../ProfilePicture";
+import { useAuth } from "../../contexts/AuthContext";
+import { giftPath, itemName } from "../shop/shopItems";
 import { useFriendRelation } from "../../hooks/queries/useFriends";
 import { usePatchNotification } from "../../hooks/queries/useNotifications";
 import GameCover from "../game/GameCover";
@@ -446,6 +450,30 @@ const ReferralJoinedContent = ({
     );
 };
 
+const GiftReceivedContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<GiftReceivedNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    const { user } = useAuth();
+    return (
+        <Link
+            to={user ? giftPath(notification.item, user.username) : "/shop"}
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <span className="group-hover:underline">
+                    {notification.username}
+                </span>{" "}
+                <span className="font-normal text-content-secondary">
+                    gifted you {itemName(notification.item)}
+                </span>
+            </p>
+        </Link>
+    );
+};
+
 /** The game it is about, where the row has no one to show. */
 const CoverLeading = ({
     notification,
@@ -532,6 +560,11 @@ export const NOTIFICATION_RENDERERS: {
         icon: UserPlus,
         tone: "text-brand",
         Content: ReferralJoinedContent,
+    },
+    gift_received: {
+        icon: Gift,
+        tone: "text-brand",
+        Content: GiftReceivedContent,
     },
     announcement: {
         icon: ANNOUNCEMENT_PRESENTATION.update.icon,

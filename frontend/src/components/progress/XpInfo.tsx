@@ -1,6 +1,12 @@
 import { useId, useState } from "react";
 import { Info } from "lucide-react";
-import { METAL_XP, QUESTS, type QuestDef } from "@playrates/shared";
+import {
+    METAL_XP,
+    QUESTS,
+    SETUP_REWARD,
+    TASK_TOKENS,
+    type QuestDef,
+} from "@playrates/shared";
 import Modal from "../ui/Modal";
 import { TokenCoin } from "./TokenAmount";
 import { useXpRules } from "../../hooks/queries/useProgress";
@@ -59,13 +65,18 @@ const BIG: [label: string, xp: string][] = [
     ["A monthly task", "150"],
     ["A badge, by metal", Object.values(METAL_XP).map(formatCount).join(" / ")],
     ["A friend joins from your invite", "50, then 250"],
+    ["Getting started, all of it", String(SETUP_REWARD.xp)],
 ];
 
 const TOKENS: [label: string, tokens: string][] = [
     ["Each level", "10"],
     ["Every 5th level / every 10th", "25 / 50"],
     ["A gold badge / a platinum one", "10 / 30"],
-    ["All weekly tasks / all monthly", "5 / 15"],
+    [
+        "A weekly task / a monthly one",
+        `${TASK_TOKENS.week} / ${TASK_TOKENS.month}`,
+    ],
+    ["Getting started, all of it", String(SETUP_REWARD.tokens)],
     ["A friend gets going", "25"],
 ];
 
@@ -78,7 +89,7 @@ const XpInfo = () => {
                 type="button"
                 onClick={() => setOpen(true)}
                 aria-label="How XP works"
-                className="relative grid size-6 shrink-0 cursor-pointer place-items-center rounded-full text-content-muted before:absolute before:-inset-2.5 before:content-[''] hover:bg-surface-hover hover:text-content focus-visible:outline-2 focus-visible:outline-brand"
+                className="relative grid size-6 shrink-0 cursor-pointer place-items-center rounded-sm text-content-muted before:absolute before:-inset-2.5 before:content-[''] hover:bg-surface-hover hover:text-content focus-visible:outline-2 focus-visible:outline-brand"
             >
                 <Info size={16} aria-hidden />
             </button>
@@ -165,7 +176,7 @@ const XpInfoSheet = ({ onClose }: { onClose: () => void }) => {
                 </Group>
                 <section>
                     <h3 className="inline-flex items-center gap-1.5 text-label text-content-muted">
-                        <TokenCoin className="size-3.5 text-[7px]" />
+                        <TokenCoin className="size-3.5" />
                         Tokens, to spend in the shop
                     </h3>
                     <ul className="mt-1 divide-y divide-subtle">

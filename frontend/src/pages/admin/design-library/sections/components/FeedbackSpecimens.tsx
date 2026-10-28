@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { AppNotification, FriendUser } from "@playrates/shared";
 import {
     useNotify,
@@ -22,8 +21,6 @@ import { STATUS_PRESENTATION } from "../../../../../constants/gameStatus";
 import LoadingSpinner from "../../../../../components/LoadingSpinner";
 import Button from "../../../../../components/ui/Button";
 import NotificationItem from "../../../../../components/notifications/NotificationItem";
-import WelcomePopup from "../../../../../components/onboarding/WelcomePopup";
-import { useAuth } from "../../../../../contexts/AuthContext";
 import Specimen from "../../../components/Specimen";
 
 interface ToastSpecimen {
@@ -108,18 +105,8 @@ const NOTIFICATIONS: AppNotification[] = [
     },
 ];
 
-/** Stands in for the viewer when the library is opened signed out. */
-const STAND_IN = {
-    username: "newplayer",
-    firstName: null,
-    avatarUrl: null,
-    accent: "indigo" as const,
-};
-
 const FeedbackSpecimens = () => {
     const notify = useNotify();
-    const { user } = useAuth();
-    const [welcomeOpen, setWelcomeOpen] = useState(false);
 
     return (
         <>
@@ -244,23 +231,6 @@ const FeedbackSpecimens = () => {
                         />
                     ))}
                 </ul>
-            </Specimen>
-
-            <Specimen
-                title="Welcome popup"
-                notes="Shown once, on a new account's first sign-in: a first name, shown on the profile unless switched off there, and a picture, both optional, and one line pointing to Settings for the rest. Save saves and closes; there is nothing after it. It waits for the signup sheet to close, so the two never stack. Any way out marks it seen, skipping included. The preview walks the real popup against your own account and saves nothing."
-                meta="profile · preview · onClose · FirstLoginWelcome gates it on owesWelcome(user, accountFormOpen)"
-            >
-                <Button onClick={() => setWelcomeOpen(true)}>
-                    Preview the welcome
-                </Button>
-                {welcomeOpen && (
-                    <WelcomePopup
-                        profile={user ?? STAND_IN}
-                        preview
-                        onClose={() => setWelcomeOpen(false)}
-                    />
-                )}
             </Specimen>
         </>
     );

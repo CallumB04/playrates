@@ -62,6 +62,16 @@
    =========================================================================== */
 :root,
 .light {
+    /* Name colours, a step deeper by day to hold on paper. */
+    --name-sky: #1a8fd6;
+    --name-gold: #b8860b;
+    --name-ember: #e2541b;
+    --name-mint: #0f9f73;
+    --name-rose: #d6336c;
+    --name-holo-1: #3aa6d0;
+    --name-holo-2: #8b6cf0;
+    --name-holo-3: #d0569e;
+
     /* Native controls follow the theme too. Without this the date picker
        panel, the select popup and the scrollbars all render light — the
        select in particular looks correct until you open it. */
@@ -216,6 +226,15 @@
    Night. The default, and the one the palette was built for.
    =========================================================================== */
 .dark {
+    --name-sky: #5ec2ff;
+    --name-gold: #f2c94c;
+    --name-ember: #ff7a45;
+    --name-mint: #3ddc97;
+    --name-rose: #ff6b9d;
+    --name-holo-1: #9fe8ff;
+    --name-holo-2: #c4a6ff;
+    --name-holo-3: #ffb3e6;
+
     color-scheme: dark;
 
     --brand: var(--iris-500);
@@ -532,7 +551,8 @@
     --animate-stamp: stamp 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
     --animate-heart-pop: heart-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
     /* Progress: the moments that are meant to feel like an event. */
-    --animate-level-burst: level-burst 14s linear infinite;
+    --animate-glow-bloom: glow-bloom 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    --animate-ring-out: ring-out 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
     --animate-level-pop: level-pop 900ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
     --animate-medal-drop: medal-drop 900ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
     /* Once, on arrival: a light that keeps crossing something is noise. */
@@ -1153,9 +1173,28 @@
     }
 }
 
-@keyframes level-burst {
+@keyframes glow-bloom {
+    from {
+        transform: scale(0.6);
+        opacity: 0;
+    }
     to {
-        transform: rotate(360deg);
+        transform: none;
+        opacity: 1;
+    }
+}
+
+@keyframes ring-out {
+    from {
+        transform: scale(0.6);
+        opacity: 0;
+    }
+    15% {
+        opacity: 0.8;
+    }
+    to {
+        transform: scale(2.2);
+        opacity: 0;
     }
 }
 
@@ -1358,7 +1397,8 @@
     :root {
         --animate-stamp: none;
         --animate-heart-pop: none;
-        --animate-level-burst: none;
+        --animate-glow-bloom: none;
+        --animate-ring-out: none;
         --animate-level-pop: none;
         --animate-medal-drop: none;
         --animate-sheen: none;
@@ -1537,11 +1577,83 @@
         --theme-accent: #ff5fd9;
     }
 
-    /* Bought profile effects. */
-    .pr-name-glow {
-        text-shadow:
-            0 0 18px var(--glow-brand),
-            0 0 2px var(--glow-brand);
+    /* A member's name, as they set it. The display fonts run large for
+       their size, so each is brought back to the name's own measure. */
+    .name-font-silkscreen {
+        font-family: "Silkscreen", var(--font-display);
+        font-size: 0.86em;
+    }
+    .name-font-orbitron {
+        font-family: "Orbitron", var(--font-display);
+        font-weight: 700;
+        font-size: 0.9em;
+    }
+    .name-font-cinzel {
+        font-family: "Cinzel", var(--font-display);
+        font-weight: 700;
+    }
+    .name-font-vt323 {
+        font-family: "VT323", var(--font-mono);
+        font-size: 1.2em;
+    }
+    .name-font-press_start {
+        font-family: "Press Start 2P", var(--font-display);
+        font-size: 0.66em;
+        line-height: 1.5;
+    }
+    .name-font-bungee {
+        font-family: "Bungee", var(--font-display);
+        font-size: 0.9em;
+    }
+    .name-font-marker {
+        font-family: "Permanent Marker", var(--font-display);
+    }
+
+    .name-colour-sky {
+        color: var(--name-sky);
+    }
+    .name-colour-gold {
+        color: var(--name-gold);
+    }
+    .name-colour-ember {
+        color: var(--name-ember);
+    }
+    .name-colour-mint {
+        color: var(--name-mint);
+    }
+    .name-colour-rose {
+        color: var(--name-rose);
+    }
+    .name-colour-aurora,
+    .name-colour-sunset,
+    .name-colour-holo {
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .name-colour-aurora {
+        background-image: linear-gradient(
+            90deg,
+            var(--name-sky),
+            #8b5cf6,
+            var(--name-mint)
+        );
+    }
+    .name-colour-sunset {
+        background-image: linear-gradient(
+            90deg,
+            var(--name-ember),
+            var(--name-rose),
+            #8b5cf6
+        );
+    }
+    .name-colour-holo {
+        background-image: linear-gradient(
+            90deg,
+            var(--name-holo-1),
+            var(--name-holo-2),
+            var(--name-holo-3)
+        );
     }
 
     /* Metallic type: a gradient through the text with a light crossing it. */

@@ -55,8 +55,13 @@ export interface ProfileRow {
   frame: string | null;
   card_theme: string | null;
   showcase_badges: string[];
+  /** No longer offered; kept so old rows still read. */
   showcase_layout: string;
   effects: string[];
+  name_font: string | null;
+  pinned_reviews: number[];
+  section_order: string[];
+  name_colour: string | null;
   pinned_lists: number[];
   referred_by: string | null;
   xp_seen_event_id: number;

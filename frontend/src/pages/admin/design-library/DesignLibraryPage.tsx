@@ -2,12 +2,14 @@ import { useState } from "react";
 import ColourSection from "./sections/ColourSection";
 import SizingSection from "./sections/SizingSection";
 import ComponentSection from "./sections/ComponentSection";
+import MomentsSection from "./sections/MomentsSection";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 
 const TABS = [
     { id: "colour", label: "Colour", Component: ColourSection },
     { id: "sizing", label: "Sizing & type", Component: SizingSection },
     { id: "components", label: "Components", Component: ComponentSection },
+    { id: "moments", label: "First-time", Component: MomentsSection },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -31,8 +33,8 @@ const DesignLibraryPage = () => {
                 </h2>
                 <p className="max-w-prose text-content-secondary">
                     Every colour and sizing token, and every shared component,
-                    rendered live. Switch between day and night above to check
-                    both.
+                    rendered live, and the moments a member meets once, to play
+                    on demand. Switch between day and night above to check both.
                 </p>
             </header>
 

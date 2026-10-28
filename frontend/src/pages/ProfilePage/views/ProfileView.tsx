@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { AboutField, Profile, ProfileVisibility } from "@playrates/shared";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useNotify } from "../../../contexts/NotificationContext";
@@ -6,8 +6,10 @@ import { useUpdateProfile } from "../../../hooks/queries/useProfiles";
 import { useUserFavourites } from "../../../hooks/queries/useFavourites";
 import AboutCard from "../components/AboutCard";
 import Gaming25Preview from "../../../components/gaming25/Gaming25Preview";
+import LevelCard from "../../../components/progress/LevelCard";
 import FavouriteGames from "../components/FavouriteGames";
 import PinnedLists from "../components/PinnedLists";
+import PinnedReviews from "../components/PinnedReviews";
 import FavouritesEditor from "../components/FavouritesEditor";
 import WishlistTop from "../components/WishlistTop";
 
@@ -68,6 +70,7 @@ const ProfileView = ({
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
             {/* First on a phone: who someone is comes before what they like. */}
             <div className="flex min-w-0 flex-col gap-4 lg:order-2 lg:gap-6">
+                <LevelCard username={profile.username} isOwner={isOwner} />
                 <Gaming25Preview
                     username={profile.username}
                     canSee={canSee}
@@ -79,18 +82,38 @@ const ProfileView = ({
                     onEditProfile={onEditProfile}
                 />
             </div>
+            {/* In the order its owner chose, in Edit profile. */}
             <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
-                {canSee && <PinnedLists ids={profile.pinnedLists} />}
-                <FavouriteGames
-                    username={profile.username}
-                    canSee={canSee}
-                    onEdit={isOwner ? () => setEditing(true) : undefined}
-                />
-                <WishlistTop
-                    username={profile.username}
-                    isMyAccount={isOwner}
-                    canSee={canSee}
-                />
+                {profile.sectionOrder.map((section) => (
+                    <Fragment key={section}>
+                        {section === "pinned_lists" && canSee && (
+                            <PinnedLists ids={profile.pinnedLists} />
+                        )}
+                        {section === "pinned_reviews" && canSee && (
+                            <PinnedReviews
+                                username={profile.username}
+                                ids={profile.pinnedReviews}
+                                isOwner={isOwner}
+                            />
+                        )}
+                        {section === "favourites" && (
+                            <FavouriteGames
+                                username={profile.username}
+                                canSee={canSee}
+                                onEdit={
+                                    isOwner ? () => setEditing(true) : undefined
+                                }
+                            />
+                        )}
+                        {section === "wishlist" && (
+                            <WishlistTop
+                                username={profile.username}
+                                isMyAccount={isOwner}
+                                canSee={canSee}
+                            />
+                        )}
+                    </Fragment>
+                ))}
             </div>
 
             {editing && (

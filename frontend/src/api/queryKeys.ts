@@ -83,6 +83,9 @@ export const queryKeys = {
             ["reviews", "game", gameId, sort ?? "recent"] as const,
         byUsername: (username: string, page?: number, limit?: number) =>
             ["reviews", "user", username, page ?? 1, limit ?? null] as const,
+        /** Keyed on the pins too, so a change of them refetches at once. */
+        pinned: (username: string, ids: number[]) =>
+            ["reviews", "pinned", username, ids.join(",")] as const,
     },
 
     favourites: {
@@ -116,6 +119,9 @@ export const queryKeys = {
         leaderboard: (period: string) =>
             ["progress", "leaderboard", period] as const,
         shop: ["progress", "shop"] as const,
+        backgrounds: ["progress", "backgrounds"] as const,
+        giftFriends: (item: string) =>
+            ["progress", "gift-friends", item] as const,
         rules: ["progress", "rules"] as const,
     },
 
@@ -146,6 +152,7 @@ export const queryKeys = {
     admin: {
         all: ["admin"] as const,
         overview: (range: string) => ["admin", "overview", range] as const,
+        progress: ["admin", "progress"] as const,
         metric: (metric: string, range: string) =>
             ["admin", "metric", metric, range] as const,
         activity: (filters: Record<string, unknown>) =>

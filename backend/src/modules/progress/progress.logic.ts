@@ -1,8 +1,13 @@
 import {
   BASE_PINNED_LISTS,
+  BASE_PINNED_REVIEWS,
   BASE_SHOWCASE_SLOTS,
   CARD_THEMES,
   FRAMES,
+  NAME_COLOURS,
+  NAME_FONTS,
+  REACTIONS,
+  styleUnlocked,
   type CardThemeKey,
   type FrameKey,
 } from "@playrates/shared";
@@ -171,6 +176,24 @@ export const themeUnlocked = (theme: CardThemeKey, owned: Owned): boolean => {
   }
   return true;
 };
+
+export const fontUnlocked = (font: string, owned: Owned): boolean => {
+  const def = NAME_FONTS.find((f) => f.key === font);
+  return !!def && styleUnlocked(def, owned.level, owned.items);
+};
+
+export const colourUnlocked = (colour: string, owned: Owned): boolean => {
+  const def = NAME_COLOURS.find((c) => c.key === colour);
+  return !!def && styleUnlocked(def, owned.level, owned.items);
+};
+
+export const reactionUnlocked = (reaction: string, owned: Owned): boolean => {
+  const def = REACTIONS.find((r) => r.key === reaction);
+  return !!def && styleUnlocked(def, owned.level, owned.items);
+};
+
+export const pinnedReviewSlots = (items: Record<string, number>): number =>
+  BASE_PINNED_REVIEWS + (items.slot_pinned_review ?? 0);
 
 export const showcaseSlots = (items: Record<string, number>): number =>
   BASE_SHOWCASE_SLOTS + (items.slot_showcase ?? 0);

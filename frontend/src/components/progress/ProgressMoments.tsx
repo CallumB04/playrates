@@ -1,13 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-    badgeDef,
-    FRAMES,
-    levelFor,
-    type BadgeDef,
-    type Metal,
-    type XpGain,
-} from "@playrates/shared";
+import { badgeDef, levelFor } from "@playrates/shared";
 import { playerCardUrl } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import {
@@ -17,41 +10,27 @@ import {
 } from "../../hooks/queries/useProgress";
 import { profilePath } from "../../lib/profilePaths";
 import ShareSheet from "../share/ShareSheet";
-import BadgeMoment from "./BadgeMoment";
+import { useNotify } from "../../contexts/NotificationContext";
 import LaunchReveal from "./LaunchReveal";
 import LevelUpMoment from "./LevelUpMoment";
-import RewardToast from "./RewardToast";
-
-type Moment =
-    | { kind: "badge"; badge: BadgeDef; metal: Metal }
-    | { kind: "level"; level: number; frame: string | null };
-
-/** The frame a climb from one level to another opened, if any. */
-const frameOpened = (from: number, to: number): string | null => {
-    let opened: string | null = null;
-    for (const f of FRAMES) {
-        if ("level" in f && f.level > from && f.level <= to) opened = f.key;
-    }
-    return opened;
-};
+import { badgeToastText } from "./rewardText";
+import { xpToast } from "./XpToast";
 
 /**
- * Watches your progress for what's new and plays it: XP as a passing
- * chip, then each badge, then a level, one at a time and in that order.
- * Each is marked seen as it's queued, so a refetch never plays it twice.
+ * Watches your progress for what's new and says so: XP and badges as
+ * toasts in the corner, like anything else the site tells you, and a new
+ * level in a small popup of its own, the one thing worth stopping for.
+ * Each is marked seen as it's shown, so a refetch never shows it twice.
  */
 const ProgressMoments = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const notify = useNotify();
     const { data } = useProgress();
     const seen = useMarkSeen();
     const revealed = useMarkRevealed();
     const handled = useRef(new Set<string>());
-    const [queue, setQueue] = useState<Moment[]>([]);
-    const [toast, setToast] = useState<{
-        gains: XpGain[];
-        tokens: number;
-    } | null>(null);
+    const [levels, setLevels] = useState<number[]>([]);
     const [revealing, setRevealing] = useState(false);
     const [sharing, setSharing] = useState(false);
 
@@ -77,27 +56,21 @@ const ProgressMoments = () => {
             handled.current.add(`badge:${b.badge}:${b.metal}`)
         );
 
+        // A badge's own XP is said with the badge.
         const plain = gains.filter((g) => g.source !== "badge");
-        if (plain.length > 0)
-            setToast({ gains: plain, tokens: data.unseen.tokens });
-
-        const moments: Moment[] = badges.flatMap((b) => {
+        if (plain.length > 0) {
+            notify(xpToast(plain, data.unseen.tokens), "success", "low");
+        }
+        for (const b of badges) {
             const def = badgeDef(b.badge);
-            return def
-                ? [{ kind: "badge" as const, badge: def, metal: b.metal }]
-                : [];
-        });
+            if (def) notify(badgeToastText(def, b.metal), "success");
+        }
         const before = levelFor(
             data.xp - gains.reduce((n, g) => n + g.xp, 0)
         ).level;
         if (before < data.level.level) {
-            moments.push({
-                kind: "level",
-                level: data.level.level,
-                frame: frameOpened(before, data.level.level),
-            });
+            setLevels((l) => [...l, data.level.level]);
         }
-        if (moments.length > 0) setQueue((q) => [...q, ...moments]);
 
         seen.mutate({
             xpEventId: gains.at(-1)?.id,
@@ -123,18 +96,11 @@ const ProgressMoments = () => {
         revealed.mutate();
     };
 
-    const current = queue[0];
-    const next = () => setQueue((q) => q.slice(1));
+    const level = levels[0];
+    const next = () => setLevels((l) => l.slice(1));
 
     return (
         <>
-            {toast && (
-                <RewardToast
-                    gains={toast.gains}
-                    tokens={toast.tokens}
-                    onDone={() => setToast(null)}
-                />
-            )}
             {revealing && (
                 <LaunchReveal
                     progress={data}
@@ -145,22 +111,9 @@ const ProgressMoments = () => {
                     }}
                 />
             )}
-            {!revealing && current?.kind === "badge" && (
-                <BadgeMoment
-                    key={`${current.badge.key}:${current.metal}`}
-                    badge={current.badge}
-                    metal={current.metal}
-                    more={queue.filter((m) => m.kind === "badge").length - 1}
-                    onNext={next}
-                    onSkipAll={() =>
-                        setQueue((q) => q.filter((m) => m.kind !== "badge"))
-                    }
-                />
-            )}
-            {!revealing && current?.kind === "level" && (
+            {!revealing && level !== undefined && (
                 <LevelUpMoment
-                    level={current.level}
-                    frame={current.frame}
+                    level={level}
                     onClose={next}
                     onShare={() => {
                         next();

@@ -42,6 +42,7 @@ const RULES: Record<string, { xp: number; active: boolean }> = {
   streak: { xp: 0, active: false },
   quest: { xp: 0, active: false },
   badge: { xp: 0, active: false },
+  setup: { xp: 150, active: false },
   referral_joined: { xp: 50, active: false },
   referral_active: { xp: 250, active: false },
   referral_welcome: { xp: 100, active: false },
@@ -53,12 +54,13 @@ const SHOP: Record<
 > = {
   frame_neon: { kind: "cosmetic", price: 60, step: 0, max: 1 },
   theme_retro: { kind: "cosmetic", price: 80, step: 0, max: 1 },
-  effect_glow: { kind: "cosmetic", price: 100, step: 0, max: 1 },
-  layout_shelf: { kind: "cosmetic", price: 60, step: 0, max: 1 },
-  slot_showcase: { kind: "slot", price: 100, step: 50, max: 3 },
+  font_pixel: { kind: "name", price: 100, step: 0, max: 1 },
+  colour_ember: { kind: "name", price: 40, step: 0, max: 1 },
+  react_goat: { kind: "reaction", price: 60, step: 0, max: 1 },
+  slot_pinned_review: { kind: "slot", price: 60, step: 40, max: 3 },
+  slot_showcase: { kind: "slot", price: 100, step: 50, max: 4 },
   slot_pinned_list: { kind: "slot", price: 100, step: 100, max: 2 },
   streak_shield: { kind: "helper", price: 40, step: 0, max: 2 },
-  quest_reroll: { kind: "helper", price: 20, step: 0, max: 3 },
 };
 
 /**
@@ -267,16 +269,123 @@ export const createInMemoryProgress = (
       return true;
     },
 
-    async rerolls(userId, period) {
-      return Object.fromEntries(
-        state.questRerolls
-          .filter((r) => r.user_id === userId && r.period === period)
-          .map((r) => [r.slot, r.seed]),
+    async grantBackgroundCredit(userId) {
+      if (
+        state.tokenEvents.some(
+          (e) => e.user_id === userId && e.key === "background_unlock",
+        )
+      )
+        return false;
+      state.tokenEvents.push({
+        user_id: userId,
+        source: "background_unlock",
+        key: "background_unlock",
+        amount: 0,
+      });
+      const row = state.userItems.find(
+        (i) => i.user_id === userId && i.item === "background_credit",
+      );
+      if (row) row.quantity++;
+      else
+        state.userItems.push({
+          user_id: userId,
+          item: "background_credit",
+          quantity: 1,
+        });
+      return true;
+    },
+
+    // As buy_background does it: the free credit first, then tokens.
+    async buyBackground(userId, gameId, url) {
+      if (
+        state.userBackgrounds.some((b) => b.user_id === userId && b.url === url)
+      )
+        throw new BuyError("owned");
+      const fromGame = state.userBackgrounds.filter(
+        (b) => b.user_id === userId && b.game_id === gameId,
+      ).length;
+      const balance = state.tokenEvents
+        .filter((e) => e.user_id === userId)
+        .reduce((n, e) => n + e.amount, 0);
+      const credit = state.userItems.find(
+        (i) =>
+          i.user_id === userId &&
+          i.item === "background_credit" &&
+          i.quantity > 0,
+      );
+      let cost = 0;
+      if (credit) credit.quantity--;
+      else {
+        cost = 15 + 5 * fromGame;
+        if (balance < cost) throw new BuyError("insufficient_tokens");
+        state.tokenEvents.push({
+          user_id: userId,
+          source: "purchase",
+          key: `background:${nextId++}`,
+          amount: -cost,
+        });
+      }
+      state.userBackgrounds.push({
+        user_id: userId,
+        game_id: gameId,
+        url,
+        price: cost,
+      });
+      return { tokens: balance - cost, cost };
+    },
+
+    async favouriteCount(userId) {
+      return state.favouriteGames.filter((f) => f.user_id === userId).length;
+    },
+
+    async holdings(userIds, item) {
+      return new Map(
+        state.userItems
+          .filter((i) => i.item === item && userIds.includes(i.user_id))
+          .map((i) => [i.user_id, i.quantity]),
       );
     },
 
-    async addReroll(userId, period, slot, seed) {
-      state.questRerolls.push({ user_id: userId, period, slot, seed });
+    // As gift_item does it: the giver pays what the recipient would.
+    async gift(giverId, recipientId, item) {
+      const def = SHOP[item];
+      if (!def) throw new BuyError("unknown_item");
+      const have =
+        state.userItems.find(
+          (i) => i.user_id === recipientId && i.item === item,
+        )?.quantity ?? 0;
+      if (have >= def.max) throw new BuyError("max_owned");
+      const cost = def.price + (def.kind === "slot" ? def.step * have : 0);
+      const balance = state.tokenEvents
+        .filter((e) => e.user_id === giverId)
+        .reduce((n, e) => n + e.amount, 0);
+      if (balance < cost) throw new BuyError("insufficient_tokens");
+      state.tokenEvents.push({
+        user_id: giverId,
+        source: "gift",
+        key: `gift:${item}:${nextId++}`,
+        amount: -cost,
+      });
+      const row = state.userItems.find(
+        (i) => i.user_id === recipientId && i.item === item,
+      );
+      if (row) row.quantity++;
+      else state.userItems.push({ user_id: recipientId, item, quantity: 1 });
+      return { tokens: balance - cost, cost };
+    },
+
+    async ownedBackgrounds(userId) {
+      return state.userBackgrounds
+        .filter((b) => b.user_id === userId)
+        .map((b) => {
+          const game = state.games.find((g) => g.id === b.game_id);
+          return {
+            game_id: b.game_id,
+            url: b.url,
+            title: game?.title ?? "",
+            cover_url: game?.box_art_url ?? game?.cover_url ?? null,
+          };
+        });
     },
 
     async rules() {

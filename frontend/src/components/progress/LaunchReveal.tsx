@@ -68,7 +68,7 @@ const LaunchReveal = ({ progress, onShowcase, onDone }: LaunchRevealProps) => {
                 <button
                     type="button"
                     onClick={() => setBeat(3)}
-                    className="fixed top-4 right-4 min-h-11 rounded-full px-4 text-label font-medium text-content-on-media/70 hover:text-content-on-media"
+                    className="fixed top-4 right-4 min-h-11 rounded-md px-4 text-label font-medium text-content-on-media/70 hover:text-content-on-media"
                 >
                     Skip
                 </button>
@@ -109,8 +109,20 @@ const LaunchReveal = ({ progress, onShowcase, onDone }: LaunchRevealProps) => {
                         {formatCount(Math.round(beat >= 3 ? progress.xp : xp))}{" "}
                         XP
                     </span>
-                    <span className="metal-gold pr-metal-text animate-level-pop font-display text-[6rem] leading-none font-extrabold sm:text-[8rem]">
-                        {progress.level.level}
+                    <span className="relative grid place-items-center">
+                        <span
+                            aria-hidden
+                            className="pointer-events-none absolute size-56 animate-glow-bloom rounded-full bg-medal-gold/20 blur-3xl"
+                        />
+                        {/* Once, as the number lands. Still, a ring that
+                            never leaves would only be in the way. */}
+                        <span
+                            aria-hidden
+                            className="pointer-events-none absolute size-32 animate-ring-out rounded-full border-2 border-medal-gold/70 [animation-delay:250ms] motion-reduce:hidden sm:size-40"
+                        />
+                        <span className="metal-gold pr-metal-text relative animate-level-pop font-display text-[6rem] leading-none font-extrabold sm:text-[8rem]">
+                            {progress.level.level}
+                        </span>
                     </span>
                     <span className="font-mono text-label font-semibold tracking-[0.2em] uppercase">
                         Level

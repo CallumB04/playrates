@@ -89,6 +89,28 @@ export type SetProfileBackgroundInput = z.infer<
 >;
 
 /** `.strict()` rejects unknown keys, so only these fields are editable. */
+/** The cards down the main column of a profile, in the order a member
+ *  can rearrange. */
+export const PROFILE_SECTIONS = [
+  "pinned_reviews",
+  "pinned_lists",
+  "favourites",
+  "wishlist",
+] as const;
+export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
+
+/** A stored order, made whole: unknown keys dropped, missing ones added in
+ *  their default place. */
+export const sectionOrder = (
+  stored: readonly string[] = [],
+): ProfileSection[] => {
+  const known = stored.filter((s): s is ProfileSection =>
+    (PROFILE_SECTIONS as readonly string[]).includes(s),
+  );
+  const kept = [...new Set(known)];
+  return [...kept, ...PROFILE_SECTIONS.filter((s) => !kept.includes(s))];
+};
+
 export const UpdateProfileSchema = z
   .object({
     username: UsernameSchema.optional(),
@@ -109,6 +131,10 @@ export const UpdateProfileSchema = z
     profileVisibility: ProfileVisibilitySchema.optional(),
     /** Who sees each About field; only the ones named change. */
     aboutVisibility: AboutVisibilitySchema.optional(),
+    sectionOrder: z
+      .array(z.enum(PROFILE_SECTIONS))
+      .max(PROFILE_SECTIONS.length)
+      .optional(),
   })
   .merge(AboutFieldsSchema)
   .strict();
@@ -147,10 +173,15 @@ export interface Profile {
   level: number;
   /** The avatar frame worn, if any has been earned. */
   frame: string | null;
-  /** Bought profile effects, as worn. */
-  effects: string[];
+  /** How their name is set: a font and a colour, by key. */
+  nameFont: string;
+  nameColour: string;
   /** Lists pinned to the profile, in order. */
   pinnedLists: number[];
+  /** Reviews pinned to the profile, in order. */
+  pinnedReviews: number[];
+  /** The main column's cards, top first. */
+  sectionOrder: ProfileSection[];
   createdAt: string;
 }
 

@@ -72,19 +72,6 @@ describe("questsFor", () => {
     );
     expect(new Set(others).size).toBeGreaterThan(1);
   });
-
-  it("swaps only that slot, never for a task already dealt", () => {
-    // Seeds are random in use; a few hundred cover the pool many times.
-    for (let i = 0; i < 300; i++) {
-      for (const period of [week, month]) {
-        const before = questsFor("user-1", period);
-        const after = questsFor("user-1", period, { 1: `seed-${i}` });
-        expect(after[0]).toEqual(before[0]);
-        expect(after[2]).toEqual(before[2]);
-        expect(before.map((q) => q.key)).not.toContain(after[1]!.key);
-      }
-    }
-  });
 });
 
 describe("periodsFor", () => {

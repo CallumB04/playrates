@@ -29,13 +29,21 @@ export interface RuleRow {
   active: boolean;
 }
 
-/** Why a purchase was refused, as buy_item raises it. */
-export type BuyRefusal = "unknown_item" | "max_owned" | "insufficient_tokens";
+/** Why a purchase was refused, as buy_item and buy_background raise it. */
+export type BuyRefusal =
+  "unknown_item" | "max_owned" | "insufficient_tokens" | "owned";
 
 export class BuyError extends Error {
   constructor(readonly reason: BuyRefusal) {
     super(reason);
   }
+}
+
+export interface OwnedBackgroundRow {
+  game_id: number;
+  url: string;
+  title: string;
+  cover_url: string | null;
 }
 
 export interface ProgressRepository {
@@ -81,13 +89,26 @@ export interface ProgressRepository {
   buy(userId: string, item: string): Promise<{ tokens: number; owned: number }>;
   /** False when there was none to use. */
   useItem(userId: string, item: string): Promise<boolean>;
-  rerolls(userId: string, period: string): Promise<Record<number, string>>;
-  addReroll(
+  /** True the first time only: the free picture for reaching the level. */
+  grantBackgroundCredit(userId: string): Promise<boolean>;
+  /** Throws BuyError when refused. */
+  buyBackground(
     userId: string,
-    period: string,
-    slot: number,
-    seed: string,
-  ): Promise<void>;
+    gameId: number,
+    url: string,
+  ): Promise<{ tokens: number; cost: number }>;
+  /** Oldest first. */
+  ownedBackgrounds(userId: string): Promise<OwnedBackgroundRow[]>;
+  /** Games on a member's favourites shelf. */
+  favouriteCount(userId: string): Promise<number>;
+  /** How many of one item each member holds; none held is left out. */
+  holdings(userIds: string[], item: string): Promise<Map<string, number>>;
+  /** Throws BuyError when refused. */
+  gift(
+    giverId: string,
+    recipientId: string,
+    item: string,
+  ): Promise<{ tokens: number; cost: number }>;
   rules(): Promise<RuleRow[]>;
   xpSince(userIds: string[], since: string): Promise<Map<string, number>>;
   holders(): Promise<{ badge: string; metal: number; holders: number }[]>;
@@ -305,26 +326,89 @@ export const createProgressRepository = (db: Db): ProgressRepository => {
       return true;
     },
 
-    async rerolls(userId, period) {
-      const { data, error } = await db
-        .from("quest_rerolls")
-        .select("slot, seed")
-        .eq("user_id", userId)
-        .eq("period", period);
+    grantBackgroundCredit: (userId) =>
+      rpc<boolean>("grant_background_credit", { p_user: userId }),
+
+    async buyBackground(userId, gameId, url) {
+      const { data, error } = await db.rpc("buy_background", {
+        p_user: userId,
+        p_game: gameId,
+        p_url: url,
+      });
+      if (error) {
+        const reason = (["owned", "insufficient_tokens"] as const).find((r) =>
+          error.message.includes(r),
+        );
+        if (reason) throw new BuyError(reason);
+        throw error;
+      }
+      return data as { tokens: number; cost: number };
+    },
+
+    async favouriteCount(userId) {
+      const { count, error } = await db
+        .from("favourite_games")
+        .select("game_id", { count: "exact", head: true })
+        .eq("user_id", userId);
       if (error) throw error;
-      return Object.fromEntries(
-        ((data ?? []) as { slot: number; seed: string }[]).map((r) => [
-          r.slot,
-          r.seed,
+      return count ?? 0;
+    },
+
+    async holdings(userIds, item) {
+      if (userIds.length === 0) return new Map();
+      const { data, error } = await db
+        .from("user_items")
+        .select("user_id, quantity")
+        .eq("item", item)
+        .in("user_id", userIds);
+      if (error) throw error;
+      return new Map(
+        ((data ?? []) as { user_id: string; quantity: number }[]).map((r) => [
+          r.user_id,
+          r.quantity,
         ]),
       );
     },
 
-    async addReroll(userId, period, slot, seed) {
-      const { error } = await db
-        .from("quest_rerolls")
-        .insert({ user_id: userId, period, slot, seed });
+    async gift(giverId, recipientId, item) {
+      const { data, error } = await db.rpc("gift_item", {
+        p_giver: giverId,
+        p_recipient: recipientId,
+        p_item: item,
+      });
+      if (error) {
+        const reason = (
+          ["unknown_item", "max_owned", "insufficient_tokens"] as const
+        ).find((r) => error.message.includes(r));
+        if (reason) throw new BuyError(reason);
+        throw error;
+      }
+      return data as { tokens: number; cost: number };
+    },
+
+    async ownedBackgrounds(userId) {
+      const { data, error } = await db
+        .from("user_backgrounds")
+        .select("game_id, url, games(title, cover_url, box_art_url)")
+        .eq("user_id", userId)
+        .order("acquired_at");
       if (error) throw error;
+      return (
+        (data ?? []) as unknown as {
+          game_id: number;
+          url: string;
+          games: {
+            title: string;
+            cover_url: string | null;
+            box_art_url: string | null;
+          } | null;
+        }[]
+      ).map((r) => ({
+        game_id: Number(r.game_id),
+        url: r.url,
+        title: r.games?.title ?? "",
+        cover_url: r.games?.box_art_url ?? r.games?.cover_url ?? null,
+      }));
     },
 
     async rules() {

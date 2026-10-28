@@ -1,9 +1,4 @@
-import type {
-    BadgeDef,
-    Metal,
-    PlayerBadges,
-    ShowcaseLayout,
-} from "@playrates/shared";
+import type { BadgeDef, Metal, PlayerBadges } from "@playrates/shared";
 import { badgeDef } from "@playrates/shared";
 import BadgeMedal from "./BadgeMedal";
 import { cn } from "../../lib/cn";
@@ -34,84 +29,23 @@ export const showcaseOf = (data: PlayerBadges): ShownBadge[] => {
     });
 };
 
-const MEDAL = {
-    sm: { base: "sm", lead: "md", plinth: "w-7" },
-    md: { base: "md", lead: "lg", plinth: "w-10" },
-} as const;
-
-/**
- * The showcase in the layout its owner wears, always on one line so it can
- * sit beside a level: a plain row, a shelf with each badge on a plinth, or
- * the first badge larger in a pool of light.
- */
+/** The badges a member pinned, in a row. */
 const ShowcaseView = ({
-    layout,
     badges,
     size = "sm",
     className,
 }: {
-    layout: ShowcaseLayout;
     badges: ShownBadge[];
-    size?: keyof typeof MEDAL;
+    size?: "sm" | "md";
     className?: string;
-}) => {
-    const m = MEDAL[size];
-    if (layout === "layout_shelf") {
-        return (
-            <span className={cn("inline-flex flex-col", className)}>
-                <ul className="flex items-end gap-1.5 px-1.5">
-                    {badges.map(({ def, metal }) => (
-                        <li
-                            key={def.key}
-                            title={def.name}
-                            className="flex flex-col items-center"
-                        >
-                            <BadgeMedal
-                                badge={def}
-                                metal={metal}
-                                size={m.base}
-                            />
-                            <span
-                                aria-hidden
-                                className={cn(
-                                    "mt-0.5 h-1 rounded-[50%] bg-content-muted/30",
-                                    m.plinth
-                                )}
-                            />
-                        </li>
-                    ))}
-                </ul>
-                <span
-                    aria-hidden
-                    className="block h-1.5 rounded-full bg-linear-to-b from-surface-raised to-surface-sunken shadow-plate ring-1 ring-subtle"
-                />
-            </span>
-        );
-    }
-    const spotlight = layout === "layout_spotlight";
-    return (
-        <ul className={cn("flex items-center gap-1.5", className)}>
-            {badges.map(({ def, metal }, i) => (
-                <li key={def.key} title={def.name} className="relative">
-                    {spotlight && i === 0 && (
-                        <span
-                            aria-hidden
-                            className="absolute inset-0 scale-[1.9] rounded-full bg-[radial-gradient(circle,var(--glow-brand),transparent_65%)]"
-                        />
-                    )}
-                    <BadgeMedal
-                        badge={def}
-                        metal={metal}
-                        size={spotlight && i === 0 ? m.lead : m.base}
-                        className={cn(
-                            "relative",
-                            spotlight && i === 0 && "mr-1.5"
-                        )}
-                    />
-                </li>
-            ))}
-        </ul>
-    );
-};
+}) => (
+    <ul className={cn("flex flex-wrap items-center gap-1.5", className)}>
+        {badges.map(({ def, metal }) => (
+            <li key={def.key} title={def.name}>
+                <BadgeMedal badge={def} metal={metal} size={size} />
+            </li>
+        ))}
+    </ul>
+);
 
 export default ShowcaseView;

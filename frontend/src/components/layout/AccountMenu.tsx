@@ -7,6 +7,7 @@ import {
     Moon,
     Settings,
     Shield,
+    Store,
     Sun,
     UserRound,
 } from "lucide-react";
@@ -187,22 +188,29 @@ const AccountMenu = ({
                 aria-haspopup="menu"
                 aria-label="Account menu"
                 className={cn(
-                    "relative block rounded-full ring-offset-2 ring-offset-surface transition-shadow lift",
-                    "before:absolute before:-inset-1 before:content-[''] sm:before:hidden",
-                    open
-                        ? "ring-2 ring-brand"
-                        : "hover:ring-2 hover:ring-subtle"
+                    "group relative block rounded-full lift",
+                    "before:absolute before:-inset-1 before:content-[''] sm:before:hidden"
                 )}
             >
-                <AvatarFrame frame={user.frame} size="sm">
-                    <ProfilePicture
-                        variant="nav"
-                        file={user.avatarUrl ?? ""}
-                        accent={user.accent}
-                        username={user.username}
-                        link={false}
-                    />
-                </AvatarFrame>
+                {/* The ring round the picture only, not the level on it. */}
+                <span
+                    className={cn(
+                        "block rounded-full ring-offset-2 ring-offset-surface transition-shadow",
+                        open
+                            ? "ring-2 ring-brand"
+                            : "group-hover:ring-2 group-hover:ring-subtle"
+                    )}
+                >
+                    <AvatarFrame frame={user.frame} size="sm">
+                        <ProfilePicture
+                            variant="nav"
+                            file={user.avatarUrl ?? ""}
+                            accent={user.accent}
+                            username={user.username}
+                            link={false}
+                        />
+                    </AvatarFrame>
+                </span>
                 <LevelChip
                     level={user.level}
                     className="absolute -right-1 -bottom-1"
@@ -241,6 +249,14 @@ const AccountMenu = ({
                         role="menuitem"
                     >
                         <UserRound size={15} aria-hidden /> Your profile
+                    </Link>
+                    <Link
+                        to="/shop"
+                        onClick={() => setOpen(false)}
+                        className={ITEM}
+                        role="menuitem"
+                    >
+                        <Store size={15} aria-hidden /> Shop
                     </Link>
 
                     {/* The shelves. Backlog used to be a top-level nav item,

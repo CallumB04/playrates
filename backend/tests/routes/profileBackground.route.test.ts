@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
-import type { GameBackdrop } from "@playrates/shared";
+import {
+  BACKGROUND_LEVEL,
+  xpForLevel,
+  type GameBackdrop,
+} from "@playrates/shared";
 import {
   nullGamesProvider,
   type GamesProvider,
@@ -92,6 +96,21 @@ describe("a profile's background", () => {
     gameLogs: logged ? [buildGameLog({ game_id: 1, status: "wishlist" })] : [],
   });
 
+  /** With the picture bought, as wearing one needs. */
+  const owning = (logged = true) => {
+    const built = buildTestApp({
+      seed: seed(logged),
+      provider: igdb().provider,
+    });
+    built.state.userBackgrounds.push({
+      user_id: USER_A,
+      game_id: 1,
+      url: SHOT.url,
+      price: 0,
+    });
+    return built;
+  };
+
   const put = (app: Parameters<typeof request>[0], body: object) =>
     request(app)
       .put("/api/v1/profiles/me/background")
@@ -99,7 +118,7 @@ describe("a profile's background", () => {
       .send(body);
 
   it("takes one of a logged game's pictures, and shows it on the profile", async () => {
-    const { app } = buildTestApp({ seed: seed(), provider: igdb().provider });
+    const { app } = owning();
 
     const response = await put(app, { gameId: 1, url: SHOT.url });
 
@@ -112,7 +131,7 @@ describe("a profile's background", () => {
   });
 
   it("keeps the part of the picture its owner chose", async () => {
-    const { app } = buildTestApp({ seed: seed(), provider: igdb().provider });
+    const { app } = owning();
 
     const response = await put(app, { gameId: 1, url: SHOT.url, position: 85 });
 
@@ -120,7 +139,7 @@ describe("a profile's background", () => {
   });
 
   it("refuses a position off the picture", async () => {
-    const { app } = buildTestApp({ seed: seed(), provider: igdb().provider });
+    const { app } = owning();
 
     for (const position of [-1, 101, 40.5]) {
       const response = await put(app, { gameId: 1, url: SHOT.url, position });
@@ -129,10 +148,7 @@ describe("a profile's background", () => {
   });
 
   it("refuses a game the owner hasn't logged", async () => {
-    const { app } = buildTestApp({
-      seed: seed(false),
-      provider: igdb().provider,
-    });
+    const { app } = owning(false);
 
     const response = await put(app, { gameId: 1, url: SHOT.url });
 
@@ -141,7 +157,7 @@ describe("a profile's background", () => {
 
   /* Anything else would put any URL at all on a public page. */
   it("refuses a picture the game doesn't offer", async () => {
-    const { app } = buildTestApp({ seed: seed(), provider: igdb().provider });
+    const { app } = owning();
 
     const response = await put(app, {
       gameId: 1,
@@ -153,8 +169,17 @@ describe("a profile's background", () => {
     expect(profile.body.background).toBeNull();
   });
 
+  it("refuses a picture that hasn't been bought", async () => {
+    const { app, state } = owning();
+    state.userBackgrounds = [];
+
+    const response = await put(app, { gameId: 1, url: SHOT.url });
+
+    expect(response.status).toBe(402);
+  });
+
   it("goes back to the colour when cleared", async () => {
-    const { app } = buildTestApp({ seed: seed(), provider: igdb().provider });
+    const { app } = owning();
     await put(app, { gameId: 1, url: SHOT.url });
 
     const response = await request(app)
@@ -166,10 +191,88 @@ describe("a profile's background", () => {
   });
 
   it("needs a signed-in owner", async () => {
-    const { app } = buildTestApp({ seed: seed(), provider: igdb().provider });
+    const { app } = owning();
     const response = await request(app)
       .put("/api/v1/profiles/me/background")
       .send({ gameId: 1, url: SHOT.url });
     expect(response.status).toBe(401);
+  });
+});
+
+describe("buying a background", () => {
+  const SECOND: GameBackdrop = {
+    url: "https://images.igdb.com/igdb/image/upload/t_1080p/sc2.jpg",
+    thumbUrl:
+      "https://images.igdb.com/igdb/image/upload/t_screenshot_med/sc2.jpg",
+  };
+  const THIRD: GameBackdrop = {
+    url: "https://images.igdb.com/igdb/image/upload/t_1080p/sc3.jpg",
+    thumbUrl:
+      "https://images.igdb.com/igdb/image/upload/t_screenshot_med/sc3.jpg",
+  };
+
+  const build = (xp = xpForLevel(BACKGROUND_LEVEL)) => {
+    const built = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        gameLogs: [buildGameLog({ game_id: 1, status: "wishlist" })],
+      },
+      provider: igdb([SHOT, SECOND, THIRD]).provider,
+    });
+    const me = () =>
+      request(built.app)
+        .get("/api/v1/me/progress")
+        .set("Authorization", authHeader(USER_A));
+    const buy = (url: string) =>
+      request(built.app)
+        .post("/api/v1/me/backgrounds")
+        .set("Authorization", authHeader(USER_A))
+        .send({ gameId: 1, url });
+    const mine = async () =>
+      (
+        await request(built.app)
+          .get("/api/v1/me/backgrounds")
+          .set("Authorization", authHeader(USER_A))
+      ).body;
+    void built.repos.progress.awardXp(USER_A, "quest", "q", xp);
+    return { ...built, me, buy, mine };
+  };
+
+  it("stays shut below its level", async () => {
+    const { buy, mine, me } = build(0);
+    await me();
+    expect((await mine()).unlocked).toBe(false);
+    expect((await buy(SHOT.url)).status).toBe(403);
+  });
+
+  it("gives the first picture free, then charges more for each from the same game", async () => {
+    const { buy, mine, me, repos } = build();
+    await me();
+    expect(await mine()).toMatchObject({ unlocked: true, credits: 1 });
+    // A second look pays no second free picture.
+    await me();
+    expect((await mine()).credits).toBe(1);
+
+    expect((await buy(SHOT.url)).body).toMatchObject({ cost: 0 });
+    // Levels 2 and 3 paid 10 tokens each: enough for the next, not the one after.
+    expect((await buy(SECOND.url)).body).toEqual({ cost: 20, tokens: 0 });
+    expect((await buy(THIRD.url)).status).toBe(402);
+
+    await repos.progress.awardTokens(USER_A, "test", "t", 100);
+    expect((await buy(THIRD.url)).body).toMatchObject({ cost: 25 });
+    expect((await buy(THIRD.url)).status).toBe(409);
+
+    expect((await mine()).games).toEqual([
+      expect.objectContaining({
+        gameId: 1,
+        urls: [SHOT.url, SECOND.url, THIRD.url],
+      }),
+    ]);
+  });
+
+  it("only sells a logged game's own pictures", async () => {
+    const { buy, me } = build();
+    await me();
+    expect((await buy("https://example.test/anything.jpg")).status).toBe(422);
   });
 });

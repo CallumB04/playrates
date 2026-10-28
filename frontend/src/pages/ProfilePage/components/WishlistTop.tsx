@@ -36,7 +36,7 @@ const WishlistTop = ({ username, isMyAccount, canSee }: WishlistTopProps) => {
     if (!isMyAccount && !isLoading && canSee && total === 0) return null;
 
     return (
-        <Panel title="Wishlist">
+        <Panel title="Top of the wishlist">
             {isLoading || !canSee ? (
                 <div className={GRID}>
                     {Array.from({ length: TOP }, (_, i) => (

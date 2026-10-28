@@ -5,7 +5,11 @@ import type {
     StyleInput,
 } from "@playrates/shared";
 import {
+    buyBackground,
     buyItem,
+    fetchBackgrounds,
+    fetchGiftFriends,
+    giftItem,
     fetchLeaderboard,
     fetchPlayerBadges,
     fetchProgress,
@@ -14,7 +18,6 @@ import {
     markProgressSeen,
     markRevealed,
     queryKeys,
-    rerollQuest,
     setProgressStyle,
 } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -79,17 +82,36 @@ export const useLeaderboard = (period: LeaderboardPeriod) => {
     });
 };
 
-export const useReroll = () => {
+export const useGiftFriends = (item: ShopItemKey, enabled: boolean) =>
+    useQuery({
+        queryKey: queryKeys.progress.giftFriends(item),
+        queryFn: () => fetchGiftFriends(item),
+        enabled,
+    });
+
+export const useGift = () => {
     const settle = useSettle();
     return useMutation({
-        mutationKey: ["progress", "reroll"],
-        mutationFn: ({
-            period,
-            slot,
-        }: {
-            period: "week" | "month";
-            slot: number;
-        }) => rerollQuest(period, slot),
+        mutationKey: ["progress", "gift"],
+        mutationFn: giftItem,
+        onSuccess: settle,
+    });
+};
+
+export const useBackgrounds = (enabled = true) => {
+    const { user } = useAuth();
+    return useQuery({
+        queryKey: queryKeys.progress.backgrounds,
+        queryFn: fetchBackgrounds,
+        enabled: enabled && !!user,
+    });
+};
+
+export const useBuyBackground = () => {
+    const settle = useSettle();
+    return useMutation({
+        mutationKey: ["progress", "background"],
+        mutationFn: buyBackground,
         onSuccess: settle,
     });
 };

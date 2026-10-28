@@ -7,17 +7,20 @@ import {
     Moon,
     Settings,
     Shield,
-    Trophy,
+    Store,
     Sun,
 } from "lucide-react";
 import type { MyProfile } from "@playrates/shared";
 import { useTheme } from "../../contexts/ThemeContext";
 import { GAME_STATUSES, STATUS_PRESENTATION } from "../../constants/gameStatus";
 import type { SetupStep } from "../../lib/setupChecklist";
+import { useProgressQuery } from "../../hooks/queries/useProgress";
 import { cn } from "../../lib/cn";
 import { shelfPath } from "../../lib/profilePaths";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
+import TokenAmount from "../progress/TokenAmount";
+import XpBar from "../progress/XpBar";
 import { ProgressRing, SetupSteps } from "./SetupSteps";
 
 interface MoreSheetProps {
@@ -51,6 +54,7 @@ const MoreSheet = ({
     const titleId = useId();
     const done = setup?.filter((step) => step.done).length ?? 0;
     const [stepsOpen, setStepsOpen] = useState(false);
+    const { data: progress } = useProgressQuery(!!user);
 
     return (
         <Modal
@@ -64,6 +68,31 @@ const MoreSheet = ({
             >
                 More
             </h2>
+
+            {/* The account menu's level row, so a phone sees it too. */}
+            {user && progress && (
+                <Link
+                    to="/progress"
+                    onClick={onClose}
+                    className="mt-4 block rounded-md border border-subtle bg-surface-sunken/50 px-3 py-2.5 transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-brand"
+                >
+                    <span className="flex items-center justify-between gap-2">
+                        <span className="text-body-sm font-semibold text-content">
+                            Level {progress.level.level}
+                        </span>
+                        <TokenAmount
+                            amount={progress.tokens}
+                            className="text-label"
+                        />
+                    </span>
+                    <XpBar
+                        level={progress.level}
+                        labelled={false}
+                        size="sm"
+                        className="mt-2"
+                    />
+                </Link>
+            )}
 
             {setup && (
                 <section className="mt-4 rounded-md border border-subtle bg-surface-sunken/50 p-1">
@@ -142,13 +171,9 @@ const MoreSheet = ({
 
             <div className="mt-3 border-t border-subtle pt-3">
                 {user && (
-                    <Link
-                        to="/progress"
-                        onClick={onClose}
-                        className={ACCOUNT_ROW}
-                    >
-                        Progress
-                        <Trophy size={16} aria-hidden />
+                    <Link to="/shop" onClick={onClose} className={ACCOUNT_ROW}>
+                        Shop
+                        <Store size={16} aria-hidden />
                     </Link>
                 )}
                 {user && (

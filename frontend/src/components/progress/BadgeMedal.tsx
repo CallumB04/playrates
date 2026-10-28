@@ -16,7 +16,7 @@ interface BadgeMedalProps {
     /** Null while it's still to earn. */
     metal: Metal | null;
     size?: keyof typeof SIZES;
-    /** How far towards the next metal, 0 to 1, drawn round a locked one. */
+    /** How far towards the next metal, 0 to 1, drawn round the outside. */
     progress?: number;
     className?: string;
 }
@@ -24,8 +24,8 @@ interface BadgeMedalProps {
 /**
  * A badge as a medal: a disc in its metal with the icon on it. Still and
  * plain on purpose; a page holds dozens. One still to earn is a blank in
- * the page's own colours with how far along it is drawn round the edge,
- * and a secret one doesn't show its icon.
+ * the page's own colours, and a secret one doesn't show its icon. Either
+ * can carry a ring of how far it is to the next metal.
  */
 const BadgeMedal = ({
     badge,
@@ -67,22 +67,33 @@ const BadgeMedal = ({
                 strokeWidth={2.25}
                 style={{ color: "var(--metal-ink)" }}
             />
-            {locked && progress !== undefined && progress > 0 && (
+            {progress !== undefined && (
+                // Round the outside, so it reads on a metal as on a blank.
                 <svg
-                    viewBox="0 0 36 36"
-                    className="absolute -inset-px size-[calc(100%+2px)] -rotate-90"
+                    viewBox="0 0 40 40"
+                    className="absolute -inset-1 size-[calc(100%+0.5rem)] -rotate-90"
                 >
                     <circle
-                        cx="18"
-                        cy="18"
-                        r="17"
+                        cx="20"
+                        cy="20"
+                        r="19"
                         fill="none"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        className="stroke-brand"
-                        pathLength={100}
-                        strokeDasharray={`${Math.min(100, progress * 100)} 100`}
+                        strokeWidth="1.5"
+                        className="stroke-surface-sunken"
                     />
+                    {progress > 0 && (
+                        <circle
+                            cx="20"
+                            cy="20"
+                            r="19"
+                            fill="none"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            className="stroke-brand"
+                            pathLength={100}
+                            strokeDasharray={`${Math.min(100, progress * 100)} 100`}
+                        />
+                    )}
                 </svg>
             )}
         </span>

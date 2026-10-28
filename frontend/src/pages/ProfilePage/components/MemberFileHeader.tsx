@@ -6,40 +6,8 @@ import UserStatus from "../../../components/UserStatus";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import { figureClass } from "../../../components/ui/Figure";
 import { formatHours, formatMonthYear } from "../../../lib/format";
-import { Link } from "react-router-dom";
 import AvatarFrame from "../../../components/progress/AvatarFrame";
-import ShowcaseView, {
-    showcaseOf,
-} from "../../../components/progress/ShowcaseView";
-import { usePlayerBadges } from "../../../hooks/queries/useProgress";
-import { profilePath } from "../../../lib/profilePaths";
-import { cn } from "../../../lib/cn";
-
-/** Their level and the badges they pinned, one line for everyone, the way
- *  into their Badges tab. */
-const LevelRow = ({ username, level }: { username: string; level: number }) => {
-    const { data } = usePlayerBadges(username);
-    const shown = data ? showcaseOf(data) : [];
-    return (
-        <Link
-            to={profilePath(username, "badges")}
-            className="mt-3 flex w-max max-w-full flex-wrap items-center gap-x-3 gap-y-2 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
-        >
-            <span className="flex items-baseline gap-1.5">
-                <span className="text-label text-content-muted">Level</span>
-                <span className="font-display text-[20px] leading-none font-bold text-content tabular-nums">
-                    {level}
-                </span>
-            </span>
-            {shown.length > 0 && (
-                <>
-                    <span aria-hidden className="h-5 w-px bg-subtle" />
-                    <ShowcaseView layout={data!.layout} badges={shown} />
-                </>
-            )}
-        </Link>
-    );
-};
+import NameText from "../../../components/progress/NameText";
 
 interface MemberFileHeaderProps {
     profile: Profile;
@@ -67,18 +35,6 @@ const MemberFileHeader = ({
     /* No card: it sits on the page, or on the picture a profile chose, as a
        game's title sits on its art. */
     <section className="relative">
-        {profile.effects.includes("effect_sheen") && (
-            // Bought: a light that crosses the top of the profile.
-            <span
-                aria-hidden
-                className="pointer-events-none absolute -inset-x-4 -top-6 bottom-0 animate-sheen opacity-60"
-                style={{
-                    backgroundImage:
-                        "linear-gradient(105deg, transparent 40%, var(--glow-brand) 50%, transparent 60%)",
-                    backgroundSize: "250% 100%",
-                }}
-            />
-        )}
         {/* Stacked until there is room beside the name for the buttons;
             then the buttons sit at the foot of it, by what they act on,
             rather than up on the picture by the avatar. */}
@@ -106,14 +62,13 @@ const MemberFileHeader = ({
 
             <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
-                    <h1
-                        className={cn(
-                            "font-display text-title break-words text-content",
-                            profile.effects.includes("effect_glow") &&
-                                "pr-name-glow"
-                        )}
-                    >
-                        {profile.username}
+                    <h1 className="font-display text-title break-words text-content">
+                        <NameText
+                            font={profile.nameFont}
+                            colour={profile.nameColour}
+                        >
+                            {profile.username}
+                        </NameText>
                     </h1>
                     <UserStatus online={profile.online} />
                     <span className="text-label text-content-muted">
@@ -145,7 +100,6 @@ const MemberFileHeader = ({
                         </span>
                     </p>
                 )}
-                <LevelRow username={profile.username} level={profile.level} />
             </div>
 
             <div className="flex gap-2 lg:shrink-0">{action}</div>

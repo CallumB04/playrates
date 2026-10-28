@@ -1,4 +1,5 @@
 import type { ExternalGame } from "../../src/providers/games/GamesProvider.js";
+import { createMemoryReactionRepo } from "./inMemoryReactions.js";
 import { matchTier } from "../../src/lib/gameMatch.js";
 
 /** The rules public.search_games and the library's filter both apply. */
@@ -117,7 +118,7 @@ export interface InMemoryState {
   gameSystems: { game_id: number; system_slug: string }[];
   gameLogs: GameLogRow[];
   reviews: ReviewRow[];
-  reviewVotes: { review_id: number; user_id: string }[];
+  reviewVotes: { review_id: number; user_id: string; reaction?: string }[];
   friendships: FriendshipRow[];
   notifications: NotificationRow[];
   platforms: PlatformRow[];
@@ -127,7 +128,11 @@ export interface InMemoryState {
   avatars: Map<string, Buffer>;
   communityThreads: CommunityThreadRow[];
   communityMessages: CommunityMessageRow[];
-  communityVotes: { message_id: number; user_id: string }[];
+  communityVotes: {
+    message_id: number;
+    user_id: string;
+    reaction?: string;
+  }[];
   /** Pictures uploaded to messages, by URL. */
   communityImages: Map<string, { bytes: Buffer; createdAt: string }>;
   /** Written by triggers in Postgres; seeded directly here. */
@@ -141,7 +146,7 @@ export interface InMemoryState {
   wishlistRanks: { user_id: string; game_id: number; position: number }[];
   gameLists: ListRow[];
   gameListItems: ListItem[];
-  gameListVotes: { list_id: number; user_id: string }[];
+  gameListVotes: { list_id: number; user_id: string; reaction?: string }[];
   gaming25s: Gaming25Row[];
   gaming25Picks: Gaming25PickState[];
   gaming25Loves: Gaming25Love[];
@@ -156,11 +161,11 @@ export interface InMemoryState {
   }[];
   userItems: { user_id: string; item: string; quantity: number }[];
   shieldsUsed: { user_id: string; week: string }[];
-  questRerolls: {
+  userBackgrounds: {
     user_id: string;
-    period: string;
-    slot: number;
-    seed: string;
+    game_id: number;
+    url: string;
+    price: number;
   }[];
   /** What player_metrics would count, per member, set by a test. */
   progressMetrics: Map<string, Record<string, number>>;
@@ -242,7 +247,7 @@ export const createInMemoryRepos = (
     userBadges: [],
     userItems: [],
     shieldsUsed: [],
-    questRerolls: [],
+    userBackgrounds: [],
     progressMetrics: new Map(),
   };
 
@@ -1237,41 +1242,11 @@ export const createInMemoryRepos = (
         return row ? withAuthor(row) : null;
       },
 
-      async votedReviewIds(userId, reviewIds) {
-        return new Set(
-          state.reviewVotes
-            .filter(
-              (v) => v.user_id === userId && reviewIds.includes(v.review_id),
-            )
-            .map((v) => v.review_id),
-        );
-      },
-
-      async hasVoted(userId, reviewId) {
-        return state.reviewVotes.some(
-          (v) => v.user_id === userId && v.review_id === reviewId,
-        );
-      },
-
-      async addVote(userId, reviewId) {
-        // Primary key is (review_id, user_id), so a second vote is a no-op.
-        const exists = state.reviewVotes.some(
-          (v) => v.user_id === userId && v.review_id === reviewId,
-        );
-        if (!exists) {
-          state.reviewVotes.push({ review_id: reviewId, user_id: userId });
-        }
-      },
-
-      async removeVote(userId, reviewId) {
-        state.reviewVotes = state.reviewVotes.filter(
-          (v) => !(v.user_id === userId && v.review_id === reviewId),
-        );
-      },
-
-      async voteCount(reviewId) {
-        return state.reviewVotes.filter((v) => v.review_id === reviewId).length;
-      },
+      reactions: createMemoryReactionRepo(
+        () => state.reviewVotes,
+        (next) => (state.reviewVotes = next),
+        "review_id",
+      ),
 
       async listRecent(from, to, showSexualContent) {
         const explicit = new Set(

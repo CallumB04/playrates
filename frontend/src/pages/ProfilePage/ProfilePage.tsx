@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Flag, Image as ImageIcon, Pencil, Settings } from "lucide-react";
+import { Flag, Image as ImageIcon, Lock, Pencil, Settings } from "lucide-react";
 import ReportDialog from "../../components/ReportDialog";
 import { useLogFlow } from "../../components/gamelog/useLogFlow";
 import { useAuth } from "../../contexts/AuthContext";
@@ -16,7 +16,7 @@ import {
 import { useUserReviews } from "../../hooks/queries/useReviews";
 import { useThreads } from "../../hooks/queries/useCommunity";
 import { usePageMeta } from "../../hooks/usePageMeta";
-import { profileDescription } from "@playrates/shared";
+import { BACKGROUND_LEVEL, profileDescription } from "@playrates/shared";
 import Button, { buttonClass } from "../../components/ui/Button";
 import PageBackdrop, {
     SHORT_BACKDROP_OFFSET,
@@ -248,7 +248,11 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                                 onClick={() => setModal({ kind: "background" })}
                                 className="max-sm:size-11 max-sm:px-0"
                             >
-                                <ImageIcon size={15} aria-hidden />
+                                {targetUser.level < BACKGROUND_LEVEL ? (
+                                    <Lock size={15} aria-hidden />
+                                ) : (
+                                    <ImageIcon size={15} aria-hidden />
+                                )}
                                 <span className="hidden sm:inline">
                                     Background
                                 </span>

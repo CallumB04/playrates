@@ -20,6 +20,7 @@ export const NOTIFICATION_KINDS = [
   "list_upvote_milestone",
   "gaming_25_love_milestone",
   "referral_joined",
+  "gift_received",
   "announcement",
 ] as const;
 
@@ -128,6 +129,14 @@ export interface ReferralJoinedNotification extends NotificationBase {
   username: string;
 }
 
+/** A friend bought you something from the shop. */
+export interface GiftReceivedNotification extends NotificationBase {
+  kind: "gift_received";
+  username: string;
+  /** The shop item's key. */
+  item: string;
+}
+
 /** A message from PlayRates to everyone, sent from the admin dashboard. */
 export interface AnnouncementNotification extends NotificationBase {
   kind: "announcement";
@@ -158,6 +167,7 @@ export type AppNotification =
   | ListUpvoteMilestoneNotification
   | Gaming25LoveMilestoneNotification
   | ReferralJoinedNotification
+  | GiftReceivedNotification
   | AnnouncementNotification
   | UnknownNotification;
 

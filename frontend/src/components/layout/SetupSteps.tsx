@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
+import { SETUP_REWARD } from "@playrates/shared";
 import Progress from "../ui/Progress";
+import { TokenCoin } from "../progress/TokenAmount";
 import { cn } from "../../lib/cn";
 import type { SetupStep } from "../../lib/setupChecklist";
 
@@ -66,6 +68,10 @@ export const SetupSteps = ({
             label={`${done} of ${steps.length} setup steps done`}
             className="mx-2.5 mt-1.5 mb-1.5"
         />
+        <p className="mx-2.5 mb-1.5 inline-flex items-center gap-1 text-label-sm text-content-muted">
+            All done: +{SETUP_REWARD.xp} XP and {SETUP_REWARD.tokens}
+            <TokenCoin className="size-3" />
+        </p>
         <ul>
             {steps.map((step) => (
                 <li key={step.key}>

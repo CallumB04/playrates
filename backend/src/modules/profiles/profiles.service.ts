@@ -11,6 +11,7 @@ import {
   AVATAR_MAX_BYTES,
   AVATAR_PIXELS,
   steamProfileUrl,
+  sectionOrder,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { cleanUpload } from "../../lib/cleanUpload.js";
@@ -39,6 +40,8 @@ export interface BackgroundSource {
   /** The pictures the game offers; throws not found for no such game. */
   backdrops(gameId: number): Promise<GameBackdrop[]>;
   hasLogged(userId: string, gameId: number): Promise<boolean>;
+  /** Bought, or worn before backgrounds were bought. */
+  owns(userId: string, url: string): Promise<boolean>;
 }
 
 export const createProfilesService = (
@@ -183,6 +186,9 @@ export const createProfilesService = (
       patch.profile_visibility = input.profileVisibility;
     }
     if (input.accent !== undefined) patch.accent = input.accent;
+    if (input.sectionOrder !== undefined) {
+      patch.section_order = sectionOrder(input.sectionOrder);
+    }
 
     // An empty string clears a field, as it does the first name.
     if (input.pronouns !== undefined) patch.pronouns = input.pronouns || null;
@@ -210,7 +216,8 @@ export const createProfilesService = (
   },
 
   /** A picture from a game the caller has logged, and only one that game
-   *  offers: anything else would put any URL at all on a public page. */
+   *  offers and they own: anything else would put any URL at all on a
+   *  public page, or wear one for free. */
   async setBackground(
     callerId: string,
     { gameId, url, position }: SetProfileBackgroundInput,
@@ -223,6 +230,9 @@ export const createProfilesService = (
     const offered = await backgrounds.backdrops(gameId);
     if (!offered.some((b) => b.url === url)) {
       throw AppError.validation("That picture isn't one of this game's");
+    }
+    if (!(await backgrounds.owns(callerId, url))) {
+      throw new AppError(402, "insufficient_tokens", "Buy that picture first");
     }
     return toMyProfile(
       await repo.update(callerId, {

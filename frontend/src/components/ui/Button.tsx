@@ -16,6 +16,13 @@ const SIZES = {
     touch: "min-h-12 px-5 text-sm",
 } as const;
 
+/*
+ * Shapes, by what a thing is. Anything pressed to do something is a rounded
+ * rectangle, as here, icon-only buttons included. A pill is a toggle or a
+ * label carrying a count or a choice: a vote, a filter, a pinned list. A
+ * circle is only for things that are round: avatars, badges, coins, ticks.
+ */
+
 /**
  * Five variants across rest, hover, pressed and disabled. The gesture is a
  * lift: hover rises and gathers light, press settles back down.

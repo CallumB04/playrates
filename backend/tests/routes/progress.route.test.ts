@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
-import { QUESTS, xpForLevel } from "@playrates/shared";
+import { QUESTS, SETUP_REWARD, xpForLevel } from "@playrates/shared";
 import {
   authHeader,
   buildTestApp,
@@ -12,6 +12,7 @@ import {
   baseSeed,
   buildFriendship,
   buildProfile,
+  buildReview,
 } from "../helpers/fixtures.js";
 
 const STRANGER = "33333333-3333-3333-3333-333333333333";
@@ -162,7 +163,7 @@ describe("the shop", () => {
     const buy = (item: string) =>
       request(app).post(`/api/v1/shop/${item}/buy`).set(as(USER_A));
 
-    expect((await buy("effect_glow")).status).toBe(402);
+    expect((await buy("font_pixel")).status).toBe(402);
     expect((await buy("frame_neon")).body).toEqual({ tokens: 30, owned: 1 });
     expect((await buy("frame_neon")).status).toBe(409);
     expect((await buy("not_a_thing")).status).toBe(422);
@@ -210,6 +211,34 @@ describe("style", () => {
 
     const me = await request(app).get("/api/v1/profiles/me").set(as(USER_A));
     expect(me.body).toMatchObject({ level: 20, frame: "neon" });
+
+    expect((await style({ frame: "none" })).status).toBe(204);
+    const bare = await request(app).get("/api/v1/profiles/me").set(as(USER_A));
+    expect(bare.body.frame).toBeNull();
+  });
+
+  it("sets a name's font and colour by level or purchase", async () => {
+    const { app, xp, tokens } = setup();
+    const style = (body: object) =>
+      request(app)
+        .patch("/api/v1/me/progress/style")
+        .set(as(USER_A))
+        .send(body);
+
+    expect((await style({ nameFont: "orbitron" })).status).toBe(403);
+    await xp(USER_A, "quest", "q", xpForLevel(15));
+    expect((await style({ nameFont: "orbitron" })).status).toBe(204);
+
+    expect((await style({ nameColour: "ember" })).status).toBe(403);
+    await tokens(USER_A, 40);
+    await request(app).post("/api/v1/shop/colour_ember/buy").set(as(USER_A));
+    expect((await style({ nameColour: "ember" })).status).toBe(204);
+
+    const me = await request(app).get("/api/v1/profiles/devuser");
+    expect(me.body).toMatchObject({
+      nameFont: "orbitron",
+      nameColour: "ember",
+    });
   });
 
   it("shows only badges you hold, as many as you have slots for", async () => {
@@ -258,21 +287,125 @@ describe("style", () => {
   });
 });
 
-describe("task rerolls", () => {
-  it("buys the reroll on the spot, once a period", async () => {
-    const { app, tokens, progress } = setup();
-    const reroll = () =>
-      request(app).post("/api/v1/me/quests/week/0/reroll").set(as(USER_A));
-    expect((await reroll()).status).toBe(402);
+describe("tasks", () => {
+  it("pays each task's tokens once, with its XP", async () => {
+    const { progress, xp } = setup();
+    const before = await progress();
+    const task = before.quests.week[0] as { key: string; target: number };
+    const def = QUESTS.find((q) => q.key === task.key)!;
+    for (let i = 0; i < task.target; i++)
+      await xp(USER_A, def.sources[0]!, `step:${i}`);
 
-    await tokens(USER_A, 40);
-    const before = (await progress()).quests.week[0].key;
-    expect((await reroll()).status).toBe(204);
-    // 20 tokens spent, and a different task in that slot.
     const after = await progress();
-    expect(after.tokens).toBe(20);
-    expect(after.quests.week[0].key).not.toBe(before);
-    expect((await reroll()).status).toBe(409);
+    expect(after.quests.week[0]).toMatchObject({ done: true, tokens: 2 });
+    expect(after.tokens - before.tokens).toBe(2);
+    expect((await progress()).tokens).toBe(after.tokens);
+  });
+});
+
+describe("getting started", () => {
+  it("pays once every step is done, and only then", async () => {
+    const { progress, state } = setup();
+    const me = state.profiles.find((p) => p.id === USER_A)!;
+    me.avatar_url = "https://example.test/a.png";
+    me.bio = "Hello";
+    state.progressMetrics.set(USER_A, {
+      logged: 1,
+      rated: 1,
+      reviews: 1,
+      friends: 1,
+    });
+    state.favouriteGames.push({ user_id: USER_A, game_id: 1, position: 1 });
+
+    const almost = await progress();
+    expect(almost.setup.steps).toMatchObject({ picture: true, post: false });
+    expect(state.xpEvents.some((e) => e.key === "setup")).toBe(false);
+
+    state.progressMetrics.set(USER_A, {
+      logged: 1,
+      rated: 1,
+      reviews: 1,
+      friends: 1,
+      posts: 1,
+    });
+    await progress();
+    await progress();
+    expect(state.xpEvents.filter((e) => e.key === "setup")).toEqual([
+      expect.objectContaining({ xp: SETUP_REWARD.xp }),
+    ]);
+    expect(state.tokenEvents.filter((e) => e.key === "setup")).toEqual([
+      expect.objectContaining({ amount: SETUP_REWARD.tokens }),
+    ]);
+  });
+});
+
+describe("gifts", () => {
+  it("buys an item for a friend, and tells them", async () => {
+    const { app, tokens, state } = setup();
+    await tokens(USER_A, 100);
+    const gift = (item: string, username: string) =>
+      request(app)
+        .post(`/api/v1/shop/${item}/gift`)
+        .set(as(USER_A))
+        .send({ username });
+
+    expect((await gift("frame_neon", "stranger")).status).toBe(403);
+    expect((await gift("frame_neon", "frienduser")).body).toEqual({
+      tokens: 40,
+      cost: 60,
+    });
+    expect((await gift("frame_neon", "frienduser")).status).toBe(409);
+    expect(
+      state.userItems.find(
+        (i) => i.user_id === USER_B && i.item === "frame_neon",
+      ),
+    ).toMatchObject({ quantity: 1 });
+    expect(
+      state.notifications.find((n) => n.kind === "gift_received"),
+    ).toMatchObject({
+      user_id: USER_B,
+      data: { username: "devuser", item: "frame_neon" },
+    });
+
+    const friends = await request(app)
+      .get("/api/v1/shop/frame_neon/friends")
+      .set(as(USER_A));
+    expect(friends.body).toEqual([
+      expect.objectContaining({
+        username: "frienduser",
+        full: true,
+        price: 60,
+      }),
+    ]);
+  });
+});
+
+describe("pinned reviews", () => {
+  it("pins your own reviews, as many as you've bought room for", async () => {
+    const { app, tokens } = setup({
+      reviews: [buildReview(), buildReview({ id: 2, user_id: USER_B })],
+    });
+    const pin = (ids: number[]) =>
+      request(app)
+        .patch("/api/v1/me/progress/style")
+        .set(as(USER_A))
+        .send({ pinnedReviews: ids });
+
+    expect((await pin([1])).status).toBe(422);
+    await tokens(USER_A, 60);
+    await request(app)
+      .post("/api/v1/shop/slot_pinned_review/buy")
+      .set(as(USER_A));
+    expect((await pin([2])).status).toBe(404);
+    expect((await pin([1])).status).toBe(204);
+
+    const me = await request(app).get("/api/v1/profiles/devuser");
+    expect(me.body.pinnedReviews).toEqual([1]);
+
+    const shown = await request(app).get(
+      "/api/v1/users/devuser/reviews/pinned",
+    );
+    expect(shown.body.map((r: { id: number }) => r.id)).toEqual([1]);
   });
 });
 

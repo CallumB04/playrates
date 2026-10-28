@@ -102,7 +102,7 @@ const WelcomePopup = ({
                     />
                 </div>
 
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-3">
                     <Field label="First name">
                         {(a11y) => (
                             <Input

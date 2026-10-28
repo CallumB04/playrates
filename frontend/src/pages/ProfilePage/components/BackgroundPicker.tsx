@@ -1,13 +1,26 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, ChevronLeft } from "lucide-react";
-import { DEFAULT_BACKGROUND_POSITION, type Profile } from "@playrates/shared";
+import { Check, ChevronLeft, Lock } from "lucide-react";
+import {
+    BACKGROUND_LEVEL,
+    DEFAULT_BACKGROUND_POSITION,
+    backgroundPrice,
+    type Profile,
+} from "@playrates/shared";
+import { ApiError } from "../../../api";
 import Modal from "../../../components/ui/Modal";
 import Button, { buttonClass } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
 import Pagination from "../../../components/ui/Pagination";
 import GameCover from "../../../components/game/GameCover";
 import { Skeleton } from "../../../components/ui/Skeleton";
+import SegmentedChoice from "../../../components/ui/SegmentedChoice";
+import { TokenCoin } from "../../../components/progress/TokenAmount";
+import {
+    useBackgrounds,
+    useBuyBackground,
+} from "../../../hooks/queries/useProgress";
+import { formatCount } from "../../../lib/format";
 import { useUserShelf } from "../../../hooks/queries/useGameLogs";
 import { useGameBackdrops } from "../../../hooks/queries/useGames";
 import {
@@ -28,10 +41,17 @@ interface BackgroundPickerProps {
     onClose: () => void;
 }
 
-/** A game you've logged, then one of its pictures, then which part of it
- *  shows. */
+type Tab = "yours" | "more";
+
+/**
+ * Your pictures by game, or more from the games you've logged; then one
+ * picture, then which part of it shows. A picture is bought once, the first
+ * free, and each after it from the same game costs a little more.
+ */
 const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
     const notify = useNotify();
+    const { data: owned, isLoading: ownedLoading } = useBackgrounds();
+    const [tab, setTab] = useState<Tab | null>(null);
     const [game, setGame] = useState<{ id: number; title: string } | null>(
         null
     );
@@ -41,6 +61,10 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
     const [term, setTerm] = useState("");
     const [page, setPage] = useState(1);
     const q = useDebouncedValue(term.trim());
+
+    // Your own first, once there are some to show.
+    const shownTab: Tab =
+        tab ?? ((owned?.games.length ?? 0) > 0 ? "yours" : "more");
 
     const { data: shelf, isLoading: gamesLoading } = useUserShelf(
         profile.username,
@@ -58,6 +82,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
     );
     const save = useSetBackground();
     const clear = useClearBackground();
+    const buy = useBuyBackground();
 
     const pagination = usePagination({
         total: shelf?.meta.total ?? 0,
@@ -65,6 +90,13 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
         page,
         onPageChange: setPage,
     });
+
+    const ownedUrls = new Set(
+        owned?.games.find((g) => g.gameId === game?.id)?.urls ?? []
+    );
+    const free = (owned?.credits ?? 0) > 0;
+    const price = backgroundPrice(ownedUrls.size);
+    const tokens = owned?.tokens ?? 0;
 
     const pickGame = (next: { id: number; title: string }) => {
         setGame(next);
@@ -76,7 +108,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
         );
     };
 
-    const pickPicture = (url: string) => {
+    const crop = (url: string) => {
         setChosen(url);
         // Back on the one it wears, where its owner last left it.
         setPosition(
@@ -85,6 +117,24 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                 : DEFAULT_BACKGROUND_POSITION
         );
         setCropping(true);
+    };
+
+    const pickPicture = (url: string) =>
+        ownedUrls.has(url) ? crop(url) : setChosen(url);
+
+    const onBuy = async () => {
+        if (!game || !chosen) return;
+        try {
+            await buy.mutateAsync({ gameId: game.id, url: chosen });
+            crop(chosen);
+        } catch (error) {
+            notify(
+                error instanceof ApiError
+                    ? error.message
+                    : "Couldn't buy that picture",
+                "error"
+            );
+        }
     };
 
     const onSave = async () => {
@@ -109,7 +159,45 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
     };
 
     const entries = shelf?.data ?? [];
-    const busy = save.isPending || clear.isPending;
+    const busy = save.isPending || clear.isPending || buy.isPending;
+    const buying = !!chosen && !cropping && !ownedUrls.has(chosen);
+
+    if (owned && !owned.unlocked) {
+        return (
+            <Modal
+                onClose={onClose}
+                labelledBy="background-picker-title"
+                className="w-full max-w-md"
+            >
+                <div className="flex flex-col items-center py-4 text-center">
+                    <span className="grid size-14 place-items-center rounded-md bg-surface-sunken text-content-muted">
+                        <Lock size={24} aria-hidden />
+                    </span>
+                    <h2
+                        id="background-picker-title"
+                        className="mt-4 font-display text-section text-content"
+                    >
+                        Backgrounds open at level {BACKGROUND_LEVEL}
+                    </h2>
+                    <p className="mt-1 max-w-xs text-body-sm text-content-secondary">
+                        You’re level {profile.level}. Your first picture is free
+                        when you get there.
+                    </p>
+                    <Link
+                        to="/progress"
+                        onClick={onClose}
+                        className={buttonClass(
+                            "secondary",
+                            "mt-5 w-full sm:w-auto",
+                            "touch"
+                        )}
+                    >
+                        See how to level up
+                    </Link>
+                </div>
+            </Modal>
+        );
+    }
 
     return (
         <Modal
@@ -129,25 +217,53 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                                 ? "Back to the pictures"
                                 : "Back to your games"
                         }
-                        className="relative -ml-1.5 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-content-secondary lift before:absolute before:-inset-1.5 before:content-[''] hover:bg-surface-hover hover:text-content focus-visible:outline-2 focus-visible:outline-brand"
+                        className="relative -ml-1.5 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-sm text-content-secondary lift before:absolute before:-inset-1.5 before:content-[''] hover:bg-surface-hover hover:text-content focus-visible:outline-2 focus-visible:outline-brand"
                     >
                         <ChevronLeft size={18} aria-hidden />
                     </button>
                 )}
                 <h2
                     id="background-picker-title"
-                    className="min-w-0 truncate font-display text-section text-content"
+                    className="min-w-0 flex-1 truncate font-display text-section text-content"
                 >
                     {game ? game.title : "Profile background"}
                 </h2>
+                {owned && (
+                    <span className="inline-flex shrink-0 items-center gap-1.5 font-mono text-label-sm text-content-secondary tabular-nums">
+                        {free ? (
+                            "1 free picture"
+                        ) : (
+                            <>
+                                <TokenCoin className="size-3.5" />
+                                {formatCount(tokens)}
+                            </>
+                        )}
+                    </span>
+                )}
             </div>
             <p className="mt-1 text-body-sm text-content-secondary">
                 {!game
-                    ? "Choose from a game you've logged."
+                    ? shownTab === "yours"
+                        ? "Your pictures, by game."
+                        : "Choose from a game you've logged."
                     : cropping
                       ? "Move the outline over the part to show on your profile."
                       : "Pick a picture to put across the top of your profile."}
             </p>
+
+            {!game && (
+                <SegmentedChoice
+                    label="Which pictures"
+                    segments={[
+                        { value: "yours", label: "Yours" },
+                        { value: "more", label: "Get more" },
+                    ]}
+                    value={shownTab}
+                    onChange={setTab}
+                    fill
+                    className="mt-4 sm:max-w-xs"
+                />
+            )}
 
             <div className="mt-4">
                 {game && cropping && chosen ? (
@@ -157,7 +273,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                         onChange={setPosition}
                     />
                 ) : game ? (
-                    picturesLoading ? (
+                    picturesLoading || ownedLoading ? (
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                             {Array.from({ length: 6 }, (_, i) => (
                                 <Skeleton
@@ -174,12 +290,13 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                             {backdrops.map((backdrop, i) => {
                                 const selected = backdrop.url === chosen;
+                                const mine = ownedUrls.has(backdrop.url);
                                 return (
                                     <button
                                         key={backdrop.url}
                                         type="button"
                                         aria-pressed={selected}
-                                        aria-label={`Picture ${i + 1}`}
+                                        aria-label={`Picture ${i + 1}${mine ? "" : free ? ", free" : `, ${price} tokens`}`}
                                         onClick={() =>
                                             pickPicture(backdrop.url)
                                         }
@@ -202,9 +319,65 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                                                 <Check size={14} aria-hidden />
                                             </span>
                                         )}
+                                        {!mine && (
+                                            <span className="absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-full bg-media-scrim-strong px-2 py-0.5 font-mono text-label-sm font-semibold text-content-on-media">
+                                                {free ? (
+                                                    "Free"
+                                                ) : (
+                                                    <>
+                                                        <TokenCoin className="size-3" />
+                                                        {price}
+                                                    </>
+                                                )}
+                                            </span>
+                                        )}
                                     </button>
                                 );
                             })}
+                        </div>
+                    )
+                ) : shownTab === "yours" ? (
+                    ownedLoading ? (
+                        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+                            {Array.from({ length: 6 }, (_, i) => (
+                                <Skeleton
+                                    key={i}
+                                    className="aspect-3/4 rounded-xs"
+                                />
+                            ))}
+                        </div>
+                    ) : !owned?.games.length ? (
+                        <div className="flex flex-col items-center gap-3 py-8 text-center">
+                            <p className="text-body-sm text-content-muted">
+                                {free
+                                    ? "Your first picture is free. Pick one from a game you've logged."
+                                    : "Pictures you get show here, by game."}
+                            </p>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setTab("more")}
+                                className="min-h-11 sm:min-h-9"
+                            >
+                                Get a picture
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+                            {owned.games.map((g) => (
+                                <GameButton
+                                    key={g.gameId}
+                                    title={g.title}
+                                    coverUrl={g.coverUrl}
+                                    note={`${g.urls.length} ${g.urls.length === 1 ? "picture" : "pictures"}`}
+                                    onClick={() =>
+                                        pickGame({
+                                            id: g.gameId,
+                                            title: g.title,
+                                        })
+                                    }
+                                />
+                            ))}
                         </div>
                     )
                 ) : (
@@ -256,29 +429,19 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                                         const title =
                                             entry.game?.title ?? "Unknown game";
                                         return (
-                                            <button
+                                            <GameButton
                                                 key={entry.gameId}
-                                                type="button"
+                                                title={title}
+                                                coverUrl={
+                                                    entry.game?.coverUrl ?? null
+                                                }
                                                 onClick={() =>
                                                     pickGame({
                                                         id: entry.gameId,
                                                         title,
                                                     })
                                                 }
-                                                className="group flex min-w-0 cursor-pointer flex-col gap-1.5 rounded-xs text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                                            >
-                                                <GameCover
-                                                    coverUrl={
-                                                        entry.game?.coverUrl ??
-                                                        null
-                                                    }
-                                                    title={title}
-                                                    className="aspect-3/4 w-full overflow-hidden rounded-xs shadow-cover lift group-hover:-translate-y-0.5"
-                                                />
-                                                <span className="line-clamp-2 text-label-sm text-content-secondary group-hover:text-content">
-                                                    {title}
-                                                </span>
-                                            </button>
+                                            />
                                         );
                                     })}
                                 </div>
@@ -306,6 +469,32 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                 ) : (
                     <span />
                 )}
+                {buying && (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                        {!free && (
+                            <span className="text-center font-mono text-label-sm text-content-muted tabular-nums sm:text-right">
+                                {tokens >= price
+                                    ? `${formatCount(tokens - price)} left after`
+                                    : `${formatCount(price - tokens)} more tokens needed`}
+                            </span>
+                        )}
+                        <Button
+                            onClick={() => void onBuy()}
+                            disabled={busy || (!free && tokens < price)}
+                            className="w-full sm:w-auto"
+                        >
+                            {free ? (
+                                "Use your free picture"
+                            ) : (
+                                <>
+                                    Buy for
+                                    <TokenCoin className="size-4" />
+                                    {price}
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                )}
                 {cropping && (
                     <Button
                         onClick={() => void onSave()}
@@ -319,5 +508,36 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
         </Modal>
     );
 };
+
+/** A game's cover, to open its pictures. */
+const GameButton = ({
+    title,
+    coverUrl,
+    note,
+    onClick,
+}: {
+    title: string;
+    coverUrl: string | null;
+    note?: string;
+    onClick: () => void;
+}) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className="group flex min-w-0 cursor-pointer flex-col gap-1.5 rounded-xs text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+    >
+        <GameCover
+            coverUrl={coverUrl}
+            title={title}
+            className="aspect-3/4 w-full overflow-hidden rounded-xs shadow-cover lift group-hover:-translate-y-0.5"
+        />
+        <span className="line-clamp-2 text-label-sm text-content-secondary group-hover:text-content">
+            {title}
+        </span>
+        {note && (
+            <span className="-mt-1 text-[11px] text-content-muted">{note}</span>
+        )}
+    </button>
+);
 
 export default BackgroundPicker;

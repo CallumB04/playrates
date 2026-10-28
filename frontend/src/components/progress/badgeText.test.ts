@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { badgeDef, type BadgeDef } from "@playrates/shared";
-import { badgeText, nextTier } from "./badgeText";
+import { badgeText, nextTier, rarityText } from "./badgeText";
 
 const critic = badgeDef("critic") as BadgeDef;
 
@@ -19,5 +19,13 @@ describe("nextTier", () => {
         expect(nextTier(critic, null)?.metal).toBe(1);
         expect(nextTier(critic, 2)?.metal).toBe(3);
         expect(nextTier(critic, 4)).toBeNull();
+    });
+});
+
+describe("rarityText", () => {
+    it("says a share of members, under one per cent as such", () => {
+        expect(rarityText(0.123)).toBe("12% of members");
+        expect(rarityText(0.004)).toBe("<1% of members");
+        expect(rarityText(1)).toBe("Everyone has this");
     });
 });

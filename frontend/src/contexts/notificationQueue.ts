@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export type NotificationType = "success" | "info" | "error";
 
 /**
@@ -23,7 +25,7 @@ const DEFAULT_SEVERITY: Record<NotificationType, NotificationSeverity> = {
 
 export interface Toast {
     id: number;
-    text: string;
+    text: ReactNode;
     type: NotificationType;
     severity: NotificationSeverity;
     dwell: number | null;
@@ -38,7 +40,7 @@ export type QueueAction =
     | {
           kind: "push";
           id: number;
-          text: string;
+          text: ReactNode;
           type: NotificationType;
           severity?: NotificationSeverity;
       }

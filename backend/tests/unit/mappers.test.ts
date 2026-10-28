@@ -427,4 +427,31 @@ describe("notification mapper", () => {
     });
     expect(broken.kind).toBe("unknown");
   });
+
+  /* Each kind from progress and lists, whole and with its data missing. */
+  it.each([
+    [
+      "list_upvote_milestone",
+      { listId: 2, listName: "Cosy", username: "devuser", milestone: 5 },
+      { listId: 2, listName: "Cosy", milestone: 5 },
+    ],
+    ["referral_joined", { username: "newbie" }, { username: "newbie" }],
+    [
+      "gift_received",
+      { username: "frienduser", item: "frame_neon" },
+      { username: "frienduser", item: "frame_neon" },
+    ],
+    [
+      "gaming_25_love_milestone",
+      { username: "devuser", milestone: 10 },
+      { username: "devuser", milestone: 10 },
+    ],
+  ])("maps %s, and refuses one without its data", (kind, data, expected) => {
+    expect(
+      toNotification(buildNotification({ kind, data }), () => null),
+    ).toMatchObject({ kind, ...expected });
+    expect(
+      toNotification(buildNotification({ kind, data: {} }), () => null).kind,
+    ).toBe("unknown");
+  });
 });

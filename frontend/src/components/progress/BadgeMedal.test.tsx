@@ -19,9 +19,20 @@ describe("BadgeMedal", () => {
             <BadgeMedal badge={collector} metal={null} progress={0.4} />
         );
         expect(container.firstChild).toHaveClass("metal-locked");
-        expect(container.querySelector("circle")).toHaveAttribute(
+        expect(container.querySelector("circle.stroke-brand")).toHaveAttribute(
             "stroke-dasharray",
             "40 100"
+        );
+    });
+
+    it("rings one already held with how far it is to the next metal", () => {
+        const { container } = render(
+            <BadgeMedal badge={collector} metal={2} progress={0.5} />
+        );
+        expect(container.firstChild).toHaveClass("metal-silver");
+        expect(container.querySelector("circle.stroke-brand")).toHaveAttribute(
+            "stroke-dasharray",
+            "50 100"
         );
     });
 

@@ -111,6 +111,19 @@ describe("NotificationItem", () => {
         );
     });
 
+    it("takes a gift to where it's worn", () => {
+        renderItem({
+            ...welcome(),
+            kind: "gift_received",
+            username: "halcyon",
+            item: "colour_mint",
+        } as AppNotification);
+
+        expect(
+            screen.getByRole("link", { name: /halcyon gifted you the Mint/ })
+        ).toHaveAttribute("href", "/progress#name");
+    });
+
     describe("upvote milestones", () => {
         it("links a message milestone to the message", () => {
             renderItem({

@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 import { useOverlay } from "../../hooks/useOverlay";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 import { burst, tokenColours } from "../../lib/particles";
-import { cn } from "../../lib/cn";
 
 interface MomentStageProps {
     onClose: () => void;
@@ -16,9 +15,9 @@ interface MomentStageProps {
 }
 
 /**
- * The stage for the big moments: the page dims to near black, a slow turn
- * of light rays sits behind the centre, and confetti bursts from it. With
- * reduced motion the rays hold still and nothing is thrown.
+ * The stage for the big moments: the page dims to near black, a soft light
+ * blooms behind the centre and stays still, and confetti bursts from it.
+ * With reduced motion the light is simply there and nothing is thrown.
  */
 const MomentStage = ({
     onClose,
@@ -53,23 +52,21 @@ const MomentStage = ({
         >
             <div
                 aria-hidden
-                className="pointer-events-none absolute top-1/2 left-1/2 size-[56rem] max-w-none -translate-x-1/2 -translate-y-1/2 animate-level-burst opacity-70"
-                style={{
-                    background: `repeating-conic-gradient(from 0deg, transparent 0deg 9deg, ${light} 9deg 12deg), radial-gradient(circle, ${light} 0%, transparent 55%)`,
-                    maskImage:
-                        "radial-gradient(circle, black 0%, black 18%, transparent 62%)",
-                }}
-            />
+                className="pointer-events-none absolute top-1/2 left-1/2 size-[44rem] max-w-none -translate-x-1/2 -translate-y-1/2"
+            >
+                <div
+                    className="size-full animate-glow-bloom"
+                    style={{
+                        background: `radial-gradient(circle, ${light} 0%, transparent 62%)`,
+                    }}
+                />
+            </div>
             <canvas
                 ref={canvas}
                 aria-hidden
                 className="pointer-events-none absolute inset-0 size-full"
             />
-            <div
-                className={cn(
-                    "relative flex w-full max-w-md flex-col items-center text-center"
-                )}
-            >
+            <div className="relative flex w-full max-w-md flex-col items-center text-center">
                 {children}
             </div>
         </div>,

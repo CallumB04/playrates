@@ -1,21 +1,28 @@
-import { randomUUID } from "node:crypto";
 import {
+  BACKGROUND_LEVEL,
   BADGES,
   CARD_THEME_KEYS,
   FRAME_KEYS,
   levelFor,
-  levelFrame,
   levelTokens,
   METAL_TOKENS,
   METAL_XP,
   metalsReached,
   periodsFor,
+  NAME_COLOUR_KEYS,
+  NAME_FONT_KEYS,
+  NO_FRAME,
   questsFor,
-  REROLL_ITEM,
+  REACTION_KEYS,
+  SETUP_REWARD,
+  SETUP_STEPS,
   SHOP_ITEMS,
+  TASK_TOKENS,
+  wornFrame,
+  type Backgrounds,
+  type GiftFriend,
   type BadgeDef,
   type CardThemeKey,
-  type FrameKey,
   type LeaderboardPeriod,
   type LeaderboardRow,
   type Metal,
@@ -24,8 +31,10 @@ import {
   type PlayerBadges,
   type Progress,
   type QuestState,
+  type NameColourKey,
+  type NameFontKey,
+  type SetupStepKey,
   type Shop,
-  type ShowcaseLayout,
   type StreakWeek,
   type StyleInput,
   type XpRule,
@@ -38,9 +47,13 @@ import type { NotificationsRepository } from "../notifications/notifications.rep
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import { toAccent } from "../profiles/profiles.mapper.js";
 import {
+  colourUnlocked,
+  fontUnlocked,
   frameUnlocked,
   localDay,
   pinnedListSlots,
+  pinnedReviewSlots,
+  reactionUnlocked,
   shiftWeek,
   showcaseSlots,
   streakOf,
@@ -60,12 +73,28 @@ const ALL_BADGES = BADGES as readonly BadgeDef[];
 
 const zoneOf = (row: ProfileRow) => row.timezone || "UTC";
 
+/** Where a background comes from: a game the member logged, and only a
+ *  picture that game offers. */
+export interface BackdropSource {
+  backdrops(gameId: number): Promise<{ url: string }[]>;
+  hasLogged(userId: string, gameId: number): Promise<boolean>;
+}
+
+/** How a member's name is set, from what they stored. */
+export const nameStyleOf = (row: ProfileRow) => ({
+  nameFont: (row.name_font as NameFontKey | null) ?? "default",
+  nameColour: (row.name_colour as NameColourKey | null) ?? "default",
+});
+
 export const createProgressService = (
   repo: ProgressRepository,
   profiles: ProfilesRepository,
   friends: FriendsRepository,
   lists: ListsRepository,
   notifications: NotificationsRepository,
+  backdrops: BackdropSource,
+  /** Who wrote a review, for pinning only your own. */
+  reviewAuthor: (reviewId: number) => Promise<string | null>,
 ) => {
   const mustProfile = async (userId: string) => {
     const row = await repo.profile(userId);
@@ -92,12 +121,17 @@ export const createProgressService = (
       gold: new Set(badges.filter((b) => b.metal >= 3).map((b) => b.badge)),
     };
     return {
+      frameChoice: row.frame,
       cardTheme: (row.card_theme as CardThemeKey | null) ?? "default",
-      layout: (row.showcase_layout as ShowcaseLayout | null) ?? "row",
+      ...nameStyleOf(row),
       frames: FRAME_KEYS.filter((f) => frameUnlocked(f, owned)),
       themes: CARD_THEME_KEYS.filter((t) => themeUnlocked(t, owned)),
+      fonts: NAME_FONT_KEYS.filter((f) => fontUnlocked(f, owned)),
+      colours: NAME_COLOUR_KEYS.filter((c) => colourUnlocked(c, owned)),
+      reactions: REACTION_KEYS.filter((r) => reactionUnlocked(r, owned)),
       showcaseSlots: showcaseSlots(items),
       pinnedListSlots: pinnedListSlots(items),
+      pinnedReviewSlots: pinnedReviewSlots(items),
     };
   };
 
@@ -106,11 +140,8 @@ export const createProgressService = (
     userId: string,
     period: Period,
   ): Promise<QuestState[]> => {
-    const [rerolls, counts] = await Promise.all([
-      repo.rerolls(userId, period.key),
-      repo.countSources(userId, period.start, period.end),
-    ]);
-    return questsFor(userId, period, rerolls).map((q, slot) => {
+    const counts = await repo.countSources(userId, period.start, period.end);
+    return questsFor(userId, period).map((q, slot) => {
       const count = Math.min(
         q.target,
         q.sources.reduce((n, s) => n + (counts[s] ?? 0), 0),
@@ -122,6 +153,7 @@ export const createProgressService = (
         target: q.target,
         count,
         xp: q.xp,
+        tokens: TASK_TOKENS[period.kind],
         done: count >= q.target,
       };
     });
@@ -144,6 +176,21 @@ export const createProgressService = (
       };
     });
   };
+
+  /** Getting started, from what the account holds. */
+  const setupOf = async (
+    row: ProfileRow,
+    metrics: Record<string, number>,
+  ): Promise<Record<SetupStepKey, boolean>> => ({
+    picture: !!row.avatar_url,
+    bio: (row.bio ?? "").trim().length > 0,
+    log: (metrics.logged ?? 0) > 0,
+    rate: (metrics.rated ?? 0) > 0,
+    review: (metrics.reviews ?? 0) > 0,
+    favourites: (await repo.favouriteCount(row.id)) > 0,
+    friend: (metrics.friends ?? 0) > 0,
+    post: (metrics.posts ?? 0) > 0,
+  });
 
   const streakFor = async (row: ProfileRow, week: Period, spare: number) => {
     const [weeks, used] = await Promise.all([
@@ -195,7 +242,7 @@ export const createProgressService = (
         );
       }
 
-      // Quests, and their tokens.
+      // Tasks, each with its XP and tokens.
       const week = await questStates(userId, periods.week);
       const month = await questStates(userId, periods.month);
       for (const [period, quests] of [
@@ -209,12 +256,8 @@ export const createProgressService = (
             `quest:${period.key}:${q.key}`,
             q.xp,
           );
+          grant("task", `task:${period.key}:${q.key}`, q.tokens);
         }
-      }
-      if (week.every((q) => q.done))
-        grant("quests", `quests:${periods.week.key}`, 5);
-      if (month.every((q) => q.done)) {
-        grant("quests", `quests:${periods.month.key}`, 15);
       }
 
       // Badges, from counts the database keeps and the streak's best.
@@ -255,6 +298,13 @@ export const createProgressService = (
         await repo.awardXp(userId, "referral_welcome", "ref:welcome");
       }
 
+      // Getting started, all of it, pays once.
+      const setup = await setupOf(row, metrics);
+      if (SETUP_STEPS.every((step) => setup[step])) {
+        await repo.awardXp(userId, "setup", "setup", SETUP_REWARD.xp);
+        grant("setup", "setup", SETUP_REWARD.tokens);
+      }
+
       // Levels, after everything above has landed.
       row = await mustProfile(userId);
       const level = levelFor(row.xp);
@@ -262,6 +312,11 @@ export const createProgressService = (
       for (let n = 2; n <= level.level; n++) {
         if (!paidLevels.has(`level:${n}`))
           grant("level", `level:${n}`, levelTokens(n));
+      }
+
+      // Backgrounds open at their level, the first picture free.
+      if (level.level >= BACKGROUND_LEVEL) {
+        await repo.grantBackgroundCredit(userId);
       }
 
       let gained = 0;
@@ -287,23 +342,19 @@ export const createProgressService = (
       }
 
       row = await mustProfile(userId);
-      const [unseenXp, badges, catalogue, weekSwaps, monthSwaps] =
-        await Promise.all([
-          launch
-            ? Promise.resolve([])
-            : repo.unseenXp(userId, row.xp_seen_event_id),
-          repo.badges(userId),
-          repo.shopItems(),
-          repo.rerolls(userId, periods.week.key),
-          repo.rerolls(userId, periods.month.key),
-        ]);
+      items = await repo.items(userId);
+      const [unseenXp, badges] = await Promise.all([
+        launch
+          ? Promise.resolve([])
+          : repo.unseenXp(userId, row.xp_seen_event_id),
+        repo.badges(userId),
+      ]);
 
       return {
         xp: row.xp,
         level: levelFor(row.xp),
         tokens: row.tokens,
-        frame:
-          (row.frame as FrameKey | null) ?? levelFrame(levelFor(row.xp).level),
+        frame: wornFrame(row.frame, levelFor(row.xp).level),
         streak: {
           weeks: streak.weeks,
           best: streak.best,
@@ -319,14 +370,7 @@ export const createProgressService = (
         },
         periods,
         look: lookOf(row, items, badges),
-        swap: {
-          price: catalogue.find((c) => c.item === REROLL_ITEM)?.price ?? 0,
-          held: items[REROLL_ITEM] ?? 0,
-          used: {
-            week: Object.keys(weekSwaps).length > 0,
-            month: Object.keys(monthSwaps).length > 0,
-          },
-        },
+        setup: { steps: setup, reward: SETUP_REWARD },
         unseen: {
           xp: unseenXp.map((e) => ({ id: e.id, source: e.source, xp: e.xp })),
           badges: badges
@@ -390,29 +434,29 @@ export const createProgressService = (
       );
       const isOwner = viewerId === profile.id;
       const row = (await repo.profile(profile.id))!;
+      const items = await repo.items(profile.id);
       const level = levelFor(row.xp).level;
       return {
         level,
         xp: row.xp,
-        frame: (row.frame as FrameKey | null) ?? levelFrame(level),
+        frame: wornFrame(row.frame, level),
         held: badges.map((b) => ({
           badge: b.badge,
           metal: b.metal as Metal,
           unlockedAt: b.unlocked_at,
           rarity: rarity.get(`${b.badge}:${b.metal}`) ?? 0,
         })),
-        // A badge since retired, or no longer held, drops out of the showcase.
-        showcase: row.showcase_badges.filter((key) =>
-          badges.some((b) => b.badge === key),
-        ),
-        layout: row.showcase_layout as ShowcaseLayout,
+        // A badge since retired, or no longer held, drops out of the
+        // showcase, as does one past the slots it has now.
+        showcase: row.showcase_badges
+          .filter((key) => badges.some((b) => b.badge === key))
+          .slice(0, showcaseSlots(items)),
         progress: isOwner
           ? await (async () => {
               const metrics = (await repo.metrics(profile.id)) as Record<
                 Metric,
                 number
               >;
-              const items = await repo.items(profile.id);
               const zone = zoneOf(row);
               const { week } = periodsFor(new Date(), zone);
               metrics.streakBest = (
@@ -486,7 +530,11 @@ export const createProgressService = (
         AppError.forbidden(`${what} isn't unlocked yet`);
 
       if (input.frame !== undefined) {
-        if (input.frame && !frameUnlocked(input.frame, owned))
+        if (
+          input.frame &&
+          input.frame !== NO_FRAME &&
+          !frameUnlocked(input.frame, owned)
+        )
           throw locked("That frame");
         patch.frame = input.frame;
       }
@@ -495,16 +543,15 @@ export const createProgressService = (
         patch.card_theme =
           input.cardTheme === "default" ? null : input.cardTheme;
       }
-      if (input.layout !== undefined) {
-        if (input.layout !== "row" && !(items[input.layout] ?? 0)) {
-          throw locked("That layout");
-        }
-        patch.showcase_layout = input.layout;
+      if (input.nameFont !== undefined) {
+        if (!fontUnlocked(input.nameFont, owned)) throw locked("That font");
+        patch.name_font = input.nameFont === "default" ? null : input.nameFont;
       }
-      if (input.effects !== undefined) {
-        if (input.effects.some((e) => !(items[e] ?? 0)))
-          throw locked("That effect");
-        patch.effects = [...new Set(input.effects)];
+      if (input.nameColour !== undefined) {
+        if (!colourUnlocked(input.nameColour, owned))
+          throw locked("That colour");
+        patch.name_colour =
+          input.nameColour === "default" ? null : input.nameColour;
       }
       if (input.showcase !== undefined) {
         const showcase = [...new Set(input.showcase)];
@@ -530,6 +577,19 @@ export const createProgressService = (
         }
         patch.pinned_lists = pinned;
       }
+      if (input.pinnedReviews !== undefined) {
+        const pinned = [...new Set(input.pinnedReviews)];
+        if (pinned.length > pinnedReviewSlots(items)) {
+          throw AppError.validation(
+            "More reviews than you have pinned slots for",
+          );
+        }
+        for (const id of pinned) {
+          if ((await reviewAuthor(id)) !== userId)
+            throw AppError.notFound("Review");
+        }
+        patch.pinned_reviews = pinned;
+      }
       if (Object.keys(patch).length > 0)
         await repo.updateProfile(userId, patch);
     },
@@ -553,6 +613,7 @@ export const createProgressService = (
             {
               item: def.item,
               kind: def.kind,
+              group: def.group,
               label: def.label,
               price,
               owned,
@@ -584,31 +645,139 @@ export const createProgressService = (
       }
     },
 
-    /** Swaps one quest for another, with a reroll bought in the shop. One
-     *  a period, so a member can't shop for the easiest. */
-    async reroll(userId: string, kind: "week" | "month", slot: number) {
-      const row = await mustProfile(userId);
-      const period = periodsFor(new Date(), zoneOf(row))[kind];
-      if (kind === "month" && slot > 2)
-        throw AppError.validation("No such quest");
-      if (kind === "week" && slot > 2)
-        throw AppError.validation("No such quest");
-      const done =
-        Object.keys(await repo.rerolls(userId, period.key)).length > 0;
-      if (done)
-        throw AppError.conflict(
-          "conflict",
-          "You've swapped a task this period already",
-        );
-      const quest = (await questStates(userId, period))[slot];
-      if (quest?.done)
-        throw AppError.conflict("conflict", "That task is done already");
-      // Bought there and then, if there isn't one held.
-      if (!(await repo.useItem(userId, REROLL_ITEM))) {
-        await this.buy(userId, REROLL_ITEM);
-        await repo.useItem(userId, REROLL_ITEM);
+    /** The reactions a member may leave: the upvote, and what their level
+     *  and packs open. Read by every service that takes a reaction. */
+    async reactionsFor(userId: string): Promise<Set<string>> {
+      const [row, items] = await Promise.all([
+        mustProfile(userId),
+        repo.items(userId),
+      ]);
+      const owned = {
+        level: levelFor(row.xp).level,
+        items,
+        gold: new Set<string>(),
+      };
+      return new Set(REACTION_KEYS.filter((r) => reactionUnlocked(r, owned)));
+    },
+
+    /** Your friends, as someone to give an item to: one who can't hold
+     *  another is marked full. */
+    async giftFriends(userId: string, item: string): Promise<GiftFriend[]> {
+      const ids = (await friends.listForUser(userId))
+        .filter((f) => f.status === "accepted")
+        .map((f) => (f.user_a_id === userId ? f.user_b_id : f.user_a_id));
+      const [people, held, catalogue] = await Promise.all([
+        repo.profilesByIds(ids),
+        repo.holdings(ids, item),
+        repo.shopItems(),
+      ]);
+      const c = catalogue.find((c) => c.item === item);
+      if (!c) throw AppError.notFound("Item");
+      return people
+        .map((p) => {
+          const have = held.get(p.id) ?? 0;
+          return {
+            username: p.username,
+            avatarUrl: p.avatar_url,
+            accent: toAccent(p.accent),
+            full: have >= c.max_owned,
+            price: c.price + (c.kind === "slot" ? c.price_step * have : 0),
+          };
+        })
+        .sort((a, b) => a.username.localeCompare(b.username));
+    },
+
+    /** Buys an item for a friend, with your tokens, and tells them. */
+    async gift(userId: string, item: string, username: string) {
+      const recipient = await profiles.findByUsername(username);
+      if (!recipient || recipient.id === userId)
+        throw AppError.notFound("Profile");
+      const edge = (await friends.listForUser(userId)).find(
+        (f) =>
+          f.status === "accepted" &&
+          (f.user_a_id === recipient.id || f.user_b_id === recipient.id),
+      );
+      if (!edge) throw AppError.forbidden("You can only send gifts to friends");
+      const giver = await mustProfile(userId);
+      let result: { tokens: number; cost: number };
+      try {
+        result = await repo.gift(userId, recipient.id, item);
+      } catch (error) {
+        if (error instanceof BuyError) {
+          if (error.reason === "insufficient_tokens")
+            throw new AppError(402, "insufficient_tokens", "Not enough tokens");
+          if (error.reason === "max_owned")
+            throw AppError.conflict("conflict", "They have that already");
+          throw AppError.notFound("Item");
+        }
+        throw error;
       }
-      await repo.addReroll(userId, period.key, slot, randomUUID());
+      await notifications.raise({
+        userId: recipient.id,
+        kind: "gift_received",
+        actorId: userId,
+        data: { username: giver.username, item },
+        dedupeKey: `gift:${userId}:${item}:${Date.now()}`,
+      });
+      return result;
+    },
+
+    /** The pictures you own, by game, and whether you can buy more. */
+    async backgrounds(userId: string): Promise<Backgrounds> {
+      const [row, items, owned] = await Promise.all([
+        mustProfile(userId),
+        repo.items(userId),
+        repo.ownedBackgrounds(userId),
+      ]);
+      const games = new Map<number, Backgrounds["games"][number]>();
+      for (const b of owned) {
+        const game = games.get(b.game_id) ?? {
+          gameId: b.game_id,
+          title: b.title,
+          coverUrl: b.cover_url,
+          urls: [],
+        };
+        game.urls.push(b.url);
+        games.set(b.game_id, game);
+      }
+      return {
+        unlocked: levelFor(row.xp).level >= BACKGROUND_LEVEL,
+        credits: items.background_credit ?? 0,
+        tokens: row.tokens,
+        games: [...games.values()],
+      };
+    },
+
+    /** One picture from a game you've logged, with your free one first. */
+    async buyBackground(userId: string, gameId: number, url: string) {
+      const row = await mustProfile(userId);
+      if (levelFor(row.xp).level < BACKGROUND_LEVEL) {
+        throw AppError.forbidden(
+          `Backgrounds open at level ${BACKGROUND_LEVEL}`,
+        );
+      }
+      if (!(await backdrops.hasLogged(userId, gameId))) {
+        throw AppError.forbidden(
+          "You can only use pictures from games you've logged",
+        );
+      }
+      const offered = await backdrops.backdrops(gameId);
+      if (!offered.some((b) => b.url === url)) {
+        throw AppError.validation("That picture isn't one of this game's");
+      }
+      try {
+        return await repo.buyBackground(userId, gameId, url);
+      } catch (error) {
+        if (error instanceof BuyError) {
+          if (error.reason === "owned")
+            throw AppError.conflict(
+              "conflict",
+              "That picture is yours already",
+            );
+          throw new AppError(402, "insufficient_tokens", "Not enough tokens");
+        }
+        throw error;
+      }
     },
 
     /** XP this week, this month or all told, among you and your friends. */
@@ -641,7 +810,8 @@ export const createProgressService = (
             avatarUrl: p.avatar_url,
             accent: toAccent(p.accent),
             level,
-            frame: (p.frame as FrameKey | null) ?? levelFrame(level),
+            frame: wornFrame(p.frame, level),
+            ...nameStyleOf(p),
             xp,
             rank: i + 1,
             isYou: p.id === userId,

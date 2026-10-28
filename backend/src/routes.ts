@@ -106,15 +106,23 @@ export const buildRoutes = ({
     },
     repos.gameEvents,
   );
+  // A profile background is a picture from a game its owner has logged.
+  const backdrops = {
+    backdrops: (gameId: number) => games.backdrops(gameId),
+    hasLogged: async (userId: string, gameId: number) =>
+      (await repos.gameLogs.listByUserAndGame(userId, gameId)).length > 0,
+  };
   const profiles = createProfilesService(
     repos.profiles,
     authAdmin,
     avatars,
     repos.accountExport,
     {
-      backdrops: (gameId) => games.backdrops(gameId),
-      hasLogged: async (userId, gameId) =>
-        (await repos.gameLogs.listByUserAndGame(userId, gameId)).length > 0,
+      ...backdrops,
+      owns: async (userId, url) =>
+        (await repos.progress.ownedBackgrounds(userId)).some(
+          (b) => b.url === url,
+        ),
     },
     async (a, b) => (await repos.friends.find(a, b))?.status === "accepted",
   );
@@ -124,12 +132,16 @@ export const buildRoutes = ({
     repos.games,
     profileGate,
   );
+  // Reactions open with level and packs, which progress knows; asked at
+  // request time, by when it exists.
+  const reactionsFor = (userId: string) => progress.reactionsFor(userId);
   const lists = createListsService(
     repos.lists,
     repos.games,
     repos.friends,
     repos.notifications,
     profileGate,
+    reactionsFor,
   );
   const gaming25 = createGaming25Service(
     repos.gaming25,
@@ -144,6 +156,8 @@ export const buildRoutes = ({
     repos.friends,
     repos.lists,
     repos.notifications,
+    backdrops,
+    async (id) => (await repos.reviews.findById(id))?.user_id ?? null,
   );
   const gameLogs = createGameLogsService(
     repos.gameLogs,
@@ -159,6 +173,7 @@ export const buildRoutes = ({
     repos.notifications,
     profileGate,
     repos.friends,
+    reactionsFor,
   );
   const friends = createFriendsService(
     repos.friends,
@@ -178,6 +193,7 @@ export const buildRoutes = ({
     communityImages,
     repos.notifications,
     profileGate,
+    reactionsFor,
   );
 
   const reports = createReportsService({

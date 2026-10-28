@@ -1,9 +1,10 @@
 import { useState, type ReactNode } from "react";
-import { Share2, UserPlus } from "lucide-react";
+import { Gift, Share2, UserPlus } from "lucide-react";
 import { playerCardUrl } from "../../api";
 import AsideCard from "../ui/AsideCard";
 import Button from "../ui/Button";
 import ShareSheet from "../share/ShareSheet";
+import { TokenCoin } from "./TokenAmount";
 import { useAuth } from "../../contexts/AuthContext";
 import { useProgress } from "../../hooks/queries/useProgress";
 import { cn } from "../../lib/cn";
@@ -31,13 +32,33 @@ const useInvite = () => {
 const TERMS =
     "300 XP and 25 tokens for each friend who joins and logs 5 games. They get 100 XP too.";
 
-/** The side column's invitation, on the progress page. */
+const Reward = ({ children }: { children: ReactNode }) => (
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-surface-raised/70 px-2.5 py-1.5 font-mono text-label font-bold text-content tabular-nums ring-1 ring-subtle">
+        {children}
+    </span>
+);
+
+/** The side column's invitation, on the progress page: what a friend is
+ *  worth, at a glance. */
 export const InviteCard = ({ className }: { className?: string }) => {
     const { ready, open, sheet } = useInvite();
     if (!ready) return null;
     return (
         <AsideCard title="Invite friends" tone="feature" className={className}>
-            <p className="text-body-sm text-content-secondary">{TERMS}</p>
+            <p className="text-label-sm text-content-secondary">
+                Each friend who joins and logs 5 games
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+                <Reward>+300 XP</Reward>
+                <Reward>
+                    +25
+                    <TokenCoin className="size-4" />
+                </Reward>
+            </div>
+            <p className="mt-2 inline-flex items-center gap-1.5 text-label-sm text-content-muted">
+                <Gift size={13} aria-hidden />
+                They get +100 XP too
+            </p>
             <Button size="touch" onClick={open} className="mt-3 w-full">
                 <Share2 size={16} aria-hidden />
                 Share your invite

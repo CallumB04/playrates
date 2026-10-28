@@ -7,6 +7,7 @@ import { server } from "../../test/msw/server";
 import { buildProfile, buildProgress } from "../../test/msw/handlers";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import ProgressMoments from "./ProgressMoments";
+import ToastStack from "../feedback/ToastStack";
 
 vi.mock("../../contexts/AuthContext", () => ({
     useAuth: () => ({ user: buildProfile() }),
@@ -54,7 +55,7 @@ const respond = (body: Progress) =>
     server.use(http.get(`${API}/me/progress`, () => HttpResponse.json(body)));
 
 describe("ProgressMoments", () => {
-    it("says XP earned, then plays a badge, then the level it reached", async () => {
+    it("says XP and badges in toasts, and a new level in a popup", async () => {
         respond(
             progress({
                 unseen: {
@@ -67,12 +68,25 @@ describe("ProgressMoments", () => {
                 },
             })
         );
-        renderWithProviders(<ProgressMoments />);
-        const user = userEvent.setup({ delay: null });
+        renderWithProviders(
+            <>
+                <ProgressMoments />
+                <ToastStack />
+            </>
+        );
 
-        expect(await screen.findByText("Rated a game")).toBeInTheDocument();
+        // The badge's own XP goes with the badge, not the XP toast.
+        const xp = await screen.findByText("+5 XP: Rated a game", {
+            exact: false,
+        });
+        // The tokens as the coin, said in words only to a screen reader.
+        expect(xp).toHaveTextContent("+5 XP: Rated a game · +10tokens");
         expect(
-            screen.getByRole("dialog", { name: "Collector" })
+            screen.getByText("New badge: Collector, Bronze")
+        ).toBeInTheDocument();
+        // 120 XP, 55 of it new: from level 1 to 2.
+        expect(
+            screen.getByRole("dialog", { name: "Level 2" })
         ).toBeInTheDocument();
         await waitFor(() =>
             expect(seen).toContainEqual({
@@ -81,11 +95,8 @@ describe("ProgressMoments", () => {
             })
         );
 
-        await user.click(screen.getByRole("button", { name: "Nice" }));
-        // 120 XP, 55 of it new: from level 1 to 2.
-        expect(
-            await screen.findByRole("dialog", { name: "Level 2" })
-        ).toBeInTheDocument();
+        await userEvent.click(screen.getByRole("button", { name: "Nice" }));
+        expect(screen.queryByRole("dialog")).toBeNull();
     });
 
     it("plays nothing when there's nothing new", async () => {

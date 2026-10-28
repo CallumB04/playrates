@@ -1,4 +1,6 @@
 import type {
+    Backgrounds,
+    GiftFriend,
     CardThemeKey,
     LeaderboardPeriod,
     LeaderboardRow,
@@ -41,11 +43,42 @@ export const fetchLeaderboard = async (
     return data;
 };
 
-export const rerollQuest = async (
-    period: "week" | "month",
-    slot: number
-): Promise<void> => {
-    await api.post(`/me/quests/${period}/${slot}/reroll`);
+/** Your friends as recipients for an item, with whether each can hold it. */
+export const fetchGiftFriends = async (
+    item: ShopItemKey
+): Promise<GiftFriend[]> => {
+    const { data } = await api.get<GiftFriend[]>(`/shop/${item}/friends`);
+    return data;
+};
+
+export const giftItem = async ({
+    item,
+    username,
+}: {
+    item: ShopItemKey;
+    username: string;
+}): Promise<{ tokens: number; cost: number }> => {
+    const { data } = await api.post<{ tokens: number; cost: number }>(
+        `/shop/${item}/gift`,
+        { username }
+    );
+    return data;
+};
+
+export const fetchBackgrounds = async (): Promise<Backgrounds> => {
+    const { data } = await api.get<Backgrounds>("/me/backgrounds");
+    return data;
+};
+
+export const buyBackground = async (input: {
+    gameId: number;
+    url: string;
+}): Promise<{ tokens: number; cost: number }> => {
+    const { data } = await api.post<{ tokens: number; cost: number }>(
+        "/me/backgrounds",
+        input
+    );
+    return data;
 };
 
 export const sendReferral = async (username: string): Promise<void> => {

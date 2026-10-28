@@ -1,59 +1,60 @@
 import { useState, type ReactNode } from "react";
 import { Link, Navigate } from "react-router-dom";
 import {
+    Award,
     Check,
     Flame,
+    ListChecks,
     Lock,
-    RefreshCw,
     ShieldCheck,
-    ShoppingBag,
+    Store,
 } from "lucide-react";
 import {
     CARD_THEMES,
-    EFFECTS,
     FRAMES,
-    SHOWCASE_LAYOUTS,
-    badgeDef,
-    type Metal,
+    NAME_COLOURS,
+    NAME_FONTS,
+    NO_FRAME,
+    REACTIONS,
     type CardThemeKey,
-    type EffectKey,
     type FrameKey,
     type LeaderboardPeriod,
+    type NameColourKey,
+    type NameFontKey,
     type Progress,
     type QuestState,
     type ShopEntry,
-    type ShowcaseLayout,
 } from "@playrates/shared";
 import { ApiError } from "../../api";
 import Panel from "../../components/ui/Panel";
+import { cardClass } from "../../components/ui/Card";
 import AsideCard from "../../components/ui/AsideCard";
 import { buttonClass } from "../../components/ui/Button";
 import SegmentedChoice from "../../components/ui/SegmentedChoice";
 import { Skeleton } from "../../components/ui/Skeleton";
 import ProfilePicture from "../../components/ProfilePicture";
 import AvatarFrame from "../../components/progress/AvatarFrame";
+import NameText from "../../components/progress/NameText";
 import PlayerCardMock from "../../components/progress/PlayerCardMock";
-import ShowcaseView, {
-    bestOf,
-    type ShownBadge,
-} from "../../components/progress/ShowcaseView";
 import { TokenCoin } from "../../components/progress/TokenAmount";
 import XpBar from "../../components/progress/XpBar";
 import XpInfo from "../../components/progress/XpInfo";
+import { nextReward } from "../../components/progress/rewardText";
 import { InviteButton, InviteCard } from "../../components/progress/Invite";
-import ItemSheet, { useWear } from "../../components/shop/ItemSheet";
+import ItemSheet from "../../components/shop/ItemSheet";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import {
     useLeaderboard,
     usePlayerBadges,
     useProgress,
-    useReroll,
     useSetStyle,
     useShop,
 } from "../../hooks/queries/useProgress";
 import { useUserLists } from "../../hooks/queries/useLists";
+import ReactionIcon from "../../components/progress/ReactionIcon";
 import { usePageMeta } from "../../hooks/usePageMeta";
+import { useScrollToHash } from "../../hooks/useScrollToHash";
 import { formatCount } from "../../lib/format";
 import { profilePath } from "../../lib/profilePaths";
 import { cn } from "../../lib/cn";
@@ -61,20 +62,10 @@ import { cn } from "../../lib/cn";
 const daysLeft = (end: string) =>
     Math.max(1, Math.ceil((Date.parse(end) - Date.now()) / 86_400_000));
 
-/** The next thing a level gives: a frame or a card theme. */
-const nextReward = (level: number) =>
-    [
-        ...FRAMES.flatMap((f) =>
-            "level" in f ? [{ level: f.level, label: `${f.label} frame` }] : []
-        ),
-        ...CARD_THEMES.flatMap((t) =>
-            "level" in t
-                ? [{ level: t.level, label: `${t.label} card theme` }]
-                : []
-        ),
-    ]
-        .filter((r) => r.level > level)
-        .sort((a, b) => a.level - b.level)[0];
+const DAY_MONTH = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+});
 
 /** Your progress in one place: level, tasks, streak, friends, and how you
  *  look. */
@@ -82,6 +73,7 @@ const ProgressPage = () => {
     const { user, isLoading: authLoading } = useAuth();
     const { data } = useProgress();
     usePageMeta({ title: "Your progress", noindex: true });
+    useScrollToHash();
 
     if (!authLoading && !user) return <Navigate to="/" replace />;
     if (!data || !user) {
@@ -102,7 +94,9 @@ const ProgressPage = () => {
                     <Look data={data} />
                 </div>
                 <aside className="flex min-w-0 flex-col gap-4 lg:gap-6">
-                    <Streak data={data} />
+                    <div id="streak" className="scroll-mt-24">
+                        <Streak data={data} />
+                    </div>
                     <Leaderboard />
                     <InviteCard />
                 </aside>
@@ -116,19 +110,14 @@ const ProgressPage = () => {
 const Header = ({ data }: { data: Progress }) => {
     const { user } = useAuth();
     const { data: badges } = usePlayerBadges(user?.username ?? "", !!user);
-    const { data: board } = useLeaderboard("week");
     if (!user) return null;
     const reward = nextReward(data.level.level);
     const tasks = [...data.quests.week, ...data.quests.month];
-    const rank =
-        (board?.length ?? 0) > 1
-            ? board!.find((r) => r.isYou)?.rank
-            : undefined;
 
     return (
         // No card: a page's own header sits on the page.
         <header className="flex flex-col gap-5">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
                 <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-6">
                     <AvatarFrame
                         frame={data.frame}
@@ -147,7 +136,7 @@ const Header = ({ data }: { data: Progress }) => {
                         <p className="font-mono text-label-sm tracking-[0.2em] text-content-muted uppercase">
                             Your progress
                         </p>
-                        <h1 className="flex items-baseline gap-2 font-display leading-none font-bold text-content">
+                        <h1 className="mt-2 flex items-baseline gap-2 font-display leading-none font-bold text-content sm:mt-3">
                             <span className="text-[22px] text-content-secondary sm:text-[28px]">
                                 Level
                             </span>
@@ -157,7 +146,11 @@ const Header = ({ data }: { data: Progress }) => {
                         </h1>
                         <div className="mt-2 flex max-w-xl items-start gap-2">
                             <XpBar level={data.level} className="flex-1" />
-                            <XpInfo />
+                            {/* Centred on the bar rather than the bar and
+                                its labels together. */}
+                            <div className="-mt-[7px]">
+                                <XpInfo />
+                            </div>
                         </div>
                         {reward && (
                             <p className="mt-1 text-label-sm text-content-muted">
@@ -166,72 +159,118 @@ const Header = ({ data }: { data: Progress }) => {
                         )}
                     </div>
                 </div>
-                <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end sm:justify-center">
-                    <span
-                        className="inline-flex items-center gap-2 font-mono text-[26px] leading-none font-bold text-content tabular-nums sm:text-[30px]"
-                        aria-label={`${formatCount(data.tokens)} tokens`}
-                    >
-                        <TokenCoin className="size-6 text-[11px]" />
-                        <span aria-hidden>{formatCount(data.tokens)}</span>
-                    </span>
-                    <Link
-                        to="/shop"
-                        className={buttonClass("primary", "sm:w-full", "touch")}
-                    >
-                        <ShoppingBag size={16} aria-hidden />
-                        Shop
-                    </Link>
-                </div>
+
+                <Link
+                    to="/shop"
+                    className={buttonClass(
+                        "secondary",
+                        "w-full gap-2 sm:w-auto sm:self-start",
+                        "md"
+                    )}
+                >
+                    <Store size={16} aria-hidden />
+                    Shop
+                </Link>
             </div>
 
-            <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-subtle bg-subtle sm:grid-cols-4">
-                <Stat label="Week streak" value={data.streak.weeks} />
-                <Stat
-                    label="Badges"
-                    value={
-                        badges
-                            ? new Set(badges.held.map((h) => h.badge)).size
-                            : "…"
+            <ul
+                aria-label="At a glance"
+                className={cardClass(
+                    "grid grid-cols-4 divide-x divide-subtle overflow-hidden",
+                    { padding: "none" }
+                )}
+            >
+                <Figure
+                    icon={<TokenCoin className="size-3.5" />}
+                    label="Tokens"
+                    value={formatCount(data.tokens)}
+                    to="/shop"
+                />
+                <Figure
+                    icon={
+                        <Flame size={14} aria-hidden className="text-accent" />
                     }
+                    label="Streak"
+                    longLabel="Week streak"
+                    value={data.streak.weeks}
+                />
+                <Figure
+                    icon={
+                        <Award size={14} aria-hidden className="text-brand" />
+                    }
+                    label="Badges"
+                    value={badges ? badges.held.length : "…"}
                     to={profilePath(user.username, "badges")}
                 />
-                <Stat
-                    label="Tasks done"
+                <Figure
+                    icon={
+                        <ListChecks
+                            size={14}
+                            aria-hidden
+                            className="text-action"
+                        />
+                    }
+                    label="Tasks"
+                    longLabel="Tasks done"
                     value={`${tasks.filter((t) => t.done).length}/${tasks.length}`}
                 />
-                <Stat
-                    label="Among friends this week"
-                    value={rank ? `#${rank}` : "–"}
-                />
-            </dl>
+            </ul>
         </header>
     );
 };
 
-const Stat = ({
+/** One figure in the band under the header, the way the home page lays out
+ *  your shelves: the label over the number, divided by hairlines. */
+const Figure = ({
+    icon,
     label,
+    longLabel,
     value,
     to,
 }: {
+    icon: ReactNode;
     label: string;
+    /** Where there's room for it; a phone gets the short one. */
+    longLabel?: string;
     value: ReactNode;
     to?: string;
 }) => {
     const body = (
         <>
-            <dt className="text-label-sm text-content-muted">{label}</dt>
-            <dd className="order-first font-display text-[22px] leading-tight font-bold text-content tabular-nums">
+            <span className="flex items-center gap-1.5 text-label-sm text-content-muted group-hover:text-content-secondary lg:text-label">
+                {icon}
+                {longLabel ? (
+                    <>
+                        <span className="sm:hidden">{label}</span>
+                        <span className="hidden sm:inline">{longLabel}</span>
+                    </>
+                ) : (
+                    label
+                )}
+            </span>
+            <span className="font-mono text-lg leading-none font-medium text-content tabular-nums sm:text-xl lg:text-[28px]">
                 {value}
-            </dd>
+            </span>
         </>
     );
-    const className = "flex flex-col bg-surface px-4 py-2.5";
-    return to ? (
-        <Link to={to} className={cn(className, "hover:bg-surface-hover")}>
-            {body}
-        </Link>
-    ) : (
-        <div className={className}>{body}</div>
+    const className =
+        "flex min-h-11 flex-col items-center justify-center gap-1.5 px-1 py-3 sm:items-start sm:gap-2 sm:px-4 lg:px-5 lg:py-4";
+    return (
+        <li>
+            {to ? (
+                <Link
+                    to={to}
+                    className={cn(
+                        className,
+                        "group h-full transition-colors hover:bg-surface-hover/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+                    )}
+                >
+                    {body}
+                </Link>
+            ) : (
+                <div className={cn(className, "h-full")}>{body}</div>
+            )}
+        </li>
     );
 };
 
@@ -241,75 +280,43 @@ const Tasks = ({ data }: { data: Progress }) => (
     <Panel title="Tasks" bodyClassName="flex flex-col gap-4 p-4">
         <TaskGroup
             title="This week"
-            period="week"
             tasks={data.quests.week}
             days={daysLeft(data.periods.week.end)}
-            bonus={5}
-            data={data}
         />
         <TaskGroup
             title="This month"
-            period="month"
             tasks={data.quests.month}
             days={daysLeft(data.periods.month.end)}
-            bonus={15}
-            data={data}
         />
     </Panel>
 );
 
 const TaskGroup = ({
     title,
-    period,
     tasks,
     days,
-    bonus,
-    data,
 }: {
     title: string;
-    period: "week" | "month";
     tasks: QuestState[];
     days: number;
-    bonus: number;
-    data: Progress;
-}) => {
-    const canSwap = !data.swap.used[period];
-    return (
-        <section>
-            <h3 className="flex flex-wrap items-baseline justify-between gap-x-3 text-label">
-                <span className="font-semibold text-content">{title}</span>
-                <span className="inline-flex items-center gap-1 font-mono text-label-sm text-content-muted">
-                    All 3: +{bonus}
-                    <TokenCoin className="size-3 text-[6px]" />
-                    <span className="ml-2">
-                        {days} {days === 1 ? "day" : "days"} left
-                    </span>
-                </span>
-            </h3>
-            <ul className="mt-1.5 divide-y divide-subtle">
-                {tasks.map((q) => (
-                    <TaskRow
-                        key={q.key}
-                        task={q}
-                        period={period}
-                        swap={canSwap && !q.done ? data.swap : null}
-                    />
-                ))}
-            </ul>
-        </section>
-    );
-};
-
-const TaskRow = ({
-    task: q,
-    period,
-    swap,
-}: {
-    task: QuestState;
-    period: "week" | "month";
-    swap: Progress["swap"] | null;
 }) => (
-    <li className="flex min-h-12 items-center gap-3 py-1.5">
+    <section>
+        <h3 className="flex items-baseline justify-between gap-3 text-label">
+            <span className="font-semibold text-content">{title}</span>
+            <span className="font-mono text-label-sm text-content-muted">
+                {days} {days === 1 ? "day" : "days"} left
+            </span>
+        </h3>
+        <ul className="mt-1 divide-y divide-subtle">
+            {tasks.map((q) => (
+                <TaskRow key={q.key} task={q} />
+            ))}
+        </ul>
+    </section>
+);
+
+const TaskRow = ({ task: q }: { task: QuestState }) => (
+    <li className="flex min-h-14 items-center gap-3 py-2.5">
         <span
             className={cn(
                 "grid size-5 shrink-0 place-items-center rounded-full",
@@ -327,98 +334,49 @@ const TaskRow = ({
             >
                 {q.label}
             </span>
-            {!q.done && q.target > 1 && (
-                <span className="mt-1 flex items-center gap-2">
-                    <span className="h-1 w-24 overflow-hidden rounded-full bg-surface-sunken">
-                        <span
-                            className="block h-full rounded-full bg-brand"
-                            style={{ width: `${(q.count / q.target) * 100}%` }}
-                        />
-                    </span>
-                    <span className="font-mono text-[11px] text-content-muted tabular-nums">
-                        {q.count}/{q.target}
-                    </span>
+            <span className="mt-1.5 flex items-center gap-2">
+                <span className="h-1 w-24 overflow-hidden rounded-full bg-surface-sunken">
+                    <span
+                        className={cn(
+                            "block h-full rounded-full",
+                            q.done ? "bg-action" : "bg-brand"
+                        )}
+                        style={{ width: `${(q.count / q.target) * 100}%` }}
+                    />
                 </span>
-            )}
+                <span className="font-mono text-[11px] text-content-muted tabular-nums">
+                    {q.count}/{q.target}
+                </span>
+            </span>
         </span>
         <span
             className={cn(
-                "shrink-0 font-mono text-label font-semibold tabular-nums",
-                q.done ? "text-content-muted" : "text-brand"
+                "flex shrink-0 flex-col items-end gap-0.5 font-mono tabular-nums",
+                q.done ? "text-content-muted" : "text-content"
             )}
         >
-            +{q.xp} XP
+            <span
+                className={cn(
+                    "text-label font-semibold",
+                    !q.done && "text-brand"
+                )}
+            >
+                +{q.xp} XP
+            </span>
+            <span
+                className="inline-flex items-center gap-1 text-label-sm"
+                aria-label={`and ${q.tokens} tokens`}
+            >
+                +{q.tokens}
+                <TokenCoin className="size-3.5" />
+            </span>
         </span>
-        {swap && <SwapButton task={q} period={period} swap={swap} />}
     </li>
 );
 
-/** Swaps a task for another: a tap to ask, a second to spend. */
-const SwapButton = ({
-    task,
-    period,
-    swap,
-}: {
-    task: QuestState;
-    period: "week" | "month";
-    swap: Progress["swap"];
-}) => {
-    const notify = useNotify();
-    const reroll = useReroll();
-    const [asking, setAsking] = useState(false);
-    const free = swap.held > 0;
-    return (
-        <button
-            type="button"
-            disabled={reroll.isPending}
-            onBlur={() => setAsking(false)}
-            onClick={() => {
-                if (!asking) return setAsking(true);
-                reroll.mutate(
-                    { period, slot: task.slot },
-                    {
-                        onSettled: () => setAsking(false),
-                        onError: (error) =>
-                            notify(
-                                error instanceof ApiError
-                                    ? error.message
-                                    : "Couldn't swap that task",
-                                "error"
-                            ),
-                    }
-                );
-            }}
-            aria-label={
-                asking
-                    ? `Confirm swapping ${task.label}`
-                    : `Swap ${task.label} for another task${free ? "" : `, ${swap.price} tokens`}`
-            }
-            className={cn(
-                "relative inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-full px-2 font-mono text-label-sm tabular-nums before:absolute before:-inset-2 before:content-[''] disabled:opacity-50",
-                "focus-visible:outline-2 focus-visible:outline-brand",
-                asking
-                    ? "bg-brand text-content-on-solid"
-                    : "text-content-muted hover:bg-surface-hover hover:text-content"
-            )}
-        >
-            <RefreshCw size={12} aria-hidden />
-            {asking ? (
-                "Swap?"
-            ) : free ? (
-                "Free"
-            ) : (
-                <>
-                    <TokenCoin className="size-3 text-[6px]" />
-                    {swap.price}
-                </>
-            )}
-        </button>
-    );
-};
-
 /* -------------------------------------------------------------- streak */
 
-const MONTH = new Intl.DateTimeFormat(undefined, { month: "short" });
+const MONTH = new Intl.DateTimeFormat("en-GB", { month: "short" });
 
 const Streak = ({ data }: { data: Progress }) => {
     const { streak } = data;
@@ -428,32 +386,16 @@ const Streak = ({ data }: { data: Progress }) => {
     // Columns by month, as a contribution graph has them by week.
     const months: { label: string; weeks: typeof streak.history }[] = [];
     for (const w of streak.history) {
-        const label = MONTH.format(new Date(`${w.week}T12:00:00`));
+        const label = MONTH.format(new Date(`${w.week}T12:00:00`)).slice(0, 3);
         const last = months.at(-1);
         if (last?.label === label) last.weeks.push(w);
         else months.push({ label, weeks: [w] });
     }
     const current = streak.history.at(-1)?.week;
+    const back = DAY_MONTH.format(new Date(data.periods.month.end));
 
     return (
-        <AsideCard
-            title="Streak"
-            trailing={
-                <span
-                    className={cn(
-                        "inline-flex items-center gap-1 text-label-sm",
-                        streak.freeShield
-                            ? "text-content-secondary"
-                            : "text-content-muted"
-                    )}
-                    title="One free shield a month covers a missed week"
-                >
-                    <ShieldCheck size={13} aria-hidden />
-                    {streak.freeShield ? "Shield ready" : "Shield used"}
-                    {streak.spareShields > 0 && ` +${streak.spareShields}`}
-                </span>
-            }
-        >
+        <AsideCard title="Streak">
             <div className="flex items-baseline gap-2">
                 <Flame
                     size={20}
@@ -470,61 +412,129 @@ const Streak = ({ data }: { data: Progress }) => {
                     {streak.weeks === 1 ? "week" : "weeks"}
                 </span>
                 <span className="ml-auto font-mono text-label-sm text-content-muted">
-                    Best {streak.best}
+                    Best {streak.best} {streak.best === 1 ? "week" : "weeks"}
                 </span>
             </div>
 
-            <div
-                className="mt-3 flex justify-between gap-1"
-                role="img"
-                aria-label={`${streak.history.filter((w) => w.state !== "empty").length} of the last ${streak.history.length} weeks kept`}
-            >
-                {months.map((m, i) => (
+            <div className="mt-3 grid grid-cols-2 divide-x divide-subtle">
+                <div className="pr-3">
                     <div
-                        key={`${m.label}${i}`}
-                        className="flex flex-col items-center gap-1"
+                        className="flex gap-1"
+                        role="img"
+                        aria-label={`${streak.history.filter((w) => w.state !== "empty").length} of the last ${streak.history.length} weeks kept`}
                     >
-                        <span className="text-[10px] text-content-muted">
-                            {m.label}
-                        </span>
-                        {m.weeks.map((w) => (
-                            <span
-                                key={w.week}
-                                className={cn(
-                                    "size-4 rounded-[3px]",
-                                    w.state === "active"
-                                        ? "bg-brand"
-                                        : w.state === "shield"
-                                          ? "bg-brand/30 ring-1 ring-brand/60 ring-inset"
-                                          : "bg-surface-sunken",
-                                    w.week === current &&
-                                        "outline-2 outline-offset-1 outline-content-muted"
-                                )}
-                            />
+                        {months.map((m, i) => (
+                            <div
+                                key={`${m.label}${i}`}
+                                className="flex min-w-0 flex-1 flex-col gap-[3px]"
+                            >
+                                <span className="mb-0.5 h-2.5 truncate text-center text-[9px] leading-none text-content-muted">
+                                    {/* A month cut short at the start has no
+                                        room for its name. */}
+                                    {m.weeks.length >= 3 ? m.label : ""}
+                                </span>
+                                {m.weeks.map((w) => (
+                                    <WeekCell
+                                        key={w.week}
+                                        state={w.state}
+                                        now={w.week === current}
+                                    />
+                                ))}
+                            </div>
                         ))}
                     </div>
-                ))}
+                    <ul className="mt-2.5 flex flex-col gap-1 text-[11px] text-content-muted">
+                        <li className="flex items-center gap-1.5">
+                            <WeekCell state="active" swatch />
+                            Played
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                            <WeekCell state="shield" swatch />
+                            Shielded
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                            <WeekCell state="empty" swatch />
+                            Missed
+                        </li>
+                    </ul>
+                </div>
+
+                <div
+                    className="flex flex-col items-center justify-center gap-2 pl-3 text-center"
+                    title="A shield covers a missed week, so your streak carries on. One free a month."
+                >
+                    <span
+                        className={cn(
+                            "grid size-14 place-items-center rounded-md",
+                            streak.freeShield
+                                ? "bg-brand-subtle text-brand"
+                                : "bg-surface-sunken text-content-muted"
+                        )}
+                    >
+                        <ShieldCheck size={30} aria-hidden />
+                    </span>
+                    <span>
+                        <span className="block text-label-sm font-semibold text-content">
+                            {streak.freeShield ? "Shield ready" : "Shield used"}
+                        </span>
+                        <span className="block text-[11px] text-content-muted">
+                            {streak.freeShield
+                                ? "Covers a missed week"
+                                : `Back on ${back}`}
+                        </span>
+                        {streak.spareShields > 0 && (
+                            <span className="block text-[11px] text-content-muted">
+                                +{streak.spareShields} spare
+                            </span>
+                        )}
+                    </span>
+                </div>
             </div>
 
-            <p
-                className={cn(
-                    "mt-3 text-label-sm",
-                    atRisk
-                        ? "font-medium text-love-content"
-                        : "text-content-muted"
-                )}
-            >
-                {streak.thisWeek
-                    ? "This week counts. See you next week."
-                    : atRisk
-                      ? "At risk: do anything before Sunday to keep it."
-                      : "Log, rate or review anything this week to keep it going."}
-            </p>
+            {atRisk && (
+                <p className="mt-3 text-label-sm font-medium text-love-content">
+                    At risk: do anything before Sunday to keep it.
+                </p>
+            )}
         </AsideCard>
     );
 };
 
+const WeekCell = ({
+    state,
+    now = false,
+    swatch = false,
+}: {
+    state: Progress["streak"]["history"][number]["state"];
+    now?: boolean;
+    /** The key's small sample, not a week filling its column. */
+    swatch?: boolean;
+}) => (
+    <span
+        className={cn(
+            "grid h-3.5 place-items-center rounded-[3px]",
+            swatch ? "w-4 shrink-0" : "w-full",
+            state === "active"
+                ? "bg-brand"
+                : state === "shield"
+                  ? "bg-brand/25 text-brand"
+                  : "bg-surface-sunken",
+            now && "outline-2 outline-offset-1 outline-content-muted"
+        )}
+    >
+        {state === "shield" && (
+            <ShieldCheck size={9} strokeWidth={3} aria-hidden />
+        )}
+    </span>
+);
+
 /* ---------------------------------------------------------- leaderboard */
+
+const BOARD_LABELS: Record<LeaderboardPeriod, string> = {
+    week: "XP this week",
+    month: "XP this month",
+    all: "XP all time",
+};
 
 const Leaderboard = () => {
     const [period, setPeriod] = useState<LeaderboardPeriod>("week");
@@ -562,51 +572,69 @@ const Leaderboard = () => {
                     <InviteButton />
                 </div>
             ) : (
-                <ol>
-                    {shown.map((r) => (
-                        <li key={r.username}>
-                            <Link
-                                to={profilePath(r.username)}
-                                className={cn(
-                                    "flex min-h-11 items-center gap-2.5 px-3 py-1.5 hover:bg-surface-hover",
-                                    r.isYou && "bg-brand-subtle"
-                                )}
-                            >
-                                <span
+                <>
+                    <p className="flex justify-between px-3 pb-1 text-[11px] text-content-muted">
+                        <span>Ranked by XP earned</span>
+                        <span>{BOARD_LABELS[period]}</span>
+                    </p>
+                    <ol>
+                        {shown.map((r) => (
+                            <li key={r.username}>
+                                <Link
+                                    to={profilePath(r.username)}
                                     className={cn(
-                                        "w-4 text-center font-mono text-label-sm font-bold",
-                                        r.rank === 1
-                                            ? "text-medal-gold"
-                                            : r.rank === 2
-                                              ? "text-medal-silver"
-                                              : r.rank === 3
-                                                ? "text-medal-bronze"
-                                                : "text-content-muted"
+                                        "flex min-h-11 items-center gap-2.5 px-3 py-1.5 hover:bg-surface-hover",
+                                        r.isYou && "bg-brand-subtle"
                                     )}
                                 >
-                                    {r.rank}
-                                </span>
-                                <AvatarFrame frame={r.frame} size="sm">
-                                    <ProfilePicture
-                                        variant="tab"
-                                        file={r.avatarUrl ?? ""}
-                                        username={r.username}
-                                        link={false}
-                                    />
-                                </AvatarFrame>
-                                <span className="min-w-0 flex-1 truncate text-body-sm text-content">
-                                    {r.isYou ? "You" : r.username}
-                                    <span className="ml-1.5 font-mono text-label-sm text-content-muted">
-                                        Lv {r.level}
+                                    <span
+                                        className={cn(
+                                            "w-4 text-center font-mono text-label-sm font-bold",
+                                            r.rank === 1
+                                                ? "text-medal-gold"
+                                                : r.rank === 2
+                                                  ? "text-medal-silver"
+                                                  : r.rank === 3
+                                                    ? "text-medal-bronze"
+                                                    : "text-content-muted"
+                                        )}
+                                    >
+                                        {r.rank}
                                     </span>
-                                </span>
-                                <span className="font-mono text-label font-semibold text-content tabular-nums">
-                                    {formatCount(r.xp)}
-                                </span>
-                            </Link>
-                        </li>
-                    ))}
-                </ol>
+                                    <AvatarFrame frame={r.frame} size="sm">
+                                        <ProfilePicture
+                                            variant="tab"
+                                            file={r.avatarUrl ?? ""}
+                                            username={r.username}
+                                            link={false}
+                                        />
+                                    </AvatarFrame>
+                                    <span className="min-w-0 flex-1 truncate text-body-sm text-content">
+                                        {r.isYou ? (
+                                            "You"
+                                        ) : (
+                                            <NameText
+                                                font={r.nameFont}
+                                                colour={r.nameColour}
+                                            >
+                                                {r.username}
+                                            </NameText>
+                                        )}
+                                        <span className="ml-1.5 font-mono text-label-sm text-content-muted">
+                                            Lv {r.level}
+                                        </span>
+                                    </span>
+                                    <span className="font-mono text-label font-semibold text-content tabular-nums">
+                                        {formatCount(r.xp)}
+                                        <span className="ml-0.5 text-label-sm font-normal text-content-muted">
+                                            XP
+                                        </span>
+                                    </span>
+                                </Link>
+                            </li>
+                        ))}
+                    </ol>
+                </>
             )}
         </AsideCard>
     );
@@ -623,10 +651,14 @@ const LookTile = ({
     price,
     onClick,
     disabled,
+    hideLabel = false,
     children,
 }: {
     label: string;
     on: boolean;
+    /** For a picture that says what it is, as a reaction's does: the name
+     *  goes to screen readers and the tooltip. */
+    hideLabel?: boolean;
     lock?: string;
     price?: number;
     onClick: () => void;
@@ -638,6 +670,7 @@ const LookTile = ({
         aria-pressed={on}
         disabled={disabled}
         onClick={onClick}
+        title={hideLabel ? label : undefined}
         className={cn(
             "flex w-full cursor-pointer flex-col items-center gap-1.5 rounded-md p-2 lift disabled:cursor-not-allowed",
             "focus-visible:outline-2 focus-visible:outline-brand",
@@ -652,7 +685,12 @@ const LookTile = ({
         >
             {children}
         </span>
-        <span className="line-clamp-1 text-[11px] text-content-secondary">
+        <span
+            className={cn(
+                "line-clamp-1 text-[11px] text-content-secondary",
+                hideLabel && "sr-only"
+            )}
+        >
             {label}
         </span>
         {lock ? (
@@ -662,42 +700,41 @@ const LookTile = ({
             </span>
         ) : price !== undefined ? (
             <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-content">
-                <TokenCoin className="size-3 text-[6px]" />
+                <TokenCoin className="size-3" />
                 {formatCount(price)}
             </span>
         ) : on ? (
-            <span className="text-[10px] font-medium text-brand">Wearing</span>
-        ) : null}
+            <span className="text-[10px] font-medium text-brand">Active</span>
+        ) : (
+            // Keeps the row of tiles level whatever each says.
+            <span aria-hidden className="h-[15px]" />
+        )}
     </button>
 );
 
 const LookSection = ({
+    id,
     title,
     note,
     children,
 }: {
+    /** For a gift's notification to link straight here. */
+    id?: string;
     title: string;
     note?: string;
     children: ReactNode;
 }) => (
-    <section>
+    <section id={id} className="scroll-mt-24">
         <h3 className="text-label font-semibold text-content">{title}</h3>
         {note && <p className="text-label-sm text-content-muted">{note}</p>}
         <div className="mt-2">{children}</div>
     </section>
 );
 
-const LAYOUT_LABELS: Record<ShowcaseLayout, string> = {
-    row: "Row",
-    layout_shelf: "Shelf",
-    layout_spotlight: "Spotlight",
-};
-
 const Look = ({ data }: { data: Progress }) => {
     const notify = useNotify();
     const { user } = useAuth();
     const { data: shop } = useShop();
-    const { data: badges } = usePlayerBadges(user?.username ?? "", !!user);
     const { data: lists } = useUserLists(user?.username ?? "", {
         sort: "new",
         page: 1,
@@ -705,12 +742,10 @@ const Look = ({ data }: { data: Progress }) => {
         enabled: !!user,
     });
     const setStyle = useSetStyle();
-    const { wearing } = useWear();
     const [open, setOpen] = useState<ShopEntry | null>(null);
     if (!user) return null;
 
     const entry = (item: string) => shop?.items.find((i) => i.item === item);
-    const owns = (item: string) => (entry(item)?.owned ?? 0) > 0;
     const failed = (error: unknown) =>
         notify(
             error instanceof ApiError ? error.message : "Couldn't change that",
@@ -726,19 +761,17 @@ const Look = ({ data }: { data: Progress }) => {
         const e = item ? entry(item) : undefined;
         if (e) setOpen(e);
     };
+    const { look } = data;
 
-    // Pinned first, then the best of the rest, to fill a layout's preview.
-    const best = badges ? bestOf(badges) : new Map<string, { metal: Metal }>();
-    const sample: ShownBadge[] = [
-        ...(badges?.showcase ?? []),
-        ...[...best.keys()].filter((k) => !badges?.showcase.includes(k)),
-    ]
-        .slice(0, 3)
-        .flatMap((key) => {
-            const def = badgeDef(key);
-            const held = best.get(key);
-            return def && held ? [{ def, metal: held.metal }] : [];
-        });
+    const avatar = (
+        <ProfilePicture
+            variant="friendRow"
+            file={user.avatarUrl ?? ""}
+            username={user.username}
+            accent={user.accent}
+            link={false}
+        />
+    );
 
     return (
         <Panel
@@ -753,25 +786,42 @@ const Look = ({ data }: { data: Progress }) => {
             }
             bodyClassName="flex flex-col gap-5 p-4"
         >
-            <LookSection title="Frame">
-                <ul className="grid grid-cols-4 gap-1 sm:grid-cols-6">
+            <LookSection id="frame" title="Frame">
+                <ul className="grid grid-cols-4 gap-1 sm:grid-cols-7">
+                    <li>
+                        <LookTile
+                            label="None"
+                            on={look.frameChoice === NO_FRAME}
+                            disabled={setStyle.isPending}
+                            onClick={() =>
+                                setStyle.mutate(
+                                    { frame: NO_FRAME },
+                                    { onError: failed }
+                                )
+                            }
+                        >
+                            {avatar}
+                        </LookTile>
+                    </li>
                     {FRAMES.map((f) => {
-                        const unlocked = data.look.frames.includes(
+                        const unlocked = look.frames.includes(
                             f.key as FrameKey
                         );
-                        const forSale = "item" in f && !unlocked;
                         return (
                             <li key={f.key}>
                                 <LookTile
                                     label={f.label}
-                                    on={data.frame === f.key}
+                                    on={
+                                        look.frameChoice !== NO_FRAME &&
+                                        data.frame === f.key
+                                    }
                                     lock={
                                         "level" in f && !unlocked
                                             ? `Level ${f.level}`
                                             : undefined
                                     }
                                     price={
-                                        forSale
+                                        "item" in f && !unlocked
                                             ? entry(f.item)?.price
                                             : undefined
                                     }
@@ -794,13 +844,7 @@ const Look = ({ data }: { data: Progress }) => {
                                     }
                                 >
                                     <AvatarFrame frame={f.key} size="md">
-                                        <ProfilePicture
-                                            variant="friendRow"
-                                            file={user.avatarUrl ?? ""}
-                                            username={user.username}
-                                            accent={user.accent}
-                                            link={false}
-                                        />
+                                        {avatar}
                                     </AvatarFrame>
                                 </LookTile>
                             </li>
@@ -810,12 +854,119 @@ const Look = ({ data }: { data: Progress }) => {
             </LookSection>
 
             <LookSection
+                id="name"
+                title="Username"
+                note="How your username shows on your profile and the friends leaderboard."
+            >
+                <p className="mb-3 truncate rounded-md bg-surface-sunken/60 px-3 py-3 text-center font-display text-title font-semibold text-content">
+                    <NameText font={look.nameFont} colour={look.nameColour}>
+                        {user.username}
+                    </NameText>
+                </p>
+                <p className="mb-1 text-label-sm text-content-muted">Font</p>
+                <ul className="grid grid-cols-4 gap-1 sm:grid-cols-8">
+                    {NAME_FONTS.map((f) => {
+                        const unlocked = look.fonts.includes(f.key);
+                        return (
+                            <li key={f.key}>
+                                <LookTile
+                                    label={f.label}
+                                    on={look.nameFont === f.key}
+                                    lock={
+                                        "level" in f && !unlocked
+                                            ? `Level ${f.level}`
+                                            : undefined
+                                    }
+                                    price={
+                                        "item" in f && !unlocked
+                                            ? entry(f.item)?.price
+                                            : undefined
+                                    }
+                                    disabled={
+                                        ("level" in f && !unlocked) ||
+                                        setStyle.isPending
+                                    }
+                                    onClick={() =>
+                                        choose(
+                                            "item" in f ? f.item : undefined,
+                                            unlocked,
+                                            () =>
+                                                setStyle.mutate(
+                                                    {
+                                                        nameFont:
+                                                            f.key as NameFontKey,
+                                                    },
+                                                    { onError: failed }
+                                                )
+                                        )
+                                    }
+                                >
+                                    <span className="grid h-9 place-items-center text-[20px] text-content">
+                                        <NameText font={f.key}>Aa</NameText>
+                                    </span>
+                                </LookTile>
+                            </li>
+                        );
+                    })}
+                </ul>
+                <p className="mt-3 mb-1 text-label-sm text-content-muted">
+                    Colour
+                </p>
+                <ul className="grid grid-cols-5 gap-1 sm:grid-cols-9">
+                    {NAME_COLOURS.map((c) => {
+                        const unlocked = look.colours.includes(c.key);
+                        return (
+                            <li key={c.key}>
+                                <LookTile
+                                    label={c.label}
+                                    on={look.nameColour === c.key}
+                                    lock={
+                                        "level" in c && !unlocked
+                                            ? `Level ${c.level}`
+                                            : undefined
+                                    }
+                                    price={
+                                        "item" in c && !unlocked
+                                            ? entry(c.item)?.price
+                                            : undefined
+                                    }
+                                    disabled={
+                                        ("level" in c && !unlocked) ||
+                                        setStyle.isPending
+                                    }
+                                    onClick={() =>
+                                        choose(
+                                            "item" in c ? c.item : undefined,
+                                            unlocked,
+                                            () =>
+                                                setStyle.mutate(
+                                                    {
+                                                        nameColour:
+                                                            c.key as NameColourKey,
+                                                    },
+                                                    { onError: failed }
+                                                )
+                                        )
+                                    }
+                                >
+                                    <span className="grid h-9 place-items-center font-display text-[20px] font-bold text-content">
+                                        <NameText colour={c.key}>Aa</NameText>
+                                    </span>
+                                </LookTile>
+                            </li>
+                        );
+                    })}
+                </ul>
+            </LookSection>
+
+            <LookSection
+                id="theme"
                 title="Card theme"
-                note="The colours of the pictures you share: your Player card and your Gaming 25."
+                note="The colours of the pictures you share: your invites, your level-ups and your Gaming 25."
             >
                 <ul className="grid grid-cols-3 gap-1 sm:grid-cols-6">
                     {CARD_THEMES.map((t) => {
-                        const unlocked = data.look.themes.includes(
+                        const unlocked = look.themes.includes(
                             t.key as CardThemeKey
                         );
                         const levelOnly = "level" in t;
@@ -823,7 +974,7 @@ const Look = ({ data }: { data: Progress }) => {
                             <li key={t.key}>
                                 <LookTile
                                     label={t.label}
-                                    on={data.look.cardTheme === t.key}
+                                    on={look.cardTheme === t.key}
                                     lock={
                                         levelOnly && !unlocked
                                             ? `Level ${t.level}`
@@ -869,99 +1020,43 @@ const Look = ({ data }: { data: Progress }) => {
             </LookSection>
 
             <LookSection
-                title="Showcase"
-                note="How the badges you pin sit on your profile."
+                id="reaction"
+                title="Reactions"
+                note="What you can leave on reviews, lists and posts."
             >
-                <ul className="grid grid-cols-3 gap-1">
-                    {SHOWCASE_LAYOUTS.map((l) => {
-                        const unlocked = l === "row" || owns(l);
+                <ul className="grid grid-cols-5 gap-1 sm:grid-cols-8">
+                    {REACTIONS.map((r) => {
+                        const unlocked = look.reactions.includes(r.key);
                         return (
-                            <li key={l}>
+                            <li key={r.key}>
                                 <LookTile
-                                    label={LAYOUT_LABELS[l]}
-                                    on={data.look.layout === l}
-                                    price={
-                                        unlocked ? undefined : entry(l)?.price
+                                    label={r.label}
+                                    hideLabel
+                                    on={false}
+                                    lock={
+                                        "level" in r && !unlocked
+                                            ? `Level ${r.level}`
+                                            : undefined
                                     }
-                                    disabled={setStyle.isPending}
+                                    price={
+                                        "item" in r && !unlocked
+                                            ? entry(r.item)?.price
+                                            : undefined
+                                    }
+                                    disabled={unlocked || "level" in r}
                                     onClick={() =>
                                         choose(
-                                            l === "row" ? undefined : l,
-                                            unlocked,
-                                            () =>
-                                                setStyle.mutate(
-                                                    { layout: l },
-                                                    { onError: failed }
-                                                )
+                                            "item" in r ? r.item : undefined,
+                                            false,
+                                            () => {}
                                         )
                                     }
                                 >
-                                    <span className="grid h-14 place-items-center">
-                                        <ShowcaseView
-                                            layout={l}
-                                            badges={sample}
+                                    <span className="grid h-9 place-items-center">
+                                        <ReactionIcon
+                                            reaction={r.key}
+                                            size={26}
                                         />
-                                    </span>
-                                </LookTile>
-                            </li>
-                        );
-                    })}
-                </ul>
-            </LookSection>
-
-            <LookSection title="Effects">
-                <ul className="grid grid-cols-2 gap-1 sm:grid-cols-4">
-                    {EFFECTS.map((e) => {
-                        const unlocked = owns(e);
-                        const on = !!wearing(e);
-                        return (
-                            <li key={e}>
-                                <LookTile
-                                    label={entry(e)?.label ?? e}
-                                    on={on}
-                                    price={
-                                        unlocked ? undefined : entry(e)?.price
-                                    }
-                                    disabled={setStyle.isPending}
-                                    onClick={() =>
-                                        choose(e, unlocked, () =>
-                                            setStyle.mutate(
-                                                {
-                                                    effects: on
-                                                        ? (
-                                                              user.effects as EffectKey[]
-                                                          ).filter(
-                                                              (x) => x !== e
-                                                          )
-                                                        : [
-                                                              ...(user.effects as EffectKey[]),
-                                                              e,
-                                                          ],
-                                                },
-                                                { onError: failed }
-                                            )
-                                        )
-                                    }
-                                >
-                                    <span
-                                        className={cn(
-                                            "grid h-10 w-full place-items-center truncate font-display text-body font-semibold text-content",
-                                            e === "effect_glow" &&
-                                                "pr-name-glow"
-                                        )}
-                                    >
-                                        {e === "effect_glow" ? (
-                                            user.username
-                                        ) : (
-                                            <span
-                                                aria-hidden
-                                                className="block h-8 w-full rounded-sm"
-                                                style={{
-                                                    backgroundImage:
-                                                        "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%), linear-gradient(135deg, var(--color-brand-deep), var(--color-accent))",
-                                                }}
-                                            />
-                                        )}
                                     </span>
                                 </LookTile>
                             </li>
@@ -972,15 +1067,17 @@ const Look = ({ data }: { data: Progress }) => {
 
             {(lists?.data.length ?? 0) > 0 && (
                 <LookSection
+                    id="pinned-lists"
                     title="Pinned lists"
-                    note={`Up to ${data.look.pinnedListSlots} on your profile.`}
+                    note={`Up to ${look.pinnedListSlots} on your profile.`}
                 >
-                    <PinnedLists
-                        lists={lists!.data.map((l) => ({
+                    <PinToggles
+                        field="pinnedLists"
+                        items={lists!.data.map((l) => ({
                             id: l.id,
                             name: l.name,
                         }))}
-                        slots={data.look.pinnedListSlots}
+                        slots={look.pinnedListSlots}
                     />
                 </LookSection>
             )}
@@ -995,17 +1092,21 @@ const Look = ({ data }: { data: Progress }) => {
     );
 };
 
-const PinnedLists = ({
-    lists,
+/** Pins on your profile, as toggles: lists or reviews, up to the slots
+ *  you have. */
+const PinToggles = ({
+    field,
+    items,
     slots,
 }: {
-    lists: { id: number; name: string }[];
+    field: "pinnedLists" | "pinnedReviews";
+    items: { id: number; name: string }[];
     slots: number;
 }) => {
     const { user } = useAuth();
     const notify = useNotify();
     const setStyle = useSetStyle();
-    const [pinned, setPinned] = useState<number[]>(user?.pinnedLists ?? []);
+    const [pinned, setPinned] = useState<number[]>(user?.[field] ?? []);
     const toggle = (id: number) => {
         const next = pinned.includes(id)
             ? pinned.filter((p) => p !== id)
@@ -1018,11 +1119,11 @@ const PinnedLists = ({
             return;
         }
         setPinned(next);
-        setStyle.mutate({ pinnedLists: next });
+        setStyle.mutate({ [field]: next });
     };
     return (
         <ul className="flex flex-wrap gap-2">
-            {lists.map((l) => {
+            {items.map((l) => {
                 const on = pinned.includes(l.id);
                 return (
                     <li key={l.id}>
