@@ -53,8 +53,12 @@ describe("ListsView", () => {
             await screen.findByRole("link", { name: /Cosy games/ })
         ).toHaveAttribute("href", "/user/devuser/lists/1");
         expect(screen.getByRole("link", { name: /Secret/ })).toHaveTextContent(
-            "Only you"
+            "Only me"
         );
+        // The public ones say so too, to their owner.
+        expect(
+            screen.getByRole("link", { name: /Cosy games/ })
+        ).toHaveTextContent("Everyone");
         expect(
             screen.getByRole("button", { name: /New list/ })
         ).toBeInTheDocument();

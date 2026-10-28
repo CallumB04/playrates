@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
-import { ArrowBigUp, Lock, Users } from "lucide-react";
+import { ArrowBigUp } from "lucide-react";
 import type { GameListSummary } from "@playrates/shared";
 import CoverGrid from "../game/CoverGrid";
 import { accentHue, avatarGradient } from "../../lib/profileAccent";
 import { formatCount } from "../../lib/format";
 import { listPath } from "../../lib/profilePaths";
 import { cn } from "../../lib/cn";
+import { PRIVACY_OPTIONS } from "../../pages/ProfilePage/components/PrivacySelect";
 
 interface ListCardProps {
     list: GameListSummary;
@@ -13,6 +14,8 @@ interface ListCardProps {
     showOwner?: boolean;
     /** For a narrow column: a smaller picture and no description. */
     compact?: boolean;
+    /** Who can see it, for its owner: the public ones said too. */
+    showVisibility?: boolean;
 }
 
 /** One list: its picture, its name, a line of what it is, and its counts. */
@@ -20,13 +23,9 @@ const ListCard = ({
     list,
     showOwner = false,
     compact = false,
+    showVisibility = false,
 }: ListCardProps) => {
-    const Hidden =
-        list.visibility === "private"
-            ? Lock
-            : list.visibility === "friends"
-              ? Users
-              : null;
+    const privacy = PRIVACY_OPTIONS.find((o) => o.value === list.visibility);
 
     return (
         <Link
@@ -77,12 +76,11 @@ const ListCard = ({
                             {list.voteCount === 1 ? " upvote" : " upvotes"}
                         </span>
                     </span>
-                    {Hidden && (
-                        <span className="inline-flex items-center gap-1">
-                            <Hidden size={12} aria-hidden />
-                            {list.visibility === "private"
-                                ? "Only you"
-                                : "Friends"}
+                    {showVisibility && privacy && (
+                        <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-surface-sunken px-2 py-0.5 text-content-secondary">
+                            <privacy.icon size={11} aria-hidden />
+                            <span className="sr-only">Who can see it: </span>
+                            {privacy.label}
                         </span>
                     )}
                 </p>

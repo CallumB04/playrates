@@ -97,7 +97,7 @@ const ListsView = ({ username, isOwner, canSee }: ListsViewProps) => {
                 <ul className="grid gap-3 sm:grid-cols-2">
                     {lists.map((list) => (
                         <li key={list.id}>
-                            <ListCard list={list} />
+                            <ListCard list={list} showVisibility={isOwner} />
                         </li>
                     ))}
                 </ul>
