@@ -228,7 +228,9 @@ const GamePage = () => {
                             user ? () => flow.review(gameId) : () => openLogin()
                         }
                         viewerId={user?.id}
-                        onVote={(reviewId) => vote.mutateAsync(reviewId)}
+                        onVote={(reviewId, reaction) =>
+                            vote.mutateAsync({ reviewId, reaction })
+                        }
                         total={reviews?.meta.total ?? 0}
                         sort={sort}
                         onSortChange={setSort}

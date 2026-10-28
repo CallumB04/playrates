@@ -12,6 +12,7 @@ import type {
     ThreadSort,
     TrendingThread,
     VoteResult,
+    ReactionKey,
 } from "@playrates/shared";
 import { api } from "../client";
 import { compactParams } from "./games";
@@ -112,10 +113,12 @@ export const deleteThread = async (threadId: number): Promise<void> => {
 };
 
 export const toggleMessageVote = async (
-    messageId: number
+    messageId: number,
+    reaction: ReactionKey = "upvote"
 ): Promise<VoteResult> => {
     const { data } = await api.post<VoteResult>(
-        `/community/messages/${messageId}/vote`
+        `/community/messages/${messageId}/vote`,
+        { reaction }
     );
     return data;
 };

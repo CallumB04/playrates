@@ -403,7 +403,7 @@ describe("upvoting a review", () => {
       .set("Authorization", authHeader(USER_B));
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ voteCount: 1, votedByViewer: true });
+    expect(response.body).toMatchObject({ voteCount: 1, votedByViewer: true });
     expect(state.reviewVotes).toHaveLength(1);
   });
 
@@ -417,7 +417,7 @@ describe("upvoting a review", () => {
     await vote();
     const response = await vote();
 
-    expect(response.body).toEqual({ voteCount: 0, votedByViewer: false });
+    expect(response.body).toMatchObject({ voteCount: 0, votedByViewer: false });
   });
 
   it("refuses a vote on your own review", async () => {

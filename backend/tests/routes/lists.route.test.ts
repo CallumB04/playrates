@@ -285,7 +285,7 @@ describe("upvoting a list", () => {
     const { id } = await create({ name: "Open" });
     const { id: hidden } = await create({ name: "x", visibility: "private" });
 
-    expect((await vote(id, USER_B)).body).toEqual({
+    expect((await vote(id, USER_B)).body).toMatchObject({
       voteCount: 1,
       votedByViewer: true,
     });

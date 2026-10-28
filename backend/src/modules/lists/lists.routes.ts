@@ -15,6 +15,7 @@ import {
   type CreateListInput,
   type ListSort,
   type UpdateListInput,
+  ReactBodySchema,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { validate } from "../../middleware/validate.js";
@@ -93,14 +94,16 @@ export const createListsRouter = ({
     },
   );
 
-  // A toggle, so the client needs no current state and can't double-count.
+  // A toggle per reaction: the same one again takes it back, so the client
+  // needs no current state and can't double-count.
   router.post(
     "/:listId/vote",
     requireAuth,
-    validate({ params: ListIdParamSchema }),
+    validate({ params: ListIdParamSchema, body: ReactBodySchema }),
     async (req, res) => {
       const { listId } = req.valid!.params as { listId: number };
-      res.json(await service.toggleVote(callerId(req), listId));
+      const { reaction } = req.valid!.body as { reaction: string };
+      res.json(await service.toggleVote(callerId(req), listId, reaction));
     },
   );
 

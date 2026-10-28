@@ -4,6 +4,8 @@ import type {
   CommunityMessageRow,
   CommunityThreadRow,
 } from "../../types/database.types.js";
+import type { ReactionRepo } from "../../lib/reactions.js";
+import { createReactionRepo } from "../reactions/reactions.repository.js";
 
 /** A row of the community_thread_cards view. */
 export interface ThreadCardRow extends CommunityThreadRow {
@@ -114,11 +116,8 @@ export interface CommunityRepository {
    *  them. */
   listBodiesByAuthor(userId: string): Promise<unknown[]>;
   deleteThread(id: number): Promise<void>;
-  votedMessageIds(userId: string, messageIds: number[]): Promise<Set<number>>;
-  hasVoted(userId: string, messageId: number): Promise<boolean>;
-  addVote(userId: string, messageId: number): Promise<void>;
-  removeVote(userId: string, messageId: number): Promise<void>;
-  voteCount(messageId: number): Promise<number>;
+  /** Who reacted to which, and with what. */
+  reactions: ReactionRepo;
 }
 
 const THREADS = "community_thread_cards";
@@ -347,54 +346,5 @@ export const createCommunityRepository = (db: Db): CommunityRepository => ({
     if (error) throw error;
   },
 
-  async votedMessageIds(userId, messageIds) {
-    if (messageIds.length === 0) return new Set();
-    const { data, error } = await db
-      .from("community_message_votes")
-      .select("message_id")
-      .eq("user_id", userId)
-      .in("message_id", messageIds);
-    if (error) throw error;
-    return new Set(
-      (data ?? []).map((r) => (r as { message_id: number }).message_id),
-    );
-  },
-
-  async hasVoted(userId, messageId) {
-    const { count, error } = await db
-      .from("community_message_votes")
-      .select("message_id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("message_id", messageId);
-    if (error) throw error;
-    return (count ?? 0) > 0;
-  },
-
-  async addVote(userId, messageId) {
-    const { error } = await db
-      .from("community_message_votes")
-      .upsert(
-        { user_id: userId, message_id: messageId },
-        { onConflict: "message_id,user_id" },
-      );
-    if (error) throw error;
-  },
-
-  async removeVote(userId, messageId) {
-    const { error } = await db
-      .from("community_message_votes")
-      .delete()
-      .eq("user_id", userId)
-      .eq("message_id", messageId);
-    if (error) throw error;
-  },
-
-  async voteCount(messageId) {
-    const { count, error } = await db
-      .from("community_message_votes")
-      .select("message_id", { count: "exact", head: true })
-      .eq("message_id", messageId);
-    if (error) throw error;
-    return count ?? 0;
-  },
+  reactions: createReactionRepo(db, "community_message_votes", "message_id"),
 });

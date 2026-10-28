@@ -22,6 +22,8 @@ const summary = (
     gameCount: 3,
     voteCount: 1,
     votedByViewer: false,
+    myReaction: null,
+    reactions: [],
     covers: [],
     owner: { username: "devuser", avatarUrl: null, accent: "indigo" },
     createdAt: "2026-01-01T00:00:00Z",

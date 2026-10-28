@@ -6,7 +6,16 @@ import type {
   ReviewWithAuthor,
 } from "@playrates/shared";
 import type { ReviewSort } from "@playrates/shared";
-import { canSeeProfile, isUpvoteMilestone } from "@playrates/shared";
+import {
+  canSeeProfile,
+  isUpvoteMilestone,
+  type ReactionState,
+} from "@playrates/shared";
+import {
+  react,
+  reactionStates,
+  type ReactionsFor,
+} from "../../lib/reactions.js";
 import type { NotificationsRepository } from "../notifications/notifications.repository.js";
 import { reviewUpvotesKey } from "../notifications/notifications.mapper.js";
 import { AppError } from "../../lib/AppError.js";
@@ -42,6 +51,7 @@ export const createReviewsService = (
   notifications: NotificationsRepository,
   gate: ProfileGate,
   friends: FriendsRepository,
+  reactionsFor: ReactionsFor,
 ) => {
   /** Opt-in, so signed out and unknown both mean no. */
   const canSeeExplicit = async (viewerId?: string): Promise<boolean> =>
@@ -89,7 +99,7 @@ export const createReviewsService = (
    *  than one per review. */
   const withAuthors = (
     rows: ReviewRowJoined[],
-    votedIds: Set<number>,
+    stateOf: (id: number, voteCount: number) => ReactionState,
     visible: Set<string>,
   ): ReviewWithAuthor[] =>
     rows.map((row) => {
@@ -120,8 +130,7 @@ export const createReviewsService = (
           title: row.game_title,
           coverUrl: row.game_cover_url,
         },
-        voteCount: Number(row.vote_count ?? 0),
-        votedByViewer: votedIds.has(row.id),
+        ...stateOf(row.id, Number(row.vote_count ?? 0)),
       };
     });
 
@@ -130,22 +139,15 @@ export const createReviewsService = (
     viewerId: string | undefined,
     rows: ReviewRowJoined[],
   ): Promise<ReviewWithAuthor[]> => {
-    const [voted, visible] = await Promise.all([
-      votesFor(viewerId, rows),
+    const [stateOf, visible] = await Promise.all([
+      reactionStates(
+        repo.reactions,
+        viewerId,
+        rows.map((r) => r.id),
+      ),
       visibleAuthors(viewerId, rows),
     ]);
-    return withAuthors(rows, voted, visible);
-  };
-
-  const votesFor = async (
-    viewerId: string | undefined,
-    rows: ReviewRowJoined[],
-  ): Promise<Set<number>> => {
-    if (!viewerId || rows.length === 0) return new Set();
-    return repo.votedReviewIds(
-      viewerId,
-      rows.map((r) => r.id),
-    );
+    return withAuthors(rows, stateOf, visible);
   };
 
   return {
@@ -186,6 +188,26 @@ export const createReviewsService = (
       return paginate(await present(viewerId, rows), pagination, total);
     },
 
+    /** The reviews a member pinned to their profile, in their order. One
+     *  since deleted, or made private to this viewer, is left out. */
+    async pinnedFor(
+      username: string,
+      viewerId: string | undefined,
+    ): Promise<ReviewWithAuthor[]> {
+      const profile = await gate(username, viewerId);
+      const rows = (
+        await Promise.all(
+          (profile.pinned_reviews ?? []).map((id) => repo.findById(Number(id))),
+        )
+      ).filter(
+        (r): r is ReviewRowJoined =>
+          !!r &&
+          r.user_id === profile.id &&
+          (r.is_public || viewerId === profile.id),
+      );
+      return present(viewerId, rows);
+    },
+
     /** The site-wide feed. Public reviews only, newest first. */
     async listRecent(
       pagination: Pagination,
@@ -200,12 +222,13 @@ export const createReviewsService = (
       return paginate(await present(viewerId, rows), pagination, total);
     },
 
-    /** Idempotent by primary key: a duplicate vote collides on
-     *  (review_id, user_id) rather than counting twice. */
+    /** One reaction per person per review, by primary key: the same one
+     *  again takes it back, another swaps it. */
     async toggleVote(
       userId: string,
       reviewId: number,
-    ): Promise<{ voteCount: number; votedByViewer: boolean }> {
+      reaction?: string,
+    ): Promise<ReactionState> {
       const review = await repo.findById(reviewId);
       if (!review) throw AppError.notFound("Review");
       // A vote says someone else found it useful; the author always does.
@@ -213,12 +236,16 @@ export const createReviewsService = (
         throw AppError.forbidden("You cannot upvote your own review");
       }
 
-      const voted = await repo.hasVoted(userId, reviewId);
-      if (voted) await repo.removeVote(userId, reviewId);
-      else await repo.addVote(userId, reviewId);
-      const voteCount = await repo.voteCount(reviewId);
+      const { state, added } = await react(
+        repo.reactions,
+        reactionsFor,
+        userId,
+        reviewId,
+        reaction,
+      );
+      const voteCount = state.voteCount;
 
-      if (!voted && isUpvoteMilestone(voteCount)) {
+      if (added && isUpvoteMilestone(voteCount)) {
         await notifications.raiseMilestone(
           review.user_id,
           "review_upvote_milestone",
@@ -233,7 +260,7 @@ export const createReviewsService = (
         );
       }
 
-      return { voteCount, votedByViewer: !voted };
+      return state;
     },
 
     /** The review on one of the caller's logs. */

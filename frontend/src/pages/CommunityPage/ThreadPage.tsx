@@ -125,8 +125,13 @@ const ThreadPage = () => {
         ) : undefined;
 
     const actions: MessageActions = {
-        onVote: (message) =>
-            user ? mutations.vote.mutateAsync(message.id) : openLogin(),
+        onVote: (message, reaction) =>
+            user
+                ? mutations.vote.mutateAsync({
+                      messageId: message.id,
+                      reaction,
+                  })
+                : openLogin(),
         onReply: isPatchNotes
             ? undefined
             : (message) => {

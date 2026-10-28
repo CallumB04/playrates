@@ -1,3 +1,4 @@
+import type { ReactionState } from "@playrates/shared";
 import { toPlainText } from "@playrates/shared";
 import type {
   CommunityAuthor,
@@ -88,7 +89,8 @@ export interface MessageViewer {
   viewerId: string | undefined;
   isAdmin: boolean;
   isPatchNotes: boolean;
-  votedIds: Set<number>;
+  /** Each message's reactions as this viewer sees them. */
+  reactions: (id: number, voteCount: number) => ReactionState;
 }
 
 /* The opening message is what the thread says, so nobody edits it, and it
@@ -129,8 +131,7 @@ export const toMessage = (
   deleted: row.deleted_at !== null,
   createdAt: row.created_at,
   editedAt: row.edited_at,
-  voteCount: Number(row.vote_count ?? 0),
-  votedByViewer: viewer.votedIds.has(row.id),
+  ...viewer.reactions(row.id, Number(row.vote_count ?? 0)),
   canEdit: canEditMessage(row, viewer),
   canDelete: canDeleteMessage(row, viewer),
   replies,

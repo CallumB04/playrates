@@ -8,6 +8,7 @@ import type {
     CreateMessageInput,
     CreateThreadInput,
     RichTextDoc,
+    ReactionKey,
 } from "@playrates/shared";
 import {
     createThread,
@@ -116,7 +117,13 @@ export const useCommunityMutations = () => {
             onSuccess: invalidate,
         }),
         vote: useMutation({
-            mutationFn: (messageId: number) => toggleMessageVote(messageId),
+            mutationFn: ({
+                messageId,
+                reaction,
+            }: {
+                messageId: number;
+                reaction?: ReactionKey;
+            }) => toggleMessageVote(messageId, reaction),
             onSuccess: invalidate,
         }),
     };

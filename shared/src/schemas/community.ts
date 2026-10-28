@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ReactionCount, ReactionKey, ReactionState } from "./reactions.js";
 import { PaginationSchema } from "./common.js";
 import type { ProfileAccent } from "./profileAccent.js";
 import { RichTextDocSchema, type RichTextDoc } from "./richText.js";
@@ -134,6 +135,8 @@ export interface CommunityMessage {
   editedAt: string | null;
   voteCount: number;
   votedByViewer: boolean;
+  myReaction: ReactionKey | null;
+  reactions: ReactionCount[];
   canEdit: boolean;
   canDelete: boolean;
   /** Only top-level messages carry replies. */
@@ -174,7 +177,4 @@ export interface LatestReply {
   createdAt: string;
 }
 
-export interface VoteResult {
-  voteCount: number;
-  votedByViewer: boolean;
-}
+export type VoteResult = ReactionState;

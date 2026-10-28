@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import type { ReviewSort, ReviewWithAuthor } from "@playrates/shared";
+import type {
+    ReviewSort,
+    ReviewWithAuthor,
+    ReactionKey,
+} from "@playrates/shared";
 import { Link } from "react-router-dom";
 import ProfilePicture, {
     PrivateProfilePicture,
@@ -12,7 +16,7 @@ import ExpandableText from "./ExpandableText";
 import SpoilerCover from "../../../components/ui/SpoilerCover";
 import { cn } from "../../../lib/cn";
 import RatingBadge from "../../../components/ui/RatingBadge";
-import VoteButton from "../../../components/ui/VoteButton";
+import ReactionBar from "../../../components/ui/ReactionBar";
 import { whyCannotVote } from "../../../lib/voting";
 import Button from "../../../components/ui/Button";
 import { Flag, PenLine } from "lucide-react";
@@ -37,7 +41,7 @@ interface GameReviewsProps {
     /** Who is looking, so their own reviews refuse a vote. Unset when signed
      *  out. */
     viewerId: string | undefined;
-    onVote?: (reviewId: number) => unknown;
+    onVote?: (reviewId: number, reaction: ReactionKey) => unknown;
     total: number;
     sort: ReviewSort;
     onSortChange: (sort: ReviewSort) => void;
@@ -277,16 +281,22 @@ const GameReviews = ({
                                                 value={review.rating}
                                                 size="row"
                                             />
-                                            <VoteButton
-                                                count={review.voteCount}
-                                                voted={review.votedByViewer}
+                                            <ReactionBar
+                                                voteCount={review.voteCount}
+                                                myReaction={review.myReaction}
+                                                reactions={review.reactions}
                                                 disabledReason={whyCannotVote(
                                                     viewerId,
                                                     author?.id
                                                 )}
-                                                onToggle={() =>
-                                                    onVote?.(review.id)
+                                                onReact={(reaction) =>
+                                                    onVote?.(
+                                                        review.id,
+                                                        reaction
+                                                    )
                                                 }
+                                                align="end"
+                                                className="justify-end"
                                             />
                                         </div>
                                     </div>

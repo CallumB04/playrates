@@ -3,6 +3,7 @@ import { usePagination } from "../../../hooks/usePagination";
 import { cardClass } from "../../../components/ui/Card";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import ReviewRow from "./ReviewRow";
+import { usePinReviews } from "../lib/usePinReviews";
 import ListFoot from "./ListFoot";
 import { NoReviews } from "./ListEmpty";
 import { usePageParam } from "../lib/usePageParam";
@@ -24,6 +25,7 @@ const ReviewList = ({ username, isOwner, canSee }: ReviewListProps) => {
         enabled: canSee,
     });
     const reviews = data?.data ?? [];
+    const pins = usePinReviews();
 
     const pagination = usePagination({
         total: data?.meta.total ?? 0,
@@ -47,7 +49,18 @@ const ReviewList = ({ username, isOwner, canSee }: ReviewListProps) => {
                     <NoReviews isOwner={isOwner} />
                 ) : (
                     reviews.map((review) => (
-                        <ReviewRow key={review.id} review={review} />
+                        <ReviewRow
+                            key={review.id}
+                            review={review}
+                            pin={
+                                isOwner && pins.slots > 0
+                                    ? {
+                                          on: pins.pinned.includes(review.id),
+                                          toggle: () => pins.toggle(review.id),
+                                      }
+                                    : undefined
+                            }
+                        />
                     ))
                 )}
             </div>

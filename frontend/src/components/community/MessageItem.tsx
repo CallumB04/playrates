@@ -1,9 +1,13 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Flag, MessageSquareReply, Pencil, Trash2, UserX } from "lucide-react";
-import type { CommunityMessage, RichTextDoc } from "@playrates/shared";
+import type {
+    CommunityMessage,
+    RichTextDoc,
+    ReactionKey,
+} from "@playrates/shared";
 import ProfilePicture from "../ProfilePicture";
-import VoteButton from "../ui/VoteButton";
+import ReactionBar from "../ui/ReactionBar";
 import Button from "../ui/Button";
 import { whyCannotVote } from "../../lib/voting";
 import { relativeTime } from "../../lib/format";
@@ -12,7 +16,7 @@ import RichTextView from "./RichTextView";
 import MessageComposer from "./MessageComposer";
 
 export interface MessageActions {
-    onVote: (message: CommunityMessage) => unknown;
+    onVote: (message: CommunityMessage, reaction: ReactionKey) => unknown;
     onReply?: (message: CommunityMessage) => void;
     onSaveEdit: (
         message: CommunityMessage,
@@ -184,16 +188,19 @@ const MessageItem = ({
 
                 {!editing && (
                     <div className="mt-2 -ml-1 flex flex-wrap items-center gap-1">
-                        <VoteButton
-                            count={message.voteCount}
-                            voted={message.votedByViewer}
+                        <ReactionBar
+                            voteCount={message.voteCount}
+                            myReaction={message.myReaction}
+                            reactions={message.reactions}
                             noun="message"
                             disabledReason={whyCannotVote(
                                 viewerId,
                                 author?.id,
                                 "message"
                             )}
-                            onToggle={() => actions.onVote(message)}
+                            onReact={(reaction) =>
+                                actions.onVote(message, reaction)
+                            }
                             className="mr-1"
                         />
                         {actions.onReply && (

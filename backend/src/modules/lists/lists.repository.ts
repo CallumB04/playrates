@@ -1,5 +1,7 @@
 import type { ListSort, ProfileVisibility } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
+import type { ReactionRepo } from "../../lib/reactions.js";
+import { createReactionRepo } from "../reactions/reactions.repository.js";
 
 /** A list as game_list_cards has it: its own columns, its counts, its
  *  first four games and its owner. */
@@ -73,11 +75,8 @@ export interface ListsRepository {
   /** At the end, unless it's in already. */
   addGame(listId: number, gameId: number): Promise<void>;
   removeGame(listId: number, gameId: number): Promise<void>;
-  votedListIds(userId: string, listIds: number[]): Promise<Set<number>>;
-  hasVoted(userId: string, listId: number): Promise<boolean>;
-  addVote(userId: string, listId: number): Promise<void>;
-  removeVote(userId: string, listId: number): Promise<void>;
-  voteCount(listId: number): Promise<number>;
+  /** Who reacted to which, and with what. */
+  reactions: ReactionRepo;
 }
 
 const ORDER: Record<ListSort, { column: string; ascending: boolean }[]> = {
@@ -229,55 +228,6 @@ export const createListsRepository = (db: Db): ListsRepository => {
       if (error) throw error;
     },
 
-    async votedListIds(userId, listIds) {
-      if (listIds.length === 0) return new Set();
-      const { data, error } = await db
-        .from("game_list_votes")
-        .select("list_id")
-        .eq("user_id", userId)
-        .in("list_id", listIds);
-      if (error) throw error;
-      return new Set(
-        ((data ?? []) as { list_id: number }[]).map((r) => r.list_id),
-      );
-    },
-
-    async hasVoted(userId, listId) {
-      const { count, error } = await db
-        .from("game_list_votes")
-        .select("list_id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("list_id", listId);
-      if (error) throw error;
-      return (count ?? 0) > 0;
-    },
-
-    async addVote(userId, listId) {
-      const { error } = await db
-        .from("game_list_votes")
-        .upsert(
-          { list_id: listId, user_id: userId },
-          { onConflict: "list_id,user_id", ignoreDuplicates: true },
-        );
-      if (error) throw error;
-    },
-
-    async removeVote(userId, listId) {
-      const { error } = await db
-        .from("game_list_votes")
-        .delete()
-        .eq("user_id", userId)
-        .eq("list_id", listId);
-      if (error) throw error;
-    },
-
-    async voteCount(listId) {
-      const { count, error } = await db
-        .from("game_list_votes")
-        .select("list_id", { count: "exact", head: true })
-        .eq("list_id", listId);
-      if (error) throw error;
-      return count ?? 0;
-    },
+    reactions: createReactionRepo(db, "game_list_votes", "list_id"),
   };
 };

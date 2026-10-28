@@ -1,3 +1,4 @@
+import type { ReactionState } from "@playrates/shared";
 import {
   MAX_LIST_COVERS,
   type GameListSummary,
@@ -35,7 +36,7 @@ export const toListSummary = (
   row: ListCardRow,
   coverIds: number[],
   covers: Map<number, ListCover>,
-  votedByViewer: boolean,
+  reactions: ReactionState,
 ): GameListSummary => ({
   id: row.id,
   name: row.name,
@@ -44,8 +45,7 @@ export const toListSummary = (
   colour: row.colour as ProfileAccent | null,
   ranked: row.ranked,
   gameCount: row.game_count,
-  voteCount: row.vote_count,
-  votedByViewer,
+  ...reactions,
   covers: coverIds.flatMap((id) => covers.get(id) ?? []),
   owner: {
     username: row.owner_username,

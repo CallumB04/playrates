@@ -1,4 +1,5 @@
 import { FALLBACK_ACCENT } from "@playrates/shared";
+import { createMemoryReactionRepo } from "./inMemoryReactions.js";
 import type {
   ListCardRow,
   ListFields,
@@ -186,34 +187,10 @@ export const createInMemoryLists = (state: InMemoryState): ListsRepository => {
         (i) => !(i.list_id === listId && i.game_id === gameId),
       );
     },
-    async votedListIds(userId, listIds) {
-      return new Set(
-        state.gameListVotes
-          .filter((v) => v.user_id === userId && listIds.includes(v.list_id))
-          .map((v) => v.list_id),
-      );
-    },
-    async hasVoted(userId, listId) {
-      return state.gameListVotes.some(
-        (v) => v.user_id === userId && v.list_id === listId,
-      );
-    },
-    async addVote(userId, listId) {
-      if (
-        !state.gameListVotes.some(
-          (v) => v.user_id === userId && v.list_id === listId,
-        )
-      ) {
-        state.gameListVotes.push({ list_id: listId, user_id: userId });
-      }
-    },
-    async removeVote(userId, listId) {
-      state.gameListVotes = state.gameListVotes.filter(
-        (v) => !(v.user_id === userId && v.list_id === listId),
-      );
-    },
-    async voteCount(listId) {
-      return state.gameListVotes.filter((v) => v.list_id === listId).length;
-    },
+    reactions: createMemoryReactionRepo(
+      () => state.gameListVotes,
+      (next) => (state.gameListVotes = next),
+      "list_id",
+    ),
   };
 };

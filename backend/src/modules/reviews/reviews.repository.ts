@@ -1,6 +1,8 @@
 import type { ReviewSort } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
 import type { ReviewRow } from "../../types/database.types.js";
+import type { ReactionRepo } from "../../lib/reactions.js";
+import { createReactionRepo } from "../reactions/reactions.repository.js";
 
 /**
  * A row of the review_cards view: the review, its author, and the rating from
@@ -65,12 +67,8 @@ export interface ReviewsRepository {
   ): Promise<{ row: ReviewRowJoined; created: boolean }>;
   remove(id: number): Promise<void>;
   findById(id: number): Promise<ReviewRowJoined | null>;
-  /** Which of these reviews the viewer has already voted on. */
-  votedReviewIds(userId: string, reviewIds: number[]): Promise<Set<number>>;
-  hasVoted(userId: string, reviewId: number): Promise<boolean>;
-  addVote(userId: string, reviewId: number): Promise<void>;
-  removeVote(userId: string, reviewId: number): Promise<void>;
-  voteCount(reviewId: number): Promise<number>;
+  /** Who reacted to which, and with what. */
+  reactions: ReactionRepo;
 }
 
 export const createReviewsRepository = (db: Db): ReviewsRepository => ({
@@ -151,55 +149,7 @@ export const createReviewsRepository = (db: Db): ReviewsRepository => ({
     return (data as ReviewRowJoined | null) ?? null;
   },
 
-  async votedReviewIds(userId, reviewIds) {
-    const { data, error } = await db
-      .from("review_votes")
-      .select("review_id")
-      .eq("user_id", userId)
-      .in("review_id", reviewIds);
-    if (error) throw error;
-    return new Set(
-      (data ?? []).map((r) => (r as { review_id: number }).review_id),
-    );
-  },
-
-  async hasVoted(userId, reviewId) {
-    const { count, error } = await db
-      .from("review_votes")
-      .select("review_id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("review_id", reviewId);
-    if (error) throw error;
-    return (count ?? 0) > 0;
-  },
-
-  async addVote(userId, reviewId) {
-    const { error } = await db
-      .from("review_votes")
-      .upsert(
-        { user_id: userId, review_id: reviewId },
-        { onConflict: "review_id,user_id" },
-      );
-    if (error) throw error;
-  },
-
-  async removeVote(userId, reviewId) {
-    const { error } = await db
-      .from("review_votes")
-      .delete()
-      .eq("user_id", userId)
-      .eq("review_id", reviewId);
-    if (error) throw error;
-  },
-
-  async voteCount(reviewId) {
-    const { count, error } = await db
-      .from("review_votes")
-      .select("review_id", { count: "exact", head: true })
-      .eq("review_id", reviewId);
-    if (error) throw error;
-    return count ?? 0;
-  },
+  reactions: createReactionRepo(db, "review_votes", "review_id"),
 
   async findByUserAndGame(userId, gameId) {
     const { data, error } = await db

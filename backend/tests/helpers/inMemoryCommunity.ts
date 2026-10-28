@@ -1,4 +1,5 @@
 import { TRENDING_WINDOW_DAYS, toPlainText } from "@playrates/shared";
+import { createMemoryReactionRepo } from "./inMemoryReactions.js";
 import type { RichTextDoc } from "@playrates/shared";
 import type {
   CommunityRepository,
@@ -351,37 +352,10 @@ export const createInMemoryCommunity = (
       );
     },
 
-    async votedMessageIds(userId, messageIds) {
-      return new Set(
-        state.communityVotes
-          .filter(
-            (v) => v.user_id === userId && messageIds.includes(v.message_id),
-          )
-          .map((v) => v.message_id),
-      );
-    },
-
-    async hasVoted(userId, messageId) {
-      return state.communityVotes.some(
-        (v) => v.user_id === userId && v.message_id === messageId,
-      );
-    },
-
-    async addVote(userId, messageId) {
-      if (!(await this.hasVoted(userId, messageId))) {
-        state.communityVotes.push({ message_id: messageId, user_id: userId });
-      }
-    },
-
-    async removeVote(userId, messageId) {
-      state.communityVotes = state.communityVotes.filter(
-        (v) => !(v.user_id === userId && v.message_id === messageId),
-      );
-    },
-
-    async voteCount(messageId) {
-      return state.communityVotes.filter((v) => v.message_id === messageId)
-        .length;
-    },
+    reactions: createMemoryReactionRepo(
+      () => state.communityVotes,
+      (next) => (state.communityVotes = next),
+      "message_id",
+    ),
   };
 };

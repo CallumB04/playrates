@@ -13,6 +13,7 @@ import {
   type CreateThreadInput,
   type ThreadListQuery,
   type UpdateMessageInput,
+  ReactBodySchema,
 } from "@playrates/shared";
 import { validate } from "../../middleware/validate.js";
 import { AppError } from "../../lib/AppError.js";
@@ -171,10 +172,11 @@ export const createCommunityRouter = ({
   router.post(
     "/messages/:messageId/vote",
     requireAuth,
-    validate({ params: MessageIdParamSchema }),
+    validate({ params: MessageIdParamSchema, body: ReactBodySchema }),
     async (req, res) => {
       const { messageId } = req.valid!.params as { messageId: number };
-      res.json(await service.toggleVote(callerId(req), messageId));
+      const { reaction } = req.valid!.body as { reaction: string };
+      res.json(await service.toggleVote(callerId(req), messageId, reaction));
     },
   );
 

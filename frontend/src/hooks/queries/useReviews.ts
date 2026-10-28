@@ -4,11 +4,12 @@ import {
     useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
-import type { ReviewSort } from "@playrates/shared";
+import type { ReviewSort, ReactionKey } from "@playrates/shared";
 import {
     fetchGameReviews,
     fetchRecentReviews,
     fetchUserReviews,
+    fetchPinnedReviews,
     toggleReviewVote,
     queryKeys,
 } from "../../api";
@@ -46,12 +47,29 @@ export const useUserReviews = (
         placeholderData: keepPreviousData,
     });
 
+export const usePinnedReviews = (
+    username: string,
+    ids: number[],
+    enabled = true
+) =>
+    useQuery({
+        queryKey: queryKeys.reviews.pinned(username, ids),
+        queryFn: () => fetchPinnedReviews(username),
+        enabled: enabled && ids.length > 0,
+    });
+
 /** Refetch rather than patch: the same review sits in the game list, the site
  *  feed and a profile, and three hand-patched copies drift. */
 export const useReviewVote = () => {
     const client = useQueryClient();
     return useMutation({
-        mutationFn: (reviewId: number) => toggleReviewVote(reviewId),
+        mutationFn: ({
+            reviewId,
+            reaction,
+        }: {
+            reviewId: number;
+            reaction?: ReactionKey;
+        }) => toggleReviewVote(reviewId, reaction),
         onSuccess: () => {
             void client.invalidateQueries({ queryKey: ["reviews"] });
         },

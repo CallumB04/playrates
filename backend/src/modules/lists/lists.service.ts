@@ -22,6 +22,11 @@ import type { NotificationsRepository } from "../notifications/notifications.rep
 import { listUpvotesKey } from "../notifications/notifications.mapper.js";
 import type { ProfileGate } from "../profiles/profileGate.js";
 import { cardCoverIds, toListSummary } from "./lists.mapper.js";
+import {
+  react,
+  reactionStates,
+  type ReactionsFor,
+} from "../../lib/reactions.js";
 import type {
   CardPage,
   ListCardRow,
@@ -59,6 +64,7 @@ export const createListsService = (
   friends: FriendsRepository,
   notifications: NotificationsRepository,
   gate: ProfileGate,
+  reactionsFor: ReactionsFor,
 ) => {
   const isFriend = async (ownerId: string, viewerId?: string) =>
     !!viewerId &&
@@ -85,14 +91,18 @@ export const createListsService = (
           ];
         }),
     );
-    const voted = viewerId
-      ? await repo.votedListIds(
-          viewerId,
-          rows.map((row) => row.id),
-        )
-      : new Set<number>();
+    const stateOf = await reactionStates(
+      repo.reactions,
+      viewerId,
+      rows.map((row) => row.id),
+    );
     return rows.map((row) =>
-      toListSummary(row, coverIds.get(row.id)!, covers, voted.has(row.id)),
+      toListSummary(
+        row,
+        coverIds.get(row.id)!,
+        covers,
+        stateOf(row.id, row.vote_count),
+      ),
     );
   };
 
@@ -345,17 +355,25 @@ export const createListsService = (
       }
     },
 
-    /** A toggle, so the client needs no state and can't count twice. */
-    async toggleVote(userId: string, listId: number): Promise<VoteResult> {
+    /** A reaction: the same one again takes it back, another swaps it. */
+    async toggleVote(
+      userId: string,
+      listId: number,
+      reaction?: string,
+    ): Promise<VoteResult> {
       const card = await visibleCard(listId, userId);
       if (card.user_id === userId) {
         throw AppError.forbidden("You cannot upvote your own list");
       }
-      const voted = await repo.hasVoted(userId, listId);
-      if (voted) await repo.removeVote(userId, listId);
-      else await repo.addVote(userId, listId);
-      const voteCount = await repo.voteCount(listId);
-      if (!voted && isUpvoteMilestone(voteCount)) {
+      const { state, added } = await react(
+        repo.reactions,
+        reactionsFor,
+        userId,
+        listId,
+        reaction,
+      );
+      const voteCount = state.voteCount;
+      if (added && isUpvoteMilestone(voteCount)) {
         await notifications.raiseMilestone(
           card.user_id,
           "list_upvote_milestone",
@@ -364,7 +382,7 @@ export const createListsService = (
           { listId, listName: card.name, username: card.owner_username },
         );
       }
-      return { voteCount, votedByViewer: !voted };
+      return state;
     },
   };
 };

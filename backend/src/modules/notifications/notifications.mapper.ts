@@ -196,6 +196,13 @@ export const toNotification = (
       return { ...base, kind: "referral_joined", username };
     }
 
+    case "gift_received": {
+      const username = str(row.data.username);
+      const item = str(row.data.item);
+      if (!username || !item) return { ...base, kind: "unknown" };
+      return { ...base, kind: "gift_received", username, item };
+    }
+
     case "gaming_25_love_milestone": {
       const milestone = num(row.data.milestone);
       const username = str(row.data.username);

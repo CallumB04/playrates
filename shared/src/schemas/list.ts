@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ReactionCount, ReactionKey } from "./reactions.js";
 import { PaginationSchema } from "./common.js";
 import type { Game } from "./game.js";
 import { ProfileVisibilitySchema, type ProfileVisibility } from "./profile.js";
@@ -104,6 +105,8 @@ export interface GameListSummary {
   gameCount: number;
   voteCount: number;
   votedByViewer: boolean;
+  myReaction: ReactionKey | null;
+  reactions: ReactionCount[];
   /** Up to four, in place: the ones picked, then the list's first games. */
   covers: ListCover[];
   owner: ListOwner;

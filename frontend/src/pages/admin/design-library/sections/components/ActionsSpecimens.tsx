@@ -1,3 +1,4 @@
+import type { ReactionKey } from "@playrates/shared";
 import { useState } from "react";
 import { Archive, Inbox, Monitor, Moon, Sun } from "lucide-react";
 import Button, {
@@ -8,7 +9,7 @@ import Button, {
 import Toggle from "../../../../../components/ui/Toggle";
 import Chip, { chipClass } from "../../../../../components/ui/Chip";
 import SegmentedChoice from "../../../../../components/ui/SegmentedChoice";
-import VoteButton from "../../../../../components/ui/VoteButton";
+import ReactionBar from "../../../../../components/ui/ReactionBar";
 import Pagination, {
     PaginationSummary,
 } from "../../../../../components/ui/Pagination";
@@ -35,7 +36,7 @@ const ActionsSpecimens = () => {
     const [adult, setAdult] = useState(false);
     const [theme, setTheme] = useState<"light" | "dark" | "system">("dark");
     const [tab, setTab] = useState<"inbox" | "archive">("inbox");
-    const [voted, setVoted] = useState(false);
+    const [mine, setMine] = useState<ReactionKey | null>(null);
     const [page, setPage] = useState(1);
     const pagination = usePagination({
         total: 184662,
@@ -166,26 +167,34 @@ const ActionsSpecimens = () => {
             </Specimen>
 
             <Specimen
-                title="Vote button"
-                notes="The count is the label, so the whole pill is one touch target; pressing again withdraws the vote. When the viewer can't vote it still shows the tally, and says why instead of just greying out: signed out, or the review is their own, which the API refuses too."
-                meta="count · voted · onToggle · disabledReason · whyCannotVote(viewerId, authorId)"
+                title="Reaction bar"
+                notes="The upvote always shows; any other reaction someone has left sits beside it, and the plus picks from the ones the viewer has unlocked. One per person: pressing the same again takes it back, another swaps it. When the viewer can't react it still shows the counts, and says why: signed out, or it's their own."
+                meta="voteCount · myReaction · reactions · onReact · disabledReason · whyCannotVote(viewerId, authorId)"
             >
-                <VoteButton
-                    count={voted ? 13 : 12}
-                    voted={voted}
-                    onToggle={() => setVoted((v) => !v)}
+                <ReactionBar
+                    voteCount={mine ? 13 : 12}
+                    myReaction={mine}
+                    reactions={[
+                        {
+                            reaction: "upvote",
+                            count: mine === "upvote" ? 10 : 9,
+                        },
+                        { reaction: "fire", count: 3 },
+                    ]}
+                    onReact={(r) => setMine((m) => (m === r ? null : r))}
                 />
-                <VoteButton count={4} voted onToggle={() => {}} />
-                <VoteButton
-                    count={12}
-                    voted={false}
-                    onToggle={() => {}}
+                <ReactionBar
+                    voteCount={12}
+                    myReaction={null}
+                    reactions={[{ reaction: "upvote", count: 12 }]}
+                    onReact={() => {}}
                     disabledReason={whyCannotVote(undefined, "author")}
                 />
-                <VoteButton
-                    count={3}
-                    voted={false}
-                    onToggle={() => {}}
+                <ReactionBar
+                    voteCount={3}
+                    myReaction={null}
+                    reactions={[{ reaction: "upvote", count: 3 }]}
+                    onReact={() => {}}
                     disabledReason={whyCannotVote("author", "author")}
                 />
             </Specimen>

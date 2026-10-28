@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Pin } from "lucide-react";
 import type { ReviewWithAuthor } from "@playrates/shared";
 import GameCover from "../../../components/game/GameCover";
 import RatingBadge from "../../../components/ui/RatingBadge";
@@ -12,6 +13,7 @@ import {
     type PlayedStatus,
 } from "../../../constants/gameStatus";
 import { formatHours, relativeTime } from "../../../lib/format";
+import { cn } from "../../../lib/cn";
 
 /** The state a review was written in, when its author still has that log. */
 const reviewStatus = (review: ReviewWithAuthor): DisplayStatus | null => {
@@ -22,15 +24,25 @@ const reviewStatus = (review: ReviewWithAuthor): DisplayStatus | null => {
     );
 };
 
-/** One of somebody's reviews. The view carries the game, so no fan-out. */
-const ReviewRow = ({ review }: { review: ReviewWithAuthor }) => {
+/** One of somebody's reviews. The view carries the game, so no fan-out.
+ *  On its owner's own, with a pin to put it on their profile. */
+const ReviewRow = ({
+    review,
+    pin,
+}: {
+    review: ReviewWithAuthor;
+    pin?: { on: boolean; toggle: () => void };
+}) => {
     const status = reviewStatus(review);
 
-    return (
+    const row = (
         // Straight to the review on the game's page, not just to the game.
         <Link
             to={`/game/${review.game.id}#review-${review.id}`}
-            className="flex gap-3 rounded-md p-2 lift hover:bg-surface-hover"
+            className={cn(
+                "flex gap-3 rounded-md p-2 lift hover:bg-surface-hover",
+                pin && "pr-12"
+            )}
         >
             <GameCover
                 coverUrl={review.game.coverUrl}
@@ -77,6 +89,36 @@ const ReviewRow = ({ review }: { review: ReviewWithAuthor }) => {
                 </span>
             </span>
         </Link>
+    );
+    if (!pin) return row;
+    // Beside the link rather than in it: a button can't sit inside one.
+    return (
+        <div className="relative">
+            {row}
+            <button
+                type="button"
+                aria-pressed={pin.on}
+                aria-label={
+                    pin.on
+                        ? `Unpin ${review.game.title} from your profile`
+                        : `Pin ${review.game.title} to your profile`
+                }
+                onClick={pin.toggle}
+                className={cn(
+                    "absolute top-2 right-2 grid size-9 cursor-pointer place-items-center rounded-sm",
+                    "focus-visible:outline-2 focus-visible:outline-brand",
+                    pin.on
+                        ? "bg-brand-subtle text-brand"
+                        : "text-content-muted hover:bg-surface-hover hover:text-content"
+                )}
+            >
+                <Pin
+                    size={15}
+                    fill={pin.on ? "currentColor" : "none"}
+                    aria-hidden
+                />
+            </button>
+        </div>
     );
 };
 

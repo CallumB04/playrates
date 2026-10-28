@@ -28,7 +28,7 @@ import { displayStatusFor } from "../../constants/gameStatus";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import Button from "../../components/ui/Button";
 import ConfirmPopup from "../../components/ui/ConfirmPopup";
-import VoteButton from "../../components/ui/VoteButton";
+import ReactionBar from "../../components/ui/ReactionBar";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { cardClass } from "../../components/ui/Card";
@@ -184,9 +184,10 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
                     </p>
                 )}
                 <div className="relative flex flex-wrap items-center gap-2 border-t border-subtle px-4 py-3 sm:px-6">
-                    <VoteButton
-                        count={list.voteCount}
-                        voted={list.votedByViewer}
+                    <ReactionBar
+                        voteCount={list.voteCount}
+                        myReaction={list.myReaction}
+                        reactions={list.reactions}
                         noun="list"
                         disabledReason={
                             !user
@@ -195,7 +196,7 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
                                   ? "You can't upvote your own list"
                                   : null
                         }
-                        onToggle={() => vote.mutateAsync()}
+                        onReact={(reaction) => vote.mutateAsync(reaction)}
                     />
                     <div className="ml-auto flex items-center gap-1">
                         {isOwner ? (

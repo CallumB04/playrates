@@ -497,7 +497,7 @@ describe("patch notes", () => {
       .post("/api/v1/community/messages/2/vote")
       .set("Authorization", authHeader(USER_A));
 
-    expect(response.body).toEqual({ voteCount: 1, votedByViewer: true });
+    expect(response.body).toMatchObject({ voteCount: 1, votedByViewer: true });
   });
 
   it("tells a non-admin they cannot post", async () => {
@@ -524,8 +524,14 @@ describe("community votes", () => {
         .post("/api/v1/community/messages/1/vote")
         .set("Authorization", authHeader(USER_B));
 
-    expect((await vote()).body).toEqual({ voteCount: 1, votedByViewer: true });
-    expect((await vote()).body).toEqual({ voteCount: 0, votedByViewer: false });
+    expect((await vote()).body).toMatchObject({
+      voteCount: 1,
+      votedByViewer: true,
+    });
+    expect((await vote()).body).toMatchObject({
+      voteCount: 0,
+      votedByViewer: false,
+    });
   });
 
   it("refuses a vote on your own message", async () => {
