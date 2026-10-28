@@ -232,13 +232,18 @@ export const createListsService = (
       return summaries(rows, viewerId);
     },
 
-    /** Your lists, marked with whether a game is in each. */
+    /** Your lists, marked with whether a game is in each. Newest made first
+     *  rather than last changed: ticking one changes it, and by recent the
+     *  list jumped to the top under the pointer. */
     async mine(userId: string, gameId?: number): Promise<MyListOption[]> {
-      const { rows } = await repo.cardsByUser(userId, ALL, {
+      const { rows: recent } = await repo.cardsByUser(userId, ALL, {
         sort: "recent",
         page: 1,
         limit: MAX_LISTS,
       });
+      const rows = [...recent].sort(
+        (a, b) => b.created_at.localeCompare(a.created_at) || b.id - a.id,
+      );
       const holding = new Set(
         gameId === undefined
           ? []

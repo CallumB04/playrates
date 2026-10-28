@@ -332,6 +332,25 @@ describe("lists beyond a profile", () => {
     ]);
   });
 
+  /* Ticking a game into a list changes it; ordered by change, the lists
+     jumped about under the pointer as they were ticked. */
+  it("keeps your lists in the order they were made, whatever changes", async () => {
+    const { app, create } = setup();
+    const older = (await create({ name: "Older" })).id;
+    await create({ name: "Newer" });
+    const names = async () =>
+      (
+        await request(app).get("/api/v1/me/lists?gameId=1").set(as(USER_A))
+      ).body.map((l: { name: string }) => l.name);
+
+    expect(await names()).toEqual(["Newer", "Older"]);
+    await request(app)
+      .post(`/api/v1/me/lists/${older}/games`)
+      .set(as(USER_A))
+      .send({ gameId: 1 });
+    expect(await names()).toEqual(["Newer", "Older"]);
+  });
+
   it("marks which of your lists already hold a game", async () => {
     const { app, create } = setup();
     await create({ name: "Has it", gameIds: [1] });
