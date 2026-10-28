@@ -28,6 +28,7 @@ import RatingPlate from "./components/RatingPlate";
 import CirculationPlate from "./components/CirculationPlate";
 import GameReviews from "./components/GameReviews";
 import GameLists from "./components/GameLists";
+import { useMyLists } from "../../hooks/queries/useLists";
 import GameThreads from "./components/GameThreads";
 import { useThreads } from "../../hooks/queries/useCommunity";
 import { newThreadPath } from "../../components/community/paths";
@@ -59,6 +60,7 @@ const GamePage = () => {
     const { data: genres } = useGenres();
     const { data: systems } = usePlatformSystems();
     const { data: myLogIds } = useMyGameLogIds();
+    const { data: myLists } = useMyLists(gameId, !!user);
     const { data: reviews, isLoading: reviewsLoading } = useGameReviews(
         gameId,
         sort
@@ -174,6 +176,7 @@ const GamePage = () => {
                         onEditLog={(logId) => flow.edit(gameId, logId)}
                         onQuickLog={(status) => void quickLog(status)}
                         onAddToList={() => flow.addToList(gameId)}
+                        inAList={!!myLists?.some((list) => list.hasGame)}
                         isSaving={quickSaving}
                         actionsEndRef={actionsEnd}
                     />
