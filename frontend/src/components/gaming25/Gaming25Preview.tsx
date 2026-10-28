@@ -6,6 +6,7 @@ import {
     type Gaming25Pick,
 } from "@playrates/shared";
 import { Skeleton } from "../ui/Skeleton";
+import { cardClass } from "../ui/Card";
 import GameCover from "../game/GameCover";
 import { useGaming25 } from "../../hooks/queries/useGaming25";
 import { formatCount } from "../../lib/format";
@@ -18,10 +19,11 @@ interface Gaming25PreviewProps {
     isOwner: boolean;
 }
 
-const CARD =
-    "group relative flex items-center gap-4 overflow-hidden rounded-lg border border-brand/30 p-4 shadow-plate lift " +
-    "bg-linear-to-br from-brand-subtle via-surface-raised to-medal-gold/10 " +
-    "hover:-translate-y-px hover:border-brand/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+const CARD = cardClass(
+    "group relative flex items-center gap-4 overflow-hidden p-4 lift " +
+        "hover:-translate-y-px hover:border-brand/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
+    { padding: "none", tone: "feature" }
+);
 
 /* The back two lean out from behind the front one, a hand of cards. */
 const BEHIND = ["left-1 top-3 -rotate-12", "right-1 top-3 rotate-12"] as const;

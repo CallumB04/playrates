@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { TrendingThread } from "@playrates/shared";
 import GameCover from "../game/GameCover";
+import { cardClass } from "../ui/Card";
 import { cn } from "../../lib/cn";
 import ContributorStack from "./ContributorStack";
 import { NewMessageCount, PeopleCount } from "./ThreadStats";
@@ -23,7 +24,9 @@ const TrendingList = ({
                     <Link
                         to={threadPath(thread.id)}
                         className={cn(
-                            "group flex h-full gap-3 rounded-lg border border-subtle bg-surface-raised p-3 shadow-plate lift",
+                            cardClass("group flex h-full gap-3 p-3 lift", {
+                                padding: "none",
+                            }),
                             "hover:-translate-y-px hover:shadow-lifted",
                             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                         )}

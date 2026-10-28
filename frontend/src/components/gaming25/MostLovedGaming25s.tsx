@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 import { GAMING_25_SIZE } from "@playrates/shared";
-import { cardClass } from "../ui/Card";
+import AsideCard from "../ui/AsideCard";
 import GameCover from "../game/GameCover";
 import ProfilePicture from "../ProfilePicture";
 import { useMostLovedGaming25s } from "../../hooks/queries/useGaming25";
@@ -18,13 +18,11 @@ const MostLovedGaming25s = () => {
     if (grids.length === 0) return null;
 
     return (
-        <section
-            aria-label="Most loved Gaming 25s"
-            className={cardClass("flex flex-col pb-1.5", { padding: "none" })}
+        <AsideCard
+            title="Most loved Gaming 25s"
+            label="Most loved Gaming 25s"
+            bodyClassName=""
         >
-            <h2 className="px-3 pt-3 pb-1.5 text-label text-content-muted">
-                Most loved Gaming 25s
-            </h2>
             <ul>
                 {grids.map((grid) => (
                     <li key={grid.owner.username}>
@@ -72,7 +70,7 @@ const MostLovedGaming25s = () => {
                     </li>
                 ))}
             </ul>
-        </section>
+        </AsideCard>
     );
 };
 

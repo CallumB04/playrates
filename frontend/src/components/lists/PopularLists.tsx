@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowBigUp } from "lucide-react";
-import { cardClass } from "../ui/Card";
+import AsideCard from "../ui/AsideCard";
 import CoverGrid from "../game/CoverGrid";
 import { usePopularLists } from "../../hooks/queries/useLists";
 import { formatCount } from "../../lib/format";
@@ -16,13 +16,7 @@ const PopularLists = () => {
     if (lists.length === 0) return null;
 
     return (
-        <section
-            aria-label="Popular lists"
-            className={cardClass("flex flex-col pb-1.5", { padding: "none" })}
-        >
-            <h2 className="px-3 pt-3 pb-1.5 text-label text-content-muted">
-                Popular lists
-            </h2>
+        <AsideCard title="Popular lists" label="Popular lists" bodyClassName="">
             <ul>
                 {lists.map((list) => (
                     <li key={list.id}>
@@ -55,7 +49,7 @@ const PopularLists = () => {
                     </li>
                 ))}
             </ul>
-        </section>
+        </AsideCard>
     );
 };
 

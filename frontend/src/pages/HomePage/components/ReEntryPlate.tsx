@@ -3,6 +3,7 @@ import { ArrowRight, Gamepad2, Pencil } from "lucide-react";
 import type { UserStats } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
 import Button from "../../../components/ui/Button";
+import { cardClass } from "../../../components/ui/Card";
 import GameCover from "../../../components/game/GameCover";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import YearChart from "./YearChart";
@@ -258,7 +259,12 @@ const ReEntryPlate = ({
                 </div>
             </div>
 
-            <div className="overflow-hidden rounded-lg border border-subtle bg-surface-raised shadow-plate lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)] lg:divide-x lg:divide-subtle">
+            <div
+                className={cardClass(
+                    "overflow-hidden lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)] lg:divide-x lg:divide-subtle",
+                    { padding: "none" }
+                )}
+            >
                 <NowPlaying
                     current={current}
                     username={username}
