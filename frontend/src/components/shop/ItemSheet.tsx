@@ -246,7 +246,7 @@ const ItemSheet = ({
                             onClick={() => wear(item.item, onClose)}
                             className="w-full sm:w-auto"
                         >
-                            {worn ? "Active" : "Wear it"}
+                            {worn ? "Active" : "Use it"}
                         </Button>
                     ) : !owned && !full && !justBought ? (
                         <Button
