@@ -18,6 +18,7 @@ export const NOTIFICATION_KINDS = [
   "community_upvote_milestone",
   "review_upvote_milestone",
   "list_upvote_milestone",
+  "gaming_25_love_milestone",
   "announcement",
 ] as const;
 
@@ -112,6 +113,14 @@ export interface ListUpvoteMilestoneNotification extends NotificationBase {
   milestone: number;
 }
 
+/** Your Gaming 25 reached a love milestone. It lives under your own
+ *  profile, so nothing else is needed to link to it. */
+export interface Gaming25LoveMilestoneNotification extends NotificationBase {
+  kind: "gaming_25_love_milestone";
+  username: string;
+  milestone: number;
+}
+
 /** A message from PlayRates to everyone, sent from the admin dashboard. */
 export interface AnnouncementNotification extends NotificationBase {
   kind: "announcement";
@@ -140,6 +149,7 @@ export type AppNotification =
   | CommunityUpvoteMilestoneNotification
   | ReviewUpvoteMilestoneNotification
   | ListUpvoteMilestoneNotification
+  | Gaming25LoveMilestoneNotification
   | AnnouncementNotification
   | UnknownNotification;
 

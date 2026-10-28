@@ -31,6 +31,9 @@ export const reviewUpvotesKey = (reviewId: number): string =>
 /** The migration's game_list_clear_notifications matches this form. */
 export const listUpvotesKey = (listId: number): string =>
   `list_upvotes:${listId}`;
+/** One per grid, which is one per person. */
+export const gaming25LovesKey = (ownerId: string): string =>
+  `gaming_25_loves:${ownerId}`;
 
 const num = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -185,6 +188,15 @@ export const toNotification = (
         username,
         milestone,
       };
+    }
+
+    case "gaming_25_love_milestone": {
+      const milestone = num(row.data.milestone);
+      const username = str(row.data.username);
+      if (milestone === null || !username) {
+        return { ...base, kind: "unknown" };
+      }
+      return { ...base, kind: "gaming_25_love_milestone", username, milestone };
     }
 
     case "announcement": {

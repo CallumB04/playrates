@@ -110,6 +110,12 @@ export const createPagesRouter = ({
     render((req) => service.profile(String(req.params.username))),
   );
 
+  // Ahead of /:view, which would take "gaming-25" for a view and 404 it.
+  router.get(
+    "/user/:username/gaming-25",
+    render((req) => service.gaming25(String(req.params.username))),
+  );
+
   // A view of a profile previews as the profile; an unknown one is a 404.
   router.get(
     "/user/:username/:view",

@@ -9,6 +9,12 @@ import {
   createMyFavouritesRouter,
   createUserFavouritesRouter,
 } from "./modules/favourites/favourites.routes.js";
+import { createGaming25Service } from "./modules/gaming25/gaming25.service.js";
+import {
+  createGaming25Router,
+  createMyGaming25Router,
+  createUserGaming25Router,
+} from "./modules/gaming25/gaming25.routes.js";
 import { createProfilesService } from "./modules/profiles/profiles.service.js";
 import { createProfilesRouter } from "./modules/profiles/profiles.routes.js";
 import { createProfileGate } from "./modules/profiles/profileGate.js";
@@ -116,6 +122,13 @@ export const buildRoutes = ({
     repos.lists,
     repos.games,
     repos.friends,
+    repos.notifications,
+    profileGate,
+  );
+  const gaming25 = createGaming25Service(
+    repos.gaming25,
+    repos.games,
+    repos.profiles,
     repos.notifications,
     profileGate,
   );
@@ -243,6 +256,10 @@ export const buildRoutes = ({
     createMyListsRouter({ service: lists, requireAuth, optionalAuth }),
   );
   router.use(
+    "/me/gaming-25",
+    createMyGaming25Router({ service: gaming25, requireAuth, optionalAuth }),
+  );
+  router.use(
     "/me/friends",
     createMyFriendsRouter({ service: friends, requireAuth, optionalAuth }),
   );
@@ -296,6 +313,15 @@ export const buildRoutes = ({
   router.use(
     "/lists",
     createListsRouter({ service: lists, requireAuth, optionalAuth }),
+  );
+
+  router.use(
+    "/users/:username/gaming-25",
+    createUserGaming25Router({ service: gaming25, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/gaming-25",
+    createGaming25Router({ service: gaming25, requireAuth, optionalAuth }),
   );
 
   router.use(

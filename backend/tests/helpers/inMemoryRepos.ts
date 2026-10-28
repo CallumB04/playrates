@@ -43,6 +43,12 @@ import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.reposito
 import type { NotificationRowWithActor } from "../../src/modules/notifications/notifications.repository.js";
 import { createInMemoryCommunity } from "./inMemoryCommunity.js";
 import {
+  createInMemoryGaming25,
+  type Gaming25Love,
+  type Gaming25PickState,
+  type Gaming25Row,
+} from "./inMemoryGaming25.js";
+import {
   createInMemoryLists,
   type ListItem,
   type ListRow,
@@ -94,6 +100,9 @@ export interface SeedData {
   gameLists?: ListRow[];
   gameListItems?: ListItem[];
   gameListVotes?: { list_id: number; user_id: string }[];
+  gaming25s?: Gaming25Row[];
+  gaming25Picks?: Gaming25PickState[];
+  gaming25Loves?: Gaming25Love[];
 }
 
 export interface InMemoryState {
@@ -128,6 +137,9 @@ export interface InMemoryState {
   gameLists: ListRow[];
   gameListItems: ListItem[];
   gameListVotes: { list_id: number; user_id: string }[];
+  gaming25s: Gaming25Row[];
+  gaming25Picks: Gaming25PickState[];
+  gaming25Loves: Gaming25Love[];
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
@@ -198,6 +210,9 @@ export const createInMemoryRepos = (
     gameLists: (seed.gameLists ?? []).map((l) => ({ ...l })),
     gameListItems: [...(seed.gameListItems ?? [])],
     gameListVotes: [...(seed.gameListVotes ?? [])],
+    gaming25s: (seed.gaming25s ?? []).map((g) => ({ ...g })),
+    gaming25Picks: [...(seed.gaming25Picks ?? [])],
+    gaming25Loves: [...(seed.gaming25Loves ?? [])],
   };
 
   let nextLogId = 1000;
@@ -475,6 +490,13 @@ export const createInMemoryRepos = (
           ),
           gameListVotes: state.gameListVotes.filter(
             (v) => v.user_id === userId,
+          ),
+          gaming25: state.gaming25s.filter((g) => g.user_id === userId),
+          gaming25Picks: state.gaming25Picks.filter(
+            (p) => p.user_id === userId,
+          ),
+          gaming25Loves: state.gaming25Loves.filter(
+            (l) => l.user_id === userId,
           ),
         };
       },
@@ -1590,6 +1612,7 @@ export const createInMemoryRepos = (
 
     community: createInMemoryCommunity(state),
     lists: createInMemoryLists(state),
+    gaming25: createInMemoryGaming25(state),
     favourites: {
       async listIds(userId) {
         return state.favouriteGames
@@ -1664,6 +1687,14 @@ export const createInMemoryRepos = (
       );
       state.gameListVotes = state.gameListVotes.filter(
         (v) => v.user_id !== userId && !theirLists.has(v.list_id),
+      );
+      // Their grid, its picks, its loves, and the loves they gave.
+      state.gaming25s = state.gaming25s.filter((g) => g.user_id !== userId);
+      state.gaming25Picks = state.gaming25Picks.filter(
+        (p) => p.user_id !== userId,
+      );
+      state.gaming25Loves = state.gaming25Loves.filter(
+        (l) => l.user_id !== userId && l.owner_id !== userId,
       );
     },
   };

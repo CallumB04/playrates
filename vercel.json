@@ -4,7 +4,7 @@
     "outputDirectory": "frontend/dist",
     "functions": {
         "api/index.ts": {
-            "includeFiles": "frontend/dist/index.html"
+            "includeFiles": "{frontend/dist/index.html,node_modules/@fontsource/geist/files/geist-latin-*-normal.woff}"
         }
     },
     "crons": [
@@ -24,6 +24,14 @@
         },
         {
             "source": "/user/:username",
+            "destination": "/api"
+        },
+        {
+            "source": "/user/:username/gaming-25",
+            "destination": "/api"
+        },
+        {
+            "source": "/user/:username/lists/:id",
             "destination": "/api"
         },
         {

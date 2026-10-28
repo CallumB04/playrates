@@ -65,7 +65,8 @@ export interface NotificationsRepository {
     kind:
       | "community_upvote_milestone"
       | "review_upvote_milestone"
-      | "list_upvote_milestone",
+      | "list_upvote_milestone"
+      | "gaming_25_love_milestone",
     dedupeKey: string,
     milestone: number,
     data: Record<string, unknown>,
