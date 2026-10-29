@@ -68,6 +68,10 @@ import {
   type SitemapRepository,
 } from "./modules/pages/sitemap.repository.js";
 import {
+  createEmailRepository,
+  type EmailRepository,
+} from "./modules/email/email.repository.js";
+import {
   createCommunityRepository,
   type CommunityRepository,
 } from "./modules/community/community.repository.js";
@@ -93,6 +97,7 @@ export interface Repositories {
   lists: ListsRepository;
   gaming25: Gaming25Repository;
   progress: ProgressRepository;
+  email: EmailRepository;
 }
 
 export const createRepositories = (db: Db): Repositories => ({
@@ -114,4 +119,5 @@ export const createRepositories = (db: Db): Repositories => ({
   lists: createListsRepository(db),
   gaming25: createGaming25Repository(db),
   progress: createProgressRepository(db),
+  email: createEmailRepository(db),
 });

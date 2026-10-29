@@ -150,6 +150,8 @@ const ENDPOINTS: { method: "get" | "post" | "patch" | "put"; path: string; body?
   { method: "get", path: "/api/v1/admin/patch-notes" },
   { method: "post", path: "/api/v1/admin/patch-notes/41/announce" },
   { method: "post", path: "/api/v1/admin/patch-notes/41/test" },
+  { method: "get", path: "/api/v1/admin/email/audience" },
+  { method: "get", path: "/api/v1/admin/email/stats" },
   { method: "get", path: "/api/v1/admin/health" },
   { method: "get", path: "/api/v1/admin/progress" },
   { method: "get", path: "/api/v1/admin/errors" },
@@ -320,6 +322,78 @@ describe("admin announcements", () => {
       .get("/api/v1/me/notifications")
       .set("Authorization", authHeader(ADMIN));
     expect(feed.body.data[0]).toMatchObject({ kind: "announcement", isTest: true });
+  });
+
+  it("leaves email out unless asked", async () => {
+    const { app, email } = buildTestApp({ seed: seed() });
+    const response = await send(app, announcement);
+    expect(response.body.emailedAt).toBeNull();
+    expect(email.broadcasts).toHaveLength(0);
+  });
+
+  it("emails it as a broadcast too, with Resend's own way out", async () => {
+    const { app, state, email } = buildTestApp({ seed: seed() });
+
+    const response = await send(app, { ...announcement, email: true });
+
+    expect(response.status).toBe(201);
+    expect(response.body.emailedAt).toEqual(expect.any(String));
+    expect(email.broadcasts).toHaveLength(1);
+    expect(email.broadcasts[0]).toMatchObject({ subject: announcement.title });
+    expect(email.broadcasts[0]!.html).toContain("{{{RESEND_UNSUBSCRIBE_URL}}}");
+    expect(email.broadcasts[0]!.html).toContain("https://playrates.test/community");
+    expect(state.announcements[0]!.email_broadcast_id).toBe("broadcast-1");
+    // Nothing goes one by one: the broadcast is the send.
+    expect(email.sent).toHaveLength(0);
+  });
+
+  it("still sends it in-app when the email fails", async () => {
+    const { app, email } = buildTestApp({ seed: seed() });
+    email.failSends = true;
+    const response = await send(app, { ...announcement, email: true });
+    expect(response.status).toBe(201);
+    expect(response.body.recipientCount).toBe(3);
+    expect(response.body.emailedAt).toBeNull();
+  });
+
+  it("emails a test to the admin's own address only", async () => {
+    const { app, email } = buildTestApp({ seed: seed() });
+
+    const response = await send(app, { ...announcement, email: true }, "/test");
+
+    expect(response.status).toBe(204);
+    expect(email.broadcasts).toHaveLength(0);
+    expect(email.sent.map((m) => m.to)).toEqual([`${ADMIN}@example.test`]);
+    expect(email.sent[0]!.html).not.toContain("RESEND_UNSUBSCRIBE_URL");
+    expect(email.sent[0]!.html).toContain("https://playrates.test/settings?section=emails");
+  });
+
+  it("says how many a news email would reach", async () => {
+    const { app, state } = buildTestApp({ seed: seed() });
+    state.profiles[0]!.email_prefs = { news: false };
+
+    const response = await request(app)
+      .get("/api/v1/admin/email/audience")
+      .set("Authorization", authHeader(ADMIN));
+
+    expect(response.body).toEqual({ newsSubscribers: 2 });
+  });
+
+  it("shows how email is going, broadcasts apart", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    await send(app, { ...announcement, email: true });
+
+    const response = await request(app)
+      .get("/api/v1/admin/email/stats")
+      .set("Authorization", authHeader(ADMIN));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      last24h: { sent: 0, capped: 0, failed: 0 },
+      broadcasts: { count: 1, recipients: 3 },
+      newsSubscribers: 3,
+    });
+    expect(response.body.days).toHaveLength(30);
   });
 
   it("counts reads, and retracting takes every copy back", async () => {
@@ -653,6 +727,49 @@ describe("admin patch notes", () => {
 
     expect((await as(app).list()).body[0].announcement).toBeNull();
     expect((await as(app).post("41/announce")).status).toBe(201);
+  });
+
+  it("emails the entry itself when asked", async () => {
+    const { app, email } = buildTestApp({ seed: seed() });
+
+    const sent = await request(app)
+      .post("/api/v1/admin/patch-notes/41/announce")
+      .set("Authorization", authHeader(ADMIN))
+      .send({ email: true });
+
+    expect(sent.status).toBe(201);
+    expect(sent.body.announcement.emailedAt).toEqual(expect.any(String));
+    expect(email.broadcasts[0]).toMatchObject({ subject: "New patch notes: v1.1 Lists" });
+    expect(email.broadcasts[0]!.html).toContain("Fixed things.");
+    expect(email.broadcasts[0]!.html).toContain(
+      "https://playrates.test/community/thread/7#message-41",
+    );
+  });
+
+  it("emails a patch notes test to the admin alone", async () => {
+    const { app, email } = buildTestApp({ seed: seed() });
+
+    const response = await request(app)
+      .post("/api/v1/admin/patch-notes/41/test")
+      .set("Authorization", authHeader(ADMIN))
+      .send({ email: true });
+
+    expect(response.status).toBe(204);
+    expect(email.sent).toHaveLength(1);
+    expect(email.sent[0]).toMatchObject({
+      to: `${ADMIN}@example.test`,
+      subject: "New patch notes: v1.1 Lists",
+    });
+    expect(email.broadcasts).toHaveLength(0);
+  });
+
+  it("refuses anything but the email choice in a patch notes body", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const response = await request(app)
+      .post("/api/v1/admin/patch-notes/41/announce")
+      .set("Authorization", authHeader(ADMIN))
+      .send({ email: "yes" });
+    expect(response.status).toBe(422);
   });
 
   it("sends a test to the admin alone, and leaves the entry unsent", async () => {

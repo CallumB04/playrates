@@ -44,6 +44,21 @@ export interface BackgroundSource {
   owns(userId: string, url: string): Promise<boolean>;
 }
 
+/** What a profile change means for email, run after the response. */
+export interface ProfileEmailHooks {
+  /** The welcome, and joining the news audience. */
+  afterOnboarding(userId: string): void;
+  /** The news audience follows the news and all switches. */
+  afterPrefsChange(userId: string): void;
+  afterAccountDeleted(email: string): void;
+}
+
+const NO_EMAIL_HOOKS: ProfileEmailHooks = {
+  afterOnboarding() {},
+  afterPrefsChange() {},
+  afterAccountDeleted() {},
+};
+
 export const createProfilesService = (
   repo: ProfilesRepository,
   authAdmin: AuthAdmin,
@@ -52,6 +67,7 @@ export const createProfilesService = (
   backgrounds: BackgroundSource,
   /** Whether two people are friends, for the About fields kept to friends. */
   areFriends: (a: string, b: string) => Promise<boolean>,
+  emails: ProfileEmailHooks = NO_EMAIL_HOOKS,
 ) => ({
   /** The caller's own, so it carries their settings. */
   async getById(id: string): Promise<MyProfile> {
@@ -72,8 +88,11 @@ export const createProfilesService = (
     // First, so a storage failure stops here with the account still whole
     // and the request safe to retry.
     if (row.avatar_url) await avatars.remove(id);
+    // Asked before the auth user goes, which takes the address with it.
+    const email = await authAdmin.getEmail(id).catch(() => null);
     await authAdmin.deleteUser(id);
     await repo.eraseTraces(id);
+    if (email) emails.afterAccountDeleted(email);
   },
 
   /** A copy of everything held about the caller, for them to keep. */
@@ -207,12 +226,25 @@ export const createProfilesService = (
         ...input.aboutVisibility,
       };
     }
+    // Kept sparse: only the switches someone has touched are stored.
+    let newsMoved = false;
+    if (input.emailPrefs !== undefined) {
+      const row = await repo.findById(callerId);
+      if (!row) throw AppError.notFound("Profile");
+      const changes = Object.fromEntries(
+        Object.entries(input.emailPrefs).filter(([, on]) => on !== undefined),
+      ) as Record<string, boolean>;
+      patch.email_prefs = { ...(row.email_prefs ?? {}), ...changes };
+      newsMoved = "news" in changes || "all" in changes;
+    }
 
     if (Object.keys(patch).length === 0) {
       return this.getById(callerId);
     }
 
-    return toMyProfile(await repo.update(callerId, patch));
+    const updated = toMyProfile(await repo.update(callerId, patch));
+    if (newsMoved) emails.afterPrefsChange(callerId);
+    return updated;
   },
 
   /** A picture from a game the caller has logged, and only one that game
@@ -259,9 +291,12 @@ export const createProfilesService = (
     const row = await repo.findById(callerId);
     if (!row) throw AppError.notFound("Profile");
     if (row.onboarded_at) return toMyProfile(row);
-    return toMyProfile(
+    const updated = toMyProfile(
       await repo.update(callerId, { onboarded_at: new Date().toISOString() }),
     );
+    // Every sign-up path ends here, email, Google and Discord alike.
+    emails.afterOnboarding(callerId);
+    return updated;
   },
 
   async heartbeat(callerId: string): Promise<void> {

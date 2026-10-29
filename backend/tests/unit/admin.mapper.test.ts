@@ -304,6 +304,8 @@ describe("toAnnouncement", () => {
       created_at: "2026-09-26T00:00:00Z",
       retracted_at: null,
       patch_note_message_id: null,
+      email_broadcast_id: null,
+      emailed_at: null,
       read_count: 1,
     });
     expect(announcement).toMatchObject({ tone: "info", link: "/community", readCount: 1 });

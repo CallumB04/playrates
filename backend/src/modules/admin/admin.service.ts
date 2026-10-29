@@ -1,4 +1,4 @@
-import { patchNoteAnnouncement } from "@playrates/shared";
+import { patchNoteAnnouncement, type RichTextDoc } from "@playrates/shared";
 import type {
   AdminActivityQuery,
   AdminGameEventsQuery,
@@ -9,6 +9,8 @@ import type {
   AdminRange,
   AdminUsersQuery,
   AnnouncementInput,
+  EmailAudience,
+  SendAnnouncementInput,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
@@ -17,6 +19,8 @@ import type { GamesRepository } from "../games/games.repository.js";
 import type { GamesService } from "../games/games.service.js";
 import type { NotificationsRepository } from "../notifications/notifications.repository.js";
 import type { AdminRepository } from "./admin.repository.js";
+import type { EmailService, NewsContent } from "../email/email.service.js";
+import type { Logger } from "../../lib/logger.js";
 import {
   isoDay,
   IGDB_USAGE_DAYS,
@@ -51,10 +55,50 @@ export const createAdminService = (deps: {
   gamesService: GamesService;
   notifications: NotificationsRepository;
   provider: GamesProvider;
+  emails: Pick<
+    EmailService,
+    "broadcastNews" | "sendNewsTest" | "newsRecipientCount" | "stats"
+  >;
+  /** The admin's own address, for a test when the token didn't carry it. */
+  emailOf: (userId: string) => Promise<string | null>;
+  logger: Pick<Logger, "error">;
   now?: () => Date;
 }) => {
-  const { repo, games, gamesService, notifications, provider } = deps;
+  const { repo, games, gamesService, notifications, provider, emails } = deps;
   const now = deps.now ?? (() => new Date());
+
+  /** The news email after the in-app one has gone. A failure here leaves
+   *  the announcement sent and simply not marked emailed. */
+  const emailNews = async (announcementId: number, content: NewsContent) => {
+    try {
+      const { emailed, broadcastId } = await emails.broadcastNews(content);
+      if (emailed) await repo.markAnnouncementEmailed(announcementId, broadcastId);
+    } catch (error) {
+      deps.logger.error({ err: error, announcementId }, "news email failed");
+    }
+  };
+
+  /** The test's email, to the admin alone. */
+  const emailTest = async (
+    content: NewsContent,
+    actorId: string,
+    actorEmail: string | undefined,
+  ) => {
+    const to = actorEmail ?? (await deps.emailOf(actorId));
+    if (!to) throw AppError.badRequest("Your account has no email address to send a test to");
+    await emails.sendNewsTest(content, to);
+  };
+
+  const patchNoteContent = (
+    entry: { body: unknown },
+    note: { title: string | null; link: string },
+  ): NewsContent => ({
+    kind: "patch_notes",
+    subject: patchNoteAnnouncement(note.title, note.link).title,
+    title: note.title,
+    doc: entry.body as RichTextDoc,
+    link: note.link,
+  });
 
   const findGame = async (id: number) => {
     const row = await games.findById(id);
@@ -181,15 +225,33 @@ export const createAdminService = (deps: {
       return (await repo.listAnnouncements()).map(toAnnouncement);
     },
 
-    async sendAnnouncement(input: AnnouncementInput, actorId: string) {
+    async sendAnnouncement(input: SendAnnouncementInput, actorId: string) {
       const created = await repo.createAnnouncement(input, actorId);
       await repo.broadcastAnnouncement(created.id);
+      if (input.email) {
+        await emailNews(created.id, { kind: "announcement", ...input });
+      }
       const card = await repo.findAnnouncement(created.id);
       if (!card) throw AppError.internal("Announcement did not persist");
       return toAnnouncement(card);
     },
 
-    sendTestAnnouncement,
+    async sendTestAnnouncement(
+      input: SendAnnouncementInput,
+      actorId: string,
+      actorEmail?: string,
+    ) {
+      await sendTestAnnouncement(input, actorId);
+      if (input.email) {
+        await emailTest({ kind: "announcement", ...input }, actorId, actorEmail);
+      }
+    },
+
+    async emailAudience(): Promise<EmailAudience> {
+      return { newsSubscribers: await emails.newsRecipientCount() };
+    },
+
+    emailStats: () => emails.stats(),
 
     async listPatchNotes() {
       const [entries, sent] = await Promise.all([
@@ -200,7 +262,7 @@ export const createAdminService = (deps: {
       return entries.map((e) => toPatchNote(e, byEntry.get(e.id)));
     },
 
-    async sendPatchNote(messageId: number, actorId: string) {
+    async sendPatchNote(messageId: number, actorId: string, email = false) {
       const entry = await repo.findPatchNoteEntry(messageId);
       if (!entry) throw AppError.notFound("Patch notes entry");
       const standing = (await repo.standingPatchNoteAnnouncements()).some(
@@ -226,12 +288,18 @@ export const createAdminService = (deps: {
           throw error;
         });
       await repo.broadcastAnnouncement(created.id);
+      if (email) await emailNews(created.id, patchNoteContent(entry, note));
       const card = await repo.findAnnouncement(created.id);
       if (!card) throw AppError.internal("Announcement did not persist");
       return toPatchNote(entry, card);
     },
 
-    async sendTestPatchNote(messageId: number, actorId: string) {
+    async sendTestPatchNote(
+      messageId: number,
+      actorId: string,
+      email = false,
+      actorEmail?: string,
+    ) {
       const entry = await repo.findPatchNoteEntry(messageId);
       if (!entry) throw AppError.notFound("Patch notes entry");
       const note = toPatchNote(entry, undefined);
@@ -239,6 +307,7 @@ export const createAdminService = (deps: {
         patchNoteAnnouncement(note.title, note.link),
         actorId,
       );
+      if (email) await emailTest(patchNoteContent(entry, note), actorId, actorEmail);
     },
 
     async retractAnnouncement(id: number) {

@@ -12,6 +12,7 @@ import { createRepositories } from "./repositories.js";
 import { verifySupabaseJwt } from "./middleware/requireAuth.js";
 import { igdbFromEnv } from "./config/igdb.js";
 import { createServerErrorSink } from "./config/errorSink.js";
+import { emailFromEnv } from "./config/email.js";
 
 export interface ServerApp {
   app: Express;
@@ -48,6 +49,7 @@ export const createServerApp = (): ServerApp => {
       authAdmin: createAuthAdmin(db),
       avatars: createAvatarStore(db),
       communityImages: createCommunityImageStore(db),
+      email: emailFromEnv(config, logger),
       verify: verifySupabaseJwt,
       logger,
       errorSink: createServerErrorSink(db),

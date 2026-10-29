@@ -75,6 +75,11 @@ import {
   createAdminReportsRouter,
   createReportsRouter,
 } from "./modules/reports/reports.routes.js";
+import type { EmailDeps } from "./config/email.js";
+import type { Logger } from "./lib/logger.js";
+import { createEmailService } from "./modules/email/email.service.js";
+import { createEmailRouter } from "./modules/email/email.routes.js";
+import { withEmails } from "./modules/email/withEmails.js";
 
 interface Deps {
   repos: Repositories;
@@ -83,20 +88,41 @@ interface Deps {
   authAdmin: AuthAdmin;
   avatars: AvatarStore;
   communityImages: CommunityImageStore;
+  email: EmailDeps;
+  logger: Logger;
   requireAuth: RequestHandler;
   optionalAuth: RequestHandler;
 }
 
 export const buildRoutes = ({
-  repos,
+  repos: baseRepos,
   provider,
   authAdmin,
   avatars,
   communityImages,
+  email,
+  logger,
   requireAuth,
   optionalAuth,
 }: Deps): Router => {
   const router = Router();
+
+  const emails = createEmailService({
+    repo: baseRepos.email,
+    profiles: baseRepos.profiles,
+    sender: email.sender,
+    audience: email.audience,
+    activity: email.activity,
+    settings: email.settings,
+    logger,
+    defer: email.defer,
+  });
+  // Every service that raises a notification gets this one, so the ones
+  // with an email send it without knowing.
+  const repos = {
+    ...baseRepos,
+    notifications: withEmails(baseRepos.notifications, emails.afterRaise),
+  };
 
   const games = createGamesService(
     repos.games,
@@ -126,6 +152,7 @@ export const buildRoutes = ({
         ),
     },
     async (a, b) => (await repos.friends.find(a, b))?.status === "accepted",
+    emails,
   );
   const profileGate = createProfileGate(repos.profiles, repos.friends);
   const favourites = createFavouritesService(
@@ -214,6 +241,9 @@ export const buildRoutes = ({
     gamesService: games,
     notifications: repos.notifications,
     provider,
+    emails,
+    emailOf: (userId) => authAdmin.getEmail(userId),
+    logger,
   });
 
   // Under /api so the host's rewrites reach it; the root one does not.
@@ -230,6 +260,8 @@ export const buildRoutes = ({
     Router().use("/reports", createAdminReportsRouter({ service: reports })),
     createAdminRouter({ service: admin }),
   );
+
+  router.use("/email", createEmailRouter({ service: emails }));
 
   router.use(
     "/reports",
@@ -400,6 +432,7 @@ export const buildRoutes = ({
       provider,
       repo: repos.games,
       progress,
+      emails,
       secret: env().CRON_SECRET,
     }),
   );

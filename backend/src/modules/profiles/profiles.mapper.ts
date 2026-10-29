@@ -18,6 +18,7 @@ import {
   PROFILE_VISIBILITIES,
   PROFILE_ACCENT_SLUGS,
   sectionOrder,
+  resolveEmailPrefs,
 } from "@playrates/shared";
 import type { ProfileRow } from "../../types/database.types.js";
 
@@ -146,4 +147,5 @@ export const toMyProfile = (row: ProfileRow, now = Date.now()): MyProfile => ({
   onboardedAt: row.onboarded_at,
   usernameChosenAt: row.username_chosen_at,
   isAdmin: row.is_admin,
+  emailPrefs: resolveEmailPrefs(row.email_prefs),
 });

@@ -47,6 +47,8 @@ export interface ProfileRow {
   steam: string | null;
   /** Each About field's visibility where it differs from the default. */
   about_visibility: Record<string, string>;
+  /** Sparse email switches; a key not there is on. */
+  email_prefs: Record<string, boolean>;
   /** Kept by a trigger as the sum of xp_events. */
   xp: number;
   /** Kept by a trigger as the sum of token_events. */
@@ -377,11 +379,52 @@ export interface AnnouncementRow {
   retracted_at: string | null;
   /** The patch-notes entry this announces, when it announces one. */
   patch_note_message_id: number | null;
+  /** The Resend broadcast that emailed it, and when; null when it wasn't. */
+  email_broadcast_id: string | null;
+  emailed_at: string | null;
 }
 
 /** announcements with how many copies have been read. */
 export interface AnnouncementCardRow extends AnnouncementRow {
   read_count: number;
+}
+
+/** An email that went out under a key, so it doesn't go twice. */
+export interface EmailLogRow {
+  id: number;
+  user_id: string;
+  kind: string;
+  ref: string;
+  sent_at: string;
+}
+
+/** One row of email_send_totals(): sends added up by day, kind and
+ *  outcome. */
+export interface EmailSendTotalRow {
+  day: string;
+  kind: string;
+  status: "sent" | "capped" | "failed";
+  transactional: boolean;
+  /** Rows: a broadcast, or a send of one or more emails. */
+  sends: number;
+  recipients: number;
+}
+
+/** One row of member_emails(): a member with a confirmed address. */
+export interface MemberEmailRow {
+  id: string;
+  email: string;
+  username: string;
+  email_prefs: Record<string, boolean>;
+}
+
+/** One row of wishlist_releases_on(). */
+export interface WishlistReleaseRow {
+  user_id: string;
+  game_id: number;
+  title: string;
+  slug: string;
+  cover_url: string | null;
 }
 
 /** One row of admin_series(). */

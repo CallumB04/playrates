@@ -309,9 +309,18 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
         created_at: new Date().toISOString(),
         retracted_at: null,
         patch_note_message_id: patchNoteMessageId ?? null,
+        email_broadcast_id: null,
+        emailed_at: null,
       };
       state.announcements.push(row);
       return row;
+    },
+
+    async markAnnouncementEmailed(id, broadcastId) {
+      const a = state.announcements.find((x) => x.id === id);
+      if (!a) return;
+      a.email_broadcast_id = broadcastId;
+      a.emailed_at = new Date().toISOString();
     },
 
     // what broadcast_announcement does: a copy per profile, once

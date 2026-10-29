@@ -43,6 +43,19 @@ import { orderPair } from "../../src/modules/friends/friends.repository.js";
 import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.repository.js";
 import type { NotificationRowWithActor } from "../../src/modules/notifications/notifications.repository.js";
 import { createInMemoryCommunity } from "./inMemoryCommunity.js";
+import { createInMemoryEmailRepo } from "./inMemoryEmail.js";
+import type { EmailLogRow } from "../../src/types/database.types.js";
+
+/** One row of email_sends. */
+export interface EmailSendRecord {
+  id: number;
+  kind: string;
+  status: "sent" | "capped" | "failed";
+  recipients: number;
+  transactional: boolean;
+  error: string | null;
+  sent_at: string;
+}
 import {
   createInMemoryProgress,
   type TokenEventState,
@@ -170,6 +183,10 @@ export interface InMemoryState {
   }[];
   /** What player_metrics would count, per member, set by a test. */
   progressMetrics: Map<string, Record<string, number>>;
+  emailLog: EmailLogRow[];
+  emailSends: EmailSendRecord[];
+  /** Members whose address isn't confirmed, so is never emailed. */
+  unconfirmed: Set<string>;
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
@@ -251,6 +268,9 @@ export const createInMemoryRepos = (
     taskSwaps: [],
     userBackgrounds: [],
     progressMetrics: new Map(),
+    emailLog: [],
+    emailSends: [],
+    unconfirmed: new Set(),
   };
 
   let nextLogId = 1000;
@@ -1652,6 +1672,7 @@ export const createInMemoryRepos = (
     lists: createInMemoryLists(state),
     gaming25: createInMemoryGaming25(state),
     progress: createInMemoryProgress(state),
+    email: createInMemoryEmailRepo(state),
     favourites: {
       async listIds(userId) {
         return state.favouriteGames

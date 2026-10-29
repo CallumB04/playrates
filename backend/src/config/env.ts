@@ -1,4 +1,12 @@
 import { z } from "zod";
+import { SITE_ORIGIN } from "@playrates/shared";
+
+/** Optional text where an empty value means unset: the local stack blanks
+ *  a variable to stop backend/.env's copy from applying. */
+const optionalText = z
+  .string()
+  .optional()
+  .transform((v) => v || undefined);
 
 /** Parsed once at boot, so a bad variable fails loudly instead of surfacing
  *  as a strange error on the first request. */
@@ -30,6 +38,34 @@ const EnvSchema = z.object({
 
   /** Vercel's cron secret; scheduled jobs are refused without it. */
   CRON_SECRET: z.string().optional(),
+
+  /** Sends email through Resend. Contacts and broadcasts need a key with
+   *  full access, not a sending-only one. */
+  RESEND_API_KEY: optionalText,
+  /** The Resend segment members with news emails on are kept in, and
+   *  broadcasts go to. Without it news emails are not sent. */
+  RESEND_SEGMENT_ID: optionalText,
+  /** Signs Resend's webhooks; they are refused without it. */
+  RESEND_WEBHOOK_SECRET: optionalText,
+  /** Signs every unsubscribe link. Without it nothing that needs one is
+   *  sent, since an email must always be possible to stop. */
+  EMAIL_SIGNING_SECRET: optionalText,
+  EMAIL_FROM: z.string().default("PlayRates <hello@playrates.app>"),
+  /** Where links in emails point. */
+  SITE_URL: z
+    .string()
+    .url()
+    .default(SITE_ORIGIN)
+    .transform((v) => v.replace(/\/+$/, "")),
+  /** The API as a mail app reaches it, for one-click unsubscribe. Defaults
+   *  to SITE_URL's /api/v1. */
+  PUBLIC_API_URL: z
+    .string()
+    .url()
+    .optional()
+    .transform((v) => v?.replace(/\/+$/, "")),
+  /** The local stack's mail viewer. Every email goes there instead. */
+  MAILPIT_URL: optionalText,
 
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])

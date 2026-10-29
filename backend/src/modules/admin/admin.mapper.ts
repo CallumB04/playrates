@@ -308,6 +308,7 @@ export const toAnnouncement = (row: AnnouncementCardRow): Announcement => ({
   retractedAt: row.retracted_at,
   recipientCount: row.recipient_count,
   readCount: Number(row.read_count),
+  emailedAt: row.emailed_at ?? null,
 });
 
 /** An entry is named by its first h1; failing that, by whatever heading

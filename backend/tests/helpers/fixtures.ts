@@ -45,6 +45,7 @@ export const buildProfile = (
   discord: null,
   steam: null,
   about_visibility: {},
+  email_prefs: {},
   xp: 0,
   tokens: 0,
   frame: null,

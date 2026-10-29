@@ -12,7 +12,8 @@ import {
   AdminUserIdParamSchema,
   AdminUsersQuerySchema,
   AnnouncementIdParamSchema,
-  AnnouncementInputSchema,
+  EmailChoiceSchema,
+  SendAnnouncementSchema,
   PatchNoteIdParamSchema,
   CursorQuerySchema,
 } from "@playrates/shared";
@@ -20,6 +21,9 @@ import type { z } from "zod";
 import { AppError } from "../../lib/AppError.js";
 import { validate } from "../../middleware/validate.js";
 import type { AdminService } from "./admin.service.js";
+
+/* No body is no email, as a patch note was sent before email existed. */
+const EmailChoiceBody = EmailChoiceSchema.default({});
 
 const callerId = (req: { auth?: { userId: string } }): string => {
   const id = req.auth?.userId;
@@ -161,19 +165,19 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
 
   router.post(
     "/announcements",
-    validate({ body: AnnouncementInputSchema }),
+    validate({ body: SendAnnouncementSchema }),
     async (req, res) => {
-      const input = req.valid!.body as z.infer<typeof AnnouncementInputSchema>;
+      const input = req.valid!.body as z.infer<typeof SendAnnouncementSchema>;
       res.status(201).json(await service.sendAnnouncement(input, callerId(req)));
     },
   );
 
   router.post(
     "/announcements/test",
-    validate({ body: AnnouncementInputSchema }),
+    validate({ body: SendAnnouncementSchema }),
     async (req, res) => {
-      const input = req.valid!.body as z.infer<typeof AnnouncementInputSchema>;
-      await service.sendTestAnnouncement(input, callerId(req));
+      const input = req.valid!.body as z.infer<typeof SendAnnouncementSchema>;
+      await service.sendTestAnnouncement(input, callerId(req), req.auth?.email);
       res.status(204).end();
     },
   );
@@ -197,22 +201,34 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
 
   router.post(
     "/patch-notes/:messageId/announce",
-    validate({ params: PatchNoteIdParamSchema }),
+    validate({ params: PatchNoteIdParamSchema, body: EmailChoiceBody }),
     async (req, res) => {
       const { messageId } = req.valid!.params as z.infer<typeof PatchNoteIdParamSchema>;
-      res.status(201).json(await service.sendPatchNote(messageId, callerId(req)));
+      const { email } = req.valid!.body as z.infer<typeof EmailChoiceSchema>;
+      res.status(201).json(await service.sendPatchNote(messageId, callerId(req), email));
     },
   );
 
   router.post(
     "/patch-notes/:messageId/test",
-    validate({ params: PatchNoteIdParamSchema }),
+    validate({ params: PatchNoteIdParamSchema, body: EmailChoiceBody }),
     async (req, res) => {
       const { messageId } = req.valid!.params as z.infer<typeof PatchNoteIdParamSchema>;
-      await service.sendTestPatchNote(messageId, callerId(req));
+      const { email } = req.valid!.body as z.infer<typeof EmailChoiceSchema>;
+      await service.sendTestPatchNote(messageId, callerId(req), email, req.auth?.email);
       res.status(204).end();
     },
   );
+
+  // Email ------------------------------------------------------------------
+
+  router.get("/email/audience", async (_req, res) => {
+    res.json(await service.emailAudience());
+  });
+
+  router.get("/email/stats", async (_req, res) => {
+    res.json(await service.emailStats());
+  });
 
   // Health ------------------------------------------------------------------
 

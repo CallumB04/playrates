@@ -113,6 +113,14 @@ const backendEnv = {
   IGDB_CLIENT_ID: "",
   IGDB_CLIENT_SECRET: "",
   CRON_SECRET: "",
+  // Every email lands in the local mail viewer, never with Resend.
+  RESEND_API_KEY: "",
+  RESEND_SEGMENT_ID: "",
+  RESEND_WEBHOOK_SECRET: "",
+  MAILPIT_URL: "http://127.0.0.1:55324",
+  SITE_URL: `http://localhost:${appPort}`,
+  PUBLIC_API_URL: "http://localhost:3000/api/v1",
+  EMAIL_SIGNING_SECRET: "local-email-secret",
 };
 
 const children = [

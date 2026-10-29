@@ -29,6 +29,7 @@
     "@playrates/shared": "*",
     "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.47.10",
+    "@vercel/functions": "^3.10.4",
     "cors": "^2.8.5",
     "express": "^5.0.1",
     "express-rate-limit": "^7.5.0",

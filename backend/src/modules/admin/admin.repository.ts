@@ -105,6 +105,9 @@ export interface AdminRepository {
   ): Promise<AnnouncementRow>;
   /** Delivers to every account, returning how many it reached. */
   broadcastAnnouncement(id: number): Promise<number>;
+  /** It went out by email too, as this Resend broadcast where there was
+   *  one. */
+  markAnnouncementEmailed(id: number, broadcastId: string | null): Promise<void>;
   /** Takes every copy back out of every inbox. */
   retractAnnouncement(id: number): Promise<void>;
 
@@ -350,6 +353,17 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
     const { data, error } = await db.rpc("broadcast_announcement", { p_id: id });
     if (error) throw error;
     return (data as number | null) ?? 0;
+  },
+
+  async markAnnouncementEmailed(id, broadcastId) {
+    const { error } = await db
+      .from("announcements")
+      .update({
+        email_broadcast_id: broadcastId,
+        emailed_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+    if (error) throw error;
   },
 
   async retractAnnouncement(id) {
