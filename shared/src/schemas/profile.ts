@@ -1,3 +1,4 @@
+import { EmailPrefsPatchSchema, type EmailPrefs } from "./emailPrefs.js";
 import { z } from "zod";
 import { ProfileAccentSchema, type ProfileAccent } from "./profileAccent.js";
 import {
@@ -135,6 +136,8 @@ export const UpdateProfileSchema = z
       .array(z.enum(PROFILE_SECTIONS))
       .max(PROFILE_SECTIONS.length)
       .optional(),
+    /** Which emails to get; only the switches named change. */
+    emailPrefs: EmailPrefsPatchSchema.optional(),
   })
   .merge(AboutFieldsSchema)
   .strict();
@@ -206,4 +209,6 @@ export interface MyProfile extends Profile {
   usernameChosenAt: string | null;
   /** Can post patch notes and remove anything in the community. */
   isAdmin: boolean;
+  /** Which emails they get. Every switch starts on. */
+  emailPrefs: EmailPrefs;
 }

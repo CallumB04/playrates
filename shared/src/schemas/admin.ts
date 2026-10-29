@@ -209,7 +209,12 @@ export interface CursorPage<T> {
 export const ACTIVITY_GROUPS = {
   account: ["signup", "profile_updated", "account_deleted"],
   logs: ["log_added", "log_updated", "log_removed"],
-  reviews: ["review_posted", "review_edited", "review_removed", "review_upvoted"],
+  reviews: [
+    "review_posted",
+    "review_edited",
+    "review_removed",
+    "review_upvoted",
+  ],
   community: [
     "thread_created",
     "thread_removed",
@@ -483,6 +488,60 @@ export const AnnouncementInputSchema = z
 
 export type AnnouncementInput = z.infer<typeof AnnouncementInputSchema>;
 
+/** Whether a broadcast also goes out by email, to members with news emails
+ *  on. A test sends it to the admin only. */
+export const EmailChoiceSchema = z
+  .object({ email: z.boolean().default(false) })
+  .strict();
+
+/** Resend's free plan, and PlayRates' own share of it. */
+export const EMAIL_LIMITS = {
+  /** PlayRates' own emails in any 24 hours. The rest of Resend's daily
+   *  allowance is kept for account emails, which Supabase sends through
+   *  the same account and which can't wait for tomorrow. */
+  cap: 80,
+  daily: 100,
+  monthly: 3000,
+  /** Contacts a broadcast can go to. */
+  contacts: 1000,
+} as const;
+
+/** One UTC day of PlayRates' own emails. */
+export interface EmailDay {
+  day: string;
+  sent: number;
+  capped: number;
+  failed: number;
+}
+
+/** How email is going, and how near the limits it is. */
+export interface EmailStats {
+  /** PlayRates' own emails in the last 24 hours, broadcasts aside. */
+  last24h: { sent: number; capped: number; failed: number };
+  /** Everything Resend sent in the last 24 hours, account emails too, as
+   *  far as `counted` reaches. Null where Resend can't be asked. */
+  resend: {
+    sent: number;
+    /** It sent more than were counted. */
+    more: boolean;
+    bounced: number;
+    complained: number;
+  } | null;
+  /** The last 30 days, oldest first, zero-filled. */
+  days: EmailDay[];
+  /** Each kind sent in the last 30 days, most first. */
+  kinds: { kind: string; sent: number }[];
+  broadcasts: { count: number; recipients: number };
+  newsSubscribers: number;
+}
+
+/** An announcement as it's sent: what it says, and whether it's emailed. */
+export const SendAnnouncementSchema = AnnouncementInputSchema.extend({
+  email: z.boolean().default(false),
+}).strict();
+
+export type SendAnnouncementInput = z.infer<typeof SendAnnouncementSchema>;
+
 export const AnnouncementIdParamSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
@@ -497,6 +556,8 @@ export interface Announcement {
   retractedAt: string | null;
   recipientCount: number;
   readCount: number;
+  /** When it also went out by email. Null when it didn't. */
+  emailedAt: string | null;
 }
 
 export interface AnnouncementSendResult {
