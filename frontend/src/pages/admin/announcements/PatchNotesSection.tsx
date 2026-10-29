@@ -5,6 +5,7 @@ import { patchNoteAnnouncement, type AdminPatchNote } from "@playrates/shared";
 import { cardClass } from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import ConfirmPopup from "../../../components/ui/ConfirmPopup";
+import Toggle from "../../../components/ui/Toggle";
 import { EmptyNote } from "../../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import IconMark from "../../../components/notifications/IconMark";
@@ -14,11 +15,13 @@ import { usePatchNotes } from "../../../hooks/queries/useCommunity";
 import {
     useAdminPatchNotes,
     useAnnouncePatchNote,
+    useEmailAudience,
     useSendTestPatchNote,
 } from "../../../hooks/queries/useAdmin";
 import { cn } from "../../../lib/cn";
 import { formatCount, formatDate } from "../../../lib/format";
 import { share } from "../lib/adminFormat";
+import { emailedTo, sentNotice, testNotice } from "../lib/broadcastCopy";
 import SectionHeader from "../components/SectionHeader";
 import { SeeAllButton, SeeAllModal } from "../components/SeeAll";
 import { useSeeAll } from "../components/useSeeAll";
@@ -48,6 +51,7 @@ const Status = ({ note }: { note: AdminPatchNote }) => {
                         {formatCount(sent.readCount)}
                     </span>{" "}
                     ({share(sent.readCount, sent.recipientCount)})
+                    {sent.emailedAt && " · emailed"}
                 </span>
             ) : (
                 <span className="font-medium text-warning">Not sent yet</span>
@@ -64,9 +68,13 @@ const PatchNoteRow = ({
     reach: number | undefined;
 }) => {
     const [confirming, setConfirming] = useState(false);
+    // On by default: patch notes are what members turned news emails on for.
+    const [email, setEmail] = useState(true);
     const announce = useAnnouncePatchNote();
     const test = useSendTestPatchNote();
+    const { data: audience } = useEmailAudience(!note.announcement);
     const notify = useNotify();
+    const send = { messageId: note.messageId, email };
     const title = note.title ?? "Untitled entry";
     // What the bell will say, so the confirmation can quote it.
     const message = patchNoteAnnouncement(note.title, note.link);
@@ -104,50 +112,62 @@ const PatchNoteRow = ({
             </div>
 
             {!note.announcement && (
-                <div className="flex shrink-0 flex-col-reverse gap-2 sm:flex-row">
-                    <Button
-                        variant="ghost"
-                        disabled={test.isPending}
-                        onClick={() =>
-                            test.mutate(note.messageId, {
-                                onSuccess: () =>
-                                    notify(
-                                        "In your bell, and nobody else’s",
-                                        "success"
-                                    ),
-                                onError: () =>
-                                    notify("The test didn’t send", "error"),
-                            })
-                        }
-                        className="w-full sm:w-auto"
-                    >
-                        Send test to me
-                    </Button>
-                    <Button
-                        onClick={() => setConfirming(true)}
-                        disabled={announce.isPending}
-                        className="w-full sm:w-auto"
-                    >
-                        {reach
-                            ? `Send to ${formatCount(reach)} people`
-                            : "Send to everyone"}
-                    </Button>
+                <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                    <Toggle
+                        checked={email}
+                        onChange={setEmail}
+                        label="Also send as an email"
+                        className="self-start sm:self-auto"
+                    />
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                        <Button
+                            variant="ghost"
+                            disabled={test.isPending}
+                            onClick={() =>
+                                test.mutate(send, {
+                                    onSuccess: () =>
+                                        notify(testNotice(email), "success"),
+                                    onError: () =>
+                                        notify("The test didn’t send", "error"),
+                                })
+                            }
+                            className="w-full sm:w-auto"
+                        >
+                            Send test to me
+                        </Button>
+                        <Button
+                            onClick={() => setConfirming(true)}
+                            disabled={announce.isPending}
+                            className="w-full sm:w-auto"
+                        >
+                            {reach
+                                ? `Send to ${formatCount(reach)} people`
+                                : "Send to everyone"}
+                        </Button>
+                    </div>
                 </div>
             )}
 
             {confirming && (
                 <ConfirmPopup
                     title="Tell everyone about these notes?"
-                    body={`“${message.title}” goes into ${reach ? `all ${formatCount(reach)}` : "every"} inboxes now, and opens the notes at this entry. You can take it back from Sent.`}
+                    body={
+                        email
+                            ? `“${message.title}” goes into ${reach ? `all ${formatCount(reach)}` : "every"} inboxes now, and by email to ${emailedTo(audience)}. It opens the notes at this entry. You can take it out of inboxes from Sent, but an email can’t be taken back.`
+                            : `“${message.title}” goes into ${reach ? `all ${formatCount(reach)}` : "every"} inboxes now, and opens the notes at this entry. You can take it back from Sent.`
+                    }
                     confirmLabel="Send"
                     tone="neutral"
                     isPending={announce.isPending}
                     onConfirm={() =>
-                        announce.mutate(note.messageId, {
+                        announce.mutate(send, {
                             onSuccess: (sent) => {
                                 setConfirming(false);
                                 notify(
-                                    `In ${formatCount(sent.announcement?.recipientCount ?? 0)} inboxes`,
+                                    sentNotice(
+                                        sent.announcement?.recipientCount ?? 0,
+                                        email
+                                    ),
                                     "success"
                                 );
                             },

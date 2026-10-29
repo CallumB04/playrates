@@ -12,6 +12,8 @@ interface ConfirmPopupProps {
     isPending?: boolean;
     onConfirm: () => void;
     onClose: () => void;
+    /** Anything to settle before confirming, like a switch. */
+    children?: ReactNode;
 }
 
 /** One confirmation dialog for every "are you sure?" in the app. Same heading
@@ -24,6 +26,7 @@ const ConfirmPopup = ({
     isPending = false,
     onConfirm,
     onClose,
+    children,
 }: ConfirmPopupProps) => (
     <Modal
         onClose={onClose}
@@ -43,6 +46,8 @@ const ConfirmPopup = ({
         <p className="pt-4 text-body-sm leading-relaxed text-content-secondary">
             {body}
         </p>
+
+        {children && <div className="pt-4">{children}</div>}
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="secondary" onClick={onClose} disabled={isPending}>

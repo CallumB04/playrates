@@ -9,10 +9,10 @@ import type {
     AdminMetric,
     AdminPullInput,
     AdminRange,
-    AnnouncementInput,
     GameEventGroup,
     ReportStatus,
     ResolveReportInput,
+    SendAnnouncementInput,
 } from "@playrates/shared";
 import {
     fetchAdminActivity,
@@ -27,6 +27,8 @@ import {
     resolveReport,
     fetchAnnouncements,
     fetchAdminPatchNotes,
+    fetchEmailAudience,
+    fetchEmailStats,
     announcePatchNote,
     sendTestPatchNote,
     fetchIgdbUsage,
@@ -42,6 +44,7 @@ import {
     setAdminGameTrending,
     type AdminActivityFilters,
     type AdminUsersFilters,
+    type PatchNoteSend,
 } from "../../api";
 
 /* Every hook here is only mounted inside the admin area, which is only
@@ -169,7 +172,7 @@ export const useAnnouncements = () =>
 export const useSendAnnouncement = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (input: AnnouncementInput) => sendAnnouncement(input),
+        mutationFn: (input: SendAnnouncementInput) => sendAnnouncement(input),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: queryKeys.admin.announcements,
@@ -185,13 +188,28 @@ export const useSendAnnouncement = () => {
 export const useSendTestAnnouncement = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (input: AnnouncementInput) => sendTestAnnouncement(input),
+        mutationFn: (input: SendAnnouncementInput) =>
+            sendTestAnnouncement(input),
         onSuccess: () =>
             queryClient.invalidateQueries({
                 queryKey: queryKeys.notifications.all,
             }),
     });
 };
+
+/** How many members a news email would reach, for the send confirmation. */
+export const useEmailStats = () =>
+    useQuery({
+        queryKey: queryKeys.admin.emailStats,
+        queryFn: fetchEmailStats,
+    });
+
+export const useEmailAudience = (enabled = true) =>
+    useQuery({
+        queryKey: queryKeys.admin.emailAudience,
+        queryFn: fetchEmailAudience,
+        enabled,
+    });
 
 export const useAdminPatchNotes = (enabled = true) =>
     useQuery({
@@ -203,7 +221,7 @@ export const useAdminPatchNotes = (enabled = true) =>
 export const useAnnouncePatchNote = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (messageId: number) => announcePatchNote(messageId),
+        mutationFn: (send: PatchNoteSend) => announcePatchNote(send),
         onSuccess: () => {
             // the history and the patch notes both
             queryClient.invalidateQueries({
@@ -219,7 +237,7 @@ export const useAnnouncePatchNote = () => {
 export const useSendTestPatchNote = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (messageId: number) => sendTestPatchNote(messageId),
+        mutationFn: (send: PatchNoteSend) => sendTestPatchNote(send),
         onSuccess: () =>
             queryClient.invalidateQueries({
                 queryKey: queryKeys.notifications.all,

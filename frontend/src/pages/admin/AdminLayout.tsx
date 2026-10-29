@@ -23,6 +23,7 @@ const ADMIN_GROUPS = [
     [
         { to: "/admin/games", label: "Games" },
         { to: "/admin/announcements", label: "Announcements" },
+        { to: "/admin/emails", label: "Emails" },
         { to: "/admin/design", label: "Design library" },
     ],
 ];

@@ -14,6 +14,7 @@ import { cardClass } from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import Field from "../../../components/ui/Field";
 import Dropdown from "../../../components/ui/Dropdown";
+import Toggle from "../../../components/ui/Toggle";
 import ConfirmPopup from "../../../components/ui/ConfirmPopup";
 import { EmptyNote } from "../../../components/ui/EmptyPlate";
 import { Input, Textarea } from "../../../components/ui/Input";
@@ -30,6 +31,7 @@ import { share } from "../lib/adminFormat";
 import {
     useAdminOverview,
     useAnnouncements,
+    useEmailAudience,
     useRetractAnnouncement,
     useSendAnnouncement,
     useSendTestAnnouncement,
@@ -39,6 +41,7 @@ import SectionHeader from "../components/SectionHeader";
 import { SeeAllButton, SeeAllModal } from "../components/SeeAll";
 import { useSeeAll } from "../components/useSeeAll";
 import { composeAnnouncement } from "./composeAnnouncement";
+import { emailedTo, sentNotice, testNotice } from "../lib/broadcastCopy";
 import PatchNotesSection from "./PatchNotesSection";
 
 /** Counts against the limit the bell was laid out for; it only takes colour
@@ -109,6 +112,7 @@ const HistoryRow = ({ announcement }: { announcement: Announcement }) => {
                             </>
                         )}
                         {announcement.link && <> · opens {announcement.link}</>}
+                        {announcement.emailedAt && <> · emailed</>}
                     </p>
                 </div>
             </div>
@@ -156,12 +160,14 @@ const AnnouncementsPage = () => {
     const [title, setTitle] = useState("");
     const [body, setBody] = useState("");
     const [link, setLink] = useState("");
+    const [email, setEmail] = useState(false);
     const [confirming, setConfirming] = useState(false);
 
     const notify = useNotify();
     const send = useSendAnnouncement();
     const test = useSendTestAnnouncement();
     const history = useAnnouncements();
+    const { data: audience } = useEmailAudience();
     // Reach is everyone with an account, which the overview already counts.
     const { data: overview } = useAdminOverview("30d");
 
@@ -197,31 +203,34 @@ const AnnouncementsPage = () => {
 
     const sendTest = () => {
         if (!parsed.success) return;
-        test.mutate(parsed.data, {
-            onSuccess: () =>
-                notify("In your bell, and nobody else’s", "success"),
-            onError: () => notify("The test didn’t send", "error"),
-        });
+        test.mutate(
+            { ...parsed.data, email },
+            {
+                onSuccess: () => notify(testNotice(email), "success"),
+                onError: () => notify("The test didn’t send", "error"),
+            }
+        );
     };
 
     const sendAll = () => {
         if (!parsed.success) return;
-        send.mutate(parsed.data, {
-            onSuccess: (sent) => {
-                setConfirming(false);
-                setTitle("");
-                setBody("");
-                setLink("");
-                notify(
-                    `In ${formatCount(sent.recipientCount)} inboxes`,
-                    "success"
-                );
-            },
-            onError: () => {
-                setConfirming(false);
-                notify("It didn’t send", "error");
-            },
-        });
+        send.mutate(
+            { ...parsed.data, email },
+            {
+                onSuccess: (sent) => {
+                    setConfirming(false);
+                    setTitle("");
+                    setBody("");
+                    setLink("");
+                    setEmail(false);
+                    notify(sentNotice(sent.recipientCount, email), "success");
+                },
+                onError: () => {
+                    setConfirming(false);
+                    notify("It didn’t send", "error");
+                },
+            }
+        );
     };
 
     const reach = overview?.totals.users;
@@ -339,6 +348,13 @@ const AnnouncementsPage = () => {
                         )}
                     </Field>
 
+                    <Toggle
+                        checked={email}
+                        onChange={setEmail}
+                        label="Also send as an email"
+                        className="self-start"
+                    />
+
                     <div className="flex flex-col-reverse gap-2 border-t border-subtle pt-4 sm:flex-row sm:items-center sm:justify-end">
                         <Button
                             variant="ghost"
@@ -425,7 +441,11 @@ const AnnouncementsPage = () => {
             {confirming && parsed.success && (
                 <ConfirmPopup
                     title="Send to everyone?"
-                    body={`“${parsed.data.title}” goes into ${reach ? `all ${formatCount(reach)}` : "every"} inboxes now. You can take it back later, but anyone who has read it will have seen it.`}
+                    body={
+                        email
+                            ? `“${parsed.data.title}” goes into ${reach ? `all ${formatCount(reach)}` : "every"} inboxes now, and by email to ${emailedTo(audience)}. You can take it out of inboxes later, but an email can’t be taken back.`
+                            : `“${parsed.data.title}” goes into ${reach ? `all ${formatCount(reach)}` : "every"} inboxes now. You can take it back later, but anyone who has read it will have seen it.`
+                    }
                     confirmLabel="Send"
                     tone="neutral"
                     isPending={send.isPending}

@@ -168,6 +168,8 @@ export const queryKeys = {
         /* Under announcements, so anything that refreshes the history —
            taking one back above all — refreshes which entries went out. */
         patchNotes: ["admin", "announcements", "patch-notes"] as const,
+        emailAudience: ["admin", "email", "audience"] as const,
+        emailStats: ["admin", "email", "stats"] as const,
         health: ["admin", "health"] as const,
         errors: ["admin", "errors"] as const,
         reports: (status: string, page: number) =>

@@ -31,6 +31,7 @@ const note = (
               retractedAt: null,
               recipientCount: 3,
               readCount: 2,
+              emailedAt: "2026-09-26T11:00:00Z",
           }
         : null,
 });
@@ -51,16 +52,25 @@ beforeEach(() => {
         http.get(`${API}/community/patch-notes`, () =>
             HttpResponse.json({ thread: { id: 7 }, latest: null })
         ),
-        http.post(`${API}/admin/patch-notes/:id/announce`, ({ params }) => {
-            announced(params.id);
-            return HttpResponse.json(note(41, "v1.1 Lists", true), {
-                status: 201,
-            });
-        }),
-        http.post(`${API}/admin/patch-notes/:id/test`, ({ params }) => {
-            tested(params.id);
-            return new HttpResponse(null, { status: 204 });
-        })
+        http.get(`${API}/admin/email/audience`, () =>
+            HttpResponse.json({ newsSubscribers: 2 })
+        ),
+        http.post(
+            `${API}/admin/patch-notes/:id/announce`,
+            async ({ params, request }) => {
+                announced(params.id, await request.json());
+                return HttpResponse.json(note(41, "v1.1 Lists", true), {
+                    status: 201,
+                });
+            }
+        ),
+        http.post(
+            `${API}/admin/patch-notes/:id/test`,
+            async ({ params, request }) => {
+                tested(params.id, await request.json());
+                return new HttpResponse(null, { status: 204 });
+            }
+        )
     );
 });
 
@@ -79,6 +89,7 @@ describe("PatchNotesSection", () => {
         ).toBeInTheDocument();
         const sent = await rowOf("v1.0 Launch");
         expect(within(sent).getByText(/Sent/)).toBeInTheDocument();
+        expect(sent).toHaveTextContent("· emailed");
         expect(within(sent).queryByRole("button")).not.toBeInTheDocument();
     });
 
@@ -93,10 +104,15 @@ describe("PatchNotesSection", () => {
         );
         const dialog = await screen.findByRole("dialog");
         expect(dialog).toHaveTextContent("“New patch notes: v1.1 Lists”");
+        await waitFor(() =>
+            expect(dialog).toHaveTextContent("by email to 2 members")
+        );
         expect(announced).not.toHaveBeenCalled();
 
         await user.click(within(dialog).getByRole("button", { name: "Send" }));
-        await waitFor(() => expect(announced).toHaveBeenCalledWith("41"));
+        await waitFor(() =>
+            expect(announced).toHaveBeenCalledWith("41", { email: true })
+        );
     });
 
     it("sends a test without asking, since it only reaches the admin", async () => {
@@ -108,7 +124,35 @@ describe("PatchNotesSection", () => {
                 name: "Send test to me",
             })
         );
-        await waitFor(() => expect(tested).toHaveBeenCalledWith("41"));
+        await waitFor(() =>
+            expect(tested).toHaveBeenCalledWith("41", { email: true })
+        );
         expect(announced).not.toHaveBeenCalled();
+    });
+
+    it("leaves the email out of the test and the send once it's off", async () => {
+        const user = userEvent.setup();
+        renderWithProviders(<PatchNotesSection reach={3} />);
+        const row = await rowOf("v1.1 Lists");
+
+        await user.click(
+            within(row).getByRole("switch", { name: "Also send as an email" })
+        );
+        await user.click(
+            within(row).getByRole("button", { name: "Send test to me" })
+        );
+        await waitFor(() =>
+            expect(tested).toHaveBeenCalledWith("41", { email: false })
+        );
+
+        await user.click(
+            within(row).getByRole("button", { name: "Send to 3 people" })
+        );
+        const dialog = await screen.findByRole("dialog");
+        expect(dialog).not.toHaveTextContent("by email");
+        await user.click(within(dialog).getByRole("button", { name: "Send" }));
+        await waitFor(() =>
+            expect(announced).toHaveBeenCalledWith("41", { email: false })
+        );
     });
 });
