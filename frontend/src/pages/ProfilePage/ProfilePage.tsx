@@ -33,6 +33,7 @@ import {
 } from "./components/PrivateProfile";
 import { profileAccess } from "./lib/profileAccess";
 import type { ProfileTab } from "./lib/profileViews";
+import { useEditParam } from "./lib/useEditParam";
 import ProfileModals, { type ProfileModal } from "./components/ProfileModals";
 import { TextSkeleton } from "../../components/ui/Skeleton";
 import GamesView from "./views/GamesView";
@@ -56,7 +57,7 @@ interface ProfilePageProps {
 /** The card, the views' nav, and whichever view the URL names. */
 const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
     const { user: currentUser } = useAuth();
-    const { openLogin } = useAccountForm();
+    const { openSignup } = useAccountForm();
     const notify = useNotify();
     const flow = useLogFlow();
     const [params] = useSearchParams();
@@ -85,6 +86,11 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
 
     const isMyAccount =
         !!currentUser && currentUser.username === targetUsername;
+    // `?edit=profile` opens the editor: Settings and the welcome send you
+    // here for the profile's own fields.
+    const [askedToEdit, doneEditing] = useEditParam("profile");
+    const shownModal: ProfileModal =
+        modal ?? (askedToEdit && isMyAccount ? { kind: "editProfile" } : null);
 
     const { data: myFriends } = useMyFriends();
     const { relation, send, accept, remove, isPending } = useFriendRelation(
@@ -166,7 +172,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
     }, [deepLinkedLog, flow, targetUsername]);
 
     const guard = (action: () => void) => () => {
-        if (!currentUser) return openLogin();
+        if (!currentUser) return openSignup();
         action();
     };
 
@@ -397,8 +403,11 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
             )}
 
             <ProfileModals
-                modal={modal}
-                setModal={setModal}
+                modal={shownModal}
+                setModal={(next) => {
+                    if (!next) doneEditing();
+                    setModal(next);
+                }}
                 targetUser={targetUser}
                 onRemoveFriend={async () => {
                     try {

@@ -77,22 +77,6 @@ export const aboutError = (
     return checked.success ? undefined : checked.error.issues[0]?.message;
 };
 
-/** Drafts of the About fields, brought up to date with the saved ones:
- *  only a field whose saved value moved takes it. Saving one field reloads
- *  the profile, and taking all of them wiped whatever was being typed in
- *  the next. */
-export const mergeSaved = <K extends string>(
-    drafts: Record<K, string>,
-    before: Record<K, string>,
-    after: Record<K, string>
-): Record<K, string> => {
-    const next = { ...drafts };
-    for (const key of Object.keys(after) as K[]) {
-        if (after[key] !== before[key]) next[key] = after[key];
-    }
-    return next;
-};
-
 /** A web address as a link reads it: no scheme, no www, no trailing slash. */
 export const linkLabel = (url: string): string =>
     url

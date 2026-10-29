@@ -2,68 +2,263 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
+import { AuthApiError } from "@supabase/supabase-js";
 import { server } from "../test/msw/server";
 import { buildProfile } from "../test/msw/handlers";
 import { renderWithProviders } from "../test/renderWithProviders";
 import SettingsPage from "./SettingsPage";
 
-const user = buildProfile({ about: { pronouns: "he/him" } });
+const user = buildProfile();
+const auth = vi.hoisted(() => ({
+    providers: ["email"] as string[],
+    newEmail: undefined as string | undefined,
+    changeEmail: null as unknown as ReturnType<typeof vi.fn>,
+    changePassword: null as unknown as ReturnType<typeof vi.fn>,
+}));
+const notify = vi.hoisted(() => vi.fn());
 
 vi.mock("../contexts/AuthContext", () => ({
-    useAuth: () => ({ user, signOut: vi.fn() }),
+    useAuth: () => ({
+        user,
+        session: {
+            user: {
+                email: "dev@playrates.test",
+                new_email: auth.newEmail,
+                app_metadata: { providers: auth.providers },
+            },
+        },
+        signOut: vi.fn(),
+        changeEmail: auth.changeEmail,
+        changePassword: auth.changePassword,
+    }),
 }));
 vi.mock("../contexts/AccountFormContext", () => ({
     useAccountForm: () => ({ openLogin: vi.fn() }),
 }));
+vi.mock("../contexts/NotificationContext", async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    useNotify: () => notify,
+}));
 
 const API = "http://localhost:3000/api/v1";
-let patches: Record<string, unknown>[];
 
 beforeEach(() => {
-    patches = [];
+    auth.providers = ["email"];
+    auth.newEmail = undefined;
+    auth.changeEmail = vi.fn(async () => ({ pending: true }));
+    auth.changePassword = vi.fn(async () => {});
+    notify.mockClear();
     server.use(
         // The close-account panel's counts; nothing here reads them.
         http.get(`${API}/users/:username/stats`, () =>
             HttpResponse.json({ logCount: 0 })
-        ),
-        http.patch(`${API}/profiles/me`, async ({ request }) => {
-            const body = (await request.json()) as Record<string, unknown>;
-            patches.push(body);
-            return HttpResponse.json({ ...user, ...body });
-        })
+        )
     );
 });
 
-const openProfile = () =>
-    renderWithProviders(<SettingsPage />, {
-        route: "/settings?section=profile",
-    });
+const open = (route = "/settings") => {
+    renderWithProviders(<SettingsPage />, { route });
+    return userEvent.setup({ delay: null });
+};
 
-describe("SettingsPage's About fields", () => {
-    it("saves one as it's left, and only that one", async () => {
-        openProfile();
-        const u = userEvent.setup({ delay: null });
-
-        const pronouns = screen.getByLabelText("Pronouns");
-        await u.clear(pronouns);
-        await u.type(pronouns, "they/them");
-        await u.click(screen.getByLabelText("Location"));
-
-        await waitFor(() =>
-            expect(patches).toEqual([{ pronouns: "they/them" }])
-        );
-    });
-
-    it("says what's wrong with one and doesn't send it", async () => {
-        openProfile();
-        const u = userEvent.setup({ delay: null });
-
-        await u.type(screen.getByLabelText("Website"), "callum dot dev");
-        await u.click(screen.getByLabelText("Location"));
+describe("SettingsPage's way to the profile", () => {
+    // Links from before the profile was edited only on the profile.
+    it("opens the old Profile section as Account, with Edit profile", () => {
+        open("/settings?section=profile");
 
         expect(
-            await screen.findByText("Enter a full address, starting https://")
+            screen.getByRole("link", { name: "Edit profile" })
+        ).toHaveAttribute("href", "/user/devuser?edit=profile");
+        expect(screen.getByLabelText("Username")).toBeInTheDocument();
+    });
+});
+
+describe("SettingsPage's email", () => {
+    it("says what's wrong with an address and doesn't send it", async () => {
+        const u = open();
+        const email = screen.getByLabelText("Email");
+
+        await u.clear(email);
+        await u.type(email, "not an email");
+        await u.click(screen.getByRole("button", { name: "Change email" }));
+
+        expect(
+            await screen.findByText(
+                "Enter an email address, like you@example.com."
+            )
         ).toBeInTheDocument();
-        expect(patches).toEqual([]);
+        expect(auth.changeEmail).not.toHaveBeenCalled();
+    });
+
+    it("sends the new address and says where the link went", async () => {
+        const u = open();
+        const email = screen.getByLabelText("Email");
+
+        await u.clear(email);
+        await u.type(email, " New@PlayRates.test ");
+        await u.click(screen.getByRole("button", { name: "Change email" }));
+
+        expect(auth.changeEmail).toHaveBeenCalledWith("new@playrates.test");
+        expect(
+            await screen.findByText(
+                "We've sent a link to new@playrates.test. Your email changes once you follow it."
+            )
+        ).toBeInTheDocument();
+        expect(notify).toHaveBeenCalledWith(
+            "Check new@playrates.test to confirm it",
+            "success"
+        );
+        // Still the old address until the link is followed.
+        expect(email).toHaveValue("dev@playrates.test");
+    });
+
+    it("says when the address belongs to another account", async () => {
+        auth.changeEmail.mockRejectedValue(
+            new AuthApiError("taken", 422, "email_exists")
+        );
+        const u = open();
+        const email = screen.getByLabelText("Email");
+
+        await u.clear(email);
+        await u.type(email, "taken@playrates.test");
+        await u.click(screen.getByRole("button", { name: "Change email" }));
+
+        expect(
+            await screen.findByText("That email already has an account.")
+        ).toBeInTheDocument();
+    });
+
+    it("keeps saying a change is waiting after a reload", () => {
+        auth.newEmail = "later@playrates.test";
+        open();
+
+        expect(
+            screen.getByText(/We've sent a link to later@playrates.test/)
+        ).toBeInTheDocument();
+    });
+});
+
+describe("SettingsPage's password", () => {
+    const fill = async (
+        u: ReturnType<typeof userEvent.setup>,
+        values: { current?: string; next?: string; confirm?: string }
+    ) => {
+        await u.click(screen.getByRole("button", { name: "Change password" }));
+        if (values.current)
+            await u.type(
+                screen.getByLabelText("Current password"),
+                values.current
+            );
+        if (values.next)
+            await u.type(screen.getByLabelText("New password"), values.next);
+        if (values.confirm)
+            await u.type(
+                screen.getByLabelText("Confirm new password"),
+                values.confirm
+            );
+        await u.click(
+            screen.getByRole("button", { name: "Save new password" })
+        );
+    };
+
+    it("holds a new password to the sign-up form's rule", async () => {
+        const u = open();
+        await fill(u, {
+            current: "old-password",
+            next: "short",
+            confirm: "short",
+        });
+
+        expect(
+            await screen.findByText(
+                "Password needs to be at least 8 characters long"
+            )
+        ).toBeInTheDocument();
+        expect(auth.changePassword).not.toHaveBeenCalled();
+    });
+
+    it("asks for the current password and a matching confirmation", async () => {
+        const u = open();
+        await fill(u, { next: "brand-new-pass", confirm: "brand-new-typo" });
+
+        expect(
+            await screen.findByText("Enter your current password.")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("The passwords don't match.")
+        ).toBeInTheDocument();
+        expect(auth.changePassword).not.toHaveBeenCalled();
+    });
+
+    it("won't take the current password as the new one", async () => {
+        const u = open();
+        await fill(u, {
+            current: "same-password",
+            next: "same-password",
+            confirm: "same-password",
+        });
+
+        expect(
+            await screen.findByText(
+                "That's your current password. Choose a new one."
+            )
+        ).toBeInTheDocument();
+        expect(auth.changePassword).not.toHaveBeenCalled();
+    });
+
+    it("checks the current password, then changes it and closes", async () => {
+        const u = open();
+        await fill(u, {
+            current: "old-password",
+            next: "brand-new-pass",
+            confirm: "brand-new-pass",
+        });
+
+        await waitFor(() =>
+            expect(notify).toHaveBeenCalledWith("Password changed", "success")
+        );
+        expect(auth.changePassword).toHaveBeenCalledWith(
+            "old-password",
+            "brand-new-pass",
+            undefined
+        );
+        expect(
+            screen.queryByLabelText("Current password")
+        ).not.toBeInTheDocument();
+    });
+
+    it("says when the current password is wrong", async () => {
+        auth.changePassword.mockRejectedValue(
+            new AuthApiError(
+                "Invalid login credentials",
+                400,
+                "invalid_credentials"
+            )
+        );
+        const u = open();
+        await fill(u, {
+            current: "wrong-password",
+            next: "brand-new-pass",
+            confirm: "brand-new-pass",
+        });
+
+        expect(
+            await screen.findByText("That isn't your current password.")
+        ).toBeInTheDocument();
+        expect(notify).not.toHaveBeenCalledWith("Password changed", "success");
+    });
+
+    it("has nothing to change for an account without a password", () => {
+        auth.providers = ["google"];
+        open();
+
+        expect(
+            screen.getByText(
+                "You sign in with Google, so there’s no password to change."
+            )
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: "Change password" })
+        ).not.toBeInTheDocument();
     });
 });

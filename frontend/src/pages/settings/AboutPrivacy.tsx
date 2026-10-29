@@ -4,6 +4,7 @@ import type {
     ProfileAbout,
     ProfileVisibility,
 } from "@playrates/shared";
+import { Link } from "react-router-dom";
 import Dropdown from "../../components/ui/Dropdown";
 import { cn } from "../../lib/cn";
 import { PRIVACY_OPTIONS } from "../ProfilePage/components/PrivacySelect";
@@ -20,8 +21,8 @@ interface AboutPrivacyProps {
     visibility: AboutVisibility;
     onChange: (next: AboutVisibility) => void;
     disabled?: boolean;
-    /** Takes you to where the fields themselves are edited. */
-    onFillIn: () => void;
+    /** Where the fields themselves are edited. */
+    editHref: string;
 }
 
 /** What a field reads as on the card, so the row says what it is hiding. */
@@ -68,7 +69,7 @@ const AboutPrivacy = ({
     visibility,
     onChange,
     disabled,
-    onFillIn,
+    editHref,
 }: AboutPrivacyProps) => {
     const filled = ABOUT_ROWS.filter(({ field }) => about[field]);
     const levels = new Set(filled.map(({ field }) => visibility[field]));
@@ -167,14 +168,13 @@ const AboutPrivacy = ({
             ))}
 
             <p className="text-label-sm text-content-muted">
-                Fill them in under{" "}
-                <button
-                    type="button"
-                    onClick={onFillIn}
-                    className="relative cursor-pointer text-content underline before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:text-brand"
+                Fill them in with{" "}
+                <Link
+                    to={editHref}
+                    className="relative text-content underline before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:text-brand"
                 >
-                    Profile
-                </button>
+                    Edit profile
+                </Link>
                 .
             </p>
         </div>

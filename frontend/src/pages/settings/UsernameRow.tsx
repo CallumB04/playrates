@@ -86,6 +86,7 @@ const UsernameRow = ({ current }: { current: string }) => {
                 </div>
 
                 <Button
+                    aria-label="Change username"
                     onClick={() => void save()}
                     disabled={
                         !changed ||

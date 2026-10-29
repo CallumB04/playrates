@@ -27,7 +27,7 @@ interface AuthContextValue {
         password: string,
         username: string,
         captchaToken?: string
-    ) => Promise<void>;
+    ) => Promise<{ signedIn: boolean }>;
     signIn: (
         email: string,
         password: string,
@@ -45,6 +45,17 @@ interface AuthContextValue {
     ) => Promise<void>;
     /** Sets a new password for whoever followed that link. */
     updatePassword: (password: string) => Promise<void>;
+    /** Moves the account to a new address. `pending` while the project
+     *  wants the change confirmed from the inbox first. */
+    changeEmail: (email: string) => Promise<{ pending: boolean }>;
+    /** Signs in with the current password before setting the new one, so a
+     *  device left signed in can't be used to lock its owner out. A wrong
+     *  current password throws the sign-in's `invalid_credentials`. */
+    changePassword: (
+        current: string,
+        next: string,
+        captchaToken?: string
+    ) => Promise<void>;
 }
 
 export type OAuthProvider = "google" | "discord";
@@ -150,13 +161,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             isLoading: isRestoring || (!!session && isProfileLoading),
 
             async signUp(email, password, username, captchaToken) {
-                const { error } = await supabase.auth.signUp({
+                const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
                     // read by the handle_new_user trigger to seed the profile
                     options: { data: { username }, captchaToken },
                 });
                 if (error) throw error;
+                // No session when the project wants the email confirmed first.
+                return { signedIn: !!data.session };
             },
 
             async signInWithProvider(provider) {
@@ -192,6 +205,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 const { error } = await supabase.auth.updateUser({ password });
                 if (error) throw error;
                 notify("Your password has been changed", "success");
+            },
+
+            async changeEmail(email) {
+                const { data, error } = await supabase.auth.updateUser({
+                    email,
+                });
+                if (error) throw error;
+                return { pending: data.user.email !== email };
+            },
+
+            async changePassword(current, next, captchaToken) {
+                const email = session?.user.email;
+                if (!email) throw new Error("No email to sign in with");
+                const { error: checkError } =
+                    await supabase.auth.signInWithPassword({
+                        email,
+                        password: current,
+                        options: { captchaToken },
+                    });
+                if (checkError) throw checkError;
+                const { error } = await supabase.auth.updateUser({
+                    password: next,
+                });
+                if (error) throw error;
             },
 
             async signOut() {

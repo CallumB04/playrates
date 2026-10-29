@@ -1,25 +1,21 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-    IdCard,
     Lock,
     Monitor,
     Moon,
+    Pencil,
     SlidersHorizontal,
     Sun,
     TriangleAlert,
     UserRound,
 } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
 import { useAccountForm } from "../contexts/AccountFormContext";
 import { useNotify } from "../contexts/NotificationContext";
 import { useTheme } from "../contexts/ThemeContext";
-import {
-    useRemoveAvatar,
-    useUpdateAvatar,
-    useUpdateProfile,
-} from "../hooks/queries/useProfiles";
+import { useUpdateProfile } from "../hooks/queries/useProfiles";
 import { useUserStats } from "../hooks/queries/useGameLogs";
 import { useUserReviews } from "../hooks/queries/useReviews";
 import { useUserFriends } from "../hooks/queries/useFriends";
@@ -28,42 +24,30 @@ import { deleteMyAccount, fetchMyData } from "../api";
 import { saveFile } from "../lib/saveFile";
 import {
     DEFAULT_ABOUT_VISIBILITY,
-    FALLBACK_ACCENT,
-    type AboutField,
     type AboutVisibility,
-    type MyProfile,
     type ProfileVisibility,
 } from "@playrates/shared";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
-import Button from "../components/ui/Button";
+import Button, { buttonClass } from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import Toggle from "../components/ui/Toggle";
 import EmptyPlate from "../components/ui/EmptyPlate";
-import { Textarea } from "../components/ui/Input";
-import Field from "../components/ui/Field";
 import UsernameRow from "./settings/UsernameRow";
+import EmailRow from "./settings/EmailRow";
+import PasswordRow from "./settings/PasswordRow";
 import AboutPrivacy from "./settings/AboutPrivacy";
-import BackgroundSetting from "./settings/BackgroundSetting";
-import AboutFieldInput from "./ProfilePage/components/AboutFieldInput";
-import {
-    ABOUT_ROWS,
-    aboutError,
-    mergeSaved,
-    type AboutRow,
-} from "./ProfilePage/lib/about";
 import Dropdown from "../components/ui/Dropdown";
 import SegmentedChoice from "../components/ui/SegmentedChoice";
-import AccentPicker from "../components/ui/AccentPicker";
-import AvatarField, { type AvatarChoice } from "../components/AvatarField";
 import { effectiveTimeZone, formatCount, timeZones } from "../lib/format";
+import { profilePath } from "../lib/profilePaths";
 import { cn } from "../lib/cn";
 
 /* Only what can be used today. Sections and rows that were all "coming
-   soon" were choices that led nowhere. */
+   soon" were choices that led nowhere. The profile itself is edited on the
+   profile, where you can see it change. */
 const SECTIONS: SettingsSection[] = [
     { id: "account", label: "Account", icon: UserRound },
-    { id: "profile", label: "Profile", icon: IdCard },
     { id: "privacy", label: "Privacy", icon: Lock },
     { id: "content", label: "Content", icon: SlidersHorizontal },
     { id: "account-closure", label: "Close account", icon: TriangleAlert },
@@ -134,29 +118,14 @@ const Group = ({
     </section>
 );
 
-/** A link-styled button to another section of Settings. */
-const SectionLink = ({
-    onClick,
-    children,
-}: {
-    onClick: () => void;
-    children: ReactNode;
-}) => (
-    <button
-        type="button"
-        onClick={onClick}
-        className="relative cursor-pointer text-content underline before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:text-brand"
-    >
-        {children}
-    </button>
-);
+/* Older links into what was the Profile section, from before the profile
+   was edited only on the profile. Account is where the way there is. */
+const SECTION_ALIASES: Record<string, string> = { profile: "account" };
 
-type AboutValues = Record<AboutField, string>;
-
-const aboutFrom = (user: MyProfile | null | undefined): AboutValues =>
-    Object.fromEntries(
-        ABOUT_ROWS.map(({ field }) => [field, user?.about[field] ?? ""])
-    ) as AboutValues;
+const sectionFrom = (asked: string | null) => {
+    const id = (asked && SECTION_ALIASES[asked]) ?? asked;
+    return SECTIONS.some((s) => s.id === id) ? id! : "account";
+};
 
 const SettingsPage = () => {
     usePageMeta({ title: "Settings", noindex: true });
@@ -173,15 +142,9 @@ const SettingsPage = () => {
     const [confirmingDelete, setConfirmingDelete] = useState(false);
     const [params] = useSearchParams();
     // ?section= so a link elsewhere can open the row it is about.
-    const [section, setSection] = useState(() => {
-        const asked = params.get("section");
-        return SECTIONS.some((s) => s.id === asked) ? asked! : "account";
-    });
-    // From a link partway down one section, to the top of another.
-    const goTo = (id: string) => {
-        setSection(id);
-        window.scrollTo({ top: 0 });
-    };
+    const [section, setSection] = useState(() =>
+        sectionFrom(params.get("section"))
+    );
 
     /* requireAuth verifies signatures locally and never checks revocation, so
        the token outlives the account. Sign out straight away. */
@@ -207,14 +170,6 @@ const SettingsPage = () => {
         onError: () => notify("Couldn't export your data", "error"),
     });
 
-    const [bio, setBio] = useState(user?.bio ?? "");
-    const [about, setAbout] = useState<AboutValues>(() => aboutFrom(user));
-    const savedAbout = useRef(about);
-    useEffect(() => {
-        const saved = aboutFrom(user);
-        setAbout((drafts) => mergeSaved(drafts, savedAbout.current, saved));
-        savedAbout.current = saved;
-    }, [user]);
     const [showSexual, setShowSexual] = useState(
         user?.showSexualContent ?? false
     );
@@ -224,20 +179,15 @@ const SettingsPage = () => {
     );
     const [profileVisibility, setProfileVisibility] =
         useState<ProfileVisibility>(user?.profileVisibility ?? "everyone");
-    const [accent, setAccent] = useState(user?.accent ?? FALLBACK_ACCENT);
     const [aboutVisibility, setAboutVisibility] = useState<AboutVisibility>(
         user?.aboutVisibility ?? DEFAULT_ABOUT_VISIBILITY
     );
-    const updateAvatar = useUpdateAvatar();
-    const removeAvatar = useRemoveAvatar();
 
     useEffect(() => {
-        setBio(user?.bio ?? "");
         setShowSexual(user?.showSexualContent ?? false);
         setHideOnline(user?.hideOnline ?? false);
         setHideFromSearch(user?.hideFromSearch ?? false);
         setProfileVisibility(user?.profileVisibility ?? "everyone");
-        setAccent(user?.accent ?? FALLBACK_ACCENT);
         setAboutVisibility(user?.aboutVisibility ?? DEFAULT_ABOUT_VISIBILITY);
     }, [user]);
 
@@ -255,30 +205,6 @@ const SettingsPage = () => {
             label: name.replace(/_/g, " "),
         }));
     }, [zone]);
-
-    // Saved on blur. One value with one owner needs no second action.
-    const saveText = (
-        patch: Partial<Record<AboutField, string>> | { bio: string },
-        unchanged: boolean,
-        message: string
-    ) => {
-        if (unchanged) return;
-        update.mutate(patch, { onError: () => notify(message, "error") });
-    };
-
-    /* Settings has no save button, so the picture goes up the moment it is
-       chosen. The field is handed "unchanged" throughout: what it draws is
-       whatever the server last confirmed, never a pending choice. */
-    const savingAvatar = updateAvatar.isPending || removeAvatar.isPending;
-    const saveAvatar = (choice: AvatarChoice) => {
-        const done = {
-            onSuccess: () => notify("Profile picture updated", "success"),
-            onError: () => notify("Couldn't save your picture", "error"),
-        };
-        if (choice.kind === "picked") updateAvatar.mutate(choice.image, done);
-        else if (choice.kind === "removed")
-            removeAvatar.mutate(undefined, done);
-    };
 
     /* Toggles save immediately and roll back on failure, so the control never
        shows a state the server did not accept. */
@@ -306,157 +232,67 @@ const SettingsPage = () => {
         );
     }
 
-    const aboutErrors = Object.fromEntries(
-        ABOUT_ROWS.map(({ field }) => [field, aboutError(field, about[field])])
-    ) as Partial<Record<AboutField, string>>;
-
-    // Saved on blur like the bio, once it's something the server will take.
-    const aboutInputs = (group: AboutRow["group"], half = false) =>
-        ABOUT_ROWS.filter(
-            (row) => row.group === group && !!row.half === half
-        ).map((row) => (
-            <AboutFieldInput
-                key={row.field}
-                row={row}
-                value={about[row.field]}
-                onChange={(value) =>
-                    setAbout((was) => ({ ...was, [row.field]: value }))
-                }
-                onBlur={() => {
-                    const value = about[row.field].trim();
-                    if (aboutErrors[row.field]) return;
-                    saveText(
-                        { [row.field]: value },
-                        value === (user.about[row.field] ?? ""),
-                        `Couldn't save your ${row.label.toLowerCase()}`
-                    );
-                }}
-                error={aboutErrors[row.field]}
-            />
-        ));
+    // Opens the Edit profile popup on arrival.
+    const editProfileHref = `${profilePath(user.username)}?edit=profile`;
 
     const panels: Record<string, ReactNode> = {
         account: (
-            <Group>
-                <FieldSetting label="Username">
-                    <UsernameRow current={user.username} />
-                </FieldSetting>
-                <FieldSetting
-                    label="Time zone"
-                    help={
-                        zoneIsDetected
-                            ? "Detected from your device."
-                            : undefined
-                    }
-                >
-                    <Dropdown
-                        searchable
-                        options={zones}
-                        value={zone}
-                        onChange={(next) =>
-                            update.mutate(
-                                { timezone: next },
-                                {
-                                    onError: () =>
-                                        notify(
-                                            "Couldn't save your time zone",
-                                            "error"
-                                        ),
-                                }
-                            )
-                        }
-                        aria-label="Time zone"
-                    />
-                </FieldSetting>
-            </Group>
-        ),
-
-        profile: (
             <>
-                <Group title="Picture">
-                    <div>
-                        <AvatarField
-                            username={user.username}
-                            accent={user.accent}
-                            current={user.avatarUrl}
-                            choice={{ kind: "unchanged" }}
-                            onChange={saveAvatar}
-                            disabled={savingAvatar}
-                        />
-                        {/* The colour fills the initial in place of a
-                            picture, so it is offered only while there is
-                            none. */}
-                        {!user.avatarUrl && (
-                            <div className="mt-4">
-                                <p className="mb-2 text-label-sm text-content-muted">
-                                    Or a colour behind your initial
-                                </p>
-                                <AccentPicker
-                                    label="Colour behind your initial"
-                                    value={accent}
-                                    onChange={(next) =>
-                                        saveToggle(
-                                            { accent: next },
-                                            next,
-                                            setAccent,
-                                            accent
-                                        )
-                                    }
-                                    disabled={update.isPending}
-                                />
-                            </div>
-                        )}
-                    </div>
-                </Group>
-                <Group title="Background">
-                    <BackgroundSetting profile={user} />
-                </Group>
-                <Group title="Bio">
-                    <div>
-                        <Field
-                            label="Bio"
-                            labelHidden
-                            help={`${bio.length} of 160 characters`}
-                        >
-                            {(a11y) => (
-                                <Textarea
-                                    {...a11y}
-                                    rows={3}
-                                    value={bio}
-                                    maxLength={160}
-                                    placeholder="I love PlayRates."
-                                    onChange={(e) => setBio(e.target.value)}
-                                    onBlur={() =>
-                                        saveText(
-                                            { bio },
-                                            bio === user.bio,
-                                            "Couldn't save your bio"
-                                        )
-                                    }
-                                />
+                <Group>
+                    <Setting
+                        wide
+                        label="Profile"
+                        help="Your picture, bio, About details, socials and look."
+                    >
+                        <Link
+                            to={editProfileHref}
+                            className={buttonClass(
+                                "secondary",
+                                "w-full sm:w-auto"
                             )}
-                        </Field>
-                    </div>
+                        >
+                            <Pencil size={15} aria-hidden />
+                            Edit profile
+                        </Link>
+                    </Setting>
+                    <FieldSetting label="Username">
+                        <UsernameRow current={user.username} />
+                    </FieldSetting>
+                    <FieldSetting
+                        label="Time zone"
+                        help={
+                            zoneIsDetected
+                                ? "Detected from your device."
+                                : undefined
+                        }
+                    >
+                        <Dropdown
+                            searchable
+                            options={zones}
+                            value={zone}
+                            onChange={(next) =>
+                                update.mutate(
+                                    { timezone: next },
+                                    {
+                                        onError: () =>
+                                            notify(
+                                                "Couldn't save your time zone",
+                                                "error"
+                                            ),
+                                    }
+                                )
+                            }
+                            aria-label="Time zone"
+                        />
+                    </FieldSetting>
                 </Group>
-                <Group title="About you">
-                    <div className="flex flex-col gap-4">
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            {aboutInputs("about", true)}
-                        </div>
-                        {aboutInputs("about")}
-                    </div>
-                </Group>
-                <Group title="Socials">
-                    <div className="flex flex-col gap-4">
-                        {aboutInputs("socials")}
-                        <p className="text-label-sm text-content-muted">
-                            Choose who sees each in{" "}
-                            <SectionLink onClick={() => goTo("privacy")}>
-                                Privacy
-                            </SectionLink>
-                            .
-                        </p>
-                    </div>
+                <Group title="Email and password">
+                    <FieldSetting label="Email">
+                        <EmailRow />
+                    </FieldSetting>
+                    <FieldSetting label="Password">
+                        <PasswordRow />
+                    </FieldSetting>
                 </Group>
             </>
         ),
@@ -537,7 +373,7 @@ const SettingsPage = () => {
                                 )
                             }
                             disabled={update.isPending}
-                            onFillIn={() => goTo("profile")}
+                            editHref={editProfileHref}
                         />
                     </div>
                 </Group>

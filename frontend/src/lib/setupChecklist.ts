@@ -15,11 +15,12 @@ const STEPS: Record<
     SetupStepKey,
     { label: string; to: (username: string) => string }
 > = {
+    // Both in the profile's own editor, opened by the link.
     picture: {
         label: "Add a profile picture",
-        to: () => "/settings?section=profile",
+        to: (u) => `${profilePath(u)}?edit=profile`,
     },
-    bio: { label: "Write a bio", to: () => "/settings?section=profile" },
+    bio: { label: "Write a bio", to: (u) => `${profilePath(u)}?edit=profile` },
     log: { label: "Log your first game", to: () => "/library" },
     // A rating and a review both hang off a log, on the played shelf.
     rate: { label: "Rate a game", to: (u) => shelfPath(u, "played") },

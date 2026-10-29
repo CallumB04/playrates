@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
     aboutError,
-    mergeSaved,
     linkLabel,
     moveItem,
     podiumOnPhone,
@@ -77,26 +76,5 @@ describe("aboutError", () => {
             "40 characters at most"
         );
         expect(aboutError("firstName", "Callum")).toBeUndefined();
-    });
-});
-
-describe("mergeSaved", () => {
-    /* Saving pronouns reloaded the profile mid-way through typing a
-       website, and the website went back to what was saved. */
-    it("takes only the fields whose saved value moved", () => {
-        const before = { pronouns: "he/him", website: "https://a.dev" };
-        const after = { pronouns: "they/them", website: "https://a.dev" };
-        const drafts = { pronouns: "they/them", website: "https://b.d" };
-
-        expect(mergeSaved(drafts, before, after)).toEqual({
-            pronouns: "they/them",
-            website: "https://b.d",
-        });
-    });
-
-    it("takes a value changed from elsewhere, over the draft", () => {
-        expect(
-            mergeSaved({ steam: "draft" }, { steam: "" }, { steam: "gaben" })
-        ).toEqual({ steam: "gaben" });
     });
 });

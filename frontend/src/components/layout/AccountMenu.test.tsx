@@ -92,7 +92,7 @@ describe("AccountMenu", () => {
             expect(screen.getByText("25%")).toBeInTheDocument();
             expect(
                 screen.getByRole("menuitem", { name: /add a profile picture/i })
-            ).toHaveAttribute("href", "/settings?section=profile");
+            ).toHaveAttribute("href", "/user/devuser?edit=profile");
             expect(
                 screen.getByRole("menuitem", { name: /add a friend/i })
             ).toHaveAttribute("href", "/community");
