@@ -14,6 +14,7 @@ import type { GameListDetail, GameListEntry } from "@playrates/shared";
 import NotFoundPage from "../NotFoundPage";
 import { ApiError } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
+import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import {
     useAddToList,
@@ -29,7 +30,7 @@ import { displayStatusFor } from "../../constants/gameStatus";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import Button, { buttonClass } from "../../components/ui/Button";
 import ConfirmPopup from "../../components/ui/ConfirmPopup";
-import ReactionBar from "../../components/ui/ReactionBar";
+import LoveButton from "../../components/ui/LoveButton";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { cardClass } from "../../components/ui/Card";
@@ -50,6 +51,7 @@ import { accentHue, avatarGradient } from "../../lib/profileAccent";
 import { formatCount, formatDate, releaseYear } from "../../lib/format";
 import { listPath, profilePath } from "../../lib/profilePaths";
 import { cn } from "../../lib/cn";
+import { whyCannotLove } from "../../lib/voting";
 
 /** Why a list didn't come back: gone, or not this viewer's to see, which
  *  the API says the same way. */
@@ -117,6 +119,7 @@ const ListPage = () => {
 
 const LoadedList = ({ list }: { list: GameListDetail }) => {
     const { user } = useAuth();
+    const { openSignup } = useAccountForm();
     const notify = useNotify();
     const navigate = useNavigate();
     const isOwner = user?.username === list.owner.username;
@@ -228,19 +231,16 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
                     show either the strip would be empty. */}
                 {(user || list.voteCount > 0) && (
                     <div className="relative flex flex-wrap items-center gap-2 border-t border-subtle px-4 py-3 sm:px-6">
-                        <ReactionBar
-                            voteCount={list.voteCount}
-                            myReaction={list.myReaction}
-                            reactions={list.reactions}
-                            noun="list"
-                            disabledReason={
-                                !user
-                                    ? "Join to react"
-                                    : isOwner
-                                      ? "You can't react to your own list"
-                                      : null
-                            }
-                            onReact={(reaction) => vote.mutateAsync(reaction)}
+                        <LoveButton
+                            count={list.voteCount}
+                            loved={list.votedByViewer}
+                            disabledReason={whyCannotLove(
+                                user?.username,
+                                list.owner.username
+                            )}
+                            onJoin={user ? undefined : openSignup}
+                            onToggle={() => vote.mutateAsync()}
+                            className="max-sm:flex-1 max-sm:justify-center"
                         />
                         <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
                             <ShareList

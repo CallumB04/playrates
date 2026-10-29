@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowBigUp } from "lucide-react";
+import { Heart } from "lucide-react";
 import type { GameListSummary } from "@playrates/shared";
 import CoverGrid from "../game/CoverGrid";
 import { accentHue, avatarGradient } from "../../lib/profileAccent";
@@ -69,20 +69,24 @@ const ListCard = ({
                         {formatCount(list.gameCount)}{" "}
                         {list.gameCount === 1 ? "game" : "games"}
                     </span>
-                    <span className="inline-flex items-center gap-0.5">
-                        <ArrowBigUp size={13} aria-hidden />
-                        {formatCount(list.voteCount)}
-                        <span className="sr-only">
-                            {list.voteCount === 1 ? " reaction" : " reactions"}
-                        </span>
-                    </span>
                     {showVisibility && privacy && (
-                        <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-surface-sunken px-2 py-0.5 text-content-secondary">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-surface-sunken px-2 py-0.5 text-content-secondary">
                             <privacy.icon size={11} aria-hidden />
                             <span className="sr-only">Who can see it: </span>
                             {privacy.label}
                         </span>
                     )}
+                    <span className="ml-auto inline-flex items-center gap-1">
+                        <Heart
+                            size={12}
+                            aria-hidden
+                            className="fill-love text-love"
+                        />
+                        {formatCount(list.voteCount)}
+                        <span className="sr-only">
+                            {list.voteCount === 1 ? " love" : " loves"}
+                        </span>
+                    </span>
                 </p>
             </div>
         </Link>

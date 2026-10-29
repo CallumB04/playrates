@@ -13,7 +13,7 @@ export const SOURCE_LABELS: Record<string, string> = {
     post_upvote: "Reactions in the community",
     friend: "Made a friend",
     list: "Made a list",
-    list_upvote: "Reactions on your lists",
+    list_upvote: "Loves on your lists",
     g25_complete: "Finished your Gaming 25",
     g25_love: "Loves on your Gaming 25",
     avatar: "Added a picture",

@@ -1,5 +1,6 @@
 import {
   canSeeProfile,
+  DEFAULT_REACTION,
   isUpvoteMilestone,
   MAX_LIST_GAMES,
   MAX_LISTS,
@@ -356,21 +357,17 @@ export const createListsService = (
     },
 
     /** A reaction: the same one again takes it back, another swaps it. */
-    async toggleVote(
-      userId: string,
-      listId: number,
-      reaction?: string,
-    ): Promise<VoteResult> {
+    async toggleVote(userId: string, listId: number): Promise<VoteResult> {
       const card = await visibleCard(listId, userId);
       if (card.user_id === userId) {
-        throw AppError.forbidden("You cannot react to your own list");
+        throw AppError.forbidden("You can't love your own list");
       }
       const { state, added } = await react(
         repo.reactions,
         reactionsFor,
         userId,
         listId,
-        reaction,
+        DEFAULT_REACTION,
       );
       const voteCount = state.voteCount;
       if (added && isUpvoteMilestone(voteCount)) {

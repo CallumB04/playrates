@@ -45,7 +45,7 @@ const GROUPS: { title: string; rows: [source: string, label: string][] }[] = [
         rows: [
             ["review_upvote", "A reaction on your review"],
             ["post_upvote", "A reaction in the community"],
-            ["list_upvote", "A reaction on your list"],
+            ["list_upvote", "A love on your list"],
             ["g25_love", "A love on your Gaming 25"],
         ],
     },

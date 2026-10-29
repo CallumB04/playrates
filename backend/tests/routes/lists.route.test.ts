@@ -294,6 +294,23 @@ describe("upvoting a list", () => {
     expect((await vote(hidden, USER_B)).status).toBe(404);
   });
 
+  // Reactions are for reviews and the community: a list is only loved.
+  it("takes a love whatever reaction is asked for", async () => {
+    const { app, create } = setup();
+    const { id } = await create({ name: "Open" });
+
+    const response = await request(app)
+      .post(`/api/v1/lists/${id}/vote`)
+      .set(as(USER_B))
+      .send({ reaction: "fire" });
+
+    expect(response.body).toMatchObject({
+      voteCount: 1,
+      myReaction: "upvote",
+      reactions: [{ reaction: "upvote", count: 1 }],
+    });
+  });
+
   it("tells its owner at a milestone, and forgets it with the list", async () => {
     const { app, create, vote, state } = setup();
     const { id } = await create({ name: "Open" });

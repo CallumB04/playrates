@@ -16,7 +16,6 @@ import {
   type CreateListInput,
   type ListSort,
   type UpdateListInput,
-  ReactBodySchema,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { validate } from "../../middleware/validate.js";
@@ -136,16 +135,15 @@ export const createListsRouter = ({
     },
   );
 
-  // A toggle per reaction: the same one again takes it back, so the client
-  // needs no current state and can't double-count.
+  // A love, as a toggle: the same again takes it back, so the client needs
+  // no current state and can't double-count. Lists don't take reactions.
   router.post(
     "/:listId/vote",
     requireAuth,
-    validate({ params: ListIdParamSchema, body: ReactBodySchema }),
+    validate({ params: ListIdParamSchema }),
     async (req, res) => {
       const { listId } = req.valid!.params as { listId: number };
-      const { reaction } = req.valid!.body as { reaction: string };
-      res.json(await service.toggleVote(callerId(req), listId, reaction));
+      res.json(await service.toggleVote(callerId(req), listId));
     },
   );
 

@@ -7,7 +7,6 @@ import type {
     Paginated,
     UpdateListInput,
     VoteResult,
-    ReactionKey,
 } from "@playrates/shared";
 import { env } from "../../lib/env";
 import { api } from "../client";
@@ -115,13 +114,9 @@ export const removeListGame = async (
     await api.delete(`/me/lists/${listId}/games/${gameId}`);
 };
 
-export const toggleListVote = async (
-    listId: number,
-    reaction: ReactionKey = "upvote"
-): Promise<VoteResult> => {
-    const { data } = await api.post<VoteResult>(`/lists/${listId}/vote`, {
-        reaction,
-    });
+/** Loves a list, or takes the love back. */
+export const toggleListVote = async (listId: number): Promise<VoteResult> => {
+    const { data } = await api.post<VoteResult>(`/lists/${listId}/vote`);
     return data;
 };
 

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowBigUp } from "lucide-react";
+import { Heart } from "lucide-react";
 import AsideCard from "../ui/AsideCard";
 import CoverGrid from "../game/CoverGrid";
 import { usePopularLists } from "../../hooks/queries/useLists";
@@ -40,9 +40,13 @@ const PopularLists = () => {
                             </span>
                             <span
                                 className="inline-flex shrink-0 items-center gap-1 font-mono text-label-sm text-content-muted"
-                                aria-label={`${formatCount(list.voteCount)} reactions`}
+                                aria-label={`${formatCount(list.voteCount)} loves`}
                             >
-                                <ArrowBigUp size={13} aria-hidden />
+                                <Heart
+                                    size={12}
+                                    aria-hidden
+                                    className="fill-love text-love"
+                                />
                                 {formatCount(list.voteCount)}
                             </span>
                         </Link>

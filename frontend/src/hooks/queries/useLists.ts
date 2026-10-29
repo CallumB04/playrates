@@ -10,7 +10,6 @@ import type {
     ListSort,
     MyListOption,
     UpdateListInput,
-    ReactionKey,
 } from "@playrates/shared";
 import {
     addListGame,
@@ -181,8 +180,7 @@ export const useToggleListGame = (gameId: number) => {
 export const useListVote = (listId: number) => {
     const client = useQueryClient();
     return useMutation({
-        mutationFn: (reaction?: ReactionKey) =>
-            toggleListVote(listId, reaction),
+        mutationFn: () => toggleListVote(listId),
         onSuccess: (result) => {
             client.setQueryData<GameListDetail>(
                 queryKeys.lists.detail(listId),

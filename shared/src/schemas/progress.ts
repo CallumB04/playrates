@@ -387,7 +387,7 @@ export const BADGES = [
   {
     key: "tastemaker",
     name: "Tastemaker",
-    description: "Get {n} reactions on your lists",
+    description: "Get {n} loves on your lists",
     category: "curation",
     icon: "Sparkle",
     metric: "listUpvotes",
@@ -899,7 +899,7 @@ export const QUESTS = [
   },
   {
     key: "m_upvotes10",
-    label: "Get 10 reactions on your reviews, posts or lists",
+    label: "Get 10 reactions or loves on your reviews, posts or lists",
     period: "month",
     sources: ["review_upvote", "post_upvote", "list_upvote"],
     target: 10,

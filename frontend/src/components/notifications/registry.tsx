@@ -414,7 +414,9 @@ const ListMilestoneContent = ({
             className="group block"
         >
             <p className={TITLE}>
-                <Upvotes count={notification.milestone} />{" "}
+                <span className="group-hover:underline">
+                    {formatCount(notification.milestone)} loves
+                </span>{" "}
                 <span className="font-normal text-content-secondary">
                     on your list
                 </span>{" "}
@@ -682,8 +684,8 @@ export const NOTIFICATION_RENDERERS: {
         Leading: CoverLeading,
     },
     list_upvote_milestone: {
-        icon: ArrowBigUp,
-        tone: "text-brand",
+        icon: Heart,
+        tone: "text-love",
         Content: ListMilestoneContent,
     },
     gaming_25_love_milestone: {

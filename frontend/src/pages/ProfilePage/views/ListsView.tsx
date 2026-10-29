@@ -23,7 +23,7 @@ interface ListsViewProps {
     canSee: boolean;
 }
 
-/** Someone's lists, the newest made or the most reacted to first. */
+/** Someone's lists, the newest made or the most loved first. */
 const ListsView = ({ username, isOwner, canSee }: ListsViewProps) => {
     const navigate = useNavigate();
     const [params, setParams] = useSearchParams();
