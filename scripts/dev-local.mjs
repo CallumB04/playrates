@@ -17,6 +17,9 @@ import { fileURLToPath } from "node:url";
 const appPort = process.env.PORT || "5173";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const resetOnly = process.argv.includes("--reset-only");
+// Runs against the database as it is: for when something worth keeping is
+// in it, or someone else is working in it.
+const keep = process.argv.includes("--keep");
 
 const run = (command, args, options = {}) => {
   const result = spawnSync(command, args, {
@@ -58,8 +61,10 @@ if (status.status !== 0) {
   supabase("start");
 }
 
-step("Resetting the local database");
-supabase("db", "reset", "--local", "--yes");
+if (!keep) {
+  step("Resetting the local database");
+  supabase("db", "reset", "--local", "--yes");
+}
 
 if (resetOnly) {
   console.log("\n✓ Local database reset.");
