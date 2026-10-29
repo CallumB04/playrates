@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { badgeDef, type BadgeDef } from "@playrates/shared";
+import { badgeDef, levelTokens, type BadgeDef } from "@playrates/shared";
 import {
     badgeToastText,
     nextReward,
-    unlocksAt,
+    tokensBetween,
+    unlocksBetween,
     xpToastText,
 } from "./rewardText";
 
@@ -40,18 +41,41 @@ describe("badgeToastText", () => {
     });
 });
 
-describe("unlocksAt", () => {
+describe("unlocksBetween", () => {
+    const labels = (to: number, from?: number) =>
+        unlocksBetween(to, from).map((r) => r.label);
+
     it("names what a level opens, and nothing for one that opens nothing", () => {
-        const labels = (level: number) => unlocksAt(level).map((r) => r.label);
         expect(labels(20)).toEqual(["Gold frame", "Gold card theme"]);
-        expect(labels(15)).toEqual(["Orbitron name font"]);
+        expect(labels(15)).toEqual(["Orbitron name font", "GG reaction"]);
         expect(labels(2)).toEqual([]);
+    });
+
+    it("counts reactions and backgrounds as unlocks too", () => {
+        expect(labels(3)).toEqual(["Fire reaction", "Profile backgrounds"]);
+    });
+
+    // A badge can lift you several levels at once; each one's unlocks count.
+    it("covers every level in a climb", () => {
+        expect(labels(8, 4)).toEqual([
+            "Bronze frame",
+            "Sky name colour",
+            "Love reaction",
+            "Arcade name font",
+        ]);
+    });
+});
+
+describe("tokensBetween", () => {
+    it("adds up every level in a climb", () => {
+        expect(tokensBetween(2)).toBe(levelTokens(2));
+        expect(tokensBetween(10, 8)).toBe(levelTokens(9) + levelTokens(10));
     });
 });
 
 describe("nextReward", () => {
     it("finds the next level that opens something", () => {
-        expect(nextReward(1)).toMatchObject({ level: 5, kind: "frame" });
+        expect(nextReward(1)).toMatchObject({ level: 3, kind: "reaction" });
         expect(nextReward(15)).toMatchObject({ level: 20 });
         expect(nextReward(100)).toBeUndefined();
     });

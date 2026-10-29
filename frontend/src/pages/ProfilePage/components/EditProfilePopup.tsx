@@ -259,7 +259,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     { value: "profile", label: "Profile" },
                     {
                         value: "about",
-                        label: "About you",
+                        label: "About",
                         flagged: invalidIn("about") || !sameLetters,
                     },
                     {
@@ -281,7 +281,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                 their place, and their state. */}
             <div className="mt-4 grid">
                 <Panel id={panelId("profile")} shown={view === "profile"}>
-                    <Group label="Profile Picture">
+                    <Group label="Profile picture">
                         <AvatarField
                             username={user.username}
                             accent={accent}
@@ -383,25 +383,23 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                 </Panel>
             </div>
 
-            <div className="mt-4 border-t border-subtle pt-4">
-                <div className="flex flex-wrap gap-3">
-                    <Button
-                        className="flex-1"
-                        onClick={() => void save()}
-                        disabled={
-                            !dirty || !sameLetters || aboutInvalid || saving
-                        }
-                    >
-                        {saving ? "Saving…" : "Save changes"}
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        className="flex-1"
-                        onClick={closePopup}
-                    >
-                        Cancel
-                    </Button>
-                </div>
+            {/* Kept in view on a phone, where the sheet is as tall as its
+                tallest view and Save fell below the fold. */}
+            <div className="mt-4 flex flex-col-reverse gap-2 border-t border-subtle bg-surface-raised pt-4 max-sm:sticky max-sm:-bottom-4 max-sm:pb-2 sm:flex-row sm:justify-end">
+                <Button
+                    variant="secondary"
+                    className="w-full sm:w-auto"
+                    onClick={closePopup}
+                >
+                    Cancel
+                </Button>
+                <Button
+                    className="w-full sm:w-auto"
+                    onClick={() => void save()}
+                    disabled={!dirty || !sameLetters || aboutInvalid || saving}
+                >
+                    {saving ? "Saving…" : "Save changes"}
+                </Button>
             </div>
         </Modal>
     );

@@ -139,7 +139,7 @@ const NowPlaying = ({
                     {others > 0 && (
                         <Link
                             to={shelfPath(username, "playing")}
-                            className="text-label text-content-secondary hover:text-content"
+                            className="relative text-label text-content-secondary before:absolute before:-inset-x-1 before:-inset-y-3.5 before:content-[''] hover:text-content"
                         >
                             +{formatCount(others)} more on the go
                         </Link>

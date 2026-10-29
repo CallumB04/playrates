@@ -106,7 +106,11 @@ const TabBar = () => {
     // Lit on its views too, not only the profile itself.
     const onProfile = !!user && here(profileTo);
     // The pages only More leads to, so somewhere on the bar is lit.
-    const onMore = here("/settings") || here("/admin");
+    const onMore =
+        here("/settings") ||
+        here("/admin") ||
+        here("/progress") ||
+        here("/shop");
 
     return (
         <>

@@ -1,55 +1,50 @@
 import { Link } from "react-router-dom";
 import { buttonClass } from "../../../components/ui/Button";
+import EmptyPlate from "../../../components/ui/EmptyPlate";
 
 interface ListEmptyProps {
-    message: string;
+    title: string;
+    body?: string;
     /** Somewhere to go about it. Only the owner is ever offered one. */
     action?: { to: string; label: string };
 }
 
-/** The sentence inside an empty panel on a profile. */
-const ListEmpty = ({ message, action }: ListEmptyProps) => (
-    <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
-        <p className="text-body-sm text-content-muted">{message}</p>
-        {action && (
-            <Link
-                to={action.to}
-                className={buttonClass(
-                    "secondary",
-                    "min-h-11 sm:min-h-9",
-                    "sm"
-                )}
-            >
-                {action.label}
-            </Link>
-        )}
-    </div>
+/** An empty view on a profile, as the games shelves have it: a title, a
+ *  line, and for the owner a way to fill it. In place of the view's card. */
+const ListEmpty = ({ title, body, action }: ListEmptyProps) => (
+    <EmptyPlate
+        title={title}
+        body={body}
+        action={
+            action && (
+                <Link to={action.to} className={buttonClass("primary")}>
+                    {action.label}
+                </Link>
+            )
+        }
+    />
 );
 
 export const NoReviews = ({ isOwner }: { isOwner: boolean }) =>
     isOwner ? (
         <ListEmpty
-            message="No reviews yet."
+            title="No reviews yet"
+            body="Rate and review the games on your shelves."
             action={{ to: "/library", label: "Find a game to review" }}
         />
     ) : (
-        <ListEmpty message="No reviews written yet." />
+        <ListEmpty title="No reviews yet" />
     );
 
-export const NoThreads = ({
-    username,
-    isOwner,
-}: {
-    username: string;
-    isOwner: boolean;
-}) =>
+export const NoThreads = ({ isOwner }: { isOwner: boolean }) =>
     isOwner ? (
         <ListEmpty
-            message="Threads you start or reply to will show here."
+            title="No threads yet"
+            body="Threads you start or reply to will show here."
             action={{ to: "/community", label: "Browse the community" }}
         />
     ) : (
-        <ListEmpty message={`${username} hasn't posted in any threads yet.`} />
+        <ListEmpty title="No threads yet" />
     );
 
 export default ListEmpty;

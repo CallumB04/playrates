@@ -139,7 +139,7 @@ const GameCoverPlate = ({
                 </div>
             ) : (
                 <Button size="lg" onClick={onPrimary} disabled={isSaving}>
-                    {!isSignedIn ? "Log in to add" : "Log this game"}
+                    {!isSignedIn ? "Join to add" : "Log this game"}
                 </Button>
             )}
 

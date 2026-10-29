@@ -40,6 +40,22 @@ describe("TabBar", () => {
         );
     });
 
+    // Only More leads to these, so it's the tab that says where you are.
+    it.each(["/progress", "/shop", "/settings"])(
+        "lights More on %s",
+        (path) => {
+            expect(
+                bar(path).getByRole("button", { name: /^More/ })
+            ).toHaveClass("text-content");
+        }
+    );
+
+    it("leaves More dark elsewhere", () => {
+        expect(
+            bar("/library").getByRole("button", { name: /^More/ })
+        ).toHaveClass("text-content-muted");
+    });
+
     it("lights Profile on your own profile only", () => {
         expect(
             bar("/user/devuser/games?type=backlog").getByRole("link", {

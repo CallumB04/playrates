@@ -30,8 +30,11 @@ const BACKDROP =
 /* Full width below sm whatever width the caller asks for: a sheet is the
    screen's width, and a max-w meant for the dialog left it short of the
    edges on a wide phone. */
+/* No outline of its own: it takes focus to hold it inside, and a popup that
+   opens by itself (a level up, the welcome) would otherwise wear the
+   browser's ring round the whole sheet. Its controls keep theirs. */
 const PANEL =
-    "relative max-h-[88dvh] animate-sheet-rise overflow-y-auto max-sm:w-full max-sm:max-w-none " +
+    "relative outline-none max-h-[88dvh] animate-sheet-rise overflow-y-auto max-sm:w-full max-sm:max-w-none " +
     "rounded-t-lg border border-b-0 border-subtle bg-surface-raised p-4 shadow-sheet " +
     // Clears the home indicator; plain p-4 anywhere without an inset.
     "pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] " +

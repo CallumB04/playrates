@@ -26,8 +26,8 @@ import { DESCRIPTIONS, lookOf } from "./shopItems";
 const KIND_OF: Record<ShopGroup, string> = {
     frame: "Frame",
     theme: "Card theme",
-    font: "Font",
-    colour: "Username colour",
+    font: "Name font",
+    colour: "Name colour",
     reaction: "Reaction",
     slot: "Profile slot",
     shield: "Streak",

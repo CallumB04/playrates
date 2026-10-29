@@ -1,5 +1,5 @@
 /**
- * Why the viewer cannot upvote this, or null when they can. Said out
+ * Why the viewer cannot react to this, or null when they can. Said out
  * loud rather than just greying the button: a control that does nothing
  * reads as broken unless it says why.
  */
@@ -8,9 +8,9 @@ export const whyCannotVote = (
     authorId: string | undefined,
     noun = "review"
 ): string | null => {
-    if (!viewerId) return "Sign in to vote";
+    if (!viewerId) return "Join to react";
     // The API refuses it too; this only saves the round trip.
-    if (viewerId === authorId) return `You can't upvote your own ${noun}`;
+    if (viewerId === authorId) return `You can't react to your own ${noun}`;
     return null;
 };
 

@@ -129,7 +129,7 @@ describe("EditProfilePopup", () => {
         const { closePopup } = setup();
         const user = userEvent.setup();
 
-        await user.click(screen.getByRole("tab", { name: "About you" }));
+        await user.click(screen.getByRole("tab", { name: "About" }));
         await user.type(screen.getByLabelText("Pronouns"), "they/them");
         await user.click(screen.getByRole("button", { name: "Save changes" }));
 

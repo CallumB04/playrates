@@ -7,6 +7,7 @@ import {
     ListChecks,
     Lock,
     ShieldCheck,
+    RefreshCw,
     Store,
 } from "lucide-react";
 import {
@@ -40,7 +41,8 @@ import { TokenCoin } from "../../components/progress/TokenAmount";
 import XpBar from "../../components/progress/XpBar";
 import XpInfo from "../../components/progress/XpInfo";
 import { nextReward } from "../../components/progress/rewardText";
-import { InviteButton, InviteCard } from "../../components/progress/Invite";
+import { questPath } from "../../lib/questPath";
+import { InviteCard } from "../../components/progress/Invite";
 import ItemSheet from "../../components/shop/ItemSheet";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotify } from "../../contexts/NotificationContext";
@@ -49,6 +51,7 @@ import {
     usePlayerBadges,
     useProgress,
     useSetStyle,
+    useSwapQuest,
     useShop,
 } from "../../hooks/queries/useProgress";
 import { useUserLists } from "../../hooks/queries/useLists";
@@ -88,12 +91,17 @@ const ProgressPage = () => {
     return (
         <div className="flex flex-col gap-6 lg:gap-8">
             <Header data={data} />
+            {/* One column on a phone, in the order of what brings you back:
+                tasks, streak and friends before the long list of looks. The
+                columns dissolve there so their cards can be ordered. */}
             <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
-                <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
+                <div className="flex min-w-0 flex-col gap-4 max-lg:contents lg:gap-6">
                     <Tasks data={data} />
-                    <Look data={data} />
+                    <div className="min-w-0 max-lg:order-last">
+                        <Look data={data} />
+                    </div>
                 </div>
-                <aside className="flex min-w-0 flex-col gap-4 lg:gap-6">
+                <aside className="flex min-w-0 flex-col gap-4 max-lg:contents lg:gap-6">
                     <div id="streak" className="scroll-mt-24">
                         <Streak data={data} />
                     </div>
@@ -154,7 +162,7 @@ const Header = ({ data }: { data: Progress }) => {
                         </div>
                         {reward && (
                             <p className="mt-1 text-label-sm text-content-muted">
-                                Level {reward.level} unlocks the {reward.label}
+                                Level {reward.level} unlocks {reward.phrase}
                             </p>
                         )}
                     </div>
@@ -282,6 +290,7 @@ const Tasks = ({ data }: { data: Progress }) => (
             title="This week"
             tasks={data.quests.week}
             days={daysLeft(data.periods.week.end)}
+            swapsLeft={data.quests.swapsLeft}
         />
         <TaskGroup
             title="This month"
@@ -295,10 +304,13 @@ const TaskGroup = ({
     title,
     tasks,
     days,
+    swapsLeft = 0,
 }: {
     title: string;
     tasks: QuestState[];
     days: number;
+    /** Weekly only: one undone task a week can be traded for another. */
+    swapsLeft?: number;
 }) => (
     <section>
         <h3 className="flex items-baseline justify-between gap-3 text-label">
@@ -309,70 +321,119 @@ const TaskGroup = ({
         </h3>
         <ul className="mt-1 divide-y divide-subtle">
             {tasks.map((q) => (
-                <TaskRow key={q.key} task={q} />
+                <TaskRow key={q.key} task={q} canSwap={swapsLeft > 0} />
             ))}
         </ul>
     </section>
 );
 
-const TaskRow = ({ task: q }: { task: QuestState }) => (
-    <li className="flex min-h-14 items-center gap-3 py-2.5">
-        <span
-            className={cn(
-                "grid size-5 shrink-0 place-items-center rounded-full",
-                q.done ? "bg-action text-action-ink" : "ring-1 ring-strong"
-            )}
-        >
-            {q.done && <Check size={12} strokeWidth={3} aria-hidden />}
-        </span>
-        <span className="min-w-0 flex-1">
+const TaskRow = ({
+    task: q,
+    canSwap = false,
+}: {
+    task: QuestState;
+    canSwap?: boolean;
+}) => {
+    const { user } = useAuth();
+    const notify = useNotify();
+    const swap = useSwapQuest();
+    const to = !q.done && user ? questPath(q.key, user.username) : null;
+    return (
+        <li className="relative flex min-h-14 items-center gap-3 py-2.5">
             <span
                 className={cn(
-                    "block text-body-sm text-content sm:truncate",
-                    q.done && "text-content-muted line-through"
+                    "grid size-5 shrink-0 place-items-center rounded-full",
+                    q.done ? "bg-action text-action-ink" : "ring-1 ring-strong"
                 )}
             >
-                {q.label}
+                {q.done && <Check size={12} strokeWidth={3} aria-hidden />}
             </span>
-            <span className="mt-1.5 flex items-center gap-2">
-                <span className="h-1 w-24 overflow-hidden rounded-full bg-surface-sunken">
+            <span className="min-w-0 flex-1">
+                {/* The whole row goes there; the name is the link. */}
+                {to ? (
+                    <Link
+                        to={to}
+                        className="block text-body-sm text-content before:absolute before:inset-0 before:content-[''] hover:underline sm:truncate"
+                    >
+                        {q.label}
+                    </Link>
+                ) : (
                     <span
                         className={cn(
-                            "block h-full rounded-full",
-                            q.done ? "bg-action" : "bg-brand"
+                            "block text-body-sm text-content sm:truncate",
+                            q.done && "text-content-muted line-through"
                         )}
-                        style={{ width: `${(q.count / q.target) * 100}%` }}
-                    />
-                </span>
-                <span className="font-mono text-[11px] text-content-muted tabular-nums">
-                    {q.count}/{q.target}
+                    >
+                        {q.label}
+                    </span>
+                )}
+                <span className="mt-1.5 flex items-center gap-2">
+                    <span className="h-1 w-24 overflow-hidden rounded-full bg-surface-sunken">
+                        <span
+                            className={cn(
+                                "block h-full rounded-full",
+                                q.done ? "bg-action" : "bg-brand"
+                            )}
+                            style={{ width: `${(q.count / q.target) * 100}%` }}
+                        />
+                    </span>
+                    <span className="font-mono text-[11px] text-content-muted tabular-nums">
+                        {q.count}/{q.target}
+                    </span>
                 </span>
             </span>
-        </span>
-        <span
-            className={cn(
-                "flex shrink-0 flex-col items-end gap-0.5 font-mono tabular-nums",
-                q.done ? "text-content-muted" : "text-content"
-            )}
-        >
             <span
                 className={cn(
-                    "text-label font-semibold",
-                    !q.done && "text-brand"
+                    "flex shrink-0 flex-col items-end gap-0.5 font-mono tabular-nums",
+                    q.done ? "text-content-muted" : "text-content"
                 )}
             >
-                +{q.xp} XP
+                <span
+                    className={cn(
+                        "text-label font-semibold",
+                        !q.done && "text-brand"
+                    )}
+                >
+                    +{q.xp} XP
+                </span>
+                <span
+                    className="inline-flex items-center gap-1 text-label-sm"
+                    aria-label={`and ${q.tokens} tokens`}
+                >
+                    +{q.tokens}
+                    <TokenCoin className="size-3.5" />
+                </span>
             </span>
-            <span
-                className="inline-flex items-center gap-1 text-label-sm"
-                aria-label={`and ${q.tokens} tokens`}
-            >
-                +{q.tokens}
-                <TokenCoin className="size-3.5" />
-            </span>
-        </span>
-    </li>
-);
+            {/* Over the row's link, which covers the rest of it. */}
+            {canSwap && !q.done && !q.swapped && (
+                <button
+                    type="button"
+                    onClick={() =>
+                        swap.mutate(q.slot, {
+                            onError: (error) =>
+                                notify(
+                                    error instanceof ApiError
+                                        ? error.message
+                                        : "Couldn't swap that task",
+                                    "error"
+                                ),
+                        })
+                    }
+                    disabled={swap.isPending}
+                    aria-label={`Swap ${q.label} for another task`}
+                    className={buttonClass(
+                        "ghost",
+                        "relative z-10 -mr-1 min-h-11 gap-1 px-2 sm:min-h-8",
+                        "sm"
+                    )}
+                >
+                    <RefreshCw size={13} aria-hidden />
+                    Swap
+                </button>
+            )}
+        </li>
+    );
+};
 
 /* -------------------------------------------------------------- streak */
 
@@ -569,7 +630,6 @@ const Leaderboard = () => {
                     <p className="text-body-sm text-content-muted">
                         Add friends to see how you stack up.
                     </p>
-                    <InviteButton />
                 </div>
             ) : (
                 <>
@@ -651,14 +711,10 @@ const LookTile = ({
     price,
     onClick,
     disabled,
-    hideLabel = false,
     children,
 }: {
     label: string;
     on: boolean;
-    /** For a picture that says what it is, as a reaction's does: the name
-     *  goes to screen readers and the tooltip. */
-    hideLabel?: boolean;
     lock?: string;
     price?: number;
     onClick: () => void;
@@ -670,7 +726,6 @@ const LookTile = ({
         aria-pressed={on}
         disabled={disabled}
         onClick={onClick}
-        title={hideLabel ? label : undefined}
         className={cn(
             "flex w-full cursor-pointer flex-col items-center gap-1.5 rounded-md p-2 lift disabled:cursor-not-allowed",
             "focus-visible:outline-2 focus-visible:outline-brand",
@@ -685,16 +740,11 @@ const LookTile = ({
         >
             {children}
         </span>
-        <span
-            className={cn(
-                "line-clamp-1 text-[11px] text-content-secondary",
-                hideLabel && "sr-only"
-            )}
-        >
+        <span className="line-clamp-1 text-[11px] text-content-secondary">
             {label}
         </span>
         {lock ? (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-content-muted">
+            <span className="inline-flex items-center gap-0.5 text-[10px] whitespace-nowrap text-content-muted">
                 <Lock size={9} aria-hidden />
                 {lock}
             </span>
@@ -741,6 +791,11 @@ const Look = ({ data }: { data: Progress }) => {
         limit: 50,
         enabled: !!user,
     });
+    // Only what everyone can see: a hidden list pinned is an empty card to
+    // anyone else.
+    const pinnable = (lists?.data ?? []).filter(
+        (l) => l.visibility === "everyone"
+    );
     const setStyle = useSetStyle();
     const [open, setOpen] = useState<ShopEntry | null>(null);
     if (!user) return null;
@@ -779,7 +834,7 @@ const Look = ({ data }: { data: Progress }) => {
             trailing={
                 <Link
                     to="/shop"
-                    className="text-label font-medium text-brand hover:underline"
+                    className="relative text-label font-medium text-brand before:absolute before:-inset-x-2 before:-inset-y-3.5 before:content-[''] hover:underline"
                 >
                     Shop
                 </Link>
@@ -1031,7 +1086,6 @@ const Look = ({ data }: { data: Progress }) => {
                             <li key={r.key}>
                                 <LookTile
                                     label={r.label}
-                                    hideLabel
                                     on={false}
                                     lock={
                                         "level" in r && !unlocked
@@ -1065,7 +1119,7 @@ const Look = ({ data }: { data: Progress }) => {
                 </ul>
             </LookSection>
 
-            {(lists?.data.length ?? 0) > 0 && (
+            {pinnable.length > 0 && (
                 <LookSection
                     id="pinned-lists"
                     title="Pinned lists"
@@ -1073,7 +1127,7 @@ const Look = ({ data }: { data: Progress }) => {
                 >
                     <PinToggles
                         field="pinnedLists"
-                        items={lists!.data.map((l) => ({
+                        items={pinnable.map((l) => ({
                             id: l.id,
                             name: l.name,
                         }))}

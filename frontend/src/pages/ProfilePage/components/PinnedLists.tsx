@@ -1,17 +1,23 @@
+import { useQueries } from "@tanstack/react-query";
 import { Pin } from "lucide-react";
 import Panel from "../../../components/ui/Panel";
 import ListCard from "../../../components/lists/ListCard";
-import { useList } from "../../../hooks/queries/useLists";
+import { fetchList } from "../../../api/endpoints/lists";
+import { queryKeys } from "../../../api/queryKeys";
 
-/** One pinned list, gone quietly if it's been deleted or hidden since. */
-const Pinned = ({ id }: { id: number }) => {
-    const { data } = useList(id);
-    return data ? <ListCard list={data} /> : null;
-};
-
-/** The lists a member pinned to the top of their profile. */
+/** The lists a member pinned to the top of their profile. One deleted or
+ *  hidden since goes quietly, and with none left to show to this viewer,
+ *  so does the card. */
 const PinnedLists = ({ ids }: { ids: number[] }) => {
-    if (ids.length === 0) return null;
+    const lists = useQueries({
+        queries: ids.map((id) => ({
+            queryKey: queryKeys.lists.detail(id),
+            queryFn: () => fetchList(id),
+            retry: false,
+        })),
+    });
+    const shown = lists.flatMap((q) => (q.data ? [q.data] : []));
+    if (shown.length === 0) return null;
     return (
         <Panel
             title={
@@ -22,8 +28,8 @@ const PinnedLists = ({ ids }: { ids: number[] }) => {
             }
         >
             <div className="grid gap-3 sm:grid-cols-2">
-                {ids.map((id) => (
-                    <Pinned key={id} id={id} />
+                {shown.map((list) => (
+                    <ListCard key={list.id} list={list} />
                 ))}
             </div>
         </Panel>

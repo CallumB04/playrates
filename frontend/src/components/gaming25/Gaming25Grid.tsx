@@ -40,7 +40,7 @@ const Cover = ({ cell, onPick }: { cell: Cell; onPick: boolean }) =>
                     <Plus size={16} aria-hidden />
                 </span>
             ) : (
-                <span className="px-1 text-center text-[9px] leading-tight sm:text-label-sm">
+                <span className="px-1 text-center text-[10px] leading-tight sm:text-label-sm">
                     No pick
                 </span>
             )}
@@ -85,7 +85,7 @@ const Gaming25Grid = ({ picks, onPick, className }: Gaming25GridProps) => {
                                     : "font-semibold text-content"
                             )}
                         >
-                            <span className="line-clamp-3 text-center text-[9px] leading-tight tracking-tight hyphens-auto sm:line-clamp-2 sm:text-label-sm sm:tracking-normal">
+                            <span className="line-clamp-3 text-center text-[10px] leading-tight tracking-tight hyphens-auto sm:line-clamp-2 sm:text-label-sm sm:tracking-normal">
                                 {cell.label}
                             </span>
                         </span>

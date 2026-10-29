@@ -17,7 +17,10 @@ const AccountFormModal = () => {
     const isSignup = mode === "signup";
     const isReset = mode === "reset";
 
-    const handleSignedUp = (email: string) => {
+    // Signed straight in, the form is done, and closing it lets the
+    // welcome show; otherwise log-in waits with the email filled.
+    const handleSignedUp = (email: string, signedIn: boolean) => {
+        if (signedIn) return close();
         setEmailAfterSignup(email);
         openLogin();
     };

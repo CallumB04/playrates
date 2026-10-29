@@ -40,7 +40,7 @@ const PopularLists = () => {
                             </span>
                             <span
                                 className="inline-flex shrink-0 items-center gap-1 font-mono text-label-sm text-content-muted"
-                                aria-label={`${formatCount(list.voteCount)} upvotes`}
+                                aria-label={`${formatCount(list.voteCount)} reactions`}
                             >
                                 <ArrowBigUp size={13} aria-hidden />
                                 {formatCount(list.voteCount)}

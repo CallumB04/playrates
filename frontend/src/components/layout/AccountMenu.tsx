@@ -215,6 +215,13 @@ const AccountMenu = ({
                     level={user.level}
                     className="absolute -right-1 -bottom-1"
                 />
+                {/* Setup waits in here, as it does behind a phone's More. */}
+                {setup && (
+                    <span
+                        aria-hidden
+                        className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-brand ring-2 ring-surface"
+                    />
+                )}
             </button>
 
             {open && (

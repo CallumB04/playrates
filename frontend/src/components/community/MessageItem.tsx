@@ -1,6 +1,13 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Flag, MessageSquareReply, Pencil, Trash2, UserX } from "lucide-react";
+import {
+    Ellipsis,
+    Flag,
+    MessageSquareReply,
+    Pencil,
+    Trash2,
+    UserX,
+} from "lucide-react";
 import type {
     CommunityMessage,
     RichTextDoc,
@@ -9,6 +16,7 @@ import type {
 import ProfilePicture from "../ProfilePicture";
 import ReactionBar from "../ui/ReactionBar";
 import Button from "../ui/Button";
+import Modal from "../ui/Modal";
 import { whyCannotVote } from "../../lib/voting";
 import { relativeTime } from "../../lib/format";
 import { cn } from "../../lib/cn";
@@ -96,7 +104,43 @@ const MessageItem = ({
     children,
 }: MessageItemProps) => {
     const [editing, setEditing] = useState(false);
+    const [moreOpen, setMoreOpen] = useState(false);
     const author = message.author;
+    const secondary: {
+        label: string;
+        icon: ReactNode;
+        onClick: () => void;
+        tone?: "danger";
+    }[] = [
+        ...(message.canEdit
+            ? [
+                  {
+                      label: "Edit",
+                      icon: <Pencil size={14} aria-hidden />,
+                      onClick: () => setEditing(true),
+                  },
+              ]
+            : []),
+        ...(message.canDelete
+            ? [
+                  {
+                      label: "Delete",
+                      icon: <Trash2 size={14} aria-hidden />,
+                      onClick: () => actions.onDelete(message),
+                      tone: "danger" as const,
+                  },
+              ]
+            : []),
+        ...(actions.onReport && viewerId && author && author.id !== viewerId
+            ? [
+                  {
+                      label: "Report",
+                      icon: <Flag size={14} aria-hidden />,
+                      onClick: () => actions.onReport?.(message),
+                  },
+              ]
+            : []),
+    ];
 
     if (message.deleted) {
         return (
@@ -213,40 +257,76 @@ const MessageItem = ({
                                 Reply
                             </ActionButton>
                         )}
-                        {message.canEdit && (
-                            <ActionButton
-                                onClick={() => setEditing(true)}
-                                icon={<Pencil size={14} aria-hidden />}
-                            >
-                                Edit
-                            </ActionButton>
-                        )}
-                        {message.canDelete && (
-                            <ActionButton
-                                tone="danger"
-                                onClick={() => actions.onDelete(message)}
-                                icon={<Trash2 size={14} aria-hidden />}
-                            >
-                                Delete
-                            </ActionButton>
+                        {/* Beside Reply from sm; on a phone they wrapped
+                            each message's row onto a second line, so they
+                            wait behind "…" in a sheet. */}
+                        {secondary.length > 0 && (
+                            <>
+                                <span className="hidden sm:contents">
+                                    {secondary.map((action) => (
+                                        <ActionButton
+                                            key={action.label}
+                                            tone={action.tone}
+                                            onClick={action.onClick}
+                                            icon={action.icon}
+                                        >
+                                            {action.label}
+                                        </ActionButton>
+                                    ))}
+                                </span>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    aria-label="More actions"
+                                    aria-haspopup="dialog"
+                                    onClick={() => setMoreOpen(true)}
+                                    className="min-h-11 min-w-11 px-2.5 sm:hidden"
+                                >
+                                    <Ellipsis size={16} aria-hidden />
+                                </Button>
+                            </>
                         )}
                         {extraActions}
-                        {actions.onReport &&
-                            viewerId &&
-                            author &&
-                            author.id !== viewerId && (
-                                <ActionButton
-                                    onClick={() => actions.onReport?.(message)}
-                                    icon={<Flag size={14} aria-hidden />}
-                                >
-                                    Report
-                                </ActionButton>
-                            )}
                     </div>
                 )}
 
                 {children}
             </div>
+            {moreOpen && (
+                <Modal
+                    onClose={() => setMoreOpen(false)}
+                    labelledBy={`message-${message.id}-actions`}
+                    className="w-full sm:max-w-xs"
+                >
+                    <h2
+                        id={`message-${message.id}-actions`}
+                        className="pr-10 font-display text-section text-content"
+                    >
+                        Message
+                    </h2>
+                    <div className="mt-3 flex flex-col gap-1">
+                        {secondary.map((action) => (
+                            <Button
+                                key={action.label}
+                                variant="ghost"
+                                size="touch"
+                                onClick={() => {
+                                    setMoreOpen(false);
+                                    action.onClick();
+                                }}
+                                className={cn(
+                                    "w-full justify-start",
+                                    action.tone === "danger" && "text-danger"
+                                )}
+                            >
+                                {action.icon}
+                                {action.label}
+                            </Button>
+                        ))}
+                    </div>
+                </Modal>
+            )}
         </article>
     );
 };

@@ -49,7 +49,8 @@ const AddToListPopup = ({ gameId, onClose }: AddToListPopupProps) => {
                 id={titleId}
                 className="pr-10 font-display text-section text-content"
             >
-                Add to list
+                {/* Opened to add and to manage alike. */}
+                Your lists
             </h2>
             {game && (
                 <p className="mt-1 truncate text-body-sm text-content-muted">
@@ -115,7 +116,9 @@ const AddToListPopup = ({ gameId, onClose }: AddToListPopupProps) => {
                                     >
                                         <span
                                             aria-hidden
-                                            className="size-2.5 shrink-0 rounded-full bg-surface-sunken ring-1 ring-strong"
+                                            // A square, the list's colour: a
+                                            // dot read as a radio button.
+                                            className="size-3 shrink-0 rounded-xs bg-surface-sunken ring-1 ring-strong"
                                             style={
                                                 list.colour
                                                     ? {

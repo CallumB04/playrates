@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
-import { ArrowLeft, Check } from "lucide-react";
+import { Navigate, useSearchParams } from "react-router-dom";
+import { Check } from "lucide-react";
 import {
     SHOP_GROUPS,
     SHOP_KINDS,
     type ShopEntry,
     type ShopKind,
 } from "@playrates/shared";
+import PageHeader from "../../components/ui/PageHeader";
 import SegmentedChoice from "../../components/ui/SegmentedChoice";
 import { cardClass } from "../../components/ui/Card";
 import { Skeleton } from "../../components/ui/Skeleton";
@@ -16,6 +17,7 @@ import { ItemThumb } from "../../components/shop/ItemPreview";
 import { GROUP_LABELS, KIND_LABELS } from "../../components/shop/shopItems";
 import { useAuth } from "../../contexts/AuthContext";
 import { useShop } from "../../hooks/queries/useProgress";
+import { useOverflowFade } from "../../hooks/useOverflowFade";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import { formatCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
@@ -26,6 +28,11 @@ const ShopPage = () => {
     const { data: shop } = useShop();
     const [kind, setKind] = useState<ShopKind>("cosmetic");
     const [open, setOpen] = useState<ShopEntry | null>(null);
+    // `?item=` opens one item, for a page that sends you here for it: out of
+    // pin slots, say. It leaves the URL as the popup closes.
+    const [params, setParams] = useSearchParams();
+    const linked = params.get("item");
+    const tabsFade = useOverflowFade<HTMLDivElement>();
     usePageMeta({ title: "Shop", noindex: true });
 
     if (!isLoading && !user) return <Navigate to="/" replace />;
@@ -40,31 +47,28 @@ const ShopPage = () => {
 
     return (
         <div className="flex flex-col gap-5 lg:gap-6">
-            <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div className="min-w-0">
-                    <Link
-                        to="/progress"
-                        className="relative inline-flex items-center gap-1 text-label text-content-muted before:absolute before:-inset-2 before:content-[''] hover:text-content"
+            <PageHeader
+                title="Shop"
+                back={{ to: "/progress", label: "Your progress" }}
+                actions={
+                    <span
+                        className="inline-flex items-center gap-2 font-mono text-[28px] leading-none font-bold text-content tabular-nums sm:text-[34px]"
+                        aria-label={`${formatCount(shop.tokens)} tokens`}
                     >
-                        <ArrowLeft size={14} aria-hidden />
-                        Your progress
-                    </Link>
-                    <h1 className="mt-2 font-display text-[28px] leading-none font-semibold text-content sm:text-[40px]">
-                        Shop
-                    </h1>
-                </div>
-                <span
-                    className="inline-flex items-center gap-2 font-mono text-[28px] leading-none font-bold text-content tabular-nums sm:text-[34px]"
-                    aria-label={`${formatCount(shop.tokens)} tokens`}
-                >
-                    <TokenCoin className="size-6 sm:size-7" />
-                    <span aria-hidden>{formatCount(shop.tokens)}</span>
-                </span>
-            </header>
+                        <TokenCoin className="size-6 sm:size-7" />
+                        <span aria-hidden>{formatCount(shop.tokens)}</span>
+                    </span>
+                }
+            />
 
             {/* Five sections don't fit a phone's width: the row scrolls
-                sideways there, edge to edge, rather than squeezing them. */}
-            <div className="-mx-4 [scrollbar-width:none] overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
+                sideways there, edge to edge, faded where there's more. */}
+            <div
+                ref={tabsFade.ref}
+                onScroll={tabsFade.onScroll}
+                style={tabsFade.style}
+                className="-mx-4 [scrollbar-width:none] overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0"
+            >
                 <SegmentedChoice
                     label="Shop sections"
                     segments={SHOP_KINDS.map((k) => ({
@@ -106,11 +110,18 @@ const ShopPage = () => {
                 );
             })}
 
-            {open && (
+            {(open ?? shop.items.find((i) => i.item === linked)) && (
                 <ItemSheet
                     // Fresh from the shop, so it shows what you own now.
-                    item={shop.items.find((i) => i.item === open.item) ?? open}
-                    onClose={() => setOpen(null)}
+                    item={
+                        shop.items.find(
+                            (i) => i.item === (open?.item ?? linked)
+                        ) ?? open!
+                    }
+                    onClose={() => {
+                        setOpen(null);
+                        if (linked) setParams({}, { replace: true });
+                    }}
                 />
             )}
         </div>

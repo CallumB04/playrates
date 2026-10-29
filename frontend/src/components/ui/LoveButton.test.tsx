@@ -45,4 +45,23 @@ describe("LoveButton", () => {
         });
         expect(button).toBeDisabled();
     });
+
+    // A phone can't show the tooltip, so a signed-out press asks them in.
+    it("asks a signed-out viewer to join rather than doing nothing", async () => {
+        const onToggle = vi.fn();
+        const onJoin = vi.fn();
+        render(
+            <LoveButton
+                count={7}
+                loved={false}
+                onToggle={onToggle}
+                disabledReason="Sign in to love it"
+                onJoin={onJoin}
+            />
+        );
+        await userEvent.click(screen.getByRole("button"));
+        expect(onJoin).toHaveBeenCalled();
+        expect(onToggle).not.toHaveBeenCalled();
+        expect(screen.getByRole("button")).toHaveTextContent("7");
+    });
 });

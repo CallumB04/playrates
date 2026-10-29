@@ -4,6 +4,7 @@ import {
     reactionLabel,
     shopLabel,
     sourceLabel,
+    sourceRows,
 } from "./progressAdmin";
 
 describe("badgeRows", () => {
@@ -16,12 +17,28 @@ describe("badgeRows", () => {
         expect(rows.map((r) => r.badge.key)).toEqual(["critic", "collector"]);
         expect(rows[1]!.holders).toEqual([2, 0, 1, 0]);
         expect(rows[1]!.total).toBe(3);
+        expect(rows[1]!.top).toBe(3);
     });
 
     it("leaves out a badge that's no longer defined", () => {
         expect(badgeRows([{ badge: "gone", metal: 1, holders: 4 }])).toEqual(
             []
         );
+    });
+});
+
+describe("sourceRows", () => {
+    it("joins sources that read the same, most XP first", () => {
+        expect(
+            sourceRows([
+                { source: "review_short", xp: 30, events: 3 },
+                { source: "finish", xp: 40, events: 2 },
+                { source: "review_long", xp: 20, events: 1 },
+            ])
+        ).toEqual([
+            { label: "Wrote a review", xp: 50 },
+            { label: "Finished a game", xp: 40 },
+        ]);
     });
 });
 

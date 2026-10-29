@@ -159,11 +159,16 @@ const Header = () => {
                                 >
                                     Sign in
                                 </Button>
-                                <span className="hidden sm:contents">
-                                    <Button size="sm" onClick={openSignup}>
+                                <Button
+                                    size="sm"
+                                    onClick={openSignup}
+                                    className="max-sm:min-h-11 max-sm:px-3"
+                                >
+                                    <span className="sm:hidden">Join</span>
+                                    <span className="hidden sm:inline">
                                         Join PlayRates
-                                    </Button>
-                                </span>
+                                    </span>
+                                </Button>
                             </div>
                         )}
                     </div>

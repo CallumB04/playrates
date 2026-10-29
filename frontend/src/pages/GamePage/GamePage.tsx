@@ -46,7 +46,7 @@ const GamePage = () => {
     const { gameID } = useParams();
     const gameId = Number(gameID);
     const { user } = useAuth();
-    const { openLogin } = useAccountForm();
+    const { openSignup } = useAccountForm();
     const flow = useLogFlow();
     const quickAdd = useQuickAdd();
     const [quickSaving, setQuickSaving] = useState(false);
@@ -115,7 +115,7 @@ const GamePage = () => {
         await quickAdd(gameId, game.title, status).catch(() => undefined);
         setQuickSaving(false);
     };
-    const openLog = () => (user ? flow.open(gameId) : openLogin());
+    const openLog = () => (user ? flow.open(gameId) : openSignup());
 
     if (isLoading) {
         return (
@@ -153,7 +153,7 @@ const GamePage = () => {
                           ? "Edit your log"
                           : user
                             ? "Log this game"
-                            : "Log in to add"
+                            : "Join to add"
                 }
                 onPress={openLog}
                 disabled={quickSaving}
@@ -225,7 +225,9 @@ const GamePage = () => {
                         reviews={reviews?.data ?? []}
                         logCount={logCount}
                         onWriteReview={
-                            user ? () => flow.review(gameId) : () => openLogin()
+                            user
+                                ? () => flow.review(gameId)
+                                : () => openSignup()
                         }
                         viewerId={user?.id}
                         onVote={(reviewId, reaction) =>
@@ -245,7 +247,9 @@ const GamePage = () => {
                         total={threads?.meta.total ?? 0}
                         isLoading={threadsLoading}
                         onStart={() =>
-                            user ? navigate(newThreadPath(gameId)) : openLogin()
+                            user
+                                ? navigate(newThreadPath(gameId))
+                                : openSignup()
                         }
                     />
                 </div>

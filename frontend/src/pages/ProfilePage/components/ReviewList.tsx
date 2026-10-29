@@ -34,6 +34,9 @@ const ReviewList = ({ username, isOwner, canSee }: ReviewListProps) => {
         onPageChange: setPage,
     });
 
+    if (!isLoading && canSee && reviews.length === 0)
+        return <NoReviews isOwner={isOwner} />;
+
     return (
         <>
             <div
@@ -45,15 +48,13 @@ const ReviewList = ({ username, isOwner, canSee }: ReviewListProps) => {
                     <div className="px-2 py-3">
                         <TextSkeleton lines={8} />
                     </div>
-                ) : reviews.length === 0 ? (
-                    <NoReviews isOwner={isOwner} />
                 ) : (
                     reviews.map((review) => (
                         <ReviewRow
                             key={review.id}
                             review={review}
                             pin={
-                                isOwner && pins.slots > 0
+                                isOwner
                                     ? {
                                           on: pins.pinned.includes(review.id),
                                           toggle: () => pins.toggle(review.id),

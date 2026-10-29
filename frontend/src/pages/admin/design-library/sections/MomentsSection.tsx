@@ -27,8 +27,9 @@ const STAND_IN = {
     accent: "indigo" as const,
 };
 
-const LEVELS = [
+const LEVELS: { level: number; from?: number; note: string }[] = [
     { level: 2, note: "Nothing unlocked" },
+    { level: 8, from: 4, note: "Four levels at once, as a badge can do" },
     { level: 15, note: "A font" },
     { level: 20, note: "A frame and a card theme" },
     { level: 50, note: "A milestone level" },
@@ -45,7 +46,7 @@ const MomentsSection = () => {
     const { data: progress } = useProgressQuery(!!user);
     const { data: badges } = usePlayerBadges(user?.username ?? "", !!user);
     const [revealing, setRevealing] = useState(false);
-    const [level, setLevel] = useState<number | null>(null);
+    const [level, setLevel] = useState<(typeof LEVELS)[number] | null>(null);
     const [welcoming, setWelcoming] = useState(false);
 
     /* The reveal plays what was unseen at launch. Long since seen, so it's
@@ -99,19 +100,22 @@ const MomentsSection = () => {
                 notes="The one reward that's a popup: the level on a gold coin that lands with a glow and a single ring, the tokens it brought, each unlock shown as itself, and the next one to aim for. XP and badges are toasts."
                 meta="LevelUpMoment level · onShare · onClose"
             >
-                {LEVELS.map(({ level: n, note }) => (
+                {LEVELS.map((l) => (
                     <Button
-                        key={n}
+                        key={l.level}
                         variant="secondary"
-                        onClick={() => setLevel(n)}
-                        title={note}
+                        onClick={() => setLevel(l)}
+                        title={l.note}
                     >
-                        Level {n}
+                        {l.from
+                            ? `Level ${l.from} to ${l.level}`
+                            : `Level ${l.level}`}
                     </Button>
                 ))}
                 {level !== null && (
                     <LevelUpMoment
-                        level={level}
+                        level={level.level}
+                        from={level.from}
                         onShare={() => setLevel(null)}
                         onClose={() => setLevel(null)}
                     />

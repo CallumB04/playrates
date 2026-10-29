@@ -75,6 +75,22 @@ describe("ProgressMoments", () => {
             </>
         );
 
+        // 120 XP, 55 of it new: from level 1 to 2.
+        expect(
+            await screen.findByRole("dialog", { name: "Level 2" })
+        ).toBeInTheDocument();
+        await waitFor(() =>
+            expect(seen).toContainEqual({
+                xpEventId: 8,
+                badges: [{ badge: "collector", metal: 1 }],
+            })
+        );
+        // The toasts wait for it: under its scrim they'd run out unread.
+        expect(screen.queryByText(/Rated a game/)).toBeNull();
+
+        await userEvent.click(screen.getByRole("button", { name: "Nice" }));
+        expect(screen.queryByRole("dialog")).toBeNull();
+
         // The badge's own XP goes with the badge, not the XP toast.
         const xp = await screen.findByText("+5 XP: Rated a game", {
             exact: false,
@@ -84,18 +100,29 @@ describe("ProgressMoments", () => {
         expect(
             screen.getByText("New badge: Collector, Bronze")
         ).toBeInTheDocument();
-        // 120 XP, 55 of it new: from level 1 to 2.
-        expect(
-            screen.getByRole("dialog", { name: "Level 2" })
-        ).toBeInTheDocument();
-        await waitFor(() =>
-            expect(seen).toContainEqual({
-                xpEventId: 8,
-                badges: [{ badge: "collector", metal: 1 }],
+    });
+
+    it("says XP at once when there's no new level to wait for", async () => {
+        respond(
+            progress({
+                xp: 50,
+                level: levelFor(50),
+                unseen: {
+                    xp: [{ id: 3, source: "rate", xp: 5 }],
+                    badges: [],
+                    tokens: 0,
+                },
             })
         );
-
-        await userEvent.click(screen.getByRole("button", { name: "Nice" }));
+        renderWithProviders(
+            <>
+                <ProgressMoments />
+                <ToastStack />
+            </>
+        );
+        expect(
+            await screen.findByText("+5 XP: Rated a game")
+        ).toBeInTheDocument();
         expect(screen.queryByRole("dialog")).toBeNull();
     });
 

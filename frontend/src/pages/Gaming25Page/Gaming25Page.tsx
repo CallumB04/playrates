@@ -68,7 +68,11 @@ const LoadedGaming25 = ({ grid }: { grid: Gaming25 }) => {
 
     const count = grid.picks.length;
     const empty = count === 0;
-    const url = `${window.location.origin}${gaming25Path(username)}`;
+    // Shared with the sharer's invite on it: "what would yours be?" is the
+    // page most likely to bring someone new.
+    const url = `${window.location.origin}${gaming25Path(username)}${
+        user ? `?ref=${encodeURIComponent(user.username)}` : ""
+    }`;
 
     return (
         <div className="flex flex-col gap-4 sm:gap-6">
@@ -117,6 +121,7 @@ const LoadedGaming25 = ({ grid }: { grid: Gaming25 }) => {
                         count={grid.loveCount}
                         loved={grid.lovedByViewer}
                         disabledReason={whyCannotLove(user?.username, username)}
+                        onJoin={user ? undefined : openSignup}
                         onToggle={() => love.mutateAsync()}
                         className="max-sm:flex-1 max-sm:justify-center"
                     />

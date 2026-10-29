@@ -19,6 +19,7 @@ import { usePagination } from "../../hooks/usePagination";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useUrlSearchTerm } from "../../hooks/useUrlSearchTerm";
 import { SearchInput } from "../../components/ui/Input";
+import PageHeader from "../../components/ui/PageHeader";
 import Button, { buttonClass } from "../../components/ui/Button";
 import { cardClass } from "../../components/ui/Card";
 import EmptyPlate from "../../components/ui/EmptyPlate";
@@ -49,7 +50,7 @@ const CommunityPage = () => {
     usePageTitle("Community");
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { openLogin } = useAccountForm();
+    const { openSignup } = useAccountForm();
 
     const [params, setParams] = useSearchParams();
     const gameId = Number(params.get("game")) || undefined;
@@ -101,7 +102,7 @@ const CommunityPage = () => {
     });
 
     const startThread = () =>
-        user ? navigate(newThreadPath(gameId)) : openLogin();
+        user ? navigate(newThreadPath(gameId)) : openSignup();
 
     const [kept] = useState(readThreadDraft);
     const draft = user && kept && hasContent(kept) ? kept : null;
@@ -113,55 +114,51 @@ const CommunityPage = () => {
 
     return (
         <div className="flex flex-col gap-6">
-            <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <h1 className="font-display text-title text-content">
-                        Community
-                    </h1>
-                    <p className="mt-2 max-w-[56ch] text-body text-content-secondary">
-                        Threads about the games people here are playing.
-                    </p>
-                </div>
-                <div className="flex flex-col items-stretch gap-2 sm:items-end">
-                    <div className="flex flex-col gap-2 sm:flex-row-reverse">
-                        <Button
-                            onClick={startThread}
-                            className="w-full sm:w-auto"
-                        >
-                            <Plus size={16} aria-hidden />
-                            Start a thread
-                        </Button>
-                        <a
-                            href={DISCORD_INVITE_URL}
-                            target="_blank"
-                            rel="noreferrer noopener"
-                            className={buttonClass(
-                                "secondary",
-                                "w-full sm:w-auto"
-                            )}
-                        >
-                            <SiDiscord size={16} aria-hidden />
-                            Join the Discord
-                        </a>
-                    </div>
-                    {/* An unfinished thread is easier to come back to when it's
+            <PageHeader
+                title="Community"
+                note="Threads about the games people here are playing."
+                actions={
+                    <>
+                        <div className="flex flex-col gap-2 sm:flex-row-reverse">
+                            <Button
+                                onClick={startThread}
+                                className="w-full sm:w-auto"
+                            >
+                                <Plus size={16} aria-hidden />
+                                Start a thread
+                            </Button>
+                            <a
+                                href={DISCORD_INVITE_URL}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                className={buttonClass(
+                                    "secondary",
+                                    "w-full sm:w-auto"
+                                )}
+                            >
+                                <SiDiscord size={16} aria-hidden />
+                                Join the Discord
+                            </a>
+                        </div>
+                        {/* An unfinished thread is easier to come back to when it's
                         pointed at, right where a new one would start. */}
-                    {draft && (
-                        <Link
-                            to="/community/new"
-                            className="inline-flex min-h-11 items-center justify-center gap-1.5 text-label text-brand hover:underline sm:min-h-0"
-                        >
-                            <PenLine size={13} aria-hidden />
-                            Finish your draft
-                            {draft.title.trim() && (
-                                <span className="max-w-[24ch] truncate text-content-muted">
-                                    “{draft.title.trim()}”
-                                </span>
-                            )}
-                        </Link>
-                    )}
-                </div>
-            </header>
+                        {draft && (
+                            <Link
+                                to="/community/new"
+                                className="inline-flex min-h-11 items-center justify-center gap-1.5 text-label text-brand hover:underline sm:min-h-0"
+                            >
+                                <PenLine size={13} aria-hidden />
+                                Finish your draft
+                                {draft.title.trim() && (
+                                    <span className="max-w-[24ch] truncate text-content-muted">
+                                        “{draft.title.trim()}”
+                                    </span>
+                                )}
+                            </Link>
+                        )}
+                    </>
+                }
+            />
 
             {patchNotes && (
                 <PatchNotesCard

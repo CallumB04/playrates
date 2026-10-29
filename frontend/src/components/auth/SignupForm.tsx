@@ -11,7 +11,7 @@ import AgreeToTerms from "./AgreeToTerms";
 import { useCaptcha } from "./useCaptcha";
 
 interface SignupFormProps {
-    onSignedUp: (email: string) => void;
+    onSignedUp: (email: string, signedIn: boolean) => void;
 }
 
 interface FieldErrors {
@@ -80,9 +80,14 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
         }
 
         try {
-            await signUp(email, password, username, captchaToken);
+            const { signedIn } = await signUp(
+                email,
+                password,
+                username,
+                captchaToken
+            );
             notify("Account successfully created", "success");
-            onSignedUp(email);
+            onSignedUp(email, signedIn);
         } catch (error) {
             captcha.reset();
             if (captcha.handled(error)) return;

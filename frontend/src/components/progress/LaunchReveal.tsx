@@ -48,6 +48,9 @@ const LaunchReveal = ({ progress, onShowcase, onDone }: LaunchRevealProps) => {
         { label: "friends made", n: value("social_butterfly") },
     ];
     const xp = useFigureRoll(beat >= 2 ? progress.xp : 0, !still);
+    const tiers = progress.unseen.badges.filter((b) =>
+        badgeDef(b.badge)
+    ).length;
     const badges = progress.unseen.badges
         .map((b: BadgeUnlock) => ({ ...b, def: badgeDef(b.badge) }))
         .filter((b) => b.def)
@@ -150,7 +153,9 @@ const LaunchReveal = ({ progress, onShowcase, onDone }: LaunchRevealProps) => {
                         </ul>
                     )}
                     <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-content-on-media/10 px-3 py-1.5 font-mono text-label font-semibold">
-                        {badges.length} badges
+                        {/* Every metal counts, as on the badges tab: the
+                            medals above are only each badge's best. */}
+                        {formatCount(tiers)} {tiers === 1 ? "badge" : "badges"}
                         <span aria-hidden>·</span>
                         <TokenCoin />
                         {formatCount(progress.tokens)} tokens to spend

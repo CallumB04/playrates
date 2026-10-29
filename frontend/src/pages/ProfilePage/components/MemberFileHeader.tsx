@@ -8,6 +8,7 @@ import { figureClass } from "../../../components/ui/Figure";
 import { formatHours, formatMonthYear } from "../../../lib/format";
 import AvatarFrame from "../../../components/progress/AvatarFrame";
 import NameText from "../../../components/progress/NameText";
+import { cn } from "../../../lib/cn";
 
 interface MemberFileHeaderProps {
     profile: Profile;
@@ -41,7 +42,14 @@ const MemberFileHeader = ({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-6">
             <span className="relative inline-block shrink-0 self-start">
                 <AvatarFrame frame={profile.frame} size="xl">
-                    <span className="relative inline-block rounded-full ring-4 ring-surface">
+                    {/* The ring parts the picture from the backdrop; a
+                        frame does that itself, and the ring would cover it. */}
+                    <span
+                        className={cn(
+                            "relative inline-block rounded-full",
+                            !profile.frame && "ring-4 ring-surface"
+                        )}
+                    >
                         <ProfilePicture
                             variant="profileHeader"
                             file={profile.avatarUrl ?? ""}
@@ -91,13 +99,16 @@ const MemberFileHeader = ({
                             </span>
                             played
                         </span>
-                        <span className="flex items-baseline gap-1.5">
-                            <RatingBadge
-                                value={stats.averageRating}
-                                size="row"
-                            />
-                            average rating
-                        </span>
+                        {/* Nothing rated yet is no average, not "-/10". */}
+                        {stats.averageRating !== null && (
+                            <span className="flex items-baseline gap-1.5">
+                                <RatingBadge
+                                    value={stats.averageRating}
+                                    size="row"
+                                />
+                                average rating
+                            </span>
+                        )}
                     </p>
                 )}
             </div>

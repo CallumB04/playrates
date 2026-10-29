@@ -36,8 +36,8 @@ export const GROUP_LABELS: Record<ShopGroup, string> = {
 const NOUNS: Partial<Record<ShopGroup, string>> = {
     frame: "frame",
     theme: "card theme",
-    font: "font",
-    colour: "username colour",
+    font: "name font",
+    colour: "name colour",
     reaction: "reaction",
 };
 const SINGLES: Record<string, string> = {

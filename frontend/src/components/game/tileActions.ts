@@ -31,7 +31,7 @@ export const tileActions = (
         return [
             {
                 key: "signin",
-                label: "Log in to add",
+                label: "Join to add",
                 tone: "primary",
                 onSelect: on.signIn,
             },

@@ -167,7 +167,7 @@ const ReactionBar = ({
                     aria-label="Add a reaction"
                     className={cn(
                         CHIP,
-                        "cursor-pointer border-subtle text-content-muted hover:border-strong hover:text-content"
+                        "min-w-11 cursor-pointer justify-center border-subtle text-content-muted hover:border-strong hover:text-content sm:min-w-0"
                     )}
                 >
                     <SmilePlus size={15} aria-hidden />

@@ -11,6 +11,7 @@ import {
 import { profilePath } from "../../lib/profilePaths";
 import ShareSheet from "../share/ShareSheet";
 import { useNotify } from "../../contexts/NotificationContext";
+import { useNoDialogOpen } from "../../hooks/useNoDialogOpen";
 import LaunchReveal from "./LaunchReveal";
 import LevelUpMoment from "./LevelUpMoment";
 import { badgeToastText } from "./rewardText";
@@ -30,9 +31,16 @@ const ProgressMoments = () => {
     const seen = useMarkSeen();
     const revealed = useMarkRevealed();
     const handled = useRef(new Set<string>());
-    const [levels, setLevels] = useState<number[]>([]);
+    // Toasts held while a level-up is on screen: under its scrim they'd
+    // run out unread.
+    const held = useRef<(() => void)[]>([]);
+    const queued = useRef(0);
+    const [levels, setLevels] = useState<{ from: number; to: number }[]>([]);
     const [revealing, setRevealing] = useState(false);
     const [sharing, setSharing] = useState(false);
+    // A level waits its turn behind any popup already open: the welcome, a
+    // finished Gaming 25's share, the sign-up form.
+    const turn = useNoDialogOpen(levels.length > 0 && !revealing);
 
     useEffect(() => {
         if (!data) return;
@@ -56,21 +64,30 @@ const ProgressMoments = () => {
             handled.current.add(`badge:${b.badge}:${b.metal}`)
         );
 
+        const toasts: (() => void)[] = [];
         // A badge's own XP is said with the badge.
         const plain = gains.filter((g) => g.source !== "badge");
         if (plain.length > 0) {
-            notify(xpToast(plain, data.unseen.tokens), "success", "low");
+            toasts.push(() =>
+                notify(xpToast(plain, data.unseen.tokens), "success", "low")
+            );
         }
         for (const b of badges) {
             const def = badgeDef(b.badge);
-            if (def) notify(badgeToastText(def, b.metal), "success");
+            if (def)
+                toasts.push(() =>
+                    notify(badgeToastText(def, b.metal), "success")
+                );
         }
         const before = levelFor(
             data.xp - gains.reduce((n, g) => n + g.xp, 0)
         ).level;
         if (before < data.level.level) {
-            setLevels((l) => [...l, data.level.level]);
+            queued.current += 1;
+            setLevels((l) => [...l, { from: before, to: data.level.level }]);
         }
+        if (queued.current > 0) held.current.push(...toasts);
+        else toasts.forEach((show) => show());
 
         seen.mutate({
             xpEventId: gains.at(-1)?.id,
@@ -97,7 +114,14 @@ const ProgressMoments = () => {
     };
 
     const level = levels[0];
-    const next = () => setLevels((l) => l.slice(1));
+    const next = () => {
+        queued.current -= 1;
+        if (queued.current === 0) {
+            held.current.forEach((show) => show());
+            held.current = [];
+        }
+        setLevels((l) => l.slice(1));
+    };
 
     return (
         <>
@@ -111,9 +135,10 @@ const ProgressMoments = () => {
                     }}
                 />
             )}
-            {!revealing && level !== undefined && (
+            {!revealing && level !== undefined && turn && (
                 <LevelUpMoment
-                    level={level}
+                    level={level.to}
+                    from={level.from}
                     onClose={next}
                     onShare={() => {
                         next();

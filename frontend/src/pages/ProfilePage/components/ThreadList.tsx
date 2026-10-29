@@ -36,6 +36,9 @@ const ThreadList = ({ username, isOwner, canSee }: ThreadListProps) => {
         onPageChange: setPage,
     });
 
+    if (!isLoading && canSee && threads.length === 0)
+        return <NoThreads isOwner={isOwner} />;
+
     return (
         <>
             <div
@@ -45,8 +48,6 @@ const ThreadList = ({ username, isOwner, canSee }: ThreadListProps) => {
                     <div className="px-3 py-3">
                         <TextSkeleton lines={8} />
                     </div>
-                ) : threads.length === 0 ? (
-                    <NoThreads username={username} isOwner={isOwner} />
                 ) : (
                     threads.map((thread) => (
                         <ThreadCard key={thread.id} thread={thread} />

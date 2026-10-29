@@ -119,14 +119,14 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
         setCropping(true);
     };
 
-    const pickPicture = (url: string) =>
-        ownedUrls.has(url) ? crop(url) : setChosen(url);
+    // Cropped before it's bought, and bought and worn in one press: closing
+    // half way through spends nothing.
+    const pickPicture = crop;
 
     const onBuy = async () => {
         if (!game || !chosen) return;
         try {
             await buy.mutateAsync({ gameId: game.id, url: chosen });
-            crop(chosen);
         } catch (error) {
             notify(
                 error instanceof ApiError
@@ -134,7 +134,9 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                     : "Couldn't buy that picture",
                 "error"
             );
+            return;
         }
+        await onSave();
     };
 
     const onSave = async () => {
@@ -160,7 +162,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
 
     const entries = shelf?.data ?? [];
     const busy = save.isPending || clear.isPending || buy.isPending;
-    const buying = !!chosen && !cropping && !ownedUrls.has(chosen);
+    const buying = !!chosen && cropping && !ownedUrls.has(chosen);
 
     if (owned && !owned.unlocked) {
         return (
@@ -495,7 +497,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                         </Button>
                     </div>
                 )}
-                {cropping && (
+                {cropping && !buying && (
                     <Button
                         onClick={() => void onSave()}
                         disabled={busy}

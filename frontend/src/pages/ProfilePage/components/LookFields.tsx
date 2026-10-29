@@ -59,15 +59,18 @@ const Group = ({ label, children }: { label: string; children: ReactNode }) => (
     </div>
 );
 
-/** A small choice, pressed while it's the one worn. */
+/** A small choice, pressed while it's the one worn. Named under it where
+ *  the picture alone can't tell two apart, as fonts and colours can't. */
 const Choice = ({
     on,
     label,
+    caption,
     onClick,
     children,
 }: {
     on: boolean;
     label: string;
+    caption?: string;
     onClick: () => void;
     children: ReactNode;
 }) => (
@@ -78,12 +81,17 @@ const Choice = ({
         title={label}
         onClick={onClick}
         className={cn(
-            "grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-md p-1.5",
+            "flex min-h-11 min-w-11 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md p-1.5",
             "focus-visible:outline-2 focus-visible:outline-brand",
             on ? "bg-brand-subtle ring-2 ring-brand" : "hover:bg-surface-hover"
         )}
     >
         {children}
+        {caption && (
+            <span className="text-[10px] leading-none text-content-muted">
+                {caption}
+            </span>
+        )}
     </button>
 );
 
@@ -157,6 +165,7 @@ const LookFields = ({
                         {username}
                     </NameText>
                 </p>
+                <p className="mb-1 text-label-sm text-content-muted">Font</p>
                 <div className="flex flex-wrap gap-1">
                     {NAME_FONTS.filter((f) => owned.fonts.includes(f.key)).map(
                         (f) => (
@@ -164,6 +173,7 @@ const LookFields = ({
                                 key={f.key}
                                 on={choice.nameFont === f.key}
                                 label={`${f.label} font`}
+                                caption={f.label}
                                 onClick={() => set({ nameFont: f.key })}
                             >
                                 <span className="text-body text-content">
@@ -173,7 +183,10 @@ const LookFields = ({
                         )
                     )}
                 </div>
-                <div className="mt-1 flex flex-wrap gap-1">
+                <p className="mt-2 mb-1 text-label-sm text-content-muted">
+                    Colour
+                </p>
+                <div className="flex flex-wrap gap-1">
                     {NAME_COLOURS.filter((c) =>
                         owned.colours.includes(c.key)
                     ).map((c) => (
@@ -181,6 +194,7 @@ const LookFields = ({
                             key={c.key}
                             on={choice.nameColour === c.key}
                             label={`${c.label} colour`}
+                            caption={c.label}
                             onClick={() => set({ nameColour: c.key })}
                         >
                             <span className="font-display text-body font-bold text-content">
@@ -191,33 +205,36 @@ const LookFields = ({
                 </div>
             </Group>
 
-            <Group label="Card theme">
-                <div className="flex flex-wrap gap-1">
-                    {CARD_THEMES.filter((t) =>
-                        owned.themes.includes(t.key)
-                    ).map((t) => (
-                        <Choice
-                            key={t.key}
-                            on={choice.cardTheme === t.key}
-                            label={`${t.label} card theme`}
-                            onClick={() =>
-                                set({ cardTheme: t.key as CardThemeKey })
-                            }
-                        >
-                            <span
-                                className={cn(
-                                    `card-theme-${t.key}`,
-                                    "block size-7 rounded-sm ring-1 ring-white/10"
-                                )}
-                                style={{
-                                    background:
-                                        "radial-gradient(circle at 50% 35%, var(--theme-glow), transparent 70%), var(--theme-ground)",
-                                }}
-                            />
-                        </Choice>
-                    ))}
-                </div>
-            </Group>
+            {/* Nothing to choose with only the default. */}
+            {owned.themes.length > 1 && (
+                <Group label="Card theme">
+                    <div className="flex flex-wrap gap-1">
+                        {CARD_THEMES.filter((t) =>
+                            owned.themes.includes(t.key)
+                        ).map((t) => (
+                            <Choice
+                                key={t.key}
+                                on={choice.cardTheme === t.key}
+                                label={`${t.label} card theme`}
+                                onClick={() =>
+                                    set({ cardTheme: t.key as CardThemeKey })
+                                }
+                            >
+                                <span
+                                    className={cn(
+                                        `card-theme-${t.key}`,
+                                        "block size-7 rounded-sm ring-1 ring-white/10"
+                                    )}
+                                    style={{
+                                        background:
+                                            "radial-gradient(circle at 50% 35%, var(--theme-glow), transparent 70%), var(--theme-ground)",
+                                    }}
+                                />
+                            </Choice>
+                        ))}
+                    </div>
+                </Group>
+            )}
 
             <p className="text-label-sm text-content-muted">
                 More frames, fonts and colours are in the{" "}

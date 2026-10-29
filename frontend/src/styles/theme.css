@@ -63,10 +63,10 @@
 :root,
 .light {
     /* Name colours, a step deeper by day to hold on paper. */
-    --name-sky: #1a8fd6;
-    --name-gold: #b8860b;
+    --name-sky: #1479b8;
+    --name-gold: #96690a;
     --name-ember: #e2541b;
-    --name-mint: #0f9f73;
+    --name-mint: #0b8160;
     --name-rose: #d6336c;
     --name-holo-1: #3aa6d0;
     --name-holo-2: #8b6cf0;

@@ -7,6 +7,9 @@ const auth = vi.hoisted(() => ({ user: null as unknown }));
 const progress = vi.hoisted(() => ({ data: undefined as unknown }));
 const notify = vi.hoisted(() => vi.fn());
 const mutate = vi.hoisted(() => vi.fn());
+const navigate = vi.hoisted(() => vi.fn());
+
+vi.mock("react-router-dom", () => ({ useNavigate: () => navigate }));
 
 vi.mock("../../../contexts/AuthContext", () => ({ useAuth: () => auth }));
 vi.mock("../../../contexts/NotificationContext", () => ({
@@ -29,6 +32,7 @@ beforeEach(() => {
     auth.user = buildProfile({ pinnedReviews: [1] });
     withSlots(2);
     notify.mockReset();
+    navigate.mockReset();
     mutate.mockReset();
 });
 
@@ -46,16 +50,13 @@ describe("usePinReviews", () => {
         expect(result.current.pinned).toEqual([2]);
     });
 
-    it("says so rather than pinning past the slots", () => {
+    it("offers another slot rather than pinning past them", () => {
         withSlots(1);
         const { result } = renderHook(() => usePinReviews());
         act(() => result.current.toggle(2));
         expect(result.current.pinned).toEqual([1]);
         expect(mutate).not.toHaveBeenCalled();
-        expect(notify).toHaveBeenCalledWith(
-            "You can pin 1. More slots are in the shop.",
-            "info"
-        );
+        expect(navigate).toHaveBeenCalledWith("/shop?item=slot_pinned_review");
     });
 
     it("puts the pins back when the save fails", () => {

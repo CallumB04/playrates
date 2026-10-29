@@ -147,7 +147,7 @@ const Gaming25Preview = ({
                 {favourite && (
                     <>
                         <span className="mt-2 block text-label-sm font-semibold text-medal-gold">
-                            Favourite Game
+                            Favourite game
                         </span>
                         <span className="block truncate text-body-sm text-content">
                             {favourite.game.title}

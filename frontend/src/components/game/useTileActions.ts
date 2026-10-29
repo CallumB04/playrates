@@ -18,7 +18,7 @@ import { tileActions } from "./tileActions";
  */
 export const useTileActions = () => {
     const { user } = useAuth();
-    const { openLogin } = useAccountForm();
+    const { openSignup } = useAccountForm();
     const flow = useLogFlow();
     const quickAdd = useQuickAdd();
     const { data: myLogIds } = useMyGameLogIds();
@@ -36,7 +36,9 @@ export const useTileActions = () => {
             game,
             { signedIn: !!user, log: logFor(game.id) },
             {
-                signIn: openLogin,
+                // Most who meet this have no account yet; the form offers
+                // log-in to the rest.
+                signIn: openSignup,
                 open: (id) => flow.open(id),
                 view: (id) => flow.view(id),
                 quickAdd,

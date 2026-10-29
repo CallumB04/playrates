@@ -12,6 +12,8 @@ import {
 } from "../../../hooks/queries/useProgress";
 import { formatCount } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
+import { questPath } from "../../../lib/questPath";
+import { useAuth } from "../../../contexts/AuthContext";
 
 const Column = ({
     title,
@@ -31,9 +33,11 @@ const Column = ({
  * you stand among friends. The way into /progress for the rest.
  */
 const YourWeek = () => {
+    const { user } = useAuth();
     const { data } = useProgress();
     const { data: board } = useLeaderboard("week");
-    if (!data) return null;
+    if (!data || !user) return null;
+    const username = user.username;
     const top = (board ?? []).slice(0, 3);
 
     return (
@@ -88,7 +92,10 @@ const YourWeek = () => {
             <Column title="This week's tasks">
                 <ul className="flex flex-col gap-2">
                     {data.quests.week.map((q) => (
-                        <li key={q.key} className="flex items-center gap-2.5">
+                        <li
+                            key={q.key}
+                            className="relative flex items-center gap-2.5"
+                        >
                             <span
                                 className={cn(
                                     "grid size-5 shrink-0 place-items-center rounded-full border",
@@ -105,16 +112,21 @@ const YourWeek = () => {
                                     />
                                 )}
                             </span>
-                            <span
-                                className={cn(
-                                    "min-w-0 flex-1 truncate text-body-sm",
-                                    q.done
-                                        ? "text-content-muted line-through"
-                                        : "text-content"
-                                )}
-                            >
-                                {q.label}
-                            </span>
+                            {!q.done ? (
+                                <Link
+                                    to={
+                                        questPath(q.key, username) ??
+                                        "/progress"
+                                    }
+                                    className="min-w-0 flex-1 truncate text-body-sm text-content before:absolute before:inset-x-0 before:-inset-y-1.5 before:content-[''] hover:underline"
+                                >
+                                    {q.label}
+                                </Link>
+                            ) : (
+                                <span className="min-w-0 flex-1 truncate text-body-sm text-content-muted line-through">
+                                    {q.label}
+                                </span>
+                            )}
                             <span className="font-mono text-label-sm text-content-muted tabular-nums">
                                 {q.count}/{q.target}
                             </span>

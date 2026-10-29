@@ -6,6 +6,7 @@ import {
     ListPlus,
     Lock,
     Pencil,
+    Pin,
     Trash2,
     Users,
 } from "lucide-react";
@@ -26,7 +27,7 @@ import { useMyGameLogIds } from "../../hooks/queries/useGameLogs";
 import StatusBadge from "../../components/ui/StatusBadge";
 import { displayStatusFor } from "../../constants/gameStatus";
 import { usePageMeta } from "../../hooks/usePageMeta";
-import Button from "../../components/ui/Button";
+import Button, { buttonClass } from "../../components/ui/Button";
 import ConfirmPopup from "../../components/ui/ConfirmPopup";
 import ReactionBar from "../../components/ui/ReactionBar";
 import EmptyPlate from "../../components/ui/EmptyPlate";
@@ -43,6 +44,8 @@ import ListVisibilitySelect from "../../components/lists/ListVisibilitySelect";
 import RankedList from "../../components/ranked/RankedList";
 import RankedGameRow from "../../components/ranked/RankedGameRow";
 import ReportDialog from "../../components/ReportDialog";
+import ShareList from "../../components/lists/ShareList";
+import { usePins } from "../ProfilePage/lib/usePinReviews";
 import { accentHue, avatarGradient } from "../../lib/profileAccent";
 import { formatCount, formatDate, releaseYear } from "../../lib/format";
 import { listPath, profilePath } from "../../lib/profilePaths";
@@ -52,6 +55,27 @@ import { cn } from "../../lib/cn";
  *  the API says the same way. */
 const isMissing = (error: unknown) =>
     error instanceof ApiError && error.status === 404;
+
+/** Pins the list to its owner's profile, or with no slot free, opens the
+ *  shop at one. Only for a list everyone can see: a hidden one pinned
+ *  would be an empty card to anyone else. */
+const PinList = ({ listId }: { listId: number }) => {
+    const pins = usePins("pinnedLists");
+    const on = pins.pinned.includes(listId);
+    return (
+        <Button
+            variant="ghost"
+            size="sm"
+            aria-pressed={on}
+            onClick={() => pins.toggle(listId)}
+            disabled={pins.saving}
+            className="max-sm:min-h-11"
+        >
+            <Pin size={14} aria-hidden fill={on ? "currentColor" : "none"} />
+            {on ? "Pinned" : "Pin to profile"}
+        </Button>
+    );
+};
 
 /** One list: what it is, whose it is, and its games. */
 const ListPage = () => {
@@ -65,7 +89,24 @@ const ListPage = () => {
         noindex: list ? list.visibility !== "everyone" : true,
     });
 
-    if (!Number.isInteger(listId) || isMissing(error)) return <NotFoundPage />;
+    if (!Number.isInteger(listId)) return <NotFoundPage />;
+    // The API won't say whether a hidden list exists, so neither does this;
+    // it says what it can, and leads to the owner's lists.
+    if (isMissing(error))
+        return (
+            <EmptyPlate
+                title="This list can't be shown"
+                body="It may have been deleted, or its owner keeps it to themselves or their friends."
+                action={
+                    <Link
+                        to={profilePath(username, "lists")}
+                        className={buttonClass("primary")}
+                    >
+                        {username}’s lists
+                    </Link>
+                }
+            />
+        );
     if (isLoading || !list) return <ListSkeleton />;
     // The link may name its owner as they were: follow them to now.
     if (list.owner.username !== username) {
@@ -183,58 +224,69 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
                         {list.description}
                     </p>
                 )}
-                <div className="relative flex flex-wrap items-center gap-2 border-t border-subtle px-4 py-3 sm:px-6">
-                    <ReactionBar
-                        voteCount={list.voteCount}
-                        myReaction={list.myReaction}
-                        reactions={list.reactions}
-                        noun="list"
-                        disabledReason={
-                            !user
-                                ? "Sign in to vote"
-                                : isOwner
-                                  ? "You can't upvote your own list"
-                                  : null
-                        }
-                        onReact={(reaction) => vote.mutateAsync(reaction)}
-                    />
-                    <div className="ml-auto flex items-center gap-1">
-                        {isOwner ? (
-                            <>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setEditing("details")}
-                                    className="max-sm:min-h-11"
-                                >
-                                    <Pencil size={14} aria-hidden />
-                                    Edit
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setDeleting(true)}
-                                    className="max-sm:min-h-11"
-                                >
-                                    <Trash2 size={14} aria-hidden />
-                                    Delete
-                                </Button>
-                            </>
-                        ) : (
-                            user && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setReporting(true)}
-                                    className="max-sm:min-h-11"
-                                >
-                                    <Flag size={14} aria-hidden />
-                                    Report
-                                </Button>
-                            )
-                        )}
+                {/* A visitor has nothing to do here, so with nothing to
+                    show either the strip would be empty. */}
+                {(user || list.voteCount > 0) && (
+                    <div className="relative flex flex-wrap items-center gap-2 border-t border-subtle px-4 py-3 sm:px-6">
+                        <ReactionBar
+                            voteCount={list.voteCount}
+                            myReaction={list.myReaction}
+                            reactions={list.reactions}
+                            noun="list"
+                            disabledReason={
+                                !user
+                                    ? "Join to react"
+                                    : isOwner
+                                      ? "You can't react to your own list"
+                                      : null
+                            }
+                            onReact={(reaction) => vote.mutateAsync(reaction)}
+                        />
+                        <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
+                            <ShareList
+                                list={list}
+                                viewerUsername={user?.username}
+                            />
+                            {isOwner ? (
+                                <>
+                                    {list.visibility === "everyone" && (
+                                        <PinList listId={list.id} />
+                                    )}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setEditing("details")}
+                                        className="max-sm:min-h-11"
+                                    >
+                                        <Pencil size={14} aria-hidden />
+                                        Edit
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setDeleting(true)}
+                                        className="max-sm:min-h-11"
+                                    >
+                                        <Trash2 size={14} aria-hidden />
+                                        Delete
+                                    </Button>
+                                </>
+                            ) : (
+                                user && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setReporting(true)}
+                                        className="max-sm:min-h-11"
+                                    >
+                                        <Flag size={14} aria-hidden />
+                                        Report
+                                    </Button>
+                                )
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </header>
 
             {isOwner && <AddGames list={list} />}

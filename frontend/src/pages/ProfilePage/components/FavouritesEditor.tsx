@@ -136,7 +136,7 @@ const FavouritesEditor = ({ current, onClose }: FavouritesEditorProps) => {
                         That’s six. Remove one to add another.
                     </p>
                 ) : (
-                    <GamePicker value={null} onChange={add} />
+                    <GamePicker value={null} onChange={add} inlineResults />
                 )}
             </div>
 

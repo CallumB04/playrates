@@ -23,14 +23,14 @@ describe("Gaming25Grid", () => {
 
         expect(cells).toHaveLength(25);
         expect(cells[12]).toHaveAttribute("data-centre");
-        expect(cells[12]).toHaveTextContent("Favourite Game");
+        expect(cells[12]).toHaveTextContent("Favourite game");
     });
 
     it("links a visitor to each game, leaving the empty cells quiet", () => {
         renderWithProviders(<Gaming25Grid picks={picks} />);
 
         expect(
-            screen.getByRole("link", { name: "Best Story: Disco" })
+            screen.getByRole("link", { name: "Best story: Disco" })
         ).toHaveAttribute("href", "/game/8");
         expect(screen.getAllByRole("link")).toHaveLength(2);
         expect(screen.queryByRole("button")).toBeNull();
@@ -42,11 +42,11 @@ describe("Gaming25Grid", () => {
 
         expect(screen.getAllByRole("button")).toHaveLength(25);
         await userEvent.click(
-            screen.getByRole("button", { name: "Hidden Gem: choose a game" })
+            screen.getByRole("button", { name: "Hidden gem: choose a game" })
         );
         await userEvent.click(
             screen.getByRole("button", {
-                name: "Favourite Game: Outer Wilds",
+                name: "Favourite game: Outer Wilds",
             })
         );
         expect(onPick.mock.calls).toEqual([

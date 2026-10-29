@@ -7,18 +7,18 @@ describe("whyCannotVote", () => {
     });
 
     it("asks a signed-out viewer to sign in", () => {
-        expect(whyCannotVote(undefined, "author")).toBe("Sign in to vote");
+        expect(whyCannotVote(undefined, "author")).toBe("Join to react");
     });
 
     it("stops you voting on your own review", () => {
         expect(whyCannotVote("author", "author")).toBe(
-            "You can't upvote your own review"
+            "You can't react to your own review"
         );
     });
 
     it("names what is being voted on", () => {
         expect(whyCannotVote("author", "author", "message")).toBe(
-            "You can't upvote your own message"
+            "You can't react to your own message"
         );
     });
 });

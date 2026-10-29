@@ -4,7 +4,6 @@ import { Plus } from "lucide-react";
 import type { ListSort } from "@playrates/shared";
 import Button from "../../../components/ui/Button";
 import SegmentedChoice from "../../../components/ui/SegmentedChoice";
-import { cardClass } from "../../../components/ui/Card";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import ListCard from "../../../components/lists/ListCard";
 import ListEditor from "../../../components/lists/ListEditor";
@@ -24,7 +23,7 @@ interface ListsViewProps {
     canSee: boolean;
 }
 
-/** Someone's lists, the newest made or the most upvoted first. */
+/** Someone's lists, the newest made or the most reacted to first. */
 const ListsView = ({ username, isOwner, canSee }: ListsViewProps) => {
     const navigate = useNavigate();
     const [params, setParams] = useSearchParams();
@@ -57,15 +56,18 @@ const ListsView = ({ username, isOwner, canSee }: ListsViewProps) => {
     return (
         <section className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <SegmentedChoice
-                    label="Sort lists"
-                    segments={[
-                        { value: "new", label: "New" },
-                        { value: "popular", label: "Popular" },
-                    ]}
-                    value={sort}
-                    onChange={setSort}
-                />
+                {/* Nothing to sort with no lists. */}
+                {(isLoading || lists.length > 0) && (
+                    <SegmentedChoice
+                        label="Sort lists"
+                        segments={[
+                            { value: "new", label: "New" },
+                            { value: "popular", label: "Popular" },
+                        ]}
+                        value={sort}
+                        onChange={setSort}
+                    />
+                )}
                 {isOwner && (
                     <Button
                         onClick={() => setCreating(true)}
@@ -84,15 +86,14 @@ const ListsView = ({ username, isOwner, canSee }: ListsViewProps) => {
                     ))}
                 </div>
             ) : lists.length === 0 ? (
-                <div className={cardClass(undefined, { padding: "none" })}>
-                    <ListEmpty
-                        message={
-                            isOwner
-                                ? "Gather games into lists: a top ten, a to-play pile, anything."
-                                : "No lists yet."
-                        }
-                    />
-                </div>
+                <ListEmpty
+                    title="No lists yet"
+                    body={
+                        isOwner
+                            ? "Gather games into lists: a top ten, a to-play pile, anything."
+                            : undefined
+                    }
+                />
             ) : (
                 <ul className="grid gap-3 sm:grid-cols-2">
                     {lists.map((list) => (

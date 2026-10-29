@@ -1,3 +1,4 @@
+import { backgroundPrice } from "@playrates/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -30,7 +31,7 @@ beforeEach(() => {
     backgrounds = {
         unlocked: true,
         credits: 0,
-        tokens: 30,
+        tokens: 100,
         games: [
             {
                 gameId: 1,
@@ -216,24 +217,32 @@ describe("BackgroundPicker", () => {
         expect(screen.queryByRole("button", { name: /Witcher/ })).toBeNull();
     });
 
-    it("buys a picture not yet owned before cropping it", async () => {
+    // Cropped first, then bought and worn in one press: closing half way
+    // used to leave the picture bought and the background unchanged.
+    it("crops a picture not yet owned, then buys and wears it at once", async () => {
         backgrounds.games[0]!.urls = [PICTURES[0]!.url];
         const { user } = setup();
 
         await openGame(user);
-        // One owned from this game already, so the next costs 20.
+        // One owned from this game already, so the next costs a step more.
         await user.click(
-            await screen.findByRole("button", { name: "Picture 2, 20 tokens" })
+            await screen.findByRole("button", {
+                name: `Picture 2, ${backgroundPrice(1)} tokens`,
+            })
         );
-        expect(screen.getByText("10 left after")).toBeInTheDocument();
-        await user.click(screen.getByRole("button", { name: /Buy for/ }));
-
         expect(
-            await screen.findByRole("slider", {
+            screen.getByRole("slider", {
                 name: "Which part of the picture shows",
             })
         ).toBeInTheDocument();
-        expect(calls).toEqual([`buy:1:${PICTURES[1]!.url}`]);
+        expect(
+            screen.getByText(`${100 - backgroundPrice(1)} left after`)
+        ).toBeInTheDocument();
+        expect(calls).toEqual([]);
+
+        await user.click(screen.getByRole("button", { name: /Buy for/ }));
+        await waitFor(() => expect(calls).toHaveLength(2));
+        expect(calls[0]).toBe(`buy:1:${PICTURES[1]!.url}`);
     });
 
     it("offers the free picture first", async () => {

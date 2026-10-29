@@ -3,6 +3,9 @@ import {
     FRAMES,
     NAME_COLOURS,
     NAME_FONTS,
+    REACTIONS,
+    BACKGROUND_LEVEL,
+    levelTokens,
     type BadgeDef,
     type Metal,
     type XpGain,
@@ -38,67 +41,70 @@ export const badgeToastText = (badge: BadgeDef, metal: Metal): string =>
         : `New badge: ${badge.name}`;
 
 export interface LevelReward {
-    kind: "frame" | "theme" | "font" | "colour";
+    kind: "frame" | "theme" | "font" | "colour" | "reaction" | "background";
     key: string;
     level: number;
+    /** As a row names it: "Gold frame". */
     label: string;
+    /** As a sentence says it: "the Gold frame". */
+    phrase: string;
 }
+
+const reward = (
+    kind: LevelReward["kind"],
+    key: string,
+    level: number,
+    label: string
+): LevelReward => ({ kind, key, level, label, phrase: `the ${label}` });
 
 /** Everything a level opens, earliest first. */
 export const LEVEL_REWARDS: LevelReward[] = [
     ...FRAMES.flatMap((f) =>
         "level" in f
-            ? [
-                  {
-                      kind: "frame" as const,
-                      key: f.key,
-                      level: f.level,
-                      label: `${f.label} frame`,
-                  },
-              ]
+            ? [reward("frame", f.key, f.level, `${f.label} frame`)]
             : []
     ),
     ...CARD_THEMES.flatMap((t) =>
         "level" in t
-            ? [
-                  {
-                      kind: "theme" as const,
-                      key: t.key,
-                      level: t.level,
-                      label: `${t.label} card theme`,
-                  },
-              ]
+            ? [reward("theme", t.key, t.level, `${t.label} card theme`)]
             : []
     ),
     ...NAME_FONTS.flatMap((f) =>
         "level" in f
-            ? [
-                  {
-                      kind: "font" as const,
-                      key: f.key,
-                      level: f.level,
-                      label: `${f.label} name font`,
-                  },
-              ]
+            ? [reward("font", f.key, f.level, `${f.label} name font`)]
             : []
     ),
     ...NAME_COLOURS.flatMap((c) =>
         "level" in c
-            ? [
-                  {
-                      kind: "colour" as const,
-                      key: c.key,
-                      level: c.level,
-                      label: `${c.label} name colour`,
-                  },
-              ]
+            ? [reward("colour", c.key, c.level, `${c.label} name colour`)]
             : []
     ),
+    ...REACTIONS.flatMap((r) =>
+        "level" in r
+            ? [reward("reaction", r.key, r.level, `${r.label} reaction`)]
+            : []
+    ),
+    {
+        kind: "background" as const,
+        key: "background",
+        level: BACKGROUND_LEVEL,
+        label: "Profile backgrounds",
+        phrase: "profile backgrounds",
+    },
 ].sort((a, b) => a.level - b.level);
 
-/** What a level opens: a frame, a card theme, a font or a colour. */
-export const unlocksAt = (level: number): LevelReward[] =>
-    LEVEL_REWARDS.filter((r) => r.level === level);
+/** What a climb opens, from the level after `from` up to `to`; one level
+ *  when `from` is left out. A single badge can lift you several at once. */
+export const unlocksBetween = (to: number, from = to - 1): LevelReward[] =>
+    LEVEL_REWARDS.filter((r) => r.level > from && r.level <= to);
+
+/** The tokens a climb paid, every level in it counted. */
+export const tokensBetween = (to: number, from = to - 1): number => {
+    let total = 0;
+    for (let level = from + 1; level <= to; level++)
+        total += levelTokens(level);
+    return total;
+};
 
 /** The next level that opens anything, and the first thing it opens. */
 export const nextReward = (level: number): LevelReward | undefined =>

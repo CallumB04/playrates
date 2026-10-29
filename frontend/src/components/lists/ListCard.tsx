@@ -73,7 +73,7 @@ const ListCard = ({
                         <ArrowBigUp size={13} aria-hidden />
                         {formatCount(list.voteCount)}
                         <span className="sr-only">
-                            {list.voteCount === 1 ? " upvote" : " upvotes"}
+                            {list.voteCount === 1 ? " reaction" : " reactions"}
                         </span>
                     </span>
                     {showVisibility && privacy && (

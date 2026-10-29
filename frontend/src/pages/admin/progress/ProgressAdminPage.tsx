@@ -17,7 +17,7 @@ import {
     badgeRows,
     reactionLabel,
     shopLabel,
-    sourceLabel,
+    sourceRows,
 } from "./progressAdmin";
 
 const METAL_COLUMNS: { metal: Metal; label: string }[] = [
@@ -85,7 +85,7 @@ const Badges = ({ badges }: { badges: AdminProgress["badges"] }) => {
                                 <span className="flex items-center gap-2.5">
                                     <BadgeMedal
                                         badge={row.badge}
-                                        metal={1}
+                                        metal={row.top}
                                         size="xs"
                                     />
                                     <span className="truncate text-content">
@@ -210,9 +210,9 @@ const Body = ({ p }: { p: AdminProgress }) => (
                 ) : (
                     <RankBars
                         unit={["XP", "XP"]}
-                        items={p.xpBySource.map((s) => ({
-                            key: s.source,
-                            label: sourceLabel(s.source),
+                        items={sourceRows(p.xpBySource).map((s) => ({
+                            key: s.label,
+                            label: s.label,
                             value: s.xp,
                         }))}
                     />

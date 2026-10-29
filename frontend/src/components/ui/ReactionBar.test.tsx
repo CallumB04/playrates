@@ -90,16 +90,16 @@ describe("ReactionBar", () => {
                 myReaction={null}
                 reactions={[]}
                 onReact={() => {}}
-                disabledReason="Sign in to vote"
+                disabledReason="Join to react"
             />
         );
         expect(container).toBeEmptyDOMElement();
     });
 
     it("lets nobody react while saying why, and still shows the count", () => {
-        bar({ disabledReason: "Sign in to vote" });
+        bar({ disabledReason: "Join to react" });
         expect(
-            screen.getByRole("button", { name: "3 upvotes. Sign in to vote" })
+            screen.getByRole("button", { name: "3 upvotes. Join to react" })
         ).toBeDisabled();
         expect(
             screen.queryByRole("button", { name: "Add a reaction" })

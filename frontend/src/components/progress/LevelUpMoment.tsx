@@ -1,6 +1,5 @@
 import { useId, type ReactNode } from "react";
-import { Share2 } from "lucide-react";
-import { levelTokens } from "@playrates/shared";
+import { ImagePlus, Share2 } from "lucide-react";
 import Button from "../ui/Button";
 import Modal from "../ui/Modal";
 import ProfilePicture from "../ProfilePicture";
@@ -9,11 +8,19 @@ import { cn } from "../../lib/cn";
 import { formatCount } from "../../lib/format";
 import AvatarFrame from "./AvatarFrame";
 import NameText from "./NameText";
-import { nextReward, unlocksAt, type LevelReward } from "./rewardText";
+import ReactionIcon from "./ReactionIcon";
+import {
+    nextReward,
+    tokensBetween,
+    unlocksBetween,
+    type LevelReward,
+} from "./rewardText";
 import { TokenCoin } from "./TokenAmount";
 
 interface LevelUpMomentProps {
     level: number;
+    /** Where the climb started, when it was more than one level. */
+    from?: number;
     onShare: () => void;
     onClose: () => void;
 }
@@ -63,7 +70,21 @@ const Preview = ({ reward }: { reward: LevelReward }) => {
                     <NameText colour={reward.key}>Aa</NameText>
                 </span>
             );
+        case "reaction":
+            return <ReactionIcon reaction={reward.key} size={26} />;
+        case "background":
+            return <ImagePlus size={24} aria-hidden className="text-brand" />;
     }
+};
+
+/** Where each kind of unlock is put to use. */
+const HOW_TO_USE: Record<LevelReward["kind"], string> = {
+    frame: "Ready to use from Your look",
+    theme: "Ready to use from Your look",
+    font: "Ready to use from Your look",
+    colour: "Ready to use from Your look",
+    reaction: "Ready to leave on reviews, lists and posts",
+    background: "Pick one from your profile",
 };
 
 const Row = ({ lead, children }: { lead: ReactNode; children: ReactNode }) => (
@@ -80,9 +101,14 @@ const Row = ({ lead, children }: { lead: ReactNode; children: ReactNode }) => (
  * number on a gold coin that lands with a glow and a single ring, then what
  * it brought, each unlock shown as itself, and what the next one is.
  */
-const LevelUpMoment = ({ level, onShare, onClose }: LevelUpMomentProps) => {
+const LevelUpMoment = ({
+    level,
+    from = level - 1,
+    onShare,
+    onClose,
+}: LevelUpMomentProps) => {
     const titleId = useId();
-    const unlocks = unlocksAt(level);
+    const unlocks = unlocksBetween(level, from);
     const next = nextReward(level);
 
     return (
@@ -126,12 +152,17 @@ const LevelUpMoment = ({ level, onShare, onClose }: LevelUpMomentProps) => {
                 >
                     Level {level}
                 </h2>
+                {from < level - 1 && (
+                    <p className="mt-1 text-body-sm text-content-secondary">
+                        Up from level {from}
+                    </p>
+                )}
             </div>
 
             <ul className="mt-5 animate-fade-up divide-y divide-subtle rounded-md bg-surface-sunken/60 [animation-delay:300ms]">
                 <Row lead={<TokenCoin className="size-7" />}>
                     <span className="font-mono font-semibold tabular-nums">
-                        +{formatCount(levelTokens(level))}
+                        +{formatCount(tokensBetween(level, from))}
                     </span>{" "}
                     tokens to spend in the shop
                 </Row>
@@ -139,14 +170,14 @@ const LevelUpMoment = ({ level, onShare, onClose }: LevelUpMomentProps) => {
                     <Row key={u.key + u.kind} lead={<Preview reward={u} />}>
                         <span className="block font-medium">{u.label}</span>
                         <span className="block text-label-sm text-content-muted">
-                            Unlocked, wear it from your profile
+                            {HOW_TO_USE[u.kind]}
                         </span>
                     </Row>
                 ))}
             </ul>
             {next && (
                 <p className="mt-3 text-center text-label-sm text-content-muted">
-                    Next: the {next.label} at level {next.level}
+                    Next: {next.phrase} at level {next.level}
                 </p>
             )}
 

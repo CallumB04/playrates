@@ -43,7 +43,7 @@ const FriendsView = ({
                     </div>
                 ) : friends.length === 0 ? (
                     <ListEmpty
-                        message="No friends yet."
+                        title="No friends yet"
                         action={
                             isOwner
                                 ? {

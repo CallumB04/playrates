@@ -70,7 +70,7 @@ describe("ListsView", () => {
         serve([]);
         render(false);
 
-        expect(await screen.findByText("No lists yet.")).toBeInTheDocument();
+        expect(await screen.findByText("No lists yet")).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: /New list/ })).toBeNull();
     });
 });

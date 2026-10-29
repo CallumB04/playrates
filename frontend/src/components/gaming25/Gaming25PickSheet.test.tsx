@@ -77,9 +77,9 @@ describe("Gaming25PickSheet", () => {
         await pickPortal();
 
         await waitFor(() => expect(saved).toEqual(["overrated"]));
-        // Best Soundtrack is filled, so on past it.
+        // Best soundtrack is filled, so on past it.
         expect(
-            screen.getByRole("heading", { name: "Hardest Game" })
+            screen.getByRole("heading", { name: "Hardest game" })
         ).toBeInTheDocument();
     });
 

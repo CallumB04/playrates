@@ -13,6 +13,9 @@ interface LoveButtonProps {
     /** Set when the viewer cannot love it, and says why. The count still
      *  shows, so a signed-out viewer or the owner can read it. */
     disabledReason?: string | null;
+    /** For a signed-out viewer: a press asks them to join instead, so the
+     *  reason isn't left to a tooltip a phone can't show. */
+    onJoin?: () => void;
     className?: string;
 }
 
@@ -28,9 +31,10 @@ const LoveButton = ({
     loved,
     onToggle,
     disabledReason,
+    onJoin,
     className,
 }: LoveButtonProps) => {
-    const disabled = !!disabledReason;
+    const disabled = !!disabledReason && !onJoin;
     const [pressed, setPressed] = useState<boolean | null>(null);
     useEffect(() => setPressed(null), [loved, count]);
     // Pops only on a press, not when the page arrives already loved.
@@ -40,6 +44,7 @@ const LoveButton = ({
     const shownCount = count + (shown === loved ? 0 : shown ? 1 : -1);
 
     const toggle = () => {
+        if (onJoin) return onJoin();
         if (!shown) setPopped((n) => n + 1);
         setPressed(!shown);
         Promise.resolve(onToggle()).catch(() => setPressed(null));
@@ -52,7 +57,7 @@ const LoveButton = ({
             disabled={disabled}
             aria-pressed={shown}
             aria-label={
-                disabled
+                disabledReason
                     ? `${shownCount} loves. ${disabledReason}`
                     : shown
                       ? `Loved, with ${shownCount}. Press to take it back`
