@@ -151,8 +151,8 @@ const Header = () => {
                             <div className="flex items-center gap-3">
                                 {/* On a phone too: someone coming back looks
                                     for it top right, not inside the menu.
-                                    One button there, so the bar stays
-                                    clear; the form it opens leads to
+                                    Only this one there, so the bar stays
+                                    simple; the form it opens leads to
                                     sign-up too. */}
                                 <Button
                                     variant="ghost"
@@ -160,12 +160,7 @@ const Header = () => {
                                     onClick={openLogin}
                                     className="max-sm:min-h-11 max-sm:px-3"
                                 >
-                                    <span className="sm:hidden">
-                                        Sign in / sign up
-                                    </span>
-                                    <span className="hidden sm:inline">
-                                        Sign in
-                                    </span>
+                                    Sign in
                                 </Button>
                                 <span className="hidden sm:contents">
                                     <Button size="sm" onClick={openSignup}>
