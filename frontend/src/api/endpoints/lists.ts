@@ -9,7 +9,12 @@ import type {
     VoteResult,
     ReactionKey,
 } from "@playrates/shared";
+import { env } from "../../lib/env";
 import { api } from "../client";
+
+/* Raised whenever the picture's design or wording changes: a versioned URL
+   is cached, so a list nobody has touched would keep its old picture. */
+const LIST_IMAGE_REVISION = 1;
 
 /** Someone's lists, as far as the caller may see them. */
 export const fetchUserLists = async (
@@ -118,4 +123,12 @@ export const toggleListVote = async (
         reaction,
     });
     return data;
+};
+
+/** The list drawn as a picture to post. The version makes each state of the
+ *  list its own URL; its owner's theme and avatar aren't in it, so the API
+ *  keeps a versioned picture a day rather than for good. */
+export const listImageUrl = (listId: number, updatedAt: string): string => {
+    const v = `${LIST_IMAGE_REVISION}.${Date.parse(updatedAt)}`;
+    return `${env.apiBaseUrl}/api/v1/lists/${listId}/image?v=${v}`;
 };

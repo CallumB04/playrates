@@ -1,4 +1,5 @@
 import { Router, type RequestHandler } from "express";
+import { z } from "zod";
 import {
   AddListGameSchema,
   CreateListSchema,
@@ -19,13 +20,29 @@ import {
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { validate } from "../../middleware/validate.js";
+import type { ProfilesRepository } from "../profiles/profiles.repository.js";
+import { ownerTheme, renderListImage } from "./lists.image.js";
 import type { ListsService } from "./lists.service.js";
 
 interface Deps {
   service: ListsService;
   requireAuth: RequestHandler;
   optionalAuth: RequestHandler;
+  /** For the owner's card theme on the shared picture; without it, the
+   *  default. */
+  profiles?: Pick<ProfilesRepository, "findByUsername">;
 }
+
+const ListImageQuerySchema = z.object({
+  /** Only there to change the URL when the list changes. */
+  v: z.string().max(64).optional(),
+});
+
+// The version follows the list but not its owner's theme or avatar, so a
+// versioned picture is kept a day rather than for good.
+const VERSIONED_CACHE = "public, max-age=86400";
+const UNVERSIONED_CACHE =
+  "public, max-age=300, s-maxage=300, stale-while-revalidate=86400";
 
 const callerId = (req: Parameters<RequestHandler>[0]): string => {
   const id = req.auth?.userId;
@@ -66,6 +83,7 @@ export const createListsRouter = ({
   service,
   requireAuth,
   optionalAuth,
+  profiles,
 }: Deps): Router => {
   const router = Router();
 
@@ -91,6 +109,30 @@ export const createListsRouter = ({
     async (req, res) => {
       const { listId } = req.valid!.params as { listId: number };
       res.json(await service.get(listId, req.auth?.userId));
+    },
+  );
+
+  // Asked as nobody, whoever asks: the picture travels beyond the site, so
+  // only a list anyone may see gets one.
+  router.get(
+    "/:listId/image",
+    validate({ params: ListIdParamSchema, query: ListImageQuerySchema }),
+    async (req, res) => {
+      const { listId } = req.valid!.params as { listId: number };
+      const { v } = req.valid!.query as { v?: string };
+      const list = await service.get(listId);
+      if (list.visibility !== "everyone") throw AppError.notFound("List");
+      const png = await renderListImage(
+        list,
+        fetch,
+        await ownerTheme(profiles, list.owner.username),
+      );
+      res
+        .type("png")
+        .setHeader("Cache-Control", v ? VERSIONED_CACHE : UNVERSIONED_CACHE)
+        // Made to be shown anywhere, not only on the site's own origin.
+        .setHeader("Cross-Origin-Resource-Policy", "cross-origin")
+        .send(png);
     },
   );
 
