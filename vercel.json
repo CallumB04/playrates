@@ -5,7 +5,7 @@
     "functions": {
         "api/index.ts": {
             "maxDuration": 60,
-            "includeFiles": "{frontend/dist/index.html,node_modules/@fontsource/geist/files/geist-latin-*-normal.woff}"
+            "includeFiles": "{frontend/dist/index.html,node_modules/@fontsource/geist/files/geist-latin-*-normal.woff,node_modules/harfbuzzjs/hb.wasm}"
         }
     },
     "crons": [
