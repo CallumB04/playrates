@@ -5,7 +5,7 @@ import { http, HttpResponse } from "msw";
 import type { AppNotification } from "@playrates/shared";
 import { server } from "../../test/msw/server";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import { buildProfile } from "../../test/msw/handlers";
+import { buildFriendEdge, buildProfile } from "../../test/msw/handlers";
 import NotificationItem from "./NotificationItem";
 
 // A friend request's Accept and Decline belong to someone signed in.
@@ -111,10 +111,11 @@ describe("NotificationItem", () => {
         );
     });
 
-    it("takes a gift to where it's worn", () => {
+    it("takes a gift to where it's worn, with the sender's face", () => {
         renderItem({
             ...welcome(),
             kind: "gift_received",
+            actor: { ...buildFriendEdge().user, username: "halcyon" },
             username: "halcyon",
             item: "colour_mint",
         } as AppNotification);
@@ -122,6 +123,7 @@ describe("NotificationItem", () => {
         expect(
             screen.getByRole("link", { name: /halcyon gifted you the Mint/ })
         ).toHaveAttribute("href", "/progress#name");
+        expect(screen.getByText("H")).toBeInTheDocument();
     });
 
     describe("upvote milestones", () => {

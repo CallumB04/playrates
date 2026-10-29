@@ -132,6 +132,8 @@ export interface ReferralJoinedNotification extends NotificationBase {
 /** A friend bought you something from the shop. */
 export interface GiftReceivedNotification extends NotificationBase {
   kind: "gift_received";
+  /** Who sent it, while they still have an account. */
+  actor: FriendUser | null;
   username: string;
   /** The shop item's key. */
   item: string;

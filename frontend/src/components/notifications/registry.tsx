@@ -189,6 +189,18 @@ const ActorFace = ({
     />
 );
 
+/** The sender's face, or the gift itself once their account is gone. */
+const GiftFace = ({
+    notification,
+}: {
+    notification: GiftReceivedNotification;
+}) =>
+    notification.actor ? (
+        <ActorFace notification={{ actor: notification.actor }} />
+    ) : (
+        <IconMark icon={Gift} tone="text-brand" />
+    );
+
 /** Opening a community notification is reading it. */
 const useOpen = (notification: AppNotification, onNavigate: () => void) => {
     const patch = usePatchNotification();
@@ -565,6 +577,7 @@ export const NOTIFICATION_RENDERERS: {
         icon: Gift,
         tone: "text-brand",
         Content: GiftReceivedContent,
+        Leading: GiftFace,
     },
     announcement: {
         icon: ANNOUNCEMENT_PRESENTATION.update.icon,

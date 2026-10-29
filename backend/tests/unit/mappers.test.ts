@@ -297,6 +297,22 @@ describe("notification mapper", () => {
     });
   });
 
+  it("embeds the sender on a gift, and does without once they're gone", () => {
+    const data = { username: "devuser", item: "frame_neon" };
+    expect(
+      toNotification(
+        { ...buildNotification({ kind: "gift_received", data }), actor },
+        () => null,
+      ),
+    ).toMatchObject({ actor: { username: "devuser" } });
+    expect(
+      toNotification(
+        buildNotification({ kind: "gift_received", data }),
+        () => null,
+      ),
+    ).toMatchObject({ kind: "gift_received", actor: null });
+  });
+
   it("embeds the actor on an accepted request", () => {
     const mapped = toNotification(
       { ...buildNotification({ kind: "friend_accepted" }), actor },

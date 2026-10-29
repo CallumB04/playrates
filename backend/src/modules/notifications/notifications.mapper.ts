@@ -200,7 +200,13 @@ export const toNotification = (
       const username = str(row.data.username);
       const item = str(row.data.item);
       if (!username || !item) return { ...base, kind: "unknown" };
-      return { ...base, kind: "gift_received", username, item };
+      return {
+        ...base,
+        kind: "gift_received",
+        actor: row.actor ? toFriendUser(row.actor, now) : null,
+        username,
+        item,
+      };
     }
 
     case "gaming_25_love_milestone": {
