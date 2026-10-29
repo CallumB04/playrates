@@ -18,7 +18,7 @@ export type { NotificationSeverity, NotificationType, Toast };
 interface NotificationContextValue {
     toasts: Toast[];
     notify: (
-        text: string,
+        text: ReactNode,
         type: NotificationType,
         severity?: NotificationSeverity
     ) => void;
@@ -40,7 +40,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
     const notify = useCallback(
         (
-            text: string,
+            text: ReactNode,
             type: NotificationType,
             severity?: NotificationSeverity
         ) => dispatch({ kind: "push", id: nextId++, text, type, severity }),

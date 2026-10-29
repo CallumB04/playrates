@@ -18,6 +18,7 @@ import type { CommunityRepository } from "../community/community.repository.js";
 import type { CommunityService } from "../community/community.service.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type { ReviewsRepository } from "../reviews/reviews.repository.js";
+import type { ListsRepository } from "../lists/lists.repository.js";
 import type { ReportsRepository } from "./reports.repository.js";
 
 interface Deps {
@@ -26,6 +27,7 @@ interface Deps {
   communityService: CommunityService;
   reviews: ReviewsRepository;
   profiles: ProfilesRepository;
+  lists: ListsRepository;
   avatars: AvatarStore;
 }
 
@@ -46,6 +48,7 @@ export const createReportsService = ({
   communityService,
   reviews,
   profiles,
+  lists,
   avatars,
 }: Deps) => {
   const numericId = (id: string): number | null =>
@@ -80,6 +83,20 @@ export const createReportsService = ({
             label: row.title,
             href: `/community/thread/${row.id}`,
             author: row.author_username,
+          }
+        : null;
+    }
+
+    if (type === "list") {
+      const row = await lists.card(n);
+      return row
+        ? {
+            authorId: row.user_id,
+            label: row.description
+              ? `${row.name}: ${row.description}`.slice(0, EXCERPT)
+              : row.name,
+            href: `/user/${row.owner_username}/lists/${row.id}`,
+            author: row.owner_username,
           }
         : null;
     }
@@ -138,6 +155,8 @@ export const createReportsService = ({
       await communityService.deleteMessage(adminId, Number(id));
     } else if (type === "review") {
       await reviews.remove(Number(id));
+    } else if (type === "list") {
+      await lists.remove(Number(id));
     } else {
       // A profile is not removed, only emptied of what can be offensive.
       // Closing the account is a bigger step, taken by hand.

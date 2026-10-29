@@ -14,6 +14,7 @@ import GameTile from "../../components/game/GameTile";
 import { useTileActions } from "../../components/game/useTileActions";
 import Pagination, { PaginationSummary } from "../../components/ui/Pagination";
 import { Skeleton, TileSkeleton } from "../../components/ui/Skeleton";
+import PageHeader from "../../components/ui/PageHeader";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import LibraryFilters from "./components/LibraryFilters";
@@ -92,23 +93,18 @@ const LibraryPage = () => {
 
     return (
         <section className="flex flex-col gap-6">
-            <header className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <h1 className="font-display text-title text-content">
-                        Library
-                    </h1>
-                    {/* Not "0 titles" while it loads: that says the library
-                        is empty, which it isn't. */}
-                    {page ? (
-                        <p className="mt-2 text-label text-content-muted">
-                            {formatCount(total)}{" "}
-                            {total === 1 ? "title" : "titles"}
-                        </p>
+            <PageHeader
+                title="Library"
+                // Not "0 titles" while it loads: that says the library is
+                // empty, which it isn't.
+                note={
+                    page ? (
+                        `${formatCount(total)} ${total === 1 ? "title" : "titles"}`
                     ) : (
-                        <Skeleton className="mt-2.5 h-3.5 w-24" />
-                    )}
-                </div>
-            </header>
+                        <Skeleton className="mt-0.5 h-3.5 w-24" />
+                    )
+                }
+            />
 
             <LibraryFilters
                 query={query}

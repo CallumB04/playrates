@@ -41,7 +41,7 @@ const FormSpecimens = () => {
             <Specimen
                 title="Fields"
                 notes="A field sits level with the page and lights up when you are in it: the border warms to the brand and a soft bloom appears behind it. Error tints the field rather than adding an icon."
-                meta="Input · NumberInput · Textarea · SearchInput — all forwardRef"
+                meta="Input · NumberInput · Textarea · SearchInput, all forwardRef"
             >
                 <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <Field label="Text" help="Recessed, hairline border">
@@ -137,8 +137,8 @@ const FormSpecimens = () => {
             <Specimen
                 title="Status plates"
                 stack
-                notes="Segmented. The selected plate lifts and lights, with a status-hue top edge; the rest sit flat. Played is always a menu, chevron showing, because its endings refine it rather than standing beside it; as a plain plate until chosen, testers never found them. One press chooses Played and opens the menu with Played ticked — a full answer, saved as no substatus. Chosen, the plate wears its ending. Choosing a status that cannot carry one clears it rather than dropping it silently at save."
-                meta="StatusPlates — aria-pressed per plate, listbox on the played plate · Dropdown onOpen"
+                notes="Segmented. The selected plate lifts and lights, with a status-hue top edge; the rest sit flat. Played is always a menu, chevron showing, because its endings refine it rather than standing beside it; as a plain plate until chosen, testers never found them. One press chooses Played and opens the menu with Played ticked: a full answer, saved as no substatus. Chosen, the plate wears its ending. Choosing a status that cannot carry one clears it rather than dropping it silently at save."
+                meta="StatusPlates · aria-pressed per plate, listbox on the played plate · Dropdown onOpen"
             >
                 <StatusPlates
                     value={status}
@@ -170,7 +170,7 @@ const FormSpecimens = () => {
 
             <Specimen
                 title="Profile picture"
-                notes="Picks, crops and compresses in the browser, so what is previewed is exactly what gets stored. It holds a pending choice rather than saving: Settings saves on every change, the welcome popup on Continue. Pick one here to see the preview — nothing is uploaded."
+                notes="Picks, crops and compresses in the browser, so what is previewed is exactly what gets stored. It holds a pending choice rather than saving: Settings saves on every change, the welcome popup on Continue. Pick one here to see the preview. Nothing is uploaded."
                 meta='username · accent · current · choice ("unchanged" | "picked" | "removed") · onChange · disabled'
             >
                 <AvatarField

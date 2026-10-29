@@ -17,6 +17,7 @@ import { unfinished } from "../../lib/setupChecklist";
 import { isCurrent } from "../../lib/navMatch";
 import { cn } from "../../lib/cn";
 import ProfilePicture from "../ProfilePicture";
+import AvatarFrame from "../progress/AvatarFrame";
 import MoreSheet from "./MoreSheet";
 
 const TAB =
@@ -102,9 +103,14 @@ const TabBar = () => {
     const here = (to: string, exact = false) =>
         isCurrent(to, exact, pathname, search);
     const profileTo = user ? `/user/${user.username}` : "";
-    const onProfile = !!user && here(profileTo, true);
+    // Lit on its views too, not only the profile itself.
+    const onProfile = !!user && here(profileTo);
     // The pages only More leads to, so somewhere on the bar is lit.
-    const onMore = here("/settings") || here("/admin");
+    const onMore =
+        here("/settings") ||
+        here("/admin") ||
+        here("/progress") ||
+        here("/shop");
 
     return (
         <>
@@ -149,13 +155,15 @@ const TabBar = () => {
                                         onProfile && "ring-2 ring-brand"
                                     )}
                                 >
-                                    <ProfilePicture
-                                        variant="tab"
-                                        file={user.avatarUrl ?? ""}
-                                        accent={user.accent}
-                                        username={user.username}
-                                        link={false}
-                                    />
+                                    <AvatarFrame frame={user.frame} size="sm">
+                                        <ProfilePicture
+                                            variant="tab"
+                                            file={user.avatarUrl ?? ""}
+                                            accent={user.accent}
+                                            username={user.username}
+                                            link={false}
+                                        />
+                                    </AvatarFrame>
                                 </span>
                             </Mark>
                             Profile

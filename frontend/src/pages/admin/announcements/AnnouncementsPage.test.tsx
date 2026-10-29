@@ -24,6 +24,9 @@ beforeEach(() => {
             HttpResponse.json({ thread: { id: 7 }, latest: null })
         ),
         http.get(`${API}/admin/patch-notes`, () => HttpResponse.json([])),
+        http.get(`${API}/admin/email/audience`, () =>
+            HttpResponse.json({ newsSubscribers: 2 })
+        ),
         http.get(`${API}/admin/stats/overview`, () =>
             HttpResponse.json({ totals: { users: 3 }, series: [], period: {} })
         ),
@@ -42,6 +45,7 @@ beforeEach(() => {
                     retractedAt: null,
                     recipientCount: 3,
                     readCount: 0,
+                    emailedAt: body.email ? "2026-09-26T00:00:00Z" : null,
                 },
                 { status: 201 }
             );
@@ -158,6 +162,7 @@ describe("AnnouncementsPage", () => {
                 title: "Hi",
                 body: "There",
                 link: null,
+                email: false,
             })
         );
         expect(sent).not.toHaveBeenCalled();
@@ -185,10 +190,77 @@ describe("AnnouncementsPage", () => {
                 title: "Hi",
                 body: "There",
                 link: "/community",
+                email: false,
             })
         );
         await waitFor(() =>
             expect(screen.getByLabelText("Title")).toHaveValue("")
         );
+    });
+
+    it("sends the test by email too when the email is on", async () => {
+        renderWithProviders(<AnnouncementsPage />);
+        const user = await write({ title: "Hi", body: "There" });
+
+        await user.click(
+            screen.getByRole("switch", { name: "Also send as an email" })
+        );
+        await user.click(
+            screen.getByRole("button", { name: /Send test to me/ })
+        );
+
+        await waitFor(() =>
+            expect(tested).toHaveBeenCalledWith(
+                expect.objectContaining({ email: true })
+            )
+        );
+    });
+
+    it("says how many members get the email, then sends it with the announcement", async () => {
+        renderWithProviders(<AnnouncementsPage />);
+        const user = await write({ title: "Hi", body: "There" });
+
+        await user.click(
+            screen.getByRole("switch", { name: "Also send as an email" })
+        );
+        await user.click(
+            await screen.findByRole("button", { name: "Send to 3 people" })
+        );
+        const dialog = screen.getByRole("dialog");
+        await waitFor(() =>
+            expect(dialog).toHaveTextContent("by email to 2 members")
+        );
+        await user.click(within(dialog).getByRole("button", { name: "Send" }));
+
+        await waitFor(() =>
+            expect(sent).toHaveBeenCalledWith(
+                expect.objectContaining({ title: "Hi", email: true })
+            )
+        );
+    });
+
+    it("marks what went out by email in the history", async () => {
+        server.use(
+            http.get(`${API}/admin/announcements`, () =>
+                HttpResponse.json([
+                    {
+                        id: 1,
+                        tone: "update",
+                        title: "Lists are here",
+                        body: "Share one.",
+                        link: null,
+                        createdAt: "2026-09-26T00:00:00Z",
+                        retractedAt: null,
+                        recipientCount: 3,
+                        readCount: 1,
+                        emailedAt: "2026-09-26T00:00:00Z",
+                    },
+                ])
+            )
+        );
+        renderWithProviders(<AnnouncementsPage />);
+
+        const row = (await screen.findByText("Lists are here")).closest("li")!;
+        expect(row).toHaveTextContent("· emailed");
     });
 });

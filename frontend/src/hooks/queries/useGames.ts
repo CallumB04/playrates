@@ -9,6 +9,7 @@ import {
     fetchGameById,
     fetchGames,
     fetchGameRelated,
+    fetchGameBackdrops,
     fetchGameStats,
     fetchGenres,
     fetchPlatforms,
@@ -82,6 +83,16 @@ export const useGameStats = (id: number | undefined) =>
         queryKey: queryKeys.games.stats(id ?? 0),
         queryFn: () => fetchGameStats(id!),
         enabled: typeof id === "number" && id > 0,
+    });
+
+/** Kept for the session: the first ask may go to IGDB, and the answer is
+ *  then fixed on the server. */
+export const useGameBackdrops = (id: number | undefined) =>
+    useQuery({
+        queryKey: queryKeys.games.backdrops(id ?? 0),
+        queryFn: () => fetchGameBackdrops(id!),
+        enabled: typeof id === "number" && id > 0,
+        staleTime: Infinity,
     });
 
 /** Not urgent: it sits below everything else on the page, and changes only

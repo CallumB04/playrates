@@ -7,6 +7,7 @@ import type {
 import type { AltCover } from "../GamesProvider.js";
 import {
   altNames,
+  pickBackdrops,
   pickBanner,
   pickSeries,
   toExternalGame,
@@ -352,6 +353,14 @@ export const createIgdbProvider = (
         `fields screenshots.image_id,artworks.image_id; where id = (${igdbIds.join(",")}); limit ${MAX_LIMIT};`,
       );
       return new Map(found.map((g) => [g.id, pickBanner(g)]));
+    },
+
+    async backdropsOf(igdbId) {
+      const [found] = await query<IgdbGame[]>(
+        "games",
+        `fields screenshots.image_id,artworks.image_id; where id = ${igdbId};`,
+      );
+      return found ? pickBackdrops(found) : [];
     },
 
     async altNamesOf(igdbIds) {

@@ -297,6 +297,60 @@ describe("notification mapper", () => {
     });
   });
 
+  it("embeds the sender on a gift, and does without once they're gone", () => {
+    const data = { username: "devuser", item: "frame_neon" };
+    expect(
+      toNotification(
+        { ...buildNotification({ kind: "gift_received", data }), actor },
+        () => null,
+      ),
+    ).toMatchObject({ actor: { username: "devuser" } });
+    expect(
+      toNotification(
+        buildNotification({ kind: "gift_received", data }),
+        () => null,
+      ),
+    ).toMatchObject({ kind: "gift_received", actor: null });
+  });
+
+  it("embeds the friend who got going, while they have an account", () => {
+    const data = { username: "devuser", xp: 250, tokens: 50 };
+    expect(
+      toNotification(
+        { ...buildNotification({ kind: "referral_active", data }), actor },
+        () => null,
+      ),
+    ).toMatchObject({ actor: { username: "devuser" } });
+  });
+
+  it("reads a streak nudge with no shield as none, and a task's period strictly", () => {
+    expect(
+      toNotification(
+        buildNotification({
+          kind: "streak_at_risk",
+          data: { weeks: 2, endsAt: "2026-11-02T00:00:00.000Z" },
+        }),
+        () => null,
+      ),
+    ).toMatchObject({ kind: "streak_at_risk", shield: false });
+    expect(
+      toNotification(
+        buildNotification({
+          kind: "task_nearly_done",
+          data: {
+            period: "year",
+            quest: "w_rate3",
+            label: "Rate 3 games",
+            count: 2,
+            target: 3,
+            endsAt: "2026-11-02T00:00:00.000Z",
+          },
+        }),
+        () => null,
+      ).kind,
+    ).toBe("unknown");
+  });
+
   it("embeds the actor on an accepted request", () => {
     const mapped = toNotification(
       { ...buildNotification({ kind: "friend_accepted" }), actor },
@@ -426,5 +480,56 @@ describe("notification mapper", () => {
       coverUrl: null,
     });
     expect(broken.kind).toBe("unknown");
+  });
+
+  /* Each kind from progress and lists, whole and with its data missing. */
+  it.each([
+    [
+      "list_upvote_milestone",
+      { listId: 2, listName: "Cosy", username: "devuser", milestone: 5 },
+      { listId: 2, listName: "Cosy", milestone: 5 },
+    ],
+    ["referral_joined", { username: "newbie" }, { username: "newbie" }],
+    [
+      "gift_received",
+      { username: "frienduser", item: "frame_neon" },
+      { username: "frienduser", item: "frame_neon" },
+    ],
+    [
+      "gaming_25_love_milestone",
+      { username: "devuser", milestone: 10 },
+      { username: "devuser", milestone: 10 },
+    ],
+    [
+      "referral_active",
+      { username: "newbie", xp: 250, tokens: 50 },
+      { username: "newbie", xp: 250, tokens: 50, actor: null },
+    ],
+    [
+      "streak_at_risk",
+      { weeks: 6, shield: true, endsAt: "2026-11-02T00:00:00.000Z" },
+      { weeks: 6, shield: true, endsAt: "2026-11-02T00:00:00.000Z" },
+    ],
+    [
+      "task_nearly_done",
+      {
+        period: "week",
+        quest: "w_rate3",
+        label: "Rate 3 games",
+        count: 2,
+        target: 3,
+        xp: 45,
+        tokens: 5,
+        endsAt: "2026-11-02T00:00:00.000Z",
+      },
+      { period: "week", quest: "w_rate3", count: 2, target: 3, tokens: 5 },
+    ],
+  ])("maps %s, and refuses one without its data", (kind, data, expected) => {
+    expect(
+      toNotification(buildNotification({ kind, data }), () => null),
+    ).toMatchObject({ kind, ...expected });
+    expect(
+      toNotification(buildNotification({ kind, data: {} }), () => null).kind,
+    ).toBe("unknown");
   });
 });

@@ -17,6 +17,8 @@ export interface TileActionHandlers {
 /**
  * What a cover offers wherever it sits: sign in when signed out; log it or
  * shelve it in one tap when not logged yet; view or edit it once it is.
+ * Not "Add to list": under a long title it was a row too many, and the
+ * game's own page offers it.
  * Shelving is not offered on a logged game, where it would overwrite the
  * status it already has.
  */
@@ -29,7 +31,7 @@ export const tileActions = (
         return [
             {
                 key: "signin",
-                label: "Log in to add",
+                label: "Join to add",
                 tone: "primary",
                 onSelect: on.signIn,
             },
@@ -46,7 +48,8 @@ export const tileActions = (
             },
             {
                 key: "edit",
-                label: "Edit",
+                // Beside "View your log", "Edit" alone read as editing the game.
+                label: log.logs.length > 1 ? "Edit logs" : "Edit log",
                 onSelect: () => on.open(game.id),
             },
         ];

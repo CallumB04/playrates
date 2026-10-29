@@ -1,0 +1,559 @@
+import type { QuestSwap, SourceCounts } from "@playrates/shared";
+import type { Db } from "../../config/supabase.js";
+import type { ProfileRow } from "../../types/database.types.js";
+
+export interface BadgeRow {
+  badge: string;
+  metal: number;
+  unlocked_at: string;
+  seen_at: string | null;
+}
+
+export interface ShopItemRow {
+  item: string;
+  kind: string;
+  price: number;
+  price_step: number;
+  max_owned: number;
+}
+
+export interface XpGainRow {
+  id: number;
+  source: string;
+  xp: number;
+}
+
+export interface RuleRow {
+  source: string;
+  xp: number;
+  daily_cap: number | null;
+  active: boolean;
+}
+
+/** Why a purchase was refused, as buy_item and buy_background raise it. */
+export type BuyRefusal =
+  "unknown_item" | "max_owned" | "insufficient_tokens" | "owned";
+
+export class BuyError extends Error {
+  constructor(readonly reason: BuyRefusal) {
+    super(reason);
+  }
+}
+
+export interface OwnedBackgroundRow {
+  game_id: number;
+  url: string;
+  title: string;
+  cover_url: string | null;
+}
+
+/** One member the daily job might nudge, as nudge_candidates reads them. */
+export interface NudgeCandidate {
+  userId: string;
+  timezone: string;
+  /** Mondays with something done, for the streak. */
+  weeks: string[];
+  shields: string[];
+  spare: number;
+  /** This week's and month's ledger by source, and the weeks before each. */
+  weekCounts: SourceCounts;
+  monthCounts: SourceCounts;
+  weekHabits: SourceCounts;
+  monthHabits: SourceCounts;
+  /** Swaps made this week, under the week's key. */
+  swaps: (QuestSwap & { period: string })[];
+}
+
+export interface ProgressRepository {
+  profile(userId: string): Promise<ProfileRow | null>;
+  profilesByIds(ids: string[]): Promise<ProfileRow[]>;
+  /** Every member's id after `after`, in order, `limit` at a time. */
+  profileIds(after: string | null, limit: number): Promise<string[]>;
+  metrics(userId: string): Promise<Record<string, number>>;
+  /** Mondays, in the member's zone, of the weeks with something done. */
+  weeks(userId: string): Promise<string[]>;
+  shieldsUsed(userId: string): Promise<string[]>;
+  recordShield(userId: string, week: string): Promise<void>;
+  badges(userId: string): Promise<BadgeRow[]>;
+  unlockBadge(userId: string, badge: string, metal: number): Promise<void>;
+  markBadgesSeen(
+    userId: string,
+    badges: { badge: string; metal: number }[],
+  ): Promise<void>;
+  awardXp(
+    userId: string,
+    source: string,
+    key: string,
+    xp?: number,
+    data?: Record<string, unknown>,
+  ): Promise<void>;
+  awardTokens(
+    userId: string,
+    source: string,
+    key: string,
+    amount: number,
+  ): Promise<void>;
+  tokenKeys(userId: string, prefix: string): Promise<Set<string>>;
+  /** Which of these keys the token ledger has already. */
+  paidTokenKeys(userId: string, keys: string[]): Promise<Set<string>>;
+  /** Ledger rows per source between two instants, less any taken back. */
+  countSources(
+    userId: string,
+    from: string,
+    to: string,
+  ): Promise<Record<string, number>>;
+  unseenXp(userId: string, afterId: number): Promise<XpGainRow[]>;
+  setSeenXp(userId: string, upToId: number): Promise<void>;
+  setRevealed(userId: string): Promise<void>;
+  items(userId: string): Promise<Record<string, number>>;
+  shopItems(): Promise<ShopItemRow[]>;
+  /** Throws BuyError when refused. */
+  buy(userId: string, item: string): Promise<{ tokens: number; owned: number }>;
+  /** False when there was none to use. */
+  useItem(userId: string, item: string): Promise<boolean>;
+  /** True the first time only: the free picture for reaching the level. */
+  grantBackgroundCredit(userId: string): Promise<boolean>;
+  /** Throws BuyError when refused. */
+  buyBackground(
+    userId: string,
+    gameId: number,
+    url: string,
+  ): Promise<{ tokens: number; cost: number }>;
+  /** Oldest first. */
+  ownedBackgrounds(userId: string): Promise<OwnedBackgroundRow[]>;
+  /** Games on a member's favourites shelf. */
+  favouriteCount(userId: string): Promise<number>;
+  /** How many of one item each member holds; none held is left out. */
+  holdings(userIds: string[], item: string): Promise<Map<string, number>>;
+  /** Throws BuyError when refused. */
+  gift(
+    giverId: string,
+    recipientId: string,
+    item: string,
+  ): Promise<{ tokens: number; cost: number }>;
+  /** The swaps made in a period. */
+  swaps(userId: string, period: string): Promise<QuestSwap[]>;
+  /** False when the period has had its swap already. */
+  recordSwap(
+    userId: string,
+    period: string,
+    slot: number,
+    quest: string,
+  ): Promise<boolean>;
+  /** Members seen since `since`, with what the nudges are decided from. */
+  nudgeCandidates(since: string, now: string): Promise<NudgeCandidate[]>;
+  rules(): Promise<RuleRow[]>;
+  xpSince(userIds: string[], since: string): Promise<Map<string, number>>;
+  holders(): Promise<{ badge: string; metal: number; holders: number }[]>;
+  memberCount(): Promise<number>;
+  updateProfile(userId: string, patch: Partial<ProfileRow>): Promise<void>;
+}
+
+export const createProgressRepository = (db: Db): ProgressRepository => {
+  const rpc = async <T>(fn: string, args: Record<string, unknown>) => {
+    const { data, error } = await db.rpc(fn, args);
+    if (error) throw error;
+    return data as T;
+  };
+
+  return {
+    async profile(userId) {
+      const { data, error } = await db
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as ProfileRow | null) ?? null;
+    },
+
+    async profilesByIds(ids) {
+      if (ids.length === 0) return [];
+      const { data, error } = await db
+        .from("profiles")
+        .select("*")
+        .in("id", ids);
+      if (error) throw error;
+      return (data ?? []) as ProfileRow[];
+    },
+
+    async profileIds(after, limit) {
+      let query = db.from("profiles").select("id").order("id").limit(limit);
+      if (after) query = query.gt("id", after);
+      const { data, error } = await query;
+      if (error) throw error;
+      return ((data ?? []) as { id: string }[]).map((r) => r.id);
+    },
+
+    metrics: (userId) =>
+      rpc<Record<string, number>>("player_metrics", { p_user: userId }),
+
+    async weeks(userId) {
+      const rows = await rpc<{ week: string }[]>("player_weeks", {
+        p_user: userId,
+      });
+      return (rows ?? []).map((r) => r.week);
+    },
+
+    async shieldsUsed(userId) {
+      const { data, error } = await db
+        .from("streak_shields_used")
+        .select("week")
+        .eq("user_id", userId);
+      if (error) throw error;
+      return ((data ?? []) as { week: string }[]).map((r) => r.week);
+    },
+
+    async recordShield(userId, week) {
+      const { error } = await db
+        .from("streak_shields_used")
+        .upsert({ user_id: userId, week }, { ignoreDuplicates: true });
+      if (error) throw error;
+    },
+
+    async badges(userId) {
+      const { data, error } = await db
+        .from("user_badges")
+        .select("badge, metal, unlocked_at, seen_at")
+        .eq("user_id", userId);
+      if (error) throw error;
+      return (data ?? []) as BadgeRow[];
+    },
+
+    async unlockBadge(userId, badge, metal) {
+      const { error } = await db
+        .from("user_badges")
+        .upsert(
+          { user_id: userId, badge, metal },
+          { onConflict: "user_id,badge,metal", ignoreDuplicates: true },
+        );
+      if (error) throw error;
+    },
+
+    async markBadgesSeen(userId, badges) {
+      for (const { badge, metal } of badges) {
+        const { error } = await db
+          .from("user_badges")
+          .update({ seen_at: new Date().toISOString() })
+          .eq("user_id", userId)
+          .eq("badge", badge)
+          .eq("metal", metal)
+          .is("seen_at", null);
+        if (error) throw error;
+      }
+    },
+
+    async awardXp(userId, source, key, xp, data) {
+      await rpc("award_xp", {
+        p_user: userId,
+        p_source: source,
+        p_key: key,
+        p_data: data ?? {},
+        p_xp: xp ?? null,
+      });
+    },
+
+    async awardTokens(userId, source, key, amount) {
+      await rpc("award_tokens", {
+        p_user: userId,
+        p_source: source,
+        p_key: key,
+        p_amount: amount,
+      });
+    },
+
+    async tokenKeys(userId, prefix) {
+      const { data, error } = await db
+        .from("token_events")
+        .select("key")
+        .eq("user_id", userId)
+        .like("key", `${prefix}%`);
+      if (error) throw error;
+      return new Set(((data ?? []) as { key: string }[]).map((r) => r.key));
+    },
+
+    async paidTokenKeys(userId, keys) {
+      if (keys.length === 0) return new Set();
+      const { data, error } = await db
+        .from("token_events")
+        .select("key")
+        .eq("user_id", userId)
+        .in("key", keys);
+      if (error) throw error;
+      return new Set(((data ?? []) as { key: string }[]).map((r) => r.key));
+    },
+
+    async countSources(userId, from, to) {
+      const { data, error } = await db
+        .from("xp_events")
+        .select("source, revoked:data->revoked")
+        .eq("user_id", userId)
+        .gte("created_at", from)
+        .lt("created_at", to);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const { source, revoked } of (data ?? []) as {
+        source: string;
+        revoked: unknown;
+      }[]) {
+        if (revoked) continue;
+        counts[source] = (counts[source] ?? 0) + 1;
+      }
+      return counts;
+    },
+
+    async unseenXp(userId, afterId) {
+      const { data, error } = await db
+        .from("xp_events")
+        .select("id, source, xp")
+        .eq("user_id", userId)
+        .gt("id", afterId)
+        .gt("xp", 0)
+        .order("id");
+      if (error) throw error;
+      return (data ?? []) as XpGainRow[];
+    },
+
+    async setSeenXp(userId, upToId) {
+      const { error } = await db
+        .from("profiles")
+        .update({ xp_seen_event_id: upToId })
+        .eq("id", userId)
+        .lt("xp_seen_event_id", upToId);
+      if (error) throw error;
+    },
+
+    async setRevealed(userId) {
+      const { error } = await db
+        .from("profiles")
+        .update({ revealed_at: new Date().toISOString() })
+        .eq("id", userId)
+        .is("revealed_at", null);
+      if (error) throw error;
+    },
+
+    async items(userId) {
+      const { data, error } = await db
+        .from("user_items")
+        .select("item, quantity")
+        .eq("user_id", userId);
+      if (error) throw error;
+      return Object.fromEntries(
+        ((data ?? []) as { item: string; quantity: number }[]).map((r) => [
+          r.item,
+          r.quantity,
+        ]),
+      );
+    },
+
+    async shopItems() {
+      const { data, error } = await db
+        .from("shop_items")
+        .select("item, kind, price, price_step, max_owned")
+        .eq("active", true);
+      if (error) throw error;
+      return (data ?? []) as ShopItemRow[];
+    },
+
+    async buy(userId, item) {
+      const { data, error } = await db.rpc("buy_item", {
+        p_user: userId,
+        p_item: item,
+      });
+      if (error) {
+        const reason = (
+          ["unknown_item", "max_owned", "insufficient_tokens"] as const
+        ).find((r) => error.message.includes(r));
+        if (reason) throw new BuyError(reason);
+        throw error;
+      }
+      return data as { tokens: number; owned: number };
+    },
+
+    async useItem(userId, item) {
+      const { error } = await db.rpc("use_item", {
+        p_user: userId,
+        p_item: item,
+      });
+      if (error) {
+        if (error.message.includes("none_left")) return false;
+        throw error;
+      }
+      return true;
+    },
+
+    grantBackgroundCredit: (userId) =>
+      rpc<boolean>("grant_background_credit", { p_user: userId }),
+
+    async buyBackground(userId, gameId, url) {
+      const { data, error } = await db.rpc("buy_background", {
+        p_user: userId,
+        p_game: gameId,
+        p_url: url,
+      });
+      if (error) {
+        const reason = (["owned", "insufficient_tokens"] as const).find((r) =>
+          error.message.includes(r),
+        );
+        if (reason) throw new BuyError(reason);
+        throw error;
+      }
+      return data as { tokens: number; cost: number };
+    },
+
+    async favouriteCount(userId) {
+      const { count, error } = await db
+        .from("favourite_games")
+        .select("game_id", { count: "exact", head: true })
+        .eq("user_id", userId);
+      if (error) throw error;
+      return count ?? 0;
+    },
+
+    async holdings(userIds, item) {
+      if (userIds.length === 0) return new Map();
+      const { data, error } = await db
+        .from("user_items")
+        .select("user_id, quantity")
+        .eq("item", item)
+        .in("user_id", userIds);
+      if (error) throw error;
+      return new Map(
+        ((data ?? []) as { user_id: string; quantity: number }[]).map((r) => [
+          r.user_id,
+          r.quantity,
+        ]),
+      );
+    },
+
+    async gift(giverId, recipientId, item) {
+      const { data, error } = await db.rpc("gift_item", {
+        p_giver: giverId,
+        p_recipient: recipientId,
+        p_item: item,
+      });
+      if (error) {
+        const reason = (
+          ["unknown_item", "max_owned", "insufficient_tokens"] as const
+        ).find((r) => error.message.includes(r));
+        if (reason) throw new BuyError(reason);
+        throw error;
+      }
+      return data as { tokens: number; cost: number };
+    },
+
+    async ownedBackgrounds(userId) {
+      const { data, error } = await db
+        .from("user_backgrounds")
+        .select("game_id, url, games(title, cover_url, box_art_url)")
+        .eq("user_id", userId)
+        .order("acquired_at");
+      if (error) throw error;
+      return (
+        (data ?? []) as unknown as {
+          game_id: number;
+          url: string;
+          games: {
+            title: string;
+            cover_url: string | null;
+            box_art_url: string | null;
+          } | null;
+        }[]
+      ).map((r) => ({
+        game_id: Number(r.game_id),
+        url: r.url,
+        title: r.games?.title ?? "",
+        cover_url: r.games?.box_art_url ?? r.games?.cover_url ?? null,
+      }));
+    },
+
+    async swaps(userId, period) {
+      const { data, error } = await db
+        .from("task_swaps")
+        .select("slot, quest")
+        .eq("user_id", userId)
+        .eq("period", period);
+      if (error) throw error;
+      return (data ?? []) as QuestSwap[];
+    },
+
+    async recordSwap(userId, period, slot, quest) {
+      const { error } = await db
+        .from("task_swaps")
+        .insert({ user_id: userId, period, slot, quest });
+      if (!error) return true;
+      // The week's key is the primary key: a second swap collides.
+      if (error.code === "23505") return false;
+      throw error;
+    },
+
+    async nudgeCandidates(since, now) {
+      const rows = await rpc<
+        {
+          user_id: string;
+          timezone: string;
+          weeks: string[] | null;
+          shields: string[] | null;
+          spare: number;
+          week_counts: SourceCounts;
+          month_counts: SourceCounts;
+          week_habits: SourceCounts;
+          month_habits: SourceCounts;
+          swaps: (QuestSwap & { period: string })[];
+        }[]
+      >("nudge_candidates", { p_since: since, p_now: now });
+      return (rows ?? []).map((r) => ({
+        userId: r.user_id,
+        timezone: r.timezone,
+        weeks: r.weeks ?? [],
+        shields: r.shields ?? [],
+        spare: Number(r.spare),
+        weekCounts: r.week_counts ?? {},
+        monthCounts: r.month_counts ?? {},
+        weekHabits: r.week_habits ?? {},
+        monthHabits: r.month_habits ?? {},
+        swaps: r.swaps ?? [],
+      }));
+    },
+
+    async rules() {
+      const { data, error } = await db
+        .from("xp_rules")
+        .select("source, xp, daily_cap, active")
+        .order("xp", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as RuleRow[];
+    },
+
+    async xpSince(userIds, since) {
+      const rows = await rpc<{ user_id: string; xp: number }[]>("xp_since", {
+        p_users: userIds,
+        p_since: since,
+      });
+      return new Map((rows ?? []).map((r) => [r.user_id, Number(r.xp)]));
+    },
+
+    async holders() {
+      const rows = await rpc<
+        { badge: string; metal: number; holders: number }[]
+      >("badge_holders", {});
+      return (rows ?? []).map((r) => ({ ...r, holders: Number(r.holders) }));
+    },
+
+    async memberCount() {
+      const { count, error } = await db
+        .from("profiles")
+        .select("id", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
+    },
+
+    async updateProfile(userId, patch) {
+      const { error } = await db
+        .from("profiles")
+        .update(patch)
+        .eq("id", userId);
+      if (error) throw error;
+    },
+  };
+};

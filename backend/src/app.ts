@@ -14,6 +14,7 @@ import type { AuthAdmin } from "./config/authAdmin.js";
 import type { AvatarStore } from "./config/avatarStore.js";
 import type { CommunityImageStore } from "./config/communityImageStore.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
+import type { EmailDeps } from "./config/email.js";
 import { createPagesRouter } from "./modules/pages/pages.routes.js";
 import { createPagesService } from "./modules/pages/pages.service.js";
 import {
@@ -27,6 +28,8 @@ export interface AppDeps {
   authAdmin: AuthAdmin;
   avatars: AvatarStore;
   communityImages: CommunityImageStore;
+  /** Where email goes, and the news audience; fakes in tests. */
+  email: EmailDeps;
   /** Injected so tests can authenticate without signing real JWTs. */
   verify: Verifier;
   logger?: Logger;
@@ -45,6 +48,7 @@ export const buildApp = ({
   authAdmin,
   avatars,
   communityImages,
+  email,
   verify,
   logger = createLogger(),
   errorSink = noopErrorSink,
@@ -78,6 +82,12 @@ export const buildApp = ({
       credentials: false,
     }),
   );
+  // Before the JSON parser, which would leave only the parsed object: a
+  // webhook's signature is over the bytes as they arrived.
+  app.use(
+    "/api/v1/email/webhooks",
+    express.raw({ type: "*/*", limit: "256kb" }),
+  );
   app.use(express.json({ limit: "64kb" }));
 
   app.get("/health", (_req, res) => {
@@ -88,7 +98,11 @@ export const buildApp = ({
   // tighter ones of their own.
   const writeLimiter = perMinute(60);
   app.use("/api/v1", (req, res, next) =>
-    req.method === "GET" || req.method === "HEAD"
+    req.method === "GET" ||
+    req.method === "HEAD" ||
+    // Signed, and sent in bursts from a few addresses: a reconcile that
+    // touches a hundred contacts is a hundred deliveries in a minute.
+    req.path.startsWith("/email/webhooks/")
       ? next()
       : writeLimiter(req, res, next),
   );
@@ -101,6 +115,8 @@ export const buildApp = ({
       authAdmin,
       avatars,
       communityImages,
+      email,
+      logger,
       requireAuth: makeRequireAuth(verify),
       optionalAuth: makeRequireAuth(verify, { optional: true }),
     }),

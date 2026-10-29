@@ -1,152 +1,55 @@
-import { Palette } from "lucide-react";
-import { cardClass } from "../../../components/ui/Card";
 import type { Profile, UserStats } from "@playrates/shared";
 import type { ReactNode } from "react";
 import ProfilePicture from "../../../components/ProfilePicture";
 import PresenceDot from "../../../components/ui/PresenceDot";
-import Stat from "../../../components/ui/Stat";
-import Progress from "../../../components/ui/Progress";
 import UserStatus from "../../../components/UserStatus";
 import RatingBadge from "../../../components/ui/RatingBadge";
-import {
-    GAME_STATUSES,
-    STATUS_PRESENTATION,
-    type GameStatus,
-} from "../../../constants/gameStatus";
-import { formatCount, formatHours, formatMonthYear } from "../../../lib/format";
-import { accentHue, bannerGradient } from "../../../lib/profileAccent";
+import { figureClass } from "../../../components/ui/Figure";
+import { formatHours, formatMonthYear } from "../../../lib/format";
+import AvatarFrame from "../../../components/progress/AvatarFrame";
+import NameText from "../../../components/progress/NameText";
 import { cn } from "../../../lib/cn";
 
 interface MemberFileHeaderProps {
     profile: Profile;
-    stats: UserStats | undefined;
-    /** Past the card is not this viewer's to see, figures included. */
-    profileHidden?: boolean;
-    reviewCount: number | undefined;
-    friendCount: number | undefined;
+    /** Their figures, once this viewer may see them and they have loaded. */
+    stats?: UserStats;
     /** When the viewer and this member became friends, if they are. */
     friendsSince?: string;
     /** A friend request from them, waiting on the viewer's answer. */
     request?: ReactNode;
     /** The friend button, or the owner's controls. */
     action: ReactNode;
-    /** Set only on your own profile: makes the picture and the banner open
-     *  the editor. */
+    /** Set only on your own profile: makes the picture open the editor. */
     onEditPicture?: () => void;
 }
 
-/** The split of a shelf across the four states, as one stacked bar. */
-const ShelfBar = ({
-    byStatus,
-    total,
-}: {
-    byStatus: Partial<Record<GameStatus, number>>;
-    total: number;
-}) => {
-    if (total === 0) return null;
-
-    return (
-        <div>
-            <Progress
-                size="lg"
-                label={GAME_STATUSES.map(
-                    (status) =>
-                        `${STATUS_PRESENTATION[status].label}: ${byStatus[status] ?? 0}`
-                ).join(", ")}
-                segments={GAME_STATUSES.map((status) => {
-                    const count = byStatus[status] ?? 0;
-                    return {
-                        key: status,
-                        value: count / total,
-                        className: STATUS_PRESENTATION[status].accent,
-                        title: `${STATUS_PRESENTATION[status].label}: ${count}`,
-                    };
-                })}
-            />
-
-            <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5">
-                {GAME_STATUSES.map((status) => {
-                    const { label, accent } = STATUS_PRESENTATION[status];
-                    return (
-                        <span
-                            key={status}
-                            className="flex items-center gap-1.5 text-label-sm text-content-muted"
-                        >
-                            <span
-                                aria-hidden
-                                className={cn("size-2 rounded-full", accent)}
-                            />
-                            {label}
-                            <span className="font-mono text-content">
-                                {formatCount(byStatus[status] ?? 0)}
-                            </span>
-                        </span>
-                    );
-                })}
-            </div>
-        </div>
-    );
-};
-
-/** The profile header: four figures and the shelf bar. */
+/** The top of a profile: who they are, and what you can do about it. */
 const MemberFileHeader = ({
     profile,
     stats,
-    profileHidden = false,
-    reviewCount,
-    friendCount,
     friendsSince,
     request,
     action,
     onEditPicture,
-}: MemberFileHeaderProps) => {
-    const banner = bannerGradient(accentHue(profile.accent));
-    const byStatus = stats?.byStatus ?? {};
-    const shelfTotal = GAME_STATUSES.reduce(
-        (sum, status) => sum + (byStatus[status] ?? 0),
-        0
-    );
-
-    return (
-        <section
-            className={cardClass("relative overflow-hidden", {
-                padding: "none",
-            })}
-        >
-            {/* A band behind the avatar, so a profile opens with something
-                other than a white rectangle. It carries the profile's colour,
-                which is also the avatar's. */}
-            {onEditPicture ? (
-                <button
-                    type="button"
-                    aria-label="Change your profile colour"
-                    onClick={onEditPicture}
-                    style={{ backgroundImage: banner }}
-                    className={cn(
-                        "group block h-20 w-full cursor-pointer sm:h-24",
-                        "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
-                    )}
-                >
-                    {/* Standing, because a phone cannot hover to find it. */}
-                    <span className="float-right m-2.5 flex items-center gap-1.5 rounded-full bg-surface-raised/80 px-2.5 py-1 text-label-sm text-content-secondary backdrop-blur-sm transition-colors group-hover:text-content">
-                        <Palette className="size-3.5" aria-hidden />
-                        Colour
-                    </span>
-                </button>
-            ) : (
-                <div
-                    aria-hidden
-                    style={{ backgroundImage: banner }}
-                    className="h-20 sm:h-24"
-                />
-            )}
-
-            <div className="px-5 pb-5 sm:px-6 sm:pb-6">
-                {/* Only the avatar reaches up into the banner. On a phone the
-                    44px buttons are taller than the part of it below the
-                    band, so lifted with it they would sit on the colour. */}
-                <div className="flex flex-wrap items-end justify-between gap-4">
-                    <span className="relative -mt-12 inline-block self-start rounded-full ring-4 ring-surface-raised sm:-mt-14">
+}: MemberFileHeaderProps) => (
+    /* No card: it sits on the page, or on the picture a profile chose, as a
+       game's title sits on its art. */
+    <section className="relative">
+        {/* Stacked until there is room beside the name for the buttons;
+            then the buttons sit at the foot of it, by what they act on,
+            rather than up on the picture by the avatar. */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-6">
+            <span className="relative inline-block shrink-0 self-start">
+                <AvatarFrame frame={profile.frame} size="xl">
+                    {/* The ring parts the picture from the backdrop; a
+                        frame does that itself, and the ring would cover it. */}
+                    <span
+                        className={cn(
+                            "relative inline-block rounded-full",
+                            !profile.frame && "ring-4 ring-surface"
+                        )}
+                    >
                         <ProfilePicture
                             variant="profileHeader"
                             file={profile.avatarUrl ?? ""}
@@ -162,22 +65,25 @@ const MemberFileHeader = ({
                         />
                         <PresenceDot online={profile.online} size="lg" />
                     </span>
+                </AvatarFrame>
+            </span>
 
-                    <div className="mt-3 flex items-center gap-2 self-start">
-                        {action}
-                    </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
-                    <h1 className="font-display text-title text-content">
-                        {profile.username}
+            <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+                    <h1 className="font-display text-title break-words text-content">
+                        <NameText
+                            font={profile.nameFont}
+                            colour={profile.nameColour}
+                        >
+                            {profile.username}
+                        </NameText>
                     </h1>
                     <UserStatus online={profile.online} />
                     <span className="text-label text-content-muted">
                         Member since {formatMonthYear(profile.createdAt)}
                     </span>
-                    {/* Here, not under the friend button, where it moved the
-                        buttons each time the friendship changed. */}
+                    {/* Here, not under the friend button, where it moved
+                        the buttons each time the friendship changed. */}
                     {friendsSince && (
                         <span className="text-label text-content-muted">
                             Friends since {new Date(friendsSince).getFullYear()}
@@ -185,50 +91,33 @@ const MemberFileHeader = ({
                     )}
                 </div>
 
-                {profile.bio && (
-                    <p className="mt-2.5 max-w-[52ch] text-sm leading-relaxed text-content-secondary">
-                        {profile.bio}
+                {stats && (
+                    <p className="mt-3 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-label text-content-muted">
+                        <span className="flex items-baseline gap-1.5">
+                            <span className={figureClass("row")}>
+                                {formatHours(stats.hoursPlayed)}
+                            </span>
+                            played
+                        </span>
+                        {/* Nothing rated yet is no average, not "-/10". */}
+                        {stats.averageRating !== null && (
+                            <span className="flex items-baseline gap-1.5">
+                                <RatingBadge
+                                    value={stats.averageRating}
+                                    size="row"
+                                />
+                                average rating
+                            </span>
+                        )}
                     </p>
                 )}
-
-                {request}
-
-                {!profileHidden && (
-                    <div className="mt-5 grid gap-5 border-t border-subtle pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-8">
-                        <div className="grid grid-cols-2 gap-x-7 gap-y-4 sm:flex sm:flex-wrap">
-                            <Stat
-                                label="Hours played"
-                                loading={!stats}
-                                value={formatHours(stats?.hoursPlayed)}
-                            />
-                            <Stat
-                                label="Average rating"
-                                loading={!stats}
-                                value={
-                                    <RatingBadge
-                                        value={stats?.averageRating ?? null}
-                                        size="md"
-                                    />
-                                }
-                            />
-                            <Stat
-                                label="Reviews"
-                                loading={reviewCount === undefined}
-                                value={formatCount(reviewCount)}
-                            />
-                            <Stat
-                                label="Friends"
-                                loading={friendCount === undefined}
-                                value={formatCount(friendCount)}
-                            />
-                        </div>
-
-                        <ShelfBar byStatus={byStatus} total={shelfTotal} />
-                    </div>
-                )}
             </div>
-        </section>
-    );
-};
+
+            <div className="flex gap-2 lg:shrink-0">{action}</div>
+        </div>
+
+        {request}
+    </section>
+);
 
 export default MemberFileHeader;

@@ -8,14 +8,25 @@ import OAuthButtons from "./OAuthButtons";
 import PasswordField from "./PasswordField";
 import { useCaptcha } from "./useCaptcha";
 
+const isUnconfirmed = (error: unknown) =>
+    error instanceof Error &&
+    ((error as { code?: string }).code === "email_not_confirmed" ||
+        /email not confirmed/i.test(error.message));
+
 interface LoginFormProps {
     /** Carried over when the user has just signed up. */
     initialEmail?: string;
     /** Opens the forgotten-password form with whatever email was typed. */
     onForgot?: (email: string) => void;
+    /** The details were right but the email isn't confirmed yet. */
+    onUnconfirmed?: (email: string) => void;
 }
 
-const LoginForm = ({ initialEmail = "", onForgot }: LoginFormProps) => {
+const LoginForm = ({
+    initialEmail = "",
+    onForgot,
+    onUnconfirmed,
+}: LoginFormProps) => {
     const { signIn } = useAuth();
     const { close } = useAccountForm();
     const notify = useNotify();
@@ -47,6 +58,9 @@ const LoginForm = ({ initialEmail = "", onForgot }: LoginFormProps) => {
         } catch (error) {
             captcha.reset();
             if (captcha.handled(error)) return;
+            // Not a wrong password: the link to confirm hasn't been opened.
+            if (isUnconfirmed(error) && onUnconfirmed)
+                return onUnconfirmed(email);
             setFormError(
                 error instanceof Error
                     ? "Those login details are not correct."

@@ -96,5 +96,15 @@ export const createGamesRouter = ({
     },
   );
 
+  // The pictures a profile can take for its background.
+  router.get(
+    "/:gameId/backdrops",
+    validate({ params: GameIdParamSchema }),
+    async (req, res) => {
+      const { gameId } = req.valid!.params as { gameId: number };
+      res.json(await service.backdrops(gameId));
+    },
+  );
+
   return router;
 };

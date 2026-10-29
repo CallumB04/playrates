@@ -12,6 +12,7 @@ import type {
     ThreadSort,
     TrendingThread,
     VoteResult,
+    ReactionKey,
 } from "@playrates/shared";
 import { api } from "../client";
 import { compactParams } from "./games";
@@ -74,17 +75,6 @@ export const fetchThread = async (threadId: number): Promise<ThreadDetail> => {
     return data;
 };
 
-export const fetchUserThreads = async (
-    username: string,
-    limit = 5
-): Promise<ThreadCard[]> => {
-    const { data } = await api.get<ThreadCard[]>(
-        `/users/${username}/community-threads`,
-        { params: { limit } }
-    );
-    return data;
-};
-
 export const createThread = async (
     input: CreateThreadInput
 ): Promise<ThreadDetail> => {
@@ -123,10 +113,12 @@ export const deleteThread = async (threadId: number): Promise<void> => {
 };
 
 export const toggleMessageVote = async (
-    messageId: number
+    messageId: number,
+    reaction: ReactionKey = "upvote"
 ): Promise<VoteResult> => {
     const { data } = await api.post<VoteResult>(
-        `/community/messages/${messageId}/vote`
+        `/community/messages/${messageId}/vote`,
+        { reaction }
     );
     return data;
 };

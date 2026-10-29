@@ -25,6 +25,7 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { useTileActions } from "../../components/game/useTileActions";
 import SignedOutHero from "./components/SignedOutHero";
 import ReEntryPlate from "./components/ReEntryPlate";
+import YourWeek from "./components/YourWeek";
 import Rail from "../../components/game/GameRail";
 import GenreGrid from "./components/GenreGrid";
 import FriendFeed from "./components/FriendFeed";
@@ -110,18 +111,21 @@ const HomePage = () => {
     return (
         <div className="flex flex-col gap-11">
             {user ? (
-                <ReEntryPlate
-                    username={user.username}
-                    displayName={user.firstName || user.username}
-                    isNew={myLogIds?.length === 0}
-                    current={current}
-                    shelves={allTime?.byStatus}
-                    yearLogs={yearLogs}
-                    yearStats={yearStats}
-                    onUpdateLog={() =>
-                        current && flow.edit(current.gameId, current.id)
-                    }
-                />
+                <div className="flex flex-col gap-4 lg:gap-6">
+                    <ReEntryPlate
+                        username={user.username}
+                        displayName={user.firstName || user.username}
+                        isNew={myLogIds?.length === 0}
+                        current={current}
+                        shelves={allTime?.byStatus}
+                        yearLogs={yearLogs}
+                        yearStats={yearStats}
+                        onUpdateLog={() =>
+                            current && flow.edit(current.gameId, current.id)
+                        }
+                    />
+                    <YourWeek />
+                </div>
             ) : (
                 <SignedOutHero
                     siteStats={siteStats}

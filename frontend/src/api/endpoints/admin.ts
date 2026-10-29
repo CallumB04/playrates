@@ -15,15 +15,21 @@ import type {
     AdminUserDetail,
     AdminUserSummary,
     Announcement,
-    AnnouncementInput,
     CursorPage,
+    EmailAudience,
+    EmailStats,
     GameEventGroup,
     Paginated,
     IgdbUsage,
     ServerErrorEntry,
+    AdminProgress,
+    SendAnnouncementInput,
 } from "@playrates/shared";
 import { api } from "../client";
 import { compactParams } from "./games";
+
+export const fetchAdminProgress = async (): Promise<AdminProgress> =>
+    (await api.get<AdminProgress>("/admin/progress")).data;
 
 export const fetchAdminOverview = async (
     range: AdminRange
@@ -124,27 +130,46 @@ export const fetchAnnouncements = async (): Promise<Announcement[]> =>
     (await api.get<Announcement[]>("/admin/announcements")).data;
 
 export const sendAnnouncement = async (
-    input: AnnouncementInput
+    input: SendAnnouncementInput
 ): Promise<Announcement> =>
     (await api.post<Announcement>("/admin/announcements", input)).data;
 
 export const sendTestAnnouncement = async (
-    input: AnnouncementInput
+    input: SendAnnouncementInput
 ): Promise<void> => {
     await api.post("/admin/announcements/test", input);
 };
 
+export const fetchEmailAudience = async (): Promise<EmailAudience> =>
+    (await api.get<EmailAudience>("/admin/email/audience")).data;
+
+export const fetchEmailStats = async (): Promise<EmailStats> =>
+    (await api.get<EmailStats>("/admin/email/stats")).data;
+
 export const fetchAdminPatchNotes = async (): Promise<AdminPatchNote[]> =>
     (await api.get<AdminPatchNote[]>("/admin/patch-notes")).data;
 
-export const announcePatchNote = async (
-    messageId: number
-): Promise<AdminPatchNote> =>
-    (await api.post<AdminPatchNote>(`/admin/patch-notes/${messageId}/announce`))
-        .data;
+export interface PatchNoteSend {
+    messageId: number;
+    email: boolean;
+}
 
-export const sendTestPatchNote = async (messageId: number): Promise<void> => {
-    await api.post(`/admin/patch-notes/${messageId}/test`);
+export const announcePatchNote = async ({
+    messageId,
+    email,
+}: PatchNoteSend): Promise<AdminPatchNote> =>
+    (
+        await api.post<AdminPatchNote>(
+            `/admin/patch-notes/${messageId}/announce`,
+            { email }
+        )
+    ).data;
+
+export const sendTestPatchNote = async ({
+    messageId,
+    email,
+}: PatchNoteSend): Promise<void> => {
+    await api.post(`/admin/patch-notes/${messageId}/test`, { email });
 };
 
 export const retractAnnouncement = async (id: number): Promise<Announcement> =>

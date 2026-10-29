@@ -47,7 +47,7 @@ const ShelfSort = ({
                    first" are the same direction but not the same sentence. */
                 aria-label={`Sort order: ${directionLabel(sort, direction)}`}
                 title={directionLabel(sort, direction)}
-                className="flex size-11 shrink-0 items-center justify-center rounded-sm border border-subtle bg-surface-raised text-content-secondary lift hover:border-strong hover:text-content sm:size-9"
+                className="flex size-11 shrink-0 items-center justify-center rounded-sm border border-subtle bg-surface-raised text-content-secondary lift hover:border-strong hover:text-content"
             >
                 <Arrow size={16} aria-hidden />
             </button>

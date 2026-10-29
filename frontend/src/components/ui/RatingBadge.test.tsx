@@ -10,7 +10,7 @@ describe("RatingBadge", () => {
 
     it("keeps the shape when there is no rating", () => {
         const { container } = render(<RatingBadge value={null} />);
-        expect(container.firstChild).toHaveTextContent("—/10");
+        expect(container.firstChild).toHaveTextContent("–/10");
     });
 
     it("reserves brand ink for a real rating", () => {

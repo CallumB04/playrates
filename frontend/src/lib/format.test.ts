@@ -75,8 +75,8 @@ describe("releaseYear", () => {
     });
 
     it("falls back for a missing date", () => {
-        expect(releaseYear(null)).toBe("—");
-        expect(releaseYear(undefined)).toBe("—");
+        expect(releaseYear(null)).toBe("–");
+        expect(releaseYear(undefined)).toBe("–");
     });
 });
 
@@ -88,8 +88,8 @@ describe("formatRating", () => {
     });
 
     it("renders an em dash when there is no rating", () => {
-        expect(formatRating(null)).toBe("—");
-        expect(formatRating(undefined)).toBe("—");
+        expect(formatRating(null)).toBe("–");
+        expect(formatRating(undefined)).toBe("–");
     });
 });
 
@@ -101,8 +101,8 @@ describe("formatRatingOutOfTen", () => {
     });
 
     it("renders a bare em dash rather than an unrated /10", () => {
-        expect(formatRatingOutOfTen(null)).toBe("—");
-        expect(formatRatingOutOfTen(undefined)).toBe("—");
+        expect(formatRatingOutOfTen(null)).toBe("–");
+        expect(formatRatingOutOfTen(undefined)).toBe("–");
     });
 });
 
@@ -126,7 +126,7 @@ describe("formatHours", () => {
     });
 
     it("renders an em dash when unknown", () => {
-        expect(formatHours(null)).toBe("—");
+        expect(formatHours(null)).toBe("–");
     });
 });
 
@@ -137,9 +137,9 @@ describe("formatFraction", () => {
     });
 
     it("renders an em dash when there is no total to be a fraction of", () => {
-        expect(formatFraction(46, null)).toBe("—");
-        expect(formatFraction(46, 0)).toBe("—");
-        expect(formatFraction(null, 52)).toBe("—");
+        expect(formatFraction(46, null)).toBe("–");
+        expect(formatFraction(46, 0)).toBe("–");
+        expect(formatFraction(null, 52)).toBe("–");
     });
 });
 
@@ -186,8 +186,8 @@ describe("formatCount", () => {
     });
 
     it("renders an em dash when the count is unknown", () => {
-        expect(formatCount(null)).toBe("—");
-        expect(formatCount(undefined)).toBe("—");
+        expect(formatCount(null)).toBe("–");
+        expect(formatCount(undefined)).toBe("–");
     });
 });
 
@@ -205,7 +205,7 @@ describe("formatMonthYear", () => {
     });
 
     it("renders an em dash when there is no date", () => {
-        expect(formatMonthYear(null)).toBe("—");
+        expect(formatMonthYear(null)).toBe("–");
     });
 });
 
@@ -215,7 +215,7 @@ describe("formatMonthYearShort", () => {
     });
 
     it("renders an em dash when there is no date", () => {
-        expect(formatMonthYearShort(null)).toBe("—");
+        expect(formatMonthYearShort(null)).toBe("–");
     });
 });
 
@@ -225,7 +225,7 @@ describe("formatDate", () => {
     });
 
     it("renders an em dash when there is no date", () => {
-        expect(formatDate(undefined)).toBe("—");
+        expect(formatDate(undefined)).toBe("–");
     });
 });
 
@@ -250,7 +250,7 @@ describe("relativeTime", () => {
     });
 
     it("renders an em dash when there is no timestamp", () => {
-        expect(relativeTime(null, now)).toBe("—");
+        expect(relativeTime(null, now)).toBe("–");
     });
 });
 

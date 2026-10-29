@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ReactionCount, ReactionKey, ReactionState } from "./reactions.js";
 import { PaginationSchema } from "./common.js";
 import type { ProfileAccent } from "./profileAccent.js";
 import { RichTextDocSchema, type RichTextDoc } from "./richText.js";
@@ -77,7 +78,6 @@ export const COMMUNITY_IMAGE_MAX_EDGE = 1600;
 export interface CommunityAuthor {
   id: string;
   username: string;
-  firstName: string | null;
   avatarUrl: string | null;
   accent: ProfileAccent;
 }
@@ -135,6 +135,8 @@ export interface CommunityMessage {
   editedAt: string | null;
   voteCount: number;
   votedByViewer: boolean;
+  myReaction: ReactionKey | null;
+  reactions: ReactionCount[];
   canEdit: boolean;
   canDelete: boolean;
   /** Only top-level messages carry replies. */
@@ -175,7 +177,4 @@ export interface LatestReply {
   createdAt: string;
 }
 
-export interface VoteResult {
-  voteCount: number;
-  votedByViewer: boolean;
-}
+export type VoteResult = ReactionState;

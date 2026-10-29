@@ -1,0 +1,130 @@
+import { z } from "zod";
+import type { Game } from "./game.js";
+import type { ProfileAccent } from "./profileAccent.js";
+
+/**
+ * The Gaming 25: one game for each of these, in this order, read across
+ * the 5×5 grid. Picks are kept by key, so a label can be reworded freely;
+ * a key taken out leaves its picks in the database, unshown.
+ */
+export const GAMING_25_CATEGORIES = [
+  { key: "childhood_classic", label: "Childhood classic" },
+  { key: "best_main_character", label: "Best main character" },
+  { key: "overrated", label: "Overrated" },
+  { key: "best_soundtrack", label: "Best soundtrack" },
+  { key: "hardest_game", label: "Hardest game" },
+
+  { key: "favourite_art_style", label: "Favourite art style" },
+  { key: "comfort_game", label: "Comfort game" },
+  { key: "best_story", label: "Best story" },
+  { key: "hidden_gem", label: "Hidden gem" },
+  { key: "best_with_friends", label: "Best with friends" },
+
+  { key: "best_boss_fights", label: "Best boss fights" },
+  { key: "biggest_letdown", label: "Biggest letdown" },
+  { key: "all_time_favourite", label: "Favourite game" },
+  { key: "best_rpg", label: "Best RPG" },
+  { key: "best_ending", label: "Best ending" },
+
+  { key: "keep_coming_back_to", label: "Keep coming back to" },
+  { key: "best_side_characters", label: "Best side characters" },
+  { key: "best_villain", label: "Best villain" },
+  { key: "guilty_pleasure", label: "Guilty pleasure" },
+  { key: "best_combat", label: "Best combat" },
+
+  { key: "remake_it_already", label: "Remake it already" },
+  { key: "best_world", label: "Best world" },
+  { key: "didnt_expect_to_love", label: "Didn't expect to love" },
+  { key: "best_indie", label: "Best indie" },
+  { key: "everyone_should_play", label: "Everyone should play" },
+] as const;
+
+export type Gaming25Category = (typeof GAMING_25_CATEGORIES)[number]["key"];
+
+export const GAMING_25_SIZE = GAMING_25_CATEGORIES.length;
+
+/** The one in the middle of the grid, which gets the emphasis. */
+export const GAMING_25_CENTRE: Gaming25Category = "all_time_favourite";
+
+/** A grid needs this many picks before Most loved will show it. */
+export const GAMING_25_SHOWCASE_MIN = 5;
+
+export const Gaming25CategorySchema = z.enum(
+  GAMING_25_CATEGORIES.map((c) => c.key) as [
+    Gaming25Category,
+    ...Gaming25Category[],
+  ],
+);
+
+export const gaming25Label = (key: Gaming25Category): string =>
+  GAMING_25_CATEGORIES.find((c) => c.key === key)!.label;
+
+export const Gaming25PickParamSchema = z.object({
+  category: Gaming25CategorySchema,
+});
+
+export const SetGaming25PickSchema = z
+  .object({ gameId: z.number().int().positive() })
+  .strict();
+
+/* Raised whenever the picture's design or wording changes. Its URL is
+   cached for good, so without this a grid nobody has touched would keep
+   its old picture. */
+const GAMING_25_IMAGE_REVISION = 2;
+
+/** The picture's version: what it's drawn from, and how it's drawn. */
+export const gaming25ImageVersion = (updatedAt: string | null): string =>
+  updatedAt
+    ? `${GAMING_25_IMAGE_REVISION}.${Date.parse(updatedAt)}`
+    : String(GAMING_25_IMAGE_REVISION);
+
+export const GAMING_25_IMAGE_LAYOUTS = ["portrait", "wide"] as const;
+export type Gaming25ImageLayout = (typeof GAMING_25_IMAGE_LAYOUTS)[number];
+
+export const Gaming25ImageQuerySchema = z.object({
+  layout: z.enum(GAMING_25_IMAGE_LAYOUTS).default("portrait"),
+  /** Only there to change the URL when the grid changes. */
+  v: z.string().max(64).optional(),
+});
+
+export const MostLovedGaming25sQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(24).default(5),
+});
+
+export interface Gaming25Owner {
+  username: string;
+  avatarUrl: string | null;
+  accent: ProfileAccent;
+  /** The card theme its pictures wear. */
+  cardTheme: string;
+}
+
+export interface Gaming25Pick {
+  category: Gaming25Category;
+  game: Game;
+}
+
+/** Someone's grid: the cells they've filled, in category order. */
+export interface Gaming25 {
+  owner: Gaming25Owner;
+  picks: Gaming25Pick[];
+  loveCount: number;
+  lovedByViewer: boolean;
+  /** Null until the first pick. */
+  updatedAt: string | null;
+}
+
+/** A grid as a card shows it. */
+export interface Gaming25Summary {
+  owner: Gaming25Owner;
+  pickCount: number;
+  loveCount: number;
+  /** The favourite game, when there is one. */
+  centre: { id: number; title: string; coverUrl: string | null } | null;
+  updatedAt: string;
+}
+
+export interface LoveResult {
+  loveCount: number;
+  lovedByViewer: boolean;
+}

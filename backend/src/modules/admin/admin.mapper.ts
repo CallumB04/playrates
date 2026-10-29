@@ -3,9 +3,11 @@ import {
   ANNOUNCEMENT_TONES,
   activityGroupOf,
   firstHeading,
+  levelFor,
   gameEventGroupOf,
   patchNotePath,
   type AdminPatchNote,
+  type AdminProgress,
   type RichTextDoc,
   type AdminActivityEvent,
   type AdminBucket,
@@ -34,7 +36,11 @@ import type {
   IgdbUsageDayRow,
 } from "../../types/database.types.js";
 import { isOnline, toAccent } from "../profiles/profiles.mapper.js";
-import type { PatchNoteEntryRow, ServerErrorRowWithUser } from "./admin.repository.js";
+import type {
+  AdminProgressRow,
+  PatchNoteEntryRow,
+  ServerErrorRowWithUser,
+} from "./admin.repository.js";
 
 const DAY_MS = 86_400_000;
 
@@ -302,6 +308,7 @@ export const toAnnouncement = (row: AnnouncementCardRow): Announcement => ({
   retractedAt: row.retracted_at,
   recipientCount: row.recipient_count,
   readCount: Number(row.read_count),
+  emailedAt: row.emailed_at ?? null,
 });
 
 /** An entry is named by its first h1; failing that, by whatever heading
@@ -349,5 +356,71 @@ export const toCursorPage = <Row extends { id: number }, T>(
   return {
     data: page.map(map),
     nextBefore: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
+  };
+};
+
+/** The level bands the Progress view counts members in. */
+export const LEVEL_BANDS = [
+  { label: "1 to 4", from: 1, to: 4 },
+  { label: "5 to 9", from: 5, to: 9 },
+  { label: "10 to 19", from: 10, to: 19 },
+  { label: "20 to 29", from: 20, to: 29 },
+  { label: "30 to 49", from: 30, to: 49 },
+  { label: "50 and up", from: 50, to: Infinity },
+];
+
+/** Postgres hands sums and counts back as strings past int4: all numbers here. */
+const n = (value: unknown): number => Number(value ?? 0);
+
+export const toAdminProgress = (row: AdminProgressRow): AdminProgress => {
+  const levels = row.xps.map((xp) => levelFor(n(xp)).level);
+  const members = n(row.members);
+  return {
+    members,
+    xp: {
+      total: row.xps.reduce((sum, xp) => sum + n(xp), 0),
+      average: members
+        ? Math.round(row.xps.reduce((sum, xp) => sum + n(xp), 0) / members)
+        : 0,
+      lastWeek: n(row.xp_last_week),
+    },
+    tokens: {
+      held: n(row.tokens_held),
+      earned: n(row.tokens_earned),
+      spent: n(row.tokens_spent),
+      gifted: n(row.tokens_gifted),
+    },
+    levels: LEVEL_BANDS.map((band) => ({
+      label: band.label,
+      members: levels.filter((l) => l >= band.from && l <= band.to).length,
+    })),
+    topPlayers: row.top.map((p) => ({
+      username: p.username,
+      avatarUrl: p.avatar_url,
+      accent: toAccent(p.accent),
+      level: levelFor(n(p.xp)).level,
+      xp: n(p.xp),
+    })),
+    xpBySource: row.xp_by_source
+      .map((s) => ({ source: s.source, xp: n(s.xp), events: n(s.events) }))
+      .sort((a, b) => b.xp - a.xp),
+    badges: row.badges.map((b) => ({
+      badge: b.badge,
+      metal: n(b.metal),
+      holders: n(b.holders),
+    })),
+    shop: row.shop
+      .map((s) => ({ item: s.item, sold: n(s.sold), tokens: n(s.tokens) }))
+      .sort((a, b) => b.tokens - a.tokens),
+    reactions: row.reactions
+      .map((r) => ({ reaction: r.reaction, count: n(r.count) }))
+      .sort((a, b) => b.count - a.count),
+    tasks: { thisWeek: n(row.tasks_week), thisMonth: n(row.tasks_month) },
+    referrals: {
+      joined: n(row.referrals_joined),
+      active: n(row.referrals_active),
+    },
+    setupDone: n(row.setup_done),
+    revealWaiting: n(row.reveal_waiting),
   };
 };

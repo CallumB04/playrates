@@ -92,23 +92,23 @@ export const formatReleaseShort = (
 
 /** The year from an ISO date, or an em dash when there isn't one. */
 export const releaseYear = (isoDate: string | null | undefined): string =>
-    isoDate ? isoDate.slice(0, 4) : "—";
+    isoDate ? isoDate.slice(0, 4) : "–";
 
 /** Always two decimals, so a column of ratings lines up. */
 export const formatRating = (rating: number | null | undefined): string =>
-    rating === null || rating === undefined ? "—" : rating.toFixed(2);
+    rating === null || rating === undefined ? "–" : rating.toFixed(2);
 
 /** "8.25/10", for plain-text spots that can't use RatingBadge. */
 export const formatRatingOutOfTen = (
     rating: number | null | undefined
 ): string =>
     rating === null || rating === undefined
-        ? "—"
+        ? "–"
         : `${formatRating(rating)}/10`;
 
 /** A count with thousands separators. */
 export const formatCount = (value: number | null | undefined): string =>
-    value === null || value === undefined ? "—" : value.toLocaleString("en-GB");
+    value === null || value === undefined ? "–" : value.toLocaleString("en-GB");
 
 /** "1 log", "1,284 logs": a bare figure reads as a rating or a year. */
 export const formatLogCount = (value: number): string =>
@@ -121,7 +121,7 @@ export const formatMessageCount = (value: number): string =>
 
 /** Hours played, trimmed of a pointless trailing zero. */
 export const formatHours = (hours: number | null | undefined): string => {
-    if (hours === null || hours === undefined) return "—";
+    if (hours === null || hours === undefined) return "–";
     const rounded = Math.round(hours * 10) / 10;
     return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}h`;
 };
@@ -132,7 +132,7 @@ export const formatFraction = (
     total: number | null | undefined
 ): string =>
     completed === null || completed === undefined || !total
-        ? "—"
+        ? "–"
         : `${completed}/${total}`;
 
 /** A percentage with no decimals, for progress bars. */
@@ -145,14 +145,14 @@ export const formatMonthYear = (iso: string | null | undefined): string =>
         ? formatter({ month: "long", year: "numeric" }, zoneFor(iso)).format(
               new Date(iso)
           )
-        : "—";
+        : "–";
 
 /** "Sept ’26" — the tightest a month and year go, for a figure under a tile.
  *  Without the apostrophe "Aug 26" reads as the 26th of August. */
 export const formatMonthYearShort = (
     iso: string | null | undefined
 ): string => {
-    if (!iso) return "—";
+    if (!iso) return "–";
     const parts = formatter(
         { month: "short", year: "2-digit" },
         zoneFor(iso)
@@ -169,7 +169,7 @@ export const formatDate = (iso: string | null | undefined): string =>
               { day: "numeric", month: "short", year: "numeric" },
               zoneFor(iso)
           ).format(new Date(iso))
-        : "—";
+        : "–";
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -183,7 +183,7 @@ export const relativeTime = (
     iso: string | null | undefined,
     now: number = Date.now()
 ): string => {
-    if (!iso) return "—";
+    if (!iso) return "–";
     const elapsed = now - new Date(iso).getTime();
     if (elapsed < MINUTE) return "just now";
     if (elapsed < HOUR) return `${Math.floor(elapsed / MINUTE)}m ago`;

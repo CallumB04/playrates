@@ -1,4 +1,20 @@
+import {
+  createFavouritesRepository,
+  type FavouritesRepository,
+} from "./modules/favourites/favourites.repository.js";
 import type { Db } from "./config/supabase.js";
+import {
+  createProgressRepository,
+  type ProgressRepository,
+} from "./modules/progress/progress.repository.js";
+import {
+  createGaming25Repository,
+  type Gaming25Repository,
+} from "./modules/gaming25/gaming25.repository.js";
+import {
+  createListsRepository,
+  type ListsRepository,
+} from "./modules/lists/lists.repository.js";
 import {
   createProfilesRepository,
   type ProfilesRepository,
@@ -52,6 +68,10 @@ import {
   type SitemapRepository,
 } from "./modules/pages/sitemap.repository.js";
 import {
+  createEmailRepository,
+  type EmailRepository,
+} from "./modules/email/email.repository.js";
+import {
   createCommunityRepository,
   type CommunityRepository,
 } from "./modules/community/community.repository.js";
@@ -73,6 +93,11 @@ export interface Repositories {
   accountExport: AccountExportRepository;
   reports: ReportsRepository;
   sitemap: SitemapRepository;
+  favourites: FavouritesRepository;
+  lists: ListsRepository;
+  gaming25: Gaming25Repository;
+  progress: ProgressRepository;
+  email: EmailRepository;
 }
 
 export const createRepositories = (db: Db): Repositories => ({
@@ -90,4 +115,9 @@ export const createRepositories = (db: Db): Repositories => ({
   accountExport: createAccountExportRepository(db),
   reports: createReportsRepository(db),
   sitemap: createSitemapRepository(db),
+  favourites: createFavouritesRepository(db),
+  lists: createListsRepository(db),
+  gaming25: createGaming25Repository(db),
+  progress: createProgressRepository(db),
+  email: createEmailRepository(db),
 });

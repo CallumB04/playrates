@@ -112,7 +112,7 @@ export const shelfFoot = (entry: ShelfEntry, sort: GameLogSort): ShelfFoot => {
             return {
                 value:
                     rollup.completion === null
-                        ? "—"
+                        ? "–"
                         : formatPercent(rollup.completion),
             };
         case "rating":

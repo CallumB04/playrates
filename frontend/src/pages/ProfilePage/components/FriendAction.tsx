@@ -9,6 +9,7 @@ interface FriendActionProps {
     onRemove: () => void;
     /** Taking back a request you sent. A different confirmation to unfriending. */
     onCancel: () => void;
+    className?: string;
 }
 
 /* 44px on a phone like the report button beside it, which also left the
@@ -22,13 +23,14 @@ const FriendAction = ({
     onAdd,
     onRemove,
     onCancel,
+    className,
 }: FriendActionProps) => {
     if (relation === "friend") {
         return (
             <Button
                 variant="secondary"
                 size="sm"
-                className={cn(TAP, isPending && "opacity-60")}
+                className={cn(TAP, className, isPending && "opacity-60")}
                 onClick={onRemove}
                 disabled={isPending}
             >
@@ -45,7 +47,7 @@ const FriendAction = ({
             <Button
                 variant="secondary"
                 size="sm"
-                className={TAP}
+                className={cn(TAP, className)}
                 onClick={onCancel}
                 disabled={isPending}
             >
@@ -55,7 +57,12 @@ const FriendAction = ({
     }
 
     return (
-        <Button size="sm" className={TAP} onClick={onAdd} disabled={isPending}>
+        <Button
+            size="sm"
+            className={cn(TAP, className)}
+            onClick={onAdd}
+            disabled={isPending}
+        >
             Add friend
         </Button>
     );

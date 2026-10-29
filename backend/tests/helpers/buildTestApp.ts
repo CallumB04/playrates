@@ -6,6 +6,7 @@ import { createLogger } from "../../src/lib/logger.js";
 import type { GamesProvider } from "../../src/providers/games/GamesProvider.js";
 import { nullGamesProvider } from "../../src/providers/games/GamesProvider.js";
 import type { Repositories } from "../../src/repositories.js";
+import { createEmailFakes, type EmailRecorder } from "./inMemoryEmail.js";
 import {
   createInMemoryRepos,
   type InMemoryState,
@@ -59,12 +60,18 @@ export const TEST_TEMPLATE = `<!doctype html>
 
 export const buildTestApp = (
   options: TestAppOptions = {},
-): { app: Express; repos: Repositories; state: InMemoryState } => {
+): {
+  app: Express;
+  repos: Repositories;
+  state: InMemoryState;
+  email: EmailRecorder;
+} => {
   setTestEnv();
 
   const { repos, state, authAdmin, avatars, communityImages } =
     createInMemoryRepos(options.seed);
   const resolved = options.repos ?? repos;
+  const email = createEmailFakes();
 
   const app = buildApp({
     repos: resolved,
@@ -72,11 +79,12 @@ export const buildTestApp = (
     authAdmin,
     avatars,
     communityImages,
+    email: email.deps,
     verify: fakeVerify,
     logger: createLogger(),
     template: async () => TEST_TEMPLATE,
     production: options.production ?? false,
   });
 
-  return { app, repos: resolved, state };
+  return { app, repos: resolved, state, email: email.recorder };
 };

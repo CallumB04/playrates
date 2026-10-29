@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ReactionCount, ReactionKey } from "./reactions.js";
 import type { ProfileAccent } from "./profileAccent.js";
 import { PaginationSchema } from "./common.js";
 
@@ -32,7 +33,6 @@ export interface Review {
 export interface ReviewAuthor {
   id: string;
   username: string;
-  firstName: string | null;
   avatarUrl: string | null;
   /** Colours the generated avatar where there is no picture. */
   accent: ProfileAccent;
@@ -64,8 +64,10 @@ export interface ReviewWithAuthor extends Review {
   system: string | null;
   game: ReviewGame;
   voteCount: number;
-  /** Whether the viewer has upvoted it. False when signed out. */
+  /** Whether the viewer has reacted to it. False when signed out. */
   votedByViewer: boolean;
+  myReaction: ReactionKey | null;
+  reactions: ReactionCount[];
 }
 
 /**

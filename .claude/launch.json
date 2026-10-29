@@ -31,6 +31,16 @@
             ],
             "port": 5173,
             "autoPort": true
+        },
+        {
+            "name": "playrates-local-keep",
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                "scripts/dev-local.mjs",
+                "--keep"
+            ],
+            "port": 5173,
+            "autoPort": true
         }
     ]
 }

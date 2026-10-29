@@ -62,6 +62,16 @@
    =========================================================================== */
 :root,
 .light {
+    /* Name colours, a step deeper by day to hold on paper. */
+    --name-sky: #1479b8;
+    --name-gold: #96690a;
+    --name-ember: #e2541b;
+    --name-mint: #0b8160;
+    --name-rose: #d6336c;
+    --name-holo-1: #3aa6d0;
+    --name-holo-2: #8b6cf0;
+    --name-holo-3: #d0569e;
+
     /* Native controls follow the theme too. Without this the date picker
        panel, the select popup and the scrollbars all render light — the
        select in particular looks correct until you open it. */
@@ -82,7 +92,6 @@
     --action-hover: var(--brand-hover);
     --action-active: var(--brand-active);
     --action-ink: var(--content-on-solid);
-    --action-mark: currentColor;
 
     /* Accent — Ember. Sparingly, for what should feel earned. */
     --accent: var(--ember-600);
@@ -158,6 +167,12 @@
     --status-wishlist-quiet: color-mix(in srgb, #ec4899 13%, transparent);
     --status-wishlist-content: #9d174d;
 
+    /* A love: warmer and louder than the brand an upvote wears, since it
+       is meant to count for more. */
+    --love: #e11d48;
+    --love-quiet: color-mix(in srgb, #f43f5e 12%, transparent);
+    --love-content: #be123c;
+
     /* Each played substatus carries its own hue. They shared the brand and
        a grey, which left the icon doing the whole job of telling finished
        from retired. Green for finished because seeing a game out is the one
@@ -191,6 +206,12 @@
     --info: #0369a1;
     --warning: var(--ember-600);
     --gold: var(--ember-500);
+    /* A podium, for a profile's favourites. Its own gold: the one above is
+       the brand's ember, which beside bronze read as a second bronze. Dark
+       enough by day to read on the page. */
+    --medal-gold: #a87400;
+    --medal-silver: #6b7685;
+    --medal-bronze: #a35a26;
 
     /* Chart series, in this order and never cycled. Checked as a set for
        colour-blind separation and contrast on the raised surface; the night
@@ -205,6 +226,15 @@
    Night. The default, and the one the palette was built for.
    =========================================================================== */
 .dark {
+    --name-sky: #5ec2ff;
+    --name-gold: #f2c94c;
+    --name-ember: #ff7a45;
+    --name-mint: #3ddc97;
+    --name-rose: #ff6b9d;
+    --name-holo-1: #9fe8ff;
+    --name-holo-2: #c4a6ff;
+    --name-holo-3: #ffb3e6;
+
     color-scheme: dark;
 
     --brand: var(--iris-500);
@@ -214,16 +244,14 @@
     --brand-muted: var(--iris-700);
     --brand-subtle: color-mix(in srgb, var(--iris-500) 18%, transparent);
 
-    /* By night the brand fill lost its label: violet is mid-tone, so dark
-       ink on it and white ink on it both sit too close to it. The action
-       goes near-white with dark ink instead, the brightest thing on the
-       page, and the brand moves into its icon and its glow. */
-    --action: var(--ink-50);
-    --action-edge: var(--ink-200);
-    --action-hover: #ffffff;
-    --action-active: var(--ink-200);
-    --action-ink: var(--ink-950);
-    --action-mark: var(--iris-600);
+    /* By night the action keeps the day's deeper violet rather than the
+       night brand: white ink holds on it, where the lighter iris-500 sat
+       too close to both white and dark. Icon and label share the ink. */
+    --action: var(--iris-600);
+    --action-edge: var(--iris-700);
+    --action-hover: var(--iris-500);
+    --action-active: var(--iris-700);
+    --action-ink: #ffffff;
 
     --accent: var(--ember-400);
     --accent-quiet: color-mix(in srgb, var(--ember-500) 18%, transparent);
@@ -276,6 +304,10 @@
     --status-wishlist-quiet: color-mix(in srgb, #ec4899 20%, transparent);
     --status-wishlist-content: #fbcfe8;
 
+    --love: #ff5c7c;
+    --love-quiet: color-mix(in srgb, #f43f5e 18%, transparent);
+    --love-content: #ffc2cf;
+
     --status-finished: #34d399;
     --status-finished-quiet: color-mix(in srgb, #34d399 18%, transparent);
     --status-mastered: #e8b530;
@@ -300,6 +332,9 @@
     --info: #56ccf2;
     --warning: var(--ember-400);
     --gold: var(--ember-300);
+    --medal-gold: #f2c94c;
+    --medal-silver: #c5ccd6;
+    --medal-bronze: #d9915a;
 
     --chart-1: #7c5cff;
     --chart-2: #0aa2c2;
@@ -514,6 +549,16 @@
     --animate-rise: rise 200ms cubic-bezier(0.22, 1, 0.36, 1);
     --animate-sheet-rise: sheet-rise 280ms cubic-bezier(0.22, 1, 0.36, 1);
     --animate-stamp: stamp 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    --animate-heart-pop: heart-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* Progress: the moments that are meant to feel like an event. */
+    --animate-glow-bloom: glow-bloom 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    --animate-ring-out: ring-out 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+    --animate-level-pop: level-pop 900ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    --animate-medal-drop: medal-drop 900ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    /* Once, on arrival: a light that keeps crossing something is noise. */
+    --animate-sheen: sheen 1.6s cubic-bezier(0.22, 1, 0.36, 1) 300ms both;
+    --animate-xp-rise: xp-rise 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    --animate-fade-up: fade-up 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
     --animate-tab-raise: tab-raise 200ms cubic-bezier(0.22, 1, 0.36, 1);
     /* A sheen crossing a control while it waits on the server. */
     --animate-sweep: sweep 1.1s linear infinite;
@@ -539,7 +584,6 @@
     --color-action-hover: var(--action-hover);
     --color-action-active: var(--action-active);
     --color-action-ink: var(--action-ink);
-    --color-action-mark: var(--action-mark);
 
     --color-accent: var(--accent);
     --color-accent-quiet: var(--accent-quiet);
@@ -614,6 +658,9 @@
     --color-info-strong: var(--info-strong);
 
     --color-gold: var(--gold);
+    --color-medal-gold: var(--medal-gold);
+    --color-medal-silver: var(--medal-silver);
+    --color-medal-bronze: var(--medal-bronze);
 
     --color-chart-1: var(--chart-1);
     --color-chart-2: var(--chart-2);
@@ -632,6 +679,9 @@
     --color-status-wishlist: var(--status-wishlist);
     --color-status-wishlist-quiet: var(--status-wishlist-quiet);
     --color-status-wishlist-content: var(--status-wishlist-content);
+    --color-love: var(--love);
+    --color-love-quiet: var(--love-quiet);
+    --color-love-content: var(--love-content);
     --color-status-mastered: var(--status-mastered);
     --color-status-mastered-quiet: var(--status-mastered-quiet);
     --color-status-finished: var(--status-finished);
@@ -1123,6 +1173,107 @@
     }
 }
 
+@keyframes glow-bloom {
+    from {
+        transform: scale(0.6);
+        opacity: 0;
+    }
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+@keyframes ring-out {
+    from {
+        transform: scale(0.6);
+        opacity: 0;
+    }
+    15% {
+        opacity: 0.8;
+    }
+    to {
+        transform: scale(2.2);
+        opacity: 0;
+    }
+}
+
+@keyframes level-pop {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+        filter: blur(12px);
+    }
+    60% {
+        transform: scale(1.12);
+        opacity: 1;
+        filter: blur(0);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes medal-drop {
+    0% {
+        transform: translateY(-48px) scale(0.6) rotateY(180deg);
+        opacity: 0;
+    }
+    60% {
+        opacity: 1;
+    }
+    100% {
+        transform: none;
+    }
+}
+
+@keyframes sheen {
+    0% {
+        background-position: 200% 0;
+    }
+    60%,
+    100% {
+        background-position: -100% 0;
+    }
+}
+
+@keyframes xp-rise {
+    from {
+        transform: translateY(10px) scale(0.92);
+        opacity: 0;
+    }
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+@keyframes fade-up {
+    from {
+        transform: translateY(14px);
+        opacity: 0;
+    }
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+@keyframes heart-pop {
+    0% {
+        transform: scale(1);
+    }
+    35% {
+        transform: scale(1.4);
+    }
+    65% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
 /* Arrival, with the overshoot the spring curve provides. */
 @keyframes settle {
     from {
@@ -1245,6 +1396,14 @@
 @media (prefers-reduced-motion: reduce) {
     :root {
         --animate-stamp: none;
+        --animate-heart-pop: none;
+        --animate-glow-bloom: none;
+        --animate-ring-out: none;
+        --animate-level-pop: none;
+        --animate-medal-drop: none;
+        --animate-sheen: none;
+        --animate-xp-rise: none;
+        --animate-fade-up: none;
         --animate-settle: none;
         --animate-rise: none;
         --animate-sheet-rise: none;
@@ -1258,5 +1417,259 @@
 
     .lift {
         transition-duration: 1ms;
+    }
+}
+
+/* Progress: badge metals and avatar frames. Raw values live here, the one
+   place a colour is defined; components only name the metal or frame. */
+@layer components {
+    .metal-bronze {
+        --metal-ink: rgba(60, 26, 6, 0.7);
+        --metal-hi: #f3c299;
+        --metal-mid: #c47a43;
+        --metal-lo: #6e3a17;
+        --metal-glow: rgba(214, 133, 74, 0.55);
+    }
+    .metal-silver {
+        --metal-ink: rgba(40, 48, 60, 0.7);
+        --metal-hi: #ffffff;
+        --metal-mid: #c3cad5;
+        --metal-lo: #6b7685;
+        --metal-glow: rgba(197, 204, 214, 0.55);
+    }
+    .metal-gold {
+        --metal-ink: rgba(80, 52, 0, 0.72);
+        --metal-hi: #fff1b8;
+        --metal-mid: #f2c94c;
+        --metal-lo: #9a6b00;
+        --metal-glow: rgba(242, 201, 76, 0.6);
+    }
+    .metal-platinum {
+        --metal-ink: rgba(40, 24, 110, 0.7);
+        --metal-hi: #e9fbff;
+        --metal-mid: #a8c7ff;
+        --metal-lo: #7a5cff;
+        --metal-glow: rgba(150, 170, 255, 0.65);
+    }
+    .metal-locked {
+        --metal-ink: var(--content-muted);
+        --metal-hi: var(--surface-raised);
+        --metal-mid: var(--surface-sunken);
+        --metal-lo: var(--surface-sunken);
+        --metal-glow: transparent;
+    }
+
+    /* A ring drawn outside the avatar, in its own gradient, with the
+       faintest glow of its colour. Still: a frame is worn everywhere, and
+       one that moves pulls the eye from everything beside it. */
+    .pr-frame {
+        position: relative;
+        isolation: isolate;
+        border-radius: 9999px;
+        box-shadow: 0 0 10px -3px var(--frame-glow, transparent);
+    }
+    .pr-frame::before {
+        content: "";
+        position: absolute;
+        inset: calc(var(--frame-width, 3px) * -1);
+        z-index: -1;
+        border-radius: inherit;
+        padding: var(--frame-width, 3px);
+        background: var(--frame);
+        -webkit-mask:
+            linear-gradient(#000 0 0) content-box,
+            linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+    }
+    .pr-frame-bronze {
+        --frame: linear-gradient(145deg, #e8b48a, #a35a26 60%, #6e3a17);
+        --frame-glow: rgba(214, 133, 74, 0.45);
+    }
+    .pr-frame-silver {
+        --frame: linear-gradient(145deg, #ffffff, #aab3bf 60%, #6b7685);
+        --frame-glow: rgba(197, 204, 214, 0.45);
+    }
+    .pr-frame-gold {
+        --frame: linear-gradient(145deg, #fff1b8, #f2c94c 55%, #a87400);
+        --frame-glow: rgba(242, 201, 76, 0.5);
+    }
+    .pr-frame-emerald {
+        --frame: linear-gradient(145deg, #b9ffd9, #20c07a 60%, #05603a);
+        --frame-glow: rgba(32, 192, 122, 0.45);
+    }
+    .pr-frame-sapphire {
+        --frame: linear-gradient(145deg, #c9dcff, #3d6bff 60%, #142c8f);
+        --frame-glow: rgba(61, 107, 255, 0.45);
+    }
+    .pr-frame-holo,
+    .pr-frame-prismatic {
+        --frame: linear-gradient(
+            135deg,
+            #ff9ad5,
+            #ad8cff 30%,
+            #94d0ff 60%,
+            #77ffd1 85%,
+            #ffe66d
+        );
+        --frame-glow: rgba(173, 140, 255, 0.5);
+    }
+    .pr-frame-prismatic {
+        --frame-width: 4px;
+    }
+    .pr-frame-legendary {
+        --frame: linear-gradient(
+            135deg,
+            #fff1b8,
+            #f2c94c 35%,
+            #ff8438 65%,
+            #ad8cff
+        );
+        --frame-glow: rgba(242, 201, 76, 0.55);
+    }
+    .pr-frame-aurora {
+        --frame: linear-gradient(135deg, #00ffa3, #00c2ff 50%, #7a5cff);
+        --frame-glow: rgba(0, 194, 255, 0.45);
+    }
+    .pr-frame-neon {
+        --frame: linear-gradient(135deg, #5cff3a, #00e5ff);
+        --frame-glow: rgba(0, 229, 255, 0.5);
+    }
+    .pr-frame-pixel {
+        --frame: repeating-conic-gradient(#ff3d6e 0 25%, #ffe66d 0 50%);
+        --frame-glow: transparent;
+    }
+    .pr-frame-flame {
+        --frame: linear-gradient(135deg, #ffd54f, #ff6d00 50%, #ff1744);
+        --frame-glow: rgba(255, 109, 0, 0.5);
+    }
+
+    /* The card themes' colours, for previews on the page; the pictures
+       themselves are drawn on the server from the same values. */
+    .card-theme-default {
+        --theme-ground: #0f0e12;
+        --theme-glow: rgba(106, 68, 240, 0.55);
+        --theme-accent: #8f74ff;
+    }
+    .card-theme-gold {
+        --theme-ground: #15110a;
+        --theme-glow: rgba(242, 201, 76, 0.5);
+        --theme-accent: #f2c94c;
+    }
+    .card-theme-holo {
+        --theme-ground: #0b0f1c;
+        --theme-glow: rgba(120, 220, 255, 0.5);
+        --theme-accent: #9fe8ff;
+    }
+    .card-theme-retro {
+        --theme-ground: #1b120c;
+        --theme-glow: rgba(255, 132, 56, 0.5);
+        --theme-accent: #ff8438;
+    }
+    .card-theme-night {
+        --theme-ground: #060a16;
+        --theme-glow: rgba(70, 120, 255, 0.5);
+        --theme-accent: #7fa8ff;
+    }
+    .card-theme-synthwave {
+        --theme-ground: #13081f;
+        --theme-glow: rgba(255, 70, 200, 0.5);
+        --theme-accent: #ff5fd9;
+    }
+
+    /* A member's name, as they set it. The display fonts run large for
+       their size, so each is brought back to the name's own measure. */
+    .name-font-silkscreen {
+        font-family: "Silkscreen", var(--font-display);
+        font-size: 0.86em;
+    }
+    .name-font-orbitron {
+        font-family: "Orbitron", var(--font-display);
+        font-weight: 700;
+        font-size: 0.9em;
+    }
+    .name-font-cinzel {
+        font-family: "Cinzel", var(--font-display);
+        font-weight: 700;
+    }
+    .name-font-vt323 {
+        font-family: "VT323", var(--font-mono);
+        font-size: 1.2em;
+    }
+    .name-font-press_start {
+        font-family: "Press Start 2P", var(--font-display);
+        font-size: 0.66em;
+        line-height: 1.5;
+    }
+    .name-font-bungee {
+        font-family: "Bungee", var(--font-display);
+        font-size: 0.9em;
+    }
+    .name-font-marker {
+        font-family: "Permanent Marker", var(--font-display);
+    }
+
+    .name-colour-sky {
+        color: var(--name-sky);
+    }
+    .name-colour-gold {
+        color: var(--name-gold);
+    }
+    .name-colour-ember {
+        color: var(--name-ember);
+    }
+    .name-colour-mint {
+        color: var(--name-mint);
+    }
+    .name-colour-rose {
+        color: var(--name-rose);
+    }
+    .name-colour-aurora,
+    .name-colour-sunset,
+    .name-colour-holo {
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .name-colour-aurora {
+        background-image: linear-gradient(
+            90deg,
+            var(--name-sky),
+            #8b5cf6,
+            var(--name-mint)
+        );
+    }
+    .name-colour-sunset {
+        background-image: linear-gradient(
+            90deg,
+            var(--name-ember),
+            var(--name-rose),
+            #8b5cf6
+        );
+    }
+    .name-colour-holo {
+        background-image: linear-gradient(
+            90deg,
+            var(--name-holo-1),
+            var(--name-holo-2),
+            var(--name-holo-3)
+        );
+    }
+
+    /* Metallic type: a gradient through the text with a light crossing it. */
+    .pr-metal-text {
+        background-image: linear-gradient(
+            100deg,
+            var(--metal-lo) 0%,
+            var(--metal-mid) 35%,
+            var(--metal-hi) 50%,
+            var(--metal-mid) 65%,
+            var(--metal-lo) 100%
+        );
+        background-size: 250% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: var(--animate-sheen);
     }
 }

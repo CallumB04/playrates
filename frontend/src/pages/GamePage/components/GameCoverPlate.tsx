@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { Plus } from "lucide-react";
+import { ListChecks, ListPlus, Plus } from "lucide-react";
 import type { Game, GameLogSummary, LogBundle } from "@playrates/shared";
 import MyLogsPlate from "../../../components/gamelog/MyLogsPlate";
 import CoverCarousel from "./CoverCarousel";
@@ -28,6 +28,9 @@ interface GameCoverPlateProps {
     onAddPlatform: () => void;
     onEditLog: (logId: number) => void;
     onQuickLog: (status: "backlog" | "wishlist") => void;
+    onAddToList: () => void;
+    /** It's in one of your lists already, so the press is to manage them. */
+    inAList: boolean;
     isSaving: boolean;
     /** Marks where the log buttons end, for the phone's sticky bar. */
     actionsEndRef?: RefObject<HTMLSpanElement>;
@@ -58,6 +61,8 @@ const GameCoverPlate = ({
     onAddPlatform,
     onEditLog,
     onQuickLog,
+    onAddToList,
+    inAList,
     isSaving,
     actionsEndRef,
 }: GameCoverPlateProps) => {
@@ -134,7 +139,7 @@ const GameCoverPlate = ({
                 </div>
             ) : (
                 <Button size="lg" onClick={onPrimary} disabled={isSaving}>
-                    {!isSignedIn ? "Log in to add" : "Log this game"}
+                    {!isSignedIn ? "Join to add" : "Log this game"}
                 </Button>
             )}
 
@@ -163,6 +168,17 @@ const GameCoverPlate = ({
                         );
                     })}
                 </div>
+            )}
+
+            {isSignedIn && (
+                <Button variant="secondary" onClick={onAddToList}>
+                    {inAList ? (
+                        <ListChecks size={15} aria-hidden />
+                    ) : (
+                        <ListPlus size={15} aria-hidden />
+                    )}
+                    {inAList ? "Manage in lists" : "Add to list"}
+                </Button>
             )}
 
             <span ref={actionsEndRef} aria-hidden />

@@ -28,6 +28,12 @@ export const communityUpvotesKey = (messageId: number): string =>
   `community_upvotes:${messageId}`;
 export const reviewUpvotesKey = (reviewId: number): string =>
   `review_upvotes:${reviewId}`;
+/** The migration's game_list_clear_notifications matches this form. */
+export const listUpvotesKey = (listId: number): string =>
+  `list_upvotes:${listId}`;
+/** One per grid, which is one per person. */
+export const gaming25LovesKey = (ownerId: string): string =>
+  `gaming_25_loves:${ownerId}`;
 
 const num = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -164,6 +170,112 @@ export const toNotification = (
         coverUrl: str(row.data.coverUrl),
         milestone,
       };
+    }
+
+    case "list_upvote_milestone": {
+      const listId = num(row.data.listId);
+      const milestone = num(row.data.milestone);
+      const listName = str(row.data.listName);
+      const username = str(row.data.username);
+      if (listId === null || milestone === null || !listName || !username) {
+        return { ...base, kind: "unknown" };
+      }
+      return {
+        ...base,
+        kind: "list_upvote_milestone",
+        listId,
+        listName,
+        username,
+        milestone,
+      };
+    }
+
+    case "referral_joined": {
+      const username = str(row.data.username);
+      if (!username) return { ...base, kind: "unknown" };
+      return { ...base, kind: "referral_joined", username };
+    }
+
+    case "referral_active": {
+      const username = str(row.data.username);
+      const xp = num(row.data.xp);
+      const tokens = num(row.data.tokens);
+      if (!username || xp === null || tokens === null)
+        return { ...base, kind: "unknown" };
+      return {
+        ...base,
+        kind: "referral_active",
+        actor: row.actor ? toFriendUser(row.actor, now) : null,
+        username,
+        xp,
+        tokens,
+      };
+    }
+
+    case "streak_at_risk": {
+      const weeks = num(row.data.weeks);
+      const endsAt = str(row.data.endsAt);
+      if (weeks === null || !endsAt) return { ...base, kind: "unknown" };
+      return {
+        ...base,
+        kind: "streak_at_risk",
+        weeks,
+        shield: row.data.shield === true,
+        endsAt,
+      };
+    }
+
+    case "task_nearly_done": {
+      const period = str(row.data.period);
+      const quest = str(row.data.quest);
+      const label = str(row.data.label);
+      const count = num(row.data.count);
+      const target = num(row.data.target);
+      const endsAt = str(row.data.endsAt);
+      if (
+        (period !== "week" && period !== "month") ||
+        !quest ||
+        !label ||
+        count === null ||
+        target === null ||
+        !endsAt
+      ) {
+        return { ...base, kind: "unknown" };
+      }
+      return {
+        ...base,
+        kind: "task_nearly_done",
+        period,
+        quest,
+        label,
+        count,
+        target,
+        xp: num(row.data.xp) ?? 0,
+        tokens: num(row.data.tokens) ?? 0,
+        endsAt,
+      };
+    }
+
+    case "gift_received": {
+      const username = str(row.data.username);
+      const item = str(row.data.item);
+      if (!username || !item) return { ...base, kind: "unknown" };
+      return {
+        ...base,
+        kind: "gift_received",
+        actor: row.actor ? toFriendUser(row.actor, now) : null,
+        username,
+        item,
+      };
+    }
+
+    case "gaming_25_love_milestone": {
+      const milestone = num(row.data.milestone);
+      const username = str(row.data.username);
+      if (milestone === null || !username) {
+        return { ...base, kind: "unknown" };
+      }
+      return { ...base, kind: "gaming_25_love_milestone", username, milestone };
     }
 
     case "announcement": {

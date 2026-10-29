@@ -58,8 +58,8 @@ const SurfaceSpecimens = () => {
         <>
             <Specimen
                 title="Plates"
-                notes="The system's elevation, as surfaces. Raised is lit from above; deep has risen further, for the one thing on a page that should float highest. Flat keeps the edge without the shadow, for tiles sitting in a row — the game page's score cards. Pressed is a well set into the surface around it: the current game on the home page, a log's headline figures."
-                meta='plateClass(state, depth, className) — state="raised" | "flat" | "pressed" · depth="shallow" | "deep"'
+                notes="The system's elevation, as surfaces. Raised is lit from above; deep has risen further, for the one thing on a page that should float highest. Flat keeps the edge without the shadow, for tiles sitting in a row, like the game page's score cards. Pressed is a well set into the surface around it: the current game on the home page, a log's headline figures."
+                meta='plateClass(state, depth, className) · state="raised" | "flat" | "pressed" · depth="shallow" | "deep"'
             >
                 {(
                     [
@@ -86,7 +86,7 @@ const SurfaceSpecimens = () => {
             <Specimen
                 title="Card"
                 notes="The page's basic surface. Padding is named rather than overridden, since classes are joined without merging and a p-0 beside the default p-4 would leave both: none is for a card whose content sets its own, like a header strip or a banner. The tone marks a card that wants something (accent) or holds something that can't be undone (danger)."
-                meta='padding="default" | "none" · tone="default" | "accent" | "danger" — cardClass(className, { padding, tone }) · CardHeader'
+                meta='padding="default" | "none" · tone="default" | "accent" | "danger" · cardClass(className, { padding, tone }) · CardHeader'
             >
                 <Card className="w-full max-w-xs">
                     <CardHeader>Your 2026</CardHeader>
@@ -113,16 +113,16 @@ const SurfaceSpecimens = () => {
             <Specimen
                 title="Popover"
                 notes="The surface of anything floating over the page: the account menu, the inbox, a dropdown's options, the search results, the played breakdown on the game page. Position and size stay with each caller, since every one hangs off something different; what they share is how high they sit and how they arrive."
-                meta='popoverClass(className, shape) — shape="menu" | "list"'
+                meta='popoverClass(className, shape) · shape="menu" | "list"'
             >
                 <div className={popoverClass("w-56 p-1.5", "menu")}>
                     <p className="px-2.5 py-2 text-body-sm text-content-secondary">
-                        menu — hangs off the header
+                        menu: hangs off the header
                     </p>
                 </div>
                 <div className={popoverClass("w-52 p-1")}>
                     <p className="px-2.5 py-2 text-body-sm text-content-secondary">
-                        list — options, a note
+                        list: options, a note
                     </p>
                 </div>
             </Specimen>
@@ -130,7 +130,7 @@ const SurfaceSpecimens = () => {
             <Specimen
                 title="Panel"
                 notes="A card with a header strip carrying its title, and a trailing slot for a count or a control. Built on the card surface, so the two can't drift apart. accent tints the strip, for a panel that wants something from you."
-                meta="title · trailing · accent · bodyClassName — PanelCount"
+                meta="title · trailing · accent · bodyClassName · PanelCount"
             >
                 <Panel
                     title="Lanternfall"
@@ -201,7 +201,7 @@ const SurfaceSpecimens = () => {
 
             <Specimen
                 title="Game cover"
-                notes="Box art is the only saturated thing on a page, so it gets the depth and the chrome stays quiet. The placeholder is a filled well rather than a broken image — an empty src would re-request the document. In a flex row give it self-start, or the row stretches it past its aspect ratio."
+                notes="Box art is the only saturated thing on a page, so it gets the depth and the chrome stays quiet. The placeholder is a filled well rather than a broken image, since an empty src would re-request the document. In a flex row give it self-start, or the row stretches it past its aspect ratio."
                 meta="coverUrl · title · className"
             >
                 <GameCover

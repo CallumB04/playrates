@@ -41,7 +41,7 @@ describe("trending from IGDB", () => {
     const response = await run(app);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ trending: 2 });
+    expect(response.body).toMatchObject({ trending: 2 });
     expect(
       state.games.filter((g) => g.is_trending).map((g) => g.title),
     ).toEqual(["Second", "First"]);

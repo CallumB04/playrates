@@ -5,6 +5,8 @@
  *   npm run db:types -w backend
  */
 
+import type { GameBackdrop } from "@playrates/shared";
+
 export interface ProfileRow {
   id: string;
   username: string;
@@ -30,6 +32,43 @@ export interface ProfileRow {
   username_chosen_at: string | null;
   /** Can post patch notes and remove anything in the community. */
   is_admin: boolean;
+  /** A game's picture across the top of the profile; null shows none. */
+  background_url: string | null;
+  /** The game it came from. Null when the game has since gone. */
+  background_game_id: number | null;
+  /** 0 to 100, top to bottom; null for the default. */
+  background_position: number | null;
+  pronouns: string | null;
+  location: string | null;
+  /** http(s) only; the check on the column holds it there. */
+  website: string | null;
+  discord: string | null;
+  /** Always a steamcommunity.com profile address, whatever was typed. */
+  steam: string | null;
+  /** Each About field's visibility where it differs from the default. */
+  about_visibility: Record<string, string>;
+  /** Sparse email switches; a key not there is on. */
+  email_prefs: Record<string, boolean>;
+  /** Kept by a trigger as the sum of xp_events. */
+  xp: number;
+  /** Kept by a trigger as the sum of token_events. */
+  tokens: number;
+  /** Chosen frame; null wears the best one the level has earned. */
+  frame: string | null;
+  card_theme: string | null;
+  showcase_badges: string[];
+  /** No longer offered; kept so old rows still read. */
+  showcase_layout: string;
+  effects: string[];
+  name_font: string | null;
+  pinned_reviews: number[];
+  section_order: string[];
+  name_colour: string | null;
+  pinned_lists: number[];
+  referred_by: string | null;
+  xp_seen_event_id: number;
+  /** Null until a member from before progress has seen their reveal. */
+  revealed_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -53,6 +92,9 @@ export interface GameRow {
   cover_url: string | null;
   /** The picture across the top of the game page; a screenshot first. */
   banner_url: string | null;
+  /** The pictures a profile can take as its background. Null until someone
+   *  first asks for them; empty when IGDB has none. */
+  backdrops?: GameBackdrop[] | null;
   /** The portrait cover. Preferred whenever the API hands a game out. */
   box_art_url: string | null;
   release_date: string | null;
@@ -337,11 +379,52 @@ export interface AnnouncementRow {
   retracted_at: string | null;
   /** The patch-notes entry this announces, when it announces one. */
   patch_note_message_id: number | null;
+  /** The Resend broadcast that emailed it, and when; null when it wasn't. */
+  email_broadcast_id: string | null;
+  emailed_at: string | null;
 }
 
 /** announcements with how many copies have been read. */
 export interface AnnouncementCardRow extends AnnouncementRow {
   read_count: number;
+}
+
+/** An email that went out under a key, so it doesn't go twice. */
+export interface EmailLogRow {
+  id: number;
+  user_id: string;
+  kind: string;
+  ref: string;
+  sent_at: string;
+}
+
+/** One row of email_send_totals(): sends added up by day, kind and
+ *  outcome. */
+export interface EmailSendTotalRow {
+  day: string;
+  kind: string;
+  status: "sent" | "capped" | "failed";
+  transactional: boolean;
+  /** Rows: a broadcast, or a send of one or more emails. */
+  sends: number;
+  recipients: number;
+}
+
+/** One row of member_emails(): a member with a confirmed address. */
+export interface MemberEmailRow {
+  id: string;
+  email: string;
+  username: string;
+  email_prefs: Record<string, boolean>;
+}
+
+/** One row of wishlist_releases_on(). */
+export interface WishlistReleaseRow {
+  user_id: string;
+  game_id: number;
+  title: string;
+  slug: string;
+  cover_url: string | null;
 }
 
 /** One row of admin_series(). */

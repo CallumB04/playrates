@@ -51,7 +51,7 @@ const SizingSection = () => (
         </Group>
 
         <Group
-            title="Spacing — 4pt base"
+            title="Spacing: 4pt base"
             blurb="Tailwind's default 0.25rem base already produces the whole run; these are the step names to reach for."
         >
             <div className="flex items-end gap-1.5">
@@ -70,8 +70,8 @@ const SizingSection = () => (
         </Group>
 
         <Group
-            title="Radii — soft by default"
-            blurb="Soft by default. Controls and chips take the small step, cards and covers the medium one, panels and modals the large. Pills are for things that read as tokens — chips, badges, avatars."
+            title="Radii: soft by default"
+            blurb="Soft by default. Controls and chips take the small step, cards and covers the medium one, panels and modals the large. Pills are for things that read as tokens: chips, badges, avatars."
         >
             <div className="flex flex-wrap gap-5">
                 {RADII.map((radius) => (

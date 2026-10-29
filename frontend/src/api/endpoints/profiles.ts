@@ -2,6 +2,7 @@ import type {
     MyProfile,
     Paginated,
     Profile,
+    SetProfileBackgroundInput,
     UpdateProfileInput,
 } from "@playrates/shared";
 import { api } from "../client";
@@ -46,6 +47,19 @@ export const uploadMyAvatar = async (image: Blob): Promise<MyProfile> => {
 /** Back to the generated one. */
 export const deleteMyAvatar = async (): Promise<MyProfile> => {
     const { data } = await api.delete<MyProfile>("/profiles/me/avatar");
+    return data;
+};
+
+export const setMyBackground = async (
+    input: SetProfileBackgroundInput
+): Promise<MyProfile> => {
+    const { data } = await api.put<MyProfile>("/profiles/me/background", input);
+    return data;
+};
+
+/** Back to the colour band. */
+export const clearMyBackground = async (): Promise<MyProfile> => {
+    const { data } = await api.delete<MyProfile>("/profiles/me/background");
     return data;
 };
 

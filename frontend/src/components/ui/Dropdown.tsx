@@ -13,7 +13,7 @@ import { Check, ChevronDown, Search } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { fieldClass } from "./Input";
 import { useDismiss } from "../../hooks/useDismiss";
-import { popoverClass } from "./popover";
+import { menuAcross, popoverClass } from "./popover";
 
 type IconProps = SVGProps<SVGSVGElement> & { size?: number | string };
 
@@ -33,7 +33,8 @@ interface DropdownProps {
     /** Shown when the value matches no option. */
     placeholder?: string;
     className?: string;
-    /** Width of the popover. Defaults to the trigger's width. */
+    /** Width of the popover, at least the trigger's. Defaults to the
+     *  trigger's width. */
     menuClassName?: string;
     /** Adds a filter field to the menu. For lists too long to scan. */
     searchable?: boolean;
@@ -279,8 +280,11 @@ const Dropdown = ({
                            menu and counts it toward its scroll height. */
                         style={{
                             position: "fixed",
-                            left: rect.left,
-                            width: rect.width,
+                            ...menuAcross(
+                                rect,
+                                window.innerWidth,
+                                !!menuClassName
+                            ),
                             // Flip above the trigger when there is no room below.
                             ...(window.innerHeight - rect.bottom < 280 &&
                             rect.top > 280

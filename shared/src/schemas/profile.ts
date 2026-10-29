@@ -1,5 +1,12 @@
+import { EmailPrefsPatchSchema, type EmailPrefs } from "./emailPrefs.js";
 import { z } from "zod";
 import { ProfileAccentSchema, type ProfileAccent } from "./profileAccent.js";
+import {
+  AboutFieldsSchema,
+  AboutVisibilitySchema,
+  type AboutVisibility,
+  type ProfileAbout,
+} from "./about.js";
 
 export const UsernameSchema = z
   .string()
@@ -46,7 +53,65 @@ export const canSeeProfile = (
   visibility === "everyone" ||
   (visibility === "friends" && viewer.isFriend);
 
+/** The views under a profile, each at /user/:username/:view. The profile
+ *  itself is the bare /user/:username. Here so the server renders the same
+ *  set the app routes. */
+export const PROFILE_VIEWS = [
+  "games",
+  "reviews",
+  "lists",
+  "badges",
+  "community",
+  "friends",
+] as const;
+export type ProfileView = (typeof PROFILE_VIEWS)[number];
+
+export const isProfileView = (value: string): value is ProfileView =>
+  (PROFILE_VIEWS as readonly string[]).includes(value);
+
+/** A picture from one of the game's backdrops. Set on its own route rather
+ *  than with the rest of the profile, since it is checked against the game
+ *  and the owner's logs of it. */
+export const SetProfileBackgroundSchema = z
+  .object({
+    gameId: z.number().int().positive(),
+    url: z.string().url().max(500),
+    /** Which part of the picture shows, 0 the top to 100 the bottom. */
+    position: z.number().int().min(0).max(100).optional(),
+  })
+  .strict();
+
+/** Just above the middle, where a game page sits its own art: the subject
+ *  of a screenshot is rarely at the very top or bottom. */
+export const DEFAULT_BACKGROUND_POSITION = 30;
+
+export type SetProfileBackgroundInput = z.infer<
+  typeof SetProfileBackgroundSchema
+>;
+
 /** `.strict()` rejects unknown keys, so only these fields are editable. */
+/** The cards down the main column of a profile, in the order a member
+ *  can rearrange. */
+export const PROFILE_SECTIONS = [
+  "pinned_reviews",
+  "pinned_lists",
+  "favourites",
+  "wishlist",
+] as const;
+export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
+
+/** A stored order, made whole: unknown keys dropped, missing ones added in
+ *  their default place. */
+export const sectionOrder = (
+  stored: readonly string[] = [],
+): ProfileSection[] => {
+  const known = stored.filter((s): s is ProfileSection =>
+    (PROFILE_SECTIONS as readonly string[]).includes(s),
+  );
+  const kept = [...new Set(known)];
+  return [...kept, ...PROFILE_SECTIONS.filter((s) => !kept.includes(s))];
+};
+
 export const UpdateProfileSchema = z
   .object({
     username: UsernameSchema.optional(),
@@ -65,7 +130,16 @@ export const UpdateProfileSchema = z
     /** Asks search engines to leave the profile page out. */
     hideFromSearch: z.boolean().optional(),
     profileVisibility: ProfileVisibilitySchema.optional(),
+    /** Who sees each About field; only the ones named change. */
+    aboutVisibility: AboutVisibilitySchema.optional(),
+    sectionOrder: z
+      .array(z.enum(PROFILE_SECTIONS))
+      .max(PROFILE_SECTIONS.length)
+      .optional(),
+    /** Which emails to get; only the switches named change. */
+    emailPrefs: EmailPrefsPatchSchema.optional(),
   })
+  .merge(AboutFieldsSchema)
   .strict();
 
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
@@ -78,18 +152,39 @@ export const CheckUsernameSchema = z.object({
 export interface Profile {
   id: string;
   username: string;
-  /** Optional. Greetings use this before falling back to the username. */
-  firstName: string | null;
   bio: string;
   avatarUrl: string | null;
   /** The colour this profile wears. Every profile has one. */
   accent: ProfileAccent;
+  /** A game's picture across the top of the page. None by default. The
+   *  game is null once it has left the catalogue. */
+  background: {
+    url: string;
+    gameId: number | null;
+    /** 0 shows the top of the picture, 100 the bottom. */
+    position: number;
+  } | null;
   /** Derived from last_seen_at, not stored. */
   online: boolean;
   /** Public because the page has to say it: a noindex is read by anyone. */
   hideFromSearch: boolean;
   /** Public so the page can say why the rest of it is missing. */
   profileVisibility: ProfileVisibility;
+  /** The About fields this viewer may see, and only those filled in. */
+  about: ProfileAbout;
+  /** Progress is on the public card, like the name and picture. */
+  level: number;
+  /** The avatar frame worn, if any has been earned. */
+  frame: string | null;
+  /** How their name is set: a font and a colour, by key. */
+  nameFont: string;
+  nameColour: string;
+  /** Lists pinned to the profile, in order. */
+  pinnedLists: number[];
+  /** Reviews pinned to the profile, in order. */
+  pinnedReviews: number[];
+  /** The main column's cards, top first. */
+  sectionOrder: ProfileSection[];
   createdAt: string;
 }
 
@@ -99,6 +194,10 @@ export interface Profile {
  * carries only what a profile page shows.
  */
 export interface MyProfile extends Profile {
+  /** Optional. Greetings use this before falling back to the username. */
+  firstName: string | null;
+  /** Who sees each About field. `about` here is every field filled in. */
+  aboutVisibility: AboutVisibility;
   showSexualContent: boolean;
   /** IANA zone name. Timestamps render in this; dates you picked do not move. */
   timezone: string;
@@ -110,4 +209,6 @@ export interface MyProfile extends Profile {
   usernameChosenAt: string | null;
   /** Can post patch notes and remove anything in the community. */
   isAdmin: boolean;
+  /** Which emails they get. Every switch starts on. */
+  emailPrefs: EmailPrefs;
 }

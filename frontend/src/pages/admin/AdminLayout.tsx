@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import ThemeToggle from "../../components/ui/ThemeToggle";
 import { cn } from "../../lib/cn";
+import { useOverflowFade } from "../../hooks/useOverflowFade";
 
 /**
  * Add a view by adding an entry here and a route in AdminApp.tsx.
@@ -13,6 +14,7 @@ const ADMIN_GROUPS = [
         { to: "/admin/overview", label: "Overview" },
         { to: "/admin/activity", label: "Activity" },
         { to: "/admin/health", label: "Health" },
+        { to: "/admin/progress", label: "Progress" },
     ],
     [
         { to: "/admin/users", label: "Users" },
@@ -21,6 +23,7 @@ const ADMIN_GROUPS = [
     [
         { to: "/admin/games", label: "Games" },
         { to: "/admin/announcements", label: "Announcements" },
+        { to: "/admin/emails", label: "Emails" },
         { to: "/admin/design", label: "Design library" },
     ],
 ];
@@ -31,6 +34,7 @@ const ADMIN_GROUPS = [
  * AdminGate's decision.
  */
 const AdminLayout = () => {
+    const fade = useOverflowFade<HTMLElement>();
     return (
         <div className="flex flex-col gap-6">
             <header className="flex flex-col gap-5">
@@ -41,14 +45,20 @@ const AdminLayout = () => {
                     <ThemeToggle />
                 </div>
 
-                {/* Wraps rather than scrolls, a group to a line on a phone,
-                    so no view is hidden off the edge. */}
+                {/* Scrolls sideways on a phone, as the shop's sections do,
+                    faded at whichever edge has more. */}
                 <nav
                     aria-label="Admin"
-                    className="flex max-w-full flex-wrap items-center gap-1 self-start rounded-md border border-subtle bg-surface-sunken p-1"
+                    ref={fade.ref}
+                    onScroll={fade.onScroll}
+                    style={fade.style}
+                    className="flex max-w-full [scrollbar-width:none] items-center gap-1 self-start overflow-x-auto rounded-md border border-subtle bg-surface-sunken p-1 sm:flex-wrap sm:overflow-visible"
                 >
                     {ADMIN_GROUPS.map((group, i) => (
-                        <div key={i} className="flex items-center gap-1">
+                        <div
+                            key={i}
+                            className="flex shrink-0 items-center gap-1"
+                        >
                             {i > 0 && (
                                 <span
                                     aria-hidden

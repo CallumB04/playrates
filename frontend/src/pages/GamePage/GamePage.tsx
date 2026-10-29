@@ -27,11 +27,15 @@ import { useReviewVote } from "../../hooks/queries/useReviews";
 import RatingPlate from "./components/RatingPlate";
 import CirculationPlate from "./components/CirculationPlate";
 import GameReviews from "./components/GameReviews";
+import GameLists from "./components/GameLists";
+import { useMyLists } from "../../hooks/queries/useLists";
 import GameThreads from "./components/GameThreads";
 import { useThreads } from "../../hooks/queries/useCommunity";
 import { newThreadPath } from "../../components/community/paths";
 import { buildGameFacts } from "./lib/gameFacts";
-import GameBackdrop from "./components/GameBackdrop";
+import PageBackdrop, {
+    TALL_BACKDROP_OFFSET,
+} from "../../components/layout/PageBackdrop";
 import StickyLogBar from "./components/StickyLogBar";
 import { cn } from "../../lib/cn";
 import ScoreCards from "./components/ScoreCards";
@@ -42,7 +46,7 @@ const GamePage = () => {
     const { gameID } = useParams();
     const gameId = Number(gameID);
     const { user } = useAuth();
-    const { openLogin } = useAccountForm();
+    const { openSignup } = useAccountForm();
     const flow = useLogFlow();
     const quickAdd = useQuickAdd();
     const [quickSaving, setQuickSaving] = useState(false);
@@ -56,6 +60,7 @@ const GamePage = () => {
     const { data: genres } = useGenres();
     const { data: systems } = usePlatformSystems();
     const { data: myLogIds } = useMyGameLogIds();
+    const { data: myLists } = useMyLists(gameId, !!user);
     const { data: reviews, isLoading: reviewsLoading } = useGameReviews(
         gameId,
         sort
@@ -110,7 +115,7 @@ const GamePage = () => {
         await quickAdd(gameId, game.title, status).catch(() => undefined);
         setQuickSaving(false);
     };
-    const openLog = () => (user ? flow.open(gameId) : openLogin());
+    const openLog = () => (user ? flow.open(gameId) : openSignup());
 
     if (isLoading) {
         return (
@@ -135,11 +140,10 @@ const GamePage = () => {
             className={cn(
                 // max-sm:pb-20: room at the very bottom for the sticky bar
                 "flex flex-col gap-7 max-sm:pb-20",
-                // room for the banner to be seen before the page starts
-                game.artworkUrl && "pt-16 sm:pt-28 lg:pt-32"
+                game.artworkUrl && TALL_BACKDROP_OFFSET
             )}
         >
-            <GameBackdrop url={game.artworkUrl} />
+            <PageBackdrop url={game.artworkUrl} />
             <StickyLogBar
                 anchor={actionsEnd}
                 label={
@@ -149,7 +153,7 @@ const GamePage = () => {
                           ? "Edit your log"
                           : user
                             ? "Log this game"
-                            : "Log in to add"
+                            : "Join to add"
                 }
                 onPress={openLog}
                 disabled={quickSaving}
@@ -171,6 +175,8 @@ const GamePage = () => {
                         onAddPlatform={() => flow.add(gameId)}
                         onEditLog={(logId) => flow.edit(gameId, logId)}
                         onQuickLog={(status) => void quickLog(status)}
+                        onAddToList={() => flow.addToList(gameId)}
+                        inAList={!!myLists?.some((list) => list.hasGame)}
                         isSaving={quickSaving}
                         actionsEndRef={actionsEnd}
                     />
@@ -219,15 +225,21 @@ const GamePage = () => {
                         reviews={reviews?.data ?? []}
                         logCount={logCount}
                         onWriteReview={
-                            user ? () => flow.review(gameId) : () => openLogin()
+                            user
+                                ? () => flow.review(gameId)
+                                : () => openSignup()
                         }
                         viewerId={user?.id}
-                        onVote={(reviewId) => vote.mutateAsync(reviewId)}
+                        onVote={(reviewId, reaction) =>
+                            vote.mutateAsync({ reviewId, reaction })
+                        }
                         total={reviews?.meta.total ?? 0}
                         sort={sort}
                         onSortChange={setSort}
                         isLoading={reviewsLoading}
                     />
+
+                    <GameLists gameId={gameId} />
 
                     <GameThreads
                         gameId={gameId}
@@ -235,7 +247,9 @@ const GamePage = () => {
                         total={threads?.meta.total ?? 0}
                         isLoading={threadsLoading}
                         onStart={() =>
-                            user ? navigate(newThreadPath(gameId)) : openLogin()
+                            user
+                                ? navigate(newThreadPath(gameId))
+                                : openSignup()
                         }
                     />
                 </div>

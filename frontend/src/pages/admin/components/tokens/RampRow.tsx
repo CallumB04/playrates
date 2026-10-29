@@ -23,7 +23,7 @@ const RampRow = ({ ramp }: { ramp: Ramp }) => {
                             {step.step}
                         </p>
                         <p className="truncate font-mono text-[9.5px] text-content-secondary">
-                            {values[step.cssVar]?.light ?? "—"}
+                            {values[step.cssVar]?.light ?? "–"}
                         </p>
                     </div>
                 ))}

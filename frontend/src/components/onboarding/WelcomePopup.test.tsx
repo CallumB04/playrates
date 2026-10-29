@@ -38,6 +38,9 @@ const renderPopup = (props: { preview?: boolean } = {}) => {
     return { onClose };
 };
 
+const gamesStep = () =>
+    screen.findByRole("heading", { name: "Games you’ve played" });
+
 describe("WelcomePopup", () => {
     it("says once that both fields are optional", () => {
         renderPopup();
@@ -51,29 +54,51 @@ describe("WelcomePopup", () => {
         ).toBeInTheDocument();
     });
 
-    it("saves a first name and closes, with nothing after it", async () => {
+    it("saves a first name, then asks for games played", async () => {
         const patches = captureWrites();
         const { onClose } = renderPopup();
 
         await userEvent.type(screen.getByLabelText("First name"), "Callum");
         await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-        await waitFor(() => expect(onClose).toHaveBeenCalled());
-        expect(patches).toHaveBeenCalledWith({ firstName: "Callum" });
+        expect(await gamesStep()).toBeInTheDocument();
+        expect(onClose).not.toHaveBeenCalled();
+        expect(patches).toHaveBeenCalledWith({
+            firstName: "Callum",
+            aboutVisibility: { firstName: "everyone" },
+        });
+    });
+
+    it("keeps the name hidden when asked to as it's given", async () => {
+        const patches = captureWrites();
+        const { onClose } = renderPopup();
+
+        await userEvent.type(screen.getByLabelText("First name"), "Callum");
+        await userEvent.click(
+            screen.getByRole("switch", { name: "Show it on my profile" })
+        );
+        await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+        expect(await gamesStep()).toBeInTheDocument();
+        expect(onClose).not.toHaveBeenCalled();
+        expect(patches).toHaveBeenCalledWith({
+            firstName: "Callum",
+            aboutVisibility: { firstName: "private" },
+        });
     });
 
     /* Both fields are optional: saving with neither is not a write. */
     it("writes nothing when saving with nothing filled in", async () => {
         const patches = captureWrites();
-        const { onClose } = renderPopup();
+        renderPopup();
 
         await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-        await waitFor(() => expect(onClose).toHaveBeenCalled());
+        expect(await gamesStep()).toBeInTheDocument();
         expect(patches).not.toHaveBeenCalled();
     });
 
-    it("lets a new account skip straight past", async () => {
+    it("lets a new account skip straight past both steps", async () => {
         const patches = captureWrites();
         const { onClose } = renderPopup();
 
@@ -81,9 +106,37 @@ describe("WelcomePopup", () => {
         await userEvent.click(
             screen.getByRole("button", { name: "Skip for now" })
         );
+        expect(await gamesStep()).toBeInTheDocument();
+        await userEvent.click(
+            screen.getByRole("button", { name: "Skip for now" })
+        );
 
         expect(onClose).toHaveBeenCalled();
         expect(patches).not.toHaveBeenCalled();
+    });
+
+    // An empty shelf is the hardest start: the games tapped go on as played.
+    it("puts the games tapped on the shelves as played", async () => {
+        const logged = vi.fn();
+        server.use(
+            http.post(`${API}/me/logs`, async ({ request }) => {
+                logged(await request.json());
+                return HttpResponse.json({});
+            })
+        );
+        const { onClose } = renderPopup();
+        await userEvent.click(
+            screen.getByRole("button", { name: "Skip for now" })
+        );
+        await userEvent.click(
+            await screen.findByRole("button", { name: "Portal 2" })
+        );
+        await userEvent.click(
+            screen.getByRole("button", { name: "Add 1 game" })
+        );
+
+        await waitFor(() => expect(onClose).toHaveBeenCalled());
+        expect(logged).toHaveBeenCalledWith({ gameId: 2, status: "played" });
     });
 
     it("stays open when the save fails, keeping what was typed", async () => {
@@ -100,13 +153,12 @@ describe("WelcomePopup", () => {
         expect(onClose).not.toHaveBeenCalled();
     });
 
-    it("points to Settings for the rest", () => {
+    it("points to Edit profile for the rest", () => {
         renderPopup();
 
-        expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
-            "href",
-            "/settings"
-        );
+        expect(
+            screen.getByRole("link", { name: "Edit profile" })
+        ).toHaveAttribute("href", "/user/newplayer?edit=profile");
     });
 
     /* The admin preview is somebody's real account: walking through it must
@@ -120,6 +172,10 @@ describe("WelcomePopup", () => {
         ).toBeInTheDocument();
         await userEvent.type(screen.getByLabelText("First name"), "Callum");
         await userEvent.click(screen.getByRole("button", { name: "Save" }));
+        expect(await gamesStep()).toBeInTheDocument();
+        await userEvent.click(
+            screen.getByRole("button", { name: "Skip for now" })
+        );
 
         expect(onClose).toHaveBeenCalled();
         expect(patches).not.toHaveBeenCalled();

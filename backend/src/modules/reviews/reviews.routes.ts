@@ -6,6 +6,7 @@ import {
   ReviewQuerySchema,
   ReviewInputSchema,
   UsernameParamSchema,
+  ReactBodySchema,
 } from "@playrates/shared";
 import type { z } from "zod";
 import { validate } from "../../middleware/validate.js";
@@ -117,14 +118,16 @@ export const createReviewsFeedRouter = ({
     },
   );
 
-  // A toggle, so the client needs no current state and can't double-count.
+  // A toggle per reaction: the same one again takes it back, so the client
+  // needs no current state and can't double-count.
   router.post(
     "/:reviewId/vote",
     requireAuth,
-    validate({ params: ReviewIdParamSchema }),
+    validate({ params: ReviewIdParamSchema, body: ReactBodySchema }),
     async (req, res) => {
       const { reviewId } = req.valid!.params as { reviewId: number };
-      res.json(await service.toggleVote(callerId(req), reviewId));
+      const { reaction } = req.valid!.body as { reaction: string };
+      res.json(await service.toggleVote(callerId(req), reviewId, reaction));
     },
   );
 
@@ -137,6 +140,16 @@ export const createUserReviewsRouter = ({
   optionalAuth,
 }: Deps): Router => {
   const router = Router({ mergeParams: true });
+
+  router.get(
+    "/pinned",
+    optionalAuth,
+    validate({ params: UsernameParamSchema }),
+    async (req, res) => {
+      const { username } = req.valid!.params as { username: string };
+      res.json(await service.pinnedFor(username, req.auth?.userId));
+    },
+  );
 
   router.get(
     "/",

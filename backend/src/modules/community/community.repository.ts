@@ -4,6 +4,8 @@ import type {
   CommunityMessageRow,
   CommunityThreadRow,
 } from "../../types/database.types.js";
+import type { ReactionRepo } from "../../lib/reactions.js";
+import { createReactionRepo } from "../reactions/reactions.repository.js";
 
 /** A row of the community_thread_cards view. */
 export interface ThreadCardRow extends CommunityThreadRow {
@@ -91,13 +93,6 @@ export interface CommunityRepository {
   ): Promise<LatestReplyRow[]>;
   /** Messages per day over the trending window, oldest first. */
   threadActivity(threadId: number): Promise<number[]>;
-  /** Game threads this person has posted in, most recent post first. The
-   *  patch notes are left out: they have a place of their own, and a row in
-   *  a profile list would pass them off as an ordinary thread. */
-  listThreadsByParticipant(
-    userId: string,
-    limit: number,
-  ): Promise<ThreadCardRow[]>;
   findThread(id: number): Promise<ThreadCardRow | null>;
   findPatchNotes(): Promise<ThreadCardRow | null>;
   listMessages(threadId: number): Promise<MessageCardRow[]>;
@@ -121,11 +116,8 @@ export interface CommunityRepository {
    *  them. */
   listBodiesByAuthor(userId: string): Promise<unknown[]>;
   deleteThread(id: number): Promise<void>;
-  votedMessageIds(userId: string, messageIds: number[]): Promise<Set<number>>;
-  hasVoted(userId: string, messageId: number): Promise<boolean>;
-  addVote(userId: string, messageId: number): Promise<void>;
-  removeVote(userId: string, messageId: number): Promise<void>;
-  voteCount(messageId: number): Promise<number>;
+  /** Who reacted to which, and with what. */
+  reactions: ReactionRepo;
 }
 
 const THREADS = "community_thread_cards";
@@ -245,39 +237,6 @@ export const createCommunityRepository = (db: Db): CommunityRepository => ({
     );
   },
 
-  async listThreadsByParticipant(userId, limit) {
-    /* Newest posts first, then the first `limit` distinct threads among them.
-       A page of posts is plenty: nobody's five most recent threads are more
-       than a hundred posts apart. */
-    const { data, error } = await db
-      .from("community_messages")
-      .select("thread_id")
-      .eq("author_id", userId)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(100);
-    if (error) throw error;
-
-    const ids = [
-      ...new Set(
-        (data ?? []).map((r) => (r as { thread_id: number }).thread_id),
-      ),
-    ];
-    if (ids.length === 0) return [];
-
-    // Filtered before the cut to `limit`, so a skipped thread leaves no gap.
-    const cards = await db
-      .from(THREADS)
-      .select("*")
-      .eq("subject_kind", "game")
-      .in("id", ids);
-    if (cards.error) throw cards.error;
-    const byId = new Map(
-      ((cards.data ?? []) as ThreadCardRow[]).map((row) => [row.id, row]),
-    );
-    return ids.flatMap((id) => byId.get(id) ?? []).slice(0, limit);
-  },
-
   async findThread(id) {
     const { data, error } = await db
       .from(THREADS)
@@ -387,54 +346,5 @@ export const createCommunityRepository = (db: Db): CommunityRepository => ({
     if (error) throw error;
   },
 
-  async votedMessageIds(userId, messageIds) {
-    if (messageIds.length === 0) return new Set();
-    const { data, error } = await db
-      .from("community_message_votes")
-      .select("message_id")
-      .eq("user_id", userId)
-      .in("message_id", messageIds);
-    if (error) throw error;
-    return new Set(
-      (data ?? []).map((r) => (r as { message_id: number }).message_id),
-    );
-  },
-
-  async hasVoted(userId, messageId) {
-    const { count, error } = await db
-      .from("community_message_votes")
-      .select("message_id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("message_id", messageId);
-    if (error) throw error;
-    return (count ?? 0) > 0;
-  },
-
-  async addVote(userId, messageId) {
-    const { error } = await db
-      .from("community_message_votes")
-      .upsert(
-        { user_id: userId, message_id: messageId },
-        { onConflict: "message_id,user_id" },
-      );
-    if (error) throw error;
-  },
-
-  async removeVote(userId, messageId) {
-    const { error } = await db
-      .from("community_message_votes")
-      .delete()
-      .eq("user_id", userId)
-      .eq("message_id", messageId);
-    if (error) throw error;
-  },
-
-  async voteCount(messageId) {
-    const { count, error } = await db
-      .from("community_message_votes")
-      .select("message_id", { count: "exact", head: true })
-      .eq("message_id", messageId);
-    if (error) throw error;
-    return count ?? 0;
-  },
+  reactions: createReactionRepo(db, "community_message_votes", "message_id"),
 });

@@ -1,4 +1,4 @@
-import type { GameQuery } from "@playrates/shared";
+import type { GameBackdrop, GameQuery } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
 import { matchesFromStart, searchWords } from "../../lib/searchKey.js";
 import { likePrefix, likeTerm } from "../../lib/likeTerm.js";
@@ -21,6 +21,8 @@ export interface GameStatsRow {
 export interface GamesRepository {
   findById(id: number): Promise<GameRowWithPlatforms | null>;
   findByIgdbId(igdbId: number): Promise<GameRowWithPlatforms | null>;
+  /** In no particular order; ids with no game are left out. */
+  findByIds(ids: number[]): Promise<GameRowWithPlatforms[]>;
   list(
     query: GameQuery,
     from: number,
@@ -42,6 +44,8 @@ export interface GamesRepository {
     showSexualContent: boolean,
   ): Promise<{ rows: GameRowWithPlatforms[]; exact: number }>;
   upsertMany(games: ExternalGame[]): Promise<number[]>;
+  /** Keeps a game's pictures once fetched, so IGDB is asked once a game. */
+  setBackdrops(id: number, backdrops: GameBackdrop[]): Promise<void>;
   statusCounts(gameId: number): Promise<{
     byStatus: Record<string, number>;
     byPlayedStatus: Record<string, number>;
@@ -228,6 +232,16 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
     return (data as GameRowWithPlatforms | null) ?? null;
   },
 
+  async findByIds(ids) {
+    if (ids.length === 0) return [];
+    const { data, error } = await db
+      .from("games")
+      .select(SELECT_WITH_RELATIONS)
+      .in("id", ids);
+    if (error) throw error;
+    return (data ?? []) as GameRowWithPlatforms[];
+  },
+
   async findByIgdbId(igdbId) {
     const { data, error } = await db
       .from("games")
@@ -403,6 +417,11 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
 
   /** Upserts a batch on the IGDB id and replaces their platform, system and
    *  genre links. */
+  async setBackdrops(id, backdrops) {
+    const { error } = await db.from("games").update({ backdrops }).eq("id", id);
+    if (error) throw error;
+  },
+
   async upsertMany(games) {
     if (games.length === 0) return [];
 

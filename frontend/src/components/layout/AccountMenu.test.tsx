@@ -30,12 +30,15 @@ describe("AccountMenu", () => {
     });
 
     describe("profile setup", () => {
-        const setup = setupSteps({
-            profile: { username: "devuser", avatarUrl: null, bio: "Hello" },
-            logCount: 2,
-            reviewCount: 0,
-            friendCount: 0,
-            postCount: 0,
+        const setup = setupSteps("devuser", {
+            picture: false,
+            bio: true,
+            log: true,
+            rate: false,
+            review: false,
+            favourites: false,
+            friend: false,
+            post: false,
         });
 
         /* The tests' matchMedia matches nothing, which is a phone; sm and
@@ -77,7 +80,7 @@ describe("AccountMenu", () => {
 
         it("is one row until it is opened", async () => {
             await openWith(setup);
-            expect(row()).toHaveTextContent("2/6");
+            expect(row()).toHaveTextContent("2/8");
             expect(
                 screen.queryByRole("menuitem", { name: /add a friend/i })
             ).not.toBeInTheDocument();
@@ -86,10 +89,10 @@ describe("AccountMenu", () => {
         it("opens on a tap on a phone, as places to go", async () => {
             await openWith(setup);
             await userEvent.click(row());
-            expect(screen.getByText("33%")).toBeInTheDocument();
+            expect(screen.getByText("25%")).toBeInTheDocument();
             expect(
                 screen.getByRole("menuitem", { name: /add a profile picture/i })
-            ).toHaveAttribute("href", "/settings?section=profile");
+            ).toHaveAttribute("href", "/user/devuser?edit=profile");
             expect(
                 screen.getByRole("menuitem", { name: /add a friend/i })
             ).toHaveAttribute("href", "/community");

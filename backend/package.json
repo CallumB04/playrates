@@ -17,15 +17,19 @@
     "db:types": "supabase gen types typescript --linked > src/types/database.types.ts",
     "migrate:igdb": "tsx scripts/migrateToIgdb.ts",
     "local:snapshot": "tsx scripts/local/snapshot.ts",
-    "local:seed": "tsx scripts/local/buildSeed.ts"
+    "local:seed": "tsx scripts/local/buildSeed.ts",
+    "backfill:progress": "tsx scripts/backfillProgress.ts"
   },
   "keywords": [],
   "author": "",
   "license": "AGPL-3.0-only",
   "description": "PlayRates backend API",
   "dependencies": {
+    "@fontsource/geist": "^5.3.0",
     "@playrates/shared": "*",
+    "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.47.10",
+    "@vercel/functions": "^3.10.4",
     "cors": "^2.8.5",
     "express": "^5.0.1",
     "express-rate-limit": "^7.5.0",
@@ -33,6 +37,7 @@
     "jose": "^5.9.6",
     "pino": "^9.6.0",
     "pino-http": "^10.3.0",
+    "satori": "^0.33.5",
     "sharp": "^0.35.5",
     "zod": "^3.24.1"
   },

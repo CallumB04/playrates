@@ -14,6 +14,6 @@ describe("bucketLabel", () => {
 describe("share", () => {
     it("is a whole percentage, and a dash with nothing to divide", () => {
         expect(share(1, 3)).toBe("33%");
-        expect(share(0, 0)).toBe("—");
+        expect(share(0, 0)).toBe("–");
     });
 });

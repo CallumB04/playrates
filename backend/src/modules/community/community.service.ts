@@ -21,6 +21,11 @@ import {
   isUpvoteMilestone,
   toPlainText,
 } from "@playrates/shared";
+import {
+  react,
+  reactionStates,
+  type ReactionsFor,
+} from "../../lib/reactions.js";
 import { AppError } from "../../lib/AppError.js";
 import { assertAdmin } from "../../lib/authz.js";
 import { cleanUpload } from "../../lib/cleanUpload.js";
@@ -58,6 +63,7 @@ export const createCommunityService = (
   images: CommunityImageStore,
   notifications: NotificationsRepository,
   gate: ProfileGate,
+  reactionsFor: ReactionsFor,
 ) => {
   const viewerProfile = async (
     viewerId: string | undefined,
@@ -74,12 +80,11 @@ export const createCommunityService = (
       viewerId,
       isAdmin: profile?.is_admin ?? false,
       isPatchNotes: thread.subject_kind === "patch_notes",
-      votedIds: viewerId
-        ? await repo.votedMessageIds(
-            viewerId,
-            rows.map((r) => r.id),
-          )
-        : new Set(),
+      reactions: await reactionStates(
+        repo.reactions,
+        viewerId,
+        rows.map((r) => r.id),
+      ),
     };
   };
 
@@ -228,17 +233,6 @@ export const createCommunityService = (
             }
           : null,
       };
-    },
-
-    async listByUsername(
-      username: string,
-      limit: number,
-      viewerId: string | undefined,
-    ): Promise<ThreadCard[]> {
-      const profile = await gate(username, viewerId);
-      return (await repo.listThreadsByParticipant(profile.id, limit)).map(
-        toThreadCard,
-      );
     },
 
     async getThread(
@@ -419,19 +413,27 @@ export const createCommunityService = (
       await discard(pictures);
     },
 
-    /** A toggle, as on reviews: idempotent by primary key. */
-    async toggleVote(userId: string, messageId: number): Promise<VoteResult> {
+    /** A reaction, as on reviews: the same one again takes it back. */
+    async toggleVote(
+      userId: string,
+      messageId: number,
+      reaction?: string,
+    ): Promise<VoteResult> {
       const message = await requireMessage(messageId);
       if (message.author_id === userId) {
-        throw AppError.forbidden("You cannot upvote your own message");
+        throw AppError.forbidden("You cannot react to your own message");
       }
 
-      const voted = await repo.hasVoted(userId, messageId);
-      if (voted) await repo.removeVote(userId, messageId);
-      else await repo.addVote(userId, messageId);
-      const voteCount = await repo.voteCount(messageId);
+      const { state, added } = await react(
+        repo.reactions,
+        reactionsFor,
+        userId,
+        messageId,
+        reaction,
+      );
+      const voteCount = state.voteCount;
 
-      if (!voted && message.author_id && isUpvoteMilestone(voteCount)) {
+      if (added && message.author_id && isUpvoteMilestone(voteCount)) {
         const thread = await requireThread(message.thread_id);
         await notifications.raiseMilestone(
           message.author_id,
@@ -449,7 +451,7 @@ export const createCommunityService = (
         );
       }
 
-      return { voteCount, votedByViewer: !voted };
+      return state;
     },
 
     async uploadImage(userId: string, bytes: Buffer): Promise<{ url: string }> {

@@ -1,0 +1,87 @@
+import { createPortal } from "react-dom";
+import { cn } from "../../lib/cn";
+
+/**
+ * A wide picture across the top of a page, under the translucent header,
+ * fading into the page at the bottom: a game's art on its page, the one a
+ * profile chose on a profile. The page starts part way down it, over the
+ * fade, so the picture is seen before anything else without pushing the
+ * page itself below the fold — see the offsets below.
+ *
+ * Short on a profile, which opens on a person rather than on the art.
+ *
+ * Into the body, so it spans the window rather than the page column.
+ */
+type BackdropSize = "tall" | "short";
+
+const HEIGHT: Record<BackdropSize, string> = {
+    tall: "h-[300px] sm:h-[420px] lg:h-[500px]",
+    short: "h-[230px] sm:h-[320px] lg:h-[380px]",
+};
+
+/**
+ * The picture as a backdrop draws it: faded out at the bottom, dimmed, and
+ * shaded at the sides.
+ */
+const BackdropArt = ({
+    url,
+    position,
+    className,
+}: {
+    url: string;
+    position: number;
+    className?: string;
+}) => (
+    <div
+        aria-hidden
+        className={cn(
+            "overflow-hidden [mask-image:linear-gradient(to_bottom,black_30%,transparent)]",
+            className
+        )}
+    >
+        <img
+            src={url}
+            alt=""
+            draggable={false}
+            style={{ objectPosition: `center ${position}%` }}
+            className="size-full object-cover"
+        />
+        {/* Dims it enough for the title over its lower half, and fades
+            the sides so a wide window has no hard edge where the picture
+            stops. Lighter by day: the page's colour there is near white, so
+            the night's wash turned a picture to milk. The fade at the foot
+            still sets the title on the page. */}
+        <span className="absolute inset-0 bg-surface/15 dark:bg-surface/45" />
+        <span className="absolute inset-0 bg-linear-to-r from-surface/40 via-transparent to-surface/40 dark:from-surface/70 dark:to-surface/70" />
+    </div>
+);
+
+const PageBackdrop = ({
+    url,
+    size = "tall",
+    position = 30,
+}: {
+    url: string | null;
+    size?: BackdropSize;
+    /** Which part of the picture shows, 0 the top to 100 the bottom. */
+    position?: number;
+}) => {
+    if (!url) return null;
+    return createPortal(
+        <BackdropArt
+            url={url}
+            position={position}
+            className={cn(
+                "pointer-events-none absolute inset-x-0 top-0 -z-10",
+                HEIGHT[size]
+            )}
+        />,
+        document.body
+    );
+};
+
+/** Room above a page for its backdrop to be seen before the page starts. */
+export const TALL_BACKDROP_OFFSET = "pt-16 sm:pt-28 lg:pt-32";
+export const SHORT_BACKDROP_OFFSET = "pt-12 sm:pt-20 lg:pt-24";
+
+export default PageBackdrop;

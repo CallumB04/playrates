@@ -1,90 +1,51 @@
 import { describe, expect, it } from "vitest";
+import { SETUP_STEPS, type SetupStepKey } from "@playrates/shared";
 import { setupSteps, unfinished } from "./setupChecklist";
 
-const facts = (
-    overrides: Partial<Parameters<typeof setupSteps>[0]> = {},
-    profile: Partial<Parameters<typeof setupSteps>[0]["profile"]> = {}
-) => ({
-    profile: { username: "devuser", avatarUrl: null, bio: "", ...profile },
-    logCount: 0,
-    reviewCount: 0,
-    friendCount: 0,
-    postCount: 0,
-    ...overrides,
-});
+const none = Object.fromEntries(SETUP_STEPS.map((k) => [k, false])) as Record<
+    SetupStepKey,
+    boolean
+>;
+const all = Object.fromEntries(SETUP_STEPS.map((k) => [k, true])) as Record<
+    SetupStepKey,
+    boolean
+>;
 
-const steps = (f = facts()) => setupSteps(f)!;
-
-const done = (f: ReturnType<typeof facts>) =>
-    Object.fromEntries(steps(f).map((s) => [s.key, s.done]));
-
-const allDone = facts(
-    { logCount: 1, reviewCount: 1, friendCount: 1, postCount: 1 },
-    { avatarUrl: "a", bio: "b" }
-);
+const steps = (done = none) => setupSteps("devuser", done)!;
 
 describe("setupSteps", () => {
-    it("starts a new account on nothing done", () => {
-        expect(done(facts())).toEqual({
-            picture: false,
-            bio: false,
-            log: false,
-            review: false,
-            friend: false,
-            post: false,
-        });
+    it("lists every step in order, ticked as the server says", () => {
+        const list = steps({ ...none, log: true, post: true });
+        expect(list.map((s) => s.key)).toEqual([...SETUP_STEPS]);
+        expect(list.filter((s) => s.done).map((s) => s.key)).toEqual([
+            "log",
+            "post",
+        ]);
     });
 
-    it("ticks each step off from what the account holds", () => {
-        expect(
-            done(
-                facts(
-                    { logCount: 3, postCount: 2 },
-                    { avatarUrl: "https://x.test/a.webp" }
-                )
-            )
-        ).toEqual({
-            picture: true,
-            bio: false,
-            log: true,
-            review: false,
-            friend: false,
-            post: true,
-        });
-    });
-
-    /* A review hangs off a log, and their played shelf is where those are. */
-    it("sends a first review to their own played shelf", () => {
-        expect(steps().find((s) => s.key === "review")?.to).toBe(
-            "/user/devuser?type=played"
-        );
-    });
-
-    it("does not count a bio of spaces", () => {
-        expect(done(facts({}, { bio: "   " })).bio).toBe(false);
+    /* A rating and a review hang off a log, and the played shelf is where those are. */
+    it("sends a rating and a first review to their own played shelf", () => {
+        for (const key of ["rate", "review"]) {
+            expect(steps().find((s) => s.key === key)?.to).toBe(
+                "/user/devuser/games?type=played"
+            );
+        }
     });
 
     /* Judging on a guess would flash the menu row at a finished account. */
-    it("waits for the counts before deciding", () => {
-        for (const count of [
-            "logCount",
-            "reviewCount",
-            "friendCount",
-            "postCount",
-        ] as const) {
-            expect(setupSteps(facts({ [count]: undefined }))).toBeNull();
-        }
+    it("waits for the answer before deciding", () => {
+        expect(setupSteps("devuser", undefined)).toBeNull();
     });
 });
 
 describe("unfinished", () => {
     it("keeps the list while anything is left", () => {
-        expect(unfinished(steps())).toHaveLength(6);
+        expect(unfinished(steps())).toHaveLength(SETUP_STEPS.length);
     });
 
     /* Not dismissable: finishing it is the only way it goes. */
-    it("has nothing once all four are done", () => {
-        expect(unfinished(steps(allDone))).toBeNull();
+    it("has nothing once every step is done", () => {
+        expect(unfinished(steps(all))).toBeNull();
         expect(unfinished(null)).toBeNull();
     });
 });

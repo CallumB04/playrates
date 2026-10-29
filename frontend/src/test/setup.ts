@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
-import { cleanup } from "@testing-library/react";
+import { cleanup, configure } from "@testing-library/react";
 import { server } from "./msw/server";
 
 // env is read at module load; tests never reach a real Supabase project
@@ -27,6 +27,11 @@ vi.mock("../lib/supabase", () => ({
         },
     },
 }));
+
+/* findBy and waitFor give up after 1s by default. A mocked request and a
+   first render take a fraction of that alone, but not on a full run across
+   every core; like vitest.config's testTimeout, this is a hang detector. */
+configure({ asyncUtilTimeout: 5_000 });
 
 // jsdom has no layout, so nothing can be scrolled into view
 Element.prototype.scrollIntoView ??= vi.fn();

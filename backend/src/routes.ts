@@ -4,9 +4,34 @@ import type { AuthAdmin } from "./config/authAdmin.js";
 import type { AvatarStore } from "./config/avatarStore.js";
 import type { CommunityImageStore } from "./config/communityImageStore.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
+import { createFavouritesService } from "./modules/favourites/favourites.service.js";
+import {
+  createMyFavouritesRouter,
+  createUserFavouritesRouter,
+} from "./modules/favourites/favourites.routes.js";
+import { createProgressService } from "./modules/progress/progress.service.js";
+import {
+  createMyProgressRouter,
+  createProgressRouter,
+  createReferralsRouter,
+  createShopRouter,
+} from "./modules/progress/progress.routes.js";
+import { createGaming25Service } from "./modules/gaming25/gaming25.service.js";
+import {
+  createGaming25Router,
+  createMyGaming25Router,
+  createUserGaming25Router,
+} from "./modules/gaming25/gaming25.routes.js";
 import { createProfilesService } from "./modules/profiles/profiles.service.js";
 import { createProfilesRouter } from "./modules/profiles/profiles.routes.js";
 import { createProfileGate } from "./modules/profiles/profileGate.js";
+import { createListsService } from "./modules/lists/lists.service.js";
+import {
+  createGameListsRouter,
+  createListsRouter,
+  createMyListsRouter,
+  createUserListsRouter,
+} from "./modules/lists/lists.routes.js";
 import { createGamesService } from "./modules/games/games.service.js";
 import { createGamesRouter } from "./modules/games/games.routes.js";
 import { createCronRouter } from "./modules/games/cron.routes.js";
@@ -19,6 +44,8 @@ import {
   createUserGameLogsRouter,
   createUserLogsRouter,
   createUserShelfRouter,
+  createUserWishlistRouter,
+  createMyWishlistRouter,
   createUserStatsRouter,
 } from "./modules/game-logs/gameLogs.routes.js";
 import { createReviewsService } from "./modules/reviews/reviews.service.js";
@@ -36,10 +63,7 @@ import {
 import { createNotificationsService } from "./modules/notifications/notifications.service.js";
 import { createMyNotificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { createCommunityService } from "./modules/community/community.service.js";
-import {
-  createCommunityRouter,
-  createUserThreadsRouter,
-} from "./modules/community/community.routes.js";
+import { createCommunityRouter } from "./modules/community/community.routes.js";
 import { createPlatformsRouter } from "./modules/platforms/platforms.js";
 import { createGenresRouter } from "./modules/genres/genres.js";
 import { createStatsRouter } from "./modules/stats/stats.js";
@@ -51,6 +75,11 @@ import {
   createAdminReportsRouter,
   createReportsRouter,
 } from "./modules/reports/reports.routes.js";
+import type { EmailDeps } from "./config/email.js";
+import type { Logger } from "./lib/logger.js";
+import { createEmailService } from "./modules/email/email.service.js";
+import { createEmailRouter } from "./modules/email/email.routes.js";
+import { withEmails } from "./modules/email/withEmails.js";
 
 interface Deps {
   repos: Repositories;
@@ -59,27 +88,42 @@ interface Deps {
   authAdmin: AuthAdmin;
   avatars: AvatarStore;
   communityImages: CommunityImageStore;
+  email: EmailDeps;
+  logger: Logger;
   requireAuth: RequestHandler;
   optionalAuth: RequestHandler;
 }
 
 export const buildRoutes = ({
-  repos,
+  repos: baseRepos,
   provider,
   authAdmin,
   avatars,
   communityImages,
+  email,
+  logger,
   requireAuth,
   optionalAuth,
 }: Deps): Router => {
   const router = Router();
 
-  const profiles = createProfilesService(
-    repos.profiles,
-    authAdmin,
-    avatars,
-    repos.accountExport,
-  );
+  const emails = createEmailService({
+    repo: baseRepos.email,
+    profiles: baseRepos.profiles,
+    sender: email.sender,
+    audience: email.audience,
+    activity: email.activity,
+    settings: email.settings,
+    logger,
+    defer: email.defer,
+  });
+  // Every service that raises a notification gets this one, so the ones
+  // with an email send it without knowing.
+  const repos = {
+    ...baseRepos,
+    notifications: withEmails(baseRepos.notifications, emails.afterRaise),
+  };
+
   const games = createGamesService(
     repos.games,
     provider,
@@ -89,7 +133,61 @@ export const buildRoutes = ({
     },
     repos.gameEvents,
   );
+  // A profile background is a picture from a game its owner has logged.
+  const backdrops = {
+    backdrops: (gameId: number) => games.backdrops(gameId),
+    hasLogged: async (userId: string, gameId: number) =>
+      (await repos.gameLogs.listByUserAndGame(userId, gameId)).length > 0,
+  };
+  const profiles = createProfilesService(
+    repos.profiles,
+    authAdmin,
+    avatars,
+    repos.accountExport,
+    {
+      ...backdrops,
+      owns: async (userId, url) =>
+        (await repos.progress.ownedBackgrounds(userId)).some(
+          (b) => b.url === url,
+        ),
+    },
+    async (a, b) => (await repos.friends.find(a, b))?.status === "accepted",
+    emails,
+  );
   const profileGate = createProfileGate(repos.profiles, repos.friends);
+  const favourites = createFavouritesService(
+    repos.favourites,
+    repos.games,
+    profileGate,
+    repos.gameLogs,
+  );
+  // Reactions open with level and packs, which progress knows; asked at
+  // request time, by when it exists.
+  const reactionsFor = (userId: string) => progress.reactionsFor(userId);
+  const lists = createListsService(
+    repos.lists,
+    repos.games,
+    repos.friends,
+    repos.notifications,
+    profileGate,
+    reactionsFor,
+  );
+  const gaming25 = createGaming25Service(
+    repos.gaming25,
+    repos.games,
+    repos.profiles,
+    repos.notifications,
+    profileGate,
+  );
+  const progress = createProgressService(
+    repos.progress,
+    repos.profiles,
+    repos.friends,
+    repos.lists,
+    repos.notifications,
+    backdrops,
+    async (id) => (await repos.reviews.findById(id))?.user_id ?? null,
+  );
   const gameLogs = createGameLogsService(
     repos.gameLogs,
     repos.games,
@@ -104,6 +202,7 @@ export const buildRoutes = ({
     repos.notifications,
     profileGate,
     repos.friends,
+    reactionsFor,
   );
   const friends = createFriendsService(
     repos.friends,
@@ -123,6 +222,7 @@ export const buildRoutes = ({
     communityImages,
     repos.notifications,
     profileGate,
+    reactionsFor,
   );
 
   const reports = createReportsService({
@@ -131,6 +231,7 @@ export const buildRoutes = ({
     communityService: community,
     reviews: repos.reviews,
     profiles: repos.profiles,
+    lists: repos.lists,
     avatars,
   });
 
@@ -140,6 +241,9 @@ export const buildRoutes = ({
     gamesService: games,
     notifications: repos.notifications,
     provider,
+    emails,
+    emailOf: (userId) => authAdmin.getEmail(userId),
+    logger,
   });
 
   // Under /api so the host's rewrites reach it; the root one does not.
@@ -157,7 +261,12 @@ export const buildRoutes = ({
     createAdminRouter({ service: admin }),
   );
 
-  router.use("/reports", createReportsRouter({ service: reports, requireAuth }));
+  router.use("/email", createEmailRouter({ service: emails }));
+
+  router.use(
+    "/reports",
+    createReportsRouter({ service: reports, requireAuth }),
+  );
 
   router.use("/platforms", createPlatformsRouter(repos.platforms));
   router.use("/genres", createGenresRouter(repos.genres));
@@ -168,7 +277,7 @@ export const buildRoutes = ({
 
   router.use(
     "/profiles",
-    createProfilesRouter({ service: profiles, requireAuth }),
+    createProfilesRouter({ service: profiles, requireAuth, optionalAuth }),
   );
 
   // "me" routes are grouped so the acting user always comes from the token
@@ -178,7 +287,16 @@ export const buildRoutes = ({
   );
   router.use(
     "/me/logs",
-    createMyLogsRouter({ service: gameLogs, reviews, requireAuth, optionalAuth }),
+    createMyLogsRouter({
+      service: gameLogs,
+      reviews,
+      requireAuth,
+      optionalAuth,
+    }),
+  );
+  router.use(
+    "/me/wishlist",
+    createMyWishlistRouter({ service: gameLogs, requireAuth, optionalAuth }),
   );
   router.use(
     "/me/shelf",
@@ -187,6 +305,26 @@ export const buildRoutes = ({
   router.use(
     "/me/reviews",
     createMyReviewsRouter({ service: reviews, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/me/favourites",
+    createMyFavouritesRouter({
+      service: favourites,
+      requireAuth,
+      optionalAuth,
+    }),
+  );
+  router.use(
+    "/me/lists",
+    createMyListsRouter({ service: lists, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/me/gaming-25",
+    createMyGaming25Router({ service: gaming25, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/me",
+    createMyProgressRouter({ service: progress, requireAuth, optionalAuth }),
   );
   router.use(
     "/me/friends",
@@ -201,6 +339,10 @@ export const buildRoutes = ({
   router.use(
     "/users/:username/game-logs",
     createUserGameLogsRouter({ service: gameLogs, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/users/:username/wishlist",
+    createUserWishlistRouter({ service: gameLogs, requireAuth, optionalAuth }),
   );
   router.use(
     "/users/:username/shelf",
@@ -222,10 +364,43 @@ export const buildRoutes = ({
     "/users/:username/friends",
     createUserFriendsRouter({ service: friends, requireAuth, optionalAuth }),
   );
+  router.use(
+    "/users/:username/favourites",
+    createUserFavouritesRouter({
+      service: favourites,
+      requireAuth,
+      optionalAuth,
+    }),
+  );
 
   router.use(
-    "/users/:username/community-threads",
-    createUserThreadsRouter({ service: community, requireAuth, optionalAuth }),
+    "/users/:username/lists",
+    createUserListsRouter({ service: lists, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/lists",
+    createListsRouter({ service: lists, profiles: repos.profiles, requireAuth, optionalAuth }),
+  );
+
+  router.use(
+    "/users/:username/gaming-25",
+    createUserGaming25Router({ service: gaming25, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/progress",
+    createProgressRouter({ service: progress, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/shop",
+    createShopRouter({ service: progress, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/referrals",
+    createReferralsRouter({ service: progress, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/gaming-25",
+    createGaming25Router({ service: gaming25, requireAuth, optionalAuth }),
   );
 
   router.use(
@@ -238,6 +413,10 @@ export const buildRoutes = ({
     createReviewsFeedRouter({ service: reviews, requireAuth, optionalAuth }),
   );
 
+  router.use(
+    "/games/:gameId/lists",
+    createGameListsRouter({ service: lists, requireAuth, optionalAuth }),
+  );
   router.use(
     "/games/:gameId/reviews",
     createGameReviewsRouter({ service: reviews, requireAuth, optionalAuth }),
@@ -252,6 +431,8 @@ export const buildRoutes = ({
     createCronRouter({
       provider,
       repo: repos.games,
+      progress,
+      emails,
       secret: env().CRON_SECRET,
     }),
   );

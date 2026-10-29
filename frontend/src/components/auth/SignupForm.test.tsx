@@ -9,7 +9,7 @@ import LoginForm from "./LoginForm";
 
 const API = "http://localhost:3000/api/v1";
 
-const signUp = vi.fn(async () => {});
+const signUp = vi.fn(async () => ({ signedIn: true }));
 const signIn = vi.fn(async () => {});
 const close = vi.fn();
 
@@ -124,7 +124,7 @@ describe("SignupForm", () => {
             "brandnew",
             undefined
         );
-        expect(onSignedUp).toHaveBeenCalledWith("new@example.test");
+        expect(onSignedUp).toHaveBeenCalledWith("new@example.test", true);
     });
 
     /** The error must be in the DOM and marked up, not just styled in. */

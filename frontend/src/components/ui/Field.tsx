@@ -41,9 +41,11 @@ const Field = ({
     return (
         <div className={cn("group flex flex-col", className)}>
             <div
+                // cn joins rather than merges, so the two margins are
+                // either/or: both, and the earlier one won.
                 className={cn(
-                    "mb-2 flex items-baseline justify-between gap-2",
-                    labelHidden && !action && "mb-0"
+                    "flex items-baseline justify-between gap-2",
+                    labelHidden && !action ? "mb-0" : "mb-2"
                 )}
             >
                 <label

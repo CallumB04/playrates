@@ -1,5 +1,7 @@
 import { http, HttpResponse } from "msw";
 import {
+    DEFAULT_ABOUT_VISIBILITY,
+    resolveEmailPrefs,
     rollupLogs,
     type FriendEdge,
     type GameLog,
@@ -7,6 +9,7 @@ import {
     type LogBundle,
     type MyProfile,
     type Paginated,
+    type Progress,
     type ReviewWithAuthor,
     type ShelfEntry,
 } from "@playrates/shared";
@@ -30,6 +33,7 @@ export const buildProfile = (
     firstName: null,
     bio: "Local development account.",
     showSexualContent: false,
+    emailPrefs: resolveEmailPrefs({}),
     timezone: "UTC",
     hideOnline: false,
     hideFromSearch: false,
@@ -39,7 +43,17 @@ export const buildProfile = (
     isAdmin: false,
     avatarUrl: null,
     accent: "indigo",
+    background: null,
+    about: {},
+    aboutVisibility: { ...DEFAULT_ABOUT_VISIBILITY },
     online: true,
+    level: 1,
+    frame: null,
+    nameFont: "default",
+    nameColour: "default",
+    pinnedLists: [],
+    pinnedReviews: [],
+    sectionOrder: ["pinned_reviews", "pinned_lists", "favourites", "wishlist"],
     createdAt: "2026-01-01T00:00:00.000Z",
     ...overrides,
 });
@@ -147,7 +161,6 @@ export const buildReview = (
     author: {
         id: "11111111-1111-1111-1111-111111111111",
         username: "devuser",
-        firstName: null,
         avatarUrl: null,
         accent: "indigo",
         online: true,
@@ -156,6 +169,8 @@ export const buildReview = (
     hoursPlayed: 41,
     voteCount: 3,
     votedByViewer: false,
+    myReaction: null,
+    reactions: [],
     status: "played",
     playedStatus: "finished",
     platform: "steam",
@@ -184,11 +199,66 @@ export const buildFriendEdge = (
     ...overrides,
 });
 
+/** A fresh member's progress. */
+export const buildProgress = (overrides: Partial<Progress> = {}): Progress => ({
+    xp: 0,
+    level: { level: 1, xp: 0, floor: 0, next: 100, progress: 0 },
+    tokens: 0,
+    frame: null,
+    streak: {
+        weeks: 0,
+        best: 0,
+        thisWeek: false,
+        freeShield: true,
+        spareShields: 0,
+        history: [],
+    },
+    quests: { week: [], month: [], swapsLeft: 1 },
+    periods: {
+        week: { key: "w2026-44", kind: "week", start: "", end: "" },
+        month: { key: "m2026-10", kind: "month", start: "", end: "" },
+    },
+    look: {
+        frameChoice: null,
+        cardTheme: "default",
+        nameFont: "default",
+        nameColour: "default",
+        frames: [],
+        themes: ["default"],
+        fonts: ["default"],
+        colours: ["default"],
+        reactions: ["upvote"],
+        showcaseSlots: 4,
+        pinnedListSlots: 1,
+        pinnedReviewSlots: 0,
+    },
+    setup: {
+        steps: {
+            picture: false,
+            bio: false,
+            log: false,
+            rate: false,
+            review: false,
+            favourites: false,
+            friend: false,
+            post: false,
+        },
+        reward: { xp: 150, tokens: 30 },
+    },
+    unseen: { xp: [], badges: [], tokens: 0 },
+    reveal: false,
+    referralCode: "devuser",
+    ...overrides,
+});
+
 /**
  * Default happy-path handlers. Individual tests override one route with
  * server.use(...) rather than redefining the whole set.
  */
 export const handlers = [
+    // A fresh member's progress, for anything that shows it in passing.
+    http.get(`${API}/me/progress`, () => HttpResponse.json(buildProgress())),
+
     http.get(`${API}/stats`, () =>
         HttpResponse.json({ userCount: 2, gameCount: 6, logCount: 1 })
     ),
@@ -270,9 +340,6 @@ export const handlers = [
     http.get(`${API}/community/trending`, () => HttpResponse.json([])),
     http.get(`${API}/community/games`, () => HttpResponse.json([])),
     http.get(`${API}/community/latest`, () => HttpResponse.json([])),
-    http.get(`${API}/users/:username/community-threads`, () =>
-        HttpResponse.json([])
-    ),
 
     http.get(`${API}/me/friends`, () =>
         HttpResponse.json({ data: [buildFriendEdge()] })

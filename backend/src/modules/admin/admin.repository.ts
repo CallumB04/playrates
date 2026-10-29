@@ -35,9 +35,37 @@ export interface PatchNoteEntryRow {
   edited_at: string | null;
 }
 
+/** What admin_progress returns, before the mapper shapes it. */
+export interface AdminProgressRow {
+  members: number;
+  xps: number[];
+  xp_last_week: number;
+  tokens_held: number;
+  tokens_earned: number;
+  tokens_spent: number;
+  tokens_gifted: number;
+  top: {
+    username: string;
+    avatar_url: string | null;
+    accent: string | null;
+    xp: number;
+  }[];
+  xp_by_source: { source: string; xp: number; events: number }[];
+  badges: { badge: string; metal: number; holders: number }[];
+  shop: { item: string; sold: number; tokens: number }[];
+  reactions: { reaction: string; count: number }[];
+  tasks_week: number;
+  tasks_month: number;
+  referrals_joined: number;
+  referrals_active: number;
+  setup_done: number;
+  reveal_waiting: number;
+}
+
 export interface AdminRepository {
   ping(): Promise<void>;
   totals(): Promise<AdminTotals>;
+  progress(): Promise<AdminProgressRow>;
   /** Inclusive dates, YYYY-MM-DD. */
   series(from: string, to: string, bucket: AdminBucket): Promise<AdminSeriesRow[]>;
   metricDetail(
@@ -77,6 +105,9 @@ export interface AdminRepository {
   ): Promise<AnnouncementRow>;
   /** Delivers to every account, returning how many it reached. */
   broadcastAnnouncement(id: number): Promise<number>;
+  /** It went out by email too, as this Resend broadcast where there was
+   *  one. */
+  markAnnouncementEmailed(id: number, broadcastId: string | null): Promise<void>;
   /** Takes every copy back out of every inbox. */
   retractAnnouncement(id: number): Promise<void>;
 
@@ -109,6 +140,12 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
     const { data, error } = await db.rpc("admin_totals");
     if (error) throw error;
     return data as AdminTotals;
+  },
+
+  async progress() {
+    const { data, error } = await db.rpc("admin_progress");
+    if (error) throw error;
+    return data as AdminProgressRow;
   },
 
   async series(from, to, bucket) {
@@ -316,6 +353,17 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
     const { data, error } = await db.rpc("broadcast_announcement", { p_id: id });
     if (error) throw error;
     return (data as number | null) ?? 0;
+  },
+
+  async markAnnouncementEmailed(id, broadcastId) {
+    const { error } = await db
+      .from("announcements")
+      .update({
+        email_broadcast_id: broadcastId,
+        emailed_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+    if (error) throw error;
   },
 
   async retractAnnouncement(id) {

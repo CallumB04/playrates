@@ -17,7 +17,7 @@ const ramp = (prefix: string, steps: string[]): RampStep[] =>
 
 export const RAMPS: Ramp[] = [
     {
-        name: "Iris — the brand",
+        name: "Iris: the brand",
         note: "periwinkle violet; stays luminous on ink and keeps clear of the art",
         steps: ramp("iris", [
             "50",
@@ -34,7 +34,7 @@ export const RAMPS: Ramp[] = [
         ]),
     },
     {
-        name: "Ink — the ground",
+        name: "Ink: the ground",
         note: "warm charcoals; not cold grey, which reads cheap beside box art",
         steps: ramp("ink", [
             "50",
@@ -52,7 +52,7 @@ export const RAMPS: Ramp[] = [
         ]),
     },
     {
-        name: "Ember — the secondary",
+        name: "Ember: the secondary",
         note: "warmth, used sparingly for what should feel earned",
         steps: ramp("ember", ["300", "400", "500", "600"]),
     },
@@ -117,7 +117,7 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
     },
     {
         title: "Accent",
-        blurb: "Ember is a genuine secondary, not a warning — which frees red to mean only danger. Used sparingly, for what should feel earned.",
+        blurb: "Ember is a genuine secondary, not a warning, which frees red to mean only danger. Used sparingly, for what should feel earned.",
         tokens: [
             {
                 name: "accent",
@@ -143,7 +143,7 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
             {
                 name: "surface",
                 cssVar: "--surface",
-                description: "Page background — the stock",
+                description: "Page background: the stock",
             },
             {
                 name: "surface-raised",
@@ -225,7 +225,7 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
     },
     {
         title: "Rule",
-        blurb: "Translucent, so a rule sits on any surface without banding. Subtle divides rows, strong divides sections — most separation is done by elevation now.",
+        blurb: "Translucent, so a rule sits on any surface without banding. Subtle divides rows, strong divides sections. Most separation is done by elevation now.",
         tokens: [
             {
                 name: "border (default)",
@@ -250,7 +250,7 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
             {
                 name: "border-focus",
                 cssVar: "--border-focus",
-                description: "Focused field — a brand rule, never a glow",
+                description: "Focused field: a brand rule, never a glow",
             },
         ],
     },
@@ -271,7 +271,7 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
             {
                 name: "status-playing",
                 cssVar: "--status-playing",
-                description: "Playing — amber",
+                description: "Playing: amber",
             },
             {
                 name: "status-playing-quiet",
@@ -281,7 +281,7 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
             {
                 name: "status-backlog",
                 cssVar: "--status-backlog",
-                description: "Backlog — teal",
+                description: "Backlog: teal",
             },
             {
                 name: "status-backlog-quiet",
@@ -291,7 +291,7 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
             {
                 name: "status-wishlist",
                 cssVar: "--status-wishlist",
-                description: "Wishlist — rose",
+                description: "Wishlist: rose",
             },
             {
                 name: "status-wishlist-quiet",
@@ -340,7 +340,7 @@ export const EFFECT_TOKENS: EffectToken[] = [
     {
         name: "shadow-ambient",
         cssVar: "--shadow-ambient",
-        note: "the soft far shadow — how far off the page a thing sits",
+        note: "the soft far shadow: how far off the page a thing sits",
         demoClass: "bg-surface-raised shadow-e2",
     },
     {
@@ -358,7 +358,7 @@ export const EFFECT_TOKENS: EffectToken[] = [
     {
         name: "glow-brand",
         cssVar: "--glow-brand",
-        note: "the bloom a hovered thing gathers — light, not paint",
+        note: "the bloom a hovered thing gathers: light, not paint",
         demoClass: "bg-surface-raised shadow-glow",
     },
     {
@@ -455,11 +455,11 @@ export const SPACING_STEPS: { name: string; px: number }[] = [
 ];
 
 export const RADII: { name: string; utility: string; note: string }[] = [
-    { name: "xs", utility: "rounded-xs", note: "6 — inline marks" },
-    { name: "sm", utility: "rounded-sm", note: "10 — controls, chips" },
-    { name: "md", utility: "rounded-md", note: "14 — cards, covers" },
-    { name: "lg", utility: "rounded-lg", note: "18 — panels, modals" },
-    { name: "xl", utility: "rounded-xl", note: "24 — full-bleed surfaces" },
+    { name: "xs", utility: "rounded-xs", note: "6: inline marks" },
+    { name: "sm", utility: "rounded-sm", note: "10: controls, chips" },
+    { name: "md", utility: "rounded-md", note: "14: cards, covers" },
+    { name: "lg", utility: "rounded-lg", note: "18: panels, modals" },
+    { name: "xl", utility: "rounded-xl", note: "24: full-bleed surfaces" },
     { name: "full", utility: "rounded-full", note: "pills and dots" },
 ];
 

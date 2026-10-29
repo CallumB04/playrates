@@ -12,6 +12,8 @@ export interface LogFlow {
         gameId: number,
         options?: { owner?: string; logId?: number }
     ) => void;
+    /** Which of your lists it's in, to change. */
+    addToList: (gameId: number) => void;
 }
 
 export const LogFlowContext = createContext<LogFlow | null>(null);

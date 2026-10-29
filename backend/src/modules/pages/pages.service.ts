@@ -2,7 +2,11 @@ import {
   SITE_DESCRIPTION,
   SITE_NAME,
   SITE_ORIGIN,
+  GAMING_25_CENTRE,
+  GAMING_25_SIZE,
   gameDescription,
+  gaming25ImageVersion,
+  gaming25Label,
   gamePageName,
   pageTitle,
   profileDescription,
@@ -13,6 +17,8 @@ import {
 import type { Repositories } from "../../repositories.js";
 import type { GenreRow } from "../../types/database.types.js";
 import type { ReviewRowJoined } from "../reviews/reviews.repository.js";
+import { inGridOrder } from "../gaming25/gaming25.mapper.js";
+import { toProfileVisibility } from "../profiles/profiles.mapper.js";
 import { excerpt, toParagraphs, type PageBody } from "./body.js";
 import { DEFAULT_IMAGE, type HeadMeta } from "./head.js";
 
@@ -22,7 +28,14 @@ const MIN_RATINGS_FOR_STARS = 3;
 
 type Repos = Pick<
   Repositories,
-  "games" | "platforms" | "genres" | "profiles" | "community" | "reviews"
+  | "games"
+  | "platforms"
+  | "genres"
+  | "profiles"
+  | "community"
+  | "reviews"
+  | "lists"
+  | "gaming25"
 >;
 
 /** How many reviews or replies a page carries in its HTML. */
@@ -285,6 +298,89 @@ export const createPagesService = (repos: Repos) => {
         noindex: row.hide_from_search,
         // Hidden from search means hidden from this too.
         body: row.hide_from_search ? undefined : await profileBody(row),
+      };
+    },
+
+    /** A list says what it is only where anyone may see it; one kept to
+     *  friends or its owner previews as nothing in particular. */
+    async list(username: string, id: number): Promise<HeadMeta | null> {
+      const row = await repos.lists.card(id);
+      if (!row || row.owner_username !== username) return null;
+      const open =
+        row.visibility === "everyone" && row.owner_visibility === "everyone";
+      if (!open) {
+        return {
+          title: pageTitle("A list"),
+          description: SITE_DESCRIPTION,
+          path: `/user/${row.owner_username}/lists/${row.id}`,
+          image: DEFAULT_IMAGE,
+          card: "summary",
+          noindex: true,
+        };
+      }
+      return {
+        title: pageTitle(`${row.name}, a list by ${row.owner_username}`),
+        description: row.description
+          ? truncateDescription(row.description)
+          : `${row.game_count} ${row.game_count === 1 ? "game" : "games"} chosen by ${row.owner_username} on PlayRates.`,
+        path: `/user/${row.owner_username}/lists/${row.id}`,
+        image: DEFAULT_IMAGE,
+        card: "summary",
+        type: "article",
+      };
+    },
+
+    /** Previews as its own picture where anyone may see it; behind a
+     *  private or friends-only profile, as nothing in particular. */
+    async gaming25(username: string): Promise<HeadMeta | null> {
+      const profile = await repos.profiles.findByUsername(username);
+      if (!profile) return null;
+      const path = `/user/${profile.username}/gaming-25`;
+      const card =
+        toProfileVisibility(profile.profile_visibility) === "everyone"
+          ? await repos.gaming25.card(profile.id)
+          : null;
+      if (!card) {
+        return {
+          title: pageTitle("A Gaming 25"),
+          description: SITE_DESCRIPTION,
+          path,
+          image: DEFAULT_IMAGE,
+          card: "summary",
+          noindex: true,
+        };
+      }
+
+      // The centre first, then the rest in grid order, adult games left out.
+      const picks = inGridOrder(await repos.gaming25.picks(profile.id));
+      const games = new Map(
+        (await repos.games.findByIds([...new Set(picks.map((p) => p.gameId))]))
+          .filter((row) => !row.has_sexual_content)
+          .map((row) => [row.id, row.title]),
+      );
+      const named = picks
+        .filter((p) => games.has(p.gameId))
+        .sort(
+          (a, b) =>
+            Number(b.category === GAMING_25_CENTRE) -
+            Number(a.category === GAMING_25_CENTRE),
+        );
+      const shown = named
+        .slice(0, 3)
+        .map((p) => `${gaming25Label(p.category)}: ${games.get(p.gameId)}`);
+      const more = named.length - shown.length;
+      const description =
+        shown.length === 0
+          ? `${profile.username}'s 25 games, one for each category, on PlayRates.`
+          : `${shown.join(" · ")}${more > 0 ? `, and ${more} more` : ""}. ${named.length} of ${GAMING_25_SIZE} picked on PlayRates.`;
+
+      return {
+        title: pageTitle(`${profile.username}'s Gaming 25`),
+        description: truncateDescription(description),
+        path,
+        image: `${SITE_ORIGIN}/api/v1/gaming-25/${encodeURIComponent(profile.username)}/image.png?layout=wide&v=${gaming25ImageVersion(card.updated_at)}`,
+        card: "summary_large_image",
+        type: "article",
       };
     },
 

@@ -29,7 +29,12 @@ const viewer = (overrides: Partial<MessageViewer> = {}): MessageViewer => ({
   viewerId: "a",
   isAdmin: false,
   isPatchNotes: false,
-  votedIds: new Set(),
+  reactions: (_id, voteCount) => ({
+    voteCount,
+    votedByViewer: false,
+    myReaction: null,
+    reactions: [],
+  }),
   ...overrides,
 });
 
@@ -66,12 +71,19 @@ describe("buildMessageTree", () => {
     expect(tree[0]!.replies.map((m) => m.id)).toEqual([2]);
   });
 
-  it("marks what the viewer has voted on", () => {
+  it("carries the reactions the viewer sees", () => {
     const [message] = buildMessageTree(
       [row({ id: 7 })],
-      viewer({ votedIds: new Set([7]) }),
+      viewer({
+        reactions: (id, voteCount) => ({
+          voteCount,
+          votedByViewer: id === 7,
+          myReaction: id === 7 ? "fire" : null,
+          reactions: [{ reaction: "fire", count: 1 }],
+        }),
+      }),
     );
-    expect(message!.votedByViewer).toBe(true);
+    expect(message).toMatchObject({ votedByViewer: true, myReaction: "fire" });
   });
 });
 

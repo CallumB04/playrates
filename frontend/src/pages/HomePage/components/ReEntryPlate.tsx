@@ -3,6 +3,7 @@ import { ArrowRight, Gamepad2, Pencil } from "lucide-react";
 import type { UserStats } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
 import Button from "../../../components/ui/Button";
+import { cardClass } from "../../../components/ui/Card";
 import GameCover from "../../../components/game/GameCover";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import YearChart from "./YearChart";
@@ -13,6 +14,7 @@ import {
 } from "../../../constants/gameStatus";
 import { formatCount, formatHours, relativeTime } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
+import { shelfPath } from "../../../lib/profilePaths";
 
 interface ReEntryPlateProps {
     username: string;
@@ -73,7 +75,7 @@ const NowPlaying = ({
                     <Link
                         to={
                             backlog > 0
-                                ? `/user/${username}?type=backlog`
+                                ? shelfPath(username, "backlog")
                                 : "/library"
                         }
                         className="relative mt-1 inline-flex items-center gap-1 text-label text-brand before:absolute before:-inset-2.5 before:content-[''] hover:underline sm:before:hidden"
@@ -136,8 +138,8 @@ const NowPlaying = ({
                     </Button>
                     {others > 0 && (
                         <Link
-                            to={`/user/${username}?type=playing`}
-                            className="text-label text-content-secondary hover:text-content"
+                            to={shelfPath(username, "playing")}
+                            className="relative text-label text-content-secondary before:absolute before:-inset-x-1 before:-inset-y-3.5 before:content-[''] hover:text-content"
                         >
                             +{formatCount(others)} more on the go
                         </Link>
@@ -165,7 +167,7 @@ const Shelves = ({
             return (
                 <Link
                     key={status}
-                    to={`/user/${username}?type=${status}`}
+                    to={shelfPath(username, status)}
                     className="group flex min-h-11 flex-col items-center justify-center gap-1 px-1 py-3 transition-colors hover:bg-surface-hover/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand lg:items-start lg:justify-center lg:gap-2 lg:px-5 lg:py-5"
                 >
                     <span className="flex items-center gap-1.5 text-label-sm text-content-muted group-hover:text-content-secondary lg:text-label">
@@ -257,7 +259,12 @@ const ReEntryPlate = ({
                 </div>
             </div>
 
-            <div className="overflow-hidden rounded-lg border border-subtle bg-surface-raised shadow-plate lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)] lg:divide-x lg:divide-subtle">
+            <div
+                className={cardClass(
+                    "overflow-hidden lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)] lg:divide-x lg:divide-subtle",
+                    { padding: "none" }
+                )}
+            >
                 <NowPlaying
                     current={current}
                     username={username}

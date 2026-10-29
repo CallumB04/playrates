@@ -11,6 +11,11 @@ export default defineConfig({
         setupFiles: ["./src/test/setup.ts"],
         include: ["src/**/*.test.{ts,tsx}"],
         css: false,
+        /* The 5s default is a hang detector, and a busy run tripped it: a
+           file's first test pays its warm-up, and a flow test that takes
+           under 200ms alone timed out in a full run on 18 workers. A real
+           hang still fails at 15s. */
+        testTimeout: 15_000,
 
         /* Scoped to the code unit tests are meant to cover: pure helpers,
            reducers and hooks. Components are exercised through the route and

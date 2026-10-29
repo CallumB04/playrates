@@ -17,6 +17,9 @@ import { fileURLToPath } from "node:url";
 const appPort = process.env.PORT || "5173";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const resetOnly = process.argv.includes("--reset-only");
+// Runs against the database as it is: for when something worth keeping is
+// in it, or someone else is working in it.
+const keep = process.argv.includes("--keep");
 
 const run = (command, args, options = {}) => {
   const result = spawnSync(command, args, {
@@ -58,8 +61,10 @@ if (status.status !== 0) {
   supabase("start");
 }
 
-step("Resetting the local database");
-supabase("db", "reset", "--local", "--yes");
+if (!keep) {
+  step("Resetting the local database");
+  supabase("db", "reset", "--local", "--yes");
+}
 
 if (resetOnly) {
   console.log("\n✓ Local database reset.");
@@ -108,6 +113,14 @@ const backendEnv = {
   IGDB_CLIENT_ID: "",
   IGDB_CLIENT_SECRET: "",
   CRON_SECRET: "",
+  // Every email lands in the local mail viewer, never with Resend.
+  RESEND_API_KEY: "",
+  RESEND_SEGMENT_ID: "",
+  RESEND_WEBHOOK_SECRET: "",
+  MAILPIT_URL: "http://127.0.0.1:55324",
+  SITE_URL: `http://localhost:${appPort}`,
+  PUBLIC_API_URL: "http://localhost:3000/api/v1",
+  EMAIL_SIGNING_SECRET: "local-email-secret",
 };
 
 const children = [

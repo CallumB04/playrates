@@ -4,13 +4,18 @@
     "outputDirectory": "frontend/dist",
     "functions": {
         "api/index.ts": {
-            "includeFiles": "frontend/dist/index.html"
+            "maxDuration": 60,
+            "includeFiles": "{frontend/dist/index.html,node_modules/@fontsource/geist/files/geist-latin-*-normal.woff}"
         }
     },
     "crons": [
         {
             "path": "/api/v1/cron/trending",
             "schedule": "0 5 * * *"
+        },
+        {
+            "path": "/api/v1/cron/nudges",
+            "schedule": "0 17 * * *"
         }
     ],
     "rewrites": [
@@ -24,6 +29,14 @@
         },
         {
             "source": "/user/:username",
+            "destination": "/api"
+        },
+        {
+            "source": "/user/:username/gaming-25",
+            "destination": "/api"
+        },
+        {
+            "source": "/user/:username/lists/:id",
             "destination": "/api"
         },
         {

@@ -1,102 +1,141 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-    Eye,
+    Lock,
+    Mail,
     Monitor,
     Moon,
+    Pencil,
     SlidersHorizontal,
     Sun,
     TriangleAlert,
     UserRound,
 } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
 import { useAccountForm } from "../contexts/AccountFormContext";
 import { useNotify } from "../contexts/NotificationContext";
 import { useTheme } from "../contexts/ThemeContext";
-import {
-    useRemoveAvatar,
-    useUpdateAvatar,
-    useUpdateProfile,
-} from "../hooks/queries/useProfiles";
+import { useUpdateProfile } from "../hooks/queries/useProfiles";
 import { useUserStats } from "../hooks/queries/useGameLogs";
 import { useUserReviews } from "../hooks/queries/useReviews";
 import { useUserFriends } from "../hooks/queries/useFriends";
 import { usePageMeta } from "../hooks/usePageMeta";
 import { deleteMyAccount, fetchMyData } from "../api";
 import { saveFile } from "../lib/saveFile";
-import { FALLBACK_ACCENT, type ProfileVisibility } from "@playrates/shared";
+import {
+    DEFAULT_ABOUT_VISIBILITY,
+    EMAIL_CATEGORIES,
+    resolveEmailPrefs,
+    type AboutVisibility,
+    type EmailPrefs,
+    type EmailScope,
+    type ProfileVisibility,
+    type UpdateProfileInput,
+} from "@playrates/shared";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
-import Button from "../components/ui/Button";
+import Button, { buttonClass } from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import Toggle from "../components/ui/Toggle";
 import EmptyPlate from "../components/ui/EmptyPlate";
-import { Input, Textarea } from "../components/ui/Input";
 import UsernameRow from "./settings/UsernameRow";
+import EmailRow from "./settings/EmailRow";
+import PasswordRow from "./settings/PasswordRow";
+import AboutPrivacy from "./settings/AboutPrivacy";
 import Dropdown from "../components/ui/Dropdown";
 import SegmentedChoice from "../components/ui/SegmentedChoice";
-import AccentPicker from "../components/ui/AccentPicker";
-import AvatarField, { type AvatarChoice } from "../components/AvatarField";
 import { effectiveTimeZone, formatCount, timeZones } from "../lib/format";
+import { profilePath } from "../lib/profilePaths";
 import { cn } from "../lib/cn";
 
 /* Only what can be used today. Sections and rows that were all "coming
-   soon" were choices that led nowhere; Row's `soon` is there for when one
-   is close enough to show. */
+   soon" were choices that led nowhere. The profile itself is edited on the
+   profile, where you can see it change. */
 const SECTIONS: SettingsSection[] = [
     { id: "account", label: "Account", icon: UserRound },
-    { id: "profile", label: "Profile", icon: Eye },
+    { id: "privacy", label: "Privacy", icon: Lock },
+    { id: "emails", label: "Emails", icon: Mail },
     { id: "content", label: "Content", icon: SlidersHorizontal },
     { id: "account-closure", label: "Close account", icon: TriangleAlert },
 ];
 
-interface RowProps {
+interface SettingProps {
     label: string;
-    /** Only where the control alone doesn't say it. Most rows need none. */
+    /** Only where the title alone doesn't say it, and short. */
     help?: ReactNode;
-    /** Rendered, disabled and labelled, so the page shows the shape of the thing. */
-    soon?: boolean;
     children: ReactNode;
 }
 
-const Row = ({ label, help, soon, children }: RowProps) => (
-    <div className="grid items-center gap-3 border-b border-subtle px-5 py-4 last:border-b-0 sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)] sm:gap-8">
-        <div>
-            <div className="flex flex-wrap items-baseline gap-2">
-                <span
-                    className={cn(
-                        "text-body-sm font-medium",
-                        soon ? "text-content-muted" : "text-content"
-                    )}
-                >
-                    {label}
-                </span>
-                {soon && (
-                    <span className="rounded-full border border-subtle px-2 py-0.5 text-[10px] text-content-muted">
-                        Coming soon
-                    </span>
-                )}
-            </div>
-            {help && (
-                <p className="mt-1 max-w-[46ch] text-xs leading-relaxed text-content-muted">
-                    {help}
-                </p>
-            )}
-        </div>
-        <div className={cn(soon && "pointer-events-none opacity-50")}>
-            {children}
-        </div>
+const Title = ({ label, help }: Omit<SettingProps, "children">) => (
+    <div className="min-w-0">
+        <p className="text-body-sm font-medium text-content">{label}</p>
+        {help && (
+            <p className="mt-0.5 text-label-sm text-content-muted">{help}</p>
+        )}
     </div>
 );
 
-/* Its rows run edge to edge with a rule between them, so the card sets no
-   padding of its own. */
-const SettingsCard = ({ children }: { children: ReactNode }) => (
-    <Card padding="none" className="overflow-hidden">
-        {children}
-    </Card>
+/** A setting whose control is small enough to sit beside its title: a
+ *  switch, a short choice. `wide` drops a wider control under the title on
+ *  a phone, where the two would crowd. */
+const Setting = ({
+    label,
+    help,
+    wide = false,
+    inactive = false,
+    children,
+}: SettingProps & { wide?: boolean; inactive?: boolean }) => (
+    <div
+        className={cn(
+            "flex gap-3 py-4 first:pt-0 last:pb-0",
+            wide
+                ? "flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+                : "items-center justify-between gap-6"
+        )}
+    >
+        <div className={cn("min-w-0", inactive && "opacity-60")}>
+            <Title label={label} help={help} />
+        </div>
+        <div className="shrink-0">{children}</div>
+    </div>
 );
+
+/** A setting edited in a field, which goes under its title. */
+const FieldSetting = ({ label, help, children }: SettingProps) => (
+    <div className="flex flex-col gap-2.5 py-4 first:pt-0 last:pb-0">
+        <Title label={label} help={help} />
+        <div>{children}</div>
+    </div>
+);
+
+/** Settings that belong together, under a heading where the section has
+ *  more than one kind. Rules between groups, not cards around them. */
+const Group = ({
+    title,
+    children,
+}: {
+    title?: string;
+    children: ReactNode;
+}) => (
+    <section className="py-7 first:pt-0 last:pb-0">
+        {title && (
+            <h2 className="mb-4 font-display text-base font-semibold text-content">
+                {title}
+            </h2>
+        )}
+        <div className="divide-y divide-subtle">{children}</div>
+    </section>
+);
+
+/* Older links into what was the Profile section, from before the profile
+   was edited only on the profile. Account is where the way there is. */
+const SECTION_ALIASES: Record<string, string> = { profile: "account" };
+
+const sectionFrom = (asked: string | null) => {
+    const id = (asked && SECTION_ALIASES[asked]) ?? asked;
+    return SECTIONS.some((s) => s.id === id) ? id! : "account";
+};
 
 const SettingsPage = () => {
     usePageMeta({ title: "Settings", noindex: true });
@@ -113,10 +152,9 @@ const SettingsPage = () => {
     const [confirmingDelete, setConfirmingDelete] = useState(false);
     const [params] = useSearchParams();
     // ?section= so a link elsewhere can open the row it is about.
-    const [section, setSection] = useState(() => {
-        const asked = params.get("section");
-        return SECTIONS.some((s) => s.id === asked) ? asked! : "account";
-    });
+    const [section, setSection] = useState(() =>
+        sectionFrom(params.get("section"))
+    );
 
     /* requireAuth verifies signatures locally and never checks revocation, so
        the token outlives the account. Sign out straight away. */
@@ -142,8 +180,6 @@ const SettingsPage = () => {
         onError: () => notify("Couldn't export your data", "error"),
     });
 
-    const [bio, setBio] = useState(user?.bio ?? "");
-    const [firstName, setFirstName] = useState(user?.firstName ?? "");
     const [showSexual, setShowSexual] = useState(
         user?.showSexualContent ?? false
     );
@@ -153,18 +189,20 @@ const SettingsPage = () => {
     );
     const [profileVisibility, setProfileVisibility] =
         useState<ProfileVisibility>(user?.profileVisibility ?? "everyone");
-    const [accent, setAccent] = useState(user?.accent ?? FALLBACK_ACCENT);
-    const updateAvatar = useUpdateAvatar();
-    const removeAvatar = useRemoveAvatar();
+    const [aboutVisibility, setAboutVisibility] = useState<AboutVisibility>(
+        user?.aboutVisibility ?? DEFAULT_ABOUT_VISIBILITY
+    );
+    const [emailPrefs, setEmailPrefs] = useState<EmailPrefs>(
+        user?.emailPrefs ?? resolveEmailPrefs(null)
+    );
 
     useEffect(() => {
-        setBio(user?.bio ?? "");
-        setFirstName(user?.firstName ?? "");
         setShowSexual(user?.showSexualContent ?? false);
         setHideOnline(user?.hideOnline ?? false);
         setHideFromSearch(user?.hideFromSearch ?? false);
         setProfileVisibility(user?.profileVisibility ?? "everyone");
-        setAccent(user?.accent ?? FALLBACK_ACCENT);
+        setAboutVisibility(user?.aboutVisibility ?? DEFAULT_ABOUT_VISIBILITY);
+        setEmailPrefs(user?.emailPrefs ?? resolveEmailPrefs(null));
     }, [user]);
 
     const zone = effectiveTimeZone(user?.timezone);
@@ -182,34 +220,10 @@ const SettingsPage = () => {
         }));
     }, [zone]);
 
-    // Saved on blur. One value with one owner needs no second action.
-    const saveText = (
-        patch: { firstName: string } | { bio: string },
-        unchanged: boolean,
-        message: string
-    ) => {
-        if (unchanged) return;
-        update.mutate(patch, { onError: () => notify(message, "error") });
-    };
-
-    /* Settings has no save button, so the picture goes up the moment it is
-       chosen. The field is handed "unchanged" throughout: what it draws is
-       whatever the server last confirmed, never a pending choice. */
-    const savingAvatar = updateAvatar.isPending || removeAvatar.isPending;
-    const saveAvatar = (choice: AvatarChoice) => {
-        const done = {
-            onSuccess: () => notify("Profile picture updated", "success"),
-            onError: () => notify("Couldn't save your picture", "error"),
-        };
-        if (choice.kind === "picked") updateAvatar.mutate(choice.image, done);
-        else if (choice.kind === "removed")
-            removeAvatar.mutate(undefined, done);
-    };
-
     /* Toggles save immediately and roll back on failure, so the control never
        shows a state the server did not accept. */
     const saveToggle = <T,>(
-        patch: Record<string, T>,
+        patch: UpdateProfileInput,
         next: T,
         setLocal: (value: T) => void,
         previous: T
@@ -223,6 +237,30 @@ const SettingsPage = () => {
         });
     };
 
+    // With every email off, a category reads as off too, though it keeps
+    // its own choice for when they come back on.
+    const silenced = (scope: EmailScope) => scope !== "all" && !emailPrefs.all;
+    const emailToggle = (scope: EmailScope, label: string) => (
+        <Toggle
+            checked={emailPrefs[scope] && !silenced(scope)}
+            onChange={(next) =>
+                saveToggle(
+                    { emailPrefs: { [scope]: next } },
+                    next,
+                    (value) =>
+                        setEmailPrefs((prefs) => ({
+                            ...prefs,
+                            [scope]: value,
+                        })),
+                    emailPrefs[scope]
+                )
+            }
+            label={label}
+            labelPosition="hidden"
+            disabled={update.isPending || silenced(scope)}
+        />
+    );
+
     if (!user) {
         return (
             <EmptyPlate
@@ -232,169 +270,182 @@ const SettingsPage = () => {
         );
     }
 
+    // Opens the Edit profile popup on arrival.
+    const editProfileHref = `${profilePath(user.username)}?edit=profile`;
+
     const panels: Record<string, ReactNode> = {
         account: (
-            <SettingsCard>
-                <Row label="Username">
-                    <UsernameRow current={user.username} />
-                </Row>
-                <Row label="First name">
-                    <Input
-                        value={firstName}
-                        maxLength={40}
-                        placeholder="Optional"
-                        onChange={(e) => setFirstName(e.target.value)}
-                        onBlur={() =>
-                            saveText(
-                                { firstName: firstName.trim() },
-                                firstName.trim() === (user.firstName ?? ""),
-                                "Couldn't save your name"
-                            )
+            <>
+                <Group>
+                    <Setting
+                        wide
+                        label="Profile"
+                        help="Your picture, bio, About details, socials and look."
+                    >
+                        <Link
+                            to={editProfileHref}
+                            className={buttonClass(
+                                "secondary",
+                                "w-full sm:w-auto"
+                            )}
+                        >
+                            <Pencil size={15} aria-hidden />
+                            Edit profile
+                        </Link>
+                    </Setting>
+                    <FieldSetting label="Username">
+                        <UsernameRow current={user.username} />
+                    </FieldSetting>
+                    <FieldSetting
+                        label="Time zone"
+                        help={
+                            zoneIsDetected
+                                ? "Detected from your device."
+                                : undefined
                         }
-                        aria-label="First name"
-                    />
-                </Row>
-                <Row
-                    label="Time zone"
-                    help={
-                        zoneIsDetected
-                            ? "Dates and times render in this. Detected from your device. Choose it to save it to your account."
-                            : "Dates and times render in this."
-                    }
-                >
-                    <Dropdown
-                        searchable
-                        options={zones}
-                        value={zone}
-                        onChange={(next) =>
-                            update.mutate(
-                                { timezone: next },
-                                {
-                                    onError: () =>
-                                        notify(
-                                            "Couldn't save your time zone",
-                                            "error"
-                                        ),
-                                }
-                            )
-                        }
-                        aria-label="Time zone"
-                    />
-                </Row>
-            </SettingsCard>
+                    >
+                        <Dropdown
+                            searchable
+                            options={zones}
+                            value={zone}
+                            onChange={(next) =>
+                                update.mutate(
+                                    { timezone: next },
+                                    {
+                                        onError: () =>
+                                            notify(
+                                                "Couldn't save your time zone",
+                                                "error"
+                                            ),
+                                    }
+                                )
+                            }
+                            aria-label="Time zone"
+                        />
+                    </FieldSetting>
+                </Group>
+                <Group title="Email and password">
+                    <FieldSetting label="Email">
+                        <EmailRow />
+                    </FieldSetting>
+                    <FieldSetting label="Password">
+                        <PasswordRow />
+                    </FieldSetting>
+                </Group>
+            </>
         ),
 
-        profile: (
-            <SettingsCard>
-                <Row label="Bio" help={`${bio.length} of 160 characters`}>
-                    <Textarea
-                        rows={3}
-                        value={bio}
-                        maxLength={160}
-                        placeholder="I love PlayRates."
-                        onChange={(e) => setBio(e.target.value)}
-                        onBlur={() =>
-                            saveText(
-                                { bio },
-                                bio === (user.bio ?? ""),
-                                "Couldn't save your bio"
-                            )
-                        }
-                        aria-label="Bio"
-                    />
-                </Row>
-                <Row label="Profile picture">
-                    <AvatarField
-                        username={user.username}
-                        accent={user.accent}
-                        current={user.avatarUrl}
-                        choice={{ kind: "unchanged" }}
-                        onChange={saveAvatar}
-                        disabled={savingAvatar}
-                    />
-                </Row>
-                <Row label="Profile Colour">
-                    <AccentPicker
-                        label="Profile Colour"
-                        value={accent}
-                        onChange={(next) =>
-                            saveToggle(
-                                { accent: next },
-                                next,
-                                setAccent,
-                                accent
-                            )
-                        }
-                        disabled={update.isPending}
-                    />
-                </Row>
-                <Row
-                    label="Who can see your profile"
-                    help="Your games, reviews, friends and threads. Your name, picture and bio always show."
-                >
-                    <SegmentedChoice
+        privacy: (
+            <>
+                <Group>
+                    <Setting
+                        wide
                         label="Who can see your profile"
-                        segments={[
-                            { value: "everyone", label: "Everyone" },
-                            { value: "friends", label: "Friends" },
-                            { value: "private", label: "Only me" },
-                        ]}
-                        value={profileVisibility}
-                        onChange={(next) =>
-                            saveToggle(
-                                { profileVisibility: next },
-                                next,
-                                setProfileVisibility,
-                                profileVisibility
-                            )
-                        }
-                    />
-                </Row>
-                <Row
-                    label="Hide online status"
-                    help="Your profile reads as offline to everyone."
-                >
-                    <Toggle
-                        checked={hideOnline}
-                        onChange={(next) =>
-                            saveToggle(
-                                { hideOnline: next },
-                                next,
-                                setHideOnline,
-                                hideOnline
-                            )
-                        }
-                        label={hideOnline ? "On" : "Off"}
-                        disabled={update.isPending}
-                    />
-                </Row>
-                <Row
-                    label="Hide from search engines"
-                    help="Asks Google and the like to leave your profile out of their results. It stays public here."
-                >
-                    <Toggle
-                        checked={hideFromSearch}
-                        onChange={(next) =>
-                            saveToggle(
-                                { hideFromSearch: next },
-                                next,
-                                setHideFromSearch,
-                                hideFromSearch
-                            )
-                        }
-                        label={hideFromSearch ? "On" : "Off"}
-                        disabled={update.isPending}
-                    />
-                </Row>
-            </SettingsCard>
+                        help="Your picture and bio always show."
+                    >
+                        <SegmentedChoice
+                            label="Who can see your profile"
+                            segments={[
+                                { value: "everyone", label: "Everyone" },
+                                { value: "friends", label: "Friends" },
+                                { value: "private", label: "Only me" },
+                            ]}
+                            value={profileVisibility}
+                            onChange={(next) =>
+                                saveToggle(
+                                    { profileVisibility: next },
+                                    next,
+                                    setProfileVisibility,
+                                    profileVisibility
+                                )
+                            }
+                        />
+                    </Setting>
+                    <Setting label="Hide online status">
+                        <Toggle
+                            checked={hideOnline}
+                            onChange={(next) =>
+                                saveToggle(
+                                    { hideOnline: next },
+                                    next,
+                                    setHideOnline,
+                                    hideOnline
+                                )
+                            }
+                            label="Hide online status"
+                            labelPosition="hidden"
+                            disabled={update.isPending}
+                        />
+                    </Setting>
+                    <Setting
+                        label="Hide from search engines"
+                        help="You stay visible on PlayRates."
+                    >
+                        <Toggle
+                            checked={hideFromSearch}
+                            onChange={(next) =>
+                                saveToggle(
+                                    { hideFromSearch: next },
+                                    next,
+                                    setHideFromSearch,
+                                    hideFromSearch
+                                )
+                            }
+                            label="Hide from search engines"
+                            labelPosition="hidden"
+                            disabled={update.isPending}
+                        />
+                    </Setting>
+                </Group>
+                <Group title="About details">
+                    <div>
+                        <AboutPrivacy
+                            about={user.about}
+                            visibility={aboutVisibility}
+                            onChange={(next) =>
+                                saveToggle<AboutVisibility>(
+                                    { aboutVisibility: next },
+                                    next,
+                                    setAboutVisibility,
+                                    aboutVisibility
+                                )
+                            }
+                            disabled={update.isPending}
+                            editHref={editProfileHref}
+                        />
+                    </div>
+                </Group>
+            </>
+        ),
+
+        emails: (
+            <>
+                <Group>
+                    <Setting
+                        label="Emails from PlayRates"
+                        help="Account emails always send: confirming your email, password resets and security notices."
+                    >
+                        {emailToggle("all", "Emails from PlayRates")}
+                    </Setting>
+                </Group>
+                <Group>
+                    {EMAIL_CATEGORIES.map((category) => (
+                        <Setting
+                            key={category.key}
+                            label={category.label}
+                            help={category.description}
+                            inactive={!emailPrefs.all}
+                        >
+                            {emailToggle(category.key, category.label)}
+                        </Setting>
+                    ))}
+                </Group>
+            </>
         ),
 
         content: (
-            <SettingsCard>
-                <Row
-                    label="Sexual content"
-                    help="Games tagged as sexually explicit stay out of the library, search and every rail."
-                >
+            <Group>
+                <Setting label="Show sexually explicit games">
                     <Toggle
                         checked={showSexual}
                         onChange={(next) =>
@@ -405,11 +456,12 @@ const SettingsPage = () => {
                                 showSexual
                             )
                         }
-                        label={showSexual ? "On" : "Off"}
+                        label="Show sexually explicit games"
+                        labelPosition="hidden"
                         disabled={update.isPending}
                     />
-                </Row>
-                <Row label="Theme">
+                </Setting>
+                <Setting wide label="Theme">
                     <SegmentedChoice
                         label="Theme"
                         segments={[
@@ -424,8 +476,8 @@ const SettingsPage = () => {
                         value={preference}
                         onChange={setPreference}
                     />
-                </Row>
-            </SettingsCard>
+                </Setting>
+            </Group>
         ),
 
         "account-closure": (
@@ -473,7 +525,11 @@ const SettingsPage = () => {
                     active={section}
                     onSelect={setSection}
                 />
-                {panels[section]}
+                {/* One width for every section, so switching between them
+                    doesn't move the edge things line up to. */}
+                <div className="max-w-2xl min-w-0 divide-y divide-subtle">
+                    {panels[section]}
+                </div>
             </div>
 
             {confirmingDelete && (

@@ -15,6 +15,18 @@ export interface AccountData {
   communityVotes: unknown[];
   activeDays: unknown[];
   reportsFiled: unknown[];
+  favouriteGames: unknown[];
+  wishlistOrder: unknown[];
+  gameLists: unknown[];
+  gameListItems: unknown[];
+  gameListVotes: unknown[];
+  gaming25: unknown[];
+  gaming25Picks: unknown[];
+  gaming25Loves: unknown[];
+  xpEvents: unknown[];
+  tokenEvents: unknown[];
+  badges: unknown[];
+  items: unknown[];
 }
 
 export interface AccountExportRepository {
@@ -73,6 +85,17 @@ export const createAccountExportRepository = (
         communityVotes,
         activeDays,
         reportsFiled,
+        favouriteGames,
+        wishlistOrder,
+        gameLists,
+        gameListVotes,
+        gaming25,
+        gaming25Picks,
+        gaming25Loves,
+        xpEvents,
+        tokenEvents,
+        badges,
+        items,
       ] = await Promise.all([
         everything("profiles", "id", own("id")),
         everything("game_logs", "id", own("user_id")),
@@ -87,7 +110,26 @@ export const createAccountExportRepository = (
         everything("community_message_votes", "message_id", own("user_id")),
         everything("user_active_days", "day", own("user_id")),
         everything("content_reports", "id", own("reporter_id")),
+        everything("favourite_games", "position", own("user_id")),
+        everything("wishlist_ranks", "position", own("user_id")),
+        everything("game_lists", "id", own("user_id")),
+        everything("game_list_votes", "list_id", own("user_id")),
+        everything("gaming_25s", "user_id", own("user_id")),
+        everything("gaming_25_picks", "category", own("user_id")),
+        everything("gaming_25_loves", "owner_id", own("user_id")),
+        everything("xp_events", "id", own("user_id")),
+        everything("token_events", "id", own("user_id")),
+        everything("user_badges", "unlocked_at", own("user_id")),
+        everything("user_items", "item", own("user_id")),
       ]);
+      // A list's games carry no owner of their own; they're found by list.
+      const listIds = (gameLists as { id: number }[]).map((l) => l.id);
+      const gameListItems =
+        listIds.length > 0
+          ? await everything("game_list_items", "list_id", (q) =>
+              q.or(`list_id.in.(${listIds.join(",")})`),
+            )
+          : [];
 
       return {
         profile: (profiles[0] as Record<string, unknown> | undefined) ?? null,
@@ -101,6 +143,18 @@ export const createAccountExportRepository = (
         communityVotes,
         activeDays,
         reportsFiled,
+        favouriteGames,
+        wishlistOrder,
+        gameLists,
+        gameListItems,
+        gameListVotes,
+        gaming25,
+        gaming25Picks,
+        gaming25Loves,
+        xpEvents,
+        tokenEvents,
+        badges,
+        items,
       };
     },
   };

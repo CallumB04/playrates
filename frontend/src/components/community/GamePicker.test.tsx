@@ -106,4 +106,37 @@ describe("GamePicker", () => {
             expect(screen.getByRole("combobox")).toBeInTheDocument()
         );
     });
+
+    /* Adding to a list: the games you've logged are the likeliest picks, so
+       they come first, and say so. */
+    it("puts the games it marks first, with their mark", async () => {
+        server.use(
+            http.get(`${API}/games/search`, () =>
+                HttpResponse.json(
+                    paginated([
+                        buildGame({ id: 1, title: "Portal" }),
+                        buildGame({ id: 2, title: "Portal 2" }),
+                        buildGame({ id: 3, title: "Portal Knights" }),
+                    ])
+                )
+            )
+        );
+        renderWithProviders(
+            <GamePicker
+                aria-label="Game"
+                value={null}
+                onChange={vi.fn()}
+                markFor={(id) => (id === 3 ? <span>Played</span> : null)}
+            />
+        );
+
+        await userEvent.type(screen.getByRole("combobox"), "portal");
+
+        const options = await screen.findAllByRole("option");
+        expect(options.map((o) => o.textContent)).toEqual([
+            expect.stringContaining("Portal KnightsPlayed"),
+            expect.stringContaining("Portal"),
+            expect.stringContaining("Portal 2"),
+        ]);
+    });
 });

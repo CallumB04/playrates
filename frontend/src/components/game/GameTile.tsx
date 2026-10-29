@@ -84,7 +84,7 @@ interface GameTileProps {
 
 const ACTION_TONE = {
     primary:
-        "bg-action text-action-ink border-action-edge hover:bg-action-hover active:bg-action-active [&_svg]:text-action-mark",
+        "bg-action text-action-ink border-action-edge hover:bg-action-hover active:bg-action-active",
     /* No rule: an outline over box art read as a sticker. The scrim alone
        parts it from the art. */
     secondary:
@@ -406,11 +406,13 @@ const GameTile = ({
             {(platformSlugs || rating !== undefined || footValue) && (
                 <div className="mt-2 flex items-center gap-1">
                     {/* Three, not four: the figure beside them is the
-                        reason the tile is in this rail, so it gets the room. */}
+                        reason the tile is in this rail, so it gets the room.
+                        Two in a narrow grid, where three and a "+n" ran
+                        into the year. */}
                     <PlatformMarks
                         slugs={platformSlugs ?? []}
                         platforms={platforms ?? []}
-                        max={3}
+                        max={narrowFoot ? 2 : 3}
                         className={cn(
                             "text-content-muted",
                             narrowFoot

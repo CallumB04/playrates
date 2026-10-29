@@ -150,7 +150,10 @@ const Header = () => {
                         ) : (
                             <div className="flex items-center gap-3">
                                 {/* On a phone too: someone coming back looks
-                                    for it top right, not inside the menu. */}
+                                    for it top right, not inside the menu.
+                                    Only this one there, so the bar stays
+                                    simple; the form it opens leads to
+                                    sign-up too. */}
                                 <Button
                                     variant="ghost"
                                     size="sm"

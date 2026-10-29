@@ -1,3 +1,4 @@
+import { likeTerm } from "../../lib/likeTerm.js";
 import type {
   GameLogSort,
   PlayedStatusFilter,
@@ -70,6 +71,10 @@ export interface ShelfQuery {
   playedStatus?: PlayedStatusFilter;
   sort: GameLogSort;
   direction: SortDirection;
+  /** Narrows to games whose title has this in it. */
+  q?: string;
+  /** Narrows to games with a log on the shelf's status for this console. */
+  system?: string;
 }
 
 export interface GameLogsRepository {
@@ -87,6 +92,12 @@ export interface GameLogsRepository {
     from: number,
     to: number,
   ): Promise<{ gameIds: number[]; total: number }>;
+  /** Their wishlisted games' ids, in the order they put them. */
+  wishlistGameIds(userId: string): Promise<number[]>;
+  /** Rewrites their wishlist order, in one statement. */
+  setWishlistOrder(userId: string, gameIds: number[]): Promise<void>;
+  /** The consoles on one of their shelves, each once. */
+  shelfConsoles(userId: string, status: string): Promise<string[]>;
   /** The user's log, or null if it is not theirs. */
   findOwn(userId: string, logId: number): Promise<GameLogRowWithGame | null>;
   /** Oldest first, so the consoles keep the order they were logged in. */
@@ -161,11 +172,49 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
   },
 
   async shelfByUser(userId, query, from, to) {
+    /* The rollups carry no title, so a search finds its games through the
+       logs first, as the community list does through its messages. */
+    let matched: number[] | undefined;
+    if (query.q) {
+      const { data, error } = await db
+        .from("game_logs")
+        .select("game_id, games!inner(title)")
+        .eq("user_id", userId)
+        .ilike("games.title", likeTerm(query.q));
+      if (error) throw error;
+      matched = [
+        ...new Set(
+          ((data ?? []) as { game_id: number }[]).map((r) => r.game_id),
+        ),
+      ];
+      if (matched.length === 0) return { gameIds: [], total: 0 };
+    }
+
+    // A console is one log's, so it is found through the logs too, and only
+    // the ones on this shelf: a game played on one console and wished for
+    // on another is on the wishlist for the second alone.
+    if (query.system) {
+      let logs = db
+        .from("game_logs")
+        .select("game_id")
+        .eq("user_id", userId)
+        .eq("system_slug", query.system);
+      if (query.status) logs = logs.eq("status", query.status);
+      const { data, error } = await logs;
+      if (error) throw error;
+      const onConsole = new Set(
+        ((data ?? []) as { game_id: number }[]).map((r) => r.game_id),
+      );
+      matched = (matched ?? [...onConsole]).filter((id) => onConsole.has(id));
+      if (matched.length === 0) return { gameIds: [], total: 0 };
+    }
+
     let builder = db
       .from("game_log_rollups")
       .select("game_id", { count: "exact" })
       .eq("user_id", userId);
 
+    if (matched) builder = builder.in("game_id", matched);
     if (query.status) builder = builder.contains("statuses", [query.status]);
     if (query.playedStatus) {
       builder = builder.contains("played_endings", [query.playedStatus]);
@@ -183,6 +232,40 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
       gameIds: ((data ?? []) as { game_id: number }[]).map((r) => r.game_id),
       total: count ?? 0,
     };
+  },
+
+  async wishlistGameIds(userId) {
+    const { data, error } = await db
+      .from("wishlist_ranks")
+      .select("game_id")
+      .eq("user_id", userId)
+      .order("position")
+      .order("created_at");
+    if (error) throw error;
+    return ((data ?? []) as { game_id: number }[]).map((r) => r.game_id);
+  },
+
+  async setWishlistOrder(userId, gameIds) {
+    const { error } = await db.rpc("set_wishlist_order", {
+      p_user_id: userId,
+      p_game_ids: gameIds,
+    });
+    if (error) throw error;
+  },
+
+  async shelfConsoles(userId, status) {
+    const { data, error } = await db
+      .from("game_logs")
+      .select("system_slug")
+      .eq("user_id", userId)
+      .eq("status", status)
+      .not("system_slug", "is", null);
+    if (error) throw error;
+    return [
+      ...new Set(
+        ((data ?? []) as { system_slug: string }[]).map((r) => r.system_slug),
+      ),
+    ].sort();
   },
 
   async findOwn(userId, logId) {

@@ -17,6 +17,13 @@ export const NOTIFICATION_KINDS = [
   "community_thread_activity",
   "community_upvote_milestone",
   "review_upvote_milestone",
+  "list_upvote_milestone",
+  "gaming_25_love_milestone",
+  "referral_joined",
+  "referral_active",
+  "gift_received",
+  "streak_at_risk",
+  "task_nearly_done",
   "announcement",
 ] as const;
 
@@ -101,6 +108,74 @@ export interface ReviewUpvoteMilestoneNotification extends NotificationBase {
   milestone: number;
 }
 
+/** A list of yours reached an upvote milestone. */
+export interface ListUpvoteMilestoneNotification extends NotificationBase {
+  kind: "list_upvote_milestone";
+  listId: number;
+  listName: string;
+  /** The list's page lives under its owner, who is the one told. */
+  username: string;
+  milestone: number;
+}
+
+/** Your Gaming 25 reached a love milestone. It lives under your own
+ *  profile, so nothing else is needed to link to it. */
+export interface Gaming25LoveMilestoneNotification extends NotificationBase {
+  kind: "gaming_25_love_milestone";
+  username: string;
+  milestone: number;
+}
+
+/** Someone you invited signed up and said so. */
+export interface ReferralJoinedNotification extends NotificationBase {
+  kind: "referral_joined";
+  username: string;
+}
+
+/** Someone you invited played enough games to count, and paid you for it. */
+export interface ReferralActiveNotification extends NotificationBase {
+  kind: "referral_active";
+  /** Who it was, while they still have an account. */
+  actor: FriendUser | null;
+  username: string;
+  xp: number;
+  tokens: number;
+}
+
+/** Nothing done yet this week, late in the week, with a streak to lose. */
+export interface StreakAtRiskNotification extends NotificationBase {
+  kind: "streak_at_risk";
+  weeks: number;
+  /** A shield would keep the streak if the week stays empty. */
+  shield: boolean;
+  /** When the week ends, in the member's own time zone. */
+  endsAt: string;
+}
+
+/** A task most of the way done, with its period about to end. */
+export interface TaskNearlyDoneNotification extends NotificationBase {
+  kind: "task_nearly_done";
+  period: "week" | "month";
+  /** The quest's key. */
+  quest: string;
+  label: string;
+  count: number;
+  target: number;
+  xp: number;
+  tokens: number;
+  endsAt: string;
+}
+
+/** A friend bought you something from the shop. */
+export interface GiftReceivedNotification extends NotificationBase {
+  kind: "gift_received";
+  /** Who sent it, while they still have an account. */
+  actor: FriendUser | null;
+  username: string;
+  /** The shop item's key. */
+  item: string;
+}
+
 /** A message from PlayRates to everyone, sent from the admin dashboard. */
 export interface AnnouncementNotification extends NotificationBase {
   kind: "announcement";
@@ -128,6 +203,13 @@ export type AppNotification =
   | CommunityThreadActivityNotification
   | CommunityUpvoteMilestoneNotification
   | ReviewUpvoteMilestoneNotification
+  | ListUpvoteMilestoneNotification
+  | Gaming25LoveMilestoneNotification
+  | ReferralJoinedNotification
+  | ReferralActiveNotification
+  | GiftReceivedNotification
+  | StreakAtRiskNotification
+  | TaskNearlyDoneNotification
   | AnnouncementNotification
   | UnknownNotification;
 

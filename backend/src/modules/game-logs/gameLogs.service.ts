@@ -8,6 +8,8 @@ import type {
   Paginated,
   Pagination,
   ShelfEntry,
+  WishlistEntry,
+  WishlistPage,
   UserStats,
 } from "@playrates/shared";
 import {
@@ -101,9 +103,16 @@ export const createGameLogsService = (
   ): Promise<Paginated<ShelfEntry>> => {
     const { from, to } = toRange(pagination);
     const { gameIds, total } = await repo.shelfByUser(userId, query, from, to);
-    const rows = await repo.listByUserAndGames(userId, gameIds);
+    return paginate(await entriesFor(userId, gameIds), pagination, total);
+  };
 
-    const entries = gameIds.flatMap((gameId): ShelfEntry[] => {
+  /** One entry a game, all its logs gathered, in the order of the ids. */
+  const entriesFor = async (
+    userId: string,
+    gameIds: number[],
+  ): Promise<ShelfEntry[]> => {
+    const rows = await repo.listByUserAndGames(userId, gameIds);
+    return gameIds.flatMap((gameId): ShelfEntry[] => {
       const mine = rows.filter((r) => r.game_id === gameId);
       const first = mine[0];
       const logs = mine.map(toGameLog);
@@ -111,7 +120,6 @@ export const createGameLogsService = (
       if (!first || !rollup) return [];
       return [{ gameId, game: toGameLogWithGame(first).game, logs, rollup }];
     });
-    return paginate(entries, pagination, total);
   };
 
   /** The one log a game-addressed write means, or a 409 when it can't say. */
@@ -129,6 +137,74 @@ export const createGameLogsService = (
   };
 
   return {
+    /**
+     * Someone's wishlist, whole and in their order: one entry a game, with
+     * the consoles it is wished for. A filter keeps each game's own rank,
+     * so #4 is #4 whether or not #3 is showing.
+     */
+    async wishlistForUsername(
+      username: string,
+      viewerId: string | undefined,
+      { system, limit }: { system?: string; limit?: number },
+    ): Promise<WishlistPage> {
+      const userId = await visibleProfileId(username, viewerId);
+      const ids = await repo.wishlistGameIds(userId);
+      const entries: WishlistEntry[] = (await entriesFor(userId, ids)).map(
+        (entry, i) => ({
+          ...entry,
+          rank: i + 1,
+          consoles: [
+            ...new Set(
+              entry.logs
+                .filter((log) => log.status === "wishlist")
+                .map((log) => log.system),
+            ),
+          ],
+        }),
+      );
+      const consoles = [
+        ...new Set(
+          entries.flatMap((e) => e.consoles).filter((c): c is string => !!c),
+        ),
+      ].sort();
+      const shown = system
+        ? entries.filter((e) => e.consoles.includes(system))
+        : entries;
+      return {
+        data: limit ? shown.slice(0, limit) : shown,
+        total: ids.length,
+        consoles,
+      };
+    },
+
+    /** Their whole wishlist, reordered. Every game on it and no other, so a
+     *  tab left open since a game was added cannot drop it. */
+    async setWishlistOrder(userId: string, gameIds: number[]): Promise<void> {
+      const current = await repo.wishlistGameIds(userId);
+      const wanted = new Set(gameIds);
+      if (
+        current.length !== gameIds.length ||
+        current.some((id) => !wanted.has(id))
+      ) {
+        throw AppError.validation(
+          "Your wishlist has changed since this page loaded. Refresh and try again.",
+        );
+      }
+      await repo.setWishlistOrder(userId, gameIds);
+    },
+
+    /** The consoles on one of someone's shelves, to filter it by. */
+    async shelfConsolesForUsername(
+      username: string,
+      status: string,
+      viewerId: string | undefined,
+    ): Promise<string[]> {
+      return repo.shelfConsoles(
+        await visibleProfileId(username, viewerId),
+        status,
+      );
+    },
+
     /* One row per log: the shelf before logs were per console. */
     async listForUsername(
       username: string,

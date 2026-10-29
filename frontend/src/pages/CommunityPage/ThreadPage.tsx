@@ -63,7 +63,7 @@ const ThreadPage = () => {
     const navigate = useNavigate();
     const notify = useNotify();
     const { user } = useAuth();
-    const { openLogin } = useAccountForm();
+    const { openSignup } = useAccountForm();
     const mutations = useCommunityMutations();
 
     const { data, isLoading, isError } = useThread(id);
@@ -125,12 +125,17 @@ const ThreadPage = () => {
         ) : undefined;
 
     const actions: MessageActions = {
-        onVote: (message) =>
-            user ? mutations.vote.mutateAsync(message.id) : openLogin(),
+        onVote: (message, reaction) =>
+            user
+                ? mutations.vote.mutateAsync({
+                      messageId: message.id,
+                      reaction,
+                  })
+                : openSignup(),
         onReply: isPatchNotes
             ? undefined
             : (message) => {
-                  if (!user) return openLogin();
+                  if (!user) return openSignup();
                   const parentId = replyParentId(message);
                   if (parentId === null) {
                       setReplyTo(null);
@@ -340,13 +345,13 @@ const ThreadPage = () => {
                         ) : (
                             <div className="flex flex-col items-center gap-3 py-2 text-center sm:flex-row sm:justify-between sm:text-left">
                                 <p className="text-body-sm text-content-secondary">
-                                    Log in to join the conversation.
+                                    Join PlayRates to take part.
                                 </p>
                                 <Button
-                                    onClick={openLogin}
+                                    onClick={openSignup}
                                     className="w-full sm:w-auto"
                                 >
-                                    Log in to reply
+                                    Join to reply
                                 </Button>
                             </div>
                         )}
@@ -438,7 +443,7 @@ const ThreadHeader = ({ detail }: { detail: ThreadDetail }) => {
 
 /**
  * The official thread. Entries newest first, since the latest release is
- * what anyone opening it came for. Nobody replies; everyone can upvote.
+ * what anyone opening it came for. Nobody replies; everyone can react.
  */
 const PatchNotesThread = ({
     detail,
@@ -471,7 +476,7 @@ const PatchNotesThread = ({
                         </h1>
                         <p className="mt-2 text-body-sm text-content-secondary">
                             Every release, written up by the PlayRates team.
-                            Upvote the changes you’re glad of.
+                            React to the changes you’re glad of.
                         </p>
                     </div>
                 </div>

@@ -1,8 +1,8 @@
 /** The product name and its one line, in one place so the two cannot drift. */
 export const BRAND_NAME = "PlayRates";
 export const BRAND_MOTTO = "A single home for all your games";
-export const DISCORD_INVITE_URL = "https://discord.gg/YKgDe6YFz8";
-export const TIKTOK_URL = "https://www.tiktok.com/@playratesapp";
+// Shared, so the emails the API sends link to the same places.
+export { DISCORD_INVITE_URL, TIKTOK_URL } from "@playrates/shared";
 
 export interface PitchPart {
     text: string;

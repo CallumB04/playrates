@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import {
     ThreadTitleSchema,
     isEmptyDoc,
@@ -12,6 +11,7 @@ import { useNotify } from "../../contexts/NotificationContext";
 import { useCommunityMutations } from "../../hooks/queries/useCommunity";
 import { useGame } from "../../hooks/queries/useGames";
 import { usePageMeta } from "../../hooks/usePageMeta";
+import PageHeader from "../../components/ui/PageHeader";
 import Button, { buttonClass } from "../../components/ui/Button";
 import { cardClass } from "../../components/ui/Card";
 import EmptyPlate from "../../components/ui/EmptyPlate";
@@ -43,7 +43,7 @@ const NewThreadPage = () => {
     const navigate = useNavigate();
     const notify = useNotify();
     const { user, isLoading: authLoading } = useAuth();
-    const { openLogin } = useAccountForm();
+    const { openSignup } = useAccountForm();
     const { createThread } = useCommunityMutations();
 
     const [params] = useSearchParams();
@@ -103,9 +103,9 @@ const NewThreadPage = () => {
     if (!user) {
         return (
             <EmptyPlate
-                title="Log in to start a thread"
+                title="Join to start a thread"
                 body="Threads are signed by whoever starts them."
-                action={<Button onClick={openLogin}>Log in</Button>}
+                action={<Button onClick={openSignup}>Join PlayRates</Button>}
             />
         );
     }
@@ -150,31 +150,27 @@ const NewThreadPage = () => {
 
     return (
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
-            <Link
-                to={backTo}
-                className="inline-flex min-h-11 w-max items-center gap-1.5 text-label text-content-muted hover:text-content sm:min-h-0"
-            >
-                <ArrowLeft size={14} aria-hidden />
-                {presetId ? "Back to the game" : "Community"}
-            </Link>
-
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <h1 className="font-display text-title text-content">
-                    Start a thread
-                </h1>
-                {restored && (
-                    <p className="text-label text-content-muted">
-                        Picked up where you left off.{" "}
-                        <button
-                            type="button"
-                            onClick={startOver}
-                            className="relative cursor-pointer text-brand before:absolute before:-inset-3 before:content-[''] hover:underline sm:before:hidden"
-                        >
-                            Start over
-                        </button>
-                    </p>
-                )}
-            </div>
+            <PageHeader
+                title="Start a thread"
+                back={{
+                    to: backTo,
+                    label: presetId ? "Back to the game" : "Community",
+                }}
+                actions={
+                    restored && (
+                        <p className="text-label text-content-muted">
+                            Picked up where you left off.{" "}
+                            <button
+                                type="button"
+                                onClick={startOver}
+                                className="relative cursor-pointer text-brand before:absolute before:-inset-3 before:content-[''] hover:underline sm:before:hidden"
+                            >
+                                Start over
+                            </button>
+                        </p>
+                    )
+                }
+            />
 
             <HouseRules />
 

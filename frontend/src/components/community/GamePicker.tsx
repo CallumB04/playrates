@@ -1,4 +1,10 @@
-import { useId, useRef, useState, type KeyboardEvent } from "react";
+import {
+    useId,
+    useRef,
+    useState,
+    type KeyboardEvent,
+    type ReactNode,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, X } from "lucide-react";
 import { queryKeys, searchGames } from "../../api";
@@ -24,16 +30,37 @@ interface GamePickerProps {
     id?: string;
     "aria-describedby"?: string;
     "aria-invalid"?: true;
+    /** What the empty box says it's for. */
+    placeholder?: string;
+    /** Something to say on a game's row: where you've logged it, say. The
+     *  games it says something about rise to the top. */
+    markFor?: (gameId: number) => ReactNode;
+    autoFocus?: boolean;
+    /** Results in the flow rather than over what's below, for a popup that
+     *  would otherwise have to keep empty room for them. */
+    inlineResults?: boolean;
 }
 
 const RESULTS = 6;
+/* With marks to rise, a wider search to rise from: a game you've logged
+   can sit a way down a search for a common word. */
+const MARKED_SEARCH = 24;
+const MARKED_RESULTS = 8;
 
 /**
  * Choose the game a thread is about. Once chosen it shows as the game, not a
  * field, with a way to change it — the common arrival is from a game's own
  * page with the choice already made.
  */
-const GamePicker = ({ value, onChange, ...a11y }: GamePickerProps) => {
+const GamePicker = ({
+    value,
+    onChange,
+    placeholder = "Search for a game",
+    markFor,
+    autoFocus,
+    inlineResults = false,
+    ...a11y
+}: GamePickerProps) => {
     const listId = useId();
     const [term, setTerm] = useState("");
     const [open, setOpen] = useState(false);
@@ -44,13 +71,20 @@ const GamePicker = ({ value, onChange, ...a11y }: GamePickerProps) => {
     const debounced = useDebouncedValue(term.trim(), 250);
     const hasTerm = debounced.length >= 2;
 
+    const fetched = markFor ? MARKED_SEARCH : RESULTS;
     const { data, isFetching } = useQuery({
-        queryKey: queryKeys.games.pick(debounced),
-        queryFn: () => searchGames(debounced, RESULTS),
+        queryKey: queryKeys.games.pick(debounced, fetched),
+        queryFn: () => searchGames(debounced, fetched),
         enabled: hasTerm && !value,
         staleTime: 30_000,
     });
-    const results = hasTerm ? (data?.data ?? []).slice(0, RESULTS) : [];
+    const found = hasTerm ? (data?.data ?? []) : [];
+    const results = markFor
+        ? [
+              ...found.filter((game) => markFor(game.id)),
+              ...found.filter((game) => !markFor(game.id)),
+          ].slice(0, MARKED_RESULTS)
+        : found.slice(0, RESULTS);
 
     useDismiss([wrapRef], () => setOpen(false), { enabled: open });
 
@@ -116,41 +150,51 @@ const GamePicker = ({ value, onChange, ...a11y }: GamePickerProps) => {
 
     return (
         <div ref={wrapRef} className="relative">
-            <Search
-                size={15}
-                aria-hidden
-                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-content-muted"
-            />
-            <SearchInput
-                ref={inputRef}
-                {...a11y}
-                role="combobox"
-                aria-expanded={showList}
-                aria-controls={listId}
-                aria-autocomplete="list"
-                aria-activedescendant={
-                    showList && results[active]
-                        ? `${listId}-${results[active].id}`
-                        : undefined
-                }
-                autoComplete="off"
-                placeholder="Search for a game"
-                value={term}
-                onChange={(event) => {
-                    setTerm(event.target.value);
-                    setActive(0);
-                    setOpen(true);
-                }}
-                onFocus={() => setOpen(true)}
-                onKeyDown={onKeyDown}
-            />
+            {/* The field in a box of its own, so the icon centres on it and
+                not on the results when they open below in the flow. */}
+            <div className="relative">
+                <Search
+                    size={15}
+                    aria-hidden
+                    className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-content-muted"
+                />
+                <SearchInput
+                    ref={inputRef}
+                    {...a11y}
+                    autoFocus={autoFocus}
+                    role="combobox"
+                    aria-expanded={showList}
+                    aria-controls={listId}
+                    aria-autocomplete="list"
+                    aria-activedescendant={
+                        showList && results[active]
+                            ? `${listId}-${results[active].id}`
+                            : undefined
+                    }
+                    autoComplete="off"
+                    placeholder={placeholder}
+                    value={term}
+                    onChange={(event) => {
+                        setTerm(event.target.value);
+                        setActive(0);
+                        setOpen(true);
+                    }}
+                    onFocus={() => setOpen(true)}
+                    onKeyDown={onKeyDown}
+                />
+            </div>
 
             {showList && (
                 <ul
                     id={listId}
                     role="listbox"
                     aria-label="Games"
-                    className="absolute inset-x-0 top-full z-20 mt-1.5 max-h-80 overflow-y-auto rounded-md border border-subtle bg-surface-overlay p-1 shadow-lifted"
+                    className={cn(
+                        "mt-1.5 max-h-80 overflow-y-auto rounded-md border border-subtle bg-surface-overlay p-1",
+                        inlineResults
+                            ? "max-h-[45dvh]"
+                            : "absolute inset-x-0 top-full z-20 shadow-lifted"
+                    )}
                 >
                     {results.length === 0 ? (
                         <li className="flex items-center gap-2 px-3 py-3 text-body-sm text-content-muted">
@@ -186,6 +230,7 @@ const GamePicker = ({ value, onChange, ...a11y }: GamePickerProps) => {
                                 <span className="min-w-0 flex-1 truncate">
                                     {game.title}
                                 </span>
+                                {markFor?.(game.id)}
                                 <span className="shrink-0 font-mono text-label-sm text-content-muted">
                                     {releaseYear(game.releaseDate)}
                                 </span>

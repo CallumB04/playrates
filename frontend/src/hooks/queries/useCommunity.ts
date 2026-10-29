@@ -8,6 +8,7 @@ import type {
     CreateMessageInput,
     CreateThreadInput,
     RichTextDoc,
+    ReactionKey,
 } from "@playrates/shared";
 import {
     createThread,
@@ -20,7 +21,6 @@ import {
     fetchThread,
     fetchThreads,
     fetchTrendingThreads,
-    fetchUserThreads,
     postMessage,
     queryKeys,
     toggleMessageVote,
@@ -72,17 +72,6 @@ export const useThread = (threadId: number | undefined) =>
 
 /** Most recently posted in first, which the full list cannot do: it sorts
  *  by the threads' own activity. */
-export const useUserThreads = (
-    username: string | undefined,
-    limit: number,
-    enabled = true
-) =>
-    useQuery({
-        queryKey: queryKeys.community.byUsername(username ?? "", limit),
-        queryFn: () => fetchUserThreads(username!, limit),
-        enabled: enabled && !!username,
-    });
-
 /** Refetch rather than patch, as reviews do: one message moves a thread's
  *  tallies, its place in the list, trending and a profile at once. */
 export const useCommunityMutations = () => {
@@ -128,7 +117,13 @@ export const useCommunityMutations = () => {
             onSuccess: invalidate,
         }),
         vote: useMutation({
-            mutationFn: (messageId: number) => toggleMessageVote(messageId),
+            mutationFn: ({
+                messageId,
+                reaction,
+            }: {
+                messageId: number;
+                reaction?: ReactionKey;
+            }) => toggleMessageVote(messageId, reaction),
             onSuccess: invalidate,
         }),
     };

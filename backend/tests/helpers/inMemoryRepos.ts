@@ -1,4 +1,5 @@
 import type { ExternalGame } from "../../src/providers/games/GamesProvider.js";
+import { createMemoryReactionRepo } from "./inMemoryReactions.js";
 import { matchTier } from "../../src/lib/gameMatch.js";
 
 /** The rules public.search_games and the library's filter both apply. */
@@ -42,6 +43,35 @@ import { orderPair } from "../../src/modules/friends/friends.repository.js";
 import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.repository.js";
 import type { NotificationRowWithActor } from "../../src/modules/notifications/notifications.repository.js";
 import { createInMemoryCommunity } from "./inMemoryCommunity.js";
+import { createInMemoryEmailRepo } from "./inMemoryEmail.js";
+import type { EmailLogRow } from "../../src/types/database.types.js";
+
+/** One row of email_sends. */
+export interface EmailSendRecord {
+  id: number;
+  kind: string;
+  status: "sent" | "capped" | "failed";
+  recipients: number;
+  transactional: boolean;
+  error: string | null;
+  sent_at: string;
+}
+import {
+  createInMemoryProgress,
+  type TokenEventState,
+  type XpEventState,
+} from "./inMemoryProgress.js";
+import {
+  createInMemoryGaming25,
+  type Gaming25Love,
+  type Gaming25PickState,
+  type Gaming25Row,
+} from "./inMemoryGaming25.js";
+import {
+  createInMemoryLists,
+  type ListItem,
+  type ListRow,
+} from "./inMemoryLists.js";
 import {
   createInMemoryAdmin,
   createInMemoryGameEvents,
@@ -84,6 +114,14 @@ export interface SeedData {
   igdbUsage?: IgdbUsageDayRow[];
   serverErrors?: ServerErrorRow[];
   contentReports?: ContentReportRow[];
+  favouriteGames?: { user_id: string; game_id: number; position: number }[];
+  wishlistRanks?: { user_id: string; game_id: number; position: number }[];
+  gameLists?: ListRow[];
+  gameListItems?: ListItem[];
+  gameListVotes?: { list_id: number; user_id: string }[];
+  gaming25s?: Gaming25Row[];
+  gaming25Picks?: Gaming25PickState[];
+  gaming25Loves?: Gaming25Love[];
 }
 
 export interface InMemoryState {
@@ -93,7 +131,7 @@ export interface InMemoryState {
   gameSystems: { game_id: number; system_slug: string }[];
   gameLogs: GameLogRow[];
   reviews: ReviewRow[];
-  reviewVotes: { review_id: number; user_id: string }[];
+  reviewVotes: { review_id: number; user_id: string; reaction?: string }[];
   friendships: FriendshipRow[];
   notifications: NotificationRow[];
   platforms: PlatformRow[];
@@ -103,7 +141,11 @@ export interface InMemoryState {
   avatars: Map<string, Buffer>;
   communityThreads: CommunityThreadRow[];
   communityMessages: CommunityMessageRow[];
-  communityVotes: { message_id: number; user_id: string }[];
+  communityVotes: {
+    message_id: number;
+    user_id: string;
+    reaction?: string;
+  }[];
   /** Pictures uploaded to messages, by URL. */
   communityImages: Map<string, { bytes: Buffer; createdAt: string }>;
   /** Written by triggers in Postgres; seeded directly here. */
@@ -113,9 +155,69 @@ export interface InMemoryState {
   serverErrors: ServerErrorRow[];
   announcements: AnnouncementRow[];
   contentReports: ContentReportRow[];
+  favouriteGames: { user_id: string; game_id: number; position: number }[];
+  wishlistRanks: { user_id: string; game_id: number; position: number }[];
+  gameLists: ListRow[];
+  gameListItems: ListItem[];
+  gameListVotes: { list_id: number; user_id: string; reaction?: string }[];
+  gaming25s: Gaming25Row[];
+  gaming25Picks: Gaming25PickState[];
+  gaming25Loves: Gaming25Love[];
+  xpEvents: XpEventState[];
+  tokenEvents: TokenEventState[];
+  userBadges: {
+    user_id: string;
+    badge: string;
+    metal: number;
+    unlocked_at: string;
+    seen_at: string | null;
+  }[];
+  userItems: { user_id: string; item: string; quantity: number }[];
+  shieldsUsed: { user_id: string; week: string }[];
+  taskSwaps: { user_id: string; period: string; slot: number; quest: string }[];
+  userBackgrounds: {
+    user_id: string;
+    game_id: number;
+    url: string;
+    price: number;
+  }[];
+  /** What player_metrics would count, per member, set by a test. */
+  progressMetrics: Map<string, Record<string, number>>;
+  emailLog: EmailLogRow[];
+  emailSends: EmailSendRecord[];
+  /** Members whose address isn't confirmed, so is never emailed. */
+  unconfirmed: Set<string>;
 }
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
+
+/** What the game_logs_wishlist_ranks trigger does in Postgres: a game newly
+ *  wished for takes the bottom place, and loses it with its last wish. */
+const syncWishlistRank = (
+  state: InMemoryState,
+  userId: string,
+  gameId: number,
+) => {
+  const wished = state.gameLogs.some(
+    (l) =>
+      l.user_id === userId && l.game_id === gameId && l.status === "wishlist",
+  );
+  const ranked = state.wishlistRanks.some(
+    (r) => r.user_id === userId && r.game_id === gameId,
+  );
+  if (wished && !ranked) {
+    const mine = state.wishlistRanks.filter((r) => r.user_id === userId);
+    state.wishlistRanks.push({
+      user_id: userId,
+      game_id: gameId,
+      position: mine.length ? Math.max(...mine.map((r) => r.position)) + 1 : 0,
+    });
+  } else if (!wished && ranked) {
+    state.wishlistRanks = state.wishlistRanks.filter(
+      (r) => !(r.user_id === userId && r.game_id === gameId),
+    );
+  }
+};
 
 export const createInMemoryRepos = (
   seed: SeedData = {},
@@ -150,6 +252,25 @@ export const createInMemoryRepos = (
     serverErrors: [...(seed.serverErrors ?? [])],
     announcements: [],
     contentReports: [...(seed.contentReports ?? [])],
+    favouriteGames: [...(seed.favouriteGames ?? [])],
+    wishlistRanks: [...(seed.wishlistRanks ?? [])],
+    gameLists: (seed.gameLists ?? []).map((l) => ({ ...l })),
+    gameListItems: [...(seed.gameListItems ?? [])],
+    gameListVotes: [...(seed.gameListVotes ?? [])],
+    gaming25s: (seed.gaming25s ?? []).map((g) => ({ ...g })),
+    gaming25Picks: [...(seed.gaming25Picks ?? [])],
+    gaming25Loves: [...(seed.gaming25Loves ?? [])],
+    xpEvents: [],
+    tokenEvents: [],
+    userBadges: [],
+    userItems: [],
+    shieldsUsed: [],
+    taskSwaps: [],
+    userBackgrounds: [],
+    progressMetrics: new Map(),
+    emailLog: [],
+    emailSends: [],
+    unconfirmed: new Set(),
   };
 
   let nextLogId = 1000;
@@ -413,6 +534,32 @@ export const createInMemoryRepos = (
           reportsFiled: state.contentReports.filter(
             (r) => r.reporter_id === userId,
           ),
+          favouriteGames: state.favouriteGames.filter(
+            (f) => f.user_id === userId,
+          ),
+          wishlistOrder: state.wishlistRanks.filter(
+            (r) => r.user_id === userId,
+          ),
+          gameLists: state.gameLists.filter((l) => l.user_id === userId),
+          gameListItems: state.gameListItems.filter((i) =>
+            state.gameLists.some(
+              (l) => l.id === i.list_id && l.user_id === userId,
+            ),
+          ),
+          gameListVotes: state.gameListVotes.filter(
+            (v) => v.user_id === userId,
+          ),
+          gaming25: state.gaming25s.filter((g) => g.user_id === userId),
+          gaming25Picks: state.gaming25Picks.filter(
+            (p) => p.user_id === userId,
+          ),
+          gaming25Loves: state.gaming25Loves.filter(
+            (l) => l.user_id === userId,
+          ),
+          xpEvents: state.xpEvents.filter((e) => e.user_id === userId),
+          tokenEvents: state.tokenEvents.filter((e) => e.user_id === userId),
+          badges: state.userBadges.filter((b) => b.user_id === userId),
+          items: state.userItems.filter((i) => i.user_id === userId),
         };
       },
     },
@@ -479,6 +626,13 @@ export const createInMemoryRepos = (
       async findByIgdbId(igdbId) {
         const game = state.games.find((g) => g.igdb_id === igdbId);
         return game ? withPlatforms(game) : null;
+      },
+      async findByIds(ids) {
+        return state.games.filter((g) => ids.includes(g.id)).map(withPlatforms);
+      },
+      async setBackdrops(id, backdrops) {
+        const game = state.games.find((g) => g.id === id);
+        if (game) game.backdrops = backdrops;
       },
       async list(query, from, to, excludeLoggedForUser, showSexualContent) {
         let rows = state.games;
@@ -866,7 +1020,21 @@ export const createInMemoryRepos = (
                 (l.played_status ?? "none") === query.playedStatus,
             );
           })
-          .map((logs) => ({ logs, game: findGame(logs[0]!.game_id) }));
+          .map((logs) => ({ logs, game: findGame(logs[0]!.game_id) }))
+          .filter(
+            ({ game }) =>
+              !query.q ||
+              (game?.title ?? "").toLowerCase().includes(query.q.toLowerCase()),
+          )
+          .filter(
+            ({ logs }) =>
+              !query.system ||
+              logs.some(
+                (l) =>
+                  l.system_slug === query.system &&
+                  (!query.status || l.status === query.status),
+              ),
+          );
 
         const sortKey = ({
           logs,
@@ -978,22 +1146,52 @@ export const createInMemoryRepos = (
         };
         assertConsoleFree(row);
         state.gameLogs.push(row);
+        syncWishlistRank(state, userId, gameId);
         return withGame(row);
       },
       async update(id, patch) {
         const log = state.gameLogs.find((l) => l.id === id);
         if (!log) throw new Error("game log not found");
         assertConsoleFree({ ...log, ...patch });
+        const before = log.game_id;
         Object.assign(log, patch, { updated_at: now() });
+        syncWishlistRank(state, log.user_id, before);
+        syncWishlistRank(state, log.user_id, log.game_id);
         return withGame(log);
       },
       async remove(id) {
+        const gone = state.gameLogs.find((l) => l.id === id);
         state.gameLogs = state.gameLogs.filter((l) => l.id !== id);
+        if (gone) syncWishlistRank(state, gone.user_id, gone.game_id);
         // reviews_log_fk cascades
         for (const r of state.reviews) {
           if (r.log_id === id) clearReviewNotifications(r.id);
         }
         state.reviews = state.reviews.filter((r) => r.log_id !== id);
+      },
+      async wishlistGameIds(userId) {
+        return state.wishlistRanks
+          .filter((r) => r.user_id === userId)
+          .sort((a, b) => a.position - b.position)
+          .map((r) => r.game_id);
+      },
+      async setWishlistOrder(userId, gameIds) {
+        for (const r of state.wishlistRanks) {
+          const at = gameIds.indexOf(r.game_id);
+          if (r.user_id === userId && at >= 0) r.position = at;
+        }
+      },
+      async shelfConsoles(userId, status) {
+        return [
+          ...new Set(
+            state.gameLogs
+              .filter(
+                (l) =>
+                  l.user_id === userId && l.status === status && l.system_slug,
+              )
+              .map((l) => l.system_slug as string),
+          ),
+        ].sort();
       },
       async count() {
         return state.gameLogs.length;
@@ -1066,41 +1264,11 @@ export const createInMemoryRepos = (
         return row ? withAuthor(row) : null;
       },
 
-      async votedReviewIds(userId, reviewIds) {
-        return new Set(
-          state.reviewVotes
-            .filter(
-              (v) => v.user_id === userId && reviewIds.includes(v.review_id),
-            )
-            .map((v) => v.review_id),
-        );
-      },
-
-      async hasVoted(userId, reviewId) {
-        return state.reviewVotes.some(
-          (v) => v.user_id === userId && v.review_id === reviewId,
-        );
-      },
-
-      async addVote(userId, reviewId) {
-        // Primary key is (review_id, user_id), so a second vote is a no-op.
-        const exists = state.reviewVotes.some(
-          (v) => v.user_id === userId && v.review_id === reviewId,
-        );
-        if (!exists) {
-          state.reviewVotes.push({ review_id: reviewId, user_id: userId });
-        }
-      },
-
-      async removeVote(userId, reviewId) {
-        state.reviewVotes = state.reviewVotes.filter(
-          (v) => !(v.user_id === userId && v.review_id === reviewId),
-        );
-      },
-
-      async voteCount(reviewId) {
-        return state.reviewVotes.filter((v) => v.review_id === reviewId).length;
-      },
+      reactions: createMemoryReactionRepo(
+        () => state.reviewVotes,
+        (next) => (state.reviewVotes = next),
+        "review_id",
+      ),
 
       async listRecent(from, to, showSexualContent) {
         const explicit = new Set(
@@ -1359,6 +1527,32 @@ export const createInMemoryRepos = (
           created_at: now(),
         });
       },
+      async raiseOnce(drafts) {
+        let added = 0;
+        for (const d of drafts) {
+          const key = d.dedupeKey ?? null;
+          if (
+            key !== null &&
+            state.notifications.some(
+              (n) => n.user_id === d.userId && n.dedupe_key === key,
+            )
+          )
+            continue;
+          state.notifications.push({
+            id: nextNotificationId++,
+            user_id: d.userId,
+            kind: d.kind,
+            actor_id: d.actorId ?? null,
+            data: d.data ?? {},
+            dedupe_key: key,
+            read_at: null,
+            archived_at: null,
+            created_at: now(),
+          });
+          added++;
+        }
+        return added;
+      },
       async bumpThreadActivity(userId, dedupeKey, data) {
         const existing = state.notifications.find(
           (n) => n.user_id === userId && n.dedupe_key === dedupeKey,
@@ -1475,6 +1669,28 @@ export const createInMemoryRepos = (
     },
 
     community: createInMemoryCommunity(state),
+    lists: createInMemoryLists(state),
+    gaming25: createInMemoryGaming25(state),
+    progress: createInMemoryProgress(state),
+    email: createInMemoryEmailRepo(state),
+    favourites: {
+      async listIds(userId) {
+        return state.favouriteGames
+          .filter((f) => f.user_id === userId)
+          .sort((a, b) => a.position - b.position)
+          .map((f) => f.game_id);
+      },
+      async set(userId, gameIds) {
+        state.favouriteGames = [
+          ...state.favouriteGames.filter((f) => f.user_id !== userId),
+          ...gameIds.map((game_id, position) => ({
+            user_id: userId,
+            game_id,
+            position,
+          })),
+        ];
+      },
+    },
     gameEvents: createInMemoryGameEvents(state),
     admin: createInMemoryAdmin(state),
 
@@ -1515,6 +1731,39 @@ export const createInMemoryRepos = (
       state.communityVotes = state.communityVotes.filter(
         (v) => v.user_id !== userId,
       );
+      state.reviewVotes = state.reviewVotes.filter((v) => v.user_id !== userId);
+      state.favouriteGames = state.favouriteGames.filter(
+        (f) => f.user_id !== userId,
+      );
+      state.wishlistRanks = state.wishlistRanks.filter(
+        (r) => r.user_id !== userId,
+      );
+      const theirLists = new Set(
+        state.gameLists.filter((l) => l.user_id === userId).map((l) => l.id),
+      );
+      state.gameLists = state.gameLists.filter((l) => l.user_id !== userId);
+      state.gameListItems = state.gameListItems.filter(
+        (i) => !theirLists.has(i.list_id),
+      );
+      state.gameListVotes = state.gameListVotes.filter(
+        (v) => v.user_id !== userId && !theirLists.has(v.list_id),
+      );
+      // Their grid, its picks, its loves, and the loves they gave.
+      state.gaming25s = state.gaming25s.filter((g) => g.user_id !== userId);
+      state.gaming25Picks = state.gaming25Picks.filter(
+        (p) => p.user_id !== userId,
+      );
+      state.gaming25Loves = state.gaming25Loves.filter(
+        (l) => l.user_id !== userId && l.owner_id !== userId,
+      );
+      // Their ledgers, badges and what they bought go with them.
+      state.xpEvents = state.xpEvents.filter((e) => e.user_id !== userId);
+      state.tokenEvents = state.tokenEvents.filter((e) => e.user_id !== userId);
+      state.userBadges = state.userBadges.filter((b) => b.user_id !== userId);
+      state.userItems = state.userItems.filter((i) => i.user_id !== userId);
+      for (const p of state.profiles) {
+        if (p.referred_by === userId) p.referred_by = null;
+      }
     },
   };
 

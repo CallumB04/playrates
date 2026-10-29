@@ -7,6 +7,7 @@ import {
     Moon,
     Settings,
     Shield,
+    Store,
     Sun,
     UserRound,
 } from "lucide-react";
@@ -14,7 +15,13 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { GAME_STATUSES, STATUS_PRESENTATION } from "../../constants/gameStatus";
 import type { MyProfile } from "@playrates/shared";
 import ProfilePicture from "../ProfilePicture";
+import AvatarFrame from "../progress/AvatarFrame";
+import LevelChip from "../progress/LevelChip";
+import TokenAmount from "../progress/TokenAmount";
+import XpBar from "../progress/XpBar";
+import { useProgressQuery } from "../../hooks/queries/useProgress";
 import { cn } from "../../lib/cn";
+import { shelfPath } from "../../lib/profilePaths";
 import { useDismiss } from "../../hooks/useDismiss";
 import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
 import type { SetupStep } from "../../lib/setupChecklist";
@@ -22,6 +29,38 @@ import { MENU_ITEM as ITEM, ProgressRing, SetupSteps } from "./SetupSteps";
 
 /** Long enough to cross the gap into the list on a diagonal. */
 const HOVER_CLOSE_MS = 150;
+
+/** Your level, how far into it, and your tokens: the way to /progress. */
+const ProgressRow = ({ onNavigate }: { onNavigate: () => void }) => {
+    const { data } = useProgressQuery();
+    if (!data) return <div className="mb-1.5 border-b border-subtle pb-2" />;
+    return (
+        <div className="mb-1.5 border-b border-subtle px-1 pb-2">
+            <Link
+                to="/progress"
+                onClick={onNavigate}
+                role="menuitem"
+                className="block rounded-sm px-1.5 py-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-brand"
+            >
+                <span className="flex items-center justify-between gap-2">
+                    <span className="text-label font-semibold text-content">
+                        Level {data.level.level}
+                    </span>
+                    <TokenAmount
+                        amount={data.tokens}
+                        className="text-label-sm"
+                    />
+                </span>
+                <XpBar
+                    level={data.level}
+                    labelled={false}
+                    size="sm"
+                    className="mt-1.5"
+                />
+            </Link>
+        </div>
+    );
+};
 
 /**
  * One row in the menu; the steps open off it. From sm a pointer resting on
@@ -149,20 +188,40 @@ const AccountMenu = ({
                 aria-haspopup="menu"
                 aria-label="Account menu"
                 className={cn(
-                    "relative block rounded-full ring-offset-2 ring-offset-surface transition-shadow lift",
-                    "before:absolute before:-inset-1 before:content-[''] sm:before:hidden",
-                    open
-                        ? "ring-2 ring-brand"
-                        : "hover:ring-2 hover:ring-subtle"
+                    "group relative block rounded-full lift",
+                    "before:absolute before:-inset-1 before:content-[''] sm:before:hidden"
                 )}
             >
-                <ProfilePicture
-                    variant="nav"
-                    file={user.avatarUrl ?? ""}
-                    accent={user.accent}
-                    username={user.username}
-                    link={false}
+                {/* The ring round the picture only, not the level on it. */}
+                <span
+                    className={cn(
+                        "block rounded-full ring-offset-2 ring-offset-surface transition-shadow",
+                        open
+                            ? "ring-2 ring-brand"
+                            : "group-hover:ring-2 group-hover:ring-subtle"
+                    )}
+                >
+                    <AvatarFrame frame={user.frame} size="sm">
+                        <ProfilePicture
+                            variant="nav"
+                            file={user.avatarUrl ?? ""}
+                            accent={user.accent}
+                            username={user.username}
+                            link={false}
+                        />
+                    </AvatarFrame>
+                </span>
+                <LevelChip
+                    level={user.level}
+                    className="absolute -right-1 -bottom-1"
                 />
+                {/* Setup waits in here, as it does behind a phone's More. */}
+                {setup && (
+                    <span
+                        aria-hidden
+                        className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-brand ring-2 ring-surface"
+                    />
+                )}
             </button>
 
             {open && (
@@ -180,9 +239,10 @@ const AccountMenu = ({
                         "menu"
                     )}
                 >
-                    <p className="mb-1.5 truncate border-b border-subtle px-2.5 pt-1.5 pb-2.5 text-label text-content-muted">
+                    <p className="truncate px-2.5 pt-1.5 text-label text-content-muted">
                         {user.username}
                     </p>
+                    <ProgressRow onNavigate={() => setOpen(false)} />
                     {setup && (
                         <SetupRow
                             steps={setup}
@@ -196,6 +256,14 @@ const AccountMenu = ({
                         role="menuitem"
                     >
                         <UserRound size={15} aria-hidden /> Your profile
+                    </Link>
+                    <Link
+                        to="/shop"
+                        onClick={() => setOpen(false)}
+                        className={ITEM}
+                        role="menuitem"
+                    >
+                        <Store size={15} aria-hidden /> Shop
                     </Link>
 
                     {/* The shelves. Backlog used to be a top-level nav item,
@@ -211,7 +279,7 @@ const AccountMenu = ({
                             return (
                                 <Link
                                     key={status}
-                                    to={`/user/${user.username}?type=${status}`}
+                                    to={shelfPath(user.username, status)}
                                     onClick={() => setOpen(false)}
                                     className={ITEM}
                                     role="menuitem"

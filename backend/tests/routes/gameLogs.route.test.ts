@@ -394,6 +394,36 @@ describe("game logs", () => {
     });
   });
 
+  describe("searching a shelf by title", () => {
+    const seed = () => ({
+      ...baseSeed(),
+      games: [
+        buildGame({ id: 1, title: "Elden Ring" }),
+        buildGame({ id: 2, slug: "eldest", title: "The Eldest Souls" }),
+        buildGame({ id: 3, slug: "hades", title: "Hades" }),
+      ],
+      gameLogs: [
+        buildGameLog({ id: 1, game_id: 1 }),
+        buildGameLog({ id: 2, game_id: 2, status: "backlog" }),
+        buildGameLog({ id: 3, game_id: 3 }),
+      ],
+    });
+
+    it("keeps the games whose title has it, across every shelf", async () => {
+      const { app } = buildTestApp({ seed: seed() });
+      const response = await request(app).get(
+        "/api/v1/users/devuser/shelf?q=eld&sort=title&direction=asc",
+      );
+      expect(response.status).toBe(200);
+      expect(
+        response.body.data.map(
+          (e: { game: { title: string } | null }) => e.game?.title,
+        ),
+      ).toEqual(["Elden Ring", "The Eldest Souls"]);
+      expect(response.body.meta.total).toBe(2);
+    });
+  });
+
   describe("filtering a played shelf by how it ended", () => {
     const seed = () => ({
       ...baseSeed(),

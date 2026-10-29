@@ -7,6 +7,12 @@ import ToastStack from "./components/feedback/ToastStack";
 import AccountFormModal from "./components/auth/AccountFormModal";
 import ChooseUsername from "./components/onboarding/ChooseUsername";
 import FirstLoginWelcome from "./components/onboarding/FirstLoginWelcome";
+import ProgressMoments from "./components/progress/ProgressMoments";
+import ReferralCapture from "./components/progress/ReferralCapture";
+import AuthLinkResult from "./components/auth/AuthLinkResult";
+import InviteBanner from "./components/progress/InviteBanner";
+import ProgressPage from "./pages/ProgressPage/ProgressPage";
+import ShopPage from "./pages/ShopPage/ShopPage";
 import HomePage from "./pages/HomePage/HomePage";
 import CommunityPage from "./pages/CommunityPage/CommunityPage";
 import NewThreadPage from "./pages/CommunityPage/NewThreadPage";
@@ -15,10 +21,13 @@ import PrivacyPage from "./pages/legal/PrivacyPage";
 import TermsPage from "./pages/legal/TermsPage";
 import ContactPage from "./pages/legal/ContactPage";
 import ProfilePageRoute from "./pages/ProfilePage/ProfilePageRoute";
+import ListPage from "./pages/ListPage/ListPage";
+import Gaming25Page from "./pages/Gaming25Page/Gaming25Page";
 import LibraryPage from "./pages/LibraryPage/LibraryPage";
 import GamePage from "./pages/GamePage/GamePage";
 import SettingsPage from "./pages/SettingsPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import UnsubscribePage from "./pages/UnsubscribePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AdminGate from "./pages/admin/AdminGate";
 import { useReloadOnNewBuild } from "./hooks/useReloadOnNewBuild";
@@ -42,13 +51,24 @@ function App() {
                 search with no results) doesn't end on the footer. */}
             <main className="min-h-dvh flex-1">
                 <PageShell>
+                    <InviteBanner />
                     <Routes>
                         <Route path="/" element={<HomePage />} />
                         <Route
-                            path="/user/:targetUsername?"
+                            path="/user/:username/lists/:listId"
+                            element={<ListPage />}
+                        />
+                        <Route
+                            path="/user/:username/gaming-25"
+                            element={<Gaming25Page />}
+                        />
+                        <Route
+                            path="/user/:targetUsername?/:view?"
                             element={<ProfilePageRoute />}
                         />
                         <Route path="/library" element={<LibraryPage />} />
+                        <Route path="/progress" element={<ProgressPage />} />
+                        <Route path="/shop" element={<ShopPage />} />
                         {/* The page was briefly called both things. Kept so
                             shared links and bookmarks still land. */}
                         <Route
@@ -70,6 +90,10 @@ function App() {
                             path="/reset-password"
                             element={<ResetPasswordPage />}
                         />
+                        <Route
+                            path="/unsubscribe"
+                            element={<UnsubscribePage />}
+                        />
 
                         {/* Stubs, so the footer never links into nothing. */}
                         <Route path="/privacy" element={<PrivacyPage />} />
@@ -87,6 +111,9 @@ function App() {
             <AccountFormModal />
             <ChooseUsername />
             <FirstLoginWelcome />
+            <ProgressMoments />
+            <ReferralCapture />
+            <AuthLinkResult />
             <ToastStack />
         </div>
     );

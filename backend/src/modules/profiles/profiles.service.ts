@@ -1,11 +1,18 @@
 import type {
+  GameBackdrop,
   MyProfile,
   Paginated,
   Pagination,
   Profile,
+  SetProfileBackgroundInput,
   UpdateProfileInput,
 } from "@playrates/shared";
-import { AVATAR_MAX_BYTES, AVATAR_PIXELS } from "@playrates/shared";
+import {
+  AVATAR_MAX_BYTES,
+  AVATAR_PIXELS,
+  steamProfileUrl,
+  sectionOrder,
+} from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { cleanUpload } from "../../lib/cleanUpload.js";
 import { paginate, toRange } from "../../lib/pagination.js";
@@ -16,18 +23,51 @@ import type {
   AccountData,
   AccountExportRepository,
 } from "./accountExport.repository.js";
-import { toMyProfile, toProfile } from "./profiles.mapper.js";
+import {
+  aboutNeedsFriendship,
+  aboutVisibilityOf,
+  toMyProfile,
+  toProfile,
+} from "./profiles.mapper.js";
 
 export interface AccountExport extends AccountData {
   exportedAt: string;
   email: string | null;
 }
 
+/** What a background is checked against, from the games and logs side. */
+export interface BackgroundSource {
+  /** The pictures the game offers; throws not found for no such game. */
+  backdrops(gameId: number): Promise<GameBackdrop[]>;
+  hasLogged(userId: string, gameId: number): Promise<boolean>;
+  /** Bought, or worn before backgrounds were bought. */
+  owns(userId: string, url: string): Promise<boolean>;
+}
+
+/** What a profile change means for email, run after the response. */
+export interface ProfileEmailHooks {
+  /** The welcome, and joining the news audience. */
+  afterOnboarding(userId: string): void;
+  /** The news audience follows the news and all switches. */
+  afterPrefsChange(userId: string): void;
+  afterAccountDeleted(email: string): void;
+}
+
+const NO_EMAIL_HOOKS: ProfileEmailHooks = {
+  afterOnboarding() {},
+  afterPrefsChange() {},
+  afterAccountDeleted() {},
+};
+
 export const createProfilesService = (
   repo: ProfilesRepository,
   authAdmin: AuthAdmin,
   avatars: AvatarStore,
   exports: AccountExportRepository,
+  backgrounds: BackgroundSource,
+  /** Whether two people are friends, for the About fields kept to friends. */
+  areFriends: (a: string, b: string) => Promise<boolean>,
+  emails: ProfileEmailHooks = NO_EMAIL_HOOKS,
 ) => ({
   /** The caller's own, so it carries their settings. */
   async getById(id: string): Promise<MyProfile> {
@@ -48,8 +88,11 @@ export const createProfilesService = (
     // First, so a storage failure stops here with the account still whole
     // and the request safe to retry.
     if (row.avatar_url) await avatars.remove(id);
+    // Asked before the auth user goes, which takes the address with it.
+    const email = await authAdmin.getEmail(id).catch(() => null);
     await authAdmin.deleteUser(id);
     await repo.eraseTraces(id);
+    if (email) emails.afterAccountDeleted(email);
   },
 
   /** A copy of everything held about the caller, for them to keep. */
@@ -87,10 +130,17 @@ export const createProfilesService = (
     return toMyProfile(await repo.update(callerId, { avatar_url: null }));
   },
 
-  async getByUsername(username: string): Promise<Profile> {
+  /** Anyone's profile, its About fields cut to what this viewer may see. */
+  async getByUsername(username: string, viewerId?: string): Promise<Profile> {
     const row = await repo.findByUsername(username);
     if (!row) throw AppError.notFound("Profile");
-    return toProfile(row);
+    const isOwner = row.id === viewerId;
+    // Only worth the lookup when a field kept to friends has something in it.
+    const isFriend =
+      !isOwner && viewerId !== undefined && aboutNeedsFriendship(row)
+        ? await areFriends(row.id, viewerId)
+        : false;
+    return toProfile(row, Date.now(), { isOwner, isFriend });
   },
 
   async search(
@@ -155,12 +205,84 @@ export const createProfilesService = (
       patch.profile_visibility = input.profileVisibility;
     }
     if (input.accent !== undefined) patch.accent = input.accent;
+    if (input.sectionOrder !== undefined) {
+      patch.section_order = sectionOrder(input.sectionOrder);
+    }
+
+    // An empty string clears a field, as it does the first name.
+    if (input.pronouns !== undefined) patch.pronouns = input.pronouns || null;
+    if (input.location !== undefined) patch.location = input.location || null;
+    if (input.website !== undefined) patch.website = input.website || null;
+    if (input.discord !== undefined) patch.discord = input.discord || null;
+    if (input.steam !== undefined) {
+      // Stored as the profile's address, whichever form was typed.
+      patch.steam = input.steam ? steamProfileUrl(input.steam) : null;
+    }
+    if (input.aboutVisibility !== undefined) {
+      const row = await repo.findById(callerId);
+      if (!row) throw AppError.notFound("Profile");
+      patch.about_visibility = {
+        ...aboutVisibilityOf(row),
+        ...input.aboutVisibility,
+      };
+    }
+    // Kept sparse: only the switches someone has touched are stored.
+    let newsMoved = false;
+    if (input.emailPrefs !== undefined) {
+      const row = await repo.findById(callerId);
+      if (!row) throw AppError.notFound("Profile");
+      const changes = Object.fromEntries(
+        Object.entries(input.emailPrefs).filter(([, on]) => on !== undefined),
+      ) as Record<string, boolean>;
+      patch.email_prefs = { ...(row.email_prefs ?? {}), ...changes };
+      newsMoved = "news" in changes || "all" in changes;
+    }
 
     if (Object.keys(patch).length === 0) {
       return this.getById(callerId);
     }
 
-    return toMyProfile(await repo.update(callerId, patch));
+    const updated = toMyProfile(await repo.update(callerId, patch));
+    if (newsMoved) emails.afterPrefsChange(callerId);
+    return updated;
+  },
+
+  /** A picture from a game the caller has logged, and only one that game
+   *  offers and they own: anything else would put any URL at all on a
+   *  public page, or wear one for free. */
+  async setBackground(
+    callerId: string,
+    { gameId, url, position }: SetProfileBackgroundInput,
+  ): Promise<MyProfile> {
+    if (!(await backgrounds.hasLogged(callerId, gameId))) {
+      throw AppError.forbidden(
+        "You can only use pictures from games you've logged",
+      );
+    }
+    const offered = await backgrounds.backdrops(gameId);
+    if (!offered.some((b) => b.url === url)) {
+      throw AppError.validation("That picture isn't one of this game's");
+    }
+    if (!(await backgrounds.owns(callerId, url))) {
+      throw new AppError(402, "insufficient_tokens", "Buy that picture first");
+    }
+    return toMyProfile(
+      await repo.update(callerId, {
+        background_url: url,
+        background_game_id: gameId,
+        background_position: position ?? null,
+      }),
+    );
+  },
+
+  async clearBackground(callerId: string): Promise<MyProfile> {
+    return toMyProfile(
+      await repo.update(callerId, {
+        background_url: null,
+        background_game_id: null,
+        background_position: null,
+      }),
+    );
   },
 
   /** The first-login welcome has been seen. Keeps the first time it was, so a
@@ -169,9 +291,12 @@ export const createProfilesService = (
     const row = await repo.findById(callerId);
     if (!row) throw AppError.notFound("Profile");
     if (row.onboarded_at) return toMyProfile(row);
-    return toMyProfile(
+    const updated = toMyProfile(
       await repo.update(callerId, { onboarded_at: new Date().toISOString() }),
     );
+    // Every sign-up path ends here, email, Google and Discord alike.
+    emails.afterOnboarding(callerId);
+    return updated;
   },
 
   async heartbeat(callerId: string): Promise<void> {
