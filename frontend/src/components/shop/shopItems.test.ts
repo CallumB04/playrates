@@ -19,7 +19,7 @@ describe("giftPath", () => {
             "/user/me/badges?edit=showcase"
         );
         expect(giftPath("slot_pinned_list", "me")).toBe(
-            "/progress#pinned-lists"
+            "/user/me?edit=pinned_lists"
         );
     });
 

@@ -61,7 +61,8 @@ export const giftPath = (item: string, username: string): string => {
         return `${profilePath(username)}?edit=pinned_reviews`;
     if (item === "slot_showcase")
         return `${profilePath(username, "badges")}?edit=showcase`;
-    if (item === "slot_pinned_list") return "/progress#pinned-lists";
+    if (item === "slot_pinned_list")
+        return `${profilePath(username)}?edit=pinned_lists`;
     const group = SHOP_ITEMS.find((i) => i.item === item)?.group;
     if (!group) return "/shop";
     if (group === "shield") return "/progress#streak";

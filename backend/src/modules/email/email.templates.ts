@@ -206,7 +206,7 @@ export const giftPath = (item: string, username: string): string => {
   const profile = `/user/${encodeURIComponent(username)}`;
   if (item === "slot_pinned_review") return `${profile}?edit=pinned_reviews`;
   if (item === "slot_showcase") return `${profile}/badges?edit=showcase`;
-  if (item === "slot_pinned_list") return "/progress#pinned-lists";
+  if (item === "slot_pinned_list") return `${profile}?edit=pinned_lists`;
   const group = SHOP_ITEMS.find((i) => i.item === item)?.group;
   if (!group) return "/shop";
   if (group === "shield") return "/progress#streak";

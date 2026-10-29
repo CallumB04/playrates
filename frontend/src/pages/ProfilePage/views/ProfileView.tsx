@@ -87,7 +87,11 @@ const ProfileView = ({
                 {profile.sectionOrder.map((section) => (
                     <Fragment key={section}>
                         {section === "pinned_lists" && canSee && (
-                            <PinnedLists ids={profile.pinnedLists} />
+                            <PinnedLists
+                                username={profile.username}
+                                ids={profile.pinnedLists}
+                                isOwner={isOwner}
+                            />
                         )}
                         {section === "pinned_reviews" && canSee && (
                             <PinnedReviews

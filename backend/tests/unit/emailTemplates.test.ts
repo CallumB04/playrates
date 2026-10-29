@@ -117,7 +117,7 @@ describe("email templates", () => {
     expect(giftItemName("no_such_item")).toBe("something from the shop");
     expect(giftPath("slot_pinned_review", "bo")).toBe("/user/bo?edit=pinned_reviews");
     expect(giftPath("slot_showcase", "bo")).toBe("/user/bo/badges?edit=showcase");
-    expect(giftPath("slot_pinned_list", "bo")).toBe("/progress#pinned-lists");
+    expect(giftPath("slot_pinned_list", "bo")).toBe("/user/bo?edit=pinned_lists");
     expect(giftPath("streak_shield", "bo")).toBe("/progress#streak");
     expect(giftPath("colour_ember", "bo")).toBe("/progress#name");
     expect(giftPath("frame_neon", "bo")).toBe("/progress#frame");
