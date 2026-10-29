@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 import {
     ArrowBigUp,
     Bell,
+    Flame,
     Gift,
     Heart,
     MessageSquareReply,
+    ListChecks,
     MessagesSquare,
     PartyPopper,
     UserCheck,
@@ -22,6 +24,9 @@ import type {
     ListUpvoteMilestoneNotification,
     Gaming25LoveMilestoneNotification,
     ReferralJoinedNotification,
+    ReferralActiveNotification,
+    StreakAtRiskNotification,
+    TaskNearlyDoneNotification,
     GiftReceivedNotification,
     FriendAcceptedNotification,
     FriendRequestNotification,
@@ -37,6 +42,8 @@ import {
 import ProfilePicture from "../ProfilePicture";
 import { useAuth } from "../../contexts/AuthContext";
 import { giftPath, itemName } from "../shop/shopItems";
+import { TokenCoin } from "../progress/TokenAmount";
+import { questPath } from "../../lib/questPath";
 import { useFriendRelation } from "../../hooks/queries/useFriends";
 import { usePatchNotification } from "../../hooks/queries/useNotifications";
 import GameCover from "../game/GameCover";
@@ -341,7 +348,9 @@ const AnnouncementContent = ({
 };
 
 const Upvotes = ({ count }: { count: number }) => (
-    <span className="group-hover:underline">{formatCount(count)} upvotes</span>
+    <span className="group-hover:underline">
+        {formatCount(count)} reactions
+    </span>
 );
 
 const MessageMilestoneContent = ({
@@ -486,6 +495,120 @@ const GiftReceivedContent = ({
     );
 };
 
+/** The rest of the week or month, as a day: "ends Sunday". */
+const WEEKDAY = new Intl.DateTimeFormat("en-GB", { weekday: "long" });
+
+/** XP and tokens as the rest of the site says them, the coin for tokens. */
+const Reward = ({ xp, tokens }: { xp: number; tokens: number }) => (
+    <span className="inline-flex items-center gap-1 font-mono text-label-sm font-semibold text-content tabular-nums">
+        +{formatCount(xp)} XP
+        {tokens > 0 && (
+            <>
+                <span aria-hidden> · </span>+{formatCount(tokens)}
+                <TokenCoin className="size-3.5" />
+                <span className="sr-only">tokens</span>
+            </>
+        )}
+    </span>
+);
+
+const ReferralFace = ({
+    notification,
+}: {
+    notification: ReferralActiveNotification;
+}) =>
+    notification.actor ? (
+        <ActorFace notification={{ actor: notification.actor }} />
+    ) : (
+        <IconMark icon={UserPlus} tone="text-brand" />
+    );
+
+const ReferralActiveContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<ReferralActiveNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    return (
+        <Link
+            to={`/user/${notification.username}`}
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <span className="group-hover:underline">
+                    {notification.username}
+                </span>{" "}
+                <span className="font-normal text-content-secondary">
+                    got going from your invite
+                </span>
+            </p>
+            <p className="mt-1">
+                <Reward xp={notification.xp} tokens={notification.tokens} />
+            </p>
+        </Link>
+    );
+};
+
+const StreakAtRiskContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<StreakAtRiskNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    const day = WEEKDAY.format(new Date(notification.endsAt));
+    return (
+        <Link to="/progress#streak" onClick={open} className="group block">
+            <p className={TITLE}>
+                <span className="group-hover:underline">
+                    Your {formatCount(notification.weeks)} week streak
+                </span>{" "}
+                <span className="font-normal text-content-secondary">
+                    needs something by {day}
+                </span>
+            </p>
+            <p className={BODY}>
+                {notification.shield
+                    ? "If not, a shield will keep it going."
+                    : "Log, rate, review or post anything to keep it."}
+            </p>
+        </Link>
+    );
+};
+
+const TaskNearlyDoneContent = ({
+    notification,
+    onNavigate,
+}: ContentProps<TaskNearlyDoneNotification>) => {
+    const open = useOpen(notification, onNavigate);
+    const { user } = useAuth();
+    const day = WEEKDAY.format(new Date(notification.endsAt));
+    return (
+        <Link
+            to={
+                (user && questPath(notification.quest, user.username)) ??
+                "/progress"
+            }
+            onClick={open}
+            className="group block"
+        >
+            <p className={TITLE}>
+                <span className="font-normal text-content-secondary">
+                    Nearly there:
+                </span>{" "}
+                <span className="group-hover:underline">
+                    {notification.label}
+                </span>
+            </p>
+            <p className={BODY}>
+                {formatCount(notification.count)} of{" "}
+                {formatCount(notification.target)}, ends {day}.
+            </p>
+            <p className="mt-1">
+                <Reward xp={notification.xp} tokens={notification.tokens} />
+            </p>
+        </Link>
+    );
+};
+
 /** The game it is about, where the row has no one to show. */
 const CoverLeading = ({
     notification,
@@ -578,6 +701,22 @@ export const NOTIFICATION_RENDERERS: {
         tone: "text-brand",
         Content: GiftReceivedContent,
         Leading: GiftFace,
+    },
+    referral_active: {
+        icon: UserPlus,
+        tone: "text-brand",
+        Content: ReferralActiveContent,
+        Leading: ReferralFace,
+    },
+    streak_at_risk: {
+        icon: Flame,
+        tone: "text-accent",
+        Content: StreakAtRiskContent,
+    },
+    task_nearly_done: {
+        icon: ListChecks,
+        tone: "text-brand",
+        Content: TaskNearlyDoneContent,
     },
     announcement: {
         icon: ANNOUNCEMENT_PRESENTATION.update.icon,

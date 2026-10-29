@@ -1,4 +1,4 @@
-import { periodsFor } from "@playrates/shared";
+import { HABIT_WEEKS, periodsFor } from "@playrates/shared";
 import type { ProfileRow } from "../../src/types/database.types.js";
 import {
   BuyError,
@@ -24,17 +24,17 @@ export interface TokenEventState {
   amount: number;
 }
 
-/** The rules as the migration seeds them; the triggers aren't in play
+/** The rules as the migrations leave them; the triggers aren't in play
  *  here, so a test writes the ledger through awardXp as they would. */
 const RULES: Record<string, { xp: number; active: boolean }> = {
-  shelve: { xp: 2, active: true },
+  shelve: { xp: 1, active: true },
   play: { xp: 10, active: true },
   finish: { xp: 20, active: true },
   master: { xp: 40, active: true },
   rate: { xp: 5, active: true },
-  review_short: { xp: 10, active: true },
-  review_long: { xp: 25, active: true },
-  review_upvote: { xp: 5, active: false },
+  review_short: { xp: 15, active: true },
+  review_long: { xp: 30, active: true },
+  review_upvote: { xp: 3, active: false },
   thread: { xp: 10, active: true },
   reply: { xp: 5, active: true },
   friend: { xp: 15, active: true },
@@ -52,15 +52,15 @@ const SHOP: Record<
   string,
   { kind: string; price: number; step: number; max: number }
 > = {
-  frame_neon: { kind: "cosmetic", price: 60, step: 0, max: 1 },
-  theme_retro: { kind: "cosmetic", price: 80, step: 0, max: 1 },
-  font_pixel: { kind: "name", price: 100, step: 0, max: 1 },
-  colour_ember: { kind: "name", price: 40, step: 0, max: 1 },
-  react_goat: { kind: "reaction", price: 60, step: 0, max: 1 },
-  slot_pinned_review: { kind: "slot", price: 60, step: 40, max: 3 },
-  slot_showcase: { kind: "slot", price: 100, step: 50, max: 4 },
-  slot_pinned_list: { kind: "slot", price: 100, step: 100, max: 2 },
-  streak_shield: { kind: "helper", price: 40, step: 0, max: 2 },
+  frame_neon: { kind: "cosmetic", price: 120, step: 0, max: 1 },
+  theme_retro: { kind: "cosmetic", price: 150, step: 0, max: 1 },
+  font_pixel: { kind: "name", price: 200, step: 0, max: 1 },
+  colour_ember: { kind: "name", price: 75, step: 0, max: 1 },
+  react_goat: { kind: "reaction", price: 100, step: 0, max: 1 },
+  slot_pinned_review: { kind: "slot", price: 100, step: 50, max: 3 },
+  slot_showcase: { kind: "slot", price: 150, step: 75, max: 4 },
+  slot_pinned_list: { kind: "slot", price: 150, step: 150, max: 2 },
+  streak_shield: { kind: "helper", price: 60, step: 0, max: 2 },
 };
 
 /**
@@ -72,6 +72,34 @@ export const createInMemoryProgress = (
   state: InMemoryState,
 ): ProgressRepository => {
   let nextId = 1;
+
+  const countIn = (userId: string, from: string, to: string) => {
+    const counts: Record<string, number> = {};
+    for (const e of state.xpEvents) {
+      if (e.user_id !== userId || e.created_at < from || e.created_at >= to)
+        continue;
+      if (e.data?.revoked) continue;
+      counts[e.source] = (counts[e.source] ?? 0) + 1;
+    }
+    return counts;
+  };
+
+  const weeksOf = (userId: string) => {
+    const row = state.profiles.find((p) => p.id === userId);
+    const zone = row?.timezone || "UTC";
+    const weeks = new Set<string>();
+    for (const e of state.xpEvents) {
+      if (e.user_id !== userId || !RULES[e.source]?.active) continue;
+      if (e.data?.revoked) continue;
+      weeks.add(
+        localDay(periodsFor(new Date(e.created_at), zone).week.start, zone),
+      );
+    }
+    return [...weeks].sort().reverse();
+  };
+
+  const weeksBefore = (instant: string, weeks: number) =>
+    new Date(Date.parse(instant) - weeks * 7 * 86400000).toISOString();
 
   const withTotals = (row: ProfileRow): ProfileRow => ({
     ...row,
@@ -93,21 +121,20 @@ export const createInMemoryProgress = (
       return state.profiles.filter((p) => ids.includes(p.id)).map(withTotals);
     },
 
+    async profileIds(after, limit) {
+      return state.profiles
+        .map((p) => p.id)
+        .sort()
+        .filter((id) => after === null || id > after)
+        .slice(0, limit);
+    },
+
     async metrics(userId) {
       return { ...(state.progressMetrics.get(userId) ?? {}) };
     },
 
     async weeks(userId) {
-      const row = state.profiles.find((p) => p.id === userId);
-      const zone = row?.timezone || "UTC";
-      const weeks = new Set<string>();
-      for (const e of state.xpEvents) {
-        if (e.user_id !== userId || !RULES[e.source]?.active) continue;
-        weeks.add(
-          localDay(periodsFor(new Date(e.created_at), zone).week.start, zone),
-        );
-      }
-      return [...weeks].sort().reverse();
+      return weeksOf(userId);
     },
 
     async shieldsUsed(userId) {
@@ -190,14 +217,16 @@ export const createInMemoryProgress = (
       );
     },
 
+    async paidTokenKeys(userId, keys) {
+      return new Set(
+        state.tokenEvents
+          .filter((e) => e.user_id === userId && keys.includes(e.key))
+          .map((e) => e.key),
+      );
+    },
+
     async countSources(userId, from, to) {
-      const counts: Record<string, number> = {};
-      for (const e of state.xpEvents) {
-        if (e.user_id !== userId || e.created_at < from || e.created_at >= to)
-          continue;
-        counts[e.source] = (counts[e.source] ?? 0) + 1;
-      }
-      return counts;
+      return countIn(userId, from, to);
     },
 
     async unseenXp(userId, afterId) {
@@ -316,7 +345,7 @@ export const createInMemoryProgress = (
       let cost = 0;
       if (credit) credit.quantity--;
       else {
-        cost = 15 + 5 * fromGame;
+        cost = 25 + 10 * fromGame;
         if (balance < cost) throw new BuyError("insufficient_tokens");
         state.tokenEvents.push({
           user_id: userId,
@@ -384,6 +413,60 @@ export const createInMemoryProgress = (
             url: b.url,
             title: game?.title ?? "",
             cover_url: game?.box_art_url ?? game?.cover_url ?? null,
+          };
+        });
+    },
+
+    async swaps(userId, period) {
+      return state.taskSwaps
+        .filter((s) => s.user_id === userId && s.period === period)
+        .map(({ slot, quest }) => ({ slot, quest }));
+    },
+
+    async recordSwap(userId, period, slot, quest) {
+      if (
+        state.taskSwaps.some(
+          (s) => s.user_id === userId && s.period === period,
+        )
+      )
+        return false;
+      state.taskSwaps.push({ user_id: userId, period, slot, quest });
+      return true;
+    },
+
+    // As nudge_candidates reads them, each member in their own periods.
+    async nudgeCandidates(since, now) {
+      return state.profiles
+        .filter((p) => p.last_seen_at >= since)
+        .map((p) => {
+          const zone = p.timezone || "UTC";
+          const { week, month } = periodsFor(new Date(now), zone);
+          return {
+            userId: p.id,
+            timezone: zone,
+            weeks: weeksOf(p.id),
+            shields: state.shieldsUsed
+              .filter((s) => s.user_id === p.id)
+              .map((s) => s.week),
+            spare:
+              state.userItems.find(
+                (i) => i.user_id === p.id && i.item === "streak_shield",
+              )?.quantity ?? 0,
+            weekCounts: countIn(p.id, week.start, now),
+            monthCounts: countIn(p.id, month.start, now),
+            weekHabits: countIn(
+              p.id,
+              weeksBefore(week.start, HABIT_WEEKS),
+              week.start,
+            ),
+            monthHabits: countIn(
+              p.id,
+              weeksBefore(month.start, HABIT_WEEKS),
+              month.start,
+            ),
+            swaps: state.taskSwaps
+              .filter((s) => s.user_id === p.id && s.period === week.key)
+              .map(({ period, slot, quest }) => ({ period, slot, quest })),
           };
         });
     },

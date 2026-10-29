@@ -313,6 +313,44 @@ describe("notification mapper", () => {
     ).toMatchObject({ kind: "gift_received", actor: null });
   });
 
+  it("embeds the friend who got going, while they have an account", () => {
+    const data = { username: "devuser", xp: 250, tokens: 50 };
+    expect(
+      toNotification(
+        { ...buildNotification({ kind: "referral_active", data }), actor },
+        () => null,
+      ),
+    ).toMatchObject({ actor: { username: "devuser" } });
+  });
+
+  it("reads a streak nudge with no shield as none, and a task's period strictly", () => {
+    expect(
+      toNotification(
+        buildNotification({
+          kind: "streak_at_risk",
+          data: { weeks: 2, endsAt: "2026-11-02T00:00:00.000Z" },
+        }),
+        () => null,
+      ),
+    ).toMatchObject({ kind: "streak_at_risk", shield: false });
+    expect(
+      toNotification(
+        buildNotification({
+          kind: "task_nearly_done",
+          data: {
+            period: "year",
+            quest: "w_rate3",
+            label: "Rate 3 games",
+            count: 2,
+            target: 3,
+            endsAt: "2026-11-02T00:00:00.000Z",
+          },
+        }),
+        () => null,
+      ).kind,
+    ).toBe("unknown");
+  });
+
   it("embeds the actor on an accepted request", () => {
     const mapped = toNotification(
       { ...buildNotification({ kind: "friend_accepted" }), actor },
@@ -461,6 +499,30 @@ describe("notification mapper", () => {
       "gaming_25_love_milestone",
       { username: "devuser", milestone: 10 },
       { username: "devuser", milestone: 10 },
+    ],
+    [
+      "referral_active",
+      { username: "newbie", xp: 250, tokens: 50 },
+      { username: "newbie", xp: 250, tokens: 50, actor: null },
+    ],
+    [
+      "streak_at_risk",
+      { weeks: 6, shield: true, endsAt: "2026-11-02T00:00:00.000Z" },
+      { weeks: 6, shield: true, endsAt: "2026-11-02T00:00:00.000Z" },
+    ],
+    [
+      "task_nearly_done",
+      {
+        period: "week",
+        quest: "w_rate3",
+        label: "Rate 3 games",
+        count: 2,
+        target: 3,
+        xp: 45,
+        tokens: 5,
+        endsAt: "2026-11-02T00:00:00.000Z",
+      },
+      { period: "week", quest: "w_rate3", count: 2, target: 3, tokens: 5 },
     ],
   ])("maps %s, and refuses one without its data", (kind, data, expected) => {
     expect(

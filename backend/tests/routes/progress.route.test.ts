@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
-import { QUESTS, SETUP_REWARD, xpForLevel } from "@playrates/shared";
+import { QUESTS, REFERRAL, SETUP_REWARD, xpForLevel } from "@playrates/shared";
 import {
   authHeader,
   buildTestApp,
@@ -63,9 +63,9 @@ describe("progress", () => {
     await xp(USER_A, "quest", "q1", xpForLevel(3));
     const now = await progress();
     expect(now.level.level).toBe(3);
-    // Levels 2 and 3 are worth 10 tokens each.
-    expect(now.tokens).toBe(20);
-    expect(now.unseen.tokens).toBe(20);
+    // Levels 2 and 3 are worth 5 tokens each.
+    expect(now.tokens).toBe(10);
+    expect(now.unseen.tokens).toBe(10);
   });
 
   it("unlocks badges from the counts, once, with their XP and tokens", async () => {
@@ -76,11 +76,11 @@ describe("progress", () => {
     expect(first.unseen.badges.map((b: { metal: number }) => b.metal)).toEqual([
       1, 2,
     ]);
-    // Bronze 50 and silver 150: level 2.
-    expect(first.xp).toBe(200);
+    // Bronze 25 and silver 50.
+    expect(first.xp).toBe(75);
 
     const second = await progress();
-    expect(second.xp).toBe(200);
+    expect(second.xp).toBe(75);
     expect(state.userBadges.filter((b) => b.user_id === USER_A)).toHaveLength(
       2,
     );
@@ -120,8 +120,8 @@ describe("progress", () => {
     const result = await progress();
     expect(result.streak).toMatchObject({ weeks: 1, thisWeek: true });
     const streakXp = result.xp - 5;
-    expect(streakXp).toBe(25);
-    expect((await progress()).xp - 5).toBe(25);
+    expect(streakXp).toBe(22);
+    expect((await progress()).xp - 5).toBe(22);
   });
 
   it("completes a quest once its count is reached, and pays it once", async () => {
@@ -159,7 +159,7 @@ describe("progress", () => {
 describe("the shop", () => {
   it("sells what you can afford and refuses the rest", async () => {
     const { app, tokens } = setup();
-    await tokens(USER_A, 90);
+    await tokens(USER_A, 150);
     const buy = (item: string) =>
       request(app).post(`/api/v1/shop/${item}/buy`).set(as(USER_A));
 
@@ -185,9 +185,9 @@ describe("the shop", () => {
       (await request(app).get("/api/v1/shop").set(as(USER_A))).body.items.find(
         (i: { item: string }) => i.item === "slot_showcase",
       ).price;
-    expect(await price()).toBe(100);
-    await request(app).post("/api/v1/shop/slot_showcase/buy").set(as(USER_A));
     expect(await price()).toBe(150);
+    await request(app).post("/api/v1/shop/slot_showcase/buy").set(as(USER_A));
+    expect(await price()).toBe(225);
   });
 });
 
@@ -205,7 +205,7 @@ describe("style", () => {
     expect((await style({ frame: "gold" })).status).toBe(204);
 
     expect((await style({ frame: "neon" })).status).toBe(403);
-    await tokens(USER_A, 60);
+    await tokens(USER_A, 120);
     await request(app).post("/api/v1/shop/frame_neon/buy").set(as(USER_A));
     expect((await style({ frame: "neon" })).status).toBe(204);
 
@@ -230,7 +230,7 @@ describe("style", () => {
     expect((await style({ nameFont: "orbitron" })).status).toBe(204);
 
     expect((await style({ nameColour: "ember" })).status).toBe(403);
-    await tokens(USER_A, 40);
+    await tokens(USER_A, 75);
     await request(app).post("/api/v1/shop/colour_ember/buy").set(as(USER_A));
     expect((await style({ nameColour: "ember" })).status).toBe(204);
 
@@ -297,9 +297,36 @@ describe("tasks", () => {
       await xp(USER_A, def.sources[0]!, `step:${i}`);
 
     const after = await progress();
-    expect(after.quests.week[0]).toMatchObject({ done: true, tokens: 2 });
-    expect(after.tokens - before.tokens).toBe(2);
+    expect(after.quests.week[0]).toMatchObject({ done: true, tokens: 5 });
+    expect(after.tokens - before.tokens).toBe(5);
     expect((await progress()).tokens).toBe(after.tokens);
+  });
+});
+
+describe("tokens said once", () => {
+  it("says a task's tokens on the visit that pays them, not every one after", async () => {
+    const { progress, xp } = setup();
+    const task = (await progress()).quests.week[0] as { key: string };
+    const def = QUESTS.find((q) => q.key === task.key)!;
+    for (let i = 0; i < def.target; i++)
+      await xp(USER_A, def.sources[0]!, `step:${i}`);
+
+    expect((await progress()).unseen.tokens).toBe(5);
+    expect((await progress()).unseen.tokens).toBe(0);
+  });
+
+  it("pays a member from before for what comes after their launch sum", async () => {
+    const { progress, state, xp } = setup();
+    state.profiles.find((p) => p.id === USER_A)!.revealed_at = null;
+    state.progressMetrics.set(USER_A, { logged: 10 });
+    const first = await progress();
+    expect(first.reveal).toBe(true);
+
+    // Still to see the reveal, they reach level 5 and its 15 tokens.
+    await xp(USER_A, "quest", "q", xpForLevel(5));
+    const later = await progress();
+    expect(later.reveal).toBe(true);
+    expect(later.tokens - first.tokens).toBeGreaterThanOrEqual(15);
   });
 });
 
@@ -310,7 +337,7 @@ describe("getting started", () => {
     me.avatar_url = "https://example.test/a.png";
     me.bio = "Hello";
     state.progressMetrics.set(USER_A, {
-      logged: 1,
+      shelved: 1,
       rated: 1,
       reviews: 1,
       friends: 1,
@@ -322,7 +349,7 @@ describe("getting started", () => {
     expect(state.xpEvents.some((e) => e.key === "setup")).toBe(false);
 
     state.progressMetrics.set(USER_A, {
-      logged: 1,
+      shelved: 1,
       rated: 1,
       reviews: 1,
       friends: 1,
@@ -342,7 +369,7 @@ describe("getting started", () => {
 describe("gifts", () => {
   it("buys an item for a friend, and tells them", async () => {
     const { app, tokens, state } = setup();
-    await tokens(USER_A, 100);
+    await tokens(USER_A, 150);
     const gift = (item: string, username: string) =>
       request(app)
         .post(`/api/v1/shop/${item}/gift`)
@@ -351,8 +378,8 @@ describe("gifts", () => {
 
     expect((await gift("frame_neon", "stranger")).status).toBe(403);
     expect((await gift("frame_neon", "frienduser")).body).toEqual({
-      tokens: 40,
-      cost: 60,
+      tokens: 30,
+      cost: 120,
     });
     expect((await gift("frame_neon", "frienduser")).status).toBe(409);
     expect(
@@ -374,7 +401,7 @@ describe("gifts", () => {
       expect.objectContaining({
         username: "frienduser",
         full: true,
-        price: 60,
+        price: 120,
       }),
     ]);
   });
@@ -392,7 +419,7 @@ describe("pinned reviews", () => {
         .send({ pinnedReviews: ids });
 
     expect((await pin([1])).status).toBe(422);
-    await tokens(USER_A, 60);
+    await tokens(USER_A, 100);
     await request(app)
       .post("/api/v1/shop/slot_pinned_review/buy")
       .set(as(USER_A));
@@ -456,7 +483,7 @@ describe("referrals", () => {
       state.tokenEvents.find((e) => e.key === `ref:${NEWBIE}`),
     ).toMatchObject({
       user_id: USER_A,
-      amount: 25,
+      amount: 50,
     });
     expect(
       state.xpEvents.find(
@@ -575,5 +602,230 @@ describe("account data", () => {
     await request(app).delete("/api/v1/profiles/me").set(as(USER_A));
     expect(state.xpEvents).toEqual([]);
     expect(state.tokenEvents).toEqual([]);
+  });
+});
+
+describe("swapping a task", () => {
+  const swap = (app: Express, slot: number) =>
+    request(app)
+      .post("/api/v1/me/progress/quests/swap")
+      .set(as(USER_A))
+      .send({ slot });
+
+  it("trades one undone weekly task for a new one, once a week", async () => {
+    const { app, progress } = setup();
+    const before = await progress();
+    expect(before.quests.swapsLeft).toBe(1);
+    const keys = before.quests.week.map((q: { key: string }) => q.key);
+
+    const res = await swap(app, 1);
+    expect(res.status).toBe(200);
+    expect(res.body.swapsLeft).toBe(0);
+    const swapped = res.body.week[1];
+    expect(keys).not.toContain(swapped.key);
+    expect(swapped).toMatchObject({ swapped: true, done: false });
+    expect(res.body.week[0].key).toBe(keys[0]);
+
+    // It holds, and there is no second swap this week.
+    const after = await progress();
+    expect(after.quests.week[1].key).toBe(swapped.key);
+    expect(after.quests.swapsLeft).toBe(0);
+    expect((await swap(app, 2)).status).toBe(409);
+  });
+
+  it("keeps a task that's done", async () => {
+    const { app, progress, xp } = setup();
+    const task = (await progress()).quests.week[0] as { key: string };
+    const def = QUESTS.find((q) => q.key === task.key)!;
+    for (let i = 0; i < def.target; i++)
+      await xp(USER_A, def.sources[0]!, `step:${i}`);
+
+    expect((await swap(app, 0)).status).toBe(409);
+    expect((await progress()).quests.swapsLeft).toBe(1);
+  });
+
+  it("takes a slot of 0 to 2 only", async () => {
+    const { app } = setup();
+    expect((await swap(app, 3)).status).toBe(422);
+  });
+});
+
+describe("founding member", () => {
+  it("is a badge that pays nothing", async () => {
+    const { progress, state } = setup();
+    state.progressMetrics.set(USER_A, { founding: 1 });
+    const result = await progress();
+    expect(result.unseen.badges).toEqual([
+      expect.objectContaining({ badge: "founding_member", metal: 4 }),
+    ]);
+    expect(result.xp).toBe(0);
+    expect(result.tokens).toBe(0);
+  });
+});
+
+describe("invites", () => {
+  const refer = (app: Express, user: string, username: string) =>
+    request(app).post("/api/v1/me/referral").set(as(user)).send({ username });
+
+  it("sends the new member a friend request from whoever invited them", async () => {
+    const { app, state } = setup();
+    expect((await refer(app, NEWBIE, "devuser")).status).toBe(204);
+
+    expect(
+      state.friendships.find((f) =>
+        [f.user_a_id, f.user_b_id].includes(NEWBIE),
+      ),
+    ).toMatchObject({ status: "pending", requested_by: USER_A });
+    const inbox = await request(app)
+      .get("/api/v1/me/notifications")
+      .set(as(NEWBIE));
+    expect(
+      inbox.body.data.find(
+        (n: { kind: string }) => n.kind === "friend_request",
+      ),
+    ).toMatchObject({
+      actor: expect.objectContaining({ username: "devuser" }),
+      relation: "request-received",
+    });
+  });
+
+  it("sends no request between people who are friends already", async () => {
+    const { app, state } = setup({
+      friendships: [
+        buildFriendship({ user_b_id: NEWBIE, status: "accepted" }),
+      ],
+    });
+    await refer(app, NEWBIE, "devuser");
+    expect(
+      state.friendships.filter((f) =>
+        [f.user_a_id, f.user_b_id].includes(NEWBIE),
+      ),
+    ).toHaveLength(1);
+    expect(
+      state.notifications.some(
+        (n) => n.user_id === NEWBIE && n.kind === "friend_request",
+      ),
+    ).toBe(false);
+  });
+
+  it("tells the inviter once the friend gets going, with what it paid", async () => {
+    const { app, progress, state } = setup();
+    await refer(app, NEWBIE, "devuser");
+    state.progressMetrics.set(NEWBIE, { logged: REFERRAL.activeAfter });
+    const newbie = await progress(NEWBIE);
+    await progress(NEWBIE);
+
+    const told = state.notifications.filter(
+      (n) => n.kind === "referral_active",
+    );
+    expect(told).toEqual([
+      expect.objectContaining({
+        user_id: USER_A,
+        actor_id: NEWBIE,
+        data: {
+          username: "newbie",
+          xp: REFERRAL.activeXp,
+          tokens: REFERRAL.activeTokens,
+        },
+      }),
+    ]);
+    // The friend who joined has their welcome too, tokens with it.
+    expect(newbie.tokens).toBeGreaterThanOrEqual(REFERRAL.welcomeTokens);
+  });
+
+  it("shows who an invite is from, to anyone", async () => {
+    const { app } = setup({
+      profiles: [buildProfile({ profile_visibility: "private" })],
+    });
+    const res = await request(app).get("/api/v1/referrals/devuser");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      username: "devuser",
+      avatarUrl: null,
+      accent: expect.any(String),
+      level: 1,
+      frame: null,
+      reward: {
+        xp: REFERRAL.welcomeXp,
+        tokens: REFERRAL.welcomeTokens,
+        afterGames: REFERRAL.activeAfter,
+      },
+    });
+    expect((await request(app).get("/api/v1/referrals/nobody")).status).toBe(
+      404,
+    );
+  });
+});
+
+describe("nudges", () => {
+  afterEach(() => vi.useRealTimers());
+
+  const FRIDAY = "2026-10-30T12:00:00.000Z";
+  const cron = (app: Express, secret?: string) => {
+    const req = request(app).get("/api/v1/cron/nudges");
+    return secret ? req.set("Authorization", `Bearer ${secret}`) : req;
+  };
+
+  const atFriday = () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(FRIDAY));
+    const built = setup();
+    for (const p of built.state.profiles)
+      p.last_seen_at = "2026-10-29T00:00:00.000Z";
+    // Active last week, nothing yet this week.
+    built.state.xpEvents.push({
+      id: 900,
+      user_id: USER_A,
+      source: "rate",
+      key: "rate:old",
+      xp: 5,
+      created_at: "2026-10-21T12:00:00.000Z",
+    });
+    return built;
+  };
+
+  it("raises a streak at risk once, and only for the cron secret", async () => {
+    const { app, state } = atFriday();
+    expect((await cron(app)).status).toBe(404);
+    expect((await cron(app, "wrong")).status).toBe(404);
+
+    expect((await cron(app, "test-cron-secret")).body).toEqual({
+      members: 4,
+      raised: 1,
+    });
+    expect((await cron(app, "test-cron-secret")).body.raised).toBe(0);
+
+    const inbox = await request(app)
+      .get("/api/v1/me/notifications")
+      .set(as(USER_A));
+    expect(inbox.body.data[0]).toMatchObject({
+      kind: "streak_at_risk",
+      weeks: 1,
+      shield: true,
+      endsAt: "2026-11-02T00:00:00.000Z",
+    });
+    expect(
+      state.notifications.filter((n) => n.kind === "streak_at_risk"),
+    ).toHaveLength(1);
+  });
+
+  it("reads the nudge once the week has something in it", async () => {
+    const { app, xp, progress, state } = atFriday();
+    await cron(app, "test-cron-secret");
+    await xp(USER_A, "rate", "rate:new");
+    await progress();
+    expect(
+      state.notifications.find((n) => n.kind === "streak_at_risk")?.read_at,
+    ).not.toBeNull();
+  });
+
+  it("leaves out members not seen for two months", async () => {
+    const { app, state } = atFriday();
+    state.profiles.find((p) => p.id === USER_A)!.last_seen_at =
+      "2026-07-01T00:00:00.000Z";
+    expect((await cron(app, "test-cron-secret")).body).toEqual({
+      members: 3,
+      raised: 0,
+    });
   });
 });

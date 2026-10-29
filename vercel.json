@@ -11,6 +11,10 @@
         {
             "path": "/api/v1/cron/trending",
             "schedule": "0 5 * * *"
+        },
+        {
+            "path": "/api/v1/cron/nudges",
+            "schedule": "0 17 * * *"
         }
     ],
     "rewrites": [

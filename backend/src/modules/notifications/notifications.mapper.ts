@@ -196,6 +196,66 @@ export const toNotification = (
       return { ...base, kind: "referral_joined", username };
     }
 
+    case "referral_active": {
+      const username = str(row.data.username);
+      const xp = num(row.data.xp);
+      const tokens = num(row.data.tokens);
+      if (!username || xp === null || tokens === null)
+        return { ...base, kind: "unknown" };
+      return {
+        ...base,
+        kind: "referral_active",
+        actor: row.actor ? toFriendUser(row.actor, now) : null,
+        username,
+        xp,
+        tokens,
+      };
+    }
+
+    case "streak_at_risk": {
+      const weeks = num(row.data.weeks);
+      const endsAt = str(row.data.endsAt);
+      if (weeks === null || !endsAt) return { ...base, kind: "unknown" };
+      return {
+        ...base,
+        kind: "streak_at_risk",
+        weeks,
+        shield: row.data.shield === true,
+        endsAt,
+      };
+    }
+
+    case "task_nearly_done": {
+      const period = str(row.data.period);
+      const quest = str(row.data.quest);
+      const label = str(row.data.label);
+      const count = num(row.data.count);
+      const target = num(row.data.target);
+      const endsAt = str(row.data.endsAt);
+      if (
+        (period !== "week" && period !== "month") ||
+        !quest ||
+        !label ||
+        count === null ||
+        target === null ||
+        !endsAt
+      ) {
+        return { ...base, kind: "unknown" };
+      }
+      return {
+        ...base,
+        kind: "task_nearly_done",
+        period,
+        quest,
+        label,
+        count,
+        target,
+        xp: num(row.data.xp) ?? 0,
+        tokens: num(row.data.tokens) ?? 0,
+        endsAt,
+      };
+    }
+
     case "gift_received": {
       const username = str(row.data.username);
       const item = str(row.data.item);

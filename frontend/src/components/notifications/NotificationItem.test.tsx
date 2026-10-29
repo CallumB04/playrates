@@ -111,6 +111,54 @@ describe("NotificationItem", () => {
         );
     });
 
+    it("says an invited friend got going, and what it paid", () => {
+        renderItem({
+            ...welcome(),
+            kind: "referral_active",
+            actor: null,
+            username: "audit_ob2",
+            xp: 250,
+            tokens: 50,
+        } as AppNotification);
+        const link = screen.getByRole("link", {
+            name: /audit_ob2 got going from your invite/,
+        });
+        expect(link).toHaveAttribute("href", "/user/audit_ob2");
+        expect(link).toHaveTextContent("+250 XP");
+        expect(link).toHaveTextContent("+50");
+    });
+
+    it("warns of a streak at risk, and leads to it", () => {
+        renderItem({
+            ...welcome(),
+            kind: "streak_at_risk",
+            weeks: 6,
+            shield: false,
+            endsAt: "2026-11-01T23:59:59Z",
+        } as AppNotification);
+        expect(
+            screen.getByRole("link", { name: /Your 6 week streak/ })
+        ).toHaveAttribute("href", "/progress#streak");
+    });
+
+    it("sends a nearly done task to where it's done", () => {
+        renderItem({
+            ...welcome(),
+            kind: "task_nearly_done",
+            period: "week",
+            quest: "w_rate3",
+            label: "Rate 3 games",
+            count: 2,
+            target: 3,
+            xp: 40,
+            tokens: 5,
+            endsAt: "2026-11-01T23:59:59Z",
+        } as AppNotification);
+        const link = screen.getByRole("link", { name: /Rate 3 games/ });
+        expect(link).toHaveAttribute("href", "/user/devuser/games?type=played");
+        expect(link).toHaveTextContent("2 of 3");
+    });
+
     it("takes a gift to where it's worn, with the sender's face", () => {
         renderItem({
             ...welcome(),
@@ -139,7 +187,9 @@ describe("NotificationItem", () => {
             } as AppNotification);
 
             expect(
-                screen.getByRole("link", { name: /10 upvotes on your message/ })
+                screen.getByRole("link", {
+                    name: /10 reactions on your message/,
+                })
             ).toHaveAttribute("href", "/community/thread/4#message-9");
         });
 
@@ -156,7 +206,7 @@ describe("NotificationItem", () => {
             } as AppNotification);
 
             const link = screen.getByRole("link", {
-                name: /5 upvotes on your review of Journey/,
+                name: /5 reactions on your review of Journey/,
             });
             expect(link).toHaveAttribute("href", "/game/12#review-3");
             await userEvent.click(link);

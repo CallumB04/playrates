@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 import request from "supertest";
-import { authHeader, buildTestApp, USER_A } from "../helpers/buildTestApp.js";
-import { baseSeed, buildGame } from "../helpers/fixtures.js";
+import {
+  authHeader,
+  buildTestApp,
+  USER_A,
+  USER_B,
+} from "../helpers/buildTestApp.js";
+import {
+  baseSeed,
+  buildGame,
+  buildGameLog,
+  buildProfile,
+} from "../helpers/fixtures.js";
 
 const games = Array.from({ length: 7 }, (_, i) =>
   buildGame({ id: i + 1, slug: `game-${i + 1}`, title: `Game ${i + 1}` }),
@@ -64,6 +74,65 @@ describe("favourite games", () => {
       ],
     });
     expect((await put(app, [7])).status).toBe(422);
+  });
+
+  /* Someone else's profile shows where they have each game, not where the
+     viewer does. */
+  it("says where the owner has each one", async () => {
+    const app = setup({
+      gameLogs: [
+        buildGameLog({
+          id: 1,
+          game_id: 1,
+          status: "playing",
+          played_status: null,
+        }),
+        buildGameLog({
+          id: 2,
+          game_id: 3,
+          status: "backlog",
+          played_status: null,
+          system_slug: "ps5",
+        }),
+        buildGameLog({
+          id: 3,
+          game_id: 3,
+          status: "played",
+          played_status: "mastered",
+        }),
+        // The viewer's own log of game 5 says nothing about the owner's.
+        buildGameLog({
+          id: 4,
+          game_id: 5,
+          user_id: USER_B,
+          status: "wishlist",
+        }),
+      ],
+    });
+    await put(app, [1, 3, 5]);
+
+    const shown = await request(app)
+      .get("/api/v1/users/devuser/favourites")
+      .set("Authorization", authHeader(USER_B));
+    expect(
+      shown.body.map((g: { ownerStatus: unknown }) => g.ownerStatus),
+    ).toEqual([
+      { status: "playing", playedStatus: null },
+      { status: "played", playedStatus: "mastered" },
+      null,
+    ]);
+  });
+
+  it("shows nothing of a private profile's, its owner's statuses included", async () => {
+    const app = setup({
+      profiles: [buildProfile({ profile_visibility: "private" })],
+      gameLogs: [buildGameLog({ id: 1, game_id: 1 })],
+    });
+    await put(app, [1]);
+    const shown = await request(app)
+      .get("/api/v1/users/devuser/favourites")
+      .set("Authorization", authHeader(USER_B));
+    expect(shown.status).toBe(403);
   });
 
   it("needs a signed-in owner to change them", async () => {

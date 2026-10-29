@@ -1,23 +1,29 @@
 import {
   BACKGROUND_LEVEL,
   BADGES,
+  badgeTokens,
+  badgeXp,
   CARD_THEME_KEYS,
   FRAME_KEYS,
+  HABIT_WEEKS,
   levelFor,
   levelTokens,
-  METAL_TOKENS,
-  METAL_XP,
   metalsReached,
   periodsFor,
   NAME_COLOUR_KEYS,
   NAME_FONT_KEYS,
   NO_FRAME,
+  questCount,
   questsFor,
   REACTION_KEYS,
+  REFERRAL,
   SETUP_REWARD,
   SETUP_STEPS,
   SHOP_ITEMS,
+  streakXp,
+  swapQuest,
   TASK_TOKENS,
+  WEEKLY_SWAPS,
   wornFrame,
   type Backgrounds,
   type GiftFriend,
@@ -30,7 +36,11 @@ import {
   type Period,
   type PlayerBadges,
   type Progress,
+  type QuestDef,
   type QuestState,
+  type QuestSwap,
+  type QuestSwapResult,
+  type ReferralInvite,
   type NameColourKey,
   type NameFontKey,
   type SetupStepKey,
@@ -43,6 +53,7 @@ import { AppError } from "../../lib/AppError.js";
 import type { ProfileRow } from "../../types/database.types.js";
 import type { FriendsRepository } from "../friends/friends.repository.js";
 import type { ListsRepository } from "../lists/lists.repository.js";
+import { friendRequestKey } from "../notifications/notifications.mapper.js";
 import type { NotificationsRepository } from "../notifications/notifications.repository.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import { toAccent } from "../profiles/profiles.mapper.js";
@@ -60,14 +71,25 @@ import {
   themeUnlocked,
 } from "./progress.logic.js";
 import type { PlayerCardSource } from "./progress.image.js";
+import {
+  NUDGE_ACTIVE_DAYS,
+  nudgesFor,
+  streakNudgeKey,
+} from "./progress.nudges.js";
 import { BuyError, type ProgressRepository } from "./progress.repository.js";
 
 /** A member from before progress starts with tokens for the levels their
  *  history reached, up to this, so they start rich but not done. */
 export const LAUNCH_TOKEN_CAP = 300;
-/** Logs that make an invited friend count as getting going. */
-export const REFERRAL_ACTIVE_LOGS = 5;
 const REFERRAL_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** A period's tasks as dealt, and what dealt them. */
+interface Deal {
+  quests: QuestDef[];
+  swaps: QuestSwap[];
+  habits: Record<string, number>;
+}
 
 const ALL_BADGES = BADGES as readonly BadgeDef[];
 
@@ -135,17 +157,32 @@ export const createProgressService = (
     };
   };
 
-  /** This period's quests, counted from the ledger. */
+  /** This period's tasks: dealt from what the member did in the weeks
+   *  before it, which can't change during it, then any swap. */
+  const dealOf = async (userId: string, period: Period): Promise<Deal> => {
+    const habitsFrom = new Date(
+      Date.parse(period.start) - HABIT_WEEKS * 7 * DAY_MS,
+    ).toISOString();
+    const [habits, swaps] = await Promise.all([
+      repo.countSources(userId, habitsFrom, period.start),
+      period.kind === "week" ? repo.swaps(userId, period.key) : [],
+    ]);
+    return {
+      quests: questsFor(userId, period, { habits, swaps }),
+      swaps,
+      habits,
+    };
+  };
+
+  /** The dealt tasks, counted from the ledger. */
   const questStates = async (
     userId: string,
     period: Period,
+    deal: Deal,
   ): Promise<QuestState[]> => {
     const counts = await repo.countSources(userId, period.start, period.end);
-    return questsFor(userId, period).map((q, slot) => {
-      const count = Math.min(
-        q.target,
-        q.sources.reduce((n, s) => n + (counts[s] ?? 0), 0),
-      );
+    return deal.quests.map((q, slot) => {
+      const count = questCount(q, counts);
       return {
         slot,
         key: q.key,
@@ -155,9 +192,13 @@ export const createProgressService = (
         xp: q.xp,
         tokens: TASK_TOKENS[period.kind],
         done: count >= q.target,
+        swapped: deal.swaps.some((s) => s.slot === slot),
       };
     });
   };
+
+  const swapsLeft = (deal: Deal) =>
+    Math.max(0, WEEKLY_SWAPS - deal.swaps.length);
 
   /** The last 26 weeks, oldest first, for the streak's graph. */
   const historyOf = async (
@@ -177,17 +218,19 @@ export const createProgressService = (
     });
   };
 
-  /** Getting started, from what the account holds. */
-  const setupOf = async (
+  /** Getting started, from what the account holds. Any game on any shelf
+   *  is a first log, as the step says. */
+  const setupOf = (
     row: ProfileRow,
     metrics: Record<string, number>,
-  ): Promise<Record<SetupStepKey, boolean>> => ({
+    favourites: number,
+  ): Record<SetupStepKey, boolean> => ({
     picture: !!row.avatar_url,
     bio: (row.bio ?? "").trim().length > 0,
-    log: (metrics.logged ?? 0) > 0,
+    log: (metrics.shelved ?? 0) > 0,
     rate: (metrics.rated ?? 0) > 0,
     review: (metrics.reviews ?? 0) > 0,
-    favourites: (await repo.favouriteCount(row.id)) > 0,
+    favourites: favourites > 0,
     friend: (metrics.friends ?? 0) > 0,
     post: (metrics.posts ?? 0) > 0,
   });
@@ -238,13 +281,22 @@ export const createProgressService = (
           userId,
           "streak",
           `streak:${periods.week.key}`,
-          Math.min(70, 20 + 5 * streak.weeks),
+          streakXp(streak.weeks),
+        );
+        // Kept: the nudge about losing it has nothing left to say.
+        await notifications.markReadByKey(
+          userId,
+          streakNudgeKey(periods.week),
         );
       }
 
       // Tasks, each with its XP and tokens.
-      const week = await questStates(userId, periods.week);
-      const month = await questStates(userId, periods.month);
+      const deals = {
+        week: await dealOf(userId, periods.week),
+        month: await dealOf(userId, periods.month),
+      };
+      const week = await questStates(userId, periods.week, deals.week);
+      const month = await questStates(userId, periods.month, deals.month);
       for (const [period, quests] of [
         [periods.week, week],
         [periods.month, month],
@@ -270,36 +322,66 @@ export const createProgressService = (
         for (const metal of metalsReached(badge, metrics[badge.metric] ?? 0)) {
           if (held.has(`${badge.key}:${metal}`)) continue;
           await repo.unlockBadge(userId, badge.key, metal);
-          await repo.awardXp(
-            userId,
+          const xp = badgeXp(badge, metal);
+          if (xp > 0) {
+            await repo.awardXp(
+              userId,
+              "badge",
+              `badge:${badge.key}:${metal}`,
+              xp,
+              // History's badges: the leaderboard leaves these out.
+              launch ? { launch: true } : undefined,
+            );
+          }
+          grant(
             "badge",
             `badge:${badge.key}:${metal}`,
-            METAL_XP[metal],
-            // History's badges: the leaderboard leaves these out.
-            launch ? { launch: true } : undefined,
+            badgeTokens(badge, metal),
           );
-          grant("badge", `badge:${badge.key}:${metal}`, METAL_TOKENS[metal]);
         }
       }
 
-      // An invited friend who got going pays both ends, once.
-      if (row.referred_by && metrics.logged >= REFERRAL_ACTIVE_LOGS) {
-        await repo.awardXp(
-          row.referred_by,
-          "referral_active",
-          `ref:${userId}:active`,
-        );
-        await repo.awardTokens(
-          row.referred_by,
-          "referral",
-          `ref:${userId}`,
-          25,
-        );
-        await repo.awardXp(userId, "referral_welcome", "ref:welcome");
+      // An invited friend who got going pays both ends, once, and the one
+      // who invited them hears about it. The token row is the marker.
+      if (row.referred_by && (metrics.logged ?? 0) >= REFERRAL.activeAfter) {
+        const referrer = row.referred_by;
+        const paid = (await repo.tokenKeys(referrer, `ref:${userId}`)).size > 0;
+        if (!paid) {
+          await repo.awardXp(
+            referrer,
+            "referral_active",
+            `ref:${userId}:active`,
+            REFERRAL.activeXp,
+          );
+          await repo.awardTokens(
+            referrer,
+            "referral",
+            `ref:${userId}`,
+            REFERRAL.activeTokens,
+          );
+          await repo.awardXp(
+            userId,
+            "referral_welcome",
+            "ref:welcome",
+            REFERRAL.welcomeXp,
+          );
+          grant("referral", "ref:welcome", REFERRAL.welcomeTokens);
+          await notifications.raise({
+            userId: referrer,
+            kind: "referral_active",
+            actorId: userId,
+            data: {
+              username: row.username,
+              xp: REFERRAL.activeXp,
+              tokens: REFERRAL.activeTokens,
+            },
+            dedupeKey: `referral_active:${userId}`,
+          });
+        }
       }
 
       // Getting started, all of it, pays once.
-      const setup = await setupOf(row, metrics);
+      const setup = setupOf(row, metrics, await repo.favouriteCount(userId));
       if (SETUP_STEPS.every((step) => setup[step])) {
         await repo.awardXp(userId, "setup", "setup", SETUP_REWARD.xp);
         grant("setup", "setup", SETUP_REWARD.tokens);
@@ -319,23 +401,33 @@ export const createProgressService = (
         await repo.grantBackgroundCredit(userId);
       }
 
+      /* Only what isn't in the ledger yet: a task done earlier in the week
+         is gathered again on every visit, and counting it each time said
+         its tokens were new each time. */
+      const paidKeys = await repo.paidTokenKeys(
+        userId,
+        grants.map((g) => g.key),
+      );
+      const fresh = grants.filter((g) => !paidKeys.has(g.key));
       let gained = 0;
-      if (launch) {
-        // Once: a second run before the reveal has played pays nothing new.
-        const paid = (await repo.tokenKeys(userId, "launch")).size > 0;
-        for (const g of grants)
+      const launchPaid =
+        launch && (await repo.tokenKeys(userId, "launch")).size > 0;
+      if (launch && !launchPaid) {
+        // The history, as one capped sum, each source keyed at 0 so it
+        // isn't paid again.
+        for (const g of fresh)
           await repo.awardTokens(userId, g.source, g.key, 0);
-        if (!paid) {
-          gained = Math.min(
-            LAUNCH_TOKEN_CAP,
-            grants.reduce((n, g) => n + g.amount, 0),
-          );
-          if (gained > 0) {
-            await repo.awardTokens(userId, "launch", "launch", gained);
-          }
+        gained = Math.min(
+          LAUNCH_TOKEN_CAP,
+          fresh.reduce((n, g) => n + g.amount, 0),
+        );
+        if (gained > 0) {
+          await repo.awardTokens(userId, "launch", "launch", gained);
         }
       } else {
-        for (const g of grants) {
+        /* Earned since: a member counted by the deploy's backfill who comes
+           back weeks later is paid for those weeks as anyone else is. */
+        for (const g of fresh) {
           await repo.awardTokens(userId, g.source, g.key, g.amount);
           gained += g.amount;
         }
@@ -365,8 +457,9 @@ export const createProgressService = (
         },
         // Read again, so quests done just now show as done.
         quests: {
-          week: await questStates(userId, periods.week),
-          month: await questStates(userId, periods.month),
+          week: await questStates(userId, periods.week, deals.week),
+          month: await questStates(userId, periods.month, deals.month),
+          swapsLeft: swapsLeft(deals.week),
         },
         periods,
         look: lookOf(row, items, badges),
@@ -384,6 +477,88 @@ export const createProgressService = (
         },
         reveal: launch,
         referralCode: row.username,
+      };
+    },
+
+    /**
+     * Trades one undone weekly task for another, once a week: never one in
+     * the set already, and one not done already if there is such a task.
+     */
+    async swapQuest(
+      userId: string,
+      slot: number,
+      now = new Date(),
+    ): Promise<QuestSwapResult> {
+      const row = await mustProfile(userId);
+      const { week } = periodsFor(now, zoneOf(row));
+      const deal = await dealOf(userId, week);
+      const used = () =>
+        AppError.conflict(
+          "conflict",
+          "You've swapped a task this week already",
+        );
+      if (swapsLeft(deal) === 0) throw used();
+      const current = deal.quests[slot];
+      if (!current) throw AppError.notFound("Task");
+      const counts = await repo.countSources(userId, week.start, week.end);
+      if (questCount(current, counts) >= current.target) {
+        throw AppError.conflict("conflict", "That task is done already");
+      }
+      const next = swapQuest(userId, week, deal.quests, slot, {
+        habits: deal.habits,
+        counts,
+      });
+      if (!next)
+        throw AppError.conflict("conflict", "There's no task to swap in");
+      if (!(await repo.recordSwap(userId, week.key, slot, next.key)))
+        throw used();
+      const after = await dealOf(userId, week);
+      return {
+        week: await questStates(userId, week, after),
+        swapsLeft: swapsLeft(after),
+      };
+    },
+
+    /**
+     * Raises the day's nudges for everyone seen lately: a streak about to go
+     * and a task nearly done near its period's end. Read in one statement,
+     * decided here with the same rules the progress page uses, and written
+     * in one; each is keyed to its period, so running twice raises nothing
+     * more.
+     */
+    async nudge(
+      now = new Date(),
+    ): Promise<{ members: number; raised: number }> {
+      const since = new Date(now.getTime() - NUDGE_ACTIVE_DAYS * DAY_MS);
+      const members = await repo.nudgeCandidates(
+        since.toISOString(),
+        now.toISOString(),
+      );
+      const drafts = members.flatMap((m) => nudgesFor(m, now));
+      return {
+        members: members.length,
+        raised: await notifications.raiseOnce(drafts),
+      };
+    },
+
+    /** Who an invite link is from, for the page it opens: the card only,
+     *  which anyone may see, private profiles included. */
+    async invite(username: string): Promise<ReferralInvite> {
+      const profile = await profiles.findByUsername(username);
+      if (!profile) throw AppError.notFound("Profile");
+      const row = await mustProfile(profile.id);
+      const level = levelFor(row.xp).level;
+      return {
+        username: row.username,
+        avatarUrl: row.avatar_url,
+        accent: toAccent(row.accent),
+        level,
+        frame: wornFrame(row.frame, level),
+        reward: {
+          xp: REFERRAL.welcomeXp,
+          tokens: REFERRAL.welcomeTokens,
+          afterGames: REFERRAL.activeAfter,
+        },
       };
     },
 
@@ -848,6 +1023,7 @@ export const createProgressService = (
         referrer.id,
         "referral_joined",
         `ref:${userId}:joined`,
+        REFERRAL.joinedXp,
       );
       await notifications.raise({
         userId: referrer.id,
@@ -856,6 +1032,23 @@ export const createProgressService = (
         data: { username: me.username },
         dedupeKey: `referral:${userId}`,
       });
+      /* The two know each other, so the one who invited asks: the new
+         member gets a request to accept, not one to remember to send. */
+      if (!(await friends.find(referrer.id, userId))) {
+        try {
+          await friends.create(referrer.id, userId);
+        } catch (error) {
+          // A request sent between the check and here is the same request.
+          if ((error as { code?: string }).code === "23505") return;
+          throw error;
+        }
+        await notifications.raise({
+          userId,
+          kind: "friend_request",
+          actorId: referrer.id,
+          dedupeKey: friendRequestKey(referrer.id),
+        });
+      }
     },
   };
 };

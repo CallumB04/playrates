@@ -233,7 +233,7 @@ export const createReviewsService = (
       if (!review) throw AppError.notFound("Review");
       // A vote says someone else found it useful; the author always does.
       if (review.user_id === userId) {
-        throw AppError.forbidden("You cannot upvote your own review");
+        throw AppError.forbidden("You cannot react to your own review");
       }
 
       const { state, added } = await react(

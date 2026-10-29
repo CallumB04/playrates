@@ -16,6 +16,7 @@ import {
     fetchShop,
     fetchXpRules,
     markProgressSeen,
+    swapQuest,
     markRevealed,
     queryKeys,
     setProgressStyle,
@@ -54,6 +55,15 @@ export const useMarkSeen = () =>
         mutationKey: ["progress", "seen"],
         mutationFn: markProgressSeen,
     });
+
+export const useSwapQuest = () => {
+    const settle = useSettle();
+    return useMutation({
+        mutationKey: ["progress", "swap"],
+        mutationFn: swapQuest,
+        onSuccess: settle,
+    });
+};
 
 export const useMarkRevealed = () => {
     const settle = useSettle();

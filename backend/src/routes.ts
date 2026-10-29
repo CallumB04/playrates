@@ -13,6 +13,7 @@ import { createProgressService } from "./modules/progress/progress.service.js";
 import {
   createMyProgressRouter,
   createProgressRouter,
+  createReferralsRouter,
   createShopRouter,
 } from "./modules/progress/progress.routes.js";
 import { createGaming25Service } from "./modules/gaming25/gaming25.service.js";
@@ -131,6 +132,7 @@ export const buildRoutes = ({
     repos.favourites,
     repos.games,
     profileGate,
+    repos.gameLogs,
   );
   // Reactions open with level and packs, which progress knows; asked at
   // request time, by when it exists.
@@ -345,7 +347,7 @@ export const buildRoutes = ({
   );
   router.use(
     "/lists",
-    createListsRouter({ service: lists, requireAuth, optionalAuth }),
+    createListsRouter({ service: lists, profiles: repos.profiles, requireAuth, optionalAuth }),
   );
 
   router.use(
@@ -359,6 +361,10 @@ export const buildRoutes = ({
   router.use(
     "/shop",
     createShopRouter({ service: progress, requireAuth, optionalAuth }),
+  );
+  router.use(
+    "/referrals",
+    createReferralsRouter({ service: progress, requireAuth, optionalAuth }),
   );
   router.use(
     "/gaming-25",
@@ -393,6 +399,7 @@ export const buildRoutes = ({
     createCronRouter({
       provider,
       repo: repos.games,
+      progress,
       secret: env().CRON_SECRET,
     }),
   );

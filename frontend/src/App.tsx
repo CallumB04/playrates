@@ -9,6 +9,7 @@ import ChooseUsername from "./components/onboarding/ChooseUsername";
 import FirstLoginWelcome from "./components/onboarding/FirstLoginWelcome";
 import ProgressMoments from "./components/progress/ProgressMoments";
 import ReferralCapture from "./components/progress/ReferralCapture";
+import InviteBanner from "./components/progress/InviteBanner";
 import ProgressPage from "./pages/ProgressPage/ProgressPage";
 import ShopPage from "./pages/ShopPage/ShopPage";
 import HomePage from "./pages/HomePage/HomePage";
@@ -48,6 +49,7 @@ function App() {
                 search with no results) doesn't end on the footer. */}
             <main className="min-h-dvh flex-1">
                 <PageShell>
+                    <InviteBanner />
                     <Routes>
                         <Route path="/" element={<HomePage />} />
                         <Route

@@ -42,7 +42,7 @@ export const levelFor = (xp: number): LevelState => {
 
 /** Tokens a level is worth on reaching it. */
 export const levelTokens = (level: number): number =>
-  level % 10 === 0 ? 50 : level % 5 === 0 ? 25 : 10;
+  level % 10 === 0 ? 30 : level % 5 === 0 ? 15 : 5;
 
 /* ---------------------------------------------------------------- frames */
 
@@ -172,13 +172,15 @@ export const styleUnlocked = (
 /** 1 bronze, 2 silver, 3 gold, 4 platinum. */
 export type Metal = 1 | 2 | 3 | 4;
 export const METALS = ["bronze", "silver", "gold", "platinum"] as const;
+/** Kept small beside what members do, so badges mark a milestone rather
+ *  than carry the climb. */
 export const METAL_XP: Record<Metal, number> = {
-  1: 50,
-  2: 150,
-  3: 400,
-  4: 1000,
+  1: 25,
+  2: 50,
+  3: 100,
+  4: 200,
 };
-export const METAL_TOKENS: Record<Metal, number> = { 1: 0, 2: 0, 3: 10, 4: 30 };
+export const METAL_TOKENS: Record<Metal, number> = { 1: 0, 2: 5, 3: 15, 4: 30 };
 
 export const BADGE_CATEGORIES = [
   "collection",
@@ -196,7 +198,10 @@ export type BadgeCategory = (typeof BADGE_CATEGORIES)[number];
 /** Every count the badges are measured by, as player_metrics returns them,
  *  plus streakBest, which the service works out. */
 export const METRICS = [
+  /** Games played or playing: a wishlist or backlog counts for nothing. */
   "logged",
+  /** Every game on any shelf, for getting started only. */
+  "shelved",
   "rated",
   "hours",
   "finished",
@@ -239,6 +244,9 @@ export interface BadgeDef {
   tiers: readonly { metal: Metal; at: number }[];
   /** Hidden from everyone, its owner included, until it's earned. */
   secret?: boolean;
+  /** Worn for what it says, and pays no XP or tokens: nothing a member
+   *  does earns it. */
+  cosmetic?: boolean;
 }
 
 const four = (a: number, b: number, c: number, d: number) =>
@@ -253,7 +261,7 @@ export const BADGES = [
   {
     key: "collector",
     name: "Collector",
-    description: "Log {n} games",
+    description: "Log {n} games you've played",
     category: "collection",
     icon: "Library",
     metric: "logged",
@@ -343,7 +351,7 @@ export const BADGES = [
   {
     key: "respected",
     name: "Respected",
-    description: "Get {n} upvotes on your reviews",
+    description: "Get {n} reactions on your reviews",
     category: "critic",
     icon: "ThumbsUp",
     metric: "reviewUpvotes",
@@ -361,7 +369,7 @@ export const BADGES = [
   {
     key: "crowd_favourite",
     name: "Crowd Favourite",
-    description: "Get {n} upvotes in the community",
+    description: "Get {n} reactions in the community",
     category: "community",
     icon: "Flame",
     metric: "postUpvotes",
@@ -379,7 +387,7 @@ export const BADGES = [
   {
     key: "tastemaker",
     name: "Tastemaker",
-    description: "Get {n} upvotes on your lists",
+    description: "Get {n} reactions on your lists",
     category: "curation",
     icon: "Sparkle",
     metric: "listUpvotes",
@@ -447,11 +455,12 @@ export const BADGES = [
     icon: "Crown",
     metric: "founding",
     tiers: [{ metal: 4, at: 1 }],
+    cosmetic: true,
   },
   {
     key: "binge",
     name: "Binge",
-    description: "Log 10 games in one day",
+    description: "Log 10 games you've played in one day",
     category: "special",
     icon: "Popcorn",
     metric: "binge",
@@ -485,6 +494,12 @@ export const BADGE_KEYS = BADGES.map((b) => b.key) as [BadgeKey, ...BadgeKey[]];
 
 export const badgeDef = (key: string): BadgeDef | undefined =>
   (BADGES as readonly BadgeDef[]).find((b) => b.key === key);
+
+export const badgeXp = (badge: BadgeDef, metal: Metal): number =>
+  badge.cosmetic ? 0 : METAL_XP[metal];
+
+export const badgeTokens = (badge: BadgeDef, metal: Metal): number =>
+  badge.cosmetic ? 0 : METAL_TOKENS[metal];
 
 /** The metals a count has reached. */
 export const metalsReached = (badge: BadgeDef, value: number): Metal[] =>
@@ -597,7 +612,7 @@ export const BACKGROUND_CREDIT_ITEM = "background_credit";
 /** A game's next picture costs a little more for each one already owned
  *  from that game, so a favourite can be collected without it being cheap. */
 export const backgroundPrice = (ownedFromGame: number): number =>
-  15 + 5 * ownedFromGame;
+  25 + 10 * ownedFromGame;
 
 export interface OwnedBackgroundGame {
   gameId: number;
@@ -637,6 +652,29 @@ export const SETUP_STEPS = [
 ] as const;
 export type SetupStepKey = (typeof SETUP_STEPS)[number];
 export const SETUP_REWARD = { xp: 150, tokens: 30 } as const;
+
+/* ---------------------------------------------------------------- streak */
+
+/** A week in the streak: more the longer it runs, up to a ceiling, so a
+ *  long streak is worth keeping without outweighing the week's play. */
+export const STREAK_XP = { base: 20, perWeek: 2, max: 50 } as const;
+
+export const streakXp = (weeks: number): number =>
+  Math.min(STREAK_XP.max, STREAK_XP.base + STREAK_XP.perWeek * weeks);
+
+/* ------------------------------------------------------------- referrals */
+
+/** An invite pays once the friend has played this many games, so an
+ *  account made only to be counted pays nothing. */
+export const REFERRAL = {
+  activeAfter: 5,
+  joinedXp: 50,
+  activeXp: 250,
+  activeTokens: 50,
+  /** For the friend who joined, once they get going. */
+  welcomeXp: 100,
+  welcomeTokens: 25,
+} as const;
 
 /* --------------------------------------------------------------- periods */
 
@@ -761,7 +799,7 @@ export const QUESTS = [
     period: "week",
     sources: ["rate"],
     target: 3,
-    xp: 40,
+    xp: 45,
   },
   {
     key: "w_finish1",
@@ -769,7 +807,7 @@ export const QUESTS = [
     period: "week",
     sources: ["finish"],
     target: 1,
-    xp: 75,
+    xp: 60,
   },
   {
     key: "w_review1",
@@ -785,7 +823,7 @@ export const QUESTS = [
     period: "week",
     sources: ["shelve"],
     target: 5,
-    xp: 40,
+    xp: 30,
   },
   {
     key: "w_post1",
@@ -828,12 +866,12 @@ export const QUESTS = [
     xp: 150,
   },
   {
-    key: "m_log15",
-    label: "Log 15 games",
+    key: "m_play8",
+    label: "Log 8 games you've played",
     period: "month",
-    sources: ["shelve", "play"],
-    target: 15,
-    xp: 150,
+    sources: ["play"],
+    target: 8,
+    xp: 125,
   },
   {
     key: "m_rate10",
@@ -841,7 +879,7 @@ export const QUESTS = [
     period: "month",
     sources: ["rate"],
     target: 10,
-    xp: 150,
+    xp: 125,
   },
   {
     key: "m_friend",
@@ -849,7 +887,7 @@ export const QUESTS = [
     period: "month",
     sources: ["friend"],
     target: 1,
-    xp: 150,
+    xp: 125,
   },
   {
     key: "m_posts5",
@@ -857,15 +895,15 @@ export const QUESTS = [
     period: "month",
     sources: ["thread", "reply"],
     target: 5,
-    xp: 150,
+    xp: 125,
   },
   {
     key: "m_upvotes10",
-    label: "Earn 10 upvotes on your reviews or posts",
+    label: "Get 10 reactions on your reviews, posts or lists",
     period: "month",
     sources: ["review_upvote", "post_upvote", "list_upvote"],
     target: 10,
-    xp: 150,
+    xp: 125,
   },
   {
     key: "m_master1",
@@ -873,7 +911,7 @@ export const QUESTS = [
     period: "month",
     sources: ["master"],
     target: 1,
-    xp: 150,
+    xp: 175,
   },
 ] as const satisfies readonly QuestDef[];
 
@@ -889,39 +927,128 @@ const hash = (text: string): number => {
   return h >>> 0;
 };
 
-/** Picks `count` from a pool in a stable order for this seed. */
-const pick = <T extends { key: string }>(
-  pool: T[],
-  seed: string,
-  count: number,
-) =>
-  [...pool]
-    .sort((a, b) => hash(`${seed}:${a.key}`) - hash(`${seed}:${b.key}`))
-    .slice(0, count);
+/** Ledger rows by XP source, as the quests count them. */
+export type SourceCounts = Record<string, number>;
 
-/** Tokens for each task done, on top of its XP. */
-export const TASK_TOKENS = { week: 2, month: 5 } as const;
+/** How often a member has done what a quest asks, over the weeks before. */
+const habitOf = (quest: QuestDef, habits: SourceCounts): number =>
+  quest.sources.reduce((n, s) => n + (habits[s] ?? 0), 0);
 
 /**
- * This period's tasks for a member: 3 a week, 3 a month, the month's a
- * longer stretch of the same kinds of thing.
+ * One from a pool, stable for the seed, and likelier the more the member
+ * does that kind of thing. A weighted draw (u to the power 1/w, highest
+ * wins) with the hash standing in for the random number.
  */
-export const questsFor = (userId: string, period: Period): QuestDef[] => {
+const draw = (
+  pool: readonly QuestDef[],
+  seed: string,
+  habits: SourceCounts,
+): QuestDef | undefined => {
+  let best: QuestDef | undefined;
+  let bestScore = -1;
+  for (const q of pool) {
+    const u = (hash(`${seed}:${q.key}`) + 1) / 4294967297;
+    const weight = 1 + Math.log2(1 + habitOf(q, habits));
+    const score = u ** (1 / weight);
+    if (score > bestScore) {
+      best = q;
+      bestScore = score;
+    }
+  }
+  return best;
+};
+
+/** How far a quest is, from this period's counts. */
+export const questCount = (quest: QuestDef, counts: SourceCounts): number =>
+  Math.min(quest.target, habitOf(quest, counts));
+
+/** Weeks of history that say what a member usually does. */
+export const HABIT_WEEKS = 8;
+
+/** Tokens for each task done, on top of its XP. */
+export const TASK_TOKENS = { week: 5, month: 15 } as const;
+
+/** Free swaps of an undone weekly task, each week. Monthly ones stay. */
+export const WEEKLY_SWAPS = 1;
+
+export interface QuestSwap {
+  slot: number;
+  quest: string;
+}
+
+/**
+ * This period's tasks for a member: 3 a week, 3 a month. Two lean towards
+ * what they've done over the last few weeks and the third is something
+ * they haven't, so the set fits them without being only more of the same.
+ * The habits are read from before the period starts, so the set holds
+ * still all period; a swap made this period then takes its slot.
+ */
+export const questsFor = (
+  userId: string,
+  period: Period,
+  {
+    habits = {},
+    swaps = [],
+  }: { habits?: SourceCounts; swaps?: QuestSwap[] } = {},
+): QuestDef[] => {
   const pool = (QUESTS as readonly QuestDef[]).filter(
     (q) => q.period === period.kind,
   );
+  const usual = pool.filter((q) => habitOf(q, habits) > 0);
+  const other = pool.filter((q) => habitOf(q, habits) === 0);
   const dealt: QuestDef[] = [];
   for (const slot of [0, 1, 2]) {
-    dealt.push(
-      pick(
-        pool.filter((q) => !dealt.some((t) => t.key === q.key)),
-        `${userId}:${period.key}:${slot}:`,
-        1,
-      )[0]!,
-    );
+    const left = (list: QuestDef[]) => list.filter((q) => !dealt.includes(q));
+    const [first, second] = slot < 2 ? [usual, other] : [other, usual];
+    const from = left(first).length > 0 ? left(first) : left(second);
+    dealt.push(draw(from, `${userId}:${period.key}:${slot}`, habits)!);
+  }
+  for (const swap of swaps) {
+    const quest = pool.find((q) => q.key === swap.quest);
+    if (quest && dealt[swap.slot] && !dealt.includes(quest))
+      dealt[swap.slot] = quest;
   }
   return dealt;
 };
+
+/**
+ * What a swap puts in a slot: never a task already in the set, and one
+ * not done already where there is one, or the swap would hand out a task
+ * as it was taken. Null when the pool has nothing left.
+ */
+export const swapQuest = (
+  userId: string,
+  period: Period,
+  dealt: readonly QuestDef[],
+  slot: number,
+  {
+    habits = {},
+    counts = {},
+  }: { habits?: SourceCounts; counts?: SourceCounts } = {},
+): QuestDef | null => {
+  const fresh = (QUESTS as readonly QuestDef[]).filter(
+    (q) => q.period === period.kind && !dealt.some((d) => d.key === q.key),
+  );
+  const open = fresh.filter((q) => questCount(q, counts) < q.target);
+  return (
+    draw(
+      open.length > 0 ? open : fresh,
+      `${userId}:${period.key}:swap:${slot}`,
+      habits,
+    ) ?? null
+  );
+};
+
+/** A task worth a nudge before its period ends: most of the way there, or
+ *  one step off. Never one that hasn't been started. */
+export const nearlyDone = (quest: {
+  count: number;
+  target: number;
+  done: boolean;
+}): boolean =>
+  !quest.done &&
+  quest.count > 0 &&
+  (quest.count >= quest.target - 1 || quest.count >= 0.75 * quest.target);
 
 /* ----------------------------------------------------------------- types */
 
@@ -934,6 +1061,8 @@ export interface QuestState {
   xp: number;
   tokens: number;
   done: boolean;
+  /** Put in this period by a swap. */
+  swapped: boolean;
 }
 
 export interface StreakWeek {
@@ -973,7 +1102,12 @@ export interface Progress {
   tokens: number;
   frame: FrameKey | null;
   streak: StreakState;
-  quests: { week: QuestState[]; month: QuestState[] };
+  quests: {
+    week: QuestState[];
+    month: QuestState[];
+    /** Swaps of an undone weekly task left this week. */
+    swapsLeft: number;
+  };
   periods: { week: Period; month: Period };
   look: {
     /** What's stored: a frame, "none", or null for the level's best. */
@@ -1104,6 +1238,27 @@ export type StyleInput = z.infer<typeof StyleSchema>;
 export const ReferralSchema = z
   .object({ username: z.string().trim().min(1).max(40) })
   .strict();
+
+/** Who sent an invite link, for the page it lands on: only what their
+ *  profile card shows anyone. */
+export interface ReferralInvite {
+  username: string;
+  avatarUrl: string | null;
+  accent: string;
+  level: number;
+  frame: FrameKey | null;
+  /** What joining is worth, once the new member has played `afterGames`. */
+  reward: { xp: number; tokens: number; afterGames: number };
+}
+
+export const SwapQuestSchema = z
+  .object({ slot: z.number().int().min(0).max(2) })
+  .strict();
+
+export interface QuestSwapResult {
+  week: QuestState[];
+  swapsLeft: number;
+}
 
 export const ShopItemParamSchema = z.object({ item: z.enum(SHOP_ITEM_KEYS) });
 

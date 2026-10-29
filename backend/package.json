@@ -17,7 +17,8 @@
     "db:types": "supabase gen types typescript --linked > src/types/database.types.ts",
     "migrate:igdb": "tsx scripts/migrateToIgdb.ts",
     "local:snapshot": "tsx scripts/local/snapshot.ts",
-    "local:seed": "tsx scripts/local/buildSeed.ts"
+    "local:seed": "tsx scripts/local/buildSeed.ts",
+    "backfill:progress": "tsx scripts/backfillProgress.ts"
   },
   "keywords": [],
   "author": "",

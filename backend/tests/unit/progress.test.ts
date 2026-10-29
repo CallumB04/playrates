@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vitest";
 import {
   BADGES,
+  badgeDef,
+  badgeTokens,
+  badgeXp,
   levelFor,
+  nearlyDone,
   periodsFor,
+  QUESTS,
+  questCount,
   questsFor,
+  streakXp,
+  swapQuest,
   xpForLevel,
   type BadgeDef,
+  type QuestDef,
 } from "@playrates/shared";
 import {
   frameUnlocked,
@@ -71,6 +80,108 @@ describe("questsFor", () => {
         .join(),
     );
     expect(new Set(others).size).toBeGreaterThan(1);
+  });
+});
+
+describe("questsFor, by habit", () => {
+  const { week } = periodsFor(new Date("2026-10-29T12:00:00Z"), "UTC");
+  const users = Array.from({ length: 40 }, (_, i) => `member-${i}`);
+
+  it("leans towards what a member has been doing", () => {
+    const share = (habits: Record<string, number>) =>
+      users.filter((u) =>
+        questsFor(u, week, { habits }).some((q) => q.key === "w_rate3"),
+      ).length / users.length;
+    expect(share({ rate: 30 })).toBeGreaterThan(share({}));
+    expect(share({ rate: 30 })).toBeGreaterThan(0.7);
+  });
+
+  it("keeps one task outside their habits while there is one", () => {
+    const habits = { rate: 5, play: 5, finish: 2, review_short: 1 };
+    for (const u of users) {
+      const dealt = questsFor(u, week, { habits });
+      expect(dealt.filter((q) => questCount(q, habits) === 0)).toHaveLength(
+        1,
+      );
+    }
+  });
+
+  it("holds still for the same habits, and gives 3 different tasks", () => {
+    const habits = { rate: 4, play: 2 };
+    const dealt = questsFor("member-1", week, { habits });
+    expect(questsFor("member-1", week, { habits })).toEqual(dealt);
+    expect(new Set(dealt.map((q) => q.key)).size).toBe(3);
+  });
+
+  it("puts a swap in its slot", () => {
+    const dealt = questsFor("member-1", week);
+    const next = swapQuest("member-1", week, dealt, 1)!;
+    const swapped = questsFor("member-1", week, {
+      swaps: [{ slot: 1, quest: next.key }],
+    });
+    expect(swapped[1]!.key).toBe(next.key);
+    expect([swapped[0], swapped[2]]).toEqual([dealt[0], dealt[2]]);
+  });
+});
+
+describe("swapQuest", () => {
+  const { week } = periodsFor(new Date("2026-10-29T12:00:00Z"), "UTC");
+
+  it("never deals a task already in the set", () => {
+    for (const u of ["a", "b", "c", "d", "e", "f"]) {
+      const dealt = questsFor(u, week);
+      for (const slot of [0, 1, 2]) {
+        const next = swapQuest(u, week, dealt, slot)!;
+        expect(dealt.map((q) => q.key)).not.toContain(next.key);
+      }
+    }
+  });
+
+  it("passes over a task that would be done as it arrives", () => {
+    const dealt = questsFor("a", week);
+    const fresh = (QUESTS as readonly QuestDef[]).filter(
+      (q) => q.period === "week" && !dealt.includes(q),
+    );
+    // Every fresh task but one is done already this week.
+    const open = fresh[0]!;
+    const counts = Object.fromEntries(
+      fresh.slice(1).flatMap((q) => q.sources.map((s) => [s, 99])),
+    );
+    for (const s of open.sources) delete counts[s];
+    expect(swapQuest("a", week, dealt, 0, { counts })?.key).toBe(open.key);
+  });
+
+  it("is the same swap for the same slot all week", () => {
+    const dealt = questsFor("a", week);
+    expect(swapQuest("a", week, dealt, 2)).toEqual(
+      swapQuest("a", week, dealt, 2),
+    );
+  });
+});
+
+describe("nearlyDone", () => {
+  it("is one step off, or three quarters there, but never untouched", () => {
+    expect(nearlyDone({ count: 2, target: 3, done: false })).toBe(true);
+    expect(nearlyDone({ count: 1, target: 2, done: false })).toBe(true);
+    expect(nearlyDone({ count: 8, target: 10, done: false })).toBe(true);
+    expect(nearlyDone({ count: 7, target: 10, done: false })).toBe(false);
+    expect(nearlyDone({ count: 0, target: 1, done: false })).toBe(false);
+    expect(nearlyDone({ count: 3, target: 3, done: true })).toBe(false);
+  });
+});
+
+describe("rewards", () => {
+  it("pays nothing for a cosmetic badge", () => {
+    const founding = badgeDef("founding_member")!;
+    expect(badgeXp(founding, 4)).toBe(0);
+    expect(badgeTokens(founding, 4)).toBe(0);
+    expect(badgeXp(badgeDef("collector")!, 4)).toBe(200);
+  });
+
+  it("grows a streak week's XP up to its ceiling", () => {
+    expect(streakXp(1)).toBe(22);
+    expect(streakXp(10)).toBe(40);
+    expect(streakXp(40)).toBe(50);
   });
 });
 

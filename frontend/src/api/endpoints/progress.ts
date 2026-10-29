@@ -6,6 +6,8 @@ import type {
     LeaderboardRow,
     PlayerBadges,
     Progress,
+    QuestSwapResult,
+    ReferralInvite,
     Shop,
     ShopItemKey,
     StyleInput,
@@ -25,6 +27,11 @@ export const markProgressSeen = async (input: {
 }): Promise<void> => {
     await api.post("/me/progress/seen", input);
 };
+
+/** Trades one undone weekly task for another, once a week. */
+export const swapQuest = async (slot: number): Promise<QuestSwapResult> =>
+    (await api.post<QuestSwapResult>("/me/progress/quests/swap", { slot }))
+        .data;
 
 export const markRevealed = async (): Promise<void> => {
     await api.post("/me/progress/revealed");
@@ -80,6 +87,16 @@ export const buyBackground = async (input: {
     );
     return data;
 };
+
+/** Who invited a visitor, for the banner they land on; public. */
+export const fetchReferralInvite = async (
+    username: string
+): Promise<ReferralInvite> =>
+    (
+        await api.get<ReferralInvite>(
+            `/referrals/${encodeURIComponent(username)}`
+        )
+    ).data;
 
 export const sendReferral = async (username: string): Promise<void> => {
     await api.post("/me/referral", { username });

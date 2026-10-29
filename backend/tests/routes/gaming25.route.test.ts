@@ -342,7 +342,7 @@ describe("its page's preview", () => {
       "<title>devuser&#39;s Gaming 25 / PlayRates</title>",
     );
     expect(page.text).toContain(
-      "Favourite Game: Game 1 · Best Story: Game 2. 2 of 25 picked on PlayRates.",
+      "Favourite game: Game 1 · Best story: Game 2. 2 of 25 picked on PlayRates.",
     );
     expect(page.text).toMatch(
       /og:image" content="[^"]*\/api\/v1\/gaming-25\/devuser\/image\.png\?layout=wide&amp;v=2\.\d+"/,

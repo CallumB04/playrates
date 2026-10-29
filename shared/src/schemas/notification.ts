@@ -20,7 +20,10 @@ export const NOTIFICATION_KINDS = [
   "list_upvote_milestone",
   "gaming_25_love_milestone",
   "referral_joined",
+  "referral_active",
   "gift_received",
+  "streak_at_risk",
+  "task_nearly_done",
   "announcement",
 ] as const;
 
@@ -129,6 +132,40 @@ export interface ReferralJoinedNotification extends NotificationBase {
   username: string;
 }
 
+/** Someone you invited played enough games to count, and paid you for it. */
+export interface ReferralActiveNotification extends NotificationBase {
+  kind: "referral_active";
+  /** Who it was, while they still have an account. */
+  actor: FriendUser | null;
+  username: string;
+  xp: number;
+  tokens: number;
+}
+
+/** Nothing done yet this week, late in the week, with a streak to lose. */
+export interface StreakAtRiskNotification extends NotificationBase {
+  kind: "streak_at_risk";
+  weeks: number;
+  /** A shield would keep the streak if the week stays empty. */
+  shield: boolean;
+  /** When the week ends, in the member's own time zone. */
+  endsAt: string;
+}
+
+/** A task most of the way done, with its period about to end. */
+export interface TaskNearlyDoneNotification extends NotificationBase {
+  kind: "task_nearly_done";
+  period: "week" | "month";
+  /** The quest's key. */
+  quest: string;
+  label: string;
+  count: number;
+  target: number;
+  xp: number;
+  tokens: number;
+  endsAt: string;
+}
+
 /** A friend bought you something from the shop. */
 export interface GiftReceivedNotification extends NotificationBase {
   kind: "gift_received";
@@ -169,7 +206,10 @@ export type AppNotification =
   | ListUpvoteMilestoneNotification
   | Gaming25LoveMilestoneNotification
   | ReferralJoinedNotification
+  | ReferralActiveNotification
   | GiftReceivedNotification
+  | StreakAtRiskNotification
+  | TaskNearlyDoneNotification
   | AnnouncementNotification
   | UnknownNotification;
 

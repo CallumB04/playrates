@@ -1,3 +1,4 @@
+import type { QuestSwap, SourceCounts } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
 import type { ProfileRow } from "../../types/database.types.js";
 
@@ -46,9 +47,28 @@ export interface OwnedBackgroundRow {
   cover_url: string | null;
 }
 
+/** One member the daily job might nudge, as nudge_candidates reads them. */
+export interface NudgeCandidate {
+  userId: string;
+  timezone: string;
+  /** Mondays with something done, for the streak. */
+  weeks: string[];
+  shields: string[];
+  spare: number;
+  /** This week's and month's ledger by source, and the weeks before each. */
+  weekCounts: SourceCounts;
+  monthCounts: SourceCounts;
+  weekHabits: SourceCounts;
+  monthHabits: SourceCounts;
+  /** Swaps made this week, under the week's key. */
+  swaps: (QuestSwap & { period: string })[];
+}
+
 export interface ProgressRepository {
   profile(userId: string): Promise<ProfileRow | null>;
   profilesByIds(ids: string[]): Promise<ProfileRow[]>;
+  /** Every member's id after `after`, in order, `limit` at a time. */
+  profileIds(after: string | null, limit: number): Promise<string[]>;
   metrics(userId: string): Promise<Record<string, number>>;
   /** Mondays, in the member's zone, of the weeks with something done. */
   weeks(userId: string): Promise<string[]>;
@@ -74,7 +94,9 @@ export interface ProgressRepository {
     amount: number,
   ): Promise<void>;
   tokenKeys(userId: string, prefix: string): Promise<Set<string>>;
-  /** Ledger rows per source between two instants. */
+  /** Which of these keys the token ledger has already. */
+  paidTokenKeys(userId: string, keys: string[]): Promise<Set<string>>;
+  /** Ledger rows per source between two instants, less any taken back. */
   countSources(
     userId: string,
     from: string,
@@ -109,6 +131,17 @@ export interface ProgressRepository {
     recipientId: string,
     item: string,
   ): Promise<{ tokens: number; cost: number }>;
+  /** The swaps made in a period. */
+  swaps(userId: string, period: string): Promise<QuestSwap[]>;
+  /** False when the period has had its swap already. */
+  recordSwap(
+    userId: string,
+    period: string,
+    slot: number,
+    quest: string,
+  ): Promise<boolean>;
+  /** Members seen since `since`, with what the nudges are decided from. */
+  nudgeCandidates(since: string, now: string): Promise<NudgeCandidate[]>;
   rules(): Promise<RuleRow[]>;
   xpSince(userIds: string[], since: string): Promise<Map<string, number>>;
   holders(): Promise<{ badge: string; metal: number; holders: number }[]>;
@@ -142,6 +175,14 @@ export const createProgressRepository = (db: Db): ProgressRepository => {
         .in("id", ids);
       if (error) throw error;
       return (data ?? []) as ProfileRow[];
+    },
+
+    async profileIds(after, limit) {
+      let query = db.from("profiles").select("id").order("id").limit(limit);
+      if (after) query = query.gt("id", after);
+      const { data, error } = await query;
+      if (error) throw error;
+      return ((data ?? []) as { id: string }[]).map((r) => r.id);
     },
 
     metrics: (userId) =>
@@ -231,16 +272,31 @@ export const createProgressRepository = (db: Db): ProgressRepository => {
       return new Set(((data ?? []) as { key: string }[]).map((r) => r.key));
     },
 
+    async paidTokenKeys(userId, keys) {
+      if (keys.length === 0) return new Set();
+      const { data, error } = await db
+        .from("token_events")
+        .select("key")
+        .eq("user_id", userId)
+        .in("key", keys);
+      if (error) throw error;
+      return new Set(((data ?? []) as { key: string }[]).map((r) => r.key));
+    },
+
     async countSources(userId, from, to) {
       const { data, error } = await db
         .from("xp_events")
-        .select("source")
+        .select("source, revoked:data->revoked")
         .eq("user_id", userId)
         .gte("created_at", from)
         .lt("created_at", to);
       if (error) throw error;
       const counts: Record<string, number> = {};
-      for (const { source } of (data ?? []) as { source: string }[]) {
+      for (const { source, revoked } of (data ?? []) as {
+        source: string;
+        revoked: unknown;
+      }[]) {
+        if (revoked) continue;
         counts[source] = (counts[source] ?? 0) + 1;
       }
       return counts;
@@ -408,6 +464,55 @@ export const createProgressRepository = (db: Db): ProgressRepository => {
         url: r.url,
         title: r.games?.title ?? "",
         cover_url: r.games?.box_art_url ?? r.games?.cover_url ?? null,
+      }));
+    },
+
+    async swaps(userId, period) {
+      const { data, error } = await db
+        .from("task_swaps")
+        .select("slot, quest")
+        .eq("user_id", userId)
+        .eq("period", period);
+      if (error) throw error;
+      return (data ?? []) as QuestSwap[];
+    },
+
+    async recordSwap(userId, period, slot, quest) {
+      const { error } = await db
+        .from("task_swaps")
+        .insert({ user_id: userId, period, slot, quest });
+      if (!error) return true;
+      // The week's key is the primary key: a second swap collides.
+      if (error.code === "23505") return false;
+      throw error;
+    },
+
+    async nudgeCandidates(since, now) {
+      const rows = await rpc<
+        {
+          user_id: string;
+          timezone: string;
+          weeks: string[] | null;
+          shields: string[] | null;
+          spare: number;
+          week_counts: SourceCounts;
+          month_counts: SourceCounts;
+          week_habits: SourceCounts;
+          month_habits: SourceCounts;
+          swaps: (QuestSwap & { period: string })[];
+        }[]
+      >("nudge_candidates", { p_since: since, p_now: now });
+      return (rows ?? []).map((r) => ({
+        userId: r.user_id,
+        timezone: r.timezone,
+        weeks: r.weeks ?? [],
+        shields: r.shields ?? [],
+        spare: Number(r.spare),
+        weekCounts: r.week_counts ?? {},
+        monthCounts: r.month_counts ?? {},
+        weekHabits: r.week_habits ?? {},
+        monthHabits: r.month_habits ?? {},
+        swaps: r.swaps ?? [],
       }));
     },
 

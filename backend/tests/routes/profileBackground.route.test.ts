@@ -254,12 +254,14 @@ describe("buying a background", () => {
     expect((await mine()).credits).toBe(1);
 
     expect((await buy(SHOT.url)).body).toMatchObject({ cost: 0 });
-    // Levels 2 and 3 paid 10 tokens each: enough for the next, not the one after.
-    expect((await buy(SECOND.url)).body).toEqual({ cost: 20, tokens: 0 });
+    // Levels 2 and 3 paid 5 tokens each; with 25 more, enough for the
+    // next, not the one after.
+    await repos.progress.awardTokens(USER_A, "test", "t0", 25);
+    expect((await buy(SECOND.url)).body).toEqual({ cost: 35, tokens: 0 });
     expect((await buy(THIRD.url)).status).toBe(402);
 
     await repos.progress.awardTokens(USER_A, "test", "t", 100);
-    expect((await buy(THIRD.url)).body).toMatchObject({ cost: 25 });
+    expect((await buy(THIRD.url)).body).toMatchObject({ cost: 45 });
     expect((await buy(THIRD.url)).status).toBe(409);
 
     expect((await mine()).games).toEqual([

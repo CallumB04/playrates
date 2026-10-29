@@ -211,7 +211,7 @@ export const buildProgress = (overrides: Partial<Progress> = {}): Progress => ({
         spareShields: 0,
         history: [],
     },
-    quests: { week: [], month: [] },
+    quests: { week: [], month: [], swapsLeft: 1 },
     periods: {
         week: { key: "w2026-44", kind: "week", start: "", end: "" },
         month: { key: "m2026-10", kind: "month", start: "", end: "" },

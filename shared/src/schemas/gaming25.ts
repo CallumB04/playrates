@@ -8,35 +8,35 @@ import type { ProfileAccent } from "./profileAccent.js";
  * a key taken out leaves its picks in the database, unshown.
  */
 export const GAMING_25_CATEGORIES = [
-  { key: "childhood_classic", label: "Childhood Classic" },
-  { key: "best_main_character", label: "Best Main Character" },
+  { key: "childhood_classic", label: "Childhood classic" },
+  { key: "best_main_character", label: "Best main character" },
   { key: "overrated", label: "Overrated" },
-  { key: "best_soundtrack", label: "Best Soundtrack" },
-  { key: "hardest_game", label: "Hardest Game" },
+  { key: "best_soundtrack", label: "Best soundtrack" },
+  { key: "hardest_game", label: "Hardest game" },
 
-  { key: "favourite_art_style", label: "Favourite Art Style" },
-  { key: "comfort_game", label: "Comfort Game" },
-  { key: "best_story", label: "Best Story" },
-  { key: "hidden_gem", label: "Hidden Gem" },
-  { key: "best_with_friends", label: "Best With Friends" },
+  { key: "favourite_art_style", label: "Favourite art style" },
+  { key: "comfort_game", label: "Comfort game" },
+  { key: "best_story", label: "Best story" },
+  { key: "hidden_gem", label: "Hidden gem" },
+  { key: "best_with_friends", label: "Best with friends" },
 
-  { key: "best_boss_fights", label: "Best Boss Fights" },
-  { key: "biggest_letdown", label: "Biggest Letdown" },
-  { key: "all_time_favourite", label: "Favourite Game" },
+  { key: "best_boss_fights", label: "Best boss fights" },
+  { key: "biggest_letdown", label: "Biggest letdown" },
+  { key: "all_time_favourite", label: "Favourite game" },
   { key: "best_rpg", label: "Best RPG" },
-  { key: "best_ending", label: "Best Ending" },
+  { key: "best_ending", label: "Best ending" },
 
-  { key: "keep_coming_back_to", label: "Keep Coming Back To" },
-  { key: "best_side_characters", label: "Best Side Characters" },
-  { key: "best_villain", label: "Best Villain" },
-  { key: "guilty_pleasure", label: "Guilty Pleasure" },
-  { key: "best_combat", label: "Best Combat" },
+  { key: "keep_coming_back_to", label: "Keep coming back to" },
+  { key: "best_side_characters", label: "Best side characters" },
+  { key: "best_villain", label: "Best villain" },
+  { key: "guilty_pleasure", label: "Guilty pleasure" },
+  { key: "best_combat", label: "Best combat" },
 
-  { key: "remake_it_already", label: "Remake It Already" },
-  { key: "best_world", label: "Best World" },
-  { key: "didnt_expect_to_love", label: "Didn't Expect to Love" },
-  { key: "best_indie", label: "Best Indie" },
-  { key: "everyone_should_play", label: "Everyone Should Play" },
+  { key: "remake_it_already", label: "Remake it already" },
+  { key: "best_world", label: "Best world" },
+  { key: "didnt_expect_to_love", label: "Didn't expect to love" },
+  { key: "best_indie", label: "Best indie" },
+  { key: "everyone_should_play", label: "Everyone should play" },
 ] as const;
 
 export type Gaming25Category = (typeof GAMING_25_CATEGORIES)[number]["key"];
@@ -119,7 +119,7 @@ export interface Gaming25Summary {
   owner: Gaming25Owner;
   pickCount: number;
   loveCount: number;
-  /** The Favourite Game, when there is one. */
+  /** The favourite game, when there is one. */
   centre: { id: number; title: string; coverUrl: string | null } | null;
   updatedAt: string;
 }

@@ -213,7 +213,7 @@ describe("admin progress", () => {
   it("counts progress across every member", async () => {
     const { app, state, repos } = buildTestApp({ seed: seed() });
     await repos.progress.awardXp(USER_A, "quest", "q", 700);
-    await repos.progress.awardTokens(USER_A, "test", "t", 100);
+    await repos.progress.awardTokens(USER_A, "test", "t", 150);
     await repos.progress.buy(USER_A, "frame_neon");
     state.reviewVotes.push({ review_id: 1, user_id: ADMIN, reaction: "fire" });
 
@@ -225,8 +225,8 @@ describe("admin progress", () => {
     expect(response.body).toMatchObject({
       members: 3,
       xp: { total: 700 },
-      tokens: { earned: 100, spent: 60, held: 40 },
-      shop: [{ item: "frame_neon", sold: 1, tokens: 60 }],
+      tokens: { earned: 150, spent: 120, held: 30 },
+      shop: [{ item: "frame_neon", sold: 1, tokens: 120 }],
       reactions: [{ reaction: "fire", count: 1 }],
     });
     // 700 XP is level 5; the other two are still on 1.

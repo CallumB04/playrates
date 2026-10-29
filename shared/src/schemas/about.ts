@@ -2,6 +2,8 @@ import { z } from "zod";
 // A type only: profile.ts imports this file, and a value import back would
 // be a cycle that leaves one side undefined while the other loads.
 import type { ProfileVisibility } from "./profile.js";
+import type { Game } from "./game.js";
+import type { GameStatus, PlayedStatus } from "./gameLog.js";
 
 const VisibilitySchema = z.enum([
   "everyone",
@@ -127,3 +129,13 @@ export const SetFavouriteGamesSchema = z
   .strict();
 
 export type SetFavouriteGamesInput = z.infer<typeof SetFavouriteGamesSchema>;
+
+/** A favourite with the status of its owner's log that speaks for the game,
+ *  or null when they have no log of it. Their games are seen by whoever may
+ *  see their favourites, so this asks nothing more. */
+export interface FavouriteGame extends Game {
+  ownerStatus: {
+    status: GameStatus;
+    playedStatus: PlayedStatus | null;
+  } | null;
+}

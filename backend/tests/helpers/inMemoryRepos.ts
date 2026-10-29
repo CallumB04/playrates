@@ -161,6 +161,7 @@ export interface InMemoryState {
   }[];
   userItems: { user_id: string; item: string; quantity: number }[];
   shieldsUsed: { user_id: string; week: string }[];
+  taskSwaps: { user_id: string; period: string; slot: number; quest: string }[];
   userBackgrounds: {
     user_id: string;
     game_id: number;
@@ -247,6 +248,7 @@ export const createInMemoryRepos = (
     userBadges: [],
     userItems: [],
     shieldsUsed: [],
+    taskSwaps: [],
     userBackgrounds: [],
     progressMetrics: new Map(),
   };
@@ -1504,6 +1506,32 @@ export const createInMemoryRepos = (
           archived_at: null,
           created_at: now(),
         });
+      },
+      async raiseOnce(drafts) {
+        let added = 0;
+        for (const d of drafts) {
+          const key = d.dedupeKey ?? null;
+          if (
+            key !== null &&
+            state.notifications.some(
+              (n) => n.user_id === d.userId && n.dedupe_key === key,
+            )
+          )
+            continue;
+          state.notifications.push({
+            id: nextNotificationId++,
+            user_id: d.userId,
+            kind: d.kind,
+            actor_id: d.actorId ?? null,
+            data: d.data ?? {},
+            dedupe_key: key,
+            read_at: null,
+            archived_at: null,
+            created_at: now(),
+          });
+          added++;
+        }
+        return added;
       },
       async bumpThreadActivity(userId, dedupeKey, data) {
         const existing = state.notifications.find(

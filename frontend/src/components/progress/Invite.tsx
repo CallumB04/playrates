@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Gift, Share2, UserPlus } from "lucide-react";
+import { REFERRAL } from "@playrates/shared";
 import { playerCardUrl } from "../../api";
 import AsideCard from "../ui/AsideCard";
 import Button from "../ui/Button";
@@ -29,8 +30,10 @@ const useInvite = () => {
     return { ready: !!user, open: () => setSharing(true), sheet };
 };
 
-const TERMS =
-    "300 XP and 25 tokens for each friend who joins and logs 5 games. They get 100 XP too.";
+const INVITER_XP = REFERRAL.joinedXp + REFERRAL.activeXp;
+
+// From the rules, so a change to the balance changes what this promises.
+const TERMS = `${INVITER_XP} XP and ${REFERRAL.activeTokens} tokens for each friend who joins and plays ${REFERRAL.activeAfter} games. They get ${REFERRAL.welcomeXp} XP and ${REFERRAL.welcomeTokens} tokens too.`;
 
 const Reward = ({ children }: { children: ReactNode }) => (
     <span className="inline-flex items-center gap-1.5 rounded-md bg-surface-raised/70 px-2.5 py-1.5 font-mono text-label font-bold text-content tabular-nums ring-1 ring-subtle">
@@ -46,18 +49,20 @@ export const InviteCard = ({ className }: { className?: string }) => {
     return (
         <AsideCard title="Invite friends" tone="feature" className={className}>
             <p className="text-label-sm text-content-secondary">
-                Each friend who joins and logs 5 games
+                Each friend who joins and plays {REFERRAL.activeAfter} games
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
-                <Reward>+300 XP</Reward>
+                <Reward>+{INVITER_XP} XP</Reward>
                 <Reward>
-                    +25
+                    +{REFERRAL.activeTokens}
                     <TokenCoin className="size-4" />
                 </Reward>
             </div>
             <p className="mt-2 inline-flex items-center gap-1.5 text-label-sm text-content-muted">
                 <Gift size={13} aria-hidden />
-                They get +100 XP too
+                They get +{REFERRAL.welcomeXp} XP and +{REFERRAL.welcomeTokens}
+                <TokenCoin className="size-3.5" />
+                <span className="sr-only">tokens</span> too
             </p>
             <Button size="touch" onClick={open} className="mt-3 w-full">
                 <Share2 size={16} aria-hidden />

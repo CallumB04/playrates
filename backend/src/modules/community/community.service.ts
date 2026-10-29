@@ -421,7 +421,7 @@ export const createCommunityService = (
     ): Promise<VoteResult> {
       const message = await requireMessage(messageId);
       if (message.author_id === userId) {
-        throw AppError.forbidden("You cannot upvote your own message");
+        throw AppError.forbidden("You cannot react to your own message");
       }
 
       const { state, added } = await react(

@@ -8,6 +8,7 @@ import {
   SeenSchema,
   ShopItemParamSchema,
   StyleSchema,
+  SwapQuestSchema,
   UsernameParamSchema,
   type CardThemeKey,
   type LeaderboardPeriod,
@@ -61,6 +62,16 @@ export const createMyProgressRouter = ({
     await service.markRevealed(callerId(req));
     res.status(204).end();
   });
+
+  router.post(
+    "/progress/quests/swap",
+    requireAuth,
+    validate({ body: SwapQuestSchema }),
+    async (req, res) => {
+      const { slot } = req.valid!.body as { slot: number };
+      res.json(await service.swapQuest(callerId(req), slot));
+    },
+  );
 
   router.patch(
     "/progress/style",
@@ -149,6 +160,22 @@ export const createShopRouter = ({ service, requireAuth }: Deps): Router => {
       const { item } = req.valid!.params as { item: string };
       const { username } = req.valid!.body as { username: string };
       res.json(await service.gift(callerId(req), item, username));
+    },
+  );
+
+  return router;
+};
+
+/** Mounted at /referrals: who an invite link is from, for anyone. */
+export const createReferralsRouter = ({ service }: Deps): Router => {
+  const router = Router();
+
+  router.get(
+    "/:username",
+    validate({ params: UsernameParamSchema }),
+    async (req, res) => {
+      const { username } = req.valid!.params as { username: string };
+      res.json(await service.invite(username));
     },
   );
 

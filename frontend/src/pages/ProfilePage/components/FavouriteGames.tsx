@@ -9,7 +9,8 @@ import { releaseYear } from "../../../lib/format";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { useUserFavourites } from "../../../hooks/queries/useFavourites";
 import { cn } from "../../../lib/cn";
-import { podiumOnPhone, rankTone } from "../lib/about";
+import { rankTone } from "../lib/about";
+import { displayStatusFor } from "../../../constants/gameStatus";
 
 interface FavouriteGamesProps {
     username: string;
@@ -39,7 +40,7 @@ const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {
     const { data: games, isLoading } = useUserFavourites(username, canSee);
     const { data: platforms } = usePlatforms();
     // The viewer's own log of each, as on every other cover.
-    const { actionsFor, statusFor } = useTileActions();
+    const { actionsFor } = useTileActions();
     const owner = !!onEdit;
 
     // Nothing to say to a visitor about favourites nobody has chosen.
@@ -66,19 +67,13 @@ const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {
             {isLoading || !canSee ? (
                 <div className={GRID}>
                     {Array.from({ length: MAX_FAVOURITE_GAMES }, (_, i) => (
-                        <Skeleton
-                            key={i}
-                            className={cn(
-                                "aspect-3/4 rounded-xs",
-                                podiumOnPhone(i + 1)
-                            )}
-                        />
+                        <Skeleton key={i} className="aspect-3/4 rounded-xs" />
                     ))}
                 </div>
             ) : (
                 <ol className={GRID}>
                     {(games ?? []).map((game, i) => (
-                        <li key={game.id} className={podiumOnPhone(i + 1)}>
+                        <li key={game.id}>
                             <Rank place={i + 1} />
                             <GameTile
                                 gameId={game.id}
@@ -87,7 +82,16 @@ const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {
                                 platformSlugs={game.platforms}
                                 platforms={platforms ?? []}
                                 footValue={releaseYear(game.releaseDate)}
-                                status={statusFor(game)}
+                                // Theirs, not the viewer's: on their
+                                // profile it reads as what they did with it.
+                                status={
+                                    game.ownerStatus
+                                        ? displayStatusFor(
+                                              game.ownerStatus.status,
+                                              game.ownerStatus.playedStatus
+                                          )
+                                        : null
+                                }
                                 actions={actionsFor(game)}
                                 narrowFoot
                             />
@@ -101,12 +105,7 @@ const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {
                                     MAX_FAVOURITE_GAMES - (games?.length ?? 0),
                             },
                             (_, i) => (
-                                <li
-                                    key={`free-${i}`}
-                                    className={podiumOnPhone(
-                                        (games?.length ?? 0) + i + 1
-                                    )}
-                                >
+                                <li key={`free-${i}`}>
                                     <Rank
                                         place={(games?.length ?? 0) + i + 1}
                                     />

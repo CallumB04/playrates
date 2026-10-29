@@ -1,8 +1,13 @@
 import { useId, useState } from "react";
 import { Info } from "lucide-react";
 import {
+    METAL_TOKENS,
     METAL_XP,
     QUESTS,
+    REFERRAL,
+    STREAK_XP,
+    levelTokens,
+    streakXp,
     SETUP_REWARD,
     TASK_TOKENS,
     type QuestDef,
@@ -38,9 +43,9 @@ const GROUPS: { title: string; rows: [source: string, label: string][] }[] = [
     {
         title: "When people like your stuff",
         rows: [
-            ["review_upvote", "An upvote on a review"],
-            ["post_upvote", "An upvote in the community"],
-            ["list_upvote", "An upvote on a list"],
+            ["review_upvote", "A reaction on your review"],
+            ["post_upvote", "A reaction in the community"],
+            ["list_upvote", "A reaction on your list"],
             ["g25_love", "A love on your Gaming 25"],
         ],
     },
@@ -55,29 +60,45 @@ const GROUPS: { title: string; rows: [source: string, label: string][] }[] = [
     },
 ];
 
-const weekly = (QUESTS as readonly QuestDef[])
-    .filter((q) => q.period === "week")
-    .map((q) => q.xp);
+const range = (values: number[]) => {
+    const low = Math.min(...values);
+    const high = Math.max(...values);
+    return low === high ? formatCount(low) : `${low} to ${high}`;
+};
+const questXp = (period: "week" | "month") =>
+    range(
+        (QUESTS as readonly QuestDef[])
+            .filter((q) => q.period === period)
+            .map((q) => q.xp)
+    );
 
+/* Read from the rules themselves, so a change to the balance can't leave
+   this saying the old numbers. */
 const BIG: [label: string, xp: string][] = [
-    ["A week in your streak", "20 to 70"],
-    ["A weekly task", `${Math.min(...weekly)} to ${Math.max(...weekly)}`],
-    ["A monthly task", "150"],
+    ["A week in your streak", `${streakXp(1)} to ${STREAK_XP.max}`],
+    ["A weekly task", questXp("week")],
+    ["A monthly task", questXp("month")],
     ["A badge, by metal", Object.values(METAL_XP).map(formatCount).join(" / ")],
-    ["A friend joins from your invite", "50, then 250"],
+    [
+        "A friend joins from your invite",
+        `${REFERRAL.joinedXp}, then ${REFERRAL.activeXp}`,
+    ],
     ["Getting started, all of it", String(SETUP_REWARD.xp)],
 ];
 
 const TOKENS: [label: string, tokens: string][] = [
-    ["Each level", "10"],
-    ["Every 5th level / every 10th", "25 / 50"],
-    ["A gold badge / a platinum one", "10 / 30"],
+    ["Each level", String(levelTokens(1))],
+    ["Every 5th level / every 10th", `${levelTokens(5)} / ${levelTokens(10)}`],
+    [
+        "A silver badge / gold / platinum",
+        `${METAL_TOKENS[2]} / ${METAL_TOKENS[3]} / ${METAL_TOKENS[4]}`,
+    ],
     [
         "A weekly task / a monthly one",
         `${TASK_TOKENS.week} / ${TASK_TOKENS.month}`,
     ],
     ["Getting started, all of it", String(SETUP_REWARD.tokens)],
-    ["A friend gets going", "25"],
+    ["A friend gets going", String(REFERRAL.activeTokens)],
 ];
 
 /** A small "i" that opens how XP and tokens are earned. */
@@ -111,7 +132,7 @@ const Row = ({
         <span className="min-w-0 flex-1 text-content-secondary">{label}</span>
         {cap != null && (
             <span className="shrink-0 font-mono text-label-sm text-content-muted">
-                {formatCount(cap)} a day
+                up to {formatCount(cap)} XP a day
             </span>
         )}
         <span className="min-w-10 shrink-0 text-right font-mono font-semibold text-content tabular-nums">

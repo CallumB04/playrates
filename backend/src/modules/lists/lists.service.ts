@@ -363,7 +363,7 @@ export const createListsService = (
     ): Promise<VoteResult> {
       const card = await visibleCard(listId, userId);
       if (card.user_id === userId) {
-        throw AppError.forbidden("You cannot upvote your own list");
+        throw AppError.forbidden("You cannot react to your own list");
       }
       const { state, added } = await react(
         repo.reactions,
