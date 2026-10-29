@@ -13,3 +13,4 @@ export * from "./endpoints/notifications";
 export * from "./endpoints/community";
 export * from "./endpoints/admin";
 export * from "./endpoints/reports";
+export * from "./endpoints/email";

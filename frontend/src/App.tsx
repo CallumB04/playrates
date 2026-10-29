@@ -27,6 +27,7 @@ import LibraryPage from "./pages/LibraryPage/LibraryPage";
 import GamePage from "./pages/GamePage/GamePage";
 import SettingsPage from "./pages/SettingsPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import UnsubscribePage from "./pages/UnsubscribePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AdminGate from "./pages/admin/AdminGate";
 import { useReloadOnNewBuild } from "./hooks/useReloadOnNewBuild";
@@ -88,6 +89,10 @@ function App() {
                         <Route
                             path="/reset-password"
                             element={<ResetPasswordPage />}
+                        />
+                        <Route
+                            path="/unsubscribe"
+                            element={<UnsubscribePage />}
                         />
 
                         {/* Stubs, so the footer never links into nothing. */}

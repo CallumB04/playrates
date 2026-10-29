@@ -262,3 +262,81 @@ describe("SettingsPage's password", () => {
         ).not.toBeInTheDocument();
     });
 });
+
+describe("SettingsPage's emails", () => {
+    const patched = vi.fn();
+
+    beforeEach(() => {
+        patched.mockClear();
+        server.use(
+            http.patch(`${API}/profiles/me`, async ({ request }) => {
+                const body = (await request.json()) as Record<string, unknown>;
+                patched(body);
+                return HttpResponse.json(buildProfile());
+            })
+        );
+    });
+
+    it("turns one kind of email off, and only that one", async () => {
+        const u = open("/settings?section=emails");
+
+        const switchFor = screen.getByRole("switch", {
+            name: "Friend requests",
+        });
+        expect(switchFor).toBeChecked();
+        await u.click(switchFor);
+
+        await waitFor(() =>
+            expect(patched).toHaveBeenCalledWith({
+                emailPrefs: { friend_requests: false },
+            })
+        );
+        expect(switchFor).not.toBeChecked();
+    });
+
+    it("turns every email off with the first switch, and the rest read as off", async () => {
+        const u = open("/settings?section=emails");
+
+        await u.click(
+            screen.getByRole("switch", { name: "Emails from PlayRates" })
+        );
+
+        await waitFor(() =>
+            expect(patched).toHaveBeenCalledWith({ emailPrefs: { all: false } })
+        );
+        const news = screen.getByRole("switch", {
+            name: "News and patch notes",
+        });
+        await waitFor(() => expect(news).toBeDisabled());
+        expect(news).not.toBeChecked();
+
+        // Each keeps its own choice for when emails come back on.
+        await u.click(
+            screen.getByRole("switch", { name: "Emails from PlayRates" })
+        );
+        await waitFor(() => expect(news).toBeChecked());
+        expect(
+            screen.getByText(/Account emails always send/)
+        ).toBeInTheDocument();
+    });
+
+    it("puts a switch back when the change doesn't save", async () => {
+        server.use(
+            http.patch(`${API}/profiles/me`, () =>
+                HttpResponse.json({ error: "nope" }, { status: 500 })
+            )
+        );
+        const u = open("/settings?section=emails");
+        const replies = screen.getByRole("switch", { name: "Replies to you" });
+
+        await u.click(replies);
+
+        await waitFor(() =>
+            expect(notify).toHaveBeenCalledWith(
+                "Couldn't save that setting",
+                "error"
+            )
+        );
+        expect(replies).toBeChecked();
+    });
+});

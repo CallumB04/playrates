@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
     Lock,
+    Mail,
     Monitor,
     Moon,
     Pencil,
@@ -24,8 +25,13 @@ import { deleteMyAccount, fetchMyData } from "../api";
 import { saveFile } from "../lib/saveFile";
 import {
     DEFAULT_ABOUT_VISIBILITY,
+    EMAIL_CATEGORIES,
+    resolveEmailPrefs,
     type AboutVisibility,
+    type EmailPrefs,
+    type EmailScope,
     type ProfileVisibility,
+    type UpdateProfileInput,
 } from "@playrates/shared";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
@@ -49,6 +55,7 @@ import { cn } from "../lib/cn";
 const SECTIONS: SettingsSection[] = [
     { id: "account", label: "Account", icon: UserRound },
     { id: "privacy", label: "Privacy", icon: Lock },
+    { id: "emails", label: "Emails", icon: Mail },
     { id: "content", label: "Content", icon: SlidersHorizontal },
     { id: "account-closure", label: "Close account", icon: TriangleAlert },
 ];
@@ -76,8 +83,9 @@ const Setting = ({
     label,
     help,
     wide = false,
+    inactive = false,
     children,
-}: SettingProps & { wide?: boolean }) => (
+}: SettingProps & { wide?: boolean; inactive?: boolean }) => (
     <div
         className={cn(
             "flex gap-3 py-4 first:pt-0 last:pb-0",
@@ -86,7 +94,9 @@ const Setting = ({
                 : "items-center justify-between gap-6"
         )}
     >
-        <Title label={label} help={help} />
+        <div className={cn("min-w-0", inactive && "opacity-60")}>
+            <Title label={label} help={help} />
+        </div>
         <div className="shrink-0">{children}</div>
     </div>
 );
@@ -182,6 +192,9 @@ const SettingsPage = () => {
     const [aboutVisibility, setAboutVisibility] = useState<AboutVisibility>(
         user?.aboutVisibility ?? DEFAULT_ABOUT_VISIBILITY
     );
+    const [emailPrefs, setEmailPrefs] = useState<EmailPrefs>(
+        user?.emailPrefs ?? resolveEmailPrefs(null)
+    );
 
     useEffect(() => {
         setShowSexual(user?.showSexualContent ?? false);
@@ -189,6 +202,7 @@ const SettingsPage = () => {
         setHideFromSearch(user?.hideFromSearch ?? false);
         setProfileVisibility(user?.profileVisibility ?? "everyone");
         setAboutVisibility(user?.aboutVisibility ?? DEFAULT_ABOUT_VISIBILITY);
+        setEmailPrefs(user?.emailPrefs ?? resolveEmailPrefs(null));
     }, [user]);
 
     const zone = effectiveTimeZone(user?.timezone);
@@ -209,7 +223,7 @@ const SettingsPage = () => {
     /* Toggles save immediately and roll back on failure, so the control never
        shows a state the server did not accept. */
     const saveToggle = <T,>(
-        patch: Record<string, T>,
+        patch: UpdateProfileInput,
         next: T,
         setLocal: (value: T) => void,
         previous: T
@@ -222,6 +236,30 @@ const SettingsPage = () => {
             },
         });
     };
+
+    // With every email off, a category reads as off too, though it keeps
+    // its own choice for when they come back on.
+    const silenced = (scope: EmailScope) => scope !== "all" && !emailPrefs.all;
+    const emailToggle = (scope: EmailScope, label: string) => (
+        <Toggle
+            checked={emailPrefs[scope] && !silenced(scope)}
+            onChange={(next) =>
+                saveToggle(
+                    { emailPrefs: { [scope]: next } },
+                    next,
+                    (value) =>
+                        setEmailPrefs((prefs) => ({
+                            ...prefs,
+                            [scope]: value,
+                        })),
+                    emailPrefs[scope]
+                )
+            }
+            label={label}
+            labelPosition="hidden"
+            disabled={update.isPending || silenced(scope)}
+        />
+    );
 
     if (!user) {
         return (
@@ -376,6 +414,31 @@ const SettingsPage = () => {
                             editHref={editProfileHref}
                         />
                     </div>
+                </Group>
+            </>
+        ),
+
+        emails: (
+            <>
+                <Group>
+                    <Setting
+                        label="Emails from PlayRates"
+                        help="Account emails always send: confirming your email, password resets and security notices."
+                    >
+                        {emailToggle("all", "Emails from PlayRates")}
+                    </Setting>
+                </Group>
+                <Group>
+                    {EMAIL_CATEGORIES.map((category) => (
+                        <Setting
+                            key={category.key}
+                            label={category.label}
+                            help={category.description}
+                            inactive={!emailPrefs.all}
+                        >
+                            {emailToggle(category.key, category.label)}
+                        </Setting>
+                    ))}
                 </Group>
             </>
         ),

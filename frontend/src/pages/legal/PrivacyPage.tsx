@@ -11,7 +11,7 @@ const External = ({ href, children }: { href: string; children: string }) => (
 );
 
 /* When the substance of this page changes, move the date. */
-const UPDATED = "2026-10-22";
+const UPDATED = "2026-10-29";
 
 const PrivacyPage = () => (
     <ProsePage
@@ -58,6 +58,13 @@ const PrivacyPage = () => (
             <li>
                 Your settings, like your time zone and whether adult games are
                 shown to you.
+            </li>
+            <li>
+                Which emails you want. Account emails, like password resets,
+                always send. The others, about friend requests, replies, gifts,
+                wishlist release days and news, you can turn off one by one in{" "}
+                <Link to="/settings?section=emails">Settings</Link> or with the
+                link at the bottom of any email.
             </li>
         </ul>
 
@@ -140,8 +147,8 @@ const PrivacyPage = () => (
 
         <h2>Who else handles it</h2>
         <p>
-            Two companies help run PlayRates. They process data for me and only
-            for that:
+            Three companies help run PlayRates. They process data for me and
+            only for that:
         </p>
         <ul>
             <li>
@@ -152,6 +159,11 @@ const PrivacyPage = () => (
                 <strong>Vercel</strong> hosts the website and the API. It keeps
                 short-lived request logs, which include IP addresses. Vercel is
                 based in the US.
+            </li>
+            <li>
+                <strong>Resend</strong> sends PlayRates’ emails. It gets your
+                email address, your username and what’s in each email, and keeps
+                a list of who wants news emails. Resend is based in the US.
             </li>
         </ul>
         <p>
@@ -184,8 +196,9 @@ const PrivacyPage = () => (
         <h2>Data outside the UK</h2>
         <p>
             Supabase keeps your data in the EU, which UK law already treats as
-            safe to send data to. Vercel is in the US, and transfers to it are
-            covered by the safeguards in Vercel’s data processing agreement.
+            safe to send data to. Vercel and Resend are in the US, and transfers
+            to them are covered by the safeguards in their data processing
+            agreements.
         </p>
 
         <h2>How long I keep it</h2>

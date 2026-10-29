@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
 import {
     DEFAULT_ABOUT_VISIBILITY,
+    resolveEmailPrefs,
     rollupLogs,
     type FriendEdge,
     type GameLog,
@@ -32,6 +33,7 @@ export const buildProfile = (
     firstName: null,
     bio: "Local development account.",
     showSexualContent: false,
+    emailPrefs: resolveEmailPrefs({}),
     timezone: "UTC",
     hideOnline: false,
     hideFromSearch: false,
