@@ -150,25 +150,28 @@ const Header = () => {
                         ) : (
                             <div className="flex items-center gap-3">
                                 {/* On a phone too: someone coming back looks
-                                    for it top right, not inside the menu. */}
+                                    for it top right, not inside the menu.
+                                    One button there, so the bar stays
+                                    clear; the form it opens leads to
+                                    sign-up too. */}
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={openLogin}
                                     className="max-sm:min-h-11 max-sm:px-3"
                                 >
-                                    Sign in
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    onClick={openSignup}
-                                    className="max-sm:min-h-11 max-sm:px-3"
-                                >
-                                    <span className="sm:hidden">Join</span>
+                                    <span className="sm:hidden">
+                                        Sign in / sign up
+                                    </span>
                                     <span className="hidden sm:inline">
-                                        Join PlayRates
+                                        Sign in
                                     </span>
                                 </Button>
+                                <span className="hidden sm:contents">
+                                    <Button size="sm" onClick={openSignup}>
+                                        Join PlayRates
+                                    </Button>
+                                </span>
                             </div>
                         )}
                     </div>
