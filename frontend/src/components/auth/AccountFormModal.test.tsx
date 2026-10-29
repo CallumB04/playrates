@@ -14,6 +14,9 @@ const form = vi.hoisted(() => ({
 vi.mock("../../contexts/AccountFormContext", () => ({
     useAccountForm: () => form,
 }));
+vi.mock("../../contexts/AuthContext", () => ({
+    useAuth: () => ({ resendConfirmation: vi.fn() }),
+}));
 
 // The form itself is SignupForm's to test; here, only what follows it.
 vi.mock("./SignupForm", () => ({
@@ -50,12 +53,15 @@ describe("AccountFormModal", () => {
         expect(form.openLogin).not.toHaveBeenCalled();
     });
 
-    it("waits at log-in when the email has to be confirmed first", async () => {
+    it("asks for the email to be confirmed when it has to be", async () => {
         renderWithProviders(<AccountFormModal />);
         await userEvent.click(
             screen.getByRole("button", { name: "To confirm" })
         );
-        expect(form.openLogin).toHaveBeenCalled();
+        expect(
+            screen.getByRole("heading", { name: "Check your inbox" })
+        ).toBeInTheDocument();
+        expect(screen.getByText("a@b.test")).toBeInTheDocument();
         expect(form.close).not.toHaveBeenCalled();
     });
 });

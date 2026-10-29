@@ -162,7 +162,7 @@ site_url = "http://localhost:5173"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["http://localhost:5173/reset-password", "http://127.0.0.1:5173/reset-password"]
+additional_redirect_urls = ["http://localhost:5173/**", "http://127.0.0.1:5173/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -225,7 +225,8 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+# On, as live is: sign-up ends at "Check your inbox" and the link signs you in.
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.

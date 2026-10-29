@@ -14,8 +14,12 @@ import {
 import type { MyProfile } from "@playrates/shared";
 import { fetchMyProfile, queryKeys, sendHeartbeat } from "../api";
 import { supabase } from "../lib/supabase";
+import { CONFIRMED_PARAM } from "../lib/authLinks";
 import { readAuthRedirectError } from "../lib/authRedirect";
 import { useNotify } from "./NotificationContext";
+
+/** Where a confirmation link lands: home, saying it worked. */
+const confirmedUrl = () => `${window.location.origin}/?${CONFIRMED_PARAM}=1`;
 
 interface AuthContextValue {
     session: Session | null;
@@ -37,6 +41,8 @@ interface AuthContextValue {
      *  in and signing up are the same thing this way. */
     signInWithProvider: (provider: OAuthProvider) => Promise<void>;
     signOut: () => Promise<void>;
+    /** Sends the sign-up confirmation again, for an email not yet confirmed. */
+    resendConfirmation: (email: string, captchaToken?: string) => Promise<void>;
     /** Emails a link to set a new password. Says nothing about whether the
      *  address has an account. */
     requestPasswordReset: (
@@ -164,8 +170,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
-                    // read by the handle_new_user trigger to seed the profile
-                    options: { data: { username }, captchaToken },
+                    options: {
+                        // read by the handle_new_user trigger to seed the profile
+                        data: { username },
+                        captchaToken,
+                        emailRedirectTo: confirmedUrl(),
+                    },
                 });
                 if (error) throw error;
                 // No session when the project wants the email confirmed first.
@@ -188,6 +198,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 });
                 if (error) throw error;
                 notify("You are now logged in", "success");
+            },
+
+            async resendConfirmation(email, captchaToken) {
+                const { error } = await supabase.auth.resend({
+                    type: "signup",
+                    email,
+                    options: { captchaToken, emailRedirectTo: confirmedUrl() },
+                });
+                if (error) throw error;
             },
 
             async requestPasswordReset(email, captchaToken) {

@@ -9,6 +9,7 @@ import ChooseUsername from "./components/onboarding/ChooseUsername";
 import FirstLoginWelcome from "./components/onboarding/FirstLoginWelcome";
 import ProgressMoments from "./components/progress/ProgressMoments";
 import ReferralCapture from "./components/progress/ReferralCapture";
+import AuthLinkResult from "./components/auth/AuthLinkResult";
 import InviteBanner from "./components/progress/InviteBanner";
 import ProgressPage from "./pages/ProgressPage/ProgressPage";
 import ShopPage from "./pages/ShopPage/ShopPage";
@@ -107,6 +108,7 @@ function App() {
             <FirstLoginWelcome />
             <ProgressMoments />
             <ReferralCapture />
+            <AuthLinkResult />
             <ToastStack />
         </div>
     );
