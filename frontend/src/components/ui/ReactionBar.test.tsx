@@ -69,6 +69,26 @@ describe("ReactionBar", () => {
         expect(picker.getByRole("button", { name: /^Fire/ })).toBeDisabled();
     });
 
+    // Hung inside the bar, a list's card with overflow hidden cut it off.
+    it("floats the picker over the page, outside the bar's card", async () => {
+        const { onReact, user } = bar();
+        const card = screen
+            .getByRole("button", { name: "Add a reaction" })
+            .closest("div")!;
+        await user.click(
+            screen.getByRole("button", { name: "Add a reaction" })
+        );
+        const picker = screen.getByRole("dialog", { name: "Reactions" });
+        expect(card.contains(picker)).toBe(false);
+        expect(picker.style.position).toBe("fixed");
+
+        // Pressing inside it isn't taken for a press outside.
+        await user.click(
+            within(picker).getByRole("button", { name: /^Upvote/ })
+        );
+        expect(onReact).toHaveBeenCalledWith("upvote");
+    });
+
     it("shows no noughts: with nothing left yet, only the plus", async () => {
         const { onReact, user } = bar({ voteCount: 0, reactions: [] });
         expect(screen.queryByRole("button", { name: /Upvote/ })).toBeNull();

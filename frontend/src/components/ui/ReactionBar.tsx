@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { Lock, SmilePlus } from "lucide-react";
 import {
@@ -13,7 +14,7 @@ import { useProgressQuery } from "../../hooks/queries/useProgress";
 import { useDismiss } from "../../hooks/useDismiss";
 import { applyReaction, countOf, type ReactionView } from "../../lib/reactions";
 import { cn } from "../../lib/cn";
-import { popoverClass } from "./popover";
+import { floatBeside, popoverClass } from "./popover";
 
 interface ReactionBarProps {
     voteCount: number;
@@ -50,12 +51,19 @@ const tint = (key: string) => {
     };
 };
 
+/** The picker's size, for placing it before it has drawn: five across,
+ *  each row about 46px, and the shop link under them. */
+const PICKER = {
+    width: 240,
+    height: Math.ceil(REACTIONS.length / 5) * 46 + 50,
+};
+
 const CHIP =
     "inline-flex min-h-11 items-center gap-1 rounded-full border px-2.5 py-1 text-label-sm transition-colors lift sm:min-h-0 " +
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
 /**
- * Reactions on a review, a list or a post: each one someone has left, with
+ * Reactions on a review or a post: each one someone has left, with
  * its count, and a plus that picks from the ones the viewer has unlocked.
  * With none left yet there's only the plus. One per person: the same again takes it back,
  * another swaps it.
@@ -84,10 +92,31 @@ const ReactionBar = ({
     useEffect(() => setPending(null), [voteCount, myReaction, reactions]);
     const [picking, setPicking] = useState(false);
     const wrap = useRef<HTMLDivElement>(null);
-    useDismiss([wrap], () => setPicking(false), {
+    const picker = useRef<HTMLDivElement>(null);
+    // The picker is portalled, so it counts as inside too.
+    useDismiss([wrap, picker], () => setPicking(false), {
         enabled: picking,
         escape: true,
     });
+
+    /* Fixed and portalled to the body: hung inside the bar, any card with
+       overflow hidden around it cut it off. Portalled, it doesn't move with
+       the bar, so it follows it. */
+    const [anchor, setAnchor] = useState<DOMRect | null>(null);
+    useEffect(() => {
+        if (!picking) return setAnchor(null);
+        const track = () => {
+            const box = wrap.current?.getBoundingClientRect();
+            if (box) setAnchor(box);
+        };
+        track();
+        window.addEventListener("resize", track);
+        window.addEventListener("scroll", track, true);
+        return () => {
+            window.removeEventListener("resize", track);
+            window.removeEventListener("scroll", track, true);
+        };
+    }, [picking]);
 
     const shown = pending ?? { voteCount, myReaction, reactions };
     const press = (reaction: ReactionKey) => {
@@ -174,75 +203,89 @@ const ReactionBar = ({
                 </button>
             )}
 
-            {picking && (
-                <div
-                    role="dialog"
-                    aria-label="Reactions"
-                    className={popoverClass(
-                        cn(
-                            "absolute top-[calc(100%+0.4rem)] z-30 w-60 p-2",
-                            align === "end" ? "right-0" : "left-0"
-                        )
-                    )}
-                >
-                    <ul className="grid grid-cols-5 gap-1">
-                        {REACTIONS.map((def) => {
-                            const open = unlocked.has(def.key);
-                            const mine = shown.myReaction === def.key;
-                            return (
-                                <li key={def.key}>
-                                    <button
-                                        type="button"
-                                        disabled={!open}
-                                        aria-pressed={mine}
-                                        aria-label={
-                                            open
-                                                ? def.label
-                                                : `${def.label}, ${lockText(def.key)}`
-                                        }
-                                        title={
-                                            open
-                                                ? def.label
-                                                : `${def.label}: ${lockText(def.key)}`
-                                        }
-                                        onClick={() => press(def.key)}
-                                        className={cn(
-                                            "relative grid aspect-square w-full cursor-pointer place-items-center rounded-sm disabled:cursor-not-allowed",
-                                            "focus-visible:outline-2 focus-visible:outline-brand",
-                                            !mine &&
-                                                open &&
-                                                "hover:bg-surface-hover"
-                                        )}
-                                        style={mine ? tint(def.key) : undefined}
-                                    >
-                                        <ReactionIcon
-                                            reaction={def.key}
-                                            size={24}
-                                            muted={!open}
-                                            className={cn(
-                                                !open && "opacity-50"
-                                            )}
-                                        />
-                                        {!open && (
-                                            <Lock
-                                                size={10}
-                                                aria-hidden
-                                                className="absolute right-1 bottom-1 text-content-muted"
-                                            />
-                                        )}
-                                    </button>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                    <Link
-                        to="/shop"
-                        className="mt-1.5 block rounded-sm px-1.5 py-1.5 text-center text-label-sm font-medium text-brand hover:bg-surface-hover"
+            {picking &&
+                anchor &&
+                createPortal(
+                    <div
+                        ref={picker}
+                        role="dialog"
+                        aria-label="Reactions"
+                        style={{
+                            position: "fixed",
+                            width: PICKER.width,
+                            ...floatBeside(
+                                anchor,
+                                {
+                                    width: window.innerWidth,
+                                    height: window.innerHeight,
+                                },
+                                PICKER,
+                                align
+                            ),
+                        }}
+                        className={popoverClass("z-[60] p-2")}
                     >
-                        More reactions in the shop
-                    </Link>
-                </div>
-            )}
+                        <ul className="grid grid-cols-5 gap-1">
+                            {REACTIONS.map((def) => {
+                                const open = unlocked.has(def.key);
+                                const mine = shown.myReaction === def.key;
+                                return (
+                                    <li key={def.key}>
+                                        <button
+                                            type="button"
+                                            disabled={!open}
+                                            aria-pressed={mine}
+                                            aria-label={
+                                                open
+                                                    ? def.label
+                                                    : `${def.label}, ${lockText(def.key)}`
+                                            }
+                                            title={
+                                                open
+                                                    ? def.label
+                                                    : `${def.label}: ${lockText(def.key)}`
+                                            }
+                                            onClick={() => press(def.key)}
+                                            className={cn(
+                                                "relative grid aspect-square w-full cursor-pointer place-items-center rounded-sm disabled:cursor-not-allowed",
+                                                "focus-visible:outline-2 focus-visible:outline-brand",
+                                                !mine &&
+                                                    open &&
+                                                    "hover:bg-surface-hover"
+                                            )}
+                                            style={
+                                                mine ? tint(def.key) : undefined
+                                            }
+                                        >
+                                            <ReactionIcon
+                                                reaction={def.key}
+                                                size={24}
+                                                muted={!open}
+                                                className={cn(
+                                                    !open && "opacity-50"
+                                                )}
+                                            />
+                                            {!open && (
+                                                <Lock
+                                                    size={10}
+                                                    aria-hidden
+                                                    className="absolute right-1 bottom-1 text-content-muted"
+                                                />
+                                            )}
+                                        </button>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                        <Link
+                            to="/shop"
+                            className="mt-1.5 block rounded-sm px-1.5 py-1.5 text-center text-label-sm font-medium text-brand hover:bg-surface-hover"
+                        >
+                            More reactions in the shop
+                        </Link>
+                    </div>,
+                    document.body
+                )}
         </div>
     );
 };
