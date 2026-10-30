@@ -5,6 +5,7 @@ import { useNotify } from "../../../contexts/NotificationContext";
 import { useUpdateProfile } from "../../../hooks/queries/useProfiles";
 import { useUserFavourites } from "../../../hooks/queries/useFavourites";
 import AboutCard from "../components/AboutCard";
+import EmptyPlate from "../../../components/ui/EmptyPlate";
 import Gaming25Preview from "../../../components/gaming25/Gaming25Preview";
 import LevelCard from "../../../components/progress/LevelCard";
 import FavouriteGames from "../components/FavouriteGames";
@@ -118,6 +119,14 @@ const ProfileView = ({
                         )}
                     </Fragment>
                 ))}
+                {/* Each card above hides itself by rules of its own, so this
+                    shows only once every one of them has. */}
+                <div className="hidden only:block">
+                    <EmptyPlate
+                        title="Nothing here yet"
+                        body={`When ${profile.username} picks their favourite games, pins a list or review, or adds a game to their wishlist, it'll show here.`}
+                    />
+                </div>
             </div>
 
             {editing && (
