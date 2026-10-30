@@ -74,25 +74,31 @@ const ProfileNav = ({
 
     return (
         <nav aria-label="Profile">
-            {/* A phone: five tabs in its width were cramped or scrolled, so
-                one control says where you are and opens the rest. */}
+            {/* A phone: seven tabs in its width were cramped or scrolled, so
+                one control says where you are and opens the rest. It has to
+                read as a way around the profile, not a heading. */}
             <button
                 type="button"
                 aria-haspopup="dialog"
                 aria-expanded={sheetOpen}
                 onClick={() => setSheetOpen(true)}
-                className="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-md border border-subtle bg-surface-raised py-2 pr-3 pl-2 text-left shadow-lip lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:hidden"
+                className="flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-md border border-brand/50 bg-surface-raised py-2 pr-2 pl-3 text-left shadow-lip lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:hidden"
             >
                 <CurrentIcon
-                    size={18}
+                    size={20}
                     aria-hidden
-                    className="ml-1.5 shrink-0 text-content-secondary"
+                    className="shrink-0 text-brand"
                 />
-                <span className="flex min-w-0 flex-1 items-center gap-2 text-body font-medium text-content">
-                    {current.label}
-                    {currentCount !== undefined && (
-                        <CountPill value={currentCount} />
-                    )}
+                <span className="min-w-0 flex-1">
+                    <span className="block text-label-sm text-content-muted">
+                        Viewing
+                    </span>
+                    <span className="flex items-center gap-2 text-body font-semibold text-content">
+                        {current.label}
+                        {currentCount !== undefined && (
+                            <CountPill value={currentCount} />
+                        )}
+                    </span>
                 </span>
                 {/* Requests wait in Friends; from anywhere else, say so. */}
                 {requestCount > 0 && current.tab !== "friends" && (
@@ -100,9 +106,9 @@ const ProfileNav = ({
                         <RequestsDot count={requestCount} />
                     </span>
                 )}
-                <span className="flex items-center gap-1 rounded-full bg-surface-sunken py-1 pr-2 pl-2.5 text-label-sm text-content-secondary">
-                    Views
-                    <ChevronDown size={14} aria-hidden />
+                <span className="flex min-h-9 items-center gap-1 rounded-sm bg-brand-subtle px-3 text-label font-medium text-brand">
+                    Switch
+                    <ChevronDown size={16} aria-hidden />
                 </span>
             </button>
 
@@ -119,7 +125,7 @@ const ProfileNav = ({
                         {username}
                         <span className="text-content-muted">’s profile</span>
                     </h2>
-                    <ul className="mt-4 flex flex-col gap-1.5">
+                    <ul className="mt-4 grid grid-cols-2 gap-2">
                         {TABS.map(({ tab, label, icon: Icon }) => {
                             const count = countOf(tab);
                             const isActive = tab === active;
@@ -130,41 +136,47 @@ const ProfileNav = ({
                                         end
                                         onClick={() => setSheetOpen(false)}
                                         className={cn(
-                                            "flex min-h-12 items-center gap-3 rounded-md p-2 pr-3 lift",
+                                            "flex min-h-[76px] flex-col justify-between gap-2 rounded-md border p-3 lift",
                                             "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                                             isActive
-                                                ? "bg-surface-sunken text-content"
-                                                : "text-content-secondary hover:bg-surface-hover hover:text-content"
+                                                ? "border-brand/60 bg-brand-subtle text-content"
+                                                : "border-subtle text-content-secondary hover:border-strong hover:bg-surface-hover hover:text-content"
                                         )}
                                     >
-                                        <Icon
-                                            size={18}
-                                            aria-hidden
-                                            className={cn(
-                                                "ml-1 shrink-0",
-                                                isActive
-                                                    ? "text-content"
-                                                    : "text-content-muted"
+                                        <span className="flex items-center justify-between gap-2">
+                                            <Icon
+                                                size={20}
+                                                aria-hidden
+                                                className={cn(
+                                                    "shrink-0",
+                                                    isActive
+                                                        ? "text-brand"
+                                                        : "text-content-muted"
+                                                )}
+                                            />
+                                            {count !== undefined && (
+                                                <CountPill value={count} />
                                             )}
-                                        />
-                                        <span
-                                            className={cn(
-                                                "flex-1 text-body",
-                                                isActive && "font-medium"
-                                            )}
-                                        >
-                                            {label}
                                         </span>
-                                        {tab === "friends" &&
-                                            requestCount > 0 && (
-                                                <span className="text-label-sm text-brand">
-                                                    {formatCount(requestCount)}{" "}
-                                                    new
-                                                </span>
-                                            )}
-                                        {count !== undefined && (
-                                            <CountPill value={count} />
-                                        )}
+                                        <span className="flex items-baseline justify-between gap-2">
+                                            <span
+                                                className={cn(
+                                                    "text-body",
+                                                    isActive && "font-semibold"
+                                                )}
+                                            >
+                                                {label}
+                                            </span>
+                                            {tab === "friends" &&
+                                                requestCount > 0 && (
+                                                    <span className="text-label-sm text-brand">
+                                                        {formatCount(
+                                                            requestCount
+                                                        )}{" "}
+                                                        new
+                                                    </span>
+                                                )}
+                                        </span>
                                     </NavLink>
                                 </li>
                             );
