@@ -20,6 +20,7 @@ const steps = setupSteps("devuser", {
 const sheet = (props: Partial<Parameters<typeof MoreSheet>[0]> = {}) => {
     const on = {
         onClose: vi.fn(),
+        onInvite: vi.fn(),
         onSignIn: vi.fn(),
         onSignUp: vi.fn(),
         onSignOut: vi.fn(),
@@ -31,6 +32,23 @@ const sheet = (props: Partial<Parameters<typeof MoreSheet>[0]> = {}) => {
 };
 
 describe("MoreSheet", () => {
+    // The share sheet opens over the page, not inside this one closing.
+    it("shuts itself and hands inviting on", async () => {
+        const on = sheet();
+        await userEvent.click(
+            screen.getByRole("button", { name: /Invite friends/ })
+        );
+        expect(on.onClose).toHaveBeenCalled();
+        expect(on.onInvite).toHaveBeenCalled();
+    });
+
+    it("offers no invite signed out", () => {
+        sheet({ user: null });
+        expect(
+            screen.queryByRole("button", { name: /Invite friends/ })
+        ).toBeNull();
+    });
+
     it("keeps everything the menus held: shelves, settings, admin", () => {
         sheet({ user: buildProfile({ username: "devuser", isAdmin: true }) });
         expect(screen.getByRole("link", { name: /Backlog/ })).toHaveAttribute(

@@ -9,6 +9,7 @@ import {
     Shield,
     Store,
     Sun,
+    UserPlus,
     UserRound,
 } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -20,6 +21,7 @@ import LevelChip from "../progress/LevelChip";
 import TokenAmount from "../progress/TokenAmount";
 import XpBar from "../progress/XpBar";
 import { useProgressQuery } from "../../hooks/queries/useProgress";
+import { useInviteFor } from "../progress/useInviteFor";
 import { cn } from "../../lib/cn";
 import { shelfPath } from "../../lib/profilePaths";
 import { useDismiss } from "../../hooks/useDismiss";
@@ -168,6 +170,8 @@ const AccountMenu = ({
     /** Steps left in setting up the profile; null once there are none. */
     setup?: SetupStep[] | null;
 }) => {
+    // Outside the menu, so the share sheet outlives the menu closing.
+    const invite = useInviteFor(user.username);
     const [open, setOpen] = useState(false);
     const wrapRef = useRef<HTMLDivElement>(null);
     const { theme, toggleTheme } = useTheme();
@@ -265,6 +269,17 @@ const AccountMenu = ({
                     >
                         <Store size={15} aria-hidden /> Shop
                     </Link>
+                    <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                            setOpen(false);
+                            invite.open();
+                        }}
+                        className={cn(ITEM, "cursor-pointer")}
+                    >
+                        <UserPlus size={15} aria-hidden /> Invite friends
+                    </button>
 
                     {/* The shelves. Backlog used to be a top-level nav item,
                         which gave one of the four states a promotion the
@@ -344,6 +359,7 @@ const AccountMenu = ({
                     </button>
                 </div>
             )}
+            {invite.sheet}
         </div>
     );
 };
