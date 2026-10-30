@@ -196,7 +196,9 @@ const ItemSheet = ({
             labelledBy={titleId}
             className="w-full sm:max-w-md"
         >
-            <div className="-mx-4 -mt-4 mb-5 bg-surface-sunken/60 px-4 pt-8 pb-6 sm:-mx-6 sm:-mt-6 sm:px-6">
+            {/* Clear of the close button: a wide preview, as a slot's is,
+                otherwise runs up under it. */}
+            <div className="-mx-4 -mt-4 mb-5 bg-surface-sunken/60 px-4 pt-12 pb-6 sm:-mx-6 sm:-mt-6 sm:px-6">
                 <ItemStage item={item} />
             </div>
             <p className="text-label-sm text-content-muted">
