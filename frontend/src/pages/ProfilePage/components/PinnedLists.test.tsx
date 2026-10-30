@@ -109,6 +109,71 @@ describe("PinnedLists", () => {
             );
         });
 
+        it("offers another slot once they're all taken, without leaving", async () => {
+            serve({});
+            own([list(1, "Cosy games"), list(2, "Hard ones")]);
+            server.use(
+                http.get(`${API}/progress/devuser/badges`, () =>
+                    HttpResponse.json({
+                        level: 3,
+                        xp: 400,
+                        frame: null,
+                        held: [],
+                        showcase: [],
+                        layout: "row",
+                        progress: [],
+                    })
+                ),
+                http.get(`${API}/shop`, () =>
+                    HttpResponse.json({
+                        tokens: 200,
+                        items: [
+                            {
+                                item: "slot_pinned_list",
+                                kind: "slot",
+                                group: "slot",
+                                label: "Pinned lists",
+                                price: 150,
+                                owned: 0,
+                                maxOwned: 2,
+                                affordable: true,
+                            },
+                        ],
+                    })
+                )
+            );
+            const u = userEvent.setup();
+            renderWithProviders(
+                <PinnedLists username="devuser" ids={[]} isOwner />
+            );
+
+            await u.click(
+                await screen.findByRole("button", { name: "Choose" })
+            );
+            const picker = await screen.findByRole("dialog");
+            expect(
+                within(picker).queryByRole("button", {
+                    name: "Get another slot",
+                })
+            ).toBeNull();
+            await u.click(
+                within(picker).getByRole("button", { name: /Cosy games/ })
+            );
+            await u.click(
+                within(picker).getByRole("button", {
+                    name: "Get another slot",
+                })
+            );
+
+            // The slot's popup, over the picker rather than instead of it.
+            await waitFor(() =>
+                expect(screen.getAllByRole("dialog")).toHaveLength(2)
+            );
+            expect(screen.getAllByRole("dialog")[1]).toHaveTextContent(
+                "Profile slot"
+            );
+        });
+
         it("stays out of the way with no list that could be pinned", async () => {
             serve({});
             own([list(2, "Secret", "private")]);

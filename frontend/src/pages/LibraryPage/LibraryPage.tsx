@@ -136,7 +136,7 @@ const LibraryPage = () => {
             ) : games.length === 0 && lookingFurther ? (
                 <EmptyPlate
                     title={`Looking further for “${searchTerm}”`}
-                    body="It isn't in the library yet, so we're checking the wider catalogue. Anything found is added here."
+                    body="Not in the library yet. Looking for it now."
                     action={<LoadingSpinner size="md" label="Searching" />}
                 />
             ) : games.length === 0 ? (

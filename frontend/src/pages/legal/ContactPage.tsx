@@ -6,14 +6,14 @@ import { DISCORD_INVITE_URL } from "../../constants/brand";
 import ProsePage from "./ProsePage";
 
 const ContactPage = () => (
-    <ProsePage title="Contact" summary="The quickest way to reach me.">
+    <ProsePage title="Contact" summary="How to get in touch.">
         <div className="flex flex-col gap-4 rounded-lg border border-subtle bg-surface-raised p-5 shadow-plate sm:flex-row sm:items-center sm:justify-between sm:p-6">
             <div>
                 <p className="font-display text-section text-content">
                     Send me an email
                 </p>
                 <p className="mt-1 text-body-sm text-content-secondary">
-                    I read everything and reply as soon as I can.
+                    I reply to every email.
                 </p>
             </div>
             <a

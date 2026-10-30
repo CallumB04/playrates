@@ -43,7 +43,8 @@ import XpInfo from "../../components/progress/XpInfo";
 import { nextReward } from "../../components/progress/rewardText";
 import { questPath } from "../../lib/questPath";
 import { InviteCard } from "../../components/progress/Invite";
-import ItemSheet from "../../components/shop/ItemSheet";
+import ItemSheet, { ItemSheetFor } from "../../components/shop/ItemSheet";
+import { usePins } from "../ProfilePage/lib/usePinReviews";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import {
@@ -628,7 +629,7 @@ const Leaderboard = () => {
             ) : (rows?.length ?? 0) <= 1 ? (
                 <div className="flex flex-col items-start gap-2 px-3 pb-2">
                     <p className="text-body-sm text-content-muted">
-                        Add friends to see how you stack up.
+                        Add friends to see them here.
                     </p>
                 </div>
             ) : (
@@ -1131,7 +1132,6 @@ const Look = ({ data }: { data: Progress }) => {
                             id: l.id,
                             name: l.name,
                         }))}
-                        slots={look.pinnedListSlots}
                     />
                 </LookSection>
             )}
@@ -1147,58 +1147,42 @@ const Look = ({ data }: { data: Progress }) => {
 };
 
 /** Pins on your profile, as toggles: lists or reviews, up to the slots
- *  you have. */
+ *  you have, and with none free, the slot to buy here. */
 const PinToggles = ({
     field,
     items,
-    slots,
 }: {
     field: "pinnedLists" | "pinnedReviews";
     items: { id: number; name: string }[];
-    slots: number;
 }) => {
-    const { user } = useAuth();
-    const notify = useNotify();
-    const setStyle = useSetStyle();
-    const [pinned, setPinned] = useState<number[]>(user?.[field] ?? []);
-    const toggle = (id: number) => {
-        const next = pinned.includes(id)
-            ? pinned.filter((p) => p !== id)
-            : [...pinned, id];
-        if (next.length > slots) {
-            notify(
-                `You can pin ${slots} for now. More slots are in the shop.`,
-                "info"
-            );
-            return;
-        }
-        setPinned(next);
-        setStyle.mutate({ [field]: next });
-    };
+    const pins = usePins(field);
     return (
-        <ul className="flex flex-wrap gap-2">
-            {items.map((l) => {
-                const on = pinned.includes(l.id);
-                return (
-                    <li key={l.id}>
-                        <button
-                            type="button"
-                            aria-pressed={on}
-                            onClick={() => toggle(l.id)}
-                            className={cn(
-                                "inline-flex min-h-11 max-w-60 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-label lift sm:min-h-9",
-                                on
-                                    ? "border-brand bg-brand-subtle text-brand"
-                                    : "border-subtle hover:border-strong"
-                            )}
-                        >
-                            {on && <Check size={12} aria-hidden />}
-                            <span className="truncate">{l.name}</span>
-                        </button>
-                    </li>
-                );
-            })}
-        </ul>
+        <>
+            <ul className="flex flex-wrap gap-2">
+                {items.map((l) => {
+                    const on = pins.pinned.includes(l.id);
+                    return (
+                        <li key={l.id}>
+                            <button
+                                type="button"
+                                aria-pressed={on}
+                                onClick={() => pins.toggle(l.id)}
+                                className={cn(
+                                    "inline-flex min-h-11 max-w-60 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-label lift sm:min-h-9",
+                                    on
+                                        ? "border-brand bg-brand-subtle text-brand"
+                                        : "border-subtle hover:border-strong"
+                                )}
+                            >
+                                {on && <Check size={12} aria-hidden />}
+                                <span className="truncate">{l.name}</span>
+                            </button>
+                        </li>
+                    );
+                })}
+            </ul>
+            {pins.buying && <ItemSheetFor {...pins.buying} />}
+        </>
     );
 };
 

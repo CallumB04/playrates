@@ -16,7 +16,8 @@ const ProfilePageRoute = () => {
     const notify = useNotify();
 
     useEffect(() => {
-        if (!targetUsername) notify("No user found in URL", "error");
+        if (!targetUsername)
+            notify("That link doesn't go to a profile", "error");
     }, [targetUsername, notify]);
 
     if (!targetUsername) return <ProfileError />;

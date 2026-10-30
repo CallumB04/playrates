@@ -29,7 +29,7 @@ const ResetPasswordPage = () => {
         return (
             <EmptyPlate
                 title="That link has expired"
-                body="Reset links only work once, and not for long. Ask for a new one and it'll be with you in a minute."
+                body="That link has expired. Send yourself a new one."
                 action={<Button onClick={openReset}>Send a new link</Button>}
             />
         );

@@ -109,6 +109,7 @@ const ChooseReviews = ({
         <ChoosePins
             title="Pinned reviews"
             slots={slots}
+            slotItem="slot_pinned_review"
             pinned={pinned}
             choices={(data?.data ?? []).map((review) => ({
                 id: review.id,

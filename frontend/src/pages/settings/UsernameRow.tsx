@@ -35,7 +35,7 @@ const UsernameRow = ({ current }: { current: string }) => {
     };
 
     const message: Record<typeof availability.state, string> = {
-        idle: `Your profile lives at /user/${value.trim() || "…"}`,
+        idle: `Your profile is at /user/${value.trim() || "…"}`,
         checking: "Checking…",
         free: `${value.trim()} is free.`,
         taken: `${value.trim()} is taken.`,

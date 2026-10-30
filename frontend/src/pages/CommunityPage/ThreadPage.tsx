@@ -247,7 +247,7 @@ const ThreadPage = () => {
                         </h2>
 
                         {data.messages.length <= 1 ? (
-                            <EmptyNote>No replies yet. Start it off.</EmptyNote>
+                            <EmptyNote>Nobody has replied yet.</EmptyNote>
                         ) : (
                             <div
                                 className={cardClass(
@@ -475,8 +475,7 @@ const PatchNotesThread = ({
                             {detail.thread.title}
                         </h1>
                         <p className="mt-2 text-body-sm text-content-secondary">
-                            Every release, written up by the PlayRates team.
-                            React to the changes you’re glad of.
+                            What’s changed on the site, newest at the top.
                         </p>
                     </div>
                 </div>

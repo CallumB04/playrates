@@ -15,6 +15,7 @@ import { useDismiss } from "../../hooks/useDismiss";
 import { applyReaction, countOf, type ReactionView } from "../../lib/reactions";
 import { cn } from "../../lib/cn";
 import { floatBeside, popoverClass } from "./popover";
+import { ItemSheetFor } from "../shop/ItemSheet";
 
 interface ReactionBarProps {
     voteCount: number;
@@ -35,6 +36,12 @@ interface ReactionBarProps {
 }
 
 const defOf = (key: ReactionKey) => REACTIONS.find((r) => r.key === key)!;
+
+/** The shop item that unlocks a reaction, for one that's bought. */
+const itemOf = (key: ReactionKey): string | null => {
+    const def = defOf(key);
+    return "item" in def ? def.item : null;
+};
 
 /** Where a locked reaction comes from, said short. */
 const lockText = (key: ReactionKey) => {
@@ -91,6 +98,8 @@ const ReactionBar = ({
     const [pending, setPending] = useState<ReactionView | null>(null);
     useEffect(() => setPending(null), [voteCount, myReaction, reactions]);
     const [picking, setPicking] = useState(false);
+    // A bought reaction not yours yet: its popup, then the reaction.
+    const [buying, setBuying] = useState<ReactionKey | null>(null);
     const wrap = useRef<HTMLDivElement>(null);
     const picker = useRef<HTMLDivElement>(null);
     // The picker is portalled, so it counts as inside too.
@@ -119,6 +128,10 @@ const ReactionBar = ({
     }, [picking]);
 
     const shown = pending ?? { voteCount, myReaction, reactions };
+    const want = (reaction: ReactionKey) => {
+        setPicking(false);
+        setBuying(reaction);
+    };
     const press = (reaction: ReactionKey) => {
         setPicking(false);
         setPending(applyReaction(shown, reaction));
@@ -147,13 +160,15 @@ const ReactionBar = ({
                 const mine = shown.myReaction === key;
                 const count = countOf(shown, key);
                 const locked = !disabled && !mine && !unlocked.has(key);
+                // One someone else left that you could buy: buy it here.
+                const buyable = locked && itemOf(key) !== null;
                 const upvote = key === DEFAULT_REACTION;
                 return (
                     <button
                         key={key}
                         type="button"
-                        onClick={() => press(key)}
-                        disabled={disabled || locked}
+                        onClick={() => (buyable ? want(key) : press(key))}
+                        disabled={disabled || (locked && !buyable)}
                         aria-pressed={mine}
                         aria-label={
                             disabled
@@ -162,7 +177,9 @@ const ReactionBar = ({
                                   ? `Remove your ${upvote ? "upvote" : def.label}`
                                   : upvote
                                     ? `Upvote this ${noun}`
-                                    : `React ${def.label}, ${count} so far`
+                                    : buyable
+                                      ? `Get ${def.label}, ${count} so far`
+                                      : `React ${def.label}, ${count} so far`
                         }
                         title={
                             disabledReason ??
@@ -175,9 +192,11 @@ const ReactionBar = ({
                             mine
                                 ? "font-semibold text-content"
                                 : "border-subtle text-content-muted hover:border-strong hover:text-content",
-                            disabled || locked
+                            disabled || (locked && !buyable)
                                 ? "cursor-not-allowed opacity-60"
-                                : "cursor-pointer"
+                                : buyable
+                                  ? "cursor-pointer opacity-60"
+                                  : "cursor-pointer"
                         )}
                         // Yours takes on the reaction's own colour.
                         style={mine ? tint(key) : undefined}
@@ -229,28 +248,36 @@ const ReactionBar = ({
                             {REACTIONS.map((def) => {
                                 const open = unlocked.has(def.key);
                                 const mine = shown.myReaction === def.key;
+                                const buyable =
+                                    !open && itemOf(def.key) !== null;
                                 return (
                                     <li key={def.key}>
                                         <button
                                             type="button"
-                                            disabled={!open}
+                                            disabled={!open && !buyable}
                                             aria-pressed={mine}
                                             aria-label={
                                                 open
                                                     ? def.label
-                                                    : `${def.label}, ${lockText(def.key)}`
+                                                    : buyable
+                                                      ? `Get ${def.label}`
+                                                      : `${def.label}, ${lockText(def.key)}`
                                             }
                                             title={
                                                 open
                                                     ? def.label
                                                     : `${def.label}: ${lockText(def.key)}`
                                             }
-                                            onClick={() => press(def.key)}
+                                            onClick={() =>
+                                                open
+                                                    ? press(def.key)
+                                                    : want(def.key)
+                                            }
                                             className={cn(
                                                 "relative grid aspect-square w-full cursor-pointer place-items-center rounded-sm disabled:cursor-not-allowed",
                                                 "focus-visible:outline-2 focus-visible:outline-brand",
                                                 !mine &&
-                                                    open &&
+                                                    (open || buyable) &&
                                                     "hover:bg-surface-hover"
                                             )}
                                             style={
@@ -286,6 +313,13 @@ const ReactionBar = ({
                     </div>,
                     document.body
                 )}
+            {buying && (
+                <ItemSheetFor
+                    item={itemOf(buying)!}
+                    onBought={() => press(buying)}
+                    onClose={() => setBuying(null)}
+                />
+            )}
         </div>
     );
 };

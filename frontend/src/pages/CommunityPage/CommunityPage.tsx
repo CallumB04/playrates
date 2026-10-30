@@ -273,8 +273,8 @@ const CommunityPage = () => {
                                         : participant
                                           ? "No threads from them yet."
                                           : gameId
-                                            ? "Nobody has started one about this game. Be the first."
-                                            : "Start the first one: pick a game and say what's on your mind."
+                                            ? "No threads about this game yet."
+                                            : "No threads yet. Pick a game and start one."
                                 }
                                 action={
                                     // The header's button is the primary one.

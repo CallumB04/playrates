@@ -1,0 +1,104 @@
+/* The list format: a picture and words set the way TikTok's own text tool
+   sets them, so a slide reads as made on a phone rather than designed. No
+   brand, no colour of our own. */
+@font-face {
+  font-family: "TikTok Sans";
+  src: url("fonts/tiktok-sans.woff2") format("woff2-variations");
+  font-weight: 300 900;
+}
+
+:root {
+  /* Clear of TikTok's tabs at the top, the caption at the bottom and the
+     like/comment rail down the right, as in slides.css. */
+  --safe-top: 250px;
+  --safe-bottom: 380px;
+  --safe-x: 110px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  background: #000;
+  font-family: "TikTok Sans", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.slide {
+  position: relative;
+  width: 1080px;
+  height: 1920px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* Text sits a little above the middle, where TikTok's tool drops it and
+     clear of the rail, which starts lower down. */
+  padding: var(--safe-top) var(--safe-x) 620px;
+  text-align: center;
+  background: #111;
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.words {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 34px;
+}
+
+/* TikTok's "background" text style: dark words on a white box per line. */
+.boxed {
+  font-size: 70px;
+  font-weight: 700;
+  line-height: 1.32;
+  letter-spacing: -0.01em;
+  color: #111;
+  text-wrap: balance;
+}
+.boxed span {
+  background: #fff;
+  padding: 4px 22px;
+  border-radius: 14px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* The cover: it's all the grid shows, so it's the biggest. */
+.boxed.hook {
+  font-size: 84px;
+}
+
+/* TikTok's plain style: white with the soft shadow it adds for contrast. */
+.plain {
+  font-size: 50px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #fff;
+  text-shadow:
+    0 0 6px rgba(0, 0, 0, 0.85),
+    0 2px 14px rgba(0, 0, 0, 0.6);
+  max-width: 820px;
+  text-wrap: balance;
+}
+
+body.sheet {
+  display: grid;
+  grid-template-columns: repeat(6, 270px);
+  gap: 24px;
+  padding: 24px;
+  width: max-content;
+  background: #222;
+}
+body.sheet .slide {
+  zoom: 0.25;
+}

@@ -186,9 +186,18 @@ export const createInMemoryProgress = (
     },
 
     async awardXp(userId, source, key, xp, data) {
-      if (state.xpEvents.some((e) => e.user_id === userId && e.key === key))
-        return;
       const amount = xp ?? RULES[source]?.xp ?? 0;
+      // As award_xp: a key paid again is raised to a higher amount, and
+      // otherwise left alone.
+      const had = state.xpEvents.find((e) => e.user_id === userId && e.key === key);
+      if (had) {
+        if (amount > had.xp) {
+          const row = state.profiles.find((p) => p.id === userId);
+          if (row) row.xp = (row.xp ?? 0) + amount - had.xp;
+          had.xp = amount;
+        }
+        return;
+      }
       state.xpEvents.push({
         id: nextId++,
         user_id: userId,

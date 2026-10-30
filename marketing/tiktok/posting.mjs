@@ -44,15 +44,13 @@ ${post.tiktok.pinnedComment}
 
 ## When
 
-${post.tiktok.time ?? "21:00"} Estonian time. ${post.tiktok.when}
+${post.tiktok.time} Estonian time. ${post.tiktok.when}
 
 ## Checklist
 
 ${video ? "- [ ] Upload video.mp4 on the Videos tab, and check the cover is the intro card." : `- [ ] Upload all ${slideCount} slides in order, 01 first. Slide 1 is the cover.`}
 - [ ] ${video ? "Replace the caption TikTok fills in with the one above" : "Paste the title and description"}, and add the sound.
-- [ ] playrates.app is still written in the profile bio. Descriptions aren't
-      clickable, and a personal account can't add a bio link until 1,000
-      followers.
+- [ ] playrates.app is still in the profile bio.
 - [ ] Pin the comment above as soon as the post is live.
 - [ ] Reply to the first comments in the first hour.
 `;

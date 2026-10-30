@@ -40,6 +40,30 @@ describe("Modal", () => {
         expect(onClose).toHaveBeenCalledOnce();
     });
 
+    // A purchase can open over a picker: Escape shuts the purchase only.
+    it("closes only the one on top on Escape", () => {
+        const below = vi.fn();
+        const above = vi.fn();
+        const stack = (buying: boolean) => (
+            <Modal onClose={() => below()}>
+                <p>picker</p>
+                {buying && (
+                    <Modal onClose={above}>
+                        <p>purchase</p>
+                    </Modal>
+                )}
+            </Modal>
+        );
+        const { rerender } = render(stack(false));
+        rerender(stack(true));
+        // The one below drawing again doesn't put it back on top.
+        rerender(stack(true));
+
+        fireEvent.keyDown(document, { key: "Escape" });
+        expect(above).toHaveBeenCalledOnce();
+        expect(below).not.toHaveBeenCalled();
+    });
+
     it("closes when the backdrop is pressed", () => {
         const onClose = vi.fn();
         render(
@@ -75,6 +99,23 @@ describe("Modal", () => {
         expect(document.body.style.overflow).toBe("hidden");
         unmount();
         expect(document.body.style.overflow).not.toBe("hidden");
+    });
+
+    it("lets the page scroll again only when the last one closes", () => {
+        document.body.style.overflow = "auto";
+        const stack = (buying: boolean) => (
+            <Modal onClose={() => {}}>
+                {buying && <Modal onClose={() => {}}>purchase</Modal>}
+            </Modal>
+        );
+        const { rerender, unmount } = render(stack(true));
+        rerender(stack(false));
+        expect(document.body.style.overflow).toBe("hidden");
+
+        rerender(stack(true));
+        // Both at once, as saving a picker with a purchase open does.
+        unmount();
+        expect(document.body.style.overflow).toBe("auto");
     });
 
     it("renders a labelled close button by default", () => {

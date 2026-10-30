@@ -25,6 +25,7 @@ import { cn } from "../../lib/cn";
 import ProfileError from "./components/ProfileError";
 import MemberFileHeader from "./components/MemberFileHeader";
 import FriendAction from "./components/FriendAction";
+import ShareCardButton from "./components/ShareCardButton";
 import FriendRequestBand from "./components/FriendRequestBand";
 import ProfileNav from "./components/ProfileNav";
 import {
@@ -156,7 +157,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
     );
 
     useEffect(() => {
-        if (targetUserError) notify("Failed to fetch user data", "error");
+        if (targetUserError) notify("Couldn’t load this profile", "error");
     }, [targetUserError, notify]);
 
     /* deep link: /user/x?log=<gameId> opens their logs of that game, on
@@ -183,7 +184,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
             await remove.mutateAsync();
             notify("Request cancelled", "success");
         } catch {
-            notify("That action failed, please try again", "error");
+            notify("That didn't work. Try again.", "error");
         }
     };
 
@@ -263,6 +264,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                                     Background
                                 </span>
                             </Button>
+                            <ShareCardButton username={targetUser.username} />
                             <Link
                                 to="/settings"
                                 aria-label="Settings"
@@ -414,7 +416,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                         await remove.mutateAsync();
                         notify("Friend removed", "success");
                     } catch {
-                        notify("That action failed, please try again", "error");
+                        notify("That didn't work. Try again.", "error");
                     }
                 }}
             />

@@ -359,7 +359,7 @@ export const BADGES = [
   },
   {
     key: "voice",
-    name: "Voice",
+    name: "Regular",
     description: "Post {n} time(s) in the community",
     category: "community",
     icon: "MessagesSquare",
@@ -386,7 +386,7 @@ export const BADGES = [
   },
   {
     key: "tastemaker",
-    name: "Tastemaker",
+    name: "Good Taste",
     description: "Get {n} loves on your lists",
     category: "curation",
     icon: "Sparkle",
@@ -664,14 +664,11 @@ export const streakXp = (weeks: number): number =>
 
 /* ------------------------------------------------------------- referrals */
 
-/** An invite pays once the friend has played this many games, so an
- *  account made only to be counted pays nothing. */
+/** What an invite pays, as the friend signs up: to whoever invited them,
+ *  and a welcome to the friend. */
 export const REFERRAL = {
-  activeAfter: 5,
-  joinedXp: 50,
-  activeXp: 250,
-  activeTokens: 50,
-  /** For the friend who joined, once they get going. */
+  inviterXp: 300,
+  inviterTokens: 50,
   welcomeXp: 100,
   welcomeTokens: 25,
 } as const;
@@ -1247,8 +1244,8 @@ export interface ReferralInvite {
   accent: string;
   level: number;
   frame: FrameKey | null;
-  /** What joining is worth, once the new member has played `afterGames`. */
-  reward: { xp: number; tokens: number; afterGames: number };
+  /** What joining is worth to the new member. */
+  reward: { xp: number; tokens: number };
 }
 
 export const SwapQuestSchema = z

@@ -94,7 +94,7 @@ const WelcomePopup = ({
                             Welcome to {BRAND_NAME}
                         </h2>
                         <p className="mt-1.5 text-body-sm text-content-secondary">
-                            Two things before you explore, both optional.
+                            Two quick things first. You can skip both.
                         </p>
                     </div>
 

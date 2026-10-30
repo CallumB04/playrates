@@ -1,18 +1,10 @@
 import { useId, useState, type ReactNode } from "react";
-import { Check, Download, Link2, Share2 } from "lucide-react";
-import {
-    SiBluesky,
-    SiFacebook,
-    SiReddit,
-    SiThreads,
-    SiWhatsapp,
-    SiX,
-} from "@icons-pack/react-simple-icons";
+import { Download } from "lucide-react";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import { Skeleton } from "../ui/Skeleton";
 import { useNotify } from "../../contexts/NotificationContext";
-import { shareLinks, type ShareTarget } from "../../lib/share";
+import { CopyLink, ShareTargets } from "./ShareParts";
 import { cn } from "../../lib/cn";
 
 interface ShareSheetProps {
@@ -30,23 +22,6 @@ interface ShareSheetProps {
     noImage?: string;
     onClose: () => void;
 }
-
-const NETWORK_ICONS: Record<ShareTarget, typeof SiX> = {
-    x: SiX,
-    bluesky: SiBluesky,
-    threads: SiThreads,
-    reddit: SiReddit,
-    whatsapp: SiWhatsapp,
-    facebook: SiFacebook,
-};
-
-// 40px to the eye, 44px to a thumb: seven fit a phone's row with room
-// between them.
-const ICON =
-    "relative grid size-10 cursor-pointer place-items-center rounded-full bg-surface-sunken text-content-secondary lift " +
-    "before:absolute before:-inset-0.5 before:content-[''] " +
-    "hover:-translate-y-px hover:bg-surface-hover hover:text-content disabled:cursor-not-allowed disabled:opacity-60 " +
-    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
 const imageFile = async (imageUrl: string, fileName: string) => {
     const res = await fetch(imageUrl);
@@ -95,10 +70,8 @@ const ShareSheet = ({
     const setImage = (status: "loaded" | "missing") =>
         setSettled({ url: imageUrl, status });
     const hasImage = image !== "missing";
-    const [copied, setCopied] = useState(false);
     const [busy, setBusy] = useState(false);
     const files = hasImage && canShareFiles();
-    const native = typeof navigator.share === "function";
 
     const shareNative = async () => {
         setBusy(true);
@@ -139,19 +112,6 @@ const ShareSheet = ({
             setBusy(false);
         }
     };
-
-    const copy = async () => {
-        try {
-            await navigator.clipboard.writeText(url);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch {
-            notify("Couldn't copy the link", "error");
-        }
-    };
-
-    // The address as it reads, not as it's typed: no scheme, no slash.
-    const shownUrl = url.replace(/^https?:\/\//, "");
 
     return (
         <Modal
@@ -209,62 +169,16 @@ const ShareSheet = ({
                 </Button>
             )}
 
-            <div className="mt-2 flex min-h-12 items-center gap-2 rounded-sm border border-subtle bg-surface-sunken py-0.5 pr-0.5 pl-3 sm:py-1 sm:pr-1">
-                <Link2
-                    size={15}
-                    aria-hidden
-                    className="shrink-0 text-content-muted"
-                />
-                <span className="min-w-0 flex-1 truncate font-mono text-label-sm text-content-secondary">
-                    {shownUrl}
-                </span>
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => void copy()}
-                    className="min-h-11 shrink-0 sm:min-h-10"
-                >
-                    {copied && <Check size={14} aria-hidden />}
-                    {copied ? "Copied" : "Copy"}
-                </Button>
-            </div>
+            <CopyLink url={url} className="mt-2" />
 
-            <ul
-                aria-label="Post it to"
-                className="mt-4 flex justify-center gap-2.5 border-t border-subtle pt-4 pb-3 sm:gap-3 sm:pb-0"
-            >
-                {native && (
-                    <li>
-                        <button
-                            type="button"
-                            onClick={() => void shareNative()}
-                            disabled={busy}
-                            aria-label={files ? "Share the picture" : "Share"}
-                            title={files ? "Share the picture" : "Share"}
-                            className={ICON}
-                        >
-                            <Share2 size={18} aria-hidden />
-                        </button>
-                    </li>
-                )}
-                {shareLinks(url, text).map((link) => {
-                    const Icon = NETWORK_ICONS[link.target];
-                    return (
-                        <li key={link.target}>
-                            <a
-                                href={link.href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label={link.label}
-                                title={link.label}
-                                className={ICON}
-                            >
-                                <Icon size={18} aria-hidden />
-                            </a>
-                        </li>
-                    );
-                })}
-            </ul>
+            <ShareTargets
+                url={url}
+                text={text}
+                onNative={() => void shareNative()}
+                nativeLabel={files ? "Share the picture" : "Share"}
+                busy={busy}
+                className="mt-4 border-t border-subtle pt-4 pb-3 sm:pb-0"
+            />
         </Modal>
     );
 };

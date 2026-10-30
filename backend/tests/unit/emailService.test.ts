@@ -157,9 +157,9 @@ describe("event emails", () => {
 
   it("names the actor from their profile when the data doesn't", async () => {
     const { service, email } = setup();
-    await service.sendEvent({ userId: USER_A, kind: "referral_active", actorId: USER_B, data: {} });
-    expect(email.sent[0]!.text).toContain("250 XP and 50 tokens");
-    expect(email.sent[0]!.subject).toBe("ana got going on PlayRates");
+    await service.sendEvent({ userId: USER_A, kind: "referral_joined", actorId: USER_B, data: {} });
+    expect(email.sent[0]!.text).toContain("300 XP and 50 tokens");
+    expect(email.sent[0]!.subject).toBe("ana joined PlayRates from your invite");
   });
 
   it("skips one missing what it needs, as the bell would", async () => {

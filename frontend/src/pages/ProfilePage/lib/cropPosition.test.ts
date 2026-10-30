@@ -3,9 +3,9 @@ import { backdropAspect, cropWindow, dragPosition } from "./cropPosition";
 
 describe("backdropAspect", () => {
     it("divides the window's width by the backdrop's height there", () => {
-        expect(backdropAspect(1520)).toBe(4);
-        expect(backdropAspect(960)).toBe(3);
-        expect(backdropAspect(460)).toBe(2);
+        expect(backdropAspect(1740)).toBe(3);
+        expect(backdropAspect(1000)).toBe(2);
+        expect(backdropAspect(420)).toBe(1);
     });
 });
 

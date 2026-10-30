@@ -218,7 +218,7 @@ const YearGlance = ({
         <YearChart
             logs={yearLogs}
             barsClassName="h-10"
-            emptyNote="Games you finish this year chart here"
+            emptyNote="Nothing finished this year yet"
         />
     </div>
 );

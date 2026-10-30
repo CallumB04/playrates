@@ -10,7 +10,7 @@ const ProfileError = () => {
         <div className="absolute top-0 left-0 flex h-[calc(100vh-64px)] w-screen items-center justify-center px-4">
             <div className="flex h-full w-full flex-col items-center justify-center gap-y-5 px-4">
                 <h1 className="text-center font-display text-xl text-content">
-                    There was an error when fetching this user.
+                    Couldn’t load this profile.
                 </h1>
                 <div className="flex w-full flex-col items-center gap-3 sm:w-max sm:flex-row">
                     <Link
@@ -27,7 +27,7 @@ const ProfileError = () => {
                                 "w-full sm:w-max"
                             )}
                         >
-                            Go to my Profile
+                            Go to my profile
                         </Link>
                     ) : (
                         <></>

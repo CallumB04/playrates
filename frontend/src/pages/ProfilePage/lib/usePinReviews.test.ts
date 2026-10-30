@@ -7,9 +7,6 @@ const auth = vi.hoisted(() => ({ user: null as unknown }));
 const progress = vi.hoisted(() => ({ data: undefined as unknown }));
 const notify = vi.hoisted(() => vi.fn());
 const mutate = vi.hoisted(() => vi.fn());
-const navigate = vi.hoisted(() => vi.fn());
-
-vi.mock("react-router-dom", () => ({ useNavigate: () => navigate }));
 
 vi.mock("../../../contexts/AuthContext", () => ({ useAuth: () => auth }));
 vi.mock("../../../contexts/NotificationContext", () => ({
@@ -32,7 +29,6 @@ beforeEach(() => {
     auth.user = buildProfile({ pinnedReviews: [1] });
     withSlots(2);
     notify.mockReset();
-    navigate.mockReset();
     mutate.mockReset();
 });
 
@@ -50,13 +46,24 @@ describe("usePinReviews", () => {
         expect(result.current.pinned).toEqual([2]);
     });
 
-    it("offers another slot rather than pinning past them", () => {
+    // It used to send you to the shop, away from what you were pinning.
+    it("offers another slot where you are, and pins it once bought", () => {
         withSlots(1);
         const { result } = renderHook(() => usePinReviews());
+        expect(result.current.buying).toBeNull();
+
         act(() => result.current.toggle(2));
         expect(result.current.pinned).toEqual([1]);
         expect(mutate).not.toHaveBeenCalled();
-        expect(navigate).toHaveBeenCalledWith("/shop?item=slot_pinned_review");
+        expect(result.current.buying?.item).toBe("slot_pinned_review");
+
+        act(() => result.current.buying!.onBought());
+        expect(mutate).toHaveBeenLastCalledWith(
+            { pinnedReviews: [1, 2] },
+            expect.anything()
+        );
+        act(() => result.current.buying!.onClose());
+        expect(result.current.buying).toBeNull();
     });
 
     it("puts the pins back when the save fails", () => {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import {
     BADGE_CATEGORIES,
     BADGES,
@@ -14,6 +14,7 @@ import { ApiError } from "../../../api";
 import Button from "../../../components/ui/Button";
 import { cardClass } from "../../../components/ui/Card";
 import { Skeleton } from "../../../components/ui/Skeleton";
+import { ItemSheetFor } from "../../../components/shop/ItemSheet";
 import BadgeMedal from "../../../components/progress/BadgeMedal";
 import { bestOf } from "../../../components/progress/ShowcaseView";
 import {
@@ -79,6 +80,7 @@ const BadgesView = ({ username, isOwner }: BadgesViewProps) => {
     const setStyle = useSetStyle();
     // The pins being chosen, in order; null while not choosing.
     const [picking, setPicking] = useState<string[] | null>(null);
+    const [buyingSlot, setBuyingSlot] = useState(false);
     const best = useMemo(() => (data ? bestOf(data) : new Map()), [data]);
     const [asked, doneAsking] = useEditParam("showcase");
     // Opened by a link, once the badges it starts from are in.
@@ -167,7 +169,29 @@ const BadgesView = ({ username, isOwner }: BadgesViewProps) => {
                                 </li>
                             );
                         })}
+                        {/* All taken with more to pin: another slot, here. */}
+                        {picking &&
+                            picking.length >= slots &&
+                            best.size > slots && (
+                                <li>
+                                    <button
+                                        type="button"
+                                        onClick={() => setBuyingSlot(true)}
+                                        aria-label="Get another slot"
+                                        title="Get another slot"
+                                        className="grid size-11 cursor-pointer place-items-center rounded-full border border-dashed border-brand/60 text-brand hover:bg-brand-subtle focus-visible:outline-2 focus-visible:outline-brand"
+                                    >
+                                        <Plus size={18} aria-hidden />
+                                    </button>
+                                </li>
+                            )}
                     </ul>
+                    {buyingSlot && (
+                        <ItemSheetFor
+                            item="slot_showcase"
+                            onClose={() => setBuyingSlot(false)}
+                        />
+                    )}
                     <div className="flex gap-2 sm:ml-auto">
                         {picking ? (
                             <>

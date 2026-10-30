@@ -104,7 +104,7 @@ const NewThreadPage = () => {
         return (
             <EmptyPlate
                 title="Join to start a thread"
-                body="Threads are signed by whoever starts them."
+                body="Join PlayRates to start a thread."
                 action={<Button onClick={openSignup}>Join PlayRates</Button>}
             />
         );
@@ -217,7 +217,7 @@ const NewThreadPage = () => {
                         key={editorKey}
                         initial={editorKey === 0 ? restored?.body : null}
                         label="First message"
-                        placeholder="Set the scene. Everyone who replies will read this first."
+                        placeholder="Write your first message. Replies go under it."
                         onChange={setBody}
                         onUploadingChange={setUploading}
                         onSubmit={() => formRef.current?.requestSubmit()}

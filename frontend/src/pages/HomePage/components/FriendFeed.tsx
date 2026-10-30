@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { EmptyNote } from "../../../components/ui/EmptyPlate";
+import { InviteButton } from "../../../components/progress/Invite";
 import type { FriendActivity } from "@playrates/shared";
 import ProfilePicture from "../../../components/ProfilePicture";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
@@ -126,9 +127,12 @@ const FriendFeed = ({
             {isLoading ? (
                 <TextSkeleton lines={4} />
             ) : items.length === 0 ? (
-                <EmptyNote>
-                    No activity yet. Logs from your friends appear here.
-                </EmptyNote>
+                <>
+                    <EmptyNote>
+                        No activity yet. Logs from your friends appear here.
+                    </EmptyNote>
+                    <InviteButton className="mt-1 self-start" />
+                </>
             ) : (
                 items.map((item) => <Row key={item.logId} item={item} />)
             )}

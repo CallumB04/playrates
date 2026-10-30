@@ -474,44 +474,55 @@ describe("referrals", () => {
         kind: "referral_joined",
       },
     );
-    expect(
-      state.xpEvents.find((e) => e.key === `ref:${NEWBIE}:joined`),
-    ).toMatchObject({
-      user_id: USER_A,
-      xp: 50,
-    });
   });
 
-  it("pays both once the invited friend has logged 5 games", async () => {
-    const { app, progress, state } = setup();
+  it("pays both in full as the friend signs up", async () => {
+    const { app, state } = setup();
     await request(app)
       .post("/api/v1/me/referral")
       .set(as(NEWBIE))
       .send({ username: "devuser" });
 
-    state.progressMetrics.set(NEWBIE, { logged: 4 });
-    await progress(NEWBIE);
-    expect(state.xpEvents.some((e) => e.key === `ref:${NEWBIE}:active`)).toBe(
-      false,
-    );
-
-    state.progressMetrics.set(NEWBIE, { logged: 5 });
-    await progress(NEWBIE);
-    await progress(NEWBIE);
     expect(
-      state.xpEvents.filter((e) => e.key === `ref:${NEWBIE}:active`),
-    ).toHaveLength(1);
+      state.xpEvents.find((e) => e.key === `ref:${NEWBIE}:joined`),
+    ).toMatchObject({ user_id: USER_A, xp: REFERRAL.inviterXp });
     expect(
       state.tokenEvents.find((e) => e.key === `ref:${NEWBIE}`),
-    ).toMatchObject({
-      user_id: USER_A,
-      amount: 50,
-    });
+    ).toMatchObject({ user_id: USER_A, amount: REFERRAL.inviterTokens });
     expect(
-      state.xpEvents.find(
-        (e) => e.user_id === NEWBIE && e.key === "ref:welcome",
-      ),
-    ).toBeDefined();
+      state.xpEvents.find((e) => e.user_id === NEWBIE && e.key === "ref:welcome"),
+    ).toMatchObject({ xp: REFERRAL.welcomeXp });
+    expect(
+      state.tokenEvents.find((e) => e.user_id === NEWBIE && e.key === "ref:welcome"),
+    ).toMatchObject({ amount: REFERRAL.welcomeTokens });
+  });
+
+  // Before invites paid at signup, joining paid 50 XP and the rest waited
+  // on the friend's first games.
+  it("pays one from before in full on the friend's next visit, once", async () => {
+    const { progress, state, xp } = setup({
+      profiles: [
+        buildProfile(),
+        buildProfile({
+          id: NEWBIE,
+          username: "newbie",
+          created_at: new Date().toISOString(),
+          referred_by: USER_A,
+        }),
+      ],
+    });
+    await xp(USER_A, "referral_joined", `ref:${NEWBIE}:joined`, 50);
+
+    const newbie = await progress(NEWBIE);
+    await progress(NEWBIE);
+
+    expect(
+      state.xpEvents.filter((e) => e.key === `ref:${NEWBIE}:joined`),
+    ).toEqual([expect.objectContaining({ xp: REFERRAL.inviterXp })]);
+    expect(
+      state.tokenEvents.filter((e) => e.key === `ref:${NEWBIE}`),
+    ).toHaveLength(1);
+    expect(newbie.tokens).toBeGreaterThanOrEqual(REFERRAL.welcomeTokens);
   });
 });
 
@@ -730,31 +741,6 @@ describe("invites", () => {
     ).toBe(false);
   });
 
-  it("tells the inviter once the friend gets going, with what it paid", async () => {
-    const { app, progress, state } = setup();
-    await refer(app, NEWBIE, "devuser");
-    state.progressMetrics.set(NEWBIE, { logged: REFERRAL.activeAfter });
-    const newbie = await progress(NEWBIE);
-    await progress(NEWBIE);
-
-    const told = state.notifications.filter(
-      (n) => n.kind === "referral_active",
-    );
-    expect(told).toEqual([
-      expect.objectContaining({
-        user_id: USER_A,
-        actor_id: NEWBIE,
-        data: {
-          username: "newbie",
-          xp: REFERRAL.activeXp,
-          tokens: REFERRAL.activeTokens,
-        },
-      }),
-    ]);
-    // The friend who joined has their welcome too, tokens with it.
-    expect(newbie.tokens).toBeGreaterThanOrEqual(REFERRAL.welcomeTokens);
-  });
-
   it("shows who an invite is from, to anyone", async () => {
     const { app } = setup({
       profiles: [buildProfile({ profile_visibility: "private" })],
@@ -767,11 +753,7 @@ describe("invites", () => {
       accent: expect.any(String),
       level: 1,
       frame: null,
-      reward: {
-        xp: REFERRAL.welcomeXp,
-        tokens: REFERRAL.welcomeTokens,
-        afterGames: REFERRAL.activeAfter,
-      },
+      reward: { xp: REFERRAL.welcomeXp, tokens: REFERRAL.welcomeTokens },
     });
     expect((await request(app).get("/api/v1/referrals/nobody")).status).toBe(
       404,

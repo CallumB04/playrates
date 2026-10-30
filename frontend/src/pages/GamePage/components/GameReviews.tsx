@@ -139,7 +139,7 @@ const GameReviews = ({
                     title="No reviews yet"
                     body={
                         hasLog
-                            ? "You have logged this one. Add a review to your log and it shows up here."
+                            ? "Add a review to your log and it shows here."
                             : "Log this game to write the first one."
                     }
                     action={

@@ -1,20 +1,15 @@
 /**
  * What the next post should be: every post so far with its format, hook and
  * games, so a new one can avoid repeating them, then the first free day and
- * a suggested kind (the other one from last time) and format.
+ * a time for it, picked at random in the evening window.
  *
  *   npm run tiktok:next
  */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { FORMATS, formatOf } from "./formats/index.mjs";
-import {
-  firstFreeDay,
-  parseChecklist,
-  pickFormat,
-  nextKind,
-} from "./history.mjs";
+import { formatOf } from "./formats/index.mjs";
+import { firstFreeDay, parseChecklist, randomTime } from "./history.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const posts = parseChecklist(
@@ -34,30 +29,21 @@ const slugsIn = (node) =>
         ]
       : [];
 
-const used = [];
 for (const { name, done, dates } of posts) {
   const post = JSON.parse(
     await readFile(path.join(here, "posts", `${name}.json`), "utf8"),
   );
   const format = formatOf(post);
-  used.push(format);
-  const hook = post.hook.title ?? post.hook.take;
+  const hook = post.hook.text ?? post.hook.title ?? post.hook.take;
   console.log(
-    `${done ? "posted " : "planned"} ${dates[0] ?? "          "}  ${format.padEnd(11)}  ${hook.replaceAll("*", "")}`,
+    `${done ? "posted " : "planned"} ${dates[0] ?? "          "}  ${format.padEnd(11)}  ${hook.replaceAll("*", "").replaceAll("\n", " ")}`,
   );
   console.log(
     `                                 ${[...new Set(slugsIn(post))].join(", ")}`,
   );
 }
 
-// A demo format waits for Callum's yes before it joins the rotation.
-const inRotation = Object.fromEntries(
-  Object.entries(FORMATS).filter(([, f]) => !f.demo),
-);
 const today = new Date().toISOString().slice(0, 10);
-const video = nextKind(used.map((format) => !!FORMATS[format].video));
-const format = pickFormat(inRotation, video, used);
-console.log(`\nnext free day: ${firstFreeDay(posts, today)}`);
 console.log(
-  `suggested: ${video ? "video" : "photo"}, ${format} — ${FORMATS[format].summary}`,
+  `\nnext free day: ${firstFreeDay(posts, today)} at ${randomTime()}`,
 );

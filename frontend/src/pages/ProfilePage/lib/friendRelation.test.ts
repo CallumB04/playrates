@@ -20,28 +20,28 @@ describe("friend relation button", () => {
         it("switches to the destructive wording on hover", () => {
             expect(getUserRelationText("friend", false, false)).toBe("Friends");
             expect(getUserRelationText("friend", true, false)).toBe(
-                "Remove Friend"
+                "Remove friend"
             );
         });
 
         it("shows the destructive wording on small screens without hover", () => {
             expect(getUserRelationText("friend", false, true)).toBe(
-                "Remove Friend"
+                "Remove friend"
             );
         });
 
         it("handles a sent request the same way", () => {
             expect(getUserRelationText("request-sent", false, false)).toBe(
-                "Request Sent"
+                "Request sent"
             );
             expect(getUserRelationText("request-sent", true, false)).toBe(
-                "Cancel Request"
+                "Cancel request"
             );
         });
 
         it("shortens the accept label on small screens", () => {
             expect(getUserRelationText("request-received", false, false)).toBe(
-                "Accept Request"
+                "Accept request"
             );
             expect(getUserRelationText("request-received", false, true)).toBe(
                 "Accept"
@@ -49,7 +49,7 @@ describe("friend relation button", () => {
         });
 
         it("offers to add when there is no relationship", () => {
-            expect(getUserRelationText(null, false, false)).toBe("Add Friend");
+            expect(getUserRelationText(null, false, false)).toBe("Add friend");
         });
     });
 

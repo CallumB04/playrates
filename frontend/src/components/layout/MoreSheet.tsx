@@ -9,6 +9,7 @@ import {
     Shield,
     Store,
     Sun,
+    UserPlus,
 } from "lucide-react";
 import type { MyProfile } from "@playrates/shared";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -28,6 +29,8 @@ interface MoreSheetProps {
     /** Steps left in setting up the profile; null once there are none. */
     setup: SetupStep[] | null;
     onClose: () => void;
+    /** Shares your invite. The sheet it opens outlives this one. */
+    onInvite: () => void;
     onSignIn: () => void;
     onSignUp: () => void;
     onSignOut: () => void;
@@ -46,6 +49,7 @@ const MoreSheet = ({
     user,
     setup,
     onClose,
+    onInvite,
     onSignIn,
     onSignUp,
     onSignOut,
@@ -175,6 +179,19 @@ const MoreSheet = ({
                         Shop
                         <Store size={16} aria-hidden />
                     </Link>
+                )}
+                {user && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            onClose();
+                            onInvite();
+                        }}
+                        className={ACCOUNT_ROW}
+                    >
+                        Invite friends
+                        <UserPlus size={16} aria-hidden />
+                    </button>
                 )}
                 {user && (
                     <Link

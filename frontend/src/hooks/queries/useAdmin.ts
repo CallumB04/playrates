@@ -16,6 +16,7 @@ import type {
 } from "@playrates/shared";
 import {
     fetchAdminActivity,
+    fetchAdminActivityCounts,
     fetchAdminGameEvents,
     fetchAdminHealth,
     fetchAdminMetric,
@@ -43,6 +44,7 @@ import {
     sendTestAnnouncement,
     setAdminGameTrending,
     type AdminActivityFilters,
+    type AdminActivityScope,
     type AdminUsersFilters,
     type PatchNoteSend,
 } from "../../api";
@@ -71,6 +73,13 @@ export const useAdminMetric = (metric: AdminMetric | null, range: AdminRange) =>
         enabled: metric !== null,
     });
 
+export const useAdminActivityCounts = (scope: AdminActivityScope) =>
+    useQuery({
+        queryKey: queryKeys.admin.activityCounts({ ...scope }),
+        queryFn: () => fetchAdminActivityCounts(scope),
+        placeholderData: keepPreviousData,
+    });
+
 export const useAdminActivity = (filters: AdminActivityFilters) =>
     useInfiniteQuery({
         queryKey: queryKeys.admin.activity({ ...filters }),
@@ -80,11 +89,12 @@ export const useAdminActivity = (filters: AdminActivityFilters) =>
         placeholderData: keepPreviousData,
     });
 
-export const useAdminUsers = (filters: AdminUsersFilters) =>
+export const useAdminUsers = (filters: AdminUsersFilters, enabled = true) =>
     useQuery({
         queryKey: queryKeys.admin.users({ ...filters }),
         queryFn: () => fetchAdminUsers(filters),
         placeholderData: keepPreviousData,
+        enabled,
     });
 
 export const useAdminUser = (id: string | null) =>

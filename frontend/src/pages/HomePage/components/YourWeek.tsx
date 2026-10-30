@@ -82,8 +82,8 @@ const YourWeek = () => {
                         />
                         <p className="mt-1 font-mono text-label-sm text-content-muted">
                             {data.streak.thisWeek
-                                ? "This week counts"
-                                : "Do anything to keep it"}
+                                ? "This week’s done"
+                                : "Do something this week to keep it going"}
                         </p>
                     </div>
                 </div>
@@ -172,7 +172,7 @@ const YourWeek = () => {
                     ) : (
                         <>
                             <p className="text-label text-content-muted">
-                                Add friends to race them for XP each week.
+                                No friends yet. Add some to compare XP.
                             </p>
                             <InviteButton className="mt-1 self-start" />
                         </>

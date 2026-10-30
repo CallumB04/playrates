@@ -36,11 +36,11 @@ const CommunityTrending = ({
             <TextSkeleton lines={3} />
         ) : threads.length === 0 ? (
             <EmptyNote>
-                Nothing trending yet.{" "}
+                Nothing here yet.{" "}
                 <Link to="/community" className="text-brand hover:underline">
                     Start a thread
                 </Link>{" "}
-                and get it going.
+                in the community.
             </EmptyNote>
         ) : (
             <TrendingList threads={threads} />

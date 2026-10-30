@@ -128,6 +128,7 @@ const ChooseLists = ({
         <ChoosePins
             title="Pinned lists"
             slots={slots}
+            slotItem="slot_pinned_list"
             pinned={pinned}
             choices={lists.map((list) => ({
                 id: list.id,

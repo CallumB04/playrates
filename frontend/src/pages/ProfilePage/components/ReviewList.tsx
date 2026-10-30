@@ -2,6 +2,7 @@ import { useUserReviews } from "../../../hooks/queries/useReviews";
 import { usePagination } from "../../../hooks/usePagination";
 import { cardClass } from "../../../components/ui/Card";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
+import { ItemSheetFor } from "../../../components/shop/ItemSheet";
 import ReviewRow from "./ReviewRow";
 import { usePinReviews } from "../lib/usePinReviews";
 import ListFoot from "./ListFoot";
@@ -66,6 +67,7 @@ const ReviewList = ({ username, isOwner, canSee }: ReviewListProps) => {
                 )}
             </div>
             <ListFoot pagination={pagination} />
+            {pins.buying && <ItemSheetFor {...pins.buying} />}
         </>
     );
 };

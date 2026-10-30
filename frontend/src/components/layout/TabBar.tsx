@@ -19,6 +19,7 @@ import { cn } from "../../lib/cn";
 import ProfilePicture from "../ProfilePicture";
 import AvatarFrame from "../progress/AvatarFrame";
 import MoreSheet from "./MoreSheet";
+import { useInviteFor } from "../progress/useInviteFor";
 
 const TAB =
     "group relative flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-1 text-[11px] leading-none font-medium transition-colors";
@@ -90,6 +91,7 @@ const TabBar = () => {
     const setup = unfinished(useSetupSteps());
     const { pathname, search } = useLocation();
     const [moreOpen, setMoreOpen] = useState(false);
+    const invite = useInviteFor(user?.username);
 
     useEffect(() => setMoreOpen(false), [pathname, search]);
 
@@ -220,11 +222,13 @@ const TabBar = () => {
                     user={user}
                     setup={setup}
                     onClose={() => setMoreOpen(false)}
+                    onInvite={invite.open}
                     onSignIn={openLogin}
                     onSignUp={openSignup}
                     onSignOut={signOut}
                 />
             )}
+            {invite.sheet}
         </>
     );
 };

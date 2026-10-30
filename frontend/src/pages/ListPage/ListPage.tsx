@@ -45,6 +45,7 @@ import ListVisibilitySelect from "../../components/lists/ListVisibilitySelect";
 import RankedList from "../../components/ranked/RankedList";
 import RankedGameRow from "../../components/ranked/RankedGameRow";
 import ReportDialog from "../../components/ReportDialog";
+import { ItemSheetFor } from "../../components/shop/ItemSheet";
 import ShareList from "../../components/lists/ShareList";
 import { usePins } from "../ProfilePage/lib/usePinReviews";
 import { accentHue, avatarGradient } from "../../lib/profileAccent";
@@ -58,24 +59,31 @@ import { whyCannotLove } from "../../lib/voting";
 const isMissing = (error: unknown) =>
     error instanceof ApiError && error.status === 404;
 
-/** Pins the list to its owner's profile, or with no slot free, opens the
- *  shop at one. Only for a list everyone can see: a hidden one pinned
- *  would be an empty card to anyone else. */
+/** Pins the list to its owner's profile, or with no slot free, offers one
+ *  and pins it once bought. Only for a list everyone can see: a hidden one
+ *  pinned would be an empty card to anyone else. */
 const PinList = ({ listId }: { listId: number }) => {
     const pins = usePins("pinnedLists");
     const on = pins.pinned.includes(listId);
     return (
-        <Button
-            variant="ghost"
-            size="sm"
-            aria-pressed={on}
-            onClick={() => pins.toggle(listId)}
-            disabled={pins.saving}
-            className="max-sm:min-h-11"
-        >
-            <Pin size={14} aria-hidden fill={on ? "currentColor" : "none"} />
-            {on ? "Pinned" : "Pin to profile"}
-        </Button>
+        <>
+            <Button
+                variant="ghost"
+                size="sm"
+                aria-pressed={on}
+                onClick={() => pins.toggle(listId)}
+                disabled={pins.saving}
+                className="max-sm:min-h-11"
+            >
+                <Pin
+                    size={14}
+                    aria-hidden
+                    fill={on ? "currentColor" : "none"}
+                />
+                {on ? "Pinned" : "Pin to profile"}
+            </Button>
+            {pins.buying && <ItemSheetFor {...pins.buying} />}
+        </>
     );
 };
 
@@ -98,7 +106,7 @@ const ListPage = () => {
         return (
             <EmptyPlate
                 title="This list can't be shown"
-                body="It may have been deleted, or its owner keeps it to themselves or their friends."
+                body="It may have been deleted, or it's private."
                 action={
                     <Link
                         to={profilePath(username, "lists")}
@@ -303,7 +311,7 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
             {deleting && (
                 <ConfirmPopup
                     title="Delete this list?"
-                    body={`“${list.name}” and its place for each game go. The games stay where else you've logged them.`}
+                    body={`“${list.name}” will be deleted. The games stay in your logs.`}
                     confirmLabel="Delete list"
                     tone="danger"
                     isPending={remove.isPending}

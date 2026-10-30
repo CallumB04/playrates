@@ -214,3 +214,136 @@ describe("activityMark", () => {
         ).toBeNull();
     });
 });
+
+describe("activitySummary, for what v1.1 added", () => {
+    const says = (overrides: Partial<AdminActivityEvent>) => {
+        const s = activitySummary(event(overrides));
+        return [s.who, s.action, s.target, s.after].filter(Boolean).join(" ");
+    };
+
+    it("names the reaction, and keeps an upvote an upvote", () => {
+        expect(
+            says({ kind: "review_upvoted", data: { reaction: "fire" } })
+        ).toBe("bee reacted Fire to a review of Hades");
+        expect(
+            says({ kind: "review_upvoted", data: { reaction: "upvote" } })
+        ).toBe("bee upvoted a review of Hades");
+        expect(
+            says({
+                kind: "message_upvoted",
+                game: null,
+                data: { reaction: "goat", threadTitle: "Best RPG" },
+            })
+        ).toBe("bee reacted GOAT to a message in Best RPG");
+    });
+
+    it("tells lists and what goes on them", () => {
+        expect(
+            says({
+                kind: "list_created",
+                game: null,
+                subjectId: "4",
+                data: { name: "Cosy" },
+            })
+        ).toBe("bee made the list Cosy");
+        expect(
+            activitySummary(
+                event({
+                    kind: "list_created",
+                    subjectId: "4",
+                    data: { name: "Cosy" },
+                })
+            ).href
+        ).toBe("/user/bee/lists/4");
+        expect(
+            says({
+                kind: "list_updated",
+                game: null,
+                data: { name: "Cosy", fields: ["name", "visibility"] },
+            })
+        ).toBe("bee changed the name and visibility of Cosy");
+        expect(says({ kind: "list_game_added", data: { name: "Cosy" } })).toBe(
+            "bee added Hades to Cosy"
+        );
+        expect(
+            says({ kind: "list_game_removed", data: { name: "Cosy" } })
+        ).toBe("bee took Hades off Cosy");
+    });
+
+    it("tells Gaming 25 picks by their category", () => {
+        expect(
+            says({ kind: "g25_picked", data: { category: "hardest_game" } })
+        ).toBe("bee picked Hades as their hardest game");
+        expect(
+            says({ kind: "g25_loved", game: null, subjectUsername: "ana" })
+        ).toBe("bee loved ana’s Gaming 25");
+    });
+
+    it("tells progress in its own terms", () => {
+        expect(says({ kind: "level_up", game: null, data: { level: 7 } })).toBe(
+            "bee reached level 7"
+        );
+        expect(
+            says({
+                kind: "badge_earned",
+                game: null,
+                data: { badge: "critic", metal: 2 },
+            })
+        ).toMatch(/^bee earned .+ in silver$/);
+        expect(
+            says({
+                kind: "task_done",
+                game: null,
+                data: { quest: "w_rate3", xp: 40 },
+            })
+        ).toBe("bee did the task Rate 3 games for 40 XP");
+    });
+
+    it("tells what was bought and given, and for how much", () => {
+        expect(
+            says({
+                kind: "item_bought",
+                game: null,
+                data: { item: "frame_neon", tokens: 120 },
+            })
+        ).toBe("bee bought the Neon frame for 120 tokens");
+        expect(says({ kind: "background_bought", data: { tokens: 0 } })).toBe(
+            "bee took their free background from Hades"
+        );
+        expect(
+            says({
+                kind: "gift_sent",
+                game: null,
+                subjectUsername: "ana",
+                data: { item: "frame_neon", tokens: 120 },
+            })
+        ).toBe("bee gave ana the Neon frame, for 120 tokens");
+    });
+
+    it("says which emails were turned off or back on", () => {
+        expect(
+            says({
+                kind: "email_prefs_changed",
+                game: null,
+                data: { off: ["news"], on: [] },
+            })
+        ).toBe("bee turned off news and patch notes emails");
+        expect(
+            says({
+                kind: "email_prefs_changed",
+                game: null,
+                data: { off: [], on: ["all"] },
+            })
+        ).toBe("bee turned all their emails back on");
+    });
+
+    it("marks what went as a removal", () => {
+        for (const kind of [
+            "list_deleted",
+            "list_game_removed",
+            "g25_unpicked",
+        ]) {
+            expect(activityMark(event({ kind }))?.label).toBe("Removed");
+        }
+    });
+});

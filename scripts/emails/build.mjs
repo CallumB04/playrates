@@ -60,7 +60,7 @@ const IF_NOT_YOU = `If it wasn't you, reset your password straight away with For
 
 const EMAILS = {
   confirmation: layout({
-    preview: "One last step to set up your account.",
+    preview: "Confirm your email address.",
     title: "Confirm your email",
     body: [
       p(

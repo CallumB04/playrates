@@ -41,7 +41,7 @@ const GROUPS: { title: string; rows: [source: string, label: string][] }[] = [
         ],
     },
     {
-        title: "When people like your stuff",
+        title: "Reactions and loves",
         rows: [
             ["review_upvote", "A reaction on your review"],
             ["post_upvote", "A reaction in the community"],
@@ -50,7 +50,7 @@ const GROUPS: { title: string; rows: [source: string, label: string][] }[] = [
         ],
     },
     {
-        title: "Your profile, once each",
+        title: "Setting up your profile",
         rows: [
             ["avatar", "Add a picture"],
             ["bio", "Write a bio"],
@@ -79,11 +79,8 @@ const BIG: [label: string, xp: string][] = [
     ["A weekly task", questXp("week")],
     ["A monthly task", questXp("month")],
     ["A badge, by metal", Object.values(METAL_XP).map(formatCount).join(" / ")],
-    [
-        "A friend joins from your invite",
-        `${REFERRAL.joinedXp}, then ${REFERRAL.activeXp}`,
-    ],
-    ["Getting started, all of it", String(SETUP_REWARD.xp)],
+    ["A friend joins from your invite", String(REFERRAL.inviterXp)],
+    ["Finishing getting started", String(SETUP_REWARD.xp)],
 ];
 
 const TOKENS: [label: string, tokens: string][] = [
@@ -97,8 +94,8 @@ const TOKENS: [label: string, tokens: string][] = [
         "A weekly task / a monthly one",
         `${TASK_TOKENS.week} / ${TASK_TOKENS.month}`,
     ],
-    ["Getting started, all of it", String(SETUP_REWARD.tokens)],
-    ["A friend gets going", String(REFERRAL.activeTokens)],
+    ["Finishing getting started", String(SETUP_REWARD.tokens)],
+    ["A friend joins from your invite", String(REFERRAL.inviterTokens)],
 ];
 
 /** A small "i" that opens how XP and tokens are earned. */
@@ -171,8 +168,8 @@ const XpInfoSheet = ({ onClose }: { onClose: () => void }) => {
                 How XP works
             </h2>
             <p className="mt-1 max-w-prose text-body-sm text-content-secondary">
-                Each thing pays once: delete it and its XP goes with it. Daily
-                limits keep a bulk import from counting as a week of play.
+                You get XP once for each thing. Delete it and you lose the XP.
+                Some things have a daily limit.
             </p>
             <div className="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2">
                 {GROUPS.map((g) => (

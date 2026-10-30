@@ -197,7 +197,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     options: { captchaToken },
                 });
                 if (error) throw error;
-                notify("You are now logged in", "success");
+                notify("Welcome back", "success");
             },
 
             async resendConfirmation(email, captchaToken) {
@@ -223,7 +223,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             async updatePassword(password) {
                 const { error } = await supabase.auth.updateUser({ password });
                 if (error) throw error;
-                notify("Your password has been changed", "success");
+                notify("Password changed", "success");
             },
 
             async changeEmail(email) {
@@ -256,7 +256,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 await supabase.auth.signOut({ scope: "local" });
                 // drop every cached response so the next user starts clean
                 queryClient.clear();
-                notify("You have been logged out", "success");
+                notify("Logged out", "success");
             },
         }),
         [session, user, isRestoring, isProfileLoading, queryClient, notify]

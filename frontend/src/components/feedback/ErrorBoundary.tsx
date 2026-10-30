@@ -73,9 +73,7 @@ class ErrorBoundary extends Component<Props, State> {
                 <TriangleAlert size={40} className="text-danger" aria-hidden />
                 <h1 className="text-2xl text-content">Something went wrong</h1>
                 <p className="max-w-prose text-content-secondary">
-                    An unexpected error stopped the page from rendering. Try
-                    reloading. If it keeps happening, the details are in the
-                    browser console.
+                    The page didn’t load properly. Reload to try again.
                 </p>
                 <Button onClick={() => window.location.reload()}>
                     Reload page

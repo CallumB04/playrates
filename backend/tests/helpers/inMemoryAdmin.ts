@@ -201,11 +201,13 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
       return {};
     },
 
-    async activity({ before, limit, group, kind, userId }) {
+    async activity({ before, limit, group, kind, userId, gameId, since }) {
       const rows: AdminActivityFeedRow[] = state.activityEvents
         .filter((e) => !group || (ACTIVITY_GROUPS[group] as readonly string[]).includes(e.kind))
         .filter((e) => !kind || e.kind === kind)
         .filter((e) => !userId || e.actor_id === userId)
+        .filter((e) => !gameId || e.game_id === gameId)
+        .filter((e) => !since || e.created_at >= since)
         .map((e) => {
           const actor = state.profiles.find((p) => p.id === e.actor_id);
           const game = state.games.find((g) => g.id === e.game_id);
@@ -221,6 +223,17 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
           };
         });
       return page(rows, before, limit);
+    },
+
+    async activityCounts({ userId, gameId, since }) {
+      const counts: Record<string, number> = {};
+      for (const e of state.activityEvents) {
+        if (userId && e.actor_id !== userId) continue;
+        if (gameId && e.game_id !== gameId) continue;
+        if (since && e.created_at < since) continue;
+        counts[e.kind] = (counts[e.kind] ?? 0) + 1;
+      }
+      return counts;
     },
 
     async gameEvents({ before, limit, group, gameId }) {

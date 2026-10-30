@@ -3,7 +3,7 @@
  * formats/ the post names: 1080x1920 PNGs ready to upload as a photo post,
  * or, for a video format, an MP4 recorded frame by frame.
  *
- *   npm run tiktok -- marketing/tiktok/posts/best-horror-games.json
+ *   npm run tiktok -- marketing/tiktok/posts/hardest-bosses.json
  *   npm run tiktok -- <post> --html     # write the page only, no PNGs
  *
  * Game details and art come from the games table, read with backend/.env as
@@ -21,7 +21,7 @@ import {
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { SLOTS } from "./history.mjs";
+import { WINDOW, inWindow } from "./history.mjs";
 import { postingNotes } from "./posting.mjs";
 import { FORMATS, formatOf, renderPost } from "./formats/index.mjs";
 
@@ -119,9 +119,9 @@ const localImage = async (url) => {
 if (post.tiktok.title.length > 90) {
   throw new Error("tiktok.title is over the 90 characters TikTok allows");
 }
-if (post.tiktok.time && !SLOTS.includes(post.tiktok.time)) {
+if (!inWindow(post.tiktok.time ?? "")) {
   throw new Error(
-    `tiktok.time is ${post.tiktok.time}, not one of ${SLOTS.join(" or ")}`,
+    `tiktok.time is ${post.tiktok.time}, not between ${WINDOW.join(" and ")}`,
   );
 }
 
@@ -205,6 +205,11 @@ const resolve = async (node) => {
 };
 
 await copyFile(path.join(here, "slides.css"), path.join(outDir, "slides.css"));
+await copyFile(path.join(here, "simple.css"), path.join(outDir, "simple.css"));
+await copyFile(
+  require.resolve("@fontsource-variable/tiktok-sans/files/tiktok-sans-latin-wght-normal.woff2"),
+  path.join(outDir, "fonts/tiktok-sans.woff2"),
+);
 await copyFile(
   require.resolve("@fontsource-variable/geist/files/geist-latin-wght-normal.woff2"),
   path.join(outDir, "fonts/geist.woff2"),

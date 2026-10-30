@@ -565,8 +565,8 @@ const CreateOrEditGameLogPopup = ({
                             className="min-h-[74px] leading-relaxed"
                             placeholder={
                                 several && consoleName
-                                    ? `What was it like on ${consoleName}?`
-                                    : "What stayed with you?"
+                                    ? `Your review of the ${consoleName} version`
+                                    : "Write your review"
                             }
                         />
                     </div>

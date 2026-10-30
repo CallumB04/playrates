@@ -156,9 +156,12 @@ const Done = ({ text, stamp = true }: { text: string; stamp?: boolean }) => (
  */
 const ItemSheet = ({
     item,
+    onBought,
     onClose,
 }: {
     item: ShopEntry;
+    /** For a purchase made on the way to something, to finish it. */
+    onBought?: () => void;
     onClose: () => void;
 }) => {
     const titleId = useId();
@@ -193,7 +196,9 @@ const ItemSheet = ({
             labelledBy={titleId}
             className="w-full sm:max-w-md"
         >
-            <div className="-mx-4 -mt-4 mb-5 bg-surface-sunken/60 px-4 pt-8 pb-6 sm:-mx-6 sm:-mt-6 sm:px-6">
+            {/* Clear of the close button: a wide preview, as a slot's is,
+                otherwise runs up under it. */}
+            <div className="-mx-4 -mt-4 mb-5 bg-surface-sunken/60 px-4 pt-12 pb-6 sm:-mx-6 sm:-mt-6 sm:px-6">
                 <ItemStage item={item} />
             </div>
             <p className="text-label-sm text-content-muted">
@@ -254,8 +259,10 @@ const ItemSheet = ({
                             disabled={tokens < item.price || buy.isPending}
                             onClick={() =>
                                 buy.mutate(item.item, {
-                                    onSuccess: (result) =>
-                                        setLeft(result.tokens),
+                                    onSuccess: (result) => {
+                                        setLeft(result.tokens);
+                                        onBought?.();
+                                    },
                                     onError: (error) =>
                                         notify(
                                             error instanceof ApiError
@@ -274,6 +281,25 @@ const ItemSheet = ({
             </div>
         </Modal>
     );
+};
+
+/**
+ * An item's popup by its key, for buying it where you are rather than in
+ * the shop: a slot when you're out of room, a reaction you don't have.
+ */
+export const ItemSheetFor = ({
+    item,
+    onBought,
+    onClose,
+}: {
+    item: string;
+    onBought?: () => void;
+    onClose: () => void;
+}) => {
+    const { data: shop } = useShop();
+    const entry = shop?.items.find((i) => i.item === item);
+    if (!entry) return null;
+    return <ItemSheet item={entry} onBought={onBought} onClose={onClose} />;
 };
 
 /** Choosing a friend to give an item to, and paying for it. A friend who
