@@ -229,13 +229,13 @@ export const giftEmail = (
     body: [
       avatar(data.giverAvatar, data.giver),
       emailParagraph(
-        `${emailStrong(escapeHtml(data.giver))} gifted you ${escapeHtml(item)}. It's yours now.`,
+        `${emailStrong(escapeHtml(data.giver))} gifted you ${escapeHtml(item)}.`,
       ),
       emailButton(href, "Use your gift"),
       emailPlainLink(href),
     ].join("\n"),
     lines: [
-      `${data.giver} gifted you ${item}. It's yours now.`,
+      `${data.giver} gifted you ${item}.`,
       "",
       `Use your gift: ${href}`,
     ],
@@ -362,7 +362,7 @@ export const welcomeEmail = (
   const steps = [
     {
       title: "Log the games you've played",
-      text: "Add what you've played, what you're playing and what you want to play next.",
+      text: "Add what you've played and what you want to play.",
       path: "/library",
     },
     {
@@ -372,7 +372,7 @@ export const welcomeEmail = (
     },
     {
       title: "Make your Gaming 25",
-      text: "Pick the 25 games that mean the most to you.",
+      text: "Pick a game for each of 25 categories.",
       path: `/user/${encodeURIComponent(data.username)}/gaming-25`,
     },
   ];
@@ -382,10 +382,10 @@ export const welcomeEmail = (
     scope: "all",
     links,
     subject: "Welcome to PlayRates",
-    preview: "Three good places to start.",
+    preview: "Your account is ready.",
     title: `Welcome to PlayRates, ${name}`,
     body: [
-      emailParagraph("You're all set up. Here are three good places to start:"),
+      emailParagraph("Your account is ready. Try these first:"),
       ...steps.map((s, i) =>
         emailParagraph(
           `${emailStrong(`${i + 1}. ${emailLink(url(links, s.path), escapeHtml(s.title))}`)}<br>${escapeHtml(s.text)}`,
@@ -395,7 +395,7 @@ export const welcomeEmail = (
       emailPlainLink(href),
     ].join("\n"),
     lines: [
-      "You're all set up. Here are three good places to start:",
+      "Your account is ready. Try these first:",
       "",
       ...steps.flatMap((s, i) => [
         `${i + 1}. ${s.title}: ${url(links, s.path)}`,
@@ -445,10 +445,10 @@ export const announcementEmail = (
     body: [
       eyebrow(TONE_LABELS[data.tone]),
       emailParagraph(html),
-      href ? emailButton(escapeHtml(href), "Take a look") : "",
+      href ? emailButton(escapeHtml(href), "Open PlayRates") : "",
       href ? emailPlainLink(escapeHtml(href)) : "",
     ].join("\n"),
-    lines: [text, ...(href ? ["", `Take a look: ${href}`] : [])],
+    lines: [text, ...(href ? ["", `Open PlayRates: ${href}`] : [])],
   });
 };
 
@@ -471,7 +471,7 @@ export const patchNotesEmail = (
     scope: "news",
     links,
     subject: data.subject,
-    preview: "What's new and what's fixed in PlayRates.",
+    preview: "The latest changes to PlayRates.",
     title,
     body: [
       eyebrow("Patch notes"),

@@ -144,7 +144,7 @@ export const emailLayout = ({
         </tr>
         <tr>
           <td class="foot" style="padding:28px 40px 0;font-family:${SANS};font-size:13px;line-height:20px;color:${C.quiet};">
-            <p style="margin:0 0 14px;">Questions, or something not right? Email <a href="mailto:${CONTACT_EMAIL}" style="color:${C.quiet};text-decoration:underline;">${CONTACT_EMAIL}</a> or come and say hi on Discord.</p>
+            <p style="margin:0 0 14px;">Something wrong? Email <a href="mailto:${CONTACT_EMAIL}" style="color:${C.quiet};text-decoration:underline;">${CONTACT_EMAIL}</a>, or post in the Discord.</p>
             <p style="margin:0 0 18px;">${social(DISCORD_INVITE_URL, "discord", "PlayRates on Discord")}${social(TIKTOK_URL, "tiktok", "PlayRates on TikTok")}</p>
             <p style="margin:0;">${reason}</p>${
               links.length > 0
