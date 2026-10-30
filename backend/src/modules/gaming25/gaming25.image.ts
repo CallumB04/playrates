@@ -1,7 +1,5 @@
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
-import satori from "satori";
-import { Resvg } from "@resvg/resvg-js";
 import {
   GAMING_25_CENTRE,
   GAMING_25_SIZE,
@@ -136,6 +134,29 @@ export const coverData = async (
 const require = createRequire(import.meta.url);
 
 type Font = { name: string; data: Buffer; weight: 500 | 700 | 800 };
+
+/**
+ * A tree drawn as a PNG this wide. satori and resvg load on the first
+ * image rather than with the API: satori starts harfbuzz's wasm as it's
+ * imported, which every cold start paid for, image or not.
+ */
+export const toPng = async (
+  tree: unknown,
+  size: { width: number; height: number },
+  fonts: Font[],
+): Promise<Buffer> => {
+  const [{ default: satori }, { Resvg }] = await Promise.all([
+    import("satori"),
+    import("@resvg/resvg-js"),
+  ]);
+  const svg = await satori(tree as Parameters<typeof satori>[0], {
+    ...size,
+    fonts: fonts.map((f) => ({ ...f, style: "normal" as const })),
+  });
+  return new Resvg(svg, { fitTo: { mode: "width", value: size.width } })
+    .render()
+    .asPng();
+};
 let fonts: Promise<Font[]> | undefined;
 export const loadFonts = () =>
   (fonts ??= Promise.all(
@@ -486,14 +507,5 @@ export const renderGaming25 = async (
     layout === "wide"
       ? wide(g, grid, covers, theme)
       : portrait(g, grid, covers, theme);
-  const svg = await satori(tree as unknown as Parameters<typeof satori>[0], {
-    width: g.canvas.width,
-    height: g.canvas.height,
-    fonts: fontData.map((f) => ({ ...f, style: "normal" as const })),
-  });
-  return new Resvg(svg, {
-    fitTo: { mode: "width", value: g.canvas.width },
-  })
-    .render()
-    .asPng();
+  return toPng(tree, g.canvas, fontData);
 };
