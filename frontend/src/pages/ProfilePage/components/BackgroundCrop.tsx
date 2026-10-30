@@ -158,8 +158,14 @@ const BackgroundCrop = ({ url, position, onChange }: BackgroundCropProps) => {
                     style={{ top: `${crop.top}%`, height: `${crop.height}%` }}
                     className="absolute inset-x-0 flex items-center justify-center rounded-xs ring-2 ring-brand ring-inset focus-visible:ring-4 focus-visible:outline-none"
                 >
+                    {/* The profile fades the lower part out behind the
+                        page, so what matters goes near the top. */}
+                    <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 rounded-xs bg-linear-to-b from-transparent from-30% to-surface/80"
+                    />
                     {movable && (
-                        <span className="flex items-center rounded-full bg-surface-raised/90 px-2 py-0.5 text-content-secondary shadow-lip backdrop-blur-sm">
+                        <span className="relative flex items-center rounded-full bg-surface-raised/90 px-2 py-0.5 text-content-secondary shadow-lip backdrop-blur-sm">
                             <GripHorizontal size={16} aria-hidden />
                         </span>
                     )}

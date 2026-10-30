@@ -1,5 +1,5 @@
 import { backgroundPrice } from "@playrates/shared";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
@@ -26,7 +26,12 @@ vi.mock("../../../contexts/AuthContext", () => ({
 /** What GET /me/backgrounds answers: both pictures owned by default. */
 let backgrounds: Backgrounds;
 
+afterEach(() => vi.unstubAllGlobals());
+
 beforeEach(() => {
+    // A laptop's window: at jsdom's 1024 the backdrop is deep enough to
+    // show a whole 16:9 picture, so there would be nothing to move.
+    vi.stubGlobal("innerWidth", 1440);
     calls.length = 0;
     backgrounds = {
         unlocked: true,
