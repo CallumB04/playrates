@@ -359,7 +359,7 @@ export const BADGES = [
   },
   {
     key: "voice",
-    name: "Voice",
+    name: "Regular",
     description: "Post {n} time(s) in the community",
     category: "community",
     icon: "MessagesSquare",
@@ -386,7 +386,7 @@ export const BADGES = [
   },
   {
     key: "tastemaker",
-    name: "Tastemaker",
+    name: "Good Taste",
     description: "Get {n} loves on your lists",
     category: "curation",
     icon: "Sparkle",

@@ -126,7 +126,7 @@ describe("page descriptions", () => {
         avgRating: null,
         ratingCount: 0,
       }),
-    ).toBe("Hades (2020) on PC. Log, rate and review it on PlayRates.");
+    ).toBe("Hades (2020) on PC. Log it on PlayRates.");
   });
 
   it("says rating, not ratings, for one", () => {

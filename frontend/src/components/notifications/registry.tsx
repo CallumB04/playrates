@@ -98,7 +98,7 @@ const WelcomeContent = ({ onNavigate }: ContentProps<WelcomeNotification>) => (
             )}
         </p>
         <p className={BODY}>
-            Come say hi on the{" "}
+            Join the{" "}
             <a
                 href={DISCORD_INVITE_URL}
                 target="_blank"
@@ -626,10 +626,8 @@ const CoverLeading = ({
 
 const UnknownContent = () => (
     <>
-        <p className={TITLE}>Something happened</p>
-        <p className={BODY}>
-            This one needs a newer version of the site to read properly.
-        </p>
+        <p className={TITLE}>New notification</p>
+        <p className={BODY}>Refresh the page to see this one.</p>
     </>
 );
 

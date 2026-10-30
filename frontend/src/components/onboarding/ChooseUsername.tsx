@@ -93,7 +93,7 @@ const ChooseUsernamePopup = () => {
                     error={fieldError}
                     help={
                         availability.state === "free"
-                            ? `${name} is free. Your profile will live at /user/${name}.`
+                            ? `${name} is free. Your profile will be at /user/${name}.`
                             : availability.state === "checking"
                               ? "Checking…"
                               : "Letters, numbers and underscores."

@@ -46,7 +46,7 @@ describe("WelcomePopup", () => {
         renderPopup();
 
         expect(
-            screen.getByText("Two things before you explore, both optional.")
+            screen.getByText("Two quick things first. You can skip both.")
         ).toBeInTheDocument();
         expect(screen.getByLabelText("First name")).toBeInTheDocument();
         expect(

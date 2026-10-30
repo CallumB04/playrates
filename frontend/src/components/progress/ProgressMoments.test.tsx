@@ -157,7 +157,7 @@ describe("ProgressMoments", () => {
         const user = userEvent.setup({ delay: null });
 
         expect(
-            await screen.findByRole("dialog", { name: "Your history, counted" })
+            await screen.findByRole("dialog", { name: "Here’s what you’ve done so far" })
         ).toBeInTheDocument();
         await user.click(screen.getByRole("button", { name: "Skip" }));
         await user.click(screen.getByRole("button", { name: "Done" }));

@@ -157,7 +157,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
     );
 
     useEffect(() => {
-        if (targetUserError) notify("Failed to fetch user data", "error");
+        if (targetUserError) notify("Couldn’t load this profile", "error");
     }, [targetUserError, notify]);
 
     /* deep link: /user/x?log=<gameId> opens their logs of that game, on
@@ -184,7 +184,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
             await remove.mutateAsync();
             notify("Request cancelled", "success");
         } catch {
-            notify("That action failed, please try again", "error");
+            notify("That didn't work. Try again.", "error");
         }
     };
 
@@ -416,7 +416,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                         await remove.mutateAsync();
                         notify("Friend removed", "success");
                     } catch {
-                        notify("That action failed, please try again", "error");
+                        notify("That didn't work. Try again.", "error");
                     }
                 }}
             />

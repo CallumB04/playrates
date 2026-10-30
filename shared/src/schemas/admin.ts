@@ -669,7 +669,7 @@ export const patchNoteAnnouncement = (
         (name.length > room
           ? `${name.slice(0, room - 1).trimEnd()}\u2026`
           : name),
-    body: "What\u2019s new and what\u2019s fixed in PlayRates. Open it to read the notes.",
+    body: "The latest changes to PlayRates.",
     link,
   };
 };

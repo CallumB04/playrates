@@ -59,7 +59,7 @@ describe("NotificationItem", () => {
     it("falls back to a plain row for a kind it cannot render", () => {
         renderItem(welcome({ kind: "unknown" } as Partial<AppNotification>));
 
-        expect(screen.getByText("Something happened")).toBeInTheDocument();
+        expect(screen.getByText("New notification")).toBeInTheDocument();
     });
 
     it("offers to read an unread notification, and to unread a read one", () => {

@@ -106,7 +106,7 @@ const ListPage = () => {
         return (
             <EmptyPlate
                 title="This list can't be shown"
-                body="It may have been deleted, or its owner keeps it to themselves or their friends."
+                body="It may have been deleted, or it's private."
                 action={
                     <Link
                         to={profilePath(username, "lists")}
@@ -311,7 +311,7 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
             {deleting && (
                 <ConfirmPopup
                     title="Delete this list?"
-                    body={`“${list.name}” and its place for each game go. The games stay where else you've logged them.`}
+                    body={`“${list.name}” will be deleted. The games stay in your logs.`}
                     confirmLabel="Delete list"
                     tone="danger"
                     isPending={remove.isPending}

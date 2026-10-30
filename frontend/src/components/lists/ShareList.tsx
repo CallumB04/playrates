@@ -46,7 +46,7 @@ const ShareList = ({ list, viewerUsername, className }: ShareListProps) => {
                     text={`${list.name}, a list by ${list.owner.username} on PlayRates`}
                     imageUrl={listImageUrl(list.id, list.updatedAt)}
                     fileName={listImageFileName(list)}
-                    noImage="Pictures are made only for lists on profiles everyone can see."
+                    noImage="Only lists on public profiles get a picture."
                     onClose={() => setOpen(false)}
                 />
             )}

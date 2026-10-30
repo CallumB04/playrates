@@ -629,7 +629,7 @@ const Leaderboard = () => {
             ) : (rows?.length ?? 0) <= 1 ? (
                 <div className="flex flex-col items-start gap-2 px-3 pb-2">
                     <p className="text-body-sm text-content-muted">
-                        Add friends to see how you stack up.
+                        Add friends to see them here.
                     </p>
                 </div>
             ) : (

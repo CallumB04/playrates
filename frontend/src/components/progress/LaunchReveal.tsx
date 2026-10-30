@@ -84,7 +84,7 @@ const LaunchReveal = ({ progress, onShowcase, onDone }: LaunchRevealProps) => {
                 id={titleId}
                 className="mt-2 animate-fade-up font-display text-[28px] leading-tight font-semibold sm:text-[40px]"
             >
-                Your history, counted
+                Here’s what you’ve done so far
             </h2>
 
             {beat >= 1 && beat < 3 && (

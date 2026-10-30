@@ -178,7 +178,7 @@ const ListEditor = ({
                                 {...a11y}
                                 value={name}
                                 maxLength={LIST_NAME_MAX}
-                                placeholder="Cosy games for a rainy day"
+                                placeholder="Best RPGs"
                                 onChange={(e) => setName(e.target.value)}
                             />
                         )}
@@ -193,7 +193,7 @@ const ListEditor = ({
                                 rows={3}
                                 value={description}
                                 maxLength={LIST_DESCRIPTION_MAX}
-                                placeholder="What brings these together?"
+                                placeholder="Add a description (optional)"
                                 onChange={(e) => setDescription(e.target.value)}
                             />
                         )}
@@ -260,8 +260,7 @@ const ListEditor = ({
                         </p>
                         {games.length === 0 ? (
                             <p className="text-body-sm text-content-muted">
-                                Its first four games make its picture. Once it
-                                has some, you can pick others here.
+                                Add some games first, then pick the covers here.
                             </p>
                         ) : (
                             <>
@@ -276,9 +275,8 @@ const ListEditor = ({
                                             picked.
                                         </p>
                                         <p className="mt-1 text-label-sm text-content-muted">
-                                            Tap up to four, in the order you
-                                            want them. Any left fill from the
-                                            first games added.
+                                            Pick up to four, in order. The rest
+                                            come from the first games added.
                                         </p>
                                         {!isFirstFour && (
                                             <button

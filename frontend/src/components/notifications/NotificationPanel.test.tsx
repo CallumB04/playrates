@@ -106,7 +106,7 @@ describe("NotificationPanel", () => {
     it("offers neither with nothing in the inbox", async () => {
         inbox([]);
         panel();
-        expect(await screen.findByText(/Nothing new/)).toBeInTheDocument();
+        expect(await screen.findByText("You’re up to date.")).toBeInTheDocument();
         expect(
             screen.queryByRole("button", { name: "Archive all" })
         ).toBeNull();

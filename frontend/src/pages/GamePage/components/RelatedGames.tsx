@@ -32,7 +32,7 @@ const RelatedGames = ({ gameId, platforms }: RelatedGamesProps) => {
         },
         data.similar.length > 0 && {
             key: "similar",
-            title: "You might also like",
+            title: "More like this",
             games: data.similar,
         },
     ].filter((row) => !!row);

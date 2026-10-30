@@ -18,8 +18,8 @@ const TABS = [
 ];
 
 const EMPTY: Record<Tab, string> = {
-    inbox: "Nothing new. Friend requests and updates land here.",
-    archive: "Nothing filed away yet.",
+    inbox: "You’re up to date.",
+    archive: "The archive’s empty.",
 };
 
 const HeaderAction = ({

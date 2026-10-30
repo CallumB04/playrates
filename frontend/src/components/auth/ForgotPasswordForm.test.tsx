@@ -35,7 +35,7 @@ describe("ForgotPasswordForm", () => {
             undefined
         );
         expect(await screen.findByRole("status")).toHaveTextContent(
-            "If an account uses kai@example.com"
+            "If there’s an account for kai@example.com"
         );
     });
 

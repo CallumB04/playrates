@@ -140,8 +140,7 @@ const LoadedGaming25 = ({ grid }: { grid: Gaming25 }) => {
 
             {isOwner && empty && (
                 <p className="rounded-lg border border-dashed border-strong bg-surface-sunken/40 p-3 text-body-sm text-content-secondary sm:p-4">
-                    Pick a game for each category. Start anywhere and each pick
-                    takes you on to the next.
+                    Pick a game for each category, in any order.
                 </p>
             )}
 
@@ -183,13 +182,13 @@ const LoadedGaming25 = ({ grid }: { grid: Gaming25 }) => {
                     }
                     lede={
                         sharing === "done"
-                            ? "All 25 picked. Put it out there and see who agrees."
+                            ? "That’s all 25. Share it with your friends."
                             : undefined
                     }
                     url={url}
                     text={
                         isOwner
-                            ? "My Gaming 25 on PlayRates. What would yours be?"
+                            ? "Here’s my Gaming 25 on PlayRates"
                             : `${username}'s Gaming 25 on PlayRates`
                     }
                     imageUrl={gaming25ImageUrl(
@@ -199,7 +198,7 @@ const LoadedGaming25 = ({ grid }: { grid: Gaming25 }) => {
                         grid.owner.cardTheme
                     )}
                     fileName={`${username}-gaming-25.png`}
-                    noImage="Pictures are made only for profiles everyone can see."
+                    noImage="Only public profiles get a picture."
                     onClose={() => setSharing(null)}
                 />
             )}
@@ -231,10 +230,10 @@ const MakeYourOwn = ({
         </span>
         <div className="min-w-0 flex-1">
             <h2 className="font-display text-base font-semibold text-content">
-                What would yours be?
+                Make your own Gaming 25
             </h2>
             <p className="text-body-sm text-content-secondary">
-                25 categories, one game each, from the whole PlayRates library.
+                Pick one game for each of 25 categories.
             </p>
         </div>
         {signedIn && username ? (

@@ -51,10 +51,10 @@ const ForgotPasswordForm = ({ initialEmail = "" }: ForgotPasswordFormProps) => {
                 role="status"
                 className="text-body-sm leading-relaxed text-content-secondary"
             >
-                If an account uses{" "}
+                If there’s an account for{" "}
                 <span className="font-medium text-content">{sentTo}</span>, a
-                link to set a new password is on its way. It can take a minute
-                or two, and may land in spam.
+                reset link has been sent to it. It can take a minute and might
+                end up in spam.
             </p>
         );
     }

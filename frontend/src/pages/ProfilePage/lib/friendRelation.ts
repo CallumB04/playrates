@@ -27,13 +27,13 @@ export const getUserRelationText = (
 ): string => {
     switch (relation) {
         case "friend":
-            return isHovering || isCompact ? "Remove Friend" : "Friends";
+            return isHovering || isCompact ? "Remove friend" : "Friends";
         case "request-sent":
-            return isHovering || isCompact ? "Cancel Request" : "Request Sent";
+            return isHovering || isCompact ? "Cancel request" : "Request sent";
         case "request-received":
-            return isCompact ? "Accept" : "Accept Request";
+            return isCompact ? "Accept" : "Accept request";
         default:
-            return "Add Friend";
+            return "Add friend";
     }
 };
 

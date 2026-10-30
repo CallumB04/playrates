@@ -90,7 +90,7 @@ const ListsView = ({ username, isOwner, canSee }: ListsViewProps) => {
                     title="No lists yet"
                     body={
                         isOwner
-                            ? "Gather games into lists: a top ten, a to-play pile, anything."
+                            ? "Make your first list, a top ten or whatever you like."
                             : undefined
                     }
                 />

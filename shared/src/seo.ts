@@ -74,7 +74,7 @@ export const gameDescription = (game: GameMetaInput): string => {
       ? ` Rated ${game.avgRating.toFixed(1)}/10 from ${game.ratingCount} ${
           game.ratingCount === 1 ? "rating" : "ratings"
         } on ${SITE_NAME}.`
-      : ` Log, rate and review it on ${SITE_NAME}.`;
+      : ` Log it on ${SITE_NAME}.`;
   return truncateDescription(opening + rated);
 };
 

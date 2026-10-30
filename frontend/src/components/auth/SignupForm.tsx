@@ -86,7 +86,7 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
                 username,
                 captchaToken
             );
-            notify("Account successfully created", "success");
+            notify("Welcome to PlayRates", "success");
             onSignedUp(email, signedIn);
         } catch (error) {
             captcha.reset();
@@ -96,7 +96,7 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
             // Supabase reports a duplicate email rather than us probing for it
             // with a public lookup endpoint
             setErrors({ email: message });
-            notify("Account creation failed", "error");
+            notify("Couldn’t sign you up", "error");
         } finally {
             setIsSubmitting(false);
         }

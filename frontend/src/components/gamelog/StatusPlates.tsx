@@ -81,9 +81,8 @@ const PLAYED_OPTIONS: DropdownOption[] = [
         label: "Played",
         icon: tonedMark("played"),
         /* An answer in its own right, not a gap: "No further detail" read as
-           something left unfinished. Its own hint, "Done with it", would
-           trespass on Shelved and Retired. */
-        hint: "That's all",
+           something left unfinished. */
+        hint: "Just played",
     },
     ...PLAYED_STATUSES.map((status) => ({
         value: status,

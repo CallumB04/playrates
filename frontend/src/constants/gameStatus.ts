@@ -59,7 +59,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     played: {
         label: "Played",
         icon: CircleCheck,
-        hint: "Done with it",
+        hint: "Played",
         chip: "border-status-played bg-status-played-quiet text-content",
         markTone: "text-status-played",
         accent: "bg-status-played",
@@ -68,7 +68,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     playing: {
         label: "Playing",
         icon: Play,
-        hint: "On the go",
+        hint: "Playing now",
         chip: "border-status-playing bg-status-playing-quiet text-content",
         markTone: "text-status-playing",
         accent: "bg-status-playing",
@@ -77,7 +77,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     backlog: {
         label: "Backlog",
         icon: Layers,
-        hint: "Getting to it",
+        hint: "Not started",
         chip: "border-status-backlog bg-status-backlog-quiet text-content",
         markTone: "text-status-backlog",
         accent: "bg-status-backlog",
@@ -86,7 +86,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     wishlist: {
         label: "Wishlist",
         icon: Heart,
-        hint: "Want it",
+        hint: "Want to play",
         chip: "border-status-wishlist bg-status-wishlist-quiet text-content",
         markTone: "text-status-wishlist",
         accent: "bg-status-wishlist",
@@ -95,7 +95,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     finished: {
         label: "Finished",
         icon: Flag,
-        hint: "Saw the credits",
+        hint: "Reached the end",
         chip: "border-status-finished bg-status-finished-quiet text-content",
         markTone: "text-status-finished",
         accent: "bg-status-finished",
@@ -104,7 +104,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     mastered: {
         label: "Mastered",
         icon: Trophy,
-        hint: "Every achievement",
+        hint: "100% done",
         chip: "border-status-mastered bg-status-mastered-quiet text-content",
         markTone: "text-status-mastered",
         accent: "bg-status-mastered",
@@ -113,7 +113,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     shelved: {
         label: "Shelved",
         icon: Pause,
-        hint: "Might come back",
+        hint: "Might go back",
         chip: "border-status-shelved bg-status-shelved-quiet text-content",
         markTone: "text-status-shelved",
         accent: "bg-status-shelved",
@@ -122,7 +122,7 @@ export const STATUS_PRESENTATION: Record<DisplayStatus, StatusPresentation> = {
     retired: {
         label: "Retired",
         icon: Archive,
-        hint: "Not going back",
+        hint: "Done with it",
         chip: "border-status-retired bg-status-retired-quiet text-content",
         markTone: "text-status-retired",
         accent: "bg-status-retired",

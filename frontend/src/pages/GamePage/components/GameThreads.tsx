@@ -49,7 +49,7 @@ const GameThreads = ({
             <TextSkeleton lines={3} />
         ) : threads.length === 0 ? (
             <EmptyNote className="mt-3">
-                No threads about this one yet. Start the first.
+                No threads about this game yet.
             </EmptyNote>
         ) : (
             <>

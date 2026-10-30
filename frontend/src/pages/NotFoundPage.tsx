@@ -41,9 +41,6 @@ const NotFoundPage = () => {
                     <h2 className="font-display text-section text-content">
                         Most logged
                     </h2>
-                    <span className="text-label text-content-muted">
-                        while you’re here
-                    </span>
                 </header>
                 <div className="grid grid-cols-3 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
                     {isLoading

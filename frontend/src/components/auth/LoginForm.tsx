@@ -64,7 +64,7 @@ const LoginForm = ({
             setFormError(
                 error instanceof Error
                     ? "Those login details are not correct."
-                    : "Something went wrong. Please try again."
+                    : "Couldn’t log you in. Try again."
             );
             notify("Login failed", "error");
         } finally {

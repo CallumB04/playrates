@@ -52,8 +52,7 @@ const WishlistTop = ({ username, isMyAccount, canSee }: WishlistTopProps) => {
             ) : total === 0 ? (
                 <div className="flex flex-col items-center gap-3 py-4 text-center">
                     <p className="text-body-sm text-content-muted">
-                        Games you wish for appear here, in the order you want
-                        them.
+                        Nothing on your wishlist yet.
                     </p>
                     <Link
                         to="/library"
