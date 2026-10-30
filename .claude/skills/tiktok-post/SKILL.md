@@ -201,6 +201,13 @@ Callum opens TikTok in the browser pane; the upload page is
   small `deltaY` (±20 to ±64) moves one to three. Read the field after
   each step. Check the inputs read the right date and time before
   scheduling.
+- **All of this works by script, even with the pane hidden** (2026-10-30):
+  `input[value=schedule]`.click(); open a picker by firing
+  pointerdown/mousedown/pointerup/mouseup/click on the field's
+  `.TUXInputBox`; the date's `span.arrow` (second is next month) and
+  `span.day.valid` take the same five events; step the time with a
+  `WheelEvent` of `deltaY` ±20 per row, reading the `input` values after
+  each; then click the `button` whose text is "Schedule".
 - **Near the bottom of the hour list sits the Now radio**: a click that
   misses the list switches the post to Now and the button to Post. Check
   the button still reads Schedule before pressing it.
