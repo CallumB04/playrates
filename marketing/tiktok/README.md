@@ -66,7 +66,8 @@ logo, no brand line, no numbers drawn in outline, no colour of our own.
 - `countdown: true` shows the items from the bottom up, so #1 is the last
   swipe. Tips leave it off.
 - `outro` (optional): `text` and `art`, a last boxed slide.
-- `tiktok.time`: required, `HH:MM` between 19:30 and 21:00. `npm run
+- `tiktok.time`: required, `HH:MM` between 19:30 and 21:00, on a
+  multiple of five minutes (all TikTok's scheduler offers). `npm run
   tiktok:next` lists every post so far, then the first free day and a time
   for it picked at random.
 

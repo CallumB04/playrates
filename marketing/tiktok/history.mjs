@@ -29,7 +29,8 @@ export const firstFreeDay = (posts, today) => {
 
 /** One post a day, between these times, Estonian time. A 16:00 slot was
  *  tried for three days in October and drew a hundredth of the evening's
- *  views; a different minute each day is what a person posting by hand does. */
+ *  views; a different time each day is what a person posting by hand does.
+ *  TikTok's scheduler only offers every fifth minute. */
 export const WINDOW = ["19:30", "21:00"];
 
 const minutes = (time) => {
@@ -39,12 +40,13 @@ const minutes = (time) => {
 
 export const inWindow = (time) =>
   /^\d{2}:\d{2}$/.test(time) &&
+  minutes(time) % 5 === 0 &&
   minutes(time) >= minutes(WINDOW[0]) &&
   minutes(time) <= minutes(WINDOW[1]);
 
-/** A minute in the window at random, as "HH:MM". */
+/** A time in the window at random, as "HH:MM". */
 export const randomTime = (random = Math.random) => {
   const [from, to] = WINDOW.map(minutes);
-  const t = from + Math.floor(random() * (to - from + 1));
+  const t = from + 5 * Math.floor(random() * ((to - from) / 5 + 1));
   return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
 };

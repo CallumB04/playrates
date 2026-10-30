@@ -36,11 +36,15 @@ test("the first free day skips every taken day, across a month end", () => {
 
 test("a time counts only inside the evening window", () => {
   assert.equal(inWindow("19:30"), true);
-  assert.equal(inWindow("20:23"), true);
+  assert.equal(inWindow("20:25"), true);
   assert.equal(inWindow("21:00"), true);
   assert.equal(inWindow("19:29"), false);
   assert.equal(inWindow("21:01"), false);
-  assert.equal(inWindow("8:23"), false);
+  assert.equal(inWindow("8:25"), false);
+});
+
+test("a time TikTok's scheduler can't pick is refused", () => {
+  assert.equal(inWindow("20:23"), false);
 });
 
 test("a random time lands on the window's ends and stays inside it", () => {

@@ -113,12 +113,15 @@ README. Rules:
 - **`tiktok.title`**: the hook, plus an emoji if one fits. 90 characters
   at most.
 - **`tiktok.description`**: a line that invites a comment, then the push
-  in brackets, "(I log every game I play on playrates.app)", then about
-  five hashtags.
+  in brackets, "(Track your games on our site, playrates.app)", then about
+  five hashtags. The account is the site's own (the bio says "from the
+  team behind playrates.app"), so the push never says "my" or "I log".
 - **`tiktok.time`**: from `npm run tiktok:next`; the renderer refuses a
-  time outside 19:30 to 21:00.
-- **Songs**: a well-known track tied to the topic where there is one, and
-  an alternative. Say they need checking in the app.
+  time outside 19:30 to 21:00 or off TikTok's five-minute steps.
+- **Songs come from games**, both the main pick and the alternative: the
+  #1's soundtrack, the game the tips are about, or the genre's best-known
+  theme. Never pop songs, edit staples or meme sounds; Callum (2026-10-30):
+  "Gamers want songs from games." Say they need checking in the app.
 - Add the post to `POSTS.md` in the order it goes out:
   `- [ ] [name](posts/name.json) — planned 2026-11-02 20:33`.
 
@@ -181,16 +184,23 @@ Callum opens TikTok in the browser pane; the upload page is
   before picking, or the list still shows the last tag's matches. Some
   tags never match (`#gamingtips`, `#underratedgames`, `#videogames`); use
   the nearest real tag and change the post file to match.
-- **Sound**: Add sound under the description. Pick the original artist's
-  version where there is one, the closest cover where there isn't, and
-  tell Callum which you chose.
+- **Sound**: Add sound under the description, search, then the row's
+  **Use** (a real click; it can take a few seconds to apply). Pick the
+  original artist's version where there is one (another arrangement by the
+  same composer counts), the closest cover of the game track where there
+  isn't, and tell Callum which you chose.
 - **Schedule** at the post's `time`, Estonian time (the picker's time
-  zone), on its day. The date cells are `span.day.valid` and take a
-  scripted click. The time lists only draw a few options at a time and
-  ignore scripted clicks: click real coordinates, reading which options
-  are visible inside the list's scroll box before each step. Clicking the
-  last visible option scrolls the list on; clicking the first steps back.
-  Check the inputs read the right date and time before scheduling.
+  zone), on its day. Pick the Schedule radio, then the date: open the
+  date field and click the day's cell at its real coordinates (a scripted
+  click on `span.day.valid` didn't take on 2026-10-30). Then the time:
+  scroll the page down first so the list has room to open below the field.
+  The hour and minute columns
+  (`.tiktok-timepicker-time-scroll-container`, 32px rows, minutes in fives)
+  ignore clicks and select whatever is centred: a real mouse-wheel tick
+  moves about four rows, and a scripted `WheelEvent` on the column with a
+  small `deltaY` (±20 to ±64) moves one to three. Read the field after
+  each step. Check the inputs read the right date and time before
+  scheduling.
 - **Near the bottom of the hour list sits the Now radio**: a click that
   misses the list switches the post to Now and the button to Post. Check
   the button still reads Schedule before pressing it.
