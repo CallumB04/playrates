@@ -201,14 +201,13 @@ export const createProgressService = (
     Math.max(0, WEEKLY_SWAPS - deal.swaps.length);
 
   /** The last 26 weeks, oldest first, for the streak's graph. */
-  const historyOf = async (
-    row: ProfileRow,
-    week: Period,
+  const historyOf = (
+    weeks: string[],
+    current: string,
     shielded: string[],
-  ): Promise<StreakWeek[]> => {
-    const active = new Set(await repo.weeks(row.id));
+  ): StreakWeek[] => {
+    const active = new Set(weeks);
     const covered = new Set(shielded);
-    const current = localDay(week.start, zoneOf(row));
     return Array.from({ length: 26 }, (_, i) => {
       const w = shiftWeek(current, i - 25);
       return {
@@ -267,71 +266,108 @@ export const createProgressService = (
       const grant = (source: string, key: string, amount: number) => {
         if (amount > 0) grants.push({ source, key, amount });
       };
+      /* XP too: nearly every visit finds each award made on an earlier
+         one, so they're checked in one read rather than a call each. Every
+         call here is a round trip to the database. */
+      const awards: {
+        source: string;
+        key: string;
+        xp: number;
+        data?: Record<string, unknown>;
+      }[] = [];
+
+      const [
+        weeks,
+        shieldsUsed,
+        firstItems,
+        dealWeek,
+        dealMonth,
+        counted,
+        held,
+        favourites,
+      ] = await Promise.all([
+        repo.weeks(userId),
+        repo.shieldsUsed(userId),
+        repo.items(userId),
+        dealOf(userId, periods.week),
+        dealOf(userId, periods.month),
+        repo.metrics(userId),
+        repo.badges(userId),
+        repo.favouriteCount(userId),
+      ]);
 
       // The streak, spending a bought shield if it would end otherwise.
-      let items = await repo.items(userId);
-      let streak = await streakFor(row, periods.week, items.streak_shield ?? 0);
+      const current = localDay(periods.week.start, zone);
+      let items = firstItems;
+      let streak = streakOf({
+        weeks,
+        used: shieldsUsed,
+        current,
+        spare: items.streak_shield ?? 0,
+      });
       if (streak.spend && (await repo.useItem(userId, "streak_shield"))) {
         await repo.recordShield(userId, streak.spend);
-        items = await repo.items(userId);
-        streak = await streakFor(row, periods.week, items.streak_shield ?? 0);
+        const [after, used] = await Promise.all([
+          repo.items(userId),
+          repo.shieldsUsed(userId),
+        ]);
+        items = after;
+        streak = streakOf({
+          weeks,
+          used,
+          current,
+          spare: items.streak_shield ?? 0,
+        });
       }
+      const streakKey = `streak:${periods.week.key}`;
       if (streak.thisWeek && streak.weeks > 0) {
-        await repo.awardXp(
-          userId,
-          "streak",
-          `streak:${periods.week.key}`,
-          streakXp(streak.weeks),
-        );
-        // Kept: the nudge about losing it has nothing left to say.
-        await notifications.markReadByKey(
-          userId,
-          streakNudgeKey(periods.week),
-        );
+        awards.push({
+          source: "streak",
+          key: streakKey,
+          xp: streakXp(streak.weeks),
+        });
       }
 
-      // Tasks, each with its XP and tokens.
-      const deals = {
-        week: await dealOf(userId, periods.week),
-        month: await dealOf(userId, periods.month),
-      };
-      const week = await questStates(userId, periods.week, deals.week);
-      const month = await questStates(userId, periods.month, deals.month);
+      // Tasks, each with its XP and tokens. They count what the member did,
+      // not anything awarded here, so they're read once.
+      const deals = { week: dealWeek, month: dealMonth };
+      const [week, month] = await Promise.all([
+        questStates(userId, periods.week, deals.week),
+        questStates(userId, periods.month, deals.month),
+      ]);
       for (const [period, quests] of [
         [periods.week, week],
         [periods.month, month],
       ] as const) {
         for (const q of quests.filter((q) => q.done)) {
-          await repo.awardXp(
-            userId,
-            "quest",
-            `quest:${period.key}:${q.key}`,
-            q.xp,
-          );
+          awards.push({
+            source: "quest",
+            key: `quest:${period.key}:${q.key}`,
+            xp: q.xp,
+          });
           grant("task", `task:${period.key}:${q.key}`, q.tokens);
         }
       }
 
       // Badges, from counts the database keeps and the streak's best.
-      const metrics = (await repo.metrics(userId)) as Record<Metric, number>;
+      const metrics = counted as Record<Metric, number>;
       metrics.streakBest = streak.best;
-      const held = new Set(
-        (await repo.badges(userId)).map((b) => `${b.badge}:${b.metal}`),
-      );
+      const heldKeys = new Set(held.map((b) => `${b.badge}:${b.metal}`));
+      let unlocked = false;
       for (const badge of ALL_BADGES) {
         for (const metal of metalsReached(badge, metrics[badge.metric] ?? 0)) {
-          if (held.has(`${badge.key}:${metal}`)) continue;
+          if (heldKeys.has(`${badge.key}:${metal}`)) continue;
           await repo.unlockBadge(userId, badge.key, metal);
+          unlocked = true;
           const xp = badgeXp(badge, metal);
           if (xp > 0) {
-            await repo.awardXp(
-              userId,
-              "badge",
-              `badge:${badge.key}:${metal}`,
+            awards.push({
+              source: "badge",
+              key: `badge:${badge.key}:${metal}`,
               xp,
               // History's badges: the leaderboard leaves these out.
-              launch ? { launch: true } : undefined,
-            );
+              data: launch ? { launch: true } : undefined,
+            });
           }
           grant(
             "badge",
@@ -359,12 +395,11 @@ export const createProgressService = (
             `ref:${userId}`,
             REFERRAL.activeTokens,
           );
-          await repo.awardXp(
-            userId,
-            "referral_welcome",
-            "ref:welcome",
-            REFERRAL.welcomeXp,
-          );
+          awards.push({
+            source: "referral_welcome",
+            key: "ref:welcome",
+            xp: REFERRAL.welcomeXp,
+          });
           grant("referral", "ref:welcome", REFERRAL.welcomeTokens);
           await notifications.raise({
             userId: referrer,
@@ -381,33 +416,51 @@ export const createProgressService = (
       }
 
       // Getting started, all of it, pays once.
-      const setup = setupOf(row, metrics, await repo.favouriteCount(userId));
+      const setup = setupOf(row, metrics, favourites);
       if (SETUP_STEPS.every((step) => setup[step])) {
-        await repo.awardXp(userId, "setup", "setup", SETUP_REWARD.xp);
+        awards.push({ source: "setup", key: "setup", xp: SETUP_REWARD.xp });
         grant("setup", "setup", SETUP_REWARD.tokens);
       }
 
-      // Levels, after everything above has landed.
-      row = await mustProfile(userId);
-      const level = levelFor(row.xp);
-      const paidLevels = await repo.tokenKeys(userId, "level:");
-      for (let n = 2; n <= level.level; n++) {
-        if (!paidLevels.has(`level:${n}`))
-          grant("level", `level:${n}`, levelTokens(n));
+      /* Only what's new, or more than was paid before: award_xp leaves an
+         award alone otherwise, so calling it would change nothing. */
+      const before = await repo.xpAwarded(
+        userId,
+        awards.map((a) => a.key),
+      );
+      const newAwards = awards.filter((a) => (before.get(a.key) ?? -1) < a.xp);
+      for (const a of newAwards) {
+        await repo.awardXp(userId, a.source, a.key, a.xp, a.data);
+      }
+      if (newAwards.some((a) => a.key === streakKey)) {
+        // Kept: the nudge about losing it has nothing left to say.
+        await notifications.markReadByKey(
+          userId,
+          streakNudgeKey(periods.week),
+        );
       }
 
-      // Backgrounds open at their level, the first picture free.
-      if (level.level >= BACKGROUND_LEVEL) {
-        await repo.grantBackgroundCredit(userId);
+      // Levels, after everything above has landed.
+      if (newAwards.length > 0) row = await mustProfile(userId);
+      const level = levelFor(row.xp);
+      for (let n = 2; n <= level.level; n++) {
+        grant("level", `level:${n}`, levelTokens(n));
       }
 
       /* Only what isn't in the ledger yet: a task done earlier in the week
          is gathered again on every visit, and counting it each time said
-         its tokens were new each time. */
-      const paidKeys = await repo.paidTokenKeys(
-        userId,
-        grants.map((g) => g.key),
-      );
+         its tokens were new each time. Backgrounds open at their level,
+         the first picture free. */
+      const [paidKeys, credited] = await Promise.all([
+        repo.paidTokenKeys(
+          userId,
+          grants.map((g) => g.key),
+        ),
+        level.level >= BACKGROUND_LEVEL
+          ? repo.grantBackgroundCredit(userId)
+          : false,
+      ]);
+      if (credited) items = await repo.items(userId);
       const fresh = grants.filter((g) => !paidKeys.has(g.key));
       let gained = 0;
       const launchPaid =
@@ -433,13 +486,12 @@ export const createProgressService = (
         }
       }
 
-      row = await mustProfile(userId);
-      items = await repo.items(userId);
+      if (gained > 0) row = await mustProfile(userId);
       const [unseenXp, badges] = await Promise.all([
         launch
           ? Promise.resolve([])
           : repo.unseenXp(userId, row.xp_seen_event_id),
-        repo.badges(userId),
+        unlocked ? repo.badges(userId) : held,
       ]);
 
       return {
@@ -453,14 +505,9 @@ export const createProgressService = (
           thisWeek: streak.thisWeek,
           freeShield: streak.freeShield,
           spareShields: items.streak_shield ?? 0,
-          history: await historyOf(row, periods.week, streak.shielded),
+          history: historyOf(weeks, current, streak.shielded),
         },
-        // Read again, so quests done just now show as done.
-        quests: {
-          week: await questStates(userId, periods.week, deals.week),
-          month: await questStates(userId, periods.month, deals.month),
-          swapsLeft: swapsLeft(deals.week),
-        },
+        quests: { week, month, swapsLeft: swapsLeft(deals.week) },
         periods,
         look: lookOf(row, items, badges),
         setup: { steps: setup, reward: SETUP_REWARD },

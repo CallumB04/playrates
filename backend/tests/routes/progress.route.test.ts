@@ -143,6 +143,28 @@ describe("progress", () => {
     expect((await progress()).xp).toBe(paid);
   });
 
+  // Every page asks for progress, and each award call is a round trip:
+  // one made on an earlier visit isn't made again.
+  it("makes no award calls on a visit with nothing new", async () => {
+    const { progress, xp, repos } = setup();
+    await xp(USER_A, "rate", "rate:1");
+    const quest = (await progress()).quests.week[0] as { key: string };
+    const def = QUESTS.find((q) => q.key === quest.key)!;
+    for (let i = 0; i < def.target; i++)
+      await xp(USER_A, def.sources[0]!, `again:${i}`);
+    const first = await progress();
+    expect(first.quests.week[0]).toMatchObject({ done: true });
+
+    const award = vi.spyOn(repos.progress, "awardXp");
+    const tokens = vi.spyOn(repos.progress, "awardTokens");
+    const again = await progress();
+
+    expect(award).not.toHaveBeenCalled();
+    expect(tokens).not.toHaveBeenCalled();
+    expect(again.xp).toBe(first.xp);
+    expect(again.quests.week[0]).toMatchObject({ done: true });
+  });
+
   it("clears what it has shown", async () => {
     const { app, progress, xp } = setup();
     await xp(USER_A, "rate", "rate:1");

@@ -217,6 +217,14 @@ export const createInMemoryProgress = (
       );
     },
 
+    async xpAwarded(userId, keys) {
+      return new Map(
+        state.xpEvents
+          .filter((e) => e.user_id === userId && keys.includes(e.key))
+          .map((e) => [e.key, e.xp]),
+      );
+    },
+
     async paidTokenKeys(userId, keys) {
       return new Set(
         state.tokenEvents

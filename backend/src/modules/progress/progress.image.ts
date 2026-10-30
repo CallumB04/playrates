@@ -1,11 +1,10 @@
-import satori from "satori";
-import { Resvg } from "@resvg/resvg-js";
 import { type CardThemeKey, type Metal } from "@playrates/shared";
 import {
   coverData,
   el,
   host,
   loadFonts,
+  toPng,
   mark,
   THEMES,
   type Node,
@@ -305,12 +304,5 @@ export const renderPlayerCard = async (
     ],
   );
 
-  const svg = await satori(tree as unknown as Parameters<typeof satori>[0], {
-    width: WIDTH,
-    height: HEIGHT,
-    fonts: fontData.map((f) => ({ ...f, style: "normal" as const })),
-  });
-  return new Resvg(svg, { fitTo: { mode: "width", value: WIDTH } })
-    .render()
-    .asPng();
+  return toPng(tree, { width: WIDTH, height: HEIGHT }, fontData);
 };
