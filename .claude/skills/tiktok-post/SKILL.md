@@ -215,7 +215,11 @@ Callum opens TikTok in the browser pane; the upload page is
 - **Press Schedule yourself** once everything checks out, then wait for
   the page to move to the post list on its own. **Never reload or navigate
   away first**: a reload ten seconds after Schedule lost a post on
-  2026-10-30. Confirm it in the post list (`/tiktokstudio/content`), note it in `POSTS.md`
+  2026-10-30. Confirm it in the post list (`/tiktokstudio/content`),
+  **including the description**: on 2026-10-30 a post scheduled with a
+  correct-looking box arrived as "No description", and **scheduled posts
+  can't be edited**, so the only fix is for Callum to delete it and for
+  you to redo it. Check the row's text right after every Schedule, note it in `POSTS.md`
   (`— scheduled 2026-11-02 20:33`) and only then open the next upload.
   Never press **Post**, which publishes now.
 - A click that misses can open a photo's preview. Click the dark overlay to
