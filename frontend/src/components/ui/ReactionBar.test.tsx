@@ -1,8 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
+import { server } from "../../test/msw/server";
 import { renderWithProviders } from "../../test/renderWithProviders";
+import { buildProfile } from "../../test/msw/handlers";
 import ReactionBar from "./ReactionBar";
+
+// The purchase popup reads who's signed in. The same one each render.
+const auth = vi.hoisted(() => ({ user: null as unknown }));
+vi.mock("../../contexts/AuthContext", () => ({ useAuth: () => auth }));
+auth.user = buildProfile();
 
 const bar = (props: Partial<Parameters<typeof ReactionBar>[0]> = {}) => {
     const onReact = vi.fn((): unknown => new Promise(() => {}));
@@ -87,6 +95,61 @@ describe("ReactionBar", () => {
             within(picker).getByRole("button", { name: /^Upvote/ })
         );
         expect(onReact).toHaveBeenCalledWith("upvote");
+    });
+
+    // A reaction from the shop is bought where you are, not in the shop.
+    it("sells a shop reaction in place, then reacts with it", async () => {
+        const bought = vi.fn();
+        server.use(
+            http.get("http://localhost:3000/api/v1/shop", () =>
+                HttpResponse.json({
+                    tokens: 100,
+                    items: [
+                        {
+                            item: "react_goat",
+                            kind: "reaction",
+                            group: "reaction",
+                            label: "GOAT",
+                            price: 60,
+                            owned: 0,
+                            maxOwned: 1,
+                            affordable: true,
+                        },
+                    ],
+                })
+            ),
+            http.get(
+                "http://localhost:3000/api/v1/progress/devuser/badges",
+                () =>
+                    HttpResponse.json({
+                        level: 3,
+                        xp: 400,
+                        frame: null,
+                        held: [],
+                        showcase: [],
+                        layout: "row",
+                        progress: [],
+                    })
+            ),
+            http.post(
+                "http://localhost:3000/api/v1/shop/react_goat/buy",
+                () => {
+                    bought();
+                    return HttpResponse.json({ tokens: 40, owned: 1 });
+                }
+            )
+        );
+        const { onReact, user } = bar();
+        await user.click(
+            screen.getByRole("button", { name: "Add a reaction" })
+        );
+        await user.click(screen.getByRole("button", { name: "Get GOAT" }));
+
+        const sheet = await screen.findByRole("dialog", { name: "GOAT" });
+        await user.click(within(sheet).getByRole("button", { name: "Buy" }));
+
+        await waitFor(() => expect(onReact).toHaveBeenCalledWith("goat"));
+        expect(bought).toHaveBeenCalledOnce();
     });
 
     it("shows no noughts: with nothing left yet, only the plus", async () => {

@@ -32,7 +32,7 @@ const shop: Shop = {
 };
 
 describe("ShopPage", () => {
-    // Out of pin slots, a review's pin sends you straight to the slot.
+    // A link can name an item to open.
     it("opens the item a link names, and lets it go on close", async () => {
         server.use(http.get(`${API}/shop`, () => HttpResponse.json(shop)));
         renderWithProviders(<ShopPage />, {

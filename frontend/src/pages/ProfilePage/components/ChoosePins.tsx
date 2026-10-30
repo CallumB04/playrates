@@ -1,5 +1,6 @@
 import { useId, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Plus } from "lucide-react";
+import { ItemSheetFor } from "../../../components/shop/ItemSheet";
 import Button from "../../../components/ui/Button";
 import Modal from "../../../components/ui/Modal";
 import { Skeleton } from "../../../components/ui/Skeleton";
@@ -15,6 +16,7 @@ export interface PinChoice {
 const ChoosePins = ({
     title,
     slots,
+    slotItem,
     pinned,
     choices,
     loading,
@@ -24,6 +26,8 @@ const ChoosePins = ({
 }: {
     title: string;
     slots: number;
+    /** The shop's slot for these, to buy here once they're all taken. */
+    slotItem: string;
     pinned: number[];
     choices: PinChoice[];
     loading: boolean;
@@ -33,6 +37,9 @@ const ChoosePins = ({
 }) => {
     const titleId = useId();
     const [picked, setPicked] = useState<number[]>(pinned);
+    const [buying, setBuying] = useState(false);
+    // Only worth offering with more to pin than there's room for.
+    const full = picked.length >= slots && choices.length > picked.length;
     const toggle = (id: number) =>
         setPicked((p) =>
             p.includes(id)
@@ -102,6 +109,16 @@ const ChoosePins = ({
                       })}
             </ul>
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                {full && (
+                    <Button
+                        variant="ghost"
+                        onClick={() => setBuying(true)}
+                        className="w-full sm:mr-auto sm:w-auto"
+                    >
+                        <Plus size={15} aria-hidden />
+                        Get another slot
+                    </Button>
+                )}
                 <Button
                     variant="secondary"
                     onClick={onClose}
@@ -118,6 +135,12 @@ const ChoosePins = ({
                     Save
                 </Button>
             </div>
+            {buying && (
+                <ItemSheetFor
+                    item={slotItem}
+                    onClose={() => setBuying(false)}
+                />
+            )}
         </Modal>
     );
 };
