@@ -124,6 +124,34 @@ export const createProgressService = (
     return row;
   };
 
+  /**
+   * An invite, paid at both ends: whoever invited them, and the friend's
+   * welcome. Every award is keyed, so paying twice pays once. The inviter's
+   * XP keeps the key it had when joining paid only part of it, and
+   * award_xp raises an award to the higher amount.
+   */
+  const payReferral = async (inviterId: string, friendId: string) => {
+    await repo.awardXp(
+      inviterId,
+      "referral_joined",
+      `ref:${friendId}:joined`,
+      REFERRAL.inviterXp,
+    );
+    await repo.awardTokens(
+      inviterId,
+      "referral",
+      `ref:${friendId}`,
+      REFERRAL.inviterTokens,
+    );
+    await repo.awardXp(friendId, "referral_welcome", "ref:welcome", REFERRAL.welcomeXp);
+    await repo.awardTokens(
+      friendId,
+      "referral",
+      "ref:welcome",
+      REFERRAL.welcomeTokens,
+    );
+  };
+
   const goldBadges = async (userId: string) =>
     new Set(
       (await repo.badges(userId))
@@ -377,41 +405,16 @@ export const createProgressService = (
         }
       }
 
-      // An invited friend who got going pays both ends, once, and the one
-      // who invited them hears about it. The token row is the marker.
-      if (row.referred_by && (metrics.logged ?? 0) >= REFERRAL.activeAfter) {
-        const referrer = row.referred_by;
-        const paid = (await repo.tokenKeys(referrer, `ref:${userId}`)).size > 0;
+      /* Invites pay as the friend signs up. One from before that, which
+         waited on the friend's first games, is paid on their next visit.
+         The inviter's token row is the marker. */
+      let referralPaid = false;
+      if (row.referred_by) {
+        const paid =
+          (await repo.tokenKeys(row.referred_by, `ref:${userId}`)).size > 0;
         if (!paid) {
-          await repo.awardXp(
-            referrer,
-            "referral_active",
-            `ref:${userId}:active`,
-            REFERRAL.activeXp,
-          );
-          await repo.awardTokens(
-            referrer,
-            "referral",
-            `ref:${userId}`,
-            REFERRAL.activeTokens,
-          );
-          awards.push({
-            source: "referral_welcome",
-            key: "ref:welcome",
-            xp: REFERRAL.welcomeXp,
-          });
-          grant("referral", "ref:welcome", REFERRAL.welcomeTokens);
-          await notifications.raise({
-            userId: referrer,
-            kind: "referral_active",
-            actorId: userId,
-            data: {
-              username: row.username,
-              xp: REFERRAL.activeXp,
-              tokens: REFERRAL.activeTokens,
-            },
-            dedupeKey: `referral_active:${userId}`,
-          });
+          await payReferral(row.referred_by, userId);
+          referralPaid = true;
         }
       }
 
@@ -441,7 +444,7 @@ export const createProgressService = (
       }
 
       // Levels, after everything above has landed.
-      if (newAwards.length > 0) row = await mustProfile(userId);
+      if (newAwards.length > 0 || referralPaid) row = await mustProfile(userId);
       const level = levelFor(row.xp);
       for (let n = 2; n <= level.level; n++) {
         grant("level", `level:${n}`, levelTokens(n));
@@ -486,7 +489,7 @@ export const createProgressService = (
         }
       }
 
-      if (gained > 0) row = await mustProfile(userId);
+      if (gained > 0 || referralPaid) row = await mustProfile(userId);
       const [unseenXp, badges] = await Promise.all([
         launch
           ? Promise.resolve([])
@@ -601,11 +604,7 @@ export const createProgressService = (
         accent: toAccent(row.accent),
         level,
         frame: wornFrame(row.frame, level),
-        reward: {
-          xp: REFERRAL.welcomeXp,
-          tokens: REFERRAL.welcomeTokens,
-          afterGames: REFERRAL.activeAfter,
-        },
+        reward: { xp: REFERRAL.welcomeXp, tokens: REFERRAL.welcomeTokens },
       };
     },
 
@@ -1066,12 +1065,7 @@ export const createProgressService = (
         throw AppError.conflict("conflict", "You invited them");
       }
       await repo.updateProfile(userId, { referred_by: referrer.id });
-      await repo.awardXp(
-        referrer.id,
-        "referral_joined",
-        `ref:${userId}:joined`,
-        REFERRAL.joinedXp,
-      );
+      await payReferral(referrer.id, userId);
       await notifications.raise({
         userId: referrer.id,
         kind: "referral_joined",

@@ -91,7 +91,7 @@ export const eventEmail = (
       const username = str(data.username) ?? actor?.username;
       if (!username) return null;
       return inviteJoinedEmail(
-        { username, xp: REFERRAL.joinedXp, activeAfter: REFERRAL.activeAfter },
+        { username, xp: REFERRAL.inviterXp, tokens: REFERRAL.inviterTokens },
         links,
       );
     }
@@ -102,8 +102,8 @@ export const eventEmail = (
       return inviteActiveEmail(
         {
           username,
-          xp: num(data.xp) ?? REFERRAL.activeXp,
-          tokens: num(data.tokens) ?? REFERRAL.activeTokens,
+          xp: num(data.xp) ?? REFERRAL.inviterXp,
+          tokens: num(data.tokens) ?? REFERRAL.inviterTokens,
         },
         links,
       );

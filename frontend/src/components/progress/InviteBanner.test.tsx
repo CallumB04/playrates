@@ -30,7 +30,7 @@ beforeEach(() => {
                 accent: "rose",
                 level: 11,
                 frame: null,
-                reward: { xp: 100, tokens: 25, afterGames: 5 },
+                reward: { xp: 100, tokens: 25 },
             })
         )
     );

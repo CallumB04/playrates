@@ -40,7 +40,7 @@ const everyEmail = (): [string, RenderedEmail][] => [
     ),
   ],
   ["gift", giftEmail({ giver: EVIL, giverAvatar: null, item: "frame_neon", recipient: "me" }, links)],
-  ["invite joined", inviteJoinedEmail({ username: EVIL, xp: 50, activeAfter: 5 }, links)],
+  ["invite joined", inviteJoinedEmail({ username: EVIL, xp: 300, tokens: 50 }, links)],
   ["invite active", inviteActiveEmail({ username: EVIL, xp: 250, tokens: 50 }, links)],
   [
     "wishlist",
@@ -128,9 +128,9 @@ describe("email templates", () => {
     expect(inviteActiveEmail({ username: "cy", xp: 250, tokens: 50 }, links).text).toContain(
       "250 XP and 50 tokens",
     );
-    expect(inviteJoinedEmail({ username: "cy", xp: 50, activeAfter: 5 }, links).text).toContain(
-      "played 5 games",
-    );
+    const joined = inviteJoinedEmail({ username: "cy", xp: 300, tokens: 50 }, links).text;
+    expect(joined).toContain("300 XP and 50 tokens");
+    expect(joined).not.toContain("games");
   });
 
   it("names a lone release, and counts several", () => {

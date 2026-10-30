@@ -80,8 +80,7 @@ const InviteBanner = () => {
                         {invite.username} invited you to PlayRates
                     </p>
                     <p className="mt-0.5 text-label text-content-secondary">
-                        Join and play {formatCount(invite.reward.afterGames)}{" "}
-                        games for +{formatCount(invite.reward.xp)} XP and{" "}
+                        Join for +{formatCount(invite.reward.xp)} XP and{" "}
                         <span className="inline-flex items-center gap-1 align-[-0.15em] whitespace-nowrap">
                             +{formatCount(invite.reward.tokens)}
                             <TokenCoin className="size-3.5" />

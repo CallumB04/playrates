@@ -79,10 +79,7 @@ const BIG: [label: string, xp: string][] = [
     ["A weekly task", questXp("week")],
     ["A monthly task", questXp("month")],
     ["A badge, by metal", Object.values(METAL_XP).map(formatCount).join(" / ")],
-    [
-        "A friend joins from your invite",
-        `${REFERRAL.joinedXp}, then ${REFERRAL.activeXp}`,
-    ],
+    ["A friend joins from your invite", String(REFERRAL.inviterXp)],
     ["Getting started, all of it", String(SETUP_REWARD.xp)],
 ];
 
@@ -98,7 +95,7 @@ const TOKENS: [label: string, tokens: string][] = [
         `${TASK_TOKENS.week} / ${TASK_TOKENS.month}`,
     ],
     ["Getting started, all of it", String(SETUP_REWARD.tokens)],
-    ["A friend gets going", String(REFERRAL.activeTokens)],
+    ["A friend joins from your invite", String(REFERRAL.inviterTokens)],
 ];
 
 /** A small "i" that opens how XP and tokens are earned. */

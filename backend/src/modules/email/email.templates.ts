@@ -245,30 +245,27 @@ export const giftEmail = (
 /* -------------------------------------------------------------- invites */
 
 export const inviteJoinedEmail = (
-  data: { username: string; xp: number; activeAfter: number },
+  data: { username: string; xp: number; tokens: number },
   links: EmailLinks,
 ): RenderedEmail => {
   const href = url(links, `/user/${encodeURIComponent(data.username)}`);
   const name = escapeHtml(data.username);
-  const after = `Once they've played ${data.activeAfter} games, you'll both get a bit more.`;
+  const reward = `${data.xp} XP and ${data.tokens} tokens`;
   return build({
     scope: "gifts_invites",
     links,
     subject: `${data.username} joined PlayRates from your invite`,
-    preview: `You've earned ${data.xp} XP for the invite.`,
+    preview: `You've earned ${reward} for the invite.`,
     title: `${data.username} joined from your invite`,
     body: [
       emailParagraph(
-        `${emailStrong(name)} signed up and said you sent them. You've earned ${emailStrong(`${data.xp} XP`)} for it.`,
+        `${emailStrong(name)} signed up and said you sent them. You've earned ${emailStrong(reward)}.`,
       ),
-      emailParagraph(escapeHtml(after)),
       emailButton(href, "See their profile"),
       emailPlainLink(href),
     ].join("\n"),
     lines: [
-      `${data.username} signed up and said you sent them. You've earned ${data.xp} XP for it.`,
-      "",
-      after,
+      `${data.username} signed up and said you sent them. You've earned ${reward}.`,
       "",
       `See their profile: ${href}`,
     ],
