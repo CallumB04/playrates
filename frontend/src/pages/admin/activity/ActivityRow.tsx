@@ -49,12 +49,15 @@ const ActivityRow = ({
     event,
     day,
     onFilterUser,
+    onFilterGame,
 }: {
     event: AdminActivityEvent;
     /** The heading of the day it sits under, so its time doesn't repeat it. */
     day: string;
     /** Narrows the feed to this person, where the feed allows it. */
     onFilterUser?: (userId: string) => void;
+    /** Narrows it to this game. */
+    onFilterGame?: (gameId: number) => void;
 }) => {
     const [open, setOpen] = useState(false);
     const detailsId = useId();
@@ -197,6 +200,15 @@ const ActivityRow = ({
                                     className={cn(LINK, "cursor-pointer")}
                                 >
                                     Only {event.actor.username}
+                                </button>
+                            )}
+                            {event.game && onFilterGame && (
+                                <button
+                                    type="button"
+                                    onClick={() => onFilterGame(event.game!.id)}
+                                    className={cn(LINK, "cursor-pointer")}
+                                >
+                                    Only {event.game.title}
                                 </button>
                             )}
                         </div>

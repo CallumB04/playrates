@@ -1,5 +1,8 @@
 import type {
     ActivityGroup,
+    ActivityKind,
+    ActivityPeriod,
+    AdminActivityCounts,
     AdminActivityEvent,
     AdminGameEvent,
     AdminGameSummary,
@@ -50,10 +53,26 @@ export const fetchAdminMetric = async (
         })
     ).data;
 
-export interface AdminActivityFilters {
-    group?: ActivityGroup;
+/** Who, which game and how far back: what the counts are counted over. */
+export interface AdminActivityScope {
     userId?: string;
+    gameId?: number;
+    period?: ActivityPeriod;
 }
+
+export interface AdminActivityFilters extends AdminActivityScope {
+    group?: ActivityGroup;
+    kind?: ActivityKind;
+}
+
+export const fetchAdminActivityCounts = async (
+    scope: AdminActivityScope
+): Promise<AdminActivityCounts> =>
+    (
+        await api.get<AdminActivityCounts>("/admin/activity/counts", {
+            params: compactParams({ ...scope }),
+        })
+    ).data;
 
 export const fetchAdminActivity = async (
     filters: AdminActivityFilters,

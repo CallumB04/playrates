@@ -13,11 +13,13 @@ import ActivityRow from "./ActivityRow";
 const ActivityFeed = ({
     filters,
     onFilterUser,
+    onFilterGame,
     compact = false,
     limit,
 }: {
     filters: AdminActivityFilters;
     onFilterUser?: (userId: string) => void;
+    onFilterGame?: (gameId: number) => void;
     /** Inside another surface, such as a person's detail: no card of its own. */
     compact?: boolean;
     /** Show only the first few, with no way to page on. */
@@ -42,7 +44,7 @@ const ActivityFeed = ({
         ) : (
             <EmptyPlate
                 title="Nothing to show"
-                body="Nobody has done that yet. Pick another kind, or clear the filter."
+                body="Nobody has done that here yet. Try further back, another kind, or clear a filter."
             />
         );
     }
@@ -78,6 +80,7 @@ const ActivityFeed = ({
                                     event={event}
                                     day={day.label}
                                     onFilterUser={onFilterUser}
+                                    onFilterGame={onFilterGame}
                                 />
                             ))}
                         </ul>

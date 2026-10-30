@@ -155,6 +155,8 @@ export const queryKeys = {
         progress: ["admin", "progress"] as const,
         metric: (metric: string, range: string) =>
             ["admin", "metric", metric, range] as const,
+        activityCounts: (scope: Record<string, unknown>) =>
+            ["admin", "activity-counts", scope] as const,
         activity: (filters: Record<string, unknown>) =>
             ["admin", "activity", filters] as const,
         users: (filters: Record<string, unknown>) =>

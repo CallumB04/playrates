@@ -1,5 +1,16 @@
 import { EyeOff, Trash2, TriangleAlert, type LucideIcon } from "lucide-react";
-import type { ActivityGroup, AdminActivityEvent } from "@playrates/shared";
+import {
+    GAMING_25_CATEGORIES,
+    METALS,
+    QUESTS,
+    REACTIONS,
+    badgeDef,
+    emailScopeLabel,
+    type ActivityGroup,
+    type ActivityKind,
+    type AdminActivityEvent,
+    type EmailScope,
+} from "@playrates/shared";
 import {
     STATUS_PRESENTATION,
     displayStatusFor,
@@ -9,13 +20,72 @@ import {
     type PlayedStatus,
 } from "../../../constants/gameStatus";
 import { threadPath } from "../../../components/community/paths";
+import { itemName } from "../../../components/shop/shopItems";
+import { gaming25Path, listPath } from "../../../lib/profilePaths";
 
 export const GROUP_LABELS: Record<ActivityGroup, string> = {
     account: "Accounts",
     logs: "Logs",
     reviews: "Reviews",
     community: "Community",
+    lists: "Lists",
+    gaming25: "Gaming 25",
+    progress: "Progress",
+    shop: "Shop",
     social: "Friends",
+    moderation: "Moderation",
+};
+
+/** Each kind as the filter offers it: what you'd be looking at. */
+export const KIND_LABELS: Record<ActivityKind, string> = {
+    signup: "Joined",
+    onboarded: "Finished setting up",
+    profile_updated: "Profile changes",
+    email_prefs_changed: "Email settings",
+    account_deleted: "Accounts closed",
+    log_added: "Logged",
+    log_updated: "Log changes",
+    log_removed: "Logs removed",
+    review_posted: "Reviews posted",
+    review_edited: "Reviews edited",
+    review_removed: "Reviews deleted",
+    review_upvoted: "Reactions to reviews",
+    thread_created: "Threads started",
+    thread_removed: "Threads removed",
+    message_posted: "Messages",
+    message_edited: "Messages edited",
+    message_deleted: "Messages deleted",
+    message_upvoted: "Reactions to messages",
+    list_created: "Lists made",
+    list_updated: "Lists edited",
+    list_deleted: "Lists deleted",
+    list_game_added: "Games added to lists",
+    list_game_removed: "Games taken off lists",
+    list_loved: "Lists loved",
+    g25_picked: "Picks",
+    g25_unpicked: "Picks cleared",
+    g25_completed: "Finished",
+    g25_loved: "Loved",
+    level_up: "Levels",
+    badge_earned: "Badges",
+    task_done: "Tasks done",
+    task_swapped: "Tasks swapped",
+    streak_kept: "Streaks kept",
+    setup_done: "Getting started finished",
+    item_bought: "Shop purchases",
+    background_bought: "Backgrounds",
+    gift_sent: "Gifts",
+    tokens_granted: "Tokens given by an admin",
+    friend_requested: "Friend requests",
+    friend_accepted: "New friends",
+    friend_removed: "Unfriended",
+    referral_joined: "Joined from an invite",
+    referral_active: "Invites paid",
+    report_filed: "Reports",
+    report_resolved: "Reports handled",
+    announcement_sent: "Announcements",
+    announcement_emailed: "Announcements emailed",
+    announcement_retracted: "Announcements taken back",
 };
 
 const REMOVALS = new Set([
@@ -25,6 +95,10 @@ const REMOVALS = new Set([
     "thread_removed",
     "message_deleted",
     "friend_removed",
+    "list_deleted",
+    "list_game_removed",
+    "g25_unpicked",
+    "announcement_retracted",
 ]);
 
 export const isRemoval = (kind: string): boolean => REMOVALS.has(kind);
@@ -121,6 +195,52 @@ export interface ActivitySummary {
 const str = (value: unknown): string | null =>
     typeof value === "string" && value !== "" ? value : null;
 
+const num = (value: unknown): number | null =>
+    typeof value === "number" && Number.isFinite(value) ? value : null;
+
+const strings = (value: unknown): string[] =>
+    Array.isArray(value)
+        ? value.filter((v): v is string => typeof v === "string")
+        : [];
+
+/** "Fire", for a reaction other than the plain upvote; null for that. */
+const reactionName = (value: unknown): string | null => {
+    const key = str(value);
+    if (!key || key === "upvote") return null;
+    return REACTIONS.find((r) => r.key === key)?.label ?? key;
+};
+
+/** A list of things, as a sentence says it: "a, b and c". */
+const andList = (items: string[]): string =>
+    items.length <= 1
+        ? (items[0] ?? "")
+        : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
+
+const emailNames = (scopes: string[]): string =>
+    scopes.includes("all")
+        ? "all their"
+        : andList(
+              scopes.map((s) => emailScopeLabel(s as EmailScope).toLowerCase())
+          );
+
+const xpAfter = (xp: unknown): string | null => {
+    const n = num(xp);
+    return n && n > 0 ? `for ${n} XP` : null;
+};
+
+const categoryOf = (value: unknown): string =>
+    (
+        GAMING_25_CATEGORIES.find((c) => c.key === value)?.label ?? "pick"
+    ).toLowerCase();
+
+const questOf = (value: unknown): string =>
+    QUESTS.find((q) => q.key === value)?.label ?? "a task";
+
+const tokensAfter = (value: unknown): string | null => {
+    const n = num(value);
+    return n && n > 0 ? `for ${n} tokens` : null;
+};
+
 /** One readable line per event. Pure, so every kind's wording is tested. */
 export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
     const d = event.data;
@@ -134,6 +254,11 @@ export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
     const threadTitle = str(d.threadTitle) ?? "a thread";
     const threadHref = threadId ? threadPath(threadId) : null;
     const person = event.subjectUsername ?? "someone";
+    const listName = str(d.name) ?? "a list";
+    const listHref =
+        event.actor && event.subjectId
+            ? listPath(event.actor.username, Number(event.subjectId))
+            : null;
     const personHref = event.subjectUsername
         ? `/user/${event.subjectUsername}`
         : null;
@@ -156,6 +281,17 @@ export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
     switch (event.kind) {
         case "signup":
             return line("joined PlayRates");
+        case "onboarded":
+            return line("finished setting up");
+        case "email_prefs_changed": {
+            const off = strings(d.off);
+            const on = strings(d.on);
+            if (off.length > 0 && on.length === 0)
+                return line(`turned off ${emailNames(off)} emails`);
+            if (on.length > 0 && off.length === 0)
+                return line(`turned ${emailNames(on)} emails back on`);
+            return line("changed which emails they get");
+        }
         case "account_deleted":
             return line("closed their account");
         case "profile_updated": {
@@ -205,8 +341,16 @@ export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
             return line("rewrote their review of", game, gameHref);
         case "review_removed":
             return line("deleted their review of", game, gameHref);
-        case "review_upvoted":
-            return line("upvoted a review of", game, gameHref);
+        case "review_upvoted": {
+            const reaction = reactionName(d.reaction);
+            return line(
+                reaction
+                    ? `reacted ${reaction} to a review of`
+                    : "upvoted a review of",
+                game,
+                gameHref
+            );
+        }
 
         case "thread_created":
             return line(
@@ -226,8 +370,131 @@ export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
             return line("edited a message in", threadTitle, threadHref);
         case "message_deleted":
             return line("deleted a message in", threadTitle, threadHref);
-        case "message_upvoted":
-            return line("upvoted a message in", threadTitle, threadHref);
+        case "message_upvoted": {
+            const reaction = reactionName(d.reaction);
+            return line(
+                reaction
+                    ? `reacted ${reaction} to a message in`
+                    : "upvoted a message in",
+                threadTitle,
+                threadHref
+            );
+        }
+
+        case "list_created":
+            return line("made the list", listName, listHref);
+        case "list_updated":
+            return line(
+                `changed the ${andList(strings(d.fields)) || "details"} of`,
+                listName,
+                listHref
+            );
+        case "list_deleted":
+            return line("deleted their list", listName);
+        case "list_game_added":
+            return line("added", game, gameHref, { after: `to ${listName}` });
+        case "list_game_removed":
+            return line("took", game, gameHref, { after: `off ${listName}` });
+        case "list_loved":
+            return line("loved the list", listName);
+
+        case "g25_picked":
+            return line("picked", game, gameHref, {
+                after: `as their ${categoryOf(d.category)}`,
+            });
+        case "g25_unpicked":
+            return line("took", game, gameHref, {
+                after: `out as their ${categoryOf(d.category)}`,
+            });
+        case "g25_completed":
+            return line(
+                "finished their",
+                "Gaming 25",
+                event.actor ? gaming25Path(event.actor.username) : null
+            );
+        case "g25_loved":
+            return line(
+                "loved",
+                `${person}’s Gaming 25`,
+                event.subjectUsername
+                    ? gaming25Path(event.subjectUsername)
+                    : null
+            );
+
+        case "level_up":
+            return line(`reached level ${num(d.level) ?? "?"}`);
+        case "badge_earned": {
+            const metal = num(d.metal);
+            return line(
+                "earned",
+                badgeDef(str(d.badge) ?? "")?.name ?? str(d.badge) ?? "a badge",
+                null,
+                {
+                    after: metal
+                        ? `in ${METALS[metal - 1] ?? "a metal"}`
+                        : null,
+                }
+            );
+        }
+        case "task_done":
+            return line("did the task", questOf(d.quest), null, {
+                after: xpAfter(d.xp),
+            });
+        case "task_swapped":
+            return line("swapped out the task", questOf(d.quest));
+        case "streak_kept":
+            return line("kept their weekly streak", null, null, {
+                after: xpAfter(d.xp),
+            });
+        case "setup_done":
+            return line("finished getting started", null, null, {
+                after: xpAfter(d.xp),
+            });
+
+        case "item_bought":
+            return line("bought", itemName(str(d.item) ?? ""), null, {
+                after: tokensAfter(d.tokens),
+            });
+        case "background_bought":
+            return num(d.tokens)
+                ? line("bought a background from", game, gameHref, {
+                      after: tokensAfter(d.tokens),
+                  })
+                : line("took their free background from", game, gameHref);
+        case "gift_sent":
+            return line("gave", person, personHref, {
+                after: `${itemName(str(d.item) ?? "")}${tokensAfter(d.tokens) ? `, ${tokensAfter(d.tokens)}` : ""}`,
+            });
+        case "tokens_granted":
+            return line(`was given ${num(d.tokens) ?? 0} tokens by an admin`);
+
+        case "report_filed":
+            return line(
+                `reported a ${str(d.targetType) ?? "post"}`,
+                null,
+                null,
+                {
+                    after: str(d.reason) ? `for ${str(d.reason)}` : null,
+                }
+            );
+        case "report_resolved":
+            return line(
+                `${str(d.status) === "dismissed" ? "dismissed" : "dealt with"} a report on a ${str(d.targetType) ?? "post"}`
+            );
+        case "announcement_sent":
+            return line(
+                d.patchNotes === true
+                    ? "sent the patch notes"
+                    : "sent the announcement",
+                str(d.title) ?? "an announcement"
+            );
+        case "announcement_emailed":
+            return line("emailed", str(d.title) ?? "an announcement");
+        case "announcement_retracted":
+            return line(
+                "took back the announcement",
+                str(d.title) ?? "an announcement"
+            );
 
         case "friend_requested":
             return line("asked to be friends with", person, personHref);
@@ -241,6 +508,12 @@ export const activitySummary = (event: AdminActivityEvent): ActivitySummary => {
                 person,
                 personHref
             );
+        case "referral_joined":
+            return line("joined from an invite by", person, personHref);
+        case "referral_active":
+            return line("was paid for inviting", person, personHref, {
+                after: xpAfter(d.xp),
+            });
 
         default:
             return line(event.kind.replace(/_/g, " "));
