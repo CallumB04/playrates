@@ -2,6 +2,7 @@ import { renderGuess } from "./guess.mjs";
 import { renderGuessYear } from "./guessyear.mjs";
 import { renderHigherLower } from "./higherlower.mjs";
 import { renderHotTake } from "./hottake.mjs";
+import { renderList } from "./list.mjs";
 import { renderPairs } from "./pairs.mjs";
 import { renderRanked } from "./ranked.mjs";
 import { renderTiers } from "./tiers.mjs";
@@ -11,11 +12,15 @@ import { renderWhichFirst } from "./whichfirst.mjs";
 
 /**
  * Every format a post can take, keyed by the post's `format`. A post without
- * one is ranked, as every post was before there were others. `npm run
- * tiktok:next` suggests from these, keeping video and photo near half and
- * half, so a format added here joins the rotation.
+ * one is ranked, as every post was before there were others. Only `list` is
+ * in use: the account restarted on 2026-10-30 with plain slideshows, and the
+ * rest are kept from the first run in case any comes back.
  */
 export const FORMATS = {
+  list: {
+    render: renderList,
+    summary: "Tips or a top X in TikTok's own text style, one item a slide",
+  },
   ranked: {
     render: renderRanked,
     summary: "Top 10, counted down to #1",

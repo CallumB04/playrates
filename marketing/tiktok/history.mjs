@@ -27,28 +27,24 @@ export const firstFreeDay = (posts, today) => {
   return day;
 };
 
-/** One post a day, in the evening, Estonian time. A 16:00 slot was tried
- *  for three days in October and drew a hundredth of the evening's views. */
-export const SLOTS = ["21:00"];
+/** One post a day, between these times, Estonian time. A 16:00 slot was
+ *  tried for three days in October and drew a hundredth of the evening's
+ *  views; a different minute each day is what a person posting by hand does. */
+export const WINDOW = ["19:30", "21:00"];
 
-/**
- * Photo or video for the next post: the other kind from the last one, so the
- * two alternate. `kinds` is `true` for each video so far, in posting order.
- * The skill can overrule it to try a new format.
- */
-export const nextKind = (kinds) =>
-  kinds.length ? !kinds[kinds.length - 1] : false;
+const minutes = (time) => {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+};
 
-/**
- * A format of the given kind at random, not the one that kind last used if
- * there's another. `formats` maps a name to `{ video }`; `history` is the
- * formats used so far, in order.
- */
-export const pickFormat = (formats, video, history, random = Math.random) => {
-  const ofKind = Object.keys(formats).filter(
-    (name) => !!formats[name].video === video,
-  );
-  const last = [...history].reverse().find((name) => ofKind.includes(name));
-  const choices = ofKind.length > 1 ? ofKind.filter((n) => n !== last) : ofKind;
-  return choices[Math.floor(random() * choices.length)];
+export const inWindow = (time) =>
+  /^\d{2}:\d{2}$/.test(time) &&
+  minutes(time) >= minutes(WINDOW[0]) &&
+  minutes(time) <= minutes(WINDOW[1]);
+
+/** A minute in the window at random, as "HH:MM". */
+export const randomTime = (random = Math.random) => {
+  const [from, to] = WINDOW.map(minutes);
+  const t = from + Math.floor(random() * (to - from + 1));
+  return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
 };

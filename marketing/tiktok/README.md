@@ -1,14 +1,37 @@
 # TikTok posts
 
-Posts for @playratesapp in the site's own design, in one of ten formats:
-six photo slideshows and four quiz videos. Each post is a JSON file in
-`posts/`; the script fills in the rest from the games table. The post files
-and their checklist, `POSTS.md`, live only on the machine that makes them
-(they're gitignored); the generator is what's shared. The `/tiktok-post`
-skill walks through making one end to end.
+Posts for @playratesapp. Each post is a JSON file in `posts/`; the script
+fills in the rest from the games table. The post files and their checklist,
+`POSTS.md`, live only on the machine that makes them (they're gitignored);
+the generator is what's shared. The `/tiktok-post` skill walks through
+making one end to end.
+
+## Starting again, 30 October 2026
+
+Every post made before 30 October was deleted, on TikTok and here. The first
+week of posts drew 550 to 650 views each, nearly all from For You. From 21
+October every post drew 1 to 10, and the only search that found them was
+the account's own name: TikTok had stopped showing them to anyone. That day
+three posts were set to Private and fourteen were uploaded in a little over
+two hours from a scripted browser, which is the likeliest trigger. Even at
+their best the posts held people for about six seconds and won no
+followers.
+
+So the account now runs on one format, `list`, made to look like someone
+put it together in the app, and the goal is followers (1,000 unlocks a bio
+link), not sign-ups:
+
+- **Photo slideshows only.** The quiz videos were the weakest posts and
+  nobody watched them; their formats are kept but not used.
+- **Hooks that give the viewer something**: tips ("6 tips for beginners in
+  Elden Ring") or a top X ("Top 10 hardest video game bosses of all time").
+- **No sign-up slide.** The description carries a light push and the bio
+  keeps the address.
+- **One post a day at a different time each evening**, 19:30 to 21:00
+  Estonian time, uploaded one at a time and never in a batch.
 
 ```bash
-npm run tiktok -- marketing/tiktok/posts/best-horror-games.json
+npm run tiktok -- marketing/tiktok/posts/hardest-bosses.json
 npm run tiktok:next     # every post so far, and a suggestion for the next
 npm run test:tiktok     # the date and scheduling logic
 ```
@@ -27,16 +50,35 @@ scripts do), Playwright's Chromium (`npx playwright install chromium` once
 per machine) and, for videos, ffmpeg. Art comes from IGDB's CDN, so a post
 costs no RAWG requests.
 
-## Formats
+## The list format
+
+`"format": "list"`. A picture fills each slide, and the words are set in
+TikTok Sans the way TikTok's own text tool sets them: the hook and each
+item's name in its boxed style (dark words on a white box per line), the
+one line under a name in its plain style (white with a soft shadow). No
+logo, no brand line, no numbers drawn in outline, no colour of our own.
+
+- `hook`: `text` and `art` (a game entry, below). `\n` forces a break, but
+  wrapping is balanced, so it's rarely needed.
+- `items`: **#1 first**, each `{ title, line, art }`. The slide shows
+  `"<n>. <title>"`; `title` defaults to the art's game title. `line` is one
+  sentence, two lines at most.
+- `countdown: true` shows the items from the bottom up, so #1 is the last
+  swipe. Tips leave it off.
+- `outro` (optional): `text` and `art`, a last boxed slide.
+- `tiktok.time`: required, `HH:MM` between 19:30 and 21:00. `npm run
+  tiktok:next` lists every post so far, then the first free day and a time
+  for it picked at random.
+
+`simple.css` is its stylesheet; nothing else uses it.
+
+## The first run's formats
+
+Everything below documents the formats used from 14 to 30 October. They
+still render, but none is in use, and the design and sign-up rules further
+down apply to them, not to `list`.
 
 A post's `format` picks one of `formats/`; without one it's `ranked`.
-One post goes out a day, at 21:00 Estonian time, photo and video taking
-turns. `npm run tiktok:next` lists every post so far, then the first free
-day and a suggestion: the other kind from last time, and a random format of
-that kind other than the one it used last. The skill treats it as a
-starting point and picks what suits the day. A format added
-to `formats/index.mjs` joins the rotation, unless it's marked `demo: true`,
-which keeps it out until Callum has seen it and said yes.
 
 Every photo post opens on a hook, then the format's own slides. The
 sign-up slide (`cta`, below) comes late: in a top 10 (`ranked`, `hottake`)
@@ -120,14 +162,14 @@ Every format's game entries take the same overrides as ranked ones below
 `POSTS.md`, beside `posts/`, is the checklist: every post in the order it
 should go out, ticked with its date and link once it's live:
 
-    - [x] [best-horror-games](posts/best-horror-games.json) — 2026-10-14 — https://www.tiktok.com/@playratesapp/photo/…
+    - [x] [hardest-bosses](posts/hardest-bosses.json) — 2026-11-02 — https://www.tiktok.com/@playratesapp/photo/…
 
 `npm run tiktok` warns about a post that isn't on it. A line scheduled in
-TikTok but not live yet ends `— scheduled 2026-10-22 21:00`. Dates on a
+TikTok but not live yet ends `— scheduled 2026-11-02 20:33`. Dates on a
 line, posted or planned, are what `npm run tiktok:next` treats as taken; an
 indented line is an example and isn't read.
 
-## Making a new post
+## Making a new post (first-run formats)
 
 Start from an existing post of the same format in `posts/`, add it to
 `POSTS.md`, and set the fields below; for a ranked post they're the whole
@@ -182,10 +224,10 @@ area or under the rail, a name cut to an ellipsis, a blurb past two lines. A
 clean run prints no warnings; the contact sheet is for everything else (HUDs,
 letterboxing, logo-only artwork, a crop that misses).
 
-## Design rules
+## Design rules (first-run formats)
 
 What reads as made by a person rather than generated, learned from posts
-that didn't:
+that didn't. The `list` format goes further and drops the brand entirely:
 
 - **One picture, big type, little else.** A slide is the art, a big number
   or word, a title and one line. A rating meter nobody has filled in, a

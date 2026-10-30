@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   firstFreeDay,
+  inWindow,
   parseChecklist,
-  pickFormat,
-  nextKind,
+  randomTime,
 } from "./history.mjs";
 
 const checklist = `# TikTok posts
@@ -34,27 +34,26 @@ test("the first free day skips every taken day, across a month end", () => {
   assert.equal(firstFreeDay(posts, "2026-10-30"), "2026-11-01");
 });
 
-const formats = {
-  ranked: {},
-  pairs: {},
-  guess: { video: true },
-  higherlower: { video: true },
-};
-
-test("photo and video alternate, starting with a photo", () => {
-  assert.equal(nextKind([]), false);
-  assert.equal(nextKind([false]), true);
-  assert.equal(nextKind([true, false, true]), false);
+test("a time counts only inside the evening window", () => {
+  assert.equal(inWindow("19:30"), true);
+  assert.equal(inWindow("20:23"), true);
+  assert.equal(inWindow("21:00"), true);
+  assert.equal(inWindow("19:29"), false);
+  assert.equal(inWindow("21:01"), false);
+  assert.equal(inWindow("8:23"), false);
 });
 
-test("a format of the kind, not the one that kind used last", () => {
-  const history = ["ranked", "guess", "pairs"];
+test("a random time lands on the window's ends and stays inside it", () => {
   assert.equal(
-    pickFormat(formats, true, history, () => 0),
-    "higherlower",
+    randomTime(() => 0),
+    "19:30",
   );
   assert.equal(
-    pickFormat(formats, false, history, () => 0.99),
-    "ranked",
+    randomTime(() => 0.9999),
+    "21:00",
+  );
+  assert.equal(
+    randomTime(() => 0.5),
+    "20:15",
   );
 });
