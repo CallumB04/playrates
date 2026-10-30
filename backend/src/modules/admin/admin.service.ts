@@ -1,6 +1,14 @@
-import { patchNoteAnnouncement, type RichTextDoc } from "@playrates/shared";
+import {
+  ACTIVITY_KINDS,
+  ACTIVITY_PERIODS,
+  patchNoteAnnouncement,
+  type RichTextDoc,
+} from "@playrates/shared";
 import type {
+  ActivityPeriod,
+  AdminActivityCounts,
   AdminActivityQuery,
+  AdminActivityScope,
   AdminGameEventsQuery,
   AdminHealth,
   AdminImportResult,
@@ -66,6 +74,10 @@ export const createAdminService = (deps: {
 }) => {
   const { repo, games, gamesService, notifications, provider, emails } = deps;
   const now = deps.now ?? (() => new Date());
+  const sinceOf = (period: ActivityPeriod | undefined) =>
+    period
+      ? new Date(now().getTime() - ACTIVITY_PERIODS[period] * DAY_MS).toISOString()
+      : undefined;
 
   /** The news email after the in-app one has gone. A failure here leaves
    *  the announcement sent and simply not marked emailed. */
@@ -153,9 +165,23 @@ export const createAdminService = (deps: {
       return toMetricDetail(metric, raw);
     },
 
-    async activity(query: AdminActivityQuery) {
-      const rows = await repo.activity(query);
+    async activity({ period, ...query }: AdminActivityQuery) {
+      const rows = await repo.activity({ ...query, since: sinceOf(period) });
       return toCursorPage(rows, query.limit, toActivityEvent);
+    },
+
+    /** Only kinds the log knows: an old one no longer listed isn't counted. */
+    async activityCounts({
+      period,
+      ...scope
+    }: AdminActivityScope): Promise<AdminActivityCounts> {
+      const counts = await repo.activityCounts({
+        ...scope,
+        since: sinceOf(period),
+      });
+      return Object.fromEntries(
+        ACTIVITY_KINDS.filter((k) => counts[k]).map((k) => [k, counts[k]]),
+      );
     },
 
     async users(query: AdminUsersQuery) {

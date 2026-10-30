@@ -130,6 +130,7 @@ const ENDPOINTS: { method: "get" | "post" | "patch" | "put"; path: string; body?
   { method: "get", path: "/api/v1/admin/stats/overview" },
   { method: "get", path: "/api/v1/admin/stats/users" },
   { method: "get", path: "/api/v1/admin/activity" },
+  { method: "get", path: "/api/v1/admin/activity/counts" },
   { method: "get", path: "/api/v1/admin/users" },
   { method: "get", path: `/api/v1/admin/users/${USER_A}` },
   { method: "get", path: "/api/v1/admin/games/events" },
@@ -627,6 +628,52 @@ describe("admin feeds", () => {
       .get("/api/v1/admin/activity?group=account")
       .set("Authorization", authHeader(ADMIN));
     expect(response.body.data.map((e: { kind: string }) => e.kind)).toEqual(["signup"]);
+  });
+
+  describe("narrowed to a game and a period", () => {
+    const hoursAgo = (h: number) => new Date(Date.now() - h * 3_600_000).toISOString();
+    const event = (id: number, kind: string, gameId: number | null, at: string) => ({
+      id,
+      actor_id: USER_A,
+      kind,
+      game_id: gameId,
+      subject_id: null,
+      data: {},
+      created_at: at,
+    });
+    const events = [
+      event(1, "level_up", null, hoursAgo(24 * 40)),
+      event(2, "list_game_added", 1, hoursAgo(24 * 3)),
+      event(3, "log_added", 2, hoursAgo(5)),
+      event(4, "list_game_added", 1, hoursAgo(2)),
+      event(5, "retired_kind", null, hoursAgo(1)),
+    ];
+    const get = async (path: string) => {
+      const { app } = buildTestApp({ seed: { ...seed(), activityEvents: events } });
+      return request(app).get(path).set("Authorization", authHeader(ADMIN));
+    };
+    const ids = (body: { data: { id: number }[] }) => body.data.map((e) => e.id);
+
+    it("keeps to one game, and to the last day or week", async () => {
+      expect(ids((await get("/api/v1/admin/activity?gameId=1")).body)).toEqual([4, 2]);
+      expect(ids((await get("/api/v1/admin/activity?period=day")).body)).toEqual([5, 4, 3]);
+      expect(ids((await get("/api/v1/admin/activity?period=week&group=lists")).body)).toEqual([4, 2]);
+    });
+
+    it("counts each kind in the same scope, leaving out kinds it doesn't know", async () => {
+      expect((await get("/api/v1/admin/activity/counts")).body).toEqual({
+        level_up: 1,
+        list_game_added: 2,
+        log_added: 1,
+      });
+      expect((await get("/api/v1/admin/activity/counts?period=week&gameId=1")).body).toEqual({
+        list_game_added: 2,
+      });
+    });
+
+    it("refuses a period it doesn't know", async () => {
+      expect((await get("/api/v1/admin/activity?period=year")).status).toBe(422);
+    });
   });
 
   it("finds users by name, with their counts", async () => {

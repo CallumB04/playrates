@@ -10,6 +10,16 @@ import {
   type AnnouncementInput,
 } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
+
+/** The activity filters as the database takes them: a period is a time. */
+export interface ActivityScopeFilter {
+  userId?: string;
+  gameId?: number;
+  /** ISO; nothing older. */
+  since?: string;
+}
+export type ActivityFilter = Omit<AdminActivityQuery, "period" | "userId" | "gameId"> &
+  ActivityScopeFilter;
 import { likeTerm } from "../../lib/likeTerm.js";
 import type {
   AdminActivityFeedRow,
@@ -75,7 +85,9 @@ export interface AdminRepository {
   ): Promise<Record<string, unknown>>;
 
   /** Newest first, one more than `limit` so the caller knows if there is more. */
-  activity(query: AdminActivityQuery): Promise<AdminActivityFeedRow[]>;
+  activity(query: ActivityFilter): Promise<AdminActivityFeedRow[]>;
+  /** Events of each kind in a scope. */
+  activityCounts(scope: ActivityScopeFilter): Promise<Record<string, number>>;
   gameEvents(query: AdminGameEventsQuery): Promise<AdminGameFeedRow[]>;
 
   users(
@@ -168,7 +180,7 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
     return (data ?? {}) as Record<string, unknown>;
   },
 
-  async activity({ before, limit, group, kind, userId }) {
+  async activity({ before, limit, group, kind, userId, gameId, since }) {
     let builder = db
       .from("admin_activity_feed")
       .select("*")
@@ -178,10 +190,27 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
     if (group) builder = builder.in("kind", [...ACTIVITY_GROUPS[group]]);
     if (kind) builder = builder.eq("kind", kind);
     if (userId) builder = builder.eq("actor_id", userId);
+    if (gameId) builder = builder.eq("game_id", gameId);
+    if (since) builder = builder.gte("created_at", since);
 
     const { data, error } = await builder;
     if (error) throw error;
     return (data ?? []) as AdminActivityFeedRow[];
+  },
+
+  async activityCounts({ userId, gameId, since }) {
+    const { data, error } = await db.rpc("admin_activity_counts", {
+      p_since: since ?? null,
+      p_user: userId ?? null,
+      p_game: gameId ?? null,
+    });
+    if (error) throw error;
+    return Object.fromEntries(
+      ((data ?? []) as { kind: string; events: number }[]).map((r) => [
+        r.kind,
+        Number(r.events),
+      ]),
+    );
   },
 
   async gameEvents({ before, limit, group, gameId }) {

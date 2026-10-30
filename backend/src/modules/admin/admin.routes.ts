@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   AdminActivityQuerySchema,
+  AdminActivityScopeSchema,
   AdminGameEventsQuerySchema,
   AdminGameIdParamSchema,
   AdminGamePatchSchema,
@@ -60,6 +61,18 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
   );
 
   // People ------------------------------------------------------------------
+
+  router.get(
+    "/activity/counts",
+    validate({ query: AdminActivityScopeSchema }),
+    async (req, res) => {
+      res.json(
+        await service.activityCounts(
+          req.valid!.query as z.infer<typeof AdminActivityScopeSchema>,
+        ),
+      );
+    },
+  );
 
   router.get(
     "/activity",

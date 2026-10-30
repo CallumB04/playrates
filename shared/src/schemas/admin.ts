@@ -207,7 +207,13 @@ export interface CursorPage<T> {
 }
 
 export const ACTIVITY_GROUPS = {
-  account: ["signup", "profile_updated", "account_deleted"],
+  account: [
+    "signup",
+    "onboarded",
+    "profile_updated",
+    "email_prefs_changed",
+    "account_deleted",
+  ],
   logs: ["log_added", "log_updated", "log_removed"],
   reviews: [
     "review_posted",
@@ -223,7 +229,38 @@ export const ACTIVITY_GROUPS = {
     "message_deleted",
     "message_upvoted",
   ],
-  social: ["friend_requested", "friend_accepted", "friend_removed"],
+  lists: [
+    "list_created",
+    "list_updated",
+    "list_deleted",
+    "list_game_added",
+    "list_game_removed",
+    "list_loved",
+  ],
+  gaming25: ["g25_picked", "g25_unpicked", "g25_completed", "g25_loved"],
+  progress: [
+    "level_up",
+    "badge_earned",
+    "task_done",
+    "task_swapped",
+    "streak_kept",
+    "setup_done",
+  ],
+  shop: ["item_bought", "background_bought", "gift_sent", "tokens_granted"],
+  social: [
+    "friend_requested",
+    "friend_accepted",
+    "friend_removed",
+    "referral_joined",
+    "referral_active",
+  ],
+  moderation: [
+    "report_filed",
+    "report_resolved",
+    "announcement_sent",
+    "announcement_emailed",
+    "announcement_retracted",
+  ],
 } as const;
 
 export type ActivityGroup = keyof typeof ACTIVITY_GROUPS;
@@ -244,13 +281,39 @@ export const activityGroupOf = (kind: string): ActivityGroup | null =>
     (ACTIVITY_GROUPS[group] as readonly string[]).includes(kind),
   ) ?? null;
 
-export const AdminActivityQuerySchema = CursorQuerySchema.extend({
+/** How far back the activity log looks; none is all of it. */
+export const ACTIVITY_PERIODS = {
+  day: 1,
+  week: 7,
+  month: 30,
+  quarter: 90,
+} as const;
+export type ActivityPeriod = keyof typeof ACTIVITY_PERIODS;
+const ACTIVITY_PERIOD_NAMES = Object.keys(ACTIVITY_PERIODS) as [
+  ActivityPeriod,
+  ...ActivityPeriod[],
+];
+
+/** Who, what game and how far back: shared by the feed and its counts. */
+export const AdminActivityScopeSchema = z.object({
+  userId: z.string().uuid().optional(),
+  gameId: z.coerce.number().int().positive().optional(),
+  period: z.enum(ACTIVITY_PERIOD_NAMES).optional(),
+});
+
+export type AdminActivityScope = z.infer<typeof AdminActivityScopeSchema>;
+
+export const AdminActivityQuerySchema = CursorQuerySchema.merge(
+  AdminActivityScopeSchema,
+).extend({
   group: z.enum(ACTIVITY_GROUP_NAMES).optional(),
   kind: z.enum(ACTIVITY_KINDS).optional(),
-  userId: z.string().uuid().optional(),
 });
 
 export type AdminActivityQuery = z.infer<typeof AdminActivityQuerySchema>;
+
+/** How many of each kind there are in a scope, for the filters. */
+export type AdminActivityCounts = Partial<Record<ActivityKind, number>>;
 
 export interface AdminPerson {
   id: string;
