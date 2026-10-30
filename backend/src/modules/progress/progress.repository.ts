@@ -96,6 +96,8 @@ export interface ProgressRepository {
   tokenKeys(userId: string, prefix: string): Promise<Set<string>>;
   /** Which of these keys the token ledger has already. */
   paidTokenKeys(userId: string, keys: string[]): Promise<Set<string>>;
+  /** The XP already awarded under each of these keys that has been. */
+  xpAwarded(userId: string, keys: string[]): Promise<Map<string, number>>;
   /** Ledger rows per source between two instants, less any taken back. */
   countSources(
     userId: string,
@@ -281,6 +283,19 @@ export const createProgressRepository = (db: Db): ProgressRepository => {
         .in("key", keys);
       if (error) throw error;
       return new Set(((data ?? []) as { key: string }[]).map((r) => r.key));
+    },
+
+    async xpAwarded(userId, keys) {
+      if (keys.length === 0) return new Map();
+      const { data, error } = await db
+        .from("xp_events")
+        .select("key, xp")
+        .eq("user_id", userId)
+        .in("key", keys);
+      if (error) throw error;
+      return new Map(
+        ((data ?? []) as { key: string; xp: number }[]).map((r) => [r.key, r.xp]),
+      );
     },
 
     async countSources(userId, from, to) {
