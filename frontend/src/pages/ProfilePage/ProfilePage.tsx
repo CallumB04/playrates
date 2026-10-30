@@ -25,6 +25,7 @@ import { cn } from "../../lib/cn";
 import ProfileError from "./components/ProfileError";
 import MemberFileHeader from "./components/MemberFileHeader";
 import FriendAction from "./components/FriendAction";
+import ShareCardButton from "./components/ShareCardButton";
 import FriendRequestBand from "./components/FriendRequestBand";
 import ProfileNav from "./components/ProfileNav";
 import {
@@ -263,6 +264,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                                     Background
                                 </span>
                             </Button>
+                            <ShareCardButton username={targetUser.username} />
                             <Link
                                 to="/settings"
                                 aria-label="Settings"
