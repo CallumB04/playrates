@@ -205,8 +205,10 @@ Callum opens TikTok in the browser pane; the upload page is
   misses the list switches the post to Now and the button to Post. Check
   the button still reads Schedule before pressing it.
 - **Disclose post content** stays off (Callum's decision, 2026-10-17).
-- **Press Schedule yourself** once everything checks out, confirm it in the
-  post list (`/tiktokstudio/content`), note it in `POSTS.md`
+- **Press Schedule yourself** once everything checks out, then wait for
+  the page to move to the post list on its own. **Never reload or navigate
+  away first**: a reload ten seconds after Schedule lost a post on
+  2026-10-30. Confirm it in the post list (`/tiktokstudio/content`), note it in `POSTS.md`
   (`— scheduled 2026-11-02 20:33`) and only then open the next upload.
   Never press **Post**, which publishes now.
 - A click that misses can open a photo's preview. Click the dark overlay to
