@@ -264,6 +264,7 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
       if (query.platform) {
         select.push("platform_filter:game_platforms!inner(platform_slug)");
       }
+      if (excludeLoggedForUser) select.push("own_logs:game_logs()");
 
       let builder = db
         .from("games")
@@ -289,19 +290,13 @@ export const createGamesRepository = (db: Db): GamesRepository => ({
         builder = builder.eq("platform_filter.platform_slug", query.platform);
       }
 
-      // "hide games I have already logged"
+      /* "Hide games I have already logged", as an anti-join: games with no
+         log of theirs. Reading their logged ids first and passing them back
+         stopped at 1000, and past a few hundred made a URL too long. */
       if (excludeLoggedForUser) {
-        const { data: logged, error: logError } = await db
-          .from("game_logs")
-          .select("game_id")
-          .eq("user_id", excludeLoggedForUser);
-        if (logError) throw logError;
-        const loggedIds = (logged ?? []).map(
-          (r) => (r as { game_id: number }).game_id,
-        );
-        if (loggedIds.length > 0) {
-          builder = builder.not("id", "in", `(${loggedIds.join(",")})`);
-        }
+        builder = builder
+          .eq("own_logs.user_id", excludeLoggedForUser)
+          .is("own_logs", null);
       }
 
       if (query.releasedAfter) {

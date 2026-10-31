@@ -1,5 +1,6 @@
 import type { QuestSwap, SourceCounts } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
+import { allPages } from "../../lib/allPages.js";
 import type { ProfileRow } from "../../types/database.types.js";
 
 export interface BadgeRow {
@@ -294,7 +295,10 @@ export const createProgressRepository = (db: Db): ProgressRepository => {
         .in("key", keys);
       if (error) throw error;
       return new Map(
-        ((data ?? []) as { key: string; xp: number }[]).map((r) => [r.key, r.xp]),
+        ((data ?? []) as { key: string; xp: number }[]).map((r) => [
+          r.key,
+          r.xp,
+        ]),
       );
     },
 
@@ -503,21 +507,28 @@ export const createProgressRepository = (db: Db): ProgressRepository => {
     },
 
     async nudgeCandidates(since, now) {
-      const rows = await rpc<
-        {
-          user_id: string;
-          timezone: string;
-          weeks: string[] | null;
-          shields: string[] | null;
-          spare: number;
-          week_counts: SourceCounts;
-          month_counts: SourceCounts;
-          week_habits: SourceCounts;
-          month_habits: SourceCounts;
-          swaps: (QuestSwap & { period: string })[];
-        }[]
-      >("nudge_candidates", { p_since: since, p_now: now });
-      return (rows ?? []).map((r) => ({
+      type CandidateRow = {
+        user_id: string;
+        timezone: string;
+        weeks: string[] | null;
+        shields: string[] | null;
+        spare: number;
+        week_counts: SourceCounts;
+        month_counts: SourceCounts;
+        week_habits: SourceCounts;
+        month_habits: SourceCounts;
+        swaps: (QuestSwap & { period: string })[];
+      };
+      // Every member, not the first thousand: a response stops at 1000 rows.
+      const rows = await allPages(async (from, to) => {
+        const { data, error } = await db
+          .rpc("nudge_candidates", { p_since: since, p_now: now })
+          .order("user_id")
+          .range(from, to);
+        if (error) throw error;
+        return (data ?? []) as CandidateRow[];
+      });
+      return rows.map((r) => ({
         userId: r.user_id,
         timezone: r.timezone,
         weeks: r.weeks ?? [],

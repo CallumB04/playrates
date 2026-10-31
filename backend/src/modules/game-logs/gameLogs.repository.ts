@@ -1,3 +1,4 @@
+import { allPages } from "../../lib/allPages.js";
 import { likeTerm } from "../../lib/likeTerm.js";
 import type {
   GameLogSort,
@@ -235,14 +236,19 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
   },
 
   async wishlistGameIds(userId) {
-    const { data, error } = await db
-      .from("wishlist_ranks")
-      .select("game_id")
-      .eq("user_id", userId)
-      .order("position")
-      .order("created_at");
-    if (error) throw error;
-    return ((data ?? []) as { game_id: number }[]).map((r) => r.game_id);
+    const rows = await allPages(async (from, to) => {
+      const { data, error } = await db
+        .from("wishlist_ranks")
+        .select("game_id")
+        .eq("user_id", userId)
+        .order("position")
+        .order("created_at")
+        .order("game_id")
+        .range(from, to);
+      if (error) throw error;
+      return (data ?? []) as { game_id: number }[];
+    });
+    return rows.map((r) => r.game_id);
   },
 
   async setWishlistOrder(userId, gameIds) {
