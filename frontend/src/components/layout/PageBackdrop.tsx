@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import { igdbSized, isIgdbImage } from "@playrates/shared";
 import { cn } from "../../lib/cn";
 
 /**
@@ -45,7 +46,15 @@ const BackdropArt = ({
     >
         <img
             src={url}
+            // A phone needs nothing like the 1080p the wide screen does.
+            srcSet={
+                isIgdbImage(url)
+                    ? `${igdbSized(url, "720p")} 1280w, ${igdbSized(url, "1080p")} 1920w`
+                    : undefined
+            }
+            sizes="100vw"
             alt=""
+            decoding="async"
             draggable={false}
             style={{ objectPosition: `center ${position}%` }}
             className="size-full object-cover"

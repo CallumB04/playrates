@@ -37,6 +37,7 @@ const ThreadCard = ({
         >
             {showSubject && game && (
                 <GameCover
+                    sizes="48px"
                     coverUrl={game.coverUrl}
                     title={game.title}
                     className="aspect-3/4 w-11 shrink-0 self-start overflow-hidden rounded-xs shadow-cover sm:w-12"

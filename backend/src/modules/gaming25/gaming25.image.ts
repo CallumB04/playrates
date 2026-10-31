@@ -4,6 +4,7 @@ import {
   GAMING_25_CENTRE,
   GAMING_25_SIZE,
   SITE_ORIGIN,
+  igdbSized,
   type CardThemeKey,
   type Gaming25ImageLayout,
 } from "@playrates/shared";
@@ -103,8 +104,7 @@ export const gaming25Geometry = (
 
 /** IGDB serves any size from the same image id; the grid needs a small
  *  one, and 25 of the large ones would be slow to fetch and to draw. */
-export const coverSize = (url: string): string =>
-  url.replace(/\/t_[a-z0-9_]+\//, "/t_cover_big/");
+export const coverSize = (url: string): string => igdbSized(url, "cover_big");
 
 type Fetch = typeof fetch;
 

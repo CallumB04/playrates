@@ -44,6 +44,7 @@ const TrendingRunnerUp = ({ thread, tone }: TrendingRunnerUpProps) => {
         >
             {game && (
                 <GameCover
+                    sizes="44px"
                     coverUrl={game.coverUrl}
                     title={game.title}
                     className="aspect-3/4 w-11 shrink-0 self-start overflow-hidden rounded-xs shadow-cover"

@@ -110,6 +110,7 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
                     className="shrink-0"
                 >
                     <GameCover
+                        sizes="48px"
                         coverUrl={coverUrl}
                         title={title}
                         className="aspect-3/4 w-10 rounded-xs sm:w-12"

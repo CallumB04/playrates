@@ -618,6 +618,7 @@ const CoverLeading = ({
     notification: { coverUrl: string | null; gameTitle: string | null };
 }) => (
     <GameCover
+        sizes="40px"
         coverUrl={notification.coverUrl}
         title={notification.gameTitle ?? ""}
         className="aspect-3/4 w-10 shrink-0 self-start overflow-hidden rounded-xs"

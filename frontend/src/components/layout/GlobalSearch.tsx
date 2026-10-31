@@ -110,6 +110,7 @@ const GlobalSearch = ({ variant = "bar", onClose }: GlobalSearchProps) => {
             render: () => (
                 <>
                     <GameCover
+                        sizes="24px"
                         coverUrl={game.coverUrl}
                         title={game.title}
                         className="aspect-3/4 w-6 shrink-0 overflow-hidden rounded-xs"
