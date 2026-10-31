@@ -1,4 +1,4 @@
-import type { Session } from "@supabase/supabase-js";
+import type { Session } from "@supabase/auth-js";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { effectiveTimeZone, setDisplayTimeZone } from "../lib/format";

@@ -6,7 +6,7 @@ import { gzipSync } from "node:zlib";
 import { join } from "node:path";
 
 /** Gzipped bytes. Lowering it is the point; raise it only on purpose. */
-const BUDGET = 280_000;
+const BUDGET = 225_000;
 
 const dist = new URL("../dist/", import.meta.url).pathname;
 const html = readFileSync(join(dist, "index.html"), "utf8");

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { AuthApiError } from "@supabase/supabase-js";
+import { AuthApiError } from "@supabase/auth-js";
 import { server } from "../test/msw/server";
 import { buildProfile } from "../test/msw/handlers";
 import { renderWithProviders } from "../test/renderWithProviders";

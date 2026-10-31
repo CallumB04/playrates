@@ -144,4 +144,53 @@ describe("api client", () => {
             expect(error.status).toBe(504);
         });
     });
+
+    describe("requests", () => {
+        it("sends an object as JSON and a picture as its own bytes", async () => {
+            const seen: { type: string | null; body: string }[] = [];
+            server.use(
+                http.post(`${API}/echo`, async ({ request }) => {
+                    seen.push({
+                        type: request.headers.get("Content-Type"),
+                        body: await request.text(),
+                    });
+                    return new HttpResponse(null, { status: 204 });
+                })
+            );
+
+            const json = await api.post("/echo", { a: 1 });
+            await api.post("/echo", new Blob(["png"], { type: "image/png" }), {
+                headers: { "Content-Type": "image/png" },
+            });
+
+            expect(json.data).toBeUndefined();
+            expect(seen).toEqual([
+                { type: "application/json", body: '{"a":1}' },
+                { type: "image/png", body: "png" },
+            ]);
+        });
+
+        it("leaves empty query parameters out", async () => {
+            let url = "";
+            server.use(
+                http.get(`${API}/echo`, ({ request }) => {
+                    url = request.url;
+                    return HttpResponse.json({});
+                })
+            );
+
+            await api.get("/echo", { params: { a: 1, b: undefined, c: null } });
+
+            expect(url).toBe(`${API}/echo?a=1`);
+        });
+
+        it("turns a request that never arrives into an ApiError", async () => {
+            server.use(http.get(`${API}/echo`, () => HttpResponse.error()));
+
+            const error = await api.get("/echo").catch((e) => e);
+
+            expect(error).toBeInstanceOf(ApiError);
+            expect(error.status).toBeUndefined();
+        });
+    });
 });

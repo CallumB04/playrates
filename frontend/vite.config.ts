@@ -20,9 +20,36 @@ const versionFile = (): Plugin => ({
     },
 });
 
+/** Preloads the body font, which the stylesheet would otherwise only ask
+ *  for once it has loaded and been read. Latin only: it's the subset nearly
+ *  every page draws with. */
+const preloadBodyFont = (): Plugin => ({
+    name: "playrates-preload-body-font",
+    apply: "build",
+    transformIndexHtml(_html, ctx) {
+        const font = Object.keys(ctx.bundle ?? {}).find((file) =>
+            /\/geist-latin-wght-normal-[^/]+\.woff2$/.test(file)
+        );
+        if (!font) return [];
+        return [
+            {
+                tag: "link",
+                attrs: {
+                    rel: "preload",
+                    as: "font",
+                    type: "font/woff2",
+                    href: `/${font}`,
+                    crossorigin: "",
+                },
+                injectTo: "head",
+            },
+        ];
+    },
+});
+
 export default defineConfig({
     base: "/",
-    plugins: [react(), tailwindcss(), versionFile()],
+    plugins: [react(), tailwindcss(), versionFile(), preloadBodyFont()],
     define: {
         __BUILD_ID__: JSON.stringify(BUILD_ID),
     },

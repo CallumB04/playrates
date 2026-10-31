@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
-import { isAuthError } from "@supabase/supabase-js";
+import { isAuthError } from "@supabase/auth-js";
 import { env } from "../../lib/env";
 import { useTheme } from "../../contexts/ThemeContext";
 

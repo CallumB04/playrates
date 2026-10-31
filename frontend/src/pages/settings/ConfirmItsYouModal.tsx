@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { isAuthError } from "@supabase/supabase-js";
+import { isAuthError } from "@supabase/auth-js";
 import Modal from "../../components/ui/Modal";
 import Button from "../../components/ui/Button";
 import PasswordField from "../../components/auth/PasswordField";
