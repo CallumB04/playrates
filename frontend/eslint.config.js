@@ -27,7 +27,11 @@ export default tseslint.config(
         },
         rules: {
             ...react.configs.flat.recommended.rules,
-            ...reactHooks.configs.recommended.rules,
+            // The two hook rules this code is written to. Version 7's
+            // recommended set adds the React Compiler's rules too, which
+            // only make sense once the compiler is switched on.
+            "react-hooks/rules-of-hooks": "error",
+            "react-hooks/exhaustive-deps": "warn",
             "react-refresh/only-export-components": [
                 "warn",
                 { allowConstantExport: true },
