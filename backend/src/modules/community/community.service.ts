@@ -100,21 +100,29 @@ export const createCommunityService = (
     return message;
   };
 
-  /* Only pictures that went through our upload. Anything else would let a
-     message load whatever it liked from wherever it liked. */
-  const assertOwnImages = (body: RichTextDoc): void => {
+  /* Only pictures that went through our upload, and only the uploads of
+     whoever the message belongs to. Anything else would let a message load
+     whatever it liked from wherever it liked, and deleting it would delete
+     a picture someone else is still showing. */
+  const assertOwnImages = (body: RichTextDoc, uploaders: string[]): void => {
     // Every image in the document, not only the top level: a list item can
     // hold one too.
-    if (!imageSources(body).every((src) => images.owns(src))) {
-      throw AppError.validation("Images must be uploaded to PlayRates");
-    }
+    const ok = imageSources(body).every((src) => {
+      const owner = images.ownerOf(src);
+      return owner !== null && uploaders.includes(owner);
+    });
+    if (!ok) throw AppError.validation("Images must be uploaded to PlayRates");
   };
 
   /* Best effort. By the time a picture is let go the change that dropped it
      has landed, and failing the request for a leftover file would have
-     someone retry something that worked. A missed one is swept later. */
-  const discard = (urls: string[]) =>
-    images.remove(urls).catch(() => undefined);
+     someone retry something that worked. A missed one is swept later.
+     Messages from before uploads were tied to their author can still hold
+     someone else's picture, so only the author's own files go. */
+  const discard = (authorId: string | null, urls: string[]) =>
+    images
+      .remove(urls.filter((url) => images.ownerOf(url) === authorId))
+      .catch(() => undefined);
 
   /* How long an upload may sit in no message before it is swept: long
      enough to write the message it was uploaded for. */
@@ -256,7 +264,7 @@ export const createCommunityService = (
     ): Promise<ThreadDetail> {
       const game = await games.findById(input.subject.gameId);
       if (!game) throw AppError.notFound("Game");
-      assertOwnImages(input.body);
+      assertOwnImages(input.body, [userId]);
 
       const threadId = await repo.createThread({
         authorId: userId,
@@ -297,7 +305,7 @@ export const createCommunityService = (
         parentId = parent.is_opening ? null : (parent.parent_id ?? parent.id);
       }
 
-      assertOwnImages(input.body);
+      assertOwnImages(input.body, [userId]);
       const row = await repo.insertMessage({
         threadId,
         parentId,
@@ -373,11 +381,20 @@ export const createCommunityService = (
         : message.author_id === userId;
       if (!allowed) throw AppError.forbidden("You cannot edit this message");
 
-      assertOwnImages(body);
+      // An admin keeping up patch notes may add their own pictures to
+      // another admin's entry.
+      assertOwnImages(
+        body,
+        [message.author_id, userId].filter((id): id is string => id !== null),
+      );
       const updated = await repo.updateMessageBody(messageId, body);
 
       const kept = new Set(imageSources(body));
-      await discard(imageSources(message.body).filter((src) => !kept.has(src)));
+      const dropped = imageSources(message.body).filter(
+        (src) => !kept.has(src),
+      );
+      await discard(message.author_id, dropped);
+      if (userId !== message.author_id) await discard(userId, dropped);
       return messageFor(userId, updated);
     },
 
@@ -393,7 +410,7 @@ export const createCommunityService = (
         );
       }
       await repo.softDeleteMessage(messageId);
-      await discard(imageSources(message.body));
+      await discard(message.author_id, imageSources(message.body));
       await notifications.removeByKey(communityReplyKey(messageId));
       await notifications.removeByKey(communityUpvotesKey(messageId));
     },
@@ -405,12 +422,12 @@ export const createCommunityService = (
         throw AppError.forbidden("The patch notes cannot be deleted");
       }
       // Read before the delete: the messages cascade away with the thread.
-      const pictures = (await repo.listMessages(threadId)).flatMap((m) =>
-        imageSources(m.body),
-      );
+      const messages = await repo.listMessages(threadId);
       // Its notifications go by trigger, whichever way the thread is deleted.
       await repo.deleteThread(threadId);
-      await discard(pictures);
+      await Promise.all(
+        messages.map((m) => discard(m.author_id, imageSources(m.body))),
+      );
     },
 
     /** A reaction, as on reviews: the same one again takes it back. */

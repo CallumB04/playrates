@@ -11,7 +11,7 @@ import type { Repositories } from "../../src/repositories.js";
 import type { AuthAdmin } from "../../src/config/authAdmin.js";
 import type { AvatarStore } from "../../src/config/avatarStore.js";
 import {
-  isStoredImageUrl,
+  storedImageOwner,
   type CommunityImageStore,
 } from "../../src/config/communityImageStore.js";
 import type {
@@ -1791,8 +1791,8 @@ export const createInMemoryRepos = (
       });
       return url;
     },
-    owns(url) {
-      return isStoredImageUrl(IMAGE_PREFIX, url);
+    ownerOf(url) {
+      return storedImageOwner(IMAGE_PREFIX, url);
     },
     async listUploads(userId) {
       return [...state.communityImages.entries()]
