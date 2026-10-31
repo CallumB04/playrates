@@ -16,9 +16,16 @@ import {
 
 const API = "https://api.igdb.com/v4";
 const TOKEN_URL = "https://id.twitch.tv/oauth2/token";
-/** A page of 500 games with everything expanded can take a few seconds. */
-const TIMEOUT_MS = 20_000;
-const MAX_ATTEMPTS = 3;
+/** How long to wait on IGDB, and how many times to ask. A page of 500
+ *  games with everything expanded can take a few seconds, and a job can
+ *  wait. Someone waiting on a search or an import can't: past 15s their
+ *  browser has given up anyway. */
+interface Patience {
+  timeoutMs: number;
+  attempts: number;
+}
+const PATIENT: Patience = { timeoutMs: 20_000, attempts: 3 };
+const QUICK: Patience = { timeoutMs: 6_000, attempts: 2 };
 /** IGDB allows four requests a second; this keeps a margin under it. */
 const MIN_INTERVAL_MS = 260;
 /** The most IGDB returns in one request. */
@@ -136,10 +143,12 @@ export const createIgdbProvider = (
     url.searchParams.set("grant_type", "client_credentials");
     const response = await fetchImpl(url, {
       method: "POST",
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(QUICK.timeoutMs),
     });
     if (!response.ok) {
-      throw AppError.upstream(`Twitch refused the IGDB credentials (${response.status})`);
+      throw AppError.upstream(
+        `Twitch refused the IGDB credentials (${response.status})`,
+      );
     }
     const body = (await response.json()) as {
       access_token: string;
@@ -169,9 +178,13 @@ export const createIgdbProvider = (
     return run;
   };
 
-  const query = <T>(endpoint: string, body: string): Promise<T> =>
+  const query = <T>(
+    endpoint: string,
+    body: string,
+    { timeoutMs, attempts }: Patience = PATIENT,
+  ): Promise<T> =>
     schedule(async () => {
-      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      for (let attempt = 0; attempt < attempts; attempt++) {
         let response: Response;
         try {
           response = await fetchImpl(`${API}/${endpoint}`, {
@@ -182,7 +195,7 @@ export const createIgdbProvider = (
               Accept: "application/json",
             },
             body,
-            signal: AbortSignal.timeout(TIMEOUT_MS),
+            signal: AbortSignal.timeout(timeoutMs),
           });
         } catch (error) {
           await report({
@@ -190,7 +203,7 @@ export const createIgdbProvider = (
             error: error instanceof Error ? error.message : String(error),
           });
           // A dropped connection or a timeout is as passing as a 429.
-          if (attempt === MAX_ATTEMPTS - 1) throw error;
+          if (attempt === attempts - 1) throw error;
           await new Promise((r) => setTimeout(r, 2 ** attempt * 300));
           continue;
         }
@@ -234,20 +247,32 @@ export const createIgdbProvider = (
    * their own on IGDB (version_parent), so it is one more request for the
    * whole batch rather than one per game.
    */
-  const withEditions = async (found: IgdbGame[]): Promise<ExternalGame[]> => {
+  const withEditions = async (
+    found: IgdbGame[],
+    patience: Patience = PATIENT,
+  ): Promise<ExternalGame[]> => {
     if (found.length === 0) return [];
     const byParent = new Map<number, AltCover[]>();
     const ids = found.map((g) => g.id).join(",");
     for (let offset = 0; ; offset += MAX_LIMIT) {
       const editions = await query<
-        { version_parent: number; version_title?: string; name: string; cover?: { image_id: string } }[]
+        {
+          version_parent: number;
+          version_title?: string;
+          name: string;
+          cover?: { image_id: string };
+        }[]
       >(
         "games",
         `fields version_parent,version_title,name,cover.image_id; where version_parent = (${ids}) & cover != null; sort id asc; limit ${MAX_LIMIT}; offset ${offset};`,
+        patience,
       );
       for (const e of editions) {
         const list = byParent.get(e.version_parent) ?? [];
-        list.push({ imageId: e.cover!.image_id, label: e.version_title ?? e.name });
+        list.push({
+          imageId: e.cover!.image_id,
+          label: e.version_title ?? e.name,
+        });
         byParent.set(e.version_parent, list);
       }
       if (editions.length < MAX_LIMIT) break;
@@ -284,11 +309,15 @@ export const createIgdbProvider = (
       const found = await query<IgdbGame[]>(
         "games",
         `search ${quote(term)}; fields ${GAME_FIELDS}; where ${CATALOGUE_FILTER}; limit ${Math.min(limit * 2, 50)};`,
+        QUICK,
       );
       return withEditions(
         found
-          .sort((a, b) => (b.total_rating_count ?? 0) - (a.total_rating_count ?? 0))
+          .sort(
+            (a, b) => (b.total_rating_count ?? 0) - (a.total_rating_count ?? 0),
+          )
           .slice(0, limit),
+        QUICK,
       );
     },
 
@@ -298,8 +327,9 @@ export const createIgdbProvider = (
       const [found] = await query<IgdbGame[]>(
         "games",
         `fields ${GAME_FIELDS}; where id = ${Math.trunc(externalId)};`,
+        QUICK,
       );
-      return found ? (await withEditions([found]))[0]! : null;
+      return found ? (await withEditions([found], QUICK))[0]! : null;
     },
 
     // Rated games only: past them the rating count is null, and IGDB
@@ -359,6 +389,7 @@ export const createIgdbProvider = (
       const [found] = await query<IgdbGame[]>(
         "games",
         `fields screenshots.image_id,artworks.image_id; where id = ${igdbId};`,
+        QUICK,
       );
       return found ? pickBackdrops(found) : [];
     },
