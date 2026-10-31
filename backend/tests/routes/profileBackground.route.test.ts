@@ -221,7 +221,7 @@ describe("buying a background", () => {
     });
     const me = () =>
       request(built.app)
-        .get("/api/v1/me/progress")
+        .post("/api/v1/me/progress")
         .set("Authorization", authHeader(USER_A));
     const buy = (url: string) =>
       request(built.app)

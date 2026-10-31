@@ -18,7 +18,7 @@ import { env } from "../../lib/env";
 import { api } from "../client";
 
 export const fetchProgress = async (): Promise<Progress> => {
-    const { data } = await api.get<Progress>("/me/progress");
+    const { data } = await api.post<Progress>("/me/progress");
     return data;
 };
 

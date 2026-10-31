@@ -47,7 +47,9 @@ export const createMyProgressRouter = ({
 }: Deps): Router => {
   const router = Router();
 
-  router.get("/progress", requireAuth, async (req, res) => {
+  // A POST, not a GET: bringing progress up to date awards XP, badges and
+  // tokens, and a GET is something a prefetcher may send unasked.
+  router.post("/progress", requireAuth, async (req, res) => {
     res.json(await service.evaluate(callerId(req)));
   });
 

@@ -56,7 +56,7 @@ describe("backfillProgress", () => {
     expect(state.profiles.find((p) => p.id === USER_A)!.revealed_at).toBeNull();
     const first = (
       await request(app)
-        .get("/api/v1/me/progress")
+        .post("/api/v1/me/progress")
         .set("Authorization", authHeader(USER_A))
     ).body;
     expect(first.reveal).toBe(true);

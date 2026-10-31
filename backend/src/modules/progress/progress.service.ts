@@ -440,9 +440,12 @@ export const createProgressService = (
         awards.map((a) => a.key),
       );
       const newAwards = awards.filter((a) => (before.get(a.key) ?? -1) < a.xp);
-      for (const a of newAwards) {
-        await repo.awardXp(userId, a.source, a.key, a.xp, a.data);
-      }
+      // Each keyed, and the total kept by trigger, so they can land at once.
+      await Promise.all(
+        newAwards.map((a) =>
+          repo.awardXp(userId, a.source, a.key, a.xp, a.data),
+        ),
+      );
       if (newAwards.some((a) => a.key === streakKey)) {
         // Kept: the nudge about losing it has nothing left to say.
         await notifications.markReadByKey(userId, streakNudgeKey(periods.week));
@@ -476,8 +479,9 @@ export const createProgressService = (
       if (launch && !launchPaid) {
         // The history, as one capped sum, each source keyed at 0 so it
         // isn't paid again.
-        for (const g of fresh)
-          await repo.awardTokens(userId, g.source, g.key, 0);
+        await Promise.all(
+          fresh.map((g) => repo.awardTokens(userId, g.source, g.key, 0)),
+        );
         gained = Math.min(
           LAUNCH_TOKEN_CAP,
           fresh.reduce((n, g) => n + g.amount, 0),
@@ -488,10 +492,10 @@ export const createProgressService = (
       } else {
         /* Earned since: a member counted by the deploy's backfill who comes
            back weeks later is paid for those weeks as anyone else is. */
-        for (const g of fresh) {
-          await repo.awardTokens(userId, g.source, g.key, g.amount);
-          gained += g.amount;
-        }
+        await Promise.all(
+          fresh.map((g) => repo.awardTokens(userId, g.source, g.key, g.amount)),
+        );
+        gained = fresh.reduce((n, g) => n + g.amount, 0);
       }
 
       if (gained > 0 || referralPaid) row = await mustProfile(userId);

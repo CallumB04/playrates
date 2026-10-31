@@ -40,7 +40,7 @@ const setup = (overrides: object = {}) => {
   });
   const app: Express = built.app;
   const progress = async (user = USER_A) =>
-    (await request(app).get("/api/v1/me/progress").set(as(user))).body;
+    (await request(app).post("/api/v1/me/progress").set(as(user))).body;
   const xp = (user: string, source: string, key: string, amount?: number) =>
     built.repos.progress.awardXp(user, source, key, amount);
   const tokens = (user: string, amount: number) =>

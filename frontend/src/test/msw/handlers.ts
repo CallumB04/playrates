@@ -257,7 +257,7 @@ export const buildProgress = (overrides: Partial<Progress> = {}): Progress => ({
  */
 export const handlers = [
     // A fresh member's progress, for anything that shows it in passing.
-    http.get(`${API}/me/progress`, () => HttpResponse.json(buildProgress())),
+    http.post(`${API}/me/progress`, () => HttpResponse.json(buildProgress())),
 
     http.get(`${API}/stats`, () =>
         HttpResponse.json({ userCount: 2, gameCount: 6, logCount: 1 })
