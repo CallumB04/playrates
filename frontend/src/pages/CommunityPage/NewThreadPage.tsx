@@ -21,7 +21,7 @@ import { TextSkeleton } from "../../components/ui/Skeleton";
 import GamePicker, {
     type PickedGame,
 } from "../../components/community/GamePicker";
-import RichTextEditor from "../../components/community/RichTextEditor";
+import RichTextEditor from "../../components/community/LazyRichTextEditor";
 import {
     clearThreadDraft,
     hasContent,

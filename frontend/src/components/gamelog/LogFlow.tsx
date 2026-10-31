@@ -1,8 +1,21 @@
-import { useMemo, useState, type ReactNode } from "react";
-import CreateOrEditGameLogPopup from "../CreateOrEditGameLogPopup";
-import ViewGameLogPopup from "../ViewGameLogPopup";
-import AddToListPopup from "../lists/AddToListPopup";
+import {
+    lazy,
+    Suspense,
+    useEffect,
+    useMemo,
+    useState,
+    type ReactNode,
+} from "react";
+import { whenIdle } from "../../lib/whenIdle";
 import { LogFlowContext, type LogFlow } from "./useLogFlow";
+
+/* The editor and viewer are most of what a page would otherwise carry for
+   a popup it may never open. Fetched once the page is idle, so the first
+   one opens without a wait. */
+const loadEditor = () => import("../CreateOrEditGameLogPopup");
+const CreateOrEditGameLogPopup = lazy(loadEditor);
+const ViewGameLogPopup = lazy(() => import("../ViewGameLogPopup"));
+const AddToListPopup = lazy(() => import("../lists/AddToListPopup"));
 
 type Open =
     | {
@@ -48,32 +61,36 @@ export const LogFlowProvider = ({ children }: { children: ReactNode }) => {
 
     const close = () => setCurrent(null);
 
+    useEffect(() => whenIdle(() => void loadEditor()), []);
+
     return (
         <LogFlowContext.Provider value={flow}>
             {children}
-            {current?.kind === "editor" && (
-                // Keyed, so moving straight from one log to another starts
-                // the form afresh rather than keeping the last one's draft.
-                <CreateOrEditGameLogPopup
-                    key={`${current.gameId}:${current.logId}`}
-                    gameId={current.gameId}
-                    logId={current.logId}
-                    focusReview={current.focusReview}
-                    onClose={close}
-                />
-            )}
-            {current?.kind === "viewer" && (
-                <ViewGameLogPopup
-                    key={`${current.gameId}:${current.owner}`}
-                    gameId={current.gameId}
-                    ownerUsername={current.owner}
-                    initialLogId={current.logId}
-                    onClose={close}
-                />
-            )}
-            {current?.kind === "lists" && (
-                <AddToListPopup gameId={current.gameId} onClose={close} />
-            )}
+            <Suspense fallback={null}>
+                {current?.kind === "editor" && (
+                    // Keyed, so moving straight from one log to another starts
+                    // the form afresh rather than keeping the last one's draft.
+                    <CreateOrEditGameLogPopup
+                        key={`${current.gameId}:${current.logId}`}
+                        gameId={current.gameId}
+                        logId={current.logId}
+                        focusReview={current.focusReview}
+                        onClose={close}
+                    />
+                )}
+                {current?.kind === "viewer" && (
+                    <ViewGameLogPopup
+                        key={`${current.gameId}:${current.owner}`}
+                        gameId={current.gameId}
+                        ownerUsername={current.owner}
+                        initialLogId={current.logId}
+                        onClose={close}
+                    />
+                )}
+                {current?.kind === "lists" && (
+                    <AddToListPopup gameId={current.gameId} onClose={close} />
+                )}
+            </Suspense>
         </LogFlowContext.Provider>
     );
 };

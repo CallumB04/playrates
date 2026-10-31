@@ -64,6 +64,9 @@ jobs:
           VITE_SUPABASE_URL: https://ci.supabase.co
           VITE_SUPABASE_ANON_KEY: ci-anon-key
 
+      - name: First-load JavaScript within budget
+        run: npm run size -w frontend
+
   migrations:
     name: Migrations apply to a clean database
     runs-on: ubuntu-latest

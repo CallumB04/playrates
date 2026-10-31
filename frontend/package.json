@@ -12,7 +12,8 @@
         "test:coverage": "vitest run --coverage",
         "test:watch": "vitest",
         "preview": "vite preview",
-        "brand-assets": "node scripts/brand-assets.mjs"
+        "brand-assets": "node scripts/brand-assets.mjs",
+        "size": "node scripts/bundle-budget.mjs"
     },
     "dependencies": {
         "@dnd-kit/core": "^6.3.1",

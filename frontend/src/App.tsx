@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Header from "./components/layout/Header";
 import TabBar from "./components/layout/TabBar";
@@ -11,26 +12,32 @@ import ProgressMoments from "./components/progress/ProgressMoments";
 import ReferralCapture from "./components/progress/ReferralCapture";
 import AuthLinkResult from "./components/auth/AuthLinkResult";
 import InviteBanner from "./components/progress/InviteBanner";
-import ProgressPage from "./pages/ProgressPage/ProgressPage";
-import ShopPage from "./pages/ShopPage/ShopPage";
-import HomePage from "./pages/HomePage/HomePage";
-import CommunityPage from "./pages/CommunityPage/CommunityPage";
-import NewThreadPage from "./pages/CommunityPage/NewThreadPage";
-import ThreadPage from "./pages/CommunityPage/ThreadPage";
-import PrivacyPage from "./pages/legal/PrivacyPage";
-import TermsPage from "./pages/legal/TermsPage";
-import ContactPage from "./pages/legal/ContactPage";
-import ProfilePageRoute from "./pages/ProfilePage/ProfilePageRoute";
-import ListPage from "./pages/ListPage/ListPage";
-import Gaming25Page from "./pages/Gaming25Page/Gaming25Page";
-import LibraryPage from "./pages/LibraryPage/LibraryPage";
-import GamePage from "./pages/GamePage/GamePage";
-import SettingsPage from "./pages/SettingsPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import UnsubscribePage from "./pages/UnsubscribePage";
 import NotFoundPage from "./pages/NotFoundPage";
-import AdminGate from "./pages/admin/AdminGate";
 import { useReloadOnNewBuild } from "./hooks/useReloadOnNewBuild";
+
+/* Each page is its own chunk, so a visitor downloads the page they landed
+   on rather than the whole app. A chunk gone missing after a deploy is
+   caught by the ErrorBoundary, which loads the new build. */
+const ProgressPage = lazy(() => import("./pages/ProgressPage/ProgressPage"));
+const ShopPage = lazy(() => import("./pages/ShopPage/ShopPage"));
+const HomePage = lazy(() => import("./pages/HomePage/HomePage"));
+const CommunityPage = lazy(() => import("./pages/CommunityPage/CommunityPage"));
+const NewThreadPage = lazy(() => import("./pages/CommunityPage/NewThreadPage"));
+const ThreadPage = lazy(() => import("./pages/CommunityPage/ThreadPage"));
+const PrivacyPage = lazy(() => import("./pages/legal/PrivacyPage"));
+const TermsPage = lazy(() => import("./pages/legal/TermsPage"));
+const ContactPage = lazy(() => import("./pages/legal/ContactPage"));
+const ProfilePageRoute = lazy(
+    () => import("./pages/ProfilePage/ProfilePageRoute")
+);
+const ListPage = lazy(() => import("./pages/ListPage/ListPage"));
+const Gaming25Page = lazy(() => import("./pages/Gaming25Page/Gaming25Page"));
+const LibraryPage = lazy(() => import("./pages/LibraryPage/LibraryPage"));
+const GamePage = lazy(() => import("./pages/GamePage/GamePage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage"));
+const AdminGate = lazy(() => import("./pages/admin/AdminGate"));
 
 /** Layout shell and route table. State lives in the providers. */
 
@@ -39,6 +46,10 @@ const LibraryRedirect = () => {
     const { search } = useLocation();
     return <Navigate to={{ pathname: "/library", search }} replace />;
 };
+
+/* A page's chunk is small and usually cached, so this is seldom seen for
+   long. Empty, and tall enough that the footer doesn't flash up into view. */
+const PageLoading = () => <div aria-busy className="min-h-[60dvh]" />;
 
 function App() {
     useReloadOnNewBuild();
@@ -52,58 +63,72 @@ function App() {
             <main className="min-h-dvh flex-1">
                 <PageShell>
                     <InviteBanner />
-                    <Routes>
-                        <Route path="/" element={<HomePage />} />
-                        <Route
-                            path="/user/:username/lists/:listId"
-                            element={<ListPage />}
-                        />
-                        <Route
-                            path="/user/:username/gaming-25"
-                            element={<Gaming25Page />}
-                        />
-                        <Route
-                            path="/user/:targetUsername?/:view?"
-                            element={<ProfilePageRoute />}
-                        />
-                        <Route path="/library" element={<LibraryPage />} />
-                        <Route path="/progress" element={<ProgressPage />} />
-                        <Route path="/shop" element={<ShopPage />} />
-                        {/* The page was briefly called both things. Kept so
+                    <Suspense fallback={<PageLoading />}>
+                        <Routes>
+                            <Route path="/" element={<HomePage />} />
+                            <Route
+                                path="/user/:username/lists/:listId"
+                                element={<ListPage />}
+                            />
+                            <Route
+                                path="/user/:username/gaming-25"
+                                element={<Gaming25Page />}
+                            />
+                            <Route
+                                path="/user/:targetUsername?/:view?"
+                                element={<ProfilePageRoute />}
+                            />
+                            <Route path="/library" element={<LibraryPage />} />
+                            <Route
+                                path="/progress"
+                                element={<ProgressPage />}
+                            />
+                            <Route path="/shop" element={<ShopPage />} />
+                            {/* The page was briefly called both things. Kept so
                             shared links and bookmarks still land. */}
-                        <Route
-                            path="/catalogue"
-                            element={<LibraryRedirect />}
-                        />
-                        <Route path="/game/:gameID" element={<GamePage />} />
-                        <Route path="/community" element={<CommunityPage />} />
-                        <Route
-                            path="/community/new"
-                            element={<NewThreadPage />}
-                        />
-                        <Route
-                            path="/community/thread/:threadId"
-                            element={<ThreadPage />}
-                        />
-                        <Route path="/settings" element={<SettingsPage />} />
-                        <Route
-                            path="/reset-password"
-                            element={<ResetPasswordPage />}
-                        />
-                        <Route
-                            path="/unsubscribe"
-                            element={<UnsubscribePage />}
-                        />
+                            <Route
+                                path="/catalogue"
+                                element={<LibraryRedirect />}
+                            />
+                            <Route
+                                path="/game/:gameID"
+                                element={<GamePage />}
+                            />
+                            <Route
+                                path="/community"
+                                element={<CommunityPage />}
+                            />
+                            <Route
+                                path="/community/new"
+                                element={<NewThreadPage />}
+                            />
+                            <Route
+                                path="/community/thread/:threadId"
+                                element={<ThreadPage />}
+                            />
+                            <Route
+                                path="/settings"
+                                element={<SettingsPage />}
+                            />
+                            <Route
+                                path="/reset-password"
+                                element={<ResetPasswordPage />}
+                            />
+                            <Route
+                                path="/unsubscribe"
+                                element={<UnsubscribePage />}
+                            />
 
-                        {/* Stubs, so the footer never links into nothing. */}
-                        <Route path="/privacy" element={<PrivacyPage />} />
-                        <Route path="/terms" element={<TermsPage />} />
-                        <Route path="/contact" element={<ContactPage />} />
+                            {/* Stubs, so the footer never links into nothing. */}
+                            <Route path="/privacy" element={<PrivacyPage />} />
+                            <Route path="/terms" element={<TermsPage />} />
+                            <Route path="/contact" element={<ContactPage />} />
 
-                        <Route path="/admin/*" element={<AdminGate />} />
+                            <Route path="/admin/*" element={<AdminGate />} />
 
-                        <Route path="*" element={<NotFoundPage />} />
-                    </Routes>
+                            <Route path="*" element={<NotFoundPage />} />
+                        </Routes>
+                    </Suspense>
                 </PageShell>
             </main>
             <Footer />

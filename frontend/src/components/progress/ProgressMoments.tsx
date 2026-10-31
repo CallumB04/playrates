@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { badgeDef, levelFor } from "@playrates/shared";
 import { playerCardUrl } from "../../api";
@@ -9,13 +9,15 @@ import {
     useProgress,
 } from "../../hooks/queries/useProgress";
 import { profilePath } from "../../lib/profilePaths";
-import ShareSheet from "../share/ShareSheet";
 import { useNotify } from "../../contexts/NotificationContext";
 import { useNoDialogOpen } from "../../hooks/useNoDialogOpen";
-import LaunchReveal from "./LaunchReveal";
-import LevelUpMoment from "./LevelUpMoment";
 import { badgeToastText } from "./rewardText";
 import { xpToast } from "./XpToast";
+
+// Each shows now and then, so none rides along with every page.
+const LaunchReveal = lazy(() => import("./LaunchReveal"));
+const LevelUpMoment = lazy(() => import("./LevelUpMoment"));
+const ShareSheet = lazy(() => import("../share/ShareSheet"));
 
 /**
  * Watches your progress for what's new and says so: XP and badges as
@@ -124,7 +126,7 @@ const ProgressMoments = () => {
     };
 
     return (
-        <>
+        <Suspense fallback={null}>
             {revealing && (
                 <LaunchReveal
                     progress={data}
@@ -157,7 +159,7 @@ const ProgressMoments = () => {
                     onClose={() => setSharing(false)}
                 />
             )}
-        </>
+        </Suspense>
     );
 };
 
