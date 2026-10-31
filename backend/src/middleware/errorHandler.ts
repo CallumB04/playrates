@@ -93,6 +93,8 @@ export const createErrorHandler =
       );
     }
 
+    // Whatever a route said about caching was about its answer, not this.
+    res.setHeader("Cache-Control", "no-store");
     res.status(appError.status).json({
       error: {
         code: appError.code,

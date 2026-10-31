@@ -23,7 +23,7 @@ const runHandler = async (
     log: undefined,
     ...url,
   } as unknown as Request;
-  const res = { status } as unknown as Response;
+  const res = { status, setHeader: vi.fn() } as unknown as Response;
 
   await handler(error, req, res, vi.fn());
 

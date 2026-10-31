@@ -12,6 +12,7 @@ import {
 import { noopErrorSink, type ErrorSink } from "./config/errorSink.js";
 import { makeRequireAuth, type Verifier } from "./middleware/requireAuth.js";
 import { buildRoutes } from "./routes.js";
+import { publicCache } from "./lib/publicCache.js";
 import type { Repositories } from "./repositories.js";
 import type { AuthAdmin } from "./config/authAdmin.js";
 import type { AvatarStore } from "./config/avatarStore.js";
@@ -109,6 +110,8 @@ export const buildApp = ({
       ? next()
       : writeLimiter(req, res, next),
   );
+
+  app.use("/api/v1", publicCache);
 
   app.use(
     "/api/v1",

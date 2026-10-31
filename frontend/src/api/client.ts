@@ -53,6 +53,9 @@ export interface RequestOptions {
     /** "blob" for a download; JSON otherwise. */
     responseType?: "json" | "blob";
     signal?: AbortSignal;
+    /** Sent without the token, for a read whose answer is the same for
+     *  everyone, so the CDN can serve it. */
+    anonymous?: boolean;
 }
 
 export interface ApiResponse<T> {
@@ -119,10 +122,12 @@ const request = async <T>(
     options: RequestOptions = {}
 ): Promise<ApiResponse<T>> => {
     const headers = new Headers(options.headers);
-    // getSession() refreshes the token first when it needs to.
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (token) headers.set("Authorization", `Bearer ${token}`);
+    if (!options.anonymous) {
+        // getSession() refreshes the token first when it needs to.
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        if (token) headers.set("Authorization", `Bearer ${token}`);
+    }
 
     const { signal, done } = deadline(options.signal);
     let response: Response;

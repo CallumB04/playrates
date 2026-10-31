@@ -17,6 +17,7 @@ import {
 import type { Repositories } from "../../repositories.js";
 import type { GenreRow } from "../../types/database.types.js";
 import type { ReviewRowJoined } from "../reviews/reviews.repository.js";
+import { memoFor } from "../../lib/memo.js";
 import { inGridOrder } from "../gaming25/gaming25.mapper.js";
 import { toProfileVisibility } from "../profiles/profiles.mapper.js";
 import { excerpt, toParagraphs, type PageBody } from "./body.js";
@@ -84,6 +85,10 @@ const reviewItem = (row: ReviewRowJoined, withGame: boolean) => ({
  * Each returns null when there is nothing at that address.
  */
 export const createPagesService = (repos: Repos) => {
+  // Every game page names its platforms and genres, and they hardly change.
+  const platformList = memoFor(10 * 60_000, () => repos.platforms.list());
+  const genreList = memoFor(10 * 60_000, () => repos.genres.list());
+
   const gameBody = async (
     row: NonNullable<Awaited<ReturnType<Repos["games"]["findById"]>>>,
     input: { avgRating: number | null; ratingCount: number },
@@ -223,8 +228,8 @@ export const createPagesService = (repos: Repos) => {
     async game(id: number): Promise<HeadMeta | null> {
       const [row, platforms, genres] = await Promise.all([
         repos.games.findById(id),
-        repos.platforms.list(),
-        repos.genres.list(),
+        platformList(),
+        genreList(),
       ]);
       if (!row) return null;
 

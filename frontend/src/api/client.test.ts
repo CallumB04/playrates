@@ -29,6 +29,19 @@ describe("api client", () => {
         expect(seen).toBe("Bearer test-access-token");
     });
 
+    it("sends no token for a read that is the same for everyone", async () => {
+        let seen: string | null = "unset";
+        server.use(
+            http.get(`${API}/genres`, ({ request }) => {
+                seen = request.headers.get("Authorization");
+                return HttpResponse.json({ data: [] });
+            })
+        );
+
+        await api.get("/genres", { anonymous: true });
+        expect(seen).toBeNull();
+    });
+
     it("passes filters through as query parameters", async () => {
         let url = "";
         server.use(

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { Genre } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
+import { memoFor } from "../../lib/memo.js";
 import type { GenreRow } from "../../types/database.types.js";
 
 export interface GenresRepository {
@@ -25,9 +26,10 @@ const toGenre = (row: GenreRow): Genre => ({
    haven't seen, which is why it's an endpoint and not a frontend constant. */
 export const createGenresRouter = (repo: GenresRepository): Router => {
   const router = Router();
+  const list = memoFor(10 * 60_000, () => repo.list());
 
   router.get("/", async (_req, res) => {
-    const rows = await repo.list();
+    const rows = await list();
     res.json({ data: rows.map(toGenre) });
   });
 
