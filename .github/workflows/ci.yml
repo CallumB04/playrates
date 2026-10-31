@@ -37,6 +37,11 @@ jobs:
       - name: Build shared package
         run: npm run build -w @playrates/shared
 
+      # Production packages only: a known high or critical hole in what
+      # ships fails the build. Dev tooling never reaches a visitor.
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -66,9 +71,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Pinned, so a CLI release can't change what CI checks without a
+      # commit saying so. Dependabot raises the bumps.
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.122.0
 
       # Catches the class of bug that only appears against a real
       # Postgres: a missing schema qualification, a constraint that
