@@ -296,7 +296,7 @@ const ACTIVITY_PERIOD_NAMES = Object.keys(ACTIVITY_PERIODS) as [
 
 /** Who, what game and how far back: shared by the feed and its counts. */
 export const AdminActivityScopeSchema = z.object({
-  userId: z.string().uuid().optional(),
+  userId: z.guid().optional(),
   gameId: z.coerce.number().int().positive().optional(),
   period: z.enum(ACTIVITY_PERIOD_NAMES).optional(),
 });
@@ -356,7 +356,7 @@ export const AdminUsersQuerySchema = PaginationSchema.extend({
 export type AdminUsersQuery = z.infer<typeof AdminUsersQuerySchema>;
 
 export const AdminUserIdParamSchema = z.object({
-  id: z.string().uuid(),
+  id: z.guid(),
 });
 
 export interface AdminUserDetail extends AdminUserSummary {

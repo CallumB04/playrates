@@ -62,10 +62,17 @@ const GameLogFieldsSchema = z
 
 /** Applied to the full and partial schemas separately — `.partial()` can't be
  *  called on a schema that already has refinements. */
-const withCrossFieldChecks = <T extends z.ZodTypeAny>(schema: T) =>
+interface CrossFields {
+  achievementsTotal?: number | null;
+  achievementsCompleted?: number | null;
+  startDate?: string | null;
+  finishDate?: string | null;
+}
+
+const withCrossFieldChecks = <T extends z.ZodType<CrossFields>>(schema: T) =>
   schema
     .refine(
-      (v: z.infer<T>) =>
+      (v: CrossFields) =>
         v.achievementsTotal == null ||
         v.achievementsCompleted == null ||
         v.achievementsCompleted <= v.achievementsTotal,
@@ -75,7 +82,7 @@ const withCrossFieldChecks = <T extends z.ZodTypeAny>(schema: T) =>
       },
     )
     .refine(
-      (v: z.infer<T>) =>
+      (v: CrossFields) =>
         !v.startDate || !v.finishDate || v.finishDate >= v.startDate,
       {
         message: "Finish date must be on or after the start date",

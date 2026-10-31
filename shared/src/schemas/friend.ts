@@ -14,7 +14,7 @@ export type FriendRelation = z.infer<typeof FriendRelationSchema>;
 
 export const FriendRequestSchema = z
   .object({
-    userId: z.string().uuid(),
+    userId: z.guid(),
   })
   .strict();
 

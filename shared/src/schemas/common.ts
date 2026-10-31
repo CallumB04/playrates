@@ -35,7 +35,7 @@ export const UsernameParamSchema = z.object({
 });
 
 export const UserIdSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.guid(),
 });
 
 /** Shape every list endpoint returns. */

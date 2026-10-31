@@ -84,20 +84,20 @@ export const steamProfileUrl = (input: string): string | null => {
 export const DISCORD_USERNAME = /^[A-Za-z0-9_.]{2,32}(?:#\d{4})?$/;
 
 /** Blank clears a field; anything else is held to its own rule. */
-const clearable = (rule: z.ZodTypeAny) =>
+const clearable = <T extends z.ZodType>(rule: T) =>
   z
     .union([z.literal(""), rule])
     .nullable()
     .optional();
 
 export const AboutFieldsSchema = z.object({
-  pronouns: clearable(z.string().trim().max(30)),
-  location: clearable(z.string().trim().max(60)),
+  pronouns: clearable(z.string().trim().max(30, "30 characters at most")),
+  location: clearable(z.string().trim().max(60, "60 characters at most")),
   website: clearable(
     z
       .string()
       .trim()
-      .max(200)
+      .max(200, "200 characters at most")
       .url("Enter a full address, starting https://")
       .refine((v) => /^https?:\/\//i.test(v), "Only web addresses link out"),
   ),
@@ -108,7 +108,7 @@ export const AboutFieldsSchema = z.object({
     z
       .string()
       .trim()
-      .max(120)
+      .max(120, "120 characters at most")
       .refine(
         (v) => steamProfileUrl(v) !== null,
         "Paste your Steam profile's address, or its custom name",
