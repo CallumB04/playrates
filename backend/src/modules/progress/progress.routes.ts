@@ -2,6 +2,7 @@ import { Router, type RequestHandler } from "express";
 import {
   CARD_THEME_KEYS,
   LeaderboardQuerySchema,
+  playerCardVersion,
   ReferralSchema,
   BuyBackgroundSchema,
   GiftSchema,
@@ -16,6 +17,8 @@ import {
 } from "@playrates/shared";
 import { z } from "zod";
 import { AppError } from "../../lib/AppError.js";
+import { redirectToVersion } from "../../lib/imageVersion.js";
+import { perMinute } from "../../lib/rateLimit.js";
 import { validate } from "../../middleware/validate.js";
 import { renderPlayerCard } from "./progress.image.js";
 import type { ProgressService } from "./progress.service.js";
@@ -193,6 +196,7 @@ export const createProgressRouter = ({
   optionalAuth,
 }: Deps): Router => {
   const router = Router();
+  const imageLimiter = perMinute(30);
 
   router.get("/rules", async (_req, res) => {
     res.json(await service.rules());
@@ -210,6 +214,7 @@ export const createProgressRouter = ({
 
   router.get(
     "/:username/card.png",
+    imageLimiter,
     validate({ params: UsernameParamSchema, query: CardQuerySchema }),
     async (req, res) => {
       const { username } = req.valid!.params as { username: string };
@@ -219,6 +224,7 @@ export const createProgressRouter = ({
       };
       const source = await service.cardSource(username);
       if (!source) throw AppError.notFound("Profile");
+      if (redirectToVersion(req, res, playerCardVersion(source.xp))) return;
       const png = await renderPlayerCard(source, theme);
       res
         .type("png")

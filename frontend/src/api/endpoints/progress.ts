@@ -13,6 +13,7 @@ import type {
     StyleInput,
     XpRule,
 } from "@playrates/shared";
+import { playerCardVersion } from "@playrates/shared";
 import { env } from "../../lib/env";
 import { api } from "../client";
 
@@ -130,14 +131,14 @@ export const buyItem = async (
     return data;
 };
 
-/** The player card picture. `version` changes the address whenever what
- *  it shows does, as the card is cached for good. */
+/** The player card picture. Its address changes with the XP it shows, as
+ *  the card is cached for good. */
 export const playerCardUrl = (
     username: string,
-    version: string | number,
+    xp: number,
     theme?: CardThemeKey
 ): string => {
-    const params = new URLSearchParams({ v: String(version) });
+    const params = new URLSearchParams({ v: playerCardVersion(xp) });
     if (theme) params.set("theme", theme);
     return `${env.apiBaseUrl}/api/v1/progress/${encodeURIComponent(username)}/card.png?${params}`;
 };

@@ -292,9 +292,14 @@ describe("the shared picture", () => {
     await pick("all_time_favourite", 1);
     await pick("best_story", 2);
 
-    const res = await request(app)
-      .get("/api/v1/gaming-25/devuser/image.png?v=1")
-      .buffer(true);
+    // A made-up version is sent on to the real one rather than drawn.
+    const stale = await request(app).get(
+      "/api/v1/gaming-25/devuser/image.png?v=1",
+    );
+    expect(stale.status).toBe(302);
+    expect(stale.headers.location).toMatch(/\?v=2\.\d+\.default$/);
+
+    const res = await request(app).get(stale.headers.location!).buffer(true);
 
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toBe("image/png");
@@ -345,7 +350,7 @@ describe("its page's preview", () => {
       "Favourite game: Game 1 · Best story: Game 2. 2 of 25 picked on PlayRates.",
     );
     expect(page.text).toMatch(
-      /og:image" content="[^"]*\/api\/v1\/gaming-25\/devuser\/image\.png\?layout=wide&amp;v=2\.\d+"/,
+      /og:image" content="[^"]*\/api\/v1\/gaming-25\/devuser\/image\.png\?layout=wide&amp;v=2\.\d+\.default"/,
     );
   });
 

@@ -1,6 +1,7 @@
 import { Router, type RequestHandler } from "express";
 import {
   Gaming25ImageQuerySchema,
+  gaming25ImageQueryVersion,
   Gaming25PickParamSchema,
   MostLovedGaming25sQuerySchema,
   SetGaming25PickSchema,
@@ -9,6 +10,8 @@ import {
   type Gaming25ImageLayout,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
+import { redirectToVersion } from "../../lib/imageVersion.js";
+import { perMinute } from "../../lib/rateLimit.js";
 import { validate } from "../../middleware/validate.js";
 import { renderGaming25 } from "./gaming25.image.js";
 import type { Gaming25Service } from "./gaming25.service.js";
@@ -108,6 +111,7 @@ export const createGaming25Router = ({ service }: Deps): Router => {
 
   router.get(
     "/:username/image.png",
+    perMinute(30),
     validate({ params: UsernameParamSchema, query: Gaming25ImageQuerySchema }),
     async (req, res) => {
       const { username } = req.valid!.params as { username: string };
@@ -117,6 +121,8 @@ export const createGaming25Router = ({ service }: Deps): Router => {
       };
       const grid = await service.publicCells(username);
       if (!grid) throw AppError.notFound("Gaming 25");
+      const current = gaming25ImageQueryVersion(grid.updatedAt, grid.cardTheme);
+      if (redirectToVersion(req, res, current)) return;
       const png = await renderGaming25(grid, layout, fetch, grid.cardTheme);
       res
         .type("png")

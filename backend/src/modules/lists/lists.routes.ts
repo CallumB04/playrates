@@ -7,6 +7,7 @@ import {
   GameListsQuerySchema,
   ListGameParamSchema,
   ListIdParamSchema,
+  listImageVersion,
   ListsQuerySchema,
   MyListsQuerySchema,
   PaginationSchema,
@@ -18,6 +19,8 @@ import {
   type UpdateListInput,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
+import { redirectToVersion } from "../../lib/imageVersion.js";
+import { perMinute } from "../../lib/rateLimit.js";
 import { validate } from "../../middleware/validate.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import { ownerTheme, renderListImage } from "./lists.image.js";
@@ -115,12 +118,14 @@ export const createListsRouter = ({
   // only a list anyone may see gets one.
   router.get(
     "/:listId/image",
+    perMinute(30),
     validate({ params: ListIdParamSchema, query: ListImageQuerySchema }),
     async (req, res) => {
       const { listId } = req.valid!.params as { listId: number };
       const { v } = req.valid!.query as { v?: string };
       const list = await service.get(listId);
       if (list.visibility !== "everyone") throw AppError.notFound("List");
+      if (redirectToVersion(req, res, listImageVersion(list.updatedAt))) return;
       const png = await renderListImage(
         list,
         fetch,

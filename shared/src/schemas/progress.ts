@@ -1273,3 +1273,6 @@ export interface GiftFriend {
   full: boolean;
   price: number;
 }
+
+/** The `v` a player card's URL carries: the card changes as XP does. */
+export const playerCardVersion = (xp: number): string => String(xp);

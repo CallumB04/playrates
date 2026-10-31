@@ -624,6 +624,19 @@ describe("badges in public", () => {
     expect(mine.status).toBe(200);
   });
 
+  it("sends a made-up card version on to the real one", async () => {
+    const { app } = setup({
+      profiles: [buildProfile({ profile_visibility: "everyone" })],
+    });
+    const res = await request(app).get(
+      "/api/v1/progress/devuser/card.png?v=999999&theme=holo",
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe(
+      "/api/v1/progress/devuser/card.png?v=0&theme=holo",
+    );
+  });
+
   it("draws no player card for a profile that isn't public", async () => {
     const { app } = setup({
       profiles: [buildProfile({ profile_visibility: "friends" })],

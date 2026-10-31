@@ -78,6 +78,13 @@ export const gaming25ImageVersion = (updatedAt: string | null): string =>
     ? `${GAMING_25_IMAGE_REVISION}.${Date.parse(updatedAt)}`
     : String(GAMING_25_IMAGE_REVISION);
 
+/** The `v` the picture's URL carries: its version, and the card theme it's
+ *  drawn in, since wearing another changes the picture but not the grid. */
+export const gaming25ImageQueryVersion = (
+  updatedAt: string | null,
+  theme: string,
+): string => `${gaming25ImageVersion(updatedAt)}.${theme}`;
+
 export const GAMING_25_IMAGE_LAYOUTS = ["portrait", "wide"] as const;
 export type Gaming25ImageLayout = (typeof GAMING_25_IMAGE_LAYOUTS)[number];
 
