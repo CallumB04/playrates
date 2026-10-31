@@ -5,6 +5,9 @@ declare global {
     interface AuthContext {
       userId: string;
       email?: string;
+      /** When the session last proved who it is (a password, a provider),
+       *  in ms. Refreshing the token doesn't move it. */
+      signedInAt?: number;
     }
 
     interface ValidatedRequest {

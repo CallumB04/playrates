@@ -18,7 +18,8 @@ export type ErrorCode =
   | "platform_taken"
   | "several_logs"
   | "profile_private"
-  | "request_unanswered";
+  | "request_unanswered"
+  | "reauthentication_required";
 
 /**
  * Errors the API returns on purpose. `expose` keeps internals in: a 5xx logs

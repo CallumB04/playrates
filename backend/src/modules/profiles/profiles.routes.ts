@@ -10,6 +10,7 @@ import {
 } from "@playrates/shared";
 import { z } from "zod";
 import { perMinute } from "../../lib/rateLimit.js";
+import { requireRecentSignIn } from "../../middleware/requireRecentSignIn.js";
 import { validate } from "../../middleware/validate.js";
 import { AppError } from "../../lib/AppError.js";
 import type { ProfilesService } from "./profiles.service.js";
@@ -69,20 +70,26 @@ export const createProfilesRouter = ({
     },
   );
 
-  router.delete("/me", requireAuth, async (req, res) => {
+  router.delete("/me", requireAuth, requireRecentSignIn, async (req, res) => {
     await service.deleteOwn(callerId(req));
     res.status(204).end();
   });
 
-  router.get("/me/export", requireAuth, exportLimiter, async (req, res) => {
-    const data = await service.exportOwn(callerId(req));
-    const day = data.exportedAt.slice(0, 10);
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="playrates-${String(data.profile?.username ?? "account")}-${day}.json"`,
-    );
-    res.json(data);
-  });
+  router.get(
+    "/me/export",
+    requireAuth,
+    requireRecentSignIn,
+    exportLimiter,
+    async (req, res) => {
+      const data = await service.exportOwn(callerId(req));
+      const day = data.exportedAt.slice(0, 10);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="playrates-${String(data.profile?.username ?? "account")}-${day}.json"`,
+      );
+      res.json(data);
+    },
+  );
 
   router.post(
     "/me/avatar",

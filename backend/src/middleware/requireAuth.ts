@@ -28,6 +28,20 @@ export const verifySupabaseJwt: Verifier = async (token) => {
   return payload;
 };
 
+/** The latest sign-in the token records. Supabase lists each way the
+ *  session was proved in `amr`, with when, in seconds. */
+const signedInAt = (payload: JWTPayload): number | undefined => {
+  const amr = Array.isArray(payload.amr) ? payload.amr : [];
+  const times = amr
+    .map((entry: unknown) =>
+      typeof entry === "object" && entry !== null && "timestamp" in entry
+        ? Number((entry as { timestamp: unknown }).timestamp)
+        : NaN,
+    )
+    .filter(Number.isFinite);
+  return times.length > 0 ? Math.max(...times) * 1000 : undefined;
+};
+
 const readBearer = (header?: string): string | null => {
   if (!header) return null;
   const [scheme, token] = header.split(" ");
@@ -54,6 +68,7 @@ export const makeRequireAuth = (
       req.auth = {
         userId: payload.sub,
         email: typeof payload.email === "string" ? payload.email : undefined,
+        signedInAt: signedInAt(payload),
       };
       next();
     } catch {

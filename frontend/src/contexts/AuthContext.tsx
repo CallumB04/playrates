@@ -37,9 +37,15 @@ interface AuthContextValue {
         password: string,
         captchaToken?: string
     ) => Promise<void>;
-    /** Leaves for the provider's sign-in page and comes back here. Signing
-     *  in and signing up are the same thing this way. */
-    signInWithProvider: (provider: OAuthProvider) => Promise<void>;
+    /** Leaves for the provider's sign-in page and comes back here, or to
+     *  `returnTo`. Signing in and signing up are the same thing this way. */
+    signInWithProvider: (
+        provider: OAuthProvider,
+        returnTo?: string
+    ) => Promise<void>;
+    /** Signs in again with the password, quietly, for what wants a sign-in
+     *  from moments ago. A wrong one throws `invalid_credentials`. */
+    confirmPassword: (password: string, captchaToken?: string) => Promise<void>;
     signOut: () => Promise<void>;
     /** Sends the sign-up confirmation again, for an email not yet confirmed. */
     resendConfirmation: (email: string, captchaToken?: string) => Promise<void>;
@@ -182,10 +188,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 return { signedIn: !!data.session };
             },
 
-            async signInWithProvider(provider) {
+            async signInWithProvider(provider, returnTo) {
                 const { error } = await supabase.auth.signInWithOAuth({
                     provider,
-                    options: { redirectTo: window.location.href },
+                    options: { redirectTo: returnTo ?? window.location.href },
+                });
+                if (error) throw error;
+            },
+
+            async confirmPassword(password, captchaToken) {
+                const email = session?.user.email;
+                if (!email) throw new Error("No email to sign in with");
+                const { error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                    options: { captchaToken },
                 });
                 if (error) throw error;
             },

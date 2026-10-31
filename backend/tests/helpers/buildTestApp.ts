@@ -33,12 +33,24 @@ export const setTestEnv = (): void => {
  * Accepts "Bearer test:<uuid>" and authenticates as that user, so tests never
  * sign real JWTs. The real verifier is covered separately.
  */
+/* "test:<id>" signed in just now; "test-stale:<id>" an hour ago, for what
+   wants a recent sign-in. */
 export const fakeVerify = async (token: string): Promise<JWTPayload> => {
-  if (!token.startsWith("test:")) throw new Error("invalid test token");
-  return { sub: token.slice("test:".length), aud: "authenticated" };
+  const [kind, sub] = token.split(":");
+  if (!sub || (kind !== "test" && kind !== "test-stale")) {
+    throw new Error("invalid test token");
+  }
+  const at = Math.floor(Date.now() / 1000) - (kind === "test" ? 0 : 3600);
+  return {
+    sub,
+    aud: "authenticated",
+    amr: [{ method: "password", timestamp: at }],
+  };
 };
 
 export const authHeader = (userId: string) => `Bearer test:${userId}`;
+export const staleAuthHeader = (userId: string) =>
+  `Bearer test-stale:${userId}`;
 
 interface TestAppOptions {
   seed?: SeedData;

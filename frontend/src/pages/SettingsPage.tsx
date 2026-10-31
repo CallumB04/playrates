@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
     Lock,
     Mail,
@@ -22,6 +22,8 @@ import { useUserReviews } from "../hooks/queries/useReviews";
 import { useUserFriends } from "../hooks/queries/useFriends";
 import { usePageMeta } from "../hooks/usePageMeta";
 import { deleteMyAccount, fetchMyData } from "../api";
+import { ApiError } from "../api/client";
+import { signedInRecently } from "../lib/recentSignIn";
 import { saveFile } from "../lib/saveFile";
 import {
     DEFAULT_ABOUT_VISIBILITY,
@@ -34,6 +36,9 @@ import {
     type UpdateProfileInput,
 } from "@playrates/shared";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
+import ConfirmItsYouModal, {
+    type ConfirmPurpose,
+} from "./settings/ConfirmItsYouModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
 import Button, { buttonClass } from "../components/ui/Button";
 import Card from "../components/ui/Card";
@@ -137,10 +142,13 @@ const sectionFrom = (asked: string | null) => {
     return SECTIONS.some((s) => s.id === id) ? id! : "account";
 };
 
+const needsSignIn = (error: unknown) =>
+    error instanceof ApiError && error.code === "reauthentication_required";
+
 const SettingsPage = () => {
     usePageMeta({ title: "Settings", noindex: true });
 
-    const { user, signOut } = useAuth();
+    const { user, session, signOut } = useAuth();
     const { openLogin } = useAccountForm();
     const { preference, setPreference } = useTheme();
     const notify = useNotify();
@@ -150,7 +158,8 @@ const SettingsPage = () => {
     const { data: reviews } = useUserReviews(user?.username);
     const { data: friends } = useUserFriends(user?.username ?? "");
     const [confirmingDelete, setConfirmingDelete] = useState(false);
-    const [params] = useSearchParams();
+    const [confirming, setConfirming] = useState<ConfirmPurpose | null>(null);
+    const [params, setParams] = useSearchParams();
     // ?section= so a link elsewhere can open the row it is about.
     const [section, setSection] = useState(() =>
         sectionFrom(params.get("section"))
@@ -165,7 +174,10 @@ const SettingsPage = () => {
             navigate("/");
             notify("Your account has been deleted", "success");
         },
-        onError: () => notify("Couldn't delete your account", "error"),
+        onError: (error) =>
+            needsSignIn(error)
+                ? setConfirming("delete")
+                : notify("Couldn't delete your account", "error"),
     });
 
     const exportData = useMutation({
@@ -177,8 +189,45 @@ const SettingsPage = () => {
                 `playrates-${user?.username ?? "account"}-${day}.json`
             );
         },
-        onError: () => notify("Couldn't export your data", "error"),
+        onError: (error) =>
+            needsSignIn(error)
+                ? setConfirming("export")
+                : notify("Couldn't export your data", "error"),
     });
+
+    /* Deleting the account and exporting its data want a sign-in from
+       moments ago. Asked for up front when the session is older, and again
+       if the API still says no. */
+    const run = (purpose: ConfirmPurpose) =>
+        purpose === "delete" ? remove.mutate() : exportData.mutate();
+    const confirmThen = (purpose: ConfirmPurpose) =>
+        signedInRecently(session?.access_token)
+            ? run(purpose)
+            : setConfirming(purpose);
+
+    // Back from signing in again with a provider: carry on with what was
+    // asked for. Deleting still goes through typing the username.
+    const resumed = useRef(false);
+    useEffect(() => {
+        const then = params.get("then");
+        if (
+            resumed.current ||
+            !user ||
+            (then !== "delete" && then !== "export")
+        )
+            return;
+        resumed.current = true;
+        setParams(
+            (current) => {
+                current.delete("then");
+                return current;
+            },
+            { replace: true }
+        );
+        if (then === "delete") setConfirmingDelete(true);
+        else confirmThen("export");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, params]);
 
     const [showSexual, setShowSexual] = useState(
         user?.showSexualContent ?? false
@@ -491,7 +540,7 @@ const SettingsPage = () => {
                     <Button
                         variant="secondary"
                         className="w-full sm:w-auto"
-                        onClick={() => exportData.mutate()}
+                        onClick={() => confirmThen("export")}
                         disabled={exportData.isPending}
                     >
                         {exportData.isPending ? "Exporting…" : "Export my data"}
@@ -542,7 +591,18 @@ const SettingsPage = () => {
                     }
                     isDeleting={remove.isPending}
                     onCancel={() => setConfirmingDelete(false)}
-                    onConfirm={() => remove.mutate()}
+                    onConfirm={() => confirmThen("delete")}
+                />
+            )}
+            {confirming && (
+                <ConfirmItsYouModal
+                    purpose={confirming}
+                    returnTo={`${window.location.origin}/settings?section=account-closure&then=${confirming}`}
+                    onCancel={() => setConfirming(null)}
+                    onConfirmed={() => {
+                        setConfirming(null);
+                        run(confirming);
+                    }}
                 />
             )}
         </div>
