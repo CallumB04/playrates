@@ -1,38 +1,75 @@
 ---
 name: tiktok-post
-description: Make PlayRates TikTok posts end to end, one photo slideshow a day at a random time between 19:30 and 21:00 — check the account for posts that went live, pick a tips or top-X topic and its games, write the post file in the plain list format, render and check it, schedule it in TikTok Studio one post at a time, and track it in the posting checklist. Use when asked for a new TikTok post or list, or to prepare, schedule or post one that already exists.
+description: Make PlayRates TikTok posts end to end in the handmade format, one photo slideshow a day at a random time between 20:00 and 21:30. Check the account for posts that went live, pick a tips or top-X topic that suits a slightly funny, human-made slideshow, gather pictures of exactly what each slide talks about, lay the slides out by hand with small asides, captions and stickers, render and check them, schedule them in TikTok Studio one post at a time, and track them in the posting checklist. Use when asked for a new TikTok post or list, or to prepare, schedule or post one that already exists.
 ---
 
 # TikTok post
 
 PlayRates posts to TikTok as **@playratesapp**, a personal account. The
-account **started again on 2026-10-30**: every earlier post was deleted
-after TikTok stopped distributing them on 21 October (the README's
-"Starting again" has the numbers). What Callum wants now:
+account **started again on 2026-10-30** after TikTok stopped distributing
+the first run (the README's "Starting again" has the numbers), and since
+**2026-11-01 every post is handmade**, after a post Kat made by hand
+(`marketing/tiktok/out/KatPRTikTok/`, the original PNGs). Callum's verdict:
+"absolutely perfect, and exactly what I want." What he wants:
 
-- **Followers first.** 1,000 unlocks a bio link. Entertainment comes before
-  sign-ups: no sign-up slide, a light push in the description, the address
-  in the bio.
-- **Photo slideshows only**, in the `list` format. No videos for now.
-- **Extremely simple**: it should look like a person made it in the app,
-  not a designer. A picture and TikTok's own text styles, nothing else.
-- **Hooks that make people swipe**: tips that benefit the viewer ("6 tips
-  for beginners in Elden Ring") or a top X ("Top 10 hardest video game
-  bosses of all time").
-- **One post a day at a different time each evening**, 19:30 to 21:00
+- **Followers first.** 1,000 unlocks a bio link. Entertainment comes
+  before sign-ups: the push is one last slide and a bracket in the
+  description.
+- **Photo slideshows only**, in the `handmade` format.
+- **Looks made by a person, and a little funny.** Pictures of exactly what
+  each slide is about, and a few small jokes on top (below).
+- **Only hooks that fit that.** Tips the viewer can use ("6 tips for
+  beginners in Elden Ring") or a top X people argue about, as long as each
+  slide has something to show and something to joke about. A topic with
+  nothing to picture or nothing light to say about it is the wrong topic.
+- **One post a day at a different time each evening**, 20:00 to 21:30
   Estonian time.
 
-The generator lives in `marketing/tiktok/`; read its `README.md` before
-writing a post.
+The generator lives in `marketing/tiktok/`; read its `README.md` first.
 
-- `marketing/tiktok/posts/<name>.json`: one file per post.
+- `marketing/tiktok/posts/<name>.json`: the post file (copy, TikTok
+  fields, time).
+- `marketing/tiktok/posts/<name>/slides.html` and `img/`: the slides, laid
+  out by hand on `handmade.css`.
 - `marketing/tiktok/POSTS.md`: the checklist, posts in posting order,
   marked scheduled, then ticked with date and link once live.
 - `marketing/tiktok/out/<name>/`: `slides/` (just the PNGs to upload),
   `contact-sheet.png`, `posting.md` and `description.txt`.
 
-The post files and `POSTS.md` are **local and gitignored**. Never commit
-them. Changes to the generator itself are code: commit and push as usual.
+Posts, their slides and `POSTS.md` are **local and gitignored**. Never
+commit them. Changes to the generator, `handmade.css` or this skill are
+code: commit and push as usual.
+
+## The format
+
+Read `posts/stardew-beginner-tips/slides.html` and look at
+`out/KatPRTikTok/` before laying out a new post; copy the Stardew page
+and change everything.
+
+- **Hook**: the most recognisable picture of the game there is (key art,
+  the title screen, the cover). A see-through white band across it with
+  the lead ("6 tips for beginners in") and the **game's real logo**, and
+  the PlayRates mark (`.mark`, the site's `favicon.svg`) small in the lower
+  left. A post across many games has no logo: put the hook in `.big` type.
+- **Each item**: the band at the top with a big number alternating iris and
+  ember (`.num`, `.num.ember`), the title, and one grey line. Behind it a
+  picture of **what the tip is about** (the horse for "get your horse", the
+  smithing stones for "upgrade your weapon"), never a generic screenshot.
+- **The human bits**, spread out, not on every slide (the Stardew post has
+  about one or two per slide):
+  - an `.aside`: a small purple bracket beside the copy ("(Trust me)",
+    "(ask me how I know)");
+  - a `.cap`: a short white lowercase caption on the picture, tilted, often
+    with an `.arrow` doodle pointing at the thing ("evil guy you don't want
+    to meet straight away", "me at 1:59am, nowhere near my bed");
+  - a `.sticker`: an item sprite or cutout dropped on the picture (carrots
+    on Torrent, strawberries at the Egg Festival), with `.spark` glows now
+    and then.
+  Jokes stay gentle and about the game. Puns are welcome.
+- **Last slide**: "Now you're ready for [logo]", then the purple push with
+  the address set as `<span class="url">playrates.app</span>`, an ember
+  aside inside the band ("(pretty please!!!)"), and the mark with two
+  sparks under the band.
 
 ## 0. Check the account first
 
@@ -66,19 +103,20 @@ prints every post on `POSTS.md` with its hook and games, then the first
 free day and a random time in the window. Use that time unless Callum
 gives one.
 
-Alternate tips and top-X posts. Read the whole history first: never repeat
-a hook, vary the game and genre, and keep any one game from turning up
-post after post. Lean on the calendar (horror at Halloween, a big release
-day). Aim at games with huge audiences (Minecraft, Elden Ring, GTA,
-Fortnite, Pokémon, Souls games) as well as lists that start arguments in
-the comments.
+Read the whole history first: never repeat a hook, vary the game and genre,
+and keep any one game from turning up post after post. Mix tips and top-X
+lists. Lean on the calendar (horror at Halloween, a big release day). Aim
+at games with huge audiences (Minecraft, Elden Ring, GTA, Fortnite,
+Pokémon, Skyrim, Stardew) as well as lists that start arguments in the
+comments. Before settling on one, sketch each slide's picture and its joke;
+if three slides have neither, pick another topic.
 
-- **Tips**: five to seven, each a short `title` (four or five words) and
-  one `line` the viewer can act on. Every tip has to be true and
-  checkable: write only what you're sure of, and list anything approximate
-  for Callum to check.
-- **Top X**: usually ten, `countdown: true`, #1 the one people will argue
-  about or agree with loudest.
+- **Tips**: six, each a short `title` (four or five words) and one `line`
+  the viewer can act on. Every tip has to be true and checkable: write only
+  what you're sure of, and list anything approximate for Callum to check.
+- **Top X**: five to seven, counted down so #1 is the last swipe. The line
+  opens with the game's name when the item isn't the game itself
+  ("Morrowind. So hated, ...").
 
 ## 2. Games
 
@@ -91,25 +129,22 @@ npx --no-install supabase db query --linked -o csv "select slug, title, release_
 ```
 
 If `npx --no-install` refuses because a newer CLI is out, run a cached one
-directly: `~/.npm/_npx/*/node_modules/.bin/supabase`. Prefer the version
-with the most ratings. A slug missing from the table can be imported
-through the site's admin; don't invent one.
+directly: `~/.npm/_npx/*/node_modules/.bin/supabase`. The slugs only feed
+the history (`art: { "slug": ... }` on the hook and each item); the
+pictures come from section 4.
 
 ## 3. The post file
 
-Copy an existing `list` post and change everything. The fields are in the
-README. Rules:
+`"format": "handmade"`. Copy `posts/stardew-beginner-tips.json`. Rules:
 
 - **Copy goes to Callum before scheduling**, and never uses an em dash.
-- **`hook.text`**: plain words, the way a person would type it. No
-  stars, no styling.
-- **`line`**: one sentence, about 60 characters at most (the renderer
-  warns past two lines). For a top X it can open with the game's name
-  ("Elden Ring. Waterfowl Dance...") when the item is a boss, a character
-  or anything else that isn't the game itself.
-- **`art`**: a game entry with a `banner` IGDB image id chosen by looking
-  (section 4). Every slide gets its own picture, even when a tips post is
-  all one game.
+  That includes every aside and caption.
+- **`hook.text`**: the hook as a sentence ("6 tips for beginners in
+  Stardew Valley"), for the history.
+- **`items`**: `{ title, line, art: { slug } }`, in slide order. The
+  renderer warns when a title or line isn't on the slides word for word, so
+  change both together.
+- **`line`**: one sentence, about 60 characters at most.
 - **`tiktok.title`**: the hook, plus an emoji if one fits. 90 characters
   at most.
 - **`tiktok.description`**: a line that invites a comment, then the push
@@ -117,47 +152,60 @@ README. Rules:
   five hashtags. The account is the site's own (the bio says "from the
   team behind playrates.app"), so the push never says "my" or "I log".
 - **`tiktok.time`**: from `npm run tiktok:next`; the renderer refuses a
-  time outside 19:30 to 21:00 or off TikTok's five-minute steps.
+  time outside 20:00 to 21:30 or off TikTok's five-minute steps.
 - **Songs come from games**, both the main pick and the alternative: the
   #1's soundtrack, the game the tips are about, or the genre's best-known
   theme. Never pop songs, edit staples or meme sounds; Callum (2026-10-30):
   "Gamers want songs from games." Say they need checking in the app.
 - Add the post to `POSTS.md` in the order it goes out:
-  `- [ ] [name](posts/name.json) — planned 2026-11-02 20:33`.
+  `- [ ] [name](posts/name.json) — planned 2026-11-02 20:35`.
 
-## 4. Pictures, render and check
+## 4. Pictures, slides, render and check
 
-List a game's IGDB screenshots and artworks with the credentials in
-`backend/.env`, and look at them before choosing:
+Every picture goes in `posts/<name>/img/`. Where to find them:
 
-```bash
-set -a; . <(grep -E "^IGDB_CLIENT_(ID|SECRET)=" backend/.env); set +a
-TOKEN=$(curl -s -X POST "https://id.twitch.tv/oauth2/token?client_id=$IGDB_CLIENT_ID&client_secret=$IGDB_CLIENT_SECRET&grant_type=client_credentials" | node -pe "JSON.parse(require('fs').readFileSync(0)).access_token")
-curl -s https://api.igdb.com/v4/screenshots -H "Client-ID: $IGDB_CLIENT_ID" -H "Authorization: Bearer $TOKEN" -d "fields image_id; where game = <igdb_id>; limit 14;"
-```
+- **Key art and screenshots**: IGDB, with the credentials in
+  `backend/.env` (none of this touches the RAWG allowance):
 
-Preview at `https://images.igdb.com/igdb/image/upload/t_screenshot_med/<image_id>.jpg`
-(a `magick montage` of the candidates, labelled with their ids, is the
-quickest way to compare). Artworks are often just the logo; skip those.
-None of this touches the RAWG allowance.
+  ```bash
+  set -a; . <(grep -E "^IGDB_CLIENT_(ID|SECRET)=" backend/.env); set +a
+  TOKEN=$(curl -s -X POST "https://id.twitch.tv/oauth2/token?client_id=$IGDB_CLIENT_ID&client_secret=$IGDB_CLIENT_SECRET&grant_type=client_credentials" | node -pe "JSON.parse(require('fs').readFileSync(0)).access_token")
+  curl -s https://api.igdb.com/v4/artworks -H "Client-ID: $IGDB_CLIENT_ID" -H "Authorization: Bearer $TOKEN" -d "fields image_id,width,height; where game = <igdb_id>; limit 30;"
+  ```
 
-A portrait slide keeps only the middle third of a landscape shot. When the
-subject is off-centre, set `bannerPosition`: the visible strip starts at
-about 0.68 × the percentage, so a subject spanning 37–55% of the width
-wants `"45% center"`. Check the real slide, not the contact sheet, for
-whether it landed.
+  Full size at `https://images.igdb.com/igdb/image/upload/t_original/<image_id>.jpg`.
+- **The game's logo**: Steam's library logo,
+  `https://cdn.cloudflare.steamstatic.com/steam/apps/<appid>/logo.png`,
+  trimmed with `magick logo.png -trim +repage`. A white one won't read on
+  the band; find a dark or coloured version or recolour it.
+- **The exact thing a slide talks about** (an item, a boss, a menu, a
+  character) and **stickers**: the game's wiki. Fandom wikis, UESP,
+  minecraft.wiki and stardewvalleywiki.com all answer the MediaWiki API with
+  a browser User-Agent: `api.php?action=parse&page=<Page>&prop=images&format=json`
+  lists a page's pictures, and `action=query&titles=File:<name>&prop=imageinfo&iiprop=url|size&format=json`
+  gives their URLs. Stickers need real transparency
+  (`magick identify -format '%[opaque]'`); item sprites usually have it.
+
+Look at every candidate before choosing (`magick a b c -resize x300 +append`
+and read the result; `montage` errors on fonts without `-label ''`).
+Pixel art scales crisp with `.px`. A portrait slide shows only the middle
+third of a landscape picture: aim it with `background-position` and
+`background-size: auto <height>px` to zoom.
+
+Lay the slides out in `posts/<name>/slides.html`, one `<section
+class="slide" data-name="...">` each. Keep anything that has to be read
+above y 1540 and left of x 940, clear of TikTok's caption and rail.
 
 ```bash
 npm run tiktok -- marketing/tiktok/posts/<name>.json
 ```
 
-A clean run prints **no warnings**. Then read `contact-sheet.png` for what
-can't be measured: a blank or muddy crop, a cut-off logo, white text on a
-bright sky. The contact sheet is scaled down and can wrap text differently
-from the slides, so check doubtful wrapping on the slide PNGs.
+A clean run prints **no warnings**. Then look at the slides themselves,
+not only the contact sheet: a caption on a light patch, an aside sitting
+on the copy, a sticker over the subject, an arrow pointing at nothing.
 
-Send Callum the contact sheets and the copy, and get his go-ahead before
-going to TikTok.
+Send Callum the contact sheets and the copy (asides and captions included),
+and get his go-ahead before going to TikTok.
 
 ## 5. TikTok Studio
 
@@ -167,7 +215,8 @@ Callum opens TikTok in the browser pane; the upload page is
 - **One post at a time, at a person's pace.** The 21 October collapse
   followed fourteen scripted uploads in two hours. Type at normal speed,
   don't hurry between steps, and never queue more than the days Callum has
-  asked for in one sitting.
+  asked for in one sitting. Leave 15 minutes between one post's Schedule
+  and the next upload.
 - **Uploading is Callum's job**: the pane can't hand files to TikTok. Open
   the upload page, then ask with AskUserQuestion (one option: "Files are
   uploaded") naming `out/<name>/slides`: Select photos, open the folder,

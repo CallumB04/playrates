@@ -24,6 +24,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { WINDOW, inWindow } from "./history.mjs";
 import { postingNotes } from "./posting.mjs";
 import { FORMATS, formatOf, renderPost } from "./formats/index.mjs";
+import { renderHandmade } from "./handmade.mjs";
 
 const require = createRequire(import.meta.url);
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -141,6 +142,14 @@ const checklist = await readFile(path.join(here, "POSTS.md"), "utf8").catch(
 );
 if (!checklist.includes(`(posts/${name}.json)`)) {
   console.warn(`warning: ${name} isn't on the checklist in POSTS.md`);
+}
+
+if (formatOf(post) === "handmade") {
+  const files = await renderHandmade({ post, name, here, outDir });
+  console.log(
+    `wrote ${files.length} slides to ${path.relative(root, outDir)}/slides`,
+  );
+  process.exit(0);
 }
 
 /** Every game a post names, wherever its format keeps them: anything with a

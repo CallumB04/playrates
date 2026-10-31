@@ -12,11 +12,17 @@ import { renderWhichFirst } from "./whichfirst.mjs";
 
 /**
  * Every format a post can take, keyed by the post's `format`. A post without
- * one is ranked, as every post was before there were others. Only `list` is
- * in use: the account restarted on 2026-10-30 with plain slideshows, and the
- * rest are kept from the first run in case any comes back.
+ * one is ranked, as every post was before there were others. Only
+ * `handmade` is in use, since 2026-11-01; the rest are kept in case any
+ * comes back.
  */
 export const FORMATS = {
+  handmade: {
+    render: () => {
+      throw new Error("handmade posts are laid out by hand; see handmade.mjs");
+    },
+    summary: "Tips or a top X laid out by hand, with a few human touches",
+  },
   list: {
     render: renderList,
     summary: "Tips or a top X in TikTok's own text style, one item a slide",
