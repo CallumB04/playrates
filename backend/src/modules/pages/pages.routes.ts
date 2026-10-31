@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { isProfileView, pageTitle, SITE_DESCRIPTION } from "@playrates/shared";
+import { env } from "../../config/env.js";
 import { SITE_HEADERS } from "../../config/siteHeaders.js";
 import type { Logger } from "../../lib/logger.js";
 import { buildBody, injectBody } from "./body.js";
@@ -51,6 +52,12 @@ const numericParam = (value: unknown): number | null =>
  * Mounted ahead of helmet, since these are pages rather than API responses
  * and carry the site's CSP instead of the API's.
  */
+/* Where to fetch the app's index.html when it isn't on disk. Never from the
+   request's Host header: the copy is kept for the instance's lifetime, so a
+   forged host would poison every page it serves after. */
+const templateOrigin = () =>
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : env().SITE_URL;
+
 export const createPagesRouter = ({
   service,
   sitemap,
@@ -70,7 +77,7 @@ export const createPagesRouter = ({
   const render =
     (load: (req: Request) => Promise<HeadMeta | null>) =>
     async (req: Request, res: Response) => {
-      const html = await template(`${req.protocol}://${req.get("host")}`);
+      const html = await template(templateOrigin());
       siteHeaders(res);
       res.type("html");
 

@@ -8,6 +8,10 @@ on:
 
 # A new push to the same branch cancels the run already in flight, so CI
 # reports on the latest commit rather than queueing behind stale ones.
+# Read the code, nothing more: no step here writes to the repository.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

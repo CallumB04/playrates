@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { Router } from "express";
 import { AppError } from "../../lib/AppError.js";
 import type { GamesProvider } from "../../providers/games/GamesProvider.js";
@@ -17,6 +18,14 @@ interface Deps {
 }
 
 /** Mounted at /cron: jobs Vercel runs on a schedule (see vercel.json). */
+/* Constant time, so the response's timing says nothing about how much of a
+   guess was right. */
+const sameSecret = (given: string | undefined, expected: string): boolean => {
+  const a = Buffer.from(given ?? "");
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+};
+
 export const createCronRouter = ({
   provider,
   repo,
@@ -27,7 +36,10 @@ export const createCronRouter = ({
   const router = Router();
 
   router.use((req, _res, next) => {
-    if (!secret || req.header("authorization") !== `Bearer ${secret}`) {
+    if (
+      !secret ||
+      !sameSecret(req.header("authorization"), `Bearer ${secret}`)
+    ) {
       throw AppError.notFound("Route");
     }
     next();

@@ -75,7 +75,12 @@ export const createErrorHandler =
         status: appError.status,
         code: appError.code,
         method: req.method,
-        path: req.originalUrl ?? req.path,
+        // Not originalUrl, and no unsubscribe token: either would put a
+        // working link to someone's email settings in the error log.
+        path: (req.baseUrl + req.path).replace(
+          /\/unsubscribe\/[^/]+/,
+          "/unsubscribe/:token",
+        ),
         message: described.message ?? appError.message,
         requestId: req.id ?? null,
         userId: req.auth?.userId ?? null,

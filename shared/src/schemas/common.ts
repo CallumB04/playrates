@@ -1,9 +1,10 @@
 import { z } from "zod";
 
 /** Query params arrive as strings, so numeric fields coerce. The cap on
- *  `limit` stops one request pulling a whole table. */
+ *  `limit` stops one request pulling a whole table, and the one on `page`
+ *  one asking the database to skip past millions of rows. */
 export const PaginationSchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
+  page: z.coerce.number().int().min(1).max(1000).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(25),
 });
 
@@ -30,7 +31,7 @@ export const GameIdQuerySchema = z.object({
 });
 
 export const UsernameParamSchema = z.object({
-  username: z.string().min(1),
+  username: z.string().min(1).max(40),
 });
 
 export const UserIdSchema = z.object({

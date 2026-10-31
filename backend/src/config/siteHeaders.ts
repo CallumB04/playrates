@@ -18,8 +18,9 @@ export const SITE_CSP = [
   `frame-src ${TURNSTILE}`,
   // Tiptap and React set inline styles.
   "style-src 'self' 'unsafe-inline'",
-  // Cover art comes from IGDB's image servers, and game websites vary.
-  "img-src 'self' data: blob: https:",
+  // Cover art comes from IGDB; avatars, backgrounds and community pictures
+  // from Supabase storage. Nothing else: a stray image is a tracking pixel.
+  `img-src 'self' data: blob: https://images.igdb.com https://${SUPABASE}`,
   "font-src 'self'",
   `connect-src 'self' https://${SUPABASE} wss://${SUPABASE}`,
   "object-src 'none'",
@@ -35,4 +36,5 @@ export const SITE_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  "Cross-Origin-Opener-Policy": "same-origin",
 };
