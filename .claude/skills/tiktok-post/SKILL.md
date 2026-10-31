@@ -8,9 +8,10 @@ description: Make PlayRates TikTok posts end to end in the handmade format, one 
 PlayRates posts to TikTok as **@playratesapp**, a personal account. The
 account **started again on 2026-10-30** after TikTok stopped distributing
 the first run (the README's "Starting again" has the numbers), and since
-**2026-11-01 every post is handmade**, after a post Kat made by hand
-(`marketing/tiktok/out/KatPRTikTok/`, the original PNGs). Callum's verdict:
-"absolutely perfect, and exactly what I want." What he wants:
+**2026-11-01 every post is handmade**, after a post Kat made by hand (her
+original PNGs are `posts/elden-ring-beginner-tips/img/kat-*.png`).
+Callum's verdict: "absolutely perfect, and exactly what I want." What he
+wants:
 
 - **Followers first.** 1,000 unlocks a bio link. Entertainment comes
   before sign-ups: the push is one last slide and a bracket in the
@@ -42,9 +43,9 @@ code: commit and push as usual.
 
 ## The format
 
-Read `posts/stardew-beginner-tips/slides.html` and look at
-`out/KatPRTikTok/` before laying out a new post; copy the Stardew page
-and change everything.
+Read `posts/stardew-beginner-tips/slides.html` and look at Kat's
+`posts/elden-ring-beginner-tips/img/kat-*.png` before laying out a new
+post; copy the Stardew page and change everything.
 
 - **Hook**: the most recognisable picture of the game there is (key art,
   the title screen, the cover). A see-through white band across it with
@@ -231,8 +232,11 @@ Callum opens TikTok in the browser pane; the upload page is
   mousedown/mouseup/click on it, then check each tag sits inside a
   `[class*="mention"]` span. Wait about two seconds after typing a tag
   before picking, or the list still shows the last tag's matches. Some
-  tags never match (`#gamingtips`, `#underratedgames`, `#videogames`); use
-  the nearest real tag and change the post file to match.
+  tags never match (`#gamingtips`, `#underratedgames`, `#videogames`,
+  `#eldenringtips`); use the nearest real tag and change the post file to
+  match. A tag with no match stays as plain text and the next tag runs into
+  it: put the caret after it with a Selection range and press Backspace
+  over it before typing on.
 - **Sound**: Add sound under the description, search, then the row's
   **Use** (a real click; it can take a few seconds to apply). Pick the
   original artist's version where there is one (another arrangement by the

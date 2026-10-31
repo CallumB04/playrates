@@ -33,9 +33,9 @@ link), not sign-ups:
 
 ## Handmade, from 1 November 2026
 
-Kat made the Elden Ring tips post by hand (`out/KatPRTikTok/` keeps her
-PNGs), and it replaced the list format straight away. A see-through white
-band carries the words, every picture is of exactly what its slide talks
+Kat made the Elden Ring tips post by hand (her PNGs are
+`posts/elden-ring-beginner-tips/img/kat-*.png`), and it replaced the list
+format straight away. A see-through white band carries the words, every picture is of exactly what its slide talks
 about, the hook is the game's best-known image with its real logo, and a
 few small jokes sit on top: a purple aside in brackets, a tilted white
 caption with a doodled arrow, an item sprite dropped on the picture. The
