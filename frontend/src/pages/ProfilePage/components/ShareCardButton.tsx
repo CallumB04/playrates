@@ -35,6 +35,7 @@ const ShareCardButton = ({ username }: { username: string }) => {
                     text="My games on PlayRates"
                     imageUrl={playerCardUrl(username, data?.xp ?? 0)}
                     fileName={`${username}-playrates.png`}
+                    noImage="Only public profiles get a picture."
                     onClose={() => setOpen(false)}
                 />
             )}

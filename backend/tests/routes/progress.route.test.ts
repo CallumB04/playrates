@@ -490,10 +490,14 @@ describe("referrals", () => {
       state.tokenEvents.find((e) => e.key === `ref:${NEWBIE}`),
     ).toMatchObject({ user_id: USER_A, amount: REFERRAL.inviterTokens });
     expect(
-      state.xpEvents.find((e) => e.user_id === NEWBIE && e.key === "ref:welcome"),
+      state.xpEvents.find(
+        (e) => e.user_id === NEWBIE && e.key === "ref:welcome",
+      ),
     ).toMatchObject({ xp: REFERRAL.welcomeXp });
     expect(
-      state.tokenEvents.find((e) => e.user_id === NEWBIE && e.key === "ref:welcome"),
+      state.tokenEvents.find(
+        (e) => e.user_id === NEWBIE && e.key === "ref:welcome",
+      ),
     ).toMatchObject({ amount: REFERRAL.welcomeTokens });
   });
 
@@ -587,9 +591,9 @@ describe("the launch and the leaderboard", () => {
 });
 
 describe("badges in public", () => {
-  it("shows a private profile's badges, and its progress only to its owner", async () => {
+  it("shows a public profile's badges, and its progress only to its owner", async () => {
     const { app, progress, state } = setup({
-      profiles: [buildProfile({ profile_visibility: "private" })],
+      profiles: [buildProfile({ profile_visibility: "everyone" })],
     });
     state.progressMetrics.set(USER_A, { logged: 10 });
     await progress();
@@ -604,6 +608,28 @@ describe("badges in public", () => {
       await request(app).get("/api/v1/progress/devuser/badges").set(as(USER_A))
     ).body;
     expect(mine.progress.length).toBeGreaterThan(10);
+  });
+
+  it("keeps a private profile's badges to its owner", async () => {
+    const { app, progress } = setup({
+      profiles: [buildProfile({ profile_visibility: "private" })],
+    });
+    await progress();
+
+    const theirs = await request(app).get("/api/v1/progress/devuser/badges");
+    expect(theirs.status).toBe(403);
+    const mine = await request(app)
+      .get("/api/v1/progress/devuser/badges")
+      .set(as(USER_A));
+    expect(mine.status).toBe(200);
+  });
+
+  it("draws no player card for a profile that isn't public", async () => {
+    const { app } = setup({
+      profiles: [buildProfile({ profile_visibility: "friends" })],
+    });
+    const res = await request(app).get("/api/v1/progress/devuser/card.png");
+    expect(res.status).toBe(404);
   });
 
   it("draws the player card", async () => {
@@ -724,9 +750,7 @@ describe("invites", () => {
 
   it("sends no request between people who are friends already", async () => {
     const { app, state } = setup({
-      friendships: [
-        buildFriendship({ user_b_id: NEWBIE, status: "accepted" }),
-      ],
+      friendships: [buildFriendship({ user_b_id: NEWBIE, status: "accepted" })],
     });
     await refer(app, NEWBIE, "devuser");
     expect(

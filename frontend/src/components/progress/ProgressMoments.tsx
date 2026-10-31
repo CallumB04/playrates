@@ -153,6 +153,7 @@ const ProgressMoments = () => {
                     text={`I just reached level ${data.level.level} on PlayRates`}
                     imageUrl={playerCardUrl(user.username, data.xp)}
                     fileName={`${user.username}-playrates.png`}
+                    noImage="Only public profiles get a picture."
                     onClose={() => setSharing(false)}
                 />
             )}
