@@ -196,7 +196,7 @@ export const createProgressRouter = ({
   optionalAuth,
 }: Deps): Router => {
   const router = Router();
-  const imageLimiter = perMinute(30);
+  const imageLimiter = perMinute("card-image", 30);
 
   router.get("/rules", async (_req, res) => {
     res.json(await service.rules());

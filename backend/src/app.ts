@@ -5,7 +5,10 @@ import { env } from "./config/env.js";
 import { createLogger, type Logger } from "./lib/logger.js";
 import { requestContext } from "./middleware/requestContext.js";
 import { perMinute } from "./lib/rateLimit.js";
-import { createErrorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+import {
+  createErrorHandler,
+  notFoundHandler,
+} from "./middleware/errorHandler.js";
 import { noopErrorSink, type ErrorSink } from "./config/errorSink.js";
 import { makeRequireAuth, type Verifier } from "./middleware/requireAuth.js";
 import { buildRoutes } from "./routes.js";
@@ -96,7 +99,7 @@ export const buildApp = ({
 
   // A ceiling on writes of any kind. The routes that cost more carry
   // tighter ones of their own.
-  const writeLimiter = perMinute(60);
+  const writeLimiter = perMinute("writes", 60);
   app.use("/api/v1", (req, res, next) =>
     req.method === "GET" ||
     req.method === "HEAD" ||

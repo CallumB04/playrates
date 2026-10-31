@@ -25,7 +25,7 @@ export const createEmailRouter = ({
   service: EmailService;
 }): Router => {
   const router = Router();
-  const limiter = perMinute(30);
+  const limiter = perMinute("unsubscribe", 30);
 
   router.get(
     "/unsubscribe/:token",
@@ -46,7 +46,8 @@ export const createEmailRouter = ({
     const parsed = UnsubscribeTokenSchema.safeParse({
       token: typeof req.query.t === "string" ? req.query.t : body.token,
     });
-    if (!parsed.success) throw AppError.badRequest("That unsubscribe link isn't valid");
+    if (!parsed.success)
+      throw AppError.badRequest("That unsubscribe link isn't valid");
     const scope = req.query.scope ?? body.scope;
     if (scope !== undefined && scope !== "all") {
       throw AppError.badRequest("Only all emails can be turned off this way");
@@ -59,7 +60,9 @@ export const createEmailRouter = ({
     limiter,
     validate({ body: ResubscribeBody }),
     async (req, res) => {
-      const { token, scope } = req.valid!.body as z.infer<typeof ResubscribeBody>;
+      const { token, scope } = req.valid!.body as z.infer<
+        typeof ResubscribeBody
+      >;
       res.json(await service.setByToken(token, true, scope));
     },
   );

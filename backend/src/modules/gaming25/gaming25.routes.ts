@@ -111,7 +111,7 @@ export const createGaming25Router = ({ service }: Deps): Router => {
 
   router.get(
     "/:username/image.png",
-    perMinute(30),
+    perMinute("gaming25-image", 30),
     validate({ params: UsernameParamSchema, query: Gaming25ImageQuerySchema }),
     async (req, res) => {
       const { username } = req.valid!.params as { username: string };

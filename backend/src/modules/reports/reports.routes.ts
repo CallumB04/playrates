@@ -29,7 +29,7 @@ export const createReportsRouter = ({
   requireAuth: RequestHandler;
 }): Router => {
   const router = Router();
-  const reportLimiter = perMinute(10);
+  const reportLimiter = perMinute("report", 10);
 
   router.post(
     "/",

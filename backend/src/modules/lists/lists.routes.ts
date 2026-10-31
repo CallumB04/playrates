@@ -118,7 +118,7 @@ export const createListsRouter = ({
   // only a list anyone may see gets one.
   router.get(
     "/:listId/image",
-    perMinute(30),
+    perMinute("list-image", 30),
     validate({ params: ListIdParamSchema, query: ListImageQuerySchema }),
     async (req, res) => {
       const { listId } = req.valid!.params as { listId: number };

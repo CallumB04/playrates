@@ -1,5 +1,4 @@
 import { Router, type RequestHandler } from "express";
-import rateLimit from "express-rate-limit";
 import {
   GameIdParamSchema,
   GameImportSchema,
@@ -7,6 +6,7 @@ import {
   GameSearchSchema,
 } from "@playrates/shared";
 import type { z } from "zod";
+import { perMinute } from "../../lib/rateLimit.js";
 import { validate } from "../../middleware/validate.js";
 import type { GamesService } from "./games.service.js";
 
@@ -16,20 +16,14 @@ interface Deps {
   optionalAuth: RequestHandler;
 }
 
-/** Search is the only route that can reach IGDB, so it gets its own limit. */
-const searchLimiter = rateLimit({
-  windowMs: 60_000,
-  limit: 30,
-  standardHeaders: "draft-7",
-  legacyHeaders: false,
-});
-
 export const createGamesRouter = ({
   service,
   requireAuth,
   optionalAuth,
 }: Deps): Router => {
   const router = Router();
+  // Search is the only route that can reach IGDB, so it gets its own limit.
+  const searchLimiter = perMinute("game-search", 30);
 
   // "/search" must precede "/:gameId" or it parses as an id
   router.get(

@@ -67,6 +67,14 @@ const EnvSchema = z.object({
   /** The local stack's mail viewer. Every email goes there instead. */
   MAILPIT_URL: optionalText,
 
+  /** Upstash Redis, where rate limits count, so every instance of the
+   *  function shares one count. Vercel's Upstash integration names them
+   *  KV_REST_API_*. Without either pair, each instance counts on its own. */
+  UPSTASH_REDIS_REST_URL: optionalText,
+  UPSTASH_REDIS_REST_TOKEN: optionalText,
+  KV_REST_API_URL: optionalText,
+  KV_REST_API_TOKEN: optionalText,
+
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
     .default("info"),
