@@ -5,7 +5,7 @@ import { cn } from "../../../lib/cn";
 interface StickyLogBarProps {
     /** Placed just after the page's own log buttons: the bar shows once
      *  they have scrolled away above the screen. */
-    anchor: RefObject<HTMLElement>;
+    anchor: RefObject<HTMLElement | null>;
     label: string;
     onPress: () => void;
     disabled?: boolean;

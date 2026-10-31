@@ -33,7 +33,7 @@ interface GameCoverPlateProps {
     inAList: boolean;
     isSaving: boolean;
     /** Marks where the log buttons end, for the phone's sticky bar. */
-    actionsEndRef?: RefObject<HTMLSpanElement>;
+    actionsEndRef?: RefObject<HTMLSpanElement | null>;
 }
 
 // A tinted panel with a word in it reads as a notice, so these get a hover

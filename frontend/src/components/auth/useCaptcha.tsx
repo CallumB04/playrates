@@ -30,9 +30,9 @@ export interface Captcha {
  */
 export const useCaptcha = (): Captcha => {
     const { theme } = useTheme();
-    const widget = useRef<TurnstileInstance>();
+    const widget = useRef<TurnstileInstance>(undefined);
     // Refs, not state: a submit handler waits on these across renders.
-    const token = useRef<string>();
+    const token = useRef<string | undefined>(undefined);
     const failed = useRef(false);
     const waiting = useRef<((token: string | null) => void)[]>([]);
     const [message, setMessage] = useState<string>();
