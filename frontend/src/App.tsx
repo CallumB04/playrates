@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Header from "./components/layout/Header";
 import TabBar from "./components/layout/TabBar";
@@ -13,6 +13,7 @@ import ReferralCapture from "./components/progress/ReferralCapture";
 import AuthLinkResult from "./components/auth/AuthLinkResult";
 import InviteBanner from "./components/progress/InviteBanner";
 import { useReloadOnNewBuild } from "./hooks/useReloadOnNewBuild";
+import { useScrollMemory } from "./hooks/useScrollMemory";
 import ErrorBoundary from "./components/feedback/ErrorBoundary";
 
 /* Each page is its own chunk, so a visitor downloads the page they landed
@@ -58,14 +59,38 @@ function App() {
     // A crash on one page shouldn't take the header and the nav with it.
     // Keyed to the page, so going somewhere else starts afresh.
     const { pathname } = useLocation();
+    useScrollMemory();
+
+    /* A new page takes focus, so a screen reader reads it and Tab starts
+       from its top, as on a site where every link loads a page. Not on the
+       first load, where the browser does that itself. */
+    const mainRef = useRef<HTMLElement>(null);
+    const firstPath = useRef(pathname);
+    useEffect(() => {
+        if (pathname === firstPath.current) return;
+        firstPath.current = "";
+        mainRef.current?.focus({ preventScroll: true });
+    }, [pathname]);
 
     return (
         // Below lg the page ends above the tab bar, footer included.
         <div className="flex min-h-dvh flex-col max-lg:pb-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom))]">
+            {/* First thing a keyboard reaches: past the header and its menus. */}
+            <a
+                href="#main"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-sm focus:bg-surface-raised focus:px-4 focus:py-2.5 focus:text-body-sm focus:font-medium focus:text-content focus:shadow-plate"
+            >
+                Skip to content
+            </a>
             <Header />
             {/* A full screen at least, so a short page (an empty community, a
                 search with no results) doesn't end on the footer. */}
-            <main className="min-h-dvh flex-1">
+            <main
+                id="main"
+                ref={mainRef}
+                tabIndex={-1}
+                className="min-h-dvh flex-1 outline-none"
+            >
                 <PageShell>
                     <InviteBanner />
                     <ErrorBoundary key={pathname}>

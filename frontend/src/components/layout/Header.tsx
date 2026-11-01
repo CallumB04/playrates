@@ -27,8 +27,8 @@ const Header = () => {
 
     const [searchOpen, setSearchOpen] = useState(false);
 
+    // Where the page lands is ScrollRestoration's (AppProviders).
     useEffect(() => {
-        window.scrollTo(0, 0);
         setSearchOpen(false);
     }, [location.pathname, location.search]);
 
