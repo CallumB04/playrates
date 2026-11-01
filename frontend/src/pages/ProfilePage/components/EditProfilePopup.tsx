@@ -319,7 +319,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                                 rows={3}
                                 value={bio}
                                 maxLength={BIO_LIMIT}
-                                placeholder="I love PlayRates."
+                                placeholder="A line or two about you and what you play"
                                 onChange={(e) => setBio(e.target.value)}
                                 {...a11y}
                             />

@@ -22,7 +22,7 @@ export const ABOUT_ROWS: AboutRow[] = [
         label: "Name",
         icon: UserRound,
         group: "about",
-        placeholder: "Callum",
+        placeholder: "Your first name",
         half: true,
     },
     {
@@ -30,7 +30,7 @@ export const ABOUT_ROWS: AboutRow[] = [
         label: "Pronouns",
         icon: Speech,
         group: "about",
-        placeholder: "he/him",
+        placeholder: "they/them, she/her, he/him",
         half: true,
     },
     {
@@ -38,14 +38,14 @@ export const ABOUT_ROWS: AboutRow[] = [
         label: "Location",
         icon: MapPin,
         group: "about",
-        placeholder: "Leeds, UK",
+        placeholder: "Town or city, country",
     },
     {
         field: "website",
         label: "Website",
         icon: Link2,
         group: "socials",
-        placeholder: "https://example.com",
+        placeholder: "https://yoursite.com",
         type: "url",
     },
     {
