@@ -18,6 +18,7 @@ import { useWindowSize } from "../../../hooks/useWindowSize";
 import { usePagination } from "../../../hooks/usePagination";
 import { GAME_STATUSES, type GameStatus } from "../../../constants/gameStatus";
 import { formatCount } from "../../../lib/format";
+import SteamImportButton from "../../../components/steam/SteamImportButton";
 import ShelfPanel from "../components/ShelfPanel";
 import ShelfSort from "../components/ShelfSort";
 import ShelfFilters from "../components/ShelfFilters";
@@ -194,80 +195,106 @@ const GamesView = ({
     };
 
     return (
-        <ShelfPanel
-            active={activeSection}
-            // Every tab's count: the stats endpoint returns the whole breakdown.
-            counts={
-                stats?.byStatus ?? {
-                    [activeSection]: isWishlist ? wishlist.length : total,
+        <>
+            <ShelfPanel
+                active={activeSection}
+                // Every tab's count: the stats endpoint returns the whole breakdown.
+                counts={
+                    stats?.byStatus ?? {
+                        [activeSection]: isWishlist ? wishlist.length : total,
+                    }
                 }
-            }
-            onSelect={setSection}
-            entries={entries}
-            platforms={platforms ?? []}
-            isLoading={(isWishlist ? wishlistLoading : isLoading) || !canSee}
-            pagination={pagination}
-            perPage={perPage}
-            buildTileActions={buildTileActions}
-            isMyAccount={isMyAccount}
-            sort={sort}
-            filtered={
-                !!consoleSlug || (activeSection === "played" && !!playedStatus)
-            }
-            list={
-                isWishlist && (
-                    <WishlistList
-                        wishlist={wishlist}
-                        console={consoleSlug}
-                        sort={wishlistSort}
-                        isMyAccount={isMyAccount}
-                        buildTileActions={buildTileActions}
-                    />
-                )
-            }
-            trailing={
-                /* The filters fold into one button so the sort keeps its
-                   width: squeezed beside them, "Time played" and "Time to
-                   beat" both read "Time…". */
-                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
-                    {!isMyAccount && myLogGameIds && (
-                        <span className="text-label text-accent max-sm:hidden">
-                            {formatCount(
-                                entries.filter((e) =>
-                                    myLogGameIds.has(e.gameId)
-                                ).length
-                            )}{" "}
-                            in common
-                        </span>
-                    )}
-                    <ShelfFilters
-                        ending={
-                            activeSection === "played"
-                                ? { value: playedStatus, onChange: setEnding }
-                                : undefined
-                        }
-                        consoles={consoles}
-                        console={consoleSlug}
-                        onConsoleChange={setConsole}
-                        onClear={clearFilters}
-                    />
-                    {isWishlist ? (
-                        <WishlistSortControl
+                onSelect={setSection}
+                entries={entries}
+                platforms={platforms ?? []}
+                isLoading={
+                    (isWishlist ? wishlistLoading : isLoading) || !canSee
+                }
+                pagination={pagination}
+                perPage={perPage}
+                buildTileActions={buildTileActions}
+                isMyAccount={isMyAccount}
+                sort={sort}
+                filtered={
+                    !!consoleSlug ||
+                    (activeSection === "played" && !!playedStatus)
+                }
+                list={
+                    isWishlist && (
+                        <WishlistList
+                            wishlist={wishlist}
+                            console={consoleSlug}
                             sort={wishlistSort}
                             isMyAccount={isMyAccount}
-                            onChange={setWishlistSort}
+                            buildTileActions={buildTileActions}
                         />
-                    ) : (
-                        <ShelfSort
-                            sort={sort}
-                            direction={direction}
-                            isMyAccount={isMyAccount}
-                            onChange={setOrder}
+                    )
+                }
+                trailing={
+                    /* The filters fold into one button so the sort keeps its
+                   width: squeezed beside them, "Time played" and "Time to
+                   beat" both read "Time…". */
+                    <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
+                        {!isMyAccount && myLogGameIds && (
+                            <span className="text-label text-accent max-sm:hidden">
+                                {formatCount(
+                                    entries.filter((e) =>
+                                        myLogGameIds.has(e.gameId)
+                                    ).length
+                                )}{" "}
+                                in common
+                            </span>
+                        )}
+                        <ShelfFilters
+                            ending={
+                                activeSection === "played"
+                                    ? {
+                                          value: playedStatus,
+                                          onChange: setEnding,
+                                      }
+                                    : undefined
+                            }
+                            consoles={consoles}
+                            console={consoleSlug}
+                            onConsoleChange={setConsole}
+                            onClear={clearFilters}
                         />
+                        {isWishlist ? (
+                            <WishlistSortControl
+                                sort={wishlistSort}
+                                isMyAccount={isMyAccount}
+                                onChange={setWishlistSort}
+                            />
+                        ) : (
+                            <ShelfSort
+                                sort={sort}
+                                direction={direction}
+                                isMyAccount={isMyAccount}
+                                onChange={setOrder}
+                            />
+                        )}
+                    </div>
+                }
+            />
+            {/* Once the shelves have something on them: an empty one offers
+            the import in its own empty state. */}
+            {isMyAccount && entries.length > 0 && (
+                <SteamImportButton>
+                    {(open) => (
+                        <p className="mt-3 text-right text-body-sm text-content-secondary">
+                            Got more on Steam?{" "}
+                            <button
+                                type="button"
+                                onClick={open}
+                                className="relative cursor-pointer font-medium text-brand-text underline-offset-2 before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:underline"
+                            >
+                                Import your library
+                            </button>
+                        </p>
                     )}
-                </div>
-            }
-        />
+                </SteamImportButton>
+            )}
+        </>
     );
 };
 

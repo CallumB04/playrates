@@ -5,7 +5,8 @@ import type { GameLogSort, Platform } from "@playrates/shared";
 import type { GameStatus } from "../../../constants/gameStatus";
 import type { PaginationState } from "../../../hooks/usePagination";
 import type { TileAction } from "../../../components/game/GameTile";
-import { buttonClass } from "../../../components/ui/Button";
+import Button, { buttonClass } from "../../../components/ui/Button";
+import SteamImportButton from "../../../components/steam/SteamImportButton";
 import { TileSkeleton } from "../../../components/ui/Skeleton";
 import EmptyPlate from "../../../components/ui/EmptyPlate";
 import DrawerTabs from "./DrawerTabs";
@@ -114,12 +115,32 @@ const ShelfPanel = ({
                         body={isMyAccount ? empty.body : "Nothing here yet."}
                         action={
                             isMyAccount ? (
-                                <Link
-                                    to="/library"
-                                    className={buttonClass("primary")}
-                                >
-                                    {empty.cta}
-                                </Link>
+                                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                                    <Link
+                                        to="/library"
+                                        className={buttonClass(
+                                            "primary",
+                                            "w-full sm:w-auto"
+                                        )}
+                                    >
+                                        {empty.cta}
+                                    </Link>
+                                    {/* A Steam import fills these two. */}
+                                    {(active === "played" ||
+                                        active === "backlog") && (
+                                        <SteamImportButton>
+                                            {(open) => (
+                                                <Button
+                                                    variant="secondary"
+                                                    onClick={open}
+                                                    className="w-full sm:w-auto"
+                                                >
+                                                    Import from Steam
+                                                </Button>
+                                            )}
+                                        </SteamImportButton>
+                                    )}
+                                </div>
                             ) : undefined
                         }
                     />

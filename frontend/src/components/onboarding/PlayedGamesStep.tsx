@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { fetchSteamAvailable } from "../../api";
+import { useSteamAvailable } from "../steam/SteamImportButton";
 import { Check } from "lucide-react";
 import Button from "../ui/Button";
 import { Skeleton } from "../ui/Skeleton";
@@ -44,11 +43,7 @@ const PlayedGamesStep = ({
         search: term.length >= 2 ? term : undefined,
     });
     const { create } = useLogMutations();
-    const { data: steamAvailable } = useQuery({
-        queryKey: ["steam", "available"],
-        queryFn: fetchSteamAvailable,
-        staleTime: Infinity,
-    });
+    const steamAvailable = useSteamAvailable();
     const notify = useNotify();
     const [picked, setPicked] = useState<number[]>([]);
     const [saving, setSaving] = useState(false);

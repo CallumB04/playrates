@@ -20,7 +20,7 @@ import {
     UserRound,
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
 import { useAccountForm } from "../contexts/AccountFormContext";
 import { useNotify } from "../contexts/NotificationContext";
@@ -30,7 +30,8 @@ import { useUserStats } from "../hooks/queries/useGameLogs";
 import { useUserReviews } from "../hooks/queries/useReviews";
 import { useUserFriends } from "../hooks/queries/useFriends";
 import { usePageMeta } from "../hooks/usePageMeta";
-import { deleteMyAccount, fetchMyData, fetchSteamAvailable } from "../api";
+import { deleteMyAccount, fetchMyData } from "../api";
+import { useSteamAvailable } from "../components/steam/SteamImportButton";
 import { ApiError } from "../api/client";
 import { signedInRecently } from "../lib/recentSignIn";
 import { saveFile } from "../lib/saveFile";
@@ -197,12 +198,7 @@ const SettingsPage = () => {
     const [importingSteam, setImportingSteam] = useState(
         () => params.get("import") === "steam"
     );
-    const { data: steamAvailable } = useQuery({
-        queryKey: ["steam", "available"],
-        queryFn: fetchSteamAvailable,
-        enabled: !!user,
-        staleTime: Infinity,
-    });
+    const steamAvailable = useSteamAvailable();
     // ?section= so a link elsewhere can open the row it is about.
     const [section, setSection] = useState(() =>
         sectionFrom(params.get("section"))

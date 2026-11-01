@@ -131,3 +131,51 @@ describe("GamesView's filters", () => {
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
 });
+
+describe("importing from Steam", () => {
+    const steamOn = () =>
+        server.use(
+            http.get(`${API}/me/steam`, () =>
+                HttpResponse.json({ available: true })
+            )
+        );
+
+    it("is offered on an empty played shelf", async () => {
+        steamOn();
+        setup("/user/devuser/games?type=played");
+        expect(
+            await screen.findByRole("button", { name: "Import from Steam" })
+        ).toBeInTheDocument();
+    });
+
+    it("isn't offered on an empty wishlist", async () => {
+        steamOn();
+        server.use(
+            http.get(`${API}/users/:username/wishlist`, () =>
+                HttpResponse.json({ data: [], consoles: [] })
+            )
+        );
+        setup("/user/devuser/games?type=wishlist");
+        expect(
+            await screen.findByText("Your wishlist is empty")
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: "Import from Steam" })
+        ).toBeNull();
+    });
+
+    it("isn't offered while Steam isn't set up", async () => {
+        server.use(
+            http.get(`${API}/me/steam`, () =>
+                HttpResponse.json({ available: false })
+            )
+        );
+        setup("/user/devuser/games?type=played");
+        expect(
+            await screen.findByText("No played games yet")
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: "Import from Steam" })
+        ).toBeNull();
+    });
+});
