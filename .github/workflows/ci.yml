@@ -89,6 +89,11 @@ jobs:
       - name: Verify the seed applies on a reset
         run: supabase db reset
 
+      # The triggers and functions, against a real Postgres: pgTAP files in
+      # supabase/tests/database, each in a transaction that rolls back.
+      - name: Database tests
+        run: supabase test db
+
       # The generated types are what the migrations make: a migration
       # without them regenerated (npm run db:types -w backend) fails here.
       - name: Generated database types match the migrations
