@@ -192,17 +192,19 @@ const AccountMenu = ({
                 aria-haspopup="menu"
                 aria-label="Account menu"
                 className={cn(
-                    "group relative block rounded-full lift",
+                    "group relative block rounded-full lift focus-visible:outline-none",
                     "before:absolute before:-inset-1 before:content-[''] sm:before:hidden"
                 )}
             >
-                {/* The ring round the picture only, not the level on it. */}
+                {/* The ring round the picture only, not the level on it:
+                    focus wears it too, in place of the button's outline,
+                    which ran round the level and under it. */}
                 <span
                     className={cn(
-                        "block rounded-full ring-offset-2 ring-offset-surface transition-shadow",
+                        "flex rounded-full ring-offset-2 ring-offset-surface transition-shadow",
                         open
                             ? "ring-2 ring-brand"
-                            : "group-hover:ring-2 group-hover:ring-subtle"
+                            : "group-hover:ring-2 group-hover:ring-subtle group-focus-visible:ring-2 group-focus-visible:ring-brand"
                     )}
                 >
                     <AvatarFrame frame={user.frame} size="sm">

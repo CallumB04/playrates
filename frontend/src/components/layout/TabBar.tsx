@@ -153,7 +153,10 @@ const TabBar = () => {
                                 <span
                                     aria-hidden
                                     className={cn(
-                                        "rounded-full ring-offset-1 ring-offset-surface",
+                                        // A box of its own: as an inline span
+                                        // its ring sat out of round on a framed
+                                        // picture.
+                                        "inline-flex rounded-full ring-offset-1 ring-offset-surface",
                                         onProfile && "ring-2 ring-brand"
                                     )}
                                 >
