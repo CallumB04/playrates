@@ -11,7 +11,7 @@ const External = ({ href, children }: { href: string; children: string }) => (
 );
 
 /* When the substance of this page changes, move the date. */
-const UPDATED = "2026-10-29";
+const UPDATED = "2026-11-01";
 
 const PrivacyPage = () => (
     <ProsePage
@@ -57,14 +57,19 @@ const PrivacyPage = () => (
             </li>
             <li>
                 Your settings, like your time zone and whether adult games are
-                shown to you.
+                shown to you. If you turn adult games on, that you confirmed
+                you’re 18 or over, and when.
             </li>
             <li>
                 Which emails you want. Account emails, like password resets,
-                always send. The others, about friend requests, replies, gifts,
-                wishlist release days and news, you can turn off one by one in{" "}
+                always send. The others, about friend requests, replies,
+                reactions and loves, gifts and invites, wishlist release days,
+                the weekly digest, streak and task reminders and news, you can
+                turn on or off one by one in{" "}
                 <Link to="/settings?section=emails">Settings</Link> or with the
-                link at the bottom of any email.
+                link at the bottom of any email. Reminders are off unless you
+                turn them on, and news is off unless you ticked the box when you
+                signed up.
             </li>
         </ul>
 
@@ -85,6 +90,15 @@ const PrivacyPage = () => (
                 you upload with them.
             </li>
             <li>Reports you send about other people’s posts.</li>
+            <li>
+                If you turn on push notifications, the address your browser
+                gives for them, the keys that encrypt them and which browser it
+                is.
+            </li>
+            <li>
+                If you import from Steam, the games you choose to add. Your
+                Steam profile and the rest of your library aren’t kept.
+            </li>
         </ul>
 
         <h3>In the background</h3>
@@ -109,7 +123,13 @@ const PrivacyPage = () => (
             <li>
                 If something breaks while you’re using the site, a record of the
                 error with your account ID and the page you were on, so I can
-                fix it.
+                fix it. For an error in your browser, it also notes which
+                browser and which version of PlayRates it was.
+            </li>
+            <li>
+                Your ratings are compared with other members’ to suggest people
+                who rate games like you. Only profiles open to everyone take
+                part, and only the match is shown, never the working.
             </li>
         </ul>
         <p>
@@ -136,8 +156,9 @@ const PrivacyPage = () => (
             </li>
             <li>
                 <strong>Knowing roughly how the site is used</strong>{" "}
-                (legitimate interests). Active days and search records, which
-                only ever turn into totals on my admin dashboard.
+                (legitimate interests). Active days, search records and Vercel’s
+                visit counts, which only ever turn into totals on my admin
+                dashboard.
             </li>
         </ul>
         <p>
@@ -147,8 +168,8 @@ const PrivacyPage = () => (
 
         <h2>Who else handles it</h2>
         <p>
-            Three companies help run PlayRates. They process data for me and
-            only for that:
+            Four companies help run PlayRates. They process data for me and only
+            for that:
         </p>
         <ul>
             <li>
@@ -157,13 +178,21 @@ const PrivacyPage = () => (
             </li>
             <li>
                 <strong>Vercel</strong> hosts the website and the API. It keeps
-                short-lived request logs, which include IP addresses. Vercel is
-                based in the US.
+                short-lived request logs, which include IP addresses. Its Web
+                Analytics and Speed Insights count page views and measure how
+                fast pages load, without cookies and without keeping your IP
+                address. Vercel is based in the US.
             </li>
             <li>
                 <strong>Resend</strong> sends PlayRates’ emails. It gets your
                 email address, your username and what’s in each email, and keeps
                 a list of who wants news emails. Resend is based in the US.
+            </li>
+            <li>
+                <strong>Upstash</strong> keeps the counts behind rate limits,
+                which stop anyone sending too many requests at once. A count is
+                kept against your IP address for about a minute. Upstash is
+                based in the US.
             </li>
         </ul>
         <p>
@@ -187,6 +216,23 @@ const PrivacyPage = () => (
                 image servers, so your browser connects to them and they see
                 your IP address, the same as any site that shows their images.
             </li>
+            <li>
+                <strong>Cloudflare Turnstile</strong> checks the sign-up and
+                sign-in forms aren’t being filled in by a bot. It runs in your
+                browser, so Cloudflare sees your IP address and details about
+                your browser, under its own privacy policy.
+            </li>
+            <li>
+                <strong>Steam</strong>, if you import from it. My server sends
+                Steam your profile ID to get your list of games.
+            </li>
+            <li>
+                Your browser’s <strong>push service</strong>, if you turn on
+                push notifications: Google’s for Chrome, Apple’s for Safari,
+                Mozilla’s for Firefox, Microsoft’s for Edge. It delivers them,
+                but what’s in each one is encrypted so only your browser can
+                read it.
+            </li>
         </ul>
         <p>
             I don’t sell your data or share it with anyone else, unless the law
@@ -196,9 +242,9 @@ const PrivacyPage = () => (
         <h2>Data outside the UK</h2>
         <p>
             Supabase keeps your data in the EU, which UK law already treats as
-            safe to send data to. Vercel and Resend are in the US, and transfers
-            to them are covered by the safeguards in their data processing
-            agreements.
+            safe to send data to. Vercel, Resend and Upstash are in the US, and
+            transfers to them are covered by the safeguards in their data
+            processing agreements.
         </p>
 
         <h2>How long I keep it</h2>
@@ -227,6 +273,12 @@ const PrivacyPage = () => (
                 know what was reported.
             </li>
         </ul>
+        <p>
+            Some things go sooner, whatever happens to your account. Error
+            records are deleted after 90 days and search records after two
+            years. Push notification details go when you turn them off, or when
+            your browser’s push service says the browser is gone.
+        </p>
         <p>
             Vercel’s request logs and Supabase’s sign-in logs are kept for a
             short time by them and then deleted automatically.
@@ -270,8 +322,8 @@ const PrivacyPage = () => (
 
         <h2>Cookies and local storage</h2>
         <p>
-            PlayRates doesn’t set any cookies. Your browser keeps two things in
-            its local storage:
+            PlayRates doesn’t set any cookies. Your browser keeps these in its
+            local storage:
         </p>
         <ul>
             <li>
@@ -281,10 +333,32 @@ const PrivacyPage = () => (
                 <code>sb-…-auth-token</code>, your sign-in session, so you stay
                 logged in.
             </li>
+            <li>
+                <code>playrates-draft:thread</code>, a community thread you
+                started writing, until you post it or clear it.
+            </li>
+            <li>
+                <code>playrates:last-system</code>, the console you last logged
+                a game on, to offer it first next time.
+            </li>
+            <li>
+                <code>pr_ref</code>, the username on an invite link you
+                followed, for up to 30 days, so they get the credit if you join.
+            </li>
         </ul>
         <p>
-            Both are there because you asked for what they do, so there’s no
-            cookie banner. There are no analytics or advertising scripts.
+            Two more are kept only until you close the tab:{" "}
+            <code>pr_invite_banner_closed</code>, when you close the invite
+            banner, and <code>playrates:reloaded-for-new-build</code>, so a page
+            that reloads for a new version of the site doesn’t do it twice. A
+            small background script, the service worker, also keeps a copy of
+            the page you see when you’re offline.
+        </p>
+        <p>
+            All of them are there for things you asked for or that the site
+            needs to work, so there’s no cookie banner. Vercel’s analytics
+            script counts visits without cookies or anything stored in your
+            browser. There are no advertising scripts.
         </p>
 
         <h2>Children</h2>
