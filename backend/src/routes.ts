@@ -125,7 +125,11 @@ export const buildRoutes = ({
   // with an email send it without knowing.
   const repos = {
     ...baseRepos,
-    notifications: withEmails(baseRepos.notifications, emails.afterRaise),
+    notifications: withEmails(
+      baseRepos.notifications,
+      emails.afterRaise,
+      emails.afterRaiseOnce,
+    ),
   };
 
   const games = createGamesService(

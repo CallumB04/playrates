@@ -27,6 +27,8 @@ const KINDS: Record<string, string> = {
     referral_active: "Invites got going",
     welcome: "Welcome",
     wishlist_release: "Wishlist release days",
+    streak_at_risk: "Streak reminders",
+    task_nearly_done: "Task reminders",
     news_test: "Your tests",
 };
 

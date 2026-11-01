@@ -51,6 +51,8 @@ export const EMAIL_REASONS: Record<EmailScope, string> = {
   wishlist_releases:
     "You're getting this because you have wishlist release emails on.",
   news: "You're getting this because you have news emails on.",
+  reminders:
+    "You're getting this because you turned on streak and task reminder emails.",
 };
 
 const footerLinks = (scope: EmailScope, links: EmailLinks) => [
@@ -350,6 +352,79 @@ export const wishlistReleaseEmail = (
       "",
       `${label}: ${href}`,
     ],
+  });
+};
+
+/* ------------------------------------------------------------ reminders */
+
+/** The day a period ends on, in the member's own zone: the bell's "by
+ *  Monday" means before Monday starts. */
+export const endDay = (endsAt: string, zone: string | null): string => {
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      weekday: "long",
+      timeZone: zone ?? "UTC",
+    }).format(new Date(endsAt));
+  } catch {
+    return new Intl.DateTimeFormat("en-GB", {
+      weekday: "long",
+      timeZone: "UTC",
+    }).format(new Date(endsAt));
+  }
+};
+
+export const streakEmail = (
+  data: { weeks: number; shield: boolean; day: string },
+  links: EmailLinks,
+): RenderedEmail => {
+  const title = `Your ${data.weeks} week streak needs something by ${data.day}`;
+  const body = data.shield
+    ? "If not, a shield will keep it going."
+    : "Log, rate, review or post anything to keep it.";
+  const href = url(links, "/progress#streak");
+  return build({
+    scope: "reminders",
+    links,
+    subject: title,
+    preview: body,
+    title,
+    body: [
+      emailParagraph(body),
+      emailButton(href, "See your streak"),
+      emailPlainLink(href),
+    ].join("\n"),
+    lines: [body, "", `See your streak: ${href}`],
+  });
+};
+
+export const taskEmail = (
+  data: {
+    label: string;
+    count: number;
+    target: number;
+    xp: number;
+    tokens: number;
+    day: string;
+  },
+  links: EmailLinks,
+): RenderedEmail => {
+  const title = `Nearly there: ${data.label}`;
+  const progress = `${data.count} of ${data.target}, ends ${data.day}.`;
+  const reward = `Finish it for ${data.xp} XP and ${data.tokens} tokens.`;
+  const href = url(links, "/progress");
+  return build({
+    scope: "reminders",
+    links,
+    subject: clip(title, 80),
+    preview: progress,
+    title,
+    body: [
+      emailParagraph(escapeHtml(progress)),
+      emailParagraph(escapeHtml(reward)),
+      emailButton(href, "See your tasks"),
+      emailPlainLink(href),
+    ].join("\n"),
+    lines: [progress, reward, "", `See your tasks: ${href}`],
   });
 };
 

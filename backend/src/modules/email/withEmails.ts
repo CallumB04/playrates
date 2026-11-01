@@ -12,10 +12,19 @@ import type {
 export const withEmails = (
   notifications: NotificationsRepository,
   afterRaise: (draft: NotificationDraft) => void,
+  afterRaiseOnce: (drafts: NotificationDraft[]) => void = () => {},
 ): NotificationsRepository => ({
   ...notifications,
   async raise(draft) {
     await notifications.raise(draft);
     if (EMAIL_CATEGORY_OF[draft.kind]) afterRaise(draft);
+  },
+  async raiseOnce(drafts) {
+    const raised = await notifications.raiseOnce(drafts);
+    // Each email is claimed once ever too, so passing on the drafts that
+    // were already in the bell sends nothing twice.
+    const emailed = drafts.filter((d) => EMAIL_CATEGORY_OF[d.kind]);
+    if (emailed.length > 0) afterRaiseOnce(emailed);
+    return raised;
   },
 });

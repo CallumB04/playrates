@@ -89,6 +89,21 @@ const EVENT_WINDOW_MS = DAY_MS;
 /** Resend's placeholder for its own unsubscribe link in a broadcast. */
 const RESEND_UNSUBSCRIBE = "{{{RESEND_UNSUBSCRIBE_URL}}}";
 
+/** One member's email, waiting to be claimed under `ref`. */
+interface Queued {
+  userId: string;
+  ref: string;
+  message: EmailMessage;
+}
+
+const byRef = (items: Queued[]): Map<string, Queued[]> => {
+  const groups = new Map<string, Queued[]>();
+  for (const item of items) {
+    groups.set(item.ref, [...(groups.get(item.ref) ?? []), item]);
+  }
+  return groups;
+};
+
 const renderNews = (content: NewsContent, links: EmailLinks): RenderedEmail =>
   content.kind === "announcement"
     ? announcementEmail(content, links)
@@ -177,6 +192,58 @@ export const createEmailService = ({
       throw error;
     }
     return granted;
+  };
+
+  /**
+   * Claims each member's email under its ref, once ever, and sends what
+   * was claimed in batches. What the cap or a failure stops is given back,
+   * so a later run can send it. How many went.
+   */
+  const sendOnce = async (kind: string, items: Queued[]): Promise<number> => {
+    const queued: Queued[] = [];
+    for (const [ref, group] of byRef(items)) {
+      // Claimed together, in one statement rather than one a member.
+      const claimed = new Set(
+        await repo.claimOnce(
+          group.map((i) => i.userId),
+          kind,
+          ref,
+        ),
+      );
+      queued.push(...group.filter((i) => claimed.has(i.userId)));
+    }
+    const giveBack = async (rest: Queued[]) => {
+      for (const [ref, group] of byRef(rest)) {
+        await repo.releaseMany(
+          group.map((i) => i.userId),
+          kind,
+          ref,
+        );
+      }
+    };
+
+    let sent = 0;
+    for (let i = 0; i < queued.length; i += RESEND_BATCH_MAX) {
+      const chunk = queued.slice(i, i + RESEND_BATCH_MAX);
+      let went: number;
+      try {
+        went = await sendCounted(
+          kind,
+          chunk.map((q) => q.message),
+        );
+      } catch (error) {
+        await giveBack(queued.slice(i));
+        logger.error({ err: error, kind, sent }, "email: batch send failed");
+        break;
+      }
+      sent += went;
+      if (went < chunk.length) {
+        // The cap's reached. Given back, as for a failure.
+        await giveBack(queued.slice(i + went));
+        break;
+      }
+    }
+    return sent;
   };
 
   /** Keeps the audience in step with one member, where there is one. */
@@ -325,62 +392,68 @@ export const createEmailService = ({
       ) {
         return { sent: 0 };
       }
-      // Claimed together, in one statement rather than one a member.
-      const claimed = new Set(
-        await repo.claimOnce(
-          wanted.map((m) => m.id),
-          "wishlist_release",
-          day,
-        ),
+      const sent = await sendOnce(
+        "wishlist_release",
+        wanted.map((member) => {
+          const target = addressed(member.id, "wishlist_releases")!;
+          return {
+            userId: member.id,
+            ref: day,
+            message: message(
+              member.email,
+              wishlistReleaseEmail(
+                { games: byUser.get(member.id)!, username: member.username },
+                target.links,
+              ),
+              target.headers,
+            ),
+          };
+        }),
+      );
+      return { sent };
+    },
+
+    /** The reminders the nudge job just put in the bell, to those who
+     *  asked for them by email. Each goes once per member and period, so
+     *  the daily run can pass them all again. */
+    async sendReminders(
+      drafts: NotificationDraft[],
+    ): Promise<{ sent: number }> {
+      const wanted = drafts.filter(
+        (d) => EMAIL_CATEGORY_OF[d.kind] === "reminders",
+      );
+      if (wanted.length === 0) return { sent: 0 };
+      const members = new Map(
+        (await repo.memberEmails([...new Set(wanted.map((d) => d.userId))]))
+          .filter((m) =>
+            emailAllowed(resolveEmailPrefs(m.email_prefs), "reminders"),
+          )
+          .map((m) => [m.id, m]),
       );
 
-      const queued: { userId: string; message: EmailMessage }[] = [];
-      for (const member of wanted) {
-        if (!claimed.has(member.id)) continue;
-        const games = byUser.get(member.id)!;
-        const target = addressed(member.id, "wishlist_releases")!;
-        queued.push({
-          userId: member.id,
-          message: message(
-            member.email,
-            wishlistReleaseEmail(
-              { games, username: member.username },
-              target.links,
-            ),
-            target.headers,
-          ),
-        });
-      }
-
       let sent = 0;
-      for (let i = 0; i < queued.length; i += RESEND_BATCH_MAX) {
-        const chunk = queued.slice(i, i + RESEND_BATCH_MAX);
-        let went: number;
-        try {
-          went = await sendCounted(
-            "wishlist_release",
-            chunk.map((q) => q.message),
+      for (const kind of ["streak_at_risk", "task_nearly_done"] as const) {
+        const items: Queued[] = [];
+        for (const draft of wanted) {
+          const member = members.get(draft.userId);
+          if (draft.kind !== kind || !member) continue;
+          const target = addressed(member.id, "reminders");
+          if (!target) return { sent };
+          const email = eventEmail(
+            kind,
+            draft.data ?? {},
+            { username: member.username, avatar_url: null },
+            null,
+            target.links,
           );
-        } catch (error) {
-          // Given back, so a second run today can try them again.
-          await repo.releaseMany(
-            queued.slice(i).map((q) => q.userId),
-            "wishlist_release",
-            day,
-          );
-          logger.error({ err: error, sent }, "email: wishlist releases failed");
-          break;
+          if (!email) continue;
+          items.push({
+            userId: member.id,
+            ref: draft.dedupeKey ?? kind,
+            message: message(member.email, email, target.headers),
+          });
         }
-        sent += went;
-        if (went < chunk.length) {
-          // The cap's reached. Given back, as for a failure.
-          await repo.releaseMany(
-            queued.slice(i + went).map((q) => q.userId),
-            "wishlist_release",
-            day,
-          );
-          break;
-        }
+        sent += await sendOnce(kind, items);
       }
       return { sent };
     },
@@ -606,6 +679,10 @@ export const createEmailService = ({
     afterRaise(draft: NotificationDraft): void {
       if (!EMAIL_CATEGORY_OF[draft.kind]) return;
       later(draft.kind, () => service.sendEvent(draft));
+    },
+
+    afterRaiseOnce(drafts: NotificationDraft[]): void {
+      later("reminders", () => service.sendReminders(drafts));
     },
 
     afterOnboarding(userId: string): void {

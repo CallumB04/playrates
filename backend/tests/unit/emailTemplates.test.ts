@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { RichTextDoc } from "@playrates/shared";
 import {
   announcementEmail,
+  endDay,
+  streakEmail,
+  taskEmail,
   friendRequestEmail,
   giftEmail,
   giftItemName,
@@ -290,5 +293,32 @@ describe("rich text in an email", () => {
     expect(richTextToEmailText(doc, { skipFirstHeading: true })[0]).toBe(
       "Bold and slanted\nthe end is [spoiler]",
     );
+  });
+});
+
+describe("reminders", () => {
+  it("names the day in the member's own zone", () => {
+    // Monday 00:00 in London is still Sunday in New York.
+    expect(endDay("2026-11-02T00:00:00.000Z", "Europe/London")).toBe("Monday");
+    expect(endDay("2026-11-02T00:00:00.000Z", "America/New_York")).toBe("Sunday");
+    expect(endDay("2026-11-02T00:00:00.000Z", "Not/AZone")).toBe("Monday");
+  });
+
+  it("escapes a task's name and says what finishing it pays", () => {
+    const email = taskEmail(
+      { label: "Rate <3> games", count: 2, target: 3, xp: 40, tokens: 5, day: "Monday" },
+      links,
+    );
+    expect(email.subject).toBe("Nearly there: Rate <3> games");
+    expect(email.html).toContain("Rate &lt;3&gt; games");
+    expect(email.text).toContain("2 of 3, ends Monday.");
+    expect(email.text).toContain("Finish it for 40 XP and 5 tokens.");
+    expect(email.text).toContain("turned on streak and task reminder emails");
+  });
+
+  it("says a shield will cover the week when one would", () => {
+    const email = streakEmail({ weeks: 4, shield: false, day: "Monday" }, links);
+    expect(email.subject).toBe("Your 4 week streak needs something by Monday");
+    expect(email.text).toContain("Log, rate, review or post anything to keep it.");
   });
 });

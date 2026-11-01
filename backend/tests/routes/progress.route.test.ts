@@ -861,6 +861,28 @@ describe("nudges", () => {
     ).not.toBeNull();
   });
 
+  it("emails a reminder only to those who turned them on, and once", async () => {
+    const { app, state, email } = atFriday();
+    const a = state.profiles.find((p) => p.id === USER_A)!;
+    a.timezone = "Europe/London";
+
+    await cron(app, "test-cron-secret");
+    await email.flush();
+    expect(email.sent).toEqual([]);
+
+    a.email_prefs = { reminders: true };
+    // The bell already has it; the email still goes, once.
+    await cron(app, "test-cron-secret");
+    await cron(app, "test-cron-secret");
+    await email.flush();
+    expect(email.sent).toHaveLength(1);
+    expect(email.sent[0]).toMatchObject({
+      subject: "Your 1 week streak needs something by Monday",
+    });
+    expect(email.sent[0]!.text).toContain("a shield will keep it going");
+    expect(email.sent[0]!.headers?.["List-Unsubscribe"]).toBeDefined();
+  });
+
   it("leaves out members not seen for two months", async () => {
     const { app, state } = atFriday();
     state.profiles.find((p) => p.id === USER_A)!.last_seen_at =

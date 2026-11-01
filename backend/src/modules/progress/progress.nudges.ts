@@ -68,6 +68,8 @@ export const nudgesFor = (
         weeks: streak.weeks,
         shield: after.weeks >= streak.weeks,
         endsAt: periods.week.end,
+        // For the email, which has no browser to tell it the member's day.
+        zone,
       },
       dedupeKey: streakNudgeKey(periods.week),
     });
@@ -100,6 +102,7 @@ export const nudgesFor = (
         xp: closest.quest.xp,
         tokens: TASK_TOKENS[period.kind],
         endsAt: period.end,
+        zone,
       },
       dedupeKey: taskNudgeKey(period),
     });

@@ -11,6 +11,9 @@ import {
   inviteActiveEmail,
   inviteJoinedEmail,
   replyEmail,
+  endDay,
+  streakEmail,
+  taskEmail,
   type EmailLinks,
   type ReleasedGame,
   type RenderedEmail,
@@ -104,6 +107,39 @@ export const eventEmail = (
           username,
           xp: num(data.xp) ?? REFERRAL.inviterXp,
           tokens: num(data.tokens) ?? REFERRAL.inviterTokens,
+        },
+        links,
+      );
+    }
+
+    case "streak_at_risk": {
+      const weeks = num(data.weeks);
+      const endsAt = str(data.endsAt);
+      if (weeks === null || !endsAt) return null;
+      return streakEmail(
+        {
+          weeks,
+          shield: data.shield === true,
+          day: endDay(endsAt, str(data.zone)),
+        },
+        links,
+      );
+    }
+
+    case "task_nearly_done": {
+      const label = str(data.label);
+      const count = num(data.count);
+      const target = num(data.target);
+      const endsAt = str(data.endsAt);
+      if (!label || count === null || target === null || !endsAt) return null;
+      return taskEmail(
+        {
+          label,
+          count,
+          target,
+          xp: num(data.xp) ?? 0,
+          tokens: num(data.tokens) ?? 0,
+          day: endDay(endsAt, str(data.zone)),
         },
         links,
       );
