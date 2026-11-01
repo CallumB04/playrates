@@ -65,6 +65,36 @@ describe("ToastStack", () => {
         vi.useRealTimers();
     });
 
+    it("keeps a toast with something to do until it's done", async () => {
+        const share = vi.fn();
+        const Offer = () => {
+            const notify = useNotify();
+            return (
+                <button
+                    type="button"
+                    onClick={() =>
+                        notify("New badge", "success", undefined, {
+                            label: "Share",
+                            onClick: share,
+                        })
+                    }
+                >
+                    raise offer
+                </button>
+            );
+        };
+        renderStack(<Offer />);
+        await raise("offer");
+
+        await advanceThenExit(DWELL_MS.high! * 2);
+        expect(screen.getByText("New badge")).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole("button", { name: "Share" }));
+        expect(share).toHaveBeenCalledOnce();
+        await advance(EXIT_MS);
+        expect(screen.queryByText("New badge")).not.toBeInTheDocument();
+    });
+
     it("shows a raised toast", async () => {
         renderStack(<Raise text="Entry saved" />);
         await raise("Entry saved");

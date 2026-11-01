@@ -13,7 +13,7 @@ import {
 import { formatCount } from "../../lib/format";
 import { SOURCE_LABELS } from "./sources";
 
-const METAL_NAMES: Record<Metal, string> = {
+export const METAL_NAMES: Record<Metal, string> = {
     1: "Bronze",
     2: "Silver",
     3: "Gold",

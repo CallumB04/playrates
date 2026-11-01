@@ -11,6 +11,12 @@ import {
 import { profilePath } from "../../lib/profilePaths";
 import { useNotify } from "../../contexts/NotificationContext";
 import { useNoDialogOpen } from "../../hooks/useNoDialogOpen";
+import {
+    closeShareMoment,
+    shareMoment,
+    useShareMoment,
+} from "../../lib/shareMoment";
+import { badgeMoment, levelMoment, shareUrl } from "../share/shareText";
 import { badgeToastText } from "./rewardText";
 import { xpToast } from "./XpToast";
 
@@ -39,7 +45,7 @@ const ProgressMoments = () => {
     const queued = useRef(0);
     const [levels, setLevels] = useState<{ from: number; to: number }[]>([]);
     const [revealing, setRevealing] = useState(false);
-    const [sharing, setSharing] = useState(false);
+    const sharing = useShareMoment();
     // A level waits its turn behind any popup already open: the welcome, a
     // finished Gaming 25's share, the sign-up form.
     const turn = useNoDialogOpen(levels.length > 0 && !revealing);
@@ -76,9 +82,15 @@ const ProgressMoments = () => {
         }
         for (const b of badges) {
             const def = badgeDef(b.badge);
-            if (def)
+            if (def && user)
                 toasts.push(() =>
-                    notify(badgeToastText(def, b.metal), "success")
+                    notify(badgeToastText(def, b.metal), "success", undefined, {
+                        label: "Share",
+                        onClick: () =>
+                            shareMoment(
+                                badgeMoment(user.username, def, b.metal)
+                            ),
+                    })
                 );
         }
         const before = levelFor(
@@ -144,19 +156,23 @@ const ProgressMoments = () => {
                     onClose={next}
                     onShare={() => {
                         next();
-                        setSharing(true);
+                        shareMoment(levelMoment(user.username, level.to));
                     }}
                 />
             )}
             {sharing && (
                 <ShareSheet
-                    title={`Level ${data.level.level}`}
-                    url={`${window.location.origin}${profilePath(user.username)}?ref=${encodeURIComponent(user.username)}`}
-                    text={`I just reached level ${data.level.level} on PlayRates`}
+                    title={sharing.title}
+                    url={shareUrl(
+                        window.location.origin,
+                        sharing.path,
+                        user.username
+                    )}
+                    text={sharing.text}
                     imageUrl={playerCardUrl(user.username, data.xp)}
                     fileName={`${user.username}-playrates.png`}
                     noImage="Only public profiles get a picture."
-                    onClose={() => setSharing(false)}
+                    onClose={closeShareMoment}
                 />
             )}
         </Suspense>

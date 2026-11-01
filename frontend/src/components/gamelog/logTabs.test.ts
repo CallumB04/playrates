@@ -3,13 +3,16 @@ import type { LogWithReview } from "@playrates/shared";
 import { buildGameLog } from "../../test/msw/handlers";
 import {
     isDirty,
+    justFinished,
     NEW_TAB,
     needsConsole,
     newTab,
     startingTab,
     tabForLog,
     takenBy,
+    type LogTab,
 } from "./logTabs";
+import { emptyDraft, type LogDraft } from "./logEditorReducer";
 
 const log = (overrides: Partial<LogWithReview> = {}): LogWithReview => {
     const { game: _game, ...plain } = buildGameLog();
@@ -87,5 +90,42 @@ describe("log tabs", () => {
         expect(startingTab(tabs, 2, 1)).toBe("log-2");
         expect(startingTab(tabs, null, 1)).toBe(NEW_TAB);
         expect(startingTab(tabs, undefined, 1)).toBe("log-1");
+    });
+});
+
+describe("justFinished", () => {
+    const tab = (
+        draft: Partial<LogDraft>,
+        original: Partial<LogDraft> | null
+    ): LogTab => ({
+        key: "t",
+        logId: 1,
+        draft: { ...emptyDraft, ...draft },
+        original: original && { ...emptyDraft, ...original },
+        hadReview: false,
+    });
+
+    it("finds a game newly finished or mastered", () => {
+        expect(
+            justFinished([
+                tab({ playedStatus: "finished" }, { status: "playing" }),
+            ])
+        ).toBeDefined();
+        expect(
+            justFinished([tab({ playedStatus: "mastered" }, null)])
+        ).toBeDefined();
+        expect(
+            justFinished([
+                tab({ playedStatus: "mastered" }, { playedStatus: "finished" }),
+            ])
+        ).toBeUndefined();
+    });
+
+    it("leaves out shelving, retiring and plain played", () => {
+        for (const playedStatus of ["shelved", "retired", null] as const) {
+            expect(
+                justFinished([tab({ playedStatus }, { status: "playing" })])
+            ).toBeUndefined();
+        }
     });
 });

@@ -23,9 +23,16 @@ const DEFAULT_SEVERITY: Record<NotificationType, NotificationSeverity> = {
     error: "high",
 };
 
+/** Something to do about a toast, as a button on it. */
+export interface ToastAction {
+    label: string;
+    onClick: () => void;
+}
+
 export interface Toast {
     id: number;
     text: ReactNode;
+    action?: ToastAction;
     type: NotificationType;
     severity: NotificationSeverity;
     dwell: number | null;
@@ -43,6 +50,7 @@ export type QueueAction =
           text: ReactNode;
           type: NotificationType;
           severity?: NotificationSeverity;
+          action?: ToastAction;
       }
     | { kind: "dismiss"; id: number }
     | { kind: "remove"; id: number };
@@ -62,7 +70,11 @@ export const notificationQueue = (
                     text: action.text,
                     type: action.type,
                     severity,
-                    dwell: DWELL_MS[severity],
+                    action: action.action,
+                    // One that offers something to do stays until it's done
+                    // or closed: a button on a clock is gone before a slow
+                    // reader reaches it.
+                    dwell: action.action ? null : DWELL_MS[severity],
                     leaving: false,
                 },
             ];

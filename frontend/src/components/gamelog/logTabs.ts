@@ -75,3 +75,12 @@ export const startingTab = (
     const wanted = logId ?? headlineId;
     return tabs.find((t) => t.logId === wanted)?.key ?? tabs[0]?.key ?? NEW_TAB;
 };
+
+const DONE = new Set(["finished", "mastered"]);
+const isDone = (draft: LogDraft | null) =>
+    draft?.status === "played" && DONE.has(draft.playedStatus ?? "");
+
+/** The tab a save just finished or mastered the game on, if any: worth
+ *  offering to share. Shelving it, or saving one already finished, isn't. */
+export const justFinished = (tabs: LogTab[]): LogTab | undefined =>
+    tabs.find((t) => isDone(t.draft) && !isDone(t.original));
