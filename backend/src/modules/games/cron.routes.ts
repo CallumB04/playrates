@@ -2,8 +2,9 @@ import { timingSafeEqual } from "node:crypto";
 import { Router } from "express";
 import { AppError } from "../../lib/AppError.js";
 import type { GamesProvider } from "../../providers/games/GamesProvider.js";
-import type { ProgressService } from "../progress/progress.service.js";
+import type { AdminRepository } from "../admin/admin.repository.js";
 import type { EmailService } from "../email/email.service.js";
+import type { ProgressService } from "../progress/progress.service.js";
 import type { GamesRepository } from "./games.repository.js";
 import { refreshTrending } from "./trending.js";
 
@@ -12,6 +13,7 @@ interface Deps {
   repo: GamesRepository;
   progress: Pick<ProgressService, "nudge">;
   emails: Pick<EmailService, "sendWishlistReleases" | "reconcileAudience">;
+  admin: Pick<AdminRepository, "pruneOldRows">;
   /** Vercel sends it as a bearer token on each scheduled call. Without
    *  one set, the jobs can't be run from outside at all. */
   secret: string | undefined;
@@ -31,6 +33,7 @@ export const createCronRouter = ({
   repo,
   progress,
   emails,
+  admin,
   secret,
 }: Deps): Router => {
   const router = Router();
@@ -72,8 +75,14 @@ export const createCronRouter = ({
   });
 
   // Streaks about to go and tasks nearly done, in the inbox once a day.
-  router.get("/nudges", async (_req, res) => {
-    res.json(await progress.nudge());
+  // And the daily tidy, which the free plan has no third cron for.
+  router.get("/nudges", async (req, res) => {
+    const nudged = await progress.nudge();
+    const pruned = await admin.pruneOldRows().catch((error) => {
+      req.log?.error({ err: error }, "cron: pruning old rows failed");
+      return null;
+    });
+    res.json({ ...nudged, pruned });
   });
 
   return router;

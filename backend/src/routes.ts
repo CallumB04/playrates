@@ -433,6 +433,7 @@ export const buildRoutes = ({
       repo: repos.games,
       progress,
       emails,
+      admin: repos.admin,
       secret: env().CRON_SECRET,
     }),
   );

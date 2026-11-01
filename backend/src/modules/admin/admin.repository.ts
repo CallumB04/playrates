@@ -18,7 +18,10 @@ export interface ActivityScopeFilter {
   /** ISO; nothing older. */
   since?: string;
 }
-export type ActivityFilter = Omit<AdminActivityQuery, "period" | "userId" | "gameId"> &
+export type ActivityFilter = Omit<
+  AdminActivityQuery,
+  "period" | "userId" | "gameId"
+> &
   ActivityScopeFilter;
 import { likeTerm } from "../../lib/likeTerm.js";
 import type {
@@ -74,10 +77,16 @@ export interface AdminProgressRow {
 
 export interface AdminRepository {
   ping(): Promise<void>;
+  /** Deletes a batch of old error and game-event rows; how many of each. */
+  pruneOldRows(): Promise<{ serverErrors: number; gameEvents: number }>;
   totals(): Promise<AdminTotals>;
   progress(): Promise<AdminProgressRow>;
   /** Inclusive dates, YYYY-MM-DD. */
-  series(from: string, to: string, bucket: AdminBucket): Promise<AdminSeriesRow[]>;
+  series(
+    from: string,
+    to: string,
+    bucket: AdminBucket,
+  ): Promise<AdminSeriesRow[]>;
   metricDetail(
     metric: AdminMetric,
     from: string,
@@ -105,8 +114,13 @@ export interface AdminRepository {
   getSetting<T>(key: string): Promise<T | null>;
   setSetting(key: string, value: unknown): Promise<void>;
 
-  serverErrors(before: number | undefined, limit: number): Promise<ServerErrorRowWithUser[]>;
-  serverErrorStats(since: string): Promise<{ count: number; lastAt: string | null }>;
+  serverErrors(
+    before: number | undefined,
+    limit: number,
+  ): Promise<ServerErrorRowWithUser[]>;
+  serverErrorStats(
+    since: string,
+  ): Promise<{ count: number; lastAt: string | null }>;
 
   listAnnouncements(): Promise<AnnouncementCardRow[]>;
   findAnnouncement(id: number): Promise<AnnouncementCardRow | null>;
@@ -119,7 +133,10 @@ export interface AdminRepository {
   broadcastAnnouncement(id: number): Promise<number>;
   /** It went out by email too, as this Resend broadcast where there was
    *  one. */
-  markAnnouncementEmailed(id: number, broadcastId: string | null): Promise<void>;
+  markAnnouncementEmailed(
+    id: number,
+    broadcastId: string | null,
+  ): Promise<void>;
   /** Takes every copy back out of every inbox. */
   retractAnnouncement(id: number): Promise<void>;
 
@@ -132,14 +149,20 @@ export interface AdminRepository {
 
 export const announcementKey = (id: number): string => `announcement:${id}`;
 
-
-const USER_SORT: Record<AdminUsersQuery["sort"], keyof AdminUserDirectoryRow> = {
-  recent: "last_seen_at",
-  joined: "created_at",
-  active: "active_day_count",
-};
+const USER_SORT: Record<AdminUsersQuery["sort"], keyof AdminUserDirectoryRow> =
+  {
+    recent: "last_seen_at",
+    joined: "created_at",
+    active: "active_day_count",
+  };
 
 export const createAdminRepository = (db: Db): AdminRepository => ({
+  async pruneOldRows() {
+    const { data, error } = await db.rpc("prune_old_rows");
+    if (error) throw error;
+    return data as { serverErrors: number; gameEvents: number };
+  },
+
   async ping() {
     const { error } = await db
       .from("profiles")
@@ -303,7 +326,9 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
     const rows = (data ?? []) as ServerErrorRow[];
 
     // No foreign key to embed through: the log outlives the accounts in it.
-    const ids = [...new Set(rows.map((r) => r.user_id).filter(Boolean))] as string[];
+    const ids = [
+      ...new Set(rows.map((r) => r.user_id).filter(Boolean)),
+    ] as string[];
     const names = new Map<string, string>();
     if (ids.length > 0) {
       const { data: profiles, error: profileError } = await db
@@ -311,7 +336,8 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
         .select("id, username")
         .in("id", ids);
       if (profileError) throw profileError;
-      for (const p of profiles ?? []) names.set(p.id as string, p.username as string);
+      for (const p of profiles ?? [])
+        names.set(p.id as string, p.username as string);
     }
 
     return rows.map((row) => ({
@@ -321,18 +347,19 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
   },
 
   async serverErrorStats(since) {
-    const [{ count, error }, { data: last, error: lastError }] = await Promise.all([
-      db
-        .from("server_errors")
-        .select("id", { head: true, count: "exact" })
-        .gte("created_at", since),
-      db
-        .from("server_errors")
-        .select("created_at")
-        .order("id", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-    ]);
+    const [{ count, error }, { data: last, error: lastError }] =
+      await Promise.all([
+        db
+          .from("server_errors")
+          .select("id", { head: true, count: "exact" })
+          .gte("created_at", since),
+        db
+          .from("server_errors")
+          .select("created_at")
+          .order("id", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
     if (error) throw error;
     if (lastError) throw lastError;
     return {
@@ -379,7 +406,9 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
   },
 
   async broadcastAnnouncement(id) {
-    const { data, error } = await db.rpc("broadcast_announcement", { p_id: id });
+    const { data, error } = await db.rpc("broadcast_announcement", {
+      p_id: id,
+    });
     if (error) throw error;
     return (data as number | null) ?? 0;
   },
@@ -412,22 +441,26 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
   async listPatchNoteEntries() {
     const { data, error } = await db
       .from("community_messages")
-      .select("id, thread_id, body, created_at, edited_at, community_threads!inner(subject_kind)")
+      .select(
+        "id, thread_id, body, created_at, edited_at, community_threads!inner(subject_kind)",
+      )
       .eq("community_threads.subject_kind", "patch_notes")
       .is("parent_id", null)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false });
     if (error) throw error;
-    return ((data ?? []) as (PatchNoteEntryRow & { community_threads?: unknown })[]).map(
-      ({ community_threads: _thread, ...row }) => row,
-    );
+    return (
+      (data ?? []) as (PatchNoteEntryRow & { community_threads?: unknown })[]
+    ).map(({ community_threads: _thread, ...row }) => row);
   },
 
   async findPatchNoteEntry(messageId) {
     const { data, error } = await db
       .from("community_messages")
-      .select("id, thread_id, body, created_at, edited_at, community_threads!inner(subject_kind)")
+      .select(
+        "id, thread_id, body, created_at, edited_at, community_threads!inner(subject_kind)",
+      )
       .eq("id", messageId)
       .eq("community_threads.subject_kind", "patch_notes")
       .is("parent_id", null)

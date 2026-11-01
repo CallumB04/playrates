@@ -833,6 +833,7 @@ describe("nudges", () => {
     expect((await cron(app, "test-cron-secret")).body).toEqual({
       members: 4,
       raised: 1,
+      pruned: { serverErrors: 0, gameEvents: 0 },
     });
     expect((await cron(app, "test-cron-secret")).body.raised).toBe(0);
 
@@ -864,7 +865,7 @@ describe("nudges", () => {
     const { app, state } = atFriday();
     state.profiles.find((p) => p.id === USER_A)!.last_seen_at =
       "2026-07-01T00:00:00.000Z";
-    expect((await cron(app, "test-cron-secret")).body).toEqual({
+    expect((await cron(app, "test-cron-secret")).body).toMatchObject({
       members: 3,
       raised: 0,
     });
