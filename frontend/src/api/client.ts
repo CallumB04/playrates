@@ -63,13 +63,16 @@ export interface ApiResponse<T> {
     status: number;
 }
 
-const BASE = `${env.apiBaseUrl}/api/v1`;
 /* Long enough for a cold function and a slow phone; a request left hanging
    past it is one the person has given up on. */
 const TIMEOUT_MS = 15_000;
 
-const urlFor = (path: string, params?: object): string => {
-    const url = new URL(`${BASE}${path}`);
+export const urlFor = (path: string, params?: object): string => {
+    // Against the page: the live site's API base is "", the same origin.
+    const url = new URL(
+        `${env.apiBaseUrl}/api/v1${path}`,
+        window.location.href
+    );
     for (const [key, value] of Object.entries(params ?? {}) as [
         string,
         QueryValue,

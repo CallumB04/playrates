@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "../test/msw/server";
 import { ApiError, api } from "./client";
@@ -205,5 +205,23 @@ describe("api client", () => {
             expect(error).toBeInstanceOf(ApiError);
             expect(error.status).toBeUndefined();
         });
+    });
+});
+
+describe("urlFor", () => {
+    /* The live site's API is on its own origin, so its base is "": a URL
+       built without the page to resolve against threw, and every request
+       failed. */
+    it("resolves a same-origin base against the page", async () => {
+        vi.resetModules();
+        vi.doMock("../lib/env", () => ({
+            env: { apiBaseUrl: "", supabaseUrl: "", supabaseAnonKey: "" },
+        }));
+        const { urlFor: relative } = await import("./client");
+
+        expect(relative("/games", { limit: 2 })).toBe(
+            `${window.location.origin}/api/v1/games?limit=2`
+        );
+        vi.doUnmock("../lib/env");
     });
 });
