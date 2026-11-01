@@ -55,6 +55,7 @@ export const EMAIL_REASONS: Record<EmailScope, string> = {
   news: "You're getting this because you have news emails on.",
   reminders:
     "You're getting this because you turned on streak and task reminder emails.",
+  digest: "You're getting this because you have the weekly digest on.",
 };
 
 const footerLinks = (scope: EmailScope, links: EmailLinks) => [
@@ -508,6 +509,111 @@ export const taskEmail = (
       emailPlainLink(href),
     ].join("\n"),
     lines: [progress, reward, "", `See your tasks: ${href}`],
+  });
+};
+
+/* --------------------------------------------------------------- digest */
+
+export interface DigestContent {
+  friends: {
+    username: string;
+    gameId: number;
+    title: string;
+    status: "played" | "playing" | "backlog";
+    rating: number | null;
+  }[];
+  releases: { gameId: number; title: string; releaseDate: string }[];
+  logged: number;
+}
+
+/** The words either side of the game's title. */
+const DID: Record<
+  DigestContent["friends"][number]["status"],
+  [string, string]
+> = {
+  played: ["played", ""],
+  playing: ["is playing", ""],
+  backlog: ["added", " to their backlog"],
+};
+
+/** "2026-11-06" as "Thursday 6 Nov": a date, not a moment, so read as UTC. */
+const releaseDay = (date: string) =>
+  new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  }).format(new Date(`${date}T00:00:00Z`));
+
+const plural = (n: number, one: string, many: string) =>
+  `${n} ${n === 1 ? one : many}`;
+
+export const digestEmail = (
+  data: DigestContent,
+  links: EmailLinks,
+): RenderedEmail => {
+  const game = (id: number) => url(links, `/game/${id}`);
+  const rated = (f: DigestContent["friends"][number]) =>
+    f.rating === null ? "" : `, rated ${f.rating}/10`;
+  const friendLine = (f: DigestContent["friends"][number]) =>
+    `${f.username} ${DID[f.status][0]} ${f.title}${DID[f.status][1]}${rated(f)}`;
+  const people = new Set(data.friends.map((f) => f.username)).size;
+
+  const summary = [
+    data.friends.length > 0 &&
+      `${plural(people, "friend", "friends")} played something this week.`,
+    data.releases.length > 0 &&
+      `${plural(data.releases.length, "game", "games")} on your wishlist ${data.releases.length === 1 ? "comes" : "come"} out this week.`,
+    data.logged > 0 && `You logged ${plural(data.logged, "game", "games")}.`,
+  ].filter((line): line is string => Boolean(line));
+
+  const html: string[] = [];
+  const lines: string[] = [];
+  if (data.friends.length > 0) {
+    html.push(emailParagraph(emailStrong("What your friends played")));
+    lines.push("What your friends played");
+    for (const f of data.friends) {
+      html.push(
+        emailParagraph(
+          `${escapeHtml(f.username)} ${DID[f.status][0]} ${emailLink(game(f.gameId), escapeHtml(f.title))}${DID[f.status][1]}${rated(f)}`,
+          "margin:0 0 8px;",
+        ),
+      );
+      lines.push(`- ${friendLine(f)}: ${game(f.gameId)}`);
+    }
+    lines.push("");
+  }
+  if (data.releases.length > 0) {
+    html.push(emailParagraph(emailStrong("Out this week from your wishlist")));
+    lines.push("Out this week from your wishlist");
+    for (const r of data.releases) {
+      html.push(
+        emailParagraph(
+          `${emailLink(game(r.gameId), escapeHtml(r.title))}, ${releaseDay(r.releaseDate)}`,
+          "margin:0 0 8px;",
+        ),
+      );
+      lines.push(`- ${r.title}, ${releaseDay(r.releaseDate)}: ${game(r.gameId)}`);
+    }
+    lines.push("");
+  }
+  if (data.logged > 0) {
+    html.push(
+      emailParagraph(
+        `${emailStrong("Your week")}<br>You logged ${plural(data.logged, "game", "games")}.`,
+      ),
+    );
+    lines.push("Your week", `You logged ${plural(data.logged, "game", "games")}.`, "");
+  }
+  const home = url(links, "/");
+  return build({
+    scope: "digest",
+    links,
+    subject: "Your week on PlayRates",
+    preview: summary.join(" "),
+    title: "Your week on PlayRates",
+    body: [...html, emailButton(home, "Open PlayRates")].join("\n"),
+    lines: [...lines, `Open PlayRates: ${home}`],
   });
 };
 

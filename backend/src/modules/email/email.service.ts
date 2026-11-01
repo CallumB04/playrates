@@ -33,6 +33,7 @@ import {
   patchNotesEmail,
   welcomeEmail,
   wishlistReleaseEmail,
+  digestEmail,
   type EmailLinks,
   type RenderedEmail,
 } from "./email.templates.js";
@@ -88,6 +89,15 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const EVENT_WINDOW_MS = DAY_MS;
 /** Resend's placeholder for its own unsubscribe link in a broadcast. */
 const RESEND_UNSUBSCRIBE = "{{{RESEND_UNSUBSCRIBE_URL}}}";
+
+/** The Sunday a run's digest is for, as YYYY-MM-DD: today on a Sunday,
+ *  yesterday on a Monday, and none on any other day. In UTC, as the cron
+ *  runs. */
+export const digestSunday = (now: Date): string | null => {
+  const weekday = now.getUTCDay();
+  if (weekday !== 0 && weekday !== 1) return null;
+  return new Date(now.getTime() - weekday * DAY_MS).toISOString().slice(0, 10);
+};
 
 /** One member's email, waiting to be claimed under `ref`. */
 interface Queued {
@@ -414,6 +424,55 @@ export const createEmailService = ({
         }),
       );
       return { sent };
+    },
+
+    /**
+     * The weekly digest, on Sunday's run. Monday's run sends whatever the
+     * day's cap held back, under the same Sunday, so nobody gets two.
+     */
+    async sendDigest(now: Date): Promise<{ sent: number } | null> {
+      const sunday = digestSunday(now);
+      if (!sunday) return null;
+      const day = (offset: number) =>
+        new Date(Date.parse(`${sunday}T00:00:00Z`) + offset * DAY_MS)
+          .toISOString()
+          .slice(0, 10);
+      const rows = await repo.weeklyDigest(
+        new Date(now.getTime() - 7 * DAY_MS).toISOString(),
+        day(1),
+        day(7),
+      );
+      if (rows.length === 0) return { sent: 0 };
+      const members = await repo.memberEmails(rows.map((r) => r.user_id));
+      const byId = new Map(rows.map((r) => [r.user_id, r]));
+
+      const items: Queued[] = [];
+      for (const member of members) {
+        const row = byId.get(member.id);
+        if (!row) continue;
+        if (!emailAllowed(resolveEmailPrefs(member.email_prefs), "digest")) {
+          continue;
+        }
+        const target = addressed(member.id, "digest");
+        if (!target) return { sent: 0 };
+        items.push({
+          userId: member.id,
+          ref: sunday,
+          message: message(
+            member.email,
+            digestEmail(
+              {
+                friends: row.friends,
+                releases: row.releases,
+                logged: row.logged,
+              },
+              target.links,
+            ),
+            target.headers,
+          ),
+        });
+      }
+      return { sent: await sendOnce("weekly_digest", items) };
     },
 
     /** The reminders the nudge job just put in the bell, to those who

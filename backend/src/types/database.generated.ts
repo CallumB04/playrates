@@ -1744,6 +1744,11 @@ isOneToOne: false
               "average_rating": number,"backlog": number,"game_count": number,"hours_played": number,"log_count": number,"played": number,"playing": number,"rated_games": number,"wishlist": number
             }[]
                            },
+"weekly_digest":
+{ Args: { "p_from": string,"p_since": string,"p_to": string }; Returns: {
+              "friends": Json,"logged": number,"releases": Json,"user_id": string
+            }[]
+                           },
 "wishlist_releases_on":
 { Args: { "p_day": string }; Returns: {
               "cover_url": string,"game_id": number,"slug": string,"title": string,"user_id": string

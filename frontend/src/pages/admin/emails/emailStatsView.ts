@@ -34,6 +34,7 @@ const KINDS: Record<string, string> = {
     wishlist_release: "Wishlist release days",
     streak_at_risk: "Streak reminders",
     task_nearly_done: "Task reminders",
+    weekly_digest: "Weekly digest",
     news_test: "Your tests",
 };
 

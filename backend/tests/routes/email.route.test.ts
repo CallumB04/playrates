@@ -238,6 +238,7 @@ describe("email settings", () => {
       gifts_invites: true,
       wishlist_releases: true,
       reminders: false,
+      digest: true,
       news: true,
     });
   });

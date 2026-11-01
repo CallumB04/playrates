@@ -112,6 +112,61 @@ export const createInMemoryEmailRepo = (
             : [];
         });
     },
+    // As weekly_digest() reads it, less the privacy and adult-game rules,
+    // which are tested against Postgres.
+    async weeklyDigest(since, from, to) {
+      return state.profiles.flatMap((member) => {
+        const friendIds = state.friendships
+          .filter(
+            (f) =>
+              f.status === "accepted" &&
+              (f.user_a_id === member.id || f.user_b_id === member.id),
+          )
+          .map((f) => (f.user_a_id === member.id ? f.user_b_id : f.user_a_id));
+        const gameOf = (id: number) => state.games.find((g) => g.id === id);
+        const friends = state.gameLogs
+          .filter(
+            (l) =>
+              friendIds.includes(l.user_id) &&
+              l.status !== "wishlist" &&
+              l.updated_at >= since,
+          )
+          .slice(0, 6)
+          .map((l) => ({
+            username:
+              state.profiles.find((p) => p.id === l.user_id)?.username ?? "",
+            gameId: l.game_id,
+            title: gameOf(l.game_id)?.title ?? "",
+            status: l.status as "played" | "playing" | "backlog",
+            rating: l.rating,
+          }));
+        const releases = state.gameLogs
+          .filter((l) => l.user_id === member.id && l.status === "wishlist")
+          .flatMap((l) => {
+            const game = gameOf(l.game_id);
+            return game?.release_date &&
+              game.release_date >= from &&
+              game.release_date <= to
+              ? [
+                  {
+                    gameId: game.id,
+                    title: game.title,
+                    releaseDate: game.release_date,
+                  },
+                ]
+              : [];
+          });
+        const logged = state.gameLogs.filter(
+          (l) =>
+            l.user_id === member.id &&
+            l.status !== "wishlist" &&
+            l.created_at >= since,
+        ).length;
+        return friends.length || releases.length || logged
+          ? [{ user_id: member.id, friends, releases, logged }]
+          : [];
+      });
+    },
     async setPrefs(userId, prefs) {
       const profile = state.profiles.find((p) => p.id === userId);
       if (profile) profile.email_prefs = prefs;

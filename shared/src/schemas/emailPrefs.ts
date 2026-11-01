@@ -49,6 +49,13 @@ export const EMAIL_CATEGORIES = [
     defaultOn: false,
   },
   {
+    key: "digest",
+    label: "Weekly digest",
+    description:
+      "On Sunday evenings: what your friends played, and wishlist games out that week.",
+    defaultOn: true,
+  },
+  {
     key: "news",
     label: "News and patch notes",
     description:

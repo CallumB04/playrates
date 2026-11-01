@@ -13,7 +13,10 @@ interface Deps {
   provider: GamesProvider;
   repo: GamesRepository;
   progress: Pick<ProgressService, "nudge">;
-  emails: Pick<EmailService, "sendWishlistReleases" | "reconcileAudience">;
+  emails: Pick<
+    EmailService,
+    "sendWishlistReleases" | "reconcileAudience" | "sendDigest"
+  >;
   admin: Pick<AdminRepository, "pruneOldRows">;
   alerts: Pick<Alerts, "jobFailed">;
   /** Vercel sends it as a bearer token on each scheduled call. Without
@@ -95,10 +98,11 @@ export const createCronRouter = ({
     const part = partOf(req, failures);
 
     const nudged = await part("Streak and task reminders", progress.nudge());
+    const digest = await part("Weekly digest", emails.sendDigest(new Date()));
     const pruned = await part("Tidying old logs", admin.pruneOldRows());
     await alerts.jobFailed("nudges", failures);
     if (!nudged) throw failures[0]!.error;
-    res.json({ ...nudged, pruned });
+    res.json({ ...nudged, digest, pruned });
   });
 
   return router;

@@ -3,6 +3,7 @@ import type {
   EmailSendTotalRow,
   MemberEmailRow,
   WishlistReleaseRow,
+  WeeklyDigestRow,
 } from "../../types/database.types.js";
 
 /** What a send asks of the day's allowance. */
@@ -38,6 +39,13 @@ export interface EmailRepository {
   memberEmails(ids: string[] | null): Promise<MemberEmailRow[]>;
   memberIdByEmail(email: string): Promise<string | null>;
   wishlistReleasesOn(day: string): Promise<WishlistReleaseRow[]>;
+  /** Members with anything for a digest covering `since` onwards, and
+   *  wishlist releases on days `from` to `to`. */
+  weeklyDigest(
+    since: string,
+    from: string,
+    to: string,
+  ): Promise<WeeklyDigestRow[]>;
   /** Overwrites the stored switches with these. */
   setPrefs(userId: string, prefs: Record<string, boolean>): Promise<void>;
   /**
@@ -130,6 +138,19 @@ export const createEmailRepository = (db: Db): EmailRepository => ({
     });
     if (error) throw error;
     return (data as string | null) ?? null;
+  },
+
+  async weeklyDigest(since, from, to) {
+    const rows: WeeklyDigestRow[] = [];
+    for (let start = 0; ; start += PAGE) {
+      const { data, error } = await db
+        .rpc("weekly_digest", { p_since: since, p_from: from, p_to: to })
+        .range(start, start + PAGE - 1);
+      if (error) throw error;
+      const page = (data ?? []) as WeeklyDigestRow[];
+      rows.push(...page);
+      if (page.length < PAGE) return rows;
+    }
   },
 
   async wishlistReleasesOn(day) {

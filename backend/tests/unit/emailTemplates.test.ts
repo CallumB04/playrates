@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { RichTextDoc } from "@playrates/shared";
 import {
   announcementEmail,
+  digestEmail,
   endDay,
   streakEmail,
   taskEmail,
@@ -320,5 +321,30 @@ describe("reminders", () => {
     const email = streakEmail({ weeks: 4, shield: false, day: "Monday" }, links);
     expect(email.subject).toBe("Your 4 week streak needs something by Monday");
     expect(email.text).toContain("Log, rate, review or post anything to keep it.");
+  });
+});
+
+describe("digestEmail", () => {
+  it("leaves out the parts with nothing in them, and escapes names", () => {
+    const email = digestEmail(
+      {
+        friends: [
+          { username: "a<b", gameId: 1, title: "Hades", status: "playing", rating: null },
+        ],
+        releases: [],
+        logged: 0,
+      },
+      links,
+    );
+    expect(email.text).toContain("a<b is playing Hades");
+    expect(email.html).toContain("a&lt;b");
+    expect(email.text).not.toContain("Out this week");
+    expect(email.text).not.toContain("Your week\n");
+    expect(email.text).toContain("You're getting this because you have the weekly digest on.");
+  });
+
+  it("counts what you logged", () => {
+    const email = digestEmail({ friends: [], releases: [], logged: 1 }, links);
+    expect(email.text).toContain("You logged 1 game.");
   });
 });
