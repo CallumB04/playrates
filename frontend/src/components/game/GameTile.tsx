@@ -80,6 +80,9 @@ interface GameTileProps {
     /** Drop the figure below `sm`, for grids too narrow to hold both it and
      *  the platform marks. */
     narrowFoot?: boolean;
+    /** Two lines of title at most, for a rail of six where a third left
+     *  the hover buttons no room. */
+    shortTitle?: boolean;
 }
 
 const ACTION_TONE = {
@@ -105,6 +108,7 @@ const GameTile = ({
     meta,
     actions = [],
     narrowFoot = false,
+    shortTitle = false,
 }: GameTileProps) => {
     const rows = actions.filter((a) => !a.icon);
     const [busy, setBusy] = useState<Busy | null>(null);
@@ -186,8 +190,14 @@ const GameTile = ({
                         status={status}
                         size="stamp"
                         onMedia
-                        // Not on a phone, where it ran into the standing button.
-                        className="absolute top-1.5 right-1.5 max-sm:hidden"
+                        // Not on a phone, where it ran into the standing button,
+                        // nor under the hover buttons, which rise to meet it.
+                        className={cn(
+                            "absolute top-1.5 right-1.5 transition-opacity duration-300 max-sm:hidden",
+                            actions.length > 0 &&
+                                "group-focus-within/tile:opacity-0 group-hover/tile:opacity-0",
+                            busy && "opacity-0"
+                        )}
                     />
                 )}
 
@@ -392,7 +402,12 @@ const GameTile = ({
 
                     {/* Capped, so a long title never climbs into the
                         standing button at the top of a phone's cover. */}
-                    <span className="line-clamp-2 text-[13px] leading-tight font-medium text-content-on-media sm:line-clamp-3">
+                    <span
+                        className={cn(
+                            "line-clamp-2 text-[13px] leading-tight font-medium text-content-on-media",
+                            !shortTitle && "sm:line-clamp-3"
+                        )}
+                    >
                         {title}
                     </span>
                     {meta && (

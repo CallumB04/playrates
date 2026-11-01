@@ -81,6 +81,7 @@ const WishlistTop = ({ username, isMyAccount, canSee }: WishlistTopProps) => {
                                     )}
                                     actions={buildTileActions(entry)}
                                     narrowFoot
+                                    shortTitle
                                 />
                             </li>
                         ))}

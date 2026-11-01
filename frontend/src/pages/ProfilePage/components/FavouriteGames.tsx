@@ -94,6 +94,7 @@ const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {
                                 }
                                 actions={actionsFor(game)}
                                 narrowFoot
+                                shortTitle
                             />
                         </li>
                     ))}
