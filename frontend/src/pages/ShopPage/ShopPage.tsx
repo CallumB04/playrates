@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import {
     SHOP_GROUPS,
@@ -25,6 +25,7 @@ import {
     SwitcherTileBody,
     switcherTileClass,
 } from "../../components/ui/SectionSwitcher";
+import SignUpPlate from "../../components/SignUpPlate";
 import { useAuth } from "../../contexts/AuthContext";
 import { useShop } from "../../hooks/queries/useProgress";
 import { usePageMeta } from "../../hooks/usePageMeta";
@@ -44,7 +45,14 @@ const ShopPage = () => {
     const linked = params.get("item");
     usePageMeta({ title: "Shop", noindex: true });
 
-    if (!isLoading && !user) return <Navigate to="/" replace />;
+    if (!isLoading && !user) {
+        return (
+            <SignUpPlate
+                title="Sign up to use the shop"
+                body="Spend the tokens you earn on frames, themes, reactions and more."
+            />
+        );
+    }
     if (!shop || !user) {
         return (
             <div className="flex flex-col gap-6">

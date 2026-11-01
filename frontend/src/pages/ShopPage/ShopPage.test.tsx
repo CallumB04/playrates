@@ -9,8 +9,12 @@ import { renderWithProviders } from "../../test/renderWithProviders";
 import ShopPage from "./ShopPage";
 
 const user = buildProfile();
+const auth: { user: typeof user | null } = { user };
 vi.mock("../../contexts/AuthContext", () => ({
-    useAuth: () => ({ user, isLoading: false }),
+    useAuth: () => ({ user: auth.user, isLoading: false }),
+}));
+vi.mock("../../contexts/AccountFormContext", () => ({
+    useAccountForm: () => ({ openSignup: vi.fn(), openLogin: vi.fn() }),
 }));
 
 const API = "http://localhost:3000/api/v1";
@@ -42,5 +46,17 @@ describe("ShopPage", () => {
         expect(sheet).toHaveTextContent("Pinned reviews");
         await userEvent.click(screen.getByRole("button", { name: /close/i }));
         expect(screen.queryByRole("dialog")).toBeNull();
+    });
+
+    it("asks someone signed out to sign up, rather than sending them away", () => {
+        auth.user = null;
+        renderWithProviders(<ShopPage />, { route: "/shop" });
+        expect(
+            screen.getByRole("heading", { name: "Sign up to use the shop" })
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: "Sign up" })
+        ).toBeInTheDocument();
+        auth.user = user;
     });
 });
