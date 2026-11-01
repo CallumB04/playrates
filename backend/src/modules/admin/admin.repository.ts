@@ -34,6 +34,7 @@ import type {
   IgdbUsageDayRow,
   ServerErrorRow,
   ClientErrorRow,
+  AdminCohortRow,
 } from "../../types/database.types.js";
 
 export interface ClientErrorRowWithUser extends ClientErrorRow {
@@ -92,6 +93,8 @@ export interface AdminRepository {
   pruneOldRows(): Promise<PrunedRows>;
   totals(): Promise<AdminTotals>;
   progress(): Promise<AdminProgressRow>;
+  /** Signup weeks, newest first, the current one included. */
+  cohorts(weeks: number): Promise<AdminCohortRow[]>;
   /** Inclusive dates, YYYY-MM-DD. */
   series(
     from: string,
@@ -242,6 +245,12 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
     const { data, error } = await db.rpc("admin_progress");
     if (error) throw error;
     return data as AdminProgressRow;
+  },
+
+  async cohorts(weeks) {
+    const { data, error } = await db.rpc("admin_cohorts", { p_weeks: weeks });
+    if (error) throw error;
+    return (data ?? []) as AdminCohortRow[];
   },
 
   async series(from, to, bucket) {

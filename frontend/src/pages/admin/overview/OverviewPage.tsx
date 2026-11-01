@@ -28,6 +28,7 @@ import { bucketLabel, RANGE_LABELS } from "../lib/adminFormat";
 import { addedIn, runningTotal } from "../lib/plot";
 import { Change } from "./Change";
 import InsightCard from "./InsightCard";
+import Staying from "./Staying";
 import { LogsPopup, RepliesPopup, ReviewsPopup } from "./popups/ActivityPopups";
 import {
     HealthPopup,
@@ -513,6 +514,8 @@ const OverviewPage = () => {
                         <ActivityRow data={data} open={setOpen} />
                         <Leaders range={range} open={setOpen} />
                     </section>
+
+                    <Staying />
 
                     <section className="flex flex-col gap-4">
                         <SectionHeader

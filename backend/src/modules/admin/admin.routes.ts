@@ -286,6 +286,10 @@ export const createAdminRouter = ({
     res.json(await service.progress());
   });
 
+  router.get("/cohorts", async (_req, res) => {
+    res.json(await service.cohorts());
+  });
+
   router.get("/health", async (_req, res) => {
     res.json(await service.health());
   });

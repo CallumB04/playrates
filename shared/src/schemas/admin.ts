@@ -706,6 +706,38 @@ export interface AdminHealth {
   };
 }
 
+/** Of those a window has closed for, how many came back in it. */
+export interface AdminReturn {
+  of: number;
+  back: number;
+}
+
+/** One signup week (its Monday) and how it went. */
+export interface AdminCohortWeek {
+  week: string;
+  signedUp: number;
+  onboarded: number;
+  /** Logged three games in their first 24 hours. */
+  loggedThree: number;
+  /** Visited again 7 to 13 days after joining. */
+  backWeek: AdminReturn;
+  /** Visited again 30 to 36 days after joining. */
+  backMonth: AdminReturn;
+}
+
+export interface AdminCohorts {
+  /** Newest first. */
+  weeks: AdminCohortWeek[];
+  /** Everyone who joined through an invite in those weeks. */
+  referrals: {
+    joined: number;
+    onboarded: number;
+    /** Five games played, as the Recruiter badge counts it. */
+    gotGoing: number;
+    backWeek: AdminReturn;
+  };
+}
+
 export interface ServerErrorEntry {
   id: number;
   status: number;

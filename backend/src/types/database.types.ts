@@ -370,6 +370,23 @@ export interface ServerErrorRow {
   created_at: string;
 }
 
+/** One row of admin_cohorts(). */
+export interface AdminCohortRow {
+  week: string;
+  signed_up: number;
+  onboarded: number;
+  logged_three: number;
+  week_due: number;
+  back_week: number;
+  month_due: number;
+  back_month: number;
+  referred: number;
+  referred_onboarded: number;
+  referred_going: number;
+  referred_week_due: number;
+  referred_back_week: number;
+}
+
 export interface ClientErrorRow {
   id: number;
   message: string;

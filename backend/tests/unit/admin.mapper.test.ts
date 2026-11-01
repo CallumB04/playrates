@@ -12,6 +12,7 @@ import {
   toAdminProgress,
   toIgdbUsage,
   toServerError,
+  toCohorts,
   toUserSummary,
   patchNoteTitle,
   toPatchNote,
@@ -426,5 +427,42 @@ describe("toAdminProgress", () => {
   it("averages nothing to nought with no members", () => {
     expect(toAdminProgress(row).xp.average).toBe(0);
     expect(toAdminProgress(row).levels.every((l) => l.members === 0)).toBe(true);
+  });
+});
+
+describe("toCohorts", () => {
+  const row = (week: string, n: number) => ({
+    week,
+    signed_up: 10 * n,
+    onboarded: 8 * n,
+    logged_three: 4 * n,
+    week_due: 10 * n,
+    back_week: 5 * n,
+    month_due: 0,
+    back_month: 0,
+    referred: 2 * n,
+    referred_onboarded: 2 * n,
+    referred_going: n,
+    referred_week_due: 2 * n,
+    referred_back_week: n,
+  });
+
+  it("keeps each week and adds up the invited across them", () => {
+    const cohorts = toCohorts([row("2026-10-26", 1), row("2026-10-19", 2)]);
+
+    expect(cohorts.weeks[1]).toEqual({
+      week: "2026-10-19",
+      signedUp: 20,
+      onboarded: 16,
+      loggedThree: 8,
+      backWeek: { of: 20, back: 10 },
+      backMonth: { of: 0, back: 0 },
+    });
+    expect(cohorts.referrals).toEqual({
+      joined: 6,
+      onboarded: 6,
+      gotGoing: 3,
+      backWeek: { of: 6, back: 3 },
+    });
   });
 });

@@ -1538,6 +1538,11 @@ isOneToOne: false
               "events": number,"kind": string
             }[]
                            },
+"admin_cohorts":
+{ Args: { "p_weeks"?: number }; Returns: {
+              "back_month": number,"back_week": number,"logged_three": number,"month_due": number,"onboarded": number,"referred": number,"referred_back_week": number,"referred_going": number,"referred_onboarded": number,"referred_week_due": number,"signed_up": number,"week": string,"week_due": number
+            }[]
+                           },
 "admin_metric_detail":
 { Args: { "p_from": string,"p_metric": string,"p_to": string }; Returns: Json
                            },

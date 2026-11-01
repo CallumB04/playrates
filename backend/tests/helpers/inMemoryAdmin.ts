@@ -313,6 +313,27 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
       return rows.filter((e) => e.created_at >= since).length;
     },
 
+    // The SQL is tested against Postgres; this only gives the route rows.
+    async cohorts(weeks) {
+      return Array.from({ length: weeks }, (_, i) => ({
+        week: new Date(Date.UTC(2026, 9, 26) - i * 7 * 86_400_000)
+          .toISOString()
+          .slice(0, 10),
+        signed_up: 0,
+        onboarded: 0,
+        logged_three: 0,
+        week_due: 0,
+        back_week: 0,
+        month_due: 0,
+        back_month: 0,
+        referred: 0,
+        referred_onboarded: 0,
+        referred_going: 0,
+        referred_week_due: 0,
+        referred_back_week: 0,
+      }));
+    },
+
     async adminIds() {
       return state.profiles.filter((p) => p.is_admin).map((p) => p.id);
     },

@@ -157,6 +157,7 @@ const ENDPOINTS: { method: "get" | "post" | "patch" | "put"; path: string; body?
   { method: "get", path: "/api/v1/admin/progress" },
   { method: "get", path: "/api/v1/admin/errors" },
   { method: "get", path: "/api/v1/admin/client-errors" },
+  { method: "get", path: "/api/v1/admin/cohorts" },
 ];
 
 const call = (
