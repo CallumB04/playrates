@@ -447,10 +447,15 @@ export const createInMemoryRepos = (
           .map((g) => ({ id: g.id, lastmod: g.updated_at.slice(0, 10) }));
       },
       async threads() {
-        return state.communityThreads.map((t) => ({
-          id: t.id,
-          lastmod: t.last_activity_at.slice(0, 10),
-        }));
+        const adult = new Set(
+          state.games.filter((g) => g.has_sexual_content).map((g) => g.id),
+        );
+        return state.communityThreads
+          .filter((t) => t.game_id === null || !adult.has(t.game_id))
+          .map((t) => ({
+            id: t.id,
+            lastmod: t.last_activity_at.slice(0, 10),
+          }));
       },
     },
     reports: {

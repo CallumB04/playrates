@@ -39,8 +39,10 @@ export const createSitemapRepository = (db: Db): SitemapRepository => ({
     const rows: SitemapEntry[] = [];
     for (let from = 0; ; from += 1000) {
       const { data, error } = await db
-        .from("community_threads")
+        .from("community_thread_cards")
         .select("id, last_activity_at")
+        // Threads about an adult game ask not to be listed, as its page does.
+        .eq("game_has_sexual_content", false)
         .order("id")
         .range(from, from + 999);
       if (error) throw error;

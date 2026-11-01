@@ -82,7 +82,10 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
             ? profileDescription(targetUser.username, targetUser.bio)
             : null,
         image: targetUser?.avatarUrl,
-        noindex: targetUser?.hideFromSearch,
+        noindex: targetUser
+            ? targetUser.hideFromSearch ||
+              targetUser.profileVisibility !== "everyone"
+            : undefined,
     });
 
     const isMyAccount =

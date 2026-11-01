@@ -300,7 +300,11 @@ export const createPagesService = (repos: Repos) => {
         image: row.avatar_url ?? DEFAULT_IMAGE,
         card: "summary",
         type: "profile",
-        noindex: row.hide_from_search,
+        // Hidden from search, or a profile only some may see past: either
+        // way not one to list.
+        noindex:
+          row.hide_from_search ||
+          toProfileVisibility(row.profile_visibility) !== "everyone",
         // Hidden from search means hidden from this too.
         body: row.hide_from_search ? undefined : await profileBody(row),
       };
@@ -404,7 +408,9 @@ export const createPagesService = (repos: Repos) => {
         image: DEFAULT_IMAGE,
         card: "summary_large_image",
         type: "article",
-        // As with the game itself, a thread about an adult game says no more.
+        // As with the game itself, a thread about an adult game says no more
+        // and asks not to be listed.
+        noindex: thread.game_has_sexual_content,
         body: thread.game_has_sexual_content
           ? undefined
           : threadBody(thread, messages),

@@ -84,6 +84,8 @@ const GamePage = () => {
               })
             : null,
         image: game?.coverUrl,
+        // As the server says for the page: an adult game isn't listed.
+        noindex: game?.hasSexualContent,
     });
 
     const actionsEnd = useRef<HTMLSpanElement>(null);

@@ -107,6 +107,33 @@ describe("rendered pages", () => {
     expect(unknown.status).toBe(404);
   });
 
+  it("asks search engines to leave a private or friends-only profile out", async () => {
+    for (const visibility of ["private", "friends"]) {
+      const { app } = buildTestApp({
+        seed: {
+          ...baseSeed(),
+          profiles: [buildProfile({ profile_visibility: visibility })],
+        },
+      });
+      const response = await request(app).get("/user/devuser");
+      expect(response.text).toContain(
+        '<meta name="robots" content="noindex" />',
+      );
+    }
+  });
+
+  it("asks search engines to leave out a thread about an adult game", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        games: [buildGame({ id: 1, has_sexual_content: true })],
+        communityThreads: [buildThread({ game_id: 1 })],
+      },
+    });
+    const response = await request(app).get("/community/thread/1");
+    expect(response.text).toContain('<meta name="robots" content="noindex" />');
+  });
+
   it("describes a thread by its opening message, escaped", async () => {
     const { app } = buildTestApp({
       seed: {
@@ -194,11 +221,21 @@ describe("the sitemap", () => {
   });
 
   it("lists threads and the fixed pages", async () => {
-    const { app } = buildTestApp({ seed: seed(), production: true });
+    const { app } = buildTestApp({
+      seed: {
+        ...seed(),
+        communityThreads: [
+          buildThread({ id: 7, game_id: 1 }),
+          buildThread({ id: 8, game_id: 2 }),
+        ],
+      },
+      production: true,
+    });
 
-    expect((await request(app).get("/sitemaps/threads.xml")).text).toContain(
-      "https://playrates.app/community/thread/7",
-    );
+    const threads = (await request(app).get("/sitemaps/threads.xml")).text;
+    expect(threads).toContain("https://playrates.app/community/thread/7");
+    // About an adult game: left out, as the game is.
+    expect(threads).not.toContain("https://playrates.app/community/thread/8");
     expect((await request(app).get("/sitemaps/pages.xml")).text).toContain(
       "<loc>https://playrates.app/privacy</loc>",
     );

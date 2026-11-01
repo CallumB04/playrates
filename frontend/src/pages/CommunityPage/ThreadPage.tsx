@@ -73,6 +73,9 @@ const ThreadPage = () => {
         description: opening
             ? toPlainText(opening, { hideSpoilers: true })
             : null,
+        noindex:
+            data?.thread.subject.kind === "game" &&
+            data.thread.subject.game.hasSexualContent,
     });
 
     const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
