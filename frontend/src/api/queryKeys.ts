@@ -135,6 +135,8 @@ export const queryKeys = {
     friends: {
         mine: ["friends", "me"] as const,
         activity: ["friends", "me", "activity"] as const,
+        matches: ["friends", "me", "matches"] as const,
+        fans: (gameId: number) => ["friends", "fans", gameId] as const,
         byUsername: (username: string) => ["friends", username] as const,
     },
 

@@ -97,6 +97,10 @@ export interface FixedPageMeta {
 export const FIXED_PAGES: Record<string, FixedPageMeta> = {
   "/library": { title: "Library" },
   "/community": { title: "Community" },
+  "/people": {
+    title: "People",
+    description: "Find people on PlayRates who play and rate like you.",
+  },
   "/privacy": {
     title: "Privacy",
     description: "What PlayRates keeps about you and why.",

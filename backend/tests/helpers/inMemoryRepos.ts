@@ -1465,6 +1465,64 @@ export const createInMemoryRepos = (
         return { rows: rows.slice(from, to + 1), total: rows.length };
       },
 
+      // The SQL ranks; this only finds who would be in the list at all.
+      async tasteMatches(userId, limit) {
+        const rated = (id: string) =>
+          new Map(
+            state.gameLogs
+              .filter((l) => l.user_id === id && l.rating !== null)
+              .map((l) => [l.game_id, l.rating!]),
+          );
+        const mine = rated(userId);
+        const friendIds = new Set(
+          state.friendships
+            .filter(
+              (f) =>
+                f.status === "accepted" &&
+                (f.user_a_id === userId || f.user_b_id === userId),
+            )
+            .map((f) => (f.user_a_id === userId ? f.user_b_id : f.user_a_id)),
+        );
+        return state.profiles
+          .filter(
+            (p) =>
+              p.id !== userId &&
+              !friendIds.has(p.id) &&
+              p.profile_visibility === "everyone",
+          )
+          .flatMap((p) => {
+            const both = [...rated(p.id)].filter(([game]) => mine.has(game));
+            if (both.length < 3) return [];
+            const agreement =
+              both.reduce(
+                (sum, [game, r]) =>
+                  sum + 1 - Math.abs(r - mine.get(game)!) / 10,
+                0,
+              ) / both.length;
+            return [
+              {
+                ...p,
+                shared: both.length,
+                agreement: Math.round(agreement * 100),
+              },
+            ];
+          })
+          .slice(0, limit);
+      },
+      async gameFans(gameId, limit) {
+        return state.gameLogs
+          .filter(
+            (l) => l.game_id === gameId && l.rating !== null && l.rating >= 8,
+          )
+          .flatMap((l) => {
+            const p = state.profiles.find((x) => x.id === l.user_id);
+            return p && p.profile_visibility === "everyone"
+              ? [{ ...p, rating: l.rating! }]
+              : [];
+          })
+          .sort((a, b) => b.rating - a.rating)
+          .slice(0, limit);
+      },
       async listForUser(userId) {
         return state.friendships
           .filter((f) => f.user_a_id === userId || f.user_b_id === userId)

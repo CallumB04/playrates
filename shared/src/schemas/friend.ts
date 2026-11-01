@@ -32,6 +32,21 @@ export interface FriendUser {
   online: boolean;
 }
 
+/** Someone who rates games the way you do. */
+export interface TasteMatch {
+  user: FriendUser;
+  /** Games you have both rated. */
+  shared: number;
+  /** How close your ratings of them sit, out of 100. */
+  agreement: number;
+}
+
+/** Someone who rated a game highly, with what they gave it. */
+export interface GameFan {
+  user: FriendUser;
+  rating: number;
+}
+
 /** The other party is embedded, so a friend list needs no follow-up requests. */
 export interface FriendEdge {
   status: FriendRelation;

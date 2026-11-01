@@ -1480,6 +1480,32 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"member_ratings": {
+                  Row: {
+                    "game_id": number,"rating": number | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "game_logs_game_id_fkey"
+      columns: ["game_id"]
+isOneToOne: false
+      referencedRelation: "games"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "game_logs_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "admin_user_directory"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "game_logs_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"review_cards": {
                   Row: {
                     "author_accent": string | null,"author_avatar_url": string | null,"author_first_name": string | null,"author_last_seen_at": string | null,"author_profile_visibility": string | null,"author_username": string | null,"body": string,"contains_spoilers": boolean,"created_at": string,"game_cover_url": string | null,"game_has_sexual_content": boolean,"game_id": number,"game_slug": string,"game_title": string,"hours_played": number | null,"id": number,"is_public": boolean,"log_id": number,"platform_slug": string | null,"played_status": string | null,"rating": number | null,"status": string | null,"system_slug": string | null,"updated_at": string,"user_id": string,"vote_count": number | null
@@ -1615,6 +1641,11 @@ isOneToOne: false
 "erase_account_traces":
 { Args: { "p_id": string }; Returns: undefined
                            },
+"game_fans":
+{ Args: { "p_game": number,"p_limit"?: number }; Returns: {
+              "accent": string,"avatar_url": string,"bio": string,"id": string,"last_seen_at": string,"rating": number,"username": string
+            }[]
+                           },
 "game_playrates_stats":
 { Args: { "p_game_id": number }; Returns: {
               "achievement_tracked_count": number,"avg_completion": number,"avg_hours_played": number,"avg_hours_to_beat": number
@@ -1731,6 +1762,11 @@ isOneToOne: false
 "take_email_slots":
 { Args: { "p_cap": number,"p_count": number,"p_kind": string,"p_transactional": boolean }; Returns: {
               "granted": number,"id": number
+            }[]
+                           },
+"taste_matches":
+{ Args: { "p_limit"?: number,"p_user": string }; Returns: {
+              "accent": string,"agreement": number,"avatar_url": string,"bio": string,"id": string,"last_seen_at": string,"shared": number,"username": string
             }[]
                            },
 "touch_last_seen":

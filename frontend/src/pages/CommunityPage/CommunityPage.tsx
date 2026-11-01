@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { PenLine, Plus, Search } from "lucide-react";
+import { PenLine, Plus, Search, Users } from "lucide-react";
 import { SiDiscord } from "@icons-pack/react-simple-icons";
 import { DISCORD_INVITE_URL } from "../../constants/brand";
 import { hasContent, readThreadDraft } from "../../lib/drafts";
@@ -139,6 +139,16 @@ const CommunityPage = () => {
                                 <SiDiscord size={16} aria-hidden />
                                 Join the Discord
                             </a>
+                            <Link
+                                to="/people"
+                                className={buttonClass(
+                                    "secondary",
+                                    "w-full sm:w-auto"
+                                )}
+                            >
+                                <Users size={16} aria-hidden />
+                                Find people
+                            </Link>
                         </div>
                         {/* An unfinished thread is easier to come back to when it's
                         pointed at, right where a new one would start. */}
