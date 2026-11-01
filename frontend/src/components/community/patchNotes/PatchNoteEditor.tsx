@@ -108,9 +108,13 @@ const PatchNoteEditor = ({
             </label>
 
             <fieldset className="flex flex-col gap-3">
-                <legend className="mb-1.5 text-label text-content-secondary">
+                <legend className="text-label text-content-secondary">
                     Changes
                 </legend>
+                <p className="mt-1 text-body-sm text-content-muted">
+                    A link starting /me goes to the reader’s own profile:
+                    /me/lists, /me/games?type=wishlist, /me?edit=profile.
+                </p>
                 {rows.map((r, i) => (
                     <div
                         key={r.key}
@@ -144,7 +148,7 @@ const PatchNoteEditor = ({
                                 onChange={(e) =>
                                     change(r.key, { link: e.target.value })
                                 }
-                                placeholder="Link, if it goes somewhere: /settings or https://…"
+                                placeholder="Link, if it goes somewhere: /me/lists, /settings or https://…"
                                 aria-label={`Change ${i + 1}: link`}
                                 aria-invalid={
                                     (showProblem &&

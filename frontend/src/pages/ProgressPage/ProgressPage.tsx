@@ -107,7 +107,9 @@ const ProgressPage = () => {
                         <Streak data={data} />
                     </div>
                     <Leaderboard />
-                    <InviteCard />
+                    <div id="invite" className="scroll-mt-24">
+                        <InviteCard />
+                    </div>
                 </aside>
             </div>
         </div>

@@ -233,6 +233,19 @@ export const createPagesRouter = ({
     })),
   );
 
+  // Your own profile, anywhere in it, by no name: the app sends you there.
+  router.get(
+    /^\/me(\/.*)?$/,
+    render(async (req) => ({
+      title: pageTitle(null),
+      description: SITE_DESCRIPTION,
+      path: req.path,
+      image: DEFAULT_IMAGE,
+      card: "summary",
+      noindex: true,
+    })),
+  );
+
   // The library's first name. The filters live in the query string.
   router.get("/catalogue", (req, res) => {
     const query = req.originalUrl.slice(req.path.length);

@@ -44,7 +44,7 @@ const AdminGate = lazy(() => import("./pages/admin/AdminGate"));
 const HubPage = lazy(() => import("./pages/HubPage/HubPage"));
 const PeoplePage = lazy(() => import("./pages/PeoplePage/PeoplePage"));
 const ReviewPage = lazy(() => import("./pages/ReviewPage/ReviewPage"));
-const MyGaming25 = lazy(() => import("./pages/Gaming25Page/MyGaming25"));
+const MyProfile = lazy(() => import("./pages/ProfilePage/MyProfile"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 /** Layout shell and route table. State lives in the providers. */
@@ -110,10 +110,7 @@ function App() {
                                     path="/user/:username/gaming-25"
                                     element={<Gaming25Page />}
                                 />
-                                <Route
-                                    path="/gaming-25"
-                                    element={<MyGaming25 />}
-                                />
+                                <Route path="/me/*" element={<MyProfile />} />
                                 <Route
                                     path="/user/:targetUsername?/:view?"
                                     element={<ProfilePageRoute />}
