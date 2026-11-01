@@ -79,6 +79,7 @@ export const queryKeys = {
 
     reviews: {
         recent: ["reviews", "recent"] as const,
+        one: (id: number) => ["reviews", "one", id] as const,
         byGame: (gameId: number, sort?: string) =>
             ["reviews", "game", gameId, sort ?? "recent"] as const,
         byUsername: (username: string, page?: number, limit?: number) =>

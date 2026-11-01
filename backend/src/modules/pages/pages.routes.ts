@@ -184,6 +184,14 @@ export const createPagesRouter = ({
   );
 
   router.get(
+    "/review/:id",
+    render(async (req) => {
+      const id = numericParam(req.params.id);
+      return id === null ? null : service.review(id);
+    }),
+  );
+
+  router.get(
     "/community/thread/:id",
     render(async (req) => {
       const id = numericParam(req.params.id);

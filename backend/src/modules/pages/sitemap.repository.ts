@@ -12,14 +12,15 @@ export interface SitemapRepository {
   countGames(): Promise<number>;
   games(offset: number, limit: number): Promise<SitemapEntry[]>;
   threads(): Promise<SitemapEntry[]>;
-  /** Paths of what members made public: their profiles, lists and Gaming
-   *  25s, each only where anyone may see it and they haven't asked to stay
-   *  out of search. */
+  /** Paths of what members made public: their profiles, lists, Gaming
+   *  25s and reviews, each only where anyone may see it and they haven't
+   *  asked to stay out of search. */
   people(): Promise<{ path: string; lastmod: string }[]>;
 }
 
 type Listed = { path: string; lastmod: string };
 const day = (at: string) => at.slice(0, 10);
+const REVIEW_PAGE_MIN = 200;
 
 export const createSitemapRepository = (db: Db): SitemapRepository => ({
   async countGames() {
@@ -84,7 +85,7 @@ export const createSitemapRepository = (db: Db): SitemapRepository => ({
     });
     const listed = new Map(profiles.map((p) => [p.id, p.username]));
 
-    const [lists, grids] = await Promise.all([
+    const [lists, grids, reviews] = await Promise.all([
       allPages(async (from, to) => {
         const { data, error } = await db
           .from("game_list_cards")
@@ -109,6 +110,23 @@ export const createSitemapRepository = (db: Db): SitemapRepository => ({
         if (error) throw error;
         return (data ?? []) as { user_id: string; updated_at: string }[];
       }),
+      allPages(async (from, to) => {
+        const { data, error } = await db
+          .from("review_cards")
+          .select("id, user_id, updated_at, body")
+          .eq("is_public", true)
+          .eq("contains_spoilers", false)
+          .eq("game_has_sexual_content", false)
+          .order("id")
+          .range(from, to);
+        if (error) throw error;
+        return (data ?? []) as {
+          id: number;
+          user_id: string;
+          updated_at: string;
+          body: string;
+        }[];
+      }),
     ]);
 
     const entries: Listed[] = profiles.map((p) => ({
@@ -131,6 +149,12 @@ export const createSitemapRepository = (db: Db): SitemapRepository => ({
           path: `/user/${owner}/gaming-25`,
           lastmod: day(g.updated_at),
         });
+      }
+    }
+    for (const r of reviews) {
+      // A line or two is a rating with a caption, not a page worth finding.
+      if (listed.has(r.user_id) && r.body.trim().length >= REVIEW_PAGE_MIN) {
+        entries.push({ path: `/review/${r.id}`, lastmod: day(r.updated_at) });
       }
     }
     return entries;

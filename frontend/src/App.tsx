@@ -43,6 +43,7 @@ const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage"));
 const AdminGate = lazy(() => import("./pages/admin/AdminGate"));
 const HubPage = lazy(() => import("./pages/HubPage/HubPage"));
 const PeoplePage = lazy(() => import("./pages/PeoplePage/PeoplePage"));
+const ReviewPage = lazy(() => import("./pages/ReviewPage/ReviewPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 /** Layout shell and route table. State lives in the providers. */
@@ -150,6 +151,10 @@ function App() {
                                 <Route
                                     path="/games/upcoming"
                                     element={<HubPage kind="upcoming" />}
+                                />
+                                <Route
+                                    path="/review/:reviewId"
+                                    element={<ReviewPage />}
                                 />
                                 <Route
                                     path="/people"

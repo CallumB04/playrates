@@ -230,11 +230,17 @@ const GameReviews = ({
                                                         played
                                                     </span>
                                                 )}
-                                                <span className="text-label-sm text-content-muted">
+                                                {/* Its own page: a link
+                                                    to share, and a page to
+                                                    be found by. */}
+                                                <Link
+                                                    to={`/review/${review.id}`}
+                                                    className="relative text-label-sm text-content-muted before:absolute before:-inset-3 before:content-[''] hover:text-content hover:underline"
+                                                >
                                                     {relativeTime(
                                                         review.createdAt
                                                     )}
-                                                </span>
+                                                </Link>
                                             </div>
                                             {/* The full width of the row: a
                                                 review is prose, and a

@@ -32,7 +32,7 @@ const Row = ({ review }: { review: ReviewWithAuthor }) => {
 
     return (
         <Link
-            to={`/game/${review.game.id}#review-${review.id}`}
+            to={`/review/${review.id}`}
             className="block rounded-md px-2.5 py-2.5 lift hover:bg-surface-hover"
         >
             <span className="flex items-center gap-2">

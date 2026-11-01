@@ -505,6 +505,8 @@ describe("every other page", () => {
         ...baseSeed(),
         games: [buildGame({ id: 1 })],
         communityThreads: [buildThread({ id: 1 })],
+        gameLogs: [buildGameLog({ id: 1 })],
+        reviews: [buildReview({ id: 1 })],
       },
     });
 
@@ -515,6 +517,7 @@ describe("every other page", () => {
         .replace("/:view?", "/games")
         .replace(":gameID", "1")
         .replace(":threadId", "1")
+        .replace(":reviewId", "1")
         .replace(":year", "2024")
         .replace("/genre/:slug", "/genre/indie")
         .replace("/platform/:slug", `/platform/${buildPlatform().slug}`)
@@ -730,5 +733,56 @@ describe("hub pages", () => {
     expect(hubs).toContain(
       "<loc>https://playrates.app/games/genre/indie</loc>",
     );
+  });
+});
+
+describe("review pages", () => {
+  const long = "Held up far better than I expected. ".repeat(8);
+  const seed = (review: Parameters<typeof buildReview>[0] = {}) => ({
+    ...baseSeed(),
+    gameLogs: [buildGameLog({ id: 1, user_id: USER_A, game_id: 1, rating: 9 })],
+    reviews: [buildReview({ id: 5, log_id: 1, body: long, ...review })],
+  });
+
+  it("gives a review its own page, with Review data", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const response = await request(app).get("/review/5");
+    expect(response.status).toBe(200);
+    expect(response.text).toContain("devuser’s review of");
+    expect(response.text).toContain('"@type":"Review"');
+    expect(response.text).toContain('"bestRating":10');
+    expect(response.text).not.toContain('content="noindex"');
+  });
+
+  it("keeps a spoiler off the page", async () => {
+    const { app } = buildTestApp({
+      seed: seed({ contains_spoilers: true, body: "The twist is that " + long }),
+    });
+    const response = await request(app).get("/review/5");
+    expect(response.text).not.toContain("The twist is that");
+    expect(response.text).toContain("It contains spoilers.");
+  });
+
+  it("isn't a page at all when private", async () => {
+    const { app } = buildTestApp({ seed: seed({ is_public: false }) });
+    expect((await request(app).get("/review/5")).status).toBe(404);
+    expect((await request(app).get("/api/v1/reviews/5")).status).toBe(404);
+  });
+
+  it("is listed in the sitemap when it has something to say", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    expect((await request(app).get("/sitemaps/people.xml")).text).toContain(
+      "/review/5",
+    );
+    const short = buildTestApp({ seed: seed({ body: "Great." }) });
+    expect(
+      (await request(short.app).get("/sitemaps/people.xml")).text,
+    ).not.toContain("/review/5");
+  });
+
+  it("answers the API with the review", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const response = await request(app).get("/api/v1/reviews/5");
+    expect(response.body).toMatchObject({ id: 5, rating: 9, author: { username: "devuser" } });
   });
 });

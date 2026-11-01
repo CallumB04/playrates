@@ -489,6 +489,16 @@ export const createInMemoryRepos = (
               path: `/user/${listed.get(g.user_id)}/gaming-25`,
               lastmod: day(g.updated_at),
             })),
+          ...state.reviews
+            .filter(
+              (r) =>
+                r.is_public &&
+                !r.contains_spoilers &&
+                listed.has(r.user_id) &&
+                r.body.trim().length >= 200 &&
+                !state.games.find((g) => g.id === r.game_id)?.has_sexual_content,
+            )
+            .map((r) => ({ path: `/review/${r.id}`, lastmod: day(r.updated_at) })),
         ];
       },
       async threads() {

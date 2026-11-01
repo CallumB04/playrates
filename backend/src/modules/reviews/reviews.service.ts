@@ -151,6 +151,24 @@ export const createReviewsService = (
   };
 
   return {
+    /** One review, on a page of its own. Missing to anyone who couldn't
+     *  see it in a listing: a private one to all but its author, one of an
+     *  adult game to those who haven't chosen to see them. */
+    async getById(
+      id: number,
+      viewerId: string | undefined,
+    ): Promise<ReviewWithAuthor> {
+      const row = await repo.findById(id);
+      if (
+        !row ||
+        (!row.is_public && row.user_id !== viewerId) ||
+        (row.game_has_sexual_content && !(await canSeeExplicit(viewerId)))
+      ) {
+        throw AppError.notFound("Review");
+      }
+      return (await present(viewerId, [row]))[0]!;
+    },
+
     async listByGame(
       gameId: number,
       viewerId: string | undefined,

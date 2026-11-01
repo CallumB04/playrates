@@ -602,6 +602,87 @@ export const createPagesService = (repos: Repos) => {
       };
     },
 
+    /** A review on its own page. A private one isn't a page at all; one
+     *  of an adult game, or by someone whose profile isn't open to all,
+     *  asks not to be listed and names no one. */
+    async review(id: number): Promise<HeadMeta | null> {
+      const row = await repos.reviews.findById(id);
+      if (!row || !row.is_public) return null;
+      const hidden =
+        row.game_has_sexual_content ||
+        (row.author_profile_visibility ?? "everyone") !== "everyone";
+      const author = hidden ? null : row.author_username;
+      const game = row.game_title;
+      const heading = author
+        ? `${author}’s review of ${game}`
+        : `A review of ${game}`;
+      // A spoiler is kept off the page and out of the preview, as the app
+      // keeps it behind a tap.
+      const text = row.contains_spoilers ? "" : row.body.trim();
+      const rating = row.rating === null ? null : Number(row.rating);
+      return {
+        title: pageTitle(heading),
+        description: text
+          ? truncateDescription(text)
+          : `${heading}. It contains spoilers.`,
+        path: `/review/${row.id}`,
+        image: row.game_has_sexual_content
+          ? DEFAULT_IMAGE
+          : (row.game_cover_url ?? DEFAULT_IMAGE),
+        card: "summary_large_image",
+        type: "article",
+        noindex: hidden,
+        jsonLd: hidden
+          ? undefined
+          : {
+              "@context": "https://schema.org",
+              "@type": "Review",
+              url: `${SITE_ORIGIN}/review/${row.id}`,
+              datePublished: row.created_at,
+              itemReviewed: {
+                "@type": "VideoGame",
+                name: game,
+                url: `${SITE_ORIGIN}/game/${row.game_id}`,
+              },
+              ...(author
+                ? {
+                    author: {
+                      "@type": "Person",
+                      name: author,
+                      url: `${SITE_ORIGIN}/user/${author}`,
+                    },
+                  }
+                : {}),
+              ...(text ? { reviewBody: truncateDescription(text, 2000) } : {}),
+              ...(rating !== null
+                ? {
+                    reviewRating: {
+                      "@type": "Rating",
+                      ratingValue: rating,
+                      bestRating: 10,
+                      worstRating: 0,
+                    },
+                  }
+                : {}),
+            },
+        body: hidden
+          ? undefined
+          : {
+              heading,
+              lead: [
+                rating !== null ? `Rated ${rating}/10,` : null,
+                `written ${formatDay(row.created_at)}.`,
+              ]
+                .filter(Boolean)
+                .join(" "),
+              text: text ? toParagraphs(text) : ["It contains spoilers."],
+              links: [
+                { href: `/game/${row.game_id}`, label: `More about ${game}` },
+              ],
+            },
+      };
+    },
+
     /** A page of games chosen one way. Null for a genre, platform, year
      *  or game the site doesn't have. */
     async hub(asked: HubRequest): Promise<HeadMeta | null> {
