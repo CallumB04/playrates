@@ -9,7 +9,10 @@ import type {
   EmailMessage,
   EmailSender,
 } from "../../src/modules/email/email.sender.js";
-import type { RecentSends, SendActivity } from "../../src/modules/email/email.activity.js";
+import type {
+  RecentSends,
+  SendActivity,
+} from "../../src/modules/email/email.activity.js";
 import type { EmailSendTotalRow } from "../../src/types/database.types.js";
 import type { InMemoryState } from "./inMemoryRepos.js";
 
@@ -44,7 +47,13 @@ export const createInMemoryEmailRepo = (
       const row = find(userId, kind, ref);
       const at = new Date(now()).toISOString();
       if (!row) {
-        state.emailLog.push({ id: nextId++, user_id: userId, kind, ref, sent_at: at });
+        state.emailLog.push({
+          id: nextId++,
+          user_id: userId,
+          kind,
+          ref,
+          sent_at: at,
+        });
         return true;
       }
       if (withinMs === null || Date.parse(row.sent_at) > now() - withinMs) {
@@ -52,6 +61,16 @@ export const createInMemoryEmailRepo = (
       }
       row.sent_at = at;
       return true;
+    },
+    async claimOnce(userIds, kind, ref) {
+      const claimed: string[] = [];
+      for (const userId of userIds) {
+        if (await this.claim(userId, kind, ref, null)) claimed.push(userId);
+      }
+      return claimed;
+    },
+    async releaseMany(userIds, kind, ref) {
+      for (const userId of userIds) await this.release(userId, kind, ref);
     },
     async release(userId, kind, ref) {
       state.emailLog = state.emailLog.filter(
@@ -106,7 +125,8 @@ export const createInMemoryEmailRepo = (
             Date.parse(s.sent_at) > now() - DAY_MS,
         )
         .reduce((sum, s) => sum + s.recipients, 0);
-      const granted = cap === null ? count : Math.min(count, Math.max(cap - used, 0));
+      const granted =
+        cap === null ? count : Math.min(count, Math.max(cap - used, 0));
       const record = (status: "sent" | "capped", recipients: number) => {
         const id = nextSendId++;
         state.emailSends.push({
@@ -164,7 +184,10 @@ export interface EmailRecorder {
   recent: RecentSends | null;
 }
 
-export const createEmailFakes = (): { deps: EmailDeps; recorder: EmailRecorder } => {
+export const createEmailFakes = (): {
+  deps: EmailDeps;
+  recorder: EmailRecorder;
+} => {
   const pending: Promise<unknown>[] = [];
   const recorder: EmailRecorder = {
     sent: [],

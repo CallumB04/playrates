@@ -9,21 +9,24 @@
         "api/index.ts": {
             "maxDuration": 60,
             "includeFiles": "{frontend/dist/index.html,node_modules/@fontsource/geist/files/geist-latin-*-normal.woff,node_modules/harfbuzzjs/hb.wasm}"
+        },
+        "api/cron.ts": {
+            "maxDuration": 60
         }
     },
     "crons": [
         {
-            "path": "/api/v1/cron/trending",
+            "path": "/api/cron?job=trending",
             "schedule": "0 5 * * *"
         },
         {
-            "path": "/api/v1/cron/nudges",
+            "path": "/api/cron?job=nudges",
             "schedule": "0 17 * * *"
         }
     ],
     "rewrites": [
         {
-            "source": "/api/(.*)",
+            "source": "/api/((?!cron$).*)",
             "destination": "/api"
         },
         {

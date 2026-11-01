@@ -23,7 +23,11 @@ import {
 } from "./email.events.js";
 import type { EmailRepository } from "./email.repository.js";
 import { emailStatsStart, toEmailStats } from "./email.stats.js";
-import { RESEND_BATCH_MAX, type EmailMessage, type EmailSender } from "./email.sender.js";
+import {
+  RESEND_BATCH_MAX,
+  type EmailMessage,
+  type EmailSender,
+} from "./email.sender.js";
 import {
   announcementEmail,
   patchNotesEmail,
@@ -32,11 +36,12 @@ import {
   type EmailLinks,
   type RenderedEmail,
 } from "./email.templates.js";
+import { readUnsubscribeToken, signUnsubscribeToken } from "./email.tokens.js";
 import {
-  readUnsubscribeToken,
-  signUnsubscribeToken,
-} from "./email.tokens.js";
-import { verifySvixSignature, type ContactEvent, type SvixHeaders } from "./email.webhook.js";
+  verifySvixSignature,
+  type ContactEvent,
+  type SvixHeaders,
+} from "./email.webhook.js";
 
 export interface EmailSettings {
   /** Where links in emails point. */
@@ -111,7 +116,10 @@ export const createEmailService = ({
       logger.warn("EMAIL_SIGNING_SECRET is not set: email not sent");
       return null;
     }
-    const token = signUnsubscribeToken(settings.signingSecret, { userId, scope });
+    const token = signUnsubscribeToken(settings.signingSecret, {
+      userId,
+      scope,
+    });
     return {
       links: {
         site: settings.site,
@@ -149,7 +157,10 @@ export const createEmailService = ({
       transactional: true,
     });
     if (granted < messages.length) {
-      logger.warn({ kind, capped: messages.length - granted }, "email: daily cap reached");
+      logger.warn(
+        { kind, capped: messages.length - granted },
+        "email: daily cap reached",
+      );
     }
     if (granted === 0) return 0;
     try {
@@ -157,7 +168,10 @@ export const createEmailService = ({
     } catch (error) {
       if (id !== null) {
         await repo
-          .markFailed(id, error instanceof Error ? error.message : String(error))
+          .markFailed(
+            id,
+            error instanceof Error ? error.message : String(error),
+          )
           .catch(() => undefined);
       }
       throw error;
@@ -187,7 +201,9 @@ export const createEmailService = ({
     if (recipients === 0) return;
     await repo
       .takeSlots({ kind, count: recipients, cap: null, transactional: false })
-      .catch((error: unknown) => logger.warn({ err: error }, "email: broadcast not logged"));
+      .catch((error: unknown) =>
+        logger.warn({ err: error }, "email: broadcast not logged"),
+      );
   };
 
   const later = (what: string, work: () => Promise<unknown>) =>
@@ -205,7 +221,10 @@ export const createEmailService = ({
     return claim;
   };
 
-  const status = (scope: EmailScope, stored: Record<string, boolean>): UnsubscribeStatus => ({
+  const status = (
+    scope: EmailScope,
+    stored: Record<string, boolean>,
+  ): UnsubscribeStatus => ({
     scope,
     label: emailScopeLabel(scope),
     on: resolveEmailPrefs(stored)[scope],
@@ -225,7 +244,9 @@ export const createEmailService = ({
       const target = addressed(draft.userId, category);
       if (!target) return false;
 
-      const actor = draft.actorId ? await profiles.findById(draft.actorId) : null;
+      const actor = draft.actorId
+        ? await profiles.findById(draft.actorId)
+        : null;
       const email = eventEmail(
         draft.kind,
         draft.data ?? {},
@@ -268,7 +289,10 @@ export const createEmailService = ({
           message(
             member.email,
             welcomeEmail(
-              { username: member.username, firstName: profile?.first_name ?? null },
+              {
+                username: member.username,
+                firstName: profile?.first_name ?? null,
+              },
               target.links,
             ),
             target.headers,
@@ -289,20 +313,40 @@ export const createEmailService = ({
       if (byUser.size === 0) return { sent: 0 };
       const members = await repo.memberEmails([...byUser.keys()]);
 
+      const wanted = members.filter(
+        (m) =>
+          byUser.has(m.id) &&
+          emailAllowed(resolveEmailPrefs(m.email_prefs), "wishlist_releases"),
+      );
+      // Nothing with an unsubscribe link goes out without a way to sign it.
+      if (
+        wanted.length === 0 ||
+        !addressed(wanted[0]!.id, "wishlist_releases")
+      ) {
+        return { sent: 0 };
+      }
+      // Claimed together, in one statement rather than one a member.
+      const claimed = new Set(
+        await repo.claimOnce(
+          wanted.map((m) => m.id),
+          "wishlist_release",
+          day,
+        ),
+      );
+
       const queued: { userId: string; message: EmailMessage }[] = [];
-      for (const member of members) {
-        const games = byUser.get(member.id);
-        if (!games) continue;
-        const prefs = resolveEmailPrefs(member.email_prefs);
-        if (!emailAllowed(prefs, "wishlist_releases")) continue;
-        const target = addressed(member.id, "wishlist_releases");
-        if (!target) break;
-        if (!(await repo.claim(member.id, "wishlist_release", day, null))) continue;
+      for (const member of wanted) {
+        if (!claimed.has(member.id)) continue;
+        const games = byUser.get(member.id)!;
+        const target = addressed(member.id, "wishlist_releases")!;
         queued.push({
           userId: member.id,
           message: message(
             member.email,
-            wishlistReleaseEmail({ games, username: member.username }, target.links),
+            wishlistReleaseEmail(
+              { games, username: member.username },
+              target.links,
+            ),
             target.headers,
           ),
         });
@@ -313,21 +357,28 @@ export const createEmailService = ({
         const chunk = queued.slice(i, i + RESEND_BATCH_MAX);
         let went: number;
         try {
-          went = await sendCounted("wishlist_release", chunk.map((q) => q.message));
+          went = await sendCounted(
+            "wishlist_release",
+            chunk.map((q) => q.message),
+          );
         } catch (error) {
           // Given back, so a second run today can try them again.
-          for (const q of queued.slice(i)) {
-            await repo.release(q.userId, "wishlist_release", day);
-          }
+          await repo.releaseMany(
+            queued.slice(i).map((q) => q.userId),
+            "wishlist_release",
+            day,
+          );
           logger.error({ err: error, sent }, "email: wishlist releases failed");
           break;
         }
         sent += went;
         if (went < chunk.length) {
           // The cap's reached. Given back, as for a failure.
-          for (const q of queued.slice(i + went)) {
-            await repo.release(q.userId, "wishlist_release", day);
-          }
+          await repo.releaseMany(
+            queued.slice(i + went).map((q) => q.userId),
+            "wishlist_release",
+            day,
+          );
           break;
         }
       }
@@ -352,7 +403,12 @@ export const createEmailService = ({
     }: {
       limit: number;
       deadline: number;
-    }): Promise<{ upserted: number; removed: number; newsOff: number; pending: number }> {
+    }): Promise<{
+      upserted: number;
+      removed: number;
+      newsOff: number;
+      pending: number;
+    }> {
       const done = { upserted: 0, removed: 0, newsOff: 0, pending: 0 };
       if (!audience) return done;
       const [members, contacts] = await Promise.all([
@@ -405,7 +461,10 @@ export const createEmailService = ({
           unsubscribe: RESEND_UNSUBSCRIBE,
           settings: settingsUrl,
         });
-        const broadcastId = await audience.broadcast({ name: email.subject, ...email });
+        const broadcastId = await audience.broadcast({
+          name: email.subject,
+          ...email,
+        });
         await logBroadcast(content.kind, (await newsRecipients()).length);
         return { emailed: true, broadcastId };
       }
@@ -417,7 +476,13 @@ export const createEmailService = ({
       for (const member of await newsRecipients()) {
         const target = addressed(member.id, "news");
         if (!target) return { emailed: false, broadcastId: null };
-        messages.push(message(member.email, renderNews(content, target.links), target.headers));
+        messages.push(
+          message(
+            member.email,
+            renderNews(content, target.links),
+            target.headers,
+          ),
+        );
       }
       await sender.send(messages);
       await logBroadcast(content.kind, messages.length);
@@ -427,16 +492,20 @@ export const createEmailService = ({
     /** The same news email, to one address only: the admin's proof. Its
      *  way out goes to Settings, as there's no broadcast behind it. */
     async sendNewsTest(content: NewsContent, to: string): Promise<void> {
-      await sendCounted("news_test", [
-        message(
-          to,
-          renderNews(content, {
-            site: settings.site,
-            unsubscribe: settingsUrl,
-            settings: settingsUrl,
-          }),
-        ),
-      ], null);
+      await sendCounted(
+        "news_test",
+        [
+          message(
+            to,
+            renderNews(content, {
+              site: settings.site,
+              unsubscribe: settingsUrl,
+              settings: settingsUrl,
+            }),
+          ),
+        ],
+        null,
+      );
     },
 
     /** How email is going, for the admin. Resend not answering only
@@ -446,10 +515,15 @@ export const createEmailService = ({
         repo.sendTotals(emailStatsStart(now)),
         repo.sendTotals(new Date(now.getTime() - DAY_MS).toISOString()),
         activity
-          ? activity.since(new Date(now.getTime() - DAY_MS)).catch((error: unknown) => {
-              logger.warn({ err: error }, "email: couldn't read Resend's sends");
-              return null;
-            })
+          ? activity
+              .since(new Date(now.getTime() - DAY_MS))
+              .catch((error: unknown) => {
+                logger.warn(
+                  { err: error },
+                  "email: couldn't read Resend's sends",
+                );
+                return null;
+              })
           : null,
         newsRecipients(),
       ]);
@@ -499,7 +573,8 @@ export const createEmailService = ({
      */
     async handleWebhook(headers: SvixHeaders, body: Buffer): Promise<boolean> {
       if (!settings.webhookSecret) return false;
-      if (!verifySvixSignature(settings.webhookSecret, headers, body)) return false;
+      if (!verifySvixSignature(settings.webhookSecret, headers, body))
+        return false;
       let event: ContactEvent;
       try {
         event = JSON.parse(body.toString("utf8")) as ContactEvent;
@@ -518,7 +593,10 @@ export const createEmailService = ({
       const row = userId ? await profiles.findById(userId) : null;
       if (!row) return true;
       if (emailAllowed(resolveEmailPrefs(row.email_prefs), "news")) {
-        await repo.setPrefs(row.id, { ...(row.email_prefs ?? {}), news: false });
+        await repo.setPrefs(row.id, {
+          ...(row.email_prefs ?? {}),
+          news: false,
+        });
       }
       return true;
     },

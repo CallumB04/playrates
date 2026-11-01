@@ -29,6 +29,11 @@ export interface EmailRepository {
   ): Promise<boolean>;
   /** Gives the claim back, for a send that failed. */
   release(userId: string, kind: string, ref: string): Promise<void>;
+  /** claim with no window, for many members in one statement: the ones
+   *  claimed now, leaving out any already sent. */
+  claimOnce(userIds: string[], kind: string, ref: string): Promise<string[]>;
+  /** release, for many members at once. */
+  releaseMany(userIds: string[], kind: string, ref: string): Promise<void>;
   /** Members with a confirmed address; everyone for null. */
   memberEmails(ids: string[] | null): Promise<MemberEmailRow[]>;
   memberIdByEmail(email: string): Promise<string | null>;
@@ -39,7 +44,9 @@ export interface EmailRepository {
    * Takes what the cap allows of `count`, recording it and whatever was
    * turned away. The record's id, to mark it failed if the send is.
    */
-  takeSlots(request: SlotRequest): Promise<{ id: number | null; granted: number }>;
+  takeSlots(
+    request: SlotRequest,
+  ): Promise<{ id: number | null; granted: number }>;
   markFailed(id: number, error: string): Promise<void>;
   sendTotals(since: string): Promise<EmailSendTotalRow[]>;
 }
@@ -68,6 +75,30 @@ export const createEmailRepository = (db: Db): EmailRepository => ({
       .select("id");
     if (updateError) throw updateError;
     return (data ?? []).length > 0;
+  },
+
+  async claimOnce(userIds, kind, ref) {
+    if (userIds.length === 0) return [];
+    const { data, error } = await db
+      .from("email_log")
+      .upsert(
+        userIds.map((user_id) => ({ user_id, kind, ref })),
+        { onConflict: "user_id,kind,ref", ignoreDuplicates: true },
+      )
+      .select("user_id");
+    if (error) throw error;
+    return ((data ?? []) as { user_id: string }[]).map((r) => r.user_id);
+  },
+
+  async releaseMany(userIds, kind, ref) {
+    if (userIds.length === 0) return;
+    const { error } = await db
+      .from("email_log")
+      .delete()
+      .in("user_id", userIds)
+      .eq("kind", kind)
+      .eq("ref", ref);
+    if (error) throw error;
   },
 
   async release(userId, kind, ref) {
@@ -143,7 +174,9 @@ export const createEmailRepository = (db: Db): EmailRepository => ({
   },
 
   async sendTotals(since) {
-    const { data, error } = await db.rpc("email_send_totals", { p_since: since });
+    const { data, error } = await db.rpc("email_send_totals", {
+      p_since: since,
+    });
     if (error) throw error;
     return ((data ?? []) as EmailSendTotalRow[]).map((r) => ({
       ...r,
