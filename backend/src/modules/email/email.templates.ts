@@ -10,9 +10,8 @@ import {
   emailText,
   escapeHtml,
   parseAnnouncementBody,
-  groupPatchNote,
   paragraphsOf,
-  PATCH_NOTE_KIND_LABELS,
+  PATCH_NOTE_KIND_NAMES,
   type PatchNote,
   type AnnouncementTone,
   type EmailScope,
@@ -722,40 +721,36 @@ export const announcementEmail = (
 
 /* ---------------------------------------------------------- patch notes */
 
-/** A release's changes as the email shows them: each kind under its
- *  heading, and a change with a link to follow linked. */
-const patchNoteHtml = (note: PatchNote, links: EmailLinks): string =>
-  [
+/** A release's changes as the email shows them: one list in the order
+ *  written, each change named by its kind, and linked where it has one. */
+const patchNoteHtml = (note: PatchNote, links: EmailLinks): string => {
+  const items = note.items
+    .map((item) => {
+      const text = escapeHtml(item.text);
+      const kind = emailStrong(`${PATCH_NOTE_KIND_NAMES[item.kind]}:`);
+      return `<li style="margin:0 0 6px;">${kind} ${
+        item.link
+          ? emailLink(escapeHtml(absolute(links, item.link)), text)
+          : text
+      }</li>`;
+    })
+    .join("");
+  return [
     ...paragraphsOf(note.intro).map((p) => emailParagraph(escapeHtml(p))),
-    ...groupPatchNote(note.items).map((group) => {
-      const items = group.items
-        .map((item) => {
-          const text = escapeHtml(item.text);
-          return `<li style="margin:0 0 6px;">${
-            item.link
-              ? emailLink(escapeHtml(absolute(links, item.link)), text)
-              : text
-          }</li>`;
-        })
-        .join("");
-      return [
-        `<h3 class="strong" style="margin:24px 0 10px;font-family:${SANS};font-size:18px;line-height:26px;font-weight:700;color:${C.ink};">${PATCH_NOTE_KIND_LABELS[group.kind]}</h3>`,
-        `<ul class="text" style="margin:0 0 16px;padding-left:24px;font-family:${SANS};font-size:16px;line-height:26px;color:${C.body};">${items}</ul>`,
-      ].join("");
-    }),
+    items
+      ? `<ul class="text" style="margin:0 0 16px;padding-left:24px;font-family:${SANS};font-size:16px;line-height:26px;color:${C.body};">${items}</ul>`
+      : "",
     ...paragraphsOf(note.outro).map((p) => emailParagraph(escapeHtml(p))),
   ].join("\n");
+};
 
 const patchNoteText = (note: PatchNote, links: EmailLinks): string[] => [
   ...paragraphsOf(note.intro).flatMap((p) => [p, ""]),
-  ...groupPatchNote(note.items).flatMap((group) => [
-    PATCH_NOTE_KIND_LABELS[group.kind],
-    ...group.items.map(
-      (item) =>
-        `- ${item.text}${item.link ? ` (${absolute(links, item.link)})` : ""}`,
-    ),
-    "",
-  ]),
+  ...note.items.map(
+    (item) =>
+      `- ${PATCH_NOTE_KIND_NAMES[item.kind]}: ${item.text}${item.link ? ` (${absolute(links, item.link)})` : ""}`,
+  ),
+  ...(note.items.length > 0 ? [""] : []),
   ...paragraphsOf(note.outro).flatMap((p) => [p, ""]),
 ];
 

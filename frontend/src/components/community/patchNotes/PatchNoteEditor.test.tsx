@@ -38,7 +38,7 @@ describe("PatchNoteEditor", () => {
             name: "How it will look",
         });
         expect(
-            within(preview).getByRole("link", { name: "Added Steam import" })
+            within(preview).getByRole("link", { name: /Added Steam import/ })
         ).toHaveAttribute("href", "/settings");
 
         await user.click(screen.getByRole("button", { name: "Publish" }));

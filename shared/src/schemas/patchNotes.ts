@@ -2,7 +2,7 @@ import { z } from "zod";
 import { isAnnouncementHref } from "../announcementBody.js";
 import type { RichTextDoc } from "./richText.js";
 
-/** What a change is, in the order a release lists them. */
+/** What a change is: shown beside it, and picked when writing it. */
 export const PATCH_NOTE_KINDS = [
   "feature",
   "improvement",
@@ -11,15 +11,7 @@ export const PATCH_NOTE_KINDS = [
 ] as const;
 export type PatchNoteKind = (typeof PATCH_NOTE_KINDS)[number];
 
-/** The heading each kind is listed under. */
-export const PATCH_NOTE_KIND_LABELS: Record<PatchNoteKind, string> = {
-  feature: "New features",
-  improvement: "Improvements",
-  fix: "Fixes",
-  other: "Other",
-};
-
-/** One kind's name for a single change, for the picker. */
+/** Each kind's name, beside its change and in the picker. */
 export const PATCH_NOTE_KIND_NAMES: Record<PatchNoteKind, string> = {
   feature: "Feature",
   improvement: "Improvement",
@@ -50,7 +42,7 @@ export const PatchNoteItemSchema = z.object({
 export type PatchNoteItem = z.infer<typeof PatchNoteItemSchema>;
 
 /** A release: its title, a message above the changes and one below, both
- *  optional, and the changes themselves. */
+ *  optional, and the changes themselves, in the order written. */
 export const PatchNoteSchema = z
   .object({
     title: z.string().trim().min(1).max(80),
@@ -64,16 +56,6 @@ export const PatchNoteSchema = z
   );
 export type PatchNote = z.infer<typeof PatchNoteSchema>;
 export type PatchNoteInput = z.input<typeof PatchNoteSchema>;
-
-/** The changes by kind, in kind order, each kind's in the order written.
- *  Kinds with none are left out. */
-export const groupPatchNote = (
-  items: PatchNoteItem[],
-): { kind: PatchNoteKind; items: PatchNoteItem[] }[] =>
-  PATCH_NOTE_KINDS.map((kind) => ({
-    kind,
-    items: items.filter((item) => item.kind === kind),
-  })).filter((group) => group.items.length > 0);
 
 /** A message's paragraphs: a blank line between them. */
 export const paragraphsOf = (text: string | null): string[] =>
@@ -102,20 +84,29 @@ export const patchNoteDoc = (note: PatchNote): RichTextDoc =>
         content: [{ type: "text", text: note.title }],
       },
       ...paragraphsOf(note.intro).map(paragraph),
-      ...groupPatchNote(note.items).flatMap((group) => [
-        {
-          type: "heading",
-          attrs: { level: 2 },
-          content: [{ type: "text", text: PATCH_NOTE_KIND_LABELS[group.kind] }],
-        },
-        {
-          type: "bulletList",
-          content: group.items.map((item) => ({
-            type: "listItem",
-            content: [paragraph(item.text)],
-          })),
-        },
-      ]),
+      ...(note.items.length > 0
+        ? [
+            {
+              type: "bulletList",
+              content: note.items.map((item) => ({
+                type: "listItem",
+                content: [
+                  {
+                    type: "paragraph",
+                    content: [
+                      {
+                        type: "text",
+                        text: `${PATCH_NOTE_KIND_NAMES[item.kind]}: `,
+                        marks: [{ type: "bold" }],
+                      },
+                      { type: "text", text: item.text },
+                    ],
+                  },
+                ],
+              })),
+            },
+          ]
+        : []),
       ...paragraphsOf(note.outro).map(paragraph),
     ],
   }) as RichTextDoc;

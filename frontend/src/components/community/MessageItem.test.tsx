@@ -92,7 +92,7 @@ describe("MessageItem", () => {
             />
         );
         expect(
-            screen.getByRole("heading", { name: "Fixes" })
+            screen.getByRole("heading", { name: "v1.2" })
         ).toBeInTheDocument();
 
         await userEvent.click(
@@ -108,7 +108,7 @@ describe("MessageItem", () => {
             }
         );
         expect(
-            await screen.findByRole("heading", { name: "Fixes" })
+            await screen.findByRole("heading", { name: "v1.2" })
         ).toBeInTheDocument();
     });
 });

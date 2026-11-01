@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { renderWithProviders } from "../../../test/renderWithProviders";
 import PatchNoteView from "./PatchNoteView";
 
 describe("PatchNoteView", () => {
-    it("lists changes under their kinds, linking out in a new tab", () => {
+    it("lists changes as written, each with its kind, a linked one clickable whole", () => {
         renderWithProviders(
             <PatchNoteView
                 note={{
@@ -17,29 +17,34 @@ describe("PatchNoteView", () => {
                             text: "Steam",
                             link: "https://store.steampowered.com",
                         },
-                        { kind: "feature", text: "Import", link: "/settings" },
+                        {
+                            kind: "improvement",
+                            text: "Import",
+                            link: "/settings",
+                        },
                     ],
                     outro: null,
                 }}
             />
         );
-        const headings = screen
-            .getAllByRole("heading", { level: 3 })
-            .map((h) => h.textContent);
-        expect(headings).toEqual(["New features", "Fixes"]);
+        const rows = screen.getAllByRole("listitem");
+        expect(rows.map((row) => row.textContent)).toEqual([
+            "FixFixed it",
+            "FeatureSteam",
+            "ImprovementImport",
+        ]);
+        expect(within(rows[0]!).queryByRole("link")).toBeNull();
+
+        const out = within(rows[1]!).getByRole("link");
+        expect(out).toHaveTextContent("FeatureSteam");
+        expect(out).toHaveAttribute("target", "_blank");
+        const here = within(rows[2]!).getByRole("link");
+        expect(here).toHaveAttribute("href", "/settings");
+        expect(here).not.toHaveAttribute("target");
+
         expect(screen.getByText("One.")).toBeInTheDocument();
         expect(
             screen.getByRole("link", { name: "hello@playrates.app" })
         ).toHaveAttribute("href", "mailto:hello@playrates.app");
-
-        const out = screen.getByRole("link", { name: "Steam" });
-        expect(out).toHaveAttribute("target", "_blank");
-        expect(screen.getByRole("link", { name: "Import" })).toHaveAttribute(
-            "href",
-            "/settings"
-        );
-        expect(
-            screen.getByRole("link", { name: "Import" })
-        ).not.toHaveAttribute("target");
     });
 });

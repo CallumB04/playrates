@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  groupPatchNote,
   paragraphsOf,
   patchNoteDoc,
   PatchNoteSchema,
@@ -59,20 +58,6 @@ describe("PatchNoteSchema", () => {
   });
 });
 
-describe("groupPatchNote", () => {
-  it("groups by kind in kind order, keeping each kind's order", () => {
-    expect(
-      groupPatchNote(note.items).map((g) => [
-        g.kind,
-        g.items.map((i) => i.text),
-      ]),
-    ).toEqual([
-      ["feature", ["Added Steam import", "Added lists"]],
-      ["fix", ["Fixed a thing"]],
-    ]);
-  });
-});
-
 describe("paragraphsOf", () => {
   it("splits on blank lines and drops empty ones", () => {
     expect(paragraphsOf("a\nb\n\n  \n\nc")).toEqual(["a\nb", "c"]);
@@ -81,22 +66,21 @@ describe("paragraphsOf", () => {
 });
 
 describe("patchNoteDoc", () => {
-  it("reads as the release in plain text: title, messages, kinds, changes", () => {
+  it("reads as the release in plain text: title, messages, changes as written", () => {
     const text = toPlainText(patchNoteDoc({ ...note, outro: "Bye" }));
     for (const part of [
       "v1.2",
       "First line.",
       "Second line.",
-      "New features",
-      "Added Steam import",
-      "Fixes",
-      "Fixed a thing",
+      "Fix: Fixed a thing",
+      "Feature: Added Steam import",
       "Bye",
     ]) {
       expect(text).toContain(part);
     }
-    expect(text.indexOf("New features")).toBeLessThan(text.indexOf("Fixes"));
-    expect(text).not.toContain("Improvements");
+    expect(text.indexOf("Fixed a thing")).toBeLessThan(
+      text.indexOf("Added Steam import"),
+    );
   });
 
   it("opens with the title as an H1, which the entry is named after", () => {

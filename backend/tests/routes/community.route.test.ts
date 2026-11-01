@@ -827,7 +827,7 @@ describe("structured patch notes", () => {
     expect(saved.thread_id).toBe(2);
     // The body lists features before fixes, under their headings.
     expect(JSON.stringify(saved.body)).toMatch(
-      /v1\.1\.2.*A big one.*New features.*Import from Steam.*Fixes.*Fixed the thing/,
+      /v1\.1\.2.*A big one.*Fix: .*Fixed the thing.*Feature: .*Import from Steam/,
     );
 
     const summary = await request(app).get("/api/v1/community/patch-notes");
