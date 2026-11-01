@@ -10,7 +10,7 @@ export const EMAIL_CATEGORIES = [
   {
     key: "friend_requests",
     label: "Friend requests",
-    description: "When someone sends you a friend request.",
+    description: "When someone sends you a friend request, or accepts yours.",
     defaultOn: true,
   },
   {
@@ -18,6 +18,13 @@ export const EMAIL_CATEGORIES = [
     label: "Replies to you",
     description:
       "When someone replies to one of your messages in the community.",
+    defaultOn: true,
+  },
+  {
+    key: "milestones",
+    label: "Reactions and loves",
+    description:
+      "When a message, review, list or your Gaming 25 reaches 5, 10, 20 and on.",
     defaultOn: true,
   },
   {
@@ -94,7 +101,12 @@ export const EMAIL_CATEGORY_OF: Partial<
   Record<NotificationKind, EmailCategory>
 > = {
   friend_request: "friend_requests",
+  friend_accepted: "friend_requests",
   community_reply: "replies",
+  community_upvote_milestone: "milestones",
+  review_upvote_milestone: "milestones",
+  list_upvote_milestone: "milestones",
+  gaming_25_love_milestone: "milestones",
   gift_received: "gifts_invites",
   referral_joined: "gifts_invites",
   referral_active: "gifts_invites",

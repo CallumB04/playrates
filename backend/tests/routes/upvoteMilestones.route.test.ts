@@ -70,6 +70,20 @@ describe("upvote milestones on community messages", () => {
     });
   });
 
+  it("emails the author once, even when the fifth vote comes and goes", async () => {
+    const { app, email } = buildTestApp({ seed: seed() });
+    for (const voter of voters(5)) await voteMessage(app, voter);
+    await voteMessage(app, voters(5)[4]!); // back to 4
+    await voteMessage(app, voters(5)[4]!); // 5 again
+    await email.flush();
+
+    expect(email.sent).toHaveLength(1);
+    expect(email.sent[0]).toMatchObject({
+      subject: "5 reactions on your message in Best side quest?",
+    });
+    expect(email.sent[0]!.text).toContain('"First take."');
+  });
+
   it("does not announce a milestone twice when a vote is taken back and given again", async () => {
     const { app, state } = buildTestApp({ seed: seed() });
     for (const voter of voters(5)) await voteMessage(app, voter);

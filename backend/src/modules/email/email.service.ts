@@ -324,7 +324,10 @@ export const createEmailService = ({
       if (!email) return false;
 
       const ref = draft.dedupeKey ?? `${draft.kind}:${Date.now()}`;
-      if (!(await repo.claim(draft.userId, draft.kind, ref, EVENT_WINDOW_MS))) {
+      // A milestone is reached once; taking a vote back and giving it again
+      // shouldn't send it twice, however far apart.
+      const window = category === "milestones" ? null : EVENT_WINDOW_MS;
+      if (!(await repo.claim(draft.userId, draft.kind, ref, window))) {
         return false;
       }
       let sent: number;

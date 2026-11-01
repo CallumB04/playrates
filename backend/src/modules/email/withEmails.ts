@@ -19,6 +19,22 @@ export const withEmails = (
     await notifications.raise(draft);
     if (EMAIL_CATEGORY_OF[draft.kind]) afterRaise(draft);
   },
+  async raiseMilestone(userId, kind, dedupeKey, milestone, data) {
+    await notifications.raiseMilestone(
+      userId,
+      kind,
+      dedupeKey,
+      milestone,
+      data,
+    );
+    // One email for each milestone reached, ever: the key says which.
+    afterRaise({
+      userId,
+      kind,
+      data: { ...data, milestone },
+      dedupeKey: `${dedupeKey}:${milestone}`,
+    });
+  },
   async raiseOnce(drafts) {
     const raised = await notifications.raiseOnce(drafts);
     // Each email is claimed once ever too, so passing on the drafts that

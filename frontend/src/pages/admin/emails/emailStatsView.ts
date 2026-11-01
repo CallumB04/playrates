@@ -21,6 +21,11 @@ export const monthSent = (stats: EmailStats) =>
 
 const KINDS: Record<string, string> = {
     friend_request: "Friend requests",
+    friend_accepted: "Friends accepted",
+    community_upvote_milestone: "Message reactions",
+    review_upvote_milestone: "Review reactions",
+    list_upvote_milestone: "List loves",
+    gaming_25_love_milestone: "Gaming 25 loves",
     community_reply: "Replies",
     gift_received: "Gifts",
     referral_joined: "Invites joined",

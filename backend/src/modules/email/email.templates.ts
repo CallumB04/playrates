@@ -46,6 +46,8 @@ export const EMAIL_REASONS: Record<EmailScope, string> = {
   friend_requests:
     "You're getting this because you have friend request emails on.",
   replies: "You're getting this because you have reply emails on.",
+  milestones:
+    "You're getting this because you have reaction and love emails on.",
   gifts_invites:
     "You're getting this because you have gift and invite emails on.",
   wishlist_releases:
@@ -352,6 +354,87 @@ export const wishlistReleaseEmail = (
       "",
       `${label}: ${href}`,
     ],
+  });
+};
+
+/* ------------------------------------------------------- friend accepted */
+
+export const friendAcceptedEmail = (
+  data: { actor: string; actorAvatar: string | null },
+  links: EmailLinks,
+): RenderedEmail => {
+  const href = url(links, `/user/${encodeURIComponent(data.actor)}`);
+  const title = `${data.actor} accepted your friend request`;
+  const line = `You and ${data.actor} are friends on PlayRates now.`;
+  return build({
+    scope: "friend_requests",
+    links,
+    subject: title,
+    preview: line,
+    title,
+    body: [
+      avatar(data.actorAvatar, data.actor),
+      emailParagraph(escapeHtml(line)),
+      emailButton(href, "See their profile"),
+      emailPlainLink(href),
+    ].join("\n"),
+    lines: [line, "", `See their profile: ${href}`],
+  });
+};
+
+/* ----------------------------------------------------------- milestones */
+
+/** What reached a milestone, and where it lives. */
+export type MilestoneSubject =
+  | { kind: "message"; threadId: number; messageId: number; threadTitle: string; excerpt: string }
+  | { kind: "review"; gameId: number; reviewId: number; gameTitle: string }
+  | { kind: "list"; listId: number; listName: string; username: string }
+  | { kind: "gaming25"; username: string };
+
+export const milestoneEmail = (
+  data: { milestone: number; subject: MilestoneSubject },
+  links: EmailLinks,
+): RenderedEmail => {
+  const s = data.subject;
+  const n = data.milestone;
+  const { title, href, label } =
+    s.kind === "message"
+      ? {
+          title: `${n} reactions on your message in ${s.threadTitle}`,
+          href: `/community/thread/${s.threadId}#message-${s.messageId}`,
+          label: "See your message",
+        }
+      : s.kind === "review"
+        ? {
+            title: `${n} reactions on your review of ${s.gameTitle}`,
+            href: `/game/${s.gameId}#review-${s.reviewId}`,
+            label: "See your review",
+          }
+        : s.kind === "list"
+          ? {
+              title: `${n} loves on your list ${s.listName}`,
+              href: `/user/${encodeURIComponent(s.username)}/lists/${s.listId}`,
+              label: "See your list",
+            }
+          : {
+              title: `${n} loves on your Gaming 25`,
+              href: `/user/${encodeURIComponent(s.username)}/gaming-25`,
+              label: "See your Gaming 25",
+            };
+  const link = url(links, href);
+  const excerpt = s.kind === "message" ? s.excerpt : "";
+  return build({
+    scope: "milestones",
+    links,
+    subject: clip(title, 90),
+    preview: excerpt || title,
+    title,
+    body: [
+      excerpt ? quote(excerpt) : "",
+      emailButton(link, label),
+      emailPlainLink(link),
+    ].join("\n"),
+    lines: [...(excerpt ? [`"${excerpt}"`, ""] : []), `${label}: ${link}`],
   });
 };
 

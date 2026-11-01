@@ -11,6 +11,9 @@ import {
   inviteActiveEmail,
   inviteJoinedEmail,
   replyEmail,
+  friendAcceptedEmail,
+  milestoneEmail,
+  type MilestoneSubject,
   endDay,
   streakEmail,
   taskEmail,
@@ -112,6 +115,24 @@ export const eventEmail = (
       );
     }
 
+    case "friend_accepted":
+      return actor
+        ? friendAcceptedEmail(
+            { actor: actor.username, actorAvatar: actor.avatar_url },
+            links,
+          )
+        : null;
+
+    case "community_upvote_milestone":
+    case "review_upvote_milestone":
+    case "list_upvote_milestone":
+    case "gaming_25_love_milestone": {
+      const milestone = num(data.milestone);
+      const subject = milestoneSubject(kind, data, recipient.username);
+      if (milestone === null || !subject) return null;
+      return milestoneEmail({ milestone, subject }, links);
+    }
+
     case "streak_at_risk": {
       const weeks = num(data.weeks);
       const endsAt = str(data.endsAt);
@@ -145,6 +166,50 @@ export const eventEmail = (
       );
     }
 
+    default:
+      return null;
+  }
+};
+
+/** What a milestone notification's data says it was for, or null where
+ *  something the email needs is missing. */
+const milestoneSubject = (
+  kind: NotificationKind,
+  data: Record<string, unknown>,
+  owner: string,
+): MilestoneSubject | null => {
+  switch (kind) {
+    case "community_upvote_milestone": {
+      const threadId = num(data.threadId);
+      const messageId = num(data.messageId);
+      const threadTitle = str(data.threadTitle);
+      return threadId === null || messageId === null || !threadTitle
+        ? null
+        : {
+            kind: "message",
+            threadId,
+            messageId,
+            threadTitle,
+            excerpt: str(data.excerpt) ?? "",
+          };
+    }
+    case "review_upvote_milestone": {
+      const gameId = num(data.gameId);
+      const reviewId = num(data.reviewId);
+      const gameTitle = str(data.gameTitle);
+      return gameId === null || reviewId === null || !gameTitle
+        ? null
+        : { kind: "review", gameId, reviewId, gameTitle };
+    }
+    case "list_upvote_milestone": {
+      const listId = num(data.listId);
+      const listName = str(data.listName);
+      return listId === null || !listName
+        ? null
+        : { kind: "list", listId, listName, username: str(data.username) ?? owner };
+    }
+    case "gaming_25_love_milestone":
+      return { kind: "gaming25", username: str(data.username) ?? owner };
     default:
       return null;
   }

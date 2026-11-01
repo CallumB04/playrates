@@ -72,9 +72,38 @@ describe("event emails", () => {
   it("sends nothing for a kind without an email", async () => {
     const { service, email } = setup();
     expect(
-      await service.sendEvent({ userId: USER_A, kind: "friend_accepted", actorId: USER_B }),
+      await service.sendEvent({ userId: USER_A, kind: "community_thread_activity" }),
     ).toBe(false);
     expect(email.sent).toHaveLength(0);
+  });
+
+  it("emails an accepted friend request under friend requests", async () => {
+    const { service, email } = setup([
+      buildProfile(),
+      buildProfile({ id: USER_B, username: "ana" }),
+    ]);
+    expect(
+      await service.sendEvent({ userId: USER_A, kind: "friend_accepted", actorId: USER_B }),
+    ).toBe(true);
+    expect(email.sent[0]).toMatchObject({
+      subject: "ana accepted your friend request",
+    });
+  });
+
+  it("emails a milestone once, however often it is reached again", async () => {
+    const { service, state, email } = setup();
+    const milestone = {
+      userId: USER_A,
+      kind: "review_upvote_milestone" as const,
+      data: { reviewId: 3, gameId: 1, gameTitle: "Hades", milestone: 10 },
+      dedupeKey: "review_upvotes:3:10",
+    };
+    expect(await service.sendEvent(milestone)).toBe(true);
+    state.emailLog[0]!.sent_at = new Date(Date.now() - 30 * 86_400_000).toISOString();
+    expect(await service.sendEvent(milestone)).toBe(false);
+    expect(email.sent).toHaveLength(1);
+    expect(email.sent[0]!.subject).toBe("10 reactions on your review of Hades");
+    expect(email.sent[0]!.text).toContain("/game/1#review-3");
   });
 
   it("respects the category's switch", async () => {

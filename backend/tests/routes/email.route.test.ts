@@ -234,6 +234,7 @@ describe("email settings", () => {
       all: true,
       friend_requests: true,
       replies: true,
+      milestones: true,
       gifts_invites: true,
       wishlist_releases: true,
       reminders: false,
