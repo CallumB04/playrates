@@ -22,7 +22,7 @@ describe("SettingsNav on a phone", () => {
         );
 
         await user.click(
-            screen.getByRole("button", { name: /Account.*Sections/ })
+            screen.getByRole("button", { name: /Viewing.*Account.*Switch/ })
         );
         const sheet = within(screen.getByRole("dialog"));
         await user.click(sheet.getByRole("button", { name: "Privacy" }));

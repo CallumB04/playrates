@@ -2,7 +2,6 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
     Award,
-    ChevronDown,
     Gamepad2,
     ListOrdered,
     MessagesSquare,
@@ -11,7 +10,13 @@ import {
     Users,
 } from "lucide-react";
 import type { ProfileView } from "@playrates/shared";
-import Modal from "../../../components/ui/Modal";
+import {
+    CountPill,
+    SwitcherButton,
+    SwitcherSheet,
+    SwitcherTileBody,
+    switcherTileClass,
+} from "../../../components/ui/SectionSwitcher";
 import { profilePath } from "../../../lib/profilePaths";
 import { formatCount } from "../../../lib/format";
 import type { IconComponent } from "../../../lib/icons";
@@ -40,13 +45,6 @@ interface ProfileNavProps {
 const pathOf = (username: string, tab: ProfileTab) =>
     profilePath(username, tab === "profile" ? undefined : tab);
 
-const CountPill = ({ value }: { value: number }) => (
-    // Leading off, so the pill sits on the word's centre, not its baseline.
-    <span className="rounded-full bg-surface-sunken px-2 py-1 font-mono text-label-sm leading-none text-content-secondary tabular-nums">
-        {formatCount(value)}
-    </span>
-);
-
 const RequestsDot = ({ count }: { count: number }) => (
     <>
         <span aria-hidden className="size-1.5 rounded-full bg-brand" />
@@ -69,120 +67,68 @@ const ProfileNav = ({
     const countOf = (tab: ProfileTab) =>
         tab === "profile" ? undefined : counts[tab];
     const current = TABS.find((t) => t.tab === active) ?? TABS[0]!;
-    const CurrentIcon = current.icon;
     const currentCount = countOf(current.tab);
 
     return (
         <nav aria-label="Profile">
             {/* A phone: seven tabs in its width were cramped or scrolled, so
-                one control says where you are and opens the rest. It has to
-                read as a way around the profile, not a heading. */}
-            <button
-                type="button"
-                aria-haspopup="dialog"
-                aria-expanded={sheetOpen}
-                onClick={() => setSheetOpen(true)}
-                className="flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-md border border-brand/50 bg-surface-raised py-2 pr-2 pl-3 text-left shadow-lip lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:hidden"
-            >
-                <CurrentIcon
-                    size={20}
-                    aria-hidden
-                    className="shrink-0 text-brand-text"
-                />
-                <span className="min-w-0 flex-1">
-                    <span className="block text-label-sm text-content-muted">
-                        Viewing
-                    </span>
-                    <span className="flex items-center gap-2 text-body font-semibold text-content">
-                        {current.label}
-                        {currentCount !== undefined && (
-                            <CountPill value={currentCount} />
-                        )}
-                    </span>
-                </span>
-                {/* Requests wait in Friends; from anywhere else, say so. */}
-                {requestCount > 0 && current.tab !== "friends" && (
-                    <span className="flex items-center">
-                        <RequestsDot count={requestCount} />
-                    </span>
-                )}
-                <span className="flex min-h-9 items-center gap-1 rounded-sm bg-brand-subtle px-3 text-label font-medium text-brand-text">
-                    Switch
-                    <ChevronDown size={16} aria-hidden />
-                </span>
-            </button>
+                one control says where you are and opens the rest. */}
+            <SwitcherButton
+                icon={current.icon}
+                label={current.label}
+                count={currentCount}
+                open={sheetOpen}
+                onOpen={() => setSheetOpen(true)}
+                extra={
+                    // Requests wait in Friends; from anywhere else, say so.
+                    requestCount > 0 &&
+                    current.tab !== "friends" && (
+                        <span className="flex items-center">
+                            <RequestsDot count={requestCount} />
+                        </span>
+                    )
+                }
+            />
 
             {sheetOpen && (
-                <Modal
+                <SwitcherSheet
+                    titleId="profile-views-title"
                     onClose={() => setSheetOpen(false)}
-                    labelledBy="profile-views-title"
-                    className="w-full max-w-sm"
+                    title={
+                        <>
+                            {username}
+                            <span className="text-content-muted">
+                                ’s profile
+                            </span>
+                        </>
+                    }
                 >
-                    <h2
-                        id="profile-views-title"
-                        className="pr-10 font-display text-section text-content"
-                    >
-                        {username}
-                        <span className="text-content-muted">’s profile</span>
-                    </h2>
-                    <ul className="mt-4 grid grid-cols-2 gap-2">
-                        {TABS.map(({ tab, label, icon: Icon }) => {
-                            const count = countOf(tab);
-                            const isActive = tab === active;
-                            return (
-                                <li key={tab}>
-                                    <NavLink
-                                        to={pathOf(username, tab)}
-                                        end
-                                        onClick={() => setSheetOpen(false)}
-                                        className={cn(
-                                            "flex min-h-[76px] flex-col justify-between gap-2 rounded-md border p-3 lift",
-                                            "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
-                                            isActive
-                                                ? "border-brand/60 bg-brand-subtle text-content"
-                                                : "border-subtle text-content-secondary hover:border-strong hover:bg-surface-hover hover:text-content"
-                                        )}
-                                    >
-                                        <span className="flex items-center justify-between gap-2">
-                                            <Icon
-                                                size={20}
-                                                aria-hidden
-                                                className={cn(
-                                                    "shrink-0",
-                                                    isActive
-                                                        ? "text-brand-text"
-                                                        : "text-content-muted"
-                                                )}
-                                            />
-                                            {count !== undefined && (
-                                                <CountPill value={count} />
-                                            )}
-                                        </span>
-                                        <span className="flex items-baseline justify-between gap-2">
-                                            <span
-                                                className={cn(
-                                                    "text-body",
-                                                    isActive && "font-semibold"
-                                                )}
-                                            >
-                                                {label}
+                    {TABS.map(({ tab, label, icon }) => (
+                        <li key={tab}>
+                            <NavLink
+                                to={pathOf(username, tab)}
+                                end
+                                onClick={() => setSheetOpen(false)}
+                                className={switcherTileClass(tab === active)}
+                            >
+                                <SwitcherTileBody
+                                    icon={icon}
+                                    label={label}
+                                    active={tab === active}
+                                    count={countOf(tab)}
+                                    note={
+                                        tab === "friends" &&
+                                        requestCount > 0 && (
+                                            <span className="text-label-sm text-brand-text">
+                                                {formatCount(requestCount)} new
                                             </span>
-                                            {tab === "friends" &&
-                                                requestCount > 0 && (
-                                                    <span className="text-label-sm text-brand-text">
-                                                        {formatCount(
-                                                            requestCount
-                                                        )}{" "}
-                                                        new
-                                                    </span>
-                                                )}
-                                        </span>
-                                    </NavLink>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                </Modal>
+                                        )
+                                    }
+                                />
+                            </NavLink>
+                        </li>
+                    ))}
+                </SwitcherSheet>
             )}
 
             <div className="hidden gap-1 border-b border-subtle sm:flex">

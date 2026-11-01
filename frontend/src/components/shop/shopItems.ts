@@ -12,6 +12,8 @@ import {
     type ShopGroup,
     type ShopKind,
 } from "@playrates/shared";
+import { LayoutGrid, Package, SmilePlus, Sparkles, Type } from "lucide-react";
+import type { IconComponent } from "../../lib/icons";
 import { profilePath } from "../../lib/profilePaths";
 
 export const KIND_LABELS: Record<ShopKind, string> = {
@@ -20,6 +22,15 @@ export const KIND_LABELS: Record<ShopKind, string> = {
     reaction: "Reactions",
     slot: "Slots",
     helper: "Other",
+};
+
+/** Each section's mark, for the phone's section switcher. */
+export const KIND_ICONS: Record<ShopKind, IconComponent> = {
+    cosmetic: Sparkles,
+    name: Type,
+    reaction: SmilePlus,
+    slot: LayoutGrid,
+    helper: Package,
 };
 
 export const GROUP_LABELS: Record<ShopGroup, string> = {

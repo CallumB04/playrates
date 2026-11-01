@@ -1,7 +1,25 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import {
+    Activity,
+    Flag,
+    Gamepad2,
+    HeartPulse,
+    LayoutDashboard,
+    Mail,
+    Megaphone,
+    Palette,
+    TrendingUp,
+    Users,
+} from "lucide-react";
 import ThemeToggle from "../../components/ui/ThemeToggle";
 import { cn } from "../../lib/cn";
-import { useOverflowFade } from "../../hooks/useOverflowFade";
+import {
+    SwitcherButton,
+    SwitcherSheet,
+    SwitcherTileBody,
+    switcherTileClass,
+} from "../../components/ui/SectionSwitcher";
 
 /**
  * Add a view by adding an entry here and a route in AdminApp.tsx.
@@ -11,22 +29,23 @@ import { useOverflowFade } from "../../hooks/useOverflowFade";
  */
 const ADMIN_GROUPS = [
     [
-        { to: "/admin/overview", label: "Overview" },
-        { to: "/admin/activity", label: "Activity" },
-        { to: "/admin/health", label: "Health" },
-        { to: "/admin/progress", label: "Progress" },
+        { to: "/admin/overview", label: "Overview", icon: LayoutDashboard },
+        { to: "/admin/activity", label: "Activity", icon: Activity },
+        { to: "/admin/health", label: "Health", icon: HeartPulse },
+        { to: "/admin/progress", label: "Progress", icon: TrendingUp },
     ],
     [
-        { to: "/admin/users", label: "Users" },
-        { to: "/admin/reports", label: "Reports" },
+        { to: "/admin/users", label: "Users", icon: Users },
+        { to: "/admin/reports", label: "Reports", icon: Flag },
     ],
     [
-        { to: "/admin/games", label: "Games" },
-        { to: "/admin/announcements", label: "Announcements" },
-        { to: "/admin/emails", label: "Emails" },
-        { to: "/admin/design", label: "Design library" },
+        { to: "/admin/games", label: "Games", icon: Gamepad2 },
+        { to: "/admin/announcements", label: "Announcements", icon: Megaphone },
+        { to: "/admin/emails", label: "Emails", icon: Mail },
+        { to: "/admin/design", label: "Design library", icon: Palette },
     ],
 ];
+const ADMIN_VIEWS = ADMIN_GROUPS.flat();
 
 /**
  * The admin area wears the profile's drawer tabs rather than a sidebar: it is
@@ -34,7 +53,10 @@ const ADMIN_GROUPS = [
  * AdminGate's decision.
  */
 const AdminLayout = () => {
-    const fade = useOverflowFade<HTMLElement>();
+    const { pathname } = useLocation();
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const current =
+        ADMIN_VIEWS.find((v) => pathname.startsWith(v.to)) ?? ADMIN_VIEWS[0]!;
     return (
         <div className="flex flex-col gap-6">
             <header className="flex flex-col gap-5">
@@ -45,14 +67,42 @@ const AdminLayout = () => {
                     <ThemeToggle />
                 </div>
 
-                {/* Scrolls sideways on a phone, as the shop's sections do,
-                    faded at whichever edge has more. */}
+                {/* Ten views don't fit a phone: the profile's switcher
+                    there, the grouped row from sm up. */}
+                <SwitcherButton
+                    icon={current.icon}
+                    label={current.label}
+                    open={sheetOpen}
+                    onOpen={() => setSheetOpen(true)}
+                />
+                {sheetOpen && (
+                    <SwitcherSheet
+                        title="Admin"
+                        titleId="admin-views-title"
+                        onClose={() => setSheetOpen(false)}
+                    >
+                        {ADMIN_VIEWS.map((view) => (
+                            <li key={view.to}>
+                                <NavLink
+                                    to={view.to}
+                                    onClick={() => setSheetOpen(false)}
+                                    className={switcherTileClass(
+                                        view === current
+                                    )}
+                                >
+                                    <SwitcherTileBody
+                                        icon={view.icon}
+                                        label={view.label}
+                                        active={view === current}
+                                    />
+                                </NavLink>
+                            </li>
+                        ))}
+                    </SwitcherSheet>
+                )}
                 <nav
                     aria-label="Admin"
-                    ref={fade.ref}
-                    onScroll={fade.onScroll}
-                    style={fade.style}
-                    className="flex max-w-full [scrollbar-width:none] items-center gap-1 self-start overflow-x-auto rounded-md border border-subtle bg-surface-sunken p-1 sm:flex-wrap sm:overflow-visible"
+                    className="hidden items-center gap-1 self-start rounded-md border border-subtle bg-surface-sunken p-1 sm:flex sm:flex-wrap"
                 >
                     {ADMIN_GROUPS.map((group, i) => (
                         <div

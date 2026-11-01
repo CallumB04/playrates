@@ -14,10 +14,19 @@ import { Skeleton } from "../../components/ui/Skeleton";
 import { TokenCoin } from "../../components/progress/TokenAmount";
 import ItemSheet, { useWear } from "../../components/shop/ItemSheet";
 import { ItemThumb } from "../../components/shop/ItemPreview";
-import { GROUP_LABELS, KIND_LABELS } from "../../components/shop/shopItems";
+import {
+    GROUP_LABELS,
+    KIND_ICONS,
+    KIND_LABELS,
+} from "../../components/shop/shopItems";
+import {
+    SwitcherButton,
+    SwitcherSheet,
+    SwitcherTileBody,
+    switcherTileClass,
+} from "../../components/ui/SectionSwitcher";
 import { useAuth } from "../../contexts/AuthContext";
 import { useShop } from "../../hooks/queries/useProgress";
-import { useOverflowFade } from "../../hooks/useOverflowFade";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import { formatCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
@@ -27,12 +36,12 @@ const ShopPage = () => {
     const { user, isLoading } = useAuth();
     const { data: shop } = useShop();
     const [kind, setKind] = useState<ShopKind>("cosmetic");
+    const [sectionsOpen, setSectionsOpen] = useState(false);
     const [open, setOpen] = useState<ShopEntry | null>(null);
     // `?item=` opens one item, for a page that sends you here for it: out of
     // pin slots, say. It leaves the URL as the popup closes.
     const [params, setParams] = useSearchParams();
     const linked = params.get("item");
-    const tabsFade = useOverflowFade<HTMLDivElement>();
     usePageMeta({ title: "Shop", noindex: true });
 
     if (!isLoading && !user) return <Navigate to="/" replace />;
@@ -61,14 +70,42 @@ const ShopPage = () => {
                 }
             />
 
-            {/* Five sections don't fit a phone's width: the row scrolls
-                sideways there, edge to edge, faded where there's more. */}
-            <div
-                ref={tabsFade.ref}
-                onScroll={tabsFade.onScroll}
-                style={tabsFade.style}
-                className="-mx-4 [scrollbar-width:none] overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0"
-            >
+            {/* Five sections don't fit a phone's width: the profile's
+                switcher there, the row from sm up. */}
+            <SwitcherButton
+                icon={KIND_ICONS[kind]}
+                label={KIND_LABELS[kind]}
+                open={sectionsOpen}
+                onOpen={() => setSectionsOpen(true)}
+            />
+            {sectionsOpen && (
+                <SwitcherSheet
+                    title="Shop"
+                    titleId="shop-sections-title"
+                    onClose={() => setSectionsOpen(false)}
+                >
+                    {SHOP_KINDS.map((k) => (
+                        <li key={k}>
+                            <button
+                                type="button"
+                                aria-current={k === kind ? "page" : undefined}
+                                onClick={() => {
+                                    setKind(k);
+                                    setSectionsOpen(false);
+                                }}
+                                className={switcherTileClass(k === kind)}
+                            >
+                                <SwitcherTileBody
+                                    icon={KIND_ICONS[k]}
+                                    label={KIND_LABELS[k]}
+                                    active={k === kind}
+                                />
+                            </button>
+                        </li>
+                    ))}
+                </SwitcherSheet>
+            )}
+            <div className="hidden sm:block">
                 <SegmentedChoice
                     label="Shop sections"
                     segments={SHOP_KINDS.map((k) => ({
@@ -78,7 +115,7 @@ const ShopPage = () => {
                     value={kind}
                     onChange={setKind}
                     fill
-                    className="w-max min-w-full sm:w-auto sm:max-w-xl sm:min-w-0"
+                    className="max-w-xl"
                 />
             </div>
 
