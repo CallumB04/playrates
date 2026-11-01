@@ -540,6 +540,7 @@ describe("list and Gaming 25 pages for readers that never run the app", () => {
             visibility: "everyone",
             colour: null,
             ranked: true,
+            cover_game_ids: [],
             created_at: "2026-10-01T00:00:00.000Z",
             updated_at: "2026-10-02T00:00:00.000Z",
           },
