@@ -183,18 +183,43 @@ describe("loggableSystems", () => {
   /* A subscription no catalogue lists, but a way of playing PC and Xbox
      games all the same. */
   it("offers Game Pass on a game that is on PC or Xbox", () => {
-    expect(loggableSystems(["steam", "playstation5"])).toEqual([
-      "steam",
-      "playstation5",
+    expect(loggableSystems(["steam", "playstation5"])).toContain(
       "pc-game-pass",
-    ]);
+    );
     expect(loggableSystems(["xbox-one"])).toContain("pc-game-pass");
   });
 
   it("doesn't offer it where Game Pass can't reach", () => {
-    expect(loggableSystems(["nintendo-switch", "playstation5"])).toEqual([
-      "nintendo-switch",
+    expect(loggableSystems(["nintendo-switch", "playstation5"])).not.toContain(
+      "pc-game-pass",
+    );
+  });
+
+  it("offers Other PC on a PC game and Other console on a console one", () => {
+    expect(loggableSystems(["steam", "playstation5"])).toEqual([
+      "steam",
       "playstation5",
+      "pc-game-pass",
+      "other-pc",
+      "other-console",
     ]);
+    expect(loggableSystems(["nintendo-switch"])).toEqual([
+      "nintendo-switch",
+      "other-console",
+    ]);
+  });
+
+  it("offers neither where it isn't relevant", () => {
+    expect(loggableSystems(["ios", "android", "macos"])).toEqual([
+      "ios",
+      "android",
+      "macos",
+    ]);
+  });
+
+  it("doesn't offer Other PC twice to a game already on it", () => {
+    expect(
+      loggableSystems(["other-pc"]).filter((s) => s === "other-pc"),
+    ).toHaveLength(1);
   });
 });

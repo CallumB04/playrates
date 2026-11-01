@@ -156,13 +156,38 @@ export type PlatformSystem = z.infer<typeof PlatformSystemSchema>;
 const GAME_PASS = "pc-game-pass";
 const GAME_PASS_HOSTS = ["steam", "other-pc", "xbox-series-x", "xbox-one"];
 
+const OTHER_PC = "other-pc";
+const OTHER_CONSOLE = "other-console";
+const PCS = ["steam", "pc-game-pass", OTHER_PC];
+/** Every machine that isn't a console: the PC storefronts, phones, Macs and
+ *  the home computers. */
+const NOT_CONSOLES = new Set([
+  ...PCS,
+  "ios",
+  "android",
+  "macos",
+  "macintosh",
+  "apple-ii",
+  "linux",
+  "web",
+  "atari-st",
+  "atari-8-bit",
+  "commodore-amiga",
+]);
+
 /** The consoles a log of this game can name: the ones the catalogue lists,
- *  and Game Pass wherever it could be how someone played it. */
-export const loggableSystems = (gameSystems: readonly string[]): string[] =>
-  gameSystems.some((s) => GAME_PASS_HOSTS.includes(s)) &&
-  !gameSystems.includes(GAME_PASS)
-    ? [...gameSystems, GAME_PASS]
-    : [...gameSystems];
+ *  Game Pass wherever it could be how someone played it, and Other PC and
+ *  Other console for a copy on a machine the list doesn't name. */
+export const loggableSystems = (gameSystems: readonly string[]): string[] => {
+  const out = [...gameSystems];
+  const add = (slug: string) => {
+    if (!out.includes(slug)) out.push(slug);
+  };
+  if (gameSystems.some((s) => GAME_PASS_HOSTS.includes(s))) add(GAME_PASS);
+  if (gameSystems.some((s) => PCS.includes(s))) add(OTHER_PC);
+  if (gameSystems.some((s) => !NOT_CONSOLES.has(s))) add(OTHER_CONSOLE);
+  return out;
+};
 
 export const GenreSchema = z.object({
   slug: z.string(),

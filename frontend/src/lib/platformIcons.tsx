@@ -86,6 +86,7 @@ const PLATFORM_ICONS: Record<string, PlatformIcon> = {
     "commodore-amiga": SiCommodore,
     "neo-geo": Joystick,
     "3do": Disc3,
+    "other-console": Gamepad2,
 };
 
 /** An unknown family falls back to a controller rather than leaving a hole in
