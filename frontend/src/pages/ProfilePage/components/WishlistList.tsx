@@ -11,6 +11,7 @@ import { useReorderWishlist } from "../../../hooks/queries/useWishlist";
 import { formatCount } from "../../../lib/format";
 import { sortWishlist, type WishlistSort } from "../lib/wishlist";
 import ConsoleChips from "./ConsoleChips";
+import WishlistConsoles from "./WishlistConsoles";
 
 interface WishlistListProps {
     /** The whole wishlist, in its owner's order. */
@@ -97,10 +98,17 @@ const WishlistList = ({
                     lifted={row.lifted}
                     ghost={row.ghost}
                     detail={
-                        <ConsoleChips
-                            consoles={entry.consoles}
-                            systems={systems}
-                        />
+                        isMyAccount ? (
+                            <WishlistConsoles
+                                entry={entry}
+                                systems={systemList ?? []}
+                            />
+                        ) : (
+                            <ConsoleChips
+                                consoles={entry.consoles}
+                                systems={systems}
+                            />
+                        )
                     }
                     actions={buildTileActions(entry)}
                     onMore={row.onMore}

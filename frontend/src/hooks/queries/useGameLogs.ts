@@ -13,6 +13,7 @@ import type {
 import {
     createLog,
     deleteLog,
+    patchLog,
     deleteLogReview,
     fetchMyGameLogIds,
     fetchMyLogBundle,
@@ -133,6 +134,17 @@ export const useLogMutations = () => {
         onSuccess: invalidate,
     });
 
+    const patch = useMutation({
+        mutationFn: ({
+            logId,
+            input,
+        }: {
+            logId: number;
+            input: Partial<GameLogInput>;
+        }) => patchLog(logId, input),
+        onSuccess: invalidate,
+    });
+
     const remove = useMutation({
         mutationFn: (logId: number) => deleteLog(logId),
         onSuccess: invalidate,
@@ -149,7 +161,7 @@ export const useLogMutations = () => {
         onSuccess: invalidate,
     });
 
-    return { create, update, remove, saveReview, removeReview };
+    return { create, update, patch, remove, saveReview, removeReview };
 };
 
 export type QuickAddStatus = "backlog" | "wishlist";

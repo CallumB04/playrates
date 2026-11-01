@@ -28,15 +28,19 @@ const consolesOf: Record<number, (string | null)[]> = {
     4: [null],
 };
 
+// One log per console, as the API sends them.
 const entry = (id: number, rank: number): WishlistEntry => ({
-    ...buildShelfEntry([
-        buildGameLog({
-            id,
-            gameId: id,
-            status: "wishlist",
-            game: buildGame({ id, title: `Game ${id}`, slug: `game-${id}` }),
-        }),
-    ]),
+    ...buildShelfEntry(
+        consolesOf[id]!.map((system, i) =>
+            buildGameLog({
+                id: id * 10 + i,
+                gameId: id,
+                status: "wishlist",
+                system,
+                game: buildGame({ id, title: `Game ${id}`, slug: `game-${id}` }),
+            })
+        )
+    ),
     rank,
     consoles: consolesOf[id]!,
 });
@@ -143,10 +147,14 @@ describe("WishlistList", () => {
         ]);
         const row = screen.getByText("Game 2").closest("li")!;
         expect(
-            await within(row).findByText("Steam", { selector: "li" })
+            await within(row).findByRole("button", {
+                name: /Platform for Game 2: Steam/,
+            })
         ).toBeInTheDocument();
         expect(
-            within(row).getByText("PlayStation 5", { selector: "li" })
+            within(row).getByRole("button", {
+                name: /Platform for Game 2: PlayStation 5/,
+            })
         ).toBeInTheDocument();
         expect(
             within(screen.getByText("Game 4").closest("li")!).getByText(

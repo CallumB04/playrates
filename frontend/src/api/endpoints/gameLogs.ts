@@ -127,6 +127,13 @@ export const updateLog = async (
     return data;
 };
 
+/** Changes only the fields given. */
+export const patchLog = async (
+    logId: number,
+    input: Partial<GameLogInput>
+): Promise<GameLog> =>
+    (await api.patch<GameLog>(`/me/logs/${logId}`, input)).data;
+
 export const deleteLog = async (logId: number): Promise<void> => {
     await api.delete(`/me/logs/${logId}`);
 };
