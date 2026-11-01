@@ -5,6 +5,7 @@ import type {
   PlatformRow,
   PlatformSystemRow,
 } from "../../types/database.types.js";
+import { memoFor } from "../../lib/memo.js";
 
 export interface PlatformsRepository {
   list(): Promise<PlatformRow[]>;
@@ -48,14 +49,16 @@ const toSystem = (row: PlatformSystemRow): PlatformSystem => ({
 
 export const createPlatformsRouter = (repo: PlatformsRepository): Router => {
   const router = Router();
+  const list = memoFor(10 * 60_000, () => repo.list());
+  const listSystems = memoFor(10 * 60_000, () => repo.listSystems());
 
   router.get("/systems", async (_req, res) => {
-    const rows = await repo.listSystems();
+    const rows = await listSystems();
     res.json({ data: rows.map(toSystem) });
   });
 
   router.get("/", async (_req, res) => {
-    const rows = await repo.list();
+    const rows = await list();
     res.json({ data: rows.map(toPlatform) });
   });
 

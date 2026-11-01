@@ -46,7 +46,7 @@ const YourWeek = () => {
             trailing={
                 <Link
                     to="/progress"
-                    className="relative inline-flex items-center gap-1 text-label font-medium text-brand before:absolute before:-inset-2 before:content-[''] hover:underline"
+                    className="relative inline-flex items-center gap-1 text-label font-medium text-brand-text before:absolute before:-inset-2 before:content-[''] hover:underline"
                 >
                     Progress
                     <ArrowRight size={14} aria-hidden />
@@ -158,7 +158,7 @@ const YourWeek = () => {
                                     className={cn(
                                         "min-w-0 flex-1 truncate text-label",
                                         r.isYou
-                                            ? "font-semibold text-brand"
+                                            ? "font-semibold text-brand-text"
                                             : "text-content"
                                     )}
                                 >

@@ -4,36 +4,64 @@ import type { NotificationKind } from "./notification.js";
 /**
  * The emails PlayRates sends that a member can turn off, one switch each.
  * Account emails (confirming an address, a password reset, security notices)
- * aren't here: those always send. Every category starts on.
+ * aren't here: those always send. Each starts as `defaultOn` says.
  */
 export const EMAIL_CATEGORIES = [
   {
     key: "friend_requests",
     label: "Friend requests",
-    description: "When someone sends you a friend request.",
+    description: "When someone sends you a friend request, or accepts yours.",
+    defaultOn: true,
   },
   {
     key: "replies",
     label: "Replies to you",
     description:
       "When someone replies to one of your messages in the community.",
+    defaultOn: true,
+  },
+  {
+    key: "milestones",
+    label: "Reactions and loves",
+    description:
+      "When a message, review, list or your Gaming 25 reaches 5, 10, 20 and on.",
+    defaultOn: true,
   },
   {
     key: "gifts_invites",
     label: "Gifts and invites",
     description:
       "When a friend sends you a gift, or someone you invited joins or gets going.",
+    defaultOn: true,
   },
   {
     key: "wishlist_releases",
     label: "Wishlist release days",
     description: "On the day a game on your wishlist comes out.",
+    defaultOn: true,
+  },
+  {
+    key: "reminders",
+    label: "Streak and task reminders",
+    description:
+      "When your streak needs something this week, or a task is nearly done.",
+    // Asked for, not assumed: a nudge nobody wanted is how people leave.
+    defaultOn: false,
+  },
+  {
+    key: "digest",
+    label: "Weekly digest",
+    description:
+      "On Sunday evenings: what your friends played, and wishlist games out that week.",
+    defaultOn: true,
   },
   {
     key: "news",
     label: "News and patch notes",
     description:
       "Announcements and what's new in PlayRates. A few a month at most.",
+    // Off at sign-up unless ticked there; the box writes it either way.
+    defaultOn: true,
   },
 ] as const;
 
@@ -53,12 +81,22 @@ export const EMAIL_SCOPES = ["all", ...EMAIL_CATEGORY_KEYS] as [
 /** Every switch, resolved: `all` off silences the rest whatever they say. */
 export type EmailPrefs = Record<EmailScope, boolean>;
 
-/** What's stored is sparse: a key not there is on. */
+const DEFAULT_ON: Record<EmailScope, boolean> = {
+  all: true,
+  ...(Object.fromEntries(
+    EMAIL_CATEGORIES.map((c) => [c.key, c.defaultOn]),
+  ) as Record<EmailCategory, boolean>),
+};
+
+/** What's stored is sparse: a key not there is its category's default. */
 export const resolveEmailPrefs = (
   stored: Partial<Record<string, unknown>> | null | undefined,
 ): EmailPrefs =>
   Object.fromEntries(
-    EMAIL_SCOPES.map((scope) => [scope, stored?.[scope] !== false]),
+    EMAIL_SCOPES.map((scope) => {
+      const value = stored?.[scope];
+      return [scope, typeof value === "boolean" ? value : DEFAULT_ON[scope]];
+    }),
   ) as EmailPrefs;
 
 /** Whether an email of this category may go to someone with these prefs. */
@@ -70,10 +108,17 @@ export const EMAIL_CATEGORY_OF: Partial<
   Record<NotificationKind, EmailCategory>
 > = {
   friend_request: "friend_requests",
+  friend_accepted: "friend_requests",
   community_reply: "replies",
+  community_upvote_milestone: "milestones",
+  review_upvote_milestone: "milestones",
+  list_upvote_milestone: "milestones",
+  gaming_25_love_milestone: "milestones",
   gift_received: "gifts_invites",
   referral_joined: "gifts_invites",
   referral_active: "gifts_invites",
+  streak_at_risk: "reminders",
+  task_nearly_done: "reminders",
 };
 
 export const EmailPrefsPatchSchema = z

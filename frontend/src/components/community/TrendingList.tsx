@@ -36,7 +36,7 @@ const TrendingList = ({
                             className={cn(
                                 "font-display text-figure-lg leading-none",
                                 thread.rank === 1
-                                    ? "text-brand"
+                                    ? "text-brand-text"
                                     : "text-content-muted"
                             )}
                         >
@@ -44,6 +44,7 @@ const TrendingList = ({
                         </span>
                         {game && (
                             <GameCover
+                                sizes="44px"
                                 coverUrl={game.coverUrl}
                                 title={game.title}
                                 className="aspect-3/4 w-11 shrink-0 self-start overflow-hidden rounded-xs shadow-cover"
@@ -55,7 +56,7 @@ const TrendingList = ({
                                     {game.title}
                                 </span>
                             )}
-                            <span className="line-clamp-2 text-body-sm font-semibold text-content group-hover:text-brand">
+                            <span className="line-clamp-2 text-body-sm font-semibold text-content group-hover:text-brand-text">
                                 {thread.title}
                             </span>
                             <span className="mt-auto flex items-center justify-between gap-2 pt-1">

@@ -101,6 +101,35 @@ describe("ChooseUsername", () => {
         await waitFor(() => expect(sent).toEqual({ username: "new_player" }));
     });
 
+    it("turns news on only when it's ticked", async () => {
+        let sent: unknown;
+        server.use(
+            http.patch(`${API}/profiles/me`, async ({ request }) => {
+                sent = await request.json();
+                return HttpResponse.json(
+                    buildProfile({ username: "new_player" })
+                );
+            })
+        );
+        const user = userEvent.setup();
+        renderWithProviders(<ChooseUsername />);
+
+        await user.type(screen.getByLabelText("Username"), "new_player");
+        await user.click(screen.getByRole("checkbox", { name: /13 or older/ }));
+        await user.click(
+            screen.getByRole("checkbox", { name: /Email me news/ })
+        );
+        await waitFor(() => expect(continueButton()).toBeEnabled());
+        await user.click(continueButton());
+
+        await waitFor(() =>
+            expect(sent).toEqual({
+                username: "new_player",
+                emailPrefs: { news: true },
+            })
+        );
+    });
+
     /* Free when checked, gone by the time it was saved. */
     it("owns up when someone got there first", async () => {
         server.use(

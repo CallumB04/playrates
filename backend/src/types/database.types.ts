@@ -1,8 +1,8 @@
 /**
- * Row shapes for the tables in supabase/migrations/. Hand-written for now;
- * regenerate from the live schema with:
- *
- *   npm run db:types -w backend
+ * Row shapes for the tables in supabase/migrations/, written by hand with
+ * the jsonb columns typed. The schema as Postgres has it is generated into
+ * database.generated.ts (`npm run db:types -w backend`, from the local
+ * stack); CI fails when that file and the migrations disagree.
  */
 
 import type { GameBackdrop } from "@playrates/shared";
@@ -15,6 +15,9 @@ export interface ProfileRow {
   last_seen_at: string;
   /** Opt-in. Off filters games flagged has_sexual_content out of listings. */
   show_sexual_content: boolean;
+  /** When they confirmed they're 18 or over, which showing sexually
+   *  explicit games needs. */
+  adult_confirmed_at: string | null;
   first_name: string | null;
   /** IANA zone name. Timestamps render in this; date-only columns do not. */
   timezone: string;
@@ -367,6 +370,34 @@ export interface ServerErrorRow {
   created_at: string;
 }
 
+/** One row of admin_cohorts(). */
+export interface AdminCohortRow {
+  week: string;
+  signed_up: number;
+  onboarded: number;
+  logged_three: number;
+  week_due: number;
+  back_week: number;
+  month_due: number;
+  back_month: number;
+  referred: number;
+  referred_onboarded: number;
+  referred_going: number;
+  referred_week_due: number;
+  referred_back_week: number;
+}
+
+export interface ClientErrorRow {
+  id: number;
+  message: string;
+  stack: string | null;
+  path: string;
+  user_agent: string | null;
+  build: string | null;
+  user_id: string | null;
+  created_at: string;
+}
+
 export interface AnnouncementRow {
   id: number;
   tone: string;
@@ -416,6 +447,23 @@ export interface MemberEmailRow {
   email: string;
   username: string;
   email_prefs: Record<string, boolean>;
+}
+
+/** A friend's log in the weekly digest. */
+export interface DigestFriendLog {
+  username: string;
+  gameId: number;
+  title: string;
+  status: "played" | "playing" | "backlog";
+  rating: number | null;
+}
+
+/** One row of weekly_digest(): a member with something to hear about. */
+export interface WeeklyDigestRow {
+  user_id: string;
+  friends: DigestFriendLog[];
+  releases: { gameId: number; title: string; releaseDate: string }[];
+  logged: number;
 }
 
 /** One row of wishlist_releases_on(). */

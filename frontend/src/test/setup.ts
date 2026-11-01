@@ -69,7 +69,7 @@ if (!window.requestAnimationFrame) {
 
 // "error" so a request with no handler fails the test loudly rather than
 // silently hitting the network
-beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => server.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
     server.resetHandlers();
     cleanup();

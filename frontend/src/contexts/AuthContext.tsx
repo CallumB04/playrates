@@ -1,4 +1,4 @@
-import type { Session } from "@supabase/supabase-js";
+import type { Session } from "@supabase/auth-js";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { effectiveTimeZone, setDisplayTimeZone } from "../lib/format";
@@ -26,20 +26,28 @@ interface AuthContextValue {
     user: MyProfile | null;
     isLoading: boolean;
     /* captchaToken: from useCaptcha, once Supabase is set to require one. */
+    /** `news`: whether they ticked to get news emails. Off unless asked. */
     signUp: (
         email: string,
         password: string,
         username: string,
-        captchaToken?: string
+        captchaToken?: string,
+        news?: boolean
     ) => Promise<{ signedIn: boolean }>;
     signIn: (
         email: string,
         password: string,
         captchaToken?: string
     ) => Promise<void>;
-    /** Leaves for the provider's sign-in page and comes back here. Signing
-     *  in and signing up are the same thing this way. */
-    signInWithProvider: (provider: OAuthProvider) => Promise<void>;
+    /** Leaves for the provider's sign-in page and comes back here, or to
+     *  `returnTo`. Signing in and signing up are the same thing this way. */
+    signInWithProvider: (
+        provider: OAuthProvider,
+        returnTo?: string
+    ) => Promise<void>;
+    /** Signs in again with the password, quietly, for what wants a sign-in
+     *  from moments ago. A wrong one throws `invalid_credentials`. */
+    confirmPassword: (password: string, captchaToken?: string) => Promise<void>;
     signOut: () => Promise<void>;
     /** Sends the sign-up confirmation again, for an email not yet confirmed. */
     resendConfirmation: (email: string, captchaToken?: string) => Promise<void>;
@@ -166,13 +174,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             user: session ? (user ?? null) : null,
             isLoading: isRestoring || (!!session && isProfileLoading),
 
-            async signUp(email, password, username, captchaToken) {
+            async signUp(email, password, username, captchaToken, news) {
                 const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
                         // read by the handle_new_user trigger to seed the profile
-                        data: { username },
+                        data: { username, news: news === true },
                         captchaToken,
                         emailRedirectTo: confirmedUrl(),
                     },
@@ -182,10 +190,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 return { signedIn: !!data.session };
             },
 
-            async signInWithProvider(provider) {
+            async signInWithProvider(provider, returnTo) {
                 const { error } = await supabase.auth.signInWithOAuth({
                     provider,
-                    options: { redirectTo: window.location.href },
+                    options: { redirectTo: returnTo ?? window.location.href },
+                });
+                if (error) throw error;
+            },
+
+            async confirmPassword(password, captchaToken) {
+                const email = session?.user.email;
+                if (!email) throw new Error("No email to sign in with");
+                const { error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                    options: { captchaToken },
                 });
                 if (error) throw error;
             },

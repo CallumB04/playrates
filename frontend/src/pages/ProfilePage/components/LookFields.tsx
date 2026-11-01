@@ -240,7 +240,7 @@ const LookFields = ({
                 More frames, fonts and colours are in the{" "}
                 <Link
                     to="/shop"
-                    className="text-content underline hover:text-brand"
+                    className="text-content underline hover:text-brand-text"
                 >
                     shop
                 </Link>

@@ -168,4 +168,26 @@ describe("Modal", () => {
         expect(dialog.className).toContain("max-sm:max-w-none");
         expect(dialog.className).toContain("max-sm:w-full");
     });
+
+    it("keeps Tab inside the dialog, going round from last to first", () => {
+        render(
+            <>
+                <button>Behind</button>
+                <Modal onClose={vi.fn()} showCloseButton={false}>
+                    <button>First</button>
+                    <button>Last</button>
+                </Modal>
+            </>
+        );
+        const dialog = screen.getByRole("dialog");
+        const first = screen.getByRole("button", { name: "First" });
+        const last = screen.getByRole("button", { name: "Last" });
+
+        last.focus();
+        fireEvent.keyDown(dialog, { key: "Tab" });
+        expect(first).toHaveFocus();
+
+        fireEvent.keyDown(dialog, { key: "Tab", shiftKey: true });
+        expect(last).toHaveFocus();
+    });
 });

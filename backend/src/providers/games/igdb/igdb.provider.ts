@@ -10,15 +10,23 @@ import {
   pickBackdrops,
   pickBanner,
   pickSeries,
+  STEAM_SOURCE,
   toExternalGame,
   type IgdbGame,
 } from "./igdb.mapper.js";
 
 const API = "https://api.igdb.com/v4";
 const TOKEN_URL = "https://id.twitch.tv/oauth2/token";
-/** A page of 500 games with everything expanded can take a few seconds. */
-const TIMEOUT_MS = 20_000;
-const MAX_ATTEMPTS = 3;
+/** How long to wait on IGDB, and how many times to ask. A page of 500
+ *  games with everything expanded can take a few seconds, and a job can
+ *  wait. Someone waiting on a search or an import can't: past 15s their
+ *  browser has given up anyway. */
+interface Patience {
+  timeoutMs: number;
+  attempts: number;
+}
+const PATIENT: Patience = { timeoutMs: 20_000, attempts: 3 };
+const QUICK: Patience = { timeoutMs: 6_000, attempts: 2 };
 /** IGDB allows four requests a second; this keeps a margin under it. */
 const MIN_INTERVAL_MS = 260;
 /** The most IGDB returns in one request. */
@@ -101,6 +109,16 @@ export interface IgdbHooks {
   /** Once per call to IGDB, retries included. Awaited, but a failure here
    *  is swallowed. */
   onRequest?: (outcome: IgdbRequestOutcome) => Promise<void> | void;
+  /** Takes the next turn under IGDB's rate limit, shared by every
+   *  instance: how long to wait before calling. Without it, each instance
+   *  keeps its own gap, which several instances together can overrun. */
+  nextTurn?: (minIntervalMs: number) => Promise<number>;
+  /** Where the Twitch token is kept between instances, so a cold start
+   *  doesn't fetch one of its own. */
+  tokenStore?: {
+    get(): Promise<string | null>;
+    set(token: string, ttlMs: number): Promise<void>;
+  };
 }
 
 /** Apicalypse needs its strings quoted, and quotes inside them escaped. */
@@ -125,21 +143,35 @@ export const createIgdbProvider = (
   };
 
   let token: { value: string; expiresAt: number } | null = null;
+  // Set when IGDB turned the shared token away, so the next one is fetched
+  // fresh rather than read back from the store.
+  let sharedRevoked = false;
 
   /** A Twitch app token, kept until near its expiry. Per instance: a cold
    *  start fetches its own, which Twitch is fine with. */
   const accessToken = async (): Promise<string> => {
     if (token && Date.now() < token.expiresAt) return token.value;
+    const shared = sharedRevoked
+      ? null
+      : await hooks.tokenStore?.get().catch(() => null);
+    if (shared) {
+      // How long it has left isn't kept with it; a minute is safe, and a
+      // revoked one is caught by the 401 below.
+      token = { value: shared, expiresAt: Date.now() + 60_000 };
+      return shared;
+    }
     const url = new URL(TOKEN_URL);
     url.searchParams.set("client_id", clientId);
     url.searchParams.set("client_secret", clientSecret);
     url.searchParams.set("grant_type", "client_credentials");
     const response = await fetchImpl(url, {
       method: "POST",
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(QUICK.timeoutMs),
     });
     if (!response.ok) {
-      throw AppError.upstream(`Twitch refused the IGDB credentials (${response.status})`);
+      throw AppError.upstream(
+        `Twitch refused the IGDB credentials (${response.status})`,
+      );
     }
     const body = (await response.json()) as {
       access_token: string;
@@ -149,17 +181,26 @@ export const createIgdbProvider = (
       value: body.access_token,
       expiresAt: Date.now() + body.expires_in * 1000 - TOKEN_MARGIN_MS,
     };
+    sharedRevoked = false;
+    await hooks.tokenStore
+      ?.set(token.value, token.expiresAt - Date.now())
+      .catch(() => undefined);
     return token.value;
   };
 
   // Chained with a minimum gap, so a burst of searches can't trip the rate
-  // limit. Single-process only: a second instance keeps its own chain.
+  // limit. The gap is shared between instances when nextTurn is given;
+  // otherwise each instance keeps its own.
   let chain: Promise<unknown> = Promise.resolve();
   let lastCallAt = 0;
 
   const schedule = <T>(task: () => Promise<T>): Promise<T> => {
     const run = chain.then(async () => {
-      const wait = Math.max(0, MIN_INTERVAL_MS - (Date.now() - lastCallAt));
+      const shared = await hooks
+        .nextTurn?.(MIN_INTERVAL_MS)
+        .catch(() => undefined);
+      const wait =
+        shared ?? Math.max(0, MIN_INTERVAL_MS - (Date.now() - lastCallAt));
       if (wait > 0) await new Promise((r) => setTimeout(r, wait));
       lastCallAt = Date.now();
       return task();
@@ -169,9 +210,13 @@ export const createIgdbProvider = (
     return run;
   };
 
-  const query = <T>(endpoint: string, body: string): Promise<T> =>
+  const query = <T>(
+    endpoint: string,
+    body: string,
+    { timeoutMs, attempts }: Patience = PATIENT,
+  ): Promise<T> =>
     schedule(async () => {
-      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      for (let attempt = 0; attempt < attempts; attempt++) {
         let response: Response;
         try {
           response = await fetchImpl(`${API}/${endpoint}`, {
@@ -182,7 +227,7 @@ export const createIgdbProvider = (
               Accept: "application/json",
             },
             body,
-            signal: AbortSignal.timeout(TIMEOUT_MS),
+            signal: AbortSignal.timeout(timeoutMs),
           });
         } catch (error) {
           await report({
@@ -190,7 +235,7 @@ export const createIgdbProvider = (
             error: error instanceof Error ? error.message : String(error),
           });
           // A dropped connection or a timeout is as passing as a 429.
-          if (attempt === MAX_ATTEMPTS - 1) throw error;
+          if (attempt === attempts - 1) throw error;
           await new Promise((r) => setTimeout(r, 2 ** attempt * 300));
           continue;
         }
@@ -207,7 +252,10 @@ export const createIgdbProvider = (
         if (response.ok) return (await response.json()) as T;
 
         // A token Twitch has revoked early: fetch a new one and go again.
-        if (response.status === 401) token = null;
+        if (response.status === 401) {
+          token = null;
+          sharedRevoked = true;
+        }
 
         if (retryable) {
           const backoff = 2 ** attempt * 300 + Math.floor(Math.random() * 150);
@@ -234,20 +282,32 @@ export const createIgdbProvider = (
    * their own on IGDB (version_parent), so it is one more request for the
    * whole batch rather than one per game.
    */
-  const withEditions = async (found: IgdbGame[]): Promise<ExternalGame[]> => {
+  const withEditions = async (
+    found: IgdbGame[],
+    patience: Patience = PATIENT,
+  ): Promise<ExternalGame[]> => {
     if (found.length === 0) return [];
     const byParent = new Map<number, AltCover[]>();
     const ids = found.map((g) => g.id).join(",");
     for (let offset = 0; ; offset += MAX_LIMIT) {
       const editions = await query<
-        { version_parent: number; version_title?: string; name: string; cover?: { image_id: string } }[]
+        {
+          version_parent: number;
+          version_title?: string;
+          name: string;
+          cover?: { image_id: string };
+        }[]
       >(
         "games",
         `fields version_parent,version_title,name,cover.image_id; where version_parent = (${ids}) & cover != null; sort id asc; limit ${MAX_LIMIT}; offset ${offset};`,
+        patience,
       );
       for (const e of editions) {
         const list = byParent.get(e.version_parent) ?? [];
-        list.push({ imageId: e.cover!.image_id, label: e.version_title ?? e.name });
+        list.push({
+          imageId: e.cover!.image_id,
+          label: e.version_title ?? e.name,
+        });
         byParent.set(e.version_parent, list);
       }
       if (editions.length < MAX_LIMIT) break;
@@ -284,11 +344,15 @@ export const createIgdbProvider = (
       const found = await query<IgdbGame[]>(
         "games",
         `search ${quote(term)}; fields ${GAME_FIELDS}; where ${CATALOGUE_FILTER}; limit ${Math.min(limit * 2, 50)};`,
+        QUICK,
       );
       return withEditions(
         found
-          .sort((a, b) => (b.total_rating_count ?? 0) - (a.total_rating_count ?? 0))
+          .sort(
+            (a, b) => (b.total_rating_count ?? 0) - (a.total_rating_count ?? 0),
+          )
           .slice(0, limit),
+        QUICK,
       );
     },
 
@@ -298,8 +362,9 @@ export const createIgdbProvider = (
       const [found] = await query<IgdbGame[]>(
         "games",
         `fields ${GAME_FIELDS}; where id = ${Math.trunc(externalId)};`,
+        QUICK,
       );
-      return found ? (await withEditions([found]))[0]! : null;
+      return found ? (await withEditions([found], QUICK))[0]! : null;
     },
 
     // Rated games only: past them the rating count is null, and IGDB
@@ -339,6 +404,46 @@ export const createIgdbProvider = (
       return played.map((p) => p.game_id);
     },
 
+    async fromSteam(appids) {
+      const found = new Map<number, number>();
+      for (let i = 0; i < appids.length; i += MAX_LIMIT) {
+        const uids = appids
+          .slice(i, i + MAX_LIMIT)
+          .map((id) => `"${Math.trunc(id)}"`)
+          .join(",");
+        const rows = await query<{ game?: number; uid?: string }[]>(
+          "external_games",
+          `fields game,uid; where external_game_source = ${STEAM_SOURCE} & uid = (${uids}); limit ${MAX_LIMIT};`,
+        );
+        for (const row of rows) {
+          const appid = Number(row.uid);
+          // A Steam app can be listed against more than one IGDB game
+          // (a bundle, a remaster); the first is kept.
+          if (row.game && Number.isFinite(appid) && !found.has(appid)) {
+            found.set(appid, row.game);
+          }
+        }
+      }
+      return found;
+    },
+
+    async getByIds(externalIds) {
+      const all: IgdbGame[] = [];
+      for (let i = 0; i < externalIds.length; i += MAX_LIMIT) {
+        const ids = externalIds
+          .slice(i, i + MAX_LIMIT)
+          .map((id) => Math.trunc(id))
+          .join(",");
+        all.push(
+          ...(await query<IgdbGame[]>(
+            "games",
+            `fields ${GAME_FIELDS}; where id = (${ids}); limit ${MAX_LIMIT};`,
+          )),
+        );
+      }
+      return withEditions(all);
+    },
+
     async seriesOf(igdbIds) {
       const found = await query<IgdbGame[]>(
         "games",
@@ -359,6 +464,7 @@ export const createIgdbProvider = (
       const [found] = await query<IgdbGame[]>(
         "games",
         `fields screenshots.image_id,artworks.image_id; where id = ${igdbId};`,
+        QUICK,
       );
       return found ? pickBackdrops(found) : [];
     },

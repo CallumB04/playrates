@@ -32,7 +32,9 @@ const ChipRow = ({
                 return (
                     <li key={slug}>
                         <Link
-                            to={`/library?${param}=${encodeURIComponent(slug)}`}
+                            // The genre's or platform's own page: one a
+                            // search engine can follow and list.
+                            to={`/games/${param}/${encodeURIComponent(slug)}`}
                             className={chipClass(false, "gap-1.5 px-3", "tag")}
                         >
                             <Icon size={13} aria-hidden className="shrink-0" />

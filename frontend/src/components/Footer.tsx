@@ -19,6 +19,11 @@ const COLUMNS: { heading: string; links: FooterLink[] }[] = [
         links: [
             { to: "/library", label: "Library" },
             { to: "/community", label: "Community" },
+            { to: "/games/upcoming", label: "Upcoming games" },
+            {
+                to: `/games/best/${new Date().getFullYear()}`,
+                label: `Best of ${new Date().getFullYear()}`,
+            },
             { href: DISCORD_INVITE_URL, label: "Discord" },
             { href: TIKTOK_URL, label: "TikTok" },
         ],

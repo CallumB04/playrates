@@ -21,7 +21,7 @@ import { TextSkeleton } from "../../components/ui/Skeleton";
 import GamePicker, {
     type PickedGame,
 } from "../../components/community/GamePicker";
-import RichTextEditor from "../../components/community/RichTextEditor";
+import RichTextEditor from "../../components/community/LazyRichTextEditor";
 import {
     clearThreadDraft,
     hasContent,
@@ -163,7 +163,7 @@ const NewThreadPage = () => {
                             <button
                                 type="button"
                                 onClick={startOver}
-                                className="relative cursor-pointer text-brand before:absolute before:-inset-3 before:content-[''] hover:underline sm:before:hidden"
+                                className="relative cursor-pointer text-brand-text before:absolute before:-inset-3 before:content-[''] hover:underline sm:before:hidden"
                             >
                                 Start over
                             </button>

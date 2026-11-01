@@ -19,7 +19,7 @@ export const SeeAllButton = ({
         onClick={onClick}
         aria-haspopup="dialog"
         className={cn(
-            "relative inline-flex shrink-0 cursor-pointer items-center gap-0.5 text-label font-medium text-brand lift before:absolute before:-inset-x-2 before:-inset-y-3 before:content-[''] hover:underline sm:before:hidden",
+            "relative inline-flex shrink-0 cursor-pointer items-center gap-0.5 text-label font-medium text-brand-text lift before:absolute before:-inset-x-2 before:-inset-y-3 before:content-[''] hover:underline sm:before:hidden",
             className
         )}
     >

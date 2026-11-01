@@ -20,11 +20,58 @@ const versionFile = (): Plugin => ({
     },
 });
 
+/** Preloads the body font, which the stylesheet would otherwise only ask
+ *  for once it has loaded and been read. Latin only: it's the subset nearly
+ *  every page draws with. */
+const preloadBodyFont = (): Plugin => ({
+    name: "playrates-preload-body-font",
+    apply: "build",
+    transformIndexHtml(_html, ctx) {
+        const font = Object.keys(ctx.bundle ?? {}).find((file) =>
+            /\/geist-latin-wght-normal-[^/]+\.woff2$/.test(file)
+        );
+        if (!font) return [];
+        return [
+            {
+                tag: "link",
+                attrs: {
+                    rel: "preload",
+                    as: "font",
+                    type: "font/woff2",
+                    href: `/${font}`,
+                    crossorigin: "",
+                },
+                injectTo: "head",
+            },
+        ];
+    },
+});
+
 export default defineConfig({
     base: "/",
-    plugins: [react(), tailwindcss(), versionFile()],
+    plugins: [react(), tailwindcss(), versionFile(), preloadBodyFont()],
     define: {
         __BUILD_ID__: JSON.stringify(BUILD_ID),
+    },
+    build: {
+        rolldownOptions: {
+            output: {
+                /* React and the router change least, so they get a chunk of
+                   their own that stays cached across deploys. Everything
+                   else splits as it falls: gathering what pages share into
+                   bigger chunks made the first load heavier, as the entry
+                   then pulled in code only other pages use. */
+                codeSplitting: {
+                    groups: [
+                        {
+                            name: "react",
+                            test: /node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom|@remix-run)[\\/]/,
+                            priority: 30,
+                        },
+                    ],
+                },
+            },
+        },
     },
     server: {
         host: true,

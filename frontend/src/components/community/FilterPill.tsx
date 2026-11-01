@@ -31,7 +31,7 @@ const FilterPill = ({
         </span>
         <Link
             to={to}
-            className="min-w-0 truncate text-body-sm font-semibold text-brand hover:underline"
+            className="min-w-0 truncate text-body-sm font-semibold text-brand-text hover:underline"
         >
             {label}
         </Link>

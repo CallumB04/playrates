@@ -98,6 +98,7 @@ const GamePicker = ({
         return (
             <div className="flex items-center gap-3 rounded-sm border border-subtle bg-surface-field p-2 pr-2.5">
                 <GameCover
+                    sizes="40px"
                     coverUrl={value.coverUrl}
                     title={value.title}
                     className="aspect-3/4 w-10 shrink-0 overflow-hidden rounded-xs"
@@ -223,6 +224,7 @@ const GamePicker = ({
                                 )}
                             >
                                 <GameCover
+                                    sizes="40px"
                                     coverUrl={game.coverUrl}
                                     title={game.title}
                                     className="aspect-3/4 w-7 shrink-0 overflow-hidden rounded-xs"

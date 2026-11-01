@@ -118,7 +118,7 @@ const SetupRow = ({
                 <ListChecks
                     size={15}
                     aria-hidden
-                    className="shrink-0 text-brand"
+                    className="shrink-0 text-brand-text"
                 />
                 <span className="min-w-0 flex-1">Get started</span>
                 <span className="font-mono text-label text-content-muted">
@@ -171,7 +171,7 @@ const AccountMenu = ({
     setup?: SetupStep[] | null;
 }) => {
     // Outside the menu, so the share sheet outlives the menu closing.
-    const invite = useInviteFor(user.username);
+    const invite = useInviteFor(user);
     const [open, setOpen] = useState(false);
     const wrapRef = useRef<HTMLDivElement>(null);
     const { theme, toggleTheme } = useTheme();

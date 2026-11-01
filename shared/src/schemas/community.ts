@@ -96,6 +96,8 @@ export type ThreadSubject =
         title: string;
         slug: string;
         coverUrl: string | null;
+        /** Its page asks search engines not to list it, as the game's does. */
+        hasSexualContent: boolean;
       };
     }
   | { kind: "patch_notes" };

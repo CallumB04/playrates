@@ -53,9 +53,9 @@ export const createCommunityRouter = ({
   optionalAuth,
 }: Deps): Router => {
   const router = Router();
-  const imageLimiter = perMinute(20);
+  const imageLimiter = perMinute("community-image", 20);
   // Posting is cheap for us and expensive for everyone reading.
-  const postLimiter = perMinute(20);
+  const postLimiter = perMinute("community-post", 20);
 
   router.get(
     "/threads",

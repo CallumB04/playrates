@@ -38,7 +38,7 @@ const PinnedReviews = ({ username, ids, isOwner }: PinnedReviewsProps) => {
 
 const Title = ({ count }: { count: number }) => (
     <span className="inline-flex items-center gap-2">
-        <Pin size={15} aria-hidden className="text-brand" />
+        <Pin size={15} aria-hidden className="text-brand-text" />
         Pinned {count === 1 ? "review" : "reviews"}
     </span>
 );

@@ -2,6 +2,7 @@ import { Router, type RequestHandler } from "express";
 import {
   CARD_THEME_KEYS,
   LeaderboardQuerySchema,
+  playerCardVersion,
   ReferralSchema,
   BuyBackgroundSchema,
   GiftSchema,
@@ -16,6 +17,9 @@ import {
 } from "@playrates/shared";
 import { z } from "zod";
 import { AppError } from "../../lib/AppError.js";
+import { redirectToVersion } from "../../lib/imageVersion.js";
+import { PICTURE_CACHE } from "../../lib/pictureCache.js";
+import { perMinute } from "../../lib/rateLimit.js";
 import { validate } from "../../middleware/validate.js";
 import { renderPlayerCard } from "./progress.image.js";
 import type { ProgressService } from "./progress.service.js";
@@ -44,7 +48,9 @@ export const createMyProgressRouter = ({
 }: Deps): Router => {
   const router = Router();
 
-  router.get("/progress", requireAuth, async (req, res) => {
+  // A POST, not a GET: bringing progress up to date awards XP, badges and
+  // tokens, and a GET is something a prefetcher may send unasked.
+  router.post("/progress", requireAuth, async (req, res) => {
     res.json(await service.evaluate(callerId(req)));
   });
 
@@ -182,17 +188,13 @@ export const createReferralsRouter = ({ service }: Deps): Router => {
   return router;
 };
 
-// A versioned card names one state of it, so it never goes stale.
-const VERSIONED_CACHE = "public, max-age=31536000, immutable";
-const UNVERSIONED_CACHE =
-  "public, max-age=300, s-maxage=300, stale-while-revalidate=86400";
-
 /** Mounted at /progress: the rules, someone's badges, their card. */
 export const createProgressRouter = ({
   service,
   optionalAuth,
 }: Deps): Router => {
   const router = Router();
+  const imageLimiter = perMinute("card-image", 30);
 
   router.get("/rules", async (_req, res) => {
     res.json(await service.rules());
@@ -210,6 +212,7 @@ export const createProgressRouter = ({
 
   router.get(
     "/:username/card.png",
+    imageLimiter,
     validate({ params: UsernameParamSchema, query: CardQuerySchema }),
     async (req, res) => {
       const { username } = req.valid!.params as { username: string };
@@ -219,10 +222,14 @@ export const createProgressRouter = ({
       };
       const source = await service.cardSource(username);
       if (!source) throw AppError.notFound("Profile");
+      if (redirectToVersion(req, res, playerCardVersion(source.xp))) return;
       const png = await renderPlayerCard(source, theme);
       res
         .type("png")
-        .setHeader("Cache-Control", v ? VERSIONED_CACHE : UNVERSIONED_CACHE)
+        .setHeader(
+          "Cache-Control",
+          v ? PICTURE_CACHE.versioned : PICTURE_CACHE.unversioned,
+        )
         // Made to be shown anywhere, not only on the site's own origin.
         .setHeader("Cross-Origin-Resource-Policy", "cross-origin")
         .send(png);

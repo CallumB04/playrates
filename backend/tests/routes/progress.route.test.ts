@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
 import { QUESTS, REFERRAL, SETUP_REWARD, xpForLevel } from "@playrates/shared";
+import type { PushSender } from "../../src/config/push.js";
 import {
   authHeader,
   buildTestApp,
+  createPushRecorder,
   USER_A,
   USER_B,
 } from "../helpers/buildTestApp.js";
@@ -20,8 +22,9 @@ const NEWBIE = "44444444-4444-4444-4444-444444444444";
 
 const as = (user: string) => ({ Authorization: authHeader(user) });
 
-const setup = (overrides: object = {}) => {
+const setup = (overrides: object = {}, push?: PushSender) => {
   const built = buildTestApp({
+    push,
     seed: {
       ...baseSeed(),
       profiles: [
@@ -40,7 +43,7 @@ const setup = (overrides: object = {}) => {
   });
   const app: Express = built.app;
   const progress = async (user = USER_A) =>
-    (await request(app).get("/api/v1/me/progress").set(as(user))).body;
+    (await request(app).post("/api/v1/me/progress").set(as(user))).body;
   const xp = (user: string, source: string, key: string, amount?: number) =>
     built.repos.progress.awardXp(user, source, key, amount);
   const tokens = (user: string, amount: number) =>
@@ -490,10 +493,14 @@ describe("referrals", () => {
       state.tokenEvents.find((e) => e.key === `ref:${NEWBIE}`),
     ).toMatchObject({ user_id: USER_A, amount: REFERRAL.inviterTokens });
     expect(
-      state.xpEvents.find((e) => e.user_id === NEWBIE && e.key === "ref:welcome"),
+      state.xpEvents.find(
+        (e) => e.user_id === NEWBIE && e.key === "ref:welcome",
+      ),
     ).toMatchObject({ xp: REFERRAL.welcomeXp });
     expect(
-      state.tokenEvents.find((e) => e.user_id === NEWBIE && e.key === "ref:welcome"),
+      state.tokenEvents.find(
+        (e) => e.user_id === NEWBIE && e.key === "ref:welcome",
+      ),
     ).toMatchObject({ amount: REFERRAL.welcomeTokens });
   });
 
@@ -587,9 +594,9 @@ describe("the launch and the leaderboard", () => {
 });
 
 describe("badges in public", () => {
-  it("shows a private profile's badges, and its progress only to its owner", async () => {
+  it("shows a public profile's badges, and its progress only to its owner", async () => {
     const { app, progress, state } = setup({
-      profiles: [buildProfile({ profile_visibility: "private" })],
+      profiles: [buildProfile({ profile_visibility: "everyone" })],
     });
     state.progressMetrics.set(USER_A, { logged: 10 });
     await progress();
@@ -604,6 +611,41 @@ describe("badges in public", () => {
       await request(app).get("/api/v1/progress/devuser/badges").set(as(USER_A))
     ).body;
     expect(mine.progress.length).toBeGreaterThan(10);
+  });
+
+  it("keeps a private profile's badges to its owner", async () => {
+    const { app, progress } = setup({
+      profiles: [buildProfile({ profile_visibility: "private" })],
+    });
+    await progress();
+
+    const theirs = await request(app).get("/api/v1/progress/devuser/badges");
+    expect(theirs.status).toBe(403);
+    const mine = await request(app)
+      .get("/api/v1/progress/devuser/badges")
+      .set(as(USER_A));
+    expect(mine.status).toBe(200);
+  });
+
+  it("sends a made-up card version on to the real one", async () => {
+    const { app } = setup({
+      profiles: [buildProfile({ profile_visibility: "everyone" })],
+    });
+    const res = await request(app).get(
+      "/api/v1/progress/devuser/card.png?v=999999&theme=holo",
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe(
+      "/api/v1/progress/devuser/card.png?v=0&theme=holo",
+    );
+  });
+
+  it("draws no player card for a profile that isn't public", async () => {
+    const { app } = setup({
+      profiles: [buildProfile({ profile_visibility: "friends" })],
+    });
+    const res = await request(app).get("/api/v1/progress/devuser/card.png");
+    expect(res.status).toBe(404);
   });
 
   it("draws the player card", async () => {
@@ -724,9 +766,7 @@ describe("invites", () => {
 
   it("sends no request between people who are friends already", async () => {
     const { app, state } = setup({
-      friendships: [
-        buildFriendship({ user_b_id: NEWBIE, status: "accepted" }),
-      ],
+      friendships: [buildFriendship({ user_b_id: NEWBIE, status: "accepted" })],
     });
     await refer(app, NEWBIE, "devuser");
     expect(
@@ -796,6 +836,8 @@ describe("nudges", () => {
     expect((await cron(app, "test-cron-secret")).body).toEqual({
       members: 4,
       raised: 1,
+      digest: null,
+      pruned: { serverErrors: 0, clientErrors: 0, gameEvents: 0 },
     });
     expect((await cron(app, "test-cron-secret")).body.raised).toBe(0);
 
@@ -823,11 +865,71 @@ describe("nudges", () => {
     ).not.toBeNull();
   });
 
+  it("emails a reminder only to those who turned them on, and once", async () => {
+    const { app, state, email } = atFriday();
+    const a = state.profiles.find((p) => p.id === USER_A)!;
+    a.timezone = "Europe/London";
+
+    await cron(app, "test-cron-secret");
+    await email.flush();
+    expect(email.sent).toEqual([]);
+
+    a.email_prefs = { reminders: true };
+    // The bell already has it; the email still goes, once.
+    await cron(app, "test-cron-secret");
+    await cron(app, "test-cron-secret");
+    await email.flush();
+    expect(email.sent).toHaveLength(1);
+    expect(email.sent[0]).toMatchObject({
+      subject: "Your 1 week streak needs something by Monday",
+    });
+    expect(email.sent[0]!.text).toContain("a shield will keep it going");
+    expect(email.sent[0]!.headers?.["List-Unsubscribe"]).toBeDefined();
+  });
+
+  it("pushes a reminder once, and only to those who asked for reminders", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(FRIDAY));
+    const recorder = createPushRecorder();
+    const built = setup({}, recorder.sender);
+    for (const p of built.state.profiles)
+      p.last_seen_at = "2026-10-29T00:00:00.000Z";
+    built.state.xpEvents.push({
+      id: 900,
+      user_id: USER_A,
+      source: "rate",
+      key: "rate:old",
+      xp: 5,
+      created_at: "2026-10-21T12:00:00.000Z",
+    });
+    built.state.pushSubscriptions.push({
+      userId: USER_A,
+      endpoint: "https://push.example/a",
+      p256dh: "k",
+      auth: "a",
+      userAgent: null,
+    });
+
+    await cron(built.app, "test-cron-secret");
+    await built.email.flush();
+    expect(recorder.sent).toEqual([]);
+
+    // Asked after the bell already had it: the next week's goes.
+    built.state.profiles.find((p) => p.id === USER_A)!.email_prefs = {
+      reminders: true,
+    };
+    built.state.notifications = [];
+    await cron(built.app, "test-cron-secret");
+    await cron(built.app, "test-cron-secret");
+    await built.email.flush();
+    expect(recorder.sent.map((s) => s.payload.tag)).toEqual(["streak"]);
+  });
+
   it("leaves out members not seen for two months", async () => {
     const { app, state } = atFriday();
     state.profiles.find((p) => p.id === USER_A)!.last_seen_at =
       "2026-07-01T00:00:00.000Z";
-    expect((await cron(app, "test-cron-secret")).body).toEqual({
+    expect((await cron(app, "test-cron-secret")).body).toMatchObject({
       members: 3,
       raised: 0,
     });

@@ -25,4 +25,13 @@ describe("InviteSheet", () => {
         expect(screen.queryByRole("img")).toBeNull();
         expect(screen.queryByRole("button", { name: "Download" })).toBeNull();
     });
+
+    it("sends a friend to your profile when anyone may see it", () => {
+        renderWithProviders(
+            <InviteSheet username="bee" publicProfile onClose={() => {}} />
+        );
+        expect(
+            screen.getByText("localhost:3000/user/bee?ref=bee")
+        ).toBeInTheDocument();
+    });
 });

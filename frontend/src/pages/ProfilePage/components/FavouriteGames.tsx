@@ -113,7 +113,7 @@ const FavouriteGames = ({ username, canSee, onEdit }: FavouriteGamesProps) => {
                                         type="button"
                                         onClick={onEdit}
                                         aria-label="Add a favourite game"
-                                        className="grid aspect-3/4 w-full cursor-pointer place-items-center rounded-xs border border-dashed border-strong text-content-muted lift hover:border-brand hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                                        className="grid aspect-3/4 w-full cursor-pointer place-items-center rounded-xs border border-dashed border-strong text-content-muted lift hover:border-brand hover:text-brand-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                                     >
                                         <Plus size={18} aria-hidden />
                                     </button>

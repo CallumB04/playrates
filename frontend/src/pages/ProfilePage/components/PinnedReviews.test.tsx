@@ -17,7 +17,7 @@ describe("PinnedReviews", () => {
     it("opens the picker when the link asks", async () => {
         const base = buildProgress();
         server.use(
-            http.get(`${API}/me/progress`, () =>
+            http.post(`${API}/me/progress`, () =>
                 HttpResponse.json({
                     ...base,
                     look: { ...base.look, pinnedReviewSlots: 2 },

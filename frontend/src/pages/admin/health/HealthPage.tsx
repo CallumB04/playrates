@@ -7,6 +7,7 @@ import { cn } from "../../../lib/cn";
 import { relativeTime } from "../../../lib/format";
 import {
     useAdminHealth,
+    useClientErrors,
     useServerErrors,
 } from "../../../hooks/queries/useAdmin";
 import AdminPageHeader from "../components/AdminPageHeader";
@@ -16,10 +17,19 @@ import { SeeAllButton, SeeAllModal } from "../components/SeeAll";
 import { useSeeAll } from "../components/useSeeAll";
 import { headline, systemStates, type SystemState } from "./healthState";
 import HealthSystems from "./HealthSystems";
-import { ErrorList } from "./ErrorRow";
+import { ErrorList, type ErrorEntry } from "./ErrorRow";
 
-const AllErrors = () => {
-    const errors = useServerErrors();
+/** What both error feeds have in common. */
+interface ErrorsQuery {
+    data?: { pages: { data: ErrorEntry[] }[] };
+    isPending: boolean;
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
+    fetchNextPage: () => unknown;
+}
+
+const AllErrors = ({ useErrors }: { useErrors: () => ErrorsQuery }) => {
+    const errors = useErrors();
     const entries = errors.data?.pages.flatMap((p) => p.data) ?? [];
     return (
         <>
@@ -34,15 +44,23 @@ const AllErrors = () => {
     );
 };
 
-/** The last three failed requests; the rest behind a popup. */
-const Errors = () => {
-    const errors = useServerErrors();
+/** The last three; the rest behind a popup. */
+const Errors = ({
+    title,
+    empty,
+    useErrors,
+}: {
+    title: string;
+    empty: string;
+    useErrors: () => ErrorsQuery;
+}) => {
+    const errors = useErrors();
     const entries = (errors.data?.pages[0]?.data ?? []).slice(0, 3);
     const all = useSeeAll();
     return (
         <section>
             <SectionHeader
-                title="Failed requests"
+                title={title}
                 trailing={
                     entries.length > 0 && <SeeAllButton onClick={all.show} />
                 }
@@ -50,16 +68,13 @@ const Errors = () => {
             {errors.isPending ? (
                 <TextSkeleton lines={3} />
             ) : entries.length === 0 ? (
-                <EmptyNote>
-                    None. Every request the API fails is kept here, with its
-                    stack.
-                </EmptyNote>
+                <EmptyNote>{empty}</EmptyNote>
             ) : (
                 <ErrorList entries={entries} />
             )}
             {all.open && (
-                <SeeAllModal title="Failed requests" onClose={all.hide} wide>
-                    <AllErrors />
+                <SeeAllModal title={title} onClose={all.hide} wide>
+                    <AllErrors useErrors={useErrors} />
                 </SeeAllModal>
             )}
         </section>
@@ -145,7 +160,16 @@ const HealthPage = () => {
                     body(h, health.dataUpdatedAt)
                 )}
 
-                <Errors />
+                <Errors
+                    title="Failed requests"
+                    empty="None. Every request the API fails is kept here, with its stack."
+                    useErrors={useServerErrors}
+                />
+                <Errors
+                    title="Browser errors"
+                    empty="None. Every crash in someone’s browser is kept here, with its stack."
+                    useErrors={useClientErrors}
+                />
             </div>
         </>
     );

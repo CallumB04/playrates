@@ -30,8 +30,9 @@ export const firstFreeDay = (posts, today) => {
 /** One post a day, between these times, Estonian time. A 16:00 slot was
  *  tried for three days in October and drew a hundredth of the evening's
  *  views; a different time each day is what a person posting by hand does.
- *  TikTok's scheduler only offers every fifth minute. */
-export const WINDOW = ["19:30", "21:00"];
+ *  Moved half an hour later on 2026-11-01, Callum's call. TikTok's scheduler
+ *  only offers every fifth minute. */
+export const WINDOW = ["20:00", "21:30"];
 
 const minutes = (time) => {
   const [h, m] = time.split(":").map(Number);

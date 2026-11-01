@@ -78,21 +78,26 @@ export const searchGames = async (
 };
 
 export const fetchPlatforms = async (): Promise<Platform[]> => {
-    const { data } = await api.get<{ data: Platform[] }>("/platforms");
+    const { data } = await api.get<{ data: Platform[] }>("/platforms", {
+        anonymous: true,
+    });
     return data.data;
 };
 
 /** The machines within those families, for the log editor. */
 export const fetchPlatformSystems = async (): Promise<PlatformSystem[]> => {
     const { data } = await api.get<{ data: PlatformSystem[] }>(
-        "/platforms/systems"
+        "/platforms/systems",
+        { anonymous: true }
     );
     return data.data;
 };
 
 /** A game carries genre slugs only, so display names come from here. */
 export const fetchGenres = async (): Promise<Genre[]> => {
-    const { data } = await api.get<{ data: Genre[] }>("/genres");
+    const { data } = await api.get<{ data: Genre[] }>("/genres", {
+        anonymous: true,
+    });
     return data.data;
 };
 
@@ -104,6 +109,6 @@ export interface SiteStats {
 
 /** Totals for the home page, counted server-side. */
 export const fetchSiteStats = async (): Promise<SiteStats> => {
-    const { data } = await api.get<SiteStats>("/stats");
+    const { data } = await api.get<SiteStats>("/stats", { anonymous: true });
     return data;
 };

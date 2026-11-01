@@ -251,3 +251,17 @@ export interface NotificationFeed extends Paginated<AppNotification> {
 export const awaitingAnswer = (notification: AppNotification): boolean =>
   notification.kind === "friend_request" &&
   notification.relation === "request-received";
+
+/** A browser's push subscription, as PushSubscription.toJSON() gives it. */
+export const PushSubscriptionSchema = z.object({
+  endpoint: z.string().url().startsWith("https://").max(1000),
+  keys: z.object({
+    p256dh: z.string().min(1).max(200),
+    auth: z.string().min(1).max(100),
+  }),
+});
+export type PushSubscriptionInput = z.infer<typeof PushSubscriptionSchema>;
+
+export const PushEndpointSchema = z.object({
+  endpoint: z.string().url().max(1000),
+});

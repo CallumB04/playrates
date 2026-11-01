@@ -15,11 +15,11 @@ describe("RatingBadge", () => {
 
     it("reserves brand ink for a real rating", () => {
         const { rerender, container } = render(<RatingBadge value={8.25} />);
-        expect(container.firstChild).toHaveClass("text-brand");
+        expect(container.firstChild).toHaveClass("text-brand-text");
 
         rerender(<RatingBadge value={null} />);
         expect(container.firstChild).toHaveClass("text-content-muted");
-        expect(container.firstChild).not.toHaveClass("text-brand");
+        expect(container.firstChild).not.toHaveClass("text-brand-text");
     });
 
     it("sets the scale suffix smaller and muted at every size", () => {

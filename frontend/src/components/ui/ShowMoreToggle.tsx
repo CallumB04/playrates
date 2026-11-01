@@ -17,7 +17,7 @@ const ShowMoreToggle = ({
         onClick={onToggle}
         aria-expanded={open}
         className={cn(
-            "inline-flex min-h-11 cursor-pointer items-center gap-1 text-label text-brand lift hover:text-brand-hover sm:min-h-0",
+            "inline-flex min-h-11 cursor-pointer items-center gap-1 text-label text-brand-text lift hover:text-brand-hover sm:min-h-0",
             className
         )}
     >

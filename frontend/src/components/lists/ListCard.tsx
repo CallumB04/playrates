@@ -51,7 +51,7 @@ const ListCard = ({
                 className={cn("shrink-0", compact ? "w-14" : "w-20 sm:w-24")}
             />
             <div className="flex min-w-0 flex-1 flex-col py-0.5">
-                <p className="line-clamp-2 text-body-sm font-medium text-content group-hover:text-brand">
+                <p className="line-clamp-2 text-body-sm font-medium text-content group-hover:text-brand-text">
                     {list.name}
                 </p>
                 {showOwner && (

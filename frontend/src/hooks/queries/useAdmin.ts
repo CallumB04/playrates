@@ -22,6 +22,7 @@ import {
     fetchAdminMetric,
     fetchAdminOverview,
     fetchAdminProgress,
+    fetchAdminCohorts,
     fetchAdminUser,
     fetchAdminUsers,
     fetchAdminReports,
@@ -34,6 +35,7 @@ import {
     sendTestPatchNote,
     fetchIgdbUsage,
     fetchServerErrors,
+    fetchClientErrors,
     importAdminGame,
     pullAdminGames,
     queryKeys,
@@ -56,6 +58,12 @@ export const useAdminProgress = () =>
     useQuery({
         queryKey: queryKeys.admin.progress,
         queryFn: fetchAdminProgress,
+    });
+
+export const useAdminCohorts = () =>
+    useQuery({
+        queryKey: queryKeys.admin.cohorts,
+        queryFn: fetchAdminCohorts,
     });
 
 export const useAdminOverview = (range: AdminRange) =>
@@ -283,6 +291,14 @@ export const useServerErrors = () =>
     useInfiniteQuery({
         queryKey: queryKeys.admin.errors,
         queryFn: ({ pageParam }) => fetchServerErrors(pageParam),
+        initialPageParam: undefined as number | undefined,
+        getNextPageParam: (last) => last.nextBefore ?? undefined,
+    });
+
+export const useClientErrors = () =>
+    useInfiniteQuery({
+        queryKey: queryKeys.admin.clientErrors,
+        queryFn: ({ pageParam }) => fetchClientErrors(pageParam),
         initialPageParam: undefined as number | undefined,
         getNextPageParam: (last) => last.nextBefore ?? undefined,
     });

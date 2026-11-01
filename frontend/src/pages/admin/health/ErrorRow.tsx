@@ -1,12 +1,16 @@
 import { useState } from "react";
-import type { ServerErrorEntry } from "@playrates/shared";
+import { AppWindow } from "lucide-react";
+import type { ClientErrorEntry, ServerErrorEntry } from "@playrates/shared";
 import { cardClass } from "../../../components/ui/Card";
 import { plateClass } from "../../../components/ui/Plate";
 import { cn } from "../../../lib/cn";
 import { relativeTime } from "../../../lib/format";
 
-export const ErrorRow = ({ entry }: { entry: ServerErrorEntry }) => {
+export type ErrorEntry = ServerErrorEntry | ClientErrorEntry;
+
+export const ErrorRow = ({ entry }: { entry: ErrorEntry }) => {
     const [open, setOpen] = useState(false);
+    const server = "status" in entry;
     return (
         <li>
             <button
@@ -20,11 +24,15 @@ export const ErrorRow = ({ entry }: { entry: ServerErrorEntry }) => {
                 )}
             >
                 <span className="w-9 shrink-0 pt-px font-mono text-body-sm font-semibold text-danger">
-                    {entry.status}
+                    {server ? (
+                        entry.status
+                    ) : (
+                        <AppWindow size={16} aria-label="In the browser" />
+                    )}
                 </span>
                 <span className="min-w-0 flex-1">
                     <span className="block truncate font-mono text-label text-content">
-                        {entry.method} {entry.path}
+                        {server ? `${entry.method} ${entry.path}` : entry.path}
                     </span>
                     <span className="mt-1 block text-label-sm break-words text-content-muted">
                         {entry.message} · {relativeTime(entry.createdAt)}
@@ -45,7 +53,7 @@ export const ErrorRow = ({ entry }: { entry: ServerErrorEntry }) => {
                                 dateStyle: "medium",
                                 timeStyle: "medium",
                             })}
-                            {entry.requestId && (
+                            {server && entry.requestId && (
                                 <>
                                     {" "}
                                     · request{" "}
@@ -54,10 +62,24 @@ export const ErrorRow = ({ entry }: { entry: ServerErrorEntry }) => {
                                     </span>
                                 </>
                             )}
+                            {!server && entry.build && (
+                                <>
+                                    {" "}
+                                    · build{" "}
+                                    <span className="font-mono">
+                                        {entry.build}
+                                    </span>
+                                </>
+                            )}
                             {entry.username && (
                                 <> · signed in as {entry.username}</>
                             )}
                         </p>
+                        {!server && entry.userAgent && (
+                            <p className="font-mono text-label-sm break-words text-content-muted">
+                                {entry.userAgent}
+                            </p>
+                        )}
                         {entry.stack ? (
                             <pre className="max-h-72 overflow-auto font-mono text-label-sm leading-relaxed whitespace-pre text-content-secondary">
                                 {entry.stack}
@@ -74,7 +96,7 @@ export const ErrorRow = ({ entry }: { entry: ServerErrorEntry }) => {
     );
 };
 
-export const ErrorList = ({ entries }: { entries: ServerErrorEntry[] }) => (
+export const ErrorList = ({ entries }: { entries: ErrorEntry[] }) => (
     <ul
         className={cardClass("flex flex-col px-1.5 py-1.5 sm:px-2", {
             padding: "none",

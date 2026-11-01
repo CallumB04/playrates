@@ -57,6 +57,7 @@ import {
 } from "./modules/reviews/reviews.routes.js";
 import { createFriendsService } from "./modules/friends/friends.service.js";
 import {
+  createGameFansRouter,
   createMyFriendsRouter,
   createUserFriendsRouter,
 } from "./modules/friends/friends.routes.js";
@@ -69,6 +70,7 @@ import { createGenresRouter } from "./modules/genres/genres.js";
 import { createStatsRouter } from "./modules/stats/stats.js";
 import { createAdminService } from "./modules/admin/admin.service.js";
 import { createAdminRouter } from "./modules/admin/admin.routes.js";
+import { createClientErrorsRouter } from "./modules/admin/clientErrors.routes.js";
 import { requireAdmin } from "./middleware/requireAdmin.js";
 import { createReportsService } from "./modules/reports/reports.service.js";
 import {
@@ -76,7 +78,18 @@ import {
   createReportsRouter,
 } from "./modules/reports/reports.routes.js";
 import type { EmailDeps } from "./config/email.js";
+import type { PushSender } from "./config/push.js";
+import { createPushService } from "./modules/push/push.service.js";
+import {
+  createMyPushRouter,
+  createPushRouter,
+} from "./modules/push/push.routes.js";
+import { withPush } from "./modules/push/withPush.js";
+import type { SteamClient } from "./providers/steam.js";
+import { createSteamService } from "./modules/steam/steam.service.js";
+import { createSteamRouter } from "./modules/steam/steam.routes.js";
 import type { Logger } from "./lib/logger.js";
+import type { Alerts } from "./modules/admin/alerts.js";
 import { createEmailService } from "./modules/email/email.service.js";
 import { createEmailRouter } from "./modules/email/email.routes.js";
 import { withEmails } from "./modules/email/withEmails.js";
@@ -89,7 +102,10 @@ interface Deps {
   avatars: AvatarStore;
   communityImages: CommunityImageStore;
   email: EmailDeps;
+  push: PushSender | null;
+  steam: SteamClient | null;
   logger: Logger;
+  alerts: Alerts;
   requireAuth: RequestHandler;
   optionalAuth: RequestHandler;
 }
@@ -101,7 +117,10 @@ export const buildRoutes = ({
   avatars,
   communityImages,
   email,
+  push: pushSender,
+  steam,
   logger,
+  alerts,
   requireAuth,
   optionalAuth,
 }: Deps): Router => {
@@ -119,9 +138,23 @@ export const buildRoutes = ({
   });
   // Every service that raises a notification gets this one, so the ones
   // with an email send it without knowing.
+  const push = createPushService({
+    repo: baseRepos.push,
+    sender: pushSender,
+    profiles: baseRepos.profiles,
+    logger,
+    defer: email.defer,
+  });
   const repos = {
     ...baseRepos,
-    notifications: withEmails(baseRepos.notifications, emails.afterRaise),
+    notifications: withPush(
+      withEmails(
+        baseRepos.notifications,
+        emails.afterRaise,
+        emails.afterRaiseOnce,
+      ),
+      push.afterRaise,
+    ),
   };
 
   const games = createGamesService(
@@ -262,6 +295,31 @@ export const buildRoutes = ({
   );
 
   router.use("/email", createEmailRouter({ service: emails }));
+  router.use("/push", createPushRouter({ service: push }));
+  router.use("/me/push", createMyPushRouter({ service: push, requireAuth }));
+  router.use(
+    "/me/steam",
+    createSteamRouter({
+      service: createSteamService({
+        client: steam,
+        provider,
+        games: repos.games,
+        gameLogs: repos.gameLogs,
+        gameEvents: repos.gameEvents,
+        profiles: repos.profiles,
+      }),
+      requireAuth,
+    }),
+  );
+
+  router.use(
+    "/client-errors",
+    createClientErrorsRouter({
+      repo: repos.admin,
+      optionalAuth,
+      recorded: () => email.defer(alerts.errorRecorded("client")),
+    }),
+  );
 
   router.use(
     "/reports",
@@ -421,6 +479,7 @@ export const buildRoutes = ({
     "/games/:gameId/reviews",
     createGameReviewsRouter({ service: reviews, requireAuth, optionalAuth }),
   );
+  router.use("/games", createGameFansRouter({ service: friends }));
   router.use(
     "/games",
     createGamesRouter({ service: games, requireAuth, optionalAuth }),
@@ -433,6 +492,8 @@ export const buildRoutes = ({
       repo: repos.games,
       progress,
       emails,
+      admin: repos.admin,
+      alerts,
       secret: env().CRON_SECRET,
     }),
   );

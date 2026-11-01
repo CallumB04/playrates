@@ -7,6 +7,7 @@ import {
   GameListsQuerySchema,
   ListGameParamSchema,
   ListIdParamSchema,
+  listImageVersion,
   ListsQuerySchema,
   MyListsQuerySchema,
   PaginationSchema,
@@ -18,6 +19,9 @@ import {
   type UpdateListInput,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
+import { redirectToVersion } from "../../lib/imageVersion.js";
+import { PICTURE_CACHE } from "../../lib/pictureCache.js";
+import { perMinute } from "../../lib/rateLimit.js";
 import { validate } from "../../middleware/validate.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import { ownerTheme, renderListImage } from "./lists.image.js";
@@ -40,8 +44,6 @@ const ListImageQuerySchema = z.object({
 // The version follows the list but not its owner's theme or avatar, so a
 // versioned picture is kept a day rather than for good.
 const VERSIONED_CACHE = "public, max-age=86400";
-const UNVERSIONED_CACHE =
-  "public, max-age=300, s-maxage=300, stale-while-revalidate=86400";
 
 const callerId = (req: Parameters<RequestHandler>[0]): string => {
   const id = req.auth?.userId;
@@ -115,12 +117,14 @@ export const createListsRouter = ({
   // only a list anyone may see gets one.
   router.get(
     "/:listId/image",
+    perMinute("list-image", 30),
     validate({ params: ListIdParamSchema, query: ListImageQuerySchema }),
     async (req, res) => {
       const { listId } = req.valid!.params as { listId: number };
       const { v } = req.valid!.query as { v?: string };
       const list = await service.get(listId);
       if (list.visibility !== "everyone") throw AppError.notFound("List");
+      if (redirectToVersion(req, res, listImageVersion(list.updatedAt))) return;
       const png = await renderListImage(
         list,
         fetch,
@@ -128,7 +132,10 @@ export const createListsRouter = ({
       );
       res
         .type("png")
-        .setHeader("Cache-Control", v ? VERSIONED_CACHE : UNVERSIONED_CACHE)
+        .setHeader(
+          "Cache-Control",
+          v ? VERSIONED_CACHE : PICTURE_CACHE.unversioned,
+        )
         // Made to be shown anywhere, not only on the site's own origin.
         .setHeader("Cross-Origin-Resource-Policy", "cross-origin")
         .send(png);

@@ -26,7 +26,7 @@ const MobileSearch = ({ onClose }: MobileSearchProps) => {
                     type="button"
                     onClick={onClose}
                     aria-label="Close search"
-                    className="-mr-[10px] flex size-11 items-center justify-center rounded-sm text-content lift hover:text-brand"
+                    className="-mr-[10px] flex size-11 items-center justify-center rounded-sm text-content lift hover:text-brand-text"
                 >
                     <X size={24} />
                 </button>

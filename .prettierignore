@@ -1,0 +1,2 @@
+# Written by `supabase gen types`; CI compares it byte for byte.
+backend/src/types/database.generated.ts

@@ -11,7 +11,7 @@ import type { Repositories } from "../../src/repositories.js";
 import type { AuthAdmin } from "../../src/config/authAdmin.js";
 import type { AvatarStore } from "../../src/config/avatarStore.js";
 import {
-  isStoredImageUrl,
+  storedImageOwner,
   type CommunityImageStore,
 } from "../../src/config/communityImageStore.js";
 import type {
@@ -20,6 +20,7 @@ import type {
   GameEventRow,
   IgdbUsageDayRow,
   ServerErrorRow,
+  ClientErrorRow,
   ContentReportRow,
   CommunityMessageRow,
   CommunityThreadRow,
@@ -113,6 +114,7 @@ export interface SeedData {
   gameEvents?: GameEventRow[];
   igdbUsage?: IgdbUsageDayRow[];
   serverErrors?: ServerErrorRow[];
+  clientErrors?: ClientErrorRow[];
   contentReports?: ContentReportRow[];
   favouriteGames?: { user_id: string; game_id: number; position: number }[];
   wishlistRanks?: { user_id: string; game_id: number; position: number }[];
@@ -148,11 +150,19 @@ export interface InMemoryState {
   }[];
   /** Pictures uploaded to messages, by URL. */
   communityImages: Map<string, { bytes: Buffer; createdAt: string }>;
+  pushSubscriptions: {
+    userId: string;
+    endpoint: string;
+    p256dh: string;
+    auth: string;
+    userAgent: string | null;
+  }[];
   /** Written by triggers in Postgres; seeded directly here. */
   activityEvents: ActivityEventRow[];
   gameEvents: GameEventRow[];
   igdbUsage: IgdbUsageDayRow[];
   serverErrors: ServerErrorRow[];
+  clientErrors: ClientErrorRow[];
   announcements: AnnouncementRow[];
   contentReports: ContentReportRow[];
   favouriteGames: { user_id: string; game_id: number; position: number }[];
@@ -246,10 +256,12 @@ export const createInMemoryRepos = (
     communityMessages: [...(seed.communityMessages ?? [])],
     communityVotes: [...(seed.communityVotes ?? [])],
     communityImages: new Map(),
+    pushSubscriptions: [],
     activityEvents: [...(seed.activityEvents ?? [])],
     gameEvents: [...(seed.gameEvents ?? [])],
     igdbUsage: [...(seed.igdbUsage ?? [])],
     serverErrors: [...(seed.serverErrors ?? [])],
+    clientErrors: [...(seed.clientErrors ?? [])],
     announcements: [],
     contentReports: [...(seed.contentReports ?? [])],
     favouriteGames: [...(seed.favouriteGames ?? [])],
@@ -446,11 +458,59 @@ export const createInMemoryRepos = (
           .slice(offset, offset + limit)
           .map((g) => ({ id: g.id, lastmod: g.updated_at.slice(0, 10) }));
       },
+      async people() {
+        const listed = new Map(
+          state.profiles
+            .filter(
+              (p) =>
+                (p.profile_visibility ?? "everyone") === "everyone" &&
+                !p.hide_from_search,
+            )
+            .map((p) => [p.id, p.username]),
+        );
+        const day = (at: string) => at.slice(0, 10);
+        return [
+          ...[...listed.values()].map((username) => ({
+            path: `/user/${username}`,
+            lastmod: day(
+              state.profiles.find((p) => p.username === username)!.updated_at ??
+                new Date().toISOString(),
+            ),
+          })),
+          ...state.gameLists
+            .filter((l) => l.visibility === "everyone" && listed.has(l.user_id))
+            .map((l) => ({
+              path: `/user/${listed.get(l.user_id)}/lists/${l.id}`,
+              lastmod: day(l.updated_at),
+            })),
+          ...state.gaming25s
+            .filter((g) => listed.has(g.user_id))
+            .map((g) => ({
+              path: `/user/${listed.get(g.user_id)}/gaming-25`,
+              lastmod: day(g.updated_at),
+            })),
+          ...state.reviews
+            .filter(
+              (r) =>
+                r.is_public &&
+                !r.contains_spoilers &&
+                listed.has(r.user_id) &&
+                r.body.trim().length >= 200 &&
+                !state.games.find((g) => g.id === r.game_id)?.has_sexual_content,
+            )
+            .map((r) => ({ path: `/review/${r.id}`, lastmod: day(r.updated_at) })),
+        ];
+      },
       async threads() {
-        return state.communityThreads.map((t) => ({
-          id: t.id,
-          lastmod: t.last_activity_at.slice(0, 10),
-        }));
+        const adult = new Set(
+          state.games.filter((g) => g.has_sexual_content).map((g) => g.id),
+        );
+        return state.communityThreads
+          .filter((t) => t.game_id === null || !adult.has(t.game_id))
+          .map((t) => ({
+            id: t.id,
+            lastmod: t.last_activity_at.slice(0, 10),
+          }));
       },
     },
     reports: {
@@ -571,7 +631,7 @@ export const createInMemoryRepos = (
         for (const e of state.gameEvents) {
           if (e.actor_id === id) e.actor_id = null;
         }
-        for (const e of state.serverErrors) {
+        for (const e of [...state.serverErrors, ...state.clientErrors]) {
           if (e.user_id === id) e.user_id = null;
         }
       },
@@ -683,6 +743,12 @@ export const createInMemoryRepos = (
             (g) => g.release_date !== null && g.release_date <= today,
           );
         }
+        if (query.sort === "upcoming") {
+          const today = new Date().toISOString().slice(0, 10);
+          rows = rows.filter(
+            (g) => g.release_date !== null && g.release_date > today,
+          );
+        }
 
         // Mirrors the SQL sort map, tiebreaker included.
         const by = {
@@ -694,6 +760,8 @@ export const createInMemoryRepos = (
             b.rating_count - a.rating_count,
           critic: (a: GameRow, b: GameRow) =>
             (b.critic_score ?? -1) - (a.critic_score ?? -1),
+          upcoming: (a: GameRow, b: GameRow) =>
+            (a.release_date ?? "").localeCompare(b.release_date ?? ""),
           // IGDB's rating count is the hidden second key, not a sort.
           // The trending set keeps IGDB's order, then the usual one.
           logged: (a: GameRow, b: GameRow) =>
@@ -1149,6 +1217,19 @@ export const createInMemoryRepos = (
         syncWishlistRank(state, userId, gameId);
         return withGame(row);
       },
+      async createMany(userId, logs) {
+        for (const { gameId } of logs) {
+          if (!state.games.some((g) => g.id === gameId)) {
+            throw AppError.validation(
+              "Some of those games aren't in the catalogue",
+            );
+          }
+        }
+        for (const { gameId, patch } of logs) {
+          await this.create(userId, gameId, patch);
+        }
+        return logs.length;
+      },
       async update(id, patch) {
         const log = state.gameLogs.find((l) => l.id === id);
         if (!log) throw new Error("game log not found");
@@ -1415,6 +1496,64 @@ export const createInMemoryRepos = (
         return { rows: rows.slice(from, to + 1), total: rows.length };
       },
 
+      // The SQL ranks; this only finds who would be in the list at all.
+      async tasteMatches(userId, limit) {
+        const rated = (id: string) =>
+          new Map(
+            state.gameLogs
+              .filter((l) => l.user_id === id && l.rating !== null)
+              .map((l) => [l.game_id, l.rating!]),
+          );
+        const mine = rated(userId);
+        const friendIds = new Set(
+          state.friendships
+            .filter(
+              (f) =>
+                f.status === "accepted" &&
+                (f.user_a_id === userId || f.user_b_id === userId),
+            )
+            .map((f) => (f.user_a_id === userId ? f.user_b_id : f.user_a_id)),
+        );
+        return state.profiles
+          .filter(
+            (p) =>
+              p.id !== userId &&
+              !friendIds.has(p.id) &&
+              p.profile_visibility === "everyone",
+          )
+          .flatMap((p) => {
+            const both = [...rated(p.id)].filter(([game]) => mine.has(game));
+            if (both.length < 3) return [];
+            const agreement =
+              both.reduce(
+                (sum, [game, r]) =>
+                  sum + 1 - Math.abs(r - mine.get(game)!) / 10,
+                0,
+              ) / both.length;
+            return [
+              {
+                ...p,
+                shared: both.length,
+                agreement: Math.round(agreement * 100),
+              },
+            ];
+          })
+          .slice(0, limit);
+      },
+      async gameFans(gameId, limit) {
+        return state.gameLogs
+          .filter(
+            (l) => l.game_id === gameId && l.rating !== null && l.rating >= 8,
+          )
+          .flatMap((l) => {
+            const p = state.profiles.find((x) => x.id === l.user_id);
+            return p && p.profile_visibility === "everyone"
+              ? [{ ...p, rating: l.rating! }]
+              : [];
+          })
+          .sort((a, b) => b.rating - a.rating)
+          .slice(0, limit);
+      },
       async listForUser(userId) {
         return state.friendships
           .filter((f) => f.user_a_id === userId || f.user_b_id === userId)
@@ -1528,7 +1667,7 @@ export const createInMemoryRepos = (
         });
       },
       async raiseOnce(drafts) {
-        let added = 0;
+        const added: typeof drafts = [];
         for (const d of drafts) {
           const key = d.dedupeKey ?? null;
           if (
@@ -1549,7 +1688,7 @@ export const createInMemoryRepos = (
             archived_at: null,
             created_at: now(),
           });
-          added++;
+          added.push(d);
         }
         return added;
       },
@@ -1673,6 +1812,29 @@ export const createInMemoryRepos = (
     gaming25: createInMemoryGaming25(state),
     progress: createInMemoryProgress(state),
     email: createInMemoryEmailRepo(state),
+    push: {
+      async save(userId, target) {
+        state.pushSubscriptions = state.pushSubscriptions.filter(
+          (p) => p.endpoint !== target.endpoint,
+        );
+        state.pushSubscriptions.push({ userId, ...target });
+      },
+      async remove(userId, endpoint) {
+        state.pushSubscriptions = state.pushSubscriptions.filter(
+          (p) => !(p.userId === userId && p.endpoint === endpoint),
+        );
+      },
+      async forUser(userId) {
+        return state.pushSubscriptions
+          .filter((p) => p.userId === userId)
+          .map(({ endpoint, p256dh, auth }) => ({ endpoint, p256dh, auth }));
+      },
+      async forget(endpoint) {
+        state.pushSubscriptions = state.pushSubscriptions.filter(
+          (p) => p.endpoint !== endpoint,
+        );
+      },
+    },
     favourites: {
       async listIds(userId) {
         return state.favouriteGames
@@ -1791,8 +1953,8 @@ export const createInMemoryRepos = (
       });
       return url;
     },
-    owns(url) {
-      return isStoredImageUrl(IMAGE_PREFIX, url);
+    ownerOf(url) {
+      return storedImageOwner(IMAGE_PREFIX, url);
     },
     async listUploads(userId) {
       return [...state.communityImages.entries()]

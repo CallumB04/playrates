@@ -110,6 +110,7 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
                     className="shrink-0"
                 >
                     <GameCover
+                        sizes="48px"
                         coverUrl={coverUrl}
                         title={title}
                         className="aspect-3/4 w-10 rounded-xs sm:w-12"
@@ -119,7 +120,7 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
                 <div className="min-w-0 flex-1">
                     <Link
                         to={`/game/${gameId}`}
-                        className="line-clamp-2 text-body-sm font-medium text-content hover:text-brand sm:line-clamp-1 sm:text-body"
+                        className="line-clamp-2 text-body-sm font-medium text-content hover:text-brand-text sm:line-clamp-1 sm:text-body"
                     >
                         <span className="sr-only">#{rank} </span>
                         {title}

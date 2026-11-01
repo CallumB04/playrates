@@ -1,0 +1,79 @@
+/*
+ * The handmade format: slides laid out by hand in posts/<post>/slides.html,
+ * after the Elden Ring post Kat made in October 2026. A see-through white
+ * band carries the words, the picture is about the tip itself, and a few
+ * small asides, captions, stickers and doodles make it read as made by a
+ * person in an editor rather than generated.
+ */
+@font-face {
+  font-family: "TikTok Sans";
+  src: url(../../node_modules/@fontsource-variable/tiktok-sans/files/tiktok-sans-latin-wght-normal.woff2) format("woff2");
+  font-weight: 100 900;
+}
+
+:root {
+  --iris: #7c5cff;
+  --iris-deep: #5a36f0;
+  --ember: #ff8438;
+  --grey: #737373;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #222; font-family: "TikTok Sans", sans-serif; }
+
+.slide { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+/* The picture behind everything. Position it per slide with inline
+   background-position/-size; add .px for pixel art so it scales crisp. */
+.bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.px, .px img { image-rendering: pixelated; }
+
+.band { position: absolute; left: 0; right: 0; background: rgb(255 255 255 / 0.86); }
+
+.band.item { top: 262px; min-height: 474px; padding: 44px 140px 48px 170px; }
+.num { color: var(--iris); font-weight: 800; font-size: 196px; line-height: 0.8; letter-spacing: -4px; height: 158px; }
+.num.ember { color: var(--ember); }
+.band h2 { font-weight: 700; font-size: 58px; line-height: 1.1; margin-top: 4px; letter-spacing: -0.5px; color: #000; }
+.band p { font-weight: 700; font-size: 41px; line-height: 1.3; color: var(--grey); margin-top: 18px; letter-spacing: -0.2px; }
+
+.band.hook { top: 470px; text-align: center; padding: 56px 80px 64px; }
+.band .lead { font-weight: 700; font-size: 54px; line-height: 1.15; color: #000; letter-spacing: -0.5px; }
+.band .big { font-weight: 800; font-size: 92px; line-height: 1.02; color: #000; letter-spacing: -1.5px; margin-top: 6px; }
+.band img.logo { display: block; margin: 26px auto 0; max-width: 760px; max-height: 300px; }
+
+.band.outro { top: 420px; text-align: center; padding: 48px 150px 60px 110px; }
+.band.outro img.logo { margin-bottom: 30px; max-width: 600px; max-height: 260px; }
+.push { font-weight: 700; font-size: 50px; line-height: 1.25; color: var(--iris); letter-spacing: -0.3px; }
+/* The address is what the slide is for, so it stands a step out of the line
+   around it without leaving the colour. */
+.url { position: relative; display: inline-block; color: var(--iris-deep); font-weight: 800; font-size: 1.1em; }
+.url::after {
+  content: ""; position: absolute; left: -6px; right: -6px; bottom: -14px; height: 18px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 18' preserveAspectRatio='none'%3E%3Cpath d='M3 12 C 40 4, 70 15, 105 8 S 170 5, 197 9' fill='none' stroke='%23ff8438' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+
+/* The little human bits. All are placed by hand with inline left/top and a
+   slight rotate. */
+.aside { position: absolute; font-weight: 700; font-size: 27px; color: var(--iris); white-space: nowrap; }
+.aside.ember { color: var(--ember); }
+.cap {
+  position: absolute; font-weight: 700; font-size: 33px; line-height: 1.2; color: #fff; text-align: center; white-space: nowrap;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 0.55), 0 2px 14px rgb(0 0 0 / 0.45);
+}
+.sticker { position: absolute; filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.35)); }
+.arrow { position: absolute; overflow: visible; }
+.arrow path { fill: none; stroke: #fff; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 4px rgb(0 0 0 / 0.5)); }
+.spark { position: absolute; overflow: visible; filter: drop-shadow(0 0 6px #ff9be0) drop-shadow(0 0 14px #ff9be0); }
+.spark path { fill: none; stroke: #ffd9f3; stroke-width: 5; stroke-linecap: round; }
+
+/* The PlayRates mark, as the site's footer shows it. */
+.mark { position: absolute; width: 124px; height: 124px; border-radius: 25%; box-shadow: 0 8px 22px rgb(0 0 0 / 0.35); }
+
+.rain {
+  position: absolute; inset: 0; opacity: 0.35;
+  background:
+    repeating-linear-gradient(105deg, transparent 0 46px, rgb(220 235 255 / 0.9) 46px 49px, transparent 49px 97px),
+    repeating-linear-gradient(100deg, transparent 0 71px, rgb(220 235 255 / 0.6) 71px 73px, transparent 73px 140px);
+  mask: repeating-linear-gradient(0deg, #000 0 60px, transparent 60px 110px);
+}
+/* A picture dropped onto the slide like a screenshot pasted in. */
+.photo { position: absolute; border: 12px solid #fff; border-radius: 14px; box-shadow: 0 16px 40px rgb(0 0 0 / 0.45); }

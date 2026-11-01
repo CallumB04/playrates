@@ -3,7 +3,10 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    /* TypeScript 6 no longer picks up every @types package by itself. Node
+       is for the tests that read files. */
+    "types": ["node"],
     "module": "ESNext",
     "skipLibCheck": true,
 

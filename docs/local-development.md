@@ -105,3 +105,10 @@ Every account's password is **`playrates-local`**, and every email is
   `backend/.env`, so nothing here can reach live.
 
 `supabase/seed/` is gitignored, since it's built from live data.
+
+## Smoke test
+
+With the stack running, `npm run smoke` walks the app in a real browser at
+phone width: home, the library, a game page, signing in as `tester`, and
+opening the log editor. It saves nothing. Point it elsewhere with
+`npm run smoke -- <url>`.

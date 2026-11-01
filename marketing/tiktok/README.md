@@ -27,11 +27,42 @@ link), not sign-ups:
   Elden Ring") or a top X ("Top 10 hardest video game bosses of all time").
 - **No sign-up slide.** The description carries a light push and the bio
   keeps the address.
-- **One post a day at a different time each evening**, 19:30 to 21:00
-  Estonian time, uploaded one at a time and never in a batch.
+- **One post a day at a different time each evening**, 20:00 to 21:30
+  Estonian time since 1 November (19:30 to 21:00 before), uploaded one at
+  a time, 15 minutes apart, never in a batch.
+
+## Handmade, from 1 November 2026
+
+Kat made the Elden Ring tips post by hand (her PNGs are
+`posts/elden-ring-beginner-tips/img/kat-*.png`), and it replaced the list
+format straight away. A see-through white band carries the words, every picture is of exactly what its slide talks
+about, the hook is the game's best-known image with its real logo, and a
+few small jokes sit on top: a purple aside in brackets, a tilted white
+caption with a doodled arrow, an item sprite dropped on the picture. The
+last slide makes the push, with the address underlined.
+
+So the slides aren't generated. A post is its file, `posts/<post>.json`
+with `"format": "handmade"` (the copy, the TikTok fields and the time), and
+its slides, laid out by hand in `posts/<post>/slides.html` with their
+pictures in `posts/<post>/img/`, on the classes in `handmade.css`:
+
+- `.slide` (`data-name` names the PNG), `.bg` for the full-bleed picture
+  (`.px` keeps pixel art crisp);
+- `.band.hook` with `.lead`, `img.logo` or `.big`; `.band.item` with
+  `.num` (`.num.ember` on alternate slides), `h2` and `p`; `.band.outro`
+  with `.push` and `.url`;
+- `.aside`, `.cap`, `.sticker`, `.arrow` (an inline SVG path), `.spark`,
+  `.rain`, `.photo`, and `.mark`, the PlayRates mark from
+  `frontend/public/favicon.svg`.
+
+`npm run tiktok` on a handmade post renders the page (`handmade.mjs`) to
+the usual `out/<post>/`, and warns about anything to be read that sits in
+TikTok's caption area or under its rail, and about item copy in the post
+file that the slides don't show. `posts/stardew-beginner-tips/` is the one
+to copy.
 
 ```bash
-npm run tiktok -- marketing/tiktok/posts/hardest-bosses.json
+npm run tiktok -- marketing/tiktok/posts/stardew-beginner-tips.json
 npm run tiktok:next     # every post so far, and a suggestion for the next
 npm run test:tiktok     # the date and scheduling logic
 ```
@@ -52,6 +83,7 @@ costs no RAWG requests.
 
 ## The list format
 
+Used from 30 October to 1 November 2026, kept in case it comes back.
 `"format": "list"`. A picture fills each slide, and the words are set in
 TikTok Sans the way TikTok's own text tool sets them: the hook and each
 item's name in its boxed style (dark words on a white box per line), the
@@ -66,7 +98,7 @@ logo, no brand line, no numbers drawn in outline, no colour of our own.
 - `countdown: true` shows the items from the bottom up, so #1 is the last
   swipe. Tips leave it off.
 - `outro` (optional): `text` and `art`, a last boxed slide.
-- `tiktok.time`: required, `HH:MM` between 19:30 and 21:00, on a
+- `tiktok.time`: required, `HH:MM` between 20:00 and 21:30, on a
   multiple of five minutes (all TikTok's scheduler offers). `npm run
   tiktok:next` lists every post so far, then the first free day and a time
   for it picked at random.

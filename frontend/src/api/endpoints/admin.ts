@@ -4,6 +4,7 @@ import type {
     ActivityPeriod,
     AdminActivityCounts,
     AdminActivityEvent,
+    AdminCohorts,
     AdminGameEvent,
     AdminGameSummary,
     AdminHealth,
@@ -18,6 +19,7 @@ import type {
     AdminUserDetail,
     AdminUserSummary,
     Announcement,
+    ClientErrorEntry,
     CursorPage,
     EmailAudience,
     EmailStats,
@@ -30,6 +32,9 @@ import type {
 } from "@playrates/shared";
 import { api } from "../client";
 import { compactParams } from "./games";
+
+export const fetchAdminCohorts = async (): Promise<AdminCohorts> =>
+    (await api.get<AdminCohorts>("/admin/cohorts")).data;
 
 export const fetchAdminProgress = async (): Promise<AdminProgress> =>
     (await api.get<AdminProgress>("/admin/progress")).data;
@@ -196,6 +201,15 @@ export const retractAnnouncement = async (id: number): Promise<Announcement> =>
 
 export const fetchAdminHealth = async (): Promise<AdminHealth> =>
     (await api.get<AdminHealth>("/admin/health")).data;
+
+export const fetchClientErrors = async (
+    before?: number
+): Promise<CursorPage<ClientErrorEntry>> =>
+    (
+        await api.get<CursorPage<ClientErrorEntry>>("/admin/client-errors", {
+            params: compactParams({ before, limit: 30 }),
+        })
+    ).data;
 
 export const fetchServerErrors = async (
     before?: number

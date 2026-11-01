@@ -23,7 +23,8 @@
         "test:coverage": "npm run test:coverage -w frontend && npm run test:coverage -w backend",
         "seed:games": "npm run seed:games -w backend",
         "tiktok": "node marketing/tiktok/render.mjs",
-        "tiktok:next": "node marketing/tiktok/next.mjs"
+        "tiktok:next": "node marketing/tiktok/next.mjs",
+        "smoke": "node scripts/smoke.mjs"
     },
     "repository": {
         "type": "git",
@@ -43,5 +44,11 @@
         "@fontsource-variable/tiktok-sans": "^5.3.0",
         "concurrently": "^9.1.2",
         "playwright": "^1.63.0"
+    },
+    "overrides": {
+        "fflate": "^0.8.3",
+        "@vercel/cli-config": {
+            "zod": "^4.6.7"
+        }
     }
 }

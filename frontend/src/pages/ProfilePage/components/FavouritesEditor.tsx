@@ -84,6 +84,7 @@ const FavouritesEditor = ({ current, onClose }: FavouritesEditorProps) => {
                                 #{i + 1}
                             </span>
                             <GameCover
+                                sizes="32px"
                                 coverUrl={game.coverUrl}
                                 title={game.title}
                                 className="aspect-3/4 w-8 shrink-0 overflow-hidden rounded-xs"

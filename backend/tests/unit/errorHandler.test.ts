@@ -6,18 +6,24 @@ import {
 } from "../../src/middleware/errorHandler.js";
 import { AppError } from "../../src/lib/AppError.js";
 
-const runHandler = async (error: unknown, handler = errorHandler) => {
+const runHandler = async (
+  error: unknown,
+  handler = errorHandler,
+  url: { baseUrl?: string; path?: string; originalUrl?: string } = {},
+) => {
   const json = vi.fn();
   // Typed params, or the mock's call tuple is [] and calls[0][0] won't index.
   const status = vi.fn((_code: number) => ({ json }));
   const req = {
     id: "req-1",
+    baseUrl: "",
     path: "/test",
     method: "GET",
     originalUrl: "/test?x=1",
     log: undefined,
+    ...url,
   } as unknown as Request;
-  const res = { status } as unknown as Response;
+  const res = { status, setHeader: vi.fn() } as unknown as Response;
 
   await handler(error, req, res, vi.fn());
 
@@ -89,7 +95,9 @@ describe("error handler", () => {
   });
 
   it("always includes the request id", async () => {
-    expect((await runHandler(AppError.notFound())).body.error.requestId).toBe("req-1");
+    expect((await runHandler(AppError.notFound())).body.error.requestId).toBe(
+      "req-1",
+    );
   });
 
   it("records a 5xx with the original message, for the admin error feed", async () => {
@@ -101,10 +109,23 @@ describe("error handler", () => {
         status: 500,
         code: "internal_error",
         method: "GET",
-        path: "/test?x=1",
+        path: "/test",
         message: "connection reset",
         requestId: "req-1",
       }),
+    );
+  });
+
+  it("keeps an unsubscribe token out of the error log", async () => {
+    const sink = vi.fn(async () => undefined);
+    await runHandler(new Error("boom"), createErrorHandler(sink), {
+      baseUrl: "/api/v1/email",
+      path: "/unsubscribe/secret-token",
+      originalUrl: "/api/v1/email/unsubscribe/secret-token?t=other-secret",
+    });
+
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({ path: "/api/v1/email/unsubscribe/:token" }),
     );
   });
 

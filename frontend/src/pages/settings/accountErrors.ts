@@ -1,4 +1,4 @@
-import { isAuthError, type User } from "@supabase/supabase-js";
+import { isAuthError, type User } from "@supabase/auth-js";
 
 const PROVIDER_NAMES: Record<string, string> = {
     google: "Google",

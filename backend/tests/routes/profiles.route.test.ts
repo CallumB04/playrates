@@ -5,6 +5,7 @@ import { realJpeg, realWebp, webpWithPayload } from "../helpers/webp.js";
 import {
   authHeader,
   buildTestApp,
+  staleAuthHeader,
   USER_A,
   USER_B,
 } from "../helpers/buildTestApp.js";
@@ -132,7 +133,12 @@ describe("finding people", () => {
   /* Settings, not profile data. A profile page is public; what the owner has
      chosen about adult content, their time zone and hiding their presence is
      not part of it. */
-  const SETTINGS = ["showSexualContent", "timezone", "hideOnline"];
+  const SETTINGS = [
+    "showSexualContent",
+    "adultConfirmedAt",
+    "timezone",
+    "hideOnline",
+  ];
 
   it("keeps a viewer's settings out of a public profile", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
@@ -178,9 +184,7 @@ describe("closing an account", () => {
     ...baseSeed(),
     gameLogs: [buildGameLog({ id: 1, user_id: USER_A, game_id: 1 })],
     reviews: [buildReview({ id: 1, user_id: USER_A, game_id: 1 })],
-    friendships: [
-      buildFriendship({ user_a_id: USER_A, user_b_id: USER_B }),
-    ],
+    friendships: [buildFriendship({ user_a_id: USER_A, user_b_id: USER_B })],
   });
 
   it("takes the logs, reviews and friendships with it", async () => {
@@ -195,6 +199,18 @@ describe("closing an account", () => {
     expect(state.gameLogs).toHaveLength(0);
     expect(state.reviews).toHaveLength(0);
     expect(state.friendships).toHaveLength(0);
+  });
+
+  it("wants a sign-in from moments ago, not just a token", async () => {
+    const { app, state } = buildTestApp({ seed: seedWithEverything() });
+
+    const response = await request(app)
+      .delete("/api/v1/profiles/me")
+      .set("Authorization", staleAuthHeader(USER_A));
+
+    expect(response.status).toBe(403);
+    expect(response.body.error.code).toBe("reauthentication_required");
+    expect(state.profiles.find((p) => p.id === USER_A)).toBeDefined();
   });
 
   it("clears what the logs held about them, and their picture", async () => {
@@ -319,9 +335,7 @@ describe("profile colour", () => {
       .send({ accent: "crimson" });
 
     expect(response.body.accent).toBe("crimson");
-    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe(
-      "crimson",
-    );
+    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe("crimson");
   });
 
   it("refuses a colour that is not one of ours", async () => {
@@ -333,9 +347,7 @@ describe("profile colour", () => {
       .send({ accent: "chartreuse" });
 
     expect(response.status).toBe(422);
-    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe(
-      "indigo",
-    );
+    expect(state.profiles.find((p) => p.id === USER_A)?.accent).toBe("indigo");
   });
 
   it("shows the colour on the public profile too, so everyone sees it", async () => {
@@ -372,9 +384,9 @@ describe("profile picture", () => {
     expect(response.status).toBe(200);
     expect(response.body.avatarUrl).toContain(`avatars/${USER_A}/avatar.webp`);
     expect(isWebp(state.avatars.get(USER_A)!)).toBe(true);
-    expect(
-      state.profiles.find((p) => p.id === USER_A)?.avatar_url,
-    ).toBe(response.body.avatarUrl);
+    expect(state.profiles.find((p) => p.id === USER_A)?.avatar_url).toBe(
+      response.body.avatarUrl,
+    );
   });
 
   it("takes a JPEG from a browser that cannot encode WebP, and stores WebP", async () => {
@@ -395,7 +407,10 @@ describe("profile picture", () => {
   it("refuses a body that is not a WebP or JPEG", async () => {
     const { app, state } = buildTestApp({ seed: baseSeed() });
 
-    const response = await upload(app, Buffer.from("\x89PNG\r\n\x1a\n and more"));
+    const response = await upload(
+      app,
+      Buffer.from("\x89PNG\r\n\x1a\n and more"),
+    );
 
     expect(response.status).toBe(400);
     expect(state.avatars.has(USER_A)).toBe(false);
@@ -661,7 +676,9 @@ describe("exporting an account", () => {
     );
     expect(response.body.email).toBe(`${USER_A}@example.test`);
     expect(response.body.profile.username).toBe("devuser");
-    expect(response.body.gameLogs.map((l: { id: number }) => l.id)).toEqual([1]);
+    expect(response.body.gameLogs.map((l: { id: number }) => l.id)).toEqual([
+      1,
+    ]);
     expect(response.body.reviews).toHaveLength(1);
   });
 
@@ -671,6 +688,17 @@ describe("exporting an account", () => {
     expect((await request(app).get("/api/v1/profiles/me/export")).status).toBe(
       401,
     );
+  });
+
+  it("wants a sign-in from moments ago", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await request(app)
+      .get("/api/v1/profiles/me/export")
+      .set("Authorization", staleAuthHeader(USER_A));
+
+    expect(response.status).toBe(403);
+    expect(response.body.error.code).toBe("reauthentication_required");
   });
 });
 
@@ -687,5 +715,41 @@ describe("hiding from search engines", () => {
 
     expect(before.body.hideFromSearch).toBe(false);
     expect(after.body.hideFromSearch).toBe(true);
+  });
+});
+
+describe("sexually explicit games", () => {
+  const patch = (app: Parameters<typeof request>[0], body: object) =>
+    request(app)
+      .patch("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A))
+      .send(body);
+
+  it("won't show them without a word that they're 18 or over", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const refused = await patch(app, { showSexualContent: true });
+
+    expect(refused.status).toBe(422);
+    expect(
+      state.profiles.find((p) => p.id === USER_A)!.show_sexual_content,
+    ).toBe(false);
+  });
+
+  it("shows them once confirmed, and keeps when", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await patch(app, {
+      showSexualContent: true,
+      confirmAdult: true,
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.adultConfirmedAt).toEqual(expect.any(String));
+    const row = state.profiles.find((p) => p.id === USER_A)!;
+    expect(row.show_sexual_content).toBe(true);
+    // Once is enough: off and on again needs no second word.
+    await patch(app, { showSexualContent: false });
+    expect((await patch(app, { showSexualContent: true })).status).toBe(200);
   });
 });

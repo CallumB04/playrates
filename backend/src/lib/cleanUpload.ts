@@ -1,4 +1,3 @@
-import sharp from "sharp";
 import { isJpeg, isWebp } from "@playrates/shared";
 import { AppError } from "./AppError.js";
 
@@ -29,7 +28,13 @@ export const cleanUpload = async (
     throw AppError.badRequest("A picture must be a WebP or JPEG image");
   }
 
-  const image = sharp(bytes, { failOn: "error", limitInputPixels: maxEdge ** 2 });
+  // Loaded here, not at the top: libvips is ~20 MB, and only an upload
+  // needs it, so every other cold start skips it.
+  const { default: sharp } = await import("sharp");
+  const image = sharp(bytes, {
+    failOn: "error",
+    limitInputPixels: maxEdge ** 2,
+  });
   const meta = await image.metadata().catch(() => null);
   if (
     !meta ||

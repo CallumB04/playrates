@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { AuthApiError } from "@supabase/supabase-js";
+import { AuthApiError } from "@supabase/auth-js";
 import { server } from "../test/msw/server";
 import { buildProfile } from "../test/msw/handlers";
 import { renderWithProviders } from "../test/renderWithProviders";
@@ -14,13 +14,17 @@ const auth = vi.hoisted(() => ({
     newEmail: undefined as string | undefined,
     changeEmail: null as unknown as ReturnType<typeof vi.fn>,
     changePassword: null as unknown as ReturnType<typeof vi.fn>,
+    confirmPassword: null as unknown as ReturnType<typeof vi.fn>,
+    accessToken: undefined as string | undefined,
 }));
+const saveFile = vi.hoisted(() => vi.fn());
 const notify = vi.hoisted(() => vi.fn());
 
 vi.mock("../contexts/AuthContext", () => ({
     useAuth: () => ({
         user,
         session: {
+            access_token: auth.accessToken,
             user: {
                 email: "dev@playrates.test",
                 new_email: auth.newEmail,
@@ -30,8 +34,10 @@ vi.mock("../contexts/AuthContext", () => ({
         signOut: vi.fn(),
         changeEmail: auth.changeEmail,
         changePassword: auth.changePassword,
+        confirmPassword: auth.confirmPassword,
     }),
 }));
+vi.mock("../lib/saveFile", () => ({ saveFile }));
 vi.mock("../contexts/AccountFormContext", () => ({
     useAccountForm: () => ({ openLogin: vi.fn() }),
 }));
@@ -47,6 +53,9 @@ beforeEach(() => {
     auth.newEmail = undefined;
     auth.changeEmail = vi.fn(async () => ({ pending: true }));
     auth.changePassword = vi.fn(async () => {});
+    auth.confirmPassword = vi.fn(async () => {});
+    auth.accessToken = undefined;
+    saveFile.mockClear();
     notify.mockClear();
     server.use(
         // The close-account panel's counts; nothing here reads them.
@@ -338,5 +347,111 @@ describe("SettingsPage's emails", () => {
             )
         );
         expect(replies).toBeChecked();
+    });
+});
+
+/** A token whose sign-in was `secondsAgo`. */
+const signedIn = (secondsAgo: number) =>
+    `h.${btoa(
+        JSON.stringify({
+            amr: [
+                {
+                    method: "password",
+                    timestamp: Math.floor(Date.now() / 1000) - secondsAgo,
+                },
+            ],
+        })
+    ).replace(/=+$/, "")}.s`;
+
+describe("SettingsPage's data export", () => {
+    beforeEach(() => {
+        server.use(
+            http.get(`${API}/profiles/me/export`, () =>
+                HttpResponse.json({ ok: true })
+            )
+        );
+    });
+
+    it("goes straight ahead after a sign-in from moments ago", async () => {
+        auth.accessToken = signedIn(60);
+        const u = open("/settings?section=account-closure");
+
+        await u.click(screen.getByRole("button", { name: "Export my data" }));
+
+        await waitFor(() => expect(saveFile).toHaveBeenCalled());
+        expect(screen.queryByText("Confirm it’s you")).not.toBeInTheDocument();
+    });
+
+    it("asks for the password first when the sign-in is older", async () => {
+        auth.accessToken = signedIn(3600);
+        auth.confirmPassword = vi.fn(async (password: string) => {
+            if (password !== "right-password")
+                throw new AuthApiError(
+                    "Invalid login credentials",
+                    400,
+                    "invalid_credentials"
+                );
+        });
+        const u = open("/settings?section=account-closure");
+
+        await u.click(screen.getByRole("button", { name: "Export my data" }));
+        expect(screen.getByText("Confirm it’s you")).toBeInTheDocument();
+        expect(saveFile).not.toHaveBeenCalled();
+
+        await u.type(screen.getByLabelText("Password"), "wrong");
+        await u.click(screen.getByRole("button", { name: "Confirm" }));
+        expect(
+            await screen.findByText("That isn't your password.")
+        ).toBeInTheDocument();
+
+        await u.clear(screen.getByLabelText("Password"));
+        await u.type(screen.getByLabelText("Password"), "right-password");
+        await u.click(screen.getByRole("button", { name: "Confirm" }));
+
+        await waitFor(() => expect(saveFile).toHaveBeenCalled());
+        expect(screen.queryByText("Confirm it’s you")).not.toBeInTheDocument();
+    });
+
+    it("sends someone who signs in with Google back to Google", async () => {
+        auth.providers = ["google"];
+        auth.accessToken = signedIn(3600);
+        const u = open("/settings?section=account-closure");
+
+        await u.click(screen.getByRole("button", { name: "Export my data" }));
+
+        expect(
+            screen.getByText("Sign in with Google again to export your data.")
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: "Continue with Google" })
+        ).toBeInTheDocument();
+    });
+});
+
+describe("SettingsPage's explicit games", () => {
+    it("asks if they're 18 or over before showing them, and says so to the API", async () => {
+        let sent: unknown;
+        server.use(
+            http.patch(`${API}/profiles/me`, async ({ request }) => {
+                sent = await request.json();
+                return HttpResponse.json(user);
+            })
+        );
+        const u = open("/settings?section=content");
+
+        await u.click(
+            screen.getByRole("switch", { name: "Show sexually explicit games" })
+        );
+        expect(screen.getByText("Are you 18 or over?")).toBeInTheDocument();
+        expect(sent).toBeUndefined();
+
+        await u.click(screen.getByRole("button", { name: "I’m 18 or over" }));
+
+        await waitFor(() =>
+            expect(sent).toEqual({
+                showSexualContent: true,
+                confirmAdult: true,
+            })
+        );
     });
 });

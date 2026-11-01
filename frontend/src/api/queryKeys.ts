@@ -79,6 +79,7 @@ export const queryKeys = {
 
     reviews: {
         recent: ["reviews", "recent"] as const,
+        one: (id: number) => ["reviews", "one", id] as const,
         byGame: (gameId: number, sort?: string) =>
             ["reviews", "game", gameId, sort ?? "recent"] as const,
         byUsername: (username: string, page?: number, limit?: number) =>
@@ -135,6 +136,8 @@ export const queryKeys = {
     friends: {
         mine: ["friends", "me"] as const,
         activity: ["friends", "me", "activity"] as const,
+        matches: ["friends", "me", "matches"] as const,
+        fans: (gameId: number) => ["friends", "fans", gameId] as const,
         byUsername: (username: string) => ["friends", username] as const,
     },
 
@@ -153,6 +156,7 @@ export const queryKeys = {
         all: ["admin"] as const,
         overview: (range: string) => ["admin", "overview", range] as const,
         progress: ["admin", "progress"] as const,
+        cohorts: ["admin", "cohorts"] as const,
         metric: (metric: string, range: string) =>
             ["admin", "metric", metric, range] as const,
         activityCounts: (scope: Record<string, unknown>) =>
@@ -174,6 +178,7 @@ export const queryKeys = {
         emailStats: ["admin", "email", "stats"] as const,
         health: ["admin", "health"] as const,
         errors: ["admin", "errors"] as const,
+        clientErrors: ["admin", "client-errors"] as const,
         reports: (status: string, page: number) =>
             ["admin", "reports", status, page] as const,
     },

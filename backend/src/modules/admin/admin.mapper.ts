@@ -25,8 +25,11 @@ import {
   type AnnouncementTone,
   type IgdbUsage,
   type ServerErrorEntry,
+  type ClientErrorEntry,
+  type AdminCohorts,
 } from "@playrates/shared";
 import type {
+  AdminCohortRow,
   AdminActivityFeedRow,
   AdminGameFeedRow,
   AdminSeriesRow,
@@ -40,6 +43,7 @@ import type {
   AdminProgressRow,
   PatchNoteEntryRow,
   ServerErrorRowWithUser,
+  ClientErrorRowWithUser,
 } from "./admin.repository.js";
 
 const DAY_MS = 86_400_000;
@@ -343,6 +347,44 @@ export const toServerError = (row: ServerErrorRowWithUser): ServerErrorEntry => 
   userId: row.user_id,
   username: row.username,
   stack: row.stack,
+  createdAt: row.created_at,
+});
+
+export const toCohorts = (rows: AdminCohortRow[]): AdminCohorts => {
+  const sum = (field: keyof Omit<AdminCohortRow, "week">) =>
+    rows.reduce((total, row) => total + row[field], 0);
+  return {
+    weeks: rows.map((row) => ({
+      week: row.week,
+      signedUp: row.signed_up,
+      onboarded: row.onboarded,
+      loggedThree: row.logged_three,
+      backWeek: { of: row.week_due, back: row.back_week },
+      backMonth: { of: row.month_due, back: row.back_month },
+    })),
+    referrals: {
+      joined: sum("referred"),
+      onboarded: sum("referred_onboarded"),
+      gotGoing: sum("referred_going"),
+      backWeek: {
+        of: sum("referred_week_due"),
+        back: sum("referred_back_week"),
+      },
+    },
+  };
+};
+
+export const toClientError = (
+  row: ClientErrorRowWithUser,
+): ClientErrorEntry => ({
+  id: row.id,
+  message: row.message,
+  stack: row.stack,
+  path: row.path,
+  userAgent: row.user_agent,
+  build: row.build,
+  userId: row.user_id,
+  username: row.username,
   createdAt: row.created_at,
 });
 

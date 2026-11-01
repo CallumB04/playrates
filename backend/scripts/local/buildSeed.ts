@@ -382,9 +382,8 @@ const buildWorld = (cat: Catalogue): string => {
     // A log is written when the run ends, or starts; dates handed in win.
     const createdAt =
       fixed.createdAt ??
-      ("finish" in fixed || "start" in fixed
-        ? (fixed.finish ?? fixed.start ?? null)
-        : null) ??
+      fixed.finish ??
+      fixed.start ??
       finish ??
       start ??
       daysAgo(

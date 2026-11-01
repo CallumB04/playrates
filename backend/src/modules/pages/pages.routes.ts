@@ -1,5 +1,11 @@
 import { Router, type Request, type Response } from "express";
-import { isProfileView, pageTitle, SITE_DESCRIPTION } from "@playrates/shared";
+import {
+  FIXED_PAGES,
+  isProfileView,
+  pageTitle,
+  SITE_DESCRIPTION,
+} from "@playrates/shared";
+import { env } from "../../config/env.js";
 import { SITE_HEADERS } from "../../config/siteHeaders.js";
 import type { Logger } from "../../lib/logger.js";
 import { buildBody, injectBody } from "./body.js";
@@ -44,9 +50,19 @@ const NOT_FOUND: Omit<HeadMeta, "path"> = {
 const numericParam = (value: unknown): number | null =>
   typeof value === "string" && /^\d{1,15}$/.test(value) ? Number(value) : null;
 
+/* Where to fetch the app's index.html when it isn't on disk. Never from the
+   request's Host header: the copy is kept for the instance's lifetime, so a
+   forged host would poison every page it serves after. */
+const templateOrigin = () =>
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : env().SITE_URL;
+
+/* Every path but the ones the API and the platform keep for themselves. */
+const NOT_A_PAGE_OF_OURS = /^\/(?!api(\/|$)|health$).*/;
+
 /**
- * The pages worth a preview, rendered with their own head: game, profile
- * and thread. Everything else is the static index.html, served as it is.
+ * Every page the app has, each with its own head: games, profiles, lists
+ * and threads from their data, the fixed pages from FIXED_PAGES. Anything
+ * else is a 404, so a mistyped address isn't a page search engines keep.
  *
  * Mounted ahead of helmet, since these are pages rather than API responses
  * and carry the site's CSP instead of the API's.
@@ -70,7 +86,7 @@ export const createPagesRouter = ({
   const render =
     (load: (req: Request) => Promise<HeadMeta | null>) =>
     async (req: Request, res: Response) => {
-      const html = await template(`${req.protocol}://${req.get("host")}`);
+      const html = await template(templateOrigin());
       siteHeaders(res);
       res.type("html");
 
@@ -134,6 +150,47 @@ export const createPagesRouter = ({
     }),
   );
 
+  // Pages of games chosen one way: a year's best, a genre, a platform,
+  // what's coming, and games like one game.
+  router.get(
+    "/games/best/:year",
+    render(async (req) => {
+      const year = numericParam(req.params.year);
+      return year === null ? null : service.hub({ kind: "year", year });
+    }),
+  );
+  router.get(
+    "/games/genre/:slug",
+    render((req) =>
+      service.hub({ kind: "genre", slug: String(req.params.slug) }),
+    ),
+  );
+  router.get(
+    "/games/platform/:slug",
+    render((req) =>
+      service.hub({ kind: "platform", slug: String(req.params.slug) }),
+    ),
+  );
+  router.get(
+    "/games/upcoming",
+    render(() => service.hub({ kind: "upcoming" })),
+  );
+  router.get(
+    "/game/:id/similar",
+    render(async (req) => {
+      const gameId = numericParam(req.params.id);
+      return gameId === null ? null : service.hub({ kind: "similar", gameId });
+    }),
+  );
+
+  router.get(
+    "/review/:id",
+    render(async (req) => {
+      const id = numericParam(req.params.id);
+      return id === null ? null : service.review(id);
+    }),
+  );
+
   router.get(
     "/community/thread/:id",
     render(async (req) => {
@@ -141,6 +198,46 @@ export const createPagesRouter = ({
       return id === null ? null : service.thread(id);
     }),
   );
+
+  // The home page's head is the one index.html carries already.
+  router.get("/", async (_req, res) => {
+    const html = await template(templateOrigin());
+    siteHeaders(res);
+    res.type("html").setHeader("Cache-Control", PAGE_CACHE).send(html);
+  });
+
+  for (const [path, page] of Object.entries(FIXED_PAGES)) {
+    router.get(
+      path,
+      render(async () => ({
+        title: pageTitle(page.title),
+        description: page.description ?? SITE_DESCRIPTION,
+        path,
+        image: DEFAULT_IMAGE,
+        card: "summary",
+        noindex: page.noindex,
+      })),
+    );
+  }
+
+  // The admin's own pages: the app, and nothing to list.
+  router.get(
+    /^\/admin(\/.*)?$/,
+    render(async (req) => ({
+      title: pageTitle(null),
+      description: SITE_DESCRIPTION,
+      path: req.path,
+      image: DEFAULT_IMAGE,
+      card: "summary",
+      noindex: true,
+    })),
+  );
+
+  // The library's first name. The filters live in the query string.
+  router.get("/catalogue", (req, res) => {
+    const query = req.originalUrl.slice(req.path.length);
+    res.redirect(301, `/library${query}`);
+  });
 
   const xml = (res: Response, body: string) => {
     res.type("application/xml").setHeader("Cache-Control", SITEMAP_CACHE);
@@ -160,9 +257,19 @@ export const createPagesRouter = ({
       sitemapIndex([
         "/sitemaps/pages.xml",
         "/sitemaps/threads.xml",
+        "/sitemaps/people.xml",
+        "/sitemaps/hubs.xml",
         ...gamePages(games),
       ]),
     );
+  });
+
+  router.get("/sitemaps/hubs.xml", async (_req, res) => {
+    xml(res, urlSet(await service.hubPaths()));
+  });
+
+  router.get("/sitemaps/people.xml", async (_req, res) => {
+    xml(res, urlSet(await sitemap.people()));
   });
 
   router.get("/sitemaps/pages.xml", (_req, res) => {
@@ -189,6 +296,14 @@ export const createPagesRouter = ({
     }
     xml(res, urlSet(gameEntries(games)));
   });
+
+  /* Last: any other address is no page of ours. The API's paths are left
+     out of the pattern itself, not turned away inside it: a route that
+     matches them would answer their CORS preflights for the API. */
+  router.get(
+    NOT_A_PAGE_OF_OURS,
+    render(async () => null),
+  );
 
   return router;
 };

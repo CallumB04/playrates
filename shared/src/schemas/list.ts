@@ -138,3 +138,11 @@ export interface MyListOption {
   /** The game asked about is in it. */
   hasGame: boolean;
 }
+
+/* Raised whenever the picture's design or wording changes: a versioned URL
+   is cached, so a list nobody has touched would keep its old picture. */
+const LIST_IMAGE_REVISION = 1;
+
+/** The `v` a list's shared picture carries. */
+export const listImageVersion = (updatedAt: string): string =>
+  `${LIST_IMAGE_REVISION}.${Date.parse(updatedAt)}`;

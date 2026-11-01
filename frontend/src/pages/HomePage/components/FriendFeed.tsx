@@ -49,6 +49,7 @@ const Row = ({ item }: { item: FriendActivity }) => {
             className="flex items-center gap-3 rounded-md px-2 py-2 lift hover:bg-surface-hover"
         >
             <GameCover
+                sizes="36px"
                 coverUrl={item.game.coverUrl}
                 title={item.game.title}
                 className="aspect-3/4 w-9 shrink-0 overflow-hidden rounded-xs shadow-cover"
@@ -117,7 +118,7 @@ const FriendFeed = ({
             </h2>
             <Link
                 to={`/user/${username}`}
-                className="text-label text-content-muted lift hover:text-brand"
+                className="text-label text-content-muted lift hover:text-brand-text"
             >
                 All friends
             </Link>

@@ -158,7 +158,7 @@ describe("EditProfilePopup", () => {
         const base = buildProgress();
         let style: Record<string, unknown> | null = null;
         server.use(
-            http.get(`${API}/me/progress`, () =>
+            http.post(`${API}/me/progress`, () =>
                 HttpResponse.json({
                     ...base,
                     look: { ...base.look, fonts: ["default", "silkscreen"] },

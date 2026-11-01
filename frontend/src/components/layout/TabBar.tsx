@@ -36,7 +36,7 @@ const Mark = ({
         className={cn(
             "grid h-7 w-14 place-items-center rounded-full transition-colors",
             active
-                ? "bg-brand-subtle text-brand"
+                ? "bg-brand-subtle text-brand-text"
                 : "group-hover:bg-surface-hover"
         )}
     >
@@ -91,7 +91,7 @@ const TabBar = () => {
     const setup = unfinished(useSetupSteps());
     const { pathname, search } = useLocation();
     const [moreOpen, setMoreOpen] = useState(false);
-    const invite = useInviteFor(user?.username);
+    const invite = useInviteFor(user);
 
     useEffect(() => setMoreOpen(false), [pathname, search]);
 

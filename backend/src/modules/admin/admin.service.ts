@@ -43,6 +43,8 @@ import {
   toIgdbUsage,
   toPatchNote,
   toServerError,
+  toClientError,
+  toCohorts,
   toUserSummary,
   toAdminProgress,
 } from "./admin.mapper.js";
@@ -53,6 +55,8 @@ const bootedAt = Date.now();
 const DAY_MS = 86_400_000;
 
 /** Twelve weeks: enough for a person's habits to show, few enough to draw. */
+// Two months: long enough for the oldest to have a month-later answer.
+const COHORT_WEEKS = 9;
 const ACTIVE_DAYS_SHOWN = 84;
 
 /** Everything behind /admin. requireAdmin has already run by the time any of
@@ -143,6 +147,10 @@ export const createAdminService = (deps: {
   return {
     async progress() {
       return toAdminProgress(await repo.progress());
+    },
+
+    async cohorts() {
+      return toCohorts(await repo.cohorts(COHORT_WEEKS));
     },
 
     async overview(range: AdminRange) {
@@ -399,6 +407,11 @@ export const createAdminService = (deps: {
     async serverErrors(before: number | undefined, limit: number) {
       const rows = await repo.serverErrors(before, limit);
       return toCursorPage(rows, limit, toServerError);
+    },
+
+    async clientErrors(before: number | undefined, limit: number) {
+      const rows = await repo.clientErrors(before, limit);
+      return toCursorPage(rows, limit, toClientError);
     },
   };
 };

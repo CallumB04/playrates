@@ -18,7 +18,10 @@ export interface ActivityScopeFilter {
   /** ISO; nothing older. */
   since?: string;
 }
-export type ActivityFilter = Omit<AdminActivityQuery, "period" | "userId" | "gameId"> &
+export type ActivityFilter = Omit<
+  AdminActivityQuery,
+  "period" | "userId" | "gameId"
+> &
   ActivityScopeFilter;
 import { likeTerm } from "../../lib/likeTerm.js";
 import type {
@@ -30,7 +33,13 @@ import type {
   AnnouncementRow,
   IgdbUsageDayRow,
   ServerErrorRow,
+  ClientErrorRow,
+  AdminCohortRow,
 } from "../../types/database.types.js";
+
+export interface ClientErrorRowWithUser extends ClientErrorRow {
+  username: string | null;
+}
 
 export interface ServerErrorRowWithUser extends ServerErrorRow {
   username: string | null;
@@ -72,12 +81,26 @@ export interface AdminProgressRow {
   reveal_waiting: number;
 }
 
+export interface PrunedRows {
+  serverErrors: number;
+  clientErrors: number;
+  gameEvents: number;
+}
+
 export interface AdminRepository {
   ping(): Promise<void>;
+  /** Deletes a batch of old error and game-event rows; how many of each. */
+  pruneOldRows(): Promise<PrunedRows>;
   totals(): Promise<AdminTotals>;
   progress(): Promise<AdminProgressRow>;
+  /** Signup weeks, newest first, the current one included. */
+  cohorts(weeks: number): Promise<AdminCohortRow[]>;
   /** Inclusive dates, YYYY-MM-DD. */
-  series(from: string, to: string, bucket: AdminBucket): Promise<AdminSeriesRow[]>;
+  series(
+    from: string,
+    to: string,
+    bucket: AdminBucket,
+  ): Promise<AdminSeriesRow[]>;
   metricDetail(
     metric: AdminMetric,
     from: string,
@@ -105,8 +128,24 @@ export interface AdminRepository {
   getSetting<T>(key: string): Promise<T | null>;
   setSetting(key: string, value: unknown): Promise<void>;
 
-  serverErrors(before: number | undefined, limit: number): Promise<ServerErrorRowWithUser[]>;
-  serverErrorStats(since: string): Promise<{ count: number; lastAt: string | null }>;
+  serverErrors(
+    before: number | undefined,
+    limit: number,
+  ): Promise<ServerErrorRowWithUser[]>;
+  serverErrorStats(
+    since: string,
+  ): Promise<{ count: number; lastAt: string | null }>;
+  /** Errors of a kind kept since `since`. */
+  errorCount(kind: "server" | "client", since: string): Promise<number>;
+  /** Who gets the alerts. */
+  adminIds(): Promise<string[]>;
+  recordClientError(
+    row: Omit<ClientErrorRow, "id" | "created_at">,
+  ): Promise<void>;
+  clientErrors(
+    before: number | undefined,
+    limit: number,
+  ): Promise<ClientErrorRowWithUser[]>;
 
   listAnnouncements(): Promise<AnnouncementCardRow[]>;
   findAnnouncement(id: number): Promise<AnnouncementCardRow | null>;
@@ -119,7 +158,10 @@ export interface AdminRepository {
   broadcastAnnouncement(id: number): Promise<number>;
   /** It went out by email too, as this Resend broadcast where there was
    *  one. */
-  markAnnouncementEmailed(id: number, broadcastId: string | null): Promise<void>;
+  markAnnouncementEmailed(
+    id: number,
+    broadcastId: string | null,
+  ): Promise<void>;
   /** Takes every copy back out of every inbox. */
   retractAnnouncement(id: number): Promise<void>;
 
@@ -132,14 +174,59 @@ export interface AdminRepository {
 
 export const announcementKey = (id: number): string => `announcement:${id}`;
 
+const USER_SORT: Record<AdminUsersQuery["sort"], keyof AdminUserDirectoryRow> =
+  {
+    recent: "last_seen_at",
+    joined: "created_at",
+    active: "active_day_count",
+  };
 
-const USER_SORT: Record<AdminUsersQuery["sort"], keyof AdminUserDirectoryRow> = {
-  recent: "last_seen_at",
-  joined: "created_at",
-  active: "active_day_count",
+/** Newest first, with the username of whoever hit each one. */
+const errorLog = async <Row extends { id: number; user_id: string | null }>(
+  db: Db,
+  table: "server_errors" | "client_errors",
+  before: number | undefined,
+  limit: number,
+): Promise<(Row & { username: string | null })[]> => {
+  let builder = db
+    .from(table)
+    .select("*")
+    .order("id", { ascending: false })
+    .limit(limit + 1);
+  if (before) builder = builder.lt("id", before);
+
+  const { data, error } = await builder;
+  if (error) throw error;
+  const rows = (data ?? []) as Row[];
+
+  // No foreign key to embed through: the log outlives the accounts in it.
+  const ids = [
+    ...new Set(rows.map((r) => r.user_id).filter(Boolean)),
+  ] as string[];
+  const names = new Map<string, string>();
+  if (ids.length > 0) {
+    const { data: profiles, error: profileError } = await db
+      .from("profiles")
+      .select("id, username")
+      .in("id", ids);
+    if (profileError) throw profileError;
+    for (const p of profiles ?? [])
+      names.set(p.id as string, p.username as string);
+  }
+
+  return rows.map((row) => ({
+    ...row,
+    username: row.user_id ? (names.get(row.user_id) ?? null) : null,
+  }));
 };
 
 export const createAdminRepository = (db: Db): AdminRepository => ({
+  async pruneOldRows() {
+    const { data, error } = await db.rpc("prune_old_rows");
+    if (error) throw error;
+    return data as PrunedRows;
+  },
+
   async ping() {
     const { error } = await db
       .from("profiles")
@@ -158,6 +245,12 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
     const { data, error } = await db.rpc("admin_progress");
     if (error) throw error;
     return data as AdminProgressRow;
+  },
+
+  async cohorts(weeks) {
+    const { data, error } = await db.rpc("admin_cohorts", { p_weeks: weeks });
+    if (error) throw error;
+    return (data ?? []) as AdminCohortRow[];
   },
 
   async series(from, to, bucket) {
@@ -291,48 +384,50 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
   },
 
   async serverErrors(before, limit) {
-    let builder = db
-      .from("server_errors")
-      .select("*")
-      .order("id", { ascending: false })
-      .limit(limit + 1);
-    if (before) builder = builder.lt("id", before);
+    return errorLog<ServerErrorRow>(db, "server_errors", before, limit);
+  },
 
-    const { data, error } = await builder;
+  async errorCount(kind, since) {
+    const { count, error } = await db
+      .from(kind === "server" ? "server_errors" : "client_errors")
+      .select("id", { head: true, count: "exact" })
+      .gte("created_at", since);
     if (error) throw error;
-    const rows = (data ?? []) as ServerErrorRow[];
+    return count ?? 0;
+  },
 
-    // No foreign key to embed through: the log outlives the accounts in it.
-    const ids = [...new Set(rows.map((r) => r.user_id).filter(Boolean))] as string[];
-    const names = new Map<string, string>();
-    if (ids.length > 0) {
-      const { data: profiles, error: profileError } = await db
-        .from("profiles")
-        .select("id, username")
-        .in("id", ids);
-      if (profileError) throw profileError;
-      for (const p of profiles ?? []) names.set(p.id as string, p.username as string);
-    }
+  async adminIds() {
+    const { data, error } = await db
+      .from("profiles")
+      .select("id")
+      .eq("is_admin", true);
+    if (error) throw error;
+    return (data ?? []).map((row) => row.id as string);
+  },
 
-    return rows.map((row) => ({
-      ...row,
-      username: row.user_id ? (names.get(row.user_id) ?? null) : null,
-    }));
+  async recordClientError(row) {
+    const { error } = await db.from("client_errors").insert(row);
+    if (error) throw error;
+  },
+
+  async clientErrors(before, limit) {
+    return errorLog<ClientErrorRow>(db, "client_errors", before, limit);
   },
 
   async serverErrorStats(since) {
-    const [{ count, error }, { data: last, error: lastError }] = await Promise.all([
-      db
-        .from("server_errors")
-        .select("id", { head: true, count: "exact" })
-        .gte("created_at", since),
-      db
-        .from("server_errors")
-        .select("created_at")
-        .order("id", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-    ]);
+    const [{ count, error }, { data: last, error: lastError }] =
+      await Promise.all([
+        db
+          .from("server_errors")
+          .select("id", { head: true, count: "exact" })
+          .gte("created_at", since),
+        db
+          .from("server_errors")
+          .select("created_at")
+          .order("id", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
     if (error) throw error;
     if (lastError) throw lastError;
     return {
@@ -379,7 +474,9 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
   },
 
   async broadcastAnnouncement(id) {
-    const { data, error } = await db.rpc("broadcast_announcement", { p_id: id });
+    const { data, error } = await db.rpc("broadcast_announcement", {
+      p_id: id,
+    });
     if (error) throw error;
     return (data as number | null) ?? 0;
   },
@@ -412,22 +509,26 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
   async listPatchNoteEntries() {
     const { data, error } = await db
       .from("community_messages")
-      .select("id, thread_id, body, created_at, edited_at, community_threads!inner(subject_kind)")
+      .select(
+        "id, thread_id, body, created_at, edited_at, community_threads!inner(subject_kind)",
+      )
       .eq("community_threads.subject_kind", "patch_notes")
       .is("parent_id", null)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false });
     if (error) throw error;
-    return ((data ?? []) as (PatchNoteEntryRow & { community_threads?: unknown })[]).map(
-      ({ community_threads: _thread, ...row }) => row,
-    );
+    return (
+      (data ?? []) as (PatchNoteEntryRow & { community_threads?: unknown })[]
+    ).map(({ community_threads: _thread, ...row }) => row);
   },
 
   async findPatchNoteEntry(messageId) {
     const { data, error } = await db
       .from("community_messages")
-      .select("id, thread_id, body, created_at, edited_at, community_threads!inner(subject_kind)")
+      .select(
+        "id, thread_id, body, created_at, edited_at, community_threads!inner(subject_kind)",
+      )
       .eq("id", messageId)
       .eq("community_threads.subject_kind", "patch_notes")
       .is("parent_id", null)

@@ -17,12 +17,12 @@ describe("FriendsView", () => {
         );
         expect(
             screen.getByText(
-                "Invite people you know, or find some in the community."
+                "Invite people you know, or find some who rate like you."
             )
         ).toBeInTheDocument();
         expect(
-            screen.getByRole("link", { name: "Find people in Community" })
-        ).toHaveAttribute("href", "/community");
+            screen.getByRole("link", { name: "Find people" })
+        ).toHaveAttribute("href", "/people");
 
         await userEvent.click(
             screen.getByRole("button", { name: "Invite friends" })

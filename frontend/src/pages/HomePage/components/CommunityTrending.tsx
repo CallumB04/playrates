@@ -25,7 +25,7 @@ const CommunityTrending = ({
             </div>
             <Link
                 to="/community"
-                className="relative inline-flex shrink-0 items-center gap-0.5 text-label font-medium text-brand before:absolute before:-inset-3 before:content-[''] hover:underline"
+                className="relative inline-flex shrink-0 items-center gap-0.5 text-label font-medium text-brand-text before:absolute before:-inset-3 before:content-[''] hover:underline"
             >
                 See all
                 <ChevronRight size={14} aria-hidden />
@@ -37,7 +37,7 @@ const CommunityTrending = ({
         ) : threads.length === 0 ? (
             <EmptyNote>
                 Nothing here yet.{" "}
-                <Link to="/community" className="text-brand hover:underline">
+                <Link to="/community" className="text-brand-text hover:underline">
                     Start a thread
                 </Link>{" "}
                 in the community.

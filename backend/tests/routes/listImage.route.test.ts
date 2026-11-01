@@ -60,7 +60,14 @@ describe("a list's shared picture", () => {
       gameIds: [1, 2, 3],
     });
 
-    const res = await image(list.id, "?v=1");
+    // A made-up version is sent on to the real one rather than drawn.
+    const stale = await image(list.id, "?v=1");
+    expect(stale.status).toBe(302);
+    expect(stale.headers.location).toMatch(/\?v=1\.\d+$/);
+    const res = await image(
+      list.id,
+      stale.headers.location!.replace(/^[^?]*/, ""),
+    );
 
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toBe("image/png");

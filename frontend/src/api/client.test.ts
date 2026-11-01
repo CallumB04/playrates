@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "../test/msw/server";
 import { ApiError, api } from "./client";
@@ -27,6 +27,19 @@ describe("api client", () => {
 
         await fetchGames();
         expect(seen).toBe("Bearer test-access-token");
+    });
+
+    it("sends no token for a read that is the same for everyone", async () => {
+        let seen: string | null = "unset";
+        server.use(
+            http.get(`${API}/genres`, ({ request }) => {
+                seen = request.headers.get("Authorization");
+                return HttpResponse.json({ data: [] });
+            })
+        );
+
+        await api.get("/genres", { anonymous: true });
+        expect(seen).toBeNull();
     });
 
     it("passes filters through as query parameters", async () => {
@@ -143,5 +156,72 @@ describe("api client", () => {
             expect(error).toBeInstanceOf(ApiError);
             expect(error.status).toBe(504);
         });
+    });
+
+    describe("requests", () => {
+        it("sends an object as JSON and a picture as its own bytes", async () => {
+            const seen: { type: string | null; body: string }[] = [];
+            server.use(
+                http.post(`${API}/echo`, async ({ request }) => {
+                    seen.push({
+                        type: request.headers.get("Content-Type"),
+                        body: await request.text(),
+                    });
+                    return new HttpResponse(null, { status: 204 });
+                })
+            );
+
+            const json = await api.post("/echo", { a: 1 });
+            await api.post("/echo", new Blob(["png"], { type: "image/png" }), {
+                headers: { "Content-Type": "image/png" },
+            });
+
+            expect(json.data).toBeUndefined();
+            expect(seen).toEqual([
+                { type: "application/json", body: '{"a":1}' },
+                { type: "image/png", body: "png" },
+            ]);
+        });
+
+        it("leaves empty query parameters out", async () => {
+            let url = "";
+            server.use(
+                http.get(`${API}/echo`, ({ request }) => {
+                    url = request.url;
+                    return HttpResponse.json({});
+                })
+            );
+
+            await api.get("/echo", { params: { a: 1, b: undefined, c: null } });
+
+            expect(url).toBe(`${API}/echo?a=1`);
+        });
+
+        it("turns a request that never arrives into an ApiError", async () => {
+            server.use(http.get(`${API}/echo`, () => HttpResponse.error()));
+
+            const error = await api.get("/echo").catch((e) => e);
+
+            expect(error).toBeInstanceOf(ApiError);
+            expect(error.status).toBeUndefined();
+        });
+    });
+});
+
+describe("urlFor", () => {
+    /* The live site's API is on its own origin, so its base is "": a URL
+       built without the page to resolve against threw, and every request
+       failed. */
+    it("resolves a same-origin base against the page", async () => {
+        vi.resetModules();
+        vi.doMock("../lib/env", () => ({
+            env: { apiBaseUrl: "", supabaseUrl: "", supabaseAnonKey: "" },
+        }));
+        const { urlFor: relative } = await import("./client");
+
+        expect(relative("/games", { limit: 2 })).toBe(
+            `${window.location.origin}/api/v1/games?limit=2`
+        );
+        vi.doUnmock("../lib/env");
     });
 });

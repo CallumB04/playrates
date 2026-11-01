@@ -171,7 +171,7 @@ const AboutPrivacy = ({
                 Fill them in with{" "}
                 <Link
                     to={editHref}
-                    className="relative text-content underline before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:text-brand"
+                    className="relative text-content underline before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:text-brand-text"
                 >
                     Edit profile
                 </Link>

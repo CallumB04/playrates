@@ -99,7 +99,7 @@ const LoginForm = ({
                                 ) as HTMLInputElement | null;
                             onForgot(email?.value ?? "");
                         }}
-                        className="relative cursor-pointer self-end text-label text-brand before:absolute before:-inset-3 before:content-[''] hover:underline sm:before:hidden"
+                        className="relative cursor-pointer self-end text-label text-brand-text before:absolute before:-inset-3 before:content-[''] hover:underline sm:before:hidden"
                     >
                         Forgot password?
                     </button>

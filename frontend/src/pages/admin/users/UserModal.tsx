@@ -117,7 +117,7 @@ const UserModal = ({
                             Latest
                             <Link
                                 to={`/admin/activity?user=${user.id}`}
-                                className="relative font-medium text-brand before:absolute before:-inset-x-2 before:-inset-y-3.5 before:content-[''] hover:underline sm:before:hidden"
+                                className="relative font-medium text-brand-text before:absolute before:-inset-x-2 before:-inset-y-3.5 before:content-[''] hover:underline sm:before:hidden"
                             >
                                 All their activity
                             </Link>

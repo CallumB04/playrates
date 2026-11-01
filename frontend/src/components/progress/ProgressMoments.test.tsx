@@ -52,7 +52,7 @@ beforeEach(() => {
 });
 
 const respond = (body: Progress) =>
-    server.use(http.get(`${API}/me/progress`, () => HttpResponse.json(body)));
+    server.use(http.post(`${API}/me/progress`, () => HttpResponse.json(body)));
 
 describe("ProgressMoments", () => {
     it("says XP and badges in toasts, and a new level in a popup", async () => {

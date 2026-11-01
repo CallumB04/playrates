@@ -91,6 +91,7 @@ const Gaming25PickSheet = ({
                 {picked && (
                     <div className="flex items-center gap-3 rounded-sm bg-surface-sunken p-2">
                         <GameCover
+                            sizes="40px"
                             coverUrl={picked.coverUrl}
                             title=""
                             className="aspect-3/4 w-10 shrink-0 overflow-hidden rounded-xs"

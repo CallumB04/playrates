@@ -4,6 +4,7 @@ import {
   GameLogInputSchema,
   GameQuerySchema,
   PaginationSchema,
+  resolveEmailPrefs,
   ReviewInputSchema,
   UpdateProfileSchema,
   UsernameSchema,
@@ -169,5 +170,29 @@ describe("canSeeProfile", () => {
   it("shows private games to no one but their owner", () => {
     expect(canSeeProfile("private", friend)).toBe(false);
     expect(canSeeProfile("private", owner)).toBe(true);
+  });
+});
+
+describe("resolveEmailPrefs", () => {
+  it("starts each category at its default", () => {
+    expect(resolveEmailPrefs({})).toMatchObject({
+      all: true,
+      replies: true,
+      news: true,
+      reminders: false,
+    });
+  });
+
+  it("keeps what was chosen, either way", () => {
+    expect(
+      resolveEmailPrefs({ reminders: true, replies: false }),
+    ).toMatchObject({ reminders: true, replies: false });
+  });
+
+  it("reads anything but a boolean as the default", () => {
+    expect(resolveEmailPrefs({ reminders: "yes", news: null })).toMatchObject({
+      reminders: false,
+      news: true,
+    });
   });
 });

@@ -1,5 +1,4 @@
 import express, { Router, type RequestHandler } from "express";
-import rateLimit from "express-rate-limit";
 import {
   AVATAR_MAX_BYTES,
   UPLOAD_IMAGE_MIMES,
@@ -11,6 +10,7 @@ import {
 } from "@playrates/shared";
 import { z } from "zod";
 import { perMinute } from "../../lib/rateLimit.js";
+import { requireRecentSignIn } from "../../middleware/requireRecentSignIn.js";
 import { validate } from "../../middleware/validate.js";
 import { AppError } from "../../lib/AppError.js";
 import type { ProfilesService } from "./profiles.service.js";
@@ -28,15 +28,6 @@ const callerId = (req: Parameters<RequestHandler>[0]): string => {
   return id;
 };
 
-/** No upstream cost behind this one, but it is the only unauthenticated route
- *  that reads a list of people — so it gets a ceiling of its own. */
-const profileSearchLimiter = rateLimit({
-  windowMs: 60_000,
-  limit: 30,
-  standardHeaders: "draft-7",
-  legacyHeaders: false,
-});
-
 /* An avatar is the only route that takes bytes rather than JSON. A raw body
    parser is all it needs: the client sends one already-compressed image, so
    there is nothing for multipart to separate. The limit is the same one the
@@ -46,24 +37,21 @@ const avatarBody = express.raw({
   limit: AVATAR_MAX_BYTES,
 });
 
-/* Re-encoding a picture is the most expensive thing a profile can ask for,
-   and it writes to storage. */
-const avatarLimiter = rateLimit({
-  windowMs: 60_000,
-  limit: 10,
-  standardHeaders: "draft-7",
-  legacyHeaders: false,
-});
-
 export const createProfilesRouter = ({
   service,
   requireAuth,
   optionalAuth,
 }: Deps): Router => {
   const router = Router();
-  const usernameCheckLimiter = perMinute(30);
+  // No upstream cost behind this one, but it is the only unauthenticated
+  // route that reads a list of people, so it gets a ceiling of its own.
+  const profileSearchLimiter = perMinute("profile-search", 30);
+  // Re-encoding a picture is the most expensive thing a profile can ask
+  // for, and it writes to storage.
+  const avatarLimiter = perMinute("avatar", 10);
+  const usernameCheckLimiter = perMinute("username-check", 30);
   // Reads every table the account touches.
-  const exportLimiter = perMinute(3);
+  const exportLimiter = perMinute("export", 3);
 
   // "/me" and "/check-username" must come before "/:username", or they parse
   // as usernames.
@@ -82,20 +70,26 @@ export const createProfilesRouter = ({
     },
   );
 
-  router.delete("/me", requireAuth, async (req, res) => {
+  router.delete("/me", requireAuth, requireRecentSignIn, async (req, res) => {
     await service.deleteOwn(callerId(req));
     res.status(204).end();
   });
 
-  router.get("/me/export", requireAuth, exportLimiter, async (req, res) => {
-    const data = await service.exportOwn(callerId(req));
-    const day = data.exportedAt.slice(0, 10);
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="playrates-${String(data.profile?.username ?? "account")}-${day}.json"`,
-    );
-    res.json(data);
-  });
+  router.get(
+    "/me/export",
+    requireAuth,
+    requireRecentSignIn,
+    exportLimiter,
+    async (req, res) => {
+      const data = await service.exportOwn(callerId(req));
+      const day = data.exportedAt.slice(0, 10);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="playrates-${String(data.profile?.username ?? "account")}-${day}.json"`,
+      );
+      res.json(data);
+    },
+  );
 
   router.post(
     "/me/avatar",

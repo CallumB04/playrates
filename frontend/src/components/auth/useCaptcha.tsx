@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
-import { isAuthError } from "@supabase/supabase-js";
+import { isAuthError } from "@supabase/auth-js";
 import { env } from "../../lib/env";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -30,9 +30,9 @@ export interface Captcha {
  */
 export const useCaptcha = (): Captcha => {
     const { theme } = useTheme();
-    const widget = useRef<TurnstileInstance>();
+    const widget = useRef<TurnstileInstance>(undefined);
     // Refs, not state: a submit handler waits on these across renders.
-    const token = useRef<string>();
+    const token = useRef<string | undefined>(undefined);
     const failed = useRef(false);
     const waiting = useRef<((token: string | null) => void)[]>([]);
     const [message, setMessage] = useState<string>();

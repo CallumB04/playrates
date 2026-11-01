@@ -41,7 +41,7 @@ const Panel = ({
             <h2
                 className={cn(
                     "font-display text-base font-semibold",
-                    accent ? "text-brand" : "text-content"
+                    accent ? "text-brand-text" : "text-content"
                 )}
             >
                 {title}
@@ -59,7 +59,7 @@ export const panelButtonClass = (accent = false, className?: string) =>
         "flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-sm border px-3 py-2 text-body-sm lift sm:min-h-0",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
         accent
-            ? "border-brand/40 text-brand hover:border-brand"
+            ? "border-brand/40 text-brand-text hover:border-brand"
             : "border-subtle text-content-secondary hover:border-strong hover:text-content",
         className
     );
@@ -76,7 +76,7 @@ export const PanelCount = ({
         className={cn(
             "shrink-0 rounded-full px-2 py-0.5 font-mono text-label-sm tabular-nums",
             accent
-                ? "bg-brand/15 text-brand"
+                ? "bg-brand/15 text-brand-text"
                 : "bg-surface-sunken text-content-muted"
         )}
     >

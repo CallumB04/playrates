@@ -8,6 +8,9 @@ import {
     useMyLogBundle,
 } from "../hooks/queries/useGameLogs";
 import { logMilestone } from "../lib/logMilestone";
+import { shareMoment } from "../lib/shareMoment";
+import { useAuth } from "../contexts/AuthContext";
+import { finishedMoment, shelfMoment } from "./share/shareText";
 import { readLastSystem, writeLastSystem } from "../lib/drafts";
 import { useNotify } from "../contexts/NotificationContext";
 import Modal from "./ui/Modal";
@@ -39,6 +42,7 @@ import {
 import {
     isDirty,
     NEW_TAB,
+    justFinished,
     needsConsole,
     newTab,
     startingTab,
@@ -77,6 +81,7 @@ const CreateOrEditGameLogPopup = ({
     const playedOn = usePlayedOn();
 
     const { data: game } = useGame(gameId);
+    const { user } = useAuth();
     const { data: systems } = usePlatformSystems();
     const mutations = useLogMutations();
     // How many games are logged before this one, for a milestone.
@@ -303,11 +308,35 @@ const CreateOrEditGameLogPopup = ({
         // A new game that lands on a milestone says so: the moment people
         // remember a site by. Another console of a game already logged isn't
         // a new game, and ordinary saves stay plain.
+        const count = (loggedIds?.length ?? 0) + 1;
         const milestone =
-            savedCount === 0 && created
-                ? logMilestone((loggedIds?.length ?? 0) + 1)
-                : null;
+            savedCount === 0 && created ? logMilestone(count) : null;
         const only = pending.length === 1 ? pending[0]! : null;
+        // Finishing a game, or a shelf reaching a round number, is the
+        // moment someone might tell their friends; anything else isn't.
+        const finished = justFinished(pending);
+        const share =
+            !user || !game
+                ? undefined
+                : milestone
+                  ? {
+                        label: "Share",
+                        onClick: () =>
+                            shareMoment(shelfMoment(user.username, count)),
+                    }
+                  : finished
+                    ? {
+                          label: "Share",
+                          onClick: () =>
+                              shareMoment(
+                                  finishedMoment(
+                                      game,
+                                      finished.draft.rating,
+                                      finished.draft.playedStatus === "mastered"
+                                  )
+                              ),
+                      }
+                    : undefined;
         notify(
             milestone ??
                 (!only
@@ -317,7 +346,9 @@ const CreateOrEditGameLogPopup = ({
                       : savedCount > 0
                         ? `Added ${nameOf(only) ?? "another platform"} to your logs`
                         : "Entry saved"),
-            "success"
+            "success",
+            undefined,
+            share
         );
         onClose();
     };

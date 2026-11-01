@@ -62,7 +62,7 @@ export const ReactBodySchema = z
   .object({ reaction: z.enum(REACTION_KEYS).default(DEFAULT_REACTION) })
   .strict()
   // An empty POST, as the vote button sent, is an upvote.
-  .default({});
+  .default({ reaction: DEFAULT_REACTION });
 
 /** Counts per reaction, most first, ties in the catalogue's order. */
 export const tallyReactions = (reactions: string[]): ReactionCount[] => {

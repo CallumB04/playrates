@@ -205,7 +205,7 @@ const Header = ({ data }: { data: Progress }) => {
                 />
                 <Figure
                     icon={
-                        <Award size={14} aria-hidden className="text-brand" />
+                        <Award size={14} aria-hidden className="text-brand-text" />
                     }
                     label="Badges"
                     value={badges ? badges.held.length : "…"}
@@ -392,7 +392,7 @@ const TaskRow = ({
                 <span
                     className={cn(
                         "text-label font-semibold",
-                        !q.done && "text-brand"
+                        !q.done && "text-brand-text"
                     )}
                 >
                     +{q.xp} XP
@@ -529,7 +529,7 @@ const Streak = ({ data }: { data: Progress }) => {
                         className={cn(
                             "grid size-14 place-items-center rounded-md",
                             streak.freeShield
-                                ? "bg-brand-subtle text-brand"
+                                ? "bg-brand-subtle text-brand-text"
                                 : "bg-surface-sunken text-content-muted"
                         )}
                     >
@@ -579,7 +579,7 @@ const WeekCell = ({
             state === "active"
                 ? "bg-brand"
                 : state === "shield"
-                  ? "bg-brand/25 text-brand"
+                  ? "bg-brand/25 text-brand-text"
                   : "bg-surface-sunken",
             now && "outline-2 outline-offset-1 outline-content-muted"
         )}
@@ -755,7 +755,7 @@ const LookTile = ({
                 {formatCount(price)}
             </span>
         ) : on ? (
-            <span className="text-[10px] font-medium text-brand">Active</span>
+            <span className="text-[10px] font-medium text-brand-text">Active</span>
         ) : (
             // Keeps the row of tiles level whatever each says.
             <span aria-hidden className="h-[15px]" />
@@ -835,7 +835,7 @@ const Look = ({ data }: { data: Progress }) => {
             trailing={
                 <Link
                     to="/shop"
-                    className="relative text-label font-medium text-brand before:absolute before:-inset-x-2 before:-inset-y-3.5 before:content-[''] hover:underline"
+                    className="relative text-label font-medium text-brand-text before:absolute before:-inset-x-2 before:-inset-y-3.5 before:content-[''] hover:underline"
                 >
                     Shop
                 </Link>
@@ -1170,7 +1170,7 @@ const PinToggles = ({
                                 className={cn(
                                     "inline-flex min-h-11 max-w-60 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-label lift sm:min-h-9",
                                     on
-                                        ? "border-brand bg-brand-subtle text-brand"
+                                        ? "border-brand bg-brand-subtle text-brand-text"
                                         : "border-subtle hover:border-strong"
                                 )}
                             >

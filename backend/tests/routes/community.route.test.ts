@@ -692,7 +692,23 @@ describe("community images", () => {
     expect(response.status).toBe(400);
   });
 
-  it("accepts a message showing an uploaded picture", async () => {
+  it("accepts a message showing a picture its author uploaded", async () => {
+    const { app } = buildTestApp({ seed: communitySeed() });
+
+    const response = await request(app)
+      .post("/api/v1/community/threads/1/messages")
+      .set("Authorization", authHeader(USER_A))
+      .send({
+        body: {
+          type: "doc",
+          content: [{ type: "image", attrs: { src: IMAGE_URL } }],
+        },
+      });
+
+    expect(response.status).toBe(201);
+  });
+
+  it("refuses a message showing someone else's upload", async () => {
     const { app } = buildTestApp({ seed: communitySeed() });
 
     const response = await request(app)
@@ -705,7 +721,7 @@ describe("community images", () => {
         },
       });
 
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(422);
   });
 
   it("refuses a message showing a picture from elsewhere", async () => {

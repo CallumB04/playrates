@@ -109,7 +109,7 @@ const DataSpecimens = () => {
                 <button
                     type="button"
                     onClick={() => setCount((n) => n + 1318)}
-                    className="text-label text-brand underline-offset-2 hover:underline"
+                    className="text-label text-brand-text underline-offset-2 hover:underline"
                 >
                     Roll it
                 </button>

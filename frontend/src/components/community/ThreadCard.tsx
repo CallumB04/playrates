@@ -37,6 +37,7 @@ const ThreadCard = ({
         >
             {showSubject && game && (
                 <GameCover
+                    sizes="48px"
                     coverUrl={game.coverUrl}
                     title={game.title}
                     className="aspect-3/4 w-11 shrink-0 self-start overflow-hidden rounded-xs shadow-cover sm:w-12"
@@ -49,7 +50,7 @@ const ThreadCard = ({
                         {game.title}
                     </span>
                 )}
-                <span className="line-clamp-2 font-display text-[15px] leading-snug font-semibold text-content group-hover:text-brand sm:text-[1.0625rem]">
+                <span className="line-clamp-2 font-display text-[15px] leading-snug font-semibold text-content group-hover:text-brand-text sm:text-[1.0625rem]">
                     {thread.title}
                 </span>
 

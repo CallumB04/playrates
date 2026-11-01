@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AuthApiError, type User } from "@supabase/supabase-js";
+import { AuthApiError, type User } from "@supabase/auth-js";
 import {
     emailChangeError,
     passwordChangeError,

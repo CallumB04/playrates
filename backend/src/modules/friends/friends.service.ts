@@ -2,6 +2,8 @@ import {
   relationFor,
   type FriendActivity,
   type FriendEdge,
+  type GameFan,
+  type TasteMatch,
   type FriendRelation,
   type Paginated,
   type Pagination,
@@ -37,6 +39,9 @@ const toEdge = (
     createdAt: row.created_at,
   };
 };
+
+const TASTE_MATCHES_SHOWN = 12;
+const GAME_FANS_SHOWN = 8;
 
 export const createFriendsService = (
   repo: FriendsRepository,
@@ -113,6 +118,23 @@ export const createFriendsService = (
         pagination,
         total,
       );
+    },
+
+    async tasteMatches(callerId: string): Promise<TasteMatch[]> {
+      const rows = await repo.tasteMatches(callerId, TASTE_MATCHES_SHOWN);
+      return rows.map((row) => ({
+        user: toFriendUser(row),
+        shared: row.shared,
+        agreement: row.agreement,
+      }));
+    },
+
+    async gameFans(gameId: number): Promise<GameFan[]> {
+      const rows = await repo.gameFans(gameId, GAME_FANS_SHOWN);
+      return rows.map((row) => ({
+        user: toFriendUser(row),
+        rating: Number(row.rating),
+      }));
     },
 
     async sendRequest(callerId: string, targetId: string): Promise<FriendEdge> {

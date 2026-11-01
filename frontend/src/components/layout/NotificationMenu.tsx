@@ -1,12 +1,20 @@
-import { useId, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
 import { popoverClass } from "../ui/popover";
 import { Bell } from "lucide-react";
 import Modal from "../ui/Modal";
-import NotificationPanel from "../notifications/NotificationPanel";
 import { useNotifications } from "../../hooks/queries/useNotifications";
 import { cn } from "../../lib/cn";
 import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
 import { useDismiss } from "../../hooks/useDismiss";
+import { whenIdle } from "../../lib/whenIdle";
+
+/* Every kind of notification has its own way to draw, which adds up. Only
+   wanted once the bell is opened, and fetched when the page is idle so it
+   opens straight away. */
+const loadPanel = () => import("../notifications/NotificationPanel");
+const NotificationPanel = lazy(loadPanel);
+
+const PanelLoading = () => <div aria-busy className="min-h-40" />;
 
 /** Past this the badge stops being a number and starts being a hint. */
 const BADGE_CAP = 9;
@@ -27,6 +35,8 @@ const NotificationMenu = () => {
 
     const { data } = useNotifications(false);
     const unread = data?.unread ?? 0;
+
+    useEffect(() => whenIdle(() => void loadPanel()), []);
 
     // The sheet on a phone closes itself, through Modal.
     useDismiss([wrapRef], () => setOpen(false), {
@@ -49,8 +59,8 @@ const NotificationMenu = () => {
                         : "Notifications"
                 }
                 className={cn(
-                    "relative flex size-9 items-center justify-center rounded-sm lift before:absolute before:-inset-1 before:content-[''] hover:text-brand sm:size-11 sm:before:hidden",
-                    open ? "text-brand" : "text-content"
+                    "relative flex size-9 items-center justify-center rounded-sm lift before:absolute before:-inset-1 before:content-[''] hover:text-brand-text sm:size-11 sm:before:hidden",
+                    open ? "text-brand-text" : "text-content"
                 )}
             >
                 <Bell size={20} />
@@ -76,10 +86,12 @@ const NotificationMenu = () => {
                         labelledBy={titleId}
                         className="w-full"
                     >
-                        <NotificationPanel
-                            onNavigate={close}
-                            titleId={titleId}
-                        />
+                        <Suspense fallback={<PanelLoading />}>
+                            <NotificationPanel
+                                onNavigate={close}
+                                titleId={titleId}
+                            />
+                        </Suspense>
                     </Modal>
                 ) : (
                     <div
@@ -90,10 +102,12 @@ const NotificationMenu = () => {
                             "menu"
                         )}
                     >
-                        <NotificationPanel
-                            onNavigate={close}
-                            titleId={titleId}
-                        />
+                        <Suspense fallback={<PanelLoading />}>
+                            <NotificationPanel
+                                onNavigate={close}
+                                titleId={titleId}
+                            />
+                        </Suspense>
                     </div>
                 ))}
         </div>

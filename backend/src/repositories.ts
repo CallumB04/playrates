@@ -72,6 +72,10 @@ import {
   type EmailRepository,
 } from "./modules/email/email.repository.js";
 import {
+  createPushRepository,
+  type PushRepository,
+} from "./modules/push/push.repository.js";
+import {
   createCommunityRepository,
   type CommunityRepository,
 } from "./modules/community/community.repository.js";
@@ -98,6 +102,7 @@ export interface Repositories {
   gaming25: Gaming25Repository;
   progress: ProgressRepository;
   email: EmailRepository;
+  push: PushRepository;
 }
 
 export const createRepositories = (db: Db): Repositories => ({
@@ -120,4 +125,5 @@ export const createRepositories = (db: Db): Repositories => ({
   gaming25: createGaming25Repository(db),
   progress: createProgressRepository(db),
   email: createEmailRepository(db),
+  push: createPushRepository(db),
 });

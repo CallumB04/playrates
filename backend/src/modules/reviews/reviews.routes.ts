@@ -118,6 +118,16 @@ export const createReviewsFeedRouter = ({
     },
   );
 
+  router.get(
+    "/:reviewId",
+    optionalAuth,
+    validate({ params: ReviewIdParamSchema }),
+    async (req, res) => {
+      const { reviewId } = req.valid!.params as { reviewId: number };
+      res.json(await service.getById(reviewId, req.auth?.userId));
+    },
+  );
+
   // A toggle per reaction: the same one again takes it back, so the client
   // needs no current state and can't double-count.
   router.post(

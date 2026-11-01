@@ -284,7 +284,7 @@ const ListEditor = ({
                                                 onClick={() =>
                                                     setCovers(firstFour)
                                                 }
-                                                className="relative mt-2 cursor-pointer text-label-sm text-content underline before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:text-brand"
+                                                className="relative mt-2 cursor-pointer text-label-sm text-content underline before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:text-brand-text"
                                             >
                                                 Use the first four
                                             </button>

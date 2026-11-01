@@ -73,6 +73,10 @@ const CoverCarousel = ({
                                 cover.label ? `${title}, ${cover.label}` : title
                             }
                             className="size-full shrink-0 snap-center"
+                            // The page's own cover: what it's about, and
+                            // most often its largest picture.
+                            priority={i === 0}
+                            sizes="(min-width: 640px) 300px, 200px"
                         />
                     ))}
                 </div>

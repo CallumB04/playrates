@@ -8,6 +8,7 @@ import FormField from "./FormField";
 import OAuthButtons from "./OAuthButtons";
 import PasswordField from "./PasswordField";
 import AgreeToTerms from "./AgreeToTerms";
+import NewsOptIn from "./NewsOptIn";
 import { useCaptcha } from "./useCaptcha";
 
 interface SignupFormProps {
@@ -84,7 +85,8 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
                 email,
                 password,
                 username,
-                captchaToken
+                captchaToken,
+                data.get("news") === "on"
             );
             notify("Welcome to PlayRates", "success");
             onSignedUp(email, signedIn);
@@ -137,6 +139,7 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
             />
 
             <AgreeToTerms name="agree" error={errors.agree} />
+            <NewsOptIn name="news" />
             {captcha.field}
 
             <Button type="submit" size="lg" disabled={isSubmitting}>

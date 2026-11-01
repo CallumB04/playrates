@@ -87,7 +87,7 @@ const PrivacyNote = () => (
         You choose who sees each of these, beside it on your profile or in{" "}
         <Link
             to="/settings?section=privacy"
-            className="text-content underline hover:text-brand"
+            className="text-content underline hover:text-brand-text"
         >
             Settings
         </Link>
@@ -338,7 +338,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                                 Rename in{" "}
                                 <Link
                                     to="/settings"
-                                    className="text-content underline hover:text-brand"
+                                    className="text-content underline hover:text-brand-text"
                                 >
                                     Settings
                                 </Link>

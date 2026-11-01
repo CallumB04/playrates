@@ -87,7 +87,7 @@ const ProfileNav = ({
                 <CurrentIcon
                     size={20}
                     aria-hidden
-                    className="shrink-0 text-brand"
+                    className="shrink-0 text-brand-text"
                 />
                 <span className="min-w-0 flex-1">
                     <span className="block text-label-sm text-content-muted">
@@ -106,7 +106,7 @@ const ProfileNav = ({
                         <RequestsDot count={requestCount} />
                     </span>
                 )}
-                <span className="flex min-h-9 items-center gap-1 rounded-sm bg-brand-subtle px-3 text-label font-medium text-brand">
+                <span className="flex min-h-9 items-center gap-1 rounded-sm bg-brand-subtle px-3 text-label font-medium text-brand-text">
                     Switch
                     <ChevronDown size={16} aria-hidden />
                 </span>
@@ -150,7 +150,7 @@ const ProfileNav = ({
                                                 className={cn(
                                                     "shrink-0",
                                                     isActive
-                                                        ? "text-brand"
+                                                        ? "text-brand-text"
                                                         : "text-content-muted"
                                                 )}
                                             />
@@ -169,7 +169,7 @@ const ProfileNav = ({
                                             </span>
                                             {tab === "friends" &&
                                                 requestCount > 0 && (
-                                                    <span className="text-label-sm text-brand">
+                                                    <span className="text-label-sm text-brand-text">
                                                         {formatCount(
                                                             requestCount
                                                         )}{" "}

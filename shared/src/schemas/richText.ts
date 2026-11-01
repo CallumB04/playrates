@@ -85,15 +85,14 @@ export interface RichTextDoc {
 }
 
 // Lazy, because a list's items hold blocks and blocks include lists.
-const BlockSchema: z.ZodType<RichTextBlock, z.ZodTypeDef, unknown> = z.lazy(
-  () =>
-    z.discriminatedUnion("type", [
-      ParagraphSchema,
-      HeadingSchema,
-      ImageSchema,
-      BulletListSchema,
-      OrderedListSchema,
-    ]),
+const BlockSchema: z.ZodType<RichTextBlock, unknown> = z.lazy(() =>
+  z.discriminatedUnion("type", [
+    ParagraphSchema,
+    HeadingSchema,
+    ImageSchema,
+    BulletListSchema,
+    OrderedListSchema,
+  ]),
 );
 
 const ListItemSchema = z.object({
@@ -231,41 +230,40 @@ export const firstHeading = (
   return text || null;
 };
 
-export const RichTextDocSchema: z.ZodType<RichTextDoc, z.ZodTypeDef, unknown> =
-  z
-    .object({
-      type: z.literal("doc"),
-      content: z.array(BlockSchema).max(MAX_BLOCKS),
-    })
-    .superRefine((doc, ctx) => {
-      let blocks = 0;
-      let deepest = 0;
-      for (const { depth } of eachBlock(doc.content)) {
-        blocks += 1;
-        deepest = Math.max(deepest, depth);
-      }
-      if (blocks > MAX_BLOCKS) {
-        ctx.addIssue({ code: "custom", message: "That message is too long" });
-      }
-      if (deepest > MAX_LIST_DEPTH) {
-        ctx.addIssue({
-          code: "custom",
-          message: `Lists can nest ${MAX_LIST_DEPTH} deep at most`,
-        });
-      }
-      if (isEmptyDoc(doc)) {
-        ctx.addIssue({ code: "custom", message: "A message cannot be empty" });
-      }
-      if (toPlainText(doc).length > RICH_TEXT_MAX_CHARS) {
-        ctx.addIssue({
-          code: "custom",
-          message: `A message must be at most ${RICH_TEXT_MAX_CHARS} characters`,
-        });
-      }
-      if (countImages(doc) > RICH_TEXT_MAX_IMAGES) {
-        ctx.addIssue({
-          code: "custom",
-          message: `A message can hold at most ${RICH_TEXT_MAX_IMAGES} images`,
-        });
-      }
-    });
+export const RichTextDocSchema: z.ZodType<RichTextDoc, unknown> = z
+  .object({
+    type: z.literal("doc"),
+    content: z.array(BlockSchema).max(MAX_BLOCKS),
+  })
+  .superRefine((doc, ctx) => {
+    let blocks = 0;
+    let deepest = 0;
+    for (const { depth } of eachBlock(doc.content)) {
+      blocks += 1;
+      deepest = Math.max(deepest, depth);
+    }
+    if (blocks > MAX_BLOCKS) {
+      ctx.addIssue({ code: "custom", message: "That message is too long" });
+    }
+    if (deepest > MAX_LIST_DEPTH) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Lists can nest ${MAX_LIST_DEPTH} deep at most`,
+      });
+    }
+    if (isEmptyDoc(doc)) {
+      ctx.addIssue({ code: "custom", message: "A message cannot be empty" });
+    }
+    if (toPlainText(doc).length > RICH_TEXT_MAX_CHARS) {
+      ctx.addIssue({
+        code: "custom",
+        message: `A message must be at most ${RICH_TEXT_MAX_CHARS} characters`,
+      });
+    }
+    if (countImages(doc) > RICH_TEXT_MAX_IMAGES) {
+      ctx.addIssue({
+        code: "custom",
+        message: `A message can hold at most ${RICH_TEXT_MAX_IMAGES} images`,
+      });
+    }
+  });

@@ -5,16 +5,23 @@ import { env } from "./config/env.js";
 import { createLogger, type Logger } from "./lib/logger.js";
 import { requestContext } from "./middleware/requestContext.js";
 import { perMinute } from "./lib/rateLimit.js";
-import { createErrorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+import {
+  createErrorHandler,
+  notFoundHandler,
+} from "./middleware/errorHandler.js";
 import { noopErrorSink, type ErrorSink } from "./config/errorSink.js";
 import { makeRequireAuth, type Verifier } from "./middleware/requireAuth.js";
 import { buildRoutes } from "./routes.js";
+import { publicCache } from "./lib/publicCache.js";
+import { createAlerts } from "./modules/admin/alerts.js";
 import type { Repositories } from "./repositories.js";
 import type { AuthAdmin } from "./config/authAdmin.js";
 import type { AvatarStore } from "./config/avatarStore.js";
 import type { CommunityImageStore } from "./config/communityImageStore.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
 import type { EmailDeps } from "./config/email.js";
+import type { PushSender } from "./config/push.js";
+import type { SteamClient } from "./providers/steam.js";
 import { createPagesRouter } from "./modules/pages/pages.routes.js";
 import { createPagesService } from "./modules/pages/pages.service.js";
 import {
@@ -33,6 +40,10 @@ export interface AppDeps {
   /** Injected so tests can authenticate without signing real JWTs. */
   verify: Verifier;
   logger?: Logger;
+  /** Web Push, where VAPID keys are set. */
+  push?: PushSender | null;
+  /** Steam's Web API, where a key is set. */
+  steam?: SteamClient | null;
   /** Where 5xx responses are recorded for the admin dashboard. */
   errorSink?: ErrorSink;
   /** The built index.html that rendered pages start from. */
@@ -49,6 +60,8 @@ export const buildApp = ({
   avatars,
   communityImages,
   email,
+  push = null,
+  steam = null,
   verify,
   logger = createLogger(),
   errorSink = noopErrorSink,
@@ -63,6 +76,14 @@ export const buildApp = ({
   app.set("trust proxy", 1);
 
   app.use(requestContext(logger));
+
+  const alerts = createAlerts({
+    admin: repos.admin,
+    emails: repos.email,
+    sender: email.sender,
+    site: email.settings.site,
+    logger,
+  });
 
   // Pages before helmet: they wear the site's CSP, not the API's.
   app.use(
@@ -96,7 +117,7 @@ export const buildApp = ({
 
   // A ceiling on writes of any kind. The routes that cost more carry
   // tighter ones of their own.
-  const writeLimiter = perMinute(60);
+  const writeLimiter = perMinute("writes", 60);
   app.use("/api/v1", (req, res, next) =>
     req.method === "GET" ||
     req.method === "HEAD" ||
@@ -107,6 +128,8 @@ export const buildApp = ({
       : writeLimiter(req, res, next),
   );
 
+  app.use("/api/v1", publicCache);
+
   app.use(
     "/api/v1",
     buildRoutes({
@@ -116,7 +139,10 @@ export const buildApp = ({
       avatars,
       communityImages,
       email,
+      push,
+      steam,
       logger,
+      alerts,
       requireAuth: makeRequireAuth(verify),
       optionalAuth: makeRequireAuth(verify, { optional: true }),
     }),
@@ -125,7 +151,12 @@ export const buildApp = ({
   app.use(notFoundHandler);
   // must be last: Express 5 forwards rejected promises here, so no handler
   // needs its own try/catch
-  app.use(createErrorHandler(errorSink));
+  app.use(
+    createErrorHandler(async (report) => {
+      await errorSink(report);
+      email.defer(alerts.errorRecorded("server"));
+    }),
+  );
 
   return app;
 };

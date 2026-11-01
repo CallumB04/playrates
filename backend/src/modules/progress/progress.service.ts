@@ -55,8 +55,9 @@ import type { FriendsRepository } from "../friends/friends.repository.js";
 import type { ListsRepository } from "../lists/lists.repository.js";
 import { friendRequestKey } from "../notifications/notifications.mapper.js";
 import type { NotificationsRepository } from "../notifications/notifications.repository.js";
+import { createProfileGate } from "../profiles/profileGate.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
-import { toAccent } from "../profiles/profiles.mapper.js";
+import { toAccent, toProfileVisibility } from "../profiles/profiles.mapper.js";
 import {
   colourUnlocked,
   fontUnlocked,
@@ -118,6 +119,8 @@ export const createProgressService = (
   /** Who wrote a review, for pinning only your own. */
   reviewAuthor: (reviewId: number) => Promise<string | null>,
 ) => {
+  const gate = createProfileGate(profiles, friends);
+
   const mustProfile = async (userId: string) => {
     const row = await repo.profile(userId);
     if (!row) throw AppError.notFound("Profile");
@@ -143,7 +146,12 @@ export const createProgressService = (
       `ref:${friendId}`,
       REFERRAL.inviterTokens,
     );
-    await repo.awardXp(friendId, "referral_welcome", "ref:welcome", REFERRAL.welcomeXp);
+    await repo.awardXp(
+      friendId,
+      "referral_welcome",
+      "ref:welcome",
+      REFERRAL.welcomeXp,
+    );
     await repo.awardTokens(
       friendId,
       "referral",
@@ -432,15 +440,15 @@ export const createProgressService = (
         awards.map((a) => a.key),
       );
       const newAwards = awards.filter((a) => (before.get(a.key) ?? -1) < a.xp);
-      for (const a of newAwards) {
-        await repo.awardXp(userId, a.source, a.key, a.xp, a.data);
-      }
+      // Each keyed, and the total kept by trigger, so they can land at once.
+      await Promise.all(
+        newAwards.map((a) =>
+          repo.awardXp(userId, a.source, a.key, a.xp, a.data),
+        ),
+      );
       if (newAwards.some((a) => a.key === streakKey)) {
         // Kept: the nudge about losing it has nothing left to say.
-        await notifications.markReadByKey(
-          userId,
-          streakNudgeKey(periods.week),
-        );
+        await notifications.markReadByKey(userId, streakNudgeKey(periods.week));
       }
 
       // Levels, after everything above has landed.
@@ -471,8 +479,9 @@ export const createProgressService = (
       if (launch && !launchPaid) {
         // The history, as one capped sum, each source keyed at 0 so it
         // isn't paid again.
-        for (const g of fresh)
-          await repo.awardTokens(userId, g.source, g.key, 0);
+        await Promise.all(
+          fresh.map((g) => repo.awardTokens(userId, g.source, g.key, 0)),
+        );
         gained = Math.min(
           LAUNCH_TOKEN_CAP,
           fresh.reduce((n, g) => n + g.amount, 0),
@@ -483,10 +492,10 @@ export const createProgressService = (
       } else {
         /* Earned since: a member counted by the deploy's backfill who comes
            back weeks later is paid for those weeks as anyone else is. */
-        for (const g of fresh) {
-          await repo.awardTokens(userId, g.source, g.key, g.amount);
-          gained += g.amount;
-        }
+        await Promise.all(
+          fresh.map((g) => repo.awardTokens(userId, g.source, g.key, g.amount)),
+        );
+        gained = fresh.reduce((n, g) => n + g.amount, 0);
       }
 
       if (gained > 0 || referralPaid) row = await mustProfile(userId);
@@ -587,7 +596,7 @@ export const createProgressService = (
       const drafts = members.flatMap((m) => nudgesFor(m, now));
       return {
         members: members.length,
-        raised: await notifications.raiseOnce(drafts),
+        raised: (await notifications.raiseOnce(drafts)).length,
       };
     },
 
@@ -634,14 +643,13 @@ export const createProgressService = (
         .map((r) => ({ source: r.source, xp: r.xp, dailyCap: r.daily_cap }));
     },
 
-    /** Someone's badges, public like the rest of the card. The owner also
+    /** Someone's badges, for whoever may see their profile. The owner also
      *  gets how far along each one is. */
     async badgesFor(
       username: string,
       viewerId?: string,
     ): Promise<PlayerBadges> {
-      const profile = await profiles.findByUsername(username);
-      if (!profile) throw AppError.notFound("Profile");
+      const profile = await gate(username, viewerId);
       const [badges, holders, members] = await Promise.all([
         repo.badges(profile.id),
         repo.holders(),
@@ -692,11 +700,17 @@ export const createProgressService = (
       };
     },
 
-    /** What the player card shows; null for no such member. Public, like
-     *  the card on the profile. */
+    /** What the player card shows; null for no such member, or one whose
+     *  profile isn't public: the picture travels beyond the site, and it
+     *  carries their stats. */
     async cardSource(username: string): Promise<PlayerCardSource | null> {
       const profile = await profiles.findByUsername(username);
-      if (!profile) return null;
+      if (
+        !profile ||
+        toProfileVisibility(profile.profile_visibility) !== "everyone"
+      ) {
+        return null;
+      }
       const row = (await repo.profile(profile.id))!;
       const [metrics, badges, items] = await Promise.all([
         repo.metrics(profile.id),

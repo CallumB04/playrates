@@ -31,7 +31,7 @@ const Cover = ({ cell, onPick }: { cell: Cell; onPick: boolean }) =>
             className={cn(
                 "grid aspect-3/4 w-full place-items-center rounded-xs border border-dashed",
                 onPick
-                    ? "border-strong text-content-muted group-hover/cell:border-brand group-hover/cell:text-brand"
+                    ? "border-strong text-content-muted group-hover/cell:border-brand group-hover/cell:text-brand-text"
                     : "border-strong text-content-muted"
             )}
         >

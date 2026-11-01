@@ -2,7 +2,7 @@ import { useState } from "react";
 import { isEmptyDoc, type RichTextDoc } from "@playrates/shared";
 import { useNotify } from "../../contexts/NotificationContext";
 import Button from "../ui/Button";
-import RichTextEditor from "./RichTextEditor";
+import RichTextEditor from "./LazyRichTextEditor";
 import SubmitHint from "./SubmitHint";
 
 interface MessageComposerProps {

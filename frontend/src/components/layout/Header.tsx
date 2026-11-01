@@ -27,8 +27,8 @@ const Header = () => {
 
     const [searchOpen, setSearchOpen] = useState(false);
 
+    // Where the page lands is ScrollRestoration's (AppProviders).
     useEffect(() => {
-        window.scrollTo(0, 0);
         setSearchOpen(false);
     }, [location.pathname, location.search]);
 
@@ -127,7 +127,7 @@ const Header = () => {
                             type="button"
                             onClick={() => setSearchOpen(true)}
                             aria-label="Search"
-                            className="relative flex size-9 items-center justify-center rounded-sm text-content lift before:absolute before:-inset-1 before:content-[''] hover:text-brand sm:size-11 sm:before:hidden xl:hidden"
+                            className="relative flex size-9 items-center justify-center rounded-sm text-content lift before:absolute before:-inset-1 before:content-[''] hover:text-brand-text sm:size-11 sm:before:hidden xl:hidden"
                         >
                             <Search size={20} />
                         </button>

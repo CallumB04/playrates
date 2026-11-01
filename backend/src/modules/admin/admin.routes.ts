@@ -24,7 +24,7 @@ import { validate } from "../../middleware/validate.js";
 import type { AdminService } from "./admin.service.js";
 
 /* No body is no email, as a patch note was sent before email existed. */
-const EmailChoiceBody = EmailChoiceSchema.default({});
+const EmailChoiceBody = EmailChoiceSchema.default({ email: false });
 
 const callerId = (req: { auth?: { userId: string } }): string => {
   const id = req.auth?.userId;
@@ -36,7 +36,11 @@ const callerId = (req: { auth?: { userId: string } }): string => {
  * Every admin endpoint. Mounted behind requireAuth and requireAdmin in
  * routes.ts, so the gate is in one place and nothing added here can miss it.
  */
-export const createAdminRouter = ({ service }: { service: AdminService }): Router => {
+export const createAdminRouter = ({
+  service,
+}: {
+  service: AdminService;
+}): Router => {
   const router = Router();
 
   // Stats -------------------------------------------------------------------
@@ -45,7 +49,9 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     "/stats/overview",
     validate({ query: AdminRangeQuerySchema }),
     async (req, res) => {
-      const { range } = req.valid!.query as z.infer<typeof AdminRangeQuerySchema>;
+      const { range } = req.valid!.query as z.infer<
+        typeof AdminRangeQuerySchema
+      >;
       res.json(await service.overview(range));
     },
   );
@@ -54,8 +60,12 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     "/stats/:metric",
     validate({ params: AdminMetricParamSchema, query: AdminRangeQuerySchema }),
     async (req, res) => {
-      const { metric } = req.valid!.params as z.infer<typeof AdminMetricParamSchema>;
-      const { range } = req.valid!.query as z.infer<typeof AdminRangeQuerySchema>;
+      const { metric } = req.valid!.params as z.infer<
+        typeof AdminMetricParamSchema
+      >;
+      const { range } = req.valid!.query as z.infer<
+        typeof AdminRangeQuerySchema
+      >;
       res.json(await service.metricDetail(metric, range));
     },
   );
@@ -91,7 +101,9 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     validate({ query: AdminUsersQuerySchema }),
     async (req, res) => {
       res.json(
-        await service.users(req.valid!.query as z.infer<typeof AdminUsersQuerySchema>),
+        await service.users(
+          req.valid!.query as z.infer<typeof AdminUsersQuerySchema>,
+        ),
       );
     },
   );
@@ -100,7 +112,9 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     "/users/:id",
     validate({ params: AdminUserIdParamSchema }),
     async (req, res) => {
-      const { id } = req.valid!.params as z.infer<typeof AdminUserIdParamSchema>;
+      const { id } = req.valid!.params as z.infer<
+        typeof AdminUserIdParamSchema
+      >;
       res.json(await service.user(id));
     },
   );
@@ -127,7 +141,9 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     "/games/search",
     validate({ query: AdminGameSearchQuerySchema }),
     async (req, res) => {
-      const { q } = req.valid!.query as z.infer<typeof AdminGameSearchQuerySchema>;
+      const { q } = req.valid!.query as z.infer<
+        typeof AdminGameSearchQuerySchema
+      >;
       res.json(await service.searchGames(q));
     },
   );
@@ -155,7 +171,9 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     "/games/:id/resync",
     validate({ params: AdminGameIdParamSchema }),
     async (req, res) => {
-      const { id } = req.valid!.params as z.infer<typeof AdminGameIdParamSchema>;
+      const { id } = req.valid!.params as z.infer<
+        typeof AdminGameIdParamSchema
+      >;
       res.json(await service.resync(id, callerId(req)));
     },
   );
@@ -164,8 +182,12 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     "/games/:id",
     validate({ params: AdminGameIdParamSchema, body: AdminGamePatchSchema }),
     async (req, res) => {
-      const { id } = req.valid!.params as z.infer<typeof AdminGameIdParamSchema>;
-      const { isTrending } = req.valid!.body as z.infer<typeof AdminGamePatchSchema>;
+      const { id } = req.valid!.params as z.infer<
+        typeof AdminGameIdParamSchema
+      >;
+      const { isTrending } = req.valid!.body as z.infer<
+        typeof AdminGamePatchSchema
+      >;
       res.json(await service.setTrending(id, isTrending, callerId(req)));
     },
   );
@@ -181,7 +203,9 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     validate({ body: SendAnnouncementSchema }),
     async (req, res) => {
       const input = req.valid!.body as z.infer<typeof SendAnnouncementSchema>;
-      res.status(201).json(await service.sendAnnouncement(input, callerId(req)));
+      res
+        .status(201)
+        .json(await service.sendAnnouncement(input, callerId(req)));
     },
   );
 
@@ -199,7 +223,9 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     "/announcements/:id/retract",
     validate({ params: AnnouncementIdParamSchema }),
     async (req, res) => {
-      const { id } = req.valid!.params as z.infer<typeof AnnouncementIdParamSchema>;
+      const { id } = req.valid!.params as z.infer<
+        typeof AnnouncementIdParamSchema
+      >;
       res.json(await service.retractAnnouncement(id));
     },
   );
@@ -216,9 +242,13 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     "/patch-notes/:messageId/announce",
     validate({ params: PatchNoteIdParamSchema, body: EmailChoiceBody }),
     async (req, res) => {
-      const { messageId } = req.valid!.params as z.infer<typeof PatchNoteIdParamSchema>;
+      const { messageId } = req.valid!.params as z.infer<
+        typeof PatchNoteIdParamSchema
+      >;
       const { email } = req.valid!.body as z.infer<typeof EmailChoiceSchema>;
-      res.status(201).json(await service.sendPatchNote(messageId, callerId(req), email));
+      res
+        .status(201)
+        .json(await service.sendPatchNote(messageId, callerId(req), email));
     },
   );
 
@@ -226,9 +256,16 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     "/patch-notes/:messageId/test",
     validate({ params: PatchNoteIdParamSchema, body: EmailChoiceBody }),
     async (req, res) => {
-      const { messageId } = req.valid!.params as z.infer<typeof PatchNoteIdParamSchema>;
+      const { messageId } = req.valid!.params as z.infer<
+        typeof PatchNoteIdParamSchema
+      >;
       const { email } = req.valid!.body as z.infer<typeof EmailChoiceSchema>;
-      await service.sendTestPatchNote(messageId, callerId(req), email, req.auth?.email);
+      await service.sendTestPatchNote(
+        messageId,
+        callerId(req),
+        email,
+        req.auth?.email,
+      );
       res.status(204).end();
     },
   );
@@ -249,6 +286,10 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     res.json(await service.progress());
   });
 
+  router.get("/cohorts", async (_req, res) => {
+    res.json(await service.cohorts());
+  });
+
   router.get("/health", async (_req, res) => {
     res.json(await service.health());
   });
@@ -257,8 +298,21 @@ export const createAdminRouter = ({ service }: { service: AdminService }): Route
     "/errors",
     validate({ query: CursorQuerySchema }),
     async (req, res) => {
-      const { before, limit } = req.valid!.query as z.infer<typeof CursorQuerySchema>;
+      const { before, limit } = req.valid!.query as z.infer<
+        typeof CursorQuerySchema
+      >;
       res.json(await service.serverErrors(before, limit));
+    },
+  );
+
+  router.get(
+    "/client-errors",
+    validate({ query: CursorQuerySchema }),
+    async (req, res) => {
+      const { before, limit } = req.valid!.query as z.infer<
+        typeof CursorQuerySchema
+      >;
+      res.json(await service.clientErrors(before, limit));
     },
   );
 

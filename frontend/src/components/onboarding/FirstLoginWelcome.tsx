@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useMarkOnboarded } from "../../hooks/queries/useProfiles";
-import WelcomePopup from "./WelcomePopup";
 import { owesWelcome } from "./owesWelcome";
+
+// Seen once per account, so never part of the page anyone else loads.
+const WelcomePopup = lazy(() => import("./WelcomePopup"));
 
 /**
  * Shows the welcome to an account that has never dismissed it — so a new
@@ -23,13 +25,15 @@ const FirstLoginWelcome = () => {
     if (!user || dismissed || !owesWelcome(user, mode !== null)) return null;
 
     return (
-        <WelcomePopup
-            profile={user}
-            onClose={() => {
-                setDismissed(true);
-                markOnboarded.mutate();
-            }}
-        />
+        <Suspense fallback={null}>
+            <WelcomePopup
+                profile={user}
+                onClose={() => {
+                    setDismissed(true);
+                    markOnboarded.mutate();
+                }}
+            />
+        </Suspense>
     );
 };
 

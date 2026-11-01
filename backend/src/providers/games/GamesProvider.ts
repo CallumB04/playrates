@@ -82,6 +82,10 @@ export interface GamesProvider {
   trendingIds(limit: number): Promise<number[]>;
   /** A game's wide pictures, the ones a profile can wear. */
   backdropsOf(externalId: number): Promise<GameBackdrop[]>;
+  /** Steam appids to upstream ids, for those it knows. */
+  fromSteam(appids: number[]): Promise<Map<number, number>>;
+  /** Many games by upstream id, filter or not, as getById. */
+  getByIds(externalIds: number[]): Promise<ExternalGame[]>;
 }
 
 /** Used when no credentials are set. Returns empty results rather than throwing,
@@ -105,6 +109,12 @@ export const nullGamesProvider: GamesProvider = {
     return [];
   },
   async backdropsOf() {
+    return [];
+  },
+  async fromSteam() {
+    return new Map();
+  },
+  async getByIds() {
     return [];
   },
 };

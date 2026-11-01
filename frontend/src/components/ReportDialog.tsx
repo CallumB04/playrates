@@ -134,7 +134,7 @@ const ReportDialog = ({ targetType, targetId, onClose }: ReportDialogProps) => {
                     the{" "}
                     <Link
                         to="/terms#reporting"
-                        className="underline underline-offset-2 hover:text-brand"
+                        className="underline underline-offset-2 hover:text-brand-text"
                         onClick={onClose}
                     >
                         terms

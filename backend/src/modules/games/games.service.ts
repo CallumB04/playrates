@@ -213,36 +213,43 @@ export const createGamesService = (
      * of those it belongs to, so the three never repeat each other.
      */
     async getRelated(gameId: number, callerId?: string): Promise<GameRelated> {
-      const row = await repo.findById(gameId);
+      const [row, showSexual] = await Promise.all([
+        repo.findById(gameId),
+        canSeeExplicit(callerId),
+      ]);
       if (!row) throw AppError.notFound("Game");
-      const showSexual = await canSeeExplicit(callerId);
-      if (row.has_sexual_content && !showSexual) throw AppError.notFound("Game");
+      if (row.has_sexual_content && !showSexual)
+        throw AppError.notFound("Game");
 
       const shown = new Set<number>([row.id]);
       const take = (rows: GameRowWithRelations[]) => {
-        const fresh = rows.filter((r) => !shown.has(r.id)).slice(0, RELATED_PER_ROW);
+        const fresh = rows
+          .filter((r) => !shown.has(r.id))
+          .slice(0, RELATED_PER_ROW);
         for (const r of fresh) shown.add(r.id);
         return fresh.map(toGame);
       };
 
-      const seriesGames =
+      /* The three at once. The developer's row asks for twice its share,
+         so it still fills after the series takes the games they share. */
+      const developer = row.developers[0] ?? null;
+      const [seriesRows, developerRows, similarRows] = await Promise.all([
         row.series_id === null
           ? []
-          : take(await repo.listSeries(row.series_id, row.id, RELATED_PER_ROW, showSexual));
-      const developer = row.developers[0] ?? null;
-      const developerGames = developer
-        ? take(
-            await repo.listByDeveloper(
+          : repo.listSeries(row.series_id, row.id, RELATED_PER_ROW, showSexual),
+        developer
+          ? repo.listByDeveloper(
               developer,
-              [...shown],
-              RELATED_PER_ROW,
+              [row.id],
+              RELATED_PER_ROW * 2,
               showSexual,
-            ),
-          )
-        : [];
-      const similar = take(
-        await repo.listByIgdbIds(row.similar_igdb_ids ?? [], showSexual),
-      );
+            )
+          : [],
+        repo.listByIgdbIds(row.similar_igdb_ids ?? [], showSexual),
+      ]);
+      const seriesGames = take(seriesRows);
+      const developerGames = take(developerRows);
+      const similar = take(similarRows);
 
       return {
         series:
@@ -258,10 +265,10 @@ export const createGamesService = (
     },
 
     async getStats(gameId: number): Promise<GameStats> {
-      // confirm the game exists so a bad id is a 404, not empty stats
-      await this.getById(gameId);
-
-      const [counts, rating, own] = await Promise.all([
+      // Alongside the counts, not before them: a bad id still rejects the
+      // lot with a 404, one round trip sooner for a good one.
+      const [, counts, rating, own] = await Promise.all([
+        this.getById(gameId),
         repo.statusCounts(gameId),
         repo.ratingSummary(gameId),
         repo.playratesStats(gameId),
@@ -426,7 +433,14 @@ export const createGamesService = (
           kind: "manual_pull",
           source: "manual_pull",
           actorId,
-          data: { ...input, from, to, ...result, failed: true, error: errorText(error) },
+          data: {
+            ...input,
+            from,
+            to,
+            ...result,
+            failed: true,
+            error: errorText(error),
+          },
         });
         throw error;
       }

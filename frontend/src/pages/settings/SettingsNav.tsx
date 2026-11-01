@@ -39,7 +39,7 @@ const SettingsNav = ({ sections, active, onSelect }: SettingsNavProps) => {
                 <CurrentIcon
                     size={18}
                     aria-hidden
-                    className="ml-1.5 shrink-0 text-brand"
+                    className="ml-1.5 shrink-0 text-brand-text"
                 />
                 <span className="min-w-0 flex-1 text-body font-medium text-content">
                     {current.label}
@@ -90,7 +90,7 @@ const SettingsNav = ({ sections, active, onSelect }: SettingsNavProps) => {
                                             className={cn(
                                                 "ml-1 shrink-0",
                                                 isActive
-                                                    ? "text-brand"
+                                                    ? "text-brand-text"
                                                     : "text-content-muted"
                                             )}
                                         />
@@ -139,7 +139,7 @@ const SettingsNav = ({ sections, active, onSelect }: SettingsNavProps) => {
                                 className={cn(
                                     "shrink-0",
                                     isActive
-                                        ? "text-brand"
+                                        ? "text-brand-text"
                                         : "text-content-muted"
                                 )}
                             />

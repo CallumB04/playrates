@@ -15,16 +15,16 @@ const FACTS: GameFacts = {
 };
 
 describe("GameDetails", () => {
-    it("links each platform and genre to the library, filtered to it", () => {
+    it("links each platform and genre to its own page", () => {
         renderWithProviders(<GameDetails facts={FACTS} />);
 
         expect(screen.getByRole("link", { name: "Steam" })).toHaveAttribute(
             "href",
-            "/library?platform=steam"
+            "/games/platform/steam"
         );
         expect(
             screen.getByRole("link", { name: "Role-playing (RPG)" })
-        ).toHaveAttribute("href", "/library?genre=role-playing-rpg");
+        ).toHaveAttribute("href", "/games/genre/role-playing-rpg");
     });
 
     it("opens the website away from the page, without handing it the opener", () => {

@@ -49,7 +49,7 @@ const TrendingHero = ({ thread }: { thread: TrendingThread }) => {
                                 {game.title}
                             </span>
                         )}
-                        <span className="line-clamp-3 font-display text-section text-content group-hover:text-brand">
+                        <span className="line-clamp-3 font-display text-section text-content group-hover:text-brand-text">
                             {thread.title}
                         </span>
                         <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-label-sm text-content-muted">

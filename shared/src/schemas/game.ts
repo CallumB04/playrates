@@ -87,6 +87,8 @@ export const GAME_SORTS = [
   "released",
   "rating",
   "critic",
+  // Not yet out, soonest first. Not a library sort: the upcoming page's.
+  "upcoming",
 ] as const;
 export const GameSortSchema = z.enum(GAME_SORTS).default("logged");
 export type GameSort = z.infer<typeof GameSortSchema>;

@@ -324,6 +324,58 @@ describe("picture cleanup", () => {
     expect(state.communityImages.size).toBe(0);
   });
 
+  it("leaves someone else's picture alone when a message holding it goes", async () => {
+    // A message from before uploads were tied to their author can still
+    // show another member's picture.
+    const { app, state } = buildTestApp({
+      seed: {
+        ...seed(),
+        communityMessages: [
+          ...seed().communityMessages,
+          buildMessage({
+            id: 3,
+            author_id: USER_B,
+            body: picture(IMAGE(USER_C, 1)),
+          }),
+        ],
+      },
+    });
+    state.communityImages.set(IMAGE(USER_C, 1), {
+      bytes: Buffer.from("x"),
+      createdAt: LONG_AGO,
+    });
+
+    await request(app)
+      .delete("/api/v1/community/messages/3")
+      .set("Authorization", authHeader(USER_B));
+
+    expect([...state.communityImages.keys()]).toEqual([IMAGE(USER_C, 1)]);
+  });
+
+  it("refuses an edit that adds someone else's picture", async () => {
+    const { app, state } = buildTestApp({
+      seed: {
+        ...seed(),
+        communityMessages: [
+          ...seed().communityMessages,
+          buildMessage({ id: 3, author_id: USER_B }),
+        ],
+      },
+    });
+    state.communityImages.set(IMAGE(USER_C, 1), {
+      bytes: Buffer.from("x"),
+      createdAt: LONG_AGO,
+    });
+
+    const response = await request(app)
+      .patch("/api/v1/community/messages/3")
+      .set("Authorization", authHeader(USER_B))
+      .send({ body: picture(IMAGE(USER_C, 1)) });
+
+    expect(response.status).toBe(422);
+    expect(state.communityImages.has(IMAGE(USER_C, 1))).toBe(true);
+  });
+
   it("sweeps a day-old upload that never made it into a message", async () => {
     const { app, state } = buildTestApp({
       seed: {

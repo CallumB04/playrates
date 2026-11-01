@@ -11,6 +11,7 @@ import type {
   ProfileRow,
   ReviewRow,
 } from "../../src/types/database.types.js";
+import type { ExternalGame } from "../../src/providers/games/GamesProvider.js";
 import { USER_A, USER_B } from "./buildTestApp.js";
 
 const NOW = new Date().toISOString();
@@ -25,6 +26,7 @@ export const buildProfile = (
   avatar_url: null,
   // recent, so `online` derives to true unless a test says otherwise
   show_sexual_content: false,
+  adult_confirmed_at: null,
   first_name: null,
   timezone: "UTC",
   hide_online: false,
@@ -239,4 +241,30 @@ export const baseSeed = () => ({
   platforms: [buildPlatform()],
   platformSystems: [buildPlatformSystem()],
   genres: [buildGenre(), buildGenre({ slug: "indie", name: "Indie" })],
+});
+
+/** A game as IGDB describes it, before it is imported. */
+export const buildExternalGame = (id: number, title = `Game ${id}`): ExternalGame => ({
+  externalId: id,
+  slug: `game-${id}`,
+  title,
+  description: "",
+  coverUrl: null,
+  boxArtUrl: null,
+  bannerUrl: null,
+  releaseDate: "2026-09-20",
+  platformSlugs: [],
+  systemSlugs: [],
+  genres: [],
+  developers: [],
+  publishers: [],
+  website: null,
+  esrbRating: null,
+  hasSexualContent: false,
+  criticScore: null,
+  igdbRatingCount: null,
+  similarIds: [],
+  series: null,
+  altCovers: [],
+  altNames: [],
 });

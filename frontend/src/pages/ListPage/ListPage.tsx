@@ -215,7 +215,7 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
                             by{" "}
                             <Link
                                 to={profilePath(list.owner.username, "lists")}
-                                className="font-medium text-content hover:text-brand"
+                                className="font-medium text-content hover:text-brand-text"
                             >
                                 {list.owner.username}
                             </Link>{" "}
@@ -360,7 +360,7 @@ const AddGames = ({ list }: { list: GameListDetail }) => {
                 htmlFor={fieldId}
                 className="mb-2 flex items-center gap-2 text-body-sm font-medium text-content"
             >
-                <ListPlus size={16} aria-hidden className="text-brand" />
+                <ListPlus size={16} aria-hidden className="text-brand-text" />
                 Add a game to this list
             </label>
             <GamePicker

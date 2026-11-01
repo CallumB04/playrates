@@ -227,16 +227,31 @@ describe("emails from what happens in the app", () => {
 });
 
 describe("email settings", () => {
-  it("are all on to begin with", async () => {
+  it("start as each category's default: reminders off, the rest on", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
     const response = await request(app).get("/api/v1/profiles/me").set("Authorization", authHeader(USER_A));
     expect(response.body.emailPrefs).toEqual({
       all: true,
       friend_requests: true,
       replies: true,
+      milestones: true,
       gifts_invites: true,
       wishlist_releases: true,
+      reminders: false,
+      digest: true,
       news: true,
+    });
+  });
+
+  it("turn reminders on when asked", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+    const response = await request(app)
+      .patch("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A))
+      .send({ emailPrefs: { reminders: true } });
+    expect(response.body.emailPrefs.reminders).toBe(true);
+    expect(state.profiles.find((p) => p.id === USER_A)!.email_prefs).toMatchObject({
+      reminders: true,
     });
   });
 

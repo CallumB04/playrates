@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import request from "supertest";
 import { buildTestApp, USER_A, USER_B } from "../helpers/buildTestApp.js";
@@ -6,6 +7,7 @@ import {
   buildGame,
   buildMessage,
   buildGameLog,
+  buildPlatform,
   buildProfile,
   buildReview,
   buildThread,
@@ -107,6 +109,33 @@ describe("rendered pages", () => {
     expect(unknown.status).toBe(404);
   });
 
+  it("asks search engines to leave a private or friends-only profile out", async () => {
+    for (const visibility of ["private", "friends"]) {
+      const { app } = buildTestApp({
+        seed: {
+          ...baseSeed(),
+          profiles: [buildProfile({ profile_visibility: visibility })],
+        },
+      });
+      const response = await request(app).get("/user/devuser");
+      expect(response.text).toContain(
+        '<meta name="robots" content="noindex" />',
+      );
+    }
+  });
+
+  it("asks search engines to leave out a thread about an adult game", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        games: [buildGame({ id: 1, has_sexual_content: true })],
+        communityThreads: [buildThread({ game_id: 1 })],
+      },
+    });
+    const response = await request(app).get("/community/thread/1");
+    expect(response.text).toContain('<meta name="robots" content="noindex" />');
+  });
+
   it("describes a thread by its opening message, escaped", async () => {
     const { app } = buildTestApp({
       seed: {
@@ -187,6 +216,30 @@ describe("the sitemap", () => {
     expect(response.text).not.toContain("/game/2<");
   });
 
+  it("lists public profiles, and nobody who'd rather not be found", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...seed(),
+        profiles: [
+          buildProfile({ id: USER_A, username: "devuser" }),
+          buildProfile({
+            id: USER_B,
+            username: "quietone",
+            hide_from_search: true,
+          }),
+        ],
+      },
+      production: true,
+    });
+
+    expect((await request(app).get("/sitemap.xml")).text).toContain(
+      "<loc>https://playrates.app/sitemaps/people.xml</loc>",
+    );
+    const people = (await request(app).get("/sitemaps/people.xml")).text;
+    expect(people).toContain("<loc>https://playrates.app/user/devuser</loc>");
+    expect(people).not.toContain("quietone");
+  });
+
   it("404s a page of games past the end", async () => {
     const { app } = buildTestApp({ seed: seed(), production: true });
 
@@ -194,11 +247,21 @@ describe("the sitemap", () => {
   });
 
   it("lists threads and the fixed pages", async () => {
-    const { app } = buildTestApp({ seed: seed(), production: true });
+    const { app } = buildTestApp({
+      seed: {
+        ...seed(),
+        communityThreads: [
+          buildThread({ id: 7, game_id: 1 }),
+          buildThread({ id: 8, game_id: 2 }),
+        ],
+      },
+      production: true,
+    });
 
-    expect((await request(app).get("/sitemaps/threads.xml")).text).toContain(
-      "https://playrates.app/community/thread/7",
-    );
+    const threads = (await request(app).get("/sitemaps/threads.xml")).text;
+    expect(threads).toContain("https://playrates.app/community/thread/7");
+    // About an adult game: left out, as the game is.
+    expect(threads).not.toContain("https://playrates.app/community/thread/8");
     expect((await request(app).get("/sitemaps/pages.xml")).text).toContain(
       "<loc>https://playrates.app/privacy</loc>",
     );
@@ -357,5 +420,369 @@ describe("page content for readers that never run the app", () => {
     expect(html).toContain("The Bloody Baron, easily.");
     // The deleted reply leaves no row behind.
     expect(html.match(/<li>/g)).toHaveLength(1);
+  });
+});
+
+describe("every other page", () => {
+  it("gives a fixed page its own title and canonical", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app).get("/privacy");
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain("<title>Privacy / PlayRates</title>");
+    expect(response.text).toContain(
+      '<link rel="canonical" href="https://playrates.app/privacy" />',
+    );
+    expect(response.headers["cache-control"]).toContain("s-maxage");
+  });
+
+  it("asks search engines to leave out someone's own pages", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    for (const path of ["/settings", "/progress", "/admin/errors"]) {
+      const response = await request(app).get(path);
+      expect(response.status, path).toBe(200);
+      expect(response.text, path).toContain(
+        '<meta name="robots" content="noindex" />',
+      );
+    }
+  });
+
+  it("answers an address the app doesn't have with a real 404", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app).get("/no-such-page");
+
+    expect(response.status).toBe(404);
+    expect(response.text).toContain(
+      "<title>Page not found / PlayRates</title>",
+    );
+    expect(response.text).toContain('<meta name="robots" content="noindex" />');
+  });
+
+  it("sends the old /catalogue on to the library, filters and all", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app).get("/catalogue?genre=rpg");
+
+    expect(response.status).toBe(301);
+    expect(response.headers.location).toBe("/library?genre=rpg");
+  });
+
+  it("leaves the API's CORS preflights to the API", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .options("/api/v1/games")
+      .set("Origin", "http://localhost:5173")
+      .set("Access-Control-Request-Method", "GET");
+
+    expect(response.headers["access-control-allow-origin"]).toBe(
+      "http://localhost:5173",
+    );
+  });
+
+  it("leaves the API to the API", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app).get("/api/v1/no-such-endpoint");
+
+    expect(response.status).toBe(404);
+    expect(response.body.error.code).toBe("not_found");
+  });
+
+  /* The app's routes are in App.tsx; a new one there without a page here
+     would be served as a 404. */
+  it("has a page for every route in the app", async () => {
+    const appSource = readFileSync(
+      new URL("../../../frontend/src/App.tsx", import.meta.url),
+      "utf8",
+    );
+    const paths = [...appSource.matchAll(/path="([^"]+)"/g)].map((m) => m[1]!);
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        games: [buildGame({ id: 1 })],
+        communityThreads: [buildThread({ id: 1 })],
+        gameLogs: [buildGameLog({ id: 1 })],
+        reviews: [buildReview({ id: 1 })],
+      },
+    });
+
+    const sample = (path: string) =>
+      path
+        .replace(":username", "devuser")
+        .replace(":targetUsername?", "devuser")
+        .replace("/:view?", "/games")
+        .replace(":gameID", "1")
+        .replace(":threadId", "1")
+        .replace(":reviewId", "1")
+        .replace(":year", "2024")
+        .replace("/genre/:slug", "/genre/indie")
+        .replace("/platform/:slug", `/platform/${buildPlatform().slug}`)
+        .replace("/*", "/anything");
+
+    const checked = paths.filter(
+      // The catch-all, and a list, which needs one of its own to exist.
+      (path) => path !== "*" && !path.includes(":listId"),
+    );
+    expect(checked.length).toBeGreaterThan(15);
+    for (const path of checked) {
+      const response = await request(app).get(sample(path));
+      expect([200, 301], `${path} -> ${sample(path)}`).toContain(
+        response.status,
+      );
+    }
+  });
+});
+
+describe("list and Gaming 25 pages for readers that never run the app", () => {
+  it("writes out a public list's games in its order", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        games: [
+          buildGame({
+            id: 1,
+            title: "Outer Wilds",
+            release_date: "2019-05-28",
+          }),
+          buildGame({ id: 2, title: "Celeste", release_date: "2018-01-25" }),
+          buildGame({ id: 3, title: "Hidden One", has_sexual_content: true }),
+        ],
+        gameLists: [
+          {
+            id: 1,
+            user_id: USER_A,
+            name: "Best of",
+            description: "Short and perfect.",
+            visibility: "everyone",
+            colour: null,
+            ranked: true,
+            cover_game_ids: [],
+            created_at: "2026-10-01T00:00:00.000Z",
+            updated_at: "2026-10-02T00:00:00.000Z",
+          },
+        ],
+        gameListItems: [
+          {
+            list_id: 1,
+            game_id: 2,
+            position: 2,
+            added_at: "2026-10-01T00:00:00.000Z",
+          },
+          {
+            list_id: 1,
+            game_id: 1,
+            position: 1,
+            added_at: "2026-10-01T00:00:00.000Z",
+          },
+          {
+            list_id: 1,
+            game_id: 3,
+            position: 3,
+            added_at: "2026-10-01T00:00:00.000Z",
+          },
+        ],
+      },
+    });
+
+    const html = (await request(app).get("/user/devuser/lists/1")).text;
+    const body = html.slice(html.indexOf('<div id="root">'));
+
+    expect(body).toContain("Best of");
+    expect(body).toContain("Short and perfect.");
+    expect(body.indexOf("1. Outer Wilds")).toBeLessThan(
+      body.indexOf("2. Celeste"),
+    );
+    expect(body).not.toContain("Hidden One");
+  });
+});
+
+describe("structured data", () => {
+  const jsonLd = (html: string) =>
+    [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)]
+      .map((m) => JSON.parse(m[1]!) as Record<string, unknown>)
+      .find((d) => d["@type"] !== "Organization" && d["@type"] !== "WebSite");
+
+  it("describes a game with its genres, makers and a trail", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        games: [
+          buildGame({
+            id: 1,
+            title: "Hades",
+            description: "Fight out of hell.",
+            developers: ["Supergiant Games"],
+            publishers: ["Supergiant Games"],
+          }),
+        ],
+      },
+    });
+
+    const data = jsonLd((await request(app).get("/game/1")).text)!;
+    const graph = data["@graph"] as Record<string, unknown>[];
+    const game = graph.find((d) => d["@type"] === "VideoGame")!;
+    expect(game).toMatchObject({
+      name: "Hades",
+      description: "Fight out of hell.",
+      author: [{ "@type": "Organization", name: "Supergiant Games" }],
+    });
+    expect(graph.find((d) => d["@type"] === "BreadcrumbList")).toBeDefined();
+  });
+
+  it("calls a thread a forum post, and a public profile a profile page", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        games: [buildGame({ id: 1, title: "Hades" })],
+        communityThreads: [buildThread({ id: 1, game_id: 1 })],
+      },
+    });
+
+    const thread = jsonLd(
+      (await request(app).get("/community/thread/1")).text,
+    )!;
+    expect(thread["@type"]).toBe("DiscussionForumPosting");
+    expect(thread.about).toMatchObject({ name: "Hades" });
+
+    const profile = jsonLd((await request(app).get("/user/devuser")).text)!;
+    expect(profile["@type"]).toBe("ProfilePage");
+  });
+
+  it("says nothing about a profile that isn't public", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        profiles: [buildProfile({ profile_visibility: "private" })],
+      },
+    });
+    expect(
+      jsonLd((await request(app).get("/user/devuser")).text),
+    ).toBeUndefined();
+  });
+});
+
+describe("hub pages", () => {
+  const hubSeed = () => ({
+    ...baseSeed(),
+    games: [
+      buildGame({
+        id: 1,
+        title: "Outer Wilds",
+        release_date: "2019-05-28",
+        critic_score: 85,
+      }),
+      buildGame({
+        id: 2,
+        title: "Disco Elysium",
+        release_date: "2019-10-15",
+        critic_score: 91,
+      }),
+      buildGame({
+        id: 3,
+        title: "Hidden One",
+        release_date: "2019-06-01",
+        has_sexual_content: true,
+      }),
+    ],
+  });
+
+  it("lists a year's best, best reviewed first, adult games left out", async () => {
+    const { app } = buildTestApp({ seed: hubSeed() });
+
+    const html = (await request(app).get("/games/best/2019")).text;
+    const body = html.slice(html.indexOf('<div id="root">'));
+
+    expect(html).toContain("<title>Best games of 2019 / PlayRates</title>");
+    expect(body.indexOf("Disco Elysium")).toBeLessThan(
+      body.indexOf("Outer Wilds"),
+    );
+    expect(body).not.toContain("Hidden One");
+  });
+
+  it("404s a genre, platform or year the site doesn't have", async () => {
+    const { app } = buildTestApp({ seed: hubSeed() });
+
+    for (const path of [
+      "/games/genre/nope",
+      "/games/platform/nope",
+      "/games/best/1900",
+    ]) {
+      expect((await request(app).get(path)).status, path).toBe(404);
+    }
+  });
+
+  it("asks search engines to leave out a hub with nothing in it", async () => {
+    const { app } = buildTestApp({ seed: hubSeed() });
+
+    const html = (await request(app).get("/games/upcoming")).text;
+
+    expect(html).toContain('<meta name="robots" content="noindex" />');
+  });
+
+  it("lists the hubs in their own sitemap", async () => {
+    const { app } = buildTestApp({ seed: hubSeed(), production: true });
+
+    const hubs = (await request(app).get("/sitemaps/hubs.xml")).text;
+
+    expect(hubs).toContain("<loc>https://playrates.app/games/upcoming</loc>");
+    expect(hubs).toContain("<loc>https://playrates.app/games/best/2019</loc>");
+    expect(hubs).toContain(
+      "<loc>https://playrates.app/games/genre/indie</loc>",
+    );
+  });
+});
+
+describe("review pages", () => {
+  const long = "Held up far better than I expected. ".repeat(8);
+  const seed = (review: Parameters<typeof buildReview>[0] = {}) => ({
+    ...baseSeed(),
+    gameLogs: [buildGameLog({ id: 1, user_id: USER_A, game_id: 1, rating: 9 })],
+    reviews: [buildReview({ id: 5, log_id: 1, body: long, ...review })],
+  });
+
+  it("gives a review its own page, with Review data", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const response = await request(app).get("/review/5");
+    expect(response.status).toBe(200);
+    expect(response.text).toContain("devuser’s review of");
+    expect(response.text).toContain('"@type":"Review"');
+    expect(response.text).toContain('"bestRating":10');
+    expect(response.text).not.toContain('content="noindex"');
+  });
+
+  it("keeps a spoiler off the page", async () => {
+    const { app } = buildTestApp({
+      seed: seed({ contains_spoilers: true, body: "The twist is that " + long }),
+    });
+    const response = await request(app).get("/review/5");
+    expect(response.text).not.toContain("The twist is that");
+    expect(response.text).toContain("It contains spoilers.");
+  });
+
+  it("isn't a page at all when private", async () => {
+    const { app } = buildTestApp({ seed: seed({ is_public: false }) });
+    expect((await request(app).get("/review/5")).status).toBe(404);
+    expect((await request(app).get("/api/v1/reviews/5")).status).toBe(404);
+  });
+
+  it("is listed in the sitemap when it has something to say", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    expect((await request(app).get("/sitemaps/people.xml")).text).toContain(
+      "/review/5",
+    );
+    const short = buildTestApp({ seed: seed({ body: "Great." }) });
+    expect(
+      (await request(short.app).get("/sitemaps/people.xml")).text,
+    ).not.toContain("/review/5");
+  });
+
+  it("answers the API with the review", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const response = await request(app).get("/api/v1/reviews/5");
+    expect(response.body).toMatchObject({ id: 5, rating: 9, author: { username: "devuser" } });
   });
 });

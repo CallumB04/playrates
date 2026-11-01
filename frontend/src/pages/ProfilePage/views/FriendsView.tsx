@@ -54,7 +54,7 @@ const FriendsView = ({
                         // yet: asking them comes first.
                         <EmptyPlate
                             title="No friends yet"
-                            body="Invite people you know, or find some in the community."
+                            body="Invite people you know, or find some who rate like you."
                             action={
                                 <div className="flex flex-col gap-2 sm:flex-row">
                                     <InviteButton
@@ -62,13 +62,13 @@ const FriendsView = ({
                                         className="w-full sm:w-auto"
                                     />
                                     <Link
-                                        to="/community"
+                                        to="/people"
                                         className={buttonClass(
                                             "secondary",
                                             "w-full sm:w-auto"
                                         )}
                                     >
-                                        Find people in Community
+                                        Find people
                                     </Link>
                                 </div>
                             }

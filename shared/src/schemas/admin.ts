@@ -296,7 +296,7 @@ const ACTIVITY_PERIOD_NAMES = Object.keys(ACTIVITY_PERIODS) as [
 
 /** Who, what game and how far back: shared by the feed and its counts. */
 export const AdminActivityScopeSchema = z.object({
-  userId: z.string().uuid().optional(),
+  userId: z.guid().optional(),
   gameId: z.coerce.number().int().positive().optional(),
   period: z.enum(ACTIVITY_PERIOD_NAMES).optional(),
 });
@@ -356,7 +356,7 @@ export const AdminUsersQuerySchema = PaginationSchema.extend({
 export type AdminUsersQuery = z.infer<typeof AdminUsersQuerySchema>;
 
 export const AdminUserIdParamSchema = z.object({
-  id: z.string().uuid(),
+  id: z.guid(),
 });
 
 export interface AdminUserDetail extends AdminUserSummary {
@@ -703,6 +703,38 @@ export interface AdminHealth {
   errors: {
     last24h: number;
     lastAt: string | null;
+  };
+}
+
+/** Of those a window has closed for, how many came back in it. */
+export interface AdminReturn {
+  of: number;
+  back: number;
+}
+
+/** One signup week (its Monday) and how it went. */
+export interface AdminCohortWeek {
+  week: string;
+  signedUp: number;
+  onboarded: number;
+  /** Logged three games in their first 24 hours. */
+  loggedThree: number;
+  /** Visited again 7 to 13 days after joining. */
+  backWeek: AdminReturn;
+  /** Visited again 30 to 36 days after joining. */
+  backMonth: AdminReturn;
+}
+
+export interface AdminCohorts {
+  /** Newest first. */
+  weeks: AdminCohortWeek[];
+  /** Everyone who joined through an invite in those weeks. */
+  referrals: {
+    joined: number;
+    onboarded: number;
+    /** Five games played, as the Recruiter badge counts it. */
+    gotGoing: number;
+    backWeek: AdminReturn;
   };
 }
 

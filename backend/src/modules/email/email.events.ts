@@ -11,6 +11,12 @@ import {
   inviteActiveEmail,
   inviteJoinedEmail,
   replyEmail,
+  friendAcceptedEmail,
+  milestoneEmail,
+  type MilestoneSubject,
+  endDay,
+  streakEmail,
+  taskEmail,
   type EmailLinks,
   type ReleasedGame,
   type RenderedEmail,
@@ -109,8 +115,105 @@ export const eventEmail = (
       );
     }
 
+    case "friend_accepted":
+      return actor
+        ? friendAcceptedEmail(
+            { actor: actor.username, actorAvatar: actor.avatar_url },
+            links,
+          )
+        : null;
+
+    case "community_upvote_milestone":
+    case "review_upvote_milestone":
+    case "list_upvote_milestone":
+    case "gaming_25_love_milestone": {
+      const milestone = num(data.milestone);
+      const subject = milestoneSubject(kind, data, recipient.username);
+      if (milestone === null || !subject) return null;
+      return milestoneEmail({ milestone, subject }, links);
+    }
+
+    case "streak_at_risk": {
+      const weeks = num(data.weeks);
+      const endsAt = str(data.endsAt);
+      if (weeks === null || !endsAt) return null;
+      return streakEmail(
+        {
+          weeks,
+          shield: data.shield === true,
+          day: endDay(endsAt, str(data.zone)),
+        },
+        links,
+      );
+    }
+
+    case "task_nearly_done": {
+      const label = str(data.label);
+      const count = num(data.count);
+      const target = num(data.target);
+      const endsAt = str(data.endsAt);
+      if (!label || count === null || target === null || !endsAt) return null;
+      return taskEmail(
+        {
+          label,
+          count,
+          target,
+          xp: num(data.xp) ?? 0,
+          tokens: num(data.tokens) ?? 0,
+          day: endDay(endsAt, str(data.zone)),
+        },
+        links,
+      );
+    }
+
     default:
       return null;
+  }
+};
+
+/** What a milestone notification's data says it was for, or null where
+ *  something the email needs is missing. */
+const milestoneSubject = (
+  kind:
+    | "community_upvote_milestone"
+    | "review_upvote_milestone"
+    | "list_upvote_milestone"
+    | "gaming_25_love_milestone",
+  data: Record<string, unknown>,
+  owner: string,
+): MilestoneSubject | null => {
+  switch (kind) {
+    case "community_upvote_milestone": {
+      const threadId = num(data.threadId);
+      const messageId = num(data.messageId);
+      const threadTitle = str(data.threadTitle);
+      return threadId === null || messageId === null || !threadTitle
+        ? null
+        : {
+            kind: "message",
+            threadId,
+            messageId,
+            threadTitle,
+            excerpt: str(data.excerpt) ?? "",
+          };
+    }
+    case "review_upvote_milestone": {
+      const gameId = num(data.gameId);
+      const reviewId = num(data.reviewId);
+      const gameTitle = str(data.gameTitle);
+      return gameId === null || reviewId === null || !gameTitle
+        ? null
+        : { kind: "review", gameId, reviewId, gameTitle };
+    }
+    case "list_upvote_milestone": {
+      const listId = num(data.listId);
+      const listName = str(data.listName);
+      return listId === null || !listName
+        ? null
+        : { kind: "list", listId, listName, username: str(data.username) ?? owner };
+    }
+    case "gaming_25_love_milestone":
+      return { kind: "gaming25", username: str(data.username) ?? owner };
   }
 };
 

@@ -108,7 +108,7 @@ const AccountFormModal = () => {
                     onClick={to(
                         inbox || isSignup || isReset ? openLogin : openSignup
                     )}
-                    className="cursor-pointer font-medium text-brand lift hover:text-brand-hover"
+                    className="cursor-pointer font-medium text-brand-text lift hover:text-brand-hover"
                 >
                     {inbox || isSignup || isReset
                         ? "Log in"

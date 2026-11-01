@@ -17,7 +17,7 @@ export const ANNOUNCEMENT_PRESENTATION: Record<
         label: "Update",
         hint: "Something new on PlayRates",
         icon: Megaphone,
-        tone: "text-brand",
+        tone: "text-brand-text",
     },
     info: {
         label: "Info",

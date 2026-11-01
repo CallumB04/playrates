@@ -33,6 +33,7 @@ const RelatedGames = ({ gameId, platforms }: RelatedGamesProps) => {
         data.similar.length > 0 && {
             key: "similar",
             title: "More like this",
+            titleTo: `/game/${gameId}/similar`,
             games: data.similar,
         },
     ].filter((row) => !!row);
@@ -48,6 +49,7 @@ const RelatedGames = ({ gameId, platforms }: RelatedGamesProps) => {
                 <GameRail
                     key={row.key}
                     title={row.title}
+                    titleTo={"titleTo" in row ? row.titleTo : undefined}
                     games={row.games}
                     platforms={platforms}
                     isLoading={false}

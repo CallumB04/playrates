@@ -113,7 +113,7 @@ const GameTile = ({
        loading then. The pause stops a sweep across a rail from fetching
        every game it passes. */
     const prefetchGame = usePrefetchGame();
-    const intent = useRef<ReturnType<typeof setTimeout>>();
+    const intent = useRef<ReturnType<typeof setTimeout>>(undefined);
     const prefetchSoon = () => {
         clearTimeout(intent.current);
         intent.current = setTimeout(() => void prefetchGame(gameId), 120);

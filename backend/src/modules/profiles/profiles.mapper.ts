@@ -142,6 +142,7 @@ export const toMyProfile = (row: ProfileRow, now = Date.now()): MyProfile => ({
   firstName: row.first_name,
   aboutVisibility: aboutVisibilityOf(row),
   showSexualContent: row.show_sexual_content,
+  adultConfirmedAt: row.adult_confirmed_at ?? null,
   timezone: row.timezone,
   hideOnline: row.hide_online,
   onboardedAt: row.onboarded_at,

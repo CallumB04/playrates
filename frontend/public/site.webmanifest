@@ -1,8 +1,10 @@
 {
+    "id": "/",
     "name": "PlayRates",
     "short_name": "PlayRates",
     "description": "A single home for all your games",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#0f0e12",
     "theme_color": "#0f0e12",

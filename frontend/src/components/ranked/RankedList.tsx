@@ -357,6 +357,7 @@ const RowSheet = ({
         <Modal onClose={onClose} labelledBy={titleId} className="sm:w-md">
             <div className="flex items-center gap-3 pr-10">
                 <GameCover
+                    sizes="40px"
                     coverUrl={coverUrl}
                     title={title}
                     className="aspect-3/4 w-10 shrink-0 rounded-xs"

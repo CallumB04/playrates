@@ -8,7 +8,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { cn } from "../../lib/cn";
 import { useInviteFor } from "./useInviteFor";
 
-const useInvite = () => useInviteFor(useAuth().user?.username);
+const useInvite = () => useInviteFor(useAuth().user);
 
 const Reward = ({ children }: { children: ReactNode }) => (
     <span className="inline-flex items-center gap-1.5 rounded-md bg-surface-raised/70 px-2.5 py-1.5 font-mono text-label font-bold text-content tabular-nums ring-1 ring-subtle">
@@ -73,7 +73,7 @@ export const InviteButton = ({
                     type="button"
                     onClick={open}
                     className={cn(
-                        "relative inline-flex cursor-pointer items-center gap-1.5 text-label font-medium text-brand before:absolute before:-inset-2 before:content-[''] hover:underline",
+                        "relative inline-flex cursor-pointer items-center gap-1.5 text-label font-medium text-brand-text before:absolute before:-inset-2 before:content-[''] hover:underline",
                         className
                     )}
                 >

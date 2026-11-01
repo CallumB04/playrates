@@ -1,5 +1,5 @@
 import {
-    gaming25ImageVersion,
+    gaming25ImageQueryVersion,
     type Gaming25,
     type Gaming25Category,
     type Gaming25ImageLayout,
@@ -64,8 +64,7 @@ export const gaming25ImageUrl = (
 ): string => {
     const params = new URLSearchParams({
         layout,
-        // The theme too: wearing another changes the picture, not the grid.
-        v: `${gaming25ImageVersion(updatedAt)}.${theme}`,
+        v: gaming25ImageQueryVersion(updatedAt, theme),
     });
     return `${env.apiBaseUrl}/api/v1/gaming-25/${encodeURIComponent(username)}/image.png?${params}`;
 };

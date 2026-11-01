@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+    lazy,
+    Suspense,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+    type ReactNode,
+} from "react";
 import {
     Lock,
     Mail,
@@ -6,12 +14,13 @@ import {
     Moon,
     Pencil,
     SlidersHorizontal,
+    Smartphone,
     Sun,
     TriangleAlert,
     UserRound,
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
 import { useAccountForm } from "../contexts/AccountFormContext";
 import { useNotify } from "../contexts/NotificationContext";
@@ -21,7 +30,9 @@ import { useUserStats } from "../hooks/queries/useGameLogs";
 import { useUserReviews } from "../hooks/queries/useReviews";
 import { useUserFriends } from "../hooks/queries/useFriends";
 import { usePageMeta } from "../hooks/usePageMeta";
-import { deleteMyAccount, fetchMyData } from "../api";
+import { deleteMyAccount, fetchMyData, fetchSteamAvailable } from "../api";
+import { ApiError } from "../api/client";
+import { signedInRecently } from "../lib/recentSignIn";
 import { saveFile } from "../lib/saveFile";
 import {
     DEFAULT_ABOUT_VISIBILITY,
@@ -34,12 +45,17 @@ import {
     type UpdateProfileInput,
 } from "@playrates/shared";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
+import ConfirmAdultModal from "./settings/ConfirmAdultModal";
+import ConfirmItsYouModal, {
+    type ConfirmPurpose,
+} from "./settings/ConfirmItsYouModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
 import Button, { buttonClass } from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import Toggle from "../components/ui/Toggle";
 import EmptyPlate from "../components/ui/EmptyPlate";
 import UsernameRow from "./settings/UsernameRow";
+import { useAppDevice, type PushState } from "./settings/useAppDevice";
 import EmailRow from "./settings/EmailRow";
 import PasswordRow from "./settings/PasswordRow";
 import AboutPrivacy from "./settings/AboutPrivacy";
@@ -49,6 +65,10 @@ import { effectiveTimeZone, formatCount, timeZones } from "../lib/format";
 import { profilePath } from "../lib/profilePaths";
 import { cn } from "../lib/cn";
 
+const SteamImportModal = lazy(
+    () => import("../components/steam/SteamImportModal")
+);
+
 /* Only what can be used today. Sections and rows that were all "coming
    soon" were choices that led nowhere. The profile itself is edited on the
    profile, where you can see it change. */
@@ -56,6 +76,7 @@ const SECTIONS: SettingsSection[] = [
     { id: "account", label: "Account", icon: UserRound },
     { id: "privacy", label: "Privacy", icon: Lock },
     { id: "emails", label: "Emails", icon: Mail },
+    { id: "app", label: "App", icon: Smartphone },
     { id: "content", label: "Content", icon: SlidersHorizontal },
     { id: "account-closure", label: "Close account", icon: TriangleAlert },
 ];
@@ -128,6 +149,21 @@ const Group = ({
     </section>
 );
 
+const PUSH_ON =
+    "Friend requests, replies and gifts, and your streak and task reminders if they're on under Emails.";
+
+const PUSH_HELP: Record<PushState, string> = {
+    checking: PUSH_ON,
+    unavailable: "",
+    "install-first":
+        "On iPhone and iPad they come to the installed app. Install PlayRates above, then turn them on from there.",
+    unsupported: "This browser can't show them.",
+    blocked:
+        "Blocked for this site in your browser's settings. Allow them there, then come back.",
+    off: PUSH_ON,
+    on: PUSH_ON,
+};
+
 /* Older links into what was the Profile section, from before the profile
    was edited only on the profile. Account is where the way there is. */
 const SECTION_ALIASES: Record<string, string> = { profile: "account" };
@@ -137,20 +173,36 @@ const sectionFrom = (asked: string | null) => {
     return SECTIONS.some((s) => s.id === id) ? id! : "account";
 };
 
+const needsSignIn = (error: unknown) =>
+    error instanceof ApiError && error.code === "reauthentication_required";
+
 const SettingsPage = () => {
     usePageMeta({ title: "Settings", noindex: true });
 
-    const { user, signOut } = useAuth();
+    const { user, session, signOut } = useAuth();
     const { openLogin } = useAccountForm();
     const { preference, setPreference } = useTheme();
     const notify = useNotify();
+    const device = useAppDevice();
     const update = useUpdateProfile();
     const navigate = useNavigate();
     const { data: stats } = useUserStats(user?.username ?? "");
     const { data: reviews } = useUserReviews(user?.username);
     const { data: friends } = useUserFriends(user?.username ?? "");
     const [confirmingDelete, setConfirmingDelete] = useState(false);
-    const [params] = useSearchParams();
+    const [confirming, setConfirming] = useState<ConfirmPurpose | null>(null);
+    const [confirmingAdult, setConfirmingAdult] = useState(false);
+    const [params, setParams] = useSearchParams();
+    // ?import=steam, from the welcome's games step.
+    const [importingSteam, setImportingSteam] = useState(
+        () => params.get("import") === "steam"
+    );
+    const { data: steamAvailable } = useQuery({
+        queryKey: ["steam", "available"],
+        queryFn: fetchSteamAvailable,
+        enabled: !!user,
+        staleTime: Infinity,
+    });
     // ?section= so a link elsewhere can open the row it is about.
     const [section, setSection] = useState(() =>
         sectionFrom(params.get("section"))
@@ -165,7 +217,10 @@ const SettingsPage = () => {
             navigate("/");
             notify("Your account has been deleted", "success");
         },
-        onError: () => notify("Couldn't delete your account", "error"),
+        onError: (error) =>
+            needsSignIn(error)
+                ? setConfirming("delete")
+                : notify("Couldn't delete your account", "error"),
     });
 
     const exportData = useMutation({
@@ -177,8 +232,45 @@ const SettingsPage = () => {
                 `playrates-${user?.username ?? "account"}-${day}.json`
             );
         },
-        onError: () => notify("Couldn't export your data", "error"),
+        onError: (error) =>
+            needsSignIn(error)
+                ? setConfirming("export")
+                : notify("Couldn't export your data", "error"),
     });
+
+    /* Deleting the account and exporting its data want a sign-in from
+       moments ago. Asked for up front when the session is older, and again
+       if the API still says no. */
+    const run = (purpose: ConfirmPurpose) =>
+        purpose === "delete" ? remove.mutate() : exportData.mutate();
+    const confirmThen = (purpose: ConfirmPurpose) =>
+        signedInRecently(session?.access_token)
+            ? run(purpose)
+            : setConfirming(purpose);
+
+    // Back from signing in again with a provider: carry on with what was
+    // asked for. Deleting still goes through typing the username.
+    const resumed = useRef(false);
+    useEffect(() => {
+        const then = params.get("then");
+        if (
+            resumed.current ||
+            !user ||
+            (then !== "delete" && then !== "export")
+        )
+            return;
+        resumed.current = true;
+        setParams(
+            (current) => {
+                current.delete("then");
+                return current;
+            },
+            { replace: true }
+        );
+        if (then === "delete") setConfirmingDelete(true);
+        else confirmThen("export");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, params]);
 
     const [showSexual, setShowSexual] = useState(
         user?.showSexualContent ?? false
@@ -443,18 +535,82 @@ const SettingsPage = () => {
             </>
         ),
 
+        app: (
+            <>
+                <Group title="Install">
+                    <Setting
+                        label="PlayRates app"
+                        help={
+                            device.install.installed
+                                ? "Installed on this device."
+                                : device.install.offer
+                                  ? "Opens from your home screen or dock, in a window of its own."
+                                  : device.install.appleMobile
+                                    ? "In Safari, tap Share, then Add to Home Screen."
+                                    : "Your browser doesn't offer this here. Chrome and Edge do, and Safari on iPhone."
+                        }
+                    >
+                        {device.install.offer && !device.install.installed && (
+                            <Button
+                                variant="secondary"
+                                onClick={() => void device.install.run()}
+                            >
+                                Install
+                            </Button>
+                        )}
+                    </Setting>
+                </Group>
+                {device.push.state !== "unavailable" && (
+                    <Group title="Notifications on this device">
+                        <Setting
+                            label="Push notifications"
+                            help={PUSH_HELP[device.push.state]}
+                            inactive={
+                                device.push.state !== "on" &&
+                                device.push.state !== "off"
+                            }
+                        >
+                            {(device.push.state === "on" ||
+                                device.push.state === "off") && (
+                                <Toggle
+                                    checked={device.push.state === "on"}
+                                    onChange={(next) =>
+                                        void (next
+                                            ? device.push.turnOn()
+                                            : device.push.turnOff()
+                                        ).catch(() =>
+                                            notify(
+                                                "Couldn't change that. Try again.",
+                                                "error"
+                                            )
+                                        )
+                                    }
+                                    label="Push notifications"
+                                    labelPosition="hidden"
+                                    disabled={device.push.busy}
+                                />
+                            )}
+                        </Setting>
+                    </Group>
+                )}
+            </>
+        ),
+
         content: (
+            <>
             <Group>
                 <Setting label="Show sexually explicit games">
                     <Toggle
                         checked={showSexual}
                         onChange={(next) =>
-                            saveToggle(
-                                { showSexualContent: next },
-                                next,
-                                setShowSexual,
-                                showSexual
-                            )
+                            next && !user.adultConfirmedAt
+                                ? setConfirmingAdult(true)
+                                : saveToggle(
+                                      { showSexualContent: next },
+                                      next,
+                                      setShowSexual,
+                                      showSexual
+                                  )
                         }
                         label="Show sexually explicit games"
                         labelPosition="hidden"
@@ -478,6 +634,22 @@ const SettingsPage = () => {
                     />
                 </Setting>
             </Group>
+            {steamAvailable && (
+                <Group title="Import">
+                    <Setting
+                        label="Steam library"
+                        help="Bring in the games you own on Steam. You choose what goes on your shelves."
+                    >
+                        <Button
+                            variant="secondary"
+                            onClick={() => setImportingSteam(true)}
+                        >
+                            Import
+                        </Button>
+                    </Setting>
+                </Group>
+            )}
+            </>
         ),
 
         "account-closure": (
@@ -491,7 +663,7 @@ const SettingsPage = () => {
                     <Button
                         variant="secondary"
                         className="w-full sm:w-auto"
-                        onClick={() => exportData.mutate()}
+                        onClick={() => confirmThen("export")}
                         disabled={exportData.isPending}
                     >
                         {exportData.isPending ? "Exporting…" : "Export my data"}
@@ -542,7 +714,40 @@ const SettingsPage = () => {
                     }
                     isDeleting={remove.isPending}
                     onCancel={() => setConfirmingDelete(false)}
-                    onConfirm={() => remove.mutate()}
+                    onConfirm={() => confirmThen("delete")}
+                />
+            )}
+            {importingSteam && steamAvailable && (
+                <Suspense fallback={null}>
+                    <SteamImportModal
+                        initialProfile={user.about.steam ?? ""}
+                        onClose={() => setImportingSteam(false)}
+                    />
+                </Suspense>
+            )}
+            {confirmingAdult && (
+                <ConfirmAdultModal
+                    onCancel={() => setConfirmingAdult(false)}
+                    onConfirm={() => {
+                        setConfirmingAdult(false);
+                        saveToggle(
+                            { showSexualContent: true, confirmAdult: true },
+                            true,
+                            setShowSexual,
+                            showSexual
+                        );
+                    }}
+                />
+            )}
+            {confirming && (
+                <ConfirmItsYouModal
+                    purpose={confirming}
+                    returnTo={`${window.location.origin}/settings?section=account-closure&then=${confirming}`}
+                    onCancel={() => setConfirming(null)}
+                    onConfirmed={() => {
+                        setConfirming(null);
+                        run(confirming);
+                    }}
                 />
             )}
         </div>

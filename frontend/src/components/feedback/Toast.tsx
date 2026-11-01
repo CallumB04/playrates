@@ -6,6 +6,7 @@ import type {
 } from "../../contexts/notificationQueue";
 import type { IconComponent } from "../../lib/icons";
 import { cn } from "../../lib/cn";
+import Button from "../ui/Button";
 
 /** Must outlast the toast-leave animation in theme.css. */
 export const EXIT_MS = 240;
@@ -48,7 +49,7 @@ interface ToastProps {
  * drives from the same number of milliseconds.
  */
 const Toast = ({ toast, onDismiss, onRemove }: ToastProps) => {
-    const { id, text, type, dwell, leaving } = toast;
+    const { id, text, type, dwell, leaving, action } = toast;
     const { icon, line, Icon } = TONES[type];
 
     useEffect(() => {
@@ -89,9 +90,22 @@ const Toast = ({ toast, onDismiss, onRemove }: ToastProps) => {
                         aria-hidden
                         className={cn("mt-0.5 shrink-0", icon)}
                     />
-                    <p className="min-w-0 flex-1 text-body-sm text-content">
-                        {text}
-                    </p>
+                    <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
+                        <p className="text-body-sm text-content">{text}</p>
+                        {action && (
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                className="relative before:absolute before:-inset-1 before:content-['']"
+                                onClick={() => {
+                                    action.onClick();
+                                    onDismiss(id);
+                                }}
+                            >
+                                {action.label}
+                            </Button>
+                        )}
+                    </div>
                     <button
                         type="button"
                         aria-label="Dismiss notification"

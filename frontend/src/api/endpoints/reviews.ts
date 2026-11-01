@@ -33,6 +33,9 @@ export const toggleReviewVote = async (
 };
 
 /** Public reviews from across the site, newest first. */
+export const fetchReview = async (id: number): Promise<ReviewWithAuthor> =>
+    (await api.get<ReviewWithAuthor>(`/reviews/${id}`)).data;
+
 export const fetchRecentReviews = async (
     limit: number
 ): Promise<Paginated<ReviewWithAuthor>> => {

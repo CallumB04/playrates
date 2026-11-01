@@ -11,16 +11,18 @@ import {
     type NotificationSeverity,
     type NotificationType,
     type Toast,
+    type ToastAction,
 } from "./notificationQueue";
 
-export type { NotificationSeverity, NotificationType, Toast };
+export type { NotificationSeverity, NotificationType, Toast, ToastAction };
 
 interface NotificationContextValue {
     toasts: Toast[];
     notify: (
         text: ReactNode,
         type: NotificationType,
-        severity?: NotificationSeverity
+        severity?: NotificationSeverity,
+        action?: ToastAction
     ) => void;
     /** Starts the exit; the toast asks to be removed once it has played. */
     dismiss: (id: number) => void;
@@ -42,8 +44,17 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         (
             text: ReactNode,
             type: NotificationType,
-            severity?: NotificationSeverity
-        ) => dispatch({ kind: "push", id: nextId++, text, type, severity }),
+            severity?: NotificationSeverity,
+            action?: ToastAction
+        ) =>
+            dispatch({
+                kind: "push",
+                id: nextId++,
+                text,
+                type,
+                severity,
+                action,
+            }),
         []
     );
 

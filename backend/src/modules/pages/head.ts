@@ -9,6 +9,8 @@ export interface HeadMeta {
   /** Path on the site, from its origin. */
   path: string;
   image: string;
+  /** Said where the picture's own size is known; previews lay out sooner. */
+  imageSize?: { width: number; height: number };
   /** A wide picture gets the large card; an avatar or a logo, the small. */
   card: "summary" | "summary_large_image";
   type?: "website" | "profile" | "article";
@@ -19,6 +21,8 @@ export interface HeadMeta {
 }
 
 export const DEFAULT_IMAGE = `${SITE_ORIGIN}/og-default.png`;
+/** og-default.png, and the wide Gaming 25 picture. */
+export const WIDE_IMAGE_SIZE = { width: 1200, height: 630 };
 
 const ENTITIES: Record<string, string> = {
   "&": "&amp;",
@@ -58,7 +62,27 @@ export const buildHead = (m: HeadMeta): string => {
     meta("property", "og:description", m.description),
     meta("property", "og:url", url),
     meta("property", "og:image", m.image),
+    // The page's title describes its picture well enough: a cover, an
+    // avatar, the site's own card.
+    meta("property", "og:image:alt", m.title),
+    ...((m.imageSize ??
+    (m.image === DEFAULT_IMAGE ? WIDE_IMAGE_SIZE : undefined))
+      ? [
+          meta(
+            "property",
+            "og:image:width",
+            String((m.imageSize ?? WIDE_IMAGE_SIZE).width),
+          ),
+          meta(
+            "property",
+            "og:image:height",
+            String((m.imageSize ?? WIDE_IMAGE_SIZE).height),
+          ),
+        ]
+      : []),
     meta("name", "twitter:card", m.card),
+    meta("name", "twitter:title", m.title),
+    meta("name", "twitter:description", m.description),
     ...(m.jsonLd
       ? [
           `<script type="application/ld+json">${jsonForScript(m.jsonLd)}</script>`,

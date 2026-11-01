@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { igdbSized, isIgdbImage } from "@playrates/shared";
 import {
   isOnline,
   toProfileVisibility,
@@ -531,5 +532,22 @@ describe("notification mapper", () => {
     expect(
       toNotification(buildNotification({ kind, data: {} }), () => null).kind,
     ).toBe("unknown");
+  });
+});
+
+describe("igdbSized", () => {
+  const cover =
+    "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co1x.jpg";
+
+  it("asks IGDB for the same picture at another size", () => {
+    expect(igdbSized(cover, "cover_small")).toBe(
+      "https://images.igdb.com/igdb/image/upload/t_cover_small/co1x.jpg",
+    );
+  });
+
+  it("leaves a picture from anywhere else as it is", () => {
+    const elsewhere = "https://cdn.example.test/t_cover_big/x.jpg";
+    expect(isIgdbImage(elsewhere)).toBe(false);
+    expect(igdbSized(elsewhere, "cover_small")).toBe(elsewhere);
   });
 });

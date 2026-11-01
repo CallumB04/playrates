@@ -27,6 +27,7 @@ import { useReviewVote } from "../../hooks/queries/useReviews";
 import RatingPlate from "./components/RatingPlate";
 import CirculationPlate from "./components/CirculationPlate";
 import GameReviews from "./components/GameReviews";
+import GameFans from "./components/GameFans";
 import GameLists from "./components/GameLists";
 import { useMyLists } from "../../hooks/queries/useLists";
 import GameThreads from "./components/GameThreads";
@@ -84,6 +85,8 @@ const GamePage = () => {
               })
             : null,
         image: game?.coverUrl,
+        // As the server says for the page: an adult game isn't listed.
+        noindex: game?.hasSexualContent,
     });
 
     const actionsEnd = useRef<HTMLSpanElement>(null);
@@ -238,6 +241,8 @@ const GamePage = () => {
                         onSortChange={setSort}
                         isLoading={reviewsLoading}
                     />
+
+                    <GameFans gameId={gameId} />
 
                     <GameLists gameId={gameId} />
 

@@ -60,7 +60,8 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
         (m) => m.author_id === id && !m.deleted_at,
       ).length,
       friend_count: state.friendships.filter(
-        (f) => f.status === "accepted" && (f.user_a_id === id || f.user_b_id === id),
+        (f) =>
+          f.status === "accepted" && (f.user_a_id === id || f.user_b_id === id),
       ).length,
       active_day_count: 0,
     };
@@ -88,6 +89,9 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
       .slice(0, limit + 1);
 
   return {
+    async pruneOldRows() {
+      return { serverErrors: 0, clientErrors: 0, gameEvents: 0 };
+    },
     async ping() {},
 
     // As admin_progress counts it, over the same state.
@@ -185,7 +189,8 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
         threads: state.communityThreads.length,
         messages: state.communityMessages.filter((m) => !m.deleted_at).length,
         games: state.games.length,
-        friendships: state.friendships.filter((f) => f.status === "accepted").length,
+        friendships: state.friendships.filter((f) => f.status === "accepted")
+          .length,
         online: 0,
         dau: 0,
         wau: 0,
@@ -203,7 +208,11 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
 
     async activity({ before, limit, group, kind, userId, gameId, since }) {
       const rows: AdminActivityFeedRow[] = state.activityEvents
-        .filter((e) => !group || (ACTIVITY_GROUPS[group] as readonly string[]).includes(e.kind))
+        .filter(
+          (e) =>
+            !group ||
+            (ACTIVITY_GROUPS[group] as readonly string[]).includes(e.kind),
+        )
         .filter((e) => !kind || e.kind === kind)
         .filter((e) => !userId || e.actor_id === userId)
         .filter((e) => !gameId || e.game_id === gameId)
@@ -238,7 +247,11 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
 
     async gameEvents({ before, limit, group, gameId }) {
       const rows: AdminGameFeedRow[] = state.gameEvents
-        .filter((e) => !group || (GAME_EVENT_GROUPS[group] as readonly string[]).includes(e.kind))
+        .filter(
+          (e) =>
+            !group ||
+            (GAME_EVENT_GROUPS[group] as readonly string[]).includes(e.kind),
+        )
         .filter((e) => !gameId || e.game_id === gameId)
         .map((e) => {
           const game = state.games.find((g) => g.id === e.game_id);
@@ -260,7 +273,8 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
       const all = state.profiles
         .filter(
           (p) =>
-            !query.q || p.username.toLowerCase().includes(query.q.toLowerCase()),
+            !query.q ||
+            p.username.toLowerCase().includes(query.q.toLowerCase()),
         )
         .map((p) => directoryRow(p.id)!);
       return { rows: all.slice(from, to + 1), total: all.length };
@@ -288,6 +302,52 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
 
     async serverErrors(before, limit) {
       return page(state.serverErrors, before, limit).map((row) => ({
+        ...row,
+        username:
+          state.profiles.find((p) => p.id === row.user_id)?.username ?? null,
+      }));
+    },
+
+    async errorCount(kind, since) {
+      const rows = kind === "server" ? state.serverErrors : state.clientErrors;
+      return rows.filter((e) => e.created_at >= since).length;
+    },
+
+    // The SQL is tested against Postgres; this only gives the route rows.
+    async cohorts(weeks) {
+      return Array.from({ length: weeks }, (_, i) => ({
+        week: new Date(Date.UTC(2026, 9, 26) - i * 7 * 86_400_000)
+          .toISOString()
+          .slice(0, 10),
+        signed_up: 0,
+        onboarded: 0,
+        logged_three: 0,
+        week_due: 0,
+        back_week: 0,
+        month_due: 0,
+        back_month: 0,
+        referred: 0,
+        referred_onboarded: 0,
+        referred_going: 0,
+        referred_week_due: 0,
+        referred_back_week: 0,
+      }));
+    },
+
+    async adminIds() {
+      return state.profiles.filter((p) => p.is_admin).map((p) => p.id);
+    },
+
+    async recordClientError(row) {
+      state.clientErrors.push({
+        ...row,
+        id: (state.clientErrors.at(-1)?.id ?? 0) + 1,
+        created_at: new Date().toISOString(),
+      });
+    },
+
+    async clientErrors(before, limit) {
+      return page(state.clientErrors, before, limit).map((row) => ({
         ...row,
         username:
           state.profiles.find((p) => p.id === row.user_id)?.username ?? null,
@@ -343,7 +403,11 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
       let sent = 0;
       for (const p of state.profiles) {
         const key = announcementKey(id);
-        if (state.notifications.some((n) => n.user_id === p.id && n.dedupe_key === key)) {
+        if (
+          state.notifications.some(
+            (n) => n.user_id === p.id && n.dedupe_key === key,
+          )
+        ) {
           continue;
         }
         state.notifications.push({
@@ -371,16 +435,22 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
 
     async retractAnnouncement(id) {
       state.notifications = state.notifications.filter(
-        (n) => !(n.kind === "announcement" && n.dedupe_key === announcementKey(id)),
+        (n) =>
+          !(n.kind === "announcement" && n.dedupe_key === announcementKey(id)),
       );
       const a = state.announcements.find((x) => x.id === id);
       if (a) a.retracted_at = new Date().toISOString();
     },
 
     async listPatchNoteEntries() {
-      const notes = state.communityThreads.find((t) => t.subject_kind === "patch_notes");
+      const notes = state.communityThreads.find(
+        (t) => t.subject_kind === "patch_notes",
+      );
       return state.communityMessages
-        .filter((m) => m.thread_id === notes?.id && m.parent_id === null && !m.deleted_at)
+        .filter(
+          (m) =>
+            m.thread_id === notes?.id && m.parent_id === null && !m.deleted_at,
+        )
         .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id - a.id)
         .map(({ id, thread_id, body, created_at, edited_at }) => ({
           id,
@@ -392,12 +462,24 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
     },
 
     async findPatchNoteEntry(messageId) {
-      const notes = state.communityThreads.find((t) => t.subject_kind === "patch_notes");
+      const notes = state.communityThreads.find(
+        (t) => t.subject_kind === "patch_notes",
+      );
       const m = state.communityMessages.find(
-        (x) => x.id === messageId && x.thread_id === notes?.id && x.parent_id === null && !x.deleted_at,
+        (x) =>
+          x.id === messageId &&
+          x.thread_id === notes?.id &&
+          x.parent_id === null &&
+          !x.deleted_at,
       );
       return m
-        ? { id: m.id, thread_id: m.thread_id, body: m.body, created_at: m.created_at, edited_at: m.edited_at }
+        ? {
+            id: m.id,
+            thread_id: m.thread_id,
+            body: m.body,
+            created_at: m.created_at,
+            edited_at: m.edited_at,
+          }
         : null;
     },
 

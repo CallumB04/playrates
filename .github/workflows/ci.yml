@@ -2,12 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [main, refactor, "release/**"]
+    branches: [main, refactor, "release/**", "v*"]
   pull_request:
     branches: [main, "release/**"]
 
 # A new push to the same branch cancels the run already in flight, so CI
 # reports on the latest commit rather than queueing behind stale ones.
+# Read the code, nothing more: no step here writes to the repository.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -33,6 +37,11 @@ jobs:
       - name: Build shared package
         run: npm run build -w @playrates/shared
 
+      # Production packages only: a known high or critical hole in what
+      # ships fails the build. Dev tooling never reaches a visitor.
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -55,6 +64,9 @@ jobs:
           VITE_SUPABASE_URL: https://ci.supabase.co
           VITE_SUPABASE_ANON_KEY: ci-anon-key
 
+      - name: First-load JavaScript within budget
+        run: npm run size -w frontend
+
   migrations:
     name: Migrations apply to a clean database
     runs-on: ubuntu-latest
@@ -62,9 +74,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Pinned, so a CLI release can't change what CI checks without a
+      # commit saying so. Dependabot raises the bumps.
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.122.0
 
       # Catches the class of bug that only appears against a real
       # Postgres: a missing schema qualification, a constraint that
@@ -74,3 +88,15 @@ jobs:
 
       - name: Verify the seed applies on a reset
         run: supabase db reset
+
+      # The triggers and functions, against a real Postgres: pgTAP files in
+      # supabase/tests/database, each in a transaction that rolls back.
+      - name: Database tests
+        run: supabase test db
+
+      # The generated types are what the migrations make: a migration
+      # without them regenerated (npm run db:types -w backend) fails here.
+      - name: Generated database types match the migrations
+        run: |
+          supabase gen types typescript --local > /tmp/database.generated.ts
+          diff -u backend/src/types/database.generated.ts /tmp/database.generated.ts

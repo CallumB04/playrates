@@ -46,11 +46,16 @@ export const EMAIL_REASONS: Record<EmailScope, string> = {
   friend_requests:
     "You're getting this because you have friend request emails on.",
   replies: "You're getting this because you have reply emails on.",
+  milestones:
+    "You're getting this because you have reaction and love emails on.",
   gifts_invites:
     "You're getting this because you have gift and invite emails on.",
   wishlist_releases:
     "You're getting this because you have wishlist release emails on.",
   news: "You're getting this because you have news emails on.",
+  reminders:
+    "You're getting this because you turned on streak and task reminder emails.",
+  digest: "You're getting this because you have the weekly digest on.",
 };
 
 const footerLinks = (scope: EmailScope, links: EmailLinks) => [
@@ -353,6 +358,265 @@ export const wishlistReleaseEmail = (
   });
 };
 
+/* ------------------------------------------------------- friend accepted */
+
+export const friendAcceptedEmail = (
+  data: { actor: string; actorAvatar: string | null },
+  links: EmailLinks,
+): RenderedEmail => {
+  const href = url(links, `/user/${encodeURIComponent(data.actor)}`);
+  const title = `${data.actor} accepted your friend request`;
+  const line = `You and ${data.actor} are friends on PlayRates now.`;
+  return build({
+    scope: "friend_requests",
+    links,
+    subject: title,
+    preview: line,
+    title,
+    body: [
+      avatar(data.actorAvatar, data.actor),
+      emailParagraph(escapeHtml(line)),
+      emailButton(href, "See their profile"),
+      emailPlainLink(href),
+    ].join("\n"),
+    lines: [line, "", `See their profile: ${href}`],
+  });
+};
+
+/* ----------------------------------------------------------- milestones */
+
+/** What reached a milestone, and where it lives. */
+export type MilestoneSubject =
+  | { kind: "message"; threadId: number; messageId: number; threadTitle: string; excerpt: string }
+  | { kind: "review"; gameId: number; reviewId: number; gameTitle: string }
+  | { kind: "list"; listId: number; listName: string; username: string }
+  | { kind: "gaming25"; username: string };
+
+export const milestoneEmail = (
+  data: { milestone: number; subject: MilestoneSubject },
+  links: EmailLinks,
+): RenderedEmail => {
+  const s = data.subject;
+  const n = data.milestone;
+  const { title, href, label } =
+    s.kind === "message"
+      ? {
+          title: `${n} reactions on your message in ${s.threadTitle}`,
+          href: `/community/thread/${s.threadId}#message-${s.messageId}`,
+          label: "See your message",
+        }
+      : s.kind === "review"
+        ? {
+            title: `${n} reactions on your review of ${s.gameTitle}`,
+            href: `/game/${s.gameId}#review-${s.reviewId}`,
+            label: "See your review",
+          }
+        : s.kind === "list"
+          ? {
+              title: `${n} loves on your list ${s.listName}`,
+              href: `/user/${encodeURIComponent(s.username)}/lists/${s.listId}`,
+              label: "See your list",
+            }
+          : {
+              title: `${n} loves on your Gaming 25`,
+              href: `/user/${encodeURIComponent(s.username)}/gaming-25`,
+              label: "See your Gaming 25",
+            };
+  const link = url(links, href);
+  const excerpt = s.kind === "message" ? s.excerpt : "";
+  return build({
+    scope: "milestones",
+    links,
+    subject: clip(title, 90),
+    preview: excerpt || title,
+    title,
+    body: [
+      excerpt ? quote(excerpt) : "",
+      emailButton(link, label),
+      emailPlainLink(link),
+    ].join("\n"),
+    lines: [...(excerpt ? [`"${excerpt}"`, ""] : []), `${label}: ${link}`],
+  });
+};
+
+/* ------------------------------------------------------------ reminders */
+
+/** The day a period ends on, in the member's own zone: the bell's "by
+ *  Monday" means before Monday starts. */
+export const endDay = (endsAt: string, zone: string | null): string => {
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      weekday: "long",
+      timeZone: zone ?? "UTC",
+    }).format(new Date(endsAt));
+  } catch {
+    return new Intl.DateTimeFormat("en-GB", {
+      weekday: "long",
+      timeZone: "UTC",
+    }).format(new Date(endsAt));
+  }
+};
+
+export const streakEmail = (
+  data: { weeks: number; shield: boolean; day: string },
+  links: EmailLinks,
+): RenderedEmail => {
+  const title = `Your ${data.weeks} week streak needs something by ${data.day}`;
+  const body = data.shield
+    ? "If not, a shield will keep it going."
+    : "Log, rate, review or post anything to keep it.";
+  const href = url(links, "/progress#streak");
+  return build({
+    scope: "reminders",
+    links,
+    subject: title,
+    preview: body,
+    title,
+    body: [
+      emailParagraph(body),
+      emailButton(href, "See your streak"),
+      emailPlainLink(href),
+    ].join("\n"),
+    lines: [body, "", `See your streak: ${href}`],
+  });
+};
+
+export const taskEmail = (
+  data: {
+    label: string;
+    count: number;
+    target: number;
+    xp: number;
+    tokens: number;
+    day: string;
+  },
+  links: EmailLinks,
+): RenderedEmail => {
+  const title = `Nearly there: ${data.label}`;
+  const progress = `${data.count} of ${data.target}, ends ${data.day}.`;
+  const reward = `Finish it for ${data.xp} XP and ${data.tokens} tokens.`;
+  const href = url(links, "/progress");
+  return build({
+    scope: "reminders",
+    links,
+    subject: clip(title, 80),
+    preview: progress,
+    title,
+    body: [
+      emailParagraph(escapeHtml(progress)),
+      emailParagraph(escapeHtml(reward)),
+      emailButton(href, "See your tasks"),
+      emailPlainLink(href),
+    ].join("\n"),
+    lines: [progress, reward, "", `See your tasks: ${href}`],
+  });
+};
+
+/* --------------------------------------------------------------- digest */
+
+export interface DigestContent {
+  friends: {
+    username: string;
+    gameId: number;
+    title: string;
+    status: "played" | "playing" | "backlog";
+    rating: number | null;
+  }[];
+  releases: { gameId: number; title: string; releaseDate: string }[];
+  logged: number;
+}
+
+/** The words either side of the game's title. */
+const DID: Record<
+  DigestContent["friends"][number]["status"],
+  [string, string]
+> = {
+  played: ["played", ""],
+  playing: ["is playing", ""],
+  backlog: ["added", " to their backlog"],
+};
+
+/** "2026-11-06" as "Thursday 6 Nov": a date, not a moment, so read as UTC. */
+const releaseDay = (date: string) =>
+  new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  }).format(new Date(`${date}T00:00:00Z`));
+
+const plural = (n: number, one: string, many: string) =>
+  `${n} ${n === 1 ? one : many}`;
+
+export const digestEmail = (
+  data: DigestContent,
+  links: EmailLinks,
+): RenderedEmail => {
+  const game = (id: number) => url(links, `/game/${id}`);
+  const rated = (f: DigestContent["friends"][number]) =>
+    f.rating === null ? "" : `, rated ${f.rating}/10`;
+  const friendLine = (f: DigestContent["friends"][number]) =>
+    `${f.username} ${DID[f.status][0]} ${f.title}${DID[f.status][1]}${rated(f)}`;
+  const people = new Set(data.friends.map((f) => f.username)).size;
+
+  const summary = [
+    data.friends.length > 0 &&
+      `${plural(people, "friend", "friends")} played something this week.`,
+    data.releases.length > 0 &&
+      `${plural(data.releases.length, "game", "games")} on your wishlist ${data.releases.length === 1 ? "comes" : "come"} out this week.`,
+    data.logged > 0 && `You logged ${plural(data.logged, "game", "games")}.`,
+  ].filter((line): line is string => Boolean(line));
+
+  const html: string[] = [];
+  const lines: string[] = [];
+  if (data.friends.length > 0) {
+    html.push(emailParagraph(emailStrong("What your friends played")));
+    lines.push("What your friends played");
+    for (const f of data.friends) {
+      html.push(
+        emailParagraph(
+          `${escapeHtml(f.username)} ${DID[f.status][0]} ${emailLink(game(f.gameId), escapeHtml(f.title))}${DID[f.status][1]}${rated(f)}`,
+          "margin:0 0 8px;",
+        ),
+      );
+      lines.push(`- ${friendLine(f)}: ${game(f.gameId)}`);
+    }
+    lines.push("");
+  }
+  if (data.releases.length > 0) {
+    html.push(emailParagraph(emailStrong("Out this week from your wishlist")));
+    lines.push("Out this week from your wishlist");
+    for (const r of data.releases) {
+      html.push(
+        emailParagraph(
+          `${emailLink(game(r.gameId), escapeHtml(r.title))}, ${releaseDay(r.releaseDate)}`,
+          "margin:0 0 8px;",
+        ),
+      );
+      lines.push(`- ${r.title}, ${releaseDay(r.releaseDate)}: ${game(r.gameId)}`);
+    }
+    lines.push("");
+  }
+  if (data.logged > 0) {
+    html.push(
+      emailParagraph(
+        `${emailStrong("Your week")}<br>You logged ${plural(data.logged, "game", "games")}.`,
+      ),
+    );
+    lines.push("Your week", `You logged ${plural(data.logged, "game", "games")}.`, "");
+  }
+  const home = url(links, "/");
+  return build({
+    scope: "digest",
+    links,
+    subject: "Your week on PlayRates",
+    preview: summary.join(" "),
+    title: "Your week on PlayRates",
+    body: [...html, emailButton(home, "Open PlayRates")].join("\n"),
+    lines: [...lines, `Open PlayRates: ${home}`],
+  });
+};
+
 /* -------------------------------------------------------------- welcome */
 
 export const welcomeEmail = (
@@ -485,4 +749,64 @@ export const patchNotesEmail = (
       `Read on PlayRates: ${href}`,
     ],
   });
+};
+
+/* ---------------------------------------------------------------- alert */
+
+export type AlertContent =
+  | { kind: "job"; job: string; failures: { part: string; message: string }[] }
+  | { kind: "spike"; errors: "server" | "client"; count: number };
+
+const ALERT_REASON = "You're getting this because you're a PlayRates admin.";
+
+/** To the admins only, so no way out: it stops when they stop being one. */
+export const alertEmail = (
+  content: AlertContent,
+  site: string,
+): RenderedEmail => {
+  const health = `${site}/admin/health`;
+  const title =
+    content.kind === "job"
+      ? `${content.job} failed`
+      : `${content.count} ${content.errors === "server" ? "failed requests" : "browser errors"} in the last hour`;
+  const lines =
+    content.kind === "job"
+      ? [
+          "These parts of it stopped with an error:",
+          ...content.failures.map((f) => `${f.part}: ${f.message}`),
+          "Everything else in it ran as normal, and it runs again tomorrow.",
+        ]
+      : [
+          "More than usual. The newest are on the Health page, with their stacks.",
+          "You won't hear about this again for six hours.",
+        ];
+  const html = [
+    ...lines.map((line, i) =>
+      content.kind === "job" && i > 0 && i <= content.failures.length
+        ? emailParagraph(
+            `${emailStrong(escapeHtml(content.failures[i - 1]!.part))}: ${escapeHtml(content.failures[i - 1]!.message)}`,
+            `padding:4px 0 4px 14px;border-left:3px solid ${C.rule};`,
+          )
+        : emailParagraph(escapeHtml(line)),
+    ),
+    emailButton(escapeHtml(health), "Open Health"),
+  ].join("\n");
+  const footer = [{ href: health, label: "Health" }];
+  return {
+    subject: `PlayRates alert: ${title.charAt(0).toLowerCase()}${title.slice(1)}`,
+    html: emailLayout({
+      preview: escapeHtml(lines[0]!),
+      title: escapeHtml(title),
+      body: html,
+      reason: ALERT_REASON,
+      site,
+      links: footer,
+    }),
+    text: emailText({
+      title,
+      lines: [...lines, "", `Open Health: ${health}`],
+      reason: ALERT_REASON,
+      links: footer,
+    }),
+  };
 };

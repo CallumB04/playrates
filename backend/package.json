@@ -14,7 +14,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "seed:games": "tsx scripts/seedGames.ts",
-    "db:types": "supabase gen types typescript --linked > src/types/database.types.ts",
+    "db:types": "supabase gen types typescript --local > src/types/database.generated.ts",
     "migrate:igdb": "tsx scripts/migrateToIgdb.ts",
     "local:snapshot": "tsx scripts/local/snapshot.ts",
     "local:seed": "tsx scripts/local/buildSeed.ts",
@@ -29,17 +29,19 @@
     "@playrates/shared": "*",
     "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.47.10",
+    "@upstash/redis": "^1.40.0",
     "@vercel/functions": "^3.10.4",
     "cors": "^2.8.5",
     "express": "^5.0.1",
-    "express-rate-limit": "^7.5.0",
+    "express-rate-limit": "^8.7.2",
     "helmet": "^8.0.0",
     "jose": "^5.9.6",
     "pino": "^9.6.0",
     "pino-http": "^10.3.0",
     "satori": "^0.33.5",
     "sharp": "^0.35.5",
-    "zod": "^3.24.1"
+    "web-push": "^3.6.7",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
@@ -47,13 +49,14 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.6",
     "@types/supertest": "^6.0.2",
-    "@vitest/coverage-v8": "^2.1.9",
+    "@types/web-push": "^3.6.4",
+    "@vitest/coverage-v8": "^5.0.5",
     "eslint": "^9.15.0",
-    "globals": "^15.12.0",
+    "globals": "^17.13.0",
     "supertest": "^7.0.0",
     "tsx": "^4.19.2",
-    "typescript": "~5.6.2",
-    "typescript-eslint": "^8.15.0",
-    "vitest": "^2.1.8"
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.0.5"
   }
 }

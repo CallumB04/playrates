@@ -4,6 +4,8 @@ import type { FriendRelation } from "@playrates/shared";
 import {
     acceptFriendRequest,
     fetchFriendActivity,
+    fetchGameFans,
+    fetchTasteMatches,
     fetchMyFriends,
     fetchUserFriends,
     queryKeys,
@@ -30,6 +32,23 @@ export const useFriendActivity = (limit: number) => {
         staleTime: 60_000,
     });
 };
+
+export const useTasteMatches = () => {
+    const { user } = useAuth();
+    return useQuery({
+        queryKey: queryKeys.friends.matches,
+        queryFn: fetchTasteMatches,
+        enabled: !!user,
+        staleTime: 5 * 60_000,
+    });
+};
+
+export const useGameFans = (gameId: number) =>
+    useQuery({
+        queryKey: queryKeys.friends.fans(gameId),
+        queryFn: () => fetchGameFans(gameId),
+        staleTime: 5 * 60_000,
+    });
 
 export const useUserFriends = (username: string, enabled = true) =>
     useQuery({

@@ -46,7 +46,7 @@ interface ReplyTarget {
 /** On the replies of whoever started the thread. Not on the opening
  *  message, where it would say the obvious. */
 const OriginalAuthorBadge = () => (
-    <span className="rounded-xs bg-brand-subtle px-1.5 py-px text-stamp font-semibold tracking-wider text-brand uppercase">
+    <span className="rounded-xs bg-brand-subtle px-1.5 py-px text-stamp font-semibold tracking-wider text-brand-text uppercase">
         Original author
     </span>
 );
@@ -73,6 +73,9 @@ const ThreadPage = () => {
         description: opening
             ? toPlainText(opening, { hideSpoilers: true })
             : null,
+        noindex:
+            data?.thread.subject.kind === "game" &&
+            data.thread.subject.game.hasSexualContent,
     });
 
     const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
@@ -109,7 +112,7 @@ const ThreadPage = () => {
                 title="Thread not found"
                 body="It may have been removed, or the link is out of date."
                 action={
-                    <Link to="/community" className="text-brand">
+                    <Link to="/community" className="text-brand-text">
                         Back to the community
                     </Link>
                 }
@@ -414,7 +417,7 @@ const ThreadHeader = ({ detail }: { detail: ThreadDetail }) => {
                         title={game.title}
                         className="aspect-3/4 w-8 shrink-0 overflow-hidden rounded-xs shadow-cover"
                     />
-                    <span className="truncate text-label font-medium text-content-secondary group-hover:text-brand">
+                    <span className="truncate text-label font-medium text-content-secondary group-hover:text-brand-text">
                         {game.title}
                     </span>
                 </Link>
@@ -427,7 +430,7 @@ const ThreadHeader = ({ detail }: { detail: ThreadDetail }) => {
                 {thread.author ? (
                     <Link
                         to={`/user/${thread.author.username}`}
-                        className="text-content-secondary hover:text-brand"
+                        className="text-content-secondary hover:text-brand-text"
                     >
                         {thread.author.username}
                     </Link>

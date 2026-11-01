@@ -6,7 +6,7 @@ import {
   UserIdSchema,
   UsernameParamSchema,
 } from "@playrates/shared";
-import type { z } from "zod";
+import { z } from "zod";
 import { validate } from "../../middleware/validate.js";
 import { AppError } from "../../lib/AppError.js";
 import type { FriendsService } from "./friends.service.js";
@@ -34,6 +34,10 @@ export const createMyFriendsRouter = ({
   router.get("/", validate({ query: FriendQuerySchema }), async (req, res) => {
     const { status } = req.valid!.query as z.infer<typeof FriendQuerySchema>;
     res.json({ data: await service.listForUser(callerId(req), status) });
+  });
+
+  router.get("/matches", async (req, res) => {
+    res.json({ data: await service.tasteMatches(callerId(req)) });
   });
 
   // Before "/requests", to match the ordering rule the rest of the file follows.
@@ -98,5 +102,26 @@ export const createUserFriendsRouter = ({
     },
   );
 
+  return router;
+};
+
+const GameIdParamSchema = z.object({
+  gameId: z.coerce.number().int().positive(),
+});
+
+/** Mounted at /games: who rated a game highly. The same for everyone, so
+ *  the CDN can keep it. */
+export const createGameFansRouter = ({
+  service,
+}: Pick<Deps, "service">): Router => {
+  const router = Router();
+  router.get(
+    "/:gameId/fans",
+    validate({ params: GameIdParamSchema }),
+    async (req, res) => {
+      const { gameId } = req.valid!.params as z.infer<typeof GameIdParamSchema>;
+      res.json({ data: await service.gameFans(gameId) });
+    },
+  );
   return router;
 };

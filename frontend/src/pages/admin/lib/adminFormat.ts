@@ -33,3 +33,13 @@ export const RANGE_LABELS = {
 /** 0.4567 → "46%". With nothing to divide it reads as a dash. */
 export const share = (part: number, whole: number): string =>
     whole === 0 ? "–" : `${Math.round((part / whole) * 100)}%`;
+
+/** How strongly to shade a share, 0 (none, or nothing to divide) to 4. */
+export const shareLevel = (part: number, whole: number): 0 | 1 | 2 | 3 | 4 => {
+    if (whole === 0 || part === 0) return 0;
+    const ratio = part / whole;
+    if (ratio >= 0.75) return 4;
+    if (ratio >= 0.5) return 3;
+    if (ratio >= 0.25) return 2;
+    return 1;
+};

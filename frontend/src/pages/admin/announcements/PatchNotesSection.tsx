@@ -87,7 +87,7 @@ const PatchNoteRow = ({
                     <Link
                         to={note.link}
                         className={cn(
-                            "group relative inline-flex max-w-full items-center gap-1 text-body-sm font-medium text-content before:absolute before:-inset-2 before:content-[''] hover:text-brand",
+                            "group relative inline-flex max-w-full items-center gap-1 text-body-sm font-medium text-content before:absolute before:-inset-2 before:content-[''] hover:text-brand-text",
                             !note.title && "text-content-muted italic"
                         )}
                     >
@@ -95,7 +95,7 @@ const PatchNoteRow = ({
                         <ArrowUpRight
                             size={14}
                             aria-hidden
-                            className="shrink-0 text-content-muted group-hover:text-brand"
+                            className="shrink-0 text-content-muted group-hover:text-brand-text"
                         />
                     </Link>
                     <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-label-sm text-content-muted">
@@ -212,7 +212,7 @@ const PatchNotesSection = ({ reach }: { reach: number | undefined }) => {
                     {summary ? (
                         <Link
                             to={threadPath(summary.thread.id)}
-                            className="font-medium text-brand hover:underline"
+                            className="font-medium text-brand-text hover:underline"
                         >
                             the patch notes
                         </Link>

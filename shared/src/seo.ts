@@ -82,3 +82,40 @@ export const profileDescription = (username: string, bio: string): string =>
   bio.trim()
     ? truncateDescription(bio)
     : `${username}’s games on ${SITE_NAME}.`;
+
+/** What a page with no data of its own says in its head: the same words
+ *  the app sets once it loads, so the server's copy and the app's agree. */
+export interface FixedPageMeta {
+  /** Null is the site's own title. */
+  title: string | null;
+  description?: string;
+  /** Pages that are someone's own (settings, progress) or a step in a
+   *  flow: nothing in them for a search result. */
+  noindex?: boolean;
+}
+
+export const FIXED_PAGES: Record<string, FixedPageMeta> = {
+  "/library": { title: "Library" },
+  "/community": { title: "Community" },
+  "/people": {
+    title: "People",
+    description: "Find people on PlayRates who play and rate like you.",
+  },
+  "/privacy": {
+    title: "Privacy",
+    description: "What PlayRates keeps about you and why.",
+  },
+  "/terms": {
+    title: "Terms",
+    description: "The rules for having an account on PlayRates.",
+  },
+  "/contact": { title: "Contact", description: "How to get in touch." },
+  "/community/new": { title: "New thread", noindex: true },
+  "/progress": { title: "Your progress", noindex: true },
+  "/shop": { title: "Shop", noindex: true },
+  "/settings": { title: "Settings", noindex: true },
+  "/reset-password": { title: "Set a new password", noindex: true },
+  "/unsubscribe": { title: "Unsubscribe", noindex: true },
+  // Your own profile, by no name: the app sends you to it.
+  "/user": { title: null, noindex: true },
+};

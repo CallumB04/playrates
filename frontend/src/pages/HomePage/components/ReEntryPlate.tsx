@@ -78,7 +78,7 @@ const NowPlaying = ({
                                 ? shelfPath(username, "backlog")
                                 : "/library"
                         }
-                        className="relative mt-1 inline-flex items-center gap-1 text-label text-brand before:absolute before:-inset-2.5 before:content-[''] hover:underline sm:before:hidden"
+                        className="relative mt-1 inline-flex items-center gap-1 text-label text-brand-text before:absolute before:-inset-2.5 before:content-[''] hover:underline sm:before:hidden"
                     >
                         {backlog > 0
                             ? `${formatCount(backlog)} ${backlog === 1 ? "game" : "games"} waiting in your backlog`
@@ -110,7 +110,7 @@ const NowPlaying = ({
                 </p>
                 <Link
                     to={`/game/${game.id}`}
-                    className="mt-1.5 line-clamp-2 font-display text-lg leading-snug text-content hover:text-brand sm:text-xl lg:text-2xl"
+                    className="mt-1.5 line-clamp-2 font-display text-lg leading-snug text-content hover:text-brand-text sm:text-xl lg:text-2xl"
                 >
                     {game.title}
                 </Link>

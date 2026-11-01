@@ -8,6 +8,7 @@ import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import FormField from "../auth/FormField";
 import AgreeToTerms from "../auth/AgreeToTerms";
+import NewsOptIn from "../auth/NewsOptIn";
 import { BRAND_NAME } from "../../constants/brand";
 
 /**
@@ -31,6 +32,7 @@ const ChooseUsernamePopup = () => {
 
     const [value, setValue] = useState("");
     const [agreed, setAgreed] = useState(false);
+    const [news, setNews] = useState(false);
     const [error, setError] = useState<string>();
     const availability = useUsernameAvailability(value);
 
@@ -47,7 +49,11 @@ const ChooseUsernamePopup = () => {
         event.preventDefault();
         setError(undefined);
         try {
-            await update.mutateAsync({ username: name });
+            // A provider sign-up starts with news off; ticked, it's on.
+            await update.mutateAsync({
+                username: name,
+                ...(news ? { emailPrefs: { news: true } } : {}),
+            });
         } catch (err) {
             setError(
                 err instanceof ApiError && err.status === 409
@@ -100,10 +106,16 @@ const ChooseUsernamePopup = () => {
                     }
                 />
 
-                <AgreeToTerms
-                    checked={agreed}
-                    onChange={(e) => setAgreed(e.target.checked)}
-                />
+                <div className="flex flex-col gap-1">
+                    <AgreeToTerms
+                        checked={agreed}
+                        onChange={(e) => setAgreed(e.target.checked)}
+                    />
+                    <NewsOptIn
+                        checked={news}
+                        onChange={(e) => setNews(e.target.checked)}
+                    />
+                </div>
 
                 <div className="flex flex-col gap-2">
                     <Button

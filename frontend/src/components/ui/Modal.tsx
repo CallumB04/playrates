@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import ClosePopupIcon from "../ClosePopupIcon";
 import { useOverlay } from "../../hooks/useOverlay";
@@ -40,6 +40,9 @@ const PANEL =
     "pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] " +
     "sm:max-h-[90dvh] sm:animate-settle sm:rounded-lg sm:border-b sm:p-6 sm:shadow-modal";
 
+const FOCUSABLE =
+    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
+
 const Modal = ({
     onClose,
     children,
@@ -50,6 +53,32 @@ const Modal = ({
     const panelRef = useRef<HTMLDivElement>(null);
 
     useOverlay(onClose);
+
+    /* Tab and Shift+Tab go round the popup rather than out of it into the
+       page behind, which a keyboard user can't see and shouldn't reach. */
+    const trapTab = (event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.key !== "Tab" || !panelRef.current) return;
+        const focusable = [
+            ...panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE),
+        ].filter((el) => !el.closest("[hidden], [inert]"));
+        if (focusable.length === 0) {
+            event.preventDefault();
+            return;
+        }
+        const first = focusable[0]!;
+        const last = focusable[focusable.length - 1]!;
+        const active = document.activeElement;
+        if (
+            event.shiftKey &&
+            (active === first || active === panelRef.current)
+        ) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && active === last) {
+            event.preventDefault();
+            first.focus();
+        }
+    };
 
     // move focus into the popup, and back out when it closes
     useEffect(() => {
@@ -68,6 +97,7 @@ const Modal = ({
                 tabIndex={-1}
                 className={cn(PANEL, className)}
                 onMouseDown={(event) => event.stopPropagation()}
+                onKeyDown={trapTab}
             >
                 {children}
                 {showCloseButton && <ClosePopupIcon onClick={onClose} />}
