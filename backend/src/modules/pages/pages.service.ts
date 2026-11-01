@@ -21,7 +21,7 @@ import { memoFor } from "../../lib/memo.js";
 import { inGridOrder } from "../gaming25/gaming25.mapper.js";
 import { toProfileVisibility } from "../profiles/profiles.mapper.js";
 import { excerpt, toParagraphs, type PageBody } from "./body.js";
-import { DEFAULT_IMAGE, type HeadMeta } from "./head.js";
+import { DEFAULT_IMAGE, WIDE_IMAGE_SIZE, type HeadMeta } from "./head.js";
 
 /** Below this many, an average is one person's opinion, and a star rating
  *  in search results would say otherwise. */
@@ -518,6 +518,7 @@ export const createPagesService = (repos: Repos) => {
         description: truncateDescription(description),
         path,
         image: `${SITE_ORIGIN}/api/v1/gaming-25/${encodeURIComponent(profile.username)}/image.png?layout=wide&v=${gaming25ImageQueryVersion(card.updated_at, profile.card_theme ?? "default")}`,
+        imageSize: WIDE_IMAGE_SIZE,
         card: "summary_large_image",
         type: "article",
       };
@@ -526,7 +527,14 @@ export const createPagesService = (repos: Repos) => {
     async thread(id: number): Promise<HeadMeta | null> {
       const thread = await repos.community.findThread(id);
       if (!thread) return null;
-      const messages = await repos.community.listMessages(id);
+      const [messages, game] = await Promise.all([
+        repos.community.listMessages(id),
+        thread.game_id ? repos.games.findById(thread.game_id) : null,
+      ]);
+      // The game's own art, as its page shows; nothing from an adult game.
+      const art = thread.game_has_sexual_content
+        ? null
+        : (game?.cover_url ?? game?.box_art_url ?? null);
       const opening = messages.find((m) => m.is_opening);
       const text = opening?.body
         ? toPlainText(opening.body as RichTextDoc, { hideSpoilers: true })
@@ -535,7 +543,7 @@ export const createPagesService = (repos: Repos) => {
         title: pageTitle(thread.title),
         description: text ? truncateDescription(text) : SITE_DESCRIPTION,
         path: `/community/thread/${thread.id}`,
-        image: DEFAULT_IMAGE,
+        image: art ?? DEFAULT_IMAGE,
         card: "summary_large_image",
         type: "article",
         // As with the game itself, a thread about an adult game says no more

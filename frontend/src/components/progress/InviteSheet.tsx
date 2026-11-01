@@ -4,10 +4,16 @@ import Modal from "../ui/Modal";
 import { CopyLink, ShareTargets } from "../share/ShareParts";
 import { TokenCoin } from "./TokenAmount";
 import { cn } from "../../lib/cn";
+import { profilePath } from "../../lib/profilePaths";
 
-/** The link that counts a friend as yours. */
-const inviteUrl = (username: string) =>
-    `${window.location.origin}/?ref=${encodeURIComponent(username)}`;
+/** The link that counts a friend as yours: to your profile when anyone may
+ *  see it, so the link's preview and where it lands are you and your games;
+ *  to the home page when it isn't, where a private profile would say
+ *  nothing to someone who's never been. */
+export const inviteUrl = (username: string, publicProfile: boolean) =>
+    publicProfile
+        ? `${window.location.origin}${profilePath(username)}?ref=${encodeURIComponent(username)}`
+        : `${window.location.origin}/?ref=${encodeURIComponent(username)}`;
 
 const Reward = ({
     who,
@@ -47,13 +53,15 @@ const Reward = ({
  */
 const InviteSheet = ({
     username,
+    publicProfile = false,
     onClose,
 }: {
     username: string;
+    publicProfile?: boolean;
     onClose: () => void;
 }) => {
     const titleId = useId();
-    const url = inviteUrl(username);
+    const url = inviteUrl(username, publicProfile);
 
     return (
         <Modal

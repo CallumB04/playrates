@@ -171,7 +171,7 @@ const AccountMenu = ({
     setup?: SetupStep[] | null;
 }) => {
     // Outside the menu, so the share sheet outlives the menu closing.
-    const invite = useInviteFor(user.username);
+    const invite = useInviteFor(user);
     const [open, setOpen] = useState(false);
     const wrapRef = useRef<HTMLDivElement>(null);
     const { theme, toggleTheme } = useTheme();
