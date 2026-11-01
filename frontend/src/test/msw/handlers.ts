@@ -33,6 +33,7 @@ export const buildProfile = (
     firstName: null,
     bio: "Local development account.",
     showSexualContent: false,
+    adultConfirmedAt: null,
     emailPrefs: resolveEmailPrefs({}),
     timezone: "UTC",
     hideOnline: false,

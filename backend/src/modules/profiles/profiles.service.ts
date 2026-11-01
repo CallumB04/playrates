@@ -190,6 +190,21 @@ export const createProfilesService = (
     }
     if (input.bio !== undefined) patch.bio = input.bio;
     if (input.showSexualContent !== undefined) {
+      /* Accounts are open from 13: turning these on takes a word that
+         they're 18 or over, once, and when is kept. */
+      if (input.showSexualContent) {
+        const row = await repo.findById(callerId);
+        if (!row?.adult_confirmed_at && input.confirmAdult !== true) {
+          throw new AppError(
+            422,
+            "validation_failed",
+            "Confirm you're 18 or over to show these",
+          );
+        }
+        if (!row?.adult_confirmed_at) {
+          patch.adult_confirmed_at = new Date().toISOString();
+        }
+      }
       patch.show_sexual_content = input.showSexualContent;
     }
     if (input.firstName !== undefined) {

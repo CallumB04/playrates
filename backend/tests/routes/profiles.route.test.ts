@@ -133,7 +133,12 @@ describe("finding people", () => {
   /* Settings, not profile data. A profile page is public; what the owner has
      chosen about adult content, their time zone and hiding their presence is
      not part of it. */
-  const SETTINGS = ["showSexualContent", "timezone", "hideOnline"];
+  const SETTINGS = [
+    "showSexualContent",
+    "adultConfirmedAt",
+    "timezone",
+    "hideOnline",
+  ];
 
   it("keeps a viewer's settings out of a public profile", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
@@ -710,5 +715,41 @@ describe("hiding from search engines", () => {
 
     expect(before.body.hideFromSearch).toBe(false);
     expect(after.body.hideFromSearch).toBe(true);
+  });
+});
+
+describe("sexually explicit games", () => {
+  const patch = (app: Parameters<typeof request>[0], body: object) =>
+    request(app)
+      .patch("/api/v1/profiles/me")
+      .set("Authorization", authHeader(USER_A))
+      .send(body);
+
+  it("won't show them without a word that they're 18 or over", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const refused = await patch(app, { showSexualContent: true });
+
+    expect(refused.status).toBe(422);
+    expect(
+      state.profiles.find((p) => p.id === USER_A)!.show_sexual_content,
+    ).toBe(false);
+  });
+
+  it("shows them once confirmed, and keeps when", async () => {
+    const { app, state } = buildTestApp({ seed: baseSeed() });
+
+    const response = await patch(app, {
+      showSexualContent: true,
+      confirmAdult: true,
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.adultConfirmedAt).toEqual(expect.any(String));
+    const row = state.profiles.find((p) => p.id === USER_A)!;
+    expect(row.show_sexual_content).toBe(true);
+    // Once is enough: off and on again needs no second word.
+    await patch(app, { showSexualContent: false });
+    expect((await patch(app, { showSexualContent: true })).status).toBe(200);
   });
 });

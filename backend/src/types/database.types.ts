@@ -15,6 +15,9 @@ export interface ProfileRow {
   last_seen_at: string;
   /** Opt-in. Off filters games flagged has_sexual_content out of listings. */
   show_sexual_content: boolean;
+  /** When they confirmed they're 18 or over, which showing sexually
+   *  explicit games needs. */
+  adult_confirmed_at: string | null;
   first_name: string | null;
   /** IANA zone name. Timestamps render in this; date-only columns do not. */
   timezone: string;

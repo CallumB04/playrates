@@ -122,6 +122,9 @@ export const UpdateProfileSchema = z
     accent: ProfileAccentSchema.optional(),
     /** Opt-in. Off keeps sexually explicit games out of every listing. */
     showSexualContent: z.boolean().optional(),
+    /** Sent with showSexualContent: true the first time: the member says
+     *  they're 18 or over. */
+    confirmAdult: z.literal(true).optional(),
     /** Optional display name. Empty string clears it. */
     firstName: z.string().trim().max(40).nullable().optional(),
     timezone: TimeZoneSchema.optional(),
@@ -199,6 +202,9 @@ export interface MyProfile extends Profile {
   /** Who sees each About field. `about` here is every field filled in. */
   aboutVisibility: AboutVisibility;
   showSexualContent: boolean;
+  /** When they confirmed they're 18 or over, for explicit games; null if
+   *  they never have. */
+  adultConfirmedAt: string | null;
   /** IANA zone name. Timestamps render in this; dates you picked do not move. */
   timezone: string;
   hideOnline: boolean;

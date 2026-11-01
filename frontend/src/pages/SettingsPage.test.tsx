@@ -427,3 +427,31 @@ describe("SettingsPage's data export", () => {
         ).toBeInTheDocument();
     });
 });
+
+describe("SettingsPage's explicit games", () => {
+    it("asks if they're 18 or over before showing them, and says so to the API", async () => {
+        let sent: unknown;
+        server.use(
+            http.patch(`${API}/profiles/me`, async ({ request }) => {
+                sent = await request.json();
+                return HttpResponse.json(user);
+            })
+        );
+        const u = open("/settings?section=content");
+
+        await u.click(
+            screen.getByRole("switch", { name: "Show sexually explicit games" })
+        );
+        expect(screen.getByText("Are you 18 or over?")).toBeInTheDocument();
+        expect(sent).toBeUndefined();
+
+        await u.click(screen.getByRole("button", { name: "I’m 18 or over" }));
+
+        await waitFor(() =>
+            expect(sent).toEqual({
+                showSexualContent: true,
+                confirmAdult: true,
+            })
+        );
+    });
+});

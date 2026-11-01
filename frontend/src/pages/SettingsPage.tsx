@@ -36,6 +36,7 @@ import {
     type UpdateProfileInput,
 } from "@playrates/shared";
 import DeleteAccountModal from "./settings/DeleteAccountModal";
+import ConfirmAdultModal from "./settings/ConfirmAdultModal";
 import ConfirmItsYouModal, {
     type ConfirmPurpose,
 } from "./settings/ConfirmItsYouModal";
@@ -159,6 +160,7 @@ const SettingsPage = () => {
     const { data: friends } = useUserFriends(user?.username ?? "");
     const [confirmingDelete, setConfirmingDelete] = useState(false);
     const [confirming, setConfirming] = useState<ConfirmPurpose | null>(null);
+    const [confirmingAdult, setConfirmingAdult] = useState(false);
     const [params, setParams] = useSearchParams();
     // ?section= so a link elsewhere can open the row it is about.
     const [section, setSection] = useState(() =>
@@ -498,12 +500,14 @@ const SettingsPage = () => {
                     <Toggle
                         checked={showSexual}
                         onChange={(next) =>
-                            saveToggle(
-                                { showSexualContent: next },
-                                next,
-                                setShowSexual,
-                                showSexual
-                            )
+                            next && !user.adultConfirmedAt
+                                ? setConfirmingAdult(true)
+                                : saveToggle(
+                                      { showSexualContent: next },
+                                      next,
+                                      setShowSexual,
+                                      showSexual
+                                  )
                         }
                         label="Show sexually explicit games"
                         labelPosition="hidden"
@@ -592,6 +596,20 @@ const SettingsPage = () => {
                     isDeleting={remove.isPending}
                     onCancel={() => setConfirmingDelete(false)}
                     onConfirm={() => confirmThen("delete")}
+                />
+            )}
+            {confirmingAdult && (
+                <ConfirmAdultModal
+                    onCancel={() => setConfirmingAdult(false)}
+                    onConfirm={() => {
+                        setConfirmingAdult(false);
+                        saveToggle(
+                            { showSexualContent: true, confirmAdult: true },
+                            true,
+                            setShowSexual,
+                            showSexual
+                        );
+                    }}
                 />
             )}
             {confirming && (

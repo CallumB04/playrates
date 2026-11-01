@@ -25,6 +25,7 @@ export const buildProfile = (
   avatar_url: null,
   // recent, so `online` derives to true unless a test says otherwise
   show_sexual_content: false,
+  adult_confirmed_at: null,
   first_name: null,
   timezone: "UTC",
   hide_online: false,
