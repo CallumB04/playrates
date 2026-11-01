@@ -348,3 +348,42 @@ describe("digestEmail", () => {
     expect(email.text).toContain("You logged 1 game.");
   });
 });
+
+describe("patchNotesEmail from a note", () => {
+  it("lists the changes by kind and keeps their links, made absolute", () => {
+    const email = patchNotesEmail(
+      {
+        subject: "New patch notes: v1.1.2",
+        title: "v1.1.2",
+        doc: { type: "doc", content: [] },
+        note: {
+          title: "v1.1.2",
+          intro: "A big one.",
+          items: [
+            { kind: "fix", text: "Fixed <it>.", link: null },
+            { kind: "feature", text: "Steam import", link: "/settings" },
+          ],
+          outro: "Thanks for playing.",
+        },
+        link: "/community/thread/1",
+      },
+      links,
+    );
+    expect(email.html).toContain('href="https://playrates.test/settings"');
+    expect(email.html).toContain("Fixed &lt;it&gt;.");
+    expect(email.html.indexOf("New features")).toBeLessThan(
+      email.html.indexOf("Fixes"),
+    );
+    expect(email.text).toContain(
+      "- Steam import (https://playrates.test/settings)",
+    );
+    expect(email.text).toContain("A big one.");
+    // The closing message comes after the changes, in both.
+    expect(email.html.indexOf("Thanks for playing.")).toBeGreaterThan(
+      email.html.indexOf("Steam import"),
+    );
+    expect(email.text.indexOf("Thanks for playing.")).toBeGreaterThan(
+      email.text.indexOf("Steam import"),
+    );
+  });
+});

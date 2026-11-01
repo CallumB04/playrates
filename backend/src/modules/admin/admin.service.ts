@@ -18,6 +18,7 @@ import type {
   AdminUsersQuery,
   AnnouncementInput,
   EmailAudience,
+  PatchNote,
   SendAnnouncementInput,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
@@ -106,13 +107,14 @@ export const createAdminService = (deps: {
   };
 
   const patchNoteContent = (
-    entry: { body: unknown },
+    entry: { body: unknown; patch_note?: unknown },
     note: { title: string | null; link: string },
   ): NewsContent => ({
     kind: "patch_notes",
     subject: patchNoteAnnouncement(note.title, note.link).title,
     title: note.title,
     doc: entry.body as RichTextDoc,
+    note: (entry.patch_note as PatchNote | null | undefined) ?? null,
     link: note.link,
   });
 

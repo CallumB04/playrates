@@ -109,8 +109,14 @@ export interface CommunityRepository {
     parentId: number | null;
     authorId: string;
     body: unknown;
+    patchNote?: unknown;
   }): Promise<MessageCardRow>;
-  updateMessageBody(id: number, body: unknown): Promise<MessageCardRow>;
+  /** A patch notes entry's note is written with the body made from it. */
+  updateMessageBody(
+    id: number,
+    body: unknown,
+    patchNote?: unknown,
+  ): Promise<MessageCardRow>;
   softDeleteMessage(id: number): Promise<void>;
   /** The bodies of this person's standing messages, for the pictures in
    *  them. */
@@ -293,7 +299,7 @@ export const createCommunityRepository = (db: Db): CommunityRepository => ({
 
   /* Writes go to the table, then the card is read back for the author and
      the tally, as reviews do. */
-  async insertMessage({ threadId, parentId, authorId, body }) {
+  async insertMessage({ threadId, parentId, authorId, body, patchNote }) {
     const { data, error } = await db
       .from("community_messages")
       .insert({
@@ -301,6 +307,7 @@ export const createCommunityRepository = (db: Db): CommunityRepository => ({
         parent_id: parentId,
         author_id: authorId,
         body,
+        ...(patchNote === undefined ? {} : { patch_note: patchNote }),
       })
       .select("id")
       .single();
@@ -311,10 +318,14 @@ export const createCommunityRepository = (db: Db): CommunityRepository => ({
     return row;
   },
 
-  async updateMessageBody(id, body) {
+  async updateMessageBody(id, body, patchNote) {
     const { error } = await db
       .from("community_messages")
-      .update({ body, edited_at: new Date().toISOString() })
+      .update({
+        body,
+        edited_at: new Date().toISOString(),
+        ...(patchNote === undefined ? {} : { patch_note: patchNote }),
+      })
       .eq("id", id);
     if (error) throw error;
 

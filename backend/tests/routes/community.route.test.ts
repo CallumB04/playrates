@@ -793,3 +793,88 @@ describe("community images", () => {
     expect(response.status).toBe(422);
   });
 });
+
+describe("structured patch notes", () => {
+  const note = {
+    title: "v1.1.2",
+    intro: "A big one.",
+    items: [
+      { kind: "fix", text: "Fixed the thing.", link: null },
+      {
+        kind: "feature",
+        text: "Import from Steam.",
+        link: "/settings?section=content",
+      },
+    ],
+    outro: null,
+  };
+  const post = (as: string, body: object = note) =>
+    request(buildTestApp({ seed: communitySeed() }).app)
+      .post("/api/v1/community/patch-notes")
+      .set("Authorization", authHeader(as))
+      .send(body);
+
+  it("posts a release, with the body written from it", async () => {
+    const { app, state } = buildTestApp({ seed: communitySeed() });
+    const response = await request(app)
+      .post("/api/v1/community/patch-notes")
+      .set("Authorization", authHeader(ADMIN))
+      .send(note);
+
+    expect(response.status).toBe(201);
+    expect(response.body.patchNote).toEqual(note);
+    const saved = state.communityMessages.at(-1)!;
+    expect(saved.thread_id).toBe(2);
+    // The body lists features before fixes, under their headings.
+    expect(JSON.stringify(saved.body)).toMatch(
+      /v1\.1\.2.*A big one.*New features.*Import from Steam.*Fixes.*Fixed the thing/,
+    );
+
+    const summary = await request(app).get("/api/v1/community/patch-notes");
+    expect(summary.body.latest.title).toBe("v1.1.2");
+  });
+
+  it("is for admins only", async () => {
+    expect((await post(USER_A)).status).toBe(403);
+  });
+
+  it("refuses a link that isn't a page here or https", async () => {
+    const response = await post(ADMIN, {
+      ...note,
+      items: [{ kind: "feature", text: "Click", link: "javascript:alert(1)" }],
+    });
+    expect(response.status).toBe(422);
+  });
+
+  it("refuses a release with nothing in it", async () => {
+    const response = await post(ADMIN, {
+      title: "Empty",
+      intro: null,
+      items: [],
+      outro: null,
+    });
+    expect(response.status).toBe(422);
+  });
+
+  it("edits a release, keeping its date", async () => {
+    const { app, state } = buildTestApp({ seed: communitySeed() });
+    const response = await request(app)
+      .put("/api/v1/community/patch-notes/2")
+      .set("Authorization", authHeader(ADMIN))
+      .send({ ...note, title: "v1.0 Launch" });
+
+    expect(response.status).toBe(200);
+    const entry = state.communityMessages.find((m) => m.id === 2)!;
+    expect(entry.patch_note).toMatchObject({ title: "v1.0 Launch" });
+    expect(entry.created_at).toBe(response.body.createdAt);
+  });
+
+  it("only edits patch notes entries", async () => {
+    const { app } = buildTestApp({ seed: communitySeed() });
+    const response = await request(app)
+      .put("/api/v1/community/patch-notes/1")
+      .set("Authorization", authHeader(ADMIN))
+      .send(note);
+    expect(response.status).toBe(404);
+  });
+});

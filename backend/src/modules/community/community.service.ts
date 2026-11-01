@@ -4,6 +4,7 @@ import type {
   CreateThreadInput,
   Paginated,
   LatestReply,
+  PatchNote,
   PatchNotesSummary,
   TalkedAboutGame,
   RichTextDoc,
@@ -14,6 +15,7 @@ import type {
   VoteResult,
 } from "@playrates/shared";
 import {
+  patchNoteDoc,
   COMMUNITY_IMAGE_MAX_BYTES,
   COMMUNITY_IMAGE_MAX_EDGE,
   firstHeading,
@@ -236,7 +238,9 @@ export const createCommunityService = (
         thread: toThreadCard(thread),
         latest: latest
           ? {
-              title: firstHeading(latest.body as RichTextDoc),
+              title:
+                (latest.patch_note as PatchNote | null | undefined)?.title ??
+                firstHeading(latest.body as RichTextDoc),
               createdAt: latest.created_at,
             }
           : null,
@@ -359,6 +363,48 @@ export const createCommunityService = (
         );
       }
 
+      return messageFor(userId, row);
+    },
+
+    /** A new release in the patch notes: the note as written, and the body
+     *  made from it for everything that reads a body. Admins only. */
+    async postPatchNote(
+      userId: string,
+      note: PatchNote,
+    ): Promise<CommunityMessage> {
+      assertAdmin(await profiles.findById(userId));
+      const thread = await repo.findPatchNotes();
+      if (!thread) throw AppError.notFound("Patch notes");
+      const row = await repo.insertMessage({
+        threadId: thread.id,
+        parentId: null,
+        authorId: userId,
+        body: patchNoteDoc(note),
+        patchNote: note,
+      });
+      return messageFor(userId, row);
+    },
+
+    async editPatchNote(
+      userId: string,
+      messageId: number,
+      note: PatchNote,
+    ): Promise<CommunityMessage> {
+      assertAdmin(await profiles.findById(userId));
+      const message = await requireMessage(messageId);
+      const thread = await requireThread(message.thread_id);
+      if (
+        thread.subject_kind !== "patch_notes" ||
+        message.parent_id !== null ||
+        message.deleted_at
+      ) {
+        throw AppError.notFound("Patch notes entry");
+      }
+      const row = await repo.updateMessageBody(
+        messageId,
+        patchNoteDoc(note),
+        note,
+      );
       return messageFor(userId, row);
     },
 

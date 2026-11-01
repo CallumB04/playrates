@@ -291,7 +291,7 @@ export const createInMemoryCommunity = (
       return id;
     },
 
-    async insertMessage({ threadId, parentId, authorId, body }) {
+    async insertMessage({ threadId, parentId, authorId, body, patchNote }) {
       return messageCard(
         insert({
           thread_id: threadId,
@@ -299,14 +299,16 @@ export const createInMemoryCommunity = (
           author_id: authorId,
           body,
           is_opening: false,
+          patch_note: patchNote ?? null,
         }),
       );
     },
 
-    async updateMessageBody(id, body) {
+    async updateMessageBody(id, body, patchNote) {
       const m = state.communityMessages.find((x) => x.id === id);
       if (!m) throw new Error("no such message");
       m.body = body;
+      if (patchNote !== undefined) m.patch_note = patchNote;
       m.edited_at = new Date().toISOString();
       return messageCard(m);
     },

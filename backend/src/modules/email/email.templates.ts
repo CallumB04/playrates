@@ -10,6 +10,10 @@ import {
   emailText,
   escapeHtml,
   parseAnnouncementBody,
+  groupPatchNote,
+  paragraphsOf,
+  PATCH_NOTE_KIND_LABELS,
+  type PatchNote,
   type AnnouncementTone,
   type EmailScope,
   type RichTextDoc,
@@ -718,18 +722,58 @@ export const announcementEmail = (
 
 /* ---------------------------------------------------------- patch notes */
 
+/** A release's changes as the email shows them: each kind under its
+ *  heading, and a change with a link to follow linked. */
+const patchNoteHtml = (note: PatchNote, links: EmailLinks): string =>
+  [
+    ...paragraphsOf(note.intro).map((p) => emailParagraph(escapeHtml(p))),
+    ...groupPatchNote(note.items).map((group) => {
+      const items = group.items
+        .map((item) => {
+          const text = escapeHtml(item.text);
+          return `<li style="margin:0 0 6px;">${
+            item.link
+              ? emailLink(escapeHtml(absolute(links, item.link)), text)
+              : text
+          }</li>`;
+        })
+        .join("");
+      return [
+        `<h3 class="strong" style="margin:24px 0 10px;font-family:${SANS};font-size:18px;line-height:26px;font-weight:700;color:${C.ink};">${PATCH_NOTE_KIND_LABELS[group.kind]}</h3>`,
+        `<ul class="text" style="margin:0 0 16px;padding-left:24px;font-family:${SANS};font-size:16px;line-height:26px;color:${C.body};">${items}</ul>`,
+      ].join("");
+    }),
+    ...paragraphsOf(note.outro).map((p) => emailParagraph(escapeHtml(p))),
+  ].join("\n");
+
+const patchNoteText = (note: PatchNote, links: EmailLinks): string[] => [
+  ...paragraphsOf(note.intro).flatMap((p) => [p, ""]),
+  ...groupPatchNote(note.items).flatMap((group) => [
+    PATCH_NOTE_KIND_LABELS[group.kind],
+    ...group.items.map(
+      (item) =>
+        `- ${item.text}${item.link ? ` (${absolute(links, item.link)})` : ""}`,
+    ),
+    "",
+  ]),
+  ...paragraphsOf(note.outro).flatMap((p) => [p, ""]),
+];
+
 export const patchNotesEmail = (
   data: {
     /** What the bell says: "New patch notes: v1.1". */
     subject: string;
     title: string | null;
     doc: RichTextDoc;
+    /** The release as written, where it was: its links survive. */
+    note?: PatchNote | null;
     link: string;
   },
   links: EmailLinks,
 ): RenderedEmail => {
   const href = absolute(links, data.link);
-  const title = data.title ?? "New patch notes";
+  const note = data.note ?? null;
+  const title = note?.title ?? data.title ?? "New patch notes";
   const options = { skipFirstHeading: data.title !== null };
   return build({
     scope: "news",
@@ -739,13 +783,16 @@ export const patchNotesEmail = (
     title,
     body: [
       eyebrow("Patch notes"),
-      richTextToEmailHtml(data.doc, options),
+      note
+        ? patchNoteHtml(note, links)
+        : richTextToEmailHtml(data.doc, options),
       emailButton(escapeHtml(href), "Read on PlayRates"),
       emailPlainLink(escapeHtml(href)),
     ].join("\n"),
     lines: [
-      ...richTextToEmailText(data.doc, options),
-      "",
+      ...(note
+        ? patchNoteText(note, links)
+        : [...richTextToEmailText(data.doc, options), ""]),
       `Read on PlayRates: ${href}`,
     ],
   });

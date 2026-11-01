@@ -143,14 +143,14 @@ isOneToOne: false
                   ]
                 },"community_messages": {
                   Row: {
-                    "author_id": string | null,"body": Json | null,"created_at": string,"deleted_at": string | null,"edited_at": string | null,"id": number,"is_opening": boolean,"parent_id": number | null,"plain_text": string | null,"thread_id": number
+                    "author_id": string | null,"body": Json | null,"created_at": string,"deleted_at": string | null,"edited_at": string | null,"id": number,"is_opening": boolean,"parent_id": number | null,"patch_note": Json | null,"plain_text": string | null,"thread_id": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "author_id"?: string | null,"body"?: Json | null,"created_at"?: string,"deleted_at"?: string | null,"edited_at"?: string | null,"id"?: never,"is_opening"?: boolean,"parent_id"?: number | null,"plain_text"?: string | null,"thread_id": number
+                    "author_id"?: string | null,"body"?: Json | null,"created_at"?: string,"deleted_at"?: string | null,"edited_at"?: string | null,"id"?: never,"is_opening"?: boolean,"parent_id"?: number | null,"patch_note"?: Json | null,"plain_text"?: string | null,"thread_id": number
                   }
                   Update: {
-                    "author_id"?: string | null,"body"?: Json | null,"created_at"?: string,"deleted_at"?: string | null,"edited_at"?: string | null,"id"?: never,"is_opening"?: boolean,"parent_id"?: number | null,"plain_text"?: string | null,"thread_id"?: number
+                    "author_id"?: string | null,"body"?: Json | null,"created_at"?: string,"deleted_at"?: string | null,"edited_at"?: string | null,"id"?: never,"is_opening"?: boolean,"parent_id"?: number | null,"patch_note"?: Json | null,"plain_text"?: string | null,"thread_id"?: number
                   }
                   Relationships: [
                     {
@@ -1332,7 +1332,7 @@ isOneToOne: false
                   ]
                 },"community_message_cards": {
                   Row: {
-                    "author_accent": string | null,"author_avatar_url": string | null,"author_first_name": string | null,"author_id": string | null,"author_username": string | null,"body": Json | null,"created_at": string,"deleted_at": string | null,"edited_at": string | null,"id": number,"is_opening": boolean,"parent_id": number | null,"thread_id": number,"vote_count": number | null
+                    "author_accent": string | null,"author_avatar_url": string | null,"author_first_name": string | null,"author_id": string | null,"author_username": string | null,"body": Json | null,"created_at": string,"deleted_at": string | null,"edited_at": string | null,"id": number,"is_opening": boolean,"parent_id": number | null,"patch_note": Json | null,"thread_id": number,"vote_count": number | null
                   }
                   ComputedFields: never
                   Relationships: [

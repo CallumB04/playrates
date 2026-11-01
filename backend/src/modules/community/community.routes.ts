@@ -9,6 +9,8 @@ import {
   ThreadIdParamSchema,
   ThreadListQuerySchema,
   UpdateMessageInputSchema,
+  PatchNoteSchema,
+  type PatchNote,
   type CreateMessageInput,
   type CreateThreadInput,
   type ThreadListQuery,
@@ -155,6 +157,28 @@ export const createCommunityRouter = ({
       const { messageId } = req.valid!.params as { messageId: number };
       const { body } = req.valid!.body as UpdateMessageInput;
       res.json(await service.editMessage(callerId(req), messageId, body));
+    },
+  );
+
+  // Admins only, which the service checks.
+  router.post(
+    "/patch-notes",
+    requireAuth,
+    validate({ body: PatchNoteSchema }),
+    async (req, res) => {
+      const note = req.valid!.body as PatchNote;
+      res.status(201).json(await service.postPatchNote(callerId(req), note));
+    },
+  );
+
+  router.put(
+    "/patch-notes/:messageId",
+    requireAuth,
+    validate({ params: MessageIdParamSchema, body: PatchNoteSchema }),
+    async (req, res) => {
+      const { messageId } = req.valid!.params as { messageId: number };
+      const note = req.valid!.body as PatchNote;
+      res.json(await service.editPatchNote(callerId(req), messageId, note));
     },
   );
 

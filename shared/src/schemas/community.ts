@@ -3,6 +3,7 @@ import type { ReactionCount, ReactionKey, ReactionState } from "./reactions.js";
 import { PaginationSchema } from "./common.js";
 import type { ProfileAccent } from "./profileAccent.js";
 import { RichTextDocSchema, type RichTextDoc } from "./richText.js";
+import type { PatchNote } from "./patchNotes.js";
 
 /**
  * What a thread is about. Only games take new threads today; patch notes is
@@ -131,6 +132,9 @@ export interface CommunityMessage {
   author: CommunityAuthor | null;
   /** Null once deleted; the message keeps its place for the replies under it. */
   body: RichTextDoc | null;
+  /** A patch notes entry's changes, which the page shows in place of the
+   *  body. Null on anything else, and on entries from before them. */
+  patchNote: PatchNote | null;
   isOpening: boolean;
   deleted: boolean;
   createdAt: string;

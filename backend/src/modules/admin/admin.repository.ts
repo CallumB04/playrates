@@ -50,6 +50,7 @@ export interface PatchNoteEntryRow {
   id: number;
   thread_id: number;
   body: unknown;
+  patch_note?: unknown;
   created_at: string;
   edited_at: string | null;
 }
@@ -510,7 +511,7 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
     const { data, error } = await db
       .from("community_messages")
       .select(
-        "id, thread_id, body, created_at, edited_at, community_threads!inner(subject_kind)",
+        "id, thread_id, body, patch_note, created_at, edited_at, community_threads!inner(subject_kind)",
       )
       .eq("community_threads.subject_kind", "patch_notes")
       .is("parent_id", null)
@@ -527,7 +528,7 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
     const { data, error } = await db
       .from("community_messages")
       .select(
-        "id, thread_id, body, created_at, edited_at, community_threads!inner(subject_kind)",
+        "id, thread_id, body, patch_note, created_at, edited_at, community_threads!inner(subject_kind)",
       )
       .eq("id", messageId)
       .eq("community_threads.subject_kind", "patch_notes")

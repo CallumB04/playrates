@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Megaphone, Trash2 } from "lucide-react";
 import type {
     CommunityMessage,
+    PatchNote,
     RichTextDoc,
     ThreadDetail,
 } from "@playrates/shared";
@@ -26,6 +27,7 @@ import MessageItem, {
     type MessageActions,
 } from "../../components/community/MessageItem";
 import MessageComposer from "../../components/community/MessageComposer";
+import PatchNoteEditor from "../../components/community/patchNotes/PatchNoteEditor";
 import PatchNoteNotify from "../../components/community/PatchNoteNotify";
 import { useAdminPatchNotes } from "../../hooks/queries/useAdmin";
 import { replyParentId } from "../../components/community/replyTarget";
@@ -155,6 +157,11 @@ const ThreadPage = () => {
               },
         onSaveEdit: (message, body) =>
             mutations.edit.mutateAsync({ messageId: message.id, body }),
+        onSavePatchNote: (message, note) =>
+            mutations.editPatchNote.mutateAsync({
+                messageId: message.id,
+                note,
+            }),
         onDelete: (message) => setPending({ kind: "message", message }),
         // The opening message is the thread: reporting it reports the thread.
         onReport: isPatchNotes
@@ -207,7 +214,7 @@ const ThreadPage = () => {
                     detail={data}
                     viewerId={user?.id}
                     actions={actions}
-                    onPost={(body) => post(body)}
+                    onPost={(note) => mutations.postPatchNote.mutateAsync(note)}
                 />
             ) : (
                 <>
@@ -457,9 +464,10 @@ const PatchNotesThread = ({
     detail: ThreadDetail;
     viewerId: string | undefined;
     actions: MessageActions;
-    onPost: (body: RichTextDoc) => Promise<unknown>;
+    onPost: (note: PatchNote) => Promise<unknown>;
 }) => {
     const entries = [...detail.messages].reverse();
+    const [posted, setPosted] = useState(0);
     // Only whoever can post here can tell everyone about it.
     const { data: sendable } = useAdminPatchNotes(detail.canPost);
     const noteFor = (messageId: number) =>
@@ -489,11 +497,14 @@ const PatchNotesThread = ({
                     <h2 className="font-display text-base font-semibold text-content">
                         Post patch notes
                     </h2>
-                    <MessageComposer
-                        label="New patch notes"
-                        placeholder="Start with an H1 naming the release. It becomes the entry's title."
+                    {/* Remounted after each post, to start the next one blank. */}
+                    <PatchNoteEditor
+                        key={posted}
                         submitLabel="Publish"
-                        onSubmit={onPost}
+                        onSubmit={async (note) => {
+                            await onPost(note);
+                            setPosted((n) => n + 1);
+                        }}
                     />
                 </section>
             )}

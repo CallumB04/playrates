@@ -22,6 +22,7 @@ const message: CommunityMessage = {
     canEdit: false,
     canDelete: true,
     replies: [],
+    patchNote: null,
 };
 
 describe("MessageItem", () => {
@@ -68,5 +69,46 @@ describe("MessageItem", () => {
         expect(
             screen.queryByRole("button", { name: "More actions" })
         ).toBeNull();
+    });
+
+    it("shows a release as its changes, and edits it as a list", async () => {
+        const note = {
+            title: "v1.2",
+            intro: null,
+            items: [{ kind: "fix" as const, text: "Fixed it", link: null }],
+            outro: null,
+        };
+        const onSavePatchNote = vi.fn().mockResolvedValue(undefined);
+        renderWithProviders(
+            <MessageItem
+                message={{ ...message, canEdit: true, patchNote: note }}
+                viewerId="a"
+                actions={{
+                    onVote: vi.fn(),
+                    onSaveEdit: vi.fn(),
+                    onSavePatchNote,
+                    onDelete: vi.fn(),
+                }}
+            />
+        );
+        expect(
+            screen.getByRole("heading", { name: "Fixes" })
+        ).toBeInTheDocument();
+
+        await userEvent.click(
+            screen.getAllByRole("button", { name: "Edit" })[0]!
+        );
+        await userEvent.type(screen.getByLabelText("Change 1"), " properly");
+        await userEvent.click(screen.getByRole("button", { name: "Save" }));
+        expect(onSavePatchNote).toHaveBeenCalledWith(
+            expect.objectContaining({ id: 5 }),
+            {
+                ...note,
+                items: [{ kind: "fix", text: "Fixed it properly", link: null }],
+            }
+        );
+        expect(
+            await screen.findByRole("heading", { name: "Fixes" })
+        ).toBeInTheDocument();
     });
 });

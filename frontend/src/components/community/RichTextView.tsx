@@ -4,9 +4,8 @@ import type {
     RichTextDoc,
     RichTextInline,
 } from "@playrates/shared";
-import { SITE_ORIGIN } from "@playrates/shared";
 import { cn } from "../../lib/cn";
-import { linkify } from "../../lib/linkify";
+import { withLinks } from "./withLinks";
 import Spoiler from "./Spoiler";
 
 /* Built from the JSON node by node, never set as HTML: the document came from
@@ -18,29 +17,6 @@ const MARK_TAGS: Partial<Record<string, "strong" | "em" | "u">> = {
     italic: "em",
     underline: "u",
 };
-
-/** Addresses written out in the text, made into links. Only http(s) and
- *  mailto ever come out of linkify, so nothing here can run script. */
-const withLinks = (text: string): ReactNode =>
-    linkify(text).map((part, i) =>
-        typeof part === "string" ? (
-            part
-        ) : part.href.startsWith(SITE_ORIGIN) ||
-          part.href.startsWith("mailto:") ? (
-            <a key={i} href={part.href}>
-                {part.text}
-            </a>
-        ) : (
-            <a
-                key={i}
-                href={part.href}
-                target="_blank"
-                rel="noreferrer noopener"
-            >
-                {part.text}
-            </a>
-        )
-    );
 
 const renderInline = (
     node: RichTextInline,

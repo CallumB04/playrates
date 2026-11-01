@@ -1,4 +1,4 @@
-import type { ReactionState } from "@playrates/shared";
+import type { PatchNote, ReactionState } from "@playrates/shared";
 import { toPlainText } from "@playrates/shared";
 import type {
   CommunityAuthor,
@@ -128,6 +128,9 @@ export const toMessage = (
   parentId: row.parent_id,
   author: row.deleted_at ? null : toAuthor(row.author_id, row),
   body: row.deleted_at ? null : (row.body as RichTextDoc),
+  patchNote: row.deleted_at
+    ? null
+    : ((row.patch_note as PatchNote | null | undefined) ?? null),
   isOpening: row.is_opening,
   deleted: row.deleted_at !== null,
   createdAt: row.created_at,

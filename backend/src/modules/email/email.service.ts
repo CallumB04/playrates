@@ -67,6 +67,7 @@ export type NewsContent =
       subject: string;
       title: string | null;
       doc: Parameters<typeof patchNotesEmail>[0]["doc"];
+      note?: Parameters<typeof patchNotesEmail>[0]["note"];
       link: string;
     };
 

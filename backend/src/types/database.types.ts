@@ -287,6 +287,8 @@ export interface CommunityMessageRow {
   created_at: string;
   edited_at: string | null;
   deleted_at: string | null;
+  /** A patch notes entry's changes, as written. Null on anything else. */
+  patch_note?: unknown;
 }
 
 /** Written by triggers on the tables it describes. No foreign keys: it

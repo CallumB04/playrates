@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type {
     CommunityMessage,
+    PatchNote,
     RichTextDoc,
     ReactionKey,
 } from "@playrates/shared";
@@ -22,6 +23,8 @@ import { relativeTime } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import RichTextView from "./RichTextView";
 import MessageComposer from "./MessageComposer";
+import PatchNoteView from "./patchNotes/PatchNoteView";
+import PatchNoteEditor from "./patchNotes/PatchNoteEditor";
 
 export interface MessageActions {
     onVote: (message: CommunityMessage, reaction: ReactionKey) => unknown;
@@ -29,6 +32,11 @@ export interface MessageActions {
     onSaveEdit: (
         message: CommunityMessage,
         body: RichTextDoc
+    ) => Promise<unknown>;
+    /** Where a message is a release written as a list of changes. */
+    onSavePatchNote?: (
+        message: CommunityMessage,
+        note: PatchNote
     ) => Promise<unknown>;
     onDelete: (message: CommunityMessage) => void;
     /** Left out where there is nothing to report, like patch notes. */
@@ -206,7 +214,21 @@ const MessageItem = ({
                     />
                 )}
 
-                {editing && message.body ? (
+                {editing && message.patchNote && actions.onSavePatchNote ? (
+                    <div className="mt-3">
+                        <PatchNoteEditor
+                            initial={message.patchNote}
+                            submitLabel="Save"
+                            onCancel={() => setEditing(false)}
+                            onSubmit={async (note) => {
+                                await actions.onSavePatchNote?.(message, note);
+                                setEditing(false);
+                            }}
+                        />
+                    </div>
+                ) : message.patchNote && !editing ? (
+                    <PatchNoteView note={message.patchNote} className="mt-3" />
+                ) : editing && message.body ? (
                     <div className="mt-3">
                         <MessageComposer
                             initial={message.body}

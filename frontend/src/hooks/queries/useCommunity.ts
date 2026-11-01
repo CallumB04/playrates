@@ -7,6 +7,7 @@ import {
 import type {
     CreateMessageInput,
     CreateThreadInput,
+    PatchNote,
     RichTextDoc,
     ReactionKey,
 } from "@playrates/shared";
@@ -15,6 +16,7 @@ import {
     deleteMessage,
     deleteThread,
     editMessage,
+    editPatchNote,
     fetchLatestReplies,
     fetchPatchNotes,
     fetchTalkedAboutGames,
@@ -22,6 +24,7 @@ import {
     fetchThreads,
     fetchTrendingThreads,
     postMessage,
+    postPatchNote,
     queryKeys,
     toggleMessageVote,
     type ThreadListFilters,
@@ -106,6 +109,20 @@ export const useCommunityMutations = () => {
                 messageId: number;
                 body: RichTextDoc;
             }) => editMessage(messageId, body),
+            onSuccess: invalidate,
+        }),
+        postPatchNote: useMutation({
+            mutationFn: (note: PatchNote) => postPatchNote(note),
+            onSuccess: invalidate,
+        }),
+        editPatchNote: useMutation({
+            mutationFn: ({
+                messageId,
+                note,
+            }: {
+                messageId: number;
+                note: PatchNote;
+            }) => editPatchNote(messageId, note),
             onSuccess: invalidate,
         }),
         remove: useMutation({

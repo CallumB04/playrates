@@ -5,6 +5,7 @@ import type {
     LatestReply,
     TalkedAboutGame,
     Paginated,
+    PatchNote,
     PatchNotesSummary,
     RichTextDoc,
     ThreadCard,
@@ -100,6 +101,27 @@ export const editMessage = async (
     const { data } = await api.patch<CommunityMessage>(
         `/community/messages/${messageId}`,
         { body }
+    );
+    return data;
+};
+
+export const postPatchNote = async (
+    note: PatchNote
+): Promise<CommunityMessage> => {
+    const { data } = await api.post<CommunityMessage>(
+        "/community/patch-notes",
+        note
+    );
+    return data;
+};
+
+export const editPatchNote = async (
+    messageId: number,
+    note: PatchNote
+): Promise<CommunityMessage> => {
+    const { data } = await api.put<CommunityMessage>(
+        `/community/patch-notes/${messageId}`,
+        note
     );
     return data;
 };
