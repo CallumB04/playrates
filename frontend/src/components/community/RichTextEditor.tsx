@@ -179,6 +179,11 @@ const RichTextEditor = ({
                       h3: editor.isActive("heading", { level: 3 }),
                       bullets: editor.isActive("bulletList"),
                       numbers: editor.isActive("orderedList"),
+                      // The selected picture's description, or null when no
+                      // picture is selected.
+                      alt: editor.isActive("image")
+                          ? String(editor.getAttributes("image").alt ?? "")
+                          : null,
                   }
                 : null,
     });
@@ -213,7 +218,25 @@ const RichTextEditor = ({
             void compressCommunityImage(file)
                 .then(uploadCommunityImage)
                 .then(({ url }) => {
+                    const at = editor.state.selection.from;
                     editor.chain().focus().setImage({ src: url }).run();
+                    /* Selected once it's in, so the field to describe it
+                       shows straight away. Where it landed is found, not
+                       assumed: an image can replace the empty line it went
+                       into. */
+                    let found: number | null = null;
+                    editor.state.doc.nodesBetween(
+                        Math.max(0, at - 2),
+                        Math.min(editor.state.doc.content.size, at + 2),
+                        (node, pos) => {
+                            if (
+                                node.type.name === "image" &&
+                                node.attrs.src === url
+                            )
+                                found = pos;
+                        }
+                    );
+                    if (found !== null) editor.commands.setNodeSelection(found);
                 })
                 .catch((error: unknown) => {
                     notify(
@@ -350,6 +373,29 @@ const RichTextEditor = ({
                     </span>
                 )}
             </div>
+
+            {state?.alt !== null && state?.alt !== undefined && (
+                <label className="flex flex-col gap-1 border-b border-subtle px-3 py-2 sm:flex-row sm:items-center sm:gap-3">
+                    <span className="shrink-0 text-label-sm text-content-muted">
+                        Picture description
+                    </span>
+                    <input
+                        value={state.alt}
+                        maxLength={300}
+                        disabled={disabled}
+                        placeholder="What it shows, for anyone who can’t see it"
+                        onChange={(event) =>
+                            editor
+                                ?.chain()
+                                .updateAttributes("image", {
+                                    alt: event.target.value || null,
+                                })
+                                .run()
+                        }
+                        className="min-h-11 w-full min-w-0 rounded-xs border border-subtle bg-surface-field px-2.5 text-body-sm text-content placeholder:text-content-muted focus:border-brand focus:outline-none sm:min-h-9"
+                    />
+                </label>
+            )}
 
             <EditorContent editor={editor} />
         </div>

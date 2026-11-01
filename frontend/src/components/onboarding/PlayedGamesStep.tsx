@@ -4,6 +4,8 @@ import Button from "../ui/Button";
 import { Skeleton } from "../ui/Skeleton";
 import GameCover from "../game/GameCover";
 import { useGames } from "../../hooks/queries/useGames";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { Input } from "../ui/Input";
 import { useLogMutations } from "../../hooks/queries/useGameLogs";
 import { useNotify } from "../../contexts/NotificationContext";
 import { formatCount } from "../../lib/format";
@@ -28,10 +30,15 @@ const PlayedGamesStep = ({
     preview = false,
     onDone,
 }: PlayedGamesStepProps) => {
+    /* The most logged to start with; a search for anything else. A pick
+       stays picked as the search changes. */
+    const [search, setSearch] = useState("");
+    const term = useDebouncedValue(search.trim(), 300);
     const { data, isLoading } = useGames({
         sort: "logged",
         limit: SHOWN,
         count: false,
+        search: term.length >= 2 ? term : undefined,
     });
     const { create } = useLogMutations();
     const notify = useNotify();
@@ -75,6 +82,20 @@ const PlayedGamesStep = ({
                     rate them and add the rest later.
                 </p>
             </div>
+
+            <Input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search for a game"
+                aria-label="Search for a game"
+            />
+
+            {!isLoading && term.length >= 2 && data?.data.length === 0 && (
+                <p className="text-body-sm text-content-secondary">
+                    Nothing matches “{term}”.
+                </p>
+            )}
 
             <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {isLoading
