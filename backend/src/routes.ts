@@ -78,6 +78,13 @@ import {
   createReportsRouter,
 } from "./modules/reports/reports.routes.js";
 import type { EmailDeps } from "./config/email.js";
+import type { PushSender } from "./config/push.js";
+import { createPushService } from "./modules/push/push.service.js";
+import {
+  createMyPushRouter,
+  createPushRouter,
+} from "./modules/push/push.routes.js";
+import { withPush } from "./modules/push/withPush.js";
 import type { Logger } from "./lib/logger.js";
 import type { Alerts } from "./modules/admin/alerts.js";
 import { createEmailService } from "./modules/email/email.service.js";
@@ -92,6 +99,7 @@ interface Deps {
   avatars: AvatarStore;
   communityImages: CommunityImageStore;
   email: EmailDeps;
+  push: PushSender | null;
   logger: Logger;
   alerts: Alerts;
   requireAuth: RequestHandler;
@@ -105,6 +113,7 @@ export const buildRoutes = ({
   avatars,
   communityImages,
   email,
+  push: pushSender,
   logger,
   alerts,
   requireAuth,
@@ -124,12 +133,22 @@ export const buildRoutes = ({
   });
   // Every service that raises a notification gets this one, so the ones
   // with an email send it without knowing.
+  const push = createPushService({
+    repo: baseRepos.push,
+    sender: pushSender,
+    profiles: baseRepos.profiles,
+    logger,
+    defer: email.defer,
+  });
   const repos = {
     ...baseRepos,
-    notifications: withEmails(
-      baseRepos.notifications,
-      emails.afterRaise,
-      emails.afterRaiseOnce,
+    notifications: withPush(
+      withEmails(
+        baseRepos.notifications,
+        emails.afterRaise,
+        emails.afterRaiseOnce,
+      ),
+      push.afterRaise,
     ),
   };
 
@@ -271,6 +290,8 @@ export const buildRoutes = ({
   );
 
   router.use("/email", createEmailRouter({ service: emails }));
+  router.use("/push", createPushRouter({ service: push }));
+  router.use("/me/push", createMyPushRouter({ service: push, requireAuth }));
 
   router.use(
     "/client-errors",

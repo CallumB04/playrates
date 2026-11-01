@@ -857,6 +857,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"push_subscriptions": {
+                  Row: {
+                    "auth": string,"created_at": string,"endpoint": string,"id": number,"p256dh": string,"user_agent": string | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "auth": string,"created_at"?: string,"endpoint": string,"id"?: never,"p256dh": string,"user_agent"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "auth"?: string,"created_at"?: string,"endpoint"?: string,"id"?: never,"p256dh"?: string,"user_agent"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "push_subscriptions_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "admin_user_directory"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "push_subscriptions_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"review_votes": {
                   Row: {
                     "created_at": string,"reaction": string,"review_id": number,"user_id": string
@@ -1705,6 +1731,11 @@ isOneToOne: false
                            },
 "raise_notifications_once":
 { Args: { "p_rows": Json }; Returns: number
+                           },
+"raise_notifications_once_new":
+{ Args: { "p_rows": Json }; Returns: {
+              "dedupe_key": string,"kind": string,"user_id": string
+            }[]
                            },
 "raise_upvote_milestone":
 { Args: { "p_data": Json,"p_dedupe_key": string,"p_kind": string,"p_milestone": number,"p_user_id": string }; Returns: undefined

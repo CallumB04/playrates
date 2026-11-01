@@ -20,6 +20,7 @@ import type { AvatarStore } from "./config/avatarStore.js";
 import type { CommunityImageStore } from "./config/communityImageStore.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
 import type { EmailDeps } from "./config/email.js";
+import type { PushSender } from "./config/push.js";
 import { createPagesRouter } from "./modules/pages/pages.routes.js";
 import { createPagesService } from "./modules/pages/pages.service.js";
 import {
@@ -38,6 +39,8 @@ export interface AppDeps {
   /** Injected so tests can authenticate without signing real JWTs. */
   verify: Verifier;
   logger?: Logger;
+  /** Web Push, where VAPID keys are set. */
+  push?: PushSender | null;
   /** Where 5xx responses are recorded for the admin dashboard. */
   errorSink?: ErrorSink;
   /** The built index.html that rendered pages start from. */
@@ -54,6 +57,7 @@ export const buildApp = ({
   avatars,
   communityImages,
   email,
+  push = null,
   verify,
   logger = createLogger(),
   errorSink = noopErrorSink,
@@ -131,6 +135,7 @@ export const buildApp = ({
       avatars,
       communityImages,
       email,
+      push,
       logger,
       alerts,
       requireAuth: makeRequireAuth(verify),

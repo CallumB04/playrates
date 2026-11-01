@@ -15,8 +15,18 @@ import "./styles/theme.css";
 import App from "./App.tsx";
 import { AppProviders } from "./app/AppProviders.tsx";
 import { installErrorReporting } from "./lib/errorReporting.ts";
+import { watchInstallOffer } from "./lib/installPrompt.ts";
 
 installErrorReporting();
+watchInstallOffer();
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").catch(() => {
+            // Without it the site works as it always has: no offline page,
+            // no pushes.
+        });
+    });
+}
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>

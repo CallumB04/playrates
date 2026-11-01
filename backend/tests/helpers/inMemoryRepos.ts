@@ -150,6 +150,13 @@ export interface InMemoryState {
   }[];
   /** Pictures uploaded to messages, by URL. */
   communityImages: Map<string, { bytes: Buffer; createdAt: string }>;
+  pushSubscriptions: {
+    userId: string;
+    endpoint: string;
+    p256dh: string;
+    auth: string;
+    userAgent: string | null;
+  }[];
   /** Written by triggers in Postgres; seeded directly here. */
   activityEvents: ActivityEventRow[];
   gameEvents: GameEventRow[];
@@ -249,6 +256,7 @@ export const createInMemoryRepos = (
     communityMessages: [...(seed.communityMessages ?? [])],
     communityVotes: [...(seed.communityVotes ?? [])],
     communityImages: new Map(),
+    pushSubscriptions: [],
     activityEvents: [...(seed.activityEvents ?? [])],
     gameEvents: [...(seed.gameEvents ?? [])],
     igdbUsage: [...(seed.igdbUsage ?? [])],
@@ -1636,7 +1644,7 @@ export const createInMemoryRepos = (
         });
       },
       async raiseOnce(drafts) {
-        let added = 0;
+        const added: typeof drafts = [];
         for (const d of drafts) {
           const key = d.dedupeKey ?? null;
           if (
@@ -1657,7 +1665,7 @@ export const createInMemoryRepos = (
             archived_at: null,
             created_at: now(),
           });
-          added++;
+          added.push(d);
         }
         return added;
       },
@@ -1781,6 +1789,29 @@ export const createInMemoryRepos = (
     gaming25: createInMemoryGaming25(state),
     progress: createInMemoryProgress(state),
     email: createInMemoryEmailRepo(state),
+    push: {
+      async save(userId, target) {
+        state.pushSubscriptions = state.pushSubscriptions.filter(
+          (p) => p.endpoint !== target.endpoint,
+        );
+        state.pushSubscriptions.push({ userId, ...target });
+      },
+      async remove(userId, endpoint) {
+        state.pushSubscriptions = state.pushSubscriptions.filter(
+          (p) => !(p.userId === userId && p.endpoint === endpoint),
+        );
+      },
+      async forUser(userId) {
+        return state.pushSubscriptions
+          .filter((p) => p.userId === userId)
+          .map(({ endpoint, p256dh, auth }) => ({ endpoint, p256dh, auth }));
+      },
+      async forget(endpoint) {
+        state.pushSubscriptions = state.pushSubscriptions.filter(
+          (p) => p.endpoint !== endpoint,
+        );
+      },
+    },
     favourites: {
       async listIds(userId) {
         return state.favouriteGames

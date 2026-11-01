@@ -3,6 +3,7 @@ import type { Express } from "express";
 import { buildApp } from "../../src/app.js";
 import { resetEnv } from "../../src/config/env.js";
 import { createLogger } from "../../src/lib/logger.js";
+import type { PushPayload, PushSender } from "../../src/config/push.js";
 import type { GamesProvider } from "../../src/providers/games/GamesProvider.js";
 import { nullGamesProvider } from "../../src/providers/games/GamesProvider.js";
 import type { Repositories } from "../../src/repositories.js";
@@ -57,7 +58,23 @@ interface TestAppOptions {
   provider?: GamesProvider;
   repos?: Repositories;
   production?: boolean;
+  push?: PushSender;
 }
+
+/** A push service that keeps what it's sent. An endpoint with "gone" in it
+ *  answers as a forgotten browser does. */
+export const createPushRecorder = () => {
+  const sent: { endpoint: string; payload: PushPayload }[] = [];
+  const sender: PushSender = {
+    publicKey: "test-public-key",
+    async send(target, payload) {
+      if (target.endpoint.includes("gone")) return "gone";
+      sent.push({ endpoint: target.endpoint, payload });
+      return "sent";
+    },
+  };
+  return { sender, sent };
+};
 
 /** index.html as the build leaves it, cut down to what pages touch. */
 export const TEST_TEMPLATE = `<!doctype html>
@@ -92,6 +109,7 @@ export const buildTestApp = (
     avatars,
     communityImages,
     email: email.deps,
+    push: options.push ?? null,
     verify: fakeVerify,
     logger: createLogger(),
     template: async () => TEST_TEMPLATE,

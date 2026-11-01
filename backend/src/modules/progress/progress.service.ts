@@ -596,7 +596,7 @@ export const createProgressService = (
       const drafts = members.flatMap((m) => nudgesFor(m, now));
       return {
         members: members.length,
-        raised: await notifications.raiseOnce(drafts),
+        raised: (await notifications.raiseOnce(drafts)).length,
       };
     },
 

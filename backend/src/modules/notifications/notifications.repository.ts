@@ -45,7 +45,7 @@ export interface NotificationsRepository {
   /** Raises each one only if nothing is under its key already, read or
    *  not, so a scheduled job can run twice without nagging. How many were
    *  new. */
-  raiseOnce(drafts: NotificationDraft[]): Promise<number>;
+  raiseOnce(drafts: NotificationDraft[]): Promise<NotificationDraft[]>;
   /** Leaves alone the friend requests from `keepRequestsFrom`, which are
    *  still waiting on an answer. */
   markAllRead(userId: string, keepRequestsFrom: string[]): Promise<void>;
@@ -178,8 +178,8 @@ export const createNotificationsRepository = (
   },
 
   async raiseOnce(drafts) {
-    if (drafts.length === 0) return 0;
-    const { data, error } = await db.rpc("raise_notifications_once", {
+    if (drafts.length === 0) return [];
+    const { data, error } = await db.rpc("raise_notifications_once_new", {
       p_rows: drafts.map((d) => ({
         user_id: d.userId,
         kind: d.kind,
@@ -189,7 +189,14 @@ export const createNotificationsRepository = (
       })),
     });
     if (error) throw error;
-    return Number(data ?? 0);
+    const added = new Set(
+      ((data ?? []) as { user_id: string; kind: string; dedupe_key: string | null }[]).map(
+        (r) => `${r.user_id}|${r.kind}|${r.dedupe_key ?? ""}`,
+      ),
+    );
+    return drafts.filter((d) =>
+      added.has(`${d.userId}|${d.kind}|${d.dedupeKey ?? ""}`),
+    );
   },
 
   async markAllRead(userId, keepRequestsFrom) {

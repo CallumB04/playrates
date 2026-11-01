@@ -40,6 +40,7 @@
     "pino-http": "^10.3.0",
     "satori": "^0.33.5",
     "sharp": "^0.35.5",
+    "web-push": "^3.6.7",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -48,6 +49,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.6",
     "@types/supertest": "^6.0.2",
+    "@types/web-push": "^3.6.4",
     "@vitest/coverage-v8": "^5.0.5",
     "eslint": "^9.15.0",
     "globals": "^17.13.0",

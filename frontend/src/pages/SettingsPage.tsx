@@ -6,6 +6,7 @@ import {
     Moon,
     Pencil,
     SlidersHorizontal,
+    Smartphone,
     Sun,
     TriangleAlert,
     UserRound,
@@ -46,6 +47,7 @@ import Card from "../components/ui/Card";
 import Toggle from "../components/ui/Toggle";
 import EmptyPlate from "../components/ui/EmptyPlate";
 import UsernameRow from "./settings/UsernameRow";
+import { useAppDevice, type PushState } from "./settings/useAppDevice";
 import EmailRow from "./settings/EmailRow";
 import PasswordRow from "./settings/PasswordRow";
 import AboutPrivacy from "./settings/AboutPrivacy";
@@ -62,6 +64,7 @@ const SECTIONS: SettingsSection[] = [
     { id: "account", label: "Account", icon: UserRound },
     { id: "privacy", label: "Privacy", icon: Lock },
     { id: "emails", label: "Emails", icon: Mail },
+    { id: "app", label: "App", icon: Smartphone },
     { id: "content", label: "Content", icon: SlidersHorizontal },
     { id: "account-closure", label: "Close account", icon: TriangleAlert },
 ];
@@ -134,6 +137,21 @@ const Group = ({
     </section>
 );
 
+const PUSH_ON =
+    "Friend requests, replies and gifts, and your streak and task reminders if they're on under Emails.";
+
+const PUSH_HELP: Record<PushState, string> = {
+    checking: PUSH_ON,
+    unavailable: "",
+    "install-first":
+        "On iPhone and iPad they come to the installed app. Install PlayRates above, then turn them on from there.",
+    unsupported: "This browser can't show them.",
+    blocked:
+        "Blocked for this site in your browser's settings. Allow them there, then come back.",
+    off: PUSH_ON,
+    on: PUSH_ON,
+};
+
 /* Older links into what was the Profile section, from before the profile
    was edited only on the profile. Account is where the way there is. */
 const SECTION_ALIASES: Record<string, string> = { profile: "account" };
@@ -153,6 +171,7 @@ const SettingsPage = () => {
     const { openLogin } = useAccountForm();
     const { preference, setPreference } = useTheme();
     const notify = useNotify();
+    const device = useAppDevice();
     const update = useUpdateProfile();
     const navigate = useNavigate();
     const { data: stats } = useUserStats(user?.username ?? "");
@@ -491,6 +510,67 @@ const SettingsPage = () => {
                         </Setting>
                     ))}
                 </Group>
+            </>
+        ),
+
+        app: (
+            <>
+                <Group title="Install">
+                    <Setting
+                        label="PlayRates app"
+                        help={
+                            device.install.installed
+                                ? "Installed on this device."
+                                : device.install.offer
+                                  ? "Opens from your home screen or dock, in a window of its own."
+                                  : device.install.appleMobile
+                                    ? "In Safari, tap Share, then Add to Home Screen."
+                                    : "Your browser doesn't offer this here. Chrome and Edge do, and Safari on iPhone."
+                        }
+                    >
+                        {device.install.offer && !device.install.installed && (
+                            <Button
+                                variant="secondary"
+                                onClick={() => void device.install.run()}
+                            >
+                                Install
+                            </Button>
+                        )}
+                    </Setting>
+                </Group>
+                {device.push.state !== "unavailable" && (
+                    <Group title="Notifications on this device">
+                        <Setting
+                            label="Push notifications"
+                            help={PUSH_HELP[device.push.state]}
+                            inactive={
+                                device.push.state !== "on" &&
+                                device.push.state !== "off"
+                            }
+                        >
+                            {(device.push.state === "on" ||
+                                device.push.state === "off") && (
+                                <Toggle
+                                    checked={device.push.state === "on"}
+                                    onChange={(next) =>
+                                        void (next
+                                            ? device.push.turnOn()
+                                            : device.push.turnOff()
+                                        ).catch(() =>
+                                            notify(
+                                                "Couldn't change that. Try again.",
+                                                "error"
+                                            )
+                                        )
+                                    }
+                                    label="Push notifications"
+                                    labelPosition="hidden"
+                                    disabled={device.push.busy}
+                                />
+                            )}
+                        </Setting>
+                    </Group>
+                )}
             </>
         ),
 

@@ -67,6 +67,13 @@ const EnvSchema = z.object({
   /** The local stack's mail viewer. Every email goes there instead. */
   MAILPIT_URL: optionalText,
 
+  /** Web Push's key pair (`npx web-push generate-vapid-keys`). Without
+   *  both, nothing is pushed and Settings doesn't offer it. */
+  VAPID_PUBLIC_KEY: optionalText,
+  VAPID_PRIVATE_KEY: optionalText,
+  /** Who push services contact about our pushes. */
+  VAPID_SUBJECT: z.string().default("mailto:hello@playrates.app"),
+
   /** Upstash Redis, where rate limits count, so every instance of the
    *  function shares one count. Vercel's Upstash integration names them
    *  KV_REST_API_*. Without either pair, each instance counts on its own. */

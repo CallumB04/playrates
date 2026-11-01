@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
 import { QUESTS, REFERRAL, SETUP_REWARD, xpForLevel } from "@playrates/shared";
+import type { PushSender } from "../../src/config/push.js";
 import {
   authHeader,
   buildTestApp,
+  createPushRecorder,
   USER_A,
   USER_B,
 } from "../helpers/buildTestApp.js";
@@ -20,8 +22,9 @@ const NEWBIE = "44444444-4444-4444-4444-444444444444";
 
 const as = (user: string) => ({ Authorization: authHeader(user) });
 
-const setup = (overrides: object = {}) => {
+const setup = (overrides: object = {}, push?: PushSender) => {
   const built = buildTestApp({
+    push,
     seed: {
       ...baseSeed(),
       profiles: [
@@ -882,6 +885,44 @@ describe("nudges", () => {
     });
     expect(email.sent[0]!.text).toContain("a shield will keep it going");
     expect(email.sent[0]!.headers?.["List-Unsubscribe"]).toBeDefined();
+  });
+
+  it("pushes a reminder once, and only to those who asked for reminders", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(FRIDAY));
+    const recorder = createPushRecorder();
+    const built = setup({}, recorder.sender);
+    for (const p of built.state.profiles)
+      p.last_seen_at = "2026-10-29T00:00:00.000Z";
+    built.state.xpEvents.push({
+      id: 900,
+      user_id: USER_A,
+      source: "rate",
+      key: "rate:old",
+      xp: 5,
+      created_at: "2026-10-21T12:00:00.000Z",
+    });
+    built.state.pushSubscriptions.push({
+      userId: USER_A,
+      endpoint: "https://push.example/a",
+      p256dh: "k",
+      auth: "a",
+      userAgent: null,
+    });
+
+    await cron(built.app, "test-cron-secret");
+    await built.email.flush();
+    expect(recorder.sent).toEqual([]);
+
+    // Asked after the bell already had it: the next week's goes.
+    built.state.profiles.find((p) => p.id === USER_A)!.email_prefs = {
+      reminders: true,
+    };
+    built.state.notifications = [];
+    await cron(built.app, "test-cron-secret");
+    await cron(built.app, "test-cron-secret");
+    await built.email.flush();
+    expect(recorder.sent.map((s) => s.payload.tag)).toEqual(["streak"]);
   });
 
   it("leaves out members not seen for two months", async () => {

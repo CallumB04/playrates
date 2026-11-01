@@ -69,6 +69,15 @@
             ]
         },
         {
+            "source": "/sw.js",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "no-cache"
+                }
+            ]
+        },
+        {
             "source": "/assets/:file([^/]+-[A-Za-z0-9_-]{8}\\.[a-z0-9]+)",
             "headers": [
                 {
