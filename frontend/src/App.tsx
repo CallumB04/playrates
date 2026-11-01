@@ -12,7 +12,6 @@ import ProgressMoments from "./components/progress/ProgressMoments";
 import ReferralCapture from "./components/progress/ReferralCapture";
 import AuthLinkResult from "./components/auth/AuthLinkResult";
 import InviteBanner from "./components/progress/InviteBanner";
-import NotFoundPage from "./pages/NotFoundPage";
 import { useReloadOnNewBuild } from "./hooks/useReloadOnNewBuild";
 
 /* Each page is its own chunk, so a visitor downloads the page they landed
@@ -39,6 +38,7 @@ const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage"));
 const AdminGate = lazy(() => import("./pages/admin/AdminGate"));
 const HubPage = lazy(() => import("./pages/HubPage/HubPage"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 /** Layout shell and route table. State lives in the providers. */
 
