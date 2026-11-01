@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { badgeDef, levelFor } from "@playrates/shared";
 import { playerCardUrl } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -49,6 +50,22 @@ const ProgressMoments = () => {
     // A level waits its turn behind any popup already open: the welcome, a
     // finished Gaming 25's share, the sign-up form.
     const turn = useNoDialogOpen(levels.length > 0 && !revealing);
+    const queryClient = useQueryClient();
+
+    /* The avatar's level comes with the profile, fetched at sign-in, and a
+       level-up only moves progress. When the two part, the profile is
+       read again, so the chip changes without a reload. */
+    const profileLevel = user?.level;
+    const progressLevel = data?.level.level;
+    useEffect(() => {
+        if (
+            profileLevel !== undefined &&
+            progressLevel !== undefined &&
+            profileLevel !== progressLevel
+        ) {
+            void queryClient.invalidateQueries({ queryKey: ["profiles"] });
+        }
+    }, [profileLevel, progressLevel, queryClient]);
 
     useEffect(() => {
         if (!data) return;

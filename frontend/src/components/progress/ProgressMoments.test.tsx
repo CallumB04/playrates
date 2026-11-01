@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
+import { QueryClient } from "@tanstack/react-query";
 import { levelFor, type Progress } from "@playrates/shared";
 import { server } from "../../test/msw/server";
 import { buildProfile, buildProgress } from "../../test/msw/handlers";
@@ -126,6 +127,26 @@ describe("ProgressMoments", () => {
         expect(screen.queryByRole("dialog")).toBeNull();
     });
 
+    it("reads the profile again when progress reaches a new level", async () => {
+        const invalidate = vi.spyOn(QueryClient.prototype, "invalidateQueries");
+        // The profile was fetched at level 1; progress is now at 2.
+        respond(progress());
+        renderWithProviders(<ProgressMoments />);
+        await waitFor(() =>
+            expect(invalidate).toHaveBeenCalledWith({ queryKey: ["profiles"] })
+        );
+        invalidate.mockRestore();
+    });
+
+    it("leaves the profile alone while the levels agree", async () => {
+        const invalidate = vi.spyOn(QueryClient.prototype, "invalidateQueries");
+        respond(progress({ xp: 50, level: levelFor(50) }));
+        renderWithProviders(<ProgressMoments />);
+        await waitFor(() => expect(seen).toEqual([]));
+        expect(invalidate).not.toHaveBeenCalledWith({ queryKey: ["profiles"] });
+        invalidate.mockRestore();
+    });
+
     it("plays nothing when there's nothing new", async () => {
         respond(progress());
         renderWithProviders(<ProgressMoments />);
@@ -157,7 +178,9 @@ describe("ProgressMoments", () => {
         const user = userEvent.setup({ delay: null });
 
         expect(
-            await screen.findByRole("dialog", { name: "Here’s what you’ve done so far" })
+            await screen.findByRole("dialog", {
+                name: "Here’s what you’ve done so far",
+            })
         ).toBeInTheDocument();
         await user.click(screen.getByRole("button", { name: "Skip" }));
         await user.click(screen.getByRole("button", { name: "Done" }));
