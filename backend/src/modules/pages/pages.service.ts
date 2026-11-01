@@ -84,6 +84,20 @@ const reviewItem = (row: ReviewRowJoined, withGame: boolean) => ({
  *
  * Each returns null when there is nothing at that address.
  */
+/** Where a page sits, for a search result's trail. */
+const breadcrumbs = (trail: { name: string; path: string }[]) => ({
+  "@type": "BreadcrumbList",
+  itemListElement: trail.map((crumb, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: crumb.name,
+    item: `${SITE_ORIGIN}${crumb.path}`,
+  })),
+});
+
+const organisations = (names: string[]) =>
+  names.map((name) => ({ "@type": "Organization", name }));
+
 export const createPagesService = (repos: Repos) => {
   // Every game page names its platforms and genres, and they hardly change.
   const platformList = memoFor(10 * 60_000, () => repos.platforms.list());
@@ -268,23 +282,50 @@ export const createPagesService = (repos: Repos) => {
         noindex: row.has_sexual_content,
         jsonLd: {
           "@context": "https://schema.org",
-          "@type": "VideoGame",
-          name: row.title,
-          url: `${SITE_ORIGIN}${path}`,
-          ...(image ? { image } : {}),
-          ...(row.release_date ? { datePublished: row.release_date } : {}),
-          ...(names.length > 0 ? { gamePlatform: names } : {}),
-          ...(avgRating !== null && row.rating_count >= MIN_RATINGS_FOR_STARS
-            ? {
-                aggregateRating: {
-                  "@type": "AggregateRating",
-                  ratingValue: avgRating.toFixed(1),
-                  bestRating: 10,
-                  worstRating: 0.5,
-                  ratingCount: row.rating_count,
-                },
-              }
-            : {}),
+          "@graph": [
+            {
+              "@type": "VideoGame",
+              name: row.title,
+              url: `${SITE_ORIGIN}${path}`,
+              ...(image ? { image } : {}),
+              ...(row.description
+                ? { description: truncateDescription(row.description, 500) }
+                : {}),
+              ...(row.release_date ? { datePublished: row.release_date } : {}),
+              ...(names.length > 0 ? { gamePlatform: names } : {}),
+              ...((row.game_genres ?? []).length > 0
+                ? {
+                    genre: (row.game_genres ?? []).map(
+                      ({ genre_slug }) =>
+                        genres.find((g) => g.slug === genre_slug)?.name ??
+                        genre_slug,
+                    ),
+                  }
+                : {}),
+              ...(row.developers.length > 0
+                ? { author: organisations(row.developers) }
+                : {}),
+              ...(row.publishers.length > 0
+                ? { publisher: organisations(row.publishers) }
+                : {}),
+              ...(avgRating !== null &&
+              row.rating_count >= MIN_RATINGS_FOR_STARS
+                ? {
+                    aggregateRating: {
+                      "@type": "AggregateRating",
+                      ratingValue: avgRating.toFixed(1),
+                      bestRating: 10,
+                      worstRating: 0.5,
+                      ratingCount: row.rating_count,
+                    },
+                  }
+                : {}),
+            },
+            breadcrumbs([
+              { name: "Library", path: "/library" },
+              { name: row.title, path },
+            ]),
+          ],
         },
         body,
       };
@@ -307,6 +348,26 @@ export const createPagesService = (repos: Repos) => {
           toProfileVisibility(row.profile_visibility) !== "everyone",
         // Hidden from search means hidden from this too.
         body: row.hide_from_search ? undefined : await profileBody(row),
+        // Only for a profile that's listed: the rest say nothing more.
+        jsonLd:
+          row.hide_from_search ||
+          toProfileVisibility(row.profile_visibility) !== "everyone"
+            ? undefined
+            : {
+                "@context": "https://schema.org",
+                "@type": "ProfilePage",
+                dateCreated: row.created_at,
+                mainEntity: {
+                  "@type": "Person",
+                  name: row.username,
+                  alternateName: row.username,
+                  url: `${SITE_ORIGIN}/user/${row.username}`,
+                  ...(row.avatar_url ? { image: row.avatar_url } : {}),
+                  ...(row.bio
+                    ? { description: truncateDescription(row.bio) }
+                    : {}),
+                },
+              },
       };
     },
 
@@ -360,6 +421,22 @@ export const createPagesService = (repos: Repos) => {
 
       return {
         body,
+        jsonLd: {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: row.name,
+          ...(row.description ? { description: row.description } : {}),
+          itemListOrder: row.ranked
+            ? "https://schema.org/ItemListOrderAscending"
+            : "https://schema.org/ItemListUnordered",
+          numberOfItems: listed.length,
+          itemListElement: listed.map((g, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            name: g.title,
+            url: `${SITE_ORIGIN}/game/${g.id}`,
+          })),
+        },
         title: pageTitle(`${row.name}, a list by ${row.owner_username}`),
         description: row.description
           ? truncateDescription(row.description)
@@ -464,6 +541,37 @@ export const createPagesService = (repos: Repos) => {
         // As with the game itself, a thread about an adult game says no more
         // and asks not to be listed.
         noindex: thread.game_has_sexual_content,
+        jsonLd: thread.game_has_sexual_content
+          ? undefined
+          : {
+              "@context": "https://schema.org",
+              "@type": "DiscussionForumPosting",
+              headline: thread.title,
+              url: `${SITE_ORIGIN}/community/thread/${thread.id}`,
+              datePublished: thread.created_at,
+              ...(text ? { text: truncateDescription(text, 500) } : {}),
+              ...(thread.author_username
+                ? {
+                    author: {
+                      "@type": "Person",
+                      name: thread.author_username,
+                      url: `${SITE_ORIGIN}/user/${thread.author_username}`,
+                    },
+                  }
+                : {}),
+              commentCount: messages.filter(
+                (m) => !m.is_opening && !m.deleted_at,
+              ).length,
+              ...(thread.game_title && thread.game_id
+                ? {
+                    about: {
+                      "@type": "VideoGame",
+                      name: thread.game_title,
+                      url: `${SITE_ORIGIN}/game/${thread.game_id}`,
+                    },
+                  }
+                : {}),
+            },
         body: thread.game_has_sexual_content
           ? undefined
           : threadBody(thread, messages),

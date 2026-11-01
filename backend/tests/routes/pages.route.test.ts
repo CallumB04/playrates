@@ -579,3 +579,68 @@ describe("list and Gaming 25 pages for readers that never run the app", () => {
     expect(body).not.toContain("Hidden One");
   });
 });
+
+describe("structured data", () => {
+  const jsonLd = (html: string) =>
+    [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)]
+      .map((m) => JSON.parse(m[1]!) as Record<string, unknown>)
+      .find((d) => d["@type"] !== "Organization" && d["@type"] !== "WebSite");
+
+  it("describes a game with its genres, makers and a trail", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        games: [
+          buildGame({
+            id: 1,
+            title: "Hades",
+            description: "Fight out of hell.",
+            developers: ["Supergiant Games"],
+            publishers: ["Supergiant Games"],
+          }),
+        ],
+      },
+    });
+
+    const data = jsonLd((await request(app).get("/game/1")).text)!;
+    const graph = data["@graph"] as Record<string, unknown>[];
+    const game = graph.find((d) => d["@type"] === "VideoGame")!;
+    expect(game).toMatchObject({
+      name: "Hades",
+      description: "Fight out of hell.",
+      author: [{ "@type": "Organization", name: "Supergiant Games" }],
+    });
+    expect(graph.find((d) => d["@type"] === "BreadcrumbList")).toBeDefined();
+  });
+
+  it("calls a thread a forum post, and a public profile a profile page", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        games: [buildGame({ id: 1, title: "Hades" })],
+        communityThreads: [buildThread({ id: 1, game_id: 1 })],
+      },
+    });
+
+    const thread = jsonLd(
+      (await request(app).get("/community/thread/1")).text,
+    )!;
+    expect(thread["@type"]).toBe("DiscussionForumPosting");
+    expect(thread.about).toMatchObject({ name: "Hades" });
+
+    const profile = jsonLd((await request(app).get("/user/devuser")).text)!;
+    expect(profile["@type"]).toBe("ProfilePage");
+  });
+
+  it("says nothing about a profile that isn't public", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        profiles: [buildProfile({ profile_visibility: "private" })],
+      },
+    });
+    expect(
+      jsonLd((await request(app).get("/user/devuser")).text),
+    ).toBeUndefined();
+  });
+});
