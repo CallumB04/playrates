@@ -73,4 +73,20 @@ describe("ListsView", () => {
         expect(await screen.findByText("No lists yet")).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: /New list/ })).toBeNull();
     });
+
+    it("offers its owner New list in the empty card, with no row above it", async () => {
+        serve([]);
+        render(true);
+
+        const card = (await screen.findByText("No lists yet")).closest(
+            "div"
+        )!.parentElement!;
+        expect(card).toHaveTextContent("New list");
+        expect(
+            screen.getAllByRole("button", { name: "New list" })
+        ).toHaveLength(1);
+        expect(
+            screen.queryByRole("radiogroup", { name: "Sort lists" })
+        ).toBeNull();
+    });
 });

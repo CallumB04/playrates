@@ -11,7 +11,7 @@ import { useUserLists } from "../../../hooks/queries/useLists";
 import { usePagination } from "../../../hooks/usePagination";
 import { listPath } from "../../../lib/profilePaths";
 import ListFoot from "../components/ListFoot";
-import ListEmpty from "../components/ListEmpty";
+import EmptyPlate from "../../../components/ui/EmptyPlate";
 import { usePageParam } from "../lib/usePageParam";
 
 export const LISTS_PER_PAGE = 12;
@@ -53,46 +53,51 @@ const ListsView = ({ username, isOwner, canSee }: ListsViewProps) => {
         setParams(updated);
     };
 
+    const loading = isLoading || !canSee;
+    // Nothing to sort with no lists, and the empty card offers New list
+    // itself: the row above it sat it lower than every other empty view.
+    const empty = !loading && lists.length === 0;
+    const newList = (
+        <Button onClick={() => setCreating(true)} className="w-full sm:w-auto">
+            <Plus size={15} aria-hidden />
+            New list
+        </Button>
+    );
+
     return (
         <section className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                {/* Nothing to sort with no lists. */}
-                {(isLoading || lists.length > 0) && (
-                    <SegmentedChoice
-                        label="Sort lists"
-                        segments={[
-                            { value: "new", label: "New" },
-                            { value: "popular", label: "Popular" },
-                        ]}
-                        value={sort}
-                        onChange={setSort}
-                    />
-                )}
-                {isOwner && (
-                    <Button
-                        onClick={() => setCreating(true)}
-                        className="w-full sm:w-auto"
-                    >
-                        <Plus size={15} aria-hidden />
-                        New list
-                    </Button>
-                )}
-            </div>
+            {!empty && (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    {lists.length > 0 && (
+                        <SegmentedChoice
+                            label="Sort lists"
+                            segments={[
+                                { value: "new", label: "New" },
+                                { value: "popular", label: "Popular" },
+                            ]}
+                            value={sort}
+                            onChange={setSort}
+                        />
+                    )}
+                    {isOwner && newList}
+                </div>
+            )}
 
-            {isLoading || !canSee ? (
+            {loading ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                     {Array.from({ length: 4 }, (_, i) => (
                         <Skeleton key={i} className="h-36 rounded-lg" />
                     ))}
                 </div>
-            ) : lists.length === 0 ? (
-                <ListEmpty
+            ) : empty ? (
+                <EmptyPlate
                     title="No lists yet"
                     body={
                         isOwner
                             ? "Make your first list, a top ten or whatever you like."
                             : undefined
                     }
+                    action={isOwner ? newList : undefined}
                 />
             ) : (
                 <ul className="grid gap-3 sm:grid-cols-2">
