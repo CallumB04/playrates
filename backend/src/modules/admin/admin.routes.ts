@@ -301,5 +301,16 @@ export const createAdminRouter = ({
     },
   );
 
+  router.get(
+    "/client-errors",
+    validate({ query: CursorQuerySchema }),
+    async (req, res) => {
+      const { before, limit } = req.valid!.query as z.infer<
+        typeof CursorQuerySchema
+      >;
+      res.json(await service.clientErrors(before, limit));
+    },
+  );
+
   return router;
 };

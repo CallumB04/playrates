@@ -34,6 +34,7 @@ import {
     sendTestPatchNote,
     fetchIgdbUsage,
     fetchServerErrors,
+    fetchClientErrors,
     importAdminGame,
     pullAdminGames,
     queryKeys,
@@ -283,6 +284,14 @@ export const useServerErrors = () =>
     useInfiniteQuery({
         queryKey: queryKeys.admin.errors,
         queryFn: ({ pageParam }) => fetchServerErrors(pageParam),
+        initialPageParam: undefined as number | undefined,
+        getNextPageParam: (last) => last.nextBefore ?? undefined,
+    });
+
+export const useClientErrors = () =>
+    useInfiniteQuery({
+        queryKey: queryKeys.admin.clientErrors,
+        queryFn: ({ pageParam }) => fetchClientErrors(pageParam),
         initialPageParam: undefined as number | undefined,
         getNextPageParam: (last) => last.nextBefore ?? undefined,
     });

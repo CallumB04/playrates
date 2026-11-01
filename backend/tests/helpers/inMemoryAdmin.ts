@@ -90,7 +90,7 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
 
   return {
     async pruneOldRows() {
-      return { serverErrors: 0, gameEvents: 0 };
+      return { serverErrors: 0, clientErrors: 0, gameEvents: 0 };
     },
     async ping() {},
 
@@ -302,6 +302,22 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
 
     async serverErrors(before, limit) {
       return page(state.serverErrors, before, limit).map((row) => ({
+        ...row,
+        username:
+          state.profiles.find((p) => p.id === row.user_id)?.username ?? null,
+      }));
+    },
+
+    async recordClientError(row) {
+      state.clientErrors.push({
+        ...row,
+        id: (state.clientErrors.at(-1)?.id ?? 0) + 1,
+        created_at: new Date().toISOString(),
+      });
+    },
+
+    async clientErrors(before, limit) {
+      return page(state.clientErrors, before, limit).map((row) => ({
         ...row,
         username:
           state.profiles.find((p) => p.id === row.user_id)?.username ?? null,

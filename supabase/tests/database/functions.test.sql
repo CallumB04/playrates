@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(8);
+select plan(11);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values ('b1000000-0000-4000-8000-000000000001', 'c@test.test', '{"username":"search_a"}');
@@ -36,9 +36,19 @@ select is((select count(*) from public.community_thread_search('100%'))::int, 0,
 insert into public.server_errors (status, code, method, path, message, created_at)
 values (500, 'internal_error', 'GET', '/old', 'old', now() - interval '100 days'),
        (500, 'internal_error', 'GET', '/new', 'new', now());
+insert into public.client_errors (message, path, created_at)
+values ('old', '/old', now() - interval '100 days'),
+       ('new', '/new', now());
 select public.prune_old_rows();
 select results_eq($$select path from server_errors where path in ('/old', '/new')$$,
     $$values ('/new')$$, 'pruning keeps the recent error');
+select results_eq($$select path from client_errors where path in ('/old', '/new')$$,
+    $$values ('/new')$$, 'pruning keeps the recent browser error');
+
+select ok(not has_table_privilege('anon', 'public.client_errors', 'insert'),
+    'anon cannot write browser errors directly');
+select ok(not has_table_privilege('authenticated', 'public.client_errors', 'select'),
+    'members cannot read browser errors');
 
 select ok(not has_function_privilege('anon', 'public.prune_old_rows(int)', 'execute'),
     'anon cannot prune');

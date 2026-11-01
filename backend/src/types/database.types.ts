@@ -370,6 +370,17 @@ export interface ServerErrorRow {
   created_at: string;
 }
 
+export interface ClientErrorRow {
+  id: number;
+  message: string;
+  stack: string | null;
+  path: string;
+  user_agent: string | null;
+  build: string | null;
+  user_id: string | null;
+  created_at: string;
+}
+
 export interface AnnouncementRow {
   id: number;
   tone: string;

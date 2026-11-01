@@ -14,6 +14,9 @@ import "@fontsource/permanent-marker/latin-400.css";
 import "./styles/theme.css";
 import App from "./App.tsx";
 import { AppProviders } from "./app/AppProviders.tsx";
+import { installErrorReporting } from "./lib/errorReporting.ts";
+
+installErrorReporting();
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>

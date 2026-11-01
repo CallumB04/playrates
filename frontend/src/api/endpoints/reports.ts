@@ -1,6 +1,7 @@
 import type {
     AdminReport,
     AdminReportsQuery,
+    ClientErrorReport,
     CreateReportInput,
     Paginated,
     ResolveReportInput,
@@ -9,6 +10,12 @@ import { api } from "../client";
 
 export const createReport = async (input: CreateReportInput): Promise<void> => {
     await api.post("/reports", input);
+};
+
+export const sendClientError = async (
+    report: ClientErrorReport
+): Promise<void> => {
+    await api.post("/client-errors", report);
 };
 
 export const fetchAdminReports = async (

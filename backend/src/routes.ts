@@ -69,6 +69,7 @@ import { createGenresRouter } from "./modules/genres/genres.js";
 import { createStatsRouter } from "./modules/stats/stats.js";
 import { createAdminService } from "./modules/admin/admin.service.js";
 import { createAdminRouter } from "./modules/admin/admin.routes.js";
+import { createClientErrorsRouter } from "./modules/admin/clientErrors.routes.js";
 import { requireAdmin } from "./middleware/requireAdmin.js";
 import { createReportsService } from "./modules/reports/reports.service.js";
 import {
@@ -262,6 +263,11 @@ export const buildRoutes = ({
   );
 
   router.use("/email", createEmailRouter({ service: emails }));
+
+  router.use(
+    "/client-errors",
+    createClientErrorsRouter({ repo: repos.admin, optionalAuth }),
+  );
 
   router.use(
     "/reports",

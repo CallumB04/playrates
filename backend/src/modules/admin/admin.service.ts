@@ -43,6 +43,7 @@ import {
   toIgdbUsage,
   toPatchNote,
   toServerError,
+  toClientError,
   toUserSummary,
   toAdminProgress,
 } from "./admin.mapper.js";
@@ -399,6 +400,11 @@ export const createAdminService = (deps: {
     async serverErrors(before: number | undefined, limit: number) {
       const rows = await repo.serverErrors(before, limit);
       return toCursorPage(rows, limit, toServerError);
+    },
+
+    async clientErrors(before: number | undefined, limit: number) {
+      const rows = await repo.clientErrors(before, limit);
+      return toCursorPage(rows, limit, toClientError);
     },
   };
 };

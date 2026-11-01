@@ -18,6 +18,7 @@ import type {
     AdminUserDetail,
     AdminUserSummary,
     Announcement,
+    ClientErrorEntry,
     CursorPage,
     EmailAudience,
     EmailStats,
@@ -196,6 +197,15 @@ export const retractAnnouncement = async (id: number): Promise<Announcement> =>
 
 export const fetchAdminHealth = async (): Promise<AdminHealth> =>
     (await api.get<AdminHealth>("/admin/health")).data;
+
+export const fetchClientErrors = async (
+    before?: number
+): Promise<CursorPage<ClientErrorEntry>> =>
+    (
+        await api.get<CursorPage<ClientErrorEntry>>("/admin/client-errors", {
+            params: compactParams({ before, limit: 30 }),
+        })
+    ).data;
 
 export const fetchServerErrors = async (
     before?: number

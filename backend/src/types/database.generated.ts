@@ -89,6 +89,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"client_errors": {
+                  Row: {
+                    "build": string | null,"created_at": string,"id": number,"message": string,"path": string,"stack": string | null,"user_agent": string | null,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "build"?: string | null,"created_at"?: string,"id"?: never,"message": string,"path": string,"stack"?: string | null,"user_agent"?: string | null,"user_id"?: string | null
+                  }
+                  Update: {
+                    "build"?: string | null,"created_at"?: string,"id"?: never,"message"?: string,"path"?: string,"stack"?: string | null,"user_agent"?: string | null,"user_id"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"community_message_votes": {
                   Row: {
                     "created_at": string,"message_id": number,"reaction": string,"user_id": string

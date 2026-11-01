@@ -20,6 +20,7 @@ import type {
   GameEventRow,
   IgdbUsageDayRow,
   ServerErrorRow,
+  ClientErrorRow,
   ContentReportRow,
   CommunityMessageRow,
   CommunityThreadRow,
@@ -113,6 +114,7 @@ export interface SeedData {
   gameEvents?: GameEventRow[];
   igdbUsage?: IgdbUsageDayRow[];
   serverErrors?: ServerErrorRow[];
+  clientErrors?: ClientErrorRow[];
   contentReports?: ContentReportRow[];
   favouriteGames?: { user_id: string; game_id: number; position: number }[];
   wishlistRanks?: { user_id: string; game_id: number; position: number }[];
@@ -153,6 +155,7 @@ export interface InMemoryState {
   gameEvents: GameEventRow[];
   igdbUsage: IgdbUsageDayRow[];
   serverErrors: ServerErrorRow[];
+  clientErrors: ClientErrorRow[];
   announcements: AnnouncementRow[];
   contentReports: ContentReportRow[];
   favouriteGames: { user_id: string; game_id: number; position: number }[];
@@ -250,6 +253,7 @@ export const createInMemoryRepos = (
     gameEvents: [...(seed.gameEvents ?? [])],
     igdbUsage: [...(seed.igdbUsage ?? [])],
     serverErrors: [...(seed.serverErrors ?? [])],
+    clientErrors: [...(seed.clientErrors ?? [])],
     announcements: [],
     contentReports: [...(seed.contentReports ?? [])],
     favouriteGames: [...(seed.favouriteGames ?? [])],
@@ -609,7 +613,7 @@ export const createInMemoryRepos = (
         for (const e of state.gameEvents) {
           if (e.actor_id === id) e.actor_id = null;
         }
-        for (const e of state.serverErrors) {
+        for (const e of [...state.serverErrors, ...state.clientErrors]) {
           if (e.user_id === id) e.user_id = null;
         }
       },

@@ -25,6 +25,7 @@ import {
   type AnnouncementTone,
   type IgdbUsage,
   type ServerErrorEntry,
+  type ClientErrorEntry,
 } from "@playrates/shared";
 import type {
   AdminActivityFeedRow,
@@ -40,6 +41,7 @@ import type {
   AdminProgressRow,
   PatchNoteEntryRow,
   ServerErrorRowWithUser,
+  ClientErrorRowWithUser,
 } from "./admin.repository.js";
 
 const DAY_MS = 86_400_000;
@@ -343,6 +345,20 @@ export const toServerError = (row: ServerErrorRowWithUser): ServerErrorEntry => 
   userId: row.user_id,
   username: row.username,
   stack: row.stack,
+  createdAt: row.created_at,
+});
+
+export const toClientError = (
+  row: ClientErrorRowWithUser,
+): ClientErrorEntry => ({
+  id: row.id,
+  message: row.message,
+  stack: row.stack,
+  path: row.path,
+  userAgent: row.user_agent,
+  build: row.build,
+  userId: row.user_id,
+  username: row.username,
   createdAt: row.created_at,
 });
 

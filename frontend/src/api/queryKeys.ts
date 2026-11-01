@@ -174,6 +174,7 @@ export const queryKeys = {
         emailStats: ["admin", "email", "stats"] as const,
         health: ["admin", "health"] as const,
         errors: ["admin", "errors"] as const,
+        clientErrors: ["admin", "client-errors"] as const,
         reports: (status: string, page: number) =>
             ["admin", "reports", status, page] as const,
     },

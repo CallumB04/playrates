@@ -833,7 +833,7 @@ describe("nudges", () => {
     expect((await cron(app, "test-cron-secret")).body).toEqual({
       members: 4,
       raised: 1,
-      pruned: { serverErrors: 0, gameEvents: 0 },
+      pruned: { serverErrors: 0, clientErrors: 0, gameEvents: 0 },
     });
     expect((await cron(app, "test-cron-secret")).body.raised).toBe(0);
 

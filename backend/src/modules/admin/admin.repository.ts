@@ -33,7 +33,12 @@ import type {
   AnnouncementRow,
   IgdbUsageDayRow,
   ServerErrorRow,
+  ClientErrorRow,
 } from "../../types/database.types.js";
+
+export interface ClientErrorRowWithUser extends ClientErrorRow {
+  username: string | null;
+}
 
 export interface ServerErrorRowWithUser extends ServerErrorRow {
   username: string | null;
@@ -75,10 +80,16 @@ export interface AdminProgressRow {
   reveal_waiting: number;
 }
 
+export interface PrunedRows {
+  serverErrors: number;
+  clientErrors: number;
+  gameEvents: number;
+}
+
 export interface AdminRepository {
   ping(): Promise<void>;
   /** Deletes a batch of old error and game-event rows; how many of each. */
-  pruneOldRows(): Promise<{ serverErrors: number; gameEvents: number }>;
+  pruneOldRows(): Promise<PrunedRows>;
   totals(): Promise<AdminTotals>;
   progress(): Promise<AdminProgressRow>;
   /** Inclusive dates, YYYY-MM-DD. */
@@ -121,6 +132,13 @@ export interface AdminRepository {
   serverErrorStats(
     since: string,
   ): Promise<{ count: number; lastAt: string | null }>;
+  recordClientError(
+    row: Omit<ClientErrorRow, "id" | "created_at">,
+  ): Promise<void>;
+  clientErrors(
+    before: number | undefined,
+    limit: number,
+  ): Promise<ClientErrorRowWithUser[]>;
 
   listAnnouncements(): Promise<AnnouncementCardRow[]>;
   findAnnouncement(id: number): Promise<AnnouncementCardRow | null>;
@@ -156,11 +174,50 @@ const USER_SORT: Record<AdminUsersQuery["sort"], keyof AdminUserDirectoryRow> =
     active: "active_day_count",
   };
 
+/** Newest first, with the username of whoever hit each one. */
+const errorLog = async <Row extends { id: number; user_id: string | null }>(
+  db: Db,
+  table: "server_errors" | "client_errors",
+  before: number | undefined,
+  limit: number,
+): Promise<(Row & { username: string | null })[]> => {
+  let builder = db
+    .from(table)
+    .select("*")
+    .order("id", { ascending: false })
+    .limit(limit + 1);
+  if (before) builder = builder.lt("id", before);
+
+  const { data, error } = await builder;
+  if (error) throw error;
+  const rows = (data ?? []) as Row[];
+
+  // No foreign key to embed through: the log outlives the accounts in it.
+  const ids = [
+    ...new Set(rows.map((r) => r.user_id).filter(Boolean)),
+  ] as string[];
+  const names = new Map<string, string>();
+  if (ids.length > 0) {
+    const { data: profiles, error: profileError } = await db
+      .from("profiles")
+      .select("id, username")
+      .in("id", ids);
+    if (profileError) throw profileError;
+    for (const p of profiles ?? [])
+      names.set(p.id as string, p.username as string);
+  }
+
+  return rows.map((row) => ({
+    ...row,
+    username: row.user_id ? (names.get(row.user_id) ?? null) : null,
+  }));
+};
+
 export const createAdminRepository = (db: Db): AdminRepository => ({
   async pruneOldRows() {
     const { data, error } = await db.rpc("prune_old_rows");
     if (error) throw error;
-    return data as { serverErrors: number; gameEvents: number };
+    return data as PrunedRows;
   },
 
   async ping() {
@@ -314,36 +371,16 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
   },
 
   async serverErrors(before, limit) {
-    let builder = db
-      .from("server_errors")
-      .select("*")
-      .order("id", { ascending: false })
-      .limit(limit + 1);
-    if (before) builder = builder.lt("id", before);
+    return errorLog<ServerErrorRow>(db, "server_errors", before, limit);
+  },
 
-    const { data, error } = await builder;
+  async recordClientError(row) {
+    const { error } = await db.from("client_errors").insert(row);
     if (error) throw error;
-    const rows = (data ?? []) as ServerErrorRow[];
+  },
 
-    // No foreign key to embed through: the log outlives the accounts in it.
-    const ids = [
-      ...new Set(rows.map((r) => r.user_id).filter(Boolean)),
-    ] as string[];
-    const names = new Map<string, string>();
-    if (ids.length > 0) {
-      const { data: profiles, error: profileError } = await db
-        .from("profiles")
-        .select("id, username")
-        .in("id", ids);
-      if (profileError) throw profileError;
-      for (const p of profiles ?? [])
-        names.set(p.id as string, p.username as string);
-    }
-
-    return rows.map((row) => ({
-      ...row,
-      username: row.user_id ? (names.get(row.user_id) ?? null) : null,
-    }));
+  async clientErrors(before, limit) {
+    return errorLog<ClientErrorRow>(db, "client_errors", before, limit);
   },
 
   async serverErrorStats(since) {
