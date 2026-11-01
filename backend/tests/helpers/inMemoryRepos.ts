@@ -721,6 +721,12 @@ export const createInMemoryRepos = (
             (g) => g.release_date !== null && g.release_date <= today,
           );
         }
+        if (query.sort === "upcoming") {
+          const today = new Date().toISOString().slice(0, 10);
+          rows = rows.filter(
+            (g) => g.release_date !== null && g.release_date > today,
+          );
+        }
 
         // Mirrors the SQL sort map, tiebreaker included.
         const by = {
@@ -732,6 +738,8 @@ export const createInMemoryRepos = (
             b.rating_count - a.rating_count,
           critic: (a: GameRow, b: GameRow) =>
             (b.critic_score ?? -1) - (a.critic_score ?? -1),
+          upcoming: (a: GameRow, b: GameRow) =>
+            (a.release_date ?? "").localeCompare(b.release_date ?? ""),
           // IGDB's rating count is the hidden second key, not a sort.
           // The trending set keeps IGDB's order, then the usual one.
           logged: (a: GameRow, b: GameRow) =>

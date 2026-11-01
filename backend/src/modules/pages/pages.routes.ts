@@ -150,6 +150,39 @@ export const createPagesRouter = ({
     }),
   );
 
+  // Pages of games chosen one way: a year's best, a genre, a platform,
+  // what's coming, and games like one game.
+  router.get(
+    "/games/best/:year",
+    render(async (req) => {
+      const year = numericParam(req.params.year);
+      return year === null ? null : service.hub({ kind: "year", year });
+    }),
+  );
+  router.get(
+    "/games/genre/:slug",
+    render((req) =>
+      service.hub({ kind: "genre", slug: String(req.params.slug) }),
+    ),
+  );
+  router.get(
+    "/games/platform/:slug",
+    render((req) =>
+      service.hub({ kind: "platform", slug: String(req.params.slug) }),
+    ),
+  );
+  router.get(
+    "/games/upcoming",
+    render(() => service.hub({ kind: "upcoming" })),
+  );
+  router.get(
+    "/game/:id/similar",
+    render(async (req) => {
+      const gameId = numericParam(req.params.id);
+      return gameId === null ? null : service.hub({ kind: "similar", gameId });
+    }),
+  );
+
   router.get(
     "/community/thread/:id",
     render(async (req) => {
@@ -217,9 +250,14 @@ export const createPagesRouter = ({
         "/sitemaps/pages.xml",
         "/sitemaps/threads.xml",
         "/sitemaps/people.xml",
+        "/sitemaps/hubs.xml",
         ...gamePages(games),
       ]),
     );
+  });
+
+  router.get("/sitemaps/hubs.xml", async (_req, res) => {
+    xml(res, urlSet(await service.hubPaths()));
   });
 
   router.get("/sitemaps/people.xml", async (_req, res) => {
@@ -254,7 +292,10 @@ export const createPagesRouter = ({
   /* Last: any other address is no page of ours. The API's paths are left
      out of the pattern itself, not turned away inside it: a route that
      matches them would answer their CORS preflights for the API. */
-  router.get(NOT_A_PAGE_OF_OURS, render(async () => null));
+  router.get(
+    NOT_A_PAGE_OF_OURS,
+    render(async () => null),
+  );
 
   return router;
 };

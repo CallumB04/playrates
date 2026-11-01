@@ -292,7 +292,8 @@ export const createGamesRepository = (db: Db): GamesRepository => {
           !excludeLoggedForUser &&
           !query.releasedAfter &&
           !query.releasedBefore &&
-          query.sort !== "released";
+          query.sort !== "released" &&
+        query.sort !== "upcoming";
         const counted = query.count !== false && !unfiltered;
 
         let builder = db
@@ -352,6 +353,11 @@ export const createGamesRepository = (db: Db): GamesRepository => {
             break;
           case "released":
             builder = builder.order("release_date", desc);
+            break;
+          case "upcoming":
+            builder = builder
+              .gt("release_date", today())
+              .order("release_date", { ascending: true });
             break;
           case "rating":
             /* Our ratings, not IGDB's. The count is a second key so one lone

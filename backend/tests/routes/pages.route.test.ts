@@ -7,6 +7,7 @@ import {
   buildGame,
   buildMessage,
   buildGameLog,
+  buildPlatform,
   buildProfile,
   buildReview,
   buildThread,
@@ -514,6 +515,9 @@ describe("every other page", () => {
         .replace("/:view?", "/games")
         .replace(":gameID", "1")
         .replace(":threadId", "1")
+        .replace(":year", "2024")
+        .replace("/genre/:slug", "/genre/indie")
+        .replace("/platform/:slug", `/platform/${buildPlatform().slug}`)
         .replace("/*", "/anything");
 
     const checked = paths.filter(
@@ -655,5 +659,76 @@ describe("structured data", () => {
     expect(
       jsonLd((await request(app).get("/user/devuser")).text),
     ).toBeUndefined();
+  });
+});
+
+describe("hub pages", () => {
+  const hubSeed = () => ({
+    ...baseSeed(),
+    games: [
+      buildGame({
+        id: 1,
+        title: "Outer Wilds",
+        release_date: "2019-05-28",
+        critic_score: 85,
+      }),
+      buildGame({
+        id: 2,
+        title: "Disco Elysium",
+        release_date: "2019-10-15",
+        critic_score: 91,
+      }),
+      buildGame({
+        id: 3,
+        title: "Hidden One",
+        release_date: "2019-06-01",
+        has_sexual_content: true,
+      }),
+    ],
+  });
+
+  it("lists a year's best, best reviewed first, adult games left out", async () => {
+    const { app } = buildTestApp({ seed: hubSeed() });
+
+    const html = (await request(app).get("/games/best/2019")).text;
+    const body = html.slice(html.indexOf('<div id="root">'));
+
+    expect(html).toContain("<title>Best games of 2019 / PlayRates</title>");
+    expect(body.indexOf("Disco Elysium")).toBeLessThan(
+      body.indexOf("Outer Wilds"),
+    );
+    expect(body).not.toContain("Hidden One");
+  });
+
+  it("404s a genre, platform or year the site doesn't have", async () => {
+    const { app } = buildTestApp({ seed: hubSeed() });
+
+    for (const path of [
+      "/games/genre/nope",
+      "/games/platform/nope",
+      "/games/best/1900",
+    ]) {
+      expect((await request(app).get(path)).status, path).toBe(404);
+    }
+  });
+
+  it("asks search engines to leave out a hub with nothing in it", async () => {
+    const { app } = buildTestApp({ seed: hubSeed() });
+
+    const html = (await request(app).get("/games/upcoming")).text;
+
+    expect(html).toContain('<meta name="robots" content="noindex" />');
+  });
+
+  it("lists the hubs in their own sitemap", async () => {
+    const { app } = buildTestApp({ seed: hubSeed(), production: true });
+
+    const hubs = (await request(app).get("/sitemaps/hubs.xml")).text;
+
+    expect(hubs).toContain("<loc>https://playrates.app/games/upcoming</loc>");
+    expect(hubs).toContain("<loc>https://playrates.app/games/best/2019</loc>");
+    expect(hubs).toContain(
+      "<loc>https://playrates.app/games/genre/indie</loc>",
+    );
   });
 });

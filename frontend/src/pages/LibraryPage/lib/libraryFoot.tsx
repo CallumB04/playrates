@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
 import type { Game, GameSort } from "@playrates/shared";
 import type { GameLogSummary } from "@playrates/shared";
-import { formatLogCount, releaseYear } from "../../../lib/format";
+import {
+    formatLogCount,
+    formatReleaseShort,
+    releaseYear,
+} from "../../../lib/format";
 import CriticScore from "../../../lib/criticScore";
 
 /** What a tile prints under its cover, the way a profile shelf does. A rating
@@ -33,6 +37,8 @@ export const libraryFoot = (
             return { value: <CriticScore score={game.criticScore} /> };
         case "released":
             return { value: releaseYear(game.releaseDate) };
+        case "upcoming":
+            return { value: formatReleaseShort(game.releaseDate) };
         case "title":
             return log
                 ? { rating: log.rating }

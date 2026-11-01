@@ -13,6 +13,12 @@ import {
   toPlainText,
   truncateDescription,
   type RichTextDoc,
+  HUB_FIRST_YEAR,
+  hubFilters,
+  hubPath,
+  hubWords,
+  isHubYear,
+  type Hub,
 } from "@playrates/shared";
 import type { Repositories } from "../../repositories.js";
 import type { GenreRow } from "../../types/database.types.js";
@@ -38,6 +44,16 @@ type Repos = Pick<
   | "lists"
   | "gaming25"
 >;
+
+/** What a hub page names in its HTML. */
+const HUB_GAMES_IN_BODY = 24;
+
+/** A hub as its address asks for it, before its names are looked up. */
+export type HubRequest =
+  | { kind: "year"; year: number }
+  | { kind: "genre" | "platform"; slug: string }
+  | { kind: "upcoming" }
+  | { kind: "similar"; gameId: number };
 
 /** How many reviews or replies a page carries in its HTML. */
 const REVIEWS_IN_BODY = 5;
@@ -584,6 +600,115 @@ export const createPagesService = (repos: Repos) => {
           ? undefined
           : threadBody(thread, messages),
       };
+    },
+
+    /** A page of games chosen one way. Null for a genre, platform, year
+     *  or game the site doesn't have. */
+    async hub(asked: HubRequest): Promise<HeadMeta | null> {
+      let hub: Hub;
+      let rows: { id: number; title: string; release_date: string | null }[];
+      if (asked.kind === "similar") {
+        const game = await repos.games.findById(asked.gameId);
+        if (!game || game.has_sexual_content) return null;
+        hub = { kind: "similar", gameId: game.id, title: game.title };
+        rows = await repos.games.listByIgdbIds(
+          game.similar_igdb_ids ?? [],
+          false,
+        );
+      } else {
+        let slice: Exclude<Hub, { kind: "similar" }>;
+        if (asked.kind === "year") {
+          if (!isHubYear(asked.year)) return null;
+          slice = asked;
+        } else if (asked.kind === "upcoming") {
+          slice = asked;
+        } else {
+          const known =
+            asked.kind === "genre"
+              ? (await genreList()).find((g) => g.slug === asked.slug)?.name
+              : (await platformList()).find((p) => p.slug === asked.slug)
+                  ?.display_name;
+          if (!known) return null;
+          slice = { kind: asked.kind, slug: asked.slug, name: known };
+        }
+        hub = slice;
+        const filters = hubFilters(slice);
+        ({ rows } = await repos.games.list(
+          {
+            page: 1,
+            limit: HUB_GAMES_IN_BODY,
+            excludeLogged: false,
+            count: false,
+            ...filters,
+          },
+          0,
+          HUB_GAMES_IN_BODY - 1,
+          undefined,
+          false,
+        ));
+      }
+
+      const words = hubWords(hub);
+      const path = hubPath(hub);
+      return {
+        title: pageTitle(words.title),
+        description: words.description,
+        path,
+        image: DEFAULT_IMAGE,
+        card: "summary",
+        // A game with nothing like it is a page with nothing on it.
+        noindex: rows.length === 0,
+        jsonLd: {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: words.heading,
+          itemListElement: rows.map((g, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            name: g.title,
+            url: `${SITE_ORIGIN}/game/${g.id}`,
+          })),
+        },
+        body: {
+          heading: words.heading,
+          lead: words.lead,
+          sections: [
+            {
+              heading: "The games",
+              items: rows.map((g) => ({
+                title: g.title,
+                meta: g.release_date ? g.release_date.slice(0, 10) : undefined,
+              })),
+            },
+          ],
+          links: [{ href: "/library", label: "Browse the library" }],
+        },
+      };
+    },
+
+    /** Every hub worth a search engine's visit: each year's best, each
+     *  genre and platform, and what's coming. */
+    async hubPaths(): Promise<{ path: string }[]> {
+      const [genres, platforms] = await Promise.all([
+        genreList(),
+        platformList(),
+      ]);
+      const thisYear = new Date().getUTCFullYear();
+      const years = Array.from(
+        { length: thisYear - HUB_FIRST_YEAR + 1 },
+        (_, i) => thisYear - i,
+      );
+      return [
+        { kind: "upcoming" } as const,
+        ...years.map((year) => ({ kind: "year", year }) as const),
+        ...genres.map(
+          (g) => ({ kind: "genre", slug: g.slug, name: g.name }) as const,
+        ),
+        ...platforms.map(
+          (p) =>
+            ({ kind: "platform", slug: p.slug, name: p.display_name }) as const,
+        ),
+      ].map((hub) => ({ path: hubPath(hub) }));
     },
   };
 };

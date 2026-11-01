@@ -38,6 +38,7 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage"));
 const AdminGate = lazy(() => import("./pages/admin/AdminGate"));
+const HubPage = lazy(() => import("./pages/HubPage/HubPage"));
 
 /** Layout shell and route table. State lives in the providers. */
 
@@ -93,6 +94,26 @@ function App() {
                             <Route
                                 path="/game/:gameID"
                                 element={<GamePage />}
+                            />
+                            <Route
+                                path="/game/:gameID/similar"
+                                element={<HubPage kind="similar" />}
+                            />
+                            <Route
+                                path="/games/best/:year"
+                                element={<HubPage kind="year" />}
+                            />
+                            <Route
+                                path="/games/genre/:slug"
+                                element={<HubPage kind="genre" />}
+                            />
+                            <Route
+                                path="/games/platform/:slug"
+                                element={<HubPage kind="platform" />}
+                            />
+                            <Route
+                                path="/games/upcoming"
+                                element={<HubPage kind="upcoming" />}
                             />
                             <Route
                                 path="/community"

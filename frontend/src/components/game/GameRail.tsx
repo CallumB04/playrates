@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Game, Platform } from "@playrates/shared";
@@ -9,6 +10,8 @@ import { cn } from "../../lib/cn";
 
 interface RailProps {
     title: string;
+    /** Where the title leads, when the rail is a taste of a page. */
+    titleTo?: string;
     /** Only when it says something the title doesn't. */
     note?: string;
     games: Game[];
@@ -35,6 +38,7 @@ const ARROW =
 /** One shelf of covers. A real overflow row, not a grid that wraps. */
 const Rail = ({
     title,
+    titleTo,
     note,
     games,
     platforms,
@@ -82,7 +86,16 @@ const Rail = ({
             <header className="mb-4 flex items-baseline justify-between gap-4">
                 <div className="flex items-baseline gap-3">
                     <h2 className="font-display text-section text-content">
-                        {title}
+                        {titleTo ? (
+                            <Link
+                                to={titleTo}
+                                className="hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                            >
+                                {title}
+                            </Link>
+                        ) : (
+                            title
+                        )}
                     </h2>
                     {note && (
                         <span className="hidden text-label text-content-muted sm:inline">
