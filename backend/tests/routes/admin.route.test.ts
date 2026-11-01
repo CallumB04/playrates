@@ -12,13 +12,13 @@ import {
 } from "../helpers/buildTestApp.js";
 import {
   baseSeed,
+  buildExternalGame,
   buildGame,
   buildMessage,
   buildProfile,
   buildThread,
 } from "../helpers/fixtures.js";
 import type {
-  ExternalGame,
   GamePage,
   GamesProvider,
 } from "../../src/providers/games/GamesProvider.js";
@@ -80,30 +80,7 @@ const seed = () => {
   };
 };
 
-const external = (id: number, title = `Game ${id}`): ExternalGame => ({
-  externalId: id,
-  slug: `game-${id}`,
-  title,
-  description: "",
-  coverUrl: null,
-  boxArtUrl: null,
-  bannerUrl: null,
-  releaseDate: "2026-09-20",
-  platformSlugs: [],
-  systemSlugs: [],
-  genres: [],
-  developers: [],
-  publishers: [],
-  website: null,
-  esrbRating: null,
-  hasSexualContent: false,
-  criticScore: null,
-  igdbRatingCount: null,
-  similarIds: [],
-  series: null,
-  altCovers: [],
-  altNames: [],
-});
+const external = buildExternalGame;
 
 const stubProvider = (overrides: Partial<GamesProvider> = {}): GamesProvider => ({
   name: "stub",
@@ -114,6 +91,8 @@ const stubProvider = (overrides: Partial<GamesProvider> = {}): GamesProvider => 
   listByDate: vi.fn(async () => ({ games: [], total: 0, hasNext: false })),
   trendingIds: vi.fn(async () => []),
   backdropsOf: vi.fn(async () => []),
+  fromSteam: vi.fn(async () => new Map()),
+  getByIds: vi.fn(async () => []),
   ...overrides,
 });
 

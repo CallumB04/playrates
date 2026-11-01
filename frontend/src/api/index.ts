@@ -14,3 +14,4 @@ export * from "./endpoints/community";
 export * from "./endpoints/admin";
 export * from "./endpoints/reports";
 export * from "./endpoints/email";
+export * from "./endpoints/steam";

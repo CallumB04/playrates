@@ -17,6 +17,7 @@ const SELECT_WITH_GAME = "*, game:games(*, game_platforms(platform_slug))";
 
 /** Postgres' unique_violation. */
 const UNIQUE_VIOLATION = "23505";
+const FOREIGN_KEY_VIOLATION = "23503";
 
 // PostgREST stops at 1000 rows a request; a long-time user can pass that.
 const PAGE = 1000;
@@ -115,6 +116,11 @@ export interface GameLogsRepository {
     gameId: number,
     patch: Partial<GameLogRow>,
   ): Promise<GameLogRowWithGame>;
+  /** Many new logs in one statement, as an import makes them. How many. */
+  createMany(
+    userId: string,
+    logs: { gameId: number; patch: Partial<GameLogRow> }[],
+  ): Promise<number>;
   update(id: number, patch: Partial<GameLogRow>): Promise<GameLogRowWithGame>;
   remove(id: number): Promise<void>;
   count(): Promise<number>;
@@ -311,6 +317,24 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
     if (error?.code === UNIQUE_VIOLATION) throw platformTaken();
     if (error) throw error;
     return data as GameLogRowWithGame;
+  },
+
+  async createMany(userId, logs) {
+    if (logs.length === 0) return 0;
+    const { error, count } = await db.from("game_logs").insert(
+      logs.map(({ gameId, patch }) => ({
+        ...patch,
+        user_id: userId,
+        game_id: gameId,
+      })),
+      { count: "exact" },
+    );
+    if (error?.code === UNIQUE_VIOLATION) throw platformTaken();
+    if (error?.code === FOREIGN_KEY_VIOLATION) {
+      throw AppError.validation("Some of those games aren't in the catalogue");
+    }
+    if (error) throw error;
+    return count ?? logs.length;
   },
 
   async update(id, patch) {

@@ -21,6 +21,7 @@ import type { CommunityImageStore } from "./config/communityImageStore.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
 import type { EmailDeps } from "./config/email.js";
 import type { PushSender } from "./config/push.js";
+import type { SteamClient } from "./providers/steam.js";
 import { createPagesRouter } from "./modules/pages/pages.routes.js";
 import { createPagesService } from "./modules/pages/pages.service.js";
 import {
@@ -41,6 +42,8 @@ export interface AppDeps {
   logger?: Logger;
   /** Web Push, where VAPID keys are set. */
   push?: PushSender | null;
+  /** Steam's Web API, where a key is set. */
+  steam?: SteamClient | null;
   /** Where 5xx responses are recorded for the admin dashboard. */
   errorSink?: ErrorSink;
   /** The built index.html that rendered pages start from. */
@@ -58,6 +61,7 @@ export const buildApp = ({
   communityImages,
   email,
   push = null,
+  steam = null,
   verify,
   logger = createLogger(),
   errorSink = noopErrorSink,
@@ -136,6 +140,7 @@ export const buildApp = ({
       communityImages,
       email,
       push,
+      steam,
       logger,
       alerts,
       requireAuth: makeRequireAuth(verify),

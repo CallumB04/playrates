@@ -14,6 +14,7 @@ import { igdbFromEnv } from "./config/igdb.js";
 import { createServerErrorSink } from "./config/errorSink.js";
 import { emailFromEnv } from "./config/email.js";
 import { pushFromEnv } from "./config/push.js";
+import { createSteamClient } from "./providers/steam.js";
 
 export interface ServerApp {
   app: Express;
@@ -52,6 +53,9 @@ export const createServerApp = (): ServerApp => {
       communityImages: createCommunityImageStore(db),
       email: emailFromEnv(config, logger),
       push: pushFromEnv(config),
+      steam: config.STEAM_API_KEY
+        ? createSteamClient(config.STEAM_API_KEY)
+        : null,
       verify: verifySupabaseJwt,
       logger,
       errorSink: createServerErrorSink(db),

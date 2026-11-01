@@ -10,6 +10,7 @@ import {
   pickBackdrops,
   pickBanner,
   pickSeries,
+  STEAM_SOURCE,
   toExternalGame,
   type IgdbGame,
 } from "./igdb.mapper.js";
@@ -401,6 +402,46 @@ export const createIgdbProvider = (
         `fields game_id; where popularity_type = ${STEAM_PEAK_PLAYERS}; sort value desc; limit ${Math.min(limit, MAX_LIMIT)};`,
       );
       return played.map((p) => p.game_id);
+    },
+
+    async fromSteam(appids) {
+      const found = new Map<number, number>();
+      for (let i = 0; i < appids.length; i += MAX_LIMIT) {
+        const uids = appids
+          .slice(i, i + MAX_LIMIT)
+          .map((id) => `"${Math.trunc(id)}"`)
+          .join(",");
+        const rows = await query<{ game?: number; uid?: string }[]>(
+          "external_games",
+          `fields game,uid; where external_game_source = ${STEAM_SOURCE} & uid = (${uids}); limit ${MAX_LIMIT};`,
+        );
+        for (const row of rows) {
+          const appid = Number(row.uid);
+          // A Steam app can be listed against more than one IGDB game
+          // (a bundle, a remaster); the first is kept.
+          if (row.game && Number.isFinite(appid) && !found.has(appid)) {
+            found.set(appid, row.game);
+          }
+        }
+      }
+      return found;
+    },
+
+    async getByIds(externalIds) {
+      const all: IgdbGame[] = [];
+      for (let i = 0; i < externalIds.length; i += MAX_LIMIT) {
+        const ids = externalIds
+          .slice(i, i + MAX_LIMIT)
+          .map((id) => Math.trunc(id))
+          .join(",");
+        all.push(
+          ...(await query<IgdbGame[]>(
+            "games",
+            `fields ${GAME_FIELDS}; where id = (${ids}); limit ${MAX_LIMIT};`,
+          )),
+        );
+      }
+      return withEditions(all);
     },
 
     async seriesOf(igdbIds) {

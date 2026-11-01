@@ -55,7 +55,7 @@ export const igdbImage = (imageId: string, size: string): string =>
 
 const EROTIC_THEME = 42;
 const OFFICIAL_WEBSITE = 1;
-const STEAM_SOURCE = 1;
+export const STEAM_SOURCE = 1;
 const ESRB = 1;
 
 /** ESRB's short forms, as the game page has always written them. */

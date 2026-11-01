@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+    lazy,
+    Suspense,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+    type ReactNode,
+} from "react";
 import {
     Lock,
     Mail,
@@ -12,7 +20,7 @@ import {
     UserRound,
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
 import { useAccountForm } from "../contexts/AccountFormContext";
 import { useNotify } from "../contexts/NotificationContext";
@@ -22,7 +30,7 @@ import { useUserStats } from "../hooks/queries/useGameLogs";
 import { useUserReviews } from "../hooks/queries/useReviews";
 import { useUserFriends } from "../hooks/queries/useFriends";
 import { usePageMeta } from "../hooks/usePageMeta";
-import { deleteMyAccount, fetchMyData } from "../api";
+import { deleteMyAccount, fetchMyData, fetchSteamAvailable } from "../api";
 import { ApiError } from "../api/client";
 import { signedInRecently } from "../lib/recentSignIn";
 import { saveFile } from "../lib/saveFile";
@@ -56,6 +64,10 @@ import SegmentedChoice from "../components/ui/SegmentedChoice";
 import { effectiveTimeZone, formatCount, timeZones } from "../lib/format";
 import { profilePath } from "../lib/profilePaths";
 import { cn } from "../lib/cn";
+
+const SteamImportModal = lazy(
+    () => import("../components/steam/SteamImportModal")
+);
 
 /* Only what can be used today. Sections and rows that were all "coming
    soon" were choices that led nowhere. The profile itself is edited on the
@@ -181,6 +193,16 @@ const SettingsPage = () => {
     const [confirming, setConfirming] = useState<ConfirmPurpose | null>(null);
     const [confirmingAdult, setConfirmingAdult] = useState(false);
     const [params, setParams] = useSearchParams();
+    // ?import=steam, from the welcome's games step.
+    const [importingSteam, setImportingSteam] = useState(
+        () => params.get("import") === "steam"
+    );
+    const { data: steamAvailable } = useQuery({
+        queryKey: ["steam", "available"],
+        queryFn: fetchSteamAvailable,
+        enabled: !!user,
+        staleTime: Infinity,
+    });
     // ?section= so a link elsewhere can open the row it is about.
     const [section, setSection] = useState(() =>
         sectionFrom(params.get("section"))
@@ -575,6 +597,7 @@ const SettingsPage = () => {
         ),
 
         content: (
+            <>
             <Group>
                 <Setting label="Show sexually explicit games">
                     <Toggle
@@ -611,6 +634,22 @@ const SettingsPage = () => {
                     />
                 </Setting>
             </Group>
+            {steamAvailable && (
+                <Group title="Import">
+                    <Setting
+                        label="Steam library"
+                        help="Bring in the games you own on Steam. You choose what goes on your shelves."
+                    >
+                        <Button
+                            variant="secondary"
+                            onClick={() => setImportingSteam(true)}
+                        >
+                            Import
+                        </Button>
+                    </Setting>
+                </Group>
+            )}
+            </>
         ),
 
         "account-closure": (
@@ -677,6 +716,14 @@ const SettingsPage = () => {
                     onCancel={() => setConfirmingDelete(false)}
                     onConfirm={() => confirmThen("delete")}
                 />
+            )}
+            {importingSteam && steamAvailable && (
+                <Suspense fallback={null}>
+                    <SteamImportModal
+                        initialProfile={user.about.steam ?? ""}
+                        onClose={() => setImportingSteam(false)}
+                    />
+                </Suspense>
             )}
             {confirmingAdult && (
                 <ConfirmAdultModal

@@ -4,6 +4,7 @@ import { buildApp } from "../../src/app.js";
 import { resetEnv } from "../../src/config/env.js";
 import { createLogger } from "../../src/lib/logger.js";
 import type { PushPayload, PushSender } from "../../src/config/push.js";
+import type { SteamClient } from "../../src/providers/steam.js";
 import type { GamesProvider } from "../../src/providers/games/GamesProvider.js";
 import { nullGamesProvider } from "../../src/providers/games/GamesProvider.js";
 import type { Repositories } from "../../src/repositories.js";
@@ -59,6 +60,7 @@ interface TestAppOptions {
   repos?: Repositories;
   production?: boolean;
   push?: PushSender;
+  steam?: SteamClient;
 }
 
 /** A push service that keeps what it's sent. An endpoint with "gone" in it
@@ -110,6 +112,7 @@ export const buildTestApp = (
     communityImages,
     email: email.deps,
     push: options.push ?? null,
+    steam: options.steam ?? null,
     verify: fakeVerify,
     logger: createLogger(),
     template: async () => TEST_TEMPLATE,

@@ -1207,6 +1207,19 @@ export const createInMemoryRepos = (
         syncWishlistRank(state, userId, gameId);
         return withGame(row);
       },
+      async createMany(userId, logs) {
+        for (const { gameId } of logs) {
+          if (!state.games.some((g) => g.id === gameId)) {
+            throw AppError.validation(
+              "Some of those games aren't in the catalogue",
+            );
+          }
+        }
+        for (const { gameId, patch } of logs) {
+          await this.create(userId, gameId, patch);
+        }
+        return logs.length;
+      },
       async update(id, patch) {
         const log = state.gameLogs.find((l) => l.id === id);
         if (!log) throw new Error("game log not found");

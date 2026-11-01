@@ -85,6 +85,9 @@ import {
   createPushRouter,
 } from "./modules/push/push.routes.js";
 import { withPush } from "./modules/push/withPush.js";
+import type { SteamClient } from "./providers/steam.js";
+import { createSteamService } from "./modules/steam/steam.service.js";
+import { createSteamRouter } from "./modules/steam/steam.routes.js";
 import type { Logger } from "./lib/logger.js";
 import type { Alerts } from "./modules/admin/alerts.js";
 import { createEmailService } from "./modules/email/email.service.js";
@@ -100,6 +103,7 @@ interface Deps {
   communityImages: CommunityImageStore;
   email: EmailDeps;
   push: PushSender | null;
+  steam: SteamClient | null;
   logger: Logger;
   alerts: Alerts;
   requireAuth: RequestHandler;
@@ -114,6 +118,7 @@ export const buildRoutes = ({
   communityImages,
   email,
   push: pushSender,
+  steam,
   logger,
   alerts,
   requireAuth,
@@ -292,6 +297,20 @@ export const buildRoutes = ({
   router.use("/email", createEmailRouter({ service: emails }));
   router.use("/push", createPushRouter({ service: push }));
   router.use("/me/push", createMyPushRouter({ service: push, requireAuth }));
+  router.use(
+    "/me/steam",
+    createSteamRouter({
+      service: createSteamService({
+        client: steam,
+        provider,
+        games: repos.games,
+        gameLogs: repos.gameLogs,
+        gameEvents: repos.gameEvents,
+        profiles: repos.profiles,
+      }),
+      requireAuth,
+    }),
+  );
 
   router.use(
     "/client-errors",

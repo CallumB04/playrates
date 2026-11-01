@@ -71,6 +71,9 @@ const EnvSchema = z.object({
    *  both, nothing is pushed and Settings doesn't offer it. */
   VAPID_PUBLIC_KEY: optionalText,
   VAPID_PRIVATE_KEY: optionalText,
+  /** Steam's Web API key, for importing a library. Without it the import
+   *  isn't offered. */
+  STEAM_API_KEY: optionalText,
   /** Who push services contact about our pushes. */
   VAPID_SUBJECT: z.string().default("mailto:hello@playrates.app"),
 

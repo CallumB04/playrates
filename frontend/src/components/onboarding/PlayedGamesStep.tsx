@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { fetchSteamAvailable } from "../../api";
 import { Check } from "lucide-react";
 import Button from "../ui/Button";
 import { Skeleton } from "../ui/Skeleton";
@@ -41,6 +44,11 @@ const PlayedGamesStep = ({
         search: term.length >= 2 ? term : undefined,
     });
     const { create } = useLogMutations();
+    const { data: steamAvailable } = useQuery({
+        queryKey: ["steam", "available"],
+        queryFn: fetchSteamAvailable,
+        staleTime: Infinity,
+    });
     const notify = useNotify();
     const [picked, setPicked] = useState<number[]>([]);
     const [saving, setSaving] = useState(false);
@@ -90,6 +98,19 @@ const PlayedGamesStep = ({
                 placeholder="Search for a game"
                 aria-label="Search for a game"
             />
+
+            {steamAvailable && !preview && (
+                <p className="text-body-sm text-content-secondary">
+                    Got a Steam library?{" "}
+                    <Link
+                        to="/settings?section=content&import=steam"
+                        onClick={onDone}
+                        className="relative font-medium text-brand-text underline-offset-2 before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:underline"
+                    >
+                        Import it instead
+                    </Link>
+                </p>
+            )}
 
             {!isLoading && term.length >= 2 && data?.data.length === 0 && (
                 <p className="text-body-sm text-content-secondary">

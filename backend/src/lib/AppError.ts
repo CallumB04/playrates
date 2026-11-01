@@ -19,6 +19,7 @@ export type ErrorCode =
   | "several_logs"
   | "profile_private"
   | "request_unanswered"
+  | "steam_private"
   | "reauthentication_required";
 
 /**
