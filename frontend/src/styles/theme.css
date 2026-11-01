@@ -833,6 +833,14 @@
         /* Every number in the product is a ledger figure. */
         font-variant-numeric: tabular-nums;
     }
+
+    /* A focus ring for anything a keyboard reaches, so nothing is left
+       without one. :where() keeps it weightless: a component's own ring,
+       or a field's border glow, wins over it. */
+    :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
+    }
 }
 
 /* The server's plain copy of a page (backend/src/modules/pages/body.ts), for

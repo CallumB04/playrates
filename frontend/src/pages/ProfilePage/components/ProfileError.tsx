@@ -7,7 +7,7 @@ const ProfileError = () => {
     const user = useUser();
 
     return (
-        <div className="absolute top-0 left-0 flex h-[calc(100vh-64px)] w-screen items-center justify-center px-4">
+        <div className="flex min-h-[60dvh] w-full items-center justify-center px-4">
             <div className="flex h-full w-full flex-col items-center justify-center gap-y-5 px-4">
                 <h1 className="text-center font-display text-xl text-content">
                     Couldn’t load this profile.

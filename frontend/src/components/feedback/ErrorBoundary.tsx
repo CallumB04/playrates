@@ -62,14 +62,14 @@ class ErrorBoundary extends Component<Props, State> {
 
         if (updating) {
             return (
-                <div className="flex min-h-[60vh] w-full items-center justify-center px-4 text-center text-content-secondary">
+                <div className="flex min-h-[60dvh] w-full items-center justify-center px-4 text-center text-content-secondary">
                     PlayRates has been updated. Loading the new version…
                 </div>
             );
         }
 
         return (
-            <div className="flex min-h-[60vh] w-full flex-col items-center justify-center gap-4 px-4 text-center font-display">
+            <div className="flex min-h-[60dvh] w-full flex-col items-center justify-center gap-4 px-4 text-center font-display">
                 <TriangleAlert size={40} className="text-danger" aria-hidden />
                 <h1 className="text-2xl text-content">Something went wrong</h1>
                 <p className="max-w-prose text-content-secondary">
