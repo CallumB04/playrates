@@ -44,7 +44,7 @@ const InsightCard = ({
             <Maximize2
                 size={14}
                 aria-hidden
-                className="mt-0.5 shrink-0 text-content-muted transition-colors group-hover:text-brand"
+                className="mt-0.5 shrink-0 text-content-muted transition-colors group-hover:text-brand-text"
             />
         </div>
         {/* Until the headline three sit side by side, each lays its figure

@@ -44,7 +44,7 @@ const SpoilerCover = ({
             <span className="text-body-sm text-content-secondary">
                 Contains spoilers.
             </span>
-            <span className="text-body-sm font-medium text-brand">
+            <span className="text-body-sm font-medium text-brand-text">
                 {revealLabel}
             </span>
         </button>

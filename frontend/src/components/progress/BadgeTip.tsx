@@ -12,7 +12,7 @@ const METAL_TEXT: Record<Metal, string> = {
     1: "text-medal-bronze",
     2: "text-medal-silver",
     3: "text-medal-gold",
-    4: "text-brand",
+    4: "text-brand-text",
 };
 
 const METAL_LABEL: Record<Metal, string> = {

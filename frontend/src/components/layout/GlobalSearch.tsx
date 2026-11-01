@@ -275,7 +275,7 @@ const GlobalSearch = ({ variant = "bar", onClose }: GlobalSearchProps) => {
                 onClick={() =>
                     go(`/library?q=${encodeURIComponent(debounced)}`)
                 }
-                className="flex min-h-11 w-full cursor-pointer items-center rounded-sm px-2.5 py-2 text-left text-label text-brand hover:bg-surface-hover sm:min-h-0"
+                className="flex min-h-11 w-full cursor-pointer items-center rounded-sm px-2.5 py-2 text-left text-label text-brand-text hover:bg-surface-hover sm:min-h-0"
             >
                 Search the library for “{debounced}”
             </button>
@@ -324,7 +324,7 @@ const GlobalSearch = ({ variant = "bar", onClose }: GlobalSearchProps) => {
                         onClick={() =>
                             go(`/library?q=${encodeURIComponent(debounced)}`)
                         }
-                        className="w-full cursor-pointer rounded-sm px-2.5 py-2 text-left text-label text-brand hover:bg-surface-hover"
+                        className="w-full cursor-pointer rounded-sm px-2.5 py-2 text-left text-label text-brand-text hover:bg-surface-hover"
                     >
                         See all games matching “{debounced}”
                     </button>

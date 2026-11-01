@@ -41,7 +41,7 @@ const RankBars = ({
                             className={cn(
                                 "w-5 shrink-0 font-mono text-label-sm",
                                 leads
-                                    ? "font-semibold text-brand"
+                                    ? "font-semibold text-brand-text"
                                     : "text-content-muted"
                             )}
                         >

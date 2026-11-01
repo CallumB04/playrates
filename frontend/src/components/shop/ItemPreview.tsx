@@ -151,7 +151,7 @@ const Change = ({
     <span className="flex items-center gap-2 font-mono tabular-nums">
         <span className="text-content-muted">{now}</span>
         <ArrowRight size={14} className="text-content-muted" aria-hidden />
-        <span className="font-bold text-brand">{next}</span>
+        <span className="font-bold text-brand-text">{next}</span>
         <span className="sr-only">{unit}</span>
     </span>
 );
@@ -252,7 +252,7 @@ export const ItemThumb = ({
                         : Plus;
             return (
                 <span className="flex flex-col items-center gap-2 text-section">
-                    <span className="grid size-10 place-items-center rounded-md bg-brand-subtle text-brand">
+                    <span className="grid size-10 place-items-center rounded-md bg-brand-subtle text-brand-text">
                         <Icon size={20} aria-hidden />
                     </span>
                     {!bare && <Pips item={item} />}
@@ -455,7 +455,7 @@ export const ItemStage = ({ item }: { item: ShopEntry }) => {
                                 "grid size-12 place-items-center rounded-md",
                                 isNew
                                     ? "bg-brand text-content-on-solid shadow-glow"
-                                    : "bg-brand-subtle text-brand"
+                                    : "bg-brand-subtle text-brand-text"
                             )}
                         >
                             <ShieldCheck size={22} aria-hidden />
@@ -482,7 +482,7 @@ const Context = ({
 const NewSlot = ({ className }: { className?: string }) => (
     <span
         className={cn(
-            "grid place-items-center border-2 border-dashed border-brand bg-brand-subtle text-brand",
+            "grid place-items-center border-2 border-dashed border-brand bg-brand-subtle text-brand-text",
             className
         )}
     >

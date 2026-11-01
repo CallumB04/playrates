@@ -26,7 +26,7 @@ const RatingBadge = ({ value, size = "sm", className }: RatingBadgeProps) => (
         className={cn(
             "font-mono leading-none tabular-nums",
             SIZE[size],
-            value === null ? "text-content-muted" : "text-brand",
+            value === null ? "text-content-muted" : "text-brand-text",
             className
         )}
     >

@@ -370,7 +370,7 @@ const Dropdown = ({
                                             <Check
                                                 size={15}
                                                 aria-hidden
-                                                className="shrink-0 text-brand"
+                                                className="shrink-0 text-brand-text"
                                             />
                                         )}
                                     </button>

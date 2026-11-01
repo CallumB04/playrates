@@ -31,7 +31,7 @@ const LevelCard = ({
             trailing={
                 <Link
                     to={profilePath(username, "badges")}
-                    className="relative inline-flex items-center gap-1 text-label-sm font-medium text-brand before:absolute before:-inset-2 before:content-[''] hover:underline"
+                    className="relative inline-flex items-center gap-1 text-label-sm font-medium text-brand-text before:absolute before:-inset-2 before:content-[''] hover:underline"
                 >
                     Badges
                     <ArrowRight size={12} aria-hidden />

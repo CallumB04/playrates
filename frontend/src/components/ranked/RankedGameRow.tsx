@@ -120,7 +120,7 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
                 <div className="min-w-0 flex-1">
                     <Link
                         to={`/game/${gameId}`}
-                        className="line-clamp-2 text-body-sm font-medium text-content hover:text-brand sm:line-clamp-1 sm:text-body"
+                        className="line-clamp-2 text-body-sm font-medium text-content hover:text-brand-text sm:line-clamp-1 sm:text-body"
                     >
                         <span className="sr-only">#{rank} </span>
                         {title}

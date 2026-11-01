@@ -306,7 +306,7 @@ const ReactionBar = ({
                         </ul>
                         <Link
                             to="/shop"
-                            className="mt-1.5 block rounded-sm px-1.5 py-1.5 text-center text-label-sm font-medium text-brand hover:bg-surface-hover"
+                            className="mt-1.5 block rounded-sm px-1.5 py-1.5 text-center text-label-sm font-medium text-brand-text hover:bg-surface-hover"
                         >
                             More reactions in the shop
                         </Link>

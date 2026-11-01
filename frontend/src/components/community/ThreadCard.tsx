@@ -50,7 +50,7 @@ const ThreadCard = ({
                         {game.title}
                     </span>
                 )}
-                <span className="line-clamp-2 font-display text-[15px] leading-snug font-semibold text-content group-hover:text-brand sm:text-[1.0625rem]">
+                <span className="line-clamp-2 font-display text-[15px] leading-snug font-semibold text-content group-hover:text-brand-text sm:text-[1.0625rem]">
                     {thread.title}
                 </span>
 

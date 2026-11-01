@@ -73,7 +73,7 @@ export const InviteButton = ({
                     type="button"
                     onClick={open}
                     className={cn(
-                        "relative inline-flex cursor-pointer items-center gap-1.5 text-label font-medium text-brand before:absolute before:-inset-2 before:content-[''] hover:underline",
+                        "relative inline-flex cursor-pointer items-center gap-1.5 text-label font-medium text-brand-text before:absolute before:-inset-2 before:content-[''] hover:underline",
                         className
                     )}
                 >

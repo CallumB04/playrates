@@ -59,8 +59,8 @@ const NotificationMenu = () => {
                         : "Notifications"
                 }
                 className={cn(
-                    "relative flex size-9 items-center justify-center rounded-sm lift before:absolute before:-inset-1 before:content-[''] hover:text-brand sm:size-11 sm:before:hidden",
-                    open ? "text-brand" : "text-content"
+                    "relative flex size-9 items-center justify-center rounded-sm lift before:absolute before:-inset-1 before:content-[''] hover:text-brand-text sm:size-11 sm:before:hidden",
+                    open ? "text-brand-text" : "text-content"
                 )}
             >
                 <Bell size={20} />

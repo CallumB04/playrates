@@ -36,7 +36,7 @@ const TrendingList = ({
                             className={cn(
                                 "font-display text-figure-lg leading-none",
                                 thread.rank === 1
-                                    ? "text-brand"
+                                    ? "text-brand-text"
                                     : "text-content-muted"
                             )}
                         >
@@ -56,7 +56,7 @@ const TrendingList = ({
                                     {game.title}
                                 </span>
                             )}
-                            <span className="line-clamp-2 text-body-sm font-semibold text-content group-hover:text-brand">
+                            <span className="line-clamp-2 text-body-sm font-semibold text-content group-hover:text-brand-text">
                                 {thread.title}
                             </span>
                             <span className="mt-auto flex items-center justify-between gap-2 pt-1">

@@ -145,7 +145,7 @@ const CommunityPage = () => {
                         {draft && (
                             <Link
                                 to="/community/new"
-                                className="inline-flex min-h-11 items-center justify-center gap-1.5 text-label text-brand hover:underline sm:min-h-0"
+                                className="inline-flex min-h-11 items-center justify-center gap-1.5 text-label text-brand-text hover:underline sm:min-h-0"
                             >
                                 <PenLine size={13} aria-hidden />
                                 Finish your draft

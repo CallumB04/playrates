@@ -73,7 +73,7 @@ const Preview = ({ reward }: { reward: LevelReward }) => {
         case "reaction":
             return <ReactionIcon reaction={reward.key} size={26} />;
         case "background":
-            return <ImagePlus size={24} aria-hidden className="text-brand" />;
+            return <ImagePlus size={24} aria-hidden className="text-brand-text" />;
     }
 };
 

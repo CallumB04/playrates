@@ -37,7 +37,7 @@ const HeaderAction = ({
         disabled={disabled}
         /* The label stays small; the tap target does not. Padding would push
            the heading's baseline. */
-        className="relative shrink-0 cursor-pointer rounded-sm text-label text-content-secondary transition-colors before:absolute before:-inset-x-2 before:-inset-y-3.5 before:content-[''] hover:text-brand disabled:cursor-not-allowed disabled:opacity-60"
+        className="relative shrink-0 cursor-pointer rounded-sm text-label text-content-secondary transition-colors before:absolute before:-inset-x-2 before:-inset-y-3.5 before:content-[''] hover:text-brand-text disabled:cursor-not-allowed disabled:opacity-60"
     >
         {children}
     </button>

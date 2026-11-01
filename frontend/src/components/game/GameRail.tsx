@@ -89,7 +89,7 @@ const Rail = ({
                         {titleTo ? (
                             <Link
                                 to={titleTo}
-                                className="hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                                className="hover:text-brand-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                             >
                                 {title}
                             </Link>

@@ -59,7 +59,7 @@ const CheckInbox = ({ email, justSent, onStartAgain }: CheckInboxProps) => {
 
     return (
         <div className="flex flex-col items-center text-center">
-            <span className="grid size-14 place-items-center rounded-lg bg-brand-subtle text-brand">
+            <span className="grid size-14 place-items-center rounded-lg bg-brand-subtle text-brand-text">
                 <MailCheck size={26} aria-hidden />
             </span>
             <p className="mt-4 text-body-sm text-content-secondary">
@@ -73,7 +73,7 @@ const CheckInbox = ({ email, justSent, onStartAgain }: CheckInboxProps) => {
             <button
                 type="button"
                 onClick={onStartAgain}
-                className="relative mt-1 cursor-pointer text-label text-brand before:absolute before:-inset-x-2 before:-inset-y-3 before:content-[''] hover:underline"
+                className="relative mt-1 cursor-pointer text-label text-brand-text before:absolute before:-inset-x-2 before:-inset-y-3 before:content-[''] hover:underline"
             >
                 Wrong address? Change it
             </button>

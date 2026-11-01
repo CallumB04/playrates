@@ -88,7 +88,7 @@ const WelcomeContent = ({ onNavigate }: ContentProps<WelcomeNotification>) => (
                         key={part.text}
                         to={part.to}
                         onClick={onNavigate}
-                        className="text-brand underline-offset-2 hover:underline"
+                        className="text-brand-text underline-offset-2 hover:underline"
                     >
                         {part.text}
                     </Link>
@@ -104,7 +104,7 @@ const WelcomeContent = ({ onNavigate }: ContentProps<WelcomeNotification>) => (
                 target="_blank"
                 rel="noreferrer noopener"
                 onClick={onNavigate}
-                className="text-brand underline-offset-2 hover:underline"
+                className="text-brand-text underline-offset-2 hover:underline"
             >
                 PlayRates Discord
             </a>
@@ -205,7 +205,7 @@ const GiftFace = ({
     notification.actor ? (
         <ActorFace notification={{ actor: notification.actor }} />
     ) : (
-        <IconMark icon={Gift} tone="text-brand" />
+        <IconMark icon={Gift} tone="text-brand-text" />
     );
 
 /** Opening a community notification is reading it. */
@@ -522,7 +522,7 @@ const ReferralFace = ({
     notification.actor ? (
         <ActorFace notification={{ actor: notification.actor }} />
     ) : (
-        <IconMark icon={UserPlus} tone="text-brand" />
+        <IconMark icon={UserPlus} tone="text-brand-text" />
     );
 
 const ReferralActiveContent = ({
@@ -644,41 +644,41 @@ export const NOTIFICATION_RENDERERS: {
 } = {
     welcome: {
         icon: PartyPopper,
-        tone: "text-brand",
+        tone: "text-brand-text",
         Content: WelcomeContent,
     },
     friend_request: {
         icon: UserPlus,
-        tone: "text-brand",
+        tone: "text-brand-text",
         Content: FriendRequestContent,
         Leading: ActorFace,
     },
     friend_accepted: {
         icon: UserCheck,
-        tone: "text-brand",
+        tone: "text-brand-text",
         Content: FriendAcceptedContent,
         Leading: ActorFace,
     },
     community_reply: {
         icon: MessageSquareReply,
-        tone: "text-brand",
+        tone: "text-brand-text",
         Content: CommunityReplyContent,
         Leading: ActorFace,
     },
     community_thread_activity: {
         icon: MessagesSquare,
-        tone: "text-brand",
+        tone: "text-brand-text",
         Content: CommunityActivityContent,
         Leading: CoverLeading,
     },
     community_upvote_milestone: {
         icon: ArrowBigUp,
-        tone: "text-brand",
+        tone: "text-brand-text",
         Content: MessageMilestoneContent,
     },
     review_upvote_milestone: {
         icon: ArrowBigUp,
-        tone: "text-brand",
+        tone: "text-brand-text",
         Content: ReviewMilestoneContent,
         Leading: CoverLeading,
     },
@@ -694,18 +694,18 @@ export const NOTIFICATION_RENDERERS: {
     },
     referral_joined: {
         icon: UserPlus,
-        tone: "text-brand",
+        tone: "text-brand-text",
         Content: ReferralJoinedContent,
     },
     gift_received: {
         icon: Gift,
-        tone: "text-brand",
+        tone: "text-brand-text",
         Content: GiftReceivedContent,
         Leading: GiftFace,
     },
     referral_active: {
         icon: UserPlus,
-        tone: "text-brand",
+        tone: "text-brand-text",
         Content: ReferralActiveContent,
         Leading: ReferralFace,
     },
@@ -716,7 +716,7 @@ export const NOTIFICATION_RENDERERS: {
     },
     task_nearly_done: {
         icon: ListChecks,
-        tone: "text-brand",
+        tone: "text-brand-text",
         Content: TaskNearlyDoneContent,
     },
     announcement: {

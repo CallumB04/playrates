@@ -71,7 +71,7 @@ const Row = ({
                             {user.username}
                         </span>
                         {user.isAdmin && (
-                            <span className="shrink-0 text-label-sm text-brand">
+                            <span className="shrink-0 text-label-sm text-brand-text">
                                 you
                             </span>
                         )}

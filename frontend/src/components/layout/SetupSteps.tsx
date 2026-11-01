@@ -81,7 +81,7 @@ export const SetupSteps = ({
                             <Check
                                 size={15}
                                 aria-hidden
-                                className="shrink-0 text-brand"
+                                className="shrink-0 text-brand-text"
                             />
                             {step.label}
                             <span className="sr-only">(done)</span>

@@ -36,7 +36,7 @@ const Mark = ({
         className={cn(
             "grid h-7 w-14 place-items-center rounded-full transition-colors",
             active
-                ? "bg-brand-subtle text-brand"
+                ? "bg-brand-subtle text-brand-text"
                 : "group-hover:bg-surface-hover"
         )}
     >

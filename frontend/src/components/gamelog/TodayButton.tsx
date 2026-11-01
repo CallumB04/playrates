@@ -14,7 +14,7 @@ const TodayButton = ({ field, onPick }: TodayButtonProps) => (
         aria-label={`Set ${field} to today`}
         onClick={() => onPick(todayIsoDate())}
         // The hit area grows up into the gap above, not down over the field.
-        className="relative cursor-pointer text-label-sm text-brand before:absolute before:-inset-x-2 before:-top-6 before:-bottom-2 before:content-[''] hover:text-brand-hover sm:before:-top-2"
+        className="relative cursor-pointer text-label-sm text-brand-text before:absolute before:-inset-x-2 before:-top-6 before:-bottom-2 before:content-[''] hover:text-brand-hover sm:before:-top-2"
     >
         Today
     </button>

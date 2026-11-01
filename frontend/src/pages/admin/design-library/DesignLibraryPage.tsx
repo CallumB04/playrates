@@ -51,7 +51,7 @@ const DesignLibraryPage = () => {
                         onClick={() => setTab(t.id)}
                         className={`-mb-px min-h-11 border-b-2 px-4 py-2 font-display text-sm transition-colors sm:min-h-0 ${
                             tab === t.id
-                                ? "border-b-brand text-brand"
+                                ? "border-b-brand text-brand-text"
                                 : "border-b-transparent text-content-secondary hover:text-content"
                         }`}
                     >

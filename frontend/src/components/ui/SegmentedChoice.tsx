@@ -100,7 +100,7 @@ const SegmentedChoice = <T extends string>({
                                     aria-hidden
                                     className={cn(
                                         "shrink-0",
-                                        isActive && "text-brand"
+                                        isActive && "text-brand-text"
                                     )}
                                 />
                             )}

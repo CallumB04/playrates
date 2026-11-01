@@ -70,7 +70,7 @@ const ToolButton = ({
             "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
             "disabled:cursor-not-allowed disabled:opacity-50",
             active
-                ? "bg-brand-subtle text-brand"
+                ? "bg-brand-subtle text-brand-text"
                 : "text-content-secondary hover:bg-surface-hover hover:text-content"
         )}
     >

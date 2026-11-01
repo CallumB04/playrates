@@ -118,7 +118,7 @@ const FriendFeed = ({
             </h2>
             <Link
                 to={`/user/${username}`}
-                className="text-label text-content-muted lift hover:text-brand"
+                className="text-label text-content-muted lift hover:text-brand-text"
             >
                 All friends
             </Link>

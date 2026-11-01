@@ -5,7 +5,7 @@ import { isExternalHref, parseAnnouncementBody } from "@playrates/shared";
 /* relative z-10 lifts a link above a row whose title link stretches over it,
    so the rest of the row still opens the announcement's own link. */
 const LINK =
-    "relative z-10 text-brand underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+    "relative z-10 text-brand-text underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
 const AnnouncementBody = ({
     body,

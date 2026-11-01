@@ -75,7 +75,7 @@ const Fan = ({
                     )}
                 />
             ) : (
-                <span className="grid aspect-3/4 w-full place-items-center rounded-xs border border-dashed border-brand bg-surface-raised text-brand shadow-lifted">
+                <span className="grid aspect-3/4 w-full place-items-center rounded-xs border border-dashed border-brand bg-surface-raised text-brand-text shadow-lifted">
                     <Plus size={18} />
                 </span>
             )}
@@ -95,7 +95,7 @@ const Heading = ({ children }: { children: string }) => (
         <ArrowRight
             size={16}
             aria-hidden
-            className="shrink-0 text-brand transition-transform group-hover:translate-x-0.5"
+            className="shrink-0 text-brand-text transition-transform group-hover:translate-x-0.5"
         />
     </span>
 );

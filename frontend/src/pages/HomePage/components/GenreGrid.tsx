@@ -28,7 +28,7 @@ const GenreGrid = ({ genres }: { genres: Genre[] }) => {
                                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                             )}
                         >
-                            <span className="grid size-7 shrink-0 place-items-center rounded-sm bg-surface-sunken text-content-muted transition-colors duration-300 group-hover/genre:bg-brand-subtle group-hover/genre:text-brand">
+                            <span className="grid size-7 shrink-0 place-items-center rounded-sm bg-surface-sunken text-content-muted transition-colors duration-300 group-hover/genre:bg-brand-subtle group-hover/genre:text-brand-text">
                                 <Icon size={14} aria-hidden />
                             </span>
                             {/* Two columns leaves ~70px for the name, so on a
@@ -39,7 +39,7 @@ const GenreGrid = ({ genres }: { genres: Genre[] }) => {
                             <ChevronRight
                                 size={14}
                                 aria-hidden
-                                className="hidden shrink-0 text-content-muted transition-colors duration-300 group-hover/genre:text-brand sm:block"
+                                className="hidden shrink-0 text-content-muted transition-colors duration-300 group-hover/genre:text-brand-text sm:block"
                             />
                         </Link>
                     );

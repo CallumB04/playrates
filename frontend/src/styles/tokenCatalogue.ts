@@ -43,6 +43,7 @@ export const RAMPS: Ramp[] = [
             "300",
             "400",
             "500",
+            "550",
             "600",
             "700",
             "800",
@@ -106,6 +107,11 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
                 name: "brand-subtle",
                 cssVar: "--brand-subtle",
                 description: "Tinted background behind brand content",
+            },
+            {
+                name: "brand-text",
+                cssVar: "--brand-text",
+                description: "Brand-coloured text, at 4.5:1 in both themes",
             },
             {
                 name: "content-on-solid",

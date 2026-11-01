@@ -181,7 +181,7 @@ const MessageItem = ({
                     {author ? (
                         <Link
                             to={`/user/${author.username}`}
-                            className="truncate text-body-sm font-semibold text-content hover:text-brand"
+                            className="truncate text-body-sm font-semibold text-content hover:text-brand-text"
                         >
                             {author.username}
                         </Link>

@@ -36,7 +36,7 @@ const GameRow = ({ game }: { game: AdminGameSummary }) => {
                     className="aspect-3/4 w-10 shrink-0 overflow-hidden rounded-xs shadow-cover"
                 />
                 <span className="min-w-0">
-                    <span className="block truncate text-body-sm font-medium text-content group-hover:text-brand">
+                    <span className="block truncate text-body-sm font-medium text-content group-hover:text-brand-text">
                         {game.title}
                     </span>
                     <span className="mt-0.5 block truncate text-label-sm text-content-muted">

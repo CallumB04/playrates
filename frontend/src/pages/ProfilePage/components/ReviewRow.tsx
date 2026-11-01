@@ -108,7 +108,7 @@ const ReviewRow = ({
                     "absolute top-2 right-2 grid size-9 cursor-pointer place-items-center rounded-sm",
                     "focus-visible:outline-2 focus-visible:outline-brand",
                     pin.on
-                        ? "bg-brand-subtle text-brand"
+                        ? "bg-brand-subtle text-brand-text"
                         : "text-content-muted hover:bg-surface-hover hover:text-content"
                 )}
             >

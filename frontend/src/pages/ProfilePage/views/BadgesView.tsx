@@ -55,7 +55,7 @@ const METAL_TEXT: Record<Metal, string> = {
     1: "text-medal-bronze",
     2: "text-medal-silver",
     3: "text-medal-gold",
-    4: "text-brand",
+    4: "text-brand-text",
 };
 
 const METAL_LABELS: Record<Metal, string> = {
@@ -179,7 +179,7 @@ const BadgesView = ({ username, isOwner }: BadgesViewProps) => {
                                         onClick={() => setBuyingSlot(true)}
                                         aria-label="Get another slot"
                                         title="Get another slot"
-                                        className="grid size-11 cursor-pointer place-items-center rounded-full border border-dashed border-brand/60 text-brand hover:bg-brand-subtle focus-visible:outline-2 focus-visible:outline-brand"
+                                        className="grid size-11 cursor-pointer place-items-center rounded-full border border-dashed border-brand/60 text-brand-text hover:bg-brand-subtle focus-visible:outline-2 focus-visible:outline-brand"
                                     >
                                         <Plus size={18} aria-hidden />
                                     </button>

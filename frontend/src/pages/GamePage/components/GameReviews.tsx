@@ -190,7 +190,7 @@ const GameReviews = ({
                                                     (author ? (
                                                         <Link
                                                             to={`/user/${author.username}`}
-                                                            className="text-body-sm font-semibold text-content hover:text-brand"
+                                                            className="text-body-sm font-semibold text-content hover:text-brand-text"
                                                         >
                                                             {author.username}
                                                         </Link>

@@ -55,7 +55,7 @@ const Field = ({
                         labelHidden && "sr-only",
                         error
                             ? "text-danger"
-                            : "text-content-muted group-focus-within:text-brand"
+                            : "text-content-muted group-focus-within:text-brand-text"
                     )}
                 >
                     {label}

@@ -19,7 +19,7 @@ const Value = ({ field, value }: { field: AboutField; value: string }) => {
                 target="_blank"
                 // Off the site, and nothing to vouch for: no referrer, no ranking.
                 rel="noopener noreferrer nofollow ugc"
-                className="block truncate text-content underline decoration-subtle underline-offset-2 hover:text-brand hover:decoration-brand"
+                className="block truncate text-content underline decoration-subtle underline-offset-2 hover:text-brand-text hover:decoration-brand"
             >
                 {field === "website" ? linkLabel(value) : steamLabel(value)}
             </a>

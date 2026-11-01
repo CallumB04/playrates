@@ -135,7 +135,7 @@ const EventRow = ({ event, day }: { event: AdminGameEvent; day: string }) => {
                         {event.game && (
                             <Link
                                 to={`/game/${event.game.id}`}
-                                className="inline-flex min-h-11 items-center text-label font-medium text-brand underline-offset-2 hover:underline sm:min-h-0"
+                                className="inline-flex min-h-11 items-center text-label font-medium text-brand-text underline-offset-2 hover:underline sm:min-h-0"
                             >
                                 Open {event.game.title}
                             </Link>

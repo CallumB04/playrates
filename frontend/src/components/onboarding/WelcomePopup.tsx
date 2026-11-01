@@ -148,7 +148,7 @@ const WelcomePopup = ({
                                 to={`${profilePath(profile.username)}?edit=profile`}
                                 onClick={onClose}
                                 // 44px to press on a phone, from a 15px line.
-                                className="relative text-brand underline-offset-2 before:absolute before:-inset-x-1 before:-inset-y-4 before:content-[''] hover:underline"
+                                className="relative text-brand-text underline-offset-2 before:absolute before:-inset-x-1 before:-inset-y-4 before:content-[''] hover:underline"
                             >
                                 Edit profile
                             </Link>

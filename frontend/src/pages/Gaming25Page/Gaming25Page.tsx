@@ -101,7 +101,7 @@ const LoadedGaming25 = ({ grid }: { grid: Gaming25 }) => {
                         <p className="text-label-sm text-content-muted">
                             <Link
                                 to={profilePath(username)}
-                                className="font-medium text-content hover:text-brand"
+                                className="font-medium text-content hover:text-brand-text"
                             >
                                 {username}
                             </Link>
@@ -224,7 +224,7 @@ const MakeYourOwn = ({
     >
         <span
             aria-hidden
-            className="grid size-10 shrink-0 place-items-center rounded-md bg-surface-raised text-brand shadow-lip"
+            className="grid size-10 shrink-0 place-items-center rounded-md bg-surface-raised text-brand-text shadow-lip"
         >
             <Grid3x3 size={20} />
         </span>

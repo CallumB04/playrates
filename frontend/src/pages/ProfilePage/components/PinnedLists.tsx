@@ -41,7 +41,7 @@ const PinnedLists = ({ username, ids, isOwner }: PinnedListsProps) => {
 
 const Title = () => (
     <span className="inline-flex items-center gap-2">
-        <Pin size={15} aria-hidden className="text-brand" />
+        <Pin size={15} aria-hidden className="text-brand-text" />
         Pinned lists
     </span>
 );

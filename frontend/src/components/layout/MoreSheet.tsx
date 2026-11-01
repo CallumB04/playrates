@@ -111,7 +111,7 @@ const MoreSheet = ({
                         <ListChecks
                             size={16}
                             aria-hidden
-                            className="shrink-0 text-brand"
+                            className="shrink-0 text-brand-text"
                         />
                         <span className="min-w-0 flex-1">Get started</span>
                         <span className="font-mono text-label text-content-muted">

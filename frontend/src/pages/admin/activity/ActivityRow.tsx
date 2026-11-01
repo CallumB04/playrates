@@ -18,7 +18,7 @@ const at = (iso: string) =>
     });
 
 const LINK =
-    "inline-flex min-h-11 items-center text-label font-medium text-brand underline-offset-2 hover:underline sm:min-h-0";
+    "inline-flex min-h-11 items-center text-label font-medium text-brand-text underline-offset-2 hover:underline sm:min-h-0";
 
 /** The row's figure, when there is one worth showing. */
 const Face = ({ event }: { event: AdminActivityEvent }) =>

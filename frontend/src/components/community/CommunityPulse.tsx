@@ -51,7 +51,7 @@ const CommunityPulse = ({
                                         className={cn(
                                             "w-5 shrink-0 font-mono text-label-sm tabular-nums",
                                             i === 0
-                                                ? "font-semibold text-brand"
+                                                ? "font-semibold text-brand-text"
                                                 : "text-content-muted"
                                         )}
                                     >

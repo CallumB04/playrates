@@ -30,7 +30,7 @@ const AgreeToTerms = ({ error, ...inputProps }: AgreeToTermsProps) => {
                         href="/terms"
                         target="_blank"
                         rel="noopener"
-                        className="text-content underline underline-offset-2 hover:text-brand"
+                        className="text-content underline underline-offset-2 hover:text-brand-text"
                     >
                         Terms
                     </a>{" "}
@@ -39,7 +39,7 @@ const AgreeToTerms = ({ error, ...inputProps }: AgreeToTermsProps) => {
                         href="/privacy"
                         target="_blank"
                         rel="noopener"
-                        className="text-content underline underline-offset-2 hover:text-brand"
+                        className="text-content underline underline-offset-2 hover:text-brand-text"
                     >
                         Privacy Policy
                     </a>

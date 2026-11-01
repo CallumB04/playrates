@@ -39,6 +39,8 @@
     --ink-300: #bdb7c7;
     --ink-400: #948da3;
     --ink-500: #6b6577;
+    /* Day's muted text: ink-500 fell just under 4.5:1 on a sunken surface. */
+    --ink-550: #635d6f;
     --ink-600: #46414f;
     --ink-700: #322e3a;
     --ink-800: #24212a;
@@ -84,6 +86,9 @@
     --brand-active: var(--iris-800);
     --brand-muted: var(--iris-300);
     --brand-subtle: color-mix(in srgb, var(--iris-500) 12%, transparent);
+    /* Brand-coloured words, as opposed to brand-coloured fills. By day the
+       brand itself holds 4.5:1 for text. */
+    --brand-text: var(--brand);
 
     /* The filled action: primary buttons, a selected chip, the tile's loud
        action. By day it is the brand itself. */
@@ -116,7 +121,7 @@
     /* Text */
     --content: var(--ink-950);
     --content-secondary: var(--ink-600);
-    --content-muted: var(--ink-500);
+    --content-muted: var(--ink-550);
     --content-inverse: var(--ink-50);
     --content-on-solid: #ffffff;
     --content-disabled: color-mix(in srgb, var(--ink-950) 32%, transparent);
@@ -243,6 +248,9 @@
     --brand-active: var(--iris-300);
     --brand-muted: var(--iris-700);
     --brand-subtle: color-mix(in srgb, var(--iris-500) 18%, transparent);
+    /* The night brand is 4.4:1 on the page, under what text needs; a step
+       lighter is 6.5:1. Fills keep the brand. */
+    --brand-text: var(--iris-400);
 
     /* By night the action keeps the day's deeper violet rather than the
        night brand: white ink holds on it, where the lighter iris-500 sat
@@ -578,6 +586,7 @@
     --color-brand-hover: var(--brand-hover);
     --color-brand-active: var(--brand-active);
     --color-brand-muted: var(--brand-muted);
+    --color-brand-text: var(--brand-text);
     --color-brand-subtle: var(--brand-subtle);
     --color-action: var(--action);
     --color-action-edge: var(--action-edge);
