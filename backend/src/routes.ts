@@ -78,6 +78,7 @@ import {
 } from "./modules/reports/reports.routes.js";
 import type { EmailDeps } from "./config/email.js";
 import type { Logger } from "./lib/logger.js";
+import type { Alerts } from "./modules/admin/alerts.js";
 import { createEmailService } from "./modules/email/email.service.js";
 import { createEmailRouter } from "./modules/email/email.routes.js";
 import { withEmails } from "./modules/email/withEmails.js";
@@ -91,6 +92,7 @@ interface Deps {
   communityImages: CommunityImageStore;
   email: EmailDeps;
   logger: Logger;
+  alerts: Alerts;
   requireAuth: RequestHandler;
   optionalAuth: RequestHandler;
 }
@@ -103,6 +105,7 @@ export const buildRoutes = ({
   communityImages,
   email,
   logger,
+  alerts,
   requireAuth,
   optionalAuth,
 }: Deps): Router => {
@@ -266,7 +269,11 @@ export const buildRoutes = ({
 
   router.use(
     "/client-errors",
-    createClientErrorsRouter({ repo: repos.admin, optionalAuth }),
+    createClientErrorsRouter({
+      repo: repos.admin,
+      optionalAuth,
+      recorded: () => email.defer(alerts.errorRecorded("client")),
+    }),
   );
 
   router.use(
@@ -440,6 +447,7 @@ export const buildRoutes = ({
       progress,
       emails,
       admin: repos.admin,
+      alerts,
       secret: env().CRON_SECRET,
     }),
   );

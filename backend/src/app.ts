@@ -13,6 +13,7 @@ import { noopErrorSink, type ErrorSink } from "./config/errorSink.js";
 import { makeRequireAuth, type Verifier } from "./middleware/requireAuth.js";
 import { buildRoutes } from "./routes.js";
 import { publicCache } from "./lib/publicCache.js";
+import { createAlerts } from "./modules/admin/alerts.js";
 import type { Repositories } from "./repositories.js";
 import type { AuthAdmin } from "./config/authAdmin.js";
 import type { AvatarStore } from "./config/avatarStore.js";
@@ -67,6 +68,14 @@ export const buildApp = ({
   app.set("trust proxy", 1);
 
   app.use(requestContext(logger));
+
+  const alerts = createAlerts({
+    admin: repos.admin,
+    emails: repos.email,
+    sender: email.sender,
+    site: email.settings.site,
+    logger,
+  });
 
   // Pages before helmet: they wear the site's CSP, not the API's.
   app.use(
@@ -123,6 +132,7 @@ export const buildApp = ({
       communityImages,
       email,
       logger,
+      alerts,
       requireAuth: makeRequireAuth(verify),
       optionalAuth: makeRequireAuth(verify, { optional: true }),
     }),
@@ -131,7 +141,12 @@ export const buildApp = ({
   app.use(notFoundHandler);
   // must be last: Express 5 forwards rejected promises here, so no handler
   // needs its own try/catch
-  app.use(createErrorHandler(errorSink));
+  app.use(
+    createErrorHandler(async (report) => {
+      await errorSink(report);
+      email.defer(alerts.errorRecorded("server"));
+    }),
+  );
 
   return app;
 };

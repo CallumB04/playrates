@@ -10,9 +10,12 @@ import type { AdminRepository } from "./admin.repository.js";
 export const createClientErrorsRouter = ({
   repo,
   optionalAuth,
+  recorded = () => {},
 }: {
   repo: Pick<AdminRepository, "recordClientError">;
   optionalAuth: RequestHandler;
+  /** After each one is kept, for the spike alert. */
+  recorded?: () => void;
 }): Router => {
   const router = Router();
 
@@ -31,6 +34,7 @@ export const createClientErrorsRouter = ({
         user_agent: req.get("user-agent")?.slice(0, 300) ?? null,
         user_id: req.auth?.userId ?? null,
       });
+      recorded();
       res.status(204).end();
     },
   );

@@ -132,6 +132,10 @@ export interface AdminRepository {
   serverErrorStats(
     since: string,
   ): Promise<{ count: number; lastAt: string | null }>;
+  /** Errors of a kind kept since `since`. */
+  errorCount(kind: "server" | "client", since: string): Promise<number>;
+  /** Who gets the alerts. */
+  adminIds(): Promise<string[]>;
   recordClientError(
     row: Omit<ClientErrorRow, "id" | "created_at">,
   ): Promise<void>;
@@ -372,6 +376,24 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
 
   async serverErrors(before, limit) {
     return errorLog<ServerErrorRow>(db, "server_errors", before, limit);
+  },
+
+  async errorCount(kind, since) {
+    const { count, error } = await db
+      .from(kind === "server" ? "server_errors" : "client_errors")
+      .select("id", { head: true, count: "exact" })
+      .gte("created_at", since);
+    if (error) throw error;
+    return count ?? 0;
+  },
+
+  async adminIds() {
+    const { data, error } = await db
+      .from("profiles")
+      .select("id")
+      .eq("is_admin", true);
+    if (error) throw error;
+    return (data ?? []).map((row) => row.id as string);
   },
 
   async recordClientError(row) {

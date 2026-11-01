@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import { buildTestApp } from "../helpers/buildTestApp.js";
-import { baseSeed, buildGame } from "../helpers/fixtures.js";
+import { baseSeed, buildGame, buildProfile } from "../helpers/fixtures.js";
 import {
   nullGamesProvider,
   type GamesProvider,
@@ -67,5 +67,36 @@ describe("trending from IGDB", () => {
 
     expect((await run(app, "wrong")).status).toBe(404);
     expect((await request(app).get("/api/v1/cron/trending")).status).toBe(404);
+  });
+});
+
+describe("when the morning job fails", () => {
+  const ADMIN = "33333333-3333-3333-3333-333333333333";
+
+  it("emails the admins which part, and still runs the rest", async () => {
+    const base = seed();
+    const { app, email } = buildTestApp({
+      seed: {
+        ...base,
+        profiles: [
+          ...base.profiles,
+          buildProfile({ id: ADMIN, username: "admin", is_admin: true }),
+        ],
+      },
+      provider: {
+        ...provider([]),
+        trendingIds: vi.fn(async () => {
+          throw new Error("IGDB timed out");
+        }),
+      },
+    });
+
+    const response = await run(app);
+
+    expect(response.status).toBe(500);
+    const alert = email.sent.find((m) => m.subject.startsWith("PlayRates alert"));
+    expect(alert?.subject).toBe("PlayRates alert: the morning job failed");
+    expect(alert?.text).toContain("Trending list: IGDB timed out");
+    expect(alert?.text).not.toContain("Wishlist release emails:");
   });
 });

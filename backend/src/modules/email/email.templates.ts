@@ -486,3 +486,63 @@ export const patchNotesEmail = (
     ],
   });
 };
+
+/* ---------------------------------------------------------------- alert */
+
+export type AlertContent =
+  | { kind: "job"; job: string; failures: { part: string; message: string }[] }
+  | { kind: "spike"; errors: "server" | "client"; count: number };
+
+const ALERT_REASON = "You're getting this because you're a PlayRates admin.";
+
+/** To the admins only, so no way out: it stops when they stop being one. */
+export const alertEmail = (
+  content: AlertContent,
+  site: string,
+): RenderedEmail => {
+  const health = `${site}/admin/health`;
+  const title =
+    content.kind === "job"
+      ? `${content.job} failed`
+      : `${content.count} ${content.errors === "server" ? "failed requests" : "browser errors"} in the last hour`;
+  const lines =
+    content.kind === "job"
+      ? [
+          "These parts of it stopped with an error:",
+          ...content.failures.map((f) => `${f.part}: ${f.message}`),
+          "Everything else in it ran as normal, and it runs again tomorrow.",
+        ]
+      : [
+          "More than usual. The newest are on the Health page, with their stacks.",
+          "You won't hear about this again for six hours.",
+        ];
+  const html = [
+    ...lines.map((line, i) =>
+      content.kind === "job" && i > 0 && i <= content.failures.length
+        ? emailParagraph(
+            `${emailStrong(escapeHtml(content.failures[i - 1]!.part))}: ${escapeHtml(content.failures[i - 1]!.message)}`,
+            `padding:4px 0 4px 14px;border-left:3px solid ${C.rule};`,
+          )
+        : emailParagraph(escapeHtml(line)),
+    ),
+    emailButton(escapeHtml(health), "Open Health"),
+  ].join("\n");
+  const footer = [{ href: health, label: "Health" }];
+  return {
+    subject: `PlayRates alert: ${title.charAt(0).toLowerCase()}${title.slice(1)}`,
+    html: emailLayout({
+      preview: escapeHtml(lines[0]!),
+      title: escapeHtml(title),
+      body: html,
+      reason: ALERT_REASON,
+      site,
+      links: footer,
+    }),
+    text: emailText({
+      title,
+      lines: [...lines, "", `Open Health: ${health}`],
+      reason: ALERT_REASON,
+      links: footer,
+    }),
+  };
+};

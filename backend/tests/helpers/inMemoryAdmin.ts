@@ -308,6 +308,15 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
       }));
     },
 
+    async errorCount(kind, since) {
+      const rows = kind === "server" ? state.serverErrors : state.clientErrors;
+      return rows.filter((e) => e.created_at >= since).length;
+    },
+
+    async adminIds() {
+      return state.profiles.filter((p) => p.is_admin).map((p) => p.id);
+    },
+
     async recordClientError(row) {
       state.clientErrors.push({
         ...row,
