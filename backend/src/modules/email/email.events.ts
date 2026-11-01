@@ -174,7 +174,11 @@ export const eventEmail = (
 /** What a milestone notification's data says it was for, or null where
  *  something the email needs is missing. */
 const milestoneSubject = (
-  kind: NotificationKind,
+  kind:
+    | "community_upvote_milestone"
+    | "review_upvote_milestone"
+    | "list_upvote_milestone"
+    | "gaming_25_love_milestone",
   data: Record<string, unknown>,
   owner: string,
 ): MilestoneSubject | null => {
@@ -210,8 +214,6 @@ const milestoneSubject = (
     }
     case "gaming_25_love_milestone":
       return { kind: "gaming25", username: str(data.username) ?? owner };
-    default:
-      return null;
   }
 };
 
