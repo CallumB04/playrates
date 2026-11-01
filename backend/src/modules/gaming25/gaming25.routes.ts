@@ -11,6 +11,7 @@ import {
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { redirectToVersion } from "../../lib/imageVersion.js";
+import { PICTURE_CACHE } from "../../lib/pictureCache.js";
 import { perMinute } from "../../lib/rateLimit.js";
 import { validate } from "../../middleware/validate.js";
 import { renderGaming25 } from "./gaming25.image.js";
@@ -27,12 +28,6 @@ const callerId = (req: Parameters<RequestHandler>[0]): string => {
   if (!id) throw AppError.unauthorized();
   return id;
 };
-
-// A versioned URL names one state of the grid, so it never goes stale; an
-// unversioned one is a link preview's, refreshed every few minutes.
-const VERSIONED_CACHE = "public, max-age=31536000, immutable";
-const UNVERSIONED_CACHE =
-  "public, max-age=300, s-maxage=300, stale-while-revalidate=86400";
 
 /** Mounted at /users/:username/gaming-25. */
 export const createUserGaming25Router = ({
@@ -126,7 +121,10 @@ export const createGaming25Router = ({ service }: Deps): Router => {
       const png = await renderGaming25(grid, layout, fetch, grid.cardTheme);
       res
         .type("png")
-        .setHeader("Cache-Control", v ? VERSIONED_CACHE : UNVERSIONED_CACHE)
+        .setHeader(
+          "Cache-Control",
+          v ? PICTURE_CACHE.versioned : PICTURE_CACHE.unversioned,
+        )
         // Made to be shown anywhere, not only on the site's own origin.
         .setHeader("Cross-Origin-Resource-Policy", "cross-origin")
         .send(png);

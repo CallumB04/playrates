@@ -18,6 +18,7 @@ import {
 import { z } from "zod";
 import { AppError } from "../../lib/AppError.js";
 import { redirectToVersion } from "../../lib/imageVersion.js";
+import { PICTURE_CACHE } from "../../lib/pictureCache.js";
 import { perMinute } from "../../lib/rateLimit.js";
 import { validate } from "../../middleware/validate.js";
 import { renderPlayerCard } from "./progress.image.js";
@@ -187,11 +188,6 @@ export const createReferralsRouter = ({ service }: Deps): Router => {
   return router;
 };
 
-// A versioned card names one state of it, so it never goes stale.
-const VERSIONED_CACHE = "public, max-age=31536000, immutable";
-const UNVERSIONED_CACHE =
-  "public, max-age=300, s-maxage=300, stale-while-revalidate=86400";
-
 /** Mounted at /progress: the rules, someone's badges, their card. */
 export const createProgressRouter = ({
   service,
@@ -230,7 +226,10 @@ export const createProgressRouter = ({
       const png = await renderPlayerCard(source, theme);
       res
         .type("png")
-        .setHeader("Cache-Control", v ? VERSIONED_CACHE : UNVERSIONED_CACHE)
+        .setHeader(
+          "Cache-Control",
+          v ? PICTURE_CACHE.versioned : PICTURE_CACHE.unversioned,
+        )
         // Made to be shown anywhere, not only on the site's own origin.
         .setHeader("Cross-Origin-Resource-Policy", "cross-origin")
         .send(png);
