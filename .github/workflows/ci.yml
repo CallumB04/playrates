@@ -88,3 +88,10 @@ jobs:
 
       - name: Verify the seed applies on a reset
         run: supabase db reset
+
+      # The generated types are what the migrations make: a migration
+      # without them regenerated (npm run db:types -w backend) fails here.
+      - name: Generated database types match the migrations
+        run: |
+          supabase gen types typescript --local > /tmp/database.generated.ts
+          diff -u backend/src/types/database.generated.ts /tmp/database.generated.ts

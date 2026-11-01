@@ -1,8 +1,8 @@
 /**
- * Row shapes for the tables in supabase/migrations/. Hand-written for now;
- * regenerate from the live schema with:
- *
- *   npm run db:types -w backend
+ * Row shapes for the tables in supabase/migrations/, written by hand with
+ * the jsonb columns typed. The schema as Postgres has it is generated into
+ * database.generated.ts (`npm run db:types -w backend`, from the local
+ * stack); CI fails when that file and the migrations disagree.
  */
 
 import type { GameBackdrop } from "@playrates/shared";
