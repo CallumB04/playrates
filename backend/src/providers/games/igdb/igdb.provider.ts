@@ -108,6 +108,16 @@ export interface IgdbHooks {
   /** Once per call to IGDB, retries included. Awaited, but a failure here
    *  is swallowed. */
   onRequest?: (outcome: IgdbRequestOutcome) => Promise<void> | void;
+  /** Takes the next turn under IGDB's rate limit, shared by every
+   *  instance: how long to wait before calling. Without it, each instance
+   *  keeps its own gap, which several instances together can overrun. */
+  nextTurn?: (minIntervalMs: number) => Promise<number>;
+  /** Where the Twitch token is kept between instances, so a cold start
+   *  doesn't fetch one of its own. */
+  tokenStore?: {
+    get(): Promise<string | null>;
+    set(token: string, ttlMs: number): Promise<void>;
+  };
 }
 
 /** Apicalypse needs its strings quoted, and quotes inside them escaped. */
@@ -132,11 +142,23 @@ export const createIgdbProvider = (
   };
 
   let token: { value: string; expiresAt: number } | null = null;
+  // Set when IGDB turned the shared token away, so the next one is fetched
+  // fresh rather than read back from the store.
+  let sharedRevoked = false;
 
   /** A Twitch app token, kept until near its expiry. Per instance: a cold
    *  start fetches its own, which Twitch is fine with. */
   const accessToken = async (): Promise<string> => {
     if (token && Date.now() < token.expiresAt) return token.value;
+    const shared = sharedRevoked
+      ? null
+      : await hooks.tokenStore?.get().catch(() => null);
+    if (shared) {
+      // How long it has left isn't kept with it; a minute is safe, and a
+      // revoked one is caught by the 401 below.
+      token = { value: shared, expiresAt: Date.now() + 60_000 };
+      return shared;
+    }
     const url = new URL(TOKEN_URL);
     url.searchParams.set("client_id", clientId);
     url.searchParams.set("client_secret", clientSecret);
@@ -158,17 +180,26 @@ export const createIgdbProvider = (
       value: body.access_token,
       expiresAt: Date.now() + body.expires_in * 1000 - TOKEN_MARGIN_MS,
     };
+    sharedRevoked = false;
+    await hooks.tokenStore
+      ?.set(token.value, token.expiresAt - Date.now())
+      .catch(() => undefined);
     return token.value;
   };
 
   // Chained with a minimum gap, so a burst of searches can't trip the rate
-  // limit. Single-process only: a second instance keeps its own chain.
+  // limit. The gap is shared between instances when nextTurn is given;
+  // otherwise each instance keeps its own.
   let chain: Promise<unknown> = Promise.resolve();
   let lastCallAt = 0;
 
   const schedule = <T>(task: () => Promise<T>): Promise<T> => {
     const run = chain.then(async () => {
-      const wait = Math.max(0, MIN_INTERVAL_MS - (Date.now() - lastCallAt));
+      const shared = await hooks
+        .nextTurn?.(MIN_INTERVAL_MS)
+        .catch(() => undefined);
+      const wait =
+        shared ?? Math.max(0, MIN_INTERVAL_MS - (Date.now() - lastCallAt));
       if (wait > 0) await new Promise((r) => setTimeout(r, wait));
       lastCallAt = Date.now();
       return task();
@@ -220,7 +251,10 @@ export const createIgdbProvider = (
         if (response.ok) return (await response.json()) as T;
 
         // A token Twitch has revoked early: fetch a new one and go again.
-        if (response.status === 401) token = null;
+        if (response.status === 401) {
+          token = null;
+          sharedRevoked = true;
+        }
 
         if (retryable) {
           const backoff = 2 ** attempt * 300 + Math.floor(Math.random() * 150);
