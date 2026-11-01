@@ -122,9 +122,40 @@ describe("SignupForm", () => {
             "new@example.test",
             "longenough1",
             "brandnew",
-            undefined
+            undefined,
+            // News is off unless ticked.
+            false
         );
         expect(onSignedUp).toHaveBeenCalledWith("new@example.test", true);
+    });
+
+    it("asks for news only when the box is ticked", async () => {
+        const user = userEvent.setup();
+        renderWithProviders(<SignupForm onSignedUp={vi.fn()} />);
+
+        const news = screen.getByRole("checkbox", {
+            name: /Email me news about PlayRates/,
+        });
+        expect(news).not.toBeChecked();
+
+        await fill(user, {
+            username: "brandnew",
+            email: "new@example.test",
+            password: "longenough1",
+        });
+        await user.click(news);
+        await user.click(
+            screen.getByRole("button", { name: "Create account" })
+        );
+
+        await waitFor(() => expect(signUp).toHaveBeenCalledOnce());
+        expect(signUp.mock.lastCall).toEqual([
+            "new@example.test",
+            "longenough1",
+            "brandnew",
+            undefined,
+            true,
+        ]);
     });
 
     /** The error must be in the DOM and marked up, not just styled in. */

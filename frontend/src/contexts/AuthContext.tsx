@@ -26,11 +26,13 @@ interface AuthContextValue {
     user: MyProfile | null;
     isLoading: boolean;
     /* captchaToken: from useCaptcha, once Supabase is set to require one. */
+    /** `news`: whether they ticked to get news emails. Off unless asked. */
     signUp: (
         email: string,
         password: string,
         username: string,
-        captchaToken?: string
+        captchaToken?: string,
+        news?: boolean
     ) => Promise<{ signedIn: boolean }>;
     signIn: (
         email: string,
@@ -172,13 +174,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             user: session ? (user ?? null) : null,
             isLoading: isRestoring || (!!session && isProfileLoading),
 
-            async signUp(email, password, username, captchaToken) {
+            async signUp(email, password, username, captchaToken, news) {
                 const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
                         // read by the handle_new_user trigger to seed the profile
-                        data: { username },
+                        data: { username, news: news === true },
                         captchaToken,
                         emailRedirectTo: confirmedUrl(),
                     },
