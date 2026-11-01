@@ -469,6 +469,19 @@ describe("every other page", () => {
     expect(response.headers.location).toBe("/library?genre=rpg");
   });
 
+  it("leaves the API's CORS preflights to the API", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app)
+      .options("/api/v1/games")
+      .set("Origin", "http://localhost:5173")
+      .set("Access-Control-Request-Method", "GET");
+
+    expect(response.headers["access-control-allow-origin"]).toBe(
+      "http://localhost:5173",
+    );
+  });
+
   it("leaves the API to the API", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 

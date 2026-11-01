@@ -56,8 +56,8 @@ const numericParam = (value: unknown): number | null =>
 const templateOrigin = () =>
   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : env().SITE_URL;
 
-/* Paths the API and the platform keep for themselves. */
-const NOT_A_PAGE = /^\/(api(\/|$)|health$)/;
+/* Every path but the ones the API and the platform keep for themselves. */
+const NOT_A_PAGE_OF_OURS = /^\/(?!api(\/|$)|health$).*/;
 
 /**
  * Every page the app has, each with its own head: games, profiles, lists
@@ -251,11 +251,10 @@ export const createPagesRouter = ({
     xml(res, urlSet(gameEntries(games)));
   });
 
-  // Last: any other address is no page of ours.
-  router.get(/^\/.*/, (req, res, next) => {
-    if (NOT_A_PAGE.test(req.path)) return next();
-    return render(async () => null)(req, res);
-  });
+  /* Last: any other address is no page of ours. The API's paths are left
+     out of the pattern itself, not turned away inside it: a route that
+     matches them would answer their CORS preflights for the API. */
+  router.get(NOT_A_PAGE_OF_OURS, render(async () => null));
 
   return router;
 };
