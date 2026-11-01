@@ -23,7 +23,8 @@
         "test:coverage": "npm run test:coverage -w frontend && npm run test:coverage -w backend",
         "seed:games": "npm run seed:games -w backend",
         "tiktok": "node marketing/tiktok/render.mjs",
-        "tiktok:next": "node marketing/tiktok/next.mjs"
+        "tiktok:next": "node marketing/tiktok/next.mjs",
+        "smoke": "node scripts/smoke.mjs"
     },
     "repository": {
         "type": "git",
