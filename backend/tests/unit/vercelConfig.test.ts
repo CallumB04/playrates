@@ -32,4 +32,15 @@ describe("vercel.json", () => {
     expect(pattern.test("/api/v1/games")).toBe(true);
     expect(pattern.test("/api/v1/cron/trending")).toBe(true);
   });
+
+  it("sends every page through the API, which knows its head and its 404", () => {
+    // Files on disk (the app's scripts, index.html for /) are served
+    // before any rewrite; everything else that isn't the API is a page.
+    const pages = vercel.rewrites.at(-1)!;
+    expect(pages.destination).toBe("/api");
+    const pattern = new RegExp(`^${pages.source}$`);
+    expect(pattern.test("/library")).toBe(true);
+    expect(pattern.test("/no-such-page")).toBe(true);
+    expect(pattern.test("/api/v1/games")).toBe(false);
+  });
 });

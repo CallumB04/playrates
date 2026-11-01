@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import request from "supertest";
 import { buildTestApp, USER_A, USER_B } from "../helpers/buildTestApp.js";
@@ -394,5 +395,100 @@ describe("page content for readers that never run the app", () => {
     expect(html).toContain("The Bloody Baron, easily.");
     // The deleted reply leaves no row behind.
     expect(html.match(/<li>/g)).toHaveLength(1);
+  });
+});
+
+describe("every other page", () => {
+  it("gives a fixed page its own title and canonical", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app).get("/privacy");
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain("<title>Privacy / PlayRates</title>");
+    expect(response.text).toContain(
+      '<link rel="canonical" href="https://playrates.app/privacy" />',
+    );
+    expect(response.headers["cache-control"]).toContain("s-maxage");
+  });
+
+  it("asks search engines to leave out someone's own pages", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    for (const path of ["/settings", "/progress", "/admin/errors"]) {
+      const response = await request(app).get(path);
+      expect(response.status, path).toBe(200);
+      expect(response.text, path).toContain(
+        '<meta name="robots" content="noindex" />',
+      );
+    }
+  });
+
+  it("answers an address the app doesn't have with a real 404", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app).get("/no-such-page");
+
+    expect(response.status).toBe(404);
+    expect(response.text).toContain(
+      "<title>Page not found / PlayRates</title>",
+    );
+    expect(response.text).toContain('<meta name="robots" content="noindex" />');
+  });
+
+  it("sends the old /catalogue on to the library, filters and all", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app).get("/catalogue?genre=rpg");
+
+    expect(response.status).toBe(301);
+    expect(response.headers.location).toBe("/library?genre=rpg");
+  });
+
+  it("leaves the API to the API", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+
+    const response = await request(app).get("/api/v1/no-such-endpoint");
+
+    expect(response.status).toBe(404);
+    expect(response.body.error.code).toBe("not_found");
+  });
+
+  /* The app's routes are in App.tsx; a new one there without a page here
+     would be served as a 404. */
+  it("has a page for every route in the app", async () => {
+    const appSource = readFileSync(
+      new URL("../../../frontend/src/App.tsx", import.meta.url),
+      "utf8",
+    );
+    const paths = [...appSource.matchAll(/path="([^"]+)"/g)].map((m) => m[1]!);
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        games: [buildGame({ id: 1 })],
+        communityThreads: [buildThread({ id: 1 })],
+      },
+    });
+
+    const sample = (path: string) =>
+      path
+        .replace(":username", "devuser")
+        .replace(":targetUsername?", "devuser")
+        .replace("/:view?", "/games")
+        .replace(":gameID", "1")
+        .replace(":threadId", "1")
+        .replace("/*", "/anything");
+
+    const checked = paths.filter(
+      // The catch-all, and a list, which needs one of its own to exist.
+      (path) => path !== "*" && !path.includes(":listId"),
+    );
+    expect(checked.length).toBeGreaterThan(15);
+    for (const path of checked) {
+      const response = await request(app).get(sample(path));
+      expect([200, 301], `${path} -> ${sample(path)}`).toContain(
+        response.status,
+      );
+    }
   });
 });

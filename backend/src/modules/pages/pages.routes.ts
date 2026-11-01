@@ -1,5 +1,10 @@
 import { Router, type Request, type Response } from "express";
-import { isProfileView, pageTitle, SITE_DESCRIPTION } from "@playrates/shared";
+import {
+  FIXED_PAGES,
+  isProfileView,
+  pageTitle,
+  SITE_DESCRIPTION,
+} from "@playrates/shared";
 import { env } from "../../config/env.js";
 import { SITE_HEADERS } from "../../config/siteHeaders.js";
 import type { Logger } from "../../lib/logger.js";
@@ -45,19 +50,23 @@ const NOT_FOUND: Omit<HeadMeta, "path"> = {
 const numericParam = (value: unknown): number | null =>
   typeof value === "string" && /^\d{1,15}$/.test(value) ? Number(value) : null;
 
-/**
- * The pages worth a preview, rendered with their own head: game, profile
- * and thread. Everything else is the static index.html, served as it is.
- *
- * Mounted ahead of helmet, since these are pages rather than API responses
- * and carry the site's CSP instead of the API's.
- */
 /* Where to fetch the app's index.html when it isn't on disk. Never from the
    request's Host header: the copy is kept for the instance's lifetime, so a
    forged host would poison every page it serves after. */
 const templateOrigin = () =>
   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : env().SITE_URL;
 
+/* Paths the API and the platform keep for themselves. */
+const NOT_A_PAGE = /^\/(api(\/|$)|health$)/;
+
+/**
+ * Every page the app has, each with its own head: games, profiles, lists
+ * and threads from their data, the fixed pages from FIXED_PAGES. Anything
+ * else is a 404, so a mistyped address isn't a page search engines keep.
+ *
+ * Mounted ahead of helmet, since these are pages rather than API responses
+ * and carry the site's CSP instead of the API's.
+ */
 export const createPagesRouter = ({
   service,
   sitemap,
@@ -149,6 +158,46 @@ export const createPagesRouter = ({
     }),
   );
 
+  // The home page's head is the one index.html carries already.
+  router.get("/", async (_req, res) => {
+    const html = await template(templateOrigin());
+    siteHeaders(res);
+    res.type("html").setHeader("Cache-Control", PAGE_CACHE).send(html);
+  });
+
+  for (const [path, page] of Object.entries(FIXED_PAGES)) {
+    router.get(
+      path,
+      render(async () => ({
+        title: pageTitle(page.title),
+        description: page.description ?? SITE_DESCRIPTION,
+        path,
+        image: DEFAULT_IMAGE,
+        card: "summary",
+        noindex: page.noindex,
+      })),
+    );
+  }
+
+  // The admin's own pages: the app, and nothing to list.
+  router.get(
+    /^\/admin(\/.*)?$/,
+    render(async (req) => ({
+      title: pageTitle(null),
+      description: SITE_DESCRIPTION,
+      path: req.path,
+      image: DEFAULT_IMAGE,
+      card: "summary",
+      noindex: true,
+    })),
+  );
+
+  // The library's first name. The filters live in the query string.
+  router.get("/catalogue", (req, res) => {
+    const query = req.originalUrl.slice(req.path.length);
+    res.redirect(301, `/library${query}`);
+  });
+
   const xml = (res: Response, body: string) => {
     res.type("application/xml").setHeader("Cache-Control", SITEMAP_CACHE);
     if (!production) res.setHeader("X-Robots-Tag", "noindex");
@@ -195,6 +244,12 @@ export const createPagesRouter = ({
       return;
     }
     xml(res, urlSet(gameEntries(games)));
+  });
+
+  // Last: any other address is no page of ours.
+  router.get(/^\/.*/, (req, res, next) => {
+    if (NOT_A_PAGE.test(req.path)) return next();
+    return render(async () => null)(req, res);
   });
 
   return router;

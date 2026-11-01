@@ -30,40 +30,8 @@
             "destination": "/api"
         },
         {
-            "source": "/game/:id",
-            "destination": "/api"
-        },
-        {
-            "source": "/user/:username",
-            "destination": "/api"
-        },
-        {
-            "source": "/user/:username/gaming-25",
-            "destination": "/api"
-        },
-        {
-            "source": "/user/:username/lists/:id",
-            "destination": "/api"
-        },
-        {
-            "source": "/community/thread/:id",
-            "destination": "/api"
-        },
-        {
-            "source": "/sitemap.xml",
-            "destination": "/api"
-        },
-        {
-            "source": "/sitemaps/:file",
-            "destination": "/api"
-        },
-        {
-            "source": "/robots.txt",
-            "destination": "/api"
-        },
-        {
             "source": "/((?!api/).*)",
-            "destination": "/index.html"
+            "destination": "/api"
         }
     ],
     "headers": [
