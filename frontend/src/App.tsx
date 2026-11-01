@@ -15,6 +15,8 @@ import InviteBanner from "./components/progress/InviteBanner";
 import { useReloadOnNewBuild } from "./hooks/useReloadOnNewBuild";
 import { useScrollMemory } from "./hooks/useScrollMemory";
 import ErrorBoundary from "./components/feedback/ErrorBoundary";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 /* Each page is its own chunk, so a visitor downloads the page they landed
    on rather than the whole app. A chunk gone missing after a deploy is
@@ -203,6 +205,10 @@ function App() {
             <ProgressMoments />
             <ReferralCapture />
             <AuthLinkResult />
+            {/* Visits and Core Web Vitals, cookieless, from the site's own
+                origin. They record nothing until switched on in Vercel. */}
+            <Analytics />
+            <SpeedInsights />
             <ToastStack />
         </div>
     );
