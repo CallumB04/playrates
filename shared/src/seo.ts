@@ -113,6 +113,8 @@ export const FIXED_PAGES: Record<string, FixedPageMeta> = {
   "/community/new": { title: "New thread", noindex: true },
   "/progress": { title: "Your progress", noindex: true },
   "/shop": { title: "Shop", noindex: true },
+  // Your own Gaming 25, by no name: the app sends you to it.
+  "/gaming-25": { title: "Gaming 25", noindex: true },
   "/settings": { title: "Settings", noindex: true },
   "/reset-password": { title: "Set a new password", noindex: true },
   "/unsubscribe": { title: "Unsubscribe", noindex: true },
