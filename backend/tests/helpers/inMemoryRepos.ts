@@ -446,6 +446,39 @@ export const createInMemoryRepos = (
           .slice(offset, offset + limit)
           .map((g) => ({ id: g.id, lastmod: g.updated_at.slice(0, 10) }));
       },
+      async people() {
+        const listed = new Map(
+          state.profiles
+            .filter(
+              (p) =>
+                (p.profile_visibility ?? "everyone") === "everyone" &&
+                !p.hide_from_search,
+            )
+            .map((p) => [p.id, p.username]),
+        );
+        const day = (at: string) => at.slice(0, 10);
+        return [
+          ...[...listed.values()].map((username) => ({
+            path: `/user/${username}`,
+            lastmod: day(
+              state.profiles.find((p) => p.username === username)!.updated_at ??
+                new Date().toISOString(),
+            ),
+          })),
+          ...state.gameLists
+            .filter((l) => l.visibility === "everyone" && listed.has(l.user_id))
+            .map((l) => ({
+              path: `/user/${listed.get(l.user_id)}/lists/${l.id}`,
+              lastmod: day(l.updated_at),
+            })),
+          ...state.gaming25s
+            .filter((g) => listed.has(g.user_id))
+            .map((g) => ({
+              path: `/user/${listed.get(g.user_id)}/gaming-25`,
+              lastmod: day(g.updated_at),
+            })),
+        ];
+      },
       async threads() {
         const adult = new Set(
           state.games.filter((g) => g.has_sexual_content).map((g) => g.id),

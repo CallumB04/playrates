@@ -215,6 +215,30 @@ describe("the sitemap", () => {
     expect(response.text).not.toContain("/game/2<");
   });
 
+  it("lists public profiles, and nobody who'd rather not be found", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...seed(),
+        profiles: [
+          buildProfile({ id: USER_A, username: "devuser" }),
+          buildProfile({
+            id: USER_B,
+            username: "quietone",
+            hide_from_search: true,
+          }),
+        ],
+      },
+      production: true,
+    });
+
+    expect((await request(app).get("/sitemap.xml")).text).toContain(
+      "<loc>https://playrates.app/sitemaps/people.xml</loc>",
+    );
+    const people = (await request(app).get("/sitemaps/people.xml")).text;
+    expect(people).toContain("<loc>https://playrates.app/user/devuser</loc>");
+    expect(people).not.toContain("quietone");
+  });
+
   it("404s a page of games past the end", async () => {
     const { app } = buildTestApp({ seed: seed(), production: true });
 
@@ -490,5 +514,67 @@ describe("every other page", () => {
         response.status,
       );
     }
+  });
+});
+
+describe("list and Gaming 25 pages for readers that never run the app", () => {
+  it("writes out a public list's games in its order", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        games: [
+          buildGame({
+            id: 1,
+            title: "Outer Wilds",
+            release_date: "2019-05-28",
+          }),
+          buildGame({ id: 2, title: "Celeste", release_date: "2018-01-25" }),
+          buildGame({ id: 3, title: "Hidden One", has_sexual_content: true }),
+        ],
+        gameLists: [
+          {
+            id: 1,
+            user_id: USER_A,
+            name: "Best of",
+            description: "Short and perfect.",
+            visibility: "everyone",
+            colour: null,
+            ranked: true,
+            created_at: "2026-10-01T00:00:00.000Z",
+            updated_at: "2026-10-02T00:00:00.000Z",
+          },
+        ],
+        gameListItems: [
+          {
+            list_id: 1,
+            game_id: 2,
+            position: 2,
+            added_at: "2026-10-01T00:00:00.000Z",
+          },
+          {
+            list_id: 1,
+            game_id: 1,
+            position: 1,
+            added_at: "2026-10-01T00:00:00.000Z",
+          },
+          {
+            list_id: 1,
+            game_id: 3,
+            position: 3,
+            added_at: "2026-10-01T00:00:00.000Z",
+          },
+        ],
+      },
+    });
+
+    const html = (await request(app).get("/user/devuser/lists/1")).text;
+    const body = html.slice(html.indexOf('<div id="root">'));
+
+    expect(body).toContain("Best of");
+    expect(body).toContain("Short and perfect.");
+    expect(body.indexOf("1. Outer Wilds")).toBeLessThan(
+      body.indexOf("2. Celeste"),
+    );
+    expect(body).not.toContain("Hidden One");
   });
 });

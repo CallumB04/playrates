@@ -327,7 +327,39 @@ export const createPagesService = (repos: Repos) => {
           noindex: true,
         };
       }
+      // The games in the list's order, adult ones left out as everywhere.
+      const items = (await repos.lists.items(row.id)).sort(
+        (a, b) => a.position - b.position,
+      );
+      const games = new Map(
+        (await repos.games.findByIds(items.map((i) => i.game_id)))
+          .filter((g) => !g.has_sexual_content)
+          .map((g) => [g.id, g]),
+      );
+      const listed = items.flatMap((i) => games.get(i.game_id) ?? []);
+      const body: PageBody = {
+        heading: row.name,
+        lead: `${row.ranked ? "A ranked list" : "A list"} by ${row.owner_username}, ${row.game_count} ${row.game_count === 1 ? "game" : "games"}.`,
+        text: toParagraphs(row.description ?? ""),
+        sections: [
+          {
+            heading: "The games",
+            items: listed.map((g, i) => ({
+              title: row.ranked ? `${i + 1}. ${g.title}` : g.title,
+              meta: g.release_date ? g.release_date.slice(0, 4) : undefined,
+            })),
+          },
+        ],
+        links: [
+          {
+            href: `/user/${row.owner_username}`,
+            label: `${row.owner_username}'s profile`,
+          },
+        ],
+      };
+
       return {
+        body,
         title: pageTitle(`${row.name}, a list by ${row.owner_username}`),
         description: row.description
           ? truncateDescription(row.description)
@@ -383,7 +415,28 @@ export const createPagesService = (repos: Repos) => {
           ? `${profile.username}'s 25 games, one for each category, on PlayRates.`
           : `${shown.join(" · ")}${more > 0 ? `, and ${more} more` : ""}. ${named.length} of ${GAMING_25_SIZE} picked on PlayRates.`;
 
+      const body: PageBody = {
+        heading: `${profile.username}'s Gaming 25`,
+        lead: `${named.length} of ${GAMING_25_SIZE} picked, one game for each category.`,
+        sections: [
+          {
+            heading: "The picks",
+            items: named.map((p) => ({
+              title: games.get(p.gameId)!,
+              meta: gaming25Label(p.category),
+            })),
+          },
+        ],
+        links: [
+          {
+            href: `/user/${profile.username}`,
+            label: `${profile.username}'s profile`,
+          },
+        ],
+      };
+
       return {
+        body,
         title: pageTitle(`${profile.username}'s Gaming 25`),
         description: truncateDescription(description),
         path,

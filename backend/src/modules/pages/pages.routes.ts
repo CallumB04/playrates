@@ -216,9 +216,14 @@ export const createPagesRouter = ({
       sitemapIndex([
         "/sitemaps/pages.xml",
         "/sitemaps/threads.xml",
+        "/sitemaps/people.xml",
         ...gamePages(games),
       ]),
     );
+  });
+
+  router.get("/sitemaps/people.xml", async (_req, res) => {
+    xml(res, urlSet(await sitemap.people()));
   });
 
   router.get("/sitemaps/pages.xml", (_req, res) => {
