@@ -1,7 +1,12 @@
 import { deflateSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import { woffToSfnt } from "../../src/lib/woff.js";
-import { loadFonts, toPng } from "../../src/modules/gaming25/gaming25.image.js";
+import sharp from "sharp";
+import {
+  coverData,
+  loadFonts,
+  toPng,
+} from "../../src/modules/gaming25/gaming25.image.js";
 
 /** A WOFF holding these tables, each compressed or stored as asked. */
 const woff = (tables: { tag: string; data: Buffer; compress: boolean }[]) => {
@@ -111,5 +116,38 @@ describe("the pictures' text", () => {
       );
     const [a, b] = await Promise.all([draw("A"), draw("B")]);
     expect(a.equals(b)).toBe(false);
+  });
+});
+
+describe("pictures on the cards", () => {
+  const picture = (format: "webp" | "jpeg") => {
+    const red = sharp({
+      create: { width: 8, height: 8, channels: 3, background: "#ff0000" },
+    });
+    return (format === "webp" ? red.webp() : red.jpeg()).toBuffer();
+  };
+  const serving = (bytes: Buffer, type: string) =>
+    (async () =>
+      new Response(new Uint8Array(bytes), {
+        headers: { "content-type": type },
+      })) as unknown as typeof fetch;
+
+  /* satori draws a WebP as nothing, and every uploaded avatar is one: the
+     card's circle came out empty. */
+  it("hands satori a member's WebP picture as a PNG", async () => {
+    const uri = await coverData(
+      "https://storage.test/avatars/a/avatar.webp",
+      serving(await picture("webp"), "image/webp"),
+    );
+    expect(uri).toMatch(/^data:image\/png;base64,/);
+  });
+
+  it("passes a JPEG cover through as it is", async () => {
+    const jpeg = await picture("jpeg");
+    const uri = await coverData(
+      "https://images.test/cover.jpg",
+      serving(jpeg, "image/jpeg; charset=binary"),
+    );
+    expect(uri).toBe(`data:image/jpeg;base64,${jpeg.toString("base64")}`);
   });
 });

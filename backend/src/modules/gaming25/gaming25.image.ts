@@ -111,6 +111,10 @@ type Fetch = typeof fetch;
 
 const COVER_TIMEOUT_MS = 4000;
 
+// What satori can draw. Anything else, a member's WebP picture included,
+// draws as nothing, so it goes in as a PNG.
+const DRAWABLE = /^image\/(png|jpe?g|gif)$/;
+
 /** A cover as a data URI, or null when it can't be had in time: a missing
  *  cover is an empty well, not a failed picture. */
 export const coverData = async (
@@ -123,10 +127,17 @@ export const coverData = async (
       signal: AbortSignal.timeout(COVER_TIMEOUT_MS),
     });
     if (!res.ok) return null;
-    const type = res.headers.get("content-type") ?? "image/jpeg";
+    const type = (res.headers.get("content-type") ?? "image/jpeg")
+      .split(";")[0]!
+      .trim();
     if (!type.startsWith("image/")) return null;
-    const data = Buffer.from(await res.arrayBuffer()).toString("base64");
-    return `data:${type};base64,${data}`;
+    const bytes = Buffer.from(await res.arrayBuffer());
+    if (DRAWABLE.test(type)) {
+      return `data:${type};base64,${bytes.toString("base64")}`;
+    }
+    const { default: sharp } = await import("sharp");
+    const png = await sharp(bytes).png().toBuffer();
+    return `data:image/png;base64,${png.toString("base64")}`;
   } catch {
     return null;
   }
