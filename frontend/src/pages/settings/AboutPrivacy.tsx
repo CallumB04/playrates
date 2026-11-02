@@ -7,7 +7,7 @@ import type {
 import { Link } from "react-router-dom";
 import Dropdown from "../../components/ui/Dropdown";
 import { cn } from "../../lib/cn";
-import { PRIVACY_OPTIONS } from "../ProfilePage/components/PrivacySelect";
+import { PRIVACY_OPTIONS } from "../ProfilePage/components/privacyOptions";
 import { ABOUT_ROWS, linkLabel, steamLabel } from "../ProfilePage/lib/about";
 
 const GROUPS = [

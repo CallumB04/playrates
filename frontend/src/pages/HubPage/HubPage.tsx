@@ -24,7 +24,7 @@ import PageHeader from "../../components/ui/PageHeader";
 import Pagination from "../../components/ui/Pagination";
 import { TileSkeleton } from "../../components/ui/Skeleton";
 import EmptyPlate from "../../components/ui/EmptyPlate";
-import { buttonClass } from "../../components/ui/Button";
+import { buttonClass } from "../../components/ui/buttonClass";
 import NotFoundPage from "../NotFoundPage";
 import { getLibraryGamesPerPage } from "../LibraryPage/lib/gamesPerPage";
 import { libraryFoot } from "../LibraryPage/lib/libraryFoot";

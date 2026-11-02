@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import type { AdminGameSummary } from "@playrates/shared";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import Button from "../../../components/ui/Button";
 import Toggle from "../../../components/ui/Toggle";
 import Field from "../../../components/ui/Field";

@@ -5,7 +5,7 @@ import Stat from "../../../components/ui/Stat";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import ProfilePicture from "../../../components/ProfilePicture";
 import PresenceDot from "../../../components/ui/PresenceDot";
-import { buttonClass } from "../../../components/ui/Button";
+import { buttonClass } from "../../../components/ui/buttonClass";
 import {
     formatCount,
     formatMonthYear,

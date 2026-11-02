@@ -211,7 +211,7 @@ export const useQuickAdd = () => {
             notify(`${title} added to your ${shelf}`, "success");
         } catch (error) {
             queryClient.setQueryData(key, before);
-            notify(`Couldn't add that to your ${shelf}`, "error");
+            notify(`Couldn’t add that to your ${shelf}`, "error");
             throw error;
         }
     };

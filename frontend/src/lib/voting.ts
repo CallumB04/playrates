@@ -10,7 +10,7 @@ export const whyCannotVote = (
 ): string | null => {
     if (!viewerId) return "Join to react";
     // The API refuses it too; this only saves the round trip.
-    if (viewerId === authorId) return `You can't react to your own ${noun}`;
+    if (viewerId === authorId) return `You can’t react to your own ${noun}`;
     return null;
 };
 
@@ -20,6 +20,6 @@ export const whyCannotLove = (
     owner: string | undefined
 ): string | null => {
     if (!viewer) return "Sign in to love it";
-    if (viewer === owner) return "You can't love your own";
+    if (viewer === owner) return "You can’t love your own";
     return null;
 };

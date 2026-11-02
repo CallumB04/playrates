@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Mail } from "lucide-react";
 import { CONTACT_EMAIL } from "@playrates/shared";
-import { buttonClass } from "../../components/ui/Button";
+import { buttonClass } from "../../components/ui/buttonClass";
 import { DISCORD_INVITE_URL } from "../../constants/brand";
 import ProsePage from "./ProsePage";
 

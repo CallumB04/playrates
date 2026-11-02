@@ -5,7 +5,7 @@ import GameCover from "../../components/game/GameCover";
 import ProfilePicture, {
     PrivateProfilePicture,
 } from "../../components/ProfilePicture";
-import { cardClass } from "../../components/ui/Card";
+import { cardClass } from "../../components/ui/cardClass";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import RatingBadge from "../../components/ui/RatingBadge";
 import { TextSkeleton } from "../../components/ui/Skeleton";

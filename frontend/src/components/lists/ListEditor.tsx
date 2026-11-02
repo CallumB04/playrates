@@ -21,7 +21,7 @@ import CoverGrid from "../game/CoverGrid";
 import { ApiError } from "../../api";
 import { useNotify } from "../../contexts/NotificationContext";
 import { useCreateList, useUpdateList } from "../../hooks/queries/useLists";
-import { PRIVACY_OPTIONS } from "../../pages/ProfilePage/components/PrivacySelect";
+import { PRIVACY_OPTIONS } from "../../pages/ProfilePage/components/privacyOptions";
 import { cn } from "../../lib/cn";
 import { coversFor } from "../../lib/lists";
 
@@ -124,7 +124,7 @@ const ListEditor = ({
                     error.status !== undefined &&
                     error.status < 500
                     ? error.message
-                    : "Couldn't save the list",
+                    : "Couldn’t save the list",
                 "error"
             );
         }

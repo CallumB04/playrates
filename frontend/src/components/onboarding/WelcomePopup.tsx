@@ -65,7 +65,7 @@ const WelcomePopup = ({
             setStep("games");
         } catch {
             // Stays open, so nothing they chose is thrown away.
-            notify("Couldn't save that. Try again, or skip for now.", "error");
+            notify("Couldn’t save that. Try again, or skip for now.", "error");
         }
     };
 

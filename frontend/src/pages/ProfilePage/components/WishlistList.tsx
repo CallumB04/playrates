@@ -28,7 +28,7 @@ interface WishlistListProps {
 const saveFailure = (error: unknown) =>
     error instanceof ApiError && error.status === 422
         ? error.message
-        : "Couldn't save your wishlist order";
+        : "Couldn’t save your wishlist order";
 
 const idOf = (entry: WishlistEntry) => entry.gameId;
 

@@ -49,7 +49,7 @@ describe("ForgotPasswordForm", () => {
             screen.getByRole("button", { name: "Send the link" })
         );
 
-        expect(await screen.findByText(/didn't send/)).toBeInTheDocument();
+        expect(await screen.findByText(/didn’t send/)).toBeInTheDocument();
     });
 });
 

@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { ProfileAccent } from "@playrates/shared";
 import ProfilePicture from "./ProfilePicture";
-import Button, { buttonClass } from "./ui/Button";
+import Button from "./ui/Button";
+import { buttonClass } from "./ui/buttonClass";
 import { compressAvatar } from "../lib/avatarImage";
 import { cn } from "../lib/cn";
 
@@ -59,7 +60,7 @@ const AvatarField = ({
             });
         } catch (e) {
             setError(
-                e instanceof Error ? e.message : "That image couldn't be used."
+                e instanceof Error ? e.message : "That image couldn’t be used."
             );
         } finally {
             setWorking(false);

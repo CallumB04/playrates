@@ -197,7 +197,7 @@ describe("WishlistList", () => {
         await user.click(sheet.getByRole("button", { name: /To the top/ }));
 
         expect(
-            await screen.findByText("Couldn't save your wishlist order")
+            await screen.findByText("Couldn’t save your wishlist order")
         ).toBeInTheDocument();
         await waitFor(() =>
             expect(shown()).toEqual([

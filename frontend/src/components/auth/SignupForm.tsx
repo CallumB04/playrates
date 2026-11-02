@@ -54,7 +54,7 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
         if (!passwordResult.success) {
             next.password = passwordResult.error.issues[0]?.message;
         } else if (confirmPassword !== password) {
-            next.confirmPassword = "The passwords don't match.";
+            next.confirmPassword = "The passwords don’t match.";
         }
 
         if (!agreed) {

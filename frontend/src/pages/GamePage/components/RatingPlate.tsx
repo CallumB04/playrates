@@ -1,5 +1,5 @@
 import RatingBadge from "../../../components/ui/RatingBadge";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import { formatCount, formatRating } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 import { medianOf } from "../lib/ratingBuckets";

@@ -11,7 +11,7 @@ import {
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { cn } from "../../lib/cn";
-import { fieldClass } from "./Input";
+import { fieldClass } from "./fieldClass";
 import { useDismiss } from "../../hooks/useDismiss";
 import { menuAcross, popoverClass } from "./popover";
 

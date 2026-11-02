@@ -28,9 +28,9 @@ import {
 } from "@playrates/shared";
 import { ApiError } from "../../api";
 import Panel from "../../components/ui/Panel";
-import { cardClass } from "../../components/ui/Card";
+import { cardClass } from "../../components/ui/cardClass";
 import AsideCard from "../../components/ui/AsideCard";
-import { buttonClass } from "../../components/ui/Button";
+import { buttonClass } from "../../components/ui/buttonClass";
 import SegmentedChoice from "../../components/ui/SegmentedChoice";
 import { Skeleton } from "../../components/ui/Skeleton";
 import ProfilePicture from "../../components/ProfilePicture";
@@ -417,7 +417,7 @@ const TaskRow = ({
                                 notify(
                                     error instanceof ApiError
                                         ? error.message
-                                        : "Couldn't swap that task",
+                                        : "Couldn’t swap that task",
                                     "error"
                                 ),
                         })
@@ -806,7 +806,7 @@ const Look = ({ data }: { data: Progress }) => {
     const entry = (item: string) => shop?.items.find((i) => i.item === item);
     const failed = (error: unknown) =>
         notify(
-            error instanceof ApiError ? error.message : "Couldn't change that",
+            error instanceof ApiError ? error.message : "Couldn’t change that",
             "error"
         );
     /** Wear it if it's yours; open it in the shop's popup if it's for sale. */

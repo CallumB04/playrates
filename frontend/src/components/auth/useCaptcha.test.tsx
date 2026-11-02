@@ -106,7 +106,7 @@ describe("the bot check on the email forms", () => {
         await fillAndSubmit(user);
 
         expect(screen.getByRole("alert")).toHaveTextContent(
-            /didn't finish. Refresh the page/
+            /didn’t finish. Refresh the page/
         );
     });
 
@@ -128,7 +128,7 @@ describe("the bot check on the email forms", () => {
         await fillAndSubmit(user);
 
         expect(await screen.findByRole("alert")).toHaveTextContent(
-            /bot check didn't pass/
+            /bot check didn’t pass/
         );
         expect(
             screen.queryByText("Those login details are not correct.")

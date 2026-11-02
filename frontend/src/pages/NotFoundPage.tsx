@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { buttonClass } from "../components/ui/Button";
+import { buttonClass } from "../components/ui/buttonClass";
 import GameTile from "../components/game/GameTile";
 import { TileSkeleton } from "../components/ui/Skeleton";
 import { useGames, usePlatforms } from "../hooks/queries/useGames";

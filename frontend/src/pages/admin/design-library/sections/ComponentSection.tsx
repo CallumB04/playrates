@@ -1,4 +1,4 @@
-import { chipClass } from "../../../../components/ui/Chip";
+import { chipClass } from "../../../../components/ui/chipClass";
 import ActionsSpecimens from "./components/ActionsSpecimens";
 import FormSpecimens from "./components/FormSpecimens";
 import DataSpecimens from "./components/DataSpecimens";

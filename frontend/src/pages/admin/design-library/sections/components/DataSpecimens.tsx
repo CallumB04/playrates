@@ -99,7 +99,7 @@ const DataSpecimens = () => {
 
             <Specimen
                 title="Figures"
-                notes="Every number in the product is a ledger figure, set tabular. roll counts up over 320ms when the value changes and simply swaps under reduced motion. It's for a figure someone is watching change, like a library count ticking up during an import. figureClass gives the same type to a value that isn't a plain number."
+                notes="Every number in the product is a ledger figure, set tabular. roll counts up over 320ms when the value changes and simply swaps under reduced motion. It’s for a figure someone is watching change, like a library count ticking up during an import. figureClass gives the same type to a value that isn’t a plain number."
                 meta='value · format · size="display" | "lg" | "row" | "label" · roll · figureClass(size, className)'
             >
                 <Figure value={count} size="display" roll />
@@ -117,7 +117,7 @@ const DataSpecimens = () => {
 
             <Specimen
                 title="Stat"
-                notes="A figure with its label under it. The game page's score cards, a profile's counts and your year on the home page all use this one. The optional mark above tells a row of them apart. While a figure is loading it holds its place: a figure nobody has fetched yet is not zero, and not a dash either."
+                notes="A figure with its label under it. The game page’s score cards, a profile’s counts and your year on the home page all use this one. The optional mark above tells a row of them apart. While a figure is loading it holds its place: a figure nobody has fetched yet is not zero, and not a dash either."
                 meta="label · value (string or node) · icon · loading"
             >
                 <div className="grid w-full max-w-md grid-cols-3 gap-4">
@@ -193,7 +193,7 @@ const DataSpecimens = () => {
 
             <Specimen
                 title="Avatars and presence"
-                notes="The generated avatar takes the profile's colour, so the same person looks the same everywhere. The presence dot sits on the rim of the circle at every size rather than floating off its corner; it expects a relative wrapper."
+                notes="The generated avatar takes the profile’s colour, so the same person looks the same everywhere. The presence dot sits on the rim of the circle at every size rather than floating off its corner; it expects a relative wrapper."
                 meta="ProfilePicture variant · accent · PresenceDot online · size"
             >
                 <span className="relative inline-block">
@@ -239,7 +239,7 @@ const DataSpecimens = () => {
 
             <Specimen
                 title="User status"
-                notes="Presence said in words, for where there is room: the profile header. Offline is muted rather than red: being away is not an error, and it matches the dot on the same person's avatar."
+                notes="Presence said in words, for where there is room: the profile header. Offline is muted rather than red: being away is not an error, and it matches the dot on the same person’s avatar."
                 meta='online · size="sm" | "md"'
             >
                 <UserStatus online />
@@ -258,7 +258,7 @@ const DataSpecimens = () => {
 
             <Specimen
                 title="Achievement ring"
-                notes="Gold, because completion is the one figure a log earns rather than records. It sits beside the log's facts, not in them."
+                notes="Gold, because completion is the one figure a log earns rather than records. It sits beside the log’s facts, not in them."
                 meta="done · total · size"
             >
                 <AchievementRing done={46} total={52} />

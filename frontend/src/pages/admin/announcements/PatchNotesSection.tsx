@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Megaphone } from "lucide-react";
 import { patchNoteAnnouncement, type AdminPatchNote } from "@playrates/shared";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import Button from "../../../components/ui/Button";
 import ConfirmPopup from "../../../components/ui/ConfirmPopup";
 import Toggle from "../../../components/ui/Toggle";

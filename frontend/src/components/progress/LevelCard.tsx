@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import AsideCard from "../ui/AsideCard";
 import { Skeleton } from "../ui/Skeleton";
 import BadgeTip from "./BadgeTip";
-import { showcaseOf } from "./ShowcaseView";
+import { showcaseOf } from "./showcase";
 import { usePlayerBadges } from "../../hooks/queries/useProgress";
 import { formatCount } from "../../lib/format";
 import { profilePath } from "../../lib/profilePaths";

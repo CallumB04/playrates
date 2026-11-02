@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import type { AdminUserSummary } from "@playrates/shared";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import { SearchInput } from "../../../components/ui/Input";
 import SegmentedChoice from "../../../components/ui/SegmentedChoice";
 import Pagination, {

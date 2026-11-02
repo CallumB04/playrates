@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useAccountForm } from "../contexts/AccountFormContext";
 import { usePageMeta } from "../hooks/usePageMeta";
 import Button from "../components/ui/Button";
-import { cardClass } from "../components/ui/Card";
+import { cardClass } from "../components/ui/cardClass";
 import EmptyPlate from "../components/ui/EmptyPlate";
 import { TextSkeleton } from "../components/ui/Skeleton";
 import PasswordField from "../components/auth/PasswordField";
@@ -48,7 +48,7 @@ const ResetPasswordPage = () => {
         }
         setError(undefined);
         if (confirmPassword !== password) {
-            setConfirmError("The passwords don't match.");
+            setConfirmError("The passwords don’t match.");
             return;
         }
         setConfirmError(undefined);
@@ -57,7 +57,7 @@ const ResetPasswordPage = () => {
             await updatePassword(password);
             navigate("/", { replace: true });
         } catch {
-            setError("That didn't save. Try again, or ask for a new link.");
+            setError("That didn’t save. Try again, or ask for a new link.");
         } finally {
             setIsSubmitting(false);
         }

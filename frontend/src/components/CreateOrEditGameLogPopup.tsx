@@ -262,10 +262,10 @@ const CreateOrEditGameLogPopup = ({
                     failure.code === "platform_taken"
                 ) {
                     setConsoleError(
-                        `You've already logged this on ${nameOf(t) ?? "that platform"}.`
+                        `You’ve already logged this on ${nameOf(t) ?? "that platform"}.`
                     );
                 } else {
-                    notify("Couldn't save that entry", "error");
+                    notify("Couldn’t save that entry", "error");
                 }
                 return;
             }
@@ -291,7 +291,7 @@ const CreateOrEditGameLogPopup = ({
                 // because the note is the part the user wrote by hand: they
                 // have to see this, not catch it out of the corner of an eye.
                 notify(
-                    "Entry saved, but your note didn't send",
+                    "Entry saved, but your note didn’t send",
                     "error",
                     "critical"
                 );
@@ -474,7 +474,7 @@ const CreateOrEditGameLogPopup = ({
                             aria-label="Add a platform"
                             title={
                                 free.length === 0
-                                    ? "Logged on every platform it's on"
+                                    ? "Logged on every platform it’s on"
                                     : "Add a platform"
                             }
                             className="mb-1 ml-1 flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-dashed border-strong text-content-secondary lift hover:border-brand hover:text-content disabled:cursor-not-allowed disabled:border-subtle disabled:text-content-muted disabled:opacity-50 disabled:hover:border-subtle sm:size-9"

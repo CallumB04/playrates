@@ -56,7 +56,7 @@ const ShareSheet = ({
     text,
     imageUrl,
     fileName,
-    noImage = "The picture couldn't be made just now.",
+    noImage = "The picture couldn’t be made just now.",
     onClose,
 }: ShareSheetProps) => {
     const titleId = useId();
@@ -87,7 +87,7 @@ const ShareSheet = ({
         } catch (error) {
             // Closing the share sheet is a choice, not a failure.
             if ((error as Error).name !== "AbortError") {
-                notify("Couldn't open sharing", "error");
+                notify("Couldn’t open sharing", "error");
             }
         } finally {
             setBusy(false);
@@ -107,7 +107,7 @@ const ShareSheet = ({
             a.click();
             setTimeout(() => URL.revokeObjectURL(href), 1000);
         } catch {
-            notify("Couldn't download the picture", "error");
+            notify("Couldn’t download the picture", "error");
         } finally {
             setBusy(false);
         }

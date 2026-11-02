@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Skeleton } from "./Skeleton";
-import { figureClass } from "./Figure";
+import { figureClass } from "./figureClass";
 import { cn } from "../../lib/cn";
 
 interface StatProps {

@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import type { LogWithReview, GameLogRollup } from "@playrates/shared";
-import { plateClass } from "../ui/Plate";
+import { plateClass } from "../ui/plateClass";
 import Button from "../ui/Button";
 import LogRow from "./LogRow";
 import RollupFigures from "./RollupFigures";

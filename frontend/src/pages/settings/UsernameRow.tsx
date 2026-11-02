@@ -30,7 +30,7 @@ const UsernameRow = ({ current }: { current: string }) => {
             await update.mutateAsync({ username: value.trim() });
             notify("Username updated", "success");
         } catch {
-            notify("Couldn't change your username", "error");
+            notify("Couldn’t change your username", "error");
         }
     };
 

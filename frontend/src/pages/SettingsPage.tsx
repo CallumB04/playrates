@@ -31,7 +31,7 @@ import { useUserReviews } from "../hooks/queries/useReviews";
 import { useUserFriends } from "../hooks/queries/useFriends";
 import { usePageMeta } from "../hooks/usePageMeta";
 import { deleteMyAccount, fetchMyData } from "../api";
-import { useSteamAvailable } from "../components/steam/SteamImportButton";
+import { useSteamAvailable } from "../components/steam/useSteamAvailable";
 import { ApiError } from "../api/client";
 import { signedInRecently } from "../lib/recentSignIn";
 import { saveFile } from "../lib/saveFile";
@@ -51,7 +51,8 @@ import ConfirmItsYouModal, {
     type ConfirmPurpose,
 } from "./settings/ConfirmItsYouModal";
 import SettingsNav, { type SettingsSection } from "./settings/SettingsNav";
-import Button, { buttonClass } from "../components/ui/Button";
+import Button from "../components/ui/Button";
+import { buttonClass } from "../components/ui/buttonClass";
 import Card from "../components/ui/Card";
 import Toggle from "../components/ui/Toggle";
 import EmptyPlate from "../components/ui/EmptyPlate";
@@ -151,16 +152,16 @@ const Group = ({
 );
 
 const PUSH_ON =
-    "Friend requests, replies and gifts, and your streak and task reminders if they're on under Emails.";
+    "Friend requests, replies and gifts, and your streak and task reminders if they’re on under Emails.";
 
 const PUSH_HELP: Record<PushState, string> = {
     checking: PUSH_ON,
     unavailable: "",
     "install-first":
         "On iPhone and iPad they come to the installed app. Install PlayRates above, then turn them on from there.",
-    unsupported: "This browser can't show them.",
+    unsupported: "This browser can’t show them.",
     blocked:
-        "Blocked for this site in your browser's settings. Allow them there, then come back.",
+        "Blocked for this site in your browser’s settings. Allow them there, then come back.",
     off: PUSH_ON,
     on: PUSH_ON,
 };
@@ -216,7 +217,7 @@ const SettingsPage = () => {
         onError: (error) =>
             needsSignIn(error)
                 ? setConfirming("delete")
-                : notify("Couldn't delete your account", "error"),
+                : notify("Couldn’t delete your account", "error"),
     });
 
     const exportData = useMutation({
@@ -231,7 +232,7 @@ const SettingsPage = () => {
         onError: (error) =>
             needsSignIn(error)
                 ? setConfirming("export")
-                : notify("Couldn't export your data", "error"),
+                : notify("Couldn’t export your data", "error"),
     });
 
     /* Deleting the account and exporting its data want a sign-in from
@@ -320,7 +321,7 @@ const SettingsPage = () => {
         update.mutate(patch, {
             onError: () => {
                 setLocal(previous);
-                notify("Couldn't save that setting", "error");
+                notify("Couldn’t save that setting", "error");
             },
         });
     };
@@ -402,7 +403,7 @@ const SettingsPage = () => {
                                     {
                                         onError: () =>
                                             notify(
-                                                "Couldn't save your time zone",
+                                                "Couldn’t save your time zone",
                                                 "error"
                                             ),
                                     }
@@ -543,7 +544,7 @@ const SettingsPage = () => {
                                   ? "Opens from your home screen or dock, in a window of its own."
                                   : device.install.appleMobile
                                     ? "In Safari, tap Share, then Add to Home Screen."
-                                    : "Your browser doesn't offer this here. Chrome and Edge do, and Safari on iPhone."
+                                    : "Your browser doesn’t offer this here. Chrome and Edge do, and Safari on iPhone."
                         }
                     >
                         {device.install.offer && !device.install.installed && (
@@ -576,7 +577,7 @@ const SettingsPage = () => {
                                             : device.push.turnOff()
                                         ).catch(() =>
                                             notify(
-                                                "Couldn't change that. Try again.",
+                                                "Couldn’t change that. Try again.",
                                                 "error"
                                             )
                                         )

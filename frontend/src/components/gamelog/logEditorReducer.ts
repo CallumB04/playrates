@@ -167,13 +167,13 @@ export const validateDraft = (draft: LogDraft): string | null => {
     const completed = toNumber(draft.achievementsCompleted);
     const total = toNumber(draft.achievementsTotal);
     if (completed !== null && total !== null && completed > total) {
-        return "Completed achievements can't exceed the total.";
+        return "Completed achievements can’t exceed the total.";
     }
 
     const start = toDate(draft.startDate);
     const finish = toDate(draft.finishDate);
     if (start && finish && finish < start) {
-        return "A game can't be finished before it was started.";
+        return "A game can’t be finished before it was started.";
     }
 
     return null;

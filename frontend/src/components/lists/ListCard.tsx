@@ -6,7 +6,7 @@ import { accentHue, avatarGradient } from "../../lib/profileAccent";
 import { formatCount } from "../../lib/format";
 import { listPath } from "../../lib/profilePaths";
 import { cn } from "../../lib/cn";
-import { PRIVACY_OPTIONS } from "../../pages/ProfilePage/components/PrivacySelect";
+import { PRIVACY_OPTIONS } from "../../pages/ProfilePage/components/privacyOptions";
 
 interface ListCardProps {
     list: GameListSummary;

@@ -1,19 +1,8 @@
 import { lazy, Suspense, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { fetchSteamAvailable } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
+import { useSteamAvailable } from "./useSteamAvailable";
 
 const SteamImportModal = lazy(() => import("./SteamImportModal"));
-
-/** Whether the Steam import is switched on for this visitor. Signed out,
- *  the API says no by refusing, which reads as off. */
-export const useSteamAvailable = (): boolean =>
-    useQuery({
-        queryKey: ["steam", "available"],
-        queryFn: fetchSteamAvailable,
-        staleTime: Infinity,
-        retry: false,
-    }).data === true;
 
 /** The dialog, with the Steam link from the member's profile filled in. */
 const Opened = ({ onClose }: { onClose: () => void }) => {

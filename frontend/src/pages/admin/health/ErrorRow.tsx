@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { AppWindow } from "lucide-react";
 import type { ClientErrorEntry, ServerErrorEntry } from "@playrates/shared";
-import { cardClass } from "../../../components/ui/Card";
-import { plateClass } from "../../../components/ui/Plate";
+import { cardClass } from "../../../components/ui/cardClass";
+import { plateClass } from "../../../components/ui/plateClass";
 import { cn } from "../../../lib/cn";
 import { relativeTime } from "../../../lib/format";
 

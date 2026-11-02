@@ -4,7 +4,7 @@ import { TextSkeleton } from "../../../../components/ui/Skeleton";
 import { EmptyNote } from "../../../../components/ui/EmptyPlate";
 import GameCover from "../../../../components/game/GameCover";
 import ProfilePicture from "../../../../components/ProfilePicture";
-import { buttonClass } from "../../../../components/ui/Button";
+import { buttonClass } from "../../../../components/ui/buttonClass";
 import { relativeTime } from "../../../../lib/format";
 import {
     useAdminHealth,

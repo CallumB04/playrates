@@ -53,7 +53,7 @@ export const shelfMoment = (username: string, count: number): ShareMoment => ({
     text:
         count === 1
             ? "I just logged my first game on PlayRates"
-            : `That's ${count.toLocaleString("en-GB")} games on my PlayRates shelves`,
+            : `That’s ${count.toLocaleString("en-GB")} games on my PlayRates shelves`,
 });
 
 /** The address a moment is shared at, carrying the sharer's invite. */

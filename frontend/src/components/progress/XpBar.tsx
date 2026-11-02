@@ -1,5 +1,5 @@
 import type { LevelState } from "@playrates/shared";
-import { useFigureRoll } from "../ui/Figure";
+import { useFigureRoll } from "../ui/useFigureRoll";
 import { formatCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 

@@ -1,6 +1,6 @@
 import type { IgdbUsage as Usage } from "@playrates/shared";
-import { cardClass } from "../../../components/ui/Card";
-import { figureClass } from "../../../components/ui/Figure";
+import { cardClass } from "../../../components/ui/cardClass";
+import { figureClass } from "../../../components/ui/figureClass";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { formatCount, relativeTime } from "../../../lib/format";
 import { useIgdbUsage } from "../../../hooks/queries/useAdmin";

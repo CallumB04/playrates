@@ -36,7 +36,7 @@ const DeleteGameLogPopup = ({
             notify("Log deleted", "success");
             (onDeleted ?? closePopup)();
         } catch {
-            notify("Couldn't delete that log", "error");
+            notify("Couldn’t delete that log", "error");
             setIsDeleting(false);
         }
     };

@@ -14,8 +14,9 @@ import {
     resubscribeEmail,
     unsubscribeEmail,
 } from "../api";
-import Button, { buttonClass } from "../components/ui/Button";
-import { cardClass } from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import { buttonClass } from "../components/ui/buttonClass";
+import { cardClass } from "../components/ui/cardClass";
 import EmptyPlate from "../components/ui/EmptyPlate";
 import { TextSkeleton } from "../components/ui/Skeleton";
 
@@ -31,10 +32,10 @@ const sentence = ({ scope, on }: UnsubscribeStatus) => {
     if (scope === "all")
         return on
             ? "Emails from PlayRates are back on."
-            : "You won't get any more emails from PlayRates, apart from account ones like password resets.";
+            : "You won’t get any more emails from PlayRates, apart from account ones like password resets.";
     return on
-        ? `You'll get emails about ${about(scope)} again.`
-        : `You won't get emails about ${about(scope)} any more.`;
+        ? `You’ll get emails about ${about(scope)} again.`
+        : `You won’t get emails about ${about(scope)} any more.`;
 };
 
 /**
@@ -74,7 +75,7 @@ const UnsubscribePage = () => {
             );
             void refreshProfile();
         },
-        onError: () => notify("That didn't go through", "error"),
+        onError: () => notify("That didn’t go through", "error"),
     });
 
     /* StrictMode runs effects twice in development, and the ref outlives
@@ -90,7 +91,7 @@ const UnsubscribePage = () => {
     const turnOffAll = () =>
         unsubscribe.mutate(
             { token, all: true },
-            { onError: () => notify("That didn't go through", "error") }
+            { onError: () => notify("That didn’t go through", "error") }
         );
 
     const undo = () => {
@@ -120,7 +121,7 @@ const UnsubscribePage = () => {
     if (invalid) {
         return (
             <EmptyPlate
-                title="That link doesn't work"
+                title="That link doesn’t work"
                 body="It may have been cut short when it was copied. You can still choose which emails you get in your settings."
                 action={
                     <Link to={SETTINGS} className={buttonClass("primary")}>
@@ -134,7 +135,7 @@ const UnsubscribePage = () => {
     if (!current && unsubscribe.isError) {
         return (
             <EmptyPlate
-                title="That didn't go through"
+                title="That didn’t go through"
                 body="Nothing has changed yet. Try again in a moment, or choose which emails you get in your settings."
                 action={
                     <div className="flex flex-col gap-2 sm:flex-row">
@@ -158,7 +159,7 @@ const UnsubscribePage = () => {
     return (
         <div className="mx-auto flex w-full max-w-[480px] flex-col gap-5">
             <h1 className="font-display text-title text-content">
-                {current.on ? "You're subscribed again" : "You're unsubscribed"}
+                {current.on ? "You’re subscribed again" : "You’re unsubscribed"}
             </h1>
             <div className={cardClass("flex flex-col gap-5")}>
                 <p className="text-body-sm text-content-secondary">
@@ -174,7 +175,7 @@ const UnsubscribePage = () => {
                                     {
                                         onError: () =>
                                             notify(
-                                                "That didn't go through",
+                                                "That didn’t go through",
                                                 "error"
                                             ),
                                     }

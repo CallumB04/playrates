@@ -217,7 +217,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                 });
             }
         } catch (error) {
-            notify(reasonFor(error, "Couldn't update your profile"), "error");
+            notify(reasonFor(error, "Couldn’t update your profile"), "error");
             return;
         }
         try {
@@ -227,11 +227,11 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                 await removeAvatar.mutateAsync();
             }
         } catch (error) {
-            setPictureError(reasonFor(error, "Your picture didn't save."));
+            setPictureError(reasonFor(error, "Your picture didn’t save."));
             notify(
                 fieldsDirty
                     ? "Saved, apart from the picture"
-                    : "Your picture didn't save",
+                    : "Your picture didn’t save",
                 "error"
             );
             return;

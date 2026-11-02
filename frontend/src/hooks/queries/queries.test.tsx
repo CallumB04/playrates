@@ -13,7 +13,7 @@ import {
 } from "../../test/msw/handlers";
 import { useGame, useGames, useSiteStats } from "./useGames";
 import { useLogMutations, useQuickAdd, useUserShelf } from "./useGameLogs";
-import { NotificationProvider } from "../../contexts/NotificationContext";
+import { NotificationProvider } from "../../contexts/NotificationProvider";
 import { useUserReviews } from "./useReviews";
 import { useProfile } from "./useProfiles";
 import { useCommunityMutations } from "./useCommunity";

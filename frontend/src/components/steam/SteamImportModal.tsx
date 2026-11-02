@@ -6,7 +6,8 @@ import { useNotify } from "../../contexts/NotificationContext";
 import { formatCount } from "../../lib/format";
 import GameCover from "../game/GameCover";
 import Button from "../ui/Button";
-import { fieldClass, Input } from "../ui/Input";
+import { Input } from "../ui/Input";
+import { fieldClass } from "../ui/fieldClass";
 import Modal from "../ui/Modal";
 import { importFrom, startingChoices, type SteamChoice } from "./steamChoices";
 

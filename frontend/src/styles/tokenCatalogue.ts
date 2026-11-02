@@ -308,7 +308,7 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
     },
     {
         title: "Feedback",
-        blurb: "Bases only. The emphasis ramp is mixed toward the theme's own paper and ink, so one formula serves both themes.",
+        blurb: "Bases only. The emphasis ramp is mixed toward the theme’s own paper and ink, so one formula serves both themes.",
         tokens: [
             {
                 name: "success",
@@ -406,7 +406,7 @@ export const TYPE_SCALE: TypeStep[] = [
         name: "Section / 22",
         utility: "font-display text-section",
         spec: "22 / 1.15",
-        sample: "Reader's notes",
+        sample: "Reader’s notes",
     },
     {
         name: "Body / 15.5",

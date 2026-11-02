@@ -1,6 +1,6 @@
 import { useUserReviews } from "../../../hooks/queries/useReviews";
 import { usePagination } from "../../../hooks/usePagination";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import { ItemSheetFor } from "../../../components/shop/ItemSheet";
 import ReviewRow from "./ReviewRow";

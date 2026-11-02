@@ -5,7 +5,7 @@ import GameCover from "../../../components/game/GameCover";
 import ProfilePicture from "../../../components/ProfilePicture";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import LedgerRow, { LedgerList } from "../../../components/ui/LedgerRow";
-import { plateClass } from "../../../components/ui/Plate";
+import { plateClass } from "../../../components/ui/plateClass";
 import { cn } from "../../../lib/cn";
 import { relativeTime } from "../../../lib/format";
 import { timeInDay } from "../lib/plot";

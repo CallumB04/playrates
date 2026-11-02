@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
 import type { LatestReply, TalkedAboutGame } from "@playrates/shared";
-import { cardClass } from "../ui/Card";
+import { cardClass } from "../ui/cardClass";
 import GameCover from "../game/GameCover";
 import ProfilePicture from "../ProfilePicture";
 import { formatMessageCount, relativeTime } from "../../lib/format";

@@ -7,9 +7,9 @@ describe("logMilestone", () => {
     });
 
     it("marks round numbers", () => {
-        expect(logMilestone(10)).toBe("That's 10 games on your shelves");
-        expect(logMilestone(250)).toBe("That's 250 games on your shelves");
-        expect(logMilestone(2000)).toBe("That's 2,000 games on your shelves");
+        expect(logMilestone(10)).toBe("That’s 10 games on your shelves");
+        expect(logMilestone(250)).toBe("That’s 250 games on your shelves");
+        expect(logMilestone(2000)).toBe("That’s 2,000 games on your shelves");
     });
 
     it("says nothing special for the rest", () => {

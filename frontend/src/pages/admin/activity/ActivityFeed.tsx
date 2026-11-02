@@ -1,5 +1,5 @@
 import type { AdminActivityFilters } from "../../../api";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import EmptyPlate, { EmptyNote } from "../../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import { cn } from "../../../lib/cn";

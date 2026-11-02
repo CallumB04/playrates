@@ -52,7 +52,7 @@ const Gaming25PickSheet = ({
         notify(
             error instanceof ApiError && error.status === 422
                 ? error.message
-                : "Couldn't save that pick",
+                : "Couldn’t save that pick",
             "error"
         );
 

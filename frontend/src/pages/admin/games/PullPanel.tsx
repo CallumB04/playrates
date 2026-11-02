@@ -4,7 +4,7 @@ import {
     PULL_PAGE_SIZE,
     type AdminPullResult,
 } from "@playrates/shared";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import Button from "../../../components/ui/Button";
 import SegmentedChoice from "../../../components/ui/SegmentedChoice";
 import Toggle from "../../../components/ui/Toggle";

@@ -37,10 +37,10 @@ const TOASTS: ToastSpecimen[] = [
         type: "success",
     },
     { label: "Info", text: "Import paused at 42 of 318", type: "info" },
-    { label: "Error", text: "Couldn't reach Steam", type: "error" },
+    { label: "Error", text: "Couldn’t reach Steam", type: "error" },
     {
         label: "Critical error",
-        text: "Entry saved, but your note didn't send",
+        text: "Entry saved, but your note didn’t send",
         type: "error",
         severity: "critical",
     },
@@ -203,7 +203,7 @@ const FeedbackSpecimens = () => {
             >
                 <EmptyPlate
                     title="Your shelf is empty"
-                    body="Log the last game you finished, even if that was years ago. The shelf is more useful when it's honest than when it's current."
+                    body="Log the last game you finished, even if that was years ago. The shelf is more useful when it’s honest than when it’s current."
                     action={<Button>Log a game</Button>}
                     className="w-full"
                 />
@@ -219,7 +219,7 @@ const FeedbackSpecimens = () => {
 
             <Specimen
                 title="Notifications"
-                notes="Every kind shares one shell: its mark, the time, an unread rule, and read and archive controls that stand rather than appear on hover, since a phone can't hover. What the row says comes from the renderer registered against its kind, and the registry will not compile with a kind missing. A friend request reads its relation live, so answered here or on a profile, the buttons go. A kind this build doesn't know draws the plain row at the bottom rather than failing."
+                notes="Every kind shares one shell: its mark, the time, an unread rule, and read and archive controls that stand rather than appear on hover, since a phone can’t hover. What the row says comes from the renderer registered against its kind, and the registry will not compile with a kind missing. A friend request reads its relation live, so answered here or on a profile, the buttons go. A kind this build doesn’t know draws the plain row at the bottom rather than failing."
                 meta="NotificationItem notification · onNavigate · NOTIFICATION_RENDERERS[kind]: icon · tone · Content · Leading"
             >
                 <ul className="flex w-full max-w-sm flex-col gap-0.5 rounded-lg border border-subtle bg-surface-raised p-3 shadow-modal">

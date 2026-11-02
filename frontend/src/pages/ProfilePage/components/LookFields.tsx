@@ -18,6 +18,7 @@ import ProfilePicture from "../../../components/ProfilePicture";
 import AvatarFrame from "../../../components/progress/AvatarFrame";
 import NameText from "../../../components/progress/NameText";
 import { cn } from "../../../lib/cn";
+import { SECTION_LABELS } from "./sectionLabels";
 
 export interface LookChoice {
     /** A frame's key, "none", or null for the best the level has earned. */
@@ -26,13 +27,6 @@ export interface LookChoice {
     nameFont: NameFontKey;
     nameColour: NameColourKey;
 }
-
-export const SECTION_LABELS: Record<ProfileSection, string> = {
-    pinned_reviews: "Pinned reviews",
-    pinned_lists: "Pinned lists",
-    favourites: "Favourite games",
-    wishlist: "Top of your wishlist",
-};
 
 interface LookFieldsProps {
     username: string;

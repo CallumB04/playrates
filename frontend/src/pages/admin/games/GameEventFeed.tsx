@@ -5,13 +5,13 @@ import {
     type AdminGameEvent,
     type GameEventGroup,
 } from "@playrates/shared";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import Chip from "../../../components/ui/Chip";
 import EmptyPlate, { EmptyNote } from "../../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import GameCover from "../../../components/game/GameCover";
 import LedgerRow, { LedgerList } from "../../../components/ui/LedgerRow";
-import { plateClass } from "../../../components/ui/Plate";
+import { plateClass } from "../../../components/ui/plateClass";
 import { cn } from "../../../lib/cn";
 import { relativeTime } from "../../../lib/format";
 import { useAdminGameEvents } from "../../../hooks/queries/useAdmin";

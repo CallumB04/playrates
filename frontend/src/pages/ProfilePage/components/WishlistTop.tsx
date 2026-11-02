@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import Panel, { panelButtonClass } from "../../../components/ui/Panel";
+import Panel from "../../../components/ui/Panel";
+import { panelButtonClass } from "../../../components/ui/panelButtonClass";
 import GameTile from "../../../components/game/GameTile";
 import { Skeleton } from "../../../components/ui/Skeleton";
-import { buttonClass } from "../../../components/ui/Button";
+import { buttonClass } from "../../../components/ui/buttonClass";
 import { usePlatforms } from "../../../hooks/queries/useGames";
 import { useUserWishlist } from "../../../hooks/queries/useWishlist";
 import { formatCount, releaseYear } from "../../../lib/format";

@@ -52,7 +52,7 @@ const SizingSection = () => (
 
         <Group
             title="Spacing: 4pt base"
-            blurb="Tailwind's default 0.25rem base already produces the whole run; these are the step names to reach for."
+            blurb="Tailwind’s default 0.25rem base already produces the whole run; these are the step names to reach for."
         >
             <div className="flex items-end gap-1.5">
                 {SPACING_STEPS.map((step) => (

@@ -107,10 +107,10 @@ export const DESCRIPTIONS: Record<string, string> = {
     slot_pinned_review: "Room to pin one of your reviews to your profile.",
     react_goat: "The best there is.",
     react_dead: "Very funny.",
-    react_hype: "For the one you can't wait for.",
+    react_hype: "For the one you can’t wait for.",
     react_congrats: "Well done.",
     react_big_brain: "Smart.",
-    react_sad: "That's rough.",
+    react_sad: "That’s rough.",
     streak_shield:
         "Covers a missed week once your free monthly shield is used.",
 };

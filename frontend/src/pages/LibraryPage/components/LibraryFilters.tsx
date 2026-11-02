@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import { ListFilter, Search } from "lucide-react";
 import Button from "../../../components/ui/Button";
 import Modal from "../../../components/ui/Modal";
@@ -83,7 +83,7 @@ const LibraryFilters = ({
             <Toggle
                 checked={query.excludeLogged}
                 onChange={(excludeLogged) => setQuery({ excludeLogged })}
-                label="Hide games I've logged"
+                label="Hide games I’ve logged"
                 // The server can only exclude logs it can attribute.
                 disabled={!isSignedIn}
             />

@@ -16,7 +16,7 @@ import {
 import { toPlainText } from "@playrates/shared";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import Button from "../../components/ui/Button";
-import { cardClass } from "../../components/ui/Card";
+import { cardClass } from "../../components/ui/cardClass";
 import ConfirmPopup from "../../components/ui/ConfirmPopup";
 import ReportDialog from "../../components/ReportDialog";
 import EmptyPlate, { EmptyNote } from "../../components/ui/EmptyPlate";
@@ -185,7 +185,7 @@ const ThreadPage = () => {
             setPending(null);
         } catch (error) {
             notify(
-                error instanceof Error ? error.message : "That didn't delete",
+                error instanceof Error ? error.message : "That didn’t delete",
                 "error"
             );
         }

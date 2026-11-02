@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { buttonClass } from "../../../components/ui/Button";
+import { buttonClass } from "../../../components/ui/buttonClass";
 import EmptyPlate from "../../../components/ui/EmptyPlate";
 
 interface ListEmptyProps {

@@ -46,19 +46,19 @@ const ReportDialog = ({ targetType, targetId, onClose }: ReportDialogProps) => {
                 details: details.trim() || undefined,
             }),
         onSuccess: () => {
-            notify("Thanks. I'll take a look.", "success");
+            notify("Thanks. I’ll take a look.", "success");
             onClose();
         },
         onError: (err) => {
             if (err instanceof ApiError && err.status === 409) {
-                notify("You've already reported this.", "info");
+                notify("You’ve already reported this.", "info");
                 onClose();
                 return;
             }
             setError(
                 err instanceof ApiError && err.message
                     ? err.message
-                    : "Couldn't send that report. Try again in a moment."
+                    : "Couldn’t send that report. Try again in a moment."
             );
         },
     });

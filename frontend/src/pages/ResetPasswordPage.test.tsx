@@ -78,7 +78,7 @@ describe("ResetPasswordPage", () => {
 
         expect(updatePassword).not.toHaveBeenCalled();
         expect(
-            screen.getByText("The passwords don't match.")
+            screen.getByText("The passwords don’t match.")
         ).toBeInTheDocument();
     });
 

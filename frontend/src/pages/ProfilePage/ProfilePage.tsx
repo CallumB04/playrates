@@ -17,7 +17,8 @@ import { useUserReviews } from "../../hooks/queries/useReviews";
 import { useThreads } from "../../hooks/queries/useCommunity";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import { BACKGROUND_LEVEL, profileDescription } from "@playrates/shared";
-import Button, { buttonClass } from "../../components/ui/Button";
+import Button from "../../components/ui/Button";
+import { buttonClass } from "../../components/ui/buttonClass";
 import PageBackdrop, {
     SHORT_BACKDROP_OFFSET,
 } from "../../components/layout/PageBackdrop";
@@ -187,7 +188,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
             await remove.mutateAsync();
             notify("Request cancelled", "success");
         } catch {
-            notify("That didn't work. Try again.", "error");
+            notify("That didn’t work. Try again.", "error");
         }
     };
 
@@ -419,7 +420,7 @@ const ProfilePage = ({ username: targetUsername, tab }: ProfilePageProps) => {
                         await remove.mutateAsync();
                         notify("Friend removed", "success");
                     } catch {
-                        notify("That didn't work. Try again.", "error");
+                        notify("That didn’t work. Try again.", "error");
                     }
                 }}
             />

@@ -6,7 +6,7 @@ import {
     type Gaming25Pick,
 } from "@playrates/shared";
 import { Skeleton } from "../ui/Skeleton";
-import { cardClass } from "../ui/Card";
+import { cardClass } from "../ui/cardClass";
 import GameCover from "../game/GameCover";
 import { useGaming25 } from "../../hooks/queries/useGaming25";
 import { formatCount } from "../../lib/format";

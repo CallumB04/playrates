@@ -63,11 +63,11 @@ describe("UnsubscribePage", () => {
 
         expect(
             await screen.findByText(
-                "You won't get emails about friend requests any more."
+                "You won’t get emails about friend requests any more."
             )
         ).toBeInTheDocument();
         expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-            "You're unsubscribed"
+            "You’re unsubscribed"
         );
         expect(unsubscribed).toHaveBeenCalledTimes(1);
         expect(unsubscribed).toHaveBeenCalledWith({
@@ -83,7 +83,7 @@ describe("UnsubscribePage", () => {
 
         expect(
             await screen.findByText(
-                "You'll get emails about friend requests again."
+                "You’ll get emails about friend requests again."
             )
         ).toBeInTheDocument();
         expect(resubscribed).toHaveBeenCalledWith({ token: TOKEN });
@@ -101,7 +101,7 @@ describe("UnsubscribePage", () => {
         open();
 
         expect(
-            await screen.findByText("That link doesn't work")
+            await screen.findByText("That link doesn’t work")
         ).toBeInTheDocument();
         expect(
             screen.getByRole("link", { name: "Email settings" })
@@ -111,7 +111,7 @@ describe("UnsubscribePage", () => {
     it("doesn't try a link with no token in it", () => {
         open("/unsubscribe");
 
-        expect(screen.getByText("That link doesn't work")).toBeInTheDocument();
+        expect(screen.getByText("That link doesn’t work")).toBeInTheDocument();
         expect(unsubscribed).not.toHaveBeenCalled();
     });
 
@@ -132,7 +132,7 @@ describe("UnsubscribePage", () => {
         );
         expect(
             await screen.findByText(
-                "You won't get any more emails from PlayRates, apart from account ones like password resets."
+                "You won’t get any more emails from PlayRates, apart from account ones like password resets."
             )
         ).toBeInTheDocument();
 
@@ -145,7 +145,7 @@ describe("UnsubscribePage", () => {
         );
         expect(
             await screen.findByText(
-                "You won't get emails about friend requests any more."
+                "You won’t get emails about friend requests any more."
             )
         ).toBeInTheDocument();
     });
@@ -156,7 +156,7 @@ describe("UnsubscribePage", () => {
 
         expect(
             await screen.findByText(
-                "You won't get any more emails from PlayRates, apart from account ones like password resets."
+                "You won’t get any more emails from PlayRates, apart from account ones like password resets."
             )
         ).toBeInTheDocument();
         expect(

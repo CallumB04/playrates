@@ -73,6 +73,6 @@ describe("usePinReviews", () => {
         const { result } = renderHook(() => usePinReviews());
         act(() => result.current.toggle(2));
         expect(result.current.pinned).toEqual([1]);
-        expect(notify).toHaveBeenCalledWith("Couldn't save your pins", "error");
+        expect(notify).toHaveBeenCalledWith("Couldn’t save your pins", "error");
     });
 });

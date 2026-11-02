@@ -7,7 +7,7 @@ import type {
     ThreadDetail,
 } from "@playrates/shared";
 import Button from "../../ui/Button";
-import { cardClass } from "../../ui/Card";
+import { cardClass } from "../../ui/cardClass";
 import { EmptyNote } from "../../ui/EmptyPlate";
 import { useAdminPatchNotes } from "../../../hooks/queries/useAdmin";
 import { useOverflowFade } from "../../../hooks/useOverflowFade";

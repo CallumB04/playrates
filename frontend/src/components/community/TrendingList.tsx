@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import type { TrendingThread } from "@playrates/shared";
 import GameCover from "../game/GameCover";
-import { cardClass } from "../ui/Card";
+import { cardClass } from "../ui/cardClass";
 import { cn } from "../../lib/cn";
 import ContributorStack from "./ContributorStack";
 import { NewMessageCount, PeopleCount } from "./ThreadStats";

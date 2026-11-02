@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { EmailStats } from "@playrates/shared";
-import { cardClass } from "../../../components/ui/Card";
-import { figureClass } from "../../../components/ui/Figure";
+import { cardClass } from "../../../components/ui/cardClass";
+import { figureClass } from "../../../components/ui/figureClass";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { formatCount } from "../../../lib/format";
 import Button from "../../../components/ui/Button";

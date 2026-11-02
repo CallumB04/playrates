@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { formatCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
-import { buttonClass } from "./Button";
+import { buttonClass } from "./buttonClass";
 
 interface LoveButtonProps {
     count: number;

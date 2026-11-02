@@ -28,12 +28,13 @@ import { useMyGameLogIds } from "../../hooks/queries/useGameLogs";
 import StatusBadge from "../../components/ui/StatusBadge";
 import { displayStatusFor } from "../../constants/gameStatus";
 import { usePageMeta } from "../../hooks/usePageMeta";
-import Button, { buttonClass } from "../../components/ui/Button";
+import Button from "../../components/ui/Button";
+import { buttonClass } from "../../components/ui/buttonClass";
 import ConfirmPopup from "../../components/ui/ConfirmPopup";
 import LoveButton from "../../components/ui/LoveButton";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import { Skeleton } from "../../components/ui/Skeleton";
-import { cardClass } from "../../components/ui/Card";
+import { cardClass } from "../../components/ui/cardClass";
 import CoverGrid from "../../components/game/CoverGrid";
 import GameTile, { type TileAction } from "../../components/game/GameTile";
 import { useTileActions } from "../../components/game/useTileActions";
@@ -105,8 +106,8 @@ const ListPage = () => {
     if (isMissing(error))
         return (
             <EmptyPlate
-                title="This list can't be shown"
-                body="It may have been deleted, or it's private."
+                title="This list can’t be shown"
+                body="It may have been deleted, or it’s private."
                 action={
                     <Link
                         to={profilePath(username, "lists")}
@@ -325,7 +326,7 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
                                 );
                             },
                             onError: () =>
-                                notify("Couldn't delete the list", "error"),
+                                notify("Couldn’t delete the list", "error"),
                         })
                     }
                 />
@@ -394,7 +395,7 @@ const AddGames = ({ list }: { list: GameListDetail }) => {
                                 error instanceof ApiError &&
                                     error.status === 422
                                     ? error.message
-                                    : "Couldn't add that game",
+                                    : "Couldn’t add that game",
                                 "error"
                             ),
                     });
@@ -422,7 +423,7 @@ const ListGames = ({
     const removeGame = (gameId: number) =>
         setGames.mutate(
             order.filter((id) => id !== gameId),
-            { onError: () => notify("Couldn't take that game out", "error") }
+            { onError: () => notify("Couldn’t take that game out", "error") }
         );
     const removeAction = (entry: GameListEntry): TileAction => ({
         key: "remove",
@@ -480,7 +481,7 @@ const ListGames = ({
                 canReorder={isOwner}
                 onReorder={(next) =>
                     setGames.mutateAsync(next).catch((err: unknown) => {
-                        notify("Couldn't save the order", "error");
+                        notify("Couldn’t save the order", "error");
                         throw err;
                     })
                 }

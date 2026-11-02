@@ -4,7 +4,7 @@ import FriendProfile from "../../../components/FriendProfile";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import { formatCount } from "../../../lib/format";
 import { Link } from "react-router-dom";
-import { buttonClass } from "../../../components/ui/Button";
+import { buttonClass } from "../../../components/ui/buttonClass";
 import EmptyPlate from "../../../components/ui/EmptyPlate";
 import { InviteButton } from "../../../components/progress/Invite";
 import ListEmpty from "../components/ListEmpty";

@@ -9,10 +9,11 @@ import {
 } from "@playrates/shared";
 import PageHeader from "../../components/ui/PageHeader";
 import SegmentedChoice from "../../components/ui/SegmentedChoice";
-import { cardClass } from "../../components/ui/Card";
+import { cardClass } from "../../components/ui/cardClass";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { TokenCoin } from "../../components/progress/TokenAmount";
-import ItemSheet, { useWear } from "../../components/shop/ItemSheet";
+import ItemSheet from "../../components/shop/ItemSheet";
+import { useWear } from "../../components/shop/useWear";
 import { ItemThumb } from "../../components/shop/ItemPreview";
 import {
     GROUP_LABELS,
@@ -23,8 +24,8 @@ import {
     SwitcherButton,
     SwitcherSheet,
     SwitcherTileBody,
-    switcherTileClass,
 } from "../../components/ui/SectionSwitcher";
+import { switcherTileClass } from "../../components/ui/switcherTileClass";
 import SignUpPlate from "../../components/SignUpPlate";
 import { useAuth } from "../../contexts/AuthContext";
 import { useShop } from "../../hooks/queries/useProgress";

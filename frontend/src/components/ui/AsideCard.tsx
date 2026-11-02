@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "../../lib/cn";
-import { cardClass, CardHeader, type CardTone } from "./Card";
+import { CardHeader } from "./Card";
+import { cardClass, type CardTone } from "./cardClass";
 
 interface AsideCardProps {
     title: ReactNode;

@@ -12,11 +12,11 @@ import {
 } from "@playrates/shared";
 import { ApiError } from "../../../api";
 import Button from "../../../components/ui/Button";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { ItemSheetFor } from "../../../components/shop/ItemSheet";
 import BadgeMedal from "../../../components/progress/BadgeMedal";
-import { bestOf } from "../../../components/progress/ShowcaseView";
+import { bestOf } from "../../../components/progress/showcase";
 import {
     badgeText,
     nextTier,
@@ -122,7 +122,7 @@ const BadgesView = ({ username, isOwner }: BadgesViewProps) => {
                     notify(
                         error instanceof ApiError
                             ? error.message
-                            : "Couldn't save your pins",
+                            : "Couldn’t save your pins",
                         "error"
                     ),
             }
@@ -147,7 +147,7 @@ const BadgesView = ({ username, isOwner }: BadgesViewProps) => {
                         <p className="mt-0.5 text-label-sm text-content-muted">
                             {picking
                                 ? `Tap badges below, in order. ${picking.length} of ${slots}.`
-                                : "Shown on your profile's Level card."}
+                                : "Shown on your profile’s Level card."}
                         </p>
                     </div>
                     <ul className="flex flex-wrap items-center gap-2">

@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Globe } from "lucide-react";
-import { buttonClass } from "../../../components/ui/Button";
-import { chipClass } from "../../../components/ui/Chip";
+import { buttonClass } from "../../../components/ui/buttonClass";
+import { chipClass } from "../../../components/ui/chipClass";
 import { platformIcon, type PlatformIcon } from "../../../lib/platformIcons";
 import { genreIcon } from "../../../lib/genreIcons";
 import { hasFacts, type GameFacts, type NamedSlug } from "../lib/gameFacts";

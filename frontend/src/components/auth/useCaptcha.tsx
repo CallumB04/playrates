@@ -55,7 +55,7 @@ export const useCaptcha = (): Captcha => {
 
     const unavailable = () => {
         setMessage(
-            "The bot check didn't finish. Refresh the page and try again."
+            "The bot check didn’t finish. Refresh the page and try again."
         );
         return null;
     };
@@ -109,7 +109,7 @@ export const useCaptcha = (): Captcha => {
             if (!isAuthError(error) || error.code !== "captcha_failed") {
                 return false;
             }
-            setMessage("The bot check didn't pass. Please try again.");
+            setMessage("The bot check didn’t pass. Please try again.");
             return true;
         },
         reset: () => {

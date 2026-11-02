@@ -61,7 +61,7 @@ export const compressAvatar = async (file: File): Promise<Blob> => {
 
         const blob = await encodeWithin(canvas, AVATAR_MIME, AVATAR_MAX_BYTES);
         if (blob) return blob;
-        throw new Error("That image won't compress small enough. Try another.");
+        throw new Error("That image won’t compress small enough. Try another.");
     } finally {
         bitmap.close();
     }

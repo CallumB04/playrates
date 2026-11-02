@@ -27,8 +27,8 @@ const AuthLinkResult = () => {
         } else {
             notify(
                 result === "expired"
-                    ? "That link has run out or was used already. Log in and we'll send a new one."
-                    : "That link didn't work. Log in to try again.",
+                    ? "That link has run out or was used already. Log in and we’ll send a new one."
+                    : "That link didn’t work. Log in to try again.",
                 // Not with log-in open over it: under a popup's scrim a toast
                 // can't be read.
                 "error"

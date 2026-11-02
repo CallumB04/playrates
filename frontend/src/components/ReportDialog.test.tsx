@@ -65,7 +65,7 @@ describe("ReportDialog", () => {
                     {
                         error: {
                             code: "already_reported",
-                            message: "You've already reported this",
+                            message: "You’ve already reported this",
                         },
                     },
                     { status: 409 }
@@ -109,7 +109,7 @@ describe("ReportDialog", () => {
         );
 
         expect(
-            await screen.findByText(/Couldn't send that report/)
+            await screen.findByText(/Couldn’t send that report/)
         ).toBeInTheDocument();
         expect(onClose).not.toHaveBeenCalled();
     });

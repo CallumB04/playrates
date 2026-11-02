@@ -92,7 +92,7 @@ const EmailRow = () => {
                     )}
                 >
                     {error ??
-                        `We've sent a link to ${pending}. Your email changes once you follow it.`}
+                        `We’ve sent a link to ${pending}. Your email changes once you follow it.`}
                 </p>
             )}
         </form>

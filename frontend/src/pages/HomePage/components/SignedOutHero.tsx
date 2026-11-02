@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { Game } from "@playrates/shared";
-import Button, { buttonClass } from "../../../components/ui/Button";
+import Button from "../../../components/ui/Button";
+import { buttonClass } from "../../../components/ui/buttonClass";
 import GameCover from "../../../components/game/GameCover";
 import type { SiteStats } from "../../../api";
 import { formatCount } from "../../../lib/format";

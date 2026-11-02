@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
-import { figureClass } from "../../../components/ui/Figure";
+import { figureClass } from "../../../components/ui/figureClass";
 import { cn } from "../../../lib/cn";
 
 /**

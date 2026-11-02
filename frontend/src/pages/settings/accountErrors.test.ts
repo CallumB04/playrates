@@ -45,7 +45,7 @@ describe("emailChangeError", () => {
 
     it("falls back to trying again", () => {
         expect(emailChangeError(new Error("offline"))).toBe(
-            "Couldn't change your email. Try again."
+            "Couldn’t change your email. Try again."
         );
     });
 });
@@ -54,7 +54,7 @@ describe("passwordChangeError", () => {
     it("blames the current password when the sign-in check fails", () => {
         expect(passwordChangeError(auth("invalid_credentials"))).toEqual({
             field: "current",
-            message: "That isn't your current password.",
+            message: "That isn’t your current password.",
         });
     });
 

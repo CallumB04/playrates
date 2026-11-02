@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useSteamAvailable } from "../steam/SteamImportButton";
+import { useSteamAvailable } from "../steam/useSteamAvailable";
 import { Check } from "lucide-react";
 import Button from "../ui/Button";
 import { Skeleton } from "../ui/Skeleton";
@@ -65,7 +65,7 @@ const PlayedGamesStep = ({
         const failed = results.filter((r) => r.status === "rejected").length;
         if (failed > 0)
             notify(
-                `${formatCount(failed)} of those didn't save. Add them from their pages.`,
+                `${formatCount(failed)} of those didn’t save. Add them from their pages.`,
                 "error"
             );
         onDone();

@@ -4,8 +4,8 @@ import {
     SwitcherButton,
     SwitcherSheet,
     SwitcherTileBody,
-    switcherTileClass,
 } from "../../components/ui/SectionSwitcher";
+import { switcherTileClass } from "../../components/ui/switcherTileClass";
 import { useOverflowFade } from "../../hooks/useOverflowFade";
 import { cn } from "../../lib/cn";
 

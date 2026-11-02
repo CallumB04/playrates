@@ -5,7 +5,7 @@ import {
     type AdminReport,
     type ReportStatus,
 } from "@playrates/shared";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import Button from "../../../components/ui/Button";
 import SegmentedChoice from "../../../components/ui/SegmentedChoice";
 import Pagination, {
@@ -165,7 +165,7 @@ const ReportsPage = () => {
             notify(done, "success");
         } catch (error) {
             notify(
-                error instanceof Error ? error.message : "That didn't work",
+                error instanceof Error ? error.message : "That didn’t work",
                 "error"
             );
         }

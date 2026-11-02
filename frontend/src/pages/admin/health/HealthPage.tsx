@@ -1,6 +1,6 @@
 import type { AdminHealth } from "@playrates/shared";
 import Button from "../../../components/ui/Button";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import EmptyPlate, { EmptyNote } from "../../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import { cn } from "../../../lib/cn";

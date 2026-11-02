@@ -4,7 +4,7 @@ import type { FriendUser, Profile } from "@playrates/shared";
 import { queryKeys, searchProfiles } from "../../api";
 import FriendProfile from "../../components/FriendProfile";
 import Button from "../../components/ui/Button";
-import { cardClass } from "../../components/ui/Card";
+import { cardClass } from "../../components/ui/cardClass";
 import { EmptyNote } from "../../components/ui/EmptyPlate";
 import { Input } from "../../components/ui/Input";
 import PageHeader from "../../components/ui/PageHeader";

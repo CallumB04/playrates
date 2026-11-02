@@ -3,7 +3,7 @@ import { ArrowRight, Gamepad2, Pencil } from "lucide-react";
 import type { UserStats } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
 import Button from "../../../components/ui/Button";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import GameCover from "../../../components/game/GameCover";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import YearChart from "./YearChart";

@@ -12,11 +12,12 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useGaming25, useGaming25Love } from "../../hooks/queries/useGaming25";
 import { usePageMeta } from "../../hooks/usePageMeta";
-import Button, { buttonClass } from "../../components/ui/Button";
+import Button from "../../components/ui/Button";
+import { buttonClass } from "../../components/ui/buttonClass";
 import LoveButton from "../../components/ui/LoveButton";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import { Skeleton } from "../../components/ui/Skeleton";
-import { cardClass } from "../../components/ui/Card";
+import { cardClass } from "../../components/ui/cardClass";
 import ProfilePicture from "../../components/ProfilePicture";
 import Gaming25Grid from "../../components/gaming25/Gaming25Grid";
 import Gaming25PickSheet from "../../components/gaming25/Gaming25PickSheet";
@@ -42,7 +43,7 @@ const Gaming25Page = () => {
         return (
             <EmptyPlate
                 title={`${username}'s Gaming 25 is private`}
-                body="It's only for the people who can see their profile."
+                body="It’s only for the people who can see their profile."
             />
         );
     }

@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from "react";
 import Modal from "../../../../components/ui/Modal";
-import { figureClass } from "../../../../components/ui/Figure";
+import { figureClass } from "../../../../components/ui/figureClass";
 
 /** Every overview popup opens the same way: what it is, the figure the card
  *  showed, and then the detail. A bottom sheet on a phone, like every Modal. */

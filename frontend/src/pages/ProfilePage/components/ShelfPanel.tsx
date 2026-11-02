@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import type { ShelfEntry } from "@playrates/shared";
 import type { GameLogSort, Platform } from "@playrates/shared";
 import type { GameStatus } from "../../../constants/gameStatus";
 import type { PaginationState } from "../../../hooks/usePagination";
 import type { TileAction } from "../../../components/game/GameTile";
-import Button, { buttonClass } from "../../../components/ui/Button";
+import Button from "../../../components/ui/Button";
+import { buttonClass } from "../../../components/ui/buttonClass";
 import SteamImportButton from "../../../components/steam/SteamImportButton";
 import { TileSkeleton } from "../../../components/ui/Skeleton";
 import EmptyPlate from "../../../components/ui/EmptyPlate";

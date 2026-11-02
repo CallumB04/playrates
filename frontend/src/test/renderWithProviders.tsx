@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, type RenderOptions } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
-import { NotificationProvider } from "../contexts/NotificationContext";
-import { ThemeProvider } from "../contexts/ThemeContext";
+import { NotificationProvider } from "../contexts/NotificationProvider";
+import { ThemeProvider } from "../contexts/ThemeProvider";
 
 /**
  * A fresh QueryClient per test, with retries off — otherwise a test asserting

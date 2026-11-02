@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Flame } from "lucide-react";
 import { TRENDING_WINDOW_DAYS, type TrendingThread } from "@playrates/shared";
-import { cardClass } from "../ui/Card";
+import { cardClass } from "../ui/cardClass";
 import GameCover from "../game/GameCover";
 import { formatMessageCount } from "../../lib/format";
 import { cn } from "../../lib/cn";

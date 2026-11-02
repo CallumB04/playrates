@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import { badgeDef, type BadgeUnlock, type Progress } from "@playrates/shared";
 import Button from "../ui/Button";
-import { useFigureRoll } from "../ui/Figure";
+import { useFigureRoll } from "../ui/useFigureRoll";
 import { useAuth } from "../../contexts/AuthContext";
 import { usePlayerBadges } from "../../hooks/queries/useProgress";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";

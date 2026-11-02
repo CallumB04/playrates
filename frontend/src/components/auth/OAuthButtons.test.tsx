@@ -70,7 +70,7 @@ describe("OAuthButtons", () => {
             await screen.findByRole("button", { name: "Continue with Discord" })
         ).toBeEnabled();
         expect(notify).toHaveBeenCalledWith(
-            expect.stringContaining("Couldn't reach the sign-in page"),
+            expect.stringContaining("Couldn’t reach the sign-in page"),
             "error"
         );
     });

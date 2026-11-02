@@ -9,7 +9,7 @@ const MILESTONES = new Set([10, 25, 50, 100, 250, 500]);
 export const logMilestone = (count: number): string | null => {
     if (count === 1) return "Your first game is on your shelves";
     if (MILESTONES.has(count) || (count >= 1000 && count % 1000 === 0)) {
-        return `That's ${count.toLocaleString("en-GB")} games on your shelves`;
+        return `That’s ${count.toLocaleString("en-GB")} games on your shelves`;
     }
     return null;
 };

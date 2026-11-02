@@ -100,7 +100,7 @@ const AddToListPopup = ({ gameId, onClose }: AddToListPopupProps) => {
                                                                 error.status ===
                                                                     422
                                                                 ? error.message
-                                                                : "Couldn't change that list",
+                                                                : "Couldn’t change that list",
                                                             "error"
                                                         ),
                                                 }

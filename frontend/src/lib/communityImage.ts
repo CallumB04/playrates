@@ -49,7 +49,7 @@ export const compressCommunityImage = async (file: File): Promise<Blob> => {
             COMMUNITY_IMAGE_MAX_BYTES
         );
         if (blob) return blob;
-        throw new Error("That image won't compress small enough. Try another.");
+        throw new Error("That image won’t compress small enough. Try another.");
     } finally {
         bitmap.close();
     }

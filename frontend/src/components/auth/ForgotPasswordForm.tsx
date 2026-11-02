@@ -39,7 +39,7 @@ const ForgotPasswordForm = ({ initialEmail = "" }: ForgotPasswordFormProps) => {
         } catch (err) {
             captcha.reset();
             if (captcha.handled(err)) return;
-            setError("That didn't send. Try again in a minute.");
+            setError("That didn’t send. Try again in a minute.");
         } finally {
             setIsSubmitting(false);
         }

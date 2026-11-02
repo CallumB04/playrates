@@ -242,7 +242,7 @@ const RichTextEditor = ({
                     notify(
                         error instanceof Error
                             ? error.message
-                            : "That picture didn't upload",
+                            : "That picture didn’t upload",
                         "error"
                     );
                 })

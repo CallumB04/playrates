@@ -46,7 +46,7 @@ const FavouritesEditor = ({ current, onClose }: FavouritesEditorProps) => {
                     error.status !== undefined &&
                     error.status < 500
                     ? error.message
-                    : "Your favourites didn't save, please try again",
+                    : "Your favourites didn’t save, please try again",
                 "error"
             );
         }

@@ -1,4 +1,4 @@
-import { buttonClass } from "../../../components/ui/Button";
+import { buttonClass } from "../../../components/ui/buttonClass";
 import { Link } from "react-router-dom";
 import { useUser } from "../../../contexts/AuthContext";
 

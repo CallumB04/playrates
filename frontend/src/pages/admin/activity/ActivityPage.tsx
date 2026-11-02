@@ -10,7 +10,8 @@ import {
     type ActivityPeriod,
     type AdminActivityCounts,
 } from "@playrates/shared";
-import Chip, { chipClass } from "../../../components/ui/Chip";
+import Chip from "../../../components/ui/Chip";
+import { chipClass } from "../../../components/ui/chipClass";
 import SegmentedChoice from "../../../components/ui/SegmentedChoice";
 import { useGame } from "../../../hooks/queries/useGames";
 import {

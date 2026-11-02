@@ -30,6 +30,8 @@ export default defineConfig({
                 "src/pages/**/lib/**",
                 "src/components/gamelog/logEditorReducer.ts",
                 "src/components/ui/Figure.tsx",
+                "src/components/ui/figureClass.ts",
+                "src/components/ui/useFigureRoll.ts",
                 "src/components/ui/RatingBadge.tsx",
             ],
             exclude: [

@@ -10,7 +10,7 @@ import {
     type AnnouncementNotification,
     type AnnouncementTone,
 } from "@playrates/shared";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import Button from "../../../components/ui/Button";
 import Field from "../../../components/ui/Field";
 import Dropdown from "../../../components/ui/Dropdown";

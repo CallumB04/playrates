@@ -1,4 +1,4 @@
-import { panelButtonClass } from "../../../components/ui/Panel";
+import { panelButtonClass } from "../../../components/ui/panelButtonClass";
 
 /** The foot of a feed: older entries, or where the log begins. */
 const ShowOlder = ({

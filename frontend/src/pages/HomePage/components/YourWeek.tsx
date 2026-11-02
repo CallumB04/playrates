@@ -89,7 +89,7 @@ const YourWeek = () => {
                 </div>
             </Column>
 
-            <Column title="This week's tasks">
+            <Column title="This week’s tasks">
                 <ul className="flex flex-col gap-2">
                     {data.quests.week.map((q) => (
                         <li

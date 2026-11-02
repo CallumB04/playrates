@@ -3,7 +3,7 @@ import { ExternalLink, MailCheck } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import { inboxFor } from "../../lib/authLinks";
-import { buttonClass } from "../ui/Button";
+import { buttonClass } from "../ui/buttonClass";
 import Button from "../ui/Button";
 import { useCaptcha } from "./useCaptcha";
 
@@ -51,7 +51,7 @@ const CheckInbox = ({ email, justSent, onStartAgain }: CheckInboxProps) => {
         } catch (error) {
             captcha.reset();
             if (captcha.handled(error)) return;
-            notify("Couldn't send it. Try again in a minute.", "error");
+            notify("Couldn’t send it. Try again in a minute.", "error");
         } finally {
             setSending(false);
         }
@@ -64,7 +64,7 @@ const CheckInbox = ({ email, justSent, onStartAgain }: CheckInboxProps) => {
             </span>
             <p className="mt-4 text-body-sm text-content-secondary">
                 {justSent
-                    ? "We've sent a link to"
+                    ? "We’ve sent a link to"
                     : "To log in, confirm your email with the link we sent to"}
             </p>
             <p className="mt-0.5 font-semibold break-all text-content">

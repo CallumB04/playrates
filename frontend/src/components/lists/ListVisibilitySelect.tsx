@@ -3,12 +3,12 @@ import type { GameListDetail, ProfileVisibility } from "@playrates/shared";
 import Dropdown from "../ui/Dropdown";
 import { useNotify } from "../../contexts/NotificationContext";
 import { useUpdateList } from "../../hooks/queries/useLists";
-import { PRIVACY_OPTIONS } from "../../pages/ProfilePage/components/PrivacySelect";
+import { PRIVACY_OPTIONS } from "../../pages/ProfilePage/components/privacyOptions";
 
 // The profile's wording, said of a list.
 const HINTS: Record<ProfileVisibility, string> = {
     everyone: "Anyone who can see your profile",
-    friends: "Only people you're friends with",
+    friends: "Only people you’re friends with",
     private: "Nobody else",
 };
 
@@ -32,7 +32,7 @@ const ListVisibilitySelect = ({ list }: { list: GameListDetail }) => {
                     { visibility: next as ProfileVisibility },
                     {
                         onError: () =>
-                            notify("Couldn't change who can see it", "error"),
+                            notify("Couldn’t change who can see it", "error"),
                     }
                 )
             }

@@ -12,13 +12,13 @@ describe("whyCannotVote", () => {
 
     it("stops you voting on your own review", () => {
         expect(whyCannotVote("author", "author")).toBe(
-            "You can't react to your own review"
+            "You can’t react to your own review"
         );
     });
 
     it("names what is being voted on", () => {
         expect(whyCannotVote("author", "author", "message")).toBe(
-            "You can't react to your own message"
+            "You can’t react to your own message"
         );
     });
 });
@@ -30,6 +30,6 @@ describe("whyCannotLove", () => {
 
     it("asks a signed-out viewer to sign in, and stops you loving your own", () => {
         expect(whyCannotLove(undefined, "owner")).toBe("Sign in to love it");
-        expect(whyCannotLove("owner", "owner")).toBe("You can't love your own");
+        expect(whyCannotLove("owner", "owner")).toBe("You can’t love your own");
     });
 });

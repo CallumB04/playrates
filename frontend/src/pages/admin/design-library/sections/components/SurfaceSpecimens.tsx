@@ -58,7 +58,7 @@ const SurfaceSpecimens = () => {
         <>
             <Specimen
                 title="Plates"
-                notes="The system's elevation, as surfaces. Raised is lit from above; deep has risen further, for the one thing on a page that should float highest. Flat keeps the edge without the shadow, for tiles sitting in a row, like the game page's score cards. Pressed is a well set into the surface around it: the current game on the home page, a log's headline figures."
+                notes="The system’s elevation, as surfaces. Raised is lit from above; deep has risen further, for the one thing on a page that should float highest. Flat keeps the edge without the shadow, for tiles sitting in a row, like the game page’s score cards. Pressed is a well set into the surface around it: the current game on the home page, a log’s headline figures."
                 meta='plateClass(state, depth, className) · state="raised" | "flat" | "pressed" · depth="shallow" | "deep"'
             >
                 {(
@@ -85,7 +85,7 @@ const SurfaceSpecimens = () => {
 
             <Specimen
                 title="Card"
-                notes="The page's basic surface. Padding is named rather than overridden, since classes are joined without merging and a p-0 beside the default p-4 would leave both: none is for a card whose content sets its own, like a header strip or a banner. The tone marks a card that wants something (accent) or holds something that can't be undone (danger)."
+                notes="The page’s basic surface. Padding is named rather than overridden, since classes are joined without merging and a p-0 beside the default p-4 would leave both: none is for a card whose content sets its own, like a header strip or a banner. The tone marks a card that wants something (accent) or holds something that can’t be undone (danger)."
                 meta='padding="default" | "none" · tone="default" | "accent" | "danger" · cardClass(className, { padding, tone }) · CardHeader'
             >
                 <Card className="w-full max-w-xs">
@@ -112,7 +112,7 @@ const SurfaceSpecimens = () => {
 
             <Specimen
                 title="Popover"
-                notes="The surface of anything floating over the page: the account menu, the inbox, a dropdown's options, the search results, the played breakdown on the game page. Position and size stay with each caller, since every one hangs off something different; what they share is how high they sit and how they arrive."
+                notes="The surface of anything floating over the page: the account menu, the inbox, a dropdown’s options, the search results, the played breakdown on the game page. Position and size stay with each caller, since every one hangs off something different; what they share is how high they sit and how they arrive."
                 meta='popoverClass(className, shape) · shape="menu" | "list"'
             >
                 <div className={popoverClass("w-56 p-1.5", "menu")}>
@@ -129,7 +129,7 @@ const SurfaceSpecimens = () => {
 
             <Specimen
                 title="Panel"
-                notes="A card with a header strip carrying its title, and a trailing slot for a count or a control. Built on the card surface, so the two can't drift apart. accent tints the strip, for a panel that wants something from you."
+                notes="A card with a header strip carrying its title, and a trailing slot for a count or a control. Built on the card surface, so the two can’t drift apart. accent tints the strip, for a panel that wants something from you."
                 meta="title · trailing · accent · bodyClassName · PanelCount"
             >
                 <Panel
@@ -161,7 +161,7 @@ const SurfaceSpecimens = () => {
 
             <Specimen
                 title="Game tile"
-                notes="The shelf's unit: box art, one line of platform marks and a figure under it, and the actions over the cover on hover. A touch screen cannot hover, so below sm the first action gets a standing button of its own. A logged game is stamped with its status, and its first action opens the log rather than overwriting it. Pressing a quick-add folds every other action away and grows that one to full width while its request is out, so nothing else can be sent alongside it; it lands as a confirmation, or hands the buttons back if it fails. Try one on the first tile."
+                notes="The shelf’s unit: box art, one line of platform marks and a figure under it, and the actions over the cover on hover. A touch screen cannot hover, so below sm the first action gets a standing button of its own. A logged game is stamped with its status, and its first action opens the log rather than overwriting it. Pressing a quick-add folds every other action away and grows that one to full width while its request is out, so nothing else can be sent alongside it; it lands as a confirmation, or hands the buttons back if it fails. Try one on the first tile."
                 meta="gameId · title · coverUrl · platformSlugs · platforms · rating · footValue · status · meta · actions · narrowFoot"
             >
                 <div className="grid w-full max-w-lg grid-cols-3 gap-4">
@@ -250,7 +250,7 @@ const SurfaceSpecimens = () => {
 
             <Specimen
                 title="Confirm popup"
-                notes="One question, two answers, and a body that names the thing being acted on. The danger tone is for what cannot be undone. The confirm button carries the pending state, so a slow request can't be sent twice."
+                notes="One question, two answers, and a body that names the thing being acted on. The danger tone is for what cannot be undone. The confirm button carries the pending state, so a slow request can’t be sent twice."
                 meta='title · body · confirmLabel · tone="danger" | "neutral" · isPending · onConfirm · onClose'
             >
                 <Button variant="danger" onClick={() => setConfirmOpen(true)}>

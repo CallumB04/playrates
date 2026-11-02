@@ -3,7 +3,7 @@ import type {
     AdminCohortWeek,
     AdminReturn,
 } from "@playrates/shared";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import { EmptyNote } from "../../../components/ui/EmptyPlate";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { useAdminCohorts } from "../../../hooks/queries/useAdmin";

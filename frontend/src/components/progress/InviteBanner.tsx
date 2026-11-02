@@ -8,7 +8,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import { pendingReferral } from "../../lib/referral";
 import { formatCount } from "../../lib/format";
-import { cardClass } from "../ui/Card";
+import { cardClass } from "../ui/cardClass";
 import Button from "../ui/Button";
 import ProfilePicture from "../ProfilePicture";
 import AvatarFrame from "./AvatarFrame";

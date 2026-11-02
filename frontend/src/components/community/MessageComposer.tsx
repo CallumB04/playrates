@@ -46,7 +46,7 @@ const MessageComposer = ({
             setRound((n) => n + 1);
         } catch (error) {
             notify(
-                error instanceof Error ? error.message : "That didn't send",
+                error instanceof Error ? error.message : "That didn’t send",
                 "error"
             );
         } finally {

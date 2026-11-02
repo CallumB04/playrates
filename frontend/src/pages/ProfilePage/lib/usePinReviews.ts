@@ -40,7 +40,7 @@ export const usePins = (field: keyof typeof PINS) => {
                     notify(
                         error instanceof ApiError
                             ? error.message
-                            : "Couldn't save your pins",
+                            : "Couldn’t save your pins",
                         "error"
                     );
                 },

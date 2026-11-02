@@ -74,7 +74,7 @@ describe("SignupForm", () => {
         );
 
         expect(
-            await screen.findByText("The passwords don't match.")
+            await screen.findByText("The passwords don’t match.")
         ).toBeVisible();
         expect(signUp).not.toHaveBeenCalled();
     });

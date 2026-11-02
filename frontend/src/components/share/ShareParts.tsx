@@ -46,7 +46,7 @@ export const CopyLink = ({
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch {
-            notify("Couldn't copy the link", "error");
+            notify("Couldn’t copy the link", "error");
         }
     };
     // The address as it reads, not as it's typed: no scheme, no slash.
@@ -108,7 +108,7 @@ export const ShareTargets = ({
         } catch (error) {
             // Closing the share sheet is a choice, not a failure.
             if ((error as Error).name !== "AbortError") {
-                notify("Couldn't open sharing", "error");
+                notify("Couldn’t open sharing", "error");
             }
         }
     };

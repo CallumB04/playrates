@@ -28,9 +28,9 @@ export const emailChangeError = (error: unknown): string => {
     const code = isAuthError(error) ? error.code : undefined;
     if (code === "email_exists") return "That email already has an account.";
     if (code === "email_address_invalid")
-        return "That email can't be used. Try another.";
+        return "That email can’t be used. Try another.";
     if (code && RATE_LIMITED.has(code)) return TOO_MANY;
-    return "Couldn't change your email. Try again.";
+    return "Couldn’t change your email. Try again.";
 };
 
 export type PasswordErrorField = "current" | "next" | "form";
@@ -44,12 +44,12 @@ export const passwordChangeError = (
     if (code === "invalid_credentials")
         return {
             field: "current",
-            message: "That isn't your current password.",
+            message: "That isn’t your current password.",
         };
     if (code === "same_password")
         return {
             field: "next",
-            message: "That's your current password. Choose a new one.",
+            message: "That’s your current password. Choose a new one.",
         };
     if (code === "weak_password")
         return { field: "next", message: "Choose a stronger password." };
@@ -57,6 +57,6 @@ export const passwordChangeError = (
         return { field: "current", message: TOO_MANY };
     return {
         field: "form",
-        message: "Couldn't change your password. Try again.",
+        message: "Couldn’t change your password. Try again.",
     };
 };

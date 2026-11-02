@@ -64,9 +64,9 @@ const PasswordRow = () => {
         if (!checked.success) {
             found.next = checked.error.issues[0]?.message;
         } else if (next === current) {
-            found.next = "That's your current password. Choose a new one.";
+            found.next = "That’s your current password. Choose a new one.";
         } else if (confirm !== next) {
-            found.confirm = "The passwords don't match.";
+            found.confirm = "The passwords don’t match.";
         }
         setErrors(found);
         if (Object.keys(found).length > 0) return;

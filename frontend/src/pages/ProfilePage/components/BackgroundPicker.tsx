@@ -9,7 +9,8 @@ import {
 } from "@playrates/shared";
 import { ApiError } from "../../../api";
 import Modal from "../../../components/ui/Modal";
-import Button, { buttonClass } from "../../../components/ui/Button";
+import Button from "../../../components/ui/Button";
+import { buttonClass } from "../../../components/ui/buttonClass";
 import { Input } from "../../../components/ui/Input";
 import Pagination from "../../../components/ui/Pagination";
 import GameCover from "../../../components/game/GameCover";
@@ -131,7 +132,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
             notify(
                 error instanceof ApiError
                     ? error.message
-                    : "Couldn't buy that picture",
+                    : "Couldn’t buy that picture",
                 "error"
             );
             return;
@@ -146,7 +147,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
             notify("Background updated", "success");
             onClose();
         } catch {
-            notify("That didn't save, please try again", "error");
+            notify("That didn’t save, please try again", "error");
         }
     };
 
@@ -156,7 +157,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
             notify("Background removed", "success");
             onClose();
         } catch {
-            notify("That didn't save, please try again", "error");
+            notify("That didn’t save, please try again", "error");
         }
     };
 
@@ -247,7 +248,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                 {!game
                     ? shownTab === "yours"
                         ? "Your pictures, by game."
-                        : "Choose from a game you've logged."
+                        : "Choose from a game you’ve logged."
                     : cropping
                       ? "Move the outline over the part to show on your profile."
                       : "Pick a picture to put across the top of your profile."}
@@ -352,7 +353,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                         <div className="flex flex-col items-center gap-3 py-8 text-center">
                             <p className="text-body-sm text-content-muted">
                                 {free
-                                    ? "Your first picture is free. Pick one from a game you've logged."
+                                    ? "Your first picture is free. Pick one from a game you’ve logged."
                                     : "Pictures you get show here, by game."}
                             </p>
                             <Button

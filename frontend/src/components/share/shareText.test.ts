@@ -45,7 +45,7 @@ describe("share moments", () => {
             "I just logged my first game on PlayRates"
         );
         expect(shelfMoment("ana", 1000).text).toBe(
-            "That's 1,000 games on my PlayRates shelves"
+            "That’s 1,000 games on my PlayRates shelves"
         );
     });
 

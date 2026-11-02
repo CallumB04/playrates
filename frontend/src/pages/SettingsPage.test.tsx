@@ -110,7 +110,7 @@ describe("SettingsPage's email", () => {
         expect(auth.changeEmail).toHaveBeenCalledWith("new@playrates.test");
         expect(
             await screen.findByText(
-                "We've sent a link to new@playrates.test. Your email changes once you follow it."
+                "We’ve sent a link to new@playrates.test. Your email changes once you follow it."
             )
         ).toBeInTheDocument();
         expect(notify).toHaveBeenCalledWith(
@@ -142,7 +142,7 @@ describe("SettingsPage's email", () => {
         open();
 
         expect(
-            screen.getByText(/We've sent a link to later@playrates.test/)
+            screen.getByText(/We’ve sent a link to later@playrates.test/)
         ).toBeInTheDocument();
     });
 });
@@ -194,7 +194,7 @@ describe("SettingsPage's password", () => {
             await screen.findByText("Enter your current password.")
         ).toBeInTheDocument();
         expect(
-            screen.getByText("The passwords don't match.")
+            screen.getByText("The passwords don’t match.")
         ).toBeInTheDocument();
         expect(auth.changePassword).not.toHaveBeenCalled();
     });
@@ -209,7 +209,7 @@ describe("SettingsPage's password", () => {
 
         expect(
             await screen.findByText(
-                "That's your current password. Choose a new one."
+                "That’s your current password. Choose a new one."
             )
         ).toBeInTheDocument();
         expect(auth.changePassword).not.toHaveBeenCalled();
@@ -252,7 +252,7 @@ describe("SettingsPage's password", () => {
         });
 
         expect(
-            await screen.findByText("That isn't your current password.")
+            await screen.findByText("That isn’t your current password.")
         ).toBeInTheDocument();
         expect(notify).not.toHaveBeenCalledWith("Password changed", "success");
     });
@@ -342,7 +342,7 @@ describe("SettingsPage's emails", () => {
 
         await waitFor(() =>
             expect(notify).toHaveBeenCalledWith(
-                "Couldn't save that setting",
+                "Couldn’t save that setting",
                 "error"
             )
         );
@@ -401,7 +401,7 @@ describe("SettingsPage's data export", () => {
         await u.type(screen.getByLabelText("Password"), "wrong");
         await u.click(screen.getByRole("button", { name: "Confirm" }));
         expect(
-            await screen.findByText("That isn't your password.")
+            await screen.findByText("That isn’t your password.")
         ).toBeInTheDocument();
 
         await u.clear(screen.getByLabelText("Password"));

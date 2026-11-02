@@ -97,7 +97,7 @@ const MomentsSection = () => {
 
             <Specimen
                 title="Level up"
-                notes="The one reward that's a popup: the level on a gold coin that lands with a glow and a single ring, the tokens it brought, each unlock shown as itself, and the next one to aim for. XP and badges are toasts."
+                notes="The one reward that’s a popup: the level on a gold coin that lands with a glow and a single ring, the tokens it brought, each unlock shown as itself, and the next one to aim for. XP and badges are toasts."
                 meta="LevelUpMoment level · onShare · onClose"
             >
                 {LEVELS.map((l) => (
@@ -124,7 +124,7 @@ const MomentsSection = () => {
 
             <Specimen
                 title="Reward toasts"
-                notes="XP and new badges, said in the corner like anything else the site tells you. A badge's own XP goes with the badge rather than the XP toast."
+                notes="XP and new badges, said in the corner like anything else the site tells you. A badge’s own XP goes with the badge rather than the XP toast."
                 meta="xpToast(gains, tokens) · badgeToastText(badge, metal) · notify(text, 'success')"
             >
                 <Button
@@ -175,7 +175,7 @@ const MomentsSection = () => {
 
             <Specimen
                 title="Welcome popup"
-                notes="Shown once, on a new account's first sign-in: a first name, shown on the profile unless switched off there, and a picture, both optional, and one line pointing to Settings for the rest. Save saves and closes; there is nothing after it. It waits for the signup sheet to close, so the two never stack. Any way out marks it seen, skipping included. The preview walks the real popup against your own account and saves nothing."
+                notes="Shown once, on a new account’s first sign-in: a first name, shown on the profile unless switched off there, and a picture, both optional, and one line pointing to Settings for the rest. Save saves and closes; there is nothing after it. It waits for the signup sheet to close, so the two never stack. Any way out marks it seen, skipping included. The preview walks the real popup against your own account and saves nothing."
                 meta="profile · preview · onClose · FirstLoginWelcome gates it on owesWelcome(user, accountFormOpen)"
             >
                 <Button onClick={() => setWelcoming(true)}>

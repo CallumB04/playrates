@@ -1,6 +1,7 @@
 import { act, render, renderHook, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import Figure, { useFigureRoll } from "./Figure";
+import Figure from "./Figure";
+import { useFigureRoll } from "./useFigureRoll";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 
 /** Drives rAF off the fake clock, so a roll can be stepped frame by frame. */

@@ -12,8 +12,9 @@ import { useCommunityMutations } from "../../hooks/queries/useCommunity";
 import { useGame } from "../../hooks/queries/useGames";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import PageHeader from "../../components/ui/PageHeader";
-import Button, { buttonClass } from "../../components/ui/Button";
-import { cardClass } from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
+import { buttonClass } from "../../components/ui/buttonClass";
+import { cardClass } from "../../components/ui/cardClass";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import Field from "../../components/ui/Field";
 import { Input } from "../../components/ui/Input";
@@ -140,7 +141,7 @@ const NewThreadPage = () => {
             notify(
                 error instanceof Error
                     ? error.message
-                    : "That thread didn't post",
+                    : "That thread didn’t post",
                 "error"
             );
         }

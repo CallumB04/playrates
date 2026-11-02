@@ -4,7 +4,7 @@ import ProfilePicture from "../../../components/ProfilePicture";
 import PresenceDot from "../../../components/ui/PresenceDot";
 import UserStatus from "../../../components/UserStatus";
 import RatingBadge from "../../../components/ui/RatingBadge";
-import { figureClass } from "../../../components/ui/Figure";
+import { figureClass } from "../../../components/ui/figureClass";
 import { formatHours, formatMonthYear } from "../../../lib/format";
 import AvatarFrame from "../../../components/progress/AvatarFrame";
 import NameText from "../../../components/progress/NameText";

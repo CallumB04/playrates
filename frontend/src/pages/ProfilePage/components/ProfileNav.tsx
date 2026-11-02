@@ -15,8 +15,8 @@ import {
     SwitcherButton,
     SwitcherSheet,
     SwitcherTileBody,
-    switcherTileClass,
 } from "../../../components/ui/SectionSwitcher";
+import { switcherTileClass } from "../../../components/ui/switcherTileClass";
 import { profilePath } from "../../../lib/profilePaths";
 import { formatCount } from "../../../lib/format";
 import type { IconComponent } from "../../../lib/icons";

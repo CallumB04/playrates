@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { LogWithReview } from "@playrates/shared";
 import { displayStatusFor } from "../constants/gameStatus";
-import { plateClass } from "./ui/Plate";
+import { plateClass } from "./ui/plateClass";
 import Progress from "./ui/Progress";
 import { useGame, usePlatformSystems } from "../hooks/queries/useGames";
 import {
@@ -16,7 +16,8 @@ import RatingBadge from "./ui/RatingBadge";
 import AchievementRing from "./gamelog/AchievementRing";
 import { formatDate, formatHours } from "../lib/format";
 import Modal from "./ui/Modal";
-import Button, { buttonClass } from "./ui/Button";
+import Button from "./ui/Button";
+import { buttonClass } from "./ui/buttonClass";
 import SpoilerCover from "./ui/SpoilerCover";
 import StatusBadge from "./ui/StatusBadge";
 import { TextSkeleton } from "./ui/Skeleton";

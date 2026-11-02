@@ -18,8 +18,8 @@ import {
     SwitcherButton,
     SwitcherSheet,
     SwitcherTileBody,
-    switcherTileClass,
 } from "../../components/ui/SectionSwitcher";
+import { switcherTileClass } from "../../components/ui/switcherTileClass";
 
 /**
  * Add a view by adding an entry here and a route in AdminApp.tsx.

@@ -3,7 +3,7 @@ import type { Game, GameStats } from "@playrates/shared";
 import { formatHours, formatPercent } from "../../../lib/format";
 import CriticScore from "../../../lib/criticScore";
 import { criticVerdict } from "../../../lib/criticVerdict";
-import { plateClass } from "../../../components/ui/Plate";
+import { plateClass } from "../../../components/ui/plateClass";
 import Stat from "../../../components/ui/Stat";
 
 /** A flat plate titled with what it holds — these sit in a row, and a raised

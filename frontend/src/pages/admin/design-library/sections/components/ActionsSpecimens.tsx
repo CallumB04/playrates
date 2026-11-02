@@ -1,13 +1,15 @@
 import type { ReactionKey } from "@playrates/shared";
 import { useState } from "react";
 import { Archive, Inbox, Monitor, Moon, Sun } from "lucide-react";
-import Button, {
+import Button from "../../../../../components/ui/Button";
+import {
     BUTTON_VARIANTS,
     buttonClass,
     type ButtonVariant,
-} from "../../../../../components/ui/Button";
+} from "../../../../../components/ui/buttonClass";
 import Toggle from "../../../../../components/ui/Toggle";
-import Chip, { chipClass } from "../../../../../components/ui/Chip";
+import Chip from "../../../../../components/ui/Chip";
+import { chipClass } from "../../../../../components/ui/chipClass";
 import SegmentedChoice from "../../../../../components/ui/SegmentedChoice";
 import ReactionBar from "../../../../../components/ui/ReactionBar";
 import Pagination, {
@@ -78,7 +80,7 @@ const ActionsSpecimens = () => {
             <Specimen
                 title="Button sizes"
                 notes="md is 44px on a phone and tightens to 40 where there is a pointer; touch is the 48px floor for the mobile sheet. sm is 36px, so it belongs on desktop-only surfaces."
-                meta="buttonClass(variant, className, size), for Links and anything else that can't be a <button>"
+                meta="buttonClass(variant, className, size), for Links and anything else that can’t be a <button>"
             >
                 <Button size="sm">Small</Button>
                 <Button size="md">Medium</Button>
@@ -91,7 +93,7 @@ const ActionsSpecimens = () => {
 
             <Specimen
                 title="Chips"
-                notes="Filter chips. aria-pressed is the source of truth for both the semantics and the styling, so the two can't drift. chipClass is the same skin for a chip that has to be a link. The tag shape takes the buttons' corners, for a chip that names something rather than filters: a game page's platforms and genres."
+                notes="Filter chips. aria-pressed is the source of truth for both the semantics and the styling, so the two can’t drift. chipClass is the same skin for a chip that has to be a link. The tag shape takes the buttons' corners, for a chip that names something rather than filters: a game page’s platforms and genres."
                 meta='selected · dotClassName · chipClass(selected, className, "pill" | "tag")'
             >
                 {PLATFORMS.map((name) => (
@@ -122,7 +124,7 @@ const ActionsSpecimens = () => {
                 <Toggle
                     checked={hideLogged}
                     onChange={setHideLogged}
-                    label="Hide games I've logged"
+                    label="Hide games I’ve logged"
                 />
                 <Toggle
                     checked={adult}
@@ -168,7 +170,7 @@ const ActionsSpecimens = () => {
 
             <Specimen
                 title="Reaction bar"
-                notes="The upvote always shows; any other reaction someone has left sits beside it, and the plus picks from the ones the viewer has unlocked. One per person: pressing the same again takes it back, another swaps it. When the viewer can't react it still shows the counts, and says why: signed out, or it's their own."
+                notes="The upvote always shows; any other reaction someone has left sits beside it, and the plus picks from the ones the viewer has unlocked. One per person: pressing the same again takes it back, another swaps it. When the viewer can’t react it still shows the counts, and says why: signed out, or it’s their own."
                 meta="voteCount · myReaction · reactions · onReact · disabledReason · whyCannotVote(viewerId, authorId)"
             >
                 <ReactionBar
@@ -202,7 +204,7 @@ const ActionsSpecimens = () => {
             <Specimen
                 title="Pagination"
                 stack
-                notes="Numbered, with gaps elided. The window keeps a constant width wherever you are in the range, so the control doesn't jump about as you page. A gap of exactly one page is never elided, since the ellipsis costs the same room as the number."
+                notes="Numbered, with gaps elided. The window keeps a constant width wherever you are in the range, so the control doesn’t jump about as you page. A gap of exactly one page is never elided, since the ellipsis costs the same room as the number."
                 meta="pageRange(page, pageCount, siblings) · PaginationSummary"
             >
                 <PaginationSummary pagination={pagination} />

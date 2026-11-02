@@ -66,8 +66,8 @@ const ConfirmItsYouModal = ({
             if (captcha.handled(err)) return;
             setError(
                 isAuthError(err) && err.code === "invalid_credentials"
-                    ? "That isn't your password."
-                    : "Couldn't check your password. Try again."
+                    ? "That isn’t your password."
+                    : "Couldn’t check your password. Try again."
             );
         } finally {
             captcha.reset();
@@ -86,7 +86,7 @@ const ConfirmItsYouModal = ({
             // Success is the page navigating away, so the button stays busy.
         } catch {
             setBusy(false);
-            setError("Couldn't reach the sign-in page. Try again.");
+            setError("Couldn’t reach the sign-in page. Try again.");
         }
     };
 

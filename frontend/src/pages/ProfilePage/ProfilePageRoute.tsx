@@ -17,7 +17,7 @@ const ProfilePageRoute = () => {
 
     useEffect(() => {
         if (!targetUsername)
-            notify("That link doesn't go to a profile", "error");
+            notify("That link doesn’t go to a profile", "error");
     }, [targetUsername, notify]);
 
     if (!targetUsername) return <ProfileError />;

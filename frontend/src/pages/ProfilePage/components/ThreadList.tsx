@@ -1,6 +1,6 @@
 import { useThreads } from "../../../hooks/queries/useCommunity";
 import { usePagination } from "../../../hooks/usePagination";
-import { cardClass } from "../../../components/ui/Card";
+import { cardClass } from "../../../components/ui/cardClass";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import ThreadCard from "../../../components/community/ThreadCard";
 import ListFoot from "./ListFoot";

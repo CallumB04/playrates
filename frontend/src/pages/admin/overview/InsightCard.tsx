@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Maximize2 } from "lucide-react";
-import { cardClass } from "../../../components/ui/Card";
-import { figureClass } from "../../../components/ui/Figure";
+import { cardClass } from "../../../components/ui/cardClass";
+import { figureClass } from "../../../components/ui/figureClass";
 import { cn } from "../../../lib/cn";
 
 /**

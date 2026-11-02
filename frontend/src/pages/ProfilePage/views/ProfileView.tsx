@@ -36,7 +36,7 @@ export const ProfileAbout = ({
         update.mutate(
             { aboutVisibility: { [field]: value } },
             {
-                onError: () => notify("Couldn't change who sees that", "error"),
+                onError: () => notify("Couldn’t change who sees that", "error"),
             }
         );
 
@@ -124,7 +124,7 @@ const ProfileView = ({
                 <div className="hidden only:block">
                     <EmptyPlate
                         title="Nothing here yet"
-                        body={`When ${profile.username} picks their favourite games, pins a list or review, or adds a game to their wishlist, it'll show here.`}
+                        body={`When ${profile.username} picks their favourite games, pins a list or review, or adds a game to their wishlist, it’ll show here.`}
                     />
                 </div>
             </div>

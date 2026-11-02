@@ -21,7 +21,7 @@ import BadgeMedal from "../progress/BadgeMedal";
 import LevelChip from "../progress/LevelChip";
 import NameText from "../progress/NameText";
 import PlayerCardMock from "../progress/PlayerCardMock";
-import { bestOf, type ShownBadge } from "../progress/ShowcaseView";
+import { bestOf, type ShownBadge } from "../progress/showcase";
 import { useAuth } from "../../contexts/AuthContext";
 import { usePlayerBadges, useProgress } from "../../hooks/queries/useProgress";
 import { cn } from "../../lib/cn";

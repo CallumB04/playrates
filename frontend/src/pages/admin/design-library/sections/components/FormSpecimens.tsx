@@ -48,13 +48,13 @@ const FormSpecimens = () => {
                         {(a11y) => <Input defaultValue="ashgrove" {...a11y} />}
                     </Field>
 
-                    <Field label="Error" error="Usernames can't contain spaces">
+                    <Field label="Error" error="Usernames can’t contain spaces">
                         {(a11y) => <Input defaultValue="a grove" {...a11y} />}
                     </Field>
 
                     <Field
                         label="Disabled"
-                        help="Verified accounts can't rename"
+                        help="Verified accounts can’t rename"
                     >
                         {(a11y) => (
                             <Input defaultValue="locked" disabled {...a11y} />
@@ -75,7 +75,7 @@ const FormSpecimens = () => {
 
             <Specimen
                 title="Dropdown and search"
-                notes="A native select takes the platform's own popup: no icon, no hint line, no tick beside what is chosen, and a font that belongs to nothing else on the page. This keeps the field skin and owns the menu. Arrows move, Enter commits, Escape closes."
+                notes="A native select takes the platform’s own popup: no icon, no hint line, no tick beside what is chosen, and a font that belongs to nothing else on the page. This keeps the field skin and owns the menu. Arrows move, Enter commits, Escape closes."
                 meta="Dropdown · SearchInput"
             >
                 <div className="grid w-full gap-4 sm:grid-cols-2">

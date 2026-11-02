@@ -4,7 +4,7 @@ import type { PlayedStatusFilter } from "@playrates/shared";
 import Button from "../../../components/ui/Button";
 import Dropdown from "../../../components/ui/Dropdown";
 import Field from "../../../components/ui/Field";
-import { fieldClass } from "../../../components/ui/Input";
+import { fieldClass } from "../../../components/ui/fieldClass";
 import Modal from "../../../components/ui/Modal";
 import { popoverClass } from "../../../components/ui/popover";
 import {
