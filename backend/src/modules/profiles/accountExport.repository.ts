@@ -1,4 +1,5 @@
 import type { Db } from "../../config/supabase.js";
+import { toExportedPushDevice } from "./profiles.mapper.js";
 
 /** Every row PlayRates keeps that belongs to one person, by table. Raw
  *  rows rather than the API's shapes: the point is that nothing is left out,
@@ -27,6 +28,8 @@ export interface AccountData {
   tokenEvents: unknown[];
   badges: unknown[];
   items: unknown[];
+  pushDevices: ReturnType<typeof toExportedPushDevice>[];
+  emailsSent: unknown[];
 }
 
 export interface AccountExportRepository {
@@ -56,11 +59,12 @@ export const createAccountExportRepository = (
     table: string,
     orderBy: string,
     filter: (q: Query) => Query,
+    columns = "*",
   ): Promise<unknown[]> => {
     const rows: unknown[] = [];
     for (let from = 0; ; from += PAGE) {
       const query = filter(
-        db.from(table).select("*") as unknown as Query,
+        db.from(table).select(columns) as unknown as Query,
       ).order(orderBy);
       const { data, error } = await query.range(from, from + PAGE - 1);
       if (error) throw error;
@@ -96,6 +100,8 @@ export const createAccountExportRepository = (
         tokenEvents,
         badges,
         items,
+        pushDevices,
+        emailsSent,
       ] = await Promise.all([
         everything("profiles", "id", own("id")),
         everything("game_logs", "id", own("user_id")),
@@ -121,6 +127,13 @@ export const createAccountExportRepository = (
         everything("token_events", "id", own("user_id")),
         everything("user_badges", "unlocked_at", own("user_id")),
         everything("user_items", "item", own("user_id")),
+        everything(
+          "push_subscriptions",
+          "id",
+          own("user_id"),
+          "endpoint, user_agent, created_at",
+        ),
+        everything("email_log", "id", own("user_id")),
       ]);
       // A list's games carry no owner of their own; they're found by list.
       const listIds = (gameLists as { id: number }[]).map((l) => l.id);
@@ -155,6 +168,10 @@ export const createAccountExportRepository = (
         tokenEvents,
         badges,
         items,
+        pushDevices: (
+          pushDevices as Parameters<typeof toExportedPushDevice>[0][]
+        ).map(toExportedPushDevice),
+        emailsSent,
       };
     },
   };

@@ -41,6 +41,7 @@ import type {
   FriendProfileRow,
 } from "../../src/modules/friends/friends.repository.js";
 import { orderPair } from "../../src/modules/friends/friends.repository.js";
+import { toExportedPushDevice } from "../../src/modules/profiles/profiles.mapper.js";
 import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.repository.js";
 import type { NotificationRowWithActor } from "../../src/modules/notifications/notifications.repository.js";
 import { createInMemoryCommunity } from "./inMemoryCommunity.js";
@@ -156,6 +157,7 @@ export interface InMemoryState {
     p256dh: string;
     auth: string;
     userAgent: string | null;
+    createdAt: string;
   }[];
   /** Written by triggers in Postgres; seeded directly here. */
   activityEvents: ActivityEventRow[];
@@ -620,6 +622,16 @@ export const createInMemoryRepos = (
           tokenEvents: state.tokenEvents.filter((e) => e.user_id === userId),
           badges: state.userBadges.filter((b) => b.user_id === userId),
           items: state.userItems.filter((i) => i.user_id === userId),
+          pushDevices: state.pushSubscriptions
+            .filter((p) => p.userId === userId)
+            .map((p) =>
+              toExportedPushDevice({
+                endpoint: p.endpoint,
+                user_agent: p.userAgent,
+                created_at: p.createdAt,
+              }),
+            ),
+          emailsSent: state.emailLog.filter((e) => e.user_id === userId),
         };
       },
     },
@@ -1817,7 +1829,7 @@ export const createInMemoryRepos = (
         state.pushSubscriptions = state.pushSubscriptions.filter(
           (p) => p.endpoint !== target.endpoint,
         );
-        state.pushSubscriptions.push({ userId, ...target });
+        state.pushSubscriptions.push({ userId, ...target, createdAt: now() });
       },
       async remove(userId, endpoint) {
         state.pushSubscriptions = state.pushSubscriptions.filter(

@@ -150,3 +150,17 @@ export const toMyProfile = (row: ProfileRow, now = Date.now()): MyProfile => ({
   isAdmin: row.is_admin,
   emailPrefs: resolveEmailPrefs(row.email_prefs),
 });
+
+/** A device that takes pushes, as the account export gives it. The keys
+ *  and the endpoint's path are what let a push reach that device, and an
+ *  export gets saved and passed around; the host still says which push
+ *  service it is. */
+export const toExportedPushDevice = (row: {
+  endpoint: string;
+  user_agent: string | null;
+  created_at: string;
+}) => ({
+  endpoint_host: new URL(row.endpoint).host,
+  user_agent: row.user_agent,
+  created_at: row.created_at,
+});

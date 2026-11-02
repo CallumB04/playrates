@@ -4,6 +4,7 @@ import {
   isOnline,
   toProfileVisibility,
   toProfile,
+  toExportedPushDevice,
 } from "../../src/modules/profiles/profiles.mapper.js";
 import {
   toGameLog,
@@ -549,5 +550,21 @@ describe("igdbSized", () => {
     const elsewhere = "https://cdn.example.test/t_cover_big/x.jpg";
     expect(isIgdbImage(elsewhere)).toBe(false);
     expect(igdbSized(elsewhere, "cover_small")).toBe(elsewhere);
+  });
+});
+
+describe("toExportedPushDevice", () => {
+  it("keeps the push service's host and drops the path that reaches the device", () => {
+    expect(
+      toExportedPushDevice({
+        endpoint: "https://updates.push.services.mozilla.com/wpush/v2/abc",
+        user_agent: null,
+        created_at: "2026-10-30T09:00:00.000Z",
+      }),
+    ).toEqual({
+      endpoint_host: "updates.push.services.mozilla.com",
+      user_agent: null,
+      created_at: "2026-10-30T09:00:00.000Z",
+    });
   });
 });

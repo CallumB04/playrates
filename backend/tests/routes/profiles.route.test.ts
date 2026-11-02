@@ -682,6 +682,61 @@ describe("exporting an account", () => {
     expect(response.body.reviews).toHaveLength(1);
   });
 
+  it("includes the caller's push devices and the emails sent to them", async () => {
+    const { app, state } = buildTestApp({ seed: seed() });
+    state.pushSubscriptions.push(
+      {
+        userId: USER_A,
+        endpoint: "https://fcm.googleapis.com/fcm/send/device-token",
+        p256dh: "secret-p256dh",
+        auth: "secret-auth",
+        userAgent: "Firefox on Android",
+        createdAt: "2026-10-30T09:00:00.000Z",
+      },
+      {
+        userId: USER_B,
+        endpoint: "https://push.example/b",
+        p256dh: "k",
+        auth: "a",
+        userAgent: null,
+        createdAt: "2026-10-30T09:00:00.000Z",
+      },
+    );
+    state.emailLog.push(
+      {
+        id: 1,
+        user_id: USER_A,
+        kind: "weekly_digest",
+        ref: "2026-W44",
+        sent_at: "2026-11-01T18:00:00.000Z",
+      },
+      {
+        id: 2,
+        user_id: USER_B,
+        kind: "weekly_digest",
+        ref: "2026-W44",
+        sent_at: "2026-11-01T18:00:00.000Z",
+      },
+    );
+
+    const response = await request(app)
+      .get("/api/v1/profiles/me/export")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.body.pushDevices).toEqual([
+      {
+        endpoint_host: "fcm.googleapis.com",
+        user_agent: "Firefox on Android",
+        created_at: "2026-10-30T09:00:00.000Z",
+      },
+    ]);
+    expect(response.text).not.toContain("secret-");
+    expect(response.text).not.toContain("device-token");
+    expect(response.body.emailsSent).toEqual([
+      expect.objectContaining({ id: 1, kind: "weekly_digest" }),
+    ]);
+  });
+
   it("requires authentication", async () => {
     const { app } = buildTestApp({ seed: seed() });
 
