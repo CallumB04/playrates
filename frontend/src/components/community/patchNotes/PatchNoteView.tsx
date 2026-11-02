@@ -14,17 +14,14 @@ import KindTag from "./KindTag";
 const ROW =
     "flex items-start gap-3 rounded-md px-2.5 py-2 text-body text-content-secondary";
 
-/** One change: its kind, then what changed. Beside each other from sm, the
- *  kinds a column; on a phone the kind leads the text's first line, as a
- *  column there would leave the text a narrow strip. */
+/** One change: its kind, then what changed. The kinds a column from sm; on
+ *  a phone the kind is a small line above, as beside the text it would
+ *  leave the change a narrow strip. */
 const ItemRow = ({ item }: { item: PatchNoteItem }) => {
     const body: ReactNode = (
-        <span className="min-w-0 flex-1 sm:flex sm:gap-3">
-            <KindTag
-                kind={item.kind}
-                className="mr-2 align-[2px] sm:mt-[0.3em] sm:mr-0 sm:shrink-0 sm:self-start"
-            />
-            <span className="sm:min-w-0">{item.text}</span>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">
+            <KindTag kind={item.kind} className="sm:w-28 sm:shrink-0" />
+            <span className="min-w-0">{item.text}</span>
         </span>
     );
     if (!item.link) return <div className={ROW}>{body}</div>;

@@ -24,13 +24,21 @@ export const OfficialBadge = () => (
     </span>
 );
 
-const LatestBadge = () => (
-    <span className="rounded-xs bg-accent px-1.5 py-px text-stamp font-semibold tracking-wider text-content-on-solid uppercase">
+/** The newest release, said beside its version: a dot in the accent, as
+ *  the release list marks it too. */
+const LatestDot = () => (
+    <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-accent" />
+);
+
+const LatestLabel = () => (
+    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent-quiet px-2.5 py-1 text-label-sm font-medium text-accent-content">
+        <LatestDot />
         Latest
     </span>
 );
 
-/** A release's heading: the version large, the name beside it, the date. */
+/** A release's heading: the version large, its name beside it, the date
+ *  beneath, and Latest across from it on the newest. */
 const ReleaseHeader = ({
     title,
     createdAt,
@@ -42,21 +50,26 @@ const ReleaseHeader = ({
 }) => {
     const { version, name } = splitReleaseTitle(title);
     return (
-        <header className="flex flex-col gap-1.5">
-            <h2 className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <span className="font-display text-title text-content tabular-nums">
-                    {version ?? name}
-                </span>
-                {version && name && (
-                    <span className="font-display text-section text-content-secondary">
-                        {name}
+        <header className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-col gap-1">
+                <h2 className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                    <span className="font-display text-title text-content tabular-nums">
+                        {version ?? name}
                     </span>
-                )}
-            </h2>
-            <p className="flex items-center gap-2 text-label-sm text-content-muted">
-                {latest && <LatestBadge />}
-                <time dateTime={createdAt}>{formatDate(createdAt)}</time>
-            </p>
+                    {version && name && (
+                        <span className="font-display text-section text-content-secondary">
+                            {name}
+                        </span>
+                    )}
+                </h2>
+                <time
+                    dateTime={createdAt}
+                    className="text-label-sm text-content-muted"
+                >
+                    {formatDate(createdAt)}
+                </time>
+            </div>
+            {latest && <LatestLabel />}
         </header>
     );
 };
@@ -68,9 +81,11 @@ const hashOf = (entry: CommunityMessage) => `message-${entry.id}`;
 const ReleaseIndex = ({
     entries,
     current,
+    latestId,
 }: {
     entries: CommunityMessage[];
     current: number | null;
+    latestId: number | undefined;
 }) => {
     const fade = useOverflowFade<HTMLUListElement>();
     const titled = entries.filter((e) => e.patchNote);
@@ -108,8 +123,16 @@ const ReleaseIndex = ({
                                         : "border-subtle text-content-secondary hover:bg-surface-hover hover:text-content"
                                 )}
                             >
-                                <span className="font-medium tabular-nums">
+                                <span className="flex items-center gap-1.5 font-medium tabular-nums">
                                     {version ?? name}
+                                    {entry.id === latestId && (
+                                        <>
+                                            <LatestDot />
+                                            <span className="sr-only">
+                                                (latest)
+                                            </span>
+                                        </>
+                                    )}
                                 </span>
                                 <span className="hidden text-label-sm text-content-muted lg:block">
                                     {formatDate(entry.createdAt)}
@@ -152,32 +175,34 @@ const PatchNotesThread = ({
     return (
         <>
             <header className="relative overflow-hidden rounded-lg border border-accent/40 bg-accent-quiet p-4 sm:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                    <div className="flex min-w-0 flex-1 items-start gap-4">
-                        <span className="grid size-12 shrink-0 place-items-center rounded-full bg-accent text-content-on-solid">
-                            <Megaphone size={22} aria-hidden />
-                        </span>
-                        <div className="min-w-0">
-                            <OfficialBadge />
-                            <h1 className="mt-2 font-display text-title text-content">
-                                {detail.thread.title}
-                            </h1>
-                            <p className="mt-2 text-body-sm text-content-secondary">
-                                What’s changed on the site, newest at the top.
-                            </p>
-                        </div>
+                <div className="flex items-start gap-4">
+                    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-accent text-content-on-solid">
+                        <Megaphone size={22} aria-hidden />
+                    </span>
+                    <div className="min-w-0">
+                        <OfficialBadge />
+                        <h1 className="mt-2 font-display text-title text-content">
+                            {detail.thread.title}
+                        </h1>
+                        <p className="mt-2 text-body-sm text-content-secondary">
+                            What’s changed on the site, newest at the top.
+                        </p>
                     </div>
-                    {detail.canPost && !writing && (
-                        <Button
-                            onClick={() => setWriting(true)}
-                            className="w-full sm:w-auto"
-                        >
-                            <Plus size={15} aria-hidden />
-                            Write patch notes
-                        </Button>
-                    )}
                 </div>
             </header>
+
+            {/* Below the header rather than on it: the header is what
+                every reader sees, the button only whoever writes them. */}
+            {detail.canPost && !writing && (
+                <Button
+                    variant="secondary"
+                    onClick={() => setWriting(true)}
+                    className="w-full sm:w-auto sm:self-end"
+                >
+                    <Plus size={15} aria-hidden />
+                    Write patch notes
+                </Button>
+            )}
 
             {writing && (
                 <section className={cardClass("flex flex-col gap-3")}>
@@ -199,7 +224,11 @@ const PatchNotesThread = ({
                 <EmptyNote>No patch notes yet.</EmptyNote>
             ) : (
                 <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[9.5rem_minmax(0,1fr)] lg:gap-8">
-                    <ReleaseIndex entries={entries} current={landedOn} />
+                    <ReleaseIndex
+                        entries={entries}
+                        current={landedOn}
+                        latestId={entries[0]?.id}
+                    />
                     <div className="flex min-w-0 flex-col gap-5">
                         {entries.map((entry, i) => {
                             const note = noteFor(entry.id);
@@ -225,7 +254,9 @@ const PatchNotesThread = ({
                                     highlighted={landedOn === entry.id}
                                     showEdited={false}
                                     linkify
-                                    className={cardClass()}
+                                    className={cardClass(undefined, {
+                                        tone: i === 0 ? "latest" : "default",
+                                    })}
                                 />
                             );
                         })}

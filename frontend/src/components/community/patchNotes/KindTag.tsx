@@ -1,16 +1,15 @@
 import { PATCH_NOTE_KIND_NAMES, type PatchNoteKind } from "@playrates/shared";
 import { cn } from "../../../lib/cn";
 
-/** Each kind's colour: the text, and a border in the same hue. */
-const TONE: Record<PatchNoteKind, string> = {
-    feature: "border-brand/45 text-brand-text",
-    improvement: "border-info/45 text-info-content",
-    fix: "border-success/45 text-success-content",
-    other: "border-strong text-content-muted",
+const DOT: Record<PatchNoteKind, string> = {
+    feature: "bg-brand",
+    improvement: "bg-info",
+    fix: "bg-success",
+    other: "bg-content-muted",
 };
 
-/** A change's kind, stamped as the site's other labels are ("Official").
- *  One width for all, so a release's changes start in a column. */
+/** A change's kind: its colour in a dot, its name in quiet text, so the
+ *  change itself is what reads first. */
 const KindTag = ({
     kind,
     className,
@@ -20,11 +19,11 @@ const KindTag = ({
 }) => (
     <span
         className={cn(
-            "inline-flex w-[5.75rem] justify-center rounded-xs border px-1.5 py-px text-stamp font-semibold tracking-wider uppercase",
-            TONE[kind],
+            "inline-flex items-center gap-1.5 text-label-sm font-medium text-content-muted",
             className
         )}
     >
+        <span aria-hidden className={cn("size-2 rounded-full", DOT[kind])} />
         {PATCH_NOTE_KIND_NAMES[kind]}
     </span>
 );

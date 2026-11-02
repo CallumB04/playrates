@@ -29,6 +29,8 @@ const TONE = {
     default: "border-subtle bg-surface-raised",
     /** A card that wants something from you. */
     accent: "border-brand/30 bg-surface-raised",
+    /** The newest of a run, edged in the accent: the latest patch notes. */
+    latest: "border-accent/50 bg-surface-raised",
     /** A card holding something that cannot be undone. */
     danger: "border-danger/40 bg-surface-raised",
     /** The page's one invitation: tinted in the brand's colour. */
