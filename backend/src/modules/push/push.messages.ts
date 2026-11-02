@@ -108,3 +108,12 @@ export const pushMessage = (
       return null;
   }
 };
+
+/** To the admins, when someone finishes signing up. Not a notification:
+ *  it has no bell entry, and nobody else gets it. */
+export const joinedMessage = (username: string): PushPayload => ({
+  title: "New member",
+  body: `${username} just joined PlayRates`,
+  url: `/user/${encodeURIComponent(username)}`,
+  tag: `joined:${username}`,
+});

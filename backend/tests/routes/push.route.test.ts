@@ -8,7 +8,7 @@ import {
   USER_A,
   USER_B,
 } from "../helpers/buildTestApp.js";
-import { baseSeed } from "../helpers/fixtures.js";
+import { baseSeed, buildProfile } from "../helpers/fixtures.js";
 
 const device = (endpoint = "https://push.example/device-1") => ({
   endpoint,
@@ -115,5 +115,65 @@ describe("push", () => {
   it("takes no subscriptions while push isn't set up", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
     expect((await subscribe(app, USER_A)).status).toBe(404);
+  });
+
+  describe("a new member, to the admins", () => {
+    // devuser is finishing signing up; frienduser runs the site.
+    const seed = () => ({
+      ...baseSeed(),
+      profiles: [
+        buildProfile({ onboarded_at: null }),
+        buildProfile({ id: USER_B, username: "frienduser", is_admin: true }),
+      ],
+    });
+    const onboard = (app: Express) =>
+      request(app)
+        .post("/api/v1/profiles/me/onboarded")
+        .set("Authorization", authHeader(USER_A));
+
+    it("pushes to an admin's devices when someone finishes signing up, once", async () => {
+      const recorder = createPushRecorder();
+      const { app, email } = buildTestApp({
+        seed: seed(),
+        push: recorder.sender,
+      });
+      await subscribe(app, USER_B);
+
+      await onboard(app);
+      // A second tab dismissing its welcome too isn't a second member.
+      await onboard(app);
+      await email.flush();
+
+      expect(recorder.sent).toEqual([
+        {
+          endpoint: "https://push.example/device-1",
+          payload: {
+            title: "New member",
+            body: "devuser just joined PlayRates",
+            url: "/user/devuser",
+            tag: "joined:devuser",
+          },
+        },
+      ]);
+    });
+
+    it("tells nobody who isn't an admin", async () => {
+      const recorder = createPushRecorder();
+      const notAdmin = seed();
+      notAdmin.profiles[1] = buildProfile({
+        id: USER_B,
+        username: "frienduser",
+      });
+      const { app, email } = buildTestApp({
+        seed: notAdmin,
+        push: recorder.sender,
+      });
+      await subscribe(app, USER_B);
+
+      await onboard(app);
+      await email.flush();
+
+      expect(recorder.sent).toEqual([]);
+    });
   });
 });

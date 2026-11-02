@@ -1,16 +1,22 @@
 import { resolveEmailPrefs } from "@playrates/shared";
-import type { PushSender } from "../../config/push.js";
+import type { PushPayload, PushSender } from "../../config/push.js";
 import type { Defer } from "../../lib/afterResponse.js";
 import type { Logger } from "../../lib/logger.js";
 import type { NotificationDraft } from "../notifications/notifications.repository.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
-import { isReminder, PUSHED, pushMessage } from "./push.messages.js";
+import {
+  isReminder,
+  joinedMessage,
+  PUSHED,
+  pushMessage,
+} from "./push.messages.js";
 import type { PushRepository } from "./push.repository.js";
 
 export const createPushService = ({
   repo,
   sender,
   profiles,
+  adminIds,
   logger,
   defer,
 }: {
@@ -18,9 +24,28 @@ export const createPushService = ({
   /** Null without VAPID keys: nothing is pushed or offered. */
   sender: PushSender | null;
   profiles: Pick<ProfilesRepository, "findById">;
+  adminIds: () => Promise<string[]>;
   logger: Logger;
   defer: Defer;
 }) => {
+  /** To each of these devices. How many took it. */
+  const deliver = async (
+    targets: Awaited<ReturnType<PushRepository["forUser"]>>,
+    payload: PushPayload,
+  ): Promise<number> => {
+    if (!sender) return 0;
+    let sent = 0;
+    for (const target of targets) {
+      const result = await sender.send(target, payload).catch((error) => {
+        logger.warn({ err: error }, "push: send failed");
+        return null;
+      });
+      if (result === "sent") sent += 1;
+      if (result === "gone") await repo.forget(target.endpoint);
+    }
+    return sent;
+  };
+
   const service = {
     publicKey(): string | null {
       return sender?.publicKey ?? null;
@@ -38,7 +63,7 @@ export const createPushService = ({
       await repo.remove(userId, endpoint);
     },
 
-    /** To every device the member said yes on. How many took it. */
+    /** A notification, as a push to the member's devices. */
     async sendFor(draft: NotificationDraft): Promise<number> {
       if (!sender || !PUSHED.has(draft.kind)) return 0;
       const targets = await repo.forUser(draft.userId);
@@ -62,16 +87,18 @@ export const createPushService = ({
         actor?.username ?? null,
         recipient.username,
       );
-      if (!payload) return 0;
+      return payload ? deliver(targets, payload) : 0;
+    },
 
+    /** A new member, to every admin's devices. */
+    async sendJoined(username: string): Promise<number> {
+      if (!sender) return 0;
       let sent = 0;
-      for (const target of targets) {
-        const result = await sender.send(target, payload).catch((error) => {
-          logger.warn({ err: error }, "push: send failed");
-          return null;
-        });
-        if (result === "sent") sent += 1;
-        if (result === "gone") await repo.forget(target.endpoint);
+      for (const admin of await adminIds()) {
+        sent += await deliver(
+          await repo.forUser(admin),
+          joinedMessage(username),
+        );
       }
       return sent;
     },
@@ -83,6 +110,15 @@ export const createPushService = ({
       defer(
         service.sendFor(draft).catch((error) => {
           logger.error({ err: error, kind: draft.kind }, "push: failed");
+        }),
+      );
+    },
+
+    afterJoined(username: string): void {
+      if (!sender) return;
+      defer(
+        service.sendJoined(username).catch((error) => {
+          logger.error({ err: error }, "push: joined failed");
         }),
       );
     },

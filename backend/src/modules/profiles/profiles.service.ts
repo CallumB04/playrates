@@ -53,6 +53,14 @@ export interface ProfileEmailHooks {
   afterAccountDeleted(email: string): void;
 }
 
+/** Telling the admins, run after the response. */
+export interface ProfileAdminHooks {
+  /** Someone has finished signing up. */
+  afterJoined(username: string): void;
+}
+
+const NO_ADMIN_HOOKS: ProfileAdminHooks = { afterJoined() {} };
+
 const NO_EMAIL_HOOKS: ProfileEmailHooks = {
   afterOnboarding() {},
   afterPrefsChange() {},
@@ -68,6 +76,7 @@ export const createProfilesService = (
   /** Whether two people are friends, for the About fields kept to friends. */
   areFriends: (a: string, b: string) => Promise<boolean>,
   emails: ProfileEmailHooks = NO_EMAIL_HOOKS,
+  admins: ProfileAdminHooks = NO_ADMIN_HOOKS,
 ) => ({
   /** The caller's own, so it carries their settings. */
   async getById(id: string): Promise<MyProfile> {
@@ -311,6 +320,7 @@ export const createProfilesService = (
     );
     // Every sign-up path ends here, email, Google and Discord alike.
     emails.afterOnboarding(callerId);
+    admins.afterJoined(updated.username);
     return updated;
   },
 

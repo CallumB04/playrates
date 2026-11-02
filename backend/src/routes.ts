@@ -142,6 +142,7 @@ export const buildRoutes = ({
     repo: baseRepos.push,
     sender: pushSender,
     profiles: baseRepos.profiles,
+    adminIds: () => baseRepos.admin.adminIds(),
     logger,
     defer: email.defer,
   });
@@ -186,6 +187,7 @@ export const buildRoutes = ({
     },
     async (a, b) => (await repos.friends.find(a, b))?.status === "accepted",
     emails,
+    push,
   );
   const profileGate = createProfileGate(repos.profiles, repos.friends);
   const favourites = createFavouritesService(
