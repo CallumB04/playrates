@@ -9,6 +9,7 @@ import {
   type Gaming25ImageLayout,
 } from "@playrates/shared";
 import type { Gaming25Cells } from "./gaming25.service.js";
+import { woffToSfnt } from "../../lib/woff.js";
 
 // Vellum's own values (frontend/src/styles/theme.css). A picture can't read
 // tokens; these match frontend/scripts/brand-assets.mjs.
@@ -163,9 +164,11 @@ export const loadFonts = () =>
     ([500, 700, 800] as const).map(async (weight) => ({
       name: "Geist",
       weight,
-      data: await readFile(
-        require.resolve(
-          `@fontsource/geist/files/geist-latin-${weight}-normal.woff`,
+      data: woffToSfnt(
+        await readFile(
+          require.resolve(
+            `@fontsource/geist/files/geist-latin-${weight}-normal.woff`,
+          ),
         ),
       ),
     })),

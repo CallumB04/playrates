@@ -1274,5 +1274,10 @@ export interface GiftFriend {
   price: number;
 }
 
+/* Raised whenever the card's drawing changes: its URL is cached for good,
+   so without this a member whose XP hasn't moved keeps the old picture. */
+const PLAYER_CARD_REVISION = 2;
+
 /** The `v` a player card's URL carries: the card changes as XP does. */
-export const playerCardVersion = (xp: number): string => String(xp);
+export const playerCardVersion = (xp: number): string =>
+  `${PLAYER_CARD_REVISION}.${xp}`;

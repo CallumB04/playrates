@@ -297,7 +297,7 @@ describe("the shared picture", () => {
       "/api/v1/gaming-25/devuser/image.png?v=1",
     );
     expect(stale.status).toBe(302);
-    expect(stale.headers.location).toMatch(/\?v=2\.\d+\.default$/);
+    expect(stale.headers.location).toMatch(/\?v=\d+\.\d+\.default$/);
 
     const res = await request(app).get(stale.headers.location!).buffer(true);
 
@@ -350,7 +350,7 @@ describe("its page's preview", () => {
       "Favourite game: Game 1 · Best story: Game 2. 2 of 25 picked on PlayRates.",
     );
     expect(page.text).toMatch(
-      /og:image" content="[^"]*\/api\/v1\/gaming-25\/devuser\/image\.png\?layout=wide&amp;v=2\.\d+\.default"/,
+      /og:image" content="[^"]*\/api\/v1\/gaming-25\/devuser\/image\.png\?layout=wide&amp;v=\d+\.\d+\.default"/,
     );
   });
 

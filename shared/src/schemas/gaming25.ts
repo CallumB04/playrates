@@ -70,7 +70,7 @@ export const SetGaming25PickSchema = z
 /* Raised whenever the picture's design or wording changes. Its URL is
    cached for good, so without this a grid nobody has touched would keep
    its old picture. */
-const GAMING_25_IMAGE_REVISION = 2;
+const GAMING_25_IMAGE_REVISION = 3;
 
 /** The picture's version: what it's drawn from, and how it's drawn. */
 export const gaming25ImageVersion = (updatedAt: string | null): string =>

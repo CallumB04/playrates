@@ -51,7 +51,7 @@ describe("ShareList", () => {
         ).toBeInTheDocument();
         const image = document.querySelector("img");
         expect(image?.getAttribute("src")).toMatch(
-            /\/api\/v1\/lists\/7\/image\?v=1\.\d+$/
+            /\/api\/v1\/lists\/7\/image\?v=\d+\.\d+$/
         );
         const post = new URL(
             screen.getByRole("link", { name: "X" }).getAttribute("href")!

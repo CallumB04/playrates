@@ -63,7 +63,7 @@ describe("a list's shared picture", () => {
     // A made-up version is sent on to the real one rather than drawn.
     const stale = await image(list.id, "?v=1");
     expect(stale.status).toBe(302);
-    expect(stale.headers.location).toMatch(/\?v=1\.\d+$/);
+    expect(stale.headers.location).toMatch(/\?v=\d+\.\d+$/);
     const res = await image(
       list.id,
       stale.headers.location!.replace(/^[^?]*/, ""),

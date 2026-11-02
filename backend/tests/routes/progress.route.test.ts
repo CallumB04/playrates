@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 import type { Express } from "express";
-import { QUESTS, REFERRAL, SETUP_REWARD, xpForLevel } from "@playrates/shared";
+import {
+  playerCardVersion,
+  QUESTS,
+  REFERRAL,
+  SETUP_REWARD,
+  xpForLevel,
+} from "@playrates/shared";
 import type { PushSender } from "../../src/config/push.js";
 import {
   authHeader,
@@ -636,7 +642,7 @@ describe("badges in public", () => {
     );
     expect(res.status).toBe(302);
     expect(res.headers.location).toBe(
-      "/api/v1/progress/devuser/card.png?v=0&theme=holo",
+      `/api/v1/progress/devuser/card.png?v=${playerCardVersion(0)}&theme=holo`,
     );
   });
 
