@@ -70,7 +70,11 @@ export const createAdminService = (deps: {
   provider: GamesProvider;
   emails: Pick<
     EmailService,
-    "broadcastNews" | "sendNewsTest" | "newsRecipientCount" | "stats"
+    | "broadcastNews"
+    | "sendNewsTest"
+    | "sendDigestTest"
+    | "newsRecipientCount"
+    | "stats"
   >;
   /** The admin's own address, for a test when the token didn't carry it. */
   emailOf: (userId: string) => Promise<string | null>;
@@ -96,14 +100,18 @@ export const createAdminService = (deps: {
   };
 
   /** The test's email, to the admin alone. */
+  const testAddress = async (actorId: string, actorEmail: string | undefined) => {
+    const to = actorEmail ?? (await deps.emailOf(actorId));
+    if (!to) throw AppError.badRequest("Your account has no email address to send a test to");
+    return to;
+  };
+
   const emailTest = async (
     content: NewsContent,
     actorId: string,
     actorEmail: string | undefined,
   ) => {
-    const to = actorEmail ?? (await deps.emailOf(actorId));
-    if (!to) throw AppError.badRequest("Your account has no email address to send a test to");
-    await emails.sendNewsTest(content, to);
+    await emails.sendNewsTest(content, await testAddress(actorId, actorEmail));
   };
 
   const patchNoteContent = (
@@ -288,6 +296,16 @@ export const createAdminService = (deps: {
     },
 
     emailStats: () => emails.stats(),
+
+    /** The admin's own weekly digest, as Sunday would send it today. */
+    async sendTestDigest(actorId: string, actorEmail?: string) {
+      const sent = await emails.sendDigestTest(
+        actorId,
+        await testAddress(actorId, actorEmail),
+        now(),
+      );
+      return { sent };
+    },
 
     async listPatchNotes() {
       const [entries, sent] = await Promise.all([

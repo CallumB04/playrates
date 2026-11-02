@@ -131,6 +131,7 @@ const ENDPOINTS: { method: "get" | "post" | "patch" | "put"; path: string; body?
   { method: "post", path: "/api/v1/admin/patch-notes/41/announce" },
   { method: "post", path: "/api/v1/admin/patch-notes/41/test" },
   { method: "get", path: "/api/v1/admin/email/audience" },
+  { method: "post", path: "/api/v1/admin/email/digest/test" },
   { method: "get", path: "/api/v1/admin/email/stats" },
   { method: "get", path: "/api/v1/admin/health" },
   { method: "get", path: "/api/v1/admin/progress" },

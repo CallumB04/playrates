@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import type { EmailStats } from "@playrates/shared";
 import { server } from "../../../test/msw/server";
 import { renderWithProviders } from "../../../test/renderWithProviders";
+import ToastStack from "../../../components/feedback/ToastStack";
 import EmailsPage from "./EmailsPage";
 
 const API = "http://localhost:3000/api/v1";
@@ -55,5 +57,46 @@ describe("EmailsPage", () => {
             screen.getByText("None held back by the cap")
         ).toBeInTheDocument();
         expect(screen.queryByText(/bounced/)).not.toBeInTheDocument();
+    });
+
+    it("sends the admin their own digest, saying when there's none", async () => {
+        let asked = 0;
+        let sent = true;
+        server.use(
+            http.post(`${API}/admin/email/digest/test`, () => {
+                asked++;
+                return HttpResponse.json({ sent });
+            })
+        );
+        server.use(
+            http.get(`${API}/admin/email/stats`, () =>
+                HttpResponse.json(stats())
+            )
+        );
+        renderWithProviders(
+            <>
+                <EmailsPage />
+                <ToastStack />
+            </>
+        );
+        const button = await screen.findByRole("button", {
+            name: "Send test to me",
+        });
+
+        await userEvent.click(button);
+        expect(
+            await screen.findByText(
+                "Your digest is in your email, and nobody else’s"
+            )
+        ).toBeInTheDocument();
+
+        sent = false;
+        await userEvent.click(button);
+        expect(
+            await screen.findByText(
+                "Yours is empty this week, so Sunday wouldn’t send it"
+            )
+        ).toBeInTheDocument();
+        expect(asked).toBe(2);
     });
 });

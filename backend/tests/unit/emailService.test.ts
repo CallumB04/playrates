@@ -548,6 +548,28 @@ describe("weekly digest", () => {
     expect(email.sent).toEqual([]);
   });
 
+  it("sends an admin their own as a test, on any day, to the address given", async () => {
+    const { service, email } = withFriend();
+    const monday = new Date("2026-11-02T17:00:00Z");
+
+    expect(await service.sendDigestTest(USER_A, "me@playrates.test", monday)).toBe(
+      true,
+    );
+    expect(email.sent).toHaveLength(1);
+    expect(email.sent[0]!.to).toBe("me@playrates.test");
+    expect(email.sent[0]!.text).toContain("ana played Hades II, rated 9/10");
+    // A test isn't Sunday's: it doesn't stop the real one going out.
+    expect(await service.sendDigest(SUNDAY)).toEqual({ sent: 1 });
+  });
+
+  it("sends no test when there's nothing in yours", async () => {
+    const { service, email } = withFriend();
+    expect(
+      await service.sendDigestTest(USER_B, "ana@playrates.test", SUNDAY),
+    ).toBe(false);
+    expect(email.sent).toEqual([]);
+  });
+
   it("does nothing on any other day, Monday included", async () => {
     const { service, email } = withFriend();
     expect(await service.sendDigest(new Date("2026-11-02T17:00:00Z"))).toBeNull();

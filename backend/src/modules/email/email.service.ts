@@ -11,7 +11,10 @@ import {
 import { AppError } from "../../lib/AppError.js";
 import type { Defer } from "../../lib/afterResponse.js";
 import type { Logger } from "../../lib/logger.js";
-import type { MemberEmailRow } from "../../types/database.types.js";
+import type {
+  MemberEmailRow,
+  WeeklyDigestRow,
+} from "../../types/database.types.js";
 import type { NotificationDraft } from "../notifications/notifications.repository.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type { SendActivity } from "./email.activity.js";
@@ -36,6 +39,7 @@ import {
   digestEmail,
   type EmailLinks,
   type RenderedEmail,
+  type DigestContent,
 } from "./email.templates.js";
 import { readUnsubscribeToken, signUnsubscribeToken } from "./email.tokens.js";
 import {
@@ -129,6 +133,26 @@ export const createEmailService = ({
   defer,
 }: EmailServiceDeps) => {
   const settingsUrl = `${settings.site}/settings?section=emails`;
+
+  /** Everyone's digest for the week up to `sunday`: friends' logs since a
+   *  week before `now`, and wishlist releases in the seven days after. */
+  const digestRows = (now: Date, sunday: string) => {
+    const day = (offset: number) =>
+      new Date(Date.parse(`${sunday}T00:00:00Z`) + offset * DAY_MS)
+        .toISOString()
+        .slice(0, 10);
+    return repo.weeklyDigest(
+      new Date(now.getTime() - 7 * DAY_MS).toISOString(),
+      day(1),
+      day(7),
+    );
+  };
+
+  const digestContent = (row: WeeklyDigestRow): DigestContent => ({
+    friends: row.friends,
+    releases: row.releases,
+    logged: row.logged,
+  });
 
   /** A member's links and one-click headers for a scope. Null without a
    *  signing secret: nothing goes out that can't be stopped. */
@@ -432,15 +456,7 @@ export const createEmailService = ({
     async sendDigest(now: Date): Promise<{ sent: number } | null> {
       const sunday = digestSunday(now);
       if (!sunday) return null;
-      const day = (offset: number) =>
-        new Date(Date.parse(`${sunday}T00:00:00Z`) + offset * DAY_MS)
-          .toISOString()
-          .slice(0, 10);
-      const rows = await repo.weeklyDigest(
-        new Date(now.getTime() - 7 * DAY_MS).toISOString(),
-        day(1),
-        day(7),
-      );
+      const rows = await digestRows(now, sunday);
       if (rows.length === 0) return { sent: 0 };
       const members = await repo.memberEmails(rows.map((r) => r.user_id));
       const byId = new Map(rows.map((r) => [r.user_id, r]));
@@ -459,14 +475,7 @@ export const createEmailService = ({
           ref: sunday,
           message: message(
             member.email,
-            digestEmail(
-              {
-                friends: row.friends,
-                releases: row.releases,
-                logged: row.logged,
-              },
-              target.links,
-            ),
+            digestEmail(digestContent(row), target.links),
             target.headers,
           ),
         });
@@ -621,6 +630,34 @@ export const createEmailService = ({
       await sender.send(messages);
       await logBroadcast(content.kind, messages.length);
       return { emailed: true, broadcastId: null };
+    },
+
+    /** One member's digest as Sunday would send it, were today Sunday, to
+     *  one address: the admin's proof. False when theirs would be empty,
+     *  as then Sunday sends them nothing. */
+    async sendDigestTest(
+      userId: string,
+      to: string,
+      now: Date,
+    ): Promise<boolean> {
+      const rows = await digestRows(now, now.toISOString().slice(0, 10));
+      const row = rows.find((r) => r.user_id === userId);
+      if (!row) return false;
+      await sendCounted(
+        "digest_test",
+        [
+          message(
+            to,
+            digestEmail(digestContent(row), {
+              site: settings.site,
+              unsubscribe: settingsUrl,
+              settings: settingsUrl,
+            }),
+          ),
+        ],
+        null,
+      );
+      return true;
     },
 
     /** The same news email, to one address only: the admin's proof. Its

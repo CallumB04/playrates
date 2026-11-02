@@ -4,7 +4,12 @@ import { cardClass } from "../../../components/ui/Card";
 import { figureClass } from "../../../components/ui/Figure";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { formatCount } from "../../../lib/format";
-import { useEmailStats } from "../../../hooks/queries/useAdmin";
+import Button from "../../../components/ui/Button";
+import { useNotify } from "../../../contexts/NotificationContext";
+import {
+    useEmailStats,
+    useSendTestDigest,
+} from "../../../hooks/queries/useAdmin";
 import AdminPageHeader from "../components/AdminPageHeader";
 import BarPlot from "../components/BarPlot";
 import Meter from "../components/Meter";
@@ -221,6 +226,52 @@ const Kinds = ({ stats }: { stats: EmailStats }) => (
  * one that bites: PlayRates' own emails stop at the cap, so sign-up
  * confirmations and password resets always have the rest.
  */
+/** The weekly digest, sent to the admin alone to see it as members will. */
+const Digest = () => {
+    const test = useSendTestDigest();
+    const notify = useNotify();
+    return (
+        <section
+            aria-label="Weekly digest"
+            className={cardClass(
+                "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+            )}
+        >
+            <div className="min-w-0">
+                <h2 className="text-body-sm font-medium text-content">
+                    Weekly digest
+                </h2>
+                <p className="mt-0.5 text-body-sm text-content-secondary">
+                    Goes out on Sunday evenings to members with something in
+                    theirs.
+                </p>
+            </div>
+            <Button
+                variant="secondary"
+                disabled={test.isPending}
+                onClick={() =>
+                    test.mutate(undefined, {
+                        onSuccess: ({ sent }) =>
+                            sent
+                                ? notify(
+                                      "Your digest is in your email, and nobody else’s",
+                                      "success"
+                                  )
+                                : notify(
+                                      "Yours is empty this week, so Sunday wouldn’t send it",
+                                      "info"
+                                  ),
+                        onError: () => notify("The test didn’t send", "error"),
+                    })
+                }
+                className="w-full shrink-0 sm:w-auto"
+            >
+                Send test to me
+            </Button>
+        </section>
+    );
+};
+
 const EmailsPage = () => {
     const { data: stats } = useEmailStats();
     return (
@@ -231,6 +282,7 @@ const EmailsPage = () => {
             />
             {stats ? (
                 <div className="flex flex-col gap-8">
+                    <Digest />
                     <Today stats={stats} />
                     <Days stats={stats} />
                     <Kinds stats={stats} />

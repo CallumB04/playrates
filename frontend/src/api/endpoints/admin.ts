@@ -196,6 +196,11 @@ export const sendTestPatchNote = async ({
     await api.post(`/admin/patch-notes/${messageId}/test`, { email });
 };
 
+/** The admin's own weekly digest, as Sunday would send it. False when
+ *  theirs would be empty, and nothing went. */
+export const sendTestDigest = async (): Promise<{ sent: boolean }> =>
+    (await api.post<{ sent: boolean }>("/admin/email/digest/test")).data;
+
 export const retractAnnouncement = async (id: number): Promise<Announcement> =>
     (await api.post<Announcement>(`/admin/announcements/${id}/retract`)).data;
 

@@ -276,6 +276,10 @@ export const createAdminRouter = ({
     res.json(await service.emailAudience());
   });
 
+  router.post("/email/digest/test", async (req, res) => {
+    res.json(await service.sendTestDigest(callerId(req), req.auth?.email));
+  });
+
   router.get("/email/stats", async (_req, res) => {
     res.json(await service.emailStats());
   });

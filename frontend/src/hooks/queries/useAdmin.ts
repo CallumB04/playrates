@@ -32,6 +32,7 @@ import {
     fetchEmailAudience,
     fetchEmailStats,
     announcePatchNote,
+    sendTestDigest,
     sendTestPatchNote,
     fetchIgdbUsage,
     fetchServerErrors,
@@ -324,3 +325,6 @@ export const useResolveReport = () => {
             queryClient.invalidateQueries({ queryKey: ["admin", "reports"] }),
     });
 };
+
+export const useSendTestDigest = () =>
+    useMutation({ mutationFn: sendTestDigest });
