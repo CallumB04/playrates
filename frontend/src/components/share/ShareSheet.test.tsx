@@ -44,9 +44,16 @@ describe("ShareSheet", () => {
     it("hands the picture itself to a share sheet that takes files", async () => {
         const share = vi.fn(async () => undefined);
         Object.assign(navigator, { share, canShare: () => true });
+        // The page's own Blob, as a browser's fetch hands back: Node's
+        // Response would give Node's, which jsdom's File won't take on
+        // every Node version.
         vi.stubGlobal(
             "fetch",
-            vi.fn(async () => new Response(new Blob(["png"])))
+            vi.fn(async () => ({
+                ok: true,
+                status: 200,
+                blob: async () => new Blob(["png"], { type: "image/png" }),
+            }))
         );
         renderWithProviders(<ShareSheet {...props} />);
 
