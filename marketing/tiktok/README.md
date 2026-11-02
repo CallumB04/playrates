@@ -35,13 +35,18 @@ link), not sign-ups:
 
 Kat made the Elden Ring tips post by hand (her PNGs are
 `posts/elden-ring-beginner-tips/img/kat-*.png`), and it replaced the list
-format straight away. A see-through white band carries the words, every picture is of exactly what its slide talks
-about, the hook is the game's best-known image with its real logo, and a
-few small jokes sit on top: a purple aside in brackets, a tilted white
+format straight away. A see-through white band carries the words, every
+picture is of exactly what its slide talks about, the hook is the game's
+best-known image with its real logo, and a few small jokes sit on top: a purple aside in brackets, a tilted white
 caption with a doodled arrow, an item sprite dropped on the picture. The
 last slide makes the push, with the address underlined.
 
-So the slides aren't generated. A post is its file, `posts/<post>.json`
+It drew 3,349 views and 11 comments on its first day, about four times
+the posts before it, so from 2 November the account posts nothing but
+gaming tips, and Callum checks every hook, tip and joke before a post is
+built.
+
+The slides aren't generated. A post is its file, `posts/<post>.json`
 with `"format": "handmade"` (the copy, the TikTok fields and the time), and
 its slides, laid out by hand in `posts/<post>/slides.html` with their
 pictures in `posts/<post>/img/`, on the classes in `handmade.css`:

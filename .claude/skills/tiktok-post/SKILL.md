@@ -1,6 +1,6 @@
 ---
 name: tiktok-post
-description: Make PlayRates TikTok posts end to end in the handmade format, one photo slideshow a day at a random time between 20:00 and 21:30. Check the account for posts that went live, pick a tips or top-X topic that suits a slightly funny, human-made slideshow, gather pictures of exactly what each slide talks about, lay the slides out by hand with small asides, captions and stickers, render and check them, schedule them in TikTok Studio one post at a time, and track them in the posting checklist. Use when asked for a new TikTok post or list, or to prepare, schedule or post one that already exists.
+description: Make PlayRates TikTok posts end to end in the handmade format, one photo slideshow a day at a random time between 20:00 and 21:30. Check the account for posts that went live, pick a gaming tips topic that suits a slightly funny, human-made slideshow, confirm the hook, every tip and every joke with Callum before making anything, gather pictures of exactly what each slide talks about, lay the slides out by hand with small asides, captions and stickers, render and check them, schedule them in TikTok Studio one post at a time, and track them in the posting checklist. Use when asked for a new TikTok post or list, or to prepare, schedule or post one that already exists.
 ---
 
 # TikTok post
@@ -18,11 +18,18 @@ wants:
   description.
 - **Photo slideshows only**, in the `handmade` format.
 - **Looks made by a person, and a little funny.** Pictures of exactly what
-  each slide is about, and a few small jokes on top (below).
-- **Only hooks that fit that.** Tips the viewer can use ("6 tips for
-  beginners in Elden Ring") or a top X people argue about, as long as each
-  slide has something to show and something to joke about. A topic with
-  nothing to picture or nothing light to say about it is the wrong topic.
+  each slide is about, and a few small jokes on top (below), never more
+  than the Elden Ring post has.
+- **All gaming tips, since 2026-11-02.** Kat's Elden Ring post drew 3,349
+  views and 11 comments on its first day, against about 800 for the posts
+  before it. Beginner tips, tips for beating a game or a boss, tips about
+  one thing in a game ("5 things you're doing wrong in..."). No top-X
+  lists. Each slide needs something to show; a topic with nothing to
+  picture is the wrong topic.
+- **Callum checks the content first.** Before gathering a single picture,
+  send him the hook, every tip (title and line) and every aside and
+  caption, and wait for his yes. He knows these games: he cut a tip the
+  tutorial already teaches and one that spoiled a later area.
 - **One post a day at a different time each evening**, 20:00 to 21:30
   Estonian time.
 
@@ -66,7 +73,10 @@ post; copy the Stardew page and change everything.
   - a `.sticker`: an item sprite or cutout dropped on the picture (carrots
     on Torrent, strawberries at the Egg Festival), with `.spark` glows now
     and then.
-  Jokes stay gentle and about the game. Puns are welcome.
+  Jokes stay gentle and about the game. Puns are welcome. Kat's Elden
+  Ring post is the ceiling: two asides, three captions and one sticker
+  across six tips. A sticker that shows the item a tip names (the Quill,
+  the markers) is a picture, not a joke.
 - **Last slide**: "Now you're ready for [logo]", then the purple push with
   the address set as `<span class="url">playrates.app</span>`, an ember
   aside inside the band ("(pretty please!!!)"), and the mark with two
@@ -105,19 +115,21 @@ free day and a random time in the window. Use that time unless Callum
 gives one.
 
 Read the whole history first: never repeat a hook, vary the game and genre,
-and keep any one game from turning up post after post. Mix tips and top-X
-lists. Lean on the calendar (horror at Halloween, a big release day). Aim
+and keep any one game from turning up post after post. Vary the kind of
+tips too. Lean on the calendar (horror at Halloween, a big release day). Aim
 at games with huge audiences (Minecraft, Elden Ring, GTA, Fortnite,
 Pokémon, Skyrim, Stardew) as well as lists that start arguments in the
 comments. Before settling on one, sketch each slide's picture and its joke;
 if three slides have neither, pick another topic.
 
-- **Tips**: six, each a short `title` (four or five words) and one `line`
-  the viewer can act on. Every tip has to be true and checkable: write only
-  what you're sure of, and list anything approximate for Callum to check.
-- **Top X**: five to seven, counted down so #1 is the last swipe. The line
-  opens with the game's name when the item isn't the game itself
-  ("Morrowind. So hated, ...").
+Six tips, each a short `title` (four or five words) and one `line` the
+viewer can act on. Every tip has to be true and checkable: write only what
+you're sure of, and list anything approximate for Callum to check. Skip
+what the game's tutorial already teaches, and anything that spoils an
+area or boss a beginner hasn't reached.
+
+Then send Callum the hook, the six tips and the jokes, and build nothing
+until he says go.
 
 ## 2. Games
 
