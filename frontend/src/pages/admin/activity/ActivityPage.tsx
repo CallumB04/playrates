@@ -57,11 +57,16 @@ const total = (
 const inline = (label: string) =>
     label.startsWith("Gaming") ? label : label.toLowerCase();
 
+// The space keeps the chip's name "Lists 5", not "Lists5", however the name
+// is worked out; in the flex row it takes up no room.
 const Count = ({ value }: { value: number | undefined }) =>
     value === undefined ? null : (
-        <span className="font-mono tabular-nums opacity-70">
-            {formatCount(value)}
-        </span>
+        <>
+            {" "}
+            <span className="font-mono tabular-nums opacity-70">
+                {formatCount(value)}
+            </span>
+        </>
     );
 
 /** A filter that's on, and the way to take it off. */

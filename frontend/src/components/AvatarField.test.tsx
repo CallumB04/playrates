@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AvatarField, { type AvatarChoice } from "./AvatarField";
+import { hasHue } from "../test/colour";
 
 const compressAvatar = vi.hoisted(() => vi.fn());
 vi.mock("../lib/avatarImage", () => ({ compressAvatar }));
@@ -132,7 +133,7 @@ describe("AvatarField", () => {
             accent: "jade",
         });
         const fill = container.querySelector<HTMLElement>("span[aria-hidden]");
-        expect(fill?.style.backgroundImage).toContain("hsl(150");
+        expect(hasHue(fill?.style.backgroundImage, 150)).toBe(true);
     });
 
     /* A phone keyboard cannot reach a control that is only 32px tall, and the

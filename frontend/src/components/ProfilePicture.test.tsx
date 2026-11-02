@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import ProfilePicture from "./ProfilePicture";
 import { accentHue } from "../lib/profileAccent";
+import { hasHue } from "../test/colour";
 
 const show = (props: Partial<Parameters<typeof ProfilePicture>[0]> = {}) =>
     render(
@@ -39,15 +40,13 @@ describe("ProfilePicture", () => {
            caller that has not been given one yet. */
         it("falls back rather than draw nothing when none is given", () => {
             const { container } = show({ accent: undefined });
-            expect(fill(container)).toContain(`hsl(${accentHue(undefined)}`);
+            expect(hasHue(fill(container), accentHue(undefined))).toBe(true);
         });
 
         it("is the chosen colour when there is one", () => {
             const { container } = show({ accent: "jade" });
-            expect(fill(container)).toContain("hsl(150");
-            expect(fill(container)).not.toContain(
-                `hsl(${accentHue(undefined)}`
-            );
+            expect(hasHue(fill(container), 150)).toBe(true);
+            expect(hasHue(fill(container), accentHue(undefined))).toBe(false);
         });
 
         /* An uploaded picture covers the fill entirely, so the colour only

@@ -105,6 +105,9 @@ const SegmentedChoice = <T extends string>({
                                 />
                             )}
                             {text}
+                            {/* Its own word in the name, "Socials (needs a
+                                look)"; in the flex row it takes no room. */}
+                            {flagged && " "}
                             {flagged && (
                                 <span className="size-1.5 shrink-0 rounded-full bg-danger">
                                     <span className="sr-only">

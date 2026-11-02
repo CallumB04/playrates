@@ -8,6 +8,7 @@ import {
 } from "@playrates/shared";
 import AccentPicker from "./AccentPicker";
 import { accentHue } from "../../lib/profileAccent";
+import { hasHue } from "../../test/colour";
 
 const setup = (value: ProfileAccent = FALLBACK_ACCENT) => {
     const onChange = vi.fn();
@@ -69,9 +70,12 @@ describe("AccentPicker", () => {
             "span[aria-hidden]"
         );
         PROFILE_ACCENTS.forEach((accent, i) => {
-            expect(swatches[i]?.style.backgroundImage).toContain(
-                `hsl(${accentHue(accent.slug)}`
-            );
+            expect(
+                hasHue(
+                    swatches[i]?.style.backgroundImage,
+                    accentHue(accent.slug)
+                )
+            ).toBe(true);
         });
     });
 

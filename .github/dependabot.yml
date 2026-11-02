@@ -11,6 +11,21 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # 0.63 lays the player card out taller, pushing its footer off the
+      # bottom. Raise it by hand once the cards are checked against it.
+      - dependency-name: satori
+        update-types: ["version-update:semver-minor"]
+      # eslint-plugin-react supports ESLint 9 at most (7.37.5): under 10 it
+      # can't load its rules. Both move together once it does.
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      # The types follow the Node the code runs on (22 in CI and on Vercel),
+      # or they offer APIs that aren't there. Raise both together.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
