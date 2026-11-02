@@ -169,7 +169,12 @@ pictures come from section 4.
 - **Songs come from games**, both the main pick and the alternative: the
   #1's soundtrack, the game the tips are about, or the genre's best-known
   theme. Never pop songs, edit staples or meme sounds; Callum (2026-10-30):
-  "Gamers want songs from games." Say they need checking in the app.
+  "Gamers want songs from games." The sound has to be recognisable from
+  the first second: the theme people know, already playing at full
+  volume. It doesn't have to be hype (Stardew's overture and Minecraft's
+  Sweden work), but a slow intro loses the swipe (Dark Souls' title theme
+  and Hollow Knight's main theme did, 2026-11-02). Studio's picker can't
+  choose where a song starts, so pick tracks that open on the melody.
 - Add the post to `POSTS.md` in the order it goes out:
   `- [ ] [name](posts/name.json) — planned 2026-11-02 20:35`.
 
@@ -254,7 +259,9 @@ Callum opens TikTok in the browser pane; the upload page is
   doesn't take, `.click()` on the row's Use button from a script does). Pick the
   original artist's version where there is one (another arrangement by the
   same composer counts), the closest cover of the game track where there
-  isn't, and tell Callum which you chose.
+  isn't. You can't hear audio, so Callum chooses: open the picker on your
+  search, list the rows with your recommendation first, and ask him to
+  preview them (each row has a play button) before you click Use.
 - **Schedule** at the post's `time`, Estonian time (the picker's time
   zone), on its day. Pick the Schedule radio, then the date: open the
   date field and click the day's cell at its real coordinates (a scripted
