@@ -1,10 +1,11 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { ListFilter } from "lucide-react";
+import { ListFilter, Search } from "lucide-react";
 import type { PlayedStatusFilter } from "@playrates/shared";
 import Button from "../../../components/ui/Button";
 import Dropdown from "../../../components/ui/Dropdown";
 import Field from "../../../components/ui/Field";
 import { fieldClass } from "../../../components/ui/fieldClass";
+import { SearchInput } from "../../../components/ui/Input";
 import Modal from "../../../components/ui/Modal";
 import { popoverClass } from "../../../components/ui/popover";
 import {
@@ -33,6 +34,13 @@ const ENDINGS = [
 ];
 
 interface ShelfFiltersProps {
+    /** A title to narrow the shelf to: what's typed, and whether it has
+     *  settled into the URL yet. */
+    search: {
+        term: string;
+        onChange: (term: string) => void;
+        active: boolean;
+    };
     /** Only the played shelf has endings to filter by. */
     ending?: {
         value: PlayedStatusFilter | undefined;
@@ -48,10 +56,12 @@ interface ShelfFiltersProps {
 
 /**
  * Everything that narrows a shelf, behind one button: a popover from sm up,
- * a bottom sheet on a phone. A dropdown per filter, so another filter is
- * another row. Each choice applies as it's made.
+ * a bottom sheet on a phone. A field per filter, so another filter is
+ * another row. Each choice applies as it's made, the title as typing
+ * pauses.
  */
 const ShelfFilters = ({
+    search,
     ending,
     consoles,
     console: consoleSlug,
@@ -95,13 +105,34 @@ const ShelfFilters = ({
         };
     }, [open, phone]);
 
-    const active = (ending?.value ? 1 : 0) + (consoleSlug ? 1 : 0);
+    const active =
+        (search.active ? 1 : 0) +
+        (ending?.value ? 1 : 0) +
+        (consoleSlug ? 1 : 0);
     // One console or none is nothing to choose between, unless a link chose.
     const showConsoles = shelfSystems.length > 1 || !!consoleSlug;
-    if (!ending && !showConsoles) return null;
 
     const body = (
         <div className="flex flex-col gap-4">
+            <Field label="Title">
+                {({ id }) => (
+                    <div className="relative">
+                        <Search
+                            size={15}
+                            aria-hidden
+                            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-content-muted"
+                        />
+                        <SearchInput
+                            id={id}
+                            placeholder="Search titles"
+                            value={search.term}
+                            onChange={(event) =>
+                                search.onChange(event.target.value)
+                            }
+                        />
+                    </div>
+                )}
+            </Field>
             {ending && (
                 <Field label="How it ended">
                     {({ id }) => (

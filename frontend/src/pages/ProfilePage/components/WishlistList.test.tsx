@@ -97,6 +97,7 @@ beforeEach(() => {
 const Harness = (props: {
     sort?: WishlistSort;
     console?: string;
+    q?: string;
     isMyAccount?: boolean;
 }) => {
     const { data } = useUserWishlist("devuser");
@@ -107,6 +108,7 @@ const Harness = (props: {
                 wishlist={data.data}
                 sort={props.sort ?? "rank"}
                 console={props.console}
+                q={props.q}
                 isMyAccount={props.isMyAccount ?? true}
                 buildTileActions={() => []}
             />
@@ -223,6 +225,18 @@ describe("WishlistList", () => {
         expect(
             sheet.queryByRole("button", { name: /To the top/ })
         ).not.toBeInTheDocument();
+    });
+
+    it("narrows to the titles searched for, each keeping its place", async () => {
+        await setup({ q: "GAME 1" });
+
+        expect(shown()).toEqual(["#1 Game 1"]);
+        expect(
+            screen.queryByRole("button", { name: /^Move Game/ })
+        ).not.toBeInTheDocument();
+        expect(
+            screen.getByText("Clear the search to rearrange.")
+        ).toBeInTheDocument();
     });
 
     it("moves a game one place down", async () => {

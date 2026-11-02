@@ -16,6 +16,7 @@ import {
 import { usePlatforms } from "../../../hooks/queries/useGames";
 import { useWindowSize } from "../../../hooks/useWindowSize";
 import { usePagination } from "../../../hooks/usePagination";
+import { useUrlSearchTerm } from "../../../hooks/useUrlSearchTerm";
 import { GAME_STATUSES, type GameStatus } from "../../../constants/gameStatus";
 import { formatCount } from "../../../lib/format";
 import SteamImportButton from "../../../components/steam/SteamImportButton";
@@ -24,7 +25,11 @@ import ShelfSort from "../components/ShelfSort";
 import ShelfFilters from "../components/ShelfFilters";
 import WishlistList from "../components/WishlistList";
 import WishlistSortControl from "../components/WishlistSortControl";
-import { WISHLIST_SORTS, type WishlistSort } from "../lib/wishlist";
+import {
+    WISHLIST_SORTS,
+    narrowWishlist,
+    type WishlistSort,
+} from "../lib/wishlist";
 import { getProfileGamesPerPage } from "../lib/friendRelation";
 import { usePageParam } from "../lib/usePageParam";
 import { useShelfTileActions } from "../lib/useShelfTileActions";
@@ -81,6 +86,13 @@ const GamesView = ({
             ? (rawPlayed as PlayedStatusFilter)
             : undefined;
 
+    // Kept from shelf to shelf: "which of my Zelda games are in the backlog?"
+    const {
+        term,
+        setTerm,
+        value: q,
+    } = useUrlSearchTerm("q", { alsoClear: ["page"] });
+
     const { buildTileActions, myLogGameIds } = useShelfTileActions(
         username,
         isMyAccount
@@ -98,6 +110,7 @@ const GamesView = ({
             // Only the played shelf has endings to filter by.
             playedStatus: activeSection === "played" ? playedStatus : undefined,
             system: consoleSlug,
+            q,
         },
         canSee && !isWishlist
     );
@@ -121,11 +134,9 @@ const GamesView = ({
     const entries = useMemo(
         () =>
             isWishlist
-                ? consoleSlug
-                    ? wishlist.filter((e) => e.consoles.includes(consoleSlug))
-                    : wishlist
+                ? narrowWishlist(wishlist, { console: consoleSlug, q })
                 : (logsPage?.data ?? []),
-        [isWishlist, consoleSlug, wishlist, logsPage]
+        [isWishlist, consoleSlug, q, wishlist, logsPage]
     );
     // Unpaged, so the wishlist gives the foot nothing to count.
     const total = isWishlist ? 0 : (logsPage?.meta.total ?? 0);
@@ -168,6 +179,7 @@ const GamesView = ({
         const updated = new URLSearchParams(params);
         updated.delete("ending");
         updated.delete("platform");
+        updated.delete("q");
         updated.delete("page");
         setParams(updated);
     };
@@ -219,11 +231,13 @@ const GamesView = ({
                     !!consoleSlug ||
                     (activeSection === "played" && !!playedStatus)
                 }
+                search={q}
                 list={
                     isWishlist && (
                         <WishlistList
                             wishlist={wishlist}
                             console={consoleSlug}
+                            q={q}
                             sort={wishlistSort}
                             isMyAccount={isMyAccount}
                             buildTileActions={buildTileActions}
@@ -246,6 +260,11 @@ const GamesView = ({
                             </span>
                         )}
                         <ShelfFilters
+                            search={{
+                                term,
+                                onChange: setTerm,
+                                active: !!q,
+                            }}
                             ending={
                                 activeSection === "played"
                                     ? {

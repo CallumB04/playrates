@@ -115,6 +115,59 @@ describe("GamesView's filters", () => {
         expect(search().get("type")).toBe("played");
     });
 
+    it("searches the shelf by title, from the first page", async () => {
+        const user = setup("/user/devuser/games?type=played&page=2");
+
+        await user.click(
+            await screen.findByRole("button", { name: "Filters" })
+        );
+        await user.type(
+            screen.getByRole("searchbox", { name: "Title" }),
+            "zelda"
+        );
+
+        await waitFor(() => expect(search().get("q")).toBe("zelda"));
+        expect(search().get("page")).toBeNull();
+        await waitFor(() => expect(shelfAsked?.get("q")).toBe("zelda"));
+        expect(
+            await screen.findByText(
+                "Nothing on this shelf has “zelda” in its title."
+            )
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: "Filters, 1 on" })
+        ).toBeInTheDocument();
+    });
+
+    it("keeps the search on another shelf", async () => {
+        const user = setup("/user/devuser/games?type=played&q=zelda");
+
+        await user.click(await screen.findByRole("tab", { name: /Backlog/ }));
+
+        expect(search().get("q")).toBe("zelda");
+        await user.click(screen.getByRole("button", { name: "Filters, 1 on" }));
+        expect(screen.getByRole("searchbox", { name: "Title" })).toHaveValue(
+            "zelda"
+        );
+    });
+
+    it("clears the search with the other filters", async () => {
+        const user = setup(
+            "/user/devuser/games?type=played&q=zelda&platform=steam"
+        );
+
+        await user.click(
+            await screen.findByRole("button", { name: "Filters, 2 on" })
+        );
+        await user.click(screen.getByRole("button", { name: "Clear" }));
+
+        expect(search().get("q")).toBeNull();
+        expect(search().get("platform")).toBeNull();
+        expect(screen.getByRole("searchbox", { name: "Title" })).toHaveValue(
+            ""
+        );
+    });
+
     it("closes on a press outside, but not on a pick inside", async () => {
         const user = setup("/user/devuser/games?type=played");
 

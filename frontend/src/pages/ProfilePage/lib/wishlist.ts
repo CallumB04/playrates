@@ -16,6 +16,20 @@ export const moveTo = (
     return next;
 };
 
+/** The games wished for on a console, with a title holding the search,
+ *  as the shelves' own filters narrow them on the server. */
+export const narrowWishlist = <T extends WishlistEntry>(
+    entries: T[],
+    { console: consoleSlug, q }: { console?: string; q?: string }
+): T[] => {
+    const term = q?.trim().toLocaleLowerCase();
+    return entries.filter(
+        (e) =>
+            (!consoleSlug || e.consoles.includes(consoleSlug)) &&
+            (!term || (e.game?.title ?? "").toLocaleLowerCase().includes(term))
+    );
+};
+
 export const WISHLIST_SORTS = ["rank", "added", "released", "title"] as const;
 export type WishlistSort = (typeof WISHLIST_SORTS)[number];
 

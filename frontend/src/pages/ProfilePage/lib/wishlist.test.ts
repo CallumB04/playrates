@@ -5,7 +5,7 @@ import {
     buildGameLog,
     buildGame,
 } from "../../../test/msw/handlers";
-import { moveTo, sortWishlist } from "./wishlist";
+import { moveTo, narrowWishlist, sortWishlist } from "./wishlist";
 
 describe("moveTo", () => {
     const order = [1, 2, 3, 4];
@@ -65,5 +65,41 @@ describe("sortWishlist", () => {
         const sorted = sortWishlist(list, "title");
         expect(ids(sorted)).toEqual([3, 1, 2]);
         expect(sorted.map((e) => e.rank)).toEqual([3, 1, 2]);
+    });
+});
+
+describe("narrowWishlist", () => {
+    const entry = (id: number, title: string, consoles: string[]) =>
+        ({
+            ...buildShelfEntry([
+                buildGameLog({
+                    id,
+                    gameId: id,
+                    status: "wishlist",
+                    game: buildGame({ id, title }),
+                }),
+            ]),
+            rank: id,
+            consoles,
+        }) as WishlistEntry;
+    const list = [
+        entry(1, "The Legend of Zelda", ["switch2"]),
+        entry(2, "Hades II", ["steam", "switch2"]),
+        entry(3, "Zelda: Echoes", ["steam"]),
+    ];
+    const ids = (entries: WishlistEntry[]) => entries.map((e) => e.gameId);
+
+    it("keeps titles holding the search, whatever the case", () => {
+        expect(ids(narrowWishlist(list, { q: "ZELDA" }))).toEqual([1, 3]);
+    });
+
+    it("ignores a search of only spaces", () => {
+        expect(ids(narrowWishlist(list, { q: "   " }))).toEqual([1, 2, 3]);
+    });
+
+    it("narrows by console and search together", () => {
+        expect(
+            ids(narrowWishlist(list, { q: "zelda", console: "steam" }))
+        ).toEqual([3]);
     });
 });

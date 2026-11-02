@@ -34,6 +34,8 @@ interface ShelfPanelProps {
     /** A filter is narrowing it, so an empty shelf may only be filtered
      *  empty. */
     filtered?: boolean;
+    /** A title search narrowing it, said back in its empty state. */
+    search?: string;
 }
 
 // Every empty shelf sends you somewhere.
@@ -79,6 +81,7 @@ const ShelfPanel = ({
     trailing,
     list,
     filtered = false,
+    search,
 }: ShelfPanelProps) => {
     const empty = EMPTY_COPY[active];
 
@@ -105,10 +108,14 @@ const ShelfPanel = ({
                             )
                         )}
                     </div>
-                ) : entries.length === 0 && filtered ? (
+                ) : entries.length === 0 && (filtered || search) ? (
                     <EmptyPlate
                         title="Nothing matches"
-                        body="No games on this shelf match the filters."
+                        body={
+                            search
+                                ? `Nothing on this shelf has “${search}” in its title${filtered ? " with these filters" : ""}.`
+                                : "No games on this shelf match the filters."
+                        }
                     />
                 ) : entries.length === 0 ? (
                     <EmptyPlate
