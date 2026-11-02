@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Megaphone, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import type {
     CommunityMessage,
-    PatchNote,
     RichTextDoc,
     ThreadDetail,
 } from "@playrates/shared";
@@ -27,9 +26,8 @@ import MessageItem, {
     type MessageActions,
 } from "../../components/community/MessageItem";
 import MessageComposer from "../../components/community/MessageComposer";
-import PatchNoteEditor from "../../components/community/patchNotes/PatchNoteEditor";
-import PatchNoteNotify from "../../components/community/PatchNoteNotify";
-import { useAdminPatchNotes } from "../../hooks/queries/useAdmin";
+import PatchNotesThread from "../../components/community/patchNotes/PatchNotesThread";
+import { cn } from "../../lib/cn";
 import { replyParentId } from "../../components/community/replyTarget";
 import {
     formatCount,
@@ -50,12 +48,6 @@ interface ReplyTarget {
 const OriginalAuthorBadge = () => (
     <span className="rounded-xs bg-brand-subtle px-1.5 py-px text-stamp font-semibold tracking-wider text-brand-text uppercase">
         Original author
-    </span>
-);
-
-const OfficialBadge = () => (
-    <span className="rounded-xs border border-accent/60 px-1.5 py-px text-stamp font-semibold tracking-wider text-accent-content uppercase">
-        Official
     </span>
 );
 
@@ -200,7 +192,13 @@ const ThreadPage = () => {
     };
 
     return (
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
+        <div
+            className={cn(
+                "mx-auto flex w-full max-w-3xl flex-col gap-5",
+                // Room for the patch notes' rail of releases beside them.
+                isPatchNotes && "lg:max-w-5xl"
+            )}
+        >
             <Link
                 to="/community"
                 className="inline-flex min-h-11 w-max items-center gap-1.5 text-label text-content-muted hover:text-content sm:min-h-0"
@@ -214,6 +212,7 @@ const ThreadPage = () => {
                     detail={data}
                     viewerId={user?.id}
                     actions={actions}
+                    landedOn={landedOn}
                     onPost={(note) => mutations.postPatchNote.mutateAsync(note)}
                 />
             ) : (
@@ -448,92 +447,6 @@ const ThreadHeader = ({ detail }: { detail: ThreadDetail }) => {
                 {thread.contributorCount === 1 ? "person" : "people"}
             </p>
         </header>
-    );
-};
-
-/**
- * The official thread. Entries newest first, since the latest release is
- * what anyone opening it came for. Nobody replies; everyone can react.
- */
-const PatchNotesThread = ({
-    detail,
-    viewerId,
-    actions,
-    onPost,
-}: {
-    detail: ThreadDetail;
-    viewerId: string | undefined;
-    actions: MessageActions;
-    onPost: (note: PatchNote) => Promise<unknown>;
-}) => {
-    const entries = [...detail.messages].reverse();
-    const [posted, setPosted] = useState(0);
-    // Only whoever can post here can tell everyone about it.
-    const { data: sendable } = useAdminPatchNotes(detail.canPost);
-    const noteFor = (messageId: number) =>
-        sendable?.find((note) => note.messageId === messageId);
-
-    return (
-        <>
-            <header className="relative overflow-hidden rounded-lg border border-accent/40 bg-accent-quiet p-4 sm:p-6">
-                <div className="flex items-start gap-4">
-                    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-accent text-content-on-solid">
-                        <Megaphone size={22} aria-hidden />
-                    </span>
-                    <div className="min-w-0">
-                        <OfficialBadge />
-                        <h1 className="mt-2 font-display text-title text-content">
-                            {detail.thread.title}
-                        </h1>
-                        <p className="mt-2 text-body-sm text-content-secondary">
-                            What’s changed on the site, newest at the top.
-                        </p>
-                    </div>
-                </div>
-            </header>
-
-            {detail.canPost && (
-                <section className={cardClass("flex flex-col gap-3")}>
-                    <h2 className="font-display text-base font-semibold text-content">
-                        Post patch notes
-                    </h2>
-                    {/* Remounted after each post, to start the next one blank. */}
-                    <PatchNoteEditor
-                        key={posted}
-                        submitLabel="Publish"
-                        onSubmit={async (note) => {
-                            await onPost(note);
-                            setPosted((n) => n + 1);
-                        }}
-                    />
-                </section>
-            )}
-
-            {entries.length === 0 ? (
-                <EmptyNote>No patch notes yet.</EmptyNote>
-            ) : (
-                <div className="flex flex-col gap-5">
-                    {entries.map((entry) => {
-                        const note = noteFor(entry.id);
-                        return (
-                            <MessageItem
-                                key={entry.id}
-                                message={entry}
-                                viewerId={viewerId}
-                                actions={actions}
-                                badge={<OfficialBadge />}
-                                extraActions={
-                                    note && <PatchNoteNotify note={note} />
-                                }
-                                showEdited={false}
-                                linkify
-                                className={cardClass()}
-                            />
-                        );
-                    })}
-                </div>
-            )}
-        </>
     );
 };
 

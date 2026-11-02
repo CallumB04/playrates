@@ -47,8 +47,11 @@ interface MessageItemProps {
     message: CommunityMessage;
     viewerId: string | undefined;
     actions: MessageActions;
-    /** A label beside the author: "Official" on patch notes, say. */
+    /** A label beside the author: "Original author", say. */
     badge?: ReactNode;
+    /** In place of the author line. A patch notes entry is headed by its
+     *  release, which then carries the title the body would. */
+    header?: ReactNode;
     /** Extra controls in the action row, like deleting the whole thread. */
     extraActions?: ReactNode;
     /** The message a link landed on, lit so the eye finds it. */
@@ -102,6 +105,7 @@ const MessageItem = ({
     viewerId,
     actions,
     badge,
+    header,
     extraActions,
     highlighted = false,
     showEdited = true,
@@ -171,40 +175,42 @@ const MessageItem = ({
                 className
             )}
         >
-            <header className="flex items-center gap-2.5">
-                {author ? (
-                    <ProfilePicture
-                        variant="nav"
-                        file={author.avatarUrl ?? ""}
-                        username={author.username}
-                        accent={author.accent}
-                        link
-                    />
-                ) : (
-                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-sunken text-content-muted">
-                        <UserX size={16} aria-hidden />
-                    </span>
-                )}
-                <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            {header ?? (
+                <header className="flex items-center gap-2.5">
                     {author ? (
-                        <Link
-                            to={`/user/${author.username}`}
-                            className="truncate text-body-sm font-semibold text-content hover:text-brand-text"
-                        >
-                            {author.username}
-                        </Link>
+                        <ProfilePicture
+                            variant="nav"
+                            file={author.avatarUrl ?? ""}
+                            username={author.username}
+                            accent={author.accent}
+                            link
+                        />
                     ) : (
-                        <span className="text-body-sm font-semibold text-content-muted">
-                            Deleted account
+                        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-sunken text-content-muted">
+                            <UserX size={16} aria-hidden />
                         </span>
                     )}
-                    {badge}
-                    <span className="text-label-sm text-content-muted">
-                        {relativeTime(message.createdAt)}
-                        {showEdited && message.editedAt && " · edited"}
+                    <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        {author ? (
+                            <Link
+                                to={`/user/${author.username}`}
+                                className="truncate text-body-sm font-semibold text-content hover:text-brand-text"
+                            >
+                                {author.username}
+                            </Link>
+                        ) : (
+                            <span className="text-body-sm font-semibold text-content-muted">
+                                Deleted account
+                            </span>
+                        )}
+                        {badge}
+                        <span className="text-label-sm text-content-muted">
+                            {relativeTime(message.createdAt)}
+                            {showEdited && message.editedAt && " · edited"}
+                        </span>
                     </span>
-                </span>
-            </header>
+                </header>
+            )}
 
             <div className={cn("relative", threaded && "sm:pl-[46px]")}>
                 {connected && (
@@ -227,7 +233,11 @@ const MessageItem = ({
                         />
                     </div>
                 ) : message.patchNote && !editing ? (
-                    <PatchNoteView note={message.patchNote} className="mt-3" />
+                    <PatchNoteView
+                        note={message.patchNote}
+                        showTitle={!header}
+                        className="mt-3"
+                    />
                 ) : editing && message.body ? (
                     <div className="mt-3">
                         <MessageComposer

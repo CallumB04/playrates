@@ -11,14 +11,12 @@ import Button from "../../ui/Button";
 import Dropdown from "../../ui/Dropdown";
 import { Input, Textarea } from "../../ui/Input";
 import { cn } from "../../../lib/cn";
-import { KIND_STYLE } from "./kinds";
 import PatchNoteView from "./PatchNoteView";
 import { noteFrom, problemWith, row, type Row } from "./patchNoteDraft";
 
 const KIND_OPTIONS = PATCH_NOTE_KINDS.map((kind) => ({
     value: kind,
     label: PATCH_NOTE_KIND_NAMES[kind],
-    icon: KIND_STYLE[kind].icon,
 }));
 
 /**

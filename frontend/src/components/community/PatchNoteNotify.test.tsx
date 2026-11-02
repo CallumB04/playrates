@@ -59,51 +59,55 @@ beforeEach(() => {
     );
 });
 
+const openPopup = (user = userEvent.setup()) =>
+    user.click(screen.getByRole("button", { name: "Send notification" }));
+
 describe("PatchNoteNotify", () => {
-    it("sends the entry to everyone once it is confirmed", async () => {
-        renderWithProviders(<PatchNoteNotify note={note(false)} />);
-
-        await userEvent.click(
-            screen.getByRole("button", { name: "Send notification" })
-        );
-        expect(announced).not.toHaveBeenCalled();
-        await userEvent.click(screen.getByRole("button", { name: "Send" }));
-
-        await waitFor(() =>
-            expect(announced).toHaveBeenCalledWith("41", { email: true })
-        );
-    });
-
-    it("says how many members the email reaches before sending", async () => {
-        renderWithProviders(<PatchNoteNotify note={note(false)} />);
-
-        await userEvent.click(
-            screen.getByRole("button", { name: "Send notification" })
-        );
-
-        expect(
-            await screen.findByText(/by email to 2 members/)
-        ).toBeInTheDocument();
-    });
-
-    it("sends a test to the admin the way the switch says, without sending", async () => {
+    it("sends to you alone unless you pick everyone", async () => {
         const user = userEvent.setup();
         renderWithProviders(<PatchNoteNotify note={note(false)} />);
+        await openPopup(user);
 
-        await user.click(
-            screen.getByRole("button", { name: "Send notification" })
+        expect(screen.getByRole("radio", { name: "Just me" })).toBeChecked();
+        await user.click(screen.getByRole("button", { name: "Send to me" }));
+
+        await waitFor(() =>
+            expect(tested).toHaveBeenCalledWith("41", { email: true })
         );
+        expect(announced).not.toHaveBeenCalled();
+        expect(screen.queryByRole("dialog")).toBeNull();
+    });
+
+    it("sends without the email when it's switched off", async () => {
+        const user = userEvent.setup();
+        renderWithProviders(<PatchNoteNotify note={note(false)} />);
+        await openPopup(user);
         await user.click(
             screen.getByRole("switch", { name: "Also send as an email" })
         );
-        await user.click(
-            screen.getByRole("button", { name: "Send test to me" })
-        );
+        await user.click(screen.getByRole("button", { name: "Send to me" }));
 
         await waitFor(() =>
             expect(tested).toHaveBeenCalledWith("41", { email: false })
         );
-        expect(announced).not.toHaveBeenCalled();
+    });
+
+    it("sends to everyone, saying how many the email reaches first", async () => {
+        const user = userEvent.setup();
+        renderWithProviders(<PatchNoteNotify note={note(false)} />);
+        await openPopup(user);
+        await user.click(screen.getByRole("radio", { name: "Everyone" }));
+
+        expect(
+            await screen.findByText(/by email to 2 members/)
+        ).toBeInTheDocument();
+        await user.click(
+            screen.getByRole("button", { name: "Send to everyone" })
+        );
+        await waitFor(() =>
+            expect(announced).toHaveBeenCalledWith("41", { email: true })
+        );
+        expect(tested).not.toHaveBeenCalled();
     });
 
     it("says when a sent entry went out, and offers no second send", () => {

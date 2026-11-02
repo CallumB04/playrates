@@ -4,30 +4,12 @@ import { ArrowRight, ArrowUpRight } from "lucide-react";
 import {
     isExternalHref,
     paragraphsOf,
-    PATCH_NOTE_KIND_NAMES,
     type PatchNote,
     type PatchNoteItem,
 } from "@playrates/shared";
 import { cn } from "../../../lib/cn";
 import { withLinks } from "../withLinks";
-import { KIND_STYLE } from "./kinds";
-
-const KindTag = ({ kind }: { kind: PatchNoteItem["kind"] }) => {
-    const style = KIND_STYLE[kind];
-    const Icon = style.icon;
-    return (
-        <span
-            className={cn(
-                "inline-flex items-center gap-1.5 rounded-full py-0.5 pr-2.5 pl-2 text-label-sm font-semibold",
-                style.tint,
-                style.text
-            )}
-        >
-            <Icon size={13} aria-hidden />
-            {PATCH_NOTE_KIND_NAMES[kind]}
-        </span>
-    );
-};
+import KindTag from "./KindTag";
 
 const ROW =
     "flex items-start gap-3 rounded-md px-2.5 py-2 text-body text-content-secondary";
@@ -38,9 +20,10 @@ const ROW =
 const ItemRow = ({ item }: { item: PatchNoteItem }) => {
     const body: ReactNode = (
         <span className="min-w-0 flex-1 sm:flex sm:gap-3">
-            <span className="mr-2 align-[1px] sm:mt-0.5 sm:mr-0 sm:w-28 sm:shrink-0 sm:align-baseline">
-                <KindTag kind={item.kind} />
-            </span>
+            <KindTag
+                kind={item.kind}
+                className="mr-2 align-[2px] sm:mt-[0.3em] sm:mr-0 sm:shrink-0 sm:self-start"
+            />
             <span className="sm:min-w-0">{item.text}</span>
         </span>
     );
@@ -89,13 +72,20 @@ const Prose = ({ text }: { text: string | null }) =>
 /** A release: its title, its messages, and its changes as written. */
 const PatchNoteView = ({
     note,
+    showTitle = true,
     className,
 }: {
     note: PatchNote;
+    /** Off where the title is drawn above it, as the release's heading. */
+    showTitle?: boolean;
     className?: string;
 }) => (
     <div className={cn("flex flex-col gap-4", className)}>
-        <h2 className="font-display text-section text-content">{note.title}</h2>
+        {showTitle && (
+            <h2 className="font-display text-section text-content">
+                {note.title}
+            </h2>
+        )}
         <Prose text={note.intro} />
         {note.items.length > 0 && (
             // Pulled out by the rows' padding, so the text lines up with the

@@ -2,7 +2,8 @@ import { useState } from "react";
 import { BellRing, Check } from "lucide-react";
 import { patchNoteAnnouncement, type AdminPatchNote } from "@playrates/shared";
 import Button from "../ui/Button";
-import ConfirmPopup from "../ui/ConfirmPopup";
+import Modal from "../ui/Modal";
+import SegmentedChoice from "../ui/SegmentedChoice";
 import Toggle from "../ui/Toggle";
 import { useNotify } from "../../contexts/NotificationContext";
 import {
@@ -18,18 +19,28 @@ import {
 } from "../../pages/admin/lib/broadcastCopy";
 import { ActionButton } from "./MessageItem";
 
+type Audience = "me" | "everyone";
+
+const AUDIENCES = [
+    { value: "me" as const, label: "Just me" },
+    { value: "everyone" as const, label: "Everyone" },
+];
+
 /**
- * Telling everyone about one patch notes entry, from the entry itself. Once
- * sent it stays sent: the server turns a second send away, so this shows
- * when it went instead of offering it again.
+ * Telling people about one patch notes entry, from the entry itself: to
+ * yourself first, to see it as they will, then to everyone. Once it has
+ * gone to everyone it stays sent: the server turns a second send away, so
+ * this shows when it went instead of offering it again.
  */
 const PatchNoteNotify = ({ note }: { note: AdminPatchNote }) => {
-    const [confirming, setConfirming] = useState(false);
+    const [open, setOpen] = useState(false);
+    // Just you to start: everyone can't be unsent, by email at least.
+    const [audience, setAudience] = useState<Audience>("me");
     // On by default: patch notes are what members turned news emails on for.
     const [email, setEmail] = useState(true);
     const announce = useAnnouncePatchNote();
     const test = useSendTestPatchNote();
-    const { data: audience } = useEmailAudience(confirming);
+    const { data: subscribers } = useEmailAudience(open);
     const notify = useNotify();
     const sent = note.announcement;
 
@@ -45,73 +56,95 @@ const PatchNoteNotify = ({ note }: { note: AdminPatchNote }) => {
 
     const message = patchNoteAnnouncement(note.title, note.link);
     const send = { messageId: note.messageId, email };
+    const pending = announce.isPending || test.isPending;
+    const close = () => setOpen(false);
 
+    const explained =
+        audience === "me"
+            ? email
+                ? "It goes into your bell and your email, and nobody else’s, so you can see it as everyone will."
+                : "It goes into your bell, and nobody else’s, so you can see it as everyone will."
+            : email
+              ? `“${message.title}” goes into every inbox now, and by email to ${emailedTo(subscribers)}. It opens the notes at this entry, and can only go out once.`
+              : `“${message.title}” goes into every inbox now, and opens the notes at this entry. It can only go out once.`;
+
+    const submit = () => {
+        if (audience === "me") {
+            test.mutate(send, {
+                onSuccess: () => {
+                    close();
+                    notify(testNotice(email), "success");
+                },
+                onError: () => notify("The test didn’t send", "error"),
+            });
+            return;
+        }
+        announce.mutate(send, {
+            onSuccess: (result) => {
+                close();
+                notify(
+                    sentNotice(result.announcement?.recipientCount ?? 0, email),
+                    "success"
+                );
+            },
+            onError: () => notify("It didn’t send", "error"),
+        });
+    };
+
+    const titleId = `notify-${note.messageId}`;
     return (
         <>
             <ActionButton
-                onClick={() => setConfirming(true)}
+                onClick={() => setOpen(true)}
                 icon={<BellRing size={14} aria-hidden />}
             >
                 Send notification
             </ActionButton>
-            {confirming && (
-                <ConfirmPopup
-                    title="Tell everyone about these notes?"
-                    body={
-                        email
-                            ? `“${message.title}” goes into every inbox now, and by email to ${emailedTo(audience)}. It opens the notes at this entry, and can only go out once.`
-                            : `“${message.title}” goes into every inbox now, and opens the notes at this entry. It can only go out once.`
-                    }
-                    confirmLabel="Send"
-                    tone="neutral"
-                    isPending={announce.isPending}
-                    onConfirm={() =>
-                        announce.mutate(send, {
-                            onSuccess: (result) => {
-                                setConfirming(false);
-                                notify(
-                                    sentNotice(
-                                        result.announcement?.recipientCount ??
-                                            0,
-                                        email
-                                    ),
-                                    "success"
-                                );
-                            },
-                            onError: () => {
-                                setConfirming(false);
-                                notify("It didn’t send", "error");
-                            },
-                        })
-                    }
-                    onClose={() => setConfirming(false)}
+            {open && (
+                <Modal
+                    onClose={close}
+                    labelledBy={titleId}
+                    className="w-full max-w-md"
                 >
-                    {/* The test sits by the switch so it goes out the way
-                        the real one will. */}
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <h2
+                        id={titleId}
+                        className="border-b border-subtle pb-3 font-display text-section text-content"
+                    >
+                        Send these patch notes
+                    </h2>
+                    <div className="flex flex-col gap-4 pt-4">
+                        <SegmentedChoice
+                            segments={AUDIENCES}
+                            value={audience}
+                            onChange={setAudience}
+                            label="Who gets it"
+                            fill
+                        />
                         <Toggle
                             checked={email}
                             onChange={setEmail}
                             label="Also send as an email"
-                            className="self-start sm:self-auto"
+                            className="self-start"
                         />
+                        <p className="text-body-sm leading-relaxed text-content-secondary">
+                            {explained}
+                        </p>
+                    </div>
+                    <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                         <Button
-                            variant="ghost"
-                            disabled={test.isPending || announce.isPending}
-                            onClick={() =>
-                                test.mutate(send, {
-                                    onSuccess: () =>
-                                        notify(testNotice(email), "success"),
-                                    onError: () =>
-                                        notify("The test didn’t send", "error"),
-                                })
-                            }
-                            className="w-full sm:w-auto"
+                            variant="secondary"
+                            onClick={close}
+                            disabled={pending}
                         >
-                            Send test to me
+                            Cancel
+                        </Button>
+                        <Button onClick={submit} disabled={pending}>
+                            {audience === "me"
+                                ? "Send to me"
+                                : "Send to everyone"}
                         </Button>
                     </div>
-                </ConfirmPopup>
+                </Modal>
             )}
         </>
     );
