@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createLogger } from "../../src/lib/logger.js";
 import { createAlerts, SPIKE_AT } from "../../src/modules/admin/alerts.js";
+import type { NewEmailMessage } from "../../src/modules/email/email.repository.js";
 import type { EmailMessage } from "../../src/modules/email/email.sender.js";
 import { alertEmail } from "../../src/modules/email/email.templates.js";
 import { setTestEnv } from "../helpers/buildTestApp.js";
@@ -13,8 +14,15 @@ const setup = ({
   errors = 0,
   admins = ["admin-1"],
   failSends = false,
-}: { errors?: number; admins?: string[]; failSends?: boolean } = {}) => {
+  failLog = false,
+}: {
+  errors?: number;
+  admins?: string[];
+  failSends?: boolean;
+  failLog?: boolean;
+} = {}) => {
   const sent: EmailMessage[] = [];
+  const logged: NewEmailMessage[] = [];
   const settings = new Map<string, unknown>();
   let clock = NOW;
   const counted: string[] = [];
@@ -43,12 +51,17 @@ const setup = ({
           email_prefs: {},
         }));
       },
+      async logMessages(messages) {
+        if (failLog) throw new Error("database down");
+        logged.push(...messages);
+      },
     },
     sender: {
       name: "log",
       async send(messages) {
         if (failSends) throw new Error("provider down");
         sent.push(...messages);
+        return messages.map((_, i) => `resend-${i + 1}`);
       },
     },
     site: "https://playrates.test",
@@ -58,6 +71,7 @@ const setup = ({
   return {
     alerts,
     sent,
+    logged,
     counted,
     advance: (ms: number) => (clock += ms),
   };
@@ -77,6 +91,31 @@ describe("job alerts", () => {
     ]);
     expect(sent[0]!.subject).toBe("PlayRates alert: the morning job failed");
     expect(sent[0]!.text).toContain("Trending list: IGDB timed out");
+  });
+
+  it("logs each admin it went to, with Resend's id", async () => {
+    const { alerts, logged } = setup({ admins: ["admin-1", "admin-2"] });
+
+    await alerts.jobFailed("trending", [{ part: "Trending list", error: "x" }]);
+
+    expect(logged).toEqual([
+      expect.objectContaining({
+        userId: "admin-1",
+        to: "admin-1@playrates.test",
+        kind: "admin_alert",
+        status: "sent",
+        resendId: "resend-1",
+      }),
+      expect.objectContaining({ userId: "admin-2", resendId: "resend-2" }),
+    ]);
+  });
+
+  it("still sends when the log can't be written", async () => {
+    const { alerts, sent } = setup({ failLog: true });
+    await alerts.jobFailed("nudges", [
+      { part: "Tidying old logs", error: "x" },
+    ]);
+    expect(sent).toHaveLength(1);
   });
 
   it("sends nothing when every part ran", async () => {

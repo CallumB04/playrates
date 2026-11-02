@@ -176,6 +176,8 @@ export const queryKeys = {
         patchNotes: ["admin", "announcements", "patch-notes"] as const,
         emailAudience: ["admin", "email", "audience"] as const,
         emailStats: ["admin", "email", "stats"] as const,
+        emailMessages: (filters: Record<string, unknown>) =>
+            ["admin", "email", "messages", filters] as const,
         health: ["admin", "health"] as const,
         errors: ["admin", "errors"] as const,
         clientErrors: ["admin", "client-errors"] as const,

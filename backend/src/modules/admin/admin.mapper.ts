@@ -27,6 +27,7 @@ import {
   type ServerErrorEntry,
   type ClientErrorEntry,
   type AdminCohorts,
+  type AdminEmailMessage,
 } from "@playrates/shared";
 import type {
   AdminCohortRow,
@@ -35,6 +36,7 @@ import type {
   AdminSeriesRow,
   AdminUserDirectoryRow,
   AnnouncementCardRow,
+  EmailMessageWithMember,
   GameRow,
   IgdbUsageDayRow,
 } from "../../types/database.types.js";
@@ -185,6 +187,27 @@ const EXCERPT_LIMIT = 280;
 
 const str = (value: unknown): string | null =>
   typeof value === "string" ? value : null;
+
+export const toEmailMessage = (
+  row: EmailMessageWithMember,
+): AdminEmailMessage => ({
+  id: row.id,
+  kind: row.kind,
+  subject: row.subject,
+  to: row.to_address,
+  member: row.profiles
+    ? {
+        id: row.profiles.id,
+        username: row.profiles.username,
+        avatarUrl: row.profiles.avatar_url,
+        accent: toAccent(row.profiles.accent),
+      }
+    : null,
+  status: row.status,
+  detail: row.detail,
+  sentAt: row.sent_at,
+  updatedAt: row.updated_at,
+});
 
 export const toActivityEvent = (row: AdminActivityFeedRow): AdminActivityEvent => ({
   id: row.id,

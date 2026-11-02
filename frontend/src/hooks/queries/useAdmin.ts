@@ -10,6 +10,7 @@ import type {
     AdminPullInput,
     AdminRange,
     GameEventGroup,
+    EmailMessageGroup,
     ReportStatus,
     ResolveReportInput,
     SendAnnouncementInput,
@@ -18,6 +19,7 @@ import {
     fetchAdminActivity,
     fetchAdminActivityCounts,
     fetchAdminGameEvents,
+    fetchAdminEmailMessages,
     fetchAdminHealth,
     fetchAdminMetric,
     fetchAdminOverview,
@@ -117,6 +119,19 @@ export const useAdminGameEvents = (group: GameEventGroup | undefined) =>
     useInfiniteQuery({
         queryKey: queryKeys.admin.gameEvents(group ?? "all"),
         queryFn: ({ pageParam }) => fetchAdminGameEvents(group, pageParam),
+        initialPageParam: undefined as number | undefined,
+        getNextPageParam: (last) => last.nextBefore ?? undefined,
+        placeholderData: keepPreviousData,
+    });
+
+export const useAdminEmailMessages = (
+    filters: { group?: EmailMessageGroup; userId?: string },
+    limit = 40
+) =>
+    useInfiniteQuery({
+        queryKey: queryKeys.admin.emailMessages({ ...filters, limit }),
+        queryFn: ({ pageParam }) =>
+            fetchAdminEmailMessages(filters, pageParam, limit),
         initialPageParam: undefined as number | undefined,
         getNextPageParam: (last) => last.nextBefore ?? undefined,
         placeholderData: keepPreviousData,

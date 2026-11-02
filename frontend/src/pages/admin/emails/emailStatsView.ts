@@ -1,4 +1,9 @@
-import { EMAIL_LIMITS, type EmailStats } from "@playrates/shared";
+import {
+    EMAIL_LIMITS,
+    type EmailMessageGroup,
+    type EmailMessageStatus,
+    type EmailStats,
+} from "@playrates/shared";
 
 /** Amber with a fifth of the allowance left, red with almost none. */
 export const limitTone = (used: number, total: number) =>
@@ -36,8 +41,35 @@ const KINDS: Record<string, string> = {
     task_nearly_done: "Task reminders",
     weekly_digest: "Weekly digest",
     news_test: "Your tests",
+    digest_test: "Your digest tests",
+    announcement: "Announcements",
+    patch_notes: "Patch notes",
+    admin_alert: "Alerts to admins",
 };
 
 export const kindLabel = (kind: string) => KINDS[kind] ?? kind;
+
+const STATUSES: Record<
+    EmailMessageStatus,
+    { label: string; className: string }
+> = {
+    delivered: { label: "Delivered", className: "text-success" },
+    sent: { label: "Sent", className: "text-content-muted" },
+    delayed: { label: "Delayed", className: "text-warning" },
+    capped: { label: "Held back by the cap", className: "text-warning" },
+    failed: { label: "Didn’t send", className: "text-danger" },
+    bounced: { label: "Bounced", className: "text-danger" },
+    suppressed: { label: "Not sent, bounced before", className: "text-danger" },
+    complained: { label: "Marked as spam", className: "text-danger" },
+};
+
+/** What became of one email, worded and coloured for the log. */
+export const statusMark = (status: EmailMessageStatus) => STATUSES[status];
+
+export const GROUP_LABELS: Record<EmailMessageGroup, string> = {
+    delivered: "Delivered",
+    waiting: "On its way",
+    problems: "Problems",
+};
 
 export { EMAIL_LIMITS };

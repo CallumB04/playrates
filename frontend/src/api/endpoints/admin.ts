@@ -6,6 +6,8 @@ import type {
     AdminActivityEvent,
     AdminCohorts,
     AdminGameEvent,
+    AdminEmailMessage,
+    EmailMessageGroup,
     AdminGameSummary,
     AdminHealth,
     AdminImportResult,
@@ -115,6 +117,17 @@ export const fetchAdminGameEvents = async (
     (
         await api.get<CursorPage<AdminGameEvent>>("/admin/games/events", {
             params: compactParams({ group, before, limit: 40 }),
+        })
+    ).data;
+
+export const fetchAdminEmailMessages = async (
+    filters: { group?: EmailMessageGroup; userId?: string },
+    before?: number,
+    limit = 40
+): Promise<CursorPage<AdminEmailMessage>> =>
+    (
+        await api.get<CursorPage<AdminEmailMessage>>("/admin/email/messages", {
+            params: compactParams({ ...filters, before, limit }),
         })
     ).data;
 

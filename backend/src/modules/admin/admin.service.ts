@@ -16,6 +16,7 @@ import type {
   AdminPullInput,
   AdminRange,
   AdminUsersQuery,
+  AdminEmailMessagesQuery,
   AnnouncementInput,
   EmailAudience,
   PatchNote,
@@ -47,6 +48,7 @@ import {
   toClientError,
   toCohorts,
   toUserSummary,
+  toEmailMessage,
   toAdminProgress,
 } from "./admin.mapper.js";
 
@@ -75,6 +77,7 @@ export const createAdminService = (deps: {
     | "sendDigestTest"
     | "newsRecipientCount"
     | "stats"
+    | "messages"
   >;
   /** The admin's own address, for a test when the token didn't carry it. */
   emailOf: (userId: string) => Promise<string | null>;
@@ -111,7 +114,11 @@ export const createAdminService = (deps: {
     actorId: string,
     actorEmail: string | undefined,
   ) => {
-    await emails.sendNewsTest(content, await testAddress(actorId, actorEmail));
+    await emails.sendNewsTest(
+      content,
+      await testAddress(actorId, actorEmail),
+      actorId,
+    );
   };
 
   const patchNoteContent = (
@@ -296,6 +303,10 @@ export const createAdminService = (deps: {
     },
 
     emailStats: () => emails.stats(),
+
+    async emailMessages(query: AdminEmailMessagesQuery) {
+      return toCursorPage(await emails.messages(query), query.limit, toEmailMessage);
+    },
 
     /** The admin's own weekly digest, as Sunday would send it today. */
     async sendTestDigest(actorId: string, actorEmail?: string) {

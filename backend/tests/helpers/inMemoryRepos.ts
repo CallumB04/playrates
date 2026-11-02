@@ -46,7 +46,10 @@ import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.reposito
 import type { NotificationRowWithActor } from "../../src/modules/notifications/notifications.repository.js";
 import { createInMemoryCommunity } from "./inMemoryCommunity.js";
 import { createInMemoryEmailRepo } from "./inMemoryEmail.js";
-import type { EmailLogRow } from "../../src/types/database.types.js";
+import type {
+  EmailLogRow,
+  EmailMessageRow,
+} from "../../src/types/database.types.js";
 
 /** One row of email_sends. */
 export interface EmailSendRecord {
@@ -197,6 +200,7 @@ export interface InMemoryState {
   progressMetrics: Map<string, Record<string, number>>;
   emailLog: EmailLogRow[];
   emailSends: EmailSendRecord[];
+  emailMessages: EmailMessageRow[];
   /** Members whose address isn't confirmed, so is never emailed. */
   unconfirmed: Set<string>;
 }
@@ -284,6 +288,7 @@ export const createInMemoryRepos = (
     progressMetrics: new Map(),
     emailLog: [],
     emailSends: [],
+    emailMessages: [],
     unconfirmed: new Set(),
   };
 
@@ -632,6 +637,19 @@ export const createInMemoryRepos = (
               }),
             ),
           emailsSent: state.emailLog.filter((e) => e.user_id === userId),
+          emailDeliveries: state.emailMessages
+            .filter((m) => m.user_id === userId)
+            .map(
+              ({ to_address, kind, subject, status, detail, sent_at, updated_at }) => ({
+                to_address,
+                kind,
+                subject,
+                status,
+                detail,
+                sent_at,
+                updated_at,
+              }),
+            ),
         };
       },
     },

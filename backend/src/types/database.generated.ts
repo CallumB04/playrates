@@ -287,6 +287,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"email_messages": {
+                  Row: {
+                    "broadcast_id": string | null,"detail": string | null,"id": number,"kind": string,"resend_id": string | null,"sent_at": string,"status": string,"subject": string,"to_address": string,"updated_at": string,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "broadcast_id"?: string | null,"detail"?: string | null,"id"?: never,"kind": string,"resend_id"?: string | null,"sent_at"?: string,"status": string,"subject": string,"to_address": string,"updated_at"?: string,"user_id"?: string | null
+                  }
+                  Update: {
+                    "broadcast_id"?: string | null,"detail"?: string | null,"id"?: never,"kind"?: string,"resend_id"?: string | null,"sent_at"?: string,"status"?: string,"subject"?: string,"to_address"?: string,"updated_at"?: string,"user_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "email_messages_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "admin_user_directory"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "email_messages_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"email_sends": {
                   Row: {
                     "error": string | null,"id": number,"kind": string,"recipients": number,"sent_at": string,"status": string,"transactional": boolean
@@ -1742,6 +1768,9 @@ isOneToOne: false
                            },
 "random_profile_accent":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"record_email_event":
+{ Args: { "p_broadcast_id": string,"p_detail": string,"p_resend_id": string,"p_status": string,"p_to": string }; Returns: number
                            },
 "revoke_xp":
 { Args: { "p_key": string,"p_user": string }; Returns: undefined

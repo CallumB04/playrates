@@ -51,7 +51,7 @@ export const createAlerts = ({
     AdminRepository,
     "adminIds" | "errorCount" | "getSetting" | "setSetting"
   >;
-  emails: Pick<EmailRepository, "memberEmails">;
+  emails: Pick<EmailRepository, "memberEmails" | "logMessages">;
   sender: EmailSender;
   site: string;
   logger: Logger;
@@ -66,9 +66,23 @@ export const createAlerts = ({
     if (ids.length === 0) return;
     const rendered = alertEmail(content, site);
     const recipients = await emails.memberEmails(ids);
-    await sender.send(
+    const sent = await sender.send(
       recipients.map(({ email }) => ({ to: email, ...rendered })),
     );
+    await emails
+      .logMessages(
+        recipients.map(({ id, email }, i) => ({
+          userId: id,
+          to: email,
+          kind: "admin_alert",
+          subject: rendered.subject,
+          status: "sent",
+          resendId: sent[i] ?? null,
+        })),
+      )
+      .catch((error: unknown) =>
+        logger.warn({ err: error }, "alerts: recipients not logged"),
+      );
   };
 
   return {

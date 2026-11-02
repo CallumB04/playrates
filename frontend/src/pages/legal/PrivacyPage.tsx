@@ -11,7 +11,7 @@ const External = ({ href, children }: { href: string; children: string }) => (
 );
 
 /* When the substance of this page changes, move the date. */
-const UPDATED = "2026-11-01";
+const UPDATED = "2026-11-02";
 
 const PrivacyPage = () => (
     <ProsePage
@@ -185,8 +185,9 @@ const PrivacyPage = () => (
             </li>
             <li>
                 <strong>Resend</strong> sends PlayRates’ emails. It gets your
-                email address, your username and what’s in each email, and keeps
-                a list of who wants news emails. Resend is based in the US.
+                email address, your username and what’s in each email, keeps a
+                list of who wants news emails, and tells PlayRates whether each
+                email arrived. Resend is based in the US.
             </li>
             <li>
                 <strong>Upstash</strong> keeps the counts behind rate limits,
@@ -275,9 +276,10 @@ const PrivacyPage = () => (
         </ul>
         <p>
             Some things go sooner, whatever happens to your account. Error
-            records are deleted after 90 days and search records after two
-            years. Push notification details go when you turn them off, or when
-            your browser’s push service says the browser is gone.
+            records are deleted after 90 days, the record of which emails went
+            to you and whether they arrived after 30 days, and search records
+            after two years. Push notification details go when you turn them
+            off, or when your browser’s push service says the browser is gone.
         </p>
         <p>
             Vercel’s request logs and Supabase’s sign-in logs are kept for a

@@ -136,6 +136,18 @@ describe("Resend sender", () => {
     );
     expect(calls.map((c) => (c.body as unknown[]).length)).toEqual([100, 100, 5]);
   });
+
+  it("hands back Resend's id for each email, in order", async () => {
+    const one = upstream([ok({ id: "e-1" })]);
+    expect(await createResendSender(one.client, "x@y.test").send([message(1)])).toEqual([
+      "e-1",
+    ]);
+
+    const batch = upstream([ok({ data: [{ id: "e-1" }, { id: "e-2" }] })]);
+    expect(
+      await createResendSender(batch.client, "x@y.test").send([message(1), message(2), message(3)]),
+    ).toEqual(["e-1", "e-2", null]);
+  });
 });
 
 describe("Resend audience", () => {

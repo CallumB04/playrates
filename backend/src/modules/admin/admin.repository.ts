@@ -86,6 +86,7 @@ export interface PrunedRows {
   serverErrors: number;
   clientErrors: number;
   gameEvents: number;
+  emailMessages: number;
 }
 
 export interface AdminRepository {

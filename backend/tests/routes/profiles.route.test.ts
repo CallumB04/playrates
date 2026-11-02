@@ -718,6 +718,34 @@ describe("exporting an account", () => {
         sent_at: "2026-11-01T18:00:00.000Z",
       },
     );
+    state.emailMessages.push(
+      {
+        id: 1,
+        user_id: USER_A,
+        to_address: "a@example.test",
+        kind: "weekly_digest",
+        subject: "Your week",
+        status: "delivered",
+        resend_id: "resend-secret-1",
+        broadcast_id: null,
+        detail: null,
+        sent_at: "2026-11-01T18:00:00.000Z",
+        updated_at: "2026-11-01T18:01:00.000Z",
+      },
+      {
+        id: 2,
+        user_id: USER_B,
+        to_address: "b@example.test",
+        kind: "weekly_digest",
+        subject: "Your week",
+        status: "delivered",
+        resend_id: "resend-secret-2",
+        broadcast_id: null,
+        detail: null,
+        sent_at: "2026-11-01T18:00:00.000Z",
+        updated_at: "2026-11-01T18:01:00.000Z",
+      },
+    );
 
     const response = await request(app)
       .get("/api/v1/profiles/me/export")
@@ -735,6 +763,13 @@ describe("exporting an account", () => {
     expect(response.body.emailsSent).toEqual([
       expect.objectContaining({ id: 1, kind: "weekly_digest" }),
     ]);
+    expect(response.body.emailDeliveries).toEqual([
+      expect.objectContaining({
+        to_address: "a@example.test",
+        status: "delivered",
+      }),
+    ]);
+    expect(response.text).not.toContain("resend-secret");
   });
 
   it("requires authentication", async () => {

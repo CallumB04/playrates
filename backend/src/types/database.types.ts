@@ -5,7 +5,7 @@
  * stack); CI fails when that file and the migrations disagree.
  */
 
-import type { GameBackdrop } from "@playrates/shared";
+import type { EmailMessageStatus, GameBackdrop } from "@playrates/shared";
 
 export interface ProfileRow {
   id: string;
@@ -429,6 +429,29 @@ export interface EmailLogRow {
   kind: string;
   ref: string;
   sent_at: string;
+}
+
+/** One email to one person, and where it got to. */
+export interface EmailMessageRow {
+  id: number;
+  user_id: string | null;
+  to_address: string;
+  kind: string;
+  subject: string;
+  status: EmailMessageStatus;
+  resend_id: string | null;
+  broadcast_id: string | null;
+  detail: string | null;
+  sent_at: string;
+  updated_at: string;
+}
+
+/** email_messages with its member, as the admin's log reads it. */
+export interface EmailMessageWithMember extends EmailMessageRow {
+  profiles: Pick<
+    ProfileRow,
+    "id" | "username" | "avatar_url" | "accent"
+  > | null;
 }
 
 /** One row of email_send_totals(): sends added up by day, kind and

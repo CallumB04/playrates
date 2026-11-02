@@ -12,9 +12,10 @@ export interface EmailMessage {
 
 export interface EmailSender {
   readonly name: "resend" | "mailpit" | "log";
-  /** Every message, in as few requests as the provider allows. Throws if
-   *  any request fails; what went before it has gone. */
-  send(messages: EmailMessage[]): Promise<void>;
+  /** Every message, in as few requests as the provider allows, and each
+   *  one's id at the provider, in order: null where it gives none. Throws
+   *  if any request fails; what went before it has gone. */
+  send(messages: EmailMessage[]): Promise<(string | null)[]>;
 }
 
 /** The most Resend takes in one batch request. */
@@ -36,16 +37,22 @@ export const createResendSender = (
     name: "resend",
     async send(messages) {
       if (messages.length === 1) {
-        await client.request("POST", "/emails", toResend(messages[0]!));
-        return;
-      }
-      for (let i = 0; i < messages.length; i += RESEND_BATCH_MAX) {
-        await client.request(
+        const { id } = await client.request<{ id?: string }>(
           "POST",
-          "/emails/batch",
-          messages.slice(i, i + RESEND_BATCH_MAX).map(toResend),
+          "/emails",
+          toResend(messages[0]!),
         );
+        return [id ?? null];
       }
+      const ids: (string | null)[] = [];
+      for (let i = 0; i < messages.length; i += RESEND_BATCH_MAX) {
+        const chunk = messages.slice(i, i + RESEND_BATCH_MAX);
+        const { data = [] } = await client.request<{
+          data?: { id?: string }[];
+        }>("POST", "/emails/batch", chunk.map(toResend));
+        ids.push(...chunk.map((_, n) => data[n]?.id ?? null));
+      }
+      return ids;
     },
   };
 };
@@ -92,6 +99,7 @@ export const createMailpitSender = (
         );
       }
     }
+    return messages.map(() => null);
   },
 });
 
@@ -102,5 +110,6 @@ export const createLoggingSender = (logger: Logger): EmailSender => ({
     for (const m of messages) {
       logger.info({ subject: m.subject }, "email not sent: no provider set");
     }
+    return messages.map(() => null);
   },
 });

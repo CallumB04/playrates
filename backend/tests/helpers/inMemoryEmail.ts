@@ -13,6 +13,7 @@ import type {
   RecentSends,
   SendActivity,
 } from "../../src/modules/email/email.activity.js";
+import { EMAIL_MESSAGE_GROUPS } from "@playrates/shared";
 import type { EmailSendTotalRow } from "../../src/types/database.types.js";
 import type { InMemoryState } from "./inMemoryRepos.js";
 
@@ -38,6 +39,7 @@ export const createInMemoryEmailRepo = (
 ): EmailRepository => {
   let nextId = 1;
   let nextSendId = 1;
+  let nextMessageId = 1;
   const find = (userId: string, kind: string, ref: string) =>
     state.emailLog.find(
       (r) => r.user_id === userId && r.kind === kind && r.ref === ref,
@@ -223,7 +225,82 @@ export const createInMemoryEmailRepo = (
       }
       return [...totals.values()];
     },
+    async logMessages(messages) {
+      const at = new Date(now()).toISOString();
+      for (const m of messages) {
+        state.emailMessages.push({
+          id: nextMessageId++,
+          user_id: m.userId,
+          to_address: m.to,
+          kind: m.kind,
+          subject: m.subject,
+          status: m.status,
+          resend_id: m.resendId ?? null,
+          broadcast_id: m.broadcastId ?? null,
+          detail: m.detail ?? null,
+          sent_at: at,
+          updated_at: at,
+        });
+      }
+    },
+    // As record_email_event() moves a row, which pgTAP tests in full.
+    async recordEvent({ resendId, broadcastId, to, status, detail }) {
+      let moved = 0;
+      for (const row of state.emailMessages) {
+        const matches =
+          row.resend_id === resendId ||
+          (row.resend_id === null &&
+            broadcastId !== null &&
+            row.broadcast_id === broadcastId &&
+            row.to_address.toLowerCase() === to?.toLowerCase());
+        if (!matches || DELIVERY_RANK[row.status]! >= DELIVERY_RANK[status]!) {
+          continue;
+        }
+        row.status = status;
+        row.detail = detail ?? row.detail;
+        row.updated_at = new Date(now()).toISOString();
+        moved += 1;
+      }
+      return moved;
+    },
+    async messages({ before, limit, group, userId }) {
+      const statuses: readonly string[] | null = group
+        ? EMAIL_MESSAGE_GROUPS[group]
+        : null;
+      return [...state.emailMessages]
+        .sort((a, b) => b.id - a.id)
+        .filter((m) => before === undefined || m.id < before)
+        .filter((m) => !statuses || statuses.includes(m.status))
+        .filter((m) => !userId || m.user_id === userId)
+        .slice(0, limit + 1)
+        .map((m) => {
+          const p = state.profiles.find((x) => x.id === m.user_id);
+          return {
+            ...m,
+            profiles: p
+              ? {
+                  id: p.id,
+                  username: p.username,
+                  avatar_url: p.avatar_url,
+                  accent: p.accent,
+                }
+              : null,
+          };
+        });
+    },
   };
+};
+
+/** record_email_event()'s order; capped never moves, having no id. */
+const DELIVERY_RANK: Record<string, number> = {
+  capped: Infinity,
+  sent: 0,
+  delayed: 1,
+  delivered: 2,
+  bounced: 3,
+  suppressed: 3,
+  failed: 3,
+  complained: 3,
 };
 
 /** What the email fakes saw, for a test to assert on. */
@@ -260,7 +337,10 @@ export const createEmailFakes = (): {
     name: "resend",
     async send(messages) {
       if (recorder.failSends) throw new Error("provider down");
-      recorder.sent.push(...messages);
+      return messages.map((m) => {
+        recorder.sent.push(m);
+        return `resend-${recorder.sent.length}`;
+      });
     },
   };
 

@@ -412,6 +412,93 @@ describe("the daily cap", () => {
   });
 });
 
+describe("who each email went to", () => {
+  it("logs the member, address, subject and Resend's id", async () => {
+    const { service, state } = setup();
+    await service.sendEvent(friendRequest);
+    expect(state.emailMessages).toEqual([
+      expect.objectContaining({
+        user_id: USER_A,
+        to_address: emailOf(USER_A),
+        kind: "friend_request",
+        subject: "ana sent you a friend request",
+        status: "sent",
+        resend_id: "resend-1",
+      }),
+    ]);
+  });
+
+  it("logs one the cap held back as capped", async () => {
+    const { service, state } = setup();
+    state.emailSends.push({
+      id: 999,
+      kind: "friend_request",
+      status: "sent",
+      recipients: EMAIL_LIMITS.cap,
+      transactional: true,
+      error: null,
+      sent_at: new Date(Date.now() - 60_000).toISOString(),
+    });
+    await service.sendEvent(friendRequest);
+    expect(state.emailMessages).toEqual([
+      expect.objectContaining({ user_id: USER_A, status: "capped", resend_id: null }),
+    ]);
+  });
+
+  it("logs one that failed with why", async () => {
+    const { service, state, email } = setup();
+    email.failSends = true;
+    await expect(service.sendEvent(friendRequest)).rejects.toThrow();
+    expect(state.emailMessages).toEqual([
+      expect.objectContaining({ status: "failed", detail: "provider down" }),
+    ]);
+  });
+
+  it("logs everyone a broadcast went to, under its id", async () => {
+    const { service, state } = setup();
+    await service.broadcastNews({
+      kind: "announcement",
+      tone: "info",
+      title: "Hi",
+      body: "There",
+      link: null,
+    });
+    expect(state.emailMessages.map((m) => [m.user_id, m.broadcast_id])).toEqual([
+      [USER_A, "broadcast-1"],
+      [USER_B, "broadcast-1"],
+    ]);
+  });
+
+  it("logs the admin's own test under their name", async () => {
+    const { service, state } = setup();
+    await service.sendNewsTest(
+      { kind: "announcement", tone: "info", title: "Hi", body: "There", link: null },
+      "admin@x.test",
+      USER_A,
+    );
+    expect(state.emailMessages).toEqual([
+      expect.objectContaining({ user_id: USER_A, to_address: "admin@x.test", kind: "news_test" }),
+    ]);
+  });
+
+  it("still sends when the log can't be written", async () => {
+    const { service, state } = setup();
+    state.emailMessages = null as never;
+    expect(await service.sendEvent(friendRequest)).toBe(true);
+  });
+
+  it("lists the log for the admin, a member's alone when asked", async () => {
+    const { service } = setup();
+    await service.sendEvent(friendRequest);
+    await service.sendEvent({ ...friendRequest, userId: USER_B, actorId: USER_A });
+
+    const all = await service.messages({ limit: 40 });
+    expect(all.map((m) => m.profiles?.username)).toEqual(["ana", "devuser"]);
+    const theirs = await service.messages({ limit: 40, userId: USER_B });
+    expect(theirs.map((m) => m.user_id)).toEqual([USER_B]);
+  });
+});
+
 describe("email stats", () => {
   it("puts the log and Resend's count together", async () => {
     const { service, email } = setup();
@@ -471,6 +558,58 @@ describe("Resend's webhook", () => {
     const { service, state } = setup();
     await deliver(service, { type: "email.delivered", data: { email: emailOf(USER_A) } });
     expect(state.profiles[0]!.email_prefs).toEqual({});
+  });
+
+  it("marks an email delivered, then bounced, but never back", async () => {
+    const { service, state } = setup();
+    await service.sendEvent(friendRequest);
+    const event = (type: string, extra = {}) =>
+      deliver(service, {
+        type,
+        data: { email_id: "resend-1", to: [emailOf(USER_A)], ...extra },
+      });
+
+    await event("email.delivered");
+    expect(state.emailMessages[0]).toMatchObject({ status: "delivered" });
+    await event("email.delivery_delayed");
+    expect(state.emailMessages[0]).toMatchObject({ status: "delivered" });
+    await event("email.bounced", { bounce: { message: "Mailbox full" } });
+    expect(state.emailMessages[0]).toMatchObject({
+      status: "bounced",
+      detail: "Mailbox full",
+    });
+  });
+
+  it("finds a broadcast's recipient by the broadcast and their address", async () => {
+    const { service, state } = setup();
+    await service.broadcastNews({
+      kind: "announcement",
+      tone: "info",
+      title: "Hi",
+      body: "There",
+      link: null,
+    });
+    await deliver(service, {
+      type: "email.complained",
+      data: {
+        email_id: "unknown-to-us",
+        broadcast_id: "broadcast-1",
+        to: [emailOf(USER_B).toUpperCase()],
+      },
+    });
+    expect(state.emailMessages.map((m) => m.status)).toEqual(["sent", "complained"]);
+  });
+
+  it("changes nothing for an email that isn't PlayRates' own", async () => {
+    const { service, state } = setup();
+    await service.sendEvent(friendRequest);
+    expect(
+      await deliver(service, {
+        type: "email.bounced",
+        data: { email_id: "a-password-reset", to: [emailOf(USER_A)] },
+      }),
+    ).toBe(true);
+    expect(state.emailMessages[0]).toMatchObject({ status: "sent" });
   });
 
   it("refuses anything unsigned", async () => {

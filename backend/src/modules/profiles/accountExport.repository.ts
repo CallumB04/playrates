@@ -30,6 +30,7 @@ export interface AccountData {
   items: unknown[];
   pushDevices: ReturnType<typeof toExportedPushDevice>[];
   emailsSent: unknown[];
+  emailDeliveries: unknown[];
 }
 
 export interface AccountExportRepository {
@@ -102,6 +103,7 @@ export const createAccountExportRepository = (
         items,
         pushDevices,
         emailsSent,
+        emailDeliveries,
       ] = await Promise.all([
         everything("profiles", "id", own("id")),
         everything("game_logs", "id", own("user_id")),
@@ -134,6 +136,12 @@ export const createAccountExportRepository = (
           "endpoint, user_agent, created_at",
         ),
         everything("email_log", "id", own("user_id")),
+        everything(
+          "email_messages",
+          "id",
+          own("user_id"),
+          "to_address, kind, subject, status, detail, sent_at, updated_at",
+        ),
       ]);
       // A list's games carry no owner of their own; they're found by list.
       const listIds = (gameLists as { id: number }[]).map((l) => l.id);
@@ -172,6 +180,7 @@ export const createAccountExportRepository = (
           pushDevices as Parameters<typeof toExportedPushDevice>[0][]
         ).map(toExportedPushDevice),
         emailsSent,
+        emailDeliveries,
       };
     },
   };

@@ -90,7 +90,12 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
 
   return {
     async pruneOldRows() {
-      return { serverErrors: 0, clientErrors: 0, gameEvents: 0 };
+      return {
+        serverErrors: 0,
+        clientErrors: 0,
+        gameEvents: 0,
+        emailMessages: 0,
+      };
     },
     async ping() {},
 
