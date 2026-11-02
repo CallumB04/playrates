@@ -485,9 +485,9 @@ describe("Resend's webhook", () => {
 });
 
 describe("weekly digest", () => {
-  it("is for the Sunday of a Sunday or Monday run, and nothing else", () => {
+  it("is for a Sunday's run, and nothing else", () => {
     expect(digestSunday(new Date("2026-11-01T17:00:00Z"))).toBe("2026-11-01");
-    expect(digestSunday(new Date("2026-11-02T17:00:00Z"))).toBe("2026-11-01");
+    expect(digestSunday(new Date("2026-11-02T17:00:00Z"))).toBeNull();
     expect(digestSunday(new Date("2026-11-03T17:00:00Z"))).toBeNull();
     expect(digestSunday(new Date("2026-10-31T17:00:00Z"))).toBeNull();
   });
@@ -531,9 +531,7 @@ describe("weekly digest", () => {
     const { service, email } = withFriend();
 
     expect(await service.sendDigest(SUNDAY)).toEqual({ sent: 1 });
-    expect(await service.sendDigest(new Date("2026-11-02T17:00:00Z"))).toEqual({
-      sent: 0,
-    });
+    expect(await service.sendDigest(SUNDAY)).toEqual({ sent: 0 });
 
     expect(email.sent).toHaveLength(1);
     const [digest] = email.sent;
@@ -550,8 +548,9 @@ describe("weekly digest", () => {
     expect(email.sent).toEqual([]);
   });
 
-  it("does nothing midweek", async () => {
+  it("does nothing on any other day, Monday included", async () => {
     const { service, email } = withFriend();
+    expect(await service.sendDigest(new Date("2026-11-02T17:00:00Z"))).toBeNull();
     expect(await service.sendDigest(new Date("2026-11-04T17:00:00Z"))).toBeNull();
     expect(email.sent).toEqual([]);
   });

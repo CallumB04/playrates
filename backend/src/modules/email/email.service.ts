@@ -92,13 +92,11 @@ const EVENT_WINDOW_MS = DAY_MS;
 const RESEND_UNSUBSCRIBE = "{{{RESEND_UNSUBSCRIBE_URL}}}";
 
 /** The Sunday a run's digest is for, as YYYY-MM-DD: today on a Sunday,
- *  yesterday on a Monday, and none on any other day. In UTC, as the cron
- *  runs. */
-export const digestSunday = (now: Date): string | null => {
-  const weekday = now.getUTCDay();
-  if (weekday !== 0 && weekday !== 1) return null;
-  return new Date(now.getTime() - weekday * DAY_MS).toISOString().slice(0, 10);
-};
+ *  and none on any other day. In UTC, as the cron runs. The digest is a
+ *  Sunday evening's email or nothing: a member the day's cap turned away
+ *  waits for the next one rather than getting it on a Monday. */
+export const digestSunday = (now: Date): string | null =>
+  now.getUTCDay() === 0 ? now.toISOString().slice(0, 10) : null;
 
 /** One member's email, waiting to be claimed under `ref`. */
 interface Queued {
@@ -428,8 +426,8 @@ export const createEmailService = ({
     },
 
     /**
-     * The weekly digest, on Sunday's run. Monday's run sends whatever the
-     * day's cap held back, under the same Sunday, so nobody gets two.
+     * The weekly digest, on Sunday's run only. A second run the same
+     * Sunday sends nobody a second one.
      */
     async sendDigest(now: Date): Promise<{ sent: number } | null> {
       const sunday = digestSunday(now);
