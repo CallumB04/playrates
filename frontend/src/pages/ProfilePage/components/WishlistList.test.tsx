@@ -98,6 +98,7 @@ const Harness = (props: {
     sort?: WishlistSort;
     console?: string;
     q?: string;
+    genre?: string;
     isMyAccount?: boolean;
 }) => {
     const { data } = useUserWishlist("devuser");
@@ -107,8 +108,11 @@ const Harness = (props: {
             <WishlistList
                 wishlist={data.data}
                 sort={props.sort ?? "rank"}
-                console={props.console}
-                q={props.q}
+                filters={{
+                    console: props.console,
+                    q: props.q,
+                    genre: props.genre,
+                }}
                 isMyAccount={props.isMyAccount ?? true}
                 buildTileActions={() => []}
             />
@@ -236,6 +240,13 @@ describe("WishlistList", () => {
         ).not.toBeInTheDocument();
         expect(
             screen.getByText("Clear the search to rearrange.")
+        ).toBeInTheDocument();
+    });
+
+    it("asks for every filter off when more than one is on", async () => {
+        await setup({ console: "steam", q: "game" });
+        expect(
+            screen.getByText("Clear the filters to rearrange.")
         ).toBeInTheDocument();
     });
 

@@ -1,4 +1,4 @@
-import type { WishlistEntry } from "@playrates/shared";
+import type { ShelfCommon, WishlistEntry } from "@playrates/shared";
 
 /** The order with one game moved to a place, counted from 1 and held to
  *  the list's ends. Top, up, down, bottom and "Move to #" are all this. */
@@ -16,17 +16,34 @@ export const moveTo = (
     return next;
 };
 
-/** The games wished for on a console, with a title holding the search,
- *  as the shelves' own filters narrow them on the server. */
+/** What narrows a wishlist, as the shelves' own filters narrow them on
+ *  the server. `common` weighs it against the viewer's logged games. */
+export interface WishlistFilters {
+    console?: string;
+    q?: string;
+    genre?: string;
+    common?: { keep: ShelfCommon; mine: ReadonlySet<number> };
+}
+
+export const wishlistFiltered = ({
+    console: consoleSlug,
+    q,
+    genre,
+    common,
+}: WishlistFilters) => !!(consoleSlug || q?.trim() || genre || common);
+
 export const narrowWishlist = <T extends WishlistEntry>(
     entries: T[],
-    { console: consoleSlug, q }: { console?: string; q?: string }
+    { console: consoleSlug, q, genre, common }: WishlistFilters
 ): T[] => {
     const term = q?.trim().toLocaleLowerCase();
     return entries.filter(
         (e) =>
             (!consoleSlug || e.consoles.includes(consoleSlug)) &&
-            (!term || (e.game?.title ?? "").toLocaleLowerCase().includes(term))
+            (!term ||
+                (e.game?.title ?? "").toLocaleLowerCase().includes(term)) &&
+            (!genre || (e.genres ?? []).includes(genre)) &&
+            (!common || common.mine.has(e.gameId) === (common.keep === "both"))
     );
 };
 

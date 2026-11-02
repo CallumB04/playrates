@@ -11,6 +11,7 @@ import {
 import { useUserShelf } from "../../../hooks/queries/useGameLogs";
 import {
     useShelfConsoles,
+    useShelfGenres,
     useUserWishlist,
 } from "../../../hooks/queries/useWishlist";
 import { usePlatforms } from "../../../hooks/queries/useGames";
@@ -18,7 +19,6 @@ import { useWindowSize } from "../../../hooks/useWindowSize";
 import { usePagination } from "../../../hooks/usePagination";
 import { useUrlSearchTerm } from "../../../hooks/useUrlSearchTerm";
 import { GAME_STATUSES, type GameStatus } from "../../../constants/gameStatus";
-import { formatCount } from "../../../lib/format";
 import SteamImportButton from "../../../components/steam/SteamImportButton";
 import ShelfPanel from "../components/ShelfPanel";
 import ShelfSort from "../components/ShelfSort";
@@ -28,6 +28,7 @@ import WishlistSortControl from "../components/WishlistSortControl";
 import {
     WISHLIST_SORTS,
     narrowWishlist,
+    type WishlistFilters,
     type WishlistSort,
 } from "../lib/wishlist";
 import { getProfileGamesPerPage } from "../lib/friendRelation";
@@ -78,6 +79,7 @@ const GamesView = ({
         ? (rawSort as WishlistSort)
         : "rank";
     const consoleSlug = params.get("platform") || undefined;
+    const genre = params.get("genre") || undefined;
 
     const rawPlayed = params.get("ending");
     const playedStatus: PlayedStatusFilter | undefined =
@@ -98,21 +100,31 @@ const GamesView = ({
         isMyAccount
     );
 
+    // Only someone else's shelf, to a viewer whose own logs have loaded.
+    const offerCommon = !isMyAccount && !!myLogGameIds;
+    const common =
+        offerCommon && params.get("common") === "both" ? "both" : undefined;
+
+    const narrowing = {
+        // Only the played shelf has endings to filter by.
+        playedStatus: activeSection === "played" ? playedStatus : undefined,
+        system: consoleSlug,
+        q,
+        genre,
+    };
     // Each tab pages independently.
     const { data: logsPage, isLoading } = useUserShelf(
         username,
         activeSection,
-        {
-            page,
-            limit: perPage,
-            sort,
-            direction,
-            // Only the played shelf has endings to filter by.
-            playedStatus: activeSection === "played" ? playedStatus : undefined,
-            system: consoleSlug,
-            q,
-        },
+        { page, limit: perPage, sort, direction, ...narrowing, common },
         canSee && !isWishlist
+    );
+    // How many the in-common switch would leave: one row, for the total.
+    const { data: commonPage } = useUserShelf(
+        username,
+        activeSection,
+        { page: 1, limit: 1, sort, direction, ...narrowing, common: "both" },
+        canSee && !isWishlist && offerCommon
     );
     /* The wishlist comes whole and filters here: a move made while it is
        filtered still has to save the order of all of it. */
@@ -126,18 +138,44 @@ const GamesView = ({
         activeSection,
         canSee && !isWishlist
     );
+    const { data: shelfGenres } = useShelfGenres(
+        username,
+        activeSection,
+        canSee && !isWishlist
+    );
     const consoles =
         (isWishlist ? wishlistPage?.consoles : shelfConsoles) ?? [];
+    const genres = (isWishlist ? wishlistPage?.genres : shelfGenres) ?? [];
     const { data: platforms } = usePlatforms();
 
     const wishlist = useMemo(() => wishlistPage?.data ?? [], [wishlistPage]);
+    const wishlistFilters = useMemo<WishlistFilters>(
+        () => ({
+            console: consoleSlug,
+            q,
+            genre,
+            common:
+                common && myLogGameIds
+                    ? { keep: common, mine: myLogGameIds }
+                    : undefined,
+        }),
+        [consoleSlug, q, genre, common, myLogGameIds]
+    );
     const entries = useMemo(
         () =>
             isWishlist
-                ? narrowWishlist(wishlist, { console: consoleSlug, q })
+                ? narrowWishlist(wishlist, wishlistFilters)
                 : (logsPage?.data ?? []),
-        [isWishlist, consoleSlug, q, wishlist, logsPage]
+        [isWishlist, wishlistFilters, wishlist, logsPage]
     );
+    const commonCount = !offerCommon
+        ? undefined
+        : isWishlist
+          ? narrowWishlist(wishlist, {
+                ...wishlistFilters,
+                common: { keep: "both", mine: myLogGameIds },
+            }).length
+          : commonPage?.meta.total;
     // Unpaged, so the wishlist gives the foot nothing to count.
     const total = isWishlist ? 0 : (logsPage?.meta.total ?? 0);
 
@@ -175,10 +213,28 @@ const GamesView = ({
         setParams(updated);
     };
 
+    const setGenre = (next: string | undefined) => {
+        const updated = new URLSearchParams(params);
+        if (next) updated.set("genre", next);
+        else updated.delete("genre");
+        updated.delete("page");
+        setParams(updated);
+    };
+
+    const setCommon = (on: boolean) => {
+        const updated = new URLSearchParams(params);
+        if (on) updated.set("common", "both");
+        else updated.delete("common");
+        updated.delete("page");
+        setParams(updated);
+    };
+
     const clearFilters = () => {
         const updated = new URLSearchParams(params);
         updated.delete("ending");
         updated.delete("platform");
+        updated.delete("genre");
+        updated.delete("common");
         updated.delete("q");
         updated.delete("page");
         setParams(updated);
@@ -194,8 +250,9 @@ const GamesView = ({
         const updated = new URLSearchParams(params);
         updated.set("type", status);
         updated.delete("page"); // a new drawer opens at its own first page
-        // Each shelf has its own consoles.
+        // Each shelf has its own consoles and genres.
         updated.delete("platform");
+        updated.delete("genre");
         // The wishlist sorts its own way; neither set means much to the other.
         if ((status === "wishlist") !== isWishlist) {
             updated.delete("sort");
@@ -229,6 +286,8 @@ const GamesView = ({
                 sort={sort}
                 filtered={
                     !!consoleSlug ||
+                    !!genre ||
+                    !!common ||
                     (activeSection === "played" && !!playedStatus)
                 }
                 search={q}
@@ -236,8 +295,7 @@ const GamesView = ({
                     isWishlist && (
                         <WishlistList
                             wishlist={wishlist}
-                            console={consoleSlug}
-                            q={q}
+                            filters={wishlistFilters}
                             sort={wishlistSort}
                             isMyAccount={isMyAccount}
                             buildTileActions={buildTileActions}
@@ -249,16 +307,6 @@ const GamesView = ({
                    width: squeezed beside them, "Time played" and "Time to
                    beat" both read "Time…". */
                     <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
-                        {!isMyAccount && myLogGameIds && (
-                            <span className="text-label text-accent max-sm:hidden">
-                                {formatCount(
-                                    entries.filter((e) =>
-                                        myLogGameIds.has(e.gameId)
-                                    ).length
-                                )}{" "}
-                                in common
-                            </span>
-                        )}
                         <ShelfFilters
                             search={{
                                 term,
@@ -276,6 +324,18 @@ const GamesView = ({
                             consoles={consoles}
                             console={consoleSlug}
                             onConsoleChange={setConsole}
+                            genres={genres}
+                            genre={genre}
+                            onGenreChange={setGenre}
+                            common={
+                                offerCommon
+                                    ? {
+                                          on: !!common,
+                                          count: commonCount,
+                                          onChange: setCommon,
+                                      }
+                                    : undefined
+                            }
                             onClear={clearFilters}
                         />
                         {isWishlist ? (

@@ -5,7 +5,12 @@ import {
     buildGameLog,
     buildGame,
 } from "../../../test/msw/handlers";
-import { moveTo, narrowWishlist, sortWishlist } from "./wishlist";
+import {
+    moveTo,
+    narrowWishlist,
+    sortWishlist,
+    wishlistFiltered,
+} from "./wishlist";
 
 describe("moveTo", () => {
     const order = [1, 2, 3, 4];
@@ -95,6 +100,34 @@ describe("narrowWishlist", () => {
 
     it("ignores a search of only spaces", () => {
         expect(ids(narrowWishlist(list, { q: "   " }))).toEqual([1, 2, 3]);
+    });
+
+    it("narrows by genre", () => {
+        const withGenres = list.map((e, i) => ({
+            ...e,
+            genres: i === 1 ? ["indie"] : [],
+        }));
+        expect(ids(narrowWishlist(withGenres, { genre: "indie" }))).toEqual([
+            2,
+        ]);
+        // An API from before genres sends none, so nothing matches.
+        expect(ids(narrowWishlist(list, { genre: "indie" }))).toEqual([]);
+    });
+
+    it("keeps what the viewer has too, or what they don't", () => {
+        const mine = new Set([1, 3]);
+        expect(
+            ids(narrowWishlist(list, { common: { keep: "both", mine } }))
+        ).toEqual([1, 3]);
+        expect(
+            ids(narrowWishlist(list, { common: { keep: "theirs", mine } }))
+        ).toEqual([2]);
+    });
+
+    it("counts as filtered with any filter on", () => {
+        expect(wishlistFiltered({})).toBe(false);
+        expect(wishlistFiltered({ q: "  " })).toBe(false);
+        expect(wishlistFiltered({ genre: "indie" })).toBe(true);
     });
 
     it("narrows by console and search together", () => {

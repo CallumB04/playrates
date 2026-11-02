@@ -55,6 +55,8 @@ export const queryKeys = {
             ["gamelogs", "wishlist", username] as const,
         shelfConsoles: (username: string, status: string) =>
             ["gamelogs", "consoles", username, status] as const,
+        shelfGenres: (username: string, status: string) =>
+            ["gamelogs", "genres", username, status] as const,
         mineForGame: (gameId: number) =>
             ["gamelogs", "me", "game", gameId] as const,
         forUserAndGame: (username: string, gameId: number) =>

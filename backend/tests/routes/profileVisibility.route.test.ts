@@ -47,6 +47,7 @@ const ROUTES = [
   "/api/v1/users/devuser/wishlist",
   "/api/v1/users/devuser/lists",
   "/api/v1/users/devuser/shelf/consoles?status=played",
+  "/api/v1/users/devuser/shelf/genres?status=played",
   "/api/v1/community/threads?participant=devuser",
 ];
 

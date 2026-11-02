@@ -7,8 +7,14 @@ import { server } from "../../../test/msw/server";
 import { renderWithProviders } from "../../../test/renderWithProviders";
 import GamesView from "./GamesView";
 
+// The viewer's own logged games, as "in common" weighs a shelf against.
+let mine: Set<number> | undefined;
+
 vi.mock("../lib/useShelfTileActions", () => ({
-    useShelfTileActions: () => ({ buildTileActions: () => [] }),
+    useShelfTileActions: () => ({
+        buildTileActions: () => [],
+        myLogGameIds: mine,
+    }),
 }));
 
 const API = "http://localhost:3000/api/v1";
@@ -17,7 +23,20 @@ let shelfAsked: URLSearchParams | null;
 
 beforeEach(() => {
     shelfAsked = null;
+    mine = undefined;
     server.use(
+        http.get(`${API}/users/:username/shelf/genres`, () =>
+            HttpResponse.json(["adventure", "role-playing-rpg"])
+        ),
+        http.get(`${API}/genres`, () =>
+            HttpResponse.json({
+                data: [
+                    { slug: "adventure", name: "Adventure" },
+                    { slug: "puzzle", name: "Puzzle" },
+                    { slug: "role-playing-rpg", name: "Role-playing (RPG)" },
+                ],
+            })
+        ),
         http.get(`${API}/users/:username/shelf`, ({ request }) => {
             shelfAsked = new URL(request.url).searchParams;
             return HttpResponse.json({
@@ -51,12 +70,12 @@ beforeEach(() => {
 
 const Search = () => <output>{useLocation().search}</output>;
 
-const setup = (route: string) => {
+const setup = (route: string, isMyAccount = true) => {
     renderWithProviders(
         <>
             <GamesView
                 username="devuser"
-                isMyAccount
+                isMyAccount={isMyAccount}
                 stats={undefined}
                 canSee
             />
@@ -166,6 +185,87 @@ describe("GamesView's filters", () => {
         expect(screen.getByRole("searchbox", { name: "Title" })).toHaveValue(
             ""
         );
+    });
+
+    it("filters by a genre on the shelf, and lets go of it on another", async () => {
+        const user = setup("/user/devuser/games?type=played&page=2");
+
+        await user.click(
+            await screen.findByRole("button", { name: "Filters" })
+        );
+        await user.click(await screen.findByRole("button", { name: "Genre" }));
+        // Only the genres on this shelf are offered.
+        expect(screen.queryByRole("option", { name: "Puzzle" })).toBeNull();
+        await user.click(
+            await screen.findByRole("option", { name: "Role-playing (RPG)" })
+        );
+
+        expect(search().get("genre")).toBe("role-playing-rpg");
+        expect(search().get("page")).toBeNull();
+        await waitFor(() =>
+            expect(shelfAsked?.get("genre")).toBe("role-playing-rpg")
+        );
+
+        await user.click(screen.getByRole("tab", { name: /Backlog/ }));
+        expect(search().get("genre")).toBeNull();
+    });
+
+    it("offers only what's in common on someone else's shelf, counted", async () => {
+        mine = new Set([1]);
+        const asked: URLSearchParams[] = [];
+        server.use(
+            http.get(`${API}/users/:username/shelf`, ({ request }) => {
+                const params = new URL(request.url).searchParams;
+                asked.push(params);
+                return HttpResponse.json({
+                    data: [],
+                    meta: { page: 1, limit: 20, total: 7, totalPages: 1 },
+                });
+            })
+        );
+        const user = setup(
+            "/user/devuser/games?type=played&genre=adventure",
+            false
+        );
+
+        await user.click(
+            await screen.findByRole("button", { name: /^Filters/ })
+        );
+        const toggle = await screen.findByRole("switch", {
+            name: "Only show games you have both logged (7)",
+        });
+        // The count is asked with the other filters on, for one row.
+        expect(
+            asked.some(
+                (p) =>
+                    p.get("common") === "both" &&
+                    p.get("limit") === "1" &&
+                    p.get("genre") === "adventure"
+            )
+        ).toBe(true);
+
+        await user.click(toggle);
+        expect(search().get("common")).toBe("both");
+        expect(toggle).toHaveAttribute("aria-checked", "true");
+        await waitFor(() =>
+            expect(
+                asked.some(
+                    (p) => p.get("common") === "both" && p.get("limit") !== "1"
+                )
+            ).toBe(true)
+        );
+    });
+
+    it("doesn't offer it on your own shelf, or ask for it", async () => {
+        mine = new Set([1]);
+        const user = setup("/user/devuser/games?type=played&common=both");
+
+        await user.click(
+            await screen.findByRole("button", { name: "Filters" })
+        );
+        expect(screen.queryByRole("button", { name: "In common" })).toBeNull();
+        await waitFor(() => expect(shelfAsked).not.toBeNull());
+        expect(shelfAsked?.get("common")).toBeNull();
     });
 
     it("closes on a press outside, but not on a pick inside", async () => {

@@ -12,6 +12,8 @@ import { formatCount } from "../../../lib/format";
 import {
     narrowWishlist,
     sortWishlist,
+    wishlistFiltered,
+    type WishlistFilters,
     type WishlistSort,
 } from "../lib/wishlist";
 import ConsoleChips from "./ConsoleChips";
@@ -20,10 +22,7 @@ import WishlistConsoles from "./WishlistConsoles";
 interface WishlistListProps {
     /** The whole wishlist, in its owner's order. */
     wishlist: WishlistEntry[];
-    /** Narrows the list to games wished for on this console. */
-    console?: string;
-    /** Narrows it to titles holding this. */
-    q?: string;
+    filters: WishlistFilters;
     sort: WishlistSort;
     isMyAccount: boolean;
     buildTileActions: (entry: WishlistEntry) => TileAction[];
@@ -41,8 +40,7 @@ const idOf = (entry: WishlistEntry) => entry.gameId;
 /** The wishlist as a ranked list, which its owner can put in order. */
 const WishlistList = ({
     wishlist,
-    console: consoleSlug,
-    q,
+    filters,
     sort,
     isMyAccount,
     buildTileActions,
@@ -56,24 +54,24 @@ const WishlistList = ({
     );
     const shown = useMemo(() => {
         const ranked = wishlist.map((entry, i) => ({ ...entry, rank: i + 1 }));
-        return sortWishlist(
-            narrowWishlist(ranked, { console: consoleSlug, q }),
-            sort
-        );
-    }, [wishlist, consoleSlug, q, sort]);
+        return sortWishlist(narrowWishlist(ranked, filters), sort);
+    }, [wishlist, filters, sort]);
 
     /* Only the whole list in its own order: filtered, a move would have to
        guess where among the hidden games it meant to land. */
-    const canReorder = isMyAccount && sort === "rank" && !consoleSlug && !q;
+    const filtered = wishlistFiltered(filters);
+    const canReorder = isMyAccount && sort === "rank" && !filtered;
     const hint = !isMyAccount
         ? undefined
         : sort !== "rank"
           ? "Sort by your order to rearrange."
-          : consoleSlug
-            ? "Clear the platform filter to rearrange."
-            : q
-              ? "Clear the search to rearrange."
-              : undefined;
+          : !filtered
+            ? undefined
+            : filters.console && !filters.q && !filters.genre
+              ? "Clear the platform filter to rearrange."
+              : filters.q && !filters.console && !filters.genre
+                ? "Clear the search to rearrange."
+                : "Clear the filters to rearrange.";
 
     return (
         <RankedList

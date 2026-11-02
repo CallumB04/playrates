@@ -7,6 +7,7 @@ import {
 import type { WishlistPage } from "@playrates/shared";
 import {
     fetchShelfConsoles,
+    fetchShelfGenres,
     fetchUserWishlist,
     queryKeys,
     setMyWishlistOrder,
@@ -80,6 +81,19 @@ export const useShelfConsoles = (
     useQuery({
         queryKey: queryKeys.gameLogs.shelfConsoles(username, status),
         queryFn: () => fetchShelfConsoles(username, status),
+        enabled: enabled && !!username,
+        staleTime: 60_000,
+    });
+
+/** The genres on one of someone's shelves, to filter it by. */
+export const useShelfGenres = (
+    username: string,
+    status: string,
+    enabled = true
+) =>
+    useQuery({
+        queryKey: queryKeys.gameLogs.shelfGenres(username, status),
+        queryFn: () => fetchShelfGenres(username, status),
         enabled: enabled && !!username,
         staleTime: 60_000,
     });

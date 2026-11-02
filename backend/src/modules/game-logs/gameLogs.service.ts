@@ -7,6 +7,7 @@ import type {
   LogBundle,
   Paginated,
   Pagination,
+  ShelfCommon,
   ShelfEntry,
   WishlistEntry,
   WishlistPage,
@@ -149,10 +150,12 @@ export const createGameLogsService = (
     ): Promise<WishlistPage> {
       const userId = await visibleProfileId(username, viewerId);
       const ids = await repo.wishlistGameIds(userId);
+      const genresOf = await repo.genresOf(ids);
       const entries: WishlistEntry[] = (await entriesFor(userId, ids)).map(
         (entry, i) => ({
           ...entry,
           rank: i + 1,
+          genres: genresOf.get(entry.gameId) ?? [],
           consoles: [
             ...new Set(
               entry.logs
@@ -174,6 +177,7 @@ export const createGameLogsService = (
         data: limit ? shown.slice(0, limit) : shown,
         total: ids.length,
         consoles,
+        genres: [...new Set([...genresOf.values()].flat())].sort(),
       };
     },
 
@@ -191,6 +195,18 @@ export const createGameLogsService = (
         );
       }
       await repo.setWishlistOrder(userId, gameIds);
+    },
+
+    /** The genres on one of someone's shelves, to filter it by. */
+    async shelfGenresForUsername(
+      username: string,
+      status: string,
+      viewerId: string | undefined,
+    ): Promise<string[]> {
+      return repo.shelfGenres(
+        await visibleProfileId(username, viewerId),
+        status,
+      );
     },
 
     /** The consoles on one of someone's shelves, to filter it by. */
@@ -237,15 +253,23 @@ export const createGameLogsService = (
       return shelfFor(userId, query, pagination);
     },
 
+    /** `common` weighs the shelf against the viewer's own logs, so it
+     *  means nothing signed out or on their own profile, and is dropped. */
     async shelfForUsername(
       username: string,
-      query: ShelfQuery,
+      {
+        common,
+        ...query
+      }: Omit<ShelfQuery, "common"> & { common?: ShelfCommon },
       pagination: Pagination,
       viewerId: string | undefined,
     ): Promise<Paginated<ShelfEntry>> {
+      const userId = await visibleProfileId(username, viewerId);
       return shelfFor(
-        await visibleProfileId(username, viewerId),
-        query,
+        userId,
+        common && viewerId && viewerId !== userId
+          ? { ...query, common: { viewerId, keep: common } }
+          : query,
         pagination,
       );
     },

@@ -104,6 +104,7 @@ export interface SeedData {
   games?: GameRow[];
   gamePlatforms?: { game_id: number; platform_slug: string }[];
   gameSystems?: { game_id: number; system_slug: string }[];
+  gameGenres?: { game_id: number; genre_slug: string }[];
   gameLogs?: GameLogRow[];
   reviews?: ReviewRow[];
   friendships?: FriendshipRow[];
@@ -135,6 +136,7 @@ export interface InMemoryState {
   games: GameRow[];
   gamePlatforms: { game_id: number; platform_slug: string }[];
   gameSystems: { game_id: number; system_slug: string }[];
+  gameGenres: { game_id: number; genre_slug: string }[];
   gameLogs: GameLogRow[];
   reviews: ReviewRow[];
   reviewVotes: { review_id: number; user_id: string; reaction?: string }[];
@@ -249,6 +251,7 @@ export const createInMemoryRepos = (
     games: [...(seed.games ?? [])],
     gamePlatforms: [...(seed.gamePlatforms ?? [])],
     gameSystems: [...(seed.gameSystems ?? [])],
+    gameGenres: [...(seed.gameGenres ?? [])],
     gameLogs: [...(seed.gameLogs ?? [])],
     reviews: [...(seed.reviews ?? [])],
     reviewVotes: [],
@@ -1132,7 +1135,25 @@ export const createInMemoryRepos = (
                   l.system_slug === query.system &&
                   (!query.status || l.status === query.status),
               ),
-          );
+          )
+          .filter(
+            ({ logs }) =>
+              !query.genre ||
+              state.gameGenres.some(
+                (g) =>
+                  g.game_id === logs[0]!.game_id &&
+                  g.genre_slug === query.genre,
+              ),
+          )
+          .filter(({ logs }) => {
+            if (!query.common) return true;
+            const theyHave = state.gameLogs.some(
+              (l) =>
+                l.user_id === query.common!.viewerId &&
+                l.game_id === logs[0]!.game_id,
+            );
+            return query.common.keep === "both" ? theyHave : !theyHave;
+          });
 
         const sortKey = ({
           logs,
@@ -1303,6 +1324,28 @@ export const createInMemoryRepos = (
               .map((l) => l.system_slug as string),
           ),
         ].sort();
+      },
+      async shelfGenres(userId, status) {
+        const onShelf = new Set(
+          state.gameLogs
+            .filter((l) => l.user_id === userId && l.status === status)
+            .map((l) => l.game_id),
+        );
+        return [
+          ...new Set(
+            state.gameGenres
+              .filter((g) => onShelf.has(g.game_id))
+              .map((g) => g.genre_slug),
+          ),
+        ].sort();
+      },
+      async genresOf(gameIds) {
+        const byGame = new Map<number, string[]>();
+        for (const g of state.gameGenres) {
+          if (!gameIds.includes(g.game_id)) continue;
+          byGame.set(g.game_id, [...(byGame.get(g.game_id) ?? []), g.genre_slug]);
+        }
+        return byGame;
       },
       async count() {
         return state.gameLogs.length;
