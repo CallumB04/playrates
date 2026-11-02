@@ -32,7 +32,7 @@ every state, `newcomer` is empty), and outgoing email lands in Mailpit on
 
 A change is finished when all of these pass, not after someone asks:
 
-- `npm run typecheck`, `npm run lint` (warnings allowed, no errors).
+- `npm run typecheck`, and `npm run lint` with no errors and no warnings.
 - `npm run test:coverage`. Thresholds are 95% statements, functions and
   lines, 90% branches, in both workspaces. New code in a covered folder
   brings its tests or the run fails.

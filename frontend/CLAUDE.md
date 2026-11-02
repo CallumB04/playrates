@@ -41,6 +41,12 @@ values or stock Tailwind colours. Brand-coloured text is `text-brand-text`,
 never `text-brand`, which fails contrast. Dark is the default and both themes
 must work; `/admin/design` renders the component library.
 
+A file that exports a component exports only components, or editing it
+reloads the whole page instead of hot-swapping it (lint warns). Helpers,
+hooks, constants and class builders go in a `.ts` file beside it:
+`ui/buttonClass.ts` beside `ui/Button.tsx`, `contexts/AuthContext.tsx` (the
+context and `useAuth`) beside `contexts/AuthProvider.tsx`.
+
 `cn()` joins classes without merging them, so a class passed in beside a
 default leaves both and the stylesheet picks. Extend a primitive with a named
 variant or tone instead of overriding it at the call site.

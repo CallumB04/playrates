@@ -5,9 +5,9 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "cd \"${CLAUDE_PROJECT_DIR:-.}\" || exit 0\n[ -z \"$(git status --porcelain -- frontend backend shared api 2>/dev/null)\" ] && exit 0\nout=$(npm run typecheck 2>&1) || { printf '%s' \"$out\" | tail -30 | jq -Rs '{decision:\"block\",reason:(\"typecheck failed \u2014 fix before finishing:\\n\"+.)}'; exit 0; }\nout=$(npm run test:coverage 2>&1) || { printf '%s' \"$out\" | tail -30 | jq -Rs '{decision:\"block\",reason:(\"tests or coverage failed \u2014 fix before finishing:\\n\"+.)}'; exit 0; }\nexit 0",
-                        "timeout": 300,
-                        "statusMessage": "Verifying typecheck, tests and coverage..."
+                        "command": "cd \"${CLAUDE_PROJECT_DIR:-.}\" || exit 0\n[ -z \"$(git status --porcelain -- frontend backend shared api 2>/dev/null)\" ] && exit 0\nout=$(npm run typecheck 2>&1) || { printf '%s' \"$out\" | tail -30 | jq -Rs '{decision:\"block\",reason:(\"typecheck failed: fix before finishing:\\n\"+.)}'; exit 0; }\nout=$(npm run lint 2>&1) || { printf '%s' \"$out\" | tail -30 | jq -Rs '{decision:\"block\",reason:(\"lint failed: fix before finishing:\\n\"+.)}'; exit 0; }\nout=$(npm run test:coverage 2>&1) || { printf '%s' \"$out\" | tail -30 | jq -Rs '{decision:\"block\",reason:(\"tests or coverage failed: fix before finishing:\\n\"+.)}'; exit 0; }\nout=$(npm run build 2>&1) || { printf '%s' \"$out\" | tail -30 | jq -Rs '{decision:\"block\",reason:(\"build failed: fix before finishing:\\n\"+.)}'; exit 0; }\nout=$(npm run size -w frontend 2>&1) || { printf '%s' \"$out\" | tail -30 | jq -Rs '{decision:\"block\",reason:(\"the first-load JS budget failed: fix before finishing:\\n\"+.)}'; exit 0; }\nexit 0",
+                        "timeout": 420,
+                        "statusMessage": "Verifying typecheck, lint, tests, coverage and build..."
                     }
                 ]
             }

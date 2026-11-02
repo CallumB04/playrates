@@ -75,7 +75,8 @@ jobs:
       - uses: actions/checkout@v4
 
       # Pinned, so a CLI release can't change what CI checks without a
-      # commit saying so. Dependabot raises the bumps.
+      # commit saying so. Dependabot only bumps action versions, not this
+      # input: raise it by hand from github.com/supabase/cli/releases.
       - uses: supabase/setup-cli@v1
         with:
           version: 2.122.0
