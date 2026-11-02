@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { FIXED_PAGES } from "@playrates/shared";
 import { describe, expect, it } from "vitest";
 import request from "supertest";
 import { buildTestApp, USER_A, USER_B } from "../helpers/buildTestApp.js";
@@ -265,6 +266,18 @@ describe("the sitemap", () => {
     expect((await request(app).get("/sitemaps/pages.xml")).text).toContain(
       "<loc>https://playrates.app/privacy</loc>",
     );
+  });
+
+  it("lists every fixed page search engines may index, and none marked noindex", async () => {
+    const { app } = buildTestApp({ seed: seed(), production: true });
+
+    const pages = (await request(app).get("/sitemaps/pages.xml")).text;
+
+    expect(pages).toContain("<loc>https://playrates.app/people</loc>");
+    for (const [path, page] of Object.entries(FIXED_PAGES)) {
+      const listed = pages.includes(`<loc>https://playrates.app${path}</loc>`);
+      expect({ path, listed }).toEqual({ path, listed: !page.noindex });
+    }
   });
 });
 
