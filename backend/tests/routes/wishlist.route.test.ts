@@ -220,7 +220,7 @@ describe("filtering by what the viewer has too", () => {
     );
   };
 
-  it("keeps the games both have logged, or theirs alone", async () => {
+  it("keeps the games both have logged", async () => {
     const { app, log } = setup();
     await log({ gameId: 1, status: "played" });
     await log({ gameId: 2, status: "played" });
@@ -228,7 +228,6 @@ describe("filtering by what the viewer has too", () => {
     await log({ gameId: 2, status: "wishlist" }, USER_B);
 
     expect(await shelf(app, "both", USER_B)).toEqual(["Game 2"]);
-    expect(await shelf(app, "theirs", USER_B)).toEqual(["Game 1"]);
   });
 
   it("means nothing signed out or on your own profile", async () => {
@@ -237,13 +236,13 @@ describe("filtering by what the viewer has too", () => {
     await log({ gameId: 2, status: "played" });
 
     expect(await shelf(app, "both")).toHaveLength(2);
-    expect(await shelf(app, "theirs", USER_A)).toHaveLength(2);
+    expect(await shelf(app, "both", USER_A)).toHaveLength(2);
   });
 
   it("refuses a value it doesn't know", async () => {
     const { app } = setup();
     const response = await request(app).get(
-      "/api/v1/users/devuser/shelf?status=played&common=mine",
+      "/api/v1/users/devuser/shelf?status=played&common=theirs",
     );
     expect(response.status).toBe(422);
   });

@@ -3,7 +3,6 @@ import { likeTerm } from "../../lib/likeTerm.js";
 import type {
   GameLogSort,
   PlayedStatusFilter,
-  ShelfCommon,
   SortDirection,
 } from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
@@ -80,9 +79,8 @@ export interface ShelfQuery {
   system?: string;
   /** Narrows to games in this genre, by slug. */
   genre?: string;
-  /** Against another member's logs, any status: the games they have too,
-   *  or the ones they don't. */
-  common?: { viewerId: string; keep: ShelfCommon };
+  /** Narrows to games this other member has logged too, in any status. */
+  common?: { viewerId: string };
 }
 
 export interface GameLogsRepository {
@@ -244,8 +242,7 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
       if (matched.length === 0) return { gameIds: [], total: 0 };
     }
 
-    // Any log of theirs counts, wishlist included, as "in common" does.
-    let theirsOnly: number[] = [];
+    // Any log of theirs counts, wishlist included.
     if (query.common) {
       const viewerId = query.common.viewerId;
       const rows = await allPages(async (from, to) => {
@@ -258,14 +255,9 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
         if (error) throw error;
         return (data ?? []) as { game_id: number }[];
       });
-      const viewers = [...new Set(rows.map((r) => r.game_id))];
-      if (query.common.keep === "both") {
-        const has = new Set(viewers);
-        matched = (matched ?? viewers).filter((id) => has.has(id));
-        if (matched.length === 0) return { gameIds: [], total: 0 };
-      } else {
-        theirsOnly = viewers;
-      }
+      const viewers = new Set(rows.map((r) => r.game_id));
+      matched = (matched ?? [...viewers]).filter((id) => viewers.has(id));
+      if (matched.length === 0) return { gameIds: [], total: 0 };
     }
 
     let builder = db
@@ -274,9 +266,6 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
       .eq("user_id", userId);
 
     if (matched) builder = builder.in("game_id", matched);
-    if (theirsOnly.length > 0) {
-      builder = builder.not("game_id", "in", `(${theirsOnly.join(",")})`);
-    }
     if (query.status) builder = builder.contains("statuses", [query.status]);
     if (query.playedStatus) {
       builder = builder.contains("played_endings", [query.playedStatus]);

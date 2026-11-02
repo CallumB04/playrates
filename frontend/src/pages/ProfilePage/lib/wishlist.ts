@@ -1,4 +1,4 @@
-import type { ShelfCommon, WishlistEntry } from "@playrates/shared";
+import type { WishlistEntry } from "@playrates/shared";
 
 /** The order with one game moved to a place, counted from 1 and held to
  *  the list's ends. Top, up, down, bottom and "Move to #" are all this. */
@@ -17,12 +17,12 @@ export const moveTo = (
 };
 
 /** What narrows a wishlist, as the shelves' own filters narrow them on
- *  the server. `common` weighs it against the viewer's logged games. */
+ *  the server. `common` is the viewer's logged games, to keep only those. */
 export interface WishlistFilters {
     console?: string;
     q?: string;
     genre?: string;
-    common?: { keep: ShelfCommon; mine: ReadonlySet<number> };
+    common?: ReadonlySet<number>;
 }
 
 export const wishlistFiltered = ({
@@ -43,7 +43,7 @@ export const narrowWishlist = <T extends WishlistEntry>(
             (!term ||
                 (e.game?.title ?? "").toLocaleLowerCase().includes(term)) &&
             (!genre || (e.genres ?? []).includes(genre)) &&
-            (!common || common.mine.has(e.gameId) === (common.keep === "both"))
+            (!common || common.has(e.gameId))
     );
 };
 

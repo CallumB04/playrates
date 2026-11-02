@@ -114,14 +114,10 @@ describe("narrowWishlist", () => {
         expect(ids(narrowWishlist(list, { genre: "indie" }))).toEqual([]);
     });
 
-    it("keeps what the viewer has too, or what they don't", () => {
-        const mine = new Set([1, 3]);
-        expect(
-            ids(narrowWishlist(list, { common: { keep: "both", mine } }))
-        ).toEqual([1, 3]);
-        expect(
-            ids(narrowWishlist(list, { common: { keep: "theirs", mine } }))
-        ).toEqual([2]);
+    it("keeps only what the viewer has logged too", () => {
+        expect(ids(narrowWishlist(list, { common: new Set([1, 3]) }))).toEqual([
+            1, 3,
+        ]);
     });
 
     it("counts as filtered with any filter on", () => {

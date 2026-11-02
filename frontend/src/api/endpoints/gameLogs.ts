@@ -9,7 +9,6 @@ import type {
     PlayedStatusFilter,
     Review,
     ReviewInput,
-    ShelfCommon,
     ShelfEntry,
     ShelfGame,
     SortDirection,
@@ -54,8 +53,8 @@ export interface GameLogPage {
     system?: string;
     /** Narrows a shelf to games in this genre, by slug. */
     genre?: string;
-    /** Someone else's shelf against the viewer's logs. */
-    common?: ShelfCommon;
+    /** Someone else's shelf, narrowed to the games the viewer has too. */
+    common?: "both";
 }
 
 /** A page of games, each with every console it was logged on. */

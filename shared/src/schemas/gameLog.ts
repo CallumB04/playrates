@@ -146,10 +146,6 @@ export const GameLogQuerySchema = z.object({
   direction: SortDirectionSchema,
 });
 
-/** Against the viewer's own logs: the games both have, or theirs alone. */
-export const SHELF_COMMON = ["both", "theirs"] as const;
-export type ShelfCommon = (typeof SHELF_COMMON)[number];
-
 /** A shelf's query: a game log query, and a title to narrow it to. */
 export const ShelfQuerySchema = GameLogQuerySchema.extend({
   q: z.string().trim().min(1).max(100).optional(),
@@ -157,8 +153,9 @@ export const ShelfQuerySchema = GameLogQuerySchema.extend({
   system: z.string().trim().min(1).max(60).optional(),
   /** A genre's slug. */
   genre: z.string().trim().min(1).max(60).optional(),
-  /** Only for a signed-in viewer of someone else's shelf. */
-  common: z.enum(SHELF_COMMON).optional(),
+  /** Only the games the viewer has logged too. For a signed-in viewer of
+   *  someone else's shelf. */
+  common: z.literal("both").optional(),
 });
 
 /** The most a wishlist holds in one answer: it is read whole, to be put in

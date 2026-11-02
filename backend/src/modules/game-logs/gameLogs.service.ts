@@ -7,7 +7,6 @@ import type {
   LogBundle,
   Paginated,
   Pagination,
-  ShelfCommon,
   ShelfEntry,
   WishlistEntry,
   WishlistPage,
@@ -257,10 +256,7 @@ export const createGameLogsService = (
      *  means nothing signed out or on their own profile, and is dropped. */
     async shelfForUsername(
       username: string,
-      {
-        common,
-        ...query
-      }: Omit<ShelfQuery, "common"> & { common?: ShelfCommon },
+      { common, ...query }: Omit<ShelfQuery, "common"> & { common?: "both" },
       pagination: Pagination,
       viewerId: string | undefined,
     ): Promise<Paginated<ShelfEntry>> {
@@ -268,7 +264,7 @@ export const createGameLogsService = (
       return shelfFor(
         userId,
         common && viewerId && viewerId !== userId
-          ? { ...query, common: { viewerId, keep: common } }
+          ? { ...query, common: { viewerId } }
           : query,
         pagination,
       );

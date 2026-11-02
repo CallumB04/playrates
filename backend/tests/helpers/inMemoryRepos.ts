@@ -1147,12 +1147,11 @@ export const createInMemoryRepos = (
           )
           .filter(({ logs }) => {
             if (!query.common) return true;
-            const theyHave = state.gameLogs.some(
+            return state.gameLogs.some(
               (l) =>
                 l.user_id === query.common!.viewerId &&
                 l.game_id === logs[0]!.game_id,
             );
-            return query.common.keep === "both" ? theyHave : !theyHave;
           });
 
         const sortKey = ({

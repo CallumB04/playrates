@@ -154,10 +154,7 @@ const GamesView = ({
             console: consoleSlug,
             q,
             genre,
-            common:
-                common && myLogGameIds
-                    ? { keep: common, mine: myLogGameIds }
-                    : undefined,
+            common: common && myLogGameIds ? myLogGameIds : undefined,
         }),
         [consoleSlug, q, genre, common, myLogGameIds]
     );
@@ -173,7 +170,7 @@ const GamesView = ({
         : isWishlist
           ? narrowWishlist(wishlist, {
                 ...wishlistFilters,
-                common: { keep: "both", mine: myLogGameIds },
+                common: myLogGameIds,
             }).length
           : commonPage?.meta.total;
     // Unpaged, so the wishlist gives the foot nothing to count.
