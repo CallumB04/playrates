@@ -76,7 +76,8 @@ jobs:
 
       # Pinned, so a CLI release can't change what CI checks without a
       # commit saying so. Dependabot only bumps action versions, not this
-      # input: raise it by hand from github.com/supabase/cli/releases.
+      # input: raise it by hand from github.com/supabase/cli/releases, and
+      # in scripts/dev-local.mjs, which runs the same one locally.
       - uses: supabase/setup-cli@v3
         with:
           version: 2.122.0

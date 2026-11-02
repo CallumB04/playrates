@@ -12,9 +12,11 @@ the browser gets nothing but sign-in.
   later migration. A changed function signature gets a new function; the old
   one stays until nothing calls it.
 - Seed and reference data is idempotent (`on conflict ... do nothing`).
-- Apply locally first (`npx --no-install supabase migration up --local`, or
+- Apply locally first (`npx --yes supabase@2.122.0 migration up --local`, or
   `npm run db:reset:local` to prove they apply from scratch), then live
-  (`npx --no-install supabase db push --linked`).
+  (`npx --yes supabase@2.122.0 db push --linked`). The CLI is pinned to the
+  version CI uses; a bare `npx --no-install supabase` fails whenever a newer
+  CLI is out.
 - Then regenerate the types against the local stack:
   `npm run db:types -w backend` writes `backend/src/types/database.generated.ts`,
   which CI diffs byte for byte. The row shapes the code imports are

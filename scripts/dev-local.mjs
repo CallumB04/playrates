@@ -34,7 +34,11 @@ const run = (command, args, options = {}) => {
   return result;
 };
 const step = (text) => console.log(`\n▸ ${text}`);
-const supabase = (...args) => run("npx", ["--no-install", "supabase", ...args]);
+// The CLI version CI pins (.github/workflows/ci.yml), fetched once if it isn't
+// cached. Unpinned, "npx --no-install supabase" stops working the day a new
+// CLI is published, as it looks for that one.
+const CLI = ["--yes", "supabase@2.122.0"];
+const supabase = (...args) => run("npx", [...CLI, ...args]);
 
 if (spawnSync("docker", ["info"], { stdio: "ignore" }).status !== 0) {
   console.error("Docker isn't running. Start it, then try again.");
@@ -53,7 +57,7 @@ run("npm", ["run", "local:seed"]);
 
 const status = spawnSync(
   "npx",
-  ["--no-install", "supabase", "status", "-o", "json"],
+  [...CLI, "status", "-o", "json"],
   { cwd: root, encoding: "utf8" },
 );
 if (status.status !== 0) {
@@ -72,7 +76,7 @@ if (resetOnly) {
 }
 
 const keys = JSON.parse(
-  spawnSync("npx", ["--no-install", "supabase", "status", "-o", "json"], {
+  spawnSync("npx", [...CLI, "status", "-o", "json"], {
     cwd: root,
     encoding: "utf8",
   }).stdout,
