@@ -250,7 +250,8 @@ Callum opens TikTok in the browser pane; the upload page is
   it: put the caret after it with a Selection range and press Backspace
   over it before typing on.
 - **Sound**: Add sound under the description, search, then the row's
-  **Use** (a real click; it can take a few seconds to apply). Pick the
+  **Use** (a real click; it can take a few seconds to apply; when a real click
+  doesn't take, `.click()` on the row's Use button from a script does). Pick the
   original artist's version where there is one (another arrangement by the
   same composer counts), the closest cover of the game track where there
   isn't, and tell Callum which you chose.
@@ -280,7 +281,9 @@ Callum opens TikTok in the browser pane; the upload page is
 - **Press Schedule yourself** once everything checks out, then wait for
   the page to move to the post list on its own. **Never reload or navigate
   away first**: a reload ten seconds after Schedule lost a post on
-  2026-10-30. Confirm it in the post list (`/tiktokstudio/content`),
+  2026-10-30. Confirm it in the post list (`/tiktokstudio/content`; the
+  list it lands on can lag, so if the post is missing, reload it then, never
+  schedule again),
   **including the description**: on 2026-10-30 a post scheduled with a
   correct-looking box arrived as "No description", and **scheduled posts
   can't be edited**, so the only fix is for Callum to delete it and for
