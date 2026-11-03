@@ -47,11 +47,14 @@ const SORT_COLUMNS: Record<GameLogSort, string> = {
   hoursPlayed: "hours_played",
   hoursToBeat: "hours_to_beat",
   added: "created_at",
+  // A log has one ending, and its column sorts alphabetically, so this list,
+  // which predates the sort and no client asks it of, keeps to the rating.
+  ending: "rating",
 };
 
 /** The same orderings over game_log_rollups, a row per game: the mean
  *  rating, the latest play, the best completion, the total hours, the
- *  quickest beat and the first log. */
+ *  quickest beat, the first log and the best ending. */
 const ROLLUP_SORT_COLUMNS: Record<GameLogSort, string> = {
   rating: "rating",
   gameRating: "game_avg_rating",
@@ -63,6 +66,7 @@ const ROLLUP_SORT_COLUMNS: Record<GameLogSort, string> = {
   hoursPlayed: "hours_played",
   hoursToBeat: "hours_to_beat",
   added: "first_added_at",
+  ending: "ending_rank",
 };
 
 /** What a shelf is filtered and ordered by. Bundled rather than threaded

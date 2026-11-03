@@ -1,5 +1,5 @@
 import { ArrowDownWideNarrow, ArrowUpNarrowWide } from "lucide-react";
-import type { GameLogSort, SortDirection } from "@playrates/shared";
+import type { GameLogSort, GameStatus, SortDirection } from "@playrates/shared";
 import Dropdown from "../../../components/ui/Dropdown";
 import { directionLabel, shelfSortOptions } from "../lib/shelfSort";
 
@@ -9,6 +9,7 @@ interface ShelfSortProps {
     /** Only to word the rating option, which is not "yours" on someone
      *  else's profile. */
     isMyAccount: boolean;
+    shelf: GameStatus;
     onChange: (next: { sort?: GameLogSort; direction?: SortDirection }) => void;
 }
 
@@ -21,6 +22,7 @@ const ShelfSort = ({
     sort,
     direction,
     isMyAccount,
+    shelf,
     onChange,
 }: ShelfSortProps) => {
     const flipped = direction === "asc";
@@ -29,7 +31,7 @@ const ShelfSort = ({
     return (
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
             <Dropdown
-                options={shelfSortOptions(isMyAccount).map((option) => ({
+                options={shelfSortOptions(isMyAccount, shelf).map((option) => ({
                     value: option.value,
                     label: option.label,
                 }))}

@@ -207,6 +207,14 @@ export interface InMemoryState {
   unconfirmed: Set<string>;
 }
 
+/** ending_rank in game_log_rollups; played with no ending is 0. */
+const ENDING_RANK: Record<string, number> = {
+  mastered: 4,
+  finished: 3,
+  shelved: 2,
+  retired: 1,
+};
+
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
 
 /** What the game_logs_wishlist_ranks trigger does in Postgres: a game newly
@@ -1088,6 +1096,8 @@ export const createInMemoryRepos = (
               return l.hours_to_beat;
             case "added":
               return l.created_at;
+            case "ending":
+              return l.rating;
           }
         };
 
@@ -1202,6 +1212,13 @@ export const createInMemoryRepos = (
             }
             case "added":
               return logs.map((l) => l.created_at).sort()[0]!;
+            // The best of the played logs', as ending_rank in the view.
+            case "ending": {
+              const ranks = logs
+                .filter((l) => l.status === "played")
+                .map((l) => ENDING_RANK[l.played_status ?? ""] ?? 0);
+              return ranks.length ? Math.max(...ranks) : null;
+            }
           }
         };
         const latest = (g: (typeof games)[number]) =>

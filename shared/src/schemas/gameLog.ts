@@ -126,6 +126,8 @@ export const GAME_LOG_SORTS = [
   "hoursPlayed",
   "hoursToBeat",
   "added",
+  /** How it ended, best first: the played shelf's alone. */
+  "ending",
 ] as const;
 
 export const GameLogSortSchema = z.enum(GAME_LOG_SORTS).default("rating");

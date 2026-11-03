@@ -32,6 +32,7 @@ import {
     type WishlistSort,
 } from "../lib/wishlist";
 import { getProfileGamesPerPage } from "../lib/friendRelation";
+import { sortForShelf } from "../lib/shelfSort";
 import { usePageParam } from "../lib/usePageParam";
 import { useShelfTileActions } from "../lib/useShelfTileActions";
 
@@ -66,9 +67,12 @@ const GamesView = ({
     /* In the URL alongside the tab, so a sorted shelf survives a reload and
        can be linked to. Anything unrecognised falls back to the default. */
     const rawSort = params.get("sort");
-    const sort: GameLogSort = GAME_LOG_SORTS.includes(rawSort as GameLogSort)
-        ? (rawSort as GameLogSort)
-        : "rating";
+    const sort: GameLogSort = sortForShelf(
+        GAME_LOG_SORTS.includes(rawSort as GameLogSort)
+            ? (rawSort as GameLogSort)
+            : "rating",
+        activeSection
+    );
     const direction: SortDirection =
         params.get("direction") === "asc" ? "asc" : "desc";
 
@@ -256,7 +260,10 @@ const GamesView = ({
             updated.delete("direction");
         }
         // No other shelf has endings, so the filter would be a lie in the URL.
-        if (status !== "played") updated.delete("ending");
+        if (status !== "played") {
+            updated.delete("ending");
+            if (sort === "ending") updated.delete("sort");
+        }
         setParams(updated);
     };
 
@@ -346,6 +353,7 @@ const GamesView = ({
                                 sort={sort}
                                 direction={direction}
                                 isMyAccount={isMyAccount}
+                                shelf={activeSection}
                                 onChange={setOrder}
                             />
                         )}

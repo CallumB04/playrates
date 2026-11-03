@@ -217,6 +217,8 @@ export interface GameLogRollupRow {
   game_release_date: string | null;
   hours_to_beat: number | null;
   first_added_at: string;
+  /** The best played log's ending, mastered 4 down to none 0; null unplayed. */
+  ending_rank: number | null;
 }
 
 /** What user_log_stats() returns. */
