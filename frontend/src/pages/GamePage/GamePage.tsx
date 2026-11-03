@@ -186,7 +186,7 @@ const GamePage = () => {
                 </div>
 
                 <header className="order-first min-w-0 lg:order-none lg:col-start-2 lg:row-start-1">
-                    <h1 className="font-display text-display text-content">
+                    <h1 className="font-display text-display text-content on-backdrop">
                         {game.title}
                     </h1>
                 </header>
@@ -195,7 +195,7 @@ const GamePage = () => {
                     {game.description ? (
                         <ExpandableText
                             text={game.description}
-                            className="text-body"
+                            className="text-body on-backdrop"
                             moreLabel="Read the full description"
                         />
                     ) : (

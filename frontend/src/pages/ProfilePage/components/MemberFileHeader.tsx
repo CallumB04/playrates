@@ -68,7 +68,7 @@ const MemberFileHeader = ({
                 </AvatarFrame>
             </span>
 
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 on-backdrop">
                 <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
                     <h1 className="font-display text-title break-words text-content">
                         <NameText
