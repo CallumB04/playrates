@@ -178,62 +178,68 @@ const SteamGameRow = ({
                 {expanded && (
                     <div
                         id={panelId}
-                        className="grid gap-x-6 gap-y-4 pt-4 pb-1 sm:grid-cols-2 sm:items-baseline sm:pl-12"
+                        className="flex flex-col gap-4 pt-4 pb-1 sm:pl-12"
                     >
-                        <div className={cn(!played && "sm:col-span-2")}>
-                            {/* One row is open at a time, so its label needn't
-                                name the game. */}
-                            <RatingMeter
-                                value={draft.rating}
-                                onChange={(rating) =>
-                                    onChange({ ...draft, rating })
-                                }
-                                label="Your rating"
-                            />
-                        </div>
-                        {played && (
-                            // Labelled as the meter labels itself, and on its
-                            // baseline, so the two read as one row.
-                            <div className="flex flex-col gap-2.5">
-                                <label
-                                    htmlFor={endingId}
-                                    className="text-label text-content-muted"
-                                >
-                                    How it ended
-                                </label>
-                                <Dropdown
-                                    id={endingId}
-                                    options={PLAYED_OPTIONS}
-                                    value={draft.playedStatus ?? ""}
-                                    onChange={(value) =>
-                                        onChange({
-                                            ...draft,
-                                            playedStatus: (value ||
-                                                null) as PlayedStatus | null,
-                                        })
-                                    }
-                                />
-                            </div>
-                        )}
-                        {got && (
-                            <div className="flex flex-col gap-1.5 sm:col-span-2">
-                                <p className="flex justify-between gap-3 text-label-sm">
-                                    <span className="text-content-muted">
-                                        Achievements from Steam
-                                    </span>
-                                    <span className="text-content-secondary">
-                                        {ofTotal(got)} ·{" "}
-                                        {formatPercent(
-                                            got.unlocked / got.total
-                                        )}
-                                    </span>
-                                </p>
-                                <Progress
-                                    value={got.unlocked / got.total}
-                                    label={`${ofTotal(got)} achievements unlocked`}
-                                    size="sm"
-                                    fillClassName="bg-status-mastered"
-                                />
+                        {/* One row is open at a time, so its label needn't
+                            name the game. */}
+                        <RatingMeter
+                            value={draft.rating}
+                            onChange={(rating) =>
+                                onChange({ ...draft, rating })
+                            }
+                            label="Your rating"
+                        />
+                        {(played || got) && (
+                            <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+                                {played && (
+                                    // Labelled as the meter labels itself.
+                                    <div className="flex flex-col gap-2.5">
+                                        <label
+                                            htmlFor={endingId}
+                                            className="text-label text-content-muted"
+                                        >
+                                            How it ended
+                                        </label>
+                                        <Dropdown
+                                            id={endingId}
+                                            options={PLAYED_OPTIONS}
+                                            value={draft.playedStatus ?? ""}
+                                            onChange={(value) =>
+                                                onChange({
+                                                    ...draft,
+                                                    playedStatus: (value ||
+                                                        null) as PlayedStatus | null,
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                )}
+                                {got && (
+                                    <div className="flex flex-col gap-2.5">
+                                        <p className="flex justify-between gap-3 text-label">
+                                            <span className="text-content-muted">
+                                                Achievements from Steam
+                                            </span>
+                                            <span className="text-content-secondary tabular-nums">
+                                                {ofTotal(got)} ·{" "}
+                                                {formatPercent(
+                                                    got.unlocked / got.total
+                                                )}
+                                            </span>
+                                        </p>
+                                        {/* The dropdown's height beside it, so
+                                            the bar sits level with its middle. */}
+                                        <div className="flex items-center sm:h-11">
+                                            <Progress
+                                                value={got.unlocked / got.total}
+                                                label={`${ofTotal(got)} achievements unlocked`}
+                                                size="sm"
+                                                fillClassName="bg-status-mastered"
+                                                className="w-full"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
