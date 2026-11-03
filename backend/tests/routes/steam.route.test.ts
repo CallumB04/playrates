@@ -237,6 +237,46 @@ describe("Steam import", () => {
     ]);
   });
 
+  it("shows a game two Steam apps match once, as its most played", async () => {
+    const { app } = buildTestApp({
+      seed: seed(),
+      provider: {
+        ...provider,
+        // Hades and its demo are one game here.
+        fromSteam: vi.fn(
+          async () =>
+            new Map([
+              [10, 1000],
+              [11, 1000],
+            ]),
+        ),
+      },
+      steam: steam([
+        {
+          appid: 11,
+          name: "Hades Demo",
+          playtime: 30,
+          recentPlaytime: 0,
+          hasStats: false,
+        },
+        {
+          appid: 10,
+          name: "Hades",
+          playtime: 1500,
+          recentPlaytime: 0,
+          hasStats: true,
+        },
+      ]),
+    });
+    const { body } = await as(app).post("/api/v1/me/steam/preview", {
+      profile: "callum",
+    });
+    expect(body.total).toBe(2);
+    expect(body.items).toEqual([
+      expect.objectContaining({ appid: 10, name: "Hades", hours: 25 }),
+    ]);
+  });
+
   it("offers to fill the blanks on a game logged with no platform", async () => {
     const base = seed();
     const { app } = buildTestApp({

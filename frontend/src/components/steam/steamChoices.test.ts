@@ -9,6 +9,7 @@ import {
     fillSummary,
     importFrom,
     importedMessage,
+    onePerGame,
     startingDrafts,
     type Achievements,
     type SteamDraft,
@@ -91,6 +92,20 @@ describe("Steam drafts", () => {
             new Map([[1, draft({ choice: "playing" })]])
         );
         expect(game).toMatchObject({ status: "playing", hours: 4 });
+    });
+});
+
+describe("one row a game", () => {
+    it("keeps a game's first app and drops the rest, leaving unmatched ones", () => {
+        const hades = { id: 1, title: "Hades", coverUrl: null };
+        expect(
+            onePerGame([
+                item(1, { appid: 10, game: hades }),
+                item(null, { appid: 30 }),
+                item(1, { appid: 11, game: hades }),
+                item(null, { appid: 31 }),
+            ]).map((i) => i.appid)
+        ).toEqual([10, 30, 31]);
     });
 });
 

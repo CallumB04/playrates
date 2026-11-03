@@ -26,6 +26,19 @@ export type AchievementState =
 
 export type Achievements = Map<number, AchievementState>;
 
+/** The library with each game here once, as its first, most played app:
+ *  an import names a game once, and an API from before it sorted that out
+ *  itself could send it twice. */
+export const onePerGame = (items: SteamLibraryItem[]): SteamLibraryItem[] => {
+    const seen = new Set<number>();
+    return items.filter((item) => {
+        if (!item.game) return true;
+        if (seen.has(item.game.id)) return false;
+        seen.add(item.game.id);
+        return true;
+    });
+};
+
 /** A game we can add: matched here and not yet on the shelves. */
 export const isAddable = (item: SteamLibraryItem) =>
     !!item.game && !item.logged;

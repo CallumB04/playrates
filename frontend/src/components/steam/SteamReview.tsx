@@ -19,6 +19,7 @@ import {
     importFrom,
     importedMessage,
     isAddable,
+    onePerGame,
     startingDrafts,
     type SteamDraft,
 } from "./steamChoices";
@@ -42,7 +43,7 @@ const SteamReview = ({
 }) => {
     const notify = useNotify();
     const queryClient = useQueryClient();
-    const items = preview.items;
+    const items = useMemo(() => onePerGame(preview.items), [preview.items]);
     const [drafts, setDrafts] = useState(() => startingDrafts(items));
     const [shown, setShown] = useState(SHOWN_AT_ONCE);
     const [openId, setOpenId] = useState<number | null>(null);

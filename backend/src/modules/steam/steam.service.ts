@@ -3,6 +3,7 @@ import {
   type SteamAchievements,
   type SteamImportInput,
   type SteamImportResult,
+  type SteamLibraryItem,
   type SteamPreview,
 } from "@playrates/shared";
 import type { GameLogRow } from "../../types/database.types.js";
@@ -155,12 +156,20 @@ export const createSteamService = ({
         rows.map((r) => r.id),
       );
 
+      // Several apps can be one game here (a demo, a remaster, a test
+      // branch). The library is most played first, so the first stands for
+      // the game and the rest are left out: one game, one row, one log.
+      const matched = new Set<number>();
       return {
         steamId,
         total: owned.length,
-        items: library.map((g) => {
+        items: library.flatMap((g) => {
           const igdb = igdbOf.get(g.appid);
           const row = igdb === undefined ? undefined : byIgdb.get(igdb);
+          if (row) {
+            if (matched.has(row.id)) return [];
+            matched.add(row.id);
+          }
           const logs = row ? logged.get(row.id) : undefined;
           const target = logs && fillTarget(logs);
           const fills = target && {
@@ -171,7 +180,7 @@ export const createSteamService = ({
               g.hasStats &&
               g.playtime > 0,
           };
-          return {
+          const item: SteamLibraryItem = {
             appid: g.appid,
             name: g.name,
             hours: Math.round(g.playtime / 6) / 10,
@@ -195,6 +204,7 @@ export const createSteamService = ({
                 ? fills
                 : null,
           };
+          return [item];
         }),
       };
     },
