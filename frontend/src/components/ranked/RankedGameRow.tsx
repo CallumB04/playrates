@@ -126,7 +126,9 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
                         {title}
                     </Link>
                     {(year || detail) && (
-                        <div className="mt-1 flex min-w-0 items-center gap-2">
+                        // Wrapping, so chips too long to sit beside the year
+                        // go under it rather than out past the row.
+                        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                             {year && (
                                 <span className="shrink-0 font-mono text-label text-content-muted tabular-nums">
                                     {year}

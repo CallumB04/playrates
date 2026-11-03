@@ -21,10 +21,15 @@ const ConsoleChips = ({
                 return (
                     <li
                         key={slug}
-                        className="inline-flex items-center gap-1 rounded-xs bg-surface-sunken px-1.5 py-0.5 text-label-sm whitespace-nowrap text-content-secondary"
+                        title={system?.displayName ?? slug}
+                        className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-xs bg-surface-sunken px-1.5 py-0.5 text-label-sm whitespace-nowrap text-content-secondary"
                     >
-                        <Icon size={11} aria-hidden />
-                        {system?.displayName ?? slug}
+                        <Icon size={11} aria-hidden className="shrink-0" />
+                        {/* Too long for a phone's row, it ends in an
+                            ellipsis rather than pushing out past it. */}
+                        <span className="truncate">
+                            {system?.displayName ?? slug}
+                        </span>
                     </li>
                 );
             })}

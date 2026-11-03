@@ -10,7 +10,7 @@ import { familyOf, systemsForGame } from "../../../lib/gameSystems";
 import { systemIcon, systemOptions } from "../../../lib/platformIcons";
 
 const CHIP =
-    "relative inline-flex cursor-pointer items-center gap-1 rounded-xs px-1.5 py-0.5 text-label-sm whitespace-nowrap lift " +
+    "relative inline-flex max-w-full cursor-pointer items-center gap-1 rounded-xs px-1.5 py-0.5 text-label-sm whitespace-nowrap lift " +
     "hover:bg-surface-hover hover:text-content focus-visible:outline-2 focus-visible:outline-brand " +
     // 44px of touch around a chip that stays small.
     "before:absolute before:-inset-x-0.5 before:-inset-y-3 before:content-['']";
@@ -90,7 +90,7 @@ const WishlistConsoles = ({
                     ? systemIcon(log.system, system?.platformSlug ?? "")
                     : null;
                 return (
-                    <li key={log.id}>
+                    <li key={log.id} className="max-w-full min-w-0">
                         <Dropdown
                             options={optionsFor(log.system)}
                             value={log.system ?? ANY}
@@ -111,8 +111,17 @@ const WishlistConsoles = ({
                             )}
                             renderTrigger={() => (
                                 <>
-                                    {Icon && <Icon size={11} aria-hidden />}
-                                    {name}
+                                    {Icon && (
+                                        <Icon
+                                            size={11}
+                                            aria-hidden
+                                            className="shrink-0"
+                                        />
+                                    )}
+                                    {/* A name too long for a phone's row
+                                        ends in an ellipsis; the menu has
+                                        it whole. */}
+                                    <span className="truncate">{name}</span>
                                 </>
                             )}
                         />
