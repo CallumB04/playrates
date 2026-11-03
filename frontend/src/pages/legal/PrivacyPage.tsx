@@ -11,7 +11,7 @@ const External = ({ href, children }: { href: string; children: string }) => (
 );
 
 /* When the substance of this page changes, move the date. */
-const UPDATED = "2026-11-02";
+const UPDATED = "2026-11-03";
 
 const PrivacyPage = () => (
     <ProsePage
@@ -96,8 +96,9 @@ const PrivacyPage = () => (
                 is.
             </li>
             <li>
-                If you import from Steam, the games you choose to add. Your
-                Steam profile and the rest of your library aren’t kept.
+                If you import from Steam, the games you choose to add, with
+                their hours and achievements from Steam. Your Steam profile and
+                the rest of your library aren’t kept.
             </li>
         </ul>
 
@@ -225,7 +226,8 @@ const PrivacyPage = () => (
             </li>
             <li>
                 <strong>Steam</strong>, if you import from it. My server sends
-                Steam your profile ID to get your list of games.
+                Steam your profile ID to get your list of games and your
+                achievements in them.
             </li>
             <li>
                 Your browser’s <strong>push service</strong>, if you turn on

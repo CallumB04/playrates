@@ -40,7 +40,11 @@ another local Supabase project.
 - **Emails are caught, not sent.** A password reset lands in the mail viewer on
   :55324, and its link brings you back to the local app.
 - **IGDB is off.** Search covers the local catalogue only, and your IGDB
-  credentials and quota are never used.
+  credentials and quota are never used. The Steam import needs IGDB, so it's
+  hidden too. To try either for real, start with `--igdb`
+  (`node scripts/dev-local.mjs --keep --igdb`, or the `playrates-local-igdb`
+  launch config): it uses the IGDB keys in `backend/.env`, and still writes
+  only to the local database.
 - **Uploads** (avatars, images in threads) go to local storage.
 
 ## Accounts

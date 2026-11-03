@@ -1,6 +1,10 @@
 import { Router, type RequestHandler } from "express";
 import type { z } from "zod";
-import { SteamImportSchema, SteamPreviewSchema } from "@playrates/shared";
+import {
+  SteamAchievementsSchema,
+  SteamImportSchema,
+  SteamPreviewSchema,
+} from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import { perMinute } from "../../lib/rateLimit.js";
 import { validate } from "../../middleware/validate.js";
@@ -35,6 +39,21 @@ export const createSteamRouter = ({
     async (req, res) => {
       const { profile } = req.valid!.body as z.infer<typeof SteamPreviewSchema>;
       res.json(await service.preview(callerId(req), profile));
+    },
+  );
+
+  // A batch of a library's achievements, which the preview asks for in
+  // turn: each is one Steam request a game.
+  router.post(
+    "/achievements",
+    perMinute("steam-achievements", 60),
+    validate({ body: SteamAchievementsSchema }),
+    async (req, res) => {
+      callerId(req);
+      const { steamId, appids } = req.valid!.body as z.infer<
+        typeof SteamAchievementsSchema
+      >;
+      res.json(await service.achievements(steamId, appids));
     },
   );
 
