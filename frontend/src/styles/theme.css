@@ -193,6 +193,8 @@
     --status-mastered-quiet: color-mix(in srgb, #d4a017 16%, transparent);
     /* The bright end of the gold, for the sweep on the completion ring. */
     --status-mastered-sheen: #e3af2b;
+    /* The gold as small text, deep enough to read on white (5.4:1). */
+    --status-mastered-text: #8a6508;
     --status-shelved: #64748b;
     --status-shelved-quiet: color-mix(in srgb, #64748b 14%, transparent);
     --status-retired: #b91c1c;
@@ -321,6 +323,7 @@
     --status-mastered: #e8b530;
     --status-mastered-quiet: color-mix(in srgb, #e8b530 20%, transparent);
     --status-mastered-sheen: #ffdc72;
+    --status-mastered-text: #e8b530;
     --status-shelved: #94a3b8;
     --status-shelved-quiet: color-mix(in srgb, #94a3b8 18%, transparent);
     --status-retired: #f87171;
@@ -693,6 +696,7 @@
     --color-love-content: var(--love-content);
     --color-status-mastered: var(--status-mastered);
     --color-status-mastered-quiet: var(--status-mastered-quiet);
+    --color-status-mastered-text: var(--status-mastered-text);
     --color-status-finished: var(--status-finished);
     --color-status-finished-quiet: var(--status-finished-quiet);
     --color-status-shelved: var(--status-shelved);

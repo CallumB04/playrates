@@ -109,11 +109,16 @@ export const shelfFoot = (entry: ShelfEntry, sort: GameLogSort): ShelfFoot => {
         case "released":
             return { value: releaseYear(game?.releaseDate) };
         case "completion":
+            // In the gold of the completion ring, as the log shows it.
             return {
                 value:
-                    rollup.completion === null
-                        ? "–"
-                        : formatPercent(rollup.completion),
+                    rollup.completion === null ? (
+                        "–"
+                    ) : (
+                        <span className="text-status-mastered-text">
+                            {formatPercent(rollup.completion)}
+                        </span>
+                    ),
             };
         case "rating":
         case "title":

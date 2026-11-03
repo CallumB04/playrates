@@ -144,12 +144,18 @@ describe("shelfFoot", () => {
         expect(shelfFoot(log(), "released").value).toBe("2007");
     });
 
-    it("shows completion as a percentage", () => {
+    it("shows completion as a percentage, in the ring's gold", () => {
         const partly = log({
             achievementsTotal: 24,
             achievementsCompleted: 14,
         });
-        expect(shelfFoot(partly, "completion").value).toBe("58%");
+        const { container } = render(
+            <>{shelfFoot(partly, "completion").value}</>
+        );
+        expect(container).toHaveTextContent("58%");
+        expect(container.firstElementChild).toHaveClass(
+            "text-status-mastered-text"
+        );
     });
 
     /* No achievements recorded is not nought per cent, and printing 0% would
@@ -248,6 +254,9 @@ describe("shelfFoot, a game logged on more than one console", () => {
     });
 
     it("shows the best completion, as trophy lists differ by console", () => {
-        expect(shelfFoot(both(), "completion").value).toBe("100%");
+        const { container } = render(
+            <>{shelfFoot(both(), "completion").value}</>
+        );
+        expect(container).toHaveTextContent("100%");
     });
 });
