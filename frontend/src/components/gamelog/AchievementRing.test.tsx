@@ -33,4 +33,19 @@ describe("AchievementRing", () => {
         expect(x).toBeLessThan(0);
         expect(x + width).toBeGreaterThan(80);
     });
+
+    it("bare, leaves out the figure and the glow, on a track that shows", () => {
+        const { container } = render(
+            <AchievementRing done={13} total={52} size={20} bare />
+        );
+        const arc = container.querySelectorAll("circle")[1];
+
+        expect(container).not.toHaveTextContent("%");
+        expect(arc).not.toHaveAttribute("filter");
+        expect(arc).toHaveAttribute("stroke-width", "14");
+        expect(container.querySelectorAll("circle")[0]).toHaveClass(
+            "text-strong"
+        );
+        expect(arc).toHaveAttribute("stroke-linecap", "butt");
+    });
 });

@@ -193,8 +193,15 @@
     --status-mastered-quiet: color-mix(in srgb, #d4a017 16%, transparent);
     /* The bright end of the gold, for the sweep on the completion ring. */
     --status-mastered-sheen: #e3af2b;
-    /* The gold as small text, deep enough to read on white (5.4:1). */
-    --status-mastered-text: #8a6508;
+    /* Completion on the way to the gold of a full set: red, orange, green.
+       A fill for bars and the ring, and a text colour deep enough to read
+       small on white (4.5:1 and up). */
+    --completion-low: #dc2626;
+    --completion-low-text: #b91c1c;
+    --completion-mid: #f97316;
+    --completion-mid-text: #c2410c;
+    --completion-high: #16a34a;
+    --completion-high-text: #15803d;
     --status-shelved: #64748b;
     --status-shelved-quiet: color-mix(in srgb, #64748b 14%, transparent);
     --status-retired: #b91c1c;
@@ -323,7 +330,12 @@
     --status-mastered: #e8b530;
     --status-mastered-quiet: color-mix(in srgb, #e8b530 20%, transparent);
     --status-mastered-sheen: #ffdc72;
-    --status-mastered-text: #e8b530;
+    --completion-low: #f87171;
+    --completion-low-text: #f87171;
+    --completion-mid: #f97316;
+    --completion-mid-text: #fb923c;
+    --completion-high: #4ade80;
+    --completion-high-text: #4ade80;
     --status-shelved: #94a3b8;
     --status-shelved-quiet: color-mix(in srgb, #94a3b8 18%, transparent);
     --status-retired: #f87171;
@@ -696,7 +708,12 @@
     --color-love-content: var(--love-content);
     --color-status-mastered: var(--status-mastered);
     --color-status-mastered-quiet: var(--status-mastered-quiet);
-    --color-status-mastered-text: var(--status-mastered-text);
+    --color-completion-low: var(--completion-low);
+    --color-completion-low-text: var(--completion-low-text);
+    --color-completion-mid: var(--completion-mid);
+    --color-completion-mid-text: var(--completion-mid-text);
+    --color-completion-high: var(--completion-high);
+    --color-completion-high-text: var(--completion-high-text);
     --color-status-finished: var(--status-finished);
     --color-status-finished-quiet: var(--status-finished-quiet);
     --color-status-shelved: var(--status-shelved);
@@ -719,6 +736,19 @@
    The idioms. These are the design's signature devices, defined once rather
    than retyped in a dozen components.
    =========================================================================== */
+
+/* Text over a page's backdrop picture, by night: a halo of the page's own
+   colour, so it reads over any art without the art having to be washed out
+   for it. Not by day, where a pale glow round dark text looked smudged.
+   Inherited, and invisible where there's no picture behind. */
+@utility on-backdrop {
+    &:where(.dark, .dark *) {
+        text-shadow:
+            0 0 4px var(--surface),
+            0 0 10px var(--surface),
+            0 0 18px var(--surface);
+    }
+}
 
 /* A quiet spacer between a label and its figure. It used to be a dotted
    leader line, which belonged to the ledger this design no longer is. */

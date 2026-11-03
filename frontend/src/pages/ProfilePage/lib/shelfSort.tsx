@@ -8,6 +8,7 @@ import {
     releaseYear,
 } from "../../../lib/format";
 import CriticScore from "../../../lib/criticScore";
+import { completionTone } from "../../../lib/completionTone";
 
 interface SortOption {
     value: GameLogSort;
@@ -109,13 +110,15 @@ export const shelfFoot = (entry: ShelfEntry, sort: GameLogSort): ShelfFoot => {
         case "released":
             return { value: releaseYear(game?.releaseDate) };
         case "completion":
-            // In the gold of the completion ring, as the log shows it.
+            // In its band's colour, as the log's ring shows it.
             return {
                 value:
                     rollup.completion === null ? (
                         "–"
                     ) : (
-                        <span className="text-status-mastered-text">
+                        <span
+                            className={completionTone(rollup.completion).text}
+                        >
                             {formatPercent(rollup.completion)}
                         </span>
                     ),

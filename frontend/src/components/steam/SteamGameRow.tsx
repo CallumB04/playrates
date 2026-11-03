@@ -2,11 +2,13 @@ import { ChevronDown } from "lucide-react";
 import type { PlayedStatus, SteamLibraryItem } from "@playrates/shared";
 import { STATUS_PRESENTATION } from "../../constants/gameStatus";
 import { cn } from "../../lib/cn";
+import { completionTone } from "../../lib/completionTone";
 import { formatCount, formatPercent } from "../../lib/format";
 import GameCover from "../game/GameCover";
 import { PLAYED_OPTIONS } from "../gamelog/playedOptions";
 import Dropdown from "../ui/Dropdown";
 import Progress from "../ui/Progress";
+import RatingBadge from "../ui/RatingBadge";
 import RatingMeter from "../ui/RatingMeter";
 import type { AchievementState, SteamChoice, SteamDraft } from "./steamChoices";
 
@@ -44,18 +46,26 @@ const AchievementsText = ({
             );
         case "done":
             return state.value ? (
-                <span>{ofTotal(state.value)} achievements</span>
+                <span>
+                    <span
+                        className={
+                            completionTone(
+                                state.value.unlocked / state.value.total
+                            ).text
+                        }
+                    >
+                        {ofTotal(state.value)}
+                    </span>{" "}
+                    achievements
+                </span>
             ) : null;
         case "private":
             return null;
     }
 };
 
-/** Set or missing, so it's plain what opening the game would add. */
-const Detail = ({ set, children }: { set: boolean; children: string }) => (
-    <span className={set ? "text-content-secondary" : "text-content-muted"}>
-        {children}
-    </span>
+const Detail = ({ children }: { children: string }) => (
+    <span className="text-content-secondary">{children}</span>
 );
 
 /**
@@ -94,8 +104,10 @@ const SteamGameRow = ({
         <li className="border-b border-subtle py-1 last:border-b-0">
             <div
                 className={cn(
-                    "-mx-2 rounded-md px-2 py-1.5 transition-colors motion-reduce:transition-none",
-                    expanded && "bg-surface-hover"
+                    "group -mx-2 rounded-md px-2 py-1.5 transition-colors motion-reduce:transition-none",
+                    expanded
+                        ? "bg-surface-hover"
+                        : !skipped && "hover:bg-surface-hover"
                 )}
             >
                 <div className="flex items-center gap-2 sm:gap-3">
@@ -139,16 +151,18 @@ const SteamGameRow = ({
                                 <AchievementsText state={achievements} />
                             </span>
                             {!skipped && (
-                                <span className="flex flex-wrap gap-x-2 text-label-sm">
-                                    <Detail set={draft.rating !== null}>
-                                        {draft.rating !== null
-                                            ? `Rated ${draft.rating}`
-                                            : "Not rated"}
-                                    </Detail>
+                                <span className="flex flex-wrap items-baseline gap-x-2 text-label-sm">
+                                    {/* Unrated, it asks: the plainest sign
+                                        that the game opens. */}
+                                    {draft.rating !== null ? (
+                                        <RatingBadge value={draft.rating} />
+                                    ) : (
+                                        <span className="font-medium text-brand-text">
+                                            Rate it
+                                        </span>
+                                    )}
                                     {played && (
-                                        <Detail set>
-                                            {ending ?? "Just played"}
-                                        </Detail>
+                                        <Detail>{ending ?? "Played"}</Detail>
                                     )}
                                 </span>
                             )}
@@ -158,8 +172,10 @@ const SteamGameRow = ({
                                 size={16}
                                 aria-hidden
                                 className={cn(
-                                    "shrink-0 text-content-secondary transition-transform motion-reduce:transition-none",
-                                    expanded && "rotate-180"
+                                    "shrink-0 transition-[color,rotate] motion-reduce:transition-none",
+                                    expanded
+                                        ? "rotate-180 text-content"
+                                        : "text-content-secondary group-hover:text-content"
                                 )}
                             />
                         )}
@@ -191,9 +207,46 @@ const SteamGameRow = ({
                         />
                         {(played || got) && (
                             <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-                                {played && (
-                                    // Labelled as the meter labels itself.
+                                {got && (
                                     <div className="flex flex-col gap-2.5">
+                                        <p className="flex justify-between gap-3 text-label">
+                                            <span className="text-content-muted">
+                                                Achievements from Steam
+                                            </span>
+                                            <span
+                                                className={cn(
+                                                    "tabular-nums",
+                                                    completionTone(
+                                                        got.unlocked / got.total
+                                                    ).text
+                                                )}
+                                            >
+                                                {ofTotal(got)} ·{" "}
+                                                {formatPercent(
+                                                    got.unlocked / got.total
+                                                )}
+                                            </span>
+                                        </p>
+                                        {/* The dropdown's height beside it, so
+                                            the bar sits level with its middle. */}
+                                        <div className="flex items-center sm:h-11">
+                                            <Progress
+                                                value={got.unlocked / got.total}
+                                                label={`${ofTotal(got)} achievements unlocked`}
+                                                size="sm"
+                                                fillClassName={
+                                                    completionTone(
+                                                        got.unlocked / got.total
+                                                    ).fill
+                                                }
+                                                className="w-full"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                                {played && (
+                                    // Labelled as the meter labels itself, and always on the right.
+                                    <div className="flex flex-col gap-2.5 sm:col-start-2">
                                         <label
                                             htmlFor={endingId}
                                             className="text-label text-content-muted"
@@ -212,32 +265,6 @@ const SteamGameRow = ({
                                                 })
                                             }
                                         />
-                                    </div>
-                                )}
-                                {got && (
-                                    <div className="flex flex-col gap-2.5">
-                                        <p className="flex justify-between gap-3 text-label">
-                                            <span className="text-content-muted">
-                                                Achievements from Steam
-                                            </span>
-                                            <span className="text-content-secondary tabular-nums">
-                                                {ofTotal(got)} ·{" "}
-                                                {formatPercent(
-                                                    got.unlocked / got.total
-                                                )}
-                                            </span>
-                                        </p>
-                                        {/* The dropdown's height beside it, so
-                                            the bar sits level with its middle. */}
-                                        <div className="flex items-center sm:h-11">
-                                            <Progress
-                                                value={got.unlocked / got.total}
-                                                label={`${ofTotal(got)} achievements unlocked`}
-                                                size="sm"
-                                                fillClassName="bg-status-mastered"
-                                                className="w-full"
-                                            />
-                                        </div>
                                     </div>
                                 )}
                             </div>

@@ -53,6 +53,7 @@ import {
 import { ChevronDown, Plus, X } from "lucide-react";
 import { cn } from "../lib/cn";
 import { formatPercent, formatRating } from "../lib/format";
+import { completionTone } from "../lib/completionTone";
 
 interface CreateOrEditGameLogPopupProps {
     gameId: number;
@@ -808,7 +809,13 @@ const CreateOrEditGameLogPopup = ({
                                                 Achievements
                                             </span>
                                             {progress !== null && (
-                                                <span className="text-label-sm text-status-played">
+                                                <span
+                                                    className={cn(
+                                                        "text-label-sm",
+                                                        completionTone(progress)
+                                                            .text
+                                                    )}
+                                                >
                                                     {formatPercent(progress)} ·{" "}
                                                     {
                                                         draft.achievementsCompleted

@@ -144,7 +144,7 @@ describe("shelfFoot", () => {
         expect(shelfFoot(log(), "released").value).toBe("2007");
     });
 
-    it("shows completion as a percentage, in the ring's gold", () => {
+    it("shows completion as a percentage, in the scale's colour", () => {
         const partly = log({
             achievementsTotal: 24,
             achievementsCompleted: 14,
@@ -154,7 +154,7 @@ describe("shelfFoot", () => {
         );
         expect(container).toHaveTextContent("58%");
         expect(container.firstElementChild).toHaveClass(
-            "text-status-mastered-text"
+            "text-completion-mid-text"
         );
     });
 

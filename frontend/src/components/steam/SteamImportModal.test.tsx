@@ -94,6 +94,14 @@ const open = async () => {
     return { user, onClose };
 };
 
+/** The line under a game's title: what it'll go in with. */
+const summary = (title: string) =>
+    document.getElementById(
+        screen
+            .getByRole("button", { name: `Details for ${title}` })
+            .getAttribute("aria-describedby")!
+    )!;
+
 const row = (title: string) =>
     screen.getByRole("button", { name: `Details for ${title}` }).closest("li")!;
 
@@ -115,20 +123,27 @@ describe("SteamImportModal", () => {
         ).toBeNull();
 
         api.release();
-        expect(
-            await within(row("Hades")).findByText("31 of 49 achievements")
-        ).toBeInTheDocument();
+        await waitFor(() =>
+            expect(summary("Hades")).toHaveTextContent("31 of 49 achievements")
+        );
+        // 63%: the middle third, so orange.
+        expect(within(summary("Hades")).getByText("31 of 49")).toHaveClass(
+            "text-completion-mid-text"
+        );
         expect(screen.queryByText(/Checking Steam/)).toBeNull();
     });
 
     it("rates a game and says how it ended, then adds it on Steam", async () => {
         const api = steamApi();
         const { user, onClose } = await open();
-        await within(row("Hades")).findByText("31 of 49 achievements");
-        expect(within(row("Hades")).getByText("Not rated")).toBeInTheDocument();
-        expect(
-            within(row("Hades")).getByText("Just played")
-        ).toBeInTheDocument();
+        await waitFor(() =>
+            expect(summary("Hades")).toHaveTextContent("31 of 49 achievements")
+        );
+        expect(summary("Hades")).toHaveTextContent("Rate it");
+        // Its ending, which is no more than played until one is picked.
+        expect(summary("Hades")).toHaveTextContent(
+            /achievementsRate itPlayed$/
+        );
 
         await user.click(
             screen.getByRole("button", { name: "Details for Hades" })
@@ -143,8 +158,7 @@ describe("SteamImportModal", () => {
         await user.click(
             screen.getByRole("button", { name: "Details for Hades" })
         );
-        expect(within(row("Hades")).getByText("Rated 10")).toBeInTheDocument();
-        expect(within(row("Hades")).getByText("Finished")).toBeInTheDocument();
+        expect(summary("Hades")).toHaveTextContent(/10\.00\/10Finished$/);
 
         await user.click(
             screen.getByRole("button", { name: "Celeste: add as" })
