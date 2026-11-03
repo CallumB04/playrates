@@ -25,6 +25,23 @@ const open = (requestCount = 0) => {
     return userEvent.setup();
 };
 
+/* Seven tabs with their counts ran past the page's edge on a tablet, where
+   the row took over from sm. jsdom lays nothing out, so the breakpoint is
+   what can be held to. */
+describe("ProfileNav on a tablet", () => {
+    it("keeps the switcher until the row has room, at lg", () => {
+        open(3);
+        const trigger = screen.getByRole("button", { expanded: false });
+        expect(trigger).toHaveClass("lg:hidden");
+        expect(trigger).not.toHaveClass("sm:hidden");
+
+        const row = screen
+            .getAllByRole("link", { name: /Friends/ })[0]!
+            .closest("div");
+        expect(row).toHaveClass("hidden", "lg:flex");
+    });
+});
+
 describe("ProfileNav on a phone", () => {
     it("says which view you're on, and opens the rest to switch to", async () => {
         const u = open();

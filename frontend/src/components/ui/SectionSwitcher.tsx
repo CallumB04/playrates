@@ -16,7 +16,11 @@ export const CountPill = ({ value }: { value: number }) => (
     </span>
 );
 
-/** The closed control: the section you're in, and Switch. Phones only. */
+/** Written out whole, so Tailwind finds them. */
+const HIDDEN_FROM = { sm: "sm:hidden", lg: "lg:hidden" } as const;
+
+/** The closed control: the section you're in, and Switch. Phones only,
+ *  unless the row it stands in for needs a wider screen than a phone's. */
 export const SwitcherButton = ({
     icon: Icon,
     label,
@@ -24,6 +28,7 @@ export const SwitcherButton = ({
     extra,
     open,
     onOpen,
+    until = "sm",
 }: {
     icon: IconComponent;
     label: string;
@@ -32,13 +37,18 @@ export const SwitcherButton = ({
     extra?: ReactNode;
     open: boolean;
     onOpen: () => void;
+    /** The width from which the row takes over. */
+    until?: keyof typeof HIDDEN_FROM;
 }) => (
     <button
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={onOpen}
-        className="flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-md border border-brand/50 bg-surface-raised py-2 pr-2 pl-3 text-left shadow-lip lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:hidden"
+        className={cn(
+            "flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-md border border-brand/50 bg-surface-raised py-2 pr-2 pl-3 text-left shadow-lip lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
+            HIDDEN_FROM[until]
+        )}
     >
         <Icon size={20} aria-hidden className="shrink-0 text-brand-text" />
         <span className="min-w-0 flex-1">
