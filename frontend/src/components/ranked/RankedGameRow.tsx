@@ -93,10 +93,12 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
                     </button>
                 )}
 
+                {/* On a phone the place leads the title instead: a column
+                    of its own left the title a third of the row. */}
                 <span
                     aria-hidden
                     className={cn(
-                        "w-8 shrink-0 text-right font-mono text-body-sm font-semibold tabular-nums sm:w-9 sm:text-body",
+                        "w-9 shrink-0 text-right font-mono text-body font-semibold tabular-nums max-sm:hidden",
                         rankTone(rank)
                     )}
                 >
@@ -122,7 +124,14 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
                         to={`/game/${gameId}`}
                         className="line-clamp-2 text-body-sm font-medium text-content hover:text-brand-text sm:line-clamp-1 sm:text-body"
                     >
-                        <span className="sr-only">#{rank} </span>
+                        <span
+                            className={cn(
+                                "font-mono font-semibold tabular-nums sm:sr-only",
+                                rankTone(rank)
+                            )}
+                        >
+                            #{rank}{" "}
+                        </span>
                         {title}
                     </Link>
                     {(year || detail) && (
@@ -166,7 +175,10 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
                         aria-label={`More for ${title}`}
                         aria-haspopup="dialog"
                         className={cn(
-                            "flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-sm text-content-muted hover:bg-surface-hover hover:text-content focus-visible:outline-2 focus-visible:outline-brand sm:size-9",
+                            // Narrow on a phone, where the row needs the width, with
+                            // its tap area still 44px across.
+                            "relative flex h-11 w-8 shrink-0 cursor-pointer items-center justify-center rounded-sm text-content-muted hover:bg-surface-hover hover:text-content focus-visible:outline-2 focus-visible:outline-brand sm:size-9",
+                            "before:absolute before:-inset-x-1.5 before:inset-y-0 before:content-[''] sm:before:hidden",
                             moreOnPhoneOnly && "sm:hidden"
                         )}
                     >
