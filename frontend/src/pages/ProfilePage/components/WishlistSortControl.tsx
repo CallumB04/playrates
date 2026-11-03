@@ -30,7 +30,7 @@ const WishlistSortControl = ({
         onChange={(value) => onChange(value as WishlistSort)}
         aria-label="Sort by"
         lead="Sort by"
-        className="min-w-0 flex-1 sm:w-52 sm:flex-none"
+        className="min-w-0 flex-1 sm:w-56 sm:flex-none"
     />
 );
 

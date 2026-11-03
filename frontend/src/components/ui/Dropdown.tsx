@@ -249,7 +249,7 @@ const Dropdown = ({
                         {lead && (
                             <span
                                 aria-hidden
-                                className="shrink-0 text-content-muted max-sm:hidden"
+                                className="shrink-0 text-label text-content-muted max-sm:hidden"
                             >
                                 {lead}
                             </span>

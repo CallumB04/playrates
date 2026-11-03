@@ -29,7 +29,9 @@ const ShelfSort = ({
     const Arrow = flipped ? ArrowUpNarrowWide : ArrowDownWideNarrow;
 
     return (
-        <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+        // Room for "PlayRates average" uncut: a phone too narrow for it
+        // beside Filters puts the sort on a line of its own.
+        <div className="flex min-w-56 flex-1 items-center gap-2 sm:min-w-0 sm:flex-none">
             <Dropdown
                 options={shelfSortOptions(isMyAccount, shelf).map((option) => ({
                     value: option.value,
@@ -39,7 +41,7 @@ const ShelfSort = ({
                 onChange={(value) => onChange({ sort: value as GameLogSort })}
                 aria-label="Sort by"
                 lead="Sort by"
-                className="min-w-0 flex-1 sm:w-52 sm:flex-none"
+                className="min-w-0 flex-1 sm:w-56 sm:flex-none"
             />
             <button
                 type="button"
