@@ -42,9 +42,9 @@ const BackdropArt = ({
             // long tail that fades rather than ends. By night it stays well
             // into the name, which the text's halo keeps readable. By day
             // there's no halo (a pale glow round dark text looked smudged),
-            // so it fades faster through the name and stats, where small
-            // grey text has to sit on it.
-            "overflow-hidden [mask-image:linear-gradient(to_bottom,black_0%,black_26%,rgb(0_0_0/0.55)_34%,rgb(0_0_0/0.3)_42%,rgb(0_0_0/0.16)_52%,rgb(0_0_0/0.08)_64%,rgb(0_0_0/0.03)_80%,transparent)] dark:[mask-image:linear-gradient(to_bottom,black_0%,black_32%,rgb(0_0_0/0.78)_44%,rgb(0_0_0/0.55)_56%,rgb(0_0_0/0.35)_68%,rgb(0_0_0/0.18)_80%,rgb(0_0_0/0.07)_90%,transparent)]",
+            // so it eases off sooner through the name and stats, and the
+            // grey text over it is a shade darker (on-backdrop).
+            "overflow-hidden [mask-image:linear-gradient(to_bottom,black_0%,black_30%,rgb(0_0_0/0.66)_40%,rgb(0_0_0/0.44)_50%,rgb(0_0_0/0.28)_60%,rgb(0_0_0/0.15)_71%,rgb(0_0_0/0.06)_84%,transparent)] dark:[mask-image:linear-gradient(to_bottom,black_0%,black_32%,rgb(0_0_0/0.78)_44%,rgb(0_0_0/0.55)_56%,rgb(0_0_0/0.35)_68%,rgb(0_0_0/0.18)_80%,rgb(0_0_0/0.07)_90%,transparent)]",
             className
         )}
     >
