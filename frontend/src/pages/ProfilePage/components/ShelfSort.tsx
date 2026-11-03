@@ -38,7 +38,8 @@ const ShelfSort = ({
                 value={sort}
                 onChange={(value) => onChange({ sort: value as GameLogSort })}
                 aria-label="Sort by"
-                className="min-w-0 flex-1 sm:w-44 sm:flex-none"
+                lead="Sort by"
+                className="min-w-0 flex-1 sm:w-52 sm:flex-none"
             />
             <button
                 type="button"

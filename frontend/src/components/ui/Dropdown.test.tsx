@@ -48,6 +48,24 @@ describe("Dropdown", () => {
         expect(screen.getByRole("button")).toHaveTextContent("Asia/Tokyo");
     });
 
+    it("leads the closed control with its words, but not the menu", async () => {
+        render(
+            <Dropdown
+                options={OPTIONS}
+                value="Asia/Tokyo"
+                onChange={vi.fn()}
+                lead="Zone"
+                aria-label="Time zone"
+            />
+        );
+        expect(screen.getByRole("button")).toHaveTextContent("ZoneAsia/Tokyo");
+
+        await open();
+        for (const option of screen.getAllByRole("option")) {
+            expect(option).not.toHaveTextContent("Zone");
+        }
+    });
+
     it("falls back to the placeholder when the value matches nothing", () => {
         render(
             <Dropdown
