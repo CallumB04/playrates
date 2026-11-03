@@ -6,7 +6,6 @@ import { formatCount, formatPercent } from "../../lib/format";
 import GameCover from "../game/GameCover";
 import { PLAYED_OPTIONS } from "../gamelog/playedOptions";
 import Dropdown from "../ui/Dropdown";
-import Field from "../ui/Field";
 import Progress from "../ui/Progress";
 import RatingMeter from "../ui/RatingMeter";
 import type { AchievementState, SteamChoice, SteamDraft } from "./steamChoices";
@@ -89,6 +88,7 @@ const SteamGameRow = ({
     const got = achievements?.kind === "done" ? achievements.value : null;
     const panelId = `steam-details-${game.id}`;
     const summaryId = `steam-summary-${game.id}`;
+    const endingId = `steam-ending-${game.id}`;
 
     return (
         <li className="border-b border-subtle py-1 last:border-b-0">
@@ -178,7 +178,7 @@ const SteamGameRow = ({
                 {expanded && (
                     <div
                         id={panelId}
-                        className="grid gap-x-6 gap-y-4 pt-4 pb-1 sm:grid-cols-2 sm:pl-12"
+                        className="grid gap-x-6 gap-y-4 pt-4 pb-1 sm:grid-cols-2 sm:items-baseline sm:pl-12"
                     >
                         <div className={cn(!played && "sm:col-span-2")}>
                             {/* One row is open at a time, so its label needn't
@@ -192,22 +192,28 @@ const SteamGameRow = ({
                             />
                         </div>
                         {played && (
-                            <Field label="How it ended">
-                                {({ id }) => (
-                                    <Dropdown
-                                        id={id}
-                                        options={PLAYED_OPTIONS}
-                                        value={draft.playedStatus ?? ""}
-                                        onChange={(value) =>
-                                            onChange({
-                                                ...draft,
-                                                playedStatus: (value ||
-                                                    null) as PlayedStatus | null,
-                                            })
-                                        }
-                                    />
-                                )}
-                            </Field>
+                            // Labelled as the meter labels itself, and on its
+                            // baseline, so the two read as one row.
+                            <div className="flex flex-col gap-2.5">
+                                <label
+                                    htmlFor={endingId}
+                                    className="text-label text-content-muted"
+                                >
+                                    How it ended
+                                </label>
+                                <Dropdown
+                                    id={endingId}
+                                    options={PLAYED_OPTIONS}
+                                    value={draft.playedStatus ?? ""}
+                                    onChange={(value) =>
+                                        onChange({
+                                            ...draft,
+                                            playedStatus: (value ||
+                                                null) as PlayedStatus | null,
+                                        })
+                                    }
+                                />
+                            </div>
                         )}
                         {got && (
                             <div className="flex flex-col gap-1.5 sm:col-span-2">
