@@ -99,7 +99,9 @@ Then:
   distribution has stopped again. Stop posting and tell Callum before
   making anything.
 - **The creator comment.** On each post live since the last run, open it
-  and read the comments (`[class*="CommentObjectWrapper"]`). If there's no
+  and read the comments (`[class*="CommentObjectWrapper"]`; the panel only
+  shows with the tab at least 1280px wide, so `resize_window` first and
+  open its Comments tab). If there's no
   comment from the account with the post's `pinnedComment`, post it in the
   "Add comment..." box and read the panel to check it went in once.
   Pinning only works in the app: tell Callum which still need pinning.
@@ -123,13 +125,20 @@ comments. Before settling on one, sketch each slide's picture and its joke;
 if three slides have neither, pick another topic.
 
 Six tips, each a short `title` (four or five words) and one `line` the
-viewer can act on. Every tip has to be true and checkable: write only what
-you're sure of, and list anything approximate for Callum to check. Skip
-what the game's tutorial already teaches, and anything that spoils an
-area or boss a beginner hasn't reached.
+viewer can act on. Even a beginner post needs tips most players don't
+already know: on 2026-11-02 Callum pulled a Minecraft post of "don't dig
+straight down, sleep the first night" basics. Every tip has to be true and
+checkable: write only what you're sure of, and list anything approximate
+for Callum to check. Skip what the game's tutorial already teaches, and
+anything that spoils the story, an area or a boss a beginner hasn't
+reached (track and file names can spoil too).
 
 Then send Callum the hook, the six tips and the jokes, and build nothing
-until he says go.
+until he says go. Once he has, fact-check every tip against sources (a
+research agent with web search, a wiki and a guide per claim) before
+gathering pictures. The RDR2 check found three of six lines wrong or
+misleading. Bring any change back to him before it goes on a slide; he
+hasn't played every game and relies on this.
 
 ## 2. Games
 
@@ -299,9 +308,13 @@ Callum opens TikTok in the browser pane; the upload page is
   Never press **Post**, which publishes now.
 - A click that misses can open a photo's preview. Click the dark overlay to
   close it, not Replace or Delete.
-- **Deleting** a post can't be undone, so it's Callum's to do, never
-  yours. To take a live post down, set it to Private from the row's
-  Privacy dropdown only when he asks.
+- **Deleting** a live post is Callum's to do, never yours. To take a live
+  post down, set it to Private from the row's Privacy dropdown only when he
+  asks. A post that's only scheduled can't be edited, so changing its
+  sound or copy means unscheduling it: when he asks, open the row's ⋯
+  (the `button` after its Privacy button), check the menu opened inside
+  that row, Delete, and confirm. It goes to Recently deleted for 30 days
+  and the files are local; then post it again as new.
 
 ## 6. After posting
 
