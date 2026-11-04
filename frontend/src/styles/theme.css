@@ -220,6 +220,7 @@
     --info: #0369a1;
     --warning: var(--ember-600);
     --gold: var(--ember-500);
+    --gold-quiet: color-mix(in srgb, var(--gold) 14%, transparent);
     /* A podium, for a profile's favourites. Its own gold: the one above is
        the brand's ember, which beside bronze read as a second bronze. Dark
        enough by day to read on the page. */
@@ -355,6 +356,7 @@
     --info: #56ccf2;
     --warning: var(--ember-400);
     --gold: var(--ember-300);
+    --gold-quiet: color-mix(in srgb, var(--gold) 18%, transparent);
     --medal-gold: #f2c94c;
     --medal-silver: #c5ccd6;
     --medal-bronze: #d9915a;
@@ -682,6 +684,7 @@
     --color-info-strong: var(--info-strong);
 
     --color-gold: var(--gold);
+    --color-gold-quiet: var(--gold-quiet);
     --color-medal-gold: var(--medal-gold);
     --color-medal-silver: var(--medal-silver);
     --color-medal-bronze: var(--medal-bronze);

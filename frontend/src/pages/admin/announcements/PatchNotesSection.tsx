@@ -82,7 +82,7 @@ const PatchNoteRow = ({
     return (
         <li className="flex flex-col gap-3 border-b border-subtle py-3.5 last:border-b-0 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex min-w-0 flex-1 gap-3">
-                <IconMark icon={Megaphone} tone="text-accent-content" />
+                <IconMark icon={Megaphone} tone="accent" />
                 <div className="min-w-0">
                     <Link
                         to={note.link}

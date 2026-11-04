@@ -180,7 +180,7 @@ export const GiftFace = ({
     notification.actor ? (
         <ActorFace notification={{ actor: notification.actor }} />
     ) : (
-        <IconMark icon={Gift} tone="text-brand-text" />
+        <IconMark icon={Gift} tone="brand" />
     );
 
 /** Opening a community notification is reading it. */
@@ -497,7 +497,7 @@ export const ReferralFace = ({
     notification.actor ? (
         <ActorFace notification={{ actor: notification.actor }} />
     ) : (
-        <IconMark icon={UserPlus} tone="text-brand-text" />
+        <IconMark icon={UserPlus} tone="brand" />
     );
 
 export const ReferralActiveContent = ({

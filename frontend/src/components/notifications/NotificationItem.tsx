@@ -12,6 +12,8 @@ import { usePatchNotification } from "../../hooks/queries/useNotifications";
 import { relativeTime } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import { NOTIFICATION_RENDERERS, type ContentProps } from "./registry";
+import { ANNOUNCEMENT_PRESENTATION } from "./announcementTones";
+import { NOTIFICATION_TONES } from "./notificationTones";
 
 /* The glyph stays small and the hit area grows around it — a touch screen
    needs 44px whatever the icon measures. */
@@ -74,6 +76,14 @@ const NotificationItem = ({
     >;
 
     const unread = notification.readAt === null;
+    // Unread, the row wears its mark's colour: an announcement its own tone,
+    // a heads-up orange, a love pink.
+    const tone =
+        NOTIFICATION_TONES[
+            notification.kind === "announcement"
+                ? ANNOUNCEMENT_PRESENTATION[notification.tone].tone
+                : renderer.tone
+        ];
     const archived = notification.archivedAt !== null;
     // Its Accept and Decline are the way out; it stays unread until then.
     const task = awaitingAnswer(notification);
@@ -85,13 +95,16 @@ const NotificationItem = ({
                    theirs 8px past the glyph, and anything less leaves the
                    list scrolling sideways. */
                 "relative flex gap-3 rounded-md py-3 pr-2 pl-3 transition-colors",
-                unread ? "bg-brand-subtle/50" : "hover:bg-surface-hover"
+                unread ? tone.unread : "hover:bg-surface-hover"
             )}
         >
             {unread && (
                 <span
                     aria-hidden
-                    className="absolute inset-y-2.5 left-0 w-0.5 rounded-full bg-brand"
+                    className={cn(
+                        "absolute inset-y-2.5 left-0 w-0.5 rounded-full",
+                        tone.rule
+                    )}
                 />
             )}
 

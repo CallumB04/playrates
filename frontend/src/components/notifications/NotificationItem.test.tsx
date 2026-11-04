@@ -54,6 +54,18 @@ describe("NotificationItem", () => {
         expect(screen.getByText("Welcome to PlayRates")).toBeInTheDocument();
     });
 
+    it("washes an unread row in its mark's colour, not always purple", () => {
+        const { container } = renderItem(
+            welcome({
+                kind: "list_upvote_milestone",
+                listId: 1,
+                listName: "Best of",
+                milestone: 10,
+            } as Partial<AppNotification>)
+        );
+        expect(container.querySelector("li")).toHaveClass("bg-love-quiet/50");
+    });
+
     /* A kind the server knows and this build does not must still draw a row
        rather than take the menu down with it. */
     it("falls back to a plain row for a kind it cannot render", () => {
@@ -299,6 +311,28 @@ describe("NotificationItem", () => {
                 isTest: false,
                 ...overrides,
             }) as AppNotification;
+
+        it("wears its tone while unread: a heads-up orange, an update purple", () => {
+            const { container, unmount } = renderItem(announcement());
+            expect(container.querySelector("li")).toHaveClass(
+                "bg-warning-subtle/50"
+            );
+            unmount();
+
+            const update = renderItem(announcement({ tone: "update" }));
+            expect(update.container.querySelector("li")).toHaveClass(
+                "bg-brand-subtle/50"
+            );
+        });
+
+        it("drops the wash once it's read", () => {
+            const { container } = renderItem(
+                announcement({ readAt: "2026-01-02T00:00:00.000Z" })
+            );
+            expect(container.querySelector("li")!.className).not.toMatch(
+                /bg-warning/
+            );
+        });
 
         it("shows the words it was sent with, and no link without one", () => {
             renderItem(announcement());
