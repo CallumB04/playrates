@@ -2,6 +2,7 @@ import type { PaginationState } from "../../hooks/usePagination";
 import { ELLIPSIS, pageRange } from "../../lib/pageRange";
 import { formatCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
+import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
 
 interface PaginationProps {
     pagination: PaginationState;
@@ -41,6 +42,7 @@ export const PaginationSummary = ({
 const Pagination = ({ pagination, onChange, className }: PaginationProps) => {
     const { page, pageCount, canPrev, canNext, next, prev, setPage } =
         pagination;
+    const isPhone = !useMediaQuery(BREAKPOINT.sm);
     if (pageCount <= 1) return null;
 
     const go = (fn: () => void) => () => {
@@ -51,7 +53,9 @@ const Pagination = ({ pagination, onChange, className }: PaginationProps) => {
     return (
         <nav
             aria-label="Pagination"
-            /* Wraps: a six-digit last page pushed "next" off screen at 375px. */
+            /* Wraps: a six-digit last page pushed "next" off screen at 375px.
+               A phone shows the current page alone between the ends, so the
+               rest stays on one line at 320px. */
             className={cn("flex flex-wrap gap-[3px]", className)}
         >
             <button
@@ -64,14 +68,15 @@ const Pagination = ({ pagination, onChange, className }: PaginationProps) => {
                 ‹
             </button>
 
-            {pageRange(page, pageCount).map((slot, i) =>
+            {pageRange(page, pageCount, isPhone ? 0 : 1).map((slot, i) =>
                 slot === ELLIPSIS ? (
                     <span
                         key={`gap-${i}`}
                         aria-hidden="true"
+                        // Narrower on a phone: nothing to tap, so no 44px.
                         className={cn(
                             SLOT,
-                            "border-transparent text-content-muted"
+                            "border-transparent text-content-muted max-sm:min-w-5 max-sm:px-0"
                         )}
                     >
                         {ELLIPSIS}
