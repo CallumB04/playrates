@@ -29,9 +29,9 @@ const ShelfSort = ({
     const Arrow = flipped ? ArrowUpNarrowWide : ArrowDownWideNarrow;
 
     return (
-        // Room for "PlayRates average" uncut: a phone too narrow for it
-        // beside Filters puts the sort on a line of its own.
-        <div className="flex min-w-56 flex-1 items-center gap-2 sm:min-w-0 sm:flex-none">
+        // Room for "Sort by" and "PlayRates average" uncut: a phone too
+        // narrow for them beside Filters puts the sort on a line of its own.
+        <div className="flex min-w-68 flex-1 items-center gap-2 sm:min-w-0 sm:flex-none">
             <Dropdown
                 options={shelfSortOptions(isMyAccount, shelf).map((option) => ({
                     value: option.value,

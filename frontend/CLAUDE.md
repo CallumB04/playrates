@@ -62,6 +62,12 @@ variant or tone instead of overriding it at the call site.
 - `ui/Modal` for every overlay, `ui/ConfirmPopup` for every "are you sure",
   `ui/Dropdown` for every select, `ui/SegmentedChoice` for a short fixed set
   of options, `ui/Toggle` for on and off.
+- Every dropdown has a visible label, one of two ways. In a form, a sheet or
+  a popover, a `Field` label above it, as in the shelf's Filters. Standing
+  alone in a toolbar, its `lead` inside it, before the value ("Sort by",
+  "Genre"), with "All" rather than "All genres". Size it so no option is
+  cut off at any width; where it can't fit, it wraps onto its own line or
+  moves into the sheet.
 - `ui/EmptyPlate` and `EmptyNote` for empty states, `ui/Skeleton` while
   loading, `components/SignUpPlate` where a page needs an account.
 

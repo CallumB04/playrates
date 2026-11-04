@@ -32,9 +32,9 @@ interface DropdownProps {
     onChange: (value: string) => void;
     /** Shown when the value matches no option. */
     placeholder?: string;
-    /** Muted words before the value on the closed control, "Sort by" say.
-     *  Not in the menu, where the options speak for themselves, nor on a
-     *  phone, where they cut the value short. */
+    /** Muted words before the value on the closed control, "Sort by" say:
+     *  the label of a dropdown standing alone, with no label above it. Not
+     *  in the menu, where the options speak for themselves. */
     lead?: string;
     className?: string;
     /** Width of the popover, at least the trigger's. Defaults to the
@@ -249,7 +249,7 @@ const Dropdown = ({
                         {lead && (
                             <span
                                 aria-hidden
-                                className="shrink-0 text-label text-content-muted max-sm:hidden"
+                                className="shrink-0 text-label text-content-muted"
                             >
                                 {lead}
                             </span>

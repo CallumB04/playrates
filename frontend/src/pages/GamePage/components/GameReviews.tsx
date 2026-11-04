@@ -127,7 +127,8 @@ const GameReviews = ({
                         value={sort}
                         onChange={(next) => onSortChange(next as ReviewSort)}
                         aria-label="Sort reviews"
-                        className="w-40"
+                        lead="Sort by"
+                        className="w-52"
                     />
                 </div>
             </div>
