@@ -34,7 +34,12 @@ const entry = (
     },
 });
 
-const detail = (canPost: boolean): ThreadDetail => ({
+const RELEASES = [
+    entry(10, "v1.0 - Official Launch", "2026-10-03T12:00:00Z"),
+    entry(11, "v1.1", "2026-10-29T12:00:00Z"),
+];
+
+const detail = (canPost: boolean, messages = RELEASES): ThreadDetail => ({
     thread: {
         id: 1,
         title: "PlayRates patch notes",
@@ -48,18 +53,15 @@ const detail = (canPost: boolean): ThreadDetail => ({
         recentMessageCount: 0,
     },
     // Oldest first, as the API gives them.
-    messages: [
-        entry(10, "v1.0 - Official Launch", "2026-10-03T12:00:00Z"),
-        entry(11, "v1.1", "2026-10-29T12:00:00Z"),
-    ],
+    messages,
     canPost,
     canDeleteThread: false,
 });
 
-const render = (canPost = false, onPost = vi.fn()) =>
+const render = (canPost = false, onPost = vi.fn(), messages = RELEASES) =>
     renderWithProviders(
         <PatchNotesThread
-            detail={detail(canPost)}
+            detail={detail(canPost, messages)}
             viewerId={undefined}
             actions={{
                 onVote: vi.fn(),
@@ -95,6 +97,24 @@ describe("PatchNotesThread", () => {
             "/community/thread/1#message-11",
             "/community/thread/1#message-10",
         ]);
+    });
+
+    /* The rail's 9.5rem column stayed when the rail didn't, and the one
+       release was squeezed into it. */
+    it("gives a lone release the full width, with no rail beside it", () => {
+        render(false, vi.fn(), [RELEASES[0]!]);
+        expect(
+            screen.queryByRole("navigation", { name: "Releases" })
+        ).toBeNull();
+        const column =
+            screen.getByRole("article").parentElement!.parentElement!;
+        expect(column.className).not.toContain("grid-cols");
+
+        render();
+        const columns = screen.getByRole("navigation", {
+            name: "Releases",
+        }).parentElement!;
+        expect(columns.className).toContain("lg:grid-cols-[9.5rem");
     });
 
     it("keeps the editor out of the way until it's asked for", async () => {

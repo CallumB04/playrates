@@ -76,6 +76,10 @@ const ReleaseHeader = ({
 
 const hashOf = (entry: CommunityMessage) => `message-${entry.id}`;
 
+/** One release has nothing to jump between. */
+const hasReleaseIndex = (entries: CommunityMessage[]) =>
+    entries.filter((e) => e.patchNote).length >= 2;
+
 /** Every release, to jump to: a rail beside them on a wide screen, a row
  *  above them on a narrower one. */
 const ReleaseIndex = ({
@@ -89,7 +93,7 @@ const ReleaseIndex = ({
 }) => {
     const fade = useOverflowFade<HTMLUListElement>();
     const titled = entries.filter((e) => e.patchNote);
-    if (titled.length < 2) return null;
+    if (!hasReleaseIndex(entries)) return null;
 
     return (
         <nav
@@ -223,7 +227,15 @@ const PatchNotesThread = ({
             {entries.length === 0 ? (
                 <EmptyNote>No patch notes yet.</EmptyNote>
             ) : (
-                <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[9.5rem_minmax(0,1fr)] lg:gap-8">
+                // The rail's column only while there's a rail: alone, the
+                // releases fell into its 9.5rem.
+                <div
+                    className={cn(
+                        "flex flex-col gap-5",
+                        hasReleaseIndex(entries) &&
+                            "lg:grid lg:grid-cols-[9.5rem_minmax(0,1fr)] lg:gap-8"
+                    )}
+                >
                     <ReleaseIndex
                         entries={entries}
                         current={landedOn}
