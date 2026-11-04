@@ -63,13 +63,20 @@ post; copy the Stardew page and change everything.
   ember (`.num`, `.num.ember`), the title, and one grey line. Behind it a
   picture of **what the tip is about** (the horse for "get your horse", the
   smithing stones for "upgrade your weapon"), never a generic screenshot.
-- **The human bits**, spread out, not on every slide (the Stardew post has
-  about one or two per slide):
+- **What stays the same** across posts is the hook band (lead and logo) and
+  the numbered tip bands. Everything on the pictures can be the post's own:
+  try a new small idea when it's funny, but don't overdo it.
+- **The human bits**, spread out, not on every slide:
   - an `.aside`: a small purple bracket beside the copy ("(Trust me)",
-    "(ask me how I know)");
+    "(ask me how I know)"), only where it's actually a joke, never as
+    decoration. Place each one where it sits naturally in that band, after
+    the word it's reacting to or in a gap the copy leaves, never the same
+    corner on every slide (Callum, 2026-11-05);
   - a `.cap`: a short white lowercase caption on the picture, tilted, often
     with an `.arrow` doodle pointing at the thing ("evil guy you don't want
-    to meet straight away", "me at 1:59am, nowhere near my bed");
+    to meet straight away", "me at 1:59am, nowhere near my bed"). The arrow
+    has to land exactly on what it points at; check it on the full-size
+    slide, not the contact sheet;
   - a `.sticker`: an item sprite or cutout dropped on the picture (carrots
     on Torrent, strawberries at the Egg Festival), with `.spark` glows now
     and then.
@@ -124,8 +131,17 @@ Pokémon, Skyrim, Stardew) as well as lists that start arguments in the
 comments. Before settling on one, sketch each slide's picture and its joke;
 if three slides have neither, pick another topic.
 
+<<<<<<< ours
 Six tips, each a short `title` (four or five words) and one `line` the
 viewer can act on. Even a beginner post needs tips most players don't
+=======
+Five to eight tips (not always six), each a short `title` (four or five
+words) and one `line` the viewer can act on. A good five beats a forced
+eight: never pad a list. Boss guides only for bosses known to be hard
+(Tree Sentinel, Malenia, Maliketh, Radahn), not ones like Margit. No trivia
+that helps nobody ("the game can pause"). No game Callum hasn't played
+and can't check (Baldur's Gate 3 for now). Even a beginner post needs tips most players don't
+>>>>>>> theirs
 already know: on 2026-11-02 Callum pulled a Minecraft post of "don't dig
 straight down, sleep the first night" basics. Every tip has to be true and
 checkable: write only what you're sure of, and list anything approximate
