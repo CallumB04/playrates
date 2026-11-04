@@ -131,18 +131,13 @@ Pokémon, Skyrim, Stardew) as well as lists that start arguments in the
 comments. Before settling on one, sketch each slide's picture and its joke;
 if three slides have neither, pick another topic.
 
-<<<<<<< ours
-Six tips, each a short `title` (four or five words) and one `line` the
-viewer can act on. Even a beginner post needs tips most players don't
-=======
 Five to eight tips (not always six), each a short `title` (four or five
 words) and one `line` the viewer can act on. A good five beats a forced
 eight: never pad a list. Boss guides only for bosses known to be hard
 (Tree Sentinel, Malenia, Maliketh, Radahn), not ones like Margit. No trivia
 that helps nobody ("the game can pause"). No game Callum hasn't played
-and can't check (Baldur's Gate 3 for now). Even a beginner post needs tips most players don't
->>>>>>> theirs
-already know: on 2026-11-02 Callum pulled a Minecraft post of "don't dig
+and can't check (Baldur's Gate 3 for now). Even a beginner post needs
+tips most players don't already know: on 2026-11-02 Callum pulled a Minecraft post of "don't dig
 straight down, sleep the first night" basics. Every tip has to be true and
 checkable: write only what you're sure of, and list anything approximate
 for Callum to check. Skip what the game's tutorial already teaches, and
