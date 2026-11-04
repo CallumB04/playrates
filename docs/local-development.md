@@ -89,8 +89,31 @@ Every account's password is **`playrates-local`**, and every email is
   There are 22 more threads, the patch notes, and votes throughout.
 - **Notifications.** Six unread: two friend requests, two replies, a review
   milestone and an announcement. Older ones are already read.
+- **Lists.** Five, one of each kind: a ranked top 10 with covers picked by
+  hand and nine loves, an unranked one with a name long enough to wrap, a
+  friends-only one, a private one and an empty one. The first two are
+  pinned to the profile.
+- **Gaming 25.** 14 of 25 picked, the centre included, with a few loves.
+- **Profile.** Six favourite games, a pinned review, and every About field
+  filled in: location for friends, Discord private, the rest for everyone.
+  A slot bought for each kind of pin.
 - **Admin.** The tester is an admin. There are reports waiting (three open,
-  one resolved) and a few months of activity for the dashboard's charts.
+  one resolved), a few months of activity for the dashboard's charts, and an
+  email log with a message in every state: delivered, sent, delayed, bounced,
+  marked as spam, failed, held back by the cap and suppressed.
+
+### Others worth knowing
+
+- **`halcyon`**, a friend: a full Gaming 25 with eleven loves, a ranked list
+  of 12 the tester has loved, and a friends-only list the tester can see.
+- **`ironclad`**, a private profile with lists and a full Gaming 25 nobody
+  else can see.
+- **`boltcutter`**, a friends-only profile the tester isn't a friend of.
+- About a dozen others have a list each, and a few have started a Gaming 25
+  or chosen favourites.
+
+The patch notes thread has two releases, v1.0 and v1.1, written in the
+patch notes editor's own format, so the release rail beside them shows.
 
 ## How it's built
 
