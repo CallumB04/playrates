@@ -1309,7 +1309,7 @@ from public.community_threads where subject_kind = 'patch_notes';`,
     }
   };
   addGaming25(halcyon, GAMING_25_SIZE, 11);
-  addGaming25(tester, 14, 4);
+  addGaming25(tester, 14, 6);
   addGaming25(marlowe, 6, 1);
   for (const user of community.slice(10, 16)) {
     addGaming25(user, int2(1, GAMING_25_SIZE), int2(0, 3));
@@ -1349,6 +1349,67 @@ values (${lit(tester.id)}, 'slot_pinned_list', 1, ${lit(daysAgo(20))}),
        (${lit(tester.id)}, 'slot_pinned_review', 1, ${lit(daysAgo(20))})
 on conflict (user_id, item) do nothing;`,
   ].join("\n");
+
+  // One of each colour a notification can wear, unread, for the bell: the
+  // love milestones on the tester's list and Gaming 25, a streak about to
+  // go, a gift and a task nearly done. The announcements' tones are below.
+  const weekEnds = new Date(NOW.getTime() + 1.5 * DAY).toISOString();
+  const moreNotifications = [
+    notify(
+      "list_upvote_milestone",
+      null,
+      {
+        listId: testerTop,
+        listName: "My all-time top 10",
+        username: tester.username,
+        milestone: 5,
+      },
+      `list_upvotes:${testerTop}`,
+      minutesAgo(50),
+      false,
+    ),
+    notify(
+      "gaming_25_love_milestone",
+      null,
+      { username: tester.username, milestone: 5 },
+      `gaming_25_loves:${tester.id}`,
+      minutesAgo(140),
+      false,
+    ),
+    notify(
+      "streak_at_risk",
+      null,
+      { weeks: 1, shield: false, endsAt: weekEnds },
+      `streak_at_risk:${dateOnly(NOW)}`,
+      minutesAgo(20),
+      false,
+    ),
+    notify(
+      "gift_received",
+      halcyon,
+      { username: halcyon.username, item: "frame_neon" },
+      `gift_received:${halcyon.id}:frame_neon`,
+      minutesAgo(400),
+      false,
+    ),
+    notify(
+      "task_nearly_done",
+      null,
+      {
+        period: "week",
+        quest: "w_rate3",
+        label: "Rate 3 games",
+        count: 2,
+        target: 3,
+        xp: 45,
+        tokens: 0,
+        endsAt: weekEnds,
+      },
+      `task_nearly_done:w_rate3:${dateOnly(NOW)}`,
+      minutesAgo(90),
+      false,
+    ),
+  ];
 
   // The admin's email log: every way a message can end up. Oldest first,
   // as they'd have been written, so the ids run with the dates.
@@ -1493,7 +1554,7 @@ from auth.users;`,
     setval("community_messages"),
     patchNotesSql,
     insert("community_message_votes", messageVotes),
-    insert("notifications", notifications),
+    insert("notifications", [...notifications, ...moreNotifications]),
     insert(
       "content_reports",
       reports.map((rp) => ({ resolved_at: null, resolved_by: null, ...rp })),
@@ -1509,16 +1570,51 @@ from auth.users;`,
     insert("favourite_games", favourites),
     profileDetails,
     insert("email_messages", emailRows),
-    // An announcement everyone was sent; most have read it.
-    `with a as (
+    // An announcement in each tone, sent to everyone; most have read them,
+    // the tester none, so the bell shows every colour.
+    ...(
+      [
+        [
+          "update",
+          "A log per platform",
+          "You can now log a game once for each console you played it on.",
+          "/community",
+          2,
+        ],
+        [
+          "info",
+          "Your data, any time",
+          "Settings can now download everything you’ve logged, as a file.",
+          "/settings",
+          5,
+        ],
+        [
+          "warning",
+          "Down for a moment on Sunday",
+          "PlayRates will be offline for about 20 minutes from 7am while we move servers.",
+          null,
+          1,
+        ],
+        [
+          "celebration",
+          "10,000 games logged",
+          "Thank you, every one of you. Here’s to the next ten thousand.",
+          null,
+          3,
+        ],
+      ] as const
+    ).map(
+      ([tone, title, body, link, days]) => `with a as (
   insert into public.announcements (tone, title, body, link_path, sent_by, created_at)
-  values ('update', 'A log per platform', 'You can now log a game once for each console you played it on.', '/community', ${lit(staff.id)}, ${lit(daysAgo(2))})
+  values (${lit(tone)}, ${lit(title)}, ${lit(body)}, ${lit(link)}, ${lit(staff.id)}, ${lit(daysAgo(days))})
   returning id
 )
 select public.broadcast_announcement(id) from a;`,
-    `update public.notifications set read_at = created_at + interval '1 hour', created_at = ${lit(daysAgo(2))}
-where kind = 'announcement' and user_id <> ${lit(tester.id)} and random() < 0.7;
-update public.notifications set created_at = ${lit(daysAgo(2))} where kind = 'announcement';`,
+    ),
+    `update public.notifications n set created_at = a.created_at
+from public.announcements a where n.kind = 'announcement' and n.dedupe_key = 'announcement:' || a.id;
+update public.notifications set read_at = created_at + interval '1 hour'
+where kind = 'announcement' and user_id <> ${lit(tester.id)} and random() < 0.7;`,
     // Welcome notes are long since read, except by the account just made.
     `update public.notifications n set read_at = p.created_at, archived_at = p.created_at, created_at = p.created_at
 from public.profiles p where n.user_id = p.id and n.kind = 'welcome' and p.username <> 'newcomer';`,

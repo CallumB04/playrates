@@ -56,7 +56,7 @@ Every account's password is **`playrates-local`**, and every email is
 | ---------------- | ------------------------------------------------------------------- |
 | `tester`         | You. An admin with something in every state the app has to draw     |
 | `newcomer`       | A brand new account: the welcome, and every empty state             |
-| `playrates_team` | Staff. Signs the patch notes and the announcement                   |
+| `playrates_team` | Staff. Signs the patch notes and the announcements                  |
 | 38 others        | The community: `marlowe`, `tessellate`, `quietriver`, `nightjar`, … |
 
 ### What `tester` has
@@ -87,13 +87,17 @@ Every account's password is **`playrates-local`**, and every email is
 - **Community.** The tester's own thread ("…: PS5 or Switch?") with five
   replies. A message of theirs in someone else's thread has seven upvotes.
   There are 22 more threads, the patch notes, and votes throughout.
-- **Notifications.** Six unread: two friend requests, two replies, a review
-  milestone and an announcement. Older ones are already read.
+- **Notifications.** Fourteen unread, in every colour the bell has: two
+  friend requests, two replies and a review milestone (purple), an
+  announcement in each tone (an update in purple, info in blue, a heads-up
+  in orange, a celebration in gold), love milestones on a list and the
+  Gaming 25 (pink), a streak about to end (ember), a gift and a task nearly
+  done. Older ones are already read.
 - **Lists.** Five, one of each kind: a ranked top 10 with covers picked by
   hand and nine loves, an unranked one with a name long enough to wrap, a
   friends-only one, a private one and an empty one. The first two are
   pinned to the profile.
-- **Gaming 25.** 14 of 25 picked, the centre included, with a few loves.
+- **Gaming 25.** 14 of 25 picked, the centre included, with six loves.
 - **Profile.** Six favourite games, a pinned review, and every About field
   filled in: location for friends, Discord private, the rest for everyone.
   A slot bought for each kind of pin.
