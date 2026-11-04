@@ -53,7 +53,7 @@ const LibraryFilters = ({
             options: platformOptions(platforms, "All"),
             value: query.platform,
             onChange: (platform: string) => setQuery({ platform }),
-            width: "w-68",
+            width: "w-60",
         },
         {
             label: "Genre",
@@ -61,7 +61,7 @@ const LibraryFilters = ({
             options: genreOptions,
             value: query.genre,
             onChange: (genre: string) => setQuery({ genre }),
-            width: "w-68",
+            width: "w-56",
         },
         {
             label: "Sort by",
@@ -70,13 +70,13 @@ const LibraryFilters = ({
             value: query.sort,
             onChange: (sort: string) =>
                 setQuery({ sort: sort as LibraryQuery["sort"] }),
-            width: "w-56",
+            width: "w-48",
         },
     ];
 
     // In the bar, each says what it is inside itself; in the sheet, above.
-    // Wide enough for "Commodore / Amiga" with its mark, and "Hack and
-    // slash/Beat 'em up".
+    // Sized for the common names and every sort; the longest platforms and
+    // genres are cut short, and read in full in the menu.
     const inBar = selects.map(({ label, ariaLabel, width, ...select }) => (
         <Dropdown
             key={label}
@@ -135,15 +135,14 @@ const LibraryFilters = ({
                         />
                     </div>
 
-                    {/* Below xl the selects and toggles move into a sheet, so
-                        the filter plate doesn't own the whole first screen,
-                        and the search keeps its width beside them. */}
-                    <div className="hidden gap-3 xl:flex">{inBar}</div>
+                    {/* Below lg the selects and toggles move into a sheet, so
+                        the filter plate doesn't own the whole first screen. */}
+                    <div className="hidden gap-3 lg:flex">{inBar}</div>
 
                     <Button
                         variant="secondary"
                         onClick={() => setSheetOpen(true)}
-                        className="xl:hidden"
+                        className="lg:hidden"
                     >
                         <ListFilter size={15} aria-hidden />
                         Filters
@@ -152,7 +151,7 @@ const LibraryFilters = ({
 
                 {/* Its own line. The one toggle sitting at the end of a row
                     of platform chips read as another chip. */}
-                <div className="hidden items-center gap-5 border-t border-subtle pt-3.5 xl:flex">
+                <div className="hidden items-center gap-5 border-t border-subtle pt-3.5 lg:flex">
                     {toggles}
                 </div>
             </div>

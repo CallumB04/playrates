@@ -238,7 +238,9 @@ const ShelfFilters = ({
     return (
         <div
             ref={wrapper}
-            className="relative shrink-0"
+            // On a phone it fills what the sort leaves, the whole line once
+            // the sort wraps under it.
+            className="relative shrink-0 max-sm:grow"
             onMouseDown={() => {
                 pressedInside.current = true;
             }}
@@ -258,7 +260,7 @@ const ShelfFilters = ({
                 aria-label={active > 0 ? `Filters, ${active} on` : "Filters"}
                 className={fieldClass(
                     cn(
-                        "flex cursor-pointer items-center gap-2 whitespace-nowrap",
+                        "flex cursor-pointer items-center gap-2 whitespace-nowrap max-sm:justify-center",
                         open && "border-brand shadow-glow"
                     )
                 )}

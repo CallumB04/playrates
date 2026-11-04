@@ -65,9 +65,10 @@ variant or tone instead of overriding it at the call site.
 - Every dropdown has a visible label, one of two ways. In a form, a sheet or
   a popover, a `Field` label above it, as in the shelf's Filters. Standing
   alone in a toolbar, its `lead` inside it, before the value ("Sort by",
-  "Genre"), with "All" rather than "All genres". Size it so no option is
-  cut off at any width; where it can't fit, it wraps onto its own line or
-  moves into the sheet.
+  "Genre"), with "All" rather than "All genres". Size it for the options
+  people will pick at every width, without making it huge: a rare,
+  very long name ("Hack and slash/Beat 'em up") can be cut short, as the
+  menu shows it whole.
 - `ui/EmptyPlate` and `EmptyNote` for empty states, `ui/Skeleton` while
   loading, `components/SignUpPlate` where a page needs an account.
 
