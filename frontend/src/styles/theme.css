@@ -737,21 +737,12 @@
    than retyped in a dozen components.
    =========================================================================== */
 
-/* Text over a page's backdrop picture. By night, a halo of the page's own
-   colour, so it reads over any art without the art having to be washed out
-   for it. By day a pale glow round dark text looked smudged, so the muted
-   grey steps up to the secondary one instead. Inherited, and harmless where
-   there's no picture behind. */
+/* Text over a page's backdrop picture: the muted grey steps up to the
+   secondary one, so it holds against the art. A halo of the page's colour
+   did that job once, and looked smudged in both themes. Inherited, and
+   harmless where there's no picture behind. */
 @utility on-backdrop {
     --color-content-muted: var(--content-secondary);
-
-    &:where(.dark, .dark *) {
-        --color-content-muted: var(--content-muted);
-        text-shadow:
-            0 0 4px var(--surface),
-            0 0 10px var(--surface),
-            0 0 18px var(--surface);
-    }
 }
 
 /* A quiet spacer between a label and its figure. It used to be a dotted

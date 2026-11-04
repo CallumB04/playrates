@@ -40,10 +40,9 @@ const BackdropArt = ({
         className={cn(
             // Eased rather than straight: clear above the profile, then a
             // long tail that fades rather than ends. By night it stays well
-            // into the name, which the text's halo keeps readable. By day
-            // there's no halo (a pale glow round dark text looked smudged),
-            // so it eases off sooner through the name and stats, and the
-            // grey text over it is a shade darker (on-backdrop).
+            // into the name, light text holding against the dimmed art; by
+            // day it eases off sooner through the name and stats. Either way
+            // the grey text over it steps up a shade (on-backdrop).
             "overflow-hidden [mask-image:linear-gradient(to_bottom,black_0%,black_30%,rgb(0_0_0/0.66)_40%,rgb(0_0_0/0.44)_50%,rgb(0_0_0/0.28)_60%,rgb(0_0_0/0.15)_71%,rgb(0_0_0/0.06)_84%,transparent)] dark:[mask-image:linear-gradient(to_bottom,black_0%,black_32%,rgb(0_0_0/0.78)_44%,rgb(0_0_0/0.55)_56%,rgb(0_0_0/0.35)_68%,rgb(0_0_0/0.18)_80%,rgb(0_0_0/0.07)_90%,transparent)]",
             className
         )}
