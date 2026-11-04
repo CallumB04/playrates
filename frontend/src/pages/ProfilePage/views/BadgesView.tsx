@@ -376,7 +376,7 @@ const BadgeRow = ({
                     className="m-1"
                 />
                 {pick && pick.order > 0 && (
-                    <span className="absolute -top-0.5 -left-0.5 grid size-5 place-items-center rounded-full bg-brand text-label-sm font-semibold text-content-on-solid shadow-plate">
+                    <span className="absolute -top-0.5 -left-0.5 grid size-5 place-items-center rounded-full bg-brand text-label-sm font-semibold text-content-on-solid shadow-solid">
                         {pick.order}
                     </span>
                 )}
