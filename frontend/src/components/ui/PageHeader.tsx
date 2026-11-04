@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import type { Crumb } from "@playrates/shared";
 import { cn } from "../../lib/cn";
+import Breadcrumbs from "./Breadcrumbs";
 
 interface PageHeaderProps {
     title: ReactNode;
-    /** A way back, over the title. */
-    back?: { to: string; label: string };
+    /** Where the page sits, over the title. */
+    trail?: Crumb[];
     /** A line under the title: what the page is, or how much is on it. */
     note?: ReactNode;
     /** Beside the title from sm, under it on a phone. */
@@ -16,12 +16,12 @@ interface PageHeaderProps {
 
 /**
  * A page's own header, so every page opens the same way: one title size,
- * one way back, one line of note. Home and Progress keep headers of their
+ * one trail back, one line of note. Home and Progress keep headers of their
  * own, where the header is the point of the page.
  */
 const PageHeader = ({
     title,
-    back,
+    trail,
     note,
     actions,
     className,
@@ -33,15 +33,7 @@ const PageHeader = ({
         )}
     >
         <div className="min-w-0">
-            {back && (
-                <Link
-                    to={back.to}
-                    className="relative mb-2 inline-flex items-center gap-1.5 text-label text-content-muted before:absolute before:-inset-x-2 before:-inset-y-3.5 before:content-[''] hover:text-content"
-                >
-                    <ArrowLeft size={14} aria-hidden />
-                    {back.label}
-                </Link>
-            )}
+            {trail && <Breadcrumbs trail={trail} className="mb-2" />}
             <h1 className="font-display text-title text-content">{title}</h1>
             {note && (
                 <div className="mt-2 max-w-[56ch] text-body-sm text-content-secondary">

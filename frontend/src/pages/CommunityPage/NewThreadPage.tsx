@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
     ThreadTitleSchema,
     isEmptyDoc,
+    newThreadTrail,
     type RichTextDoc,
 } from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
@@ -153,10 +154,13 @@ const NewThreadPage = () => {
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
             <PageHeader
                 title="Start a thread"
-                back={{
-                    to: backTo,
-                    label: presetId ? "Back to the game" : "Community",
-                }}
+                // Its game's trail once the game is in, so the way back
+                // doesn't change under a thumb.
+                trail={
+                    presetId
+                        ? preset && newThreadTrail(preset)
+                        : newThreadTrail()
+                }
                 actions={
                     restored && (
                         <p className="text-label text-content-muted">

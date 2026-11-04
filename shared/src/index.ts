@@ -8,6 +8,7 @@ export * from "./schemas/gameLog.js";
 export * from "./logRollup.js";
 export * from "./igdbImage.js";
 export * from "./hubs.js";
+export * from "./breadcrumbs.js";
 export * from "./schemas/review.js";
 export * from "./schemas/friend.js";
 export * from "./schemas/notification.js";

@@ -2,6 +2,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
     hubFilters,
     hubPath,
+    hubTrail,
     hubWords,
     isHubYear,
     type Game,
@@ -217,11 +218,7 @@ const HubPage = ({ kind }: { kind: Kind }) => {
             <PageHeader
                 title={words?.heading ?? ""}
                 note={words?.lead}
-                back={
-                    hub?.kind === "similar"
-                        ? { to: `/game/${hub.gameId}`, label: hub.title }
-                        : undefined
-                }
+                trail={hub ? hubTrail(hub) : undefined}
                 actions={
                     hub?.kind === "year" ? (
                         <YearSteps year={hub.year} />

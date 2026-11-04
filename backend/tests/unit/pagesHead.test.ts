@@ -69,6 +69,47 @@ describe("the page head", () => {
     expect(head).not.toContain("robots");
   });
 
+  it("gives a trail as a BreadcrumbList, each step on the live origin", () => {
+    const head = buildHead({
+      ...base,
+      breadcrumbs: [
+        { name: "Library", path: "/library" },
+        { name: "Hades", path: "/game/1" },
+      ],
+    });
+    const data = [
+      ...head.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g),
+    ].map((m) => JSON.parse(m[1]!));
+
+    expect(data).toContainEqual({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Library",
+          item: "https://playrates.app/library",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Hades",
+          item: "https://playrates.app/game/1",
+        },
+      ],
+    });
+  });
+
+  it("keeps a trail out of a page asked not to be indexed", () => {
+    const head = buildHead({
+      ...base,
+      noindex: true,
+      breadcrumbs: [{ name: "Library", path: "/library" }],
+    });
+    expect(head).not.toContain("BreadcrumbList");
+  });
+
   it("asks not to be indexed when told to", () => {
     expect(buildHead({ ...base, noindex: true })).toContain(
       '<meta name="robots" content="noindex" />',

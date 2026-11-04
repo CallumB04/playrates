@@ -665,6 +665,48 @@ describe("structured data", () => {
     expect(profile["@type"]).toBe("ProfilePage");
   });
 
+  it("gives a list its trail, and a list kept to friends none", async () => {
+    const list = (visibility: "everyone" | "friends") =>
+      buildTestApp({
+        seed: {
+          ...baseSeed(),
+          gameLists: [
+            {
+              id: 1,
+              user_id: USER_A,
+              name: "Best of",
+              description: "",
+              visibility,
+              colour: null,
+              ranked: false,
+              cover_game_ids: [],
+              created_at: "2026-10-01T00:00:00.000Z",
+              updated_at: "2026-10-02T00:00:00.000Z",
+            },
+          ],
+        },
+      }).app;
+    const trail = async (visibility: "everyone" | "friends") =>
+      [
+        ...(
+          await request(list(visibility)).get("/user/devuser/lists/1")
+        ).text.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs),
+      ]
+        .map((m) => JSON.parse(m[1]!) as Record<string, unknown>)
+        .find((d) => d["@type"] === "BreadcrumbList");
+
+    expect(
+      (
+        (await trail("everyone"))!.itemListElement as { item: string }[]
+      ).map((c) => c.item),
+    ).toEqual([
+      "https://playrates.app/user/devuser",
+      "https://playrates.app/user/devuser/lists",
+      "https://playrates.app/user/devuser/lists/1",
+    ]);
+    expect(await trail("friends")).toBeUndefined();
+  });
+
   it("says nothing about a profile that isn't public", async () => {
     const { app } = buildTestApp({
       seed: {

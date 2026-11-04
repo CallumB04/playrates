@@ -1,10 +1,12 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { reviewTrail } from "@playrates/shared";
 import { fetchReview, isNotFound, queryKeys } from "../../api";
 import GameCover from "../../components/game/GameCover";
 import ProfilePicture, {
     PrivateProfilePicture,
 } from "../../components/ProfilePicture";
+import Breadcrumbs from "../../components/ui/Breadcrumbs";
 import { cardClass } from "../../components/ui/cardClass";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import RatingBadge from "../../components/ui/RatingBadge";
@@ -57,6 +59,14 @@ const ReviewPage = () => {
 
     return (
         <article className="flex max-w-2xl flex-col gap-6">
+            <Breadcrumbs
+                trail={reviewTrail({
+                    id: review.id,
+                    game: review.game,
+                    author: author?.username ?? null,
+                })}
+                className="-mb-3"
+            />
             <Link
                 to={`/game/${review.game.id}`}
                 className="flex items-center gap-4 rounded-md lift hover:bg-surface-hover"
