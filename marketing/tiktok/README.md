@@ -52,11 +52,13 @@ its slides, laid out by hand in `posts/<post>/slides.html` with their
 pictures in `posts/<post>/img/`, on the classes in `handmade.css`:
 
 - `.slide` (`data-name` names the PNG), `.bg` for the full-bleed picture
-  (`.px` keeps pixel art crisp);
+  (`.px` keeps pixel art crisp; `.bg.soft` blurs it behind a `.photo` of
+  the same shot that's too small or wide to fill the slide);
 - `.band.hook` with `.lead`, `img.logo` or `.big`; `.band.item` with
   `.num` (`.num.ember` on alternate slides), `h2` and `p`; `.band.outro`
   with `.push` and `.url`;
-- `.aside`, `.cap`, `.sticker`, `.arrow` (an inline SVG path), `.spark`,
+- `.aside` (`.aside.inline` sits in the copy, right after the words it
+  reacts to), `.cap`, `.sticker`, `.arrow` (an inline SVG path), `.spark`,
   `.rain`, `.photo`, and `.mark`, the PlayRates mark from
   `frontend/public/favicon.svg`.
 
@@ -226,7 +228,7 @@ format, and the others share them:
 - `games` — **#1 first**, by slug. Remakes and ports share a title, so look
   the slug up rather than guessing it (`resident-evil-2--1` is the 2019
   remake):
-  `npx --no-install supabase db query --linked -o csv "select slug, title, release_date from games where igdb_id is not null and title ilike '%resident evil 2%'"`
+  `npx --no-install supabase db query --remote --read-only -o csv "select slug, title, release_date from games where igdb_id is not null and title ilike '%resident evil 2%'"`
   (the `igdb_id` filter keeps it on the slug index rather than a full scan).
   `order: "countdown"` shows #10 first so the reveal is the last swipe;
   `"ranked"` shows #1 first.

@@ -158,7 +158,7 @@ Look slugs up rather than guessing them; remakes and ports share titles
 scans the table:
 
 ```bash
-npx --no-install supabase db query --linked -o csv "select slug, title, release_date, igdb_rating_count from games where igdb_id is not null and title ilike '%silent hill%' order by igdb_rating_count desc nulls last"
+npx --no-install supabase db query --remote --read-only -o csv "select slug, title, release_date, igdb_rating_count from games where igdb_id is not null and title ilike '%silent hill%' order by igdb_rating_count desc nulls last"
 ```
 
 If `npx --no-install` refuses because a newer CLI is out, run a cached one
