@@ -1,4 +1,5 @@
 import {
+  notificationGroupKey,
   relationFor,
   type FriendRelation,
   type NotificationFeed,
@@ -10,6 +11,17 @@ import { toRange } from "../../lib/pagination.js";
 import type { FriendsRepository } from "../friends/friends.repository.js";
 import { toNotification, type RelationLookup } from "./notifications.mapper.js";
 import type { NotificationsRepository } from "./notifications.repository.js";
+
+/** The date in their own time zone; UTC's where theirs isn't one. */
+const dayIn = (iso: string, timezone: string | null): string => {
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone ?? "UTC",
+    }).format(new Date(iso));
+  } catch {
+    return iso.slice(0, 10);
+  }
+};
 
 export const createNotificationsService = (
   repo: NotificationsRepository,
@@ -55,13 +67,15 @@ export const createNotificationsService = (
       { archived, ...pagination }: Pagination & { archived: boolean },
     ): Promise<NotificationFeed> {
       const { from, to } = toRange(pagination);
-      const [{ rows, total }, unread, requestActors, seenAt] =
+      const [{ rows, total }, unread, requestActors, owner, unreadRows] =
         await Promise.all([
           repo.listForUser(userId, archived, from, to),
           repo.countUnread(userId),
           repo.unreadRequestActors(userId),
-          repo.seenAt(userId),
+          repo.bellOwner(userId),
+          repo.unreadForRows(userId),
         ]);
+      const { seenAt, timezone } = owner;
 
       const relationOf = await relationLookup(
         userId,
@@ -75,6 +89,14 @@ export const createNotificationsService = (
         unread,
         unseen: await repo.countUnseen(userId, seenAt),
         seenAt,
+        unreadRows: new Set(
+          unreadRows.map((n) =>
+            notificationGroupKey(
+              { id: n.id, kind: n.kind, threadId: n.thread_id },
+              dayIn(n.created_at, timezone),
+            ),
+          ),
+        ).size,
         awaitingAnswer: requestActors.filter(
           (id) => relationOf(id) === "request-received",
         ).length,

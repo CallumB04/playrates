@@ -1721,8 +1721,28 @@ export const createInMemoryRepos = (
             (since === null || n.created_at > since),
         ).length;
       },
-      async seenAt(userId) {
-        return state.notificationsSeenAt.get(userId) ?? null;
+      async bellOwner(userId) {
+        return {
+          seenAt: state.notificationsSeenAt.get(userId) ?? null,
+          timezone:
+            state.profiles.find((p) => p.id === userId)?.timezone ?? null,
+        };
+      },
+      async unreadForRows(userId) {
+        return state.notifications
+          .filter(
+            (n) =>
+              n.user_id === userId &&
+              n.read_at === null &&
+              n.archived_at === null,
+          )
+          .map((n) => ({
+            id: n.id,
+            kind: n.kind,
+            created_at: n.created_at,
+            thread_id:
+              (n.data as { threadId?: number } | null)?.threadId ?? null,
+          }));
       },
       async markSeen(userId) {
         state.notificationsSeenAt.set(userId, new Date().toISOString());

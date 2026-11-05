@@ -147,7 +147,14 @@ const useSetReadInCache = () => {
                     change += read ? -1 : 1;
                     return { ...n, readAt: read ? now : null };
                 });
-                return { ...feed, data, unread: feed.unread + change };
+                // The rows' count is the server's to work out; until it
+                // does, the badge reads the plain count, moved at once.
+                return {
+                    ...feed,
+                    data,
+                    unread: feed.unread + change,
+                    unreadRows: undefined,
+                };
             }
         );
     };

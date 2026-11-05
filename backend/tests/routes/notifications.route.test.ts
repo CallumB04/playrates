@@ -151,6 +151,74 @@ describe("notifications", () => {
     expect(response.status).toBe(422);
   });
 
+  /* Two friends accepting on one day share a row in the bell, so the
+     badge counts them once, by the day in the member's own time zone. */
+  it("counts a row of several unread once on the badge", async () => {
+    const accepted = (id: number, created_at: string) =>
+      buildNotification({
+        id,
+        kind: "friend_accepted",
+        actor_id: USER_B,
+        dedupe_key: `friend_accepted:${id}`,
+        created_at,
+      });
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        notifications: [
+          accepted(1, "2026-11-05T10:00:00.000Z"),
+          accepted(2, "2026-11-05T09:00:00.000Z"),
+          // The day before.
+          accepted(3, "2026-11-04T09:00:00.000Z"),
+          buildNotification({ id: 4, dedupe_key: "welcome-again" }),
+          buildNotification({
+            id: 5,
+            dedupe_key: "read",
+            read_at: "2026-11-05T11:00:00.000Z",
+          }),
+        ],
+      },
+    });
+
+    const response = await request(app)
+      .get("/api/v1/me/notifications")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.body.unread).toBe(4);
+    expect(response.body.unreadRows).toBe(3);
+  });
+
+  it("says what a day is by the member's own time zone", async () => {
+    const seed = baseSeed();
+    const accepted = (id: number, created_at: string) =>
+      buildNotification({
+        id,
+        kind: "friend_accepted",
+        actor_id: USER_B,
+        dedupe_key: `friend_accepted:${id}`,
+        created_at,
+      });
+    const { app } = buildTestApp({
+      seed: {
+        ...seed,
+        profiles: seed.profiles!.map((p) =>
+          p.id === USER_A ? { ...p, timezone: "Pacific/Auckland" } : p,
+        ),
+        // Two UTC days, one day in Auckland.
+        notifications: [
+          accepted(1, "2026-11-04T23:00:00.000Z"),
+          accepted(2, "2026-11-05T01:00:00.000Z"),
+        ],
+      },
+    });
+
+    const response = await request(app)
+      .get("/api/v1/me/notifications")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.body.unreadRows).toBe(1);
+  });
+
   it("requires a signed-in caller", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 

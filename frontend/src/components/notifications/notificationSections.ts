@@ -1,4 +1,8 @@
-import { awaitingAnswer, type AppNotification } from "@playrates/shared";
+import {
+    awaitingAnswer,
+    notificationGroupKey,
+    type AppNotification,
+} from "@playrates/shared";
 
 /** One row in the bell: a notification, or several of a kind on one day. */
 export interface FeedEntry {
@@ -24,20 +28,17 @@ const LABELS: Record<SectionId, string> = {
 
 const WEEK_MS = 7 * 86_400_000;
 
-const dayOf = (iso: string) => new Date(iso).toDateString();
-
-/* People doing the same thing on the same day read as one line: friends
-   accepting, or replies in one thread. Everything else stands alone. */
-const groupKey = (n: AppNotification): string => {
-    switch (n.kind) {
-        case "friend_accepted":
-            return `accepted:${dayOf(n.createdAt)}`;
-        case "community_reply":
-            return `reply:${n.threadId}:${dayOf(n.createdAt)}`;
-        default:
-            return `one:${n.id}`;
-    }
-};
+/** The browser's own day, which is the member's time zone in practice:
+ *  the server counts the badge's rows by that. */
+const groupKey = (n: AppNotification) =>
+    notificationGroupKey(
+        {
+            id: n.id,
+            kind: n.kind,
+            threadId: "threadId" in n ? n.threadId : null,
+        },
+        new Date(n.createdAt).toDateString()
+    );
 
 const grouped = (notifications: AppNotification[]): FeedEntry[] => {
     const entries = new Map<string, FeedEntry>();

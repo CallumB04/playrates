@@ -42,9 +42,10 @@ const NotificationMenu = () => {
     const titleId = useId();
 
     const { data } = useNotifications(false);
-    // Unread, friend requests waiting on an answer included. Closing the
-    // bell reads what it showed, so after a look only those are left.
-    const unread = data?.unread ?? 0;
+    // Unread rows, friend requests waiting on an answer included, a group
+    // of them counting once. Closing the bell reads what it showed, so after
+    // a look only the requests are left.
+    const unread = data ? (data.unreadRows ?? data.unread) : 0;
 
     useEffect(() => whenIdle(() => void loadPanel()), []);
 

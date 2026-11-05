@@ -256,10 +256,33 @@ export interface NotificationFeed extends Paginated<AppNotification> {
   unseen?: number;
   /** When the bell was last opened, to tell what's new in the list. */
   seenAt?: string | null;
+  /** Unread as the bell shows them, a group sharing a row counting once:
+   *  what the badge says. Absent from an API older than it. */
+  unreadRows?: number;
   /** Of those, friend requests still waiting on an answer: unread until
    *  answered, so the bulk actions leave them be. */
   awaitingAnswer: number;
 }
+
+/**
+ * Which row of the bell a notification sits in. People doing the same
+ * thing on the same day read as one line: friends accepting, or replies in
+ * one thread. Everything else stands alone. `day` is the date in the
+ * member's own time zone, so the bell and its badge agree on what a day is.
+ */
+export const notificationGroupKey = (
+  n: { id: number; kind: string; threadId?: number | null },
+  day: string,
+): string => {
+  switch (n.kind) {
+    case "friend_accepted":
+      return `accepted:${day}`;
+    case "community_reply":
+      return `reply:${n.threadId}:${day}`;
+    default:
+      return `one:${n.id}`;
+  }
+};
 
 /**
  * A friend request still waiting on an answer is a task, not news: it cannot

@@ -37,8 +37,15 @@ export interface NotificationsRepository {
   /** Unread, in the inbox, and raised after `since`: what's new since the
    *  bell was last opened. Every unread one when it never has been. */
   countUnseen(userId: string, since: string | null): Promise<number>;
-  /** When they last opened the bell; null if they never have. */
-  seenAt(userId: string): Promise<string | null>;
+  /** When they last opened the bell (null if never), and their time zone,
+   *  which decides what counts as one day in it. */
+  bellOwner(
+    userId: string,
+  ): Promise<{ seenAt: string | null; timezone: string | null }>;
+  /** Enough of each unread inbox row to tell which share a row. */
+  unreadForRows(
+    userId: string,
+  ): Promise<{ id: number; kind: string; created_at: string; thread_id: number | null }[]>;
   markSeen(userId: string): Promise<void>;
   /** Who sent the unread friend requests still in the inbox. */
   unreadRequestActors(userId: string): Promise<string[]>;
@@ -150,17 +157,44 @@ export const createNotificationsRepository = (
     return count ?? 0;
   },
 
-  async seenAt(userId) {
+  async bellOwner(userId) {
     const { data, error } = await db
       .from("profiles")
-      .select("notifications_seen_at")
+      .select("notifications_seen_at, timezone")
       .eq("id", userId)
       .maybeSingle();
     if (error) throw error;
+    const row = data as {
+      notifications_seen_at: string | null;
+      timezone: string | null;
+    } | null;
+    return {
+      seenAt: row?.notifications_seen_at ?? null,
+      timezone: row?.timezone ?? null,
+    };
+  },
+
+  async unreadForRows(userId) {
+    const { data, error } = await db
+      .from("notifications")
+      .select("id, kind, created_at, data")
+      .eq("user_id", userId)
+      .is("read_at", null)
+      .is("archived_at", null);
+    if (error) throw error;
     return (
-      (data as { notifications_seen_at: string | null } | null)
-        ?.notifications_seen_at ?? null
-    );
+      (data ?? []) as {
+        id: number;
+        kind: string;
+        created_at: string;
+        data: { threadId?: number } | null;
+      }[]
+    ).map((r) => ({
+      id: r.id,
+      kind: r.kind,
+      created_at: r.created_at,
+      thread_id: r.data?.threadId ?? null,
+    }));
   },
 
   async markSeen(userId) {
