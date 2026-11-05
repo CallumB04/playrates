@@ -4,6 +4,7 @@ import type {
     CardThemeKey,
     LeaderboardPeriod,
     LeaderboardRow,
+    Metal,
     PlayerBadges,
     Progress,
     QuestSwapResult,
@@ -129,6 +130,25 @@ export const buyItem = async (
         `/shop/${item}/buy`
     );
     return data;
+};
+
+/** Which moment a share picture is of. */
+export type MomentPicture =
+    | { kind: "badge"; badge: string; metal: Metal }
+    | { kind: "level"; level: number }
+    | { kind: "finished"; game: number }
+    | { kind: "shelf"; count: number };
+
+/** A moment's own share picture: the badge, the level, the game, the
+ *  shelf. Drawn for public profiles only, as the player card is. */
+export const momentImageUrl = (
+    username: string,
+    moment: MomentPicture
+): string => {
+    const params = new URLSearchParams(
+        Object.entries(moment).map(([key, value]) => [key, String(value)])
+    );
+    return `${env.apiBaseUrl}/api/v1/progress/${encodeURIComponent(username)}/moment.png?${params}`;
 };
 
 /** The player card picture. Its address changes with the XP it shows, as

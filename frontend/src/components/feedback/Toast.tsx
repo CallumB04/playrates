@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CircleAlert, CircleCheck, Info, X } from "lucide-react";
 import type {
     NotificationType,
@@ -51,11 +51,23 @@ const Toast = ({ toast, onDismiss, onRemove }: ToastProps) => {
     const { id, text, type, dwell, leaving, action } = toast;
     const { icon, line, Icon } = TONES[type];
 
+    /* Held while the pointer or focus is on it: a toast that runs out under
+       the hand reaching for its button reads as broken. */
+    const [held, setHeld] = useState(false);
+    const left = useRef(dwell);
+    const startedAt = useRef(0);
+    const hold = (on: boolean) => {
+        if (on === held) return;
+        if (on && left.current !== null)
+            left.current -= Date.now() - startedAt.current;
+        setHeld(on);
+    };
     useEffect(() => {
-        if (leaving || dwell === null) return;
-        const timer = setTimeout(() => onDismiss(id), dwell);
+        if (leaving || left.current === null || held) return;
+        startedAt.current = Date.now();
+        const timer = setTimeout(() => onDismiss(id), left.current);
         return () => clearTimeout(timer);
-    }, [dwell, id, leaving, onDismiss]);
+    }, [held, id, leaving, onDismiss]);
 
     useEffect(() => {
         if (!leaving) return;
@@ -78,6 +90,13 @@ const Toast = ({ toast, onDismiss, onRemove }: ToastProps) => {
                     // The same plate as every other surface: ambient shadow and
                     // a rim of light along the top edge. The status is the
                     // icon's job and the countdown line's, not the card's.
+                    onPointerEnter={() => hold(true)}
+                    onPointerLeave={() => hold(false)}
+                    onFocus={() => hold(true)}
+                    onBlur={(event) => {
+                        if (!event.currentTarget.contains(event.relatedTarget))
+                            hold(false);
+                    }}
                     className={cn(
                         "pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-md",
                         "border border-subtle bg-surface-raised py-3 pr-2 pl-3.5",
@@ -137,7 +156,12 @@ const Toast = ({ toast, onDismiss, onRemove }: ToastProps) => {
                         style={
                             dwell === null
                                 ? undefined
-                                : { animationDuration: `${dwell}ms` }
+                                : {
+                                      animationDuration: `${dwell}ms`,
+                                      animationPlayState: held
+                                          ? "paused"
+                                          : "running",
+                                  }
                         }
                         className={cn(
                             "absolute inset-x-0 bottom-0 h-0.5 origin-left",

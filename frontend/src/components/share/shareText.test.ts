@@ -10,25 +10,29 @@ import {
 
 const badge = (tiers: number) =>
     ({
+        key: "collector",
         name: "Collector",
         tiers: Array.from({ length: tiers }),
     }) as unknown as BadgeDef;
 
 describe("share moments", () => {
     it("says a finished game with its rating, where it has one", () => {
-        expect(finishedMoment({ id: 7, title: "Hades" }, 9).text).toBe(
+        expect(finishedMoment("ana", { id: 7, title: "Hades" }, 9).text).toBe(
             "I just finished Hades and gave it 9/10"
         );
-        expect(finishedMoment({ id: 7, title: "Hades" }, 8.25).text).toBe(
-            "I just finished Hades and gave it 8.25/10"
-        );
-        expect(finishedMoment({ id: 7, title: "Hades" }, null, true).text).toBe(
-            "I just mastered Hades"
-        );
-        expect(finishedMoment({ id: 7, title: "Hades" }, null)).toEqual({
+        expect(
+            finishedMoment("ana", { id: 7, title: "Hades" }, 8.25).text
+        ).toBe("I just finished Hades and gave it 8.25/10");
+        expect(
+            finishedMoment("ana", { id: 7, title: "Hades" }, null, true).text
+        ).toBe("I just mastered Hades");
+        expect(finishedMoment("ana", { id: 7, title: "Hades" }, null)).toEqual({
             title: "Hades",
             path: "/game/7",
             text: "I just finished Hades",
+            image: expect.stringMatching(
+                /\/api\/v1\/progress\/ana\/moment\.png\?kind=finished&game=7$/
+            ),
         });
     });
 
@@ -38,11 +42,17 @@ describe("share moments", () => {
         );
         expect(badgeMoment("ana", badge(1), 1).title).toBe("Collector");
         expect(badgeMoment("ana", badge(1), 1).path).toBe("/user/ana/badges");
+        expect(badgeMoment("ana", badge(4), 3).image).toMatch(
+            /\/api\/v1\/progress\/ana\/moment\.png\?kind=badge&badge=collector&metal=3$/
+        );
     });
 
     it("tells a first game from a round number", () => {
         expect(shelfMoment("ana", 1).text).toBe(
             "I just logged my first game on PlayRates"
+        );
+        expect(shelfMoment("ana", 25).image).toMatch(
+            /\/api\/v1\/progress\/ana\/moment\.png\?kind=shelf&count=25$/
         );
         expect(shelfMoment("ana", 1000).text).toBe(
             "That’s 1,000 games on my PlayRates shelves"
@@ -54,6 +64,9 @@ describe("share moments", () => {
             title: "Level 12",
             path: "/user/ana",
             text: "I just reached level 12 on PlayRates",
+            image: expect.stringMatching(
+                /\/api\/v1\/progress\/ana\/moment\.png\?kind=level&level=12$/
+            ),
         });
     });
 

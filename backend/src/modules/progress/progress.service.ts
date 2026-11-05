@@ -1,6 +1,8 @@
 import {
   BACKGROUND_LEVEL,
   BADGES,
+  badgeDef,
+  badgeText,
   badgeTokens,
   badgeXp,
   CARD_THEME_KEYS,
@@ -8,6 +10,7 @@ import {
   HABIT_WEEKS,
   levelFor,
   levelTokens,
+  METAL_NAMES,
   metalsReached,
   periodsFor,
   NAME_COLOUR_KEYS,
@@ -50,6 +53,8 @@ import {
   type XpRule,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
+import { BADGE_ICONS } from "./badgeIcons.js";
+import type { MomentSource } from "./moment.image.js";
 import type { ProfileRow } from "../../types/database.types.js";
 import type { FriendsRepository } from "../friends/friends.repository.js";
 import type { ListsRepository } from "../lists/lists.repository.js";
@@ -71,7 +76,7 @@ import {
   streakOf,
   themeUnlocked,
 } from "./progress.logic.js";
-import type { PlayerCardSource } from "./progress.image.js";
+import { formatCount, type PlayerCardSource } from "./progress.image.js";
 import {
   NUDGE_ACTIVE_DAYS,
   nudgesFor,
@@ -93,6 +98,13 @@ interface Deal {
 }
 
 const ALL_BADGES = BADGES as readonly BadgeDef[];
+
+/** Which moment a share picture is of. */
+export type MomentQuery =
+  | { kind: "badge"; badge: string; metal: Metal }
+  | { kind: "level"; level: number }
+  | { kind: "finished"; game: number }
+  | { kind: "shelf"; count: number };
 
 const zoneOf = (row: ProfileRow) => row.timezone || "UTC";
 
@@ -748,6 +760,110 @@ export const createProgressService = (
         theme: (row.card_theme ?? "default") as CardThemeKey,
         unlocked: CARD_THEME_KEYS.filter((t) => themeUnlocked(t, owned)),
       };
+    },
+
+    /** What a moment's share picture shows, or null where there's nothing
+     *  to show: a private profile, as for the card, or a badge, level,
+     *  game or count that isn't theirs. */
+    async momentSource(
+      username: string,
+      moment: MomentQuery,
+    ): Promise<MomentSource | null> {
+      const profile = await profiles.findByUsername(username);
+      if (
+        !profile ||
+        toProfileVisibility(profile.profile_visibility) !== "everyone"
+      ) {
+        return null;
+      }
+      const row = (await repo.profile(profile.id))!;
+      const level = levelFor(row.xp).level;
+      const who = {
+        username: row.username,
+        avatarUrl: row.avatar_url,
+        level,
+        theme: (row.card_theme ?? "default") as CardThemeKey,
+      };
+      const levelUp = "Level up with me on PlayRates";
+      const tracking = "Track what you play on PlayRates";
+
+      switch (moment.kind) {
+        case "badge": {
+          const def = badgeDef(moment.badge);
+          const held = (await repo.badges(profile.id)).some(
+            (b) => b.badge === moment.badge && b.metal >= moment.metal,
+          );
+          if (!def || !held) return null;
+          return {
+            ...who,
+            hero: {
+              kind: "badge",
+              icon: BADGE_ICONS[def.icon] ?? null,
+              metal: moment.metal,
+            },
+            eyebrow: "NEW BADGE",
+            headline: def.name,
+            detail:
+              def.tiers.length > 1
+                ? `${METAL_NAMES[moment.metal]} · ${badgeText(def, moment.metal)}`
+                : badgeText(def, moment.metal),
+            invite: levelUp,
+          };
+        }
+        case "level": {
+          if (moment.level > level) return null;
+          return {
+            ...who,
+            hero: { kind: "level", level: moment.level },
+            eyebrow: "LEVEL UP",
+            headline: `Level ${moment.level}`,
+            detail: `${formatCount(row.xp)} XP and counting`,
+            invite: levelUp,
+          };
+        }
+        case "finished": {
+          const game = await repo.playedGame(profile.id, moment.game);
+          // A picture leaves the site, so an adult game never goes in one.
+          if (!game || game.adult) return null;
+          return {
+            ...who,
+            hero: { kind: "game", cover: game.cover, rating: game.rating },
+            eyebrow:
+              game.playedStatus === "mastered"
+                ? "MASTERED"
+                : game.playedStatus === "finished"
+                  ? "FINISHED"
+                  : "PLAYED",
+            headline: game.title,
+            detail:
+              game.hours === null
+                ? ""
+                : `${formatCount(Math.round(game.hours))} ${Math.round(game.hours) === 1 ? "hour" : "hours"} played`,
+            invite: tracking,
+          };
+        }
+        case "shelf": {
+          const metrics = await repo.metrics(profile.id);
+          if (moment.count > (metrics.logged ?? 0)) return null;
+          return {
+            ...who,
+            hero: {
+              kind: "shelf",
+              covers: await repo.recentCovers(
+                profile.id,
+                Math.min(moment.count, 5),
+              ),
+            },
+            eyebrow: "MILESTONE",
+            headline:
+              moment.count === 1
+                ? "First game"
+                : `${formatCount(moment.count)} games`,
+            detail: "logged on PlayRates",
+            invite: tracking,
+          };
+        }
+      }
     },
 
     /** Changes how you look: each choice checked against what you've

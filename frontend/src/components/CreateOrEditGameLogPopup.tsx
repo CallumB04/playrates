@@ -13,6 +13,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { finishedMoment, shelfMoment } from "./share/shareText";
 import { readLastSystem, writeLastSystem } from "../lib/drafts";
 import { useNotify } from "../contexts/NotificationContext";
+import { OFFER_DWELL_MS } from "../contexts/notificationQueue";
 import Modal from "./ui/Modal";
 import Button from "./ui/Button";
 import Toggle from "./ui/Toggle";
@@ -322,15 +323,18 @@ const CreateOrEditGameLogPopup = ({
                 : milestone
                   ? {
                         label: "Share",
+                        dwell: OFFER_DWELL_MS,
                         onClick: () =>
                             shareMoment(shelfMoment(user.username, count)),
                     }
                   : finished
                     ? {
                           label: "Share",
+                          dwell: OFFER_DWELL_MS,
                           onClick: () =>
                               shareMoment(
                                   finishedMoment(
+                                      user.username,
                                       game,
                                       finished.draft.rating,
                                       finished.draft.playedStatus === "mastered"

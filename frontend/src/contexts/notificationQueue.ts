@@ -23,6 +23,10 @@ const DEFAULT_SEVERITY: Record<NotificationType, NotificationSeverity> = {
     error: "high",
 };
 
+/** An offer to share a moment: long enough to take in and reach for, but
+ *  a badge isn't a question, so it doesn't wait for an answer. */
+export const OFFER_DWELL_MS = 20_000;
+
 /** Something to do about a toast, as a button on it. */
 export interface ToastAction {
     label: string;

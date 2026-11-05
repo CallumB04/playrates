@@ -19,6 +19,8 @@ import {
 import {
   baseSeed,
   buildFriendship,
+  buildGame,
+  buildGameLog,
   buildProfile,
   buildReview,
 } from "../helpers/fixtures.js";
@@ -666,6 +668,77 @@ describe("badges in public", () => {
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toBe("image/png");
   }, 20_000);
+});
+
+describe("a moment's share picture", () => {
+  const picture = (app: Express, query: string, user = "devuser") =>
+    request(app)
+      .get(`/api/v1/progress/${user}/moment.png?${query}`)
+      .buffer(true);
+
+  const withPlays = (overrides: object = {}) =>
+    setup({
+      games: [
+        buildGame(),
+        buildGame({ id: 2, slug: "adult", has_sexual_content: true }),
+      ],
+      gameLogs: [buildGameLog(), buildGameLog({ id: 2, game_id: 2 })],
+      ...overrides,
+    });
+
+  it("draws a badge, a level, a finished game and a shelf", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("", { status: 404 })),
+    );
+    const { app, repos, state } = withPlays();
+    await repos.progress.unlockBadge(USER_A, "collector", 2);
+    state.progressMetrics.set(USER_A, { logged: 10 });
+
+    for (const query of [
+      "kind=badge&badge=collector&metal=2",
+      "kind=level&level=1",
+      "kind=finished&game=1",
+      "kind=shelf&count=10",
+    ]) {
+      const res = await picture(app, query);
+      expect(res.status, query).toBe(200);
+      expect(res.headers["content-type"]).toBe("image/png");
+    }
+  }, 60_000);
+
+  it("draws none for a profile that isn't public", async () => {
+    const { app } = withPlays({
+      profiles: [buildProfile({ profile_visibility: "friends" })],
+    });
+    expect((await picture(app, "kind=level&level=1")).status).toBe(404);
+  });
+
+  it("refuses what isn't theirs: a badge, a level, a count", async () => {
+    const { app, repos, state } = withPlays();
+    await repos.progress.unlockBadge(USER_A, "collector", 1);
+    state.progressMetrics.set(USER_A, { logged: 9 });
+
+    expect(
+      (await picture(app, "kind=badge&badge=collector&metal=2")).status,
+    ).toBe(404);
+    expect((await picture(app, "kind=badge&badge=rater&metal=1")).status).toBe(
+      404,
+    );
+    expect((await picture(app, "kind=level&level=2")).status).toBe(404);
+    expect((await picture(app, "kind=shelf&count=10")).status).toBe(404);
+  });
+
+  it("refuses a game they haven't played, and any adult game", async () => {
+    const { app } = withPlays();
+    expect((await picture(app, "kind=finished&game=3")).status).toBe(404);
+    expect((await picture(app, "kind=finished&game=2")).status).toBe(404);
+  });
+
+  it("asks for a kind it knows", async () => {
+    const { app } = withPlays();
+    expect((await picture(app, "kind=review&id=1")).status).toBe(422);
+  });
 });
 
 describe("account data", () => {

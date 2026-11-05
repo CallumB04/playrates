@@ -495,6 +495,23 @@ export const BADGE_KEYS = BADGES.map((b) => b.key) as [BadgeKey, ...BadgeKey[]];
 export const badgeDef = (key: string): BadgeDef | undefined =>
   (BADGES as readonly BadgeDef[]).find((b) => b.key === key);
 
+export const METAL_NAMES: Record<Metal, string> = {
+  1: "Bronze",
+  2: "Silver",
+  3: "Gold",
+  4: "Platinum",
+};
+
+/** A badge's line for a metal, its threshold filled in. */
+export const badgeText = (badge: BadgeDef, metal: Metal): string => {
+  const tier = badge.tiers.find((t) => t.metal === metal) ?? badge.tiers[0];
+  const n = tier?.at ?? 0;
+  // "(s)" marks a word that's plural unless the threshold is 1.
+  return badge.description
+    .replace("{n}", n.toLocaleString("en-GB"))
+    .replace(/\(s\)/g, n === 1 ? "" : "s");
+};
+
 export const badgeXp = (badge: BadgeDef, metal: Metal): number =>
   badge.cosmetic ? 0 : METAL_XP[metal];
 

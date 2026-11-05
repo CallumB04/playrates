@@ -1,5 +1,6 @@
 import type { BadgeDef, Metal } from "@playrates/shared";
 import { METAL_NAMES } from "../progress/rewardText";
+import { momentImageUrl } from "../../api";
 import { profilePath } from "../../lib/profilePaths";
 import type { ShareMoment } from "../../lib/shareMoment";
 
@@ -9,6 +10,7 @@ export const levelMoment = (username: string, level: number): ShareMoment => ({
     title: `Level ${level}`,
     path: profilePath(username),
     text: `I just reached level ${level} on PlayRates`,
+    image: momentImageUrl(username, { kind: "level", level }),
 });
 
 export const badgeMoment = (
@@ -24,10 +26,16 @@ export const badgeMoment = (
         title: name,
         path: profilePath(username, "badges"),
         text: `I just earned the ${name} badge on PlayRates`,
+        image: momentImageUrl(username, {
+            kind: "badge",
+            badge: badge.key,
+            metal,
+        }),
     };
 };
 
 export const finishedMoment = (
+    username: string,
     game: { id: number; title: string },
     rating: number | null,
     mastered = false
@@ -41,6 +49,7 @@ export const finishedMoment = (
                 ? done
                 : // 9/10 in a sentence, not the table's 9.00/10.
                   `${done} and gave it ${Number(rating.toFixed(2))}/10`,
+        image: momentImageUrl(username, { kind: "finished", game: game.id }),
     };
 };
 
@@ -54,6 +63,7 @@ export const shelfMoment = (username: string, count: number): ShareMoment => ({
         count === 1
             ? "I just logged my first game on PlayRates"
             : `That’s ${count.toLocaleString("en-GB")} games on my PlayRates shelves`,
+    image: momentImageUrl(username, { kind: "shelf", count }),
 });
 
 /** The address a moment is shared at, carrying the sharer's invite. */
