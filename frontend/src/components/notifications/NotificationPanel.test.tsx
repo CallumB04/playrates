@@ -190,18 +190,48 @@ describe("NotificationPanel", () => {
         await lastTestsReads();
         const readAll = vi.fn();
         server.use(
-            http.post(`${API}/me/notifications/read-all`, () => {
-                readAll();
-                return new HttpResponse(null, { status: 204 });
-            })
+            http.post(
+                `${API}/me/notifications/read-all`,
+                async ({ request }) => {
+                    readAll(await request.json());
+                    return new HttpResponse(null, { status: 204 });
+                }
+            )
         );
-        inbox([welcome()]);
+        inbox([welcome(), welcome({ id: 2 })]);
         const { unmount } = panel();
-        await screen.findByText("Welcome to PlayRates");
+        await screen.findAllByText("Welcome to PlayRates");
         expect(readAll).not.toHaveBeenCalled();
 
         unmount();
-        await waitFor(() => expect(readAll).toHaveBeenCalledTimes(1));
+        await waitFor(() =>
+            expect(readAll).toHaveBeenCalledWith({ ids: [1, 2] })
+        );
+    });
+
+    it("leaves one marked unread while it was open unread when it closes", async () => {
+        await lastTestsReads();
+        const readAll = vi.fn();
+        server.use(
+            http.post(
+                `${API}/me/notifications/read-all`,
+                async ({ request }) => {
+                    readAll(await request.json());
+                    return new HttpResponse(null, { status: 204 });
+                }
+            ),
+            http.patch(`${API}/me/notifications/:id`, () =>
+                HttpResponse.json(welcome())
+            )
+        );
+        inbox([welcome({ readAt: READ }), welcome({ id: 2 })]);
+        const { unmount } = panel();
+        await userEvent.click(
+            await screen.findByRole("button", { name: "Mark as unread" })
+        );
+
+        unmount();
+        await waitFor(() => expect(readAll).toHaveBeenCalledWith({ ids: [2] }));
     });
 
     it("has nothing to read on closing when it's all read", async () => {

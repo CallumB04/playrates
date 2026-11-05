@@ -120,8 +120,9 @@ export const createNotificationsService = (
       await repo.markSeen(userId);
     },
 
-    async markAllRead(userId: string): Promise<void> {
-      await repo.markAllRead(userId, await awaitingFrom(userId));
+    async markAllRead(userId: string, ids?: number[]): Promise<void> {
+      if (ids?.length === 0) return;
+      await repo.markAllRead(userId, await awaitingFrom(userId), ids);
     },
 
     async archiveAllRead(userId: string): Promise<void> {

@@ -54,7 +54,12 @@ export interface NotificationsRepository {
   raiseOnce(drafts: NotificationDraft[]): Promise<NotificationDraft[]>;
   /** Leaves alone the friend requests from `keepRequestsFrom`, which are
    *  still waiting on an answer. */
-  markAllRead(userId: string, keepRequestsFrom: string[]): Promise<void>;
+  markAllRead(
+    userId: string,
+    keepRequestsFrom: string[],
+    /** Only these, where given; the caller's own either way. */
+    ids?: number[],
+  ): Promise<void>;
   /** Files away the inbox's read rows. Unread ones stay, so one that lands
    *  as the button is pressed is not archived unseen; so do the requests
    *  from `keepRequestsFrom`. */
@@ -239,13 +244,14 @@ export const createNotificationsRepository = (
     );
   },
 
-  async markAllRead(userId, keepRequestsFrom) {
+  async markAllRead(userId, keepRequestsFrom, ids) {
     let query = db
       .from("notifications")
       .update({ read_at: new Date().toISOString() })
       .eq("user_id", userId)
       .is("read_at", null)
       .is("archived_at", null);
+    if (ids) query = query.in("id", ids);
     if (keepRequestsFrom.length > 0) {
       query = query.or(exceptRequestsFrom(keepRequestsFrom));
     }

@@ -78,19 +78,24 @@ describe("NotificationItem", () => {
 
     /* The unread dot is the sign and the shortcut; the rest waits behind
        More, so a row carries one quiet control, not two. */
-    /* Opening reads it and Clear files it: the row carries one control,
-       not a read toggle and an archive button to keep up with. */
-    it("has one control, Clear, whether it's read or not", () => {
+    /* No read button and no archive: the dot in the margin is the
+       toggle, and Clear the one control at the end. */
+    it("reads and unreads from the dot in its margin", async () => {
+        const seen = capturePatch();
         const { unmount } = renderItem(welcome());
         expect(screen.getByRole("button", { name: "Clear" })).toBeEnabled();
-        expect(
-            screen.queryByRole("button", { name: /Mark as/ })
-        ).not.toBeInTheDocument();
+        await userEvent.click(
+            screen.getByRole("button", { name: "Mark as read" })
+        );
+        await waitFor(() => expect(seen).toHaveBeenCalledWith({ read: true }));
         unmount();
 
         renderItem(welcome({ readAt: "2026-01-02T00:00:00.000Z" }));
-        expect(screen.getByRole("button", { name: "Clear" })).toBeEnabled();
         expect(screen.queryByText("Unread")).not.toBeInTheDocument();
+        await userEvent.click(
+            screen.getByRole("button", { name: "Mark as unread" })
+        );
+        await waitFor(() => expect(seen).toHaveBeenCalledWith({ read: false }));
     });
 
     it("steps a read row's text back, and lifts an unread one's", () => {
@@ -163,6 +168,19 @@ describe("NotificationItem", () => {
         await waitFor(() =>
             expect(seen).toHaveBeenCalledWith({ archived: true })
         );
+    });
+
+    it("reads or unreads when swiped right by touch", async () => {
+        const seen = capturePatch();
+        const { container } = renderItem(welcome());
+        const row = container.querySelector("li")!;
+        const touch = { pointerType: "touch", pointerId: 1 };
+
+        fireEvent.pointerDown(row, { ...touch, clientX: 100, clientY: 20 });
+        fireEvent.pointerMove(row, { ...touch, clientX: 150, clientY: 22 });
+        fireEvent.pointerMove(row, { ...touch, clientX: 250, clientY: 24 });
+        fireEvent.pointerUp(row, touch);
+        await waitFor(() => expect(seen).toHaveBeenCalledWith({ read: true }));
     });
 
     it("clears every row in a group at once", async () => {
@@ -515,10 +533,13 @@ describe("NotificationItem", () => {
                 relation,
             } as unknown as Partial<AppNotification>);
 
-        it("can't be cleared while it waits on an answer", () => {
+        it("can't be cleared or read while it waits on an answer", () => {
             renderItem(request("request-received"));
             expect(
                 screen.queryByRole("button", { name: "Clear" })
+            ).not.toBeInTheDocument();
+            expect(
+                screen.queryByRole("button", { name: "Mark as read" })
             ).not.toBeInTheDocument();
             expect(screen.getByText("Unread")).toBeInTheDocument();
         });

@@ -1859,11 +1859,12 @@ export const createInMemoryRepos = (
           (n) => n.dedupe_key !== dedupeKey,
         );
       },
-      async markAllRead(userId, keepRequestsFrom) {
+      async markAllRead(userId, keepRequestsFrom, ids) {
         for (const n of state.notifications) {
           if (
             n.user_id === userId &&
             n.archived_at === null &&
+            (!ids || ids.includes(n.id)) &&
             !keptRequest(n, keepRequestsFrom)
           ) {
             n.read_at ??= now();

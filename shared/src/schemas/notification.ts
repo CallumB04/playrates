@@ -235,6 +235,18 @@ export const NotificationPatchSchema = z
 
 export type NotificationPatch = z.infer<typeof NotificationPatchSchema>;
 
+/** Read-all, or only these: closing the bell reads what it showed, less
+ *  any marked unread while it was open. No body at all, from a client
+ *  older than it, reads everything. */
+export const NotificationReadAllSchema = z
+  .object({
+    ids: z.array(z.number().int().positive()).max(100).optional(),
+  })
+  .strict()
+  .optional();
+
+export type NotificationReadAll = z.infer<typeof NotificationReadAllSchema>;
+
 /** The count is of everything unread, not of the page — a badge that only
  *  counted the first page would stop climbing at 25. */
 export interface NotificationFeed extends Paginated<AppNotification> {

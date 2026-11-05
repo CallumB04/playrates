@@ -130,28 +130,56 @@ export const useArchiveAllNotifications = () => {
     });
 };
 
-/** The badge drops to what still needs an answer at once, rather than at
- *  the next poll. */
-export const useMarkAllNotificationsRead = () => {
+/** Sets rows read or unread in the cached feed, and the badge with them,
+ *  so the bell answers at once rather than at the next poll. */
+const useSetReadInCache = () => {
     const queryClient = useQueryClient();
+    return (pick: (n: AppNotification) => boolean, read: boolean) => {
+        const now = new Date().toISOString();
+        queryClient.setQueryData<NotificationFeed>(
+            queryKeys.notifications.list(false),
+            (feed) => {
+                if (!feed) return feed;
+                let change = 0;
+                const data = feed.data.map((n) => {
+                    if (!pick(n) || awaitingAnswer(n)) return n;
+                    if (read === (n.readAt !== null)) return n;
+                    change += read ? -1 : 1;
+                    return { ...n, readAt: read ? now : null };
+                });
+                return { ...feed, data, unread: feed.unread + change };
+            }
+        );
+    };
+};
+
+/** Everything unread, or only the rows named: closing the bell reads what
+ *  it showed, less any marked unread while it was open. */
+export const useMarkAllNotificationsRead = () => {
+    const setRead = useSetReadInCache();
     const invalidate = useNotificationsInvalidator();
     return useMutation({
-        mutationFn: markAllNotificationsRead,
-        onMutate: () => {
-            const now = new Date().toISOString();
-            queryClient.setQueryData<NotificationFeed>(
-                queryKeys.notifications.list(false),
-                (feed) =>
-                    feed && {
-                        ...feed,
-                        unread: feed.awaitingAnswer,
-                        data: feed.data.map((n) =>
-                            n.readAt === null && !awaitingAnswer(n)
-                                ? { ...n, readAt: now }
-                                : n
-                        ),
-                    }
-            );
+        mutationFn: (ids?: number[]) => markAllNotificationsRead(ids),
+        onMutate: (ids) => setRead((n) => !ids || ids.includes(n.id), true),
+        onSettled: invalidate,
+    });
+};
+
+/** A row, or a group of them, read or unread again by hand. */
+export const useSetNotificationsRead = () => {
+    const setRead = useSetReadInCache();
+    const invalidate = useNotificationsInvalidator();
+    return useMutation({
+        mutationFn: ({
+            items,
+            read,
+        }: {
+            items: AppNotification[];
+            read: boolean;
+        }) => Promise.all(items.map((n) => patchNotification(n.id, { read }))),
+        onMutate: ({ items, read }) => {
+            const ids = new Set(items.map((n) => n.id));
+            setRead((n) => ids.has(n.id), read);
         },
         onSettled: invalidate,
     });

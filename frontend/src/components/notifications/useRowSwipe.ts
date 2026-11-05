@@ -1,16 +1,25 @@
-import { useRef, useState, type PointerEvent, type MouseEvent } from "react";
+import { useRef, useState, type MouseEvent, type PointerEvent } from "react";
 
-/** How far left a row has to go before letting go clears it. */
-export const CLEAR_AT = 96;
+/** How far a row has to go before letting go acts on it. */
+export const SWIPE_AT = 96;
 /** Under this, a touch is a tap or a scroll, not a swipe. */
 const SLOP = 10;
 
 /**
- * Swipe a row left to clear it, on a touch screen. A mouse never swipes,
- * and an upward or downward drag is left to scroll the list. The tap that
- * ends a swipe is swallowed, so letting go over a link doesn't open it.
+ * Swipe a row on a touch screen: left to clear it, right to read or unread
+ * it, as Mail does. A mouse never swipes, and an upward or downward drag is
+ * left to scroll the list. The tap that ends a swipe is swallowed, so
+ * letting go over a link doesn't open it.
  */
-export const useSwipeToClear = (onClear: () => void, enabled: boolean) => {
+export const useRowSwipe = ({
+    onLeft,
+    onRight,
+    enabled,
+}: {
+    onLeft: () => void;
+    onRight: () => void;
+    enabled: boolean;
+}) => {
     const start = useRef<{ x: number; y: number } | null>(null);
     const swiping = useRef(false);
     const swiped = useRef(false);
@@ -39,16 +48,17 @@ export const useSwipeToClear = (onClear: () => void, enabled: boolean) => {
                         start.current = null;
                         return;
                     }
-                    if (dx > -SLOP) return;
+                    if (Math.abs(dx) < SLOP) return;
                     swiping.current = true;
                     event.currentTarget.setPointerCapture?.(event.pointerId);
                 }
-                setOffset(Math.min(0, dx));
+                setOffset(dx);
             },
             onPointerUp: () => {
                 if (swiping.current) {
                     swiped.current = true;
-                    if (offset <= -CLEAR_AT) onClear();
+                    if (offset <= -SWIPE_AT) onLeft();
+                    else if (offset >= SWIPE_AT) onRight();
                 }
                 reset();
             },

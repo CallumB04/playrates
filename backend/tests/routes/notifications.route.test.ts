@@ -99,6 +99,58 @@ describe("notifications", () => {
     ).toBe(401);
   });
 
+  /* Closing the bell reads what it showed, less what was marked unread
+     while it was open, so it names them. */
+  it("reads only the ones it's given, and only the caller's", async () => {
+    const { app, state } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        notifications: [
+          buildNotification(),
+          buildNotification({ id: 2, dedupe_key: "two" }),
+          buildNotification({ id: 3, user_id: USER_B, dedupe_key: "theirs" }),
+        ],
+      },
+    });
+
+    const response = await request(app)
+      .post("/api/v1/me/notifications/read-all")
+      .set("Authorization", authHeader(USER_A))
+      .send({ ids: [2, 3] });
+
+    expect(response.status).toBe(204);
+    const read = (id: number) =>
+      state.notifications.find((n) => n.id === id)!.read_at !== null;
+    expect([read(1), read(2), read(3)]).toEqual([false, true, false]);
+  });
+
+  it("still reads everything when it's sent nothing", async () => {
+    const { app, state } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        notifications: [
+          buildNotification(),
+          buildNotification({ id: 2, dedupe_key: "two" }),
+        ],
+      },
+    });
+
+    await request(app)
+      .post("/api/v1/me/notifications/read-all")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(state.notifications.every((n) => n.read_at !== null)).toBe(true);
+  });
+
+  it("refuses anything but a list of ids", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+    const response = await request(app)
+      .post("/api/v1/me/notifications/read-all")
+      .set("Authorization", authHeader(USER_A))
+      .send({ ids: ["1"], everyone: true });
+    expect(response.status).toBe(422);
+  });
+
   it("requires a signed-in caller", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 

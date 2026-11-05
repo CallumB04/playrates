@@ -77,11 +77,16 @@ const NotificationPanel = ({
 
     // Closing it reads what it showed: not every row has somewhere to open
     // (a welcome, an announcement with no link), and the badge should fall
-    // to what still needs an answer. They stay marked new while it's open.
+    // to what still needs an answer. They stay marked new while it's open,
+    // and one marked unread by hand while it was open stays unread.
     // A tick later, and only if it stayed closed: development mounts it
     // twice, and the first unmount would read everything on opening.
-    const unreadShown = useRef(0);
-    unreadShown.current = markable;
+    const keptUnread = useRef(new Set<number>());
+    const unreadShown = useRef<number[]>([]);
+    unreadShown.current = notifications
+        .filter((n) => n.readAt === null && !awaitingAnswer(n))
+        .map((n) => n.id)
+        .filter((id) => !keptUnread.current.has(id));
     const closed = useRef(false);
     const { mutate: readAll } = markAll;
     useEffect(() => {
@@ -89,10 +94,18 @@ const NotificationPanel = ({
         return () => {
             closed.current = true;
             setTimeout(() => {
-                if (closed.current && unreadShown.current > 0) readAll();
+                if (closed.current && unreadShown.current.length > 0) {
+                    readAll(unreadShown.current);
+                }
             }, 0);
         };
     }, [readAll]);
+    const onReadChange = (ids: number[], read: boolean) => {
+        for (const id of ids) {
+            if (read) keptUnread.current.delete(id);
+            else keptUnread.current.add(id);
+        }
+    };
     const clearable = notifications.some((n) => !awaitingAnswer(n));
 
     return (
@@ -110,7 +123,10 @@ const NotificationPanel = ({
                     same place empties the bell. */}
                 {markable > 0 ? (
                     <HeaderAction
-                        onClick={() => markAll.mutate()}
+                        onClick={() => {
+                            keptUnread.current.clear();
+                            markAll.mutate(undefined);
+                        }}
                         disabled={markAll.isPending}
                     >
                         Mark all read
@@ -156,6 +172,7 @@ const NotificationPanel = ({
                                         notification={entry.items[0]!}
                                         group={entry.items}
                                         onNavigate={onNavigate}
+                                        onReadChange={onReadChange}
                                     />
                                 ))}
                             </ul>

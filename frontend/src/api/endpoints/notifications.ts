@@ -33,8 +33,11 @@ export const markNotificationsSeen = async (): Promise<void> => {
     await api.post("/me/notifications/seen");
 };
 
-export const markAllNotificationsRead = async (): Promise<void> => {
-    await api.post("/me/notifications/read-all");
+/** Everything, or only these where given. */
+export const markAllNotificationsRead = async (
+    ids?: number[]
+): Promise<void> => {
+    await api.post("/me/notifications/read-all", ids ? { ids } : undefined);
 };
 
 /** Files away every read notification in the inbox. */
