@@ -26,6 +26,9 @@ body { background: #222; font-family: "TikTok Sans", sans-serif; }
    background-position/-size; add .px for pixel art so it scales crisp. */
 .bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
 .px, .px img { image-rendering: pixelated; }
+/* Behind a .photo of the same shot, so a picture too small or too wide to
+   fill the slide still sits on its own colours. */
+.bg.soft { filter: blur(14px) brightness(0.55); transform: scale(1.08); }
 
 .band { position: absolute; left: 0; right: 0; background: rgb(255 255 255 / 0.86); }
 
@@ -55,6 +58,9 @@ body { background: #222; font-family: "TikTok Sans", sans-serif; }
    slight rotate. */
 .aside { position: absolute; font-weight: 700; font-size: 27px; color: var(--iris); white-space: nowrap; }
 .aside.ember { color: var(--ember); }
+/* In the flow of the copy, so it can sit right after the words it's
+   reacting to instead of in a fixed corner. */
+.aside.inline { position: relative; display: inline-block; margin-left: 10px; vertical-align: 0.15em; }
 .cap {
   position: absolute; font-weight: 700; font-size: 33px; line-height: 1.2; color: #fff; text-align: center; white-space: nowrap;
   text-shadow: 0 1px 4px rgb(0 0 0 / 0.55), 0 2px 14px rgb(0 0 0 / 0.45);
