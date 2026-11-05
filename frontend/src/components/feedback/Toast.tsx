@@ -92,7 +92,9 @@ const Toast = ({ toast, onDismiss, onRemove }: ToastProps) => {
                     {/* The action sits on the line it answers, as a word
                         rather than a button of its own under it. */}
                     <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                        <p className="text-body-sm text-content">{text}</p>
+                        <p className="min-w-0 flex-1 text-body-sm text-content">
+                            {text}
+                        </p>
                         {action && (
                             <button
                                 type="button"

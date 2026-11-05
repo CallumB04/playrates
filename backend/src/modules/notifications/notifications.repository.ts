@@ -54,6 +54,13 @@ export interface NotificationsRepository {
     id: number,
     patch: Partial<NotificationRow>,
   ): Promise<NotificationRowWithActor>;
+  /** These of the caller's, less the requests from `keepRequestsFrom`. */
+  updateMany(
+    userId: string,
+    ids: number[],
+    patch: Partial<NotificationRow>,
+    keepRequestsFrom: string[],
+  ): Promise<void>;
   raise(draft: NotificationDraft): Promise<void>;
   /** Raises each one only if nothing is under its key already, read or
    *  not, so a scheduled job can run twice without nagging. How many were
@@ -276,6 +283,19 @@ export const createNotificationsRepository = (
     return drafts.filter((d) =>
       added.has(`${d.userId}|${d.kind}|${d.dedupeKey ?? ""}`),
     );
+  },
+
+  async updateMany(userId, ids, patch, keepRequestsFrom) {
+    let query = db
+      .from("notifications")
+      .update(patch)
+      .eq("user_id", userId)
+      .in("id", ids);
+    if (keepRequestsFrom.length > 0) {
+      query = query.or(exceptRequestsFrom(keepRequestsFrom));
+    }
+    const { error } = await query;
+    if (error) throw error;
   },
 
   async markAllRead(userId, keepRequestsFrom, ids) {

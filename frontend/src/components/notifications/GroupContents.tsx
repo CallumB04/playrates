@@ -6,7 +6,7 @@ import type {
     FriendUser,
 } from "@playrates/shared";
 import ProfilePicture from "../ProfilePicture";
-import { usePatchNotification } from "../../hooks/queries/useNotifications";
+import { usePatchNotification } from "../../hooks/queries/useNotificationActions";
 import { threadPath } from "../community/paths";
 import { namesOf } from "./notificationSections";
 

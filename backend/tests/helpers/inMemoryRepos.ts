@@ -1879,6 +1879,17 @@ export const createInMemoryRepos = (
           (n) => n.dedupe_key !== dedupeKey,
         );
       },
+      async updateMany(userId, ids, patch, keepRequestsFrom) {
+        for (const n of state.notifications) {
+          if (
+            n.user_id === userId &&
+            ids.includes(n.id) &&
+            !keptRequest(n, keepRequestsFrom)
+          ) {
+            Object.assign(n, patch);
+          }
+        }
+      },
       async markAllRead(userId, keepRequestsFrom, ids) {
         for (const n of state.notifications) {
           if (

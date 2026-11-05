@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TextSkeleton } from "../ui/Skeleton";
 import {
-    useArchiveAllNotifications,
+    useClearNotifications,
     useMarkAllNotificationsRead,
     useMarkNotificationsSeen,
-    useNotifications,
-} from "../../hooks/queries/useNotifications";
+} from "../../hooks/queries/useNotificationActions";
+import { useNotifications } from "../../hooks/queries/useNotifications";
 import { awaitingAnswer } from "@playrates/shared";
 import NotificationItem from "./NotificationItem";
 import { feedSections } from "./notificationSections";
@@ -48,7 +48,7 @@ const NotificationPanel = ({
 }) => {
     const { data, isLoading } = useNotifications(false);
     const markAll = useMarkAllNotificationsRead();
-    const clearAll = useArchiveAllNotifications();
+    const clear = useClearNotifications();
     const markSeen = useMarkNotificationsSeen();
 
     // What counted as new when it opened. Marking it seen moves the server's
@@ -106,7 +106,9 @@ const NotificationPanel = ({
             else keptUnread.current.add(id);
         }
     };
-    const clearable = notifications.some((n) => !awaitingAnswer(n));
+    // What Clear all takes: every row on show bar the requests, so Undo
+    // knows exactly what to put back.
+    const clearable = notifications.filter((n) => !awaitingAnswer(n));
 
     return (
         <>
@@ -132,10 +134,15 @@ const NotificationPanel = ({
                         Mark all read
                     </HeaderAction>
                 ) : (
-                    clearable && (
+                    clearable.length > 0 && (
                         <HeaderAction
-                            onClick={() => clearAll.mutate()}
-                            disabled={clearAll.isPending}
+                            onClick={() =>
+                                clear.mutate({
+                                    items: clearable,
+                                    label: "Cleared all",
+                                })
+                            }
+                            disabled={clear.isPending}
                         >
                             Clear all
                         </HeaderAction>

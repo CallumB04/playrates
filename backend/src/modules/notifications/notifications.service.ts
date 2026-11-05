@@ -2,6 +2,7 @@ import {
   notificationGroupKey,
   relationFor,
   type FriendRelation,
+  type NotificationBulkPatch,
   type NotificationFeed,
   type NotificationPatch,
   type Pagination,
@@ -11,6 +12,19 @@ import { toRange } from "../../lib/pagination.js";
 import type { FriendsRepository } from "../friends/friends.repository.js";
 import { toNotification, type RelationLookup } from "./notifications.mapper.js";
 import type { NotificationsRepository } from "./notifications.repository.js";
+
+/** A patch as columns. Filing something reads it; an explicit `read`
+ *  still wins. */
+const fieldsOf = (patch: NotificationPatch) => {
+  const now = new Date().toISOString();
+  const fields: { read_at?: string | null; archived_at?: string | null } = {};
+  if (patch.archived !== undefined) {
+    fields.archived_at = patch.archived ? now : null;
+    if (patch.archived) fields.read_at = now;
+  }
+  if (patch.read !== undefined) fields.read_at = patch.read ? now : null;
+  return fields;
+};
 
 /** The date in their own time zone; UTC's where theirs isn't one. */
 const dayIn = (iso: string, timezone: string | null): string => {
@@ -117,24 +131,22 @@ export const createNotificationsService = (
         }
       }
 
-      const now = new Date().toISOString();
-      const fields: { read_at?: string | null; archived_at?: string | null } =
-        {};
-
-      if (patch.archived !== undefined) {
-        fields.archived_at = patch.archived ? now : null;
-        // Filing something reads it. An explicit `read` below still wins.
-        if (patch.archived) fields.read_at = now;
-      }
-      if (patch.read !== undefined) fields.read_at = patch.read ? now : null;
-
-      const row = await repo.update(id, fields);
+      const row = await repo.update(id, fieldsOf(patch));
 
       const relationOf = await relationLookup(
         callerId,
         row.kind === "friend_request",
       );
       return toNotification(row, relationOf);
+    },
+
+    /** One change to many of the caller's at once. A request waiting on
+     *  an answer is left as it is, as it is by the single patch. */
+    async patchMany(
+      userId: string,
+      { ids, ...patch }: NotificationBulkPatch,
+    ): Promise<void> {
+      await repo.updateMany(userId, ids, fieldsOf(patch), await awaitingFrom(userId));
     },
 
     /** The bell was opened: what's in it now is no longer new. */

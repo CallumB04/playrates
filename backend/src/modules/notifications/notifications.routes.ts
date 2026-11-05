@@ -4,6 +4,8 @@ import {
   NotificationPatchSchema,
   NotificationQuerySchema,
   NotificationReadAllSchema,
+  NotificationBulkPatchSchema,
+  type NotificationBulkPatch,
   type NotificationReadAll,
 } from "@playrates/shared";
 import type { z } from "zod";
@@ -62,6 +64,18 @@ export const createMyNotificationsRouter = ({
     await service.archiveAllRead(callerId(req));
     res.status(204).end();
   });
+
+  router.patch(
+    "/",
+    validate({ body: NotificationBulkPatchSchema }),
+    async (req, res) => {
+      await service.patchMany(
+        callerId(req),
+        req.valid!.body as NotificationBulkPatch,
+      );
+      res.status(204).end();
+    },
+  );
 
   router.patch(
     "/:id",

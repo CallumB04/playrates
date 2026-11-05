@@ -219,6 +219,45 @@ describe("notifications", () => {
     expect(response.body.unreadRows).toBe(1);
   });
 
+  /* Clear all and its Undo, and a group of rows cleared as one. */
+  it("changes many of the caller's at once, and none of anyone else's", async () => {
+    const { app, state } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        notifications: [
+          buildNotification(),
+          buildNotification({ id: 2, dedupe_key: "two" }),
+          buildNotification({ id: 3, user_id: USER_B, dedupe_key: "theirs" }),
+        ],
+      },
+    });
+    const patch = (body: object) =>
+      request(app)
+        .patch("/api/v1/me/notifications")
+        .set("Authorization", authHeader(USER_A))
+        .send(body);
+    const row = (id: number) => state.notifications.find((n) => n.id === id)!;
+
+    expect((await patch({ ids: [1, 2, 3], archived: true })).status).toBe(204);
+    expect(row(1).archived_at).not.toBeNull();
+    // Clearing reads it, as it does one at a time.
+    expect(row(2).read_at).not.toBeNull();
+    expect(row(3).archived_at).toBeNull();
+
+    await patch({ ids: [1, 2], archived: false, read: false });
+    expect([row(1).archived_at, row(1).read_at]).toEqual([null, null]);
+
+    expect((await patch({ ids: [], archived: true })).status).toBe(422);
+    expect((await patch({ ids: [1] })).status).toBe(422);
+    expect(
+      (
+        await request(app)
+          .patch("/api/v1/me/notifications")
+          .send({ ids: [1], read: true })
+      ).status,
+    ).toBe(401);
+  });
+
   it("requires a signed-in caller", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 
@@ -416,6 +455,22 @@ describe("notifications", () => {
     });
     const request10 = (state: ReturnType<typeof buildTestApp>["state"]) =>
       state.notifications.find((n) => n.id === 10)!;
+
+    it("is left out of a change to many at once", async () => {
+      const { app, state } = buildTestApp({
+        seed: waiting([{ id: 11, dedupe_key: "other" }]),
+      });
+      const response = await request(app)
+        .patch("/api/v1/me/notifications")
+        .set("Authorization", authHeader(USER_A))
+        .send({ ids: [10, 11], archived: true });
+
+      expect(response.status).toBe(204);
+      expect(request10(state).archived_at).toBeNull();
+      expect(
+        state.notifications.find((n) => n.id === 11)!.archived_at,
+      ).not.toBeNull();
+    });
 
     it("cannot be read or archived by hand", async () => {
       const { app, state } = buildTestApp({ seed: waiting() });

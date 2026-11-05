@@ -40,9 +40,12 @@ export const markAllNotificationsRead = async (
     await api.post("/me/notifications/read-all", ids ? { ids } : undefined);
 };
 
-/** Files away every read notification in the inbox. */
-export const archiveAllNotifications = async (): Promise<void> => {
-    await api.post("/me/notifications/archive-all");
+/** One change to many at once: a group, Clear all, and their Undo. */
+export const patchNotifications = async (
+    ids: number[],
+    patch: NotificationPatch
+): Promise<void> => {
+    await api.patch("/me/notifications", { ids, ...patch });
 };
 
 /** Null where push isn't set up, so nothing offers it. */

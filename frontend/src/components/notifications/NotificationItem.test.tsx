@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import type { AppNotification } from "@playrates/shared";
@@ -27,12 +27,24 @@ const welcome = (overrides: Partial<AppNotification> = {}): AppNotification =>
     }) as AppNotification;
 
 /** Captures the PATCH body, since that is what the row's controls are for. */
+/** Which rows the last change to many was for. */
+const seenIds = vi.fn();
+
 const capturePatch = () => {
     const seen = vi.fn();
     server.use(
         http.patch(`${API}/me/notifications/:id`, async ({ request }) => {
             seen(await request.json());
             return HttpResponse.json(welcome());
+        }),
+        // Many at once: what changes, and which, apart.
+        http.patch(`${API}/me/notifications`, async ({ request }) => {
+            const { ids, ...patch } = (await request.json()) as {
+                ids: number[];
+            };
+            seenIds(ids);
+            seen(patch);
+            return new HttpResponse(null, { status: 204 });
         })
     );
     return seen;
@@ -128,6 +140,14 @@ describe("NotificationItem", () => {
         await waitFor(() =>
             expect(seen).toHaveBeenCalledWith({ archived: true })
         );
+        // It says which one went, on a line of its own.
+        const toasts = within(
+            screen.getByRole("list", { name: "Notifications" })
+        );
+        expect(toasts.getByText("Cleared")).toBeInTheDocument();
+        expect(toasts.getByText("Welcome to PlayRates")).toHaveClass(
+            "truncate"
+        );
 
         await userEvent.click(
             await screen.findByRole("button", { name: "Undo" })
@@ -209,7 +229,10 @@ describe("NotificationItem", () => {
 
         expect(screen.getByText("halcyon and marlowe")).toBeInTheDocument();
         await userEvent.click(screen.getByRole("button", { name: "Clear" }));
-        await waitFor(() => expect(seen).toHaveBeenCalledTimes(2));
+        await waitFor(() =>
+            expect(seen).toHaveBeenCalledWith({ archived: true })
+        );
+        expect(seenIds).toHaveBeenLastCalledWith([1, 2]);
     });
 
     it("says an invited friend got going, and what it paid", () => {

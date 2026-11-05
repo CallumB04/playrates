@@ -32,7 +32,7 @@ import { giftPath, itemName } from "../shop/shopItems";
 import { TokenCoin } from "../progress/TokenAmount";
 import { questPath } from "../../lib/questPath";
 import { useFriendRelation } from "../../hooks/queries/useFriends";
-import { usePatchNotification } from "../../hooks/queries/useNotifications";
+import { usePatchNotification } from "../../hooks/queries/useNotificationActions";
 import GameCover from "../game/GameCover";
 import { threadPath } from "../community/paths";
 import { gaming25Path } from "../../lib/profilePaths";

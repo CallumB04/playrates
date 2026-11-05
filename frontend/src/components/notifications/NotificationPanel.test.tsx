@@ -6,6 +6,7 @@ import { awaitingAnswer, type AppNotification } from "@playrates/shared";
 import { server } from "../../test/msw/server";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { buildProfile } from "../../test/msw/handlers";
+import ToastStack from "../feedback/ToastStack";
 import NotificationPanel from "./NotificationPanel";
 
 // The inbox is only fetched for someone signed in.
@@ -79,24 +80,41 @@ describe("NotificationPanel", () => {
 
     /* Read first, then cleared: the same place empties the bell once there
        is nothing left to read. */
-    it("offers to clear everything once it is all read", async () => {
-        const archived = vi.fn();
+    it("offers to clear everything once it is all read, and to undo it", async () => {
+        const cleared = vi.fn();
         server.use(
-            http.post(`${API}/me/notifications/archive-all`, () => {
-                archived();
+            http.patch(`${API}/me/notifications`, async ({ request }) => {
+                cleared(await request.json());
                 return new HttpResponse(null, { status: 204 });
             })
         );
         inbox([welcome({ readAt: READ }), welcome({ id: 2, readAt: READ })]);
-        panel();
+        renderWithProviders(
+            <>
+                <NotificationPanel onNavigate={() => {}} titleId="t" />
+                <ToastStack />
+            </>
+        );
 
         await userEvent.click(
             await screen.findByRole("button", { name: "Clear all" })
         );
-        await waitFor(() => expect(archived).toHaveBeenCalled());
-        expect(
-            screen.queryByRole("button", { name: "Mark all read" })
-        ).not.toBeInTheDocument();
+        await waitFor(() =>
+            expect(cleared).toHaveBeenCalledWith({
+                ids: [1, 2],
+                archived: true,
+            })
+        );
+        expect(await screen.findByText("Cleared all")).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole("button", { name: "Undo" }));
+        await waitFor(() =>
+            expect(cleared).toHaveBeenCalledWith({
+                ids: [1, 2],
+                archived: false,
+                read: true,
+            })
+        );
     });
 
     /* A request waiting on an answer stays unread whatever is pressed, so

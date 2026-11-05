@@ -235,6 +235,21 @@ export const NotificationPatchSchema = z
 
 export type NotificationPatch = z.infer<typeof NotificationPatchSchema>;
 
+/** The same change to many at once: a group cleared, Clear all, and the
+ *  Undo that puts them back. */
+export const NotificationBulkPatchSchema = z
+  .object({
+    ids: z.array(z.number().int().positive()).min(1).max(100),
+    read: z.boolean().optional(),
+    archived: z.boolean().optional(),
+  })
+  .strict()
+  .refine((patch) => patch.read !== undefined || patch.archived !== undefined, {
+    message: "Supply read, archived, or both",
+  });
+
+export type NotificationBulkPatch = z.infer<typeof NotificationBulkPatchSchema>;
+
 /** Read-all, or only these: closing the bell reads what it showed, less
  *  any marked unread while it was open. No body at all, from a client
  *  older than it, reads everything. */

@@ -10,7 +10,7 @@ import {
 import {
     useClearNotifications,
     useSetNotificationsRead,
-} from "../../hooks/queries/useNotifications";
+} from "../../hooks/queries/useNotificationActions";
 import { relativeTime } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import { NOTIFICATION_RENDERERS, type ContentProps } from "./registry";
@@ -22,6 +22,8 @@ import {
     ReplyGroupContent,
 } from "./GroupContents";
 import { useRowSwipe } from "./useRowSwipe";
+import ClearedLine from "./ClearedLine";
+import { summaryOf } from "./notificationSummary";
 
 /**
  * The shell every notification shares: mark, timestamp, unread dot and the
@@ -60,6 +62,11 @@ const NotificationItem = ({
     const unread = items.some((n) => n.readAt === null);
     // Its Accept and Decline are the way out; it stays until then.
     const task = awaitingAnswer(notification);
+    const clearRow = () =>
+        clear.mutate({
+            items,
+            label: <ClearedLine what={summaryOf(items)} />,
+        });
     const toggleRead = () => {
         setRead.mutate({ items, read: unread });
         onReadChange?.(
@@ -68,7 +75,7 @@ const NotificationItem = ({
         );
     };
     const swipe = useRowSwipe({
-        onLeft: () => clear.mutate(items),
+        onLeft: () => clearRow(),
         onRight: toggleRead,
         enabled: !task && !preview,
     });
@@ -214,7 +221,7 @@ const NotificationItem = ({
                             title="Clear"
                             aria-label="Clear"
                             disabled={preview || clear.isPending}
-                            onClick={() => clear.mutate(items)}
+                            onClick={clearRow}
                             className={cn(
                                 "relative flex size-8 cursor-pointer items-center justify-center rounded-sm text-content-muted transition-colors",
                                 "before:absolute before:-inset-2 before:content-[''] hover:bg-surface-hover hover:text-content",
