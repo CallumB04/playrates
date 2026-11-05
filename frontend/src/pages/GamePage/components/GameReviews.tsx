@@ -21,13 +21,7 @@ import { whyCannotVote } from "../../../lib/voting";
 import Button from "../../../components/ui/Button";
 import { Flag, PenLine } from "lucide-react";
 import ReportDialog from "../../../components/ReportDialog";
-import {
-    displayStatusFor,
-    isDisplayStatus,
-    type DisplayStatus,
-    type GameStatus,
-    type PlayedStatus,
-} from "../../../constants/gameStatus";
+import { reviewStatus } from "../../../lib/reviewStatus";
 import { formatCount, formatHours, relativeTime } from "../../../lib/format";
 import { usePlayedOn } from "../../../components/gamelog/usePlayedOn";
 import { groupByAuthor } from "../lib/groupReviews";
@@ -47,15 +41,6 @@ interface GameReviewsProps {
     onSortChange: (sort: ReviewSort) => void;
     isLoading: boolean;
 }
-
-/** The state a review was written in, when its author still has that log. */
-const reviewStatus = (review: ReviewWithAuthor): DisplayStatus | null => {
-    if (!review.status || !isDisplayStatus(review.status)) return null;
-    return displayStatusFor(
-        review.status as GameStatus,
-        review.playedStatus as PlayedStatus | null
-    );
-};
 
 const GameReviews = ({
     reviews,

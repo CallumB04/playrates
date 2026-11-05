@@ -5,24 +5,9 @@ import GameCover from "../../../components/game/GameCover";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import { SpoilerNote } from "../../../components/ui/SpoilerCover";
 import StatusBadge from "../../../components/ui/StatusBadge";
-import {
-    displayStatusFor,
-    isDisplayStatus,
-    type DisplayStatus,
-    type GameStatus,
-    type PlayedStatus,
-} from "../../../constants/gameStatus";
+import { reviewStatus } from "../../../lib/reviewStatus";
 import { formatHours, relativeTime } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
-
-/** The state a review was written in, when its author still has that log. */
-const reviewStatus = (review: ReviewWithAuthor): DisplayStatus | null => {
-    if (!review.status || !isDisplayStatus(review.status)) return null;
-    return displayStatusFor(
-        review.status as GameStatus,
-        review.playedStatus as PlayedStatus | null
-    );
-};
 
 /** One of somebody's reviews. The view carries the game, so no fan-out.
  *  On its owner's own, with a pin to put it on their profile. */
