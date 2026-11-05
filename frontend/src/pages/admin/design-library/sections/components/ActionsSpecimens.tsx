@@ -1,4 +1,4 @@
-import type { ReactionKey } from "@playrates/shared";
+import { REACTION_KEYS, type ReactionKey } from "@playrates/shared";
 import { useState } from "react";
 import { Archive, Inbox, Monitor, Moon, Sun } from "lucide-react";
 import Button from "../../../../../components/ui/Button";
@@ -170,7 +170,7 @@ const ActionsSpecimens = () => {
 
             <Specimen
                 title="Reaction bar"
-                notes="The upvote always shows; any other reaction someone has left sits beside it, and the plus picks from the ones the viewer has unlocked. One per person: pressing the same again takes it back, another swaps it. When the viewer can’t react it still shows the counts, and says why: signed out, or it’s their own."
+                notes="The upvote always shows; any other reaction someone has left sits beside it, and the plus picks from the ones the viewer has unlocked. One per person: pressing the same again takes it back, another swaps it. When the viewer can’t react it still shows the counts, and says why: signed out, or it’s their own. Past three kinds on a phone, or six wider, the rest fold into a +N that opens them all; yours always stays in sight."
                 meta="voteCount · myReaction · reactions · onReact · disabledReason · whyCannotVote(viewerId, authorId)"
             >
                 <ReactionBar
@@ -198,6 +198,15 @@ const ActionsSpecimens = () => {
                     reactions={[{ reaction: "upvote", count: 3 }]}
                     onReact={() => {}}
                     disabledReason={whyCannotVote("author", "author")}
+                />
+                <ReactionBar
+                    voteCount={34}
+                    myReaction={null}
+                    reactions={REACTION_KEYS.map((reaction, i) => ({
+                        reaction,
+                        count: 10 - i,
+                    }))}
+                    onReact={() => {}}
                 />
             </Specimen>
 

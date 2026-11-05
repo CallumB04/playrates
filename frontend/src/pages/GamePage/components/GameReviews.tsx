@@ -162,7 +162,7 @@ const GameReviews = ({
                                         key={review.id}
                                         id={`review-${review.id}`}
                                         className={cn(
-                                            "grid grid-cols-[minmax(0,1fr)_auto] gap-4 target:bg-brand-subtle",
+                                            "grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 target:bg-brand-subtle",
                                             index > 0 &&
                                                 "mt-4 border-t border-dashed border-subtle pt-4",
                                             landedOn ===
@@ -170,64 +170,65 @@ const GameReviews = ({
                                                 "bg-brand-subtle"
                                         )}
                                     >
-                                        <div className="min-w-0">
-                                            <div className="mb-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                                                {index === 0 &&
-                                                    (author ? (
-                                                        <Link
-                                                            to={`/user/${author.username}`}
-                                                            className="text-body-sm font-semibold text-content hover:text-brand-text"
-                                                        >
-                                                            {author.username}
-                                                        </Link>
-                                                    ) : (
-                                                        <span className="text-body-sm font-semibold text-content-secondary">
-                                                            Private account
-                                                        </span>
-                                                    ))}
-                                                {/* Which console the take is
-                                                    about: a port can be a
-                                                    different game. */}
-                                                {platformName && (
-                                                    <span className="inline-flex items-center gap-1.5 text-label-sm text-content-secondary">
-                                                        <PlatformIcon
-                                                            size={13}
-                                                            aria-hidden
-                                                        />
-                                                        {platformName}
+                                        <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+                                            {index === 0 &&
+                                                (author ? (
+                                                    <Link
+                                                        to={`/user/${author.username}`}
+                                                        className="text-body-sm font-semibold text-content hover:text-brand-text"
+                                                    >
+                                                        {author.username}
+                                                    </Link>
+                                                ) : (
+                                                    <span className="text-body-sm font-semibold text-content-secondary">
+                                                        Private account
                                                     </span>
-                                                )}
-                                                {reviewStatus(review) && (
-                                                    <StatusBadge
-                                                        status={reviewStatus(
-                                                            review
-                                                        )!}
+                                                ))}
+                                            {/* Which console the take is
+                                                about: a port can be a
+                                                different game. */}
+                                            {platformName && (
+                                                <span className="inline-flex items-center gap-1.5 text-label-sm text-content-secondary">
+                                                    <PlatformIcon
+                                                        size={13}
+                                                        aria-hidden
                                                     />
-                                                )}
-                                                {review.hoursPlayed !==
-                                                    null && (
-                                                    <span className="text-label-sm text-content-muted">
-                                                        Reviewed at{" "}
-                                                        <span className="font-mono">
-                                                            {formatHours(
-                                                                review.hoursPlayed
-                                                            )}
-                                                        </span>{" "}
-                                                        played
-                                                    </span>
-                                                )}
-                                                {/* Its own page: a link
-                                                    to share, and a page to
-                                                    be found by. */}
-                                                <Link
-                                                    to={`/review/${review.id}`}
-                                                    className="relative text-label-sm text-content-muted before:absolute before:-inset-3 before:content-[''] hover:text-content hover:underline"
-                                                >
-                                                    {relativeTime(
-                                                        review.createdAt
-                                                    )}
-                                                </Link>
-                                            </div>
+                                                    {platformName}
+                                                </span>
+                                            )}
+                                            {reviewStatus(review) && (
+                                                <StatusBadge
+                                                    status={reviewStatus(
+                                                        review
+                                                    )!}
+                                                />
+                                            )}
+                                            {review.hoursPlayed !== null && (
+                                                <span className="text-label-sm text-content-muted">
+                                                    Reviewed at{" "}
+                                                    <span className="font-mono">
+                                                        {formatHours(
+                                                            review.hoursPlayed
+                                                        )}
+                                                    </span>{" "}
+                                                    played
+                                                </span>
+                                            )}
+                                            {/* Its own page: a link
+                                                to share, and a page to
+                                                be found by. */}
+                                            <Link
+                                                to={`/review/${review.id}`}
+                                                className="relative text-label-sm text-content-muted before:absolute before:-inset-3 before:content-[''] hover:text-content hover:underline"
+                                            >
+                                                {relativeTime(review.createdAt)}
+                                            </Link>
+                                        </div>
+                                        <RatingBadge
+                                            value={review.rating}
+                                            size="row"
+                                        />
+                                        <div className="col-span-2 min-w-0">
                                             {/* The full width of the row: a
                                                 review is prose, and a
                                                 character cap made every one
@@ -247,32 +248,13 @@ const GameReviews = ({
                                                     moreLabel="Show more"
                                                 />
                                             </SpoilerCover>
-                                            {viewerId &&
-                                                viewerId !== author?.id && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            setReporting(
-                                                                review.id
-                                                            )
-                                                        }
-                                                        className="mt-1 -ml-2.5 min-h-11 px-2.5 text-content-muted sm:min-h-8"
-                                                    >
-                                                        <Flag
-                                                            size={13}
-                                                            aria-hidden
-                                                        />
-                                                        Report
-                                                    </Button>
-                                                )}
                                         </div>
-                                        <div className="flex flex-col items-end gap-2">
-                                            <RatingBadge
-                                                value={review.rating}
-                                                size="row"
-                                            />
+                                        {/* Under the text, across the row:
+                                            beside it, a few kinds of
+                                            reaction took the width and left
+                                            the review a letter wide on a
+                                            phone. */}
+                                        <div className="col-span-2 flex flex-wrap items-center justify-between gap-2">
                                             <ReactionBar
                                                 voteCount={review.voteCount}
                                                 myReaction={review.myReaction}
@@ -287,9 +269,27 @@ const GameReviews = ({
                                                         reaction
                                                     )
                                                 }
-                                                align="end"
-                                                className="justify-end"
                                             />
+                                            {viewerId &&
+                                                viewerId !== author?.id && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            setReporting(
+                                                                review.id
+                                                            )
+                                                        }
+                                                        className="-mr-2.5 min-h-11 px-2.5 text-content-muted sm:min-h-8"
+                                                    >
+                                                        <Flag
+                                                            size={13}
+                                                            aria-hidden
+                                                        />
+                                                        Report
+                                                    </Button>
+                                                )}
                                         </div>
                                     </div>
                                 );

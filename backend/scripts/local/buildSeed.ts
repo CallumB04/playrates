@@ -23,6 +23,7 @@ import {
   GAMING_25_CATEGORIES,
   GAMING_25_CENTRE,
   GAMING_25_SIZE,
+  REACTION_KEYS,
   patchNoteDoc,
   type PatchNote,
 } from "@playrates/shared";
@@ -70,6 +71,12 @@ const int = (min: number, max: number) =>
   min + Math.floor(r() * (max - min + 1));
 const chance = (p: number) => r() < p;
 const pick = <T>(xs: readonly T[]): T => xs[Math.floor(r() * xs.length)]!;
+/** Mostly upvotes, as on the site, with the reactions anyone can leave
+ *  mixed in. */
+const everydayReaction = () =>
+  chance(0.65) ? "upvote" : pick(["fire", "love", "lol"] as const);
+/** Every kind in turn: enough of them that the bar folds some away. */
+const everyReaction = (i: number) => REACTION_KEYS[i % REACTION_KEYS.length]!;
 const shuffle = <T>(xs: T[]): T[] => {
   const out = [...xs];
   for (let i = out.length - 1; i > 0; i--) {
@@ -650,20 +657,42 @@ const buildWorld = (cat: Catalogue): string => {
     body: "Private note to self: replay this on hard.",
   });
 
-  // Votes: most reviews get a few, the tester's first one a milestone's worth.
+  // Votes: most reviews get a few, the tester's first one a milestone's worth
+  // of upvotes. Three reviews of the most reviewed game get every kind of
+  // reaction, so its page shows the bar crowded.
+  const publicReviews = reviews.filter((rev) => rev.isPublic);
+  const reviewsOf = new Map<Game, Review[]>();
+  for (const rev of publicReviews)
+    reviewsOf.set(rev.log.game, [...(reviewsOf.get(rev.log.game) ?? []), rev]);
+  const crowded = new Set(
+    [...reviewsOf.values()]
+      .sort((a, b) => b.length - a.length)[0]!
+      .filter((rev) => rev !== testerReviews[0])
+      .slice(0, 3),
+  );
   const reviewVotes: Row[] = [];
-  for (const rev of reviews) {
-    if (!rev.isPublic) continue;
-    const count = rev === testerReviews[0] ? 12 : Math.floor(r() ** 3 * 14);
-    for (const voter of shuffle(
-      community.filter((u) => u !== rev.log.user),
-    ).slice(0, count)) {
-      reviewVotes.push({
-        review_id: rev.id,
-        user_id: voter.id,
-        created_at: later(rev.createdAt, int(0, 20)),
+  for (const rev of publicReviews) {
+    const count =
+      rev === testerReviews[0]
+        ? 12
+        : crowded.has(rev)
+          ? 30
+          : Math.floor(r() ** 3 * 14);
+    shuffle(community.filter((u) => u !== rev.log.user))
+      .slice(0, count)
+      .forEach((voter, i) => {
+        reviewVotes.push({
+          review_id: rev.id,
+          user_id: voter.id,
+          reaction:
+            rev === testerReviews[0]
+              ? "upvote"
+              : crowded.has(rev)
+                ? everyReaction(i)
+                : everydayReaction(),
+          created_at: later(rev.createdAt, int(0, 20)),
+        });
       });
-    }
   }
 
   // Friendships -----------------------------------------------------------
@@ -758,14 +787,20 @@ const buildWorld = (cat: Catalogue): string => {
     });
     return id;
   };
-  const vote = (messageId: number, voters: Account[], after: Date) => {
-    for (const voter of voters) {
+  const vote = (
+    messageId: number,
+    voters: Account[],
+    after: Date,
+    reaction: (i: number) => string = everydayReaction,
+  ) => {
+    voters.forEach((voter, i) => {
       messageVotes.push({
         message_id: messageId,
         user_id: voter.id,
+        reaction: reaction(i),
         created_at: later(after, int(0, 5)),
       });
-    }
+    });
   };
 
   const gameThread = (
@@ -852,7 +887,22 @@ const buildWorld = (cat: Catalogue): string => {
     ),
     daysAgo(12),
   );
-  vote(testerMessage, community.slice(10, 17), daysAgo(12));
+  vote(testerMessage, community.slice(10, 17), daysAgo(12), () => "upvote");
+  // A reply the tester can react to, with every kind on it already.
+  const busyReply = post(
+    theirs.id,
+    f3!,
+    doc(
+      "The opening hours are some of the best in the genre. It drags in the middle, but stick with it.",
+    ),
+    daysAgo(11),
+  );
+  vote(
+    busyReply,
+    community.filter((u) => u !== f3!).slice(0, 30),
+    daysAgo(11),
+    everyReaction,
+  );
 
   // Patch notes: the thread a migration made, signed by the team, with two
   // releases in it, written as the editor writes them.
@@ -909,6 +959,16 @@ const buildWorld = (cat: Catalogue): string => {
 where subject_kind = 'patch_notes';`,
     `update public.community_messages m set author_id = ${lit(staff.id)}, created_at = ${lit(patchStart)}
 from public.community_threads t where m.thread_id = t.id and t.subject_kind = 'patch_notes' and m.is_opening;`,
+    // Every kind of reaction on the opening post.
+    `insert into public.community_message_votes (message_id, user_id, reaction, created_at)
+select m.id, v.user_id, v.reaction, ${lit(later(patchStart, 2))}
+from public.community_messages m
+join public.community_threads t on t.id = m.thread_id and t.subject_kind = 'patch_notes'
+cross join (values ${community
+      .slice(0, 30)
+      .map((u, i) => `(${lit(u.id)}::uuid, ${lit(everyReaction(i))})`)
+      .join(", ")}) v(user_id, reaction)
+where m.is_opening;`,
     ...patchEntries.map(
       (
         entry,

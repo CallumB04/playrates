@@ -12,7 +12,13 @@ import ReactionIcon from "../progress/ReactionIcon";
 import { REACTION_COLOURS } from "../progress/reactionIcons";
 import { useProgressQuery } from "../../hooks/queries/useProgress";
 import { useDismiss } from "../../hooks/useDismiss";
-import { applyReaction, countOf, type ReactionView } from "../../lib/reactions";
+import {
+    applyReaction,
+    countOf,
+    reactionOrder,
+    shownReactions,
+    type ReactionView,
+} from "../../lib/reactions";
 import { cn } from "../../lib/cn";
 import { floatBeside, popoverClass } from "./popover";
 import { ItemSheetFor } from "../shop/ItemSheet";
@@ -65,8 +71,14 @@ const PICKER = {
     height: Math.ceil(REACTIONS.length / 5) * 46 + 50,
 };
 
+/* How many kinds show before the rest fold away: one row of 44px chips on a
+   phone, more where they're smaller and there's room. */
+const FOLD = { phone: 3, wide: 6 };
+
+/* No display of its own: cn() doesn't merge, so a folded chip's "hidden"
+   beside an "inline-flex" here would lose. */
 const CHIP =
-    "inline-flex min-h-11 items-center gap-1 rounded-full border px-2.5 py-1 text-label-sm transition-colors lift sm:min-h-0 " +
+    "min-h-11 items-center gap-1 rounded-full border px-2.5 py-1 text-label-sm transition-colors lift sm:min-h-0 " +
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
 /**
@@ -98,6 +110,7 @@ const ReactionBar = ({
     const [pending, setPending] = useState<ReactionView | null>(null);
     useEffect(() => setPending(null), [voteCount, myReaction, reactions]);
     const [picking, setPicking] = useState(false);
+    const [unfolded, setUnfolded] = useState(false);
     // A bought reaction not yours yet: its popup, then the reaction.
     const [buying, setBuying] = useState<ReactionKey | null>(null);
     const wrap = useRef<HTMLDivElement>(null);
@@ -140,11 +153,11 @@ const ReactionBar = ({
 
     // Only what someone has left, the upvote first: nothing reads as a
     // row of noughts.
-    const chips: ReactionKey[] = shown.reactions
-        .map((r) => r.reaction)
-        .sort((a, b) =>
-            a === DEFAULT_REACTION ? -1 : b === DEFAULT_REACTION ? 1 : 0
-        );
+    const chips = reactionOrder(shown);
+    const onPhone = shownReactions(chips, shown.myReaction, FOLD.phone);
+    const onWide = shownReactions(chips, shown.myReaction, FOLD.wide);
+    const foldedOnPhone = unfolded ? 0 : chips.length - onPhone.size;
+    const foldedOnWide = unfolded ? 0 : chips.length - onWide.size;
     if (chips.length === 0 && disabled) return null;
 
     return (
@@ -189,6 +202,11 @@ const ReactionBar = ({
                         }
                         className={cn(
                             CHIP,
+                            unfolded || onPhone.has(key)
+                                ? "inline-flex"
+                                : onWide.has(key)
+                                  ? "hidden sm:inline-flex"
+                                  : "hidden",
                             mine
                                 ? "font-semibold text-content"
                                 : "border-subtle text-content-muted hover:border-strong hover:text-content",
@@ -207,6 +225,22 @@ const ReactionBar = ({
                 );
             })}
 
+            {foldedOnPhone > 0 && (
+                <button
+                    type="button"
+                    onClick={() => setUnfolded(true)}
+                    aria-label="Show all reactions"
+                    className={cn(
+                        CHIP,
+                        "inline-flex cursor-pointer border-subtle font-mono text-content-muted tabular-nums hover:border-strong hover:text-content",
+                        foldedOnWide === 0 && "sm:hidden"
+                    )}
+                >
+                    <span className="sm:hidden">+{foldedOnPhone}</span>
+                    <span className="hidden sm:inline">+{foldedOnWide}</span>
+                </button>
+            )}
+
             {!disabled && (
                 <button
                     type="button"
@@ -215,7 +249,7 @@ const ReactionBar = ({
                     aria-label="Add a reaction"
                     className={cn(
                         CHIP,
-                        "min-w-11 cursor-pointer justify-center border-subtle text-content-muted hover:border-strong hover:text-content sm:min-w-0"
+                        "inline-flex min-w-11 cursor-pointer justify-center border-subtle text-content-muted hover:border-strong hover:text-content sm:min-w-0"
                     )}
                 >
                     <SmilePlus size={15} aria-hidden />

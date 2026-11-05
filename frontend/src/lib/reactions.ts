@@ -43,3 +43,29 @@ export const countOf = (
     view: ReactionView,
     reaction: ReactionKey = DEFAULT_REACTION
 ) => view.reactions.find((r) => r.reaction === reaction)?.count ?? 0;
+
+/** The reactions someone has left, the upvote first and the rest by how
+ *  many: the order the bar shows them in. */
+export const reactionOrder = (view: ReactionView): ReactionKey[] =>
+    [...view.reactions]
+        .sort((a, b) =>
+            a.reaction === DEFAULT_REACTION
+                ? -1
+                : b.reaction === DEFAULT_REACTION
+                  ? 1
+                  : b.count - a.count
+        )
+        .map((r) => r.reaction);
+
+/** The ones to show while the rest are folded away: the first few, and
+ *  yours wherever it falls, so a press never hides what you pressed. All of
+ *  them when only one would fold: a "+1" takes the room it saves. */
+export const shownReactions = (
+    order: ReactionKey[],
+    mine: ReactionKey | null,
+    limit: number
+): Set<ReactionKey> => {
+    const shown = new Set(order.slice(0, limit));
+    if (mine && order.includes(mine)) shown.add(mine);
+    return order.length - shown.size > 1 ? shown : new Set(order);
+};
