@@ -59,9 +59,12 @@ post; copy the Stardew page and change everything.
   the lead ("6 tips for beginners in") and the **game's real logo**, and
   the PlayRates mark (`.mark`, the site's `favicon.svg`) small in the lower
   left. A post across many games has no logo: put the hook in `.big` type.
-  The band must never cover the hook's character or main subject: move it
-  up or down (`top` on the band, and `background-size`/`-position` on the
-  picture) until the face and figure are clear (Callum, 2026-11-05).
+  The band must never cover the hook's character or main subject. Keep it
+  at its usual height (the default `top`, just above the head, as in the
+  Elden Ring, Stardew and Skyrim posts) or lower, never up by the top edge
+  where some phones crop it, and move the picture instead: a larger
+  `background-size` with `background-position: x 0%` drops the subject
+  below the band (Callum, 2026-11-05).
 - **Each item**: the band at the top with a big number alternating iris and
   ember (`.num`, `.num.ember`), the title, and one grey line. Behind it a
   picture of **what the tip is about** (the horse for "get your horse", the
