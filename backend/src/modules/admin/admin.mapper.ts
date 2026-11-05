@@ -28,9 +28,13 @@ import {
   type ClientErrorEntry,
   type AdminCohorts,
   type AdminEmailMessage,
+  type AdminStaying,
+  type AdminStayingFigures,
 } from "@playrates/shared";
 import type {
   AdminCohortRow,
+  AdminReturnRow,
+  AdminStayingRow,
   AdminActivityFeedRow,
   AdminGameFeedRow,
   AdminSeriesRow,
@@ -53,7 +57,7 @@ const DAY_MS = 86_400_000;
 /** YYYY-MM-DD, UTC. Every series on the dashboard is in UTC. */
 export const isoDay = (date: Date): string => date.toISOString().slice(0, 10);
 
-const addDays = (day: string, days: number): string =>
+export const addDays = (day: string, days: number): string =>
   isoDay(new Date(Date.parse(`${day}T00:00:00Z`) + days * DAY_MS));
 
 /** The Monday of that day's week, as Postgres's date_trunc('week') has it. */
@@ -371,6 +375,34 @@ export const toServerError = (row: ServerErrorRowWithUser): ServerErrorEntry => 
   username: row.username,
   stack: row.stack,
   createdAt: row.created_at,
+});
+
+const toStayingFigures = (row: AdminStayingRow): AdminStayingFigures => ({
+  joined: row.joined,
+  onboarded: row.onboarded,
+  loggedThree: row.logged_three,
+  backWeek: { of: row.week_due, back: row.back_week },
+  backMonth: { of: row.month_due, back: row.back_month },
+});
+
+export const toStaying = (
+  range: AdminRange,
+  current: AdminStayingRow,
+  previous: AdminStayingRow,
+  curve: AdminReturnRow[],
+): AdminStaying => ({
+  range,
+  current: toStayingFigures(current),
+  previous: toStayingFigures(previous),
+  invited: {
+    joined: current.invited,
+    backWeek: { of: current.invited_week_due, back: current.invited_back_week },
+  },
+  curve: curve.map((row) => ({
+    day: row.day,
+    everyone: { of: row.due, back: row.back },
+    invited: { of: row.invited_due, back: row.invited_back },
+  })),
 });
 
 export const toCohorts = (rows: AdminCohortRow[]): AdminCohorts => {

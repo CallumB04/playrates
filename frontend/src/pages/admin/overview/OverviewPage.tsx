@@ -515,7 +515,7 @@ const OverviewPage = () => {
                         <Leaders range={range} open={setOpen} />
                     </section>
 
-                    <Staying />
+                    <Staying range={range} />
 
                     <section className="flex flex-col gap-4">
                         <SectionHeader

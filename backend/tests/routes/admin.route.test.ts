@@ -107,6 +107,7 @@ const announcement = {
  *  for the ones someone remembered to test. */
 const ENDPOINTS: { method: "get" | "post" | "patch" | "put"; path: string; body?: object }[] = [
   { method: "get", path: "/api/v1/admin/stats/overview" },
+  { method: "get", path: "/api/v1/admin/stats/staying" },
   { method: "get", path: "/api/v1/admin/stats/users" },
   { method: "get", path: "/api/v1/admin/activity" },
   { method: "get", path: "/api/v1/admin/activity/counts" },
@@ -192,6 +193,34 @@ describe("admin gate", () => {
       .set("Authorization", authHeader(ADMIN));
 
     expect(response.status).toBe(404);
+  });
+});
+
+describe("do people stay", () => {
+  it("answers for the period asked, with a curve as long as it", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const get = (range: string) =>
+      request(app)
+        .get(`/api/v1/admin/stats/staying?range=${range}`)
+        .set("Authorization", authHeader(ADMIN));
+
+    const month = await get("30d");
+    expect(month.status).toBe(200);
+    expect(month.body.range).toBe("30d");
+    expect(month.body.current.backWeek).toEqual({ of: 2, back: 1 });
+    expect(month.body.invited).toEqual({
+      joined: 1,
+      backWeek: { of: 1, back: 1 },
+    });
+    expect(month.body.curve).toHaveLength(30);
+    expect(month.body.curve[0]).toEqual({
+      day: 1,
+      everyone: { of: 4, back: 3 },
+      invited: { of: 1, back: 1 },
+    });
+
+    expect((await get("12m")).body.curve).toHaveLength(180);
+    expect((await get("forever")).status).toBe(422);
   });
 });
 

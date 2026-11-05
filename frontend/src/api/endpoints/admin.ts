@@ -4,7 +4,7 @@ import type {
     ActivityPeriod,
     AdminActivityCounts,
     AdminActivityEvent,
-    AdminCohorts,
+    AdminStaying,
     AdminGameEvent,
     AdminEmailMessage,
     EmailMessageGroup,
@@ -35,8 +35,14 @@ import type {
 import { api } from "../client";
 import { compactParams } from "./games";
 
-export const fetchAdminCohorts = async (): Promise<AdminCohorts> =>
-    (await api.get<AdminCohorts>("/admin/cohorts")).data;
+export const fetchAdminStaying = async (
+    range: AdminRange
+): Promise<AdminStaying> =>
+    (
+        await api.get<AdminStaying>("/admin/stats/staying", {
+            params: { range },
+        })
+    ).data;
 
 export const fetchAdminProgress = async (): Promise<AdminProgress> =>
     (await api.get<AdminProgress>("/admin/progress")).data;

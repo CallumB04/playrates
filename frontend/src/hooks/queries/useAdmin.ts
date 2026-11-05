@@ -24,7 +24,7 @@ import {
     fetchAdminMetric,
     fetchAdminOverview,
     fetchAdminProgress,
-    fetchAdminCohorts,
+    fetchAdminStaying,
     fetchAdminUser,
     fetchAdminUsers,
     fetchAdminReports,
@@ -63,10 +63,11 @@ export const useAdminProgress = () =>
         queryFn: fetchAdminProgress,
     });
 
-export const useAdminCohorts = () =>
+export const useAdminStaying = (range: AdminRange) =>
     useQuery({
-        queryKey: queryKeys.admin.cohorts,
-        queryFn: fetchAdminCohorts,
+        queryKey: queryKeys.admin.staying(range),
+        queryFn: () => fetchAdminStaying(range),
+        placeholderData: keepPreviousData,
     });
 
 export const useAdminOverview = (range: AdminRange) =>

@@ -391,6 +391,29 @@ export interface AdminCohortRow {
   referred_back_week: number;
 }
 
+/** What admin_staying returns for a period's signups. */
+export interface AdminStayingRow {
+  joined: number;
+  onboarded: number;
+  logged_three: number;
+  week_due: number;
+  back_week: number;
+  month_due: number;
+  back_month: number;
+  invited: number;
+  invited_week_due: number;
+  invited_back_week: number;
+}
+
+/** One day of admin_return_curve. */
+export interface AdminReturnRow {
+  day: number;
+  due: number;
+  back: number;
+  invited_due: number;
+  invited_back: number;
+}
+
 export interface ClientErrorRow {
   id: number;
   message: string;

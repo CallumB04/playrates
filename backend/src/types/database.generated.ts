@@ -1627,9 +1627,19 @@ isOneToOne: false
 "admin_progress":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"admin_return_curve":
+{ Args: { "p_days": number,"p_from": string,"p_to": string }; Returns: {
+              "back": number,"day": number,"due": number,"invited_back": number,"invited_due": number
+            }[]
+                           },
 "admin_series":
 { Args: { "p_bucket": string,"p_from": string,"p_to": string }; Returns: {
               "active": number,"active_week": number,"bucket": string,"logs": number,"messages": number,"reviews": number,"signups": number,"threads": number
+            }[]
+                           },
+"admin_staying":
+{ Args: { "p_from": string,"p_to": string }; Returns: {
+              "back_month": number,"back_week": number,"invited": number,"invited_back_week": number,"invited_week_due": number,"joined": number,"logged_three": number,"month_due": number,"onboarded": number,"week_due": number
             }[]
                            },
 "admin_totals":

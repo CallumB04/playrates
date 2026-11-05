@@ -47,6 +47,17 @@ export const createAdminRouter = ({
   // Stats -------------------------------------------------------------------
 
   router.get(
+    "/stats/staying",
+    validate({ query: AdminRangeQuerySchema }),
+    async (req, res) => {
+      const { range } = req.valid!.query as z.infer<
+        typeof AdminRangeQuerySchema
+      >;
+      res.json(await service.staying(range));
+    },
+  );
+
+  router.get(
     "/stats/overview",
     validate({ query: AdminRangeQuerySchema }),
     async (req, res) => {

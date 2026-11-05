@@ -47,6 +47,8 @@ import {
   toServerError,
   toClientError,
   toCohorts,
+  toStaying,
+  addDays,
   toUserSummary,
   toEmailMessage,
   toAdminProgress,
@@ -60,6 +62,15 @@ const DAY_MS = 86_400_000;
 /** Twelve weeks: enough for a person's habits to show, few enough to draw. */
 // Two months: long enough for the oldest to have a month-later answer.
 const COHORT_WEEKS = 9;
+
+/** How far the "still coming back" curve runs after joining. Past the
+ *  period's own length, no one who joined in it has got that far. */
+const CURVE_DAYS: Record<AdminRange, number> = {
+  "7d": 7,
+  "30d": 30,
+  "90d": 90,
+  "12m": 180,
+};
 const ACTIVE_DAYS_SHOWN = 84;
 
 /** Everything behind /admin. requireAdmin has already run by the time any of
@@ -164,6 +175,18 @@ export const createAdminService = (deps: {
   return {
     async progress() {
       return toAdminProgress(await repo.progress());
+    },
+
+    /** How the people who joined in a period got on, beside those who
+     *  joined in the period before, and the curve of who kept coming. */
+    async staying(range: AdminRange) {
+      const window = rangeWindow(range, now());
+      const [current, previous, curve] = await Promise.all([
+        repo.staying(window.from, window.to),
+        repo.staying(window.previousFrom, addDays(window.from, -1)),
+        repo.returnCurve(window.from, window.to, CURVE_DAYS[range]),
+      ]);
+      return toStaying(range, current, previous, curve);
     },
 
     async cohorts() {

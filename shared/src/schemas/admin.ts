@@ -788,6 +788,36 @@ export interface AdminCohorts {
   };
 }
 
+/** How a period's signups got on. Coming back is any visit that many days
+ *  after joining or later, counted once that day has passed for them. */
+export interface AdminStayingFigures {
+  joined: number;
+  onboarded: number;
+  /** Logged three games in their first 24 hours. */
+  loggedThree: number;
+  backWeek: AdminReturn;
+  backMonth: AdminReturn;
+}
+
+/** One day after joining, on the "still coming back" curve. */
+export interface AdminReturnPoint {
+  day: number;
+  everyone: AdminReturn;
+  invited: AdminReturn;
+}
+
+export interface AdminStaying {
+  range: AdminRange;
+  current: AdminStayingFigures;
+  /** The equal-length period before, to compare with. */
+  previous: AdminStayingFigures;
+  /** Of those who joined in the period, the ones who came through an
+   *  invite. */
+  invited: { joined: number; backWeek: AdminReturn };
+  /** Day 1 onward. A day nobody has reached yet has nothing due. */
+  curve: AdminReturnPoint[];
+}
+
 export interface ServerErrorEntry {
   id: number;
   status: number;

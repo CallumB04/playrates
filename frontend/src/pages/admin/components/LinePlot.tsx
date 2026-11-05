@@ -22,6 +22,9 @@ interface LinePlotProps {
     /** A picture only: no readout and nothing to step through, for a plot
      *  inside something that is itself the control, such as a card. */
     still?: boolean;
+    /** The top of the scale, where it isn't the highest value: 100 for a
+     *  share, so 40% reads as 40% and not as the top. */
+    ceiling?: number;
     className?: string;
 }
 
@@ -41,13 +44,14 @@ const LinePlot = ({
     height = 112,
     axis,
     still = false,
+    ceiling,
     className,
 }: LinePlotProps) => {
     const id = useId().replace(/:/g, "");
     const count = series[0]?.values.length ?? 0;
     const cursor = usePlotCursor<HTMLDivElement>(count);
     const index = cursor.index;
-    const peak = Math.max(1, ...series.flatMap((s) => s.values));
+    const peak = ceiling ?? Math.max(1, ...series.flatMap((s) => s.values));
     const x = (i: number) => (count <= 1 ? W : (i / (count - 1)) * W);
     // A hair of headroom, so the peak's stroke isn't clipped by the top edge.
     const y = (v: number) => height - 3 - (v / peak) * (height - 8);

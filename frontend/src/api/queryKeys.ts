@@ -158,7 +158,7 @@ export const queryKeys = {
         all: ["admin"] as const,
         overview: (range: string) => ["admin", "overview", range] as const,
         progress: ["admin", "progress"] as const,
-        cohorts: ["admin", "cohorts"] as const,
+        staying: (range: string) => ["admin", "staying", range] as const,
         metric: (metric: string, range: string) =>
             ["admin", "metric", metric, range] as const,
         activityCounts: (scope: Record<string, unknown>) =>
