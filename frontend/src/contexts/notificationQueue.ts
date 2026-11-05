@@ -27,6 +27,9 @@ const DEFAULT_SEVERITY: Record<NotificationType, NotificationSeverity> = {
 export interface ToastAction {
     label: string;
     onClick: () => void;
+    /** How long it's on offer, where it's only for a moment, as Undo is.
+     *  Without one the toast waits to be pressed or closed. */
+    dwell?: number;
 }
 
 export interface Toast {
@@ -73,8 +76,10 @@ export const notificationQueue = (
                     action: action.action,
                     // One that offers something to do stays until it's done
                     // or closed: a button on a clock is gone before a slow
-                    // reader reaches it.
-                    dwell: action.action ? null : DWELL_MS[severity],
+                    // reader reaches it. Unless the offer itself is brief.
+                    dwell: action.action
+                        ? (action.action.dwell ?? null)
+                        : DWELL_MS[severity],
                     leaving: false,
                 },
             ];

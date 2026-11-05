@@ -107,6 +107,8 @@ export const useClearNotifications = () => {
                 "low",
                 {
                     label: "Undo",
+                    // Long enough to notice and reach for, then gone.
+                    dwell: 10_000,
                     onClick: () =>
                         void Promise.all(
                             items.map((n) =>
