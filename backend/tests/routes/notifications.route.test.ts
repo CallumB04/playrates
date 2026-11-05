@@ -51,6 +51,54 @@ describe("notifications", () => {
     expect(response.body.unread).toBe(0);
   });
 
+  it("clears the badge when the bell is opened, and counts what comes after", async () => {
+    const { app, state } = buildTestApp({
+      seed: { ...baseSeed(), notifications: [buildNotification()] },
+    });
+    const feed = async () =>
+      (
+        await request(app)
+          .get("/api/v1/me/notifications")
+          .set("Authorization", authHeader(USER_A))
+      ).body;
+
+    expect(await feed()).toMatchObject({ unread: 1, unseen: 1, seenAt: null });
+
+    const seen = await request(app)
+      .post("/api/v1/me/notifications/seen")
+      .set("Authorization", authHeader(USER_A));
+    expect(seen.status).toBe(204);
+    // Seen isn't read: the row stays unread until it's opened.
+    expect(await feed()).toMatchObject({ unread: 1, unseen: 0 });
+
+    state.notifications.push(
+      buildNotification({
+        id: 2,
+        dedupe_key: "later",
+        created_at: new Date(Date.now() + 1000).toISOString(),
+      }),
+    );
+    expect(await feed()).toMatchObject({ unread: 2, unseen: 1 });
+  });
+
+  it("opens only the caller's own bell", async () => {
+    const { app } = buildTestApp({
+      seed: { ...baseSeed(), notifications: [buildNotification()] },
+    });
+    await request(app)
+      .post("/api/v1/me/notifications/seen")
+      .set("Authorization", authHeader(USER_B));
+
+    const response = await request(app)
+      .get("/api/v1/me/notifications")
+      .set("Authorization", authHeader(USER_A));
+    expect(response.body.unseen).toBe(1);
+
+    expect(
+      (await request(app).post("/api/v1/me/notifications/seen")).status,
+    ).toBe(401);
+  });
+
   it("requires a signed-in caller", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 

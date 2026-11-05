@@ -55,11 +55,13 @@ export const createNotificationsService = (
       { archived, ...pagination }: Pagination & { archived: boolean },
     ): Promise<NotificationFeed> {
       const { from, to } = toRange(pagination);
-      const [{ rows, total }, unread, requestActors] = await Promise.all([
-        repo.listForUser(userId, archived, from, to),
-        repo.countUnread(userId),
-        repo.unreadRequestActors(userId),
-      ]);
+      const [{ rows, total }, unread, requestActors, seenAt] =
+        await Promise.all([
+          repo.listForUser(userId, archived, from, to),
+          repo.countUnread(userId),
+          repo.unreadRequestActors(userId),
+          repo.seenAt(userId),
+        ]);
 
       const relationOf = await relationLookup(
         userId,
@@ -71,6 +73,8 @@ export const createNotificationsService = (
         data: rows.map((row) => toNotification(row, relationOf)),
         meta: { page: pagination.page, limit: pagination.limit, total },
         unread,
+        unseen: await repo.countUnseen(userId, seenAt),
+        seenAt,
         awaitingAnswer: requestActors.filter(
           (id) => relationOf(id) === "request-received",
         ).length,
@@ -109,6 +113,11 @@ export const createNotificationsService = (
         row.kind === "friend_request",
       );
       return toNotification(row, relationOf);
+    },
+
+    /** The bell was opened: what's in it now is no longer new. */
+    async markSeen(userId: string): Promise<void> {
+      await repo.markSeen(userId);
     },
 
     async markAllRead(userId: string): Promise<void> {

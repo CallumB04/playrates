@@ -34,6 +34,12 @@ export interface NotificationsRepository {
     to: number,
   ): Promise<{ rows: NotificationRowWithActor[]; total: number }>;
   countUnread(userId: string): Promise<number>;
+  /** Unread, in the inbox, and raised after `since`: what's new since the
+   *  bell was last opened. Every unread one when it never has been. */
+  countUnseen(userId: string, since: string | null): Promise<number>;
+  /** When they last opened the bell; null if they never have. */
+  seenAt(userId: string): Promise<string | null>;
+  markSeen(userId: string): Promise<void>;
   /** Who sent the unread friend requests still in the inbox. */
   unreadRequestActors(userId: string): Promise<string[]>;
   findById(id: number): Promise<NotificationRow | null>;
@@ -124,6 +130,40 @@ export const createNotificationsRepository = (
       .is("archived_at", null);
     if (error) throw error;
     return count ?? 0;
+  },
+
+  async countUnseen(userId, since) {
+    let builder = db
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .is("read_at", null)
+      .is("archived_at", null);
+    if (since) builder = builder.gt("created_at", since);
+    const { count, error } = await builder;
+    if (error) throw error;
+    return count ?? 0;
+  },
+
+  async seenAt(userId) {
+    const { data, error } = await db
+      .from("profiles")
+      .select("notifications_seen_at")
+      .eq("id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    return (
+      (data as { notifications_seen_at: string | null } | null)
+        ?.notifications_seen_at ?? null
+    );
+  },
+
+  async markSeen(userId) {
+    const { error } = await db
+      .from("profiles")
+      .update({ notifications_seen_at: new Date().toISOString() })
+      .eq("id", userId);
+    if (error) throw error;
   },
 
   async findById(id) {

@@ -1,33 +1,33 @@
 /** The colour a notification wears: its icon, and while it's unread, the
- *  wash behind its row and the rule down its edge. */
+ *  wash behind its row and the dot beside it. */
 export type NotificationTone =
     "brand" | "love" | "accent" | "info" | "warning" | "gold" | "neutral";
 
 export const NOTIFICATION_TONES: Record<
     NotificationTone,
-    { icon: string; unread: string; rule: string }
+    { icon: string; wash: string; dot: string }
 > = {
     brand: {
         icon: "text-brand-text",
-        unread: "bg-brand-subtle/50",
-        rule: "bg-brand",
+        wash: "bg-brand-subtle/60",
+        dot: "bg-brand",
     },
-    love: { icon: "text-love", unread: "bg-love-quiet/50", rule: "bg-love" },
+    love: { icon: "text-love", wash: "bg-love-quiet/60", dot: "bg-love" },
     accent: {
         icon: "text-accent",
-        unread: "bg-accent-quiet/50",
-        rule: "bg-accent",
+        wash: "bg-accent-quiet/60",
+        dot: "bg-accent",
     },
-    info: { icon: "text-info", unread: "bg-info-subtle/50", rule: "bg-info" },
+    info: { icon: "text-info", wash: "bg-info-subtle/60", dot: "bg-info" },
     warning: {
         icon: "text-warning",
-        unread: "bg-warning-subtle/50",
-        rule: "bg-warning",
+        wash: "bg-warning-subtle/60",
+        dot: "bg-warning",
     },
-    gold: { icon: "text-gold", unread: "bg-gold-quiet/50", rule: "bg-gold" },
+    gold: { icon: "text-gold", wash: "bg-gold-quiet/60", dot: "bg-gold" },
     neutral: {
         icon: "text-content-muted",
-        unread: "bg-surface-sunken/50",
-        rule: "bg-strong",
+        wash: "bg-surface-sunken/60",
+        dot: "bg-strong",
     },
 };

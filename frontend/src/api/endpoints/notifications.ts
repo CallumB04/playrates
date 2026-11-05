@@ -28,6 +28,11 @@ export const patchNotification = async (
     return data;
 };
 
+/** The bell was opened: the badge counts from here. */
+export const markNotificationsSeen = async (): Promise<void> => {
+    await api.post("/me/notifications/seen");
+};
+
 export const markAllNotificationsRead = async (): Promise<void> => {
     await api.post("/me/notifications/read-all");
 };

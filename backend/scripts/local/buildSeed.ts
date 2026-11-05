@@ -1337,7 +1337,8 @@ from public.community_threads where subject_kind = 'patch_notes';`,
   const profileDetails = [
     `update public.profiles set pronouns = 'he/him', location = 'Manchester', website = 'https://playrates.app', discord = 'tester_plays', steam = 'https://steamcommunity.com/id/playrates-tester',
   about_visibility = '{"firstName":"everyone","pronouns":"everyone","location":"friends","website":"everyone","discord":"private","steam":"everyone"}'::jsonb,
-  pinned_lists = '{${testerTop},${testerCosy}}', pinned_reviews = '{${testerReviews[0]!.id}}'
+  pinned_lists = '{${testerTop},${testerCosy}}', pinned_reviews = '{${testerReviews[0]!.id}}',
+  notifications_seen_at = ${lit(daysAgo(1))}
 where id = ${lit(tester.id)};`,
     `update public.profiles set pronouns = 'she/her', location = 'Glasgow', discord = 'halcyon.days',
   about_visibility = '{"location":"friends"}'::jsonb, pinned_lists = '{${halcyonTop}}'
@@ -1355,6 +1356,17 @@ on conflict (user_id, item) do nothing;`,
   // go, a gift and a task nearly done. The announcements' tones are below.
   const weekEnds = new Date(NOW.getTime() + 1.5 * DAY).toISOString();
   const moreNotifications = [
+    // Two friends accepting today: one row in the bell, with both faces.
+    ...[f2!, f3!].map((friend, i) =>
+      notify(
+        "friend_accepted",
+        friend,
+        {},
+        `friend_accepted:${friend.id}`,
+        minutesAgo(300 + i * 25),
+        false,
+      ),
+    ),
     notify(
       "list_upvote_milestone",
       null,

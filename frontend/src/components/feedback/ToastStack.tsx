@@ -15,6 +15,7 @@ const ToastStack = () => {
     return (
         <ol
             aria-label="Notifications"
+            data-toast-stack
             className={[
                 "pointer-events-none fixed inset-x-4 z-50 flex flex-col",
                 // Above the tab bar and the home indicator, until lg.

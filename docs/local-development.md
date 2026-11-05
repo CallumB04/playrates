@@ -87,12 +87,14 @@ Every account's password is **`playrates-local`**, and every email is
 - **Community.** The tester's own thread ("…: PS5 or Switch?") with five
   replies. A message of theirs in someone else's thread has seven upvotes.
   There are 22 more threads, the patch notes, and votes throughout.
-- **Notifications.** Fourteen unread, in every colour the bell has: two
+- **Notifications.** Sixteen unread, in every colour the bell has: two
   friend requests, two replies and a review milestone (purple), an
   announcement in each tone (an update in purple, info in blue, a heads-up
   in orange, a celebration in gold), love milestones on a list and the
   Gaming 25 (pink), a streak about to end (ember), a gift and a task nearly
-  done. Older ones are already read.
+  done. Older ones are already read. The bell was last opened a day ago, so
+  the first open has both New and This week in it, and two friends who
+  accepted today share one row.
 - **Lists.** Five, one of each kind: a ranked top 10 with covers picked by
   hand and nine loves, an unranked one with a name long enough to wrap, a
   friends-only one, a private one and an empty one. The first two are

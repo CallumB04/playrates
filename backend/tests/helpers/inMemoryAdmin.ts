@@ -95,6 +95,7 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
         clientErrors: 0,
         gameEvents: 0,
         emailMessages: 0,
+        notifications: 0,
       };
     },
     async ping() {},

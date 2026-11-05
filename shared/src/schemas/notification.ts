@@ -239,6 +239,11 @@ export type NotificationPatch = z.infer<typeof NotificationPatchSchema>;
  *  counted the first page would stop climbing at 25. */
 export interface NotificationFeed extends Paginated<AppNotification> {
   unread: number;
+  /** Unread and raised since the bell was last opened: what the badge
+   *  counts, so opening it clears it. Absent from an API older than it. */
+  unseen?: number;
+  /** When the bell was last opened, to tell what's new in the list. */
+  seenAt?: string | null;
   /** Of those, friend requests still waiting on an answer: unread until
    *  answered, so the bulk actions leave them be. */
   awaitingAnswer: number;

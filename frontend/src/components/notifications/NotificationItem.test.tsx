@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import type { AppNotification } from "@playrates/shared";
 import { server } from "../../test/msw/server";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { buildFriendEdge, buildProfile } from "../../test/msw/handlers";
+import ToastStack from "../feedback/ToastStack";
 import NotificationItem from "./NotificationItem";
 
 // A friend request's Accept and Decline belong to someone signed in.
@@ -54,7 +55,7 @@ describe("NotificationItem", () => {
         expect(screen.getByText("Welcome to PlayRates")).toBeInTheDocument();
     });
 
-    it("washes an unread row in its mark's colour, not always purple", () => {
+    it("colours its unread dot after its mark, not always purple", () => {
         const { container } = renderItem(
             welcome({
                 kind: "list_upvote_milestone",
@@ -63,7 +64,8 @@ describe("NotificationItem", () => {
                 milestone: 10,
             } as Partial<AppNotification>)
         );
-        expect(container.querySelector("li")).toHaveClass("bg-love-quiet/50");
+        expect(container.querySelector(".bg-love")).toBeInTheDocument();
+        expect(screen.getByText("Unread")).toHaveClass("sr-only");
     });
 
     /* A kind the server knows and this build does not must still draw a row
@@ -74,53 +76,122 @@ describe("NotificationItem", () => {
         expect(screen.getByText("New notification")).toBeInTheDocument();
     });
 
-    it("offers to read an unread notification, and to unread a read one", () => {
+    /* The unread dot is the sign and the shortcut; the rest waits behind
+       More, so a row carries one quiet control, not two. */
+    /* Opening reads it and Clear files it: the row carries one control,
+       not a read toggle and an archive button to keep up with. */
+    it("has one control, Clear, whether it's read or not", () => {
         const { unmount } = renderItem(welcome());
+        expect(screen.getByRole("button", { name: "Clear" })).toBeEnabled();
         expect(
-            screen.getByRole("button", { name: "Mark as read" })
-        ).toBeInTheDocument();
+            screen.queryByRole("button", { name: /Mark as/ })
+        ).not.toBeInTheDocument();
         unmount();
 
         renderItem(welcome({ readAt: "2026-01-02T00:00:00.000Z" }));
-        expect(
-            screen.getByRole("button", { name: "Mark as unread" })
-        ).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Clear" })).toBeEnabled();
+        expect(screen.queryByText("Unread")).not.toBeInTheDocument();
     });
 
-    it("marks an unread notification read", async () => {
-        const seen = capturePatch();
-        renderItem(welcome());
+    it("steps a read row's text back, and lifts an unread one's", () => {
+        const row = (c: HTMLElement) => c.querySelector("li > div")!;
+        const { container, unmount } = renderItem(welcome());
+        expect(row(container)).toHaveClass("notification-unread");
+        unmount();
 
-        await userEvent.click(
-            screen.getByRole("button", { name: "Mark as read" })
+        const read = renderItem(
+            welcome({ readAt: "2026-01-02T00:00:00.000Z" })
+        );
+        expect(row(read.container)).toHaveClass("notification-read");
+    });
+
+    it("clears a row in one go, and Undo puts it back unread", async () => {
+        const seen = capturePatch();
+        renderWithProviders(
+            <>
+                <ul>
+                    <NotificationItem
+                        notification={welcome()}
+                        onNavigate={() => {}}
+                    />
+                </ul>
+                <ToastStack />
+            </>
         );
 
-        await waitFor(() => expect(seen).toHaveBeenCalledWith({ read: true }));
-    });
-
-    it("archives from the inbox and restores from the archive", async () => {
-        const seen = capturePatch();
-        const { unmount } = renderItem(welcome());
-
-        await userEvent.click(screen.getByRole("button", { name: "Archive" }));
+        await userEvent.click(screen.getByRole("button", { name: "Clear" }));
         await waitFor(() =>
             expect(seen).toHaveBeenCalledWith({ archived: true })
         );
-        unmount();
 
-        renderItem(
-            welcome({
-                readAt: "2026-01-02T00:00:00.000Z",
-                archivedAt: "2026-01-02T00:00:00.000Z",
-            })
-        );
         await userEvent.click(
-            screen.getByRole("button", { name: "Move back to inbox" })
+            await screen.findByRole("button", { name: "Undo" })
+        );
+        await waitFor(() =>
+            expect(seen).toHaveBeenCalledWith({ archived: false, read: false })
+        );
+    });
+
+    /* A phone clears by swiping left; a scroll down the list, or a mouse,
+       never does. */
+    it("clears when swiped left by touch, and not when scrolled", async () => {
+        const seen = capturePatch();
+        const { container } = renderItem(welcome());
+        const row = container.querySelector("li")!;
+        const touch = { pointerType: "touch", pointerId: 1 };
+
+        fireEvent.pointerDown(row, { ...touch, clientX: 300, clientY: 20 });
+        fireEvent.pointerMove(row, { ...touch, clientX: 300, clientY: 80 });
+        fireEvent.pointerUp(row, touch);
+        fireEvent.pointerDown(row, {
+            pointerType: "mouse",
+            clientX: 300,
+            clientY: 20,
+        });
+        fireEvent.pointerMove(row, {
+            pointerType: "mouse",
+            clientX: 100,
+            clientY: 20,
+        });
+        fireEvent.pointerUp(row, { pointerType: "mouse" });
+        expect(seen).not.toHaveBeenCalled();
+
+        fireEvent.pointerDown(row, { ...touch, clientX: 300, clientY: 20 });
+        fireEvent.pointerMove(row, { ...touch, clientX: 250, clientY: 22 });
+        fireEvent.pointerMove(row, { ...touch, clientX: 150, clientY: 24 });
+        fireEvent.pointerUp(row, touch);
+        await waitFor(() =>
+            expect(seen).toHaveBeenCalledWith({ archived: true })
+        );
+    });
+
+    it("clears every row in a group at once", async () => {
+        const seen = capturePatch();
+        const accepted = (id: number, username: string) =>
+            welcome({
+                id,
+                kind: "friend_accepted",
+                actor: {
+                    id: username,
+                    username,
+                    avatarUrl: null,
+                    accent: "lime",
+                },
+            } as unknown as Partial<AppNotification>);
+        const group = [accepted(1, "halcyon"), accepted(2, "marlowe")];
+        renderWithProviders(
+            <ul>
+                <NotificationItem
+                    notification={group[0]!}
+                    group={group}
+                    onNavigate={() => {}}
+                />
+            </ul>
         );
 
-        await waitFor(() =>
-            expect(seen).toHaveBeenCalledWith({ archived: false })
-        );
+        expect(screen.getByText("halcyon and marlowe")).toBeInTheDocument();
+        await userEvent.click(screen.getByRole("button", { name: "Clear" }));
+        await waitFor(() => expect(seen).toHaveBeenCalledTimes(2));
     });
 
     it("says an invited friend got going, and what it paid", () => {
@@ -312,26 +383,22 @@ describe("NotificationItem", () => {
                 ...overrides,
             }) as AppNotification;
 
-        it("wears its tone while unread: a heads-up orange, an update purple", () => {
+        it("wears its tone on its dot: a heads-up orange, an update purple", () => {
             const { container, unmount } = renderItem(announcement());
-            expect(container.querySelector("li")).toHaveClass(
-                "bg-warning-subtle/50"
-            );
+            expect(container.querySelector(".bg-warning")).toBeInTheDocument();
             unmount();
 
             const update = renderItem(announcement({ tone: "update" }));
-            expect(update.container.querySelector("li")).toHaveClass(
-                "bg-brand-subtle/50"
-            );
+            expect(
+                update.container.querySelector(".bg-brand")
+            ).toBeInTheDocument();
         });
 
-        it("drops the wash once it's read", () => {
+        it("drops the dot once it's read", () => {
             const { container } = renderItem(
                 announcement({ readAt: "2026-01-02T00:00:00.000Z" })
             );
-            expect(container.querySelector("li")!.className).not.toMatch(
-                /bg-warning/
-            );
+            expect(container.querySelector(".bg-warning")).toBeNull();
         });
 
         it("shows the words it was sent with, and no link without one", () => {
@@ -428,10 +495,7 @@ describe("NotificationItem", () => {
                 </ul>
             );
             expect(
-                screen.getByRole("button", { name: "Mark as read" })
-            ).toBeDisabled();
-            expect(
-                screen.getByRole("button", { name: "Archive" })
+                screen.getByRole("button", { name: "Clear" })
             ).toBeDisabled();
         });
     });
@@ -451,23 +515,18 @@ describe("NotificationItem", () => {
                 relation,
             } as unknown as Partial<AppNotification>);
 
-        it("offers no read or archive while it waits on an answer", () => {
+        it("can't be cleared while it waits on an answer", () => {
             renderItem(request("request-received"));
             expect(
-                screen.queryByRole("button", { name: "Mark as read" })
+                screen.queryByRole("button", { name: "Clear" })
             ).not.toBeInTheDocument();
-            expect(
-                screen.queryByRole("button", { name: "Archive" })
-            ).not.toBeInTheDocument();
+            expect(screen.getByText("Unread")).toBeInTheDocument();
         });
 
-        it("offers both once it has been answered", () => {
+        it("can be cleared once it has been answered", () => {
             renderItem(request("friend"));
             expect(
-                screen.getByRole("button", { name: "Mark as read" })
-            ).toBeInTheDocument();
-            expect(
-                screen.getByRole("button", { name: "Archive" })
+                screen.getByRole("button", { name: "Clear" })
             ).toBeInTheDocument();
         });
     });

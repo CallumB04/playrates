@@ -6,7 +6,6 @@ import type {
 } from "../../contexts/notificationQueue";
 import type { IconComponent } from "../../lib/icons";
 import { cn } from "../../lib/cn";
-import Button from "../ui/Button";
 
 /** Must outlast the toast-leave animation in theme.css. */
 export const EXIT_MS = 240;
@@ -80,7 +79,7 @@ const Toast = ({ toast, onDismiss, onRemove }: ToastProps) => {
                     // a rim of light along the top edge. The status is the
                     // icon's job and the countdown line's, not the card's.
                     className={cn(
-                        "pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-md",
+                        "pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-md",
                         "border border-subtle bg-surface-raised py-3 pr-2 pl-3.5",
                         "shadow-toast inset-shadow-deep"
                     )}
@@ -88,22 +87,29 @@ const Toast = ({ toast, onDismiss, onRemove }: ToastProps) => {
                     <Icon
                         size={16}
                         aria-hidden
-                        className={cn("mt-0.5 shrink-0", icon)}
+                        className={cn("shrink-0", icon)}
                     />
-                    <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
+                    {/* The action sits on the line it answers, as a word
+                        rather than a button of its own under it. */}
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1">
                         <p className="text-body-sm text-content">{text}</p>
                         {action && (
-                            <Button
-                                size="sm"
-                                variant="secondary"
-                                className="relative before:absolute before:-inset-1 before:content-['']"
+                            <button
+                                type="button"
                                 onClick={() => {
                                     action.onClick();
                                     onDismiss(id);
                                 }}
+                                className={cn(
+                                    "relative -my-1 shrink-0 cursor-pointer rounded-xs px-2 py-1 text-body-sm font-semibold text-brand-text transition-colors",
+                                    "hover:bg-brand-subtle",
+                                    // 44px of touch around a 28px label.
+                                    "before:absolute before:-inset-x-1 before:-inset-y-2 before:content-['']",
+                                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                                )}
                             >
                                 {action.label}
-                            </Button>
+                            </button>
                         )}
                     </div>
                     <button

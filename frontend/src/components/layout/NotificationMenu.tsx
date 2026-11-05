@@ -1,4 +1,12 @@
-import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
+import {
+    lazy,
+    Suspense,
+    useEffect,
+    useId,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import { popoverClass } from "../ui/popover";
 import { Bell } from "lucide-react";
 import Modal from "../ui/Modal";
@@ -23,8 +31,8 @@ const BADGE_CAP = 9;
  * The bell, and the inbox behind it. A bottom sheet below `sm`, a popover
  * anchored to the bell from there up.
  *
- * The unread count comes from the same query the panel lists, so opening the
- * menu costs nothing and the badge is never a request behind the list.
+ * The badge's count comes from the same query the panel lists, so opening
+ * the menu costs nothing and the badge is never a request behind the list.
  */
 const NotificationMenu = () => {
     const [open, setOpen] = useState(false);
@@ -34,12 +42,27 @@ const NotificationMenu = () => {
     const titleId = useId();
 
     const { data } = useNotifications(false);
+    // Unread, friend requests waiting on an answer included. Closing the
+    // bell reads what it showed, so after a look only those are left.
     const unread = data?.unread ?? 0;
 
     useEffect(() => whenIdle(() => void loadPanel()), []);
 
+    // Undo on a cleared notification is pressed in a toast, outside the
+    // bell; pressing it shouldn't close the bell it's undoing in.
+    const toasts = useMemo(
+        () => ({
+            get current() {
+                return document.querySelector<HTMLElement>(
+                    "[data-toast-stack]"
+                );
+            },
+        }),
+        []
+    );
+
     // The sheet on a phone closes itself, through Modal.
-    useDismiss([wrapRef], () => setOpen(false), {
+    useDismiss([wrapRef, toasts], () => setOpen(false), {
         enabled: open && !isPhone,
         escape: true,
     });

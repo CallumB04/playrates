@@ -142,6 +142,8 @@ export interface InMemoryState {
   reviewVotes: { review_id: number; user_id: string; reaction?: string }[];
   friendships: FriendshipRow[];
   notifications: NotificationRow[];
+  /** When each member last opened the bell (profiles.notifications_seen_at). */
+  notificationsSeenAt: Map<string, string>;
   platforms: PlatformRow[];
   platformSystems: PlatformSystemRow[];
   genres: GenreRow[];
@@ -301,6 +303,7 @@ export const createInMemoryRepos = (
     emailSends: [],
     emailMessages: [],
     unconfirmed: new Set(),
+    notificationsSeenAt: new Map(),
   };
 
   let nextLogId = 1000;
@@ -1708,6 +1711,21 @@ export const createInMemoryRepos = (
             n.read_at === null &&
             n.archived_at === null,
         ).length;
+      },
+      async countUnseen(userId, since) {
+        return state.notifications.filter(
+          (n) =>
+            n.user_id === userId &&
+            n.read_at === null &&
+            n.archived_at === null &&
+            (since === null || n.created_at > since),
+        ).length;
+      },
+      async seenAt(userId) {
+        return state.notificationsSeenAt.get(userId) ?? null;
+      },
+      async markSeen(userId) {
+        state.notificationsSeenAt.set(userId, new Date().toISOString());
       },
       async findById(id) {
         return state.notifications.find((n) => n.id === id) ?? null;

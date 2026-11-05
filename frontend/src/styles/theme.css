@@ -748,6 +748,17 @@
     --color-content-muted: var(--content-secondary);
 }
 
+/* A notification still to be read says so in its type: names and titles a
+   weight up. Once read, its text steps back a shade. Set here, inherited by
+   whatever the notification's own content draws. */
+@utility notification-unread {
+    --font-weight-medium: 650;
+}
+@utility notification-read {
+    --color-content: var(--content-secondary);
+    --color-content-secondary: var(--content-muted);
+}
+
 /* A quiet spacer between a label and its figure. It used to be a dotted
    leader line, which belonged to the ledger this design no longer is. */
 @utility leader {

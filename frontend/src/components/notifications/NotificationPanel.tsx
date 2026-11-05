@@ -1,26 +1,14 @@
-import { useState } from "react";
-import { Archive, Inbox } from "lucide-react";
-import SegmentedChoice from "../ui/SegmentedChoice";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { TextSkeleton } from "../ui/Skeleton";
 import {
     useArchiveAllNotifications,
     useMarkAllNotificationsRead,
+    useMarkNotificationsSeen,
     useNotifications,
 } from "../../hooks/queries/useNotifications";
 import { awaitingAnswer } from "@playrates/shared";
 import NotificationItem from "./NotificationItem";
-
-type Tab = "inbox" | "archive";
-
-const TABS = [
-    { value: "inbox" as const, label: "Inbox", icon: Inbox },
-    { value: "archive" as const, label: "Archive", icon: Archive },
-];
-
-const EMPTY: Record<Tab, string> = {
-    inbox: "You’re up to date.",
-    archive: "The archive’s empty.",
-};
+import { feedSections } from "./notificationSections";
 
 const HeaderAction = ({
     onClick,
@@ -43,7 +31,13 @@ const HeaderAction = ({
     </button>
 );
 
-/** The list itself, shared by the desktop popover and the mobile sheet. */
+/**
+ * The list itself, shared by the desktop popover and the mobile sheet: what
+ * waits on an answer, what's new since the bell was last opened, then the
+ * week and before. Closing it reads what it showed; anything done with is
+ * cleared, not filed. Old ones expire on their own, so there's no archive
+ * to keep.
+ */
 const NotificationPanel = ({
     onNavigate,
     titleId,
@@ -52,16 +46,54 @@ const NotificationPanel = ({
     onNavigate: () => void;
     titleId: string;
 }) => {
-    const [tab, setTab] = useState<Tab>("inbox");
-    const { data, isLoading } = useNotifications(tab === "archive");
+    const { data, isLoading } = useNotifications(false);
     const markAll = useMarkAllNotificationsRead();
-    const archiveAll = useArchiveAllNotifications();
+    const clearAll = useArchiveAllNotifications();
+    const markSeen = useMarkNotificationsSeen();
 
-    const notifications = data?.data ?? [];
+    // What counted as new when it opened. Marking it seen moves the server's
+    // mark at once; the sections shouldn't move under the reader with it.
+    const [seenAt, setSeenAt] = useState<string | null | undefined>(
+        data ? (data.seenAt ?? null) : undefined
+    );
+    useEffect(() => {
+        if (data && seenAt === undefined) setSeenAt(data.seenAt ?? null);
+    }, [data, seenAt]);
+
+    const unseen = data ? (data.unseen ?? data.unread) : 0;
+    const { mutate: see } = markSeen;
+    useEffect(() => {
+        if (unseen > 0) see();
+    }, [unseen, see]);
+
+    const notifications = useMemo(() => data?.data ?? [], [data]);
+    const sections = useMemo(
+        () => feedSections(notifications, seenAt ?? null),
+        [notifications, seenAt]
+    );
     // Requests waiting on an answer stay unread, and out of both bulk
     // actions, until they are answered.
     const markable = (data?.unread ?? 0) - (data?.awaitingAnswer ?? 0);
-    const archivable = notifications.some((n) => !awaitingAnswer(n));
+
+    // Closing it reads what it showed: not every row has somewhere to open
+    // (a welcome, an announcement with no link), and the badge should fall
+    // to what still needs an answer. They stay marked new while it's open.
+    // A tick later, and only if it stayed closed: development mounts it
+    // twice, and the first unmount would read everything on opening.
+    const unreadShown = useRef(0);
+    unreadShown.current = markable;
+    const closed = useRef(false);
+    const { mutate: readAll } = markAll;
+    useEffect(() => {
+        closed.current = false;
+        return () => {
+            closed.current = true;
+            setTimeout(() => {
+                if (closed.current && unreadShown.current > 0) readAll();
+            }, 0);
+        };
+    }, [readAll]);
+    const clearable = notifications.some((n) => !awaitingAnswer(n));
 
     return (
         <>
@@ -74,57 +106,61 @@ const NotificationPanel = ({
                 >
                     Notifications
                 </h2>
-                {/* Only on the inbox: from the archive it would act on rows
-                    that are not on screen. Read first, then filed: once
-                    nothing is left unread, the same place clears the inbox. */}
-                {tab === "inbox" &&
-                    (markable > 0 ? (
+                {/* Read first, then cleared: once nothing is left unread, the
+                    same place empties the bell. */}
+                {markable > 0 ? (
+                    <HeaderAction
+                        onClick={() => markAll.mutate()}
+                        disabled={markAll.isPending}
+                    >
+                        Mark all read
+                    </HeaderAction>
+                ) : (
+                    clearable && (
                         <HeaderAction
-                            onClick={() => markAll.mutate()}
-                            disabled={markAll.isPending}
+                            onClick={() => clearAll.mutate()}
+                            disabled={clearAll.isPending}
                         >
-                            Mark all read
+                            Clear all
                         </HeaderAction>
-                    ) : (
-                        archivable && (
-                            <HeaderAction
-                                onClick={() => archiveAll.mutate()}
-                                disabled={archiveAll.isPending}
-                            >
-                                Archive all
-                            </HeaderAction>
-                        )
-                    ))}
+                    )
+                )}
             </div>
 
-            <SegmentedChoice
-                segments={TABS}
-                value={tab}
-                onChange={setTab}
-                label="Which notifications to show"
-                fill
-                className="mt-3"
-            />
-
-            <div className="mt-3 max-h-[58dvh] overflow-y-auto sm:max-h-[26rem]">
+            <div className="mt-3 max-h-[64dvh] overflow-y-auto sm:max-h-[30rem]">
                 {isLoading ? (
                     <div className="px-2 py-3">
                         <TextSkeleton lines={4} />
                     </div>
-                ) : notifications.length === 0 ? (
+                ) : sections.length === 0 ? (
                     <p className="px-2 py-8 text-center text-body-sm text-content-muted">
-                        {EMPTY[tab]}
+                        You’re up to date.
                     </p>
                 ) : (
-                    <ul className="flex flex-col gap-0.5">
-                        {notifications.map((notification) => (
-                            <NotificationItem
-                                key={notification.id}
-                                notification={notification}
-                                onNavigate={onNavigate}
-                            />
-                        ))}
-                    </ul>
+                    sections.map((section) => (
+                        <section
+                            key={section.id}
+                            aria-labelledby={`${titleId}-${section.id}`}
+                            className="pb-2"
+                        >
+                            <h3
+                                id={`${titleId}-${section.id}`}
+                                className="px-3 pt-2 pb-1 text-label-sm font-medium text-content-muted"
+                            >
+                                {section.label}
+                            </h3>
+                            <ul className="flex flex-col gap-0.5">
+                                {section.entries.map((entry) => (
+                                    <NotificationItem
+                                        key={entry.key}
+                                        notification={entry.items[0]!}
+                                        group={entry.items}
+                                        onNavigate={onNavigate}
+                                    />
+                                ))}
+                            </ul>
+                        </section>
+                    ))
                 )}
             </div>
         </>
