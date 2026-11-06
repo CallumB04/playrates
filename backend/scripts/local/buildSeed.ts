@@ -928,15 +928,68 @@ const buildWorld = (cat: Catalogue): string => {
         outro: null,
       },
     },
+    // Patches on it, between the big releases, so the list shows them
+    // tucked under theirs.
+    {
+      at: daysAgo(24),
+      note: {
+        title: "v1.0.1",
+        intro: null,
+        items: [
+          {
+            kind: "fix",
+            text: "A rating saved on a slow connection no longer goes missing.",
+            link: null,
+          },
+          {
+            kind: "improvement",
+            text: "The library opens faster on a phone.",
+            link: null,
+          },
+        ],
+        outro: null,
+      },
+    },
+    {
+      at: daysAgo(16),
+      note: {
+        title: "v1.0.2",
+        intro: null,
+        items: [
+          {
+            kind: "removed",
+            text: "The old spreadsheet import. Steam import does it better.",
+            link: null,
+          },
+          {
+            kind: "fix",
+            text: "Friend requests no longer show twice in the bell.",
+            link: null,
+          },
+        ],
+        outro: null,
+      },
+    },
     {
       at: daysAgo(2),
       note: {
         title: "v1.1",
         intro: null,
+        // Written out of order on purpose: the page sorts them by kind.
         items: [
+          {
+            kind: "fix",
+            text: "Long platform names stay inside the wishlist on a phone.",
+            link: null,
+          },
           {
             kind: "feature",
             text: "Played something on more than one console? Log each one. Your game page adds up the hours and shows your quickest finish.",
+            link: null,
+          },
+          {
+            kind: "improvement",
+            text: "Reviews have a page of their own, with more from the same person and the same game.",
             link: null,
           },
           {
@@ -944,13 +997,28 @@ const buildWorld = (cat: Catalogue): string => {
             text: "Lists, and a Gaming 25 for your profile.",
             link: "/me/lists",
           },
+        ],
+        outro: "Tell us what you think in the community.",
+      },
+    },
+    {
+      at: daysAgo(1),
+      note: {
+        title: "v1.1.1",
+        intro: null,
+        items: [
+          {
+            kind: "other",
+            text: "Tidying behind the scenes, so pages load a little quicker.",
+            link: null,
+          },
           {
             kind: "fix",
-            text: "Long platform names stay inside the wishlist on a phone.",
+            text: "Reacting twice in quick succession no longer counts twice.",
             link: null,
           },
         ],
-        outro: "Tell us what you think in the community.",
+        outro: null,
       },
     },
   ];

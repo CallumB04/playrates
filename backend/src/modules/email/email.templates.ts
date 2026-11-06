@@ -12,6 +12,7 @@ import {
   parseAnnouncementBody,
   paragraphsOf,
   PATCH_NOTE_KIND_NAMES,
+  sortedItems,
   type PatchNote,
   type AnnouncementTone,
   type EmailScope,
@@ -721,10 +722,10 @@ export const announcementEmail = (
 
 /* ---------------------------------------------------------- patch notes */
 
-/** A release's changes as the email shows them: one list in the order
- *  written, each change named by its kind, and linked where it has one. */
+/** A release's changes as the email shows them: one list, new things
+ *  first, each change named by its kind, and linked where it has one. */
 const patchNoteHtml = (note: PatchNote, links: EmailLinks): string => {
-  const items = note.items
+  const items = sortedItems(note.items)
     .map((item) => {
       const text = escapeHtml(item.text);
       const kind = emailStrong(`${PATCH_NOTE_KIND_NAMES[item.kind]}:`);
@@ -746,7 +747,7 @@ const patchNoteHtml = (note: PatchNote, links: EmailLinks): string => {
 
 const patchNoteText = (note: PatchNote, links: EmailLinks): string[] => [
   ...paragraphsOf(note.intro).flatMap((p) => [p, ""]),
-  ...note.items.map(
+  ...sortedItems(note.items).map(
     (item) =>
       `- ${PATCH_NOTE_KIND_NAMES[item.kind]}: ${item.text}${item.link ? ` (${absolute(links, item.link)})` : ""}`,
   ),

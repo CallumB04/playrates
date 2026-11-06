@@ -4,7 +4,7 @@ import { renderWithProviders } from "../../../test/renderWithProviders";
 import PatchNoteView from "./PatchNoteView";
 
 describe("PatchNoteView", () => {
-    it("lists changes as written, each with its kind, a linked one clickable whole", () => {
+    it("lists changes under a heading per kind, new first, a linked one clickable whole", () => {
         renderWithProviders(
             <PatchNoteView
                 note={{
@@ -27,18 +27,23 @@ describe("PatchNoteView", () => {
                 }}
             />
         );
+        expect(
+            screen
+                .getAllByRole("heading", { level: 3 })
+                .map((h) => h.textContent)
+        ).toEqual(["New", "Improved", "Fixed"]);
         const rows = screen.getAllByRole("listitem");
         expect(rows.map((row) => row.textContent)).toEqual([
-            "FixFixed it",
-            "FeatureSteam",
-            "ImprovementImport",
+            "Steam",
+            "Import",
+            "Fixed it",
         ]);
-        expect(within(rows[0]!).queryByRole("link")).toBeNull();
+        expect(within(rows[2]!).queryByRole("link")).toBeNull();
 
-        const out = within(rows[1]!).getByRole("link");
-        expect(out).toHaveTextContent("FeatureSteam");
+        const out = within(rows[0]!).getByRole("link");
+        expect(out).toHaveTextContent("Steam");
         expect(out).toHaveAttribute("target", "_blank");
-        const here = within(rows[2]!).getByRole("link");
+        const here = within(rows[1]!).getByRole("link");
         expect(here).toHaveAttribute("href", "/settings");
         expect(here).not.toHaveAttribute("target");
 

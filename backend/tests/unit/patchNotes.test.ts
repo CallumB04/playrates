@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  groupedItems,
   paragraphsOf,
   patchNoteDoc,
   PatchNoteSchema,
+  sortedItems,
   toPlainText,
 } from "@playrates/shared";
 
@@ -66,7 +68,7 @@ describe("paragraphsOf", () => {
 });
 
 describe("patchNoteDoc", () => {
-  it("reads as the release in plain text: title, messages, changes as written", () => {
+  it("reads as the release in plain text: title, messages, then the changes by kind", () => {
     const text = toPlainText(patchNoteDoc({ ...note, outro: "Bye" }));
     for (const part of [
       "v1.2",
@@ -78,8 +80,8 @@ describe("patchNoteDoc", () => {
     ]) {
       expect(text).toContain(part);
     }
-    expect(text.indexOf("Fixed a thing")).toBeLessThan(
-      text.indexOf("Added Steam import"),
+    expect(text.indexOf("Added Steam import")).toBeLessThan(
+      text.indexOf("Fixed a thing"),
     );
   });
 
@@ -88,5 +90,43 @@ describe("patchNoteDoc", () => {
       type: "heading",
       attrs: { level: 1 },
     });
+  });
+});
+
+describe("a release's changes by kind", () => {
+  const items = [
+    { kind: "other" as const, text: "Tidied up" },
+    { kind: "fix" as const, text: "Fixed one" },
+    { kind: "removed" as const, text: "Took one away" },
+    { kind: "feature" as const, text: "Added one" },
+    { kind: "fix" as const, text: "Fixed another" },
+    { kind: "improvement" as const, text: "Made one better" },
+  ];
+
+  it("puts what's new first, then improved, fixed, removed and the rest", () => {
+    expect(groupedItems(items).map((g) => g.kind)).toEqual([
+      "feature",
+      "improvement",
+      "fix",
+      "removed",
+      "other",
+    ]);
+  });
+
+  it("keeps each kind's changes in the order they were written", () => {
+    expect(sortedItems(items).map((i) => i.text)).toEqual([
+      "Added one",
+      "Made one better",
+      "Fixed one",
+      "Fixed another",
+      "Took one away",
+      "Tidied up",
+    ]);
+  });
+
+  it("leaves out a kind with nothing in it", () => {
+    expect(groupedItems([items[1]!])).toEqual([
+      { kind: "fix", items: [items[1]] },
+    ]);
   });
 });

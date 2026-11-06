@@ -1,15 +1,9 @@
-import { PATCH_NOTE_KIND_NAMES, type PatchNoteKind } from "@playrates/shared";
+import { PATCH_NOTE_GROUP_NAMES, type PatchNoteKind } from "@playrates/shared";
 import { cn } from "../../../lib/cn";
+import { KIND_TONES } from "./kindTones";
 
-const DOT: Record<PatchNoteKind, string> = {
-    feature: "bg-brand",
-    improvement: "bg-info",
-    fix: "bg-success",
-    other: "bg-content-muted",
-};
-
-/** A change's kind: its colour in a dot, its name in quiet text, so the
- *  change itself is what reads first. */
+/** The heading over a release's changes of one kind: a ring in its colour,
+ *  where the line down its changes starts, and its name in small capitals. */
 const KindTag = ({
     kind,
     className,
@@ -19,12 +13,20 @@ const KindTag = ({
 }) => (
     <span
         className={cn(
-            "inline-flex items-center gap-1.5 text-label-sm font-medium text-content-muted",
+            "inline-flex items-center gap-2.5 text-label-sm leading-none font-semibold tracking-[0.08em] text-content uppercase",
             className
         )}
     >
-        <span aria-hidden className={cn("size-2 rounded-full", DOT[kind])} />
-        {PATCH_NOTE_KIND_NAMES[kind]}
+        {/* Lifted to the capitals' middle, not the line's: with nothing
+            below the baseline, centring on the line left it low. */}
+        <span
+            aria-hidden
+            className={cn(
+                "size-2.5 shrink-0 -translate-y-[0.11em] rounded-full border-2",
+                KIND_TONES[kind].ring
+            )}
+        />
+        {PATCH_NOTE_GROUP_NAMES[kind]}
     </span>
 );
 
