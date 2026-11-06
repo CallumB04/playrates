@@ -1,6 +1,18 @@
-import { Link2, MapPin, Speech, UserRound } from "lucide-react";
+import {
+    CalendarDays,
+    Clock,
+    Cake,
+    Link2,
+    MapPin,
+    Speech,
+    UserRound,
+} from "lucide-react";
 import { SiDiscord, SiSteam } from "@icons-pack/react-simple-icons";
-import { AboutFieldsSchema, type AboutField } from "@playrates/shared";
+import {
+    AboutFieldsSchema,
+    type AboutFact,
+    type AboutField,
+} from "@playrates/shared";
 import type { IconComponent } from "../../../lib/icons";
 
 export interface AboutRow {
@@ -63,6 +75,58 @@ export const ABOUT_ROWS: AboutRow[] = [
         placeholder: "Profile address or custom name",
     },
 ];
+
+/** The About card's lines that aren't typed in: their labels, in order. */
+export const ABOUT_FACT_ROWS: {
+    fact: AboutFact;
+    label: string;
+    icon: IconComponent;
+}[] = [
+    { fact: "age", label: "Age", icon: Cake },
+    { fact: "joined", label: "Joined", icon: CalendarDays },
+    { fact: "lastSeen", label: "Last seen", icon: Clock },
+];
+
+const LONG_DATE = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+});
+const DAY_MONTH = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+});
+
+/** "9 April 2019". */
+export const joinedText = (iso: string): string =>
+    LONG_DATE.format(new Date(iso));
+
+/** When someone was last on, from the day the API gives (UTC): now, today,
+ *  yesterday, else the day, with its year only when it isn't this one. */
+export const lastSeenText = (
+    day: string,
+    online: boolean,
+    today: string = new Date().toISOString().slice(0, 10)
+): string => {
+    if (online) return "Online now";
+    if (day >= today) return "Today";
+    const date = new Date(`${day}T00:00:00Z`);
+    const yesterday = new Date(`${today}T00:00:00Z`);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    if (date.getTime() === yesterday.getTime()) return "Yesterday";
+    return day.slice(0, 4) === today.slice(0, 4)
+        ? DAY_MONTH.format(date)
+        : LONG_DATE.format(date);
+};
+
+/** The latest birthday Edit profile takes: 13 years ago today. */
+export const latestBirthDate = (today = new Date()): string => {
+    const d = new Date(today);
+    d.setUTCFullYear(d.getUTCFullYear() - 13);
+    return d.toISOString().slice(0, 10);
+};
 
 /** What is wrong with a field as typed, by the rule the server holds it to.
  *  The first name is not an About field there, so its one rule is here. */

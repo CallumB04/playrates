@@ -2,6 +2,7 @@ import type {
   AboutField,
   AboutVisibility,
   ProfileAbout,
+  ProfileFacts,
   ProfileVisibility,
   MyProfile,
   Profile,
@@ -10,7 +11,10 @@ import type {
 import {
   levelFor,
   wornFrame,
+  ABOUT_FACTS,
   ABOUT_FIELDS,
+  ABOUT_KEYS,
+  ageOn,
   canSeeProfile,
   DEFAULT_ABOUT_VISIBILITY,
   DEFAULT_BACKGROUND_POSITION,
@@ -68,13 +72,41 @@ const ABOUT_COLUMNS: Record<AboutField, keyof ProfileRow> = {
 export const aboutVisibilityOf = (row: ProfileRow): AboutVisibility => {
   const stored = row.about_visibility ?? {};
   return Object.fromEntries(
-    ABOUT_FIELDS.map((field) => [
-      field,
-      field in stored
-        ? toProfileVisibility(stored[field])
-        : DEFAULT_ABOUT_VISIBILITY[field],
+    ABOUT_KEYS.map((key) => [
+      key,
+      key in stored
+        ? toProfileVisibility(stored[key])
+        : DEFAULT_ABOUT_VISIBILITY[key],
     ]),
   ) as AboutVisibility;
+};
+
+/** What each fact says, before who may see it is asked. */
+const factValues = (row: ProfileRow, now: number): ProfileFacts => ({
+  age: row.birth_date
+    ? ageOn(row.birth_date, new Date(now).toISOString().slice(0, 10))
+    : undefined,
+  joined: row.created_at,
+  // Hiding when they're online hides when they were, too.
+  lastSeen: row.hide_online
+    ? undefined
+    : new Date(row.last_seen_at).toISOString().slice(0, 10),
+});
+
+/** Age, joined and last seen: those this viewer may see. */
+export const factsFor = (
+  row: ProfileRow,
+  viewer: AboutViewer,
+  now = Date.now(),
+): ProfileFacts => {
+  const visibility = aboutVisibilityOf(row);
+  const values = factValues(row, now);
+  return Object.fromEntries(
+    ABOUT_FACTS.filter(
+      (fact) =>
+        values[fact] !== undefined && canSeeProfile(visibility[fact], viewer),
+    ).map((fact) => [fact, values[fact]]),
+  ) as ProfileFacts;
 };
 
 /** The About fields this viewer may see, and only the ones filled in. */
@@ -96,8 +128,14 @@ export const aboutFor = (
  *  so the friendship is worth looking up. */
 export const aboutNeedsFriendship = (row: ProfileRow): boolean => {
   const visibility = aboutVisibilityOf(row);
-  return ABOUT_FIELDS.some(
-    (field) => visibility[field] === "friends" && !!row[ABOUT_COLUMNS[field]],
+  const facts = factValues(row, Date.now());
+  return (
+    ABOUT_FIELDS.some(
+      (field) => visibility[field] === "friends" && !!row[ABOUT_COLUMNS[field]],
+    ) ||
+    ABOUT_FACTS.some(
+      (fact) => visibility[fact] === "friends" && facts[fact] !== undefined,
+    )
   );
 };
 
@@ -125,6 +163,7 @@ export const toProfile = (
   hideFromSearch: row.hide_from_search,
   profileVisibility: toProfileVisibility(row.profile_visibility),
   about: aboutFor(row, viewer),
+  facts: factsFor(row, viewer, now),
   level: levelFor(row.xp ?? 0).level,
   frame: wornFrame(row.frame ?? null, levelFor(row.xp ?? 0).level),
   nameFont: row.name_font ?? "default",
@@ -132,14 +171,19 @@ export const toProfile = (
   pinnedLists: (row.pinned_lists ?? []).map(Number),
   pinnedReviews: (row.pinned_reviews ?? []).map(Number),
   sectionOrder: sectionOrder(row.section_order ?? []),
-  createdAt: row.created_at,
+  // Left out, not blanked, where they keep it: the date itself is the secret.
+  ...(canSeeProfile(aboutVisibilityOf(row).joined, viewer)
+    ? { createdAt: row.created_at }
+    : {}),
 });
 
 /** The same row for its owner, settings included. Only ever returned from a
  *  route that has established the caller is that owner. */
 export const toMyProfile = (row: ProfileRow, now = Date.now()): MyProfile => ({
   ...toProfile(row, now, { isOwner: true, isFriend: false }),
+  createdAt: row.created_at,
   firstName: row.first_name,
+  birthDate: row.birth_date ?? null,
   aboutVisibility: aboutVisibilityOf(row),
   showSexualContent: row.show_sexual_content,
   adultConfirmedAt: row.adult_confirmed_at ?? null,

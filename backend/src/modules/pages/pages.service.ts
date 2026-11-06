@@ -31,7 +31,10 @@ import type { GenreRow } from "../../types/database.types.js";
 import type { ReviewRowJoined } from "../reviews/reviews.repository.js";
 import { memoFor } from "../../lib/memo.js";
 import { inGridOrder } from "../gaming25/gaming25.mapper.js";
-import { toProfileVisibility } from "../profiles/profiles.mapper.js";
+import {
+  aboutVisibilityOf,
+  toProfileVisibility,
+} from "../profiles/profiles.mapper.js";
 import { excerpt, toParagraphs, type PageBody } from "./body.js";
 import {
   DEFAULT_IMAGE,
@@ -207,7 +210,11 @@ export const createPagesService = (repos: Repos) => {
     );
     return {
       heading: row.username,
-      lead: `A ${SITE_NAME} member since ${formatMonth(row.created_at)}.`,
+      // Only where they let anyone see when they joined.
+      lead:
+        aboutVisibilityOf(row).joined === "everyone"
+          ? `A ${SITE_NAME} member since ${formatMonth(row.created_at)}.`
+          : `A ${SITE_NAME} member.`,
       text: toParagraphs(row.bio ?? ""),
       sections: [
         {
@@ -369,7 +376,9 @@ export const createPagesService = (repos: Repos) => {
             : {
                 "@context": "https://schema.org",
                 "@type": "ProfilePage",
-                dateCreated: row.created_at,
+                ...(aboutVisibilityOf(row).joined === "everyone"
+                  ? { dateCreated: row.created_at }
+                  : {}),
                 mainEntity: {
                   "@type": "Person",
                   name: row.username,

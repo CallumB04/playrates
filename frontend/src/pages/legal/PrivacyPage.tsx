@@ -11,7 +11,7 @@ const External = ({ href, children }: { href: string; children: string }) => (
 );
 
 /* When the substance of this page changes, move the date. */
-const UPDATED = "2026-11-03";
+const UPDATED = "2026-11-06";
 
 const PrivacyPage = () => (
     <ProsePage
@@ -54,6 +54,11 @@ const PrivacyPage = () => (
             <li>
                 A username, and if you add them, a first name, a bio, a profile
                 picture and a profile colour.
+            </li>
+            <li>
+                If you add it, your date of birth. Your profile only ever shows
+                the age it makes, to whoever you choose. The date itself stays
+                with you.
             </li>
             <li>
                 Your settings, like your time zone and whether adult games are
@@ -106,8 +111,10 @@ const PrivacyPage = () => (
         <ul>
             <li>
                 When you were last active, so your friends can see if you’re
-                online. It updates every couple of minutes while the site is
-                open. You can hide your online status in Settings.
+                online, and your profile can show the day you were last on. It
+                updates every couple of minutes while the site is open. You
+                choose who sees the day, and hiding your online status in
+                Settings hides both.
             </li>
             <li>
                 Which days you used the site. I use this to count active users.
@@ -134,8 +141,8 @@ const PrivacyPage = () => (
             </li>
         </ul>
         <p>
-            I don’t keep your IP address in the database, and I don’t ask for
-            your date of birth.
+            I don’t keep your IP address in the database, and I only have your
+            date of birth if you add it.
         </p>
 
         <h2>Why, and the legal part</h2>

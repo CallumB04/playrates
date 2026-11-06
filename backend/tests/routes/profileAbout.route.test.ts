@@ -185,3 +185,62 @@ describe("saving the About fields", () => {
     });
   });
 });
+
+describe("age, joined and last seen, by who is looking", () => {
+  const app = (overrides = {}, friends = false) =>
+    buildTestApp({
+      seed: {
+        ...baseSeed(),
+        profiles: [
+          buildProfile({ birth_date: "1991-04-09", ...overrides }),
+          buildProfile({ id: USER_B, username: "frienduser" }),
+          buildProfile({ id: STRANGER, username: "stranger" }),
+        ],
+        friendships: friends ? [buildFriendship({ status: "accepted" })] : [],
+      },
+    }).app;
+  const factsAs = async (built: ReturnType<typeof app>, viewer: string) =>
+    (
+      await request(built)
+        .get("/api/v1/profiles/devuser")
+        .set("Authorization", authHeader(viewer))
+    ).body;
+
+  it("keeps an age to friends by default, and never sends the birthday", async () => {
+    const stranger = await factsAs(app(), STRANGER);
+    expect(stranger.facts.age).toBeUndefined();
+    expect(stranger.facts.joined).toBeDefined();
+    const friend = await factsAs(app({}, true), USER_B);
+    expect(friend.facts.age).toBeGreaterThan(30);
+    expect(JSON.stringify(friend)).not.toContain("1991-04-09");
+  });
+
+  it("keeps the join date from a stranger who isn't allowed it", async () => {
+    const profile = await factsAs(
+      app({ about_visibility: { joined: "friends" } }),
+      STRANGER,
+    );
+    expect(profile.createdAt).toBeUndefined();
+    expect(profile.facts.joined).toBeUndefined();
+  });
+
+  it("saves a birthday of 13 or over, and refuses a younger one", async () => {
+    const built = app({ birth_date: null });
+    const patch = (birthDate: string | null) =>
+      request(built)
+        .patch("/api/v1/profiles/me")
+        .set("Authorization", authHeader(USER_A))
+        .send({ birthDate });
+
+    const saved = await patch("2000-02-29");
+    expect(saved.status).toBe(200);
+    expect(saved.body.birthDate).toBe("2000-02-29");
+    expect(saved.body.facts.age).toBeGreaterThan(20);
+
+    const young = new Date();
+    young.setUTCFullYear(young.getUTCFullYear() - 10);
+    expect((await patch(young.toISOString().slice(0, 10))).status).toBe(422);
+
+    expect((await patch(null)).body.birthDate).toBeNull();
+  });
+});

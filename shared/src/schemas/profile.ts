@@ -4,8 +4,10 @@ import { ProfileAccentSchema, type ProfileAccent } from "./profileAccent.js";
 import {
   AboutFieldsSchema,
   AboutVisibilitySchema,
+  BirthDateSchema,
   type AboutVisibility,
   type ProfileAbout,
+  type ProfileFacts,
 } from "./about.js";
 
 export const UsernameSchema = z
@@ -127,6 +129,8 @@ export const UpdateProfileSchema = z
     confirmAdult: z.literal(true).optional(),
     /** Optional display name. Empty string clears it. */
     firstName: z.string().trim().max(40).nullable().optional(),
+    /** Only the age it makes is ever shown. Null clears it. */
+    birthDate: BirthDateSchema.nullable().optional(),
     timezone: TimeZoneSchema.optional(),
     /** Opt-out, so the default is the permissive one. */
     hideOnline: z.boolean().optional(),
@@ -175,6 +179,9 @@ export interface Profile {
   profileVisibility: ProfileVisibility;
   /** The About fields this viewer may see, and only those filled in. */
   about: ProfileAbout;
+  /** Age, joined and last seen, those this viewer may see. Absent from an
+   *  API older than them. */
+  facts?: ProfileFacts;
   /** Progress is on the public card, like the name and picture. */
   level: number;
   /** The avatar frame worn, if any has been earned. */
@@ -188,7 +195,8 @@ export interface Profile {
   pinnedReviews: number[];
   /** The main column's cards, top first. */
   sectionOrder: ProfileSection[];
-  createdAt: string;
+  /** Absent where they keep when they joined from this viewer. */
+  createdAt?: string;
 }
 
 /**
@@ -197,8 +205,11 @@ export interface Profile {
  * carries only what a profile page shows.
  */
 export interface MyProfile extends Profile {
+  createdAt: string;
   /** Optional. Greetings use this before falling back to the username. */
   firstName: string | null;
+  /** YYYY-MM-DD; theirs alone. Others see the age it makes, if anything. */
+  birthDate: string | null;
   /** Who sees each About field. `about` here is every field filled in. */
   aboutVisibility: AboutVisibility;
   showSexualContent: boolean;

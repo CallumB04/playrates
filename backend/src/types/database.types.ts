@@ -19,6 +19,9 @@ export interface ProfileRow {
    *  explicit games needs. */
   adult_confirmed_at: string | null;
   first_name: string | null;
+  /** YYYY-MM-DD. Only the age it makes is ever shown. Optional for rows
+   *  read before it was added. */
+  birth_date?: string | null;
   /** IANA zone name. Timestamps render in this; date-only columns do not. */
   timezone: string;
   /** When true, this profile reads as offline to everyone. */

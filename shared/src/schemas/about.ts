@@ -23,11 +23,26 @@ export const ABOUT_FIELDS = [
 ] as const;
 export type AboutField = (typeof ABOUT_FIELDS)[number];
 
-export type AboutVisibility = Record<AboutField, ProfileVisibility>;
+/** On the About card beside the fields, but not typed in there: their age,
+ *  worked out from a birthday given once, when they joined, and when they
+ *  were last on. */
+export const ABOUT_FACTS = ["age", "joined", "lastSeen"] as const;
+export type AboutFact = (typeof ABOUT_FACTS)[number];
+
+/** Everything on the About card that has a say over who sees it. */
+export type AboutKey = AboutField | AboutFact;
+export const ABOUT_KEYS: readonly AboutKey[] = [
+  ...ABOUT_FIELDS,
+  ...ABOUT_FACTS,
+];
+
+export type AboutVisibility = Record<AboutKey, ProfileVisibility>;
 
 /** Each field is blank until filled in, and public once it is, which is
  *  why anyone fills them in. The first name can be kept hidden as it's
- *  given, at sign-up; accounts from before that were pinned hidden. */
+ *  given, at sign-up; accounts from before that were pinned hidden. An age
+ *  starts with friends: members can be 13. When someone joined and was last
+ *  on were public before they could be hidden, and stay so until changed. */
 export const DEFAULT_ABOUT_VISIBILITY: AboutVisibility = {
   firstName: "everyone",
   pronouns: "everyone",
@@ -35,7 +50,47 @@ export const DEFAULT_ABOUT_VISIBILITY: AboutVisibility = {
   website: "everyone",
   discord: "everyone",
   steam: "everyone",
+  age: "friends",
+  joined: "everyone",
+  lastSeen: "everyone",
 };
+
+/** The facts a viewer may see. `lastSeen` is a day, YYYY-MM-DD in UTC:
+ *  the hour someone was on is more than a profile needs to say. */
+export interface ProfileFacts {
+  age?: number;
+  joined?: string;
+  lastSeen?: string;
+}
+
+/** Whole years from a birthday to a day, both YYYY-MM-DD. */
+export const ageOn = (birthDate: string, today: string): number => {
+  const [by, bm, bd] = birthDate.split("-").map(Number) as [
+    number,
+    number,
+    number,
+  ];
+  const [ty, tm, td] = today.split("-").map(Number) as [number, number, number];
+  return ty - by - (tm < bm || (tm === bm && td < bd) ? 1 : 0);
+};
+
+/** A birthday as Edit profile takes it: a real date, 13 or over, as
+ *  signing up asks, and a believable one. */
+export const BirthDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date")
+  .refine(
+    (v) => !Number.isNaN(Date.parse(`${v}T00:00:00Z`)),
+    "That isn’t a date",
+  )
+  .refine(
+    (v) => ageOn(v, new Date().toISOString().slice(0, 10)) >= 13,
+    "You need to be 13 or over",
+  )
+  .refine(
+    (v) => ageOn(v, new Date().toISOString().slice(0, 10)) <= 120,
+    "Check the year",
+  );
 
 /** The fields a viewer may see, and only those that are filled in. */
 export type ProfileAbout = Partial<Record<AboutField, string>>;
@@ -48,6 +103,9 @@ export const AboutVisibilitySchema = z
     website: VisibilitySchema,
     discord: VisibilitySchema,
     steam: VisibilitySchema,
+    age: VisibilitySchema,
+    joined: VisibilitySchema,
+    lastSeen: VisibilitySchema,
   })
   .partial()
   .strict();

@@ -220,6 +220,7 @@ export const createProfilesService = (
       // An empty string is a clear, not a name.
       patch.first_name = input.firstName || null;
     }
+    if (input.birthDate !== undefined) patch.birth_date = input.birthDate;
     if (input.timezone !== undefined) patch.timezone = input.timezone;
     if (input.hideOnline !== undefined) patch.hide_online = input.hideOnline;
     if (input.hideFromSearch !== undefined) {

@@ -1396,7 +1396,8 @@ from public.community_threads where subject_kind = 'patch_notes';`,
   // kind of pin so both pin rows have something in them.
   const profileDetails = [
     `update public.profiles set pronouns = 'he/him', location = 'Manchester', website = 'https://playrates.app', discord = 'tester_plays', steam = 'https://steamcommunity.com/id/playrates-tester',
-  about_visibility = '{"firstName":"everyone","pronouns":"everyone","location":"friends","website":"everyone","discord":"private","steam":"everyone"}'::jsonb,
+  birth_date = '1991-04-09',
+  about_visibility = '{"firstName":"everyone","pronouns":"everyone","location":"friends","website":"everyone","discord":"private","steam":"everyone","age":"everyone","joined":"everyone","lastSeen":"friends"}'::jsonb,
   pinned_lists = '{${testerTop},${testerCosy}}', pinned_reviews = '{${testerReviews[0]!.id}}',
   notifications_seen_at = ${lit(daysAgo(1))}
 where id = ${lit(tester.id)};`,
@@ -1582,10 +1583,19 @@ on conflict (user_id, item) do nothing;`,
     )
     .join(",\n");
 
+  // Four in five give a birthday, spread across the ages, worked out from
+  // their place rather than drawn, so nothing after this changes.
+  const birthDate = (i: number) =>
+    i % 5 === 4
+      ? "null"
+      : lit(
+          `${1978 + ((i * 7) % 28)}-${String(1 + ((i * 5) % 12)).padStart(2, "0")}-${String(1 + ((i * 11) % 28)).padStart(2, "0")}`,
+        );
+
   const profileUpdates = everyone
     .map(
       (u, i) =>
-        `update public.profiles set first_name = ${lit(u.firstName)}, bio = ${lit(u.bio)}, timezone = ${lit(u.timezone)}, accent = ${lit(["ember", "amber", "lime", "moss", "jade", "teal", "azure", "indigo", "violet", "plum", "magenta", "rose"][i % 12])}, is_admin = ${u.admin}, last_seen_at = ${lit(u.lastSeen)}, created_at = ${lit(u.createdAt)}, onboarded_at = ${u.onboarded ? lit(u.createdAt) : "null"} where id = ${lit(u.id)};`,
+        `update public.profiles set first_name = ${lit(u.firstName)}, birth_date = ${birthDate(i)}, bio = ${lit(u.bio)}, timezone = ${lit(u.timezone)}, accent = ${lit(["ember", "amber", "lime", "moss", "jade", "teal", "azure", "indigo", "violet", "plum", "magenta", "rose"][i % 12])}, is_admin = ${u.admin}, last_seen_at = ${lit(u.lastSeen)}, created_at = ${lit(u.createdAt)}, onboarded_at = ${u.onboarded ? lit(u.createdAt) : "null"} where id = ${lit(u.id)};`,
     )
     .join("\n");
 

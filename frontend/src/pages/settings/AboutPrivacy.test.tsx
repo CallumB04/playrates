@@ -8,7 +8,7 @@ import {
 } from "@playrates/shared";
 import AboutPrivacy from "./AboutPrivacy";
 
-const setup = (visibility: AboutVisibility) => {
+const setup = (visibility: AboutVisibility, hideOnline = false) => {
     const onChange = vi.fn();
     render(
         <MemoryRouter>
@@ -17,6 +17,13 @@ const setup = (visibility: AboutVisibility) => {
                     firstName: "Callum",
                     website: "https://www.callum.dev/",
                 }}
+                facts={{
+                    age: 35,
+                    joined: "2019-04-09T10:00:00Z",
+                    ...(hideOnline ? {} : { lastSeen: "2026-11-05" }),
+                }}
+                online={false}
+                hideOnline={hideOnline}
                 visibility={visibility}
                 onChange={onChange}
                 editHref="/user/callum?edit=profile"
@@ -91,6 +98,32 @@ describe("AboutPrivacy", () => {
             firstName: "private",
             website: "private",
             discord: "private",
+            age: "private",
+            joined: "private",
+            lastSeen: "private",
         });
+    });
+
+    it("lists age, joined and last seen, each with its own choice", () => {
+        setup(DEFAULT_ABOUT_VISIBILITY);
+
+        expect(
+            screen.getByRole("button", { name: "Who sees your age" })
+        ).toHaveTextContent("Friends");
+        expect(screen.getByText("9 April 2019")).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: "Who sees your last seen" })
+        ).toBeInTheDocument();
+    });
+
+    it("offers no choice over last seen while online status is hidden", () => {
+        setup(DEFAULT_ABOUT_VISIBILITY, true);
+
+        expect(
+            screen.getByText("Hidden with your online status")
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: "Who sees your last seen" })
+        ).toBeNull();
     });
 });

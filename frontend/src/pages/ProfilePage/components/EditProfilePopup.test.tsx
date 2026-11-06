@@ -137,6 +137,29 @@ describe("EditProfilePopup", () => {
         expect(sent).toMatchObject({ pronouns: "they/them" });
     });
 
+    it("saves a date of birth, and turns down one under 13", async () => {
+        const { closePopup } = setup();
+        const user = userEvent.setup();
+        await user.click(screen.getByRole("tab", { name: "About" }));
+        const field = screen.getByLabelText("Date of birth");
+        const save = screen.getByRole("button", { name: "Save changes" });
+
+        const young = new Date();
+        young.setUTCFullYear(young.getUTCFullYear() - 10);
+        await user.type(field, young.toISOString().slice(0, 10));
+        expect(
+            await screen.findByText("You need to be 13 or over")
+        ).toBeInTheDocument();
+        expect(save).toBeDisabled();
+
+        await user.clear(field);
+        await user.type(field, "1991-04-09");
+        await user.click(save);
+
+        await waitFor(() => expect(closePopup).toHaveBeenCalledOnce());
+        expect(sent).toMatchObject({ birthDate: "1991-04-09" });
+    });
+
     /* Save is off while a field is wrong; the dot says which view it's on. */
     it("marks the view holding a field that needs fixing", async () => {
         setup();
