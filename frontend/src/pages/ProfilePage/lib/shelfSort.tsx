@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
-import type { GameLogSort, SortDirection } from "@playrates/shared";
-import type { ShelfEntry } from "@playrates/shared";
+import type {
+    GameLogSort,
+    GameStatus,
+    PlayedStatus,
+    ShelfEntry,
+    SortDirection,
+} from "@playrates/shared";
 import {
     formatHours,
     formatMonthYearShort,
@@ -8,6 +13,8 @@ import {
     releaseYear,
 } from "../../../lib/format";
 import CriticScore from "../../../lib/criticScore";
+import { completionTone } from "../../../lib/completionTone";
+import { STATUS_PRESENTATION } from "../../../constants/gameStatus";
 
 interface SortOption {
     value: GameLogSort;
@@ -24,9 +31,13 @@ const OLD_NEW = { ascending: "Oldest first", descending: "Newest first" };
  * Ordered as the menu shows them: the scores, then time, then the rest.
  *
  * The first label depends on whose shelf it is — "Your rating" is wrong on
- * someone else's profile, where the figure is theirs.
+ * someone else's profile, where the figure is theirs. Only the played shelf
+ * has endings to sort by.
  */
-export const shelfSortOptions = (isMyAccount: boolean): SortOption[] => [
+export const shelfSortOptions = (
+    isMyAccount: boolean,
+    shelf: GameStatus
+): SortOption[] => [
     {
         value: "rating",
         label: isMyAccount ? "Your rating" : "User rating",
@@ -61,13 +72,32 @@ export const shelfSortOptions = (isMyAccount: boolean): SortOption[] => [
         ascending: "Least first",
         descending: "Most first",
     },
+    ...(shelf === "played"
+        ? [
+              {
+                  value: "ending" as const,
+                  label: "How it ended",
+                  ascending: "Mastered last",
+                  descending: "Mastered first",
+              },
+          ]
+        : []),
 ];
+
+/** The shelf's sort, unless it's one this shelf doesn't offer. */
+export const sortForShelf = (
+    sort: GameLogSort,
+    shelf: GameStatus
+): GameLogSort => (sort === "ending" && shelf !== "played" ? "rating" : sort);
+
+/** Best first, as ending_rank orders them in the database. */
+const ENDINGS: PlayedStatus[] = ["mastered", "finished", "shelved", "retired"];
 
 export const directionLabel = (
     sort: GameLogSort,
     direction: SortDirection
 ): string => {
-    const options = shelfSortOptions(true);
+    const options = shelfSortOptions(true, "played");
     const option = options.find((s) => s.value === sort) ?? options[0]!;
     return direction === "asc" ? option.ascending : option.descending;
 };
@@ -109,12 +139,29 @@ export const shelfFoot = (entry: ShelfEntry, sort: GameLogSort): ShelfFoot => {
         case "released":
             return { value: releaseYear(game?.releaseDate) };
         case "completion":
+            // In its band's colour, as the log's ring shows it.
             return {
                 value:
-                    rollup.completion === null
-                        ? "–"
-                        : formatPercent(rollup.completion),
+                    rollup.completion === null ? (
+                        "–"
+                    ) : (
+                        <span
+                            className={completionTone(rollup.completion).text}
+                        >
+                            {formatPercent(rollup.completion)}
+                        </span>
+                    ),
             };
+        case "ending": {
+            // The best of its played logs', which is what it sorted on.
+            const ended = entry.logs
+                .filter((l) => l.status === "played")
+                .map((l) => l.playedStatus);
+            const best = ENDINGS.find((e) => ended.includes(e));
+            if (!best) return { value: ended.length ? "Played" : "–" };
+            const { label, markTone } = STATUS_PRESENTATION[best];
+            return { value: <span className={markTone}>{label}</span> };
+        }
         case "rating":
         case "title":
             return { rating: rollup.rating };

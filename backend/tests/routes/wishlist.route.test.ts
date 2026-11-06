@@ -19,6 +19,13 @@ const seed = () => ({
     { game_id: g.id, system_slug: "steam" },
     { game_id: g.id, system_slug: "switch" },
   ]),
+  // Games 1 and 2 are RPGs; 2 is indie too.
+  gameGenres: [
+    { game_id: 1, genre_slug: "rpg" },
+    { game_id: 2, genre_slug: "rpg" },
+    { game_id: 2, genre_slug: "indie" },
+    { game_id: 3, genre_slug: "shooter" },
+  ],
 });
 
 const as = (user = USER_A) => ({ Authorization: authHeader(user) });
@@ -26,8 +33,8 @@ const as = (user = USER_A) => ({ Authorization: authHeader(user) });
 const setup = () => {
   const built = buildTestApp({ seed: seed() });
   const { app } = built;
-  const log = (body: object) =>
-    request(app).post("/api/v1/me/logs").set(as()).send(body);
+  const log = (body: object, user = USER_A) =>
+    request(app).post("/api/v1/me/logs").set(as(user)).send(body);
   const wishlist = async (query = "") =>
     (await request(app).get(`/api/v1/users/devuser/wishlist${query}`)).body;
   const order = (gameIds: number[]) =>
@@ -148,6 +155,96 @@ describe("filtering by console", () => {
       shelf.body.data.map((e: { game: { title: string } }) => e.game.title),
     ).toEqual(["Game 1"]);
     expect(consoles.body).toEqual(["steam", "switch"]);
+  });
+});
+
+describe("filtering by genre", () => {
+  const shelfTitles = (response: request.Response) =>
+    response.body.data.map((e: { game: { title: string } }) => e.game.title);
+
+  it("narrows a shelf to the genre, and lists the genres on it", async () => {
+    const { app, log } = setup();
+    await log({ gameId: 1, status: "played" });
+    await log({ gameId: 2, status: "played" });
+    await log({ gameId: 3, status: "played" });
+    await log({ gameId: 4, status: "backlog" });
+
+    const shelf = await request(app).get(
+      "/api/v1/users/devuser/shelf?status=played&genre=indie",
+    );
+    const genres = await request(app).get(
+      "/api/v1/users/devuser/shelf/genres?status=played",
+    );
+
+    expect(shelfTitles(shelf)).toEqual(["Game 2"]);
+    expect(genres.body).toEqual(["indie", "rpg", "shooter"]);
+  });
+
+  it("works alongside the console and the search", async () => {
+    const { app, log } = setup();
+    await log({ gameId: 1, status: "played", system: "steam" });
+    await log({ gameId: 2, status: "played", system: "switch" });
+
+    const shelf = await request(app).get(
+      "/api/v1/users/devuser/shelf?status=played&genre=rpg&system=switch&q=game",
+    );
+    expect(shelfTitles(shelf)).toEqual(["Game 2"]);
+  });
+
+  it("gives each wished-for game its genres, and the wishlist's", async () => {
+    const { log, wishlist } = setup();
+    await log({ gameId: 2, status: "wishlist" });
+    await log({ gameId: 4, status: "wishlist" });
+
+    const page = await wishlist();
+    expect(page.data.map((e: { genres: string[] }) => e.genres)).toEqual([
+      ["rpg", "indie"],
+      [],
+    ]);
+    expect(page.genres).toEqual(["indie", "rpg"]);
+  });
+});
+
+describe("filtering by what the viewer has too", () => {
+  const shelf = async (
+    app: Parameters<typeof request>[0],
+    common: string,
+    viewer?: string,
+  ) => {
+    const req = request(app).get(
+      `/api/v1/users/devuser/shelf?status=played&common=${common}`,
+    );
+    const response = viewer ? await req.set(as(viewer)) : await req;
+    return response.body.data.map(
+      (e: { game: { title: string } }) => e.game.title,
+    );
+  };
+
+  it("keeps the games both have logged", async () => {
+    const { app, log } = setup();
+    await log({ gameId: 1, status: "played" });
+    await log({ gameId: 2, status: "played" });
+    // Any of the viewer's logs counts, a wishlist one included.
+    await log({ gameId: 2, status: "wishlist" }, USER_B);
+
+    expect(await shelf(app, "both", USER_B)).toEqual(["Game 2"]);
+  });
+
+  it("means nothing signed out or on your own profile", async () => {
+    const { app, log } = setup();
+    await log({ gameId: 1, status: "played" });
+    await log({ gameId: 2, status: "played" });
+
+    expect(await shelf(app, "both")).toHaveLength(2);
+    expect(await shelf(app, "both", USER_A)).toHaveLength(2);
+  });
+
+  it("refuses a value it doesn't know", async () => {
+    const { app } = setup();
+    const response = await request(app).get(
+      "/api/v1/users/devuser/shelf?status=played&common=theirs",
+    );
+    expect(response.status).toBe(422);
   });
 });
 

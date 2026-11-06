@@ -51,6 +51,10 @@ export interface GameLogPage {
     q?: string;
     /** Narrows a shelf to games logged on it for this console. */
     system?: string;
+    /** Narrows a shelf to games in this genre, by slug. */
+    genre?: string;
+    /** Someone else's shelf, narrowed to the games the viewer has too. */
+    common?: "both";
 }
 
 /** A page of games, each with every console it was logged on. */
@@ -168,6 +172,17 @@ export const setMyWishlistOrder = async (gameIds: number[]): Promise<void> => {
 };
 
 /** The consoles on one of someone's shelves. */
+export const fetchShelfGenres = async (
+    username: string,
+    status: string
+): Promise<string[]> => {
+    const { data } = await api.get<string[]>(
+        `/users/${username}/shelf/genres`,
+        { params: { status } }
+    );
+    return data;
+};
+
 export const fetchShelfConsoles = async (
     username: string,
     status: string

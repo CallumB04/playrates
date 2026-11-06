@@ -287,6 +287,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"email_messages": {
+                  Row: {
+                    "broadcast_id": string | null,"detail": string | null,"id": number,"kind": string,"resend_id": string | null,"sent_at": string,"status": string,"subject": string,"to_address": string,"updated_at": string,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "broadcast_id"?: string | null,"detail"?: string | null,"id"?: never,"kind": string,"resend_id"?: string | null,"sent_at"?: string,"status": string,"subject": string,"to_address": string,"updated_at"?: string,"user_id"?: string | null
+                  }
+                  Update: {
+                    "broadcast_id"?: string | null,"detail"?: string | null,"id"?: never,"kind"?: string,"resend_id"?: string | null,"sent_at"?: string,"status"?: string,"subject"?: string,"to_address"?: string,"updated_at"?: string,"user_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "email_messages_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "admin_user_directory"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "email_messages_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"email_sends": {
                   Row: {
                     "error": string | null,"id": number,"kind": string,"recipients": number,"sent_at": string,"status": string,"transactional": boolean
@@ -827,14 +853,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "about_visibility": NonNullable<Json>,"accent": string,"adult_confirmed_at": string | null,"avatar_url": string | null,"background_game_id": number | null,"background_position": number | null,"background_url": string | null,"bio": string,"card_theme": string | null,"created_at": string,"discord": string | null,"effects": (string)[],"email_prefs": NonNullable<Json>,"first_name": string | null,"frame": string | null,"hide_from_search": boolean,"hide_online": boolean,"id": string,"is_admin": boolean,"last_seen_at": string,"location": string | null,"name_colour": string | null,"name_font": string | null,"onboarded_at": string | null,"pinned_lists": (number)[],"pinned_reviews": (number)[],"profile_visibility": string,"pronouns": string | null,"referred_by": string | null,"revealed_at": string | null,"section_order": (string)[],"show_sexual_content": boolean,"showcase_badges": (string)[],"showcase_layout": string,"steam": string | null,"timezone": string,"tokens": number,"updated_at": string,"username": string,"username_chosen_at": string | null,"website": string | null,"xp": number,"xp_seen_event_id": number
+                    "about_visibility": NonNullable<Json>,"accent": string,"adult_confirmed_at": string | null,"avatar_url": string | null,"background_game_id": number | null,"background_position": number | null,"background_url": string | null,"bio": string,"birth_date": string | null,"card_theme": string | null,"created_at": string,"discord": string | null,"effects": (string)[],"email_prefs": NonNullable<Json>,"first_name": string | null,"frame": string | null,"hide_from_search": boolean,"hide_online": boolean,"id": string,"is_admin": boolean,"last_seen_at": string,"location": string | null,"name_colour": string | null,"name_font": string | null,"notifications_seen_at": string | null,"onboarded_at": string | null,"pinned_lists": (number)[],"pinned_reviews": (number)[],"profile_visibility": string,"pronouns": string | null,"referred_by": string | null,"revealed_at": string | null,"section_order": (string)[],"show_sexual_content": boolean,"showcase_badges": (string)[],"showcase_layout": string,"steam": string | null,"timezone": string,"tokens": number,"updated_at": string,"username": string,"username_chosen_at": string | null,"website": string | null,"xp": number,"xp_seen_event_id": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "about_visibility"?: NonNullable<Json>,"accent"?: string,"adult_confirmed_at"?: string | null,"avatar_url"?: string | null,"background_game_id"?: number | null,"background_position"?: number | null,"background_url"?: string | null,"bio"?: string,"card_theme"?: string | null,"created_at"?: string,"discord"?: string | null,"effects"?: (string)[],"email_prefs"?: NonNullable<Json>,"first_name"?: string | null,"frame"?: string | null,"hide_from_search"?: boolean,"hide_online"?: boolean,"id": string,"is_admin"?: boolean,"last_seen_at"?: string,"location"?: string | null,"name_colour"?: string | null,"name_font"?: string | null,"onboarded_at"?: string | null,"pinned_lists"?: (number)[],"pinned_reviews"?: (number)[],"profile_visibility"?: string,"pronouns"?: string | null,"referred_by"?: string | null,"revealed_at"?: string | null,"section_order"?: (string)[],"show_sexual_content"?: boolean,"showcase_badges"?: (string)[],"showcase_layout"?: string,"steam"?: string | null,"timezone"?: string,"tokens"?: number,"updated_at"?: string,"username": string,"username_chosen_at"?: string | null,"website"?: string | null,"xp"?: number,"xp_seen_event_id"?: number
+                    "about_visibility"?: NonNullable<Json>,"accent"?: string,"adult_confirmed_at"?: string | null,"avatar_url"?: string | null,"background_game_id"?: number | null,"background_position"?: number | null,"background_url"?: string | null,"bio"?: string,"birth_date"?: string | null,"card_theme"?: string | null,"created_at"?: string,"discord"?: string | null,"effects"?: (string)[],"email_prefs"?: NonNullable<Json>,"first_name"?: string | null,"frame"?: string | null,"hide_from_search"?: boolean,"hide_online"?: boolean,"id": string,"is_admin"?: boolean,"last_seen_at"?: string,"location"?: string | null,"name_colour"?: string | null,"name_font"?: string | null,"notifications_seen_at"?: string | null,"onboarded_at"?: string | null,"pinned_lists"?: (number)[],"pinned_reviews"?: (number)[],"profile_visibility"?: string,"pronouns"?: string | null,"referred_by"?: string | null,"revealed_at"?: string | null,"section_order"?: (string)[],"show_sexual_content"?: boolean,"showcase_badges"?: (string)[],"showcase_layout"?: string,"steam"?: string | null,"timezone"?: string,"tokens"?: number,"updated_at"?: string,"username": string,"username_chosen_at"?: string | null,"website"?: string | null,"xp"?: number,"xp_seen_event_id"?: number
                   }
                   Update: {
-                    "about_visibility"?: NonNullable<Json>,"accent"?: string,"adult_confirmed_at"?: string | null,"avatar_url"?: string | null,"background_game_id"?: number | null,"background_position"?: number | null,"background_url"?: string | null,"bio"?: string,"card_theme"?: string | null,"created_at"?: string,"discord"?: string | null,"effects"?: (string)[],"email_prefs"?: NonNullable<Json>,"first_name"?: string | null,"frame"?: string | null,"hide_from_search"?: boolean,"hide_online"?: boolean,"id"?: string,"is_admin"?: boolean,"last_seen_at"?: string,"location"?: string | null,"name_colour"?: string | null,"name_font"?: string | null,"onboarded_at"?: string | null,"pinned_lists"?: (number)[],"pinned_reviews"?: (number)[],"profile_visibility"?: string,"pronouns"?: string | null,"referred_by"?: string | null,"revealed_at"?: string | null,"section_order"?: (string)[],"show_sexual_content"?: boolean,"showcase_badges"?: (string)[],"showcase_layout"?: string,"steam"?: string | null,"timezone"?: string,"tokens"?: number,"updated_at"?: string,"username"?: string,"username_chosen_at"?: string | null,"website"?: string | null,"xp"?: number,"xp_seen_event_id"?: number
+                    "about_visibility"?: NonNullable<Json>,"accent"?: string,"adult_confirmed_at"?: string | null,"avatar_url"?: string | null,"background_game_id"?: number | null,"background_position"?: number | null,"background_url"?: string | null,"bio"?: string,"birth_date"?: string | null,"card_theme"?: string | null,"created_at"?: string,"discord"?: string | null,"effects"?: (string)[],"email_prefs"?: NonNullable<Json>,"first_name"?: string | null,"frame"?: string | null,"hide_from_search"?: boolean,"hide_online"?: boolean,"id"?: string,"is_admin"?: boolean,"last_seen_at"?: string,"location"?: string | null,"name_colour"?: string | null,"name_font"?: string | null,"notifications_seen_at"?: string | null,"onboarded_at"?: string | null,"pinned_lists"?: (number)[],"pinned_reviews"?: (number)[],"profile_visibility"?: string,"pronouns"?: string | null,"referred_by"?: string | null,"revealed_at"?: string | null,"section_order"?: (string)[],"show_sexual_content"?: boolean,"showcase_badges"?: (string)[],"showcase_layout"?: string,"steam"?: string | null,"timezone"?: string,"tokens"?: number,"updated_at"?: string,"username"?: string,"username_chosen_at"?: string | null,"website"?: string | null,"xp"?: number,"xp_seen_event_id"?: number
                   }
                   Relationships: [
                     {
@@ -1462,7 +1488,7 @@ isOneToOne: false
                   ]
                 },"game_log_rollups": {
                   Row: {
-                    "completion": number | null,"first_added_at": string | null,"game_avg_rating": number | null,"game_critic_score": number | null,"game_id": number,"game_release_date": string | null,"game_title": string,"hours_played": number | null,"hours_to_beat": number | null,"last_played": string | null,"latest_log_id": number | null,"log_count": number | null,"played_endings": (string)[] | null,"rating": number | null,"statuses": (string)[] | null,"updated_at": string | null,"user_id": string
+                    "completion": number | null,"ending_rank": number | null,"first_added_at": string | null,"game_avg_rating": number | null,"game_critic_score": number | null,"game_id": number,"game_release_date": string | null,"game_title": string,"hours_played": number | null,"hours_to_beat": number | null,"last_played": string | null,"latest_log_id": number | null,"log_count": number | null,"played_endings": (string)[] | null,"rating": number | null,"statuses": (string)[] | null,"updated_at": string | null,"user_id": string
                   }
                   ComputedFields: never
                   Relationships: [
@@ -1601,9 +1627,19 @@ isOneToOne: false
 "admin_progress":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"admin_return_curve":
+{ Args: { "p_days": number,"p_from": string,"p_to": string }; Returns: {
+              "back": number,"day": number,"due": number,"invited_back": number,"invited_due": number
+            }[]
+                           },
 "admin_series":
 { Args: { "p_bucket": string,"p_from": string,"p_to": string }; Returns: {
               "active": number,"active_week": number,"bucket": string,"logs": number,"messages": number,"reviews": number,"signups": number,"threads": number
+            }[]
+                           },
+"admin_staying":
+{ Args: { "p_from": string,"p_to": string }; Returns: {
+              "back_month": number,"back_week": number,"invited": number,"invited_back_week": number,"invited_week_due": number,"joined": number,"logged_three": number,"month_due": number,"onboarded": number,"week_due": number
             }[]
                            },
 "admin_totals":
@@ -1742,6 +1778,9 @@ isOneToOne: false
                            },
 "random_profile_accent":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"record_email_event":
+{ Args: { "p_broadcast_id": string,"p_detail": string,"p_resend_id": string,"p_status": string,"p_to": string }; Returns: number
                            },
 "revoke_xp":
 { Args: { "p_key": string,"p_user": string }; Returns: undefined

@@ -15,6 +15,7 @@ import BarPlot from "../components/BarPlot";
 import Meter from "../components/Meter";
 import RankBars from "../components/RankBars";
 import SectionHeader from "../components/SectionHeader";
+import EmailLog from "./EmailLog";
 import { bucketLabel } from "../lib/adminFormat";
 import {
     EMAIL_LIMITS,
@@ -284,6 +285,7 @@ const EmailsPage = () => {
                 <div className="flex flex-col gap-8">
                     <Digest />
                     <Today stats={stats} />
+                    <EmailLog />
                     <Days stats={stats} />
                     <Kinds stats={stats} />
                 </div>

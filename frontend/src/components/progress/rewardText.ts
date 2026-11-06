@@ -3,6 +3,7 @@ import {
     FRAMES,
     NAME_COLOURS,
     NAME_FONTS,
+    METAL_NAMES,
     REACTIONS,
     BACKGROUND_LEVEL,
     levelTokens,
@@ -13,12 +14,7 @@ import {
 import { formatCount } from "../../lib/format";
 import { SOURCE_LABELS } from "./sources";
 
-export const METAL_NAMES: Record<Metal, string> = {
-    1: "Bronze",
-    2: "Silver",
-    3: "Gold",
-    4: "Platinum",
-};
+export { METAL_NAMES } from "@playrates/shared";
 
 /** XP just earned, as one line for a toast: the total and what for.
  *  "+25 XP: Finished a game, Rated a game" */

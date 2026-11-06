@@ -10,7 +10,11 @@ import {
     Trash2,
     Users,
 } from "lucide-react";
-import type { GameListDetail, GameListEntry } from "@playrates/shared";
+import {
+    listTrail,
+    type GameListDetail,
+    type GameListEntry,
+} from "@playrates/shared";
 import NotFoundPage from "../NotFoundPage";
 import { ApiError } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -28,6 +32,7 @@ import { useMyGameLogIds } from "../../hooks/queries/useGameLogs";
 import StatusBadge from "../../components/ui/StatusBadge";
 import { displayStatusFor } from "../../constants/gameStatus";
 import { usePageMeta } from "../../hooks/usePageMeta";
+import Breadcrumbs from "../../components/ui/Breadcrumbs";
 import Button from "../../components/ui/Button";
 import { buttonClass } from "../../components/ui/buttonClass";
 import ConfirmPopup from "../../components/ui/ConfirmPopup";
@@ -149,6 +154,10 @@ const LoadedList = ({ list }: { list: GameListDetail }) => {
 
     return (
         <div className="flex flex-col gap-6">
+            <Breadcrumbs
+                trail={listTrail(list.owner.username, list)}
+                className="-mb-3"
+            />
             <header
                 className={cardClass("relative overflow-hidden", {
                     padding: "none",

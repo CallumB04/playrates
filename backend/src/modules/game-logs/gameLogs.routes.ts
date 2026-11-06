@@ -143,6 +143,9 @@ export const createMyShelfRouter = ({ service, requireAuth }: Deps): Router => {
         playedStatus,
         q,
         system,
+        genre,
+        // Your own shelf has nothing to be in common with.
+        common: _common,
         sort,
         direction,
         ...pagination
@@ -150,7 +153,7 @@ export const createMyShelfRouter = ({ service, requireAuth }: Deps): Router => {
       res.json(
         await service.shelfForUser(
           callerId(req),
-          { status, playedStatus, q, system, sort, direction },
+          { status, playedStatus, q, system, genre, sort, direction },
           pagination,
         ),
       );
@@ -188,6 +191,27 @@ export const createUserShelfRouter = ({
     },
   );
 
+  // The genres on one shelf, for its filter.
+  router.get(
+    "/genres",
+    optionalAuth,
+    validate({
+      params: UsernameParamSchema,
+      query: z.object({ status: GameStatusSchema }),
+    }),
+    async (req, res) => {
+      const { username } = req.valid!.params as { username: string };
+      const { status } = req.valid!.query as { status: string };
+      res.json(
+        await service.shelfGenresForUsername(
+          username,
+          status,
+          req.auth?.userId,
+        ),
+      );
+    },
+  );
+
   router.get(
     "/",
     optionalAuth,
@@ -199,6 +223,8 @@ export const createUserShelfRouter = ({
         playedStatus,
         q,
         system,
+        genre,
+        common,
         sort,
         direction,
         ...pagination
@@ -206,7 +232,7 @@ export const createUserShelfRouter = ({
       res.json(
         await service.shelfForUsername(
           username,
-          { status, playedStatus, q, system, sort, direction },
+          { status, playedStatus, q, system, genre, common, sort, direction },
           pagination,
           req.auth?.userId,
         ),

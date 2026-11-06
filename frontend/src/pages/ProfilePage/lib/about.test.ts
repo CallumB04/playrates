@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
     aboutError,
+    joinedText,
+    lastSeenText,
+    latestBirthDate,
     linkLabel,
     moveItem,
     podiumOnPhone,
@@ -76,5 +79,42 @@ describe("aboutError", () => {
             "40 characters at most"
         );
         expect(aboutError("firstName", "Callum")).toBeUndefined();
+    });
+});
+
+describe("joinedText", () => {
+    it("writes the day in full", () => {
+        expect(joinedText("2019-04-09T10:00:00Z")).toBe("9 April 2019");
+    });
+});
+
+describe("lastSeenText", () => {
+    const today = "2026-11-06";
+
+    it("says online now, whenever the day", () => {
+        expect(lastSeenText("2026-10-01", true, today)).toBe("Online now");
+    });
+
+    it("says today and yesterday", () => {
+        expect(lastSeenText("2026-11-06", false, today)).toBe("Today");
+        expect(lastSeenText("2026-11-05", false, today)).toBe("Yesterday");
+        expect(lastSeenText("2026-12-31", false, "2027-01-01")).toBe(
+            "Yesterday"
+        );
+    });
+
+    it("gives the year only when it isn't this one", () => {
+        expect(lastSeenText("2026-11-01", false, today)).toBe("1 November");
+        expect(lastSeenText("2024-11-10", false, today)).toBe(
+            "10 November 2024"
+        );
+    });
+});
+
+describe("latestBirthDate", () => {
+    it("is 13 years before today", () => {
+        expect(latestBirthDate(new Date("2026-11-06T12:00:00Z"))).toBe(
+            "2013-11-06"
+        );
     });
 });

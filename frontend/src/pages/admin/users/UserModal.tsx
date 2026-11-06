@@ -13,6 +13,7 @@ import {
 } from "../../../lib/format";
 import { useAdminUser } from "../../../hooks/queries/useAdmin";
 import ActivityFeed from "../activity/ActivityFeed";
+import { MemberEmails } from "../emails/EmailLog";
 import Heatmap from "../components/Heatmap";
 import { bucketLabel } from "../lib/adminFormat";
 import { fillDays } from "../lib/plot";
@@ -127,6 +128,13 @@ const UserModal = ({
                             compact
                             limit={5}
                         />
+                    </section>
+
+                    <section>
+                        <h3 className="border-b border-subtle pb-2 text-label text-content-muted">
+                            Emails · last 30 days
+                        </h3>
+                        <MemberEmails userId={user.id} />
                     </section>
 
                     <Link

@@ -10,3 +10,7 @@ export const splitReleaseTitle = (
     if (!match) return { version: null, name: title.trim() || null };
     return { version: match[1]!, name: match[2]!.trim() || null };
 };
+
+/** A big release (v1.1) rather than a patch on one (v1.1.2). */
+export const isMajorRelease = (version: string | null): boolean =>
+    /^v\d+\.\d+$/i.test(version ?? "");

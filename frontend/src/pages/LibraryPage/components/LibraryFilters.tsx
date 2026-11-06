@@ -5,7 +5,8 @@ import Button from "../../../components/ui/Button";
 import Modal from "../../../components/ui/Modal";
 import type { Genre, Platform } from "@playrates/shared";
 import { SearchInput } from "../../../components/ui/Input";
-import Dropdown from "../../../components/ui/Dropdown";
+import Dropdown, { type DropdownOption } from "../../../components/ui/Dropdown";
+import Field from "../../../components/ui/Field";
 import { platformOptions } from "../../../lib/platformIcons";
 import Toggle from "../../../components/ui/Toggle";
 import type { LibraryQuery } from "../lib/useLibraryQuery";
@@ -40,43 +41,65 @@ const LibraryFilters = ({
 }: LibraryFiltersProps) => {
     const [sheetOpen, setSheetOpen] = useState(false);
 
-    const selects = (
-        <>
-            <Dropdown
-                options={platformOptions(platforms, "All platforms")}
-                value={query.platform}
-                onChange={(platform) => setQuery({ platform })}
-                placeholder="All platforms"
-                aria-label="Filter by platform"
-                className="lg:w-44"
-            />
+    const genreOptions: DropdownOption[] = [
+        { value: "", label: "All" },
+        ...genres.map((genre) => ({ value: genre.slug, label: genre.name })),
+    ];
 
-            <Dropdown
-                options={[
-                    { value: "", label: "All genres" },
-                    ...genres.map((genre) => ({
-                        value: genre.slug,
-                        label: genre.name,
-                    })),
-                ]}
-                value={query.genre}
-                onChange={(genre) => setQuery({ genre })}
-                placeholder="All genres"
-                aria-label="Filter by genre"
-                className="lg:w-44"
-            />
+    const selects = [
+        {
+            label: "Platform",
+            ariaLabel: "Filter by platform",
+            options: platformOptions(platforms, "All"),
+            value: query.platform,
+            onChange: (platform: string) => setQuery({ platform }),
+            width: "w-60",
+        },
+        {
+            label: "Genre",
+            ariaLabel: "Filter by genre",
+            options: genreOptions,
+            value: query.genre,
+            onChange: (genre: string) => setQuery({ genre }),
+            width: "w-56",
+        },
+        {
+            label: "Sort by",
+            ariaLabel: "Sort the library",
+            options: SORT_OPTIONS,
+            value: query.sort,
+            onChange: (sort: string) =>
+                setQuery({ sort: sort as LibraryQuery["sort"] }),
+            width: "w-48",
+        },
+    ];
 
-            <Dropdown
-                options={SORT_OPTIONS}
-                value={query.sort}
-                onChange={(sort) =>
-                    setQuery({ sort: sort as LibraryQuery["sort"] })
-                }
-                aria-label="Sort the library"
-                className="lg:w-48"
-            />
-        </>
-    );
+    // In the bar, each says what it is inside itself; in the sheet, above.
+    // Sized for the common names and every sort; the longest platforms and
+    // genres are cut short, and read in full in the menu.
+    const inBar = selects.map(({ label, ariaLabel, width, ...select }) => (
+        <Dropdown
+            key={label}
+            {...select}
+            placeholder="All"
+            lead={label}
+            aria-label={ariaLabel}
+            className={width}
+        />
+    ));
+    const inSheet = selects.map(({ label, options, value, onChange }) => (
+        <Field key={label} label={label}>
+            {({ id }) => (
+                <Dropdown
+                    id={id}
+                    options={options}
+                    value={value}
+                    onChange={onChange}
+                    placeholder="All"
+                />
+            )}
+        </Field>
+    ));
 
     const toggles = (
         <>
@@ -114,7 +137,7 @@ const LibraryFilters = ({
 
                     {/* Below lg the selects and toggles move into a sheet, so
                         the filter plate doesn't own the whole first screen. */}
-                    <div className="hidden gap-3 lg:flex">{selects}</div>
+                    <div className="hidden gap-3 lg:flex">{inBar}</div>
 
                     <Button
                         variant="secondary"
@@ -146,7 +169,7 @@ const LibraryFilters = ({
                         Filters
                     </h2>
                     <div className="flex flex-col gap-4 pt-4">
-                        {selects}
+                        {inSheet}
                         {toggles}
                         <Button
                             onClick={() => setSheetOpen(false)}

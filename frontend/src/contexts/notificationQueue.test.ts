@@ -40,6 +40,29 @@ describe("notificationQueue", () => {
         expect(bad.dwell).toBeGreaterThan(ok.dwell!);
     });
 
+    it("keeps one with something to do until it's done, unless the offer is brief", () => {
+        const share = run([
+            {
+                kind: "push",
+                id: 1,
+                text: "New badge",
+                type: "success",
+                action: { label: "Share", onClick: () => {} },
+            },
+        ])[0]!;
+        const undo = run([
+            {
+                kind: "push",
+                id: 2,
+                text: "Cleared",
+                type: "info",
+                action: { label: "Undo", onClick: () => {}, dwell: 10_000 },
+            },
+        ])[0]!;
+        expect(share.dwell).toBeNull();
+        expect(undo.dwell).toBe(10_000);
+    });
+
     it("gives a critical toast no dwell at all", () => {
         expect(run([push(1, "error", "critical")])[0].dwell).toBeNull();
     });

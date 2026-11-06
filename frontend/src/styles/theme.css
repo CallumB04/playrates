@@ -193,6 +193,15 @@
     --status-mastered-quiet: color-mix(in srgb, #d4a017 16%, transparent);
     /* The bright end of the gold, for the sweep on the completion ring. */
     --status-mastered-sheen: #e3af2b;
+    /* Completion on the way to the gold of a full set: red, orange, green.
+       A fill for bars and the ring, and a text colour deep enough to read
+       small on white (4.5:1 and up). */
+    --completion-low: #dc2626;
+    --completion-low-text: #b91c1c;
+    --completion-mid: #f97316;
+    --completion-mid-text: #b45309;
+    --completion-high: #16a34a;
+    --completion-high-text: #15803d;
     --status-shelved: #64748b;
     --status-shelved-quiet: color-mix(in srgb, #64748b 14%, transparent);
     --status-retired: #b91c1c;
@@ -211,6 +220,7 @@
     --info: #0369a1;
     --warning: var(--ember-600);
     --gold: var(--ember-500);
+    --gold-quiet: color-mix(in srgb, var(--gold) 14%, transparent);
     /* A podium, for a profile's favourites. Its own gold: the one above is
        the brand's ember, which beside bronze read as a second bronze. Dark
        enough by day to read on the page. */
@@ -321,6 +331,12 @@
     --status-mastered: #e8b530;
     --status-mastered-quiet: color-mix(in srgb, #e8b530 20%, transparent);
     --status-mastered-sheen: #ffdc72;
+    --completion-low: #ef4444;
+    --completion-low-text: #ef4444;
+    --completion-mid: #f97316;
+    --completion-mid-text: #fb923c;
+    --completion-high: #4ade80;
+    --completion-high-text: #4ade80;
     --status-shelved: #94a3b8;
     --status-shelved-quiet: color-mix(in srgb, #94a3b8 18%, transparent);
     --status-retired: #f87171;
@@ -340,6 +356,7 @@
     --info: #56ccf2;
     --warning: var(--ember-400);
     --gold: var(--ember-300);
+    --gold-quiet: color-mix(in srgb, var(--gold) 18%, transparent);
     --medal-gold: #f2c94c;
     --medal-silver: #c5ccd6;
     --medal-bronze: #d9915a;
@@ -667,6 +684,7 @@
     --color-info-strong: var(--info-strong);
 
     --color-gold: var(--gold);
+    --color-gold-quiet: var(--gold-quiet);
     --color-medal-gold: var(--medal-gold);
     --color-medal-silver: var(--medal-silver);
     --color-medal-bronze: var(--medal-bronze);
@@ -693,6 +711,12 @@
     --color-love-content: var(--love-content);
     --color-status-mastered: var(--status-mastered);
     --color-status-mastered-quiet: var(--status-mastered-quiet);
+    --color-completion-low: var(--completion-low);
+    --color-completion-low-text: var(--completion-low-text);
+    --color-completion-mid: var(--completion-mid);
+    --color-completion-mid-text: var(--completion-mid-text);
+    --color-completion-high: var(--completion-high);
+    --color-completion-high-text: var(--completion-high-text);
     --color-status-finished: var(--status-finished);
     --color-status-finished-quiet: var(--status-finished-quiet);
     --color-status-shelved: var(--status-shelved);
@@ -715,6 +739,25 @@
    The idioms. These are the design's signature devices, defined once rather
    than retyped in a dozen components.
    =========================================================================== */
+
+/* Text over a page's backdrop picture: the muted grey steps up to the
+   secondary one, so it holds against the art. A halo of the page's colour
+   did that job once, and looked smudged in both themes. Inherited, and
+   harmless where there's no picture behind. */
+@utility on-backdrop {
+    --color-content-muted: var(--content-secondary);
+}
+
+/* A notification still to be read says so in its type: names and titles a
+   weight up. Once read, its text steps back a shade. Set here, inherited by
+   whatever the notification's own content draws. */
+@utility notification-unread {
+    --font-weight-medium: 650;
+}
+@utility notification-read {
+    --color-content: var(--content-secondary);
+    --color-content-secondary: var(--content-muted);
+}
 
 /* A quiet spacer between a label and its figure. It used to be a dotted
    leader line, which belonged to the ledger this design no longer is. */

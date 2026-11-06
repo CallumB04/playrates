@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import {
+    groupedItems,
     isExternalHref,
     paragraphsOf,
     type PatchNote,
@@ -10,26 +11,26 @@ import {
 import { cn } from "../../../lib/cn";
 import { withLinks } from "../withLinks";
 import KindTag from "./KindTag";
+import { KIND_TONES } from "./kindTones";
 
+/* Each change branches off its section's line, as a timeline does: a short
+   rule from the line to the change's first line of text, as thick as the
+   line and in its colour. Drawn on the row, so a linked row's hover keeps
+   it. */
 const ROW =
-    "flex items-start gap-3 rounded-md px-2.5 py-2 text-body text-content-secondary";
+    "relative flex items-start gap-3 rounded-md px-2.5 py-2 text-body text-content-secondary " +
+    "before:absolute before:-left-1 before:top-[calc(0.5rem+0.5lh-1px)] before:h-0.5 before:w-1.5 before:content-['']";
 
-/** One change: its kind, then what changed. The kinds a column from sm; on
- *  a phone the kind is a small line above, as beside the text it would
- *  leave the change a narrow strip. */
+/** One change, as said. Its kind is the heading it sits under. */
 const ItemRow = ({ item }: { item: PatchNoteItem }) => {
-    const body: ReactNode = (
-        <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">
-            <KindTag kind={item.kind} className="sm:w-28 sm:shrink-0" />
-            <span className="min-w-0">{item.text}</span>
-        </span>
-    );
-    if (!item.link) return <div className={ROW}>{body}</div>;
+    const row = cn(ROW, KIND_TONES[item.kind].branch);
+    const body: ReactNode = <span className="min-w-0 flex-1">{item.text}</span>;
+    if (!item.link) return <div className={row}>{body}</div>;
 
     const external = isExternalHref(item.link);
     const Arrow = external ? ArrowUpRight : ArrowRight;
     const linked = cn(
-        ROW,
+        row,
         "group min-h-11 lift hover:bg-surface-hover",
         "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
     );
@@ -66,7 +67,8 @@ const Prose = ({ text }: { text: string | null }) =>
         </p>
     ));
 
-/** A release: its title, its messages, and its changes as written. */
+/** A release: its title, its messages, and its changes under a heading
+ *  for each kind: new first, then improved, fixed, removed and the rest. */
 const PatchNoteView = ({
     note,
     showTitle = true,
@@ -84,17 +86,28 @@ const PatchNoteView = ({
             </h2>
         )}
         <Prose text={note.intro} />
-        {note.items.length > 0 && (
-            // Pulled out by the rows' padding, so the text lines up with the
-            // messages while a linked row's hover still has room.
-            <ul className="-mx-2.5 flex flex-col">
-                {note.items.map((item, i) => (
-                    <li key={i}>
-                        <ItemRow item={item} />
-                    </li>
-                ))}
-            </ul>
-        )}
+        {groupedItems(note.items).map(({ kind, items }) => (
+            <section key={kind} className="flex flex-col gap-1">
+                <h3>
+                    <KindTag kind={kind} />
+                </h3>
+                {/* Down from the ring's middle, in its colour: the changes
+                    hang off their heading, and the text lines up with its
+                    name. */}
+                <ul
+                    className={cn(
+                        "ml-1 flex flex-col border-l-2 pl-1",
+                        KIND_TONES[kind].rail
+                    )}
+                >
+                    {items.map((item, i) => (
+                        <li key={i}>
+                            <ItemRow item={item} />
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        ))}
         <Prose text={note.outro} />
     </div>
 );

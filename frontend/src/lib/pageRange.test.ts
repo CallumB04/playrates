@@ -36,6 +36,17 @@ describe("pageRange", () => {
         ]);
     });
 
+    /* A phone's: nine slots wrapped "next" onto a second line at 375px. */
+    it("with no siblings, holds five slots wherever the page is", () => {
+        expect(pageRange(5, 21, 0)).toEqual([1, ELLIPSIS, 5, ELLIPSIS, 21]);
+        expect(pageRange(1, 21, 0)).toEqual([1, 2, 3, ELLIPSIS, 21]);
+        expect(pageRange(21, 21, 0)).toEqual([1, ELLIPSIS, 19, 20, 21]);
+        const widths = [1, 2, 3, 10, 19, 20, 21].map(
+            (p) => pageRange(p, 21, 0).length
+        );
+        expect(new Set(widths)).toEqual(new Set([5]));
+    });
+
     it("keeps a constant width, so the control does not jump while paging", () => {
         const widths = [1, 2, 3, 500, 6593, 6594, 6595].map(
             (p) => pageRange(p, 6595).length

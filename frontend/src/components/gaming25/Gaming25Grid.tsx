@@ -68,7 +68,7 @@ const Gaming25Grid = ({ picks, onPick, className }: Gaming25GridProps) => {
                         {cell.centre && (
                             <span
                                 aria-hidden
-                                className="absolute -top-2.5 left-1/2 z-10 grid size-5 -translate-x-1/2 place-items-center rounded-full bg-medal-gold text-surface-raised shadow-plate sm:-top-3 sm:size-6"
+                                className="absolute -top-2.5 left-1/2 z-10 grid size-5 -translate-x-1/2 place-items-center rounded-full bg-medal-gold text-surface-raised shadow-solid sm:-top-3 sm:size-6"
                             >
                                 <Crown size={12} strokeWidth={2.5} />
                             </span>

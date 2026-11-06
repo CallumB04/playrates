@@ -1,6 +1,7 @@
 import { HABIT_WEEKS, periodsFor } from "@playrates/shared";
 import type { ProfileRow } from "../../src/types/database.types.js";
 import {
+  bestEnding,
   BuyError,
   type ProgressRepository,
 } from "../../src/modules/progress/progress.repository.js";
@@ -382,6 +383,40 @@ export const createInMemoryProgress = (
 
     async favouriteCount(userId) {
       return state.favouriteGames.filter((f) => f.user_id === userId).length;
+    },
+
+    async playedGame(userId, gameId) {
+      const log = bestEnding(
+        state.gameLogs.filter(
+          (l) =>
+            l.user_id === userId &&
+            l.game_id === gameId &&
+            l.status === "played",
+        ),
+      );
+      const game = state.games.find((g) => g.id === gameId);
+      if (!log || !game) return null;
+      return {
+        title: game.title,
+        cover: game.box_art_url ?? game.cover_url,
+        adult: game.has_sexual_content,
+        playedStatus: log.played_status,
+        rating: log.rating,
+        hours: log.hours_played,
+      };
+    },
+
+    async recentCovers(userId, limit) {
+      const covers = state.gameLogs
+        .filter((l) => l.user_id === userId)
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))
+        .flatMap((l) => {
+          const game = state.games.find((g) => g.id === l.game_id);
+          return game && !game.has_sexual_content
+            ? (game.box_art_url ?? game.cover_url ?? [])
+            : [];
+        });
+      return [...new Set(covers)].slice(0, limit);
     },
 
     async holdings(userIds, item) {

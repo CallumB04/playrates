@@ -90,7 +90,13 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
 
   return {
     async pruneOldRows() {
-      return { serverErrors: 0, clientErrors: 0, gameEvents: 0 };
+      return {
+        serverErrors: 0,
+        clientErrors: 0,
+        gameEvents: 0,
+        emailMessages: 0,
+        notifications: 0,
+      };
     },
     async ping() {},
 
@@ -313,7 +319,30 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
       return rows.filter((e) => e.created_at >= since).length;
     },
 
-    // The SQL is tested against Postgres; this only gives the route rows.
+    // The SQL is tested against Postgres; these only give the route rows.
+    async staying() {
+      return {
+        joined: 4,
+        onboarded: 3,
+        logged_three: 1,
+        week_due: 2,
+        back_week: 1,
+        month_due: 0,
+        back_month: 0,
+        invited: 1,
+        invited_week_due: 1,
+        invited_back_week: 1,
+      };
+    },
+    async returnCurve(_from, _to, days) {
+      return Array.from({ length: days }, (_, i) => ({
+        day: i + 1,
+        due: 4,
+        back: Math.max(0, 3 - i),
+        invited_due: 1,
+        invited_back: 1,
+      }));
+    },
     async cohorts(weeks) {
       return Array.from({ length: weeks }, (_, i) => ({
         week: new Date(Date.UTC(2026, 9, 26) - i * 7 * 86_400_000)

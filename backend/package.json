@@ -36,6 +36,7 @@
     "express-rate-limit": "^8.7.2",
     "helmet": "^8.0.0",
     "jose": "^6.2.15",
+    "lucide": "1.66.0",
     "pino": "^10.4.0",
     "satori": "^0.33.5",
     "sharp": "^0.35.5",

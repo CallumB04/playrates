@@ -47,11 +47,14 @@ const SORT_COLUMNS: Record<GameLogSort, string> = {
   hoursPlayed: "hours_played",
   hoursToBeat: "hours_to_beat",
   added: "created_at",
+  // A log has one ending, and its column sorts alphabetically, so this list,
+  // which predates the sort and no client asks it of, keeps to the rating.
+  ending: "rating",
 };
 
 /** The same orderings over game_log_rollups, a row per game: the mean
  *  rating, the latest play, the best completion, the total hours, the
- *  quickest beat and the first log. */
+ *  quickest beat, the first log and the best ending. */
 const ROLLUP_SORT_COLUMNS: Record<GameLogSort, string> = {
   rating: "rating",
   gameRating: "game_avg_rating",
@@ -63,6 +66,7 @@ const ROLLUP_SORT_COLUMNS: Record<GameLogSort, string> = {
   hoursPlayed: "hours_played",
   hoursToBeat: "hours_to_beat",
   added: "first_added_at",
+  ending: "ending_rank",
 };
 
 /** What a shelf is filtered and ordered by. Bundled rather than threaded
@@ -77,6 +81,10 @@ export interface ShelfQuery {
   q?: string;
   /** Narrows to games with a log on the shelf's status for this console. */
   system?: string;
+  /** Narrows to games in this genre, by slug. */
+  genre?: string;
+  /** Narrows to games this other member has logged too, in any status. */
+  common?: { viewerId: string };
 }
 
 export interface GameLogsRepository {
@@ -100,6 +108,10 @@ export interface GameLogsRepository {
   setWishlistOrder(userId: string, gameIds: number[]): Promise<void>;
   /** The consoles on one of their shelves, each once. */
   shelfConsoles(userId: string, status: string): Promise<string[]>;
+  /** The genres of the games on one of their shelves, as slugs, each once. */
+  shelfGenres(userId: string, status: string): Promise<string[]>;
+  /** Each game's genres, as slugs; a game with none is left out. */
+  genresOf(gameIds: number[]): Promise<Map<number, string[]>>;
   /** The user's log, or null if it is not theirs. */
   findOwn(userId: string, logId: number): Promise<GameLogRowWithGame | null>;
   /** Oldest first, so the consoles keep the order they were logged in. */
@@ -216,6 +228,42 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
       if (matched.length === 0) return { gameIds: [], total: 0 };
     }
 
+    if (query.genre) {
+      const genre = query.genre;
+      const rows = await allPages(async (from, to) => {
+        const { data, error } = await db
+          .from("game_logs")
+          .select("game_id, games!inner(game_genres!inner(genre_slug))")
+          .eq("user_id", userId)
+          .eq("games.game_genres.genre_slug", genre)
+          .order("id")
+          .range(from, to);
+        if (error) throw error;
+        return (data ?? []) as { game_id: number }[];
+      });
+      const inGenre = new Set(rows.map((r) => r.game_id));
+      matched = (matched ?? [...inGenre]).filter((id) => inGenre.has(id));
+      if (matched.length === 0) return { gameIds: [], total: 0 };
+    }
+
+    // Any log of theirs counts, wishlist included.
+    if (query.common) {
+      const viewerId = query.common.viewerId;
+      const rows = await allPages(async (from, to) => {
+        const { data, error } = await db
+          .from("game_logs")
+          .select("game_id")
+          .eq("user_id", viewerId)
+          .order("id")
+          .range(from, to);
+        if (error) throw error;
+        return (data ?? []) as { game_id: number }[];
+      });
+      const viewers = new Set(rows.map((r) => r.game_id));
+      matched = (matched ?? [...viewers]).filter((id) => viewers.has(id));
+      if (matched.length === 0) return { gameIds: [], total: 0 };
+    }
+
     let builder = db
       .from("game_log_rollups")
       .select("game_id", { count: "exact" })
@@ -278,6 +326,49 @@ export const createGameLogsRepository = (db: Db): GameLogsRepository => ({
         ((data ?? []) as { system_slug: string }[]).map((r) => r.system_slug),
       ),
     ].sort();
+  },
+
+  async shelfGenres(userId, status) {
+    const rows = await allPages(async (from, to) => {
+      const { data, error } = await db
+        .from("game_logs")
+        .select("games!inner(game_genres(genre_slug))")
+        .eq("user_id", userId)
+        .eq("status", status)
+        .order("id")
+        .range(from, to);
+      if (error) throw error;
+      return (data ?? []) as unknown as {
+        games: { game_genres: { genre_slug: string }[] };
+      }[];
+    });
+    return [
+      ...new Set(
+        rows.flatMap((r) => r.games.game_genres.map((g) => g.genre_slug)),
+      ),
+    ].sort();
+  },
+
+  async genresOf(gameIds) {
+    const byGame = new Map<number, string[]>();
+    // In slices, so the list of ids stays well inside a URL.
+    for (let i = 0; i < gameIds.length; i += 200) {
+      const { data, error } = await db
+        .from("game_genres")
+        .select("game_id, genre_slug")
+        .in("game_id", gameIds.slice(i, i + 200));
+      if (error) throw error;
+      for (const row of (data ?? []) as {
+        game_id: number;
+        genre_slug: string;
+      }[]) {
+        byGame.set(row.game_id, [
+          ...(byGame.get(row.game_id) ?? []),
+          row.genre_slug,
+        ]);
+      }
+    }
+    return byGame;
   },
 
   async findOwn(userId, logId) {

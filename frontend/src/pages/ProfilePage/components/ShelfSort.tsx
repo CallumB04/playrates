@@ -1,5 +1,5 @@
 import { ArrowDownWideNarrow, ArrowUpNarrowWide } from "lucide-react";
-import type { GameLogSort, SortDirection } from "@playrates/shared";
+import type { GameLogSort, GameStatus, SortDirection } from "@playrates/shared";
 import Dropdown from "../../../components/ui/Dropdown";
 import { directionLabel, shelfSortOptions } from "../lib/shelfSort";
 
@@ -9,6 +9,7 @@ interface ShelfSortProps {
     /** Only to word the rating option, which is not "yours" on someone
      *  else's profile. */
     isMyAccount: boolean;
+    shelf: GameStatus;
     onChange: (next: { sort?: GameLogSort; direction?: SortDirection }) => void;
 }
 
@@ -21,22 +22,26 @@ const ShelfSort = ({
     sort,
     direction,
     isMyAccount,
+    shelf,
     onChange,
 }: ShelfSortProps) => {
     const flipped = direction === "asc";
     const Arrow = flipped ? ArrowUpNarrowWide : ArrowDownWideNarrow;
 
     return (
-        <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+        // Room for "Sort by" and "PlayRates average" uncut: a phone too
+        // narrow for them beside Filters puts the sort on a line of its own.
+        <div className="flex min-w-68 flex-1 items-center gap-2 sm:min-w-0 sm:flex-none">
             <Dropdown
-                options={shelfSortOptions(isMyAccount).map((option) => ({
+                options={shelfSortOptions(isMyAccount, shelf).map((option) => ({
                     value: option.value,
                     label: option.label,
                 }))}
                 value={sort}
                 onChange={(value) => onChange({ sort: value as GameLogSort })}
                 aria-label="Sort by"
-                className="min-w-0 flex-1 sm:w-44 sm:flex-none"
+                lead="Sort by"
+                className="min-w-0 flex-1 sm:w-56 sm:flex-none"
             />
             <button
                 type="button"

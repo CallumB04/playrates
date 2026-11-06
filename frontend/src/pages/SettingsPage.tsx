@@ -490,6 +490,9 @@ const SettingsPage = () => {
                     <div>
                         <AboutPrivacy
                             about={user.about}
+                            facts={user.facts ?? {}}
+                            online={user.online}
+                            hideOnline={hideOnline}
                             visibility={aboutVisibility}
                             onChange={(next) =>
                                 saveToggle<AboutVisibility>(

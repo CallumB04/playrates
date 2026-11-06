@@ -16,6 +16,37 @@ export const moveTo = (
     return next;
 };
 
+/** What narrows a wishlist, as the shelves' own filters narrow them on
+ *  the server. `common` is the viewer's logged games, to keep only those. */
+export interface WishlistFilters {
+    console?: string;
+    q?: string;
+    genre?: string;
+    common?: ReadonlySet<number>;
+}
+
+export const wishlistFiltered = ({
+    console: consoleSlug,
+    q,
+    genre,
+    common,
+}: WishlistFilters) => !!(consoleSlug || q?.trim() || genre || common);
+
+export const narrowWishlist = <T extends WishlistEntry>(
+    entries: T[],
+    { console: consoleSlug, q, genre, common }: WishlistFilters
+): T[] => {
+    const term = q?.trim().toLocaleLowerCase();
+    return entries.filter(
+        (e) =>
+            (!consoleSlug || e.consoles.includes(consoleSlug)) &&
+            (!term ||
+                (e.game?.title ?? "").toLocaleLowerCase().includes(term)) &&
+            (!genre || (e.genres ?? []).includes(genre)) &&
+            (!common || common.has(e.gameId))
+    );
+};
+
 export const WISHLIST_SORTS = ["rank", "added", "released", "title"] as const;
 export type WishlistSort = (typeof WISHLIST_SORTS)[number];
 

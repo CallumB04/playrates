@@ -1,5 +1,11 @@
+import {
+  EMAIL_MESSAGE_GROUPS,
+  type AdminEmailMessagesQuery,
+  type EmailMessageStatus,
+} from "@playrates/shared";
 import type { Db } from "../../config/supabase.js";
 import type {
+  EmailMessageWithMember,
   EmailSendTotalRow,
   MemberEmailRow,
   WishlistReleaseRow,
@@ -14,6 +20,27 @@ export interface SlotRequest {
   cap: number | null;
   /** False for a broadcast, which Resend counts apart. */
   transactional: boolean;
+}
+
+/** One email to one person, as it's written to the log. */
+export interface NewEmailMessage {
+  userId: string | null;
+  to: string;
+  kind: string;
+  subject: string;
+  status: Extract<EmailMessageStatus, "capped" | "failed" | "sent">;
+  resendId?: string | null;
+  broadcastId?: string | null;
+  detail?: string | null;
+}
+
+/** What Resend's webhook said became of an email. */
+export interface DeliveryEvent {
+  resendId: string;
+  broadcastId: string | null;
+  to: string | null;
+  status: EmailMessageStatus;
+  detail: string | null;
 }
 
 export interface EmailRepository {
@@ -57,9 +84,16 @@ export interface EmailRepository {
   ): Promise<{ id: number | null; granted: number }>;
   markFailed(id: number, error: string): Promise<void>;
   sendTotals(since: string): Promise<EmailSendTotalRow[]>;
+  logMessages(messages: NewEmailMessage[]): Promise<void>;
+  /** Moves the email's row on, never back. How many rows it moved. */
+  recordEvent(event: DeliveryEvent): Promise<number>;
+  /** The log, newest first, one more than `limit` to tell if there's more. */
+  messages(query: AdminEmailMessagesQuery): Promise<EmailMessageWithMember[]>;
 }
 
 const UNIQUE_VIOLATION = "23505";
+/** Matches the column's own limit on what's kept of an error. */
+const DETAIL_MAX = 500;
 /** PostgREST hands back at most this many rows a request. */
 const PAGE = 1000;
 
@@ -189,7 +223,7 @@ export const createEmailRepository = (db: Db): EmailRepository => ({
   async markFailed(id, message) {
     const { error } = await db
       .from("email_sends")
-      .update({ status: "failed", error: message.slice(0, 500) })
+      .update({ status: "failed", error: message.slice(0, DETAIL_MAX) })
       .eq("id", id);
     if (error) throw error;
   },
@@ -204,5 +238,48 @@ export const createEmailRepository = (db: Db): EmailRepository => ({
       sends: Number(r.sends),
       recipients: Number(r.recipients),
     }));
+  },
+
+  async logMessages(messages) {
+    if (messages.length === 0) return;
+    const { error } = await db.from("email_messages").insert(
+      messages.map((m) => ({
+        user_id: m.userId,
+        to_address: m.to,
+        kind: m.kind,
+        subject: m.subject,
+        status: m.status,
+        resend_id: m.resendId ?? null,
+        broadcast_id: m.broadcastId ?? null,
+        detail: m.detail?.slice(0, DETAIL_MAX) ?? null,
+      })),
+    );
+    if (error) throw error;
+  },
+
+  async recordEvent({ resendId, broadcastId, to, status, detail }) {
+    const { data, error } = await db.rpc("record_email_event", {
+      p_resend_id: resendId,
+      p_broadcast_id: broadcastId,
+      p_to: to,
+      p_status: status,
+      p_detail: detail,
+    });
+    if (error) throw error;
+    return Number(data ?? 0);
+  },
+
+  async messages({ before, limit, group, userId }) {
+    let builder = db
+      .from("email_messages")
+      .select("*, profiles(id, username, avatar_url, accent)")
+      .order("id", { ascending: false })
+      .limit(limit + 1);
+    if (before) builder = builder.lt("id", before);
+    if (group) builder = builder.in("status", [...EMAIL_MESSAGE_GROUPS[group]]);
+    if (userId) builder = builder.eq("user_id", userId);
+    const { data, error } = await builder;
+    if (error) throw error;
+    return (data ?? []) as unknown as EmailMessageWithMember[];
   },
 });

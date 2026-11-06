@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Megaphone, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import type {
     CommunityMessage,
     PatchNote,
@@ -16,29 +16,19 @@ import { formatDate } from "../../../lib/format";
 import MessageItem, { type MessageActions } from "../MessageItem";
 import PatchNoteNotify from "../PatchNoteNotify";
 import PatchNoteEditor from "./PatchNoteEditor";
-import { splitReleaseTitle } from "./releaseTitle";
+import { isMajorRelease, splitReleaseTitle } from "./releaseTitle";
 
-export const OfficialBadge = () => (
-    <span className="rounded-xs border border-accent/60 px-1.5 py-px text-stamp font-semibold tracking-wider text-accent-content uppercase">
-        Official
-    </span>
-);
-
-/** The newest release, said beside its version: a dot in the accent, as
- *  the release list marks it too. */
-const LatestDot = () => (
-    <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-accent" />
-);
-
-const LatestLabel = () => (
-    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent-quiet px-2.5 py-1 text-label-sm font-medium text-accent-content">
-        <LatestDot />
+/** The newest release, said in words in the accent rather than a badge:
+ *  beside its date, and in the list of releases. */
+const LatestText = ({ className }: { className?: string }) => (
+    <span className={cn("font-medium text-accent-content", className)}>
         Latest
     </span>
 );
 
-/** A release's heading: the version large, its name beside it, the date
- *  beneath, and Latest across from it on the newest. */
+/** A release's heading: the version, its name beside it, and under them
+ *  the date, with Latest beside it on the newest. Every release's the same
+ *  size; the list beside them is where the big ones stand out. */
 const ReleaseHeader = ({
     title,
     createdAt,
@@ -50,34 +40,39 @@ const ReleaseHeader = ({
 }) => {
     const { version, name } = splitReleaseTitle(title);
     return (
-        <header className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col gap-1">
-                <h2 className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                    <span className="font-display text-title text-content tabular-nums">
-                        {version ?? name}
+        <header className="flex min-w-0 flex-col gap-0.5">
+            <h2 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                <span className="font-display text-section text-content tabular-nums">
+                    {version ?? name}
+                </span>
+                {version && name && (
+                    <span className="text-body text-content-secondary">
+                        {name}
                     </span>
-                    {version && name && (
-                        <span className="font-display text-section text-content-secondary">
-                            {name}
-                        </span>
-                    )}
-                </h2>
-                <time
-                    dateTime={createdAt}
-                    className="text-label-sm text-content-muted"
-                >
-                    {formatDate(createdAt)}
-                </time>
-            </div>
-            {latest && <LatestLabel />}
+                )}
+            </h2>
+            <p className="flex items-center gap-1.5 text-label-sm text-content-muted">
+                <time dateTime={createdAt}>{formatDate(createdAt)}</time>
+                {latest && (
+                    <>
+                        <span aria-hidden>·</span>
+                        <LatestText />
+                    </>
+                )}
+            </p>
         </header>
     );
 };
 
 const hashOf = (entry: CommunityMessage) => `message-${entry.id}`;
 
-/** Every release, to jump to: a rail beside them on a wide screen, a row
- *  above them on a narrower one. */
+/** One release has nothing to jump between. */
+const hasReleaseIndex = (entries: CommunityMessage[]) =>
+    entries.filter((e) => e.patchNote).length >= 2;
+
+/** Every release, newest first, to jump to: a rail beside them on a wide
+ *  screen, a row above them on a narrower one. The big releases (v1.1)
+ *  stand out from the patches on them (v1.1.2), in place. */
 const ReleaseIndex = ({
     entries,
     current,
@@ -89,7 +84,7 @@ const ReleaseIndex = ({
 }) => {
     const fade = useOverflowFade<HTMLUListElement>();
     const titled = entries.filter((e) => e.patchNote);
-    if (titled.length < 2) return null;
+    if (!hasReleaseIndex(entries)) return null;
 
     return (
         <nav
@@ -103,12 +98,13 @@ const ReleaseIndex = ({
                 ref={fade.ref}
                 onScroll={fade.onScroll}
                 style={fade.style}
-                className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-0 lg:pb-0"
+                className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-col lg:items-stretch lg:gap-0.5 lg:overflow-visible lg:px-0 lg:pb-0"
             >
                 {titled.map((entry) => {
                     const { version, name } = splitReleaseTitle(
                         entry.patchNote!.title
                     );
+                    const major = isMajorRelease(version) || !version;
                     const active = entry.id === current;
                     return (
                         <li key={entry.id} className="shrink-0">
@@ -116,27 +112,27 @@ const ReleaseIndex = ({
                                 to={{ hash: hashOf(entry) }}
                                 aria-current={active ? "location" : undefined}
                                 className={cn(
-                                    "flex min-h-11 items-center gap-2 rounded-sm border px-3 text-label lift lg:min-h-0 lg:flex-col lg:items-start lg:gap-0 lg:border-transparent lg:px-2.5 lg:py-1.5",
+                                    "flex min-h-11 items-center gap-x-2 rounded-sm border px-3 tabular-nums lift lg:min-h-0 lg:flex-wrap lg:border-transparent lg:px-2.5",
                                     "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
+                                    major
+                                        ? "text-body-sm font-semibold lg:py-1.5"
+                                        : "text-label-sm lg:py-1",
                                     active
                                         ? "border-strong bg-surface-raised text-content"
-                                        : "border-subtle text-content-secondary hover:bg-surface-hover hover:text-content"
+                                        : major
+                                          ? "border-subtle text-content hover:bg-surface-hover"
+                                          : "border-subtle text-content-muted hover:bg-surface-hover hover:text-content"
                                 )}
                             >
-                                <span className="flex items-center gap-1.5 font-medium tabular-nums">
-                                    {version ?? name}
-                                    {entry.id === latestId && (
-                                        <>
-                                            <LatestDot />
-                                            <span className="sr-only">
-                                                (latest)
-                                            </span>
-                                        </>
-                                    )}
-                                </span>
-                                <span className="hidden text-label-sm text-content-muted lg:block">
-                                    {formatDate(entry.createdAt)}
-                                </span>
+                                {version ?? name}
+                                {entry.id === latestId && (
+                                    <LatestText className="text-label-sm" />
+                                )}
+                                {major && (
+                                    <span className="hidden w-full text-label-sm font-normal text-content-muted lg:block">
+                                        {formatDate(entry.createdAt)}
+                                    </span>
+                                )}
                             </Link>
                         </li>
                     );
@@ -174,35 +170,27 @@ const PatchNotesThread = ({
 
     return (
         <>
-            <header className="relative overflow-hidden rounded-lg border border-accent/40 bg-accent-quiet p-4 sm:p-6">
-                <div className="flex items-start gap-4">
-                    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-accent text-content-on-solid">
-                        <Megaphone size={22} aria-hidden />
-                    </span>
-                    <div className="min-w-0">
-                        <OfficialBadge />
-                        <h1 className="mt-2 font-display text-title text-content">
-                            {detail.thread.title}
-                        </h1>
-                        <p className="mt-2 text-body-sm text-content-secondary">
-                            What’s changed on the site, newest at the top.
-                        </p>
-                    </div>
+            <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+                <div className="min-w-0">
+                    <h1 className="font-display text-title text-content">
+                        {detail.thread.title}
+                    </h1>
+                    <p className="mt-1 text-body-sm text-content-secondary">
+                        What’s changed on the site, newest at the top.
+                    </p>
                 </div>
+                {/* Beside the title, where only whoever writes them sees it. */}
+                {detail.canPost && !writing && (
+                    <Button
+                        variant="secondary"
+                        onClick={() => setWriting(true)}
+                        className="w-full sm:w-auto"
+                    >
+                        <Plus size={15} aria-hidden />
+                        Write patch notes
+                    </Button>
+                )}
             </header>
-
-            {/* Below the header rather than on it: the header is what
-                every reader sees, the button only whoever writes them. */}
-            {detail.canPost && !writing && (
-                <Button
-                    variant="secondary"
-                    onClick={() => setWriting(true)}
-                    className="w-full sm:w-auto sm:self-end"
-                >
-                    <Plus size={15} aria-hidden />
-                    Write patch notes
-                </Button>
-            )}
 
             {writing && (
                 <section className={cardClass("flex flex-col gap-3")}>
@@ -223,7 +211,15 @@ const PatchNotesThread = ({
             {entries.length === 0 ? (
                 <EmptyNote>No patch notes yet.</EmptyNote>
             ) : (
-                <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[9.5rem_minmax(0,1fr)] lg:gap-8">
+                // The rail's column only while there's a rail: alone, the
+                // releases fell into its 9.5rem.
+                <div
+                    className={cn(
+                        "flex flex-col gap-5",
+                        hasReleaseIndex(entries) &&
+                            "lg:grid lg:grid-cols-[9.5rem_minmax(0,1fr)] lg:gap-8"
+                    )}
+                >
                     <ReleaseIndex
                         entries={entries}
                         current={landedOn}
@@ -247,16 +243,13 @@ const PatchNotesThread = ({
                                             />
                                         ) : undefined
                                     }
-                                    badge={<OfficialBadge />}
                                     extraActions={
                                         note && <PatchNoteNotify note={note} />
                                     }
                                     highlighted={landedOn === entry.id}
                                     showEdited={false}
                                     linkify
-                                    className={cardClass(undefined, {
-                                        tone: i === 0 ? "latest" : "default",
-                                    })}
+                                    className={cardClass()}
                                 />
                             );
                         })}

@@ -51,6 +51,213 @@ describe("notifications", () => {
     expect(response.body.unread).toBe(0);
   });
 
+  it("clears the badge when the bell is opened, and counts what comes after", async () => {
+    const { app, state } = buildTestApp({
+      seed: { ...baseSeed(), notifications: [buildNotification()] },
+    });
+    const feed = async () =>
+      (
+        await request(app)
+          .get("/api/v1/me/notifications")
+          .set("Authorization", authHeader(USER_A))
+      ).body;
+
+    expect(await feed()).toMatchObject({ unread: 1, unseen: 1, seenAt: null });
+
+    const seen = await request(app)
+      .post("/api/v1/me/notifications/seen")
+      .set("Authorization", authHeader(USER_A));
+    expect(seen.status).toBe(204);
+    // Seen isn't read: the row stays unread until it's opened.
+    expect(await feed()).toMatchObject({ unread: 1, unseen: 0 });
+
+    state.notifications.push(
+      buildNotification({
+        id: 2,
+        dedupe_key: "later",
+        created_at: new Date(Date.now() + 1000).toISOString(),
+      }),
+    );
+    expect(await feed()).toMatchObject({ unread: 2, unseen: 1 });
+  });
+
+  it("opens only the caller's own bell", async () => {
+    const { app } = buildTestApp({
+      seed: { ...baseSeed(), notifications: [buildNotification()] },
+    });
+    await request(app)
+      .post("/api/v1/me/notifications/seen")
+      .set("Authorization", authHeader(USER_B));
+
+    const response = await request(app)
+      .get("/api/v1/me/notifications")
+      .set("Authorization", authHeader(USER_A));
+    expect(response.body.unseen).toBe(1);
+
+    expect(
+      (await request(app).post("/api/v1/me/notifications/seen")).status,
+    ).toBe(401);
+  });
+
+  /* Closing the bell reads what it showed, less what was marked unread
+     while it was open, so it names them. */
+  it("reads only the ones it's given, and only the caller's", async () => {
+    const { app, state } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        notifications: [
+          buildNotification(),
+          buildNotification({ id: 2, dedupe_key: "two" }),
+          buildNotification({ id: 3, user_id: USER_B, dedupe_key: "theirs" }),
+        ],
+      },
+    });
+
+    const response = await request(app)
+      .post("/api/v1/me/notifications/read-all")
+      .set("Authorization", authHeader(USER_A))
+      .send({ ids: [2, 3] });
+
+    expect(response.status).toBe(204);
+    const read = (id: number) =>
+      state.notifications.find((n) => n.id === id)!.read_at !== null;
+    expect([read(1), read(2), read(3)]).toEqual([false, true, false]);
+  });
+
+  it("still reads everything when it's sent nothing", async () => {
+    const { app, state } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        notifications: [
+          buildNotification(),
+          buildNotification({ id: 2, dedupe_key: "two" }),
+        ],
+      },
+    });
+
+    await request(app)
+      .post("/api/v1/me/notifications/read-all")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(state.notifications.every((n) => n.read_at !== null)).toBe(true);
+  });
+
+  it("refuses anything but a list of ids", async () => {
+    const { app } = buildTestApp({ seed: baseSeed() });
+    const response = await request(app)
+      .post("/api/v1/me/notifications/read-all")
+      .set("Authorization", authHeader(USER_A))
+      .send({ ids: ["1"], everyone: true });
+    expect(response.status).toBe(422);
+  });
+
+  /* Two friends accepting on one day share a row in the bell, so the
+     badge counts them once, by the day in the member's own time zone. */
+  it("counts a row of several unread once on the badge", async () => {
+    const accepted = (id: number, created_at: string) =>
+      buildNotification({
+        id,
+        kind: "friend_accepted",
+        actor_id: USER_B,
+        dedupe_key: `friend_accepted:${id}`,
+        created_at,
+      });
+    const { app } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        notifications: [
+          accepted(1, "2026-11-05T10:00:00.000Z"),
+          accepted(2, "2026-11-05T09:00:00.000Z"),
+          // The day before.
+          accepted(3, "2026-11-04T09:00:00.000Z"),
+          buildNotification({ id: 4, dedupe_key: "welcome-again" }),
+          buildNotification({
+            id: 5,
+            dedupe_key: "read",
+            read_at: "2026-11-05T11:00:00.000Z",
+          }),
+        ],
+      },
+    });
+
+    const response = await request(app)
+      .get("/api/v1/me/notifications")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.body.unread).toBe(4);
+    expect(response.body.unreadRows).toBe(3);
+  });
+
+  it("says what a day is by the member's own time zone", async () => {
+    const seed = baseSeed();
+    const accepted = (id: number, created_at: string) =>
+      buildNotification({
+        id,
+        kind: "friend_accepted",
+        actor_id: USER_B,
+        dedupe_key: `friend_accepted:${id}`,
+        created_at,
+      });
+    const { app } = buildTestApp({
+      seed: {
+        ...seed,
+        profiles: seed.profiles!.map((p) =>
+          p.id === USER_A ? { ...p, timezone: "Pacific/Auckland" } : p,
+        ),
+        // Two UTC days, one day in Auckland.
+        notifications: [
+          accepted(1, "2026-11-04T23:00:00.000Z"),
+          accepted(2, "2026-11-05T01:00:00.000Z"),
+        ],
+      },
+    });
+
+    const response = await request(app)
+      .get("/api/v1/me/notifications")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.body.unreadRows).toBe(1);
+  });
+
+  /* Clear all and its Undo, and a group of rows cleared as one. */
+  it("changes many of the caller's at once, and none of anyone else's", async () => {
+    const { app, state } = buildTestApp({
+      seed: {
+        ...baseSeed(),
+        notifications: [
+          buildNotification(),
+          buildNotification({ id: 2, dedupe_key: "two" }),
+          buildNotification({ id: 3, user_id: USER_B, dedupe_key: "theirs" }),
+        ],
+      },
+    });
+    const patch = (body: object) =>
+      request(app)
+        .patch("/api/v1/me/notifications")
+        .set("Authorization", authHeader(USER_A))
+        .send(body);
+    const row = (id: number) => state.notifications.find((n) => n.id === id)!;
+
+    expect((await patch({ ids: [1, 2, 3], archived: true })).status).toBe(204);
+    expect(row(1).archived_at).not.toBeNull();
+    // Clearing reads it, as it does one at a time.
+    expect(row(2).read_at).not.toBeNull();
+    expect(row(3).archived_at).toBeNull();
+
+    await patch({ ids: [1, 2], archived: false, read: false });
+    expect([row(1).archived_at, row(1).read_at]).toEqual([null, null]);
+
+    expect((await patch({ ids: [], archived: true })).status).toBe(422);
+    expect((await patch({ ids: [1] })).status).toBe(422);
+    expect(
+      (
+        await request(app)
+          .patch("/api/v1/me/notifications")
+          .send({ ids: [1], read: true })
+      ).status,
+    ).toBe(401);
+  });
+
   it("requires a signed-in caller", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 
@@ -248,6 +455,22 @@ describe("notifications", () => {
     });
     const request10 = (state: ReturnType<typeof buildTestApp>["state"]) =>
       state.notifications.find((n) => n.id === 10)!;
+
+    it("is left out of a change to many at once", async () => {
+      const { app, state } = buildTestApp({
+        seed: waiting([{ id: 11, dedupe_key: "other" }]),
+      });
+      const response = await request(app)
+        .patch("/api/v1/me/notifications")
+        .set("Authorization", authHeader(USER_A))
+        .send({ ids: [10, 11], archived: true });
+
+      expect(response.status).toBe(204);
+      expect(request10(state).archived_at).toBeNull();
+      expect(
+        state.notifications.find((n) => n.id === 11)!.archived_at,
+      ).not.toBeNull();
+    });
 
     it("cannot be read or archived by hand", async () => {
       const { app, state } = buildTestApp({ seed: waiting() });

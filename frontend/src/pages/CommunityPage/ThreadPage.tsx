@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import type {
     CommunityMessage,
     RichTextDoc,
@@ -13,8 +13,9 @@ import {
     useCommunityMutations,
     useThread,
 } from "../../hooks/queries/useCommunity";
-import { toPlainText } from "@playrates/shared";
+import { threadTrail, toPlainText } from "@playrates/shared";
 import { usePageMeta } from "../../hooks/usePageMeta";
+import Breadcrumbs from "../../components/ui/Breadcrumbs";
 import Button from "../../components/ui/Button";
 import { cardClass } from "../../components/ui/cardClass";
 import ConfirmPopup from "../../components/ui/ConfirmPopup";
@@ -199,13 +200,7 @@ const ThreadPage = () => {
                 isPatchNotes && "lg:max-w-5xl"
             )}
         >
-            <Link
-                to="/community"
-                className="inline-flex min-h-11 w-max items-center gap-1.5 text-label text-content-muted hover:text-content sm:min-h-0"
-            >
-                <ArrowLeft size={14} aria-hidden />
-                Community
-            </Link>
+            <Breadcrumbs trail={threadTrail(data.thread)} />
 
             {isPatchNotes ? (
                 <PatchNotesThread

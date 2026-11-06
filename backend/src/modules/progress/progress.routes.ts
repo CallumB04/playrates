@@ -13,6 +13,7 @@ import {
   UsernameParamSchema,
   type CardThemeKey,
   type LeaderboardPeriod,
+  type Metal,
   type StyleInput,
 } from "@playrates/shared";
 import { z } from "zod";
@@ -21,8 +22,9 @@ import { redirectToVersion } from "../../lib/imageVersion.js";
 import { PICTURE_CACHE } from "../../lib/pictureCache.js";
 import { perMinute } from "../../lib/rateLimit.js";
 import { validate } from "../../middleware/validate.js";
+import { renderMoment } from "./moment.image.js";
 import { renderPlayerCard } from "./progress.image.js";
-import type { ProgressService } from "./progress.service.js";
+import type { MomentQuery, ProgressService } from "./progress.service.js";
 
 interface Deps {
   service: ProgressService;
@@ -35,6 +37,31 @@ const callerId = (req: Parameters<RequestHandler>[0]): string => {
   if (!id) throw AppError.unauthorized();
   return id;
 };
+
+const MomentQuerySchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("badge"),
+    badge: z.string().min(1).max(40),
+    metal: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(4)
+      .transform((m) => m as Metal),
+  }),
+  z.object({
+    kind: z.literal("level"),
+    level: z.coerce.number().int().min(1).max(1000),
+  }),
+  z.object({
+    kind: z.literal("finished"),
+    game: z.coerce.number().int().positive(),
+  }),
+  z.object({
+    kind: z.literal("shelf"),
+    count: z.coerce.number().int().min(1).max(100_000),
+  }),
+]);
 
 const CardQuerySchema = z.object({
   theme: z.enum(CARD_THEME_KEYS).optional(),
@@ -231,6 +258,29 @@ export const createProgressRouter = ({
           v ? PICTURE_CACHE.versioned : PICTURE_CACHE.unversioned,
         )
         // Made to be shown anywhere, not only on the site's own origin.
+        .setHeader("Cross-Origin-Resource-Policy", "cross-origin")
+        .send(png);
+    },
+  );
+
+  // A badge, a level, a finished game or a shelf milestone as a picture of
+  // its own, for the share that offered it. Not versioned: what it shows
+  // can move (a rating changed, a new picture), so it's kept a few minutes.
+  router.get(
+    "/:username/moment.png",
+    imageLimiter,
+    validate({ params: UsernameParamSchema, query: MomentQuerySchema }),
+    async (req, res) => {
+      const { username } = req.valid!.params as { username: string };
+      const source = await service.momentSource(
+        username,
+        req.valid!.query as MomentQuery,
+      );
+      if (!source) throw AppError.notFound("Picture");
+      const png = await renderMoment(source);
+      res
+        .type("png")
+        .setHeader("Cache-Control", PICTURE_CACHE.unversioned)
         .setHeader("Cross-Origin-Resource-Policy", "cross-origin")
         .send(png);
     },

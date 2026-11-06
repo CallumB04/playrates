@@ -1,16 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { NotificationPatch } from "@playrates/shared";
-import {
-    fetchNotifications,
-    markAllNotificationsRead,
-    archiveAllNotifications,
-    patchNotification,
-    queryKeys,
-} from "../../api";
+import { useQuery } from "@tanstack/react-query";
+import { fetchNotifications, queryKeys } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 
-/** As many as the menu shows at once. Paging can come with a full page. */
-const MENU_LIMIT = 20;
+/** As many as the menu shows at once. Paging can come with a full page.
+ *  Read and cleared ones expire after two months, so it rarely fills. */
+const MENU_LIMIT = 30;
 
 /** The inbox query is mounted for as long as the bell is, so its unread count
  *  is what the badge reads. Polled, because a friend request arrives without
@@ -23,39 +17,5 @@ export const useNotifications = (archived: boolean, enabled = true) => {
         enabled: !!user && enabled,
         staleTime: 30_000,
         refetchInterval: 60_000,
-    });
-};
-
-/** Every mutation invalidates both lists: archiving moves a row between them. */
-const useNotificationsInvalidator = () => {
-    const queryClient = useQueryClient();
-    return () =>
-        queryClient.invalidateQueries({
-            queryKey: queryKeys.notifications.all,
-        });
-};
-
-export const usePatchNotification = () => {
-    const invalidate = useNotificationsInvalidator();
-    return useMutation({
-        mutationFn: ({ id, patch }: { id: number; patch: NotificationPatch }) =>
-            patchNotification(id, patch),
-        onSuccess: invalidate,
-    });
-};
-
-export const useArchiveAllNotifications = () => {
-    const invalidate = useNotificationsInvalidator();
-    return useMutation({
-        mutationFn: archiveAllNotifications,
-        onSuccess: invalidate,
-    });
-};
-
-export const useMarkAllNotificationsRead = () => {
-    const invalidate = useNotificationsInvalidator();
-    return useMutation({
-        mutationFn: markAllNotificationsRead,
-        onSuccess: invalidate,
     });
 };

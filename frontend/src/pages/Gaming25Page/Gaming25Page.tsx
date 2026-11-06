@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Grid3x3, Share2 } from "lucide-react";
+import { ArrowRight, Grid3x3, Share2 } from "lucide-react";
 import {
     GAMING_25_SIZE,
+    gaming25Trail,
     type Gaming25,
     type Gaming25Category,
 } from "@playrates/shared";
@@ -12,6 +13,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useGaming25, useGaming25Love } from "../../hooks/queries/useGaming25";
 import { usePageMeta } from "../../hooks/usePageMeta";
+import Breadcrumbs from "../../components/ui/Breadcrumbs";
 import Button from "../../components/ui/Button";
 import { buttonClass } from "../../components/ui/buttonClass";
 import LoveButton from "../../components/ui/LoveButton";
@@ -77,13 +79,10 @@ const LoadedGaming25 = ({ grid }: { grid: Gaming25 }) => {
 
     return (
         <div className="flex flex-col gap-4 sm:gap-6">
-            <Link
-                to={profilePath(username)}
-                className="-mb-1 inline-flex min-h-11 w-max items-center gap-1.5 text-label font-medium text-content-secondary hover:text-content sm:-mb-2 sm:min-h-0"
-            >
-                <ArrowLeft size={15} aria-hidden />
-                {isOwner ? "Your profile" : `${username}’s profile`}
-            </Link>
+            <Breadcrumbs
+                trail={gaming25Trail(username)}
+                className="-mb-1 sm:-mb-2"
+            />
             <header
                 className={cardClass(
                     "flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-6",

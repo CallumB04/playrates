@@ -107,6 +107,7 @@ const announcement = {
  *  for the ones someone remembered to test. */
 const ENDPOINTS: { method: "get" | "post" | "patch" | "put"; path: string; body?: object }[] = [
   { method: "get", path: "/api/v1/admin/stats/overview" },
+  { method: "get", path: "/api/v1/admin/stats/staying" },
   { method: "get", path: "/api/v1/admin/stats/users" },
   { method: "get", path: "/api/v1/admin/activity" },
   { method: "get", path: "/api/v1/admin/activity/counts" },
@@ -133,6 +134,7 @@ const ENDPOINTS: { method: "get" | "post" | "patch" | "put"; path: string; body?
   { method: "get", path: "/api/v1/admin/email/audience" },
   { method: "post", path: "/api/v1/admin/email/digest/test" },
   { method: "get", path: "/api/v1/admin/email/stats" },
+  { method: "get", path: "/api/v1/admin/email/messages" },
   { method: "get", path: "/api/v1/admin/health" },
   { method: "get", path: "/api/v1/admin/progress" },
   { method: "get", path: "/api/v1/admin/errors" },
@@ -191,6 +193,34 @@ describe("admin gate", () => {
       .set("Authorization", authHeader(ADMIN));
 
     expect(response.status).toBe(404);
+  });
+});
+
+describe("do people stay", () => {
+  it("answers for the period asked, with a curve as long as it", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const get = (range: string) =>
+      request(app)
+        .get(`/api/v1/admin/stats/staying?range=${range}`)
+        .set("Authorization", authHeader(ADMIN));
+
+    const month = await get("30d");
+    expect(month.status).toBe(200);
+    expect(month.body.range).toBe("30d");
+    expect(month.body.current.backWeek).toEqual({ of: 2, back: 1 });
+    expect(month.body.invited).toEqual({
+      joined: 1,
+      backWeek: { of: 1, back: 1 },
+    });
+    expect(month.body.curve).toHaveLength(30);
+    expect(month.body.curve[0]).toEqual({
+      day: 1,
+      everyone: { of: 4, back: 3 },
+      invited: { of: 1, back: 1 },
+    });
+
+    expect((await get("12m")).body.curve).toHaveLength(180);
+    expect((await get("forever")).status).toBe(422);
   });
 });
 
@@ -377,6 +407,42 @@ describe("admin announcements", () => {
       newsSubscribers: 3,
     });
     expect(response.body.days).toHaveLength(30);
+  });
+
+  it("lists who each email went to, newest first, a page at a time", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    await send(app, { ...announcement, email: true });
+
+    const first = await request(app)
+      .get("/api/v1/admin/email/messages?limit=2")
+      .set("Authorization", authHeader(ADMIN));
+    expect(first.status).toBe(200);
+    expect(first.body.data).toHaveLength(2);
+    expect(first.body.data[0]).toMatchObject({
+      kind: "announcement",
+      status: "sent",
+      to: expect.stringContaining("@example.test"),
+      member: { username: expect.any(String) },
+    });
+
+    const rest = await request(app)
+      .get(`/api/v1/admin/email/messages?limit=2&before=${first.body.nextBefore}`)
+      .set("Authorization", authHeader(ADMIN));
+    expect(rest.body.data).toHaveLength(1);
+    expect(rest.body.nextBefore).toBeNull();
+
+    const problems = await request(app)
+      .get("/api/v1/admin/email/messages?group=problems")
+      .set("Authorization", authHeader(ADMIN));
+    expect(problems.body.data).toEqual([]);
+  });
+
+  it("refuses a member filter that isn't an id", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const response = await request(app)
+      .get("/api/v1/admin/email/messages?userId=ana")
+      .set("Authorization", authHeader(ADMIN));
+    expect(response.status).toBe(422);
   });
 
   it("counts reads, and retracting takes every copy back", async () => {

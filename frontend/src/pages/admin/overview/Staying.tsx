@@ -1,184 +1,276 @@
 import type {
-    AdminCohorts,
-    AdminCohortWeek,
+    AdminPeriodFigure,
+    AdminRange,
     AdminReturn,
+    AdminStaying,
 } from "@playrates/shared";
+import type { ReactNode } from "react";
 import { cardClass } from "../../../components/ui/cardClass";
 import { EmptyNote } from "../../../components/ui/EmptyPlate";
 import { Skeleton } from "../../../components/ui/Skeleton";
-import { useAdminCohorts } from "../../../hooks/queries/useAdmin";
+import { useAdminStaying } from "../../../hooks/queries/useAdmin";
 import { cn } from "../../../lib/cn";
 import { formatCount } from "../../../lib/format";
-import { bucketLabel, share, shareLevel } from "../lib/adminFormat";
+import { RANGE_LABELS } from "../lib/adminFormat";
+import { pointsChange, rate, reachedCurve } from "../lib/staying";
+import LinePlot from "../components/LinePlot";
 import SectionHeader from "../components/SectionHeader";
+import { Change } from "./Change";
 
-const SHADE = [
-    "",
-    "bg-brand/8",
-    "bg-brand/16",
-    "bg-brand/26",
-    "bg-brand/38",
-] as const;
+const countChange = (current: number, previous: number): AdminPeriodFigure => ({
+    current,
+    previous,
+    change:
+        previous === 0
+            ? current === 0
+                ? 0
+                : null
+            : (current - previous) / previous,
+});
 
-/** A share of the week, shaded by how big it is. A window that hasn't
- *  closed for anyone yet reads as a dash. */
-const Cell = ({ part, whole }: { part: number; whole: number }) => (
-    <td
-        className={cn(
-            "px-1.5 py-2 text-center font-mono text-label sm:px-3",
-            whole === 0 ? "text-content-muted" : "text-content",
-            SHADE[shareLevel(part, whole)]
-        )}
-        title={
-            whole === 0
-                ? undefined
-                : `${formatCount(part)} of ${formatCount(whole)}`
-        }
-    >
-        {share(part, whole)}
-    </td>
-);
-
-const Returned = ({ value }: { value: AdminReturn }) => (
-    <Cell part={value.back} whole={value.of} />
-);
-
-const COLUMNS = [
-    "Got started",
-    "Logged 3 on day one",
-    "Back a week later",
-    "Back a month later",
-];
-
-const CohortTable = ({ weeks }: { weeks: AdminCohortWeek[] }) => (
-    <div className={cardClass("overflow-hidden", { padding: "none" })}>
-        <table className="w-full table-fixed border-collapse">
-            <caption className="sr-only">
-                Each signup week, and what share of it did each thing
-            </caption>
-            <thead>
-                <tr className="border-b border-subtle text-label-sm text-content-muted">
-                    <th
-                        scope="col"
-                        className="w-[30%] px-3 py-2.5 text-left font-medium sm:w-[22%] sm:px-4"
-                    >
-                        Week
-                    </th>
-                    {COLUMNS.map((label) => (
-                        <th
-                            key={label}
-                            scope="col"
-                            className="px-1.5 py-2.5 text-center align-bottom font-medium sm:px-3"
-                        >
-                            {label}
-                        </th>
-                    ))}
-                </tr>
-            </thead>
-            <tbody>
-                {weeks.map((week, i) => (
-                    <tr
-                        key={week.week}
-                        className="border-b border-subtle last:border-b-0"
-                    >
-                        <th
-                            scope="row"
-                            className="px-3 py-2 text-left font-normal sm:px-4"
-                        >
-                            <span className="block text-label text-content">
-                                {i === 0
-                                    ? "This week"
-                                    : bucketLabel(week.week, "week")}
-                            </span>
-                            <span className="block text-label-sm text-content-muted">
-                                {formatCount(week.signedUp)} joined
-                            </span>
-                        </th>
-                        <Cell part={week.onboarded} whole={week.signedUp} />
-                        <Cell part={week.loggedThree} whole={week.signedUp} />
-                        <Returned value={week.backWeek} />
-                        <Returned value={week.backMonth} />
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    </div>
-);
-
-const Step = ({
+const Figure = ({
     label,
     value,
-    of,
+    detail,
+    note,
 }: {
     label: string;
-    value: number;
-    of?: number;
+    value: string;
+    detail?: string;
+    note: ReactNode;
 }) => (
     <li className="flex min-w-0 flex-col gap-1">
         <span className="text-label text-content-secondary">{label}</span>
-        <span className="flex flex-wrap items-baseline gap-x-2">
-            <span className="font-display text-title text-content">
-                {formatCount(value)}
+        <span className="font-display text-title text-content">{value}</span>
+        {detail && (
+            <span className="font-mono text-label-sm text-content-muted">
+                {detail}
             </span>
-            {of !== undefined && (
-                <span className="font-mono text-label text-content-muted">
-                    {share(value, of)}
-                </span>
-            )}
-        </span>
+        )}
+        <span className="text-label-sm text-content-muted">{note}</span>
     </li>
 );
 
-const Referrals = ({ referrals }: { referrals: AdminCohorts["referrals"] }) => (
-    <section className={cardClass("flex flex-col gap-4")}>
-        <h3 className="text-label text-content-secondary">
-            Joined through an invite, same weeks
-        </h3>
-        <ol className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4">
-            <Step label="Joined" value={referrals.joined} />
-            <Step
+/** A share of the period's signups, and its move on the period before in
+ *  points, coloured, with the words in body ink beside it. */
+const RateFigure = ({
+    label,
+    current,
+    previous,
+    period,
+}: {
+    label: string;
+    current: AdminReturn;
+    previous: AdminReturn;
+    period: string;
+}) => {
+    const value = rate(current);
+    const change = pointsChange(current, previous, period);
+    return (
+        <Figure
+            label={label}
+            value={value === null ? "–" : `${value}%`}
+            detail={
+                current.of === 0
+                    ? "Too soon to tell"
+                    : `${formatCount(current.back)} of ${formatCount(current.of)}`
+            }
+            note={
+                change.figure ? (
+                    <>
+                        <span
+                            className={cn(
+                                "font-mono",
+                                change.tone === "up"
+                                    ? "text-success"
+                                    : "text-danger"
+                            )}
+                        >
+                            {change.figure}
+                        </span>{" "}
+                        {change.words}
+                    </>
+                ) : (
+                    change.words
+                )
+            }
+        />
+    );
+};
+
+const Figures = ({ data, period }: { data: AdminStaying; period: string }) => {
+    const { current, previous } = data;
+    const of = (n: AdminStaying["current"], back: number): AdminReturn => ({
+        back,
+        of: n.joined,
+    });
+    return (
+        <ol
+            className={cardClass(
+                "grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-5"
+            )}
+        >
+            <Figure
+                label="Joined"
+                value={formatCount(current.joined)}
+                note={
+                    <Change
+                        figure={countChange(current.joined, previous.joined)}
+                        previous={period}
+                    />
+                }
+            />
+            <RateFigure
                 label="Got started"
-                value={referrals.onboarded}
-                of={referrals.joined}
+                current={of(current, current.onboarded)}
+                previous={of(previous, previous.onboarded)}
+                period={period}
             />
-            <Step
-                label="Played 5 games"
-                value={referrals.gotGoing}
-                of={referrals.joined}
+            <RateFigure
+                label="Logged 3 on day one"
+                current={of(current, current.loggedThree)}
+                previous={of(previous, previous.loggedThree)}
+                period={period}
             />
-            <Step
-                label="Back a week later"
-                value={referrals.backWeek.back}
-                of={referrals.backWeek.of}
+            <RateFigure
+                label="Back after a week"
+                current={current.backWeek}
+                previous={previous.backWeek}
+                period={period}
+            />
+            <RateFigure
+                label="Back after a month"
+                current={current.backMonth}
+                previous={previous.backMonth}
+                period={period}
             />
         </ol>
-    </section>
-);
+    );
+};
 
-/** Whether the people who join keep coming, week by week. */
-const Staying = () => {
-    const { data, isPending, isError } = useAdminCohorts();
+const percentOf = (r: AdminReturn) => rate(r) ?? 0;
+
+/** Of the period's signups, the share still coming back each day after
+ *  joining: one shape to read, however long the period. */
+const Curve = ({ data }: { data: AdminStaying }) => {
+    const curve = reachedCurve(data.curve);
+    const withInvited = data.invited.joined > 0;
+    if (curve.length === 0) {
+        return (
+            <EmptyNote>
+                No one who joined is a day along yet, so there’s no curve.
+            </EmptyNote>
+        );
+    }
+    const words = (i: number) => {
+        const point = curve[i]!;
+        const { back, of } = point.everyone;
+        const invited = rate(point.invited);
+        return `Day ${point.day}: ${rate(point.everyone) ?? 0}% still coming back, ${formatCount(back)} of ${formatCount(of)}${
+            withInvited && invited !== null
+                ? `. Through an invite, ${invited}%`
+                : ""
+        }`;
+    };
+    return (
+        <section className={cardClass("flex flex-col gap-3")}>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <h3 className="text-label text-content-secondary">
+                    Still coming back, by days since joining
+                </h3>
+                {withInvited && (
+                    <span className="flex items-center gap-3 text-label-sm text-content-muted">
+                        <span className="flex items-center gap-1.5">
+                            <span
+                                aria-hidden
+                                className="h-0.5 w-3 rounded-full bg-brand"
+                            />
+                            Everyone
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                            <span
+                                aria-hidden
+                                className="h-0.5 w-3 rounded-full bg-content-muted"
+                            />
+                            Through an invite
+                        </span>
+                    </span>
+                )}
+            </div>
+            <LinePlot
+                series={[
+                    {
+                        key: "everyone",
+                        label: "Everyone",
+                        values: curve.map((p) => percentOf(p.everyone)),
+                        color: "var(--color-brand)",
+                    },
+                    ...(withInvited
+                        ? [
+                              {
+                                  key: "invited",
+                                  label: "Through an invite",
+                                  values: curve.map((p) =>
+                                      percentOf(p.invited)
+                                  ),
+                                  color: "var(--color-content-muted)",
+                                  quiet: true,
+                              },
+                          ]
+                        : []),
+                ]}
+                ceiling={100}
+                height={160}
+                label="Share of the people who joined still coming back, each day after joining"
+                describe={words}
+                axis={{
+                    start: "Day 1",
+                    end: `Day ${curve[curve.length - 1]!.day}`,
+                }}
+            />
+        </section>
+    );
+};
+
+/** Whether the people who join keep coming, over the page's period. */
+const Staying = ({ range }: { range: AdminRange }) => {
+    const { data, isPending, isError, isPlaceholderData } =
+        useAdminStaying(range);
+    const period = RANGE_LABELS[range];
     return (
         <section className="flex flex-col gap-4">
             <SectionHeader
                 title="Do people stay"
-                note="By the week they joined"
+                note={`The people who joined in the last ${period}`}
                 className="mb-0"
             />
             {isPending ? (
                 <Skeleton className="h-96 rounded-lg" />
             ) : isError || !data ? (
                 <EmptyNote>These didn’t load. Health says why.</EmptyNote>
+            ) : data.current.joined === 0 ? (
+                <EmptyNote>No one joined in the last {period}.</EmptyNote>
             ) : (
-                <>
-                    <CohortTable weeks={data.weeks} />
-                    <Referrals referrals={data.referrals} />
+                <div
+                    className={cn(
+                        "flex flex-col gap-4 transition-opacity",
+                        isPlaceholderData && "opacity-60"
+                    )}
+                >
+                    <Figures data={data} period={period} />
+                    <Curve data={data} />
                     <p className="text-label-sm text-content-muted">
-                        Back means any visit in that week: days 7 to 13, or 30
-                        to 36. A week counts toward it once that window has
-                        closed. Invites shared but not used aren’t recorded.
+                        Back after a week is any visit seven or more days after
+                        joining, counted once a week has passed for them; a
+                        month, thirty. The curve reads each day the same way.
+                        {data.invited.joined > 0 &&
+                            ` ${formatCount(data.invited.joined)} joined through an invite${
+                                data.invited.backWeek.of > 0
+                                    ? `, and ${rate(data.invited.backWeek)}% of them were back after a week`
+                                    : ""
+                            }.`}
                     </p>
-                </>
+                </div>
             )}
         </section>
     );

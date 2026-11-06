@@ -324,7 +324,7 @@ const ListEditor = ({
                                                         className="aspect-3/4 w-full"
                                                     />
                                                     {at >= 0 && (
-                                                        <span className="absolute top-1 left-1 grid size-5 place-items-center rounded-full bg-brand text-label-sm font-semibold text-content-on-solid shadow-plate">
+                                                        <span className="absolute top-1 left-1 grid size-5 place-items-center rounded-full bg-brand text-label-sm font-semibold text-content-on-solid shadow-solid">
                                                             <span className="cap-box">
                                                                 {at + 1}
                                                             </span>

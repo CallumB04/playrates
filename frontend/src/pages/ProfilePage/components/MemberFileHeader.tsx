@@ -5,7 +5,7 @@ import PresenceDot from "../../../components/ui/PresenceDot";
 import UserStatus from "../../../components/UserStatus";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import { figureClass } from "../../../components/ui/figureClass";
-import { formatHours, formatMonthYear } from "../../../lib/format";
+import { formatHours } from "../../../lib/format";
 import AvatarFrame from "../../../components/progress/AvatarFrame";
 import NameText from "../../../components/progress/NameText";
 import { cn } from "../../../lib/cn";
@@ -68,7 +68,7 @@ const MemberFileHeader = ({
                 </AvatarFrame>
             </span>
 
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 on-backdrop">
                 <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
                     <h1 className="font-display text-title break-words text-content">
                         <NameText
@@ -79,9 +79,6 @@ const MemberFileHeader = ({
                         </NameText>
                     </h1>
                     <UserStatus online={profile.online} />
-                    <span className="text-label text-content-muted">
-                        Member since {formatMonthYear(profile.createdAt)}
-                    </span>
                     {/* Here, not under the friend button, where it moved
                         the buttons each time the friendship changed. */}
                     {friendsSince && (

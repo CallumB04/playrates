@@ -4,9 +4,15 @@ import {
     GAME_LOG_SORTS,
     rollupLogs,
     type GameLog,
+    type GameStatus,
     type ShelfEntry,
 } from "@playrates/shared";
-import { directionLabel, shelfFoot, shelfSortOptions } from "./shelfSort";
+import {
+    directionLabel,
+    shelfFoot,
+    shelfSortOptions,
+    sortForShelf,
+} from "./shelfSort";
 
 /** A game on a shelf with one log, the log built from these overrides. */
 const log = (overrides: Partial<GameLog> = {}): ShelfEntry => {
@@ -49,14 +55,14 @@ const log = (overrides: Partial<GameLog> = {}): ShelfEntry => {
 describe("shelfSortOptions", () => {
     it("offers every sort the API accepts", () => {
         expect(
-            shelfSortOptions(true)
+            shelfSortOptions(true, "played")
                 .map((s) => s.value)
                 .sort()
         ).toEqual([...GAME_LOG_SORTS].sort());
     });
 
     it("words both directions for each, since none of them is 'ascending'", () => {
-        for (const option of shelfSortOptions(true)) {
+        for (const option of shelfSortOptions(true, "played")) {
             expect(option.ascending, option.value).not.toBe("");
             expect(option.descending, option.value).not.toBe(option.ascending);
         }
@@ -65,15 +71,31 @@ describe("shelfSortOptions", () => {
     /* The figure belongs to whoever's profile it is, and "Your rating" on
        someone else's shelf claims it is the viewer's. */
     it("calls the rating yours only on your own profile", () => {
-        expect(shelfSortOptions(true)[0]!.label).toBe("Your rating");
-        expect(shelfSortOptions(false)[0]!.label).toBe("User rating");
+        expect(shelfSortOptions(true, "played")[0]!.label).toBe("Your rating");
+        expect(shelfSortOptions(false, "played")[0]!.label).toBe("User rating");
     });
 
     it("names the site's own average as the site's", () => {
-        const average = shelfSortOptions(true).find(
+        const average = shelfSortOptions(true, "played").find(
             (s) => s.value === "gameRating"
         );
         expect(average?.label).toBe("PlayRates average");
+    });
+});
+
+describe("sorting by how it ended", () => {
+    it("is offered on the played shelf alone", () => {
+        const offers = (shelf: GameStatus) =>
+            shelfSortOptions(true, shelf).some((s) => s.value === "ending");
+        expect(offers("played")).toBe(true);
+        expect(offers("playing")).toBe(false);
+        expect(offers("backlog")).toBe(false);
+    });
+
+    it("falls back to the rating on a shelf without endings", () => {
+        expect(sortForShelf("ending", "backlog")).toBe("rating");
+        expect(sortForShelf("ending", "played")).toBe("ending");
+        expect(sortForShelf("title", "backlog")).toBe("title");
     });
 });
 
@@ -82,10 +104,44 @@ describe("directionLabel", () => {
         expect(directionLabel("title", "asc")).toBe("A to Z");
         expect(directionLabel("rating", "desc")).toBe("Highest first");
         expect(directionLabel("played", "desc")).toBe("Newest first");
+        expect(directionLabel("ending", "desc")).toBe("Mastered first");
     });
 });
 
 describe("shelfFoot", () => {
+    it("names the best ending of the game's played logs", () => {
+        const entry = log({ playedStatus: "retired" });
+        const finished: GameLog = {
+            ...entry.logs[0]!,
+            id: 3,
+            playedStatus: "finished",
+        };
+        const backlog: GameLog = {
+            ...entry.logs[0]!,
+            id: 4,
+            status: "backlog",
+            playedStatus: "mastered",
+        };
+        const logs = [entry.logs[0]!, finished, backlog];
+        const { container } = render(
+            <>
+                {
+                    shelfFoot(
+                        { ...entry, logs, rollup: rollupLogs(logs)! },
+                        "ending"
+                    ).value
+                }
+            </>
+        );
+        expect(container).toHaveTextContent("Finished");
+        expect(container.firstElementChild).toHaveClass("text-status-finished");
+    });
+
+    it("says played for a game with no ending, and a dash for one unplayed", () => {
+        expect(shelfFoot(log(), "ending").value).toBe("Played");
+        expect(shelfFoot(log({ status: "backlog" }), "ending").value).toBe("–");
+    });
+
     it("shows your own rating by default", () => {
         expect(shelfFoot(log(), "rating")).toEqual({ rating: 8.5 });
     });
@@ -144,12 +200,18 @@ describe("shelfFoot", () => {
         expect(shelfFoot(log(), "released").value).toBe("2007");
     });
 
-    it("shows completion as a percentage", () => {
+    it("shows completion as a percentage, in the scale's colour", () => {
         const partly = log({
             achievementsTotal: 24,
             achievementsCompleted: 14,
         });
-        expect(shelfFoot(partly, "completion").value).toBe("58%");
+        const { container } = render(
+            <>{shelfFoot(partly, "completion").value}</>
+        );
+        expect(container).toHaveTextContent("58%");
+        expect(container.firstElementChild).toHaveClass(
+            "text-completion-mid-text"
+        );
     });
 
     /* No achievements recorded is not nought per cent, and printing 0% would
@@ -248,6 +310,9 @@ describe("shelfFoot, a game logged on more than one console", () => {
     });
 
     it("shows the best completion, as trophy lists differ by console", () => {
-        expect(shelfFoot(both(), "completion").value).toBe("100%");
+        const { container } = render(
+            <>{shelfFoot(both(), "completion").value}</>
+        );
+        expect(container).toHaveTextContent("100%");
     });
 });

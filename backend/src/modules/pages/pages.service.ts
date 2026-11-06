@@ -19,15 +19,29 @@ import {
   hubWords,
   isHubYear,
   type Hub,
+  gameTrail,
+  gaming25Trail,
+  hubTrail,
+  listTrail,
+  reviewTrail,
+  threadTrail,
 } from "@playrates/shared";
 import type { Repositories } from "../../repositories.js";
 import type { GenreRow } from "../../types/database.types.js";
 import type { ReviewRowJoined } from "../reviews/reviews.repository.js";
 import { memoFor } from "../../lib/memo.js";
 import { inGridOrder } from "../gaming25/gaming25.mapper.js";
-import { toProfileVisibility } from "../profiles/profiles.mapper.js";
+import {
+  aboutVisibilityOf,
+  toProfileVisibility,
+} from "../profiles/profiles.mapper.js";
 import { excerpt, toParagraphs, type PageBody } from "./body.js";
-import { DEFAULT_IMAGE, WIDE_IMAGE_SIZE, type HeadMeta } from "./head.js";
+import {
+  DEFAULT_IMAGE,
+  WIDE_IMAGE_SIZE,
+  breadcrumbList,
+  type HeadMeta,
+} from "./head.js";
 
 /** Below this many, an average is one person's opinion, and a star rating
  *  in search results would say otherwise. */
@@ -100,17 +114,6 @@ const reviewItem = (row: ReviewRowJoined, withGame: boolean) => ({
  *
  * Each returns null when there is nothing at that address.
  */
-/** Where a page sits, for a search result's trail. */
-const breadcrumbs = (trail: { name: string; path: string }[]) => ({
-  "@type": "BreadcrumbList",
-  itemListElement: trail.map((crumb, i) => ({
-    "@type": "ListItem",
-    position: i + 1,
-    name: crumb.name,
-    item: `${SITE_ORIGIN}${crumb.path}`,
-  })),
-});
-
 const organisations = (names: string[]) =>
   names.map((name) => ({ "@type": "Organization", name }));
 
@@ -207,7 +210,11 @@ export const createPagesService = (repos: Repos) => {
     );
     return {
       heading: row.username,
-      lead: `A ${SITE_NAME} member since ${formatMonth(row.created_at)}.`,
+      // Only where they let anyone see when they joined.
+      lead:
+        aboutVisibilityOf(row).joined === "everyone"
+          ? `A ${SITE_NAME} member since ${formatMonth(row.created_at)}.`
+          : `A ${SITE_NAME} member.`,
       text: toParagraphs(row.bio ?? ""),
       sections: [
         {
@@ -337,10 +344,7 @@ export const createPagesService = (repos: Repos) => {
                   }
                 : {}),
             },
-            breadcrumbs([
-              { name: "Library", path: "/library" },
-              { name: row.title, path },
-            ]),
+            breadcrumbList(gameTrail(row)),
           ],
         },
         body,
@@ -372,7 +376,9 @@ export const createPagesService = (repos: Repos) => {
             : {
                 "@context": "https://schema.org",
                 "@type": "ProfilePage",
-                dateCreated: row.created_at,
+                ...(aboutVisibilityOf(row).joined === "everyone"
+                  ? { dateCreated: row.created_at }
+                  : {}),
                 mainEntity: {
                   "@type": "Person",
                   name: row.username,
@@ -437,6 +443,7 @@ export const createPagesService = (repos: Repos) => {
 
       return {
         body,
+        breadcrumbs: listTrail(row.owner_username, row),
         jsonLd: {
           "@context": "https://schema.org",
           "@type": "ItemList",
@@ -530,6 +537,7 @@ export const createPagesService = (repos: Repos) => {
 
       return {
         body,
+        breadcrumbs: gaming25Trail(profile.username),
         title: pageTitle(`${profile.username}'s Gaming 25`),
         description: truncateDescription(description),
         path,
@@ -565,6 +573,7 @@ export const createPagesService = (repos: Repos) => {
         // As with the game itself, a thread about an adult game says no more
         // and asks not to be listed.
         noindex: thread.game_has_sexual_content,
+        breadcrumbs: threadTrail(thread),
         jsonLd: thread.game_has_sexual_content
           ? undefined
           : {
@@ -632,6 +641,11 @@ export const createPagesService = (repos: Repos) => {
         card: "summary_large_image",
         type: "article",
         noindex: hidden,
+        breadcrumbs: reviewTrail({
+          id: row.id,
+          game: { id: row.game_id, title: game },
+          author,
+        }),
         jsonLd: hidden
           ? undefined
           : {
@@ -739,6 +753,7 @@ export const createPagesService = (repos: Repos) => {
         card: "summary",
         // A game with nothing like it is a page with nothing on it.
         noindex: rows.length === 0,
+        breadcrumbs: hubTrail(hub),
         jsonLd: {
           "@context": "https://schema.org",
           "@type": "ItemList",

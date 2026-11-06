@@ -5,7 +5,7 @@
  * stack); CI fails when that file and the migrations disagree.
  */
 
-import type { GameBackdrop } from "@playrates/shared";
+import type { EmailMessageStatus, GameBackdrop } from "@playrates/shared";
 
 export interface ProfileRow {
   id: string;
@@ -19,6 +19,9 @@ export interface ProfileRow {
    *  explicit games needs. */
   adult_confirmed_at: string | null;
   first_name: string | null;
+  /** YYYY-MM-DD. Only the age it makes is ever shown. Optional for rows
+   *  read before it was added. */
+  birth_date?: string | null;
   /** IANA zone name. Timestamps render in this; date-only columns do not. */
   timezone: string;
   /** When true, this profile reads as offline to everyone. */
@@ -217,6 +220,8 @@ export interface GameLogRollupRow {
   game_release_date: string | null;
   hours_to_beat: number | null;
   first_added_at: string;
+  /** The best played log's ending, mastered 4 down to none 0; null unplayed. */
+  ending_rank: number | null;
 }
 
 /** What user_log_stats() returns. */
@@ -389,6 +394,29 @@ export interface AdminCohortRow {
   referred_back_week: number;
 }
 
+/** What admin_staying returns for a period's signups. */
+export interface AdminStayingRow {
+  joined: number;
+  onboarded: number;
+  logged_three: number;
+  week_due: number;
+  back_week: number;
+  month_due: number;
+  back_month: number;
+  invited: number;
+  invited_week_due: number;
+  invited_back_week: number;
+}
+
+/** One day of admin_return_curve. */
+export interface AdminReturnRow {
+  day: number;
+  due: number;
+  back: number;
+  invited_due: number;
+  invited_back: number;
+}
+
 export interface ClientErrorRow {
   id: number;
   message: string;
@@ -429,6 +457,29 @@ export interface EmailLogRow {
   kind: string;
   ref: string;
   sent_at: string;
+}
+
+/** One email to one person, and where it got to. */
+export interface EmailMessageRow {
+  id: number;
+  user_id: string | null;
+  to_address: string;
+  kind: string;
+  subject: string;
+  status: EmailMessageStatus;
+  resend_id: string | null;
+  broadcast_id: string | null;
+  detail: string | null;
+  sent_at: string;
+  updated_at: string;
+}
+
+/** email_messages with its member, as the admin's log reads it. */
+export interface EmailMessageWithMember extends EmailMessageRow {
+  profiles: Pick<
+    ProfileRow,
+    "id" | "username" | "avatar_url" | "accent"
+  > | null;
 }
 
 /** One row of email_send_totals(): sends added up by day, kind and

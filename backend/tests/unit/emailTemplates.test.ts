@@ -350,7 +350,7 @@ describe("digestEmail", () => {
 });
 
 describe("patchNotesEmail from a note", () => {
-  it("lists the changes as written, each named by kind, links made absolute", () => {
+  it("lists the changes new first, each named by kind, links made absolute", () => {
     const email = patchNotesEmail(
       {
         subject: "New patch notes: v1.1.2",
@@ -371,9 +371,12 @@ describe("patchNotesEmail from a note", () => {
     );
     expect(email.html).toContain('href="https://playrates.test/settings"');
     expect(email.html).toContain("Fixed &lt;it&gt;.");
-    // In the order written: the fix first, though features once led.
-    expect(email.html.indexOf("Fix:")).toBeLessThan(
-      email.html.indexOf("Feature:"),
+    // By kind, as the page lists them: the feature first, though written second.
+    expect(email.html.indexOf("Feature:")).toBeLessThan(
+      email.html.indexOf("Fix:"),
+    );
+    expect(email.text.indexOf("- Feature:")).toBeLessThan(
+      email.text.indexOf("- Fix:"),
     );
     expect(email.text).toContain("- Fix: Fixed <it>.");
     expect(email.text).toContain(

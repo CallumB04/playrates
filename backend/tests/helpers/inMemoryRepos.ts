@@ -46,7 +46,10 @@ import type { ReviewRowJoined } from "../../src/modules/reviews/reviews.reposito
 import type { NotificationRowWithActor } from "../../src/modules/notifications/notifications.repository.js";
 import { createInMemoryCommunity } from "./inMemoryCommunity.js";
 import { createInMemoryEmailRepo } from "./inMemoryEmail.js";
-import type { EmailLogRow } from "../../src/types/database.types.js";
+import type {
+  EmailLogRow,
+  EmailMessageRow,
+} from "../../src/types/database.types.js";
 
 /** One row of email_sends. */
 export interface EmailSendRecord {
@@ -101,6 +104,7 @@ export interface SeedData {
   games?: GameRow[];
   gamePlatforms?: { game_id: number; platform_slug: string }[];
   gameSystems?: { game_id: number; system_slug: string }[];
+  gameGenres?: { game_id: number; genre_slug: string }[];
   gameLogs?: GameLogRow[];
   reviews?: ReviewRow[];
   friendships?: FriendshipRow[];
@@ -132,11 +136,14 @@ export interface InMemoryState {
   games: GameRow[];
   gamePlatforms: { game_id: number; platform_slug: string }[];
   gameSystems: { game_id: number; system_slug: string }[];
+  gameGenres: { game_id: number; genre_slug: string }[];
   gameLogs: GameLogRow[];
   reviews: ReviewRow[];
   reviewVotes: { review_id: number; user_id: string; reaction?: string }[];
   friendships: FriendshipRow[];
   notifications: NotificationRow[];
+  /** When each member last opened the bell (profiles.notifications_seen_at). */
+  notificationsSeenAt: Map<string, string>;
   platforms: PlatformRow[];
   platformSystems: PlatformSystemRow[];
   genres: GenreRow[];
@@ -197,9 +204,18 @@ export interface InMemoryState {
   progressMetrics: Map<string, Record<string, number>>;
   emailLog: EmailLogRow[];
   emailSends: EmailSendRecord[];
+  emailMessages: EmailMessageRow[];
   /** Members whose address isn't confirmed, so is never emailed. */
   unconfirmed: Set<string>;
 }
+
+/** ending_rank in game_log_rollups; played with no ending is 0. */
+const ENDING_RANK: Record<string, number> = {
+  mastered: 4,
+  finished: 3,
+  shelved: 2,
+  retired: 1,
+};
 
 const now = () => new Date("2026-01-01T00:00:00.000Z").toISOString();
 
@@ -245,6 +261,7 @@ export const createInMemoryRepos = (
     games: [...(seed.games ?? [])],
     gamePlatforms: [...(seed.gamePlatforms ?? [])],
     gameSystems: [...(seed.gameSystems ?? [])],
+    gameGenres: [...(seed.gameGenres ?? [])],
     gameLogs: [...(seed.gameLogs ?? [])],
     reviews: [...(seed.reviews ?? [])],
     reviewVotes: [],
@@ -284,7 +301,9 @@ export const createInMemoryRepos = (
     progressMetrics: new Map(),
     emailLog: [],
     emailSends: [],
+    emailMessages: [],
     unconfirmed: new Set(),
+    notificationsSeenAt: new Map(),
   };
 
   let nextLogId = 1000;
@@ -632,6 +651,19 @@ export const createInMemoryRepos = (
               }),
             ),
           emailsSent: state.emailLog.filter((e) => e.user_id === userId),
+          emailDeliveries: state.emailMessages
+            .filter((m) => m.user_id === userId)
+            .map(
+              ({ to_address, kind, subject, status, detail, sent_at, updated_at }) => ({
+                to_address,
+                kind,
+                subject,
+                status,
+                detail,
+                sent_at,
+                updated_at,
+              }),
+            ),
         };
       },
     },
@@ -1067,6 +1099,8 @@ export const createInMemoryRepos = (
               return l.hours_to_beat;
             case "added":
               return l.created_at;
+            case "ending":
+              return l.rating;
           }
         };
 
@@ -1114,7 +1148,24 @@ export const createInMemoryRepos = (
                   l.system_slug === query.system &&
                   (!query.status || l.status === query.status),
               ),
-          );
+          )
+          .filter(
+            ({ logs }) =>
+              !query.genre ||
+              state.gameGenres.some(
+                (g) =>
+                  g.game_id === logs[0]!.game_id &&
+                  g.genre_slug === query.genre,
+              ),
+          )
+          .filter(({ logs }) => {
+            if (!query.common) return true;
+            return state.gameLogs.some(
+              (l) =>
+                l.user_id === query.common!.viewerId &&
+                l.game_id === logs[0]!.game_id,
+            );
+          });
 
         const sortKey = ({
           logs,
@@ -1164,6 +1215,13 @@ export const createInMemoryRepos = (
             }
             case "added":
               return logs.map((l) => l.created_at).sort()[0]!;
+            // The best of the played logs', as ending_rank in the view.
+            case "ending": {
+              const ranks = logs
+                .filter((l) => l.status === "played")
+                .map((l) => ENDING_RANK[l.played_status ?? ""] ?? 0);
+              return ranks.length ? Math.max(...ranks) : null;
+            }
           }
         };
         const latest = (g: (typeof games)[number]) =>
@@ -1285,6 +1343,28 @@ export const createInMemoryRepos = (
               .map((l) => l.system_slug as string),
           ),
         ].sort();
+      },
+      async shelfGenres(userId, status) {
+        const onShelf = new Set(
+          state.gameLogs
+            .filter((l) => l.user_id === userId && l.status === status)
+            .map((l) => l.game_id),
+        );
+        return [
+          ...new Set(
+            state.gameGenres
+              .filter((g) => onShelf.has(g.game_id))
+              .map((g) => g.genre_slug),
+          ),
+        ].sort();
+      },
+      async genresOf(gameIds) {
+        const byGame = new Map<number, string[]>();
+        for (const g of state.gameGenres) {
+          if (!gameIds.includes(g.game_id)) continue;
+          byGame.set(g.game_id, [...(byGame.get(g.game_id) ?? []), g.genre_slug]);
+        }
+        return byGame;
       },
       async count() {
         return state.gameLogs.length;
@@ -1632,6 +1712,41 @@ export const createInMemoryRepos = (
             n.archived_at === null,
         ).length;
       },
+      async countUnseen(userId, since) {
+        return state.notifications.filter(
+          (n) =>
+            n.user_id === userId &&
+            n.read_at === null &&
+            n.archived_at === null &&
+            (since === null || n.created_at > since),
+        ).length;
+      },
+      async bellOwner(userId) {
+        return {
+          seenAt: state.notificationsSeenAt.get(userId) ?? null,
+          timezone:
+            state.profiles.find((p) => p.id === userId)?.timezone ?? null,
+        };
+      },
+      async unreadForRows(userId) {
+        return state.notifications
+          .filter(
+            (n) =>
+              n.user_id === userId &&
+              n.read_at === null &&
+              n.archived_at === null,
+          )
+          .map((n) => ({
+            id: n.id,
+            kind: n.kind,
+            created_at: n.created_at,
+            thread_id:
+              (n.data as { threadId?: number } | null)?.threadId ?? null,
+          }));
+      },
+      async markSeen(userId) {
+        state.notificationsSeenAt.set(userId, new Date().toISOString());
+      },
       async findById(id) {
         return state.notifications.find((n) => n.id === id) ?? null;
       },
@@ -1764,11 +1879,23 @@ export const createInMemoryRepos = (
           (n) => n.dedupe_key !== dedupeKey,
         );
       },
-      async markAllRead(userId, keepRequestsFrom) {
+      async updateMany(userId, ids, patch, keepRequestsFrom) {
+        for (const n of state.notifications) {
+          if (
+            n.user_id === userId &&
+            ids.includes(n.id) &&
+            !keptRequest(n, keepRequestsFrom)
+          ) {
+            Object.assign(n, patch);
+          }
+        }
+      },
+      async markAllRead(userId, keepRequestsFrom, ids) {
         for (const n of state.notifications) {
           if (
             n.user_id === userId &&
             n.archived_at === null &&
+            (!ids || ids.includes(n.id)) &&
             !keptRequest(n, keepRequestsFrom)
           ) {
             n.read_at ??= now();

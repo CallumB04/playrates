@@ -438,6 +438,35 @@ describe("shelves of games", () => {
     expect(await shelfOrder("sort=hoursToBeat&direction=asc")).toEqual([2, 1]);
   });
 
+  it("sorts the played shelf by how each game ended, best first", async () => {
+    const endings: Record<number, string | null> = {
+      1: "retired",
+      2: null,
+      3: "shelved",
+    };
+    const base = shelfSeed();
+    const { app } = buildTestApp({
+      seed: {
+        ...base,
+        gameLogs: base.gameLogs.map((l) => ({
+          ...l,
+          played_status: endings[l.id]!,
+        })),
+      },
+    });
+    const order = async (direction: string) =>
+      (
+        await request(app)
+          .get(
+            `/api/v1/me/shelf?status=played&sort=ending&direction=${direction}`,
+          )
+          .set(as(USER_A))
+      ).body.data.map((e: { gameId: number }) => e.gameId);
+
+    expect(await order("desc")).toEqual([2, 1]);
+    expect(await order("asc")).toEqual([1, 2]);
+  });
+
   /* The tab counts and the shelf's pages have to agree. */
   it("counts games per shelf the way the shelves list them", async () => {
     const { app } = buildTestApp({ seed: shelfSeed() });

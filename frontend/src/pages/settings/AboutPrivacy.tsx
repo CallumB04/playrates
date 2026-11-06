@@ -1,23 +1,49 @@
 import type {
     AboutField,
+    AboutKey,
     AboutVisibility,
     ProfileAbout,
+    ProfileFacts,
     ProfileVisibility,
 } from "@playrates/shared";
 import { Link } from "react-router-dom";
 import Dropdown from "../../components/ui/Dropdown";
 import { cn } from "../../lib/cn";
 import { PRIVACY_OPTIONS } from "../ProfilePage/components/privacyOptions";
-import { ABOUT_ROWS, linkLabel, steamLabel } from "../ProfilePage/lib/about";
+import type { IconComponent } from "../../lib/icons";
+import {
+    ABOUT_FACT_ROWS,
+    ABOUT_ROWS,
+    joinedText,
+    lastSeenText,
+    linkLabel,
+    steamLabel,
+} from "../ProfilePage/lib/about";
 
 const GROUPS = [
     { id: "about", title: "About you" },
     { id: "socials", title: "Socials" },
+    { id: "activity", title: "Activity" },
 ] as const;
+
+interface Row {
+    key: AboutKey;
+    label: string;
+    icon: IconComponent;
+    group: (typeof GROUPS)[number]["id"];
+    /** What the card says now; null with nothing to show or hide. */
+    value: string | null;
+    /** Why there's nothing to choose, where it isn't that it's empty. */
+    note?: string;
+}
 
 interface AboutPrivacyProps {
     /** Every field filled in, as its owner sees it. */
     about: ProfileAbout;
+    /** Every fact there is, as its owner sees it. */
+    facts: ProfileFacts;
+    online: boolean;
+    hideOnline: boolean;
     visibility: AboutVisibility;
     onChange: (next: AboutVisibility) => void;
     disabled?: boolean;
@@ -66,20 +92,54 @@ const PrivacyDropdown = ({
  */
 const AboutPrivacy = ({
     about,
+    facts,
+    online,
+    hideOnline,
     visibility,
     onChange,
     disabled,
     editHref,
 }: AboutPrivacyProps) => {
-    const filled = ABOUT_ROWS.filter(({ field }) => about[field]);
-    const levels = new Set(filled.map(({ field }) => visibility[field]));
+    const rows: Row[] = [
+        ...ABOUT_ROWS.map(({ field, label, icon, group }) => ({
+            key: field,
+            label,
+            icon,
+            group,
+            value: about[field] ? shown(field, about[field]) : null,
+        })),
+        ...ABOUT_FACT_ROWS.map(({ fact, label, icon }) => ({
+            key: fact,
+            label,
+            icon,
+            group: fact === "age" ? ("about" as const) : ("activity" as const),
+            value:
+                fact === "age"
+                    ? facts.age !== undefined
+                        ? String(facts.age)
+                        : null
+                    : fact === "joined"
+                      ? facts.joined
+                          ? joinedText(facts.joined)
+                          : null
+                      : facts.lastSeen
+                        ? lastSeenText(facts.lastSeen, online)
+                        : null,
+            note:
+                fact === "lastSeen" && hideOnline
+                    ? "Hidden with your online status"
+                    : undefined,
+        })),
+    ];
+    const filled = rows.filter((row) => row.value);
+    const levels = new Set(filled.map(({ key }) => visibility[key]));
     // Blank when they differ, which the dropdown shows as its placeholder.
     const all = levels.size === 1 ? [...levels][0]! : "";
 
     const setAll = (next: ProfileVisibility) =>
         onChange({
             ...visibility,
-            ...Object.fromEntries(filled.map(({ field }) => [field, next])),
+            ...Object.fromEntries(filled.map(({ key }) => [key, next])),
         });
 
     return (
@@ -105,64 +165,59 @@ const AboutPrivacy = ({
                         {title}
                     </h3>
                     <ul className="divide-y divide-subtle rounded-md border border-subtle">
-                        {ABOUT_ROWS.filter((row) => row.group === id).map(
-                            ({ field, label, icon: Icon }) => {
-                                const value = about[field];
-                                return (
-                                    <li
-                                        key={field}
-                                        className={cn(
-                                            "flex items-center gap-3 py-1.5 pr-1.5 pl-3",
-                                            !value && "bg-surface-sunken/40"
-                                        )}
-                                    >
-                                        <Icon
-                                            size={16}
-                                            aria-hidden
-                                            className="shrink-0 text-content-muted"
+                        {rows
+                            .filter((row) => row.group === id)
+                            .map(({ key, label, icon: Icon, value, note }) => (
+                                <li
+                                    key={key}
+                                    className={cn(
+                                        "flex items-center gap-3 py-1.5 pr-1.5 pl-3",
+                                        !value && "bg-surface-sunken/40"
+                                    )}
+                                >
+                                    <Icon
+                                        size={16}
+                                        aria-hidden
+                                        className="shrink-0 text-content-muted"
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-label-sm text-content-muted">
+                                            {label}
+                                        </p>
+                                        <p
+                                            className={
+                                                value
+                                                    ? "truncate text-body-sm text-content"
+                                                    : "text-body-sm text-content-muted"
+                                            }
+                                        >
+                                            {value ?? note ?? "Not set"}
+                                        </p>
+                                    </div>
+                                    {value ? (
+                                        <PrivacyDropdown
+                                            label={`Who sees your ${label.toLowerCase()}`}
+                                            value={visibility[key]}
+                                            onChange={(next) =>
+                                                onChange({
+                                                    ...visibility,
+                                                    [key]: next,
+                                                })
+                                            }
+                                            disabled={disabled}
                                         />
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-label-sm text-content-muted">
-                                                {label}
-                                            </p>
-                                            <p
-                                                className={
-                                                    value
-                                                        ? "truncate text-body-sm text-content"
-                                                        : "text-body-sm text-content-muted"
-                                                }
-                                            >
-                                                {value
-                                                    ? shown(field, value)
-                                                    : "Not set"}
-                                            </p>
-                                        </div>
-                                        {value ? (
-                                            <PrivacyDropdown
-                                                label={`Who sees your ${label.toLowerCase()}`}
-                                                value={visibility[field]}
-                                                onChange={(next) =>
-                                                    onChange({
-                                                        ...visibility,
-                                                        [field]: next,
-                                                    })
-                                                }
-                                                disabled={disabled}
-                                            />
-                                        ) : (
-                                            /* The dropdown's place, greyed:
-                                               the row says why already. */
-                                            <span
-                                                aria-hidden
-                                                className="flex min-h-11 w-36 shrink-0 items-center justify-center rounded-sm border border-dashed border-subtle text-label-sm text-content-muted"
-                                            >
-                                                Empty
-                                            </span>
-                                        )}
-                                    </li>
-                                );
-                            }
-                        )}
+                                    ) : (
+                                        /* The dropdown's place, greyed:
+                                           the row says why already. */
+                                        <span
+                                            aria-hidden
+                                            className="flex min-h-11 w-36 shrink-0 items-center justify-center rounded-sm border border-dashed border-subtle text-label-sm text-content-muted"
+                                        >
+                                            {note ? "Hidden" : "Empty"}
+                                        </span>
+                                    )}
+                                </li>
+                            ))}
                     </ul>
                 </section>
             ))}

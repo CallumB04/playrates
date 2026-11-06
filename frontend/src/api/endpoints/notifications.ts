@@ -28,13 +28,24 @@ export const patchNotification = async (
     return data;
 };
 
-export const markAllNotificationsRead = async (): Promise<void> => {
-    await api.post("/me/notifications/read-all");
+/** The bell was opened: the badge counts from here. */
+export const markNotificationsSeen = async (): Promise<void> => {
+    await api.post("/me/notifications/seen");
 };
 
-/** Files away every read notification in the inbox. */
-export const archiveAllNotifications = async (): Promise<void> => {
-    await api.post("/me/notifications/archive-all");
+/** Everything, or only these where given. */
+export const markAllNotificationsRead = async (
+    ids?: number[]
+): Promise<void> => {
+    await api.post("/me/notifications/read-all", ids ? { ids } : undefined);
+};
+
+/** One change to many at once: a group, Clear all, and their Undo. */
+export const patchNotifications = async (
+    ids: number[],
+    patch: NotificationPatch
+): Promise<void> => {
+    await api.patch("/me/notifications", { ids, ...patch });
 };
 
 /** Null where push isn't set up, so nothing offers it. */

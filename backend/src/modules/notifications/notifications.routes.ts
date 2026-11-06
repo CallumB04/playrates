@@ -3,6 +3,10 @@ import {
   NotificationIdSchema,
   NotificationPatchSchema,
   NotificationQuerySchema,
+  NotificationReadAllSchema,
+  NotificationBulkPatchSchema,
+  type NotificationBulkPatch,
+  type NotificationReadAll,
 } from "@playrates/shared";
 import type { z } from "zod";
 import { validate } from "../../middleware/validate.js";
@@ -40,8 +44,19 @@ export const createMyNotificationsRouter = ({
   );
 
   // Before "/:id", or the literal is read as an id and fails validation.
-  router.post("/read-all", async (req, res) => {
-    await service.markAllRead(callerId(req));
+  // A body is optional: without one, everything is read, as before.
+  router.post(
+    "/read-all",
+    validate({ body: NotificationReadAllSchema }),
+    async (req, res) => {
+      const body = req.valid!.body as NotificationReadAll;
+      await service.markAllRead(callerId(req), body?.ids);
+      res.status(204).end();
+    },
+  );
+
+  router.post("/seen", async (req, res) => {
+    await service.markSeen(callerId(req));
     res.status(204).end();
   });
 
@@ -49,6 +64,18 @@ export const createMyNotificationsRouter = ({
     await service.archiveAllRead(callerId(req));
     res.status(204).end();
   });
+
+  router.patch(
+    "/",
+    validate({ body: NotificationBulkPatchSchema }),
+    async (req, res) => {
+      await service.patchMany(
+        callerId(req),
+        req.valid!.body as NotificationBulkPatch,
+      );
+      res.status(204).end();
+    },
+  );
 
   router.patch(
     "/:id",

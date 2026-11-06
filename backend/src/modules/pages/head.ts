@@ -1,4 +1,4 @@
-import { SITE_NAME, SITE_ORIGIN } from "@playrates/shared";
+import { SITE_NAME, SITE_ORIGIN, type Crumb } from "@playrates/shared";
 import type { PageBody } from "./body.js";
 
 /** Everything a page says about itself before the app has run. */
@@ -16,6 +16,8 @@ export interface HeadMeta {
   type?: "website" | "profile" | "article";
   noindex?: boolean;
   jsonLd?: Record<string, unknown>;
+  /** Where it sits, as the trail over its title shows it. */
+  breadcrumbs?: Crumb[];
   /** The content itself, for readers that never run the app. */
   body?: PageBody;
 }
@@ -48,6 +50,17 @@ export const jsonForScript = (value: unknown): string =>
 
 const meta = (key: "name" | "property", name: string, content: string) =>
   `<meta ${key}="${name}" content="${escapeHtml(content)}" />`;
+
+/** A trail as schema.org has it: alone in its script, or in a @graph. */
+export const breadcrumbList = (trail: Crumb[]) => ({
+  "@type": "BreadcrumbList",
+  itemListElement: trail.map((crumb, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: crumb.name,
+    item: `${SITE_ORIGIN}${crumb.path}`,
+  })),
+});
 
 export const buildHead = (m: HeadMeta): string => {
   const url = `${SITE_ORIGIN}${m.path}`;
@@ -86,6 +99,15 @@ export const buildHead = (m: HeadMeta): string => {
     ...(m.jsonLd
       ? [
           `<script type="application/ld+json">${jsonForScript(m.jsonLd)}</script>`,
+        ]
+      : []),
+    // Nothing for a search engine on a page asked to stay out of one.
+    ...(m.breadcrumbs && !m.noindex
+      ? [
+          `<script type="application/ld+json">${jsonForScript({
+            "@context": "https://schema.org",
+            ...breadcrumbList(m.breadcrumbs),
+          })}</script>`,
         ]
       : []),
   ].join("\n        ");

@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { EmailStats } from "@playrates/shared";
+import { EMAIL_MESSAGE_STATUSES, type EmailStats } from "@playrates/shared";
 import {
     accountEmails,
     dailyUsed,
     kindLabel,
     limitTone,
     monthSent,
+    statusMark,
 } from "./emailStatsView";
 
 const stats = (overrides: Partial<EmailStats> = {}): EmailStats => ({
@@ -52,5 +53,14 @@ describe("email stats, for the admin", () => {
     it("names the kinds, and shows an unknown one as it is", () => {
         expect(kindLabel("friend_request")).toBe("Friend requests");
         expect(kindLabel("something_new")).toBe("something_new");
+    });
+
+    it("words every status, a problem in red", () => {
+        for (const status of EMAIL_MESSAGE_STATUSES) {
+            expect(statusMark(status).label).not.toBe("");
+        }
+        expect(statusMark("delivered").className).toBe("text-success");
+        expect(statusMark("bounced").className).toBe("text-danger");
+        expect(statusMark("capped").label).toBe("Held back by the cap");
     });
 });

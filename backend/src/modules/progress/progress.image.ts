@@ -27,19 +27,19 @@ export interface PlayerCardSource {
 
 const WIDTH = 1080;
 const HEIGHT = 1350;
-const TEXT = "#f4f2f8";
-const TEXT_SOFT = "#b9b3c7";
-const TEXT_MUTED = "#7d778b";
+export const TEXT = "#f4f2f8";
+export const TEXT_SOFT = "#b9b3c7";
+export const TEXT_MUTED = "#7d778b";
 
 // Each metal as a light-to-dark sweep, as the medals on the site.
-const METAL: Record<Metal, [string, string]> = {
+export const METAL: Record<Metal, [string, string]> = {
   1: ["#f0b483", "#8a4a22"],
   2: ["#eef2f7", "#7c8796"],
   3: ["#ffe08a", "#a87400"],
   4: ["#d9f6ff", "#8b7cff"],
 };
 
-const ring = (
+export const ring = (
   progress: number,
   size: number,
   stroke: number,
@@ -134,7 +134,7 @@ const medal = (name: string, metal: Metal) =>
     ),
   ]);
 
-const formatCount = (n: number) =>
+export const formatCount = (n: number) =>
   n >= 10_000 ? `${Math.round(n / 1000)}k` : n.toLocaleString("en-GB");
 
 /** Someone's level and best badges as a picture to post. */

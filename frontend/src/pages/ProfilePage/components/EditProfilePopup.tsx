@@ -1,6 +1,7 @@
 import { useId, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
+    BirthDateSchema,
     type AboutField,
     type Profile,
     type ProfileAccent,
@@ -12,6 +13,7 @@ import {
     useUpdateAvatar,
     useUpdateProfile,
 } from "../../../hooks/queries/useProfiles";
+import { useAuth } from "../../../contexts/AuthContext";
 import { useNotify } from "../../../contexts/NotificationContext";
 import { useProgress, useSetStyle } from "../../../hooks/queries/useProgress";
 import LookFields, { type LookChoice } from "./LookFields";
@@ -20,7 +22,7 @@ import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 import Field from "../../../components/ui/Field";
 import { Input, Textarea } from "../../../components/ui/Input";
-import { ABOUT_ROWS, aboutError } from "../lib/about";
+import { ABOUT_ROWS, aboutError, latestBirthDate } from "../lib/about";
 import AboutFieldInput from "./AboutFieldInput";
 import AvatarField, {
     type AvatarChoice,
@@ -150,8 +152,19 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     const aboutErrors = Object.fromEntries(
         ABOUT_ROWS.map(({ field }) => [field, aboutError(field, about[field])])
     ) as Record<AboutField, string | undefined>;
-    const aboutInvalid = Object.values(aboutErrors).some(Boolean);
+    // Only ever your own profile here, so the birthday is in the session.
+    const { user: me } = useAuth();
+    const initialBirthDate = me?.birthDate ?? "";
+    const [birthDate, setBirthDate] = useState(initialBirthDate);
+    const birthDateError =
+        birthDate === ""
+            ? undefined
+            : BirthDateSchema.safeParse(birthDate).error?.issues[0]?.message;
+    const birthDateDirty = birthDate !== initialBirthDate;
+    const aboutInvalid =
+        Object.values(aboutErrors).some(Boolean) || !!birthDateError;
     const invalidIn = (of: View) =>
+        (of === "about" && !!birthDateError) ||
         ABOUT_ROWS.some(
             ({ field, group }) => group === of && aboutErrors[field]
         );
@@ -182,6 +195,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
         username !== user.username ||
         accent !== user.accent ||
         orderDirty ||
+        birthDateDirty ||
         Object.keys(changedAbout).length > 0;
     const dirty = fieldsDirty || lookDirty || avatar.kind !== "unchanged";
     const saving =
@@ -205,6 +219,9 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     accent,
                     ...(orderDirty ? { sectionOrder: order } : {}),
                     ...changedAbout,
+                    ...(birthDateDirty
+                        ? { birthDate: birthDate || null }
+                        : {}),
                 });
             }
             if (lookDirty) {
@@ -331,6 +348,21 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                         {inputsFor("about", true)}
                     </div>
                     {inputsFor("about")}
+                    <Field
+                        label="Date of birth"
+                        help="Only your age shows, never the date."
+                        error={birthDateError}
+                    >
+                        {(a11y) => (
+                            <Input
+                                type="date"
+                                value={birthDate}
+                                max={latestBirthDate()}
+                                onChange={(e) => setBirthDate(e.target.value)}
+                                {...a11y}
+                            />
+                        )}
+                    </Field>
                     <Field
                         label="Username capitalisation"
                         help={

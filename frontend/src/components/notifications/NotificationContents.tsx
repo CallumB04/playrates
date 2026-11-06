@@ -32,7 +32,7 @@ import { giftPath, itemName } from "../shop/shopItems";
 import { TokenCoin } from "../progress/TokenAmount";
 import { questPath } from "../../lib/questPath";
 import { useFriendRelation } from "../../hooks/queries/useFriends";
-import { usePatchNotification } from "../../hooks/queries/useNotifications";
+import { usePatchNotification } from "../../hooks/queries/useNotificationActions";
 import GameCover from "../game/GameCover";
 import { threadPath } from "../community/paths";
 import { gaming25Path } from "../../lib/profilePaths";
@@ -180,7 +180,7 @@ export const GiftFace = ({
     notification.actor ? (
         <ActorFace notification={{ actor: notification.actor }} />
     ) : (
-        <IconMark icon={Gift} tone="text-brand-text" />
+        <IconMark icon={Gift} tone="brand" />
     );
 
 /** Opening a community notification is reading it. */
@@ -497,7 +497,7 @@ export const ReferralFace = ({
     notification.actor ? (
         <ActorFace notification={{ actor: notification.actor }} />
     ) : (
-        <IconMark icon={UserPlus} tone="text-brand-text" />
+        <IconMark icon={UserPlus} tone="brand" />
     );
 
 export const ReferralActiveContent = ({

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { AppNotification } from "@playrates/shared";
 import { ANNOUNCEMENT_PRESENTATION } from "./announcementTones";
+import type { NotificationTone } from "./notificationTones";
 import {
     ActorFace,
     AnnouncementContent,
@@ -48,7 +49,7 @@ export interface ContentProps<T extends AppNotification> {
 interface Renderer<T extends AppNotification> {
     /** The mark, where the kind has nobody to show an avatar for. */
     icon: LucideIcon;
-    tone: string;
+    tone: NotificationTone;
     Content: ComponentType<ContentProps<T>>;
     /** Replaces the icon chip — an actor's face beats a glyph. */
     Leading?: ComponentType<{ notification: T }>;
@@ -66,79 +67,79 @@ export const NOTIFICATION_RENDERERS: {
 } = {
     welcome: {
         icon: PartyPopper,
-        tone: "text-brand-text",
+        tone: "brand",
         Content: WelcomeContent,
     },
     friend_request: {
         icon: UserPlus,
-        tone: "text-brand-text",
+        tone: "brand",
         Content: FriendRequestContent,
         Leading: ActorFace,
     },
     friend_accepted: {
         icon: UserCheck,
-        tone: "text-brand-text",
+        tone: "brand",
         Content: FriendAcceptedContent,
         Leading: ActorFace,
     },
     community_reply: {
         icon: MessageSquareReply,
-        tone: "text-brand-text",
+        tone: "brand",
         Content: CommunityReplyContent,
         Leading: ActorFace,
     },
     community_thread_activity: {
         icon: MessagesSquare,
-        tone: "text-brand-text",
+        tone: "brand",
         Content: CommunityActivityContent,
         Leading: CoverLeading,
     },
     community_upvote_milestone: {
         icon: ArrowBigUp,
-        tone: "text-brand-text",
+        tone: "brand",
         Content: MessageMilestoneContent,
     },
     review_upvote_milestone: {
         icon: ArrowBigUp,
-        tone: "text-brand-text",
+        tone: "brand",
         Content: ReviewMilestoneContent,
         Leading: CoverLeading,
     },
     list_upvote_milestone: {
         icon: Heart,
-        tone: "text-love",
+        tone: "love",
         Content: ListMilestoneContent,
     },
     gaming_25_love_milestone: {
         icon: Heart,
-        tone: "text-love",
+        tone: "love",
         Content: Gaming25MilestoneContent,
     },
     referral_joined: {
         icon: UserPlus,
-        tone: "text-brand-text",
+        tone: "brand",
         Content: ReferralJoinedContent,
     },
     gift_received: {
         icon: Gift,
-        tone: "text-brand-text",
+        tone: "brand",
         Content: GiftReceivedContent,
         Leading: GiftFace,
     },
     referral_active: {
         icon: UserPlus,
-        tone: "text-brand-text",
+        tone: "brand",
         Content: ReferralActiveContent,
         Leading: ReferralFace,
     },
     streak_at_risk: {
         icon: Flame,
-        tone: "text-accent",
+        tone: "accent",
         Content: StreakAtRiskContent,
     },
     task_nearly_done: {
         icon: ListChecks,
-        tone: "text-brand-text",
+        tone: "brand",
         Content: TaskNearlyDoneContent,
     },
     announcement: {
@@ -149,7 +150,7 @@ export const NOTIFICATION_RENDERERS: {
     },
     unknown: {
         icon: Bell,
-        tone: "text-content-muted",
+        tone: "neutral",
         Content: UnknownContent,
     },
 };

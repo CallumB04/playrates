@@ -7,7 +7,8 @@
  *   10_catalogue.sql  the games, their platforms, consoles and genres
  *   20_world.sql      a made-up community using them: accounts, logs on one
  *                     or more consoles, reviews, votes, friendships, threads,
- *                     notifications, reports, an announcement
+ *                     patch notes, lists, Gaming 25s, favourites, notifications,
+ *                     reports, an announcement and the email log
  *
  * Random, but seeded, so every reset produces the same world. Dates are
  * relative to when it runs, so the world is always current: someone online
@@ -18,6 +19,14 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  GAMING_25_CATEGORIES,
+  GAMING_25_CENTRE,
+  GAMING_25_SIZE,
+  REACTION_KEYS,
+  patchNoteDoc,
+  type PatchNote,
+} from "@playrates/shared";
 import { seedGame } from "./catalogueRows.js";
 import {
   COMMUNITY,
@@ -62,6 +71,12 @@ const int = (min: number, max: number) =>
   min + Math.floor(r() * (max - min + 1));
 const chance = (p: number) => r() < p;
 const pick = <T>(xs: readonly T[]): T => xs[Math.floor(r() * xs.length)]!;
+/** Mostly upvotes, as on the site, with the reactions anyone can leave
+ *  mixed in. */
+const everydayReaction = () =>
+  chance(0.65) ? "upvote" : pick(["fire", "love", "lol"] as const);
+/** Every kind in turn: enough of them that the bar folds some away. */
+const everyReaction = (i: number) => REACTION_KEYS[i % REACTION_KEYS.length]!;
 const shuffle = <T>(xs: T[]): T[] => {
   const out = [...xs];
   for (let i = out.length - 1; i > 0; i--) {
@@ -642,20 +657,42 @@ const buildWorld = (cat: Catalogue): string => {
     body: "Private note to self: replay this on hard.",
   });
 
-  // Votes: most reviews get a few, the tester's first one a milestone's worth.
+  // Votes: most reviews get a few, the tester's first one a milestone's worth
+  // of upvotes. Three reviews of the most reviewed game get every kind of
+  // reaction, so its page shows the bar crowded.
+  const publicReviews = reviews.filter((rev) => rev.isPublic);
+  const reviewsOf = new Map<Game, Review[]>();
+  for (const rev of publicReviews)
+    reviewsOf.set(rev.log.game, [...(reviewsOf.get(rev.log.game) ?? []), rev]);
+  const crowded = new Set(
+    [...reviewsOf.values()]
+      .sort((a, b) => b.length - a.length)[0]!
+      .filter((rev) => rev !== testerReviews[0])
+      .slice(0, 3),
+  );
   const reviewVotes: Row[] = [];
-  for (const rev of reviews) {
-    if (!rev.isPublic) continue;
-    const count = rev === testerReviews[0] ? 12 : Math.floor(r() ** 3 * 14);
-    for (const voter of shuffle(
-      community.filter((u) => u !== rev.log.user),
-    ).slice(0, count)) {
-      reviewVotes.push({
-        review_id: rev.id,
-        user_id: voter.id,
-        created_at: later(rev.createdAt, int(0, 20)),
+  for (const rev of publicReviews) {
+    const count =
+      rev === testerReviews[0]
+        ? 12
+        : crowded.has(rev)
+          ? 30
+          : Math.floor(r() ** 3 * 14);
+    shuffle(community.filter((u) => u !== rev.log.user))
+      .slice(0, count)
+      .forEach((voter, i) => {
+        reviewVotes.push({
+          review_id: rev.id,
+          user_id: voter.id,
+          reaction:
+            rev === testerReviews[0]
+              ? "upvote"
+              : crowded.has(rev)
+                ? everyReaction(i)
+                : everydayReaction(),
+          created_at: later(rev.createdAt, int(0, 20)),
+        });
       });
-    }
   }
 
   // Friendships -----------------------------------------------------------
@@ -750,14 +787,20 @@ const buildWorld = (cat: Catalogue): string => {
     });
     return id;
   };
-  const vote = (messageId: number, voters: Account[], after: Date) => {
-    for (const voter of voters) {
+  const vote = (
+    messageId: number,
+    voters: Account[],
+    after: Date,
+    reaction: (i: number) => string = everydayReaction,
+  ) => {
+    voters.forEach((voter, i) => {
       messageVotes.push({
         message_id: messageId,
         user_id: voter.id,
+        reaction: reaction(i),
         created_at: later(after, int(0, 5)),
       });
-    }
+    });
   };
 
   const gameThread = (
@@ -844,21 +887,139 @@ const buildWorld = (cat: Catalogue): string => {
     ),
     daysAgo(12),
   );
-  vote(testerMessage, community.slice(10, 17), daysAgo(12));
+  vote(testerMessage, community.slice(10, 17), daysAgo(12), () => "upvote");
+  // A reply the tester can react to, with every kind on it already.
+  const busyReply = post(
+    theirs.id,
+    f3!,
+    doc(
+      "The opening hours are some of the best in the genre. It drags in the middle, but stick with it.",
+    ),
+    daysAgo(11),
+  );
+  vote(
+    busyReply,
+    community.filter((u) => u !== f3!).slice(0, 30),
+    daysAgo(11),
+    everyReaction,
+  );
 
   // Patch notes: the thread a migration made, signed by the team, with two
-  // entries in it.
+  // releases in it, written as the editor writes them.
   const patchStart = daysAgo(90);
-  const patchEntries = [
+  const patchEntries: { at: Date; note: PatchNote }[] = [
     {
       at: daysAgo(30),
-      heading: "Forgiving search",
-      text: "Search now finds games however you spell them: III or 3, accents or not.",
+      note: {
+        title: "v1.0 - Official Launch",
+        intro: "PlayRates is open to everyone. Thanks for being here early.",
+        items: [
+          {
+            kind: "feature",
+            text: "Log every game you play, with a rating, your hours and how it ended.",
+            link: null,
+          },
+          {
+            kind: "improvement",
+            text: "Search finds games however you spell them: III or 3, accents or not.",
+            link: "/library",
+          },
+        ],
+        outro: null,
+      },
+    },
+    // Patches on it, between the big releases, so the list shows them
+    // tucked under theirs.
+    {
+      at: daysAgo(24),
+      note: {
+        title: "v1.0.1",
+        intro: null,
+        items: [
+          {
+            kind: "fix",
+            text: "A rating saved on a slow connection no longer goes missing.",
+            link: null,
+          },
+          {
+            kind: "improvement",
+            text: "The library opens faster on a phone.",
+            link: null,
+          },
+        ],
+        outro: null,
+      },
+    },
+    {
+      at: daysAgo(16),
+      note: {
+        title: "v1.0.2",
+        intro: null,
+        items: [
+          {
+            kind: "removed",
+            text: "The old spreadsheet import. Steam import does it better.",
+            link: null,
+          },
+          {
+            kind: "fix",
+            text: "Friend requests no longer show twice in the bell.",
+            link: null,
+          },
+        ],
+        outro: null,
+      },
     },
     {
       at: daysAgo(2),
-      heading: "A log per platform",
-      text: "Played something on more than one console? Log each one. Your game page adds up the hours and shows your quickest finish.",
+      note: {
+        title: "v1.1",
+        intro: null,
+        // Written out of order on purpose: the page sorts them by kind.
+        items: [
+          {
+            kind: "fix",
+            text: "Long platform names stay inside the wishlist on a phone.",
+            link: null,
+          },
+          {
+            kind: "feature",
+            text: "Played something on more than one console? Log each one. Your game page adds up the hours and shows your quickest finish.",
+            link: null,
+          },
+          {
+            kind: "improvement",
+            text: "Reviews have a page of their own, with more from the same person and the same game.",
+            link: null,
+          },
+          {
+            kind: "feature",
+            text: "Lists, and a Gaming 25 for your profile.",
+            link: "/me/lists",
+          },
+        ],
+        outro: "Tell us what you think in the community.",
+      },
+    },
+    {
+      at: daysAgo(1),
+      note: {
+        title: "v1.1.1",
+        intro: null,
+        items: [
+          {
+            kind: "other",
+            text: "Tidying behind the scenes, so pages load a little quicker.",
+            link: null,
+          },
+          {
+            kind: "fix",
+            text: "Reacting twice in quick succession no longer counts twice.",
+            link: null,
+          },
+        ],
+        outro: null,
+      },
     },
   ];
   const patchNotesSql = [
@@ -866,21 +1027,21 @@ const buildWorld = (cat: Catalogue): string => {
 where subject_kind = 'patch_notes';`,
     `update public.community_messages m set author_id = ${lit(staff.id)}, created_at = ${lit(patchStart)}
 from public.community_threads t where m.thread_id = t.id and t.subject_kind = 'patch_notes' and m.is_opening;`,
+    // Every kind of reaction on the opening post.
+    `insert into public.community_message_votes (message_id, user_id, reaction, created_at)
+select m.id, v.user_id, v.reaction, ${lit(later(patchStart, 2))}
+from public.community_messages m
+join public.community_threads t on t.id = m.thread_id and t.subject_kind = 'patch_notes'
+cross join (values ${community
+      .slice(0, 30)
+      .map((u, i) => `(${lit(u.id)}::uuid, ${lit(everyReaction(i))})`)
+      .join(", ")}) v(user_id, reaction)
+where m.is_opening;`,
     ...patchEntries.map(
       (
         entry,
-      ) => `insert into public.community_messages (thread_id, author_id, body, created_at)
-select id, ${lit(staff.id)}, ${json({
-        type: "doc",
-        content: [
-          {
-            type: "heading",
-            attrs: { level: 2 },
-            content: [{ type: "text", text: entry.heading }],
-          },
-          { type: "paragraph", content: [{ type: "text", text: entry.text }] },
-        ],
-      })}, ${lit(entry.at)}
+      ) => `insert into public.community_messages (thread_id, author_id, body, patch_note, created_at)
+select id, ${lit(staff.id)}, ${json(patchNoteDoc(entry.note))}, ${json(entry.note)}, ${lit(entry.at)}
 from public.community_threads where subject_kind = 'patch_notes';`,
     ),
   ].join("\n");
@@ -1060,6 +1221,428 @@ from public.community_threads where subject_kind = 'patch_notes';`,
     }
   }
 
+  // Lists, Gaming 25s, favourites and profile details ----------------------
+  /* A generator of their own, after everything else has drawn from the
+     world's, so adding these left the rest of the world as it was. */
+  const r2 = mulberry32(20261105);
+  const int2 = (min: number, max: number) =>
+    min + Math.floor(r2() * (max - min + 1));
+  const shuffle2 = <T>(xs: readonly T[]): T[] => {
+    const out = [...xs];
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = Math.floor(r2() * (i + 1));
+      [out[i], out[j]] = [out[j]!, out[i]!];
+    }
+    return out;
+  };
+  const adult = new Set(
+    cat.games.filter((g) => g.has_sexual_content).map((g) => g.id as number),
+  );
+  const byName = (username: string) =>
+    everyone.find((u) => u.username === username)!;
+  /** Their own games first, as anyone's lists and picks would be, topped
+   *  up from the popular ones; never an adult game. A favourite or a pick
+   *  is a game they've played, not one still on the wishlist. */
+  const gamesFor = (user: Account, count: number, played = false): Game[] => {
+    const own = [
+      ...new Map(
+        logs
+          .filter(
+            (l) =>
+              l.user === user &&
+              !adult.has(l.game.id) &&
+              (!played || l.status === "played" || l.status === "playing"),
+          )
+          .map((l) => [l.game.id, l.game]),
+      ).values(),
+    ];
+    const rest = games
+      .slice(0, 400)
+      .filter((g) => !adult.has(g.id) && !own.includes(g));
+    return [...shuffle2(own), ...shuffle2(rest)].slice(0, count);
+  };
+
+  // Lists: every visibility, ranked and not, chosen covers and an empty one.
+  const lists: Row[] = [];
+  const listItems: Row[] = [];
+  const listLoves: Row[] = [];
+  let nextList = 1;
+  const addList = (
+    owner: Account,
+    list: {
+      name: string;
+      description?: string;
+      visibility?: "everyone" | "friends" | "private";
+      colour?: string | null;
+      ranked?: boolean;
+      size: number;
+      chosenCovers?: boolean;
+      loves?: number;
+    },
+  ) => {
+    const id = nextList++;
+    const createdAt = daysAgo(int2(3, 120));
+    const picked = gamesFor(owner, list.size);
+    lists.push({
+      id,
+      user_id: owner.id,
+      name: list.name,
+      description: list.description ?? "",
+      visibility: list.visibility ?? "everyone",
+      colour: list.colour ?? null,
+      ranked: list.ranked ?? false,
+      cover_game_ids: list.chosenCovers
+        ? `{${picked
+            .slice(0, 4)
+            .reverse()
+            .map((g) => g.id)
+            .join(",")}}`
+        : null,
+      created_at: createdAt,
+      updated_at: later(createdAt, int2(0, 3)),
+    });
+    picked.forEach((game, i) =>
+      listItems.push({
+        list_id: id,
+        game_id: game.id,
+        position: i + 1,
+        added_at: later(createdAt, i / 24),
+      }),
+    );
+    for (const fan of shuffle2(community.filter((u) => u !== owner)).slice(
+      0,
+      list.loves ?? 0,
+    )) {
+      listLoves.push({
+        list_id: id,
+        user_id: fan.id,
+        created_at: later(createdAt, int2(0, 2)),
+      });
+    }
+    return id;
+  };
+
+  const testerTop = addList(tester, {
+    name: "My all-time top 10",
+    description:
+      "In order, and I’ll argue about every one of them. Number one hasn’t moved in years.",
+    colour: "violet",
+    ranked: true,
+    size: 10,
+    chosenCovers: true,
+    loves: 9,
+  });
+  const testerCosy = addList(tester, {
+    name: "Games for a rainy Sunday when you can’t face anything with a boss fight in it",
+    description:
+      "Low stakes, nothing that shouts at you, a cup of tea within reach.",
+    colour: "teal",
+    size: 7,
+    loves: 3,
+  });
+  addList(tester, {
+    name: "Still to beat",
+    description: "Friends only, so they can nag me about it.",
+    visibility: "friends",
+    ranked: true,
+    size: 5,
+  });
+  addList(tester, {
+    name: "Gift ideas",
+    visibility: "private",
+    size: 3,
+  });
+  addList(tester, { name: "Empty for now", size: 0 });
+
+  const halcyon = byName("halcyon");
+  const marlowe = byName("marlowe");
+  const halcyonTop = addList(halcyon, {
+    name: "Best soundtracks",
+    description: "Headphones on.",
+    colour: "amber",
+    ranked: true,
+    size: 12,
+    chosenCovers: true,
+    loves: 14,
+  });
+  addList(halcyon, {
+    name: "For my friends to try",
+    visibility: "friends",
+    size: 6,
+  });
+  addList(marlowe, { name: "Short and perfect", size: 8, loves: 4 });
+  for (const user of community.slice(6, 18)) {
+    addList(user, {
+      name: shuffle2([
+        "Comfort games",
+        "Hidden gems",
+        "Played with my brother",
+        "Worth the hype",
+        "Under ten hours",
+        "Couch co-op",
+        "Back in the day",
+        "Would replay tomorrow",
+      ])[0]!,
+      colour: shuffle2(["rose", "jade", "azure", "ember", null])[0]!,
+      ranked: r2() < 0.4,
+      size: int2(3, 12),
+      loves: int2(0, 6),
+    });
+  }
+  // Behind a private profile and a friends-only one: none of it shows.
+  const ironclad = byName("ironclad");
+  const boltcutter = byName("boltcutter");
+  addList(ironclad, { name: "Nobody sees this", size: 5, loves: 1 });
+  addList(boltcutter, { name: "Friends get to see this", size: 4 });
+  // The tester loves a friend's list.
+  listLoves.push({
+    list_id: halcyonTop,
+    user_id: tester.id,
+    created_at: daysAgo(4),
+  });
+
+  // Gaming 25: one full, the tester's part of the way, a few started.
+  const gaming25s: Row[] = [];
+  const gaming25Picks: Row[] = [];
+  const gaming25Loves: Row[] = [];
+  const addGaming25 = (owner: Account, filled: number, loves: number) => {
+    const at = daysAgo(int2(2, 60));
+    gaming25s.push({ user_id: owner.id, created_at: at, updated_at: at });
+    // The centre first, so a grid part filled still has its favourite.
+    const categories = [
+      GAMING_25_CENTRE,
+      ...shuffle2(
+        GAMING_25_CATEGORIES.map((c) => c.key).filter(
+          (k) => k !== GAMING_25_CENTRE,
+        ),
+      ),
+    ].slice(0, filled);
+    gamesFor(owner, filled, true).forEach((game, i) =>
+      gaming25Picks.push({
+        user_id: owner.id,
+        category: categories[i],
+        game_id: game.id,
+        updated_at: at,
+      }),
+    );
+    for (const fan of shuffle2(everyone.filter((u) => u !== owner)).slice(
+      0,
+      loves,
+    )) {
+      gaming25Loves.push({
+        owner_id: owner.id,
+        user_id: fan.id,
+        created_at: later(at, int2(0, 2)),
+      });
+    }
+  };
+  addGaming25(halcyon, GAMING_25_SIZE, 11);
+  addGaming25(tester, 14, 6);
+  addGaming25(marlowe, 6, 1);
+  for (const user of community.slice(10, 16)) {
+    addGaming25(user, int2(1, GAMING_25_SIZE), int2(0, 3));
+  }
+  addGaming25(ironclad, GAMING_25_SIZE, 0);
+
+  // Favourites: the tester's six, and a few for others.
+  const favourites: Row[] = [];
+  const addFavourites = (user: Account, count: number) =>
+    gamesFor(user, count, true).forEach((game, position) =>
+      favourites.push({
+        user_id: user.id,
+        game_id: game.id,
+        position,
+        created_at: daysAgo(int2(5, 90)),
+      }),
+    );
+  addFavourites(tester, 6);
+  addFavourites(halcyon, 4);
+  addFavourites(marlowe, 2);
+  for (const user of community.slice(18, 24)) addFavourites(user, int2(1, 6));
+
+  // Each About field set, at every visibility, and a slot bought for each
+  // kind of pin so both pin rows have something in them.
+  const profileDetails = [
+    `update public.profiles set pronouns = 'he/him', location = 'Manchester', website = 'https://playrates.app', discord = 'tester_plays', steam = 'https://steamcommunity.com/id/playrates-tester',
+  birth_date = '1991-04-09',
+  about_visibility = '{"firstName":"everyone","pronouns":"everyone","location":"friends","website":"everyone","discord":"private","steam":"everyone","age":"everyone","joined":"everyone","lastSeen":"friends"}'::jsonb,
+  pinned_lists = '{${testerTop},${testerCosy}}', pinned_reviews = '{${testerReviews[0]!.id}}',
+  notifications_seen_at = ${lit(daysAgo(1))}
+where id = ${lit(tester.id)};`,
+    `update public.profiles set pronouns = 'she/her', location = 'Glasgow', discord = 'halcyon.days',
+  about_visibility = '{"location":"friends"}'::jsonb, pinned_lists = '{${halcyonTop}}'
+where id = ${lit(halcyon.id)};`,
+    `update public.profiles set profile_visibility = 'private' where id = ${lit(ironclad.id)};`,
+    `update public.profiles set profile_visibility = 'friends' where id = ${lit(boltcutter.id)};`,
+    `insert into public.user_items (user_id, item, quantity, acquired_at)
+values (${lit(tester.id)}, 'slot_pinned_list', 1, ${lit(daysAgo(20))}),
+       (${lit(tester.id)}, 'slot_pinned_review', 1, ${lit(daysAgo(20))})
+on conflict (user_id, item) do nothing;`,
+  ].join("\n");
+
+  // One of each colour a notification can wear, unread, for the bell: the
+  // love milestones on the tester's list and Gaming 25, a streak about to
+  // go, a gift and a task nearly done. The announcements' tones are below.
+  const weekEnds = new Date(NOW.getTime() + 1.5 * DAY).toISOString();
+  const moreNotifications = [
+    // Two friends accepting today: one row in the bell, with both faces.
+    ...[f2!, f3!].map((friend, i) =>
+      notify(
+        "friend_accepted",
+        friend,
+        {},
+        `friend_accepted:${friend.id}`,
+        minutesAgo(300 + i * 25),
+        false,
+      ),
+    ),
+    notify(
+      "list_upvote_milestone",
+      null,
+      {
+        listId: testerTop,
+        listName: "My all-time top 10",
+        username: tester.username,
+        milestone: 5,
+      },
+      `list_upvotes:${testerTop}`,
+      minutesAgo(50),
+      false,
+    ),
+    notify(
+      "gaming_25_love_milestone",
+      null,
+      { username: tester.username, milestone: 5 },
+      `gaming_25_loves:${tester.id}`,
+      minutesAgo(140),
+      false,
+    ),
+    notify(
+      "streak_at_risk",
+      null,
+      { weeks: 1, shield: false, endsAt: weekEnds },
+      `streak_at_risk:${dateOnly(NOW)}`,
+      minutesAgo(20),
+      false,
+    ),
+    notify(
+      "gift_received",
+      halcyon,
+      { username: halcyon.username, item: "frame_neon" },
+      `gift_received:${halcyon.id}:frame_neon`,
+      minutesAgo(400),
+      false,
+    ),
+    notify(
+      "task_nearly_done",
+      null,
+      {
+        period: "week",
+        quest: "w_rate3",
+        label: "Rate 3 games",
+        count: 2,
+        target: 3,
+        xp: 45,
+        tokens: 0,
+        endsAt: weekEnds,
+      },
+      `task_nearly_done:w_rate3:${dateOnly(NOW)}`,
+      minutesAgo(90),
+      false,
+    ),
+  ];
+
+  // The admin's email log: every way a message can end up. Oldest first,
+  // as they'd have been written, so the ids run with the dates.
+  const emailRows: Row[] = [
+    [newbie, "welcome", "Welcome to PlayRates", "delivered", 0.02, null],
+    [
+      tester,
+      "friend_request",
+      "halcyon sent you a friend request",
+      "delivered",
+      6,
+      null,
+    ],
+    [
+      tester,
+      "community_reply",
+      "New reply in your thread",
+      "delivered",
+      1,
+      null,
+    ],
+    [tester, "patch_notes", "What’s new: v1.1", "sent", 0.1, null],
+    [halcyon, "patch_notes", "What’s new: v1.1", "delivered", 0.1, null],
+    [
+      marlowe,
+      "patch_notes",
+      "What’s new: v1.1",
+      "delayed",
+      0.1,
+      "The receiving server is slow to accept; Resend is retrying.",
+    ],
+    [
+      byName("nightjar"),
+      "friend_accepted",
+      "tester accepted your friend request",
+      "bounced",
+      3,
+      "The mailbox doesn’t exist.",
+    ],
+    [
+      byName("obsidian"),
+      "community_reply",
+      "New reply in Best route?",
+      "complained",
+      9,
+      "Marked as spam.",
+    ],
+    [
+      byName("pixelwren"),
+      "weekly_digest",
+      "Your week on PlayRates",
+      "failed",
+      2,
+      "Resend refused the request.",
+    ],
+    [
+      byName("frostbyte"),
+      "weekly_digest",
+      "Your week on PlayRates",
+      "capped",
+      2,
+      null,
+    ],
+    [
+      byName("cinderlane"),
+      "announcement",
+      "A log per platform",
+      "suppressed",
+      2,
+      "On Resend’s suppression list.",
+    ],
+  ]
+    .sort((a, b) => (b[4] as number) - (a[4] as number))
+    .map(([user, kind, subject, status, days, detail], i) => {
+      const sentAt = daysAgo(days as number);
+      return {
+        user_id: (user as Account).id,
+        to_address: `${(user as Account).username}@playrates.test`,
+        kind,
+        subject,
+        status,
+        resend_id:
+          status === "capped" || status === "failed"
+            ? null
+            : `local-seed-${i + 1}`,
+        broadcast_id: kind === "patch_notes" ? "local-seed-broadcast" : null,
+        detail,
+        sent_at: sentAt,
+        updated_at: later(sentAt, 0.01),
+      };
+    });
+
   // Assemble ---------------------------------------------------------------
   const authUsers = everyone
     .map(
@@ -1068,10 +1651,19 @@ from public.community_threads where subject_kind = 'patch_notes';`,
     )
     .join(",\n");
 
+  // Four in five give a birthday, spread across the ages, worked out from
+  // their place rather than drawn, so nothing after this changes.
+  const birthDate = (i: number) =>
+    i % 5 === 4
+      ? "null"
+      : lit(
+          `${1978 + ((i * 7) % 28)}-${String(1 + ((i * 5) % 12)).padStart(2, "0")}-${String(1 + ((i * 11) % 28)).padStart(2, "0")}`,
+        );
+
   const profileUpdates = everyone
     .map(
       (u, i) =>
-        `update public.profiles set first_name = ${lit(u.firstName)}, bio = ${lit(u.bio)}, timezone = ${lit(u.timezone)}, accent = ${lit(["ember", "amber", "lime", "moss", "jade", "teal", "azure", "indigo", "violet", "plum", "magenta", "rose"][i % 12])}, is_admin = ${u.admin}, last_seen_at = ${lit(u.lastSeen)}, created_at = ${lit(u.createdAt)}, onboarded_at = ${u.onboarded ? lit(u.createdAt) : "null"} where id = ${lit(u.id)};`,
+        `update public.profiles set first_name = ${lit(u.firstName)}, birth_date = ${birthDate(i)}, bio = ${lit(u.bio)}, timezone = ${lit(u.timezone)}, accent = ${lit(["ember", "amber", "lime", "moss", "jade", "teal", "azure", "indigo", "violet", "plum", "magenta", "rose"][i % 12])}, is_admin = ${u.admin}, last_seen_at = ${lit(u.lastSeen)}, created_at = ${lit(u.createdAt)}, onboarded_at = ${u.onboarded ? lit(u.createdAt) : "null"} where id = ${lit(u.id)};`,
     )
     .join("\n");
 
@@ -1112,22 +1704,67 @@ from auth.users;`,
     setval("community_messages"),
     patchNotesSql,
     insert("community_message_votes", messageVotes),
-    insert("notifications", notifications),
+    insert("notifications", [...notifications, ...moreNotifications]),
     insert(
       "content_reports",
       reports.map((rp) => ({ resolved_at: null, resolved_by: null, ...rp })),
     ),
     insert("user_active_days", activeDays),
-    // An announcement everyone was sent; most have read it.
-    `with a as (
+    insert("game_lists", lists, true),
+    setval("game_lists"),
+    insert("game_list_items", listItems),
+    insert("game_list_votes", listLoves),
+    insert("gaming_25s", gaming25s),
+    insert("gaming_25_picks", gaming25Picks),
+    insert("gaming_25_loves", gaming25Loves),
+    insert("favourite_games", favourites),
+    profileDetails,
+    insert("email_messages", emailRows),
+    // An announcement in each tone, sent to everyone; most have read them,
+    // the tester none, so the bell shows every colour.
+    ...(
+      [
+        [
+          "update",
+          "A log per platform",
+          "You can now log a game once for each console you played it on.",
+          "/community",
+          2,
+        ],
+        [
+          "info",
+          "Your data, any time",
+          "Settings can now download everything you’ve logged, as a file.",
+          "/settings",
+          5,
+        ],
+        [
+          "warning",
+          "Down for a moment on Sunday",
+          "PlayRates will be offline for about 20 minutes from 7am while we move servers.",
+          null,
+          1,
+        ],
+        [
+          "celebration",
+          "10,000 games logged",
+          "Thank you, every one of you. Here’s to the next ten thousand.",
+          null,
+          3,
+        ],
+      ] as const
+    ).map(
+      ([tone, title, body, link, days]) => `with a as (
   insert into public.announcements (tone, title, body, link_path, sent_by, created_at)
-  values ('update', 'A log per platform', 'You can now log a game once for each console you played it on.', '/community', ${lit(staff.id)}, ${lit(daysAgo(2))})
+  values (${lit(tone)}, ${lit(title)}, ${lit(body)}, ${lit(link)}, ${lit(staff.id)}, ${lit(daysAgo(days))})
   returning id
 )
 select public.broadcast_announcement(id) from a;`,
-    `update public.notifications set read_at = created_at + interval '1 hour', created_at = ${lit(daysAgo(2))}
-where kind = 'announcement' and user_id <> ${lit(tester.id)} and random() < 0.7;
-update public.notifications set created_at = ${lit(daysAgo(2))} where kind = 'announcement';`,
+    ),
+    `update public.notifications n set created_at = a.created_at
+from public.announcements a where n.kind = 'announcement' and n.dedupe_key = 'announcement:' || a.id;
+update public.notifications set read_at = created_at + interval '1 hour'
+where kind = 'announcement' and user_id <> ${lit(tester.id)} and random() < 0.7;`,
     // Welcome notes are long since read, except by the account just made.
     `update public.notifications n set read_at = p.created_at, archived_at = p.created_at, created_at = p.created_at
 from public.profiles p where n.user_id = p.id and n.kind = 'welcome' and p.username <> 'newcomer';`,

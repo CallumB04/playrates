@@ -7,7 +7,7 @@ import {
     type NotificationType,
 } from "../../contexts/NotificationContext";
 import { NotificationProvider } from "../../contexts/NotificationProvider";
-import { DWELL_MS } from "../../contexts/notificationQueue";
+import { DWELL_MS, OFFER_DWELL_MS } from "../../contexts/notificationQueue";
 import ToastStack from "./ToastStack";
 import { EXIT_MS } from "./Toast";
 
@@ -114,6 +114,46 @@ describe("ToastStack", () => {
 
         expect(screen.getByRole("status")).toHaveTextContent("Saved");
         expect(screen.getByRole("alert")).toHaveTextContent("Failed");
+    });
+
+    it("lets an offer to share go once it has had its time", async () => {
+        const Offer = () => {
+            const notify = useNotify();
+            return (
+                <button
+                    type="button"
+                    onClick={() =>
+                        notify("New badge", "success", undefined, {
+                            label: "Share",
+                            dwell: OFFER_DWELL_MS,
+                            onClick: () => {},
+                        })
+                    }
+                >
+                    raise offer
+                </button>
+            );
+        };
+        renderStack(<Offer />);
+        await raise("offer");
+
+        await advance(OFFER_DWELL_MS - 1000);
+        expect(screen.getByText("New badge")).toBeInTheDocument();
+        await advanceThenExit(1000);
+        expect(screen.queryByText("New badge")).not.toBeInTheDocument();
+    });
+
+    it("holds its clock while the pointer is on it", async () => {
+        renderStack(<Raise text="Entry saved" />);
+        await raise("Entry saved");
+
+        await userEvent.hover(screen.getByText("Entry saved"));
+        await advanceThenExit(DWELL_MS.low! * 3);
+        expect(screen.getByText("Entry saved")).toBeInTheDocument();
+
+        await userEvent.unhover(screen.getByText("Entry saved"));
+        await advanceThenExit(DWELL_MS.low!);
+        expect(screen.queryByText("Entry saved")).not.toBeInTheDocument();
     });
 
     it("clears itself once its dwell runs out", async () => {

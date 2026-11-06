@@ -126,6 +126,8 @@ export const GAME_LOG_SORTS = [
   "hoursPlayed",
   "hoursToBeat",
   "added",
+  /** How it ended, best first: the played shelf's alone. */
+  "ending",
 ] as const;
 
 export const GameLogSortSchema = z.enum(GAME_LOG_SORTS).default("rating");
@@ -151,6 +153,11 @@ export const ShelfQuerySchema = GameLogQuerySchema.extend({
   q: z.string().trim().min(1).max(100).optional(),
   /** Narrows to games with a log on this shelf for this console. */
   system: z.string().trim().min(1).max(60).optional(),
+  /** A genre's slug. */
+  genre: z.string().trim().min(1).max(60).optional(),
+  /** Only the games the viewer has logged too. For a signed-in viewer of
+   *  someone else's shelf. */
+  common: z.literal("both").optional(),
 });
 
 /** The most a wishlist holds in one answer: it is read whole, to be put in
@@ -273,6 +280,8 @@ export interface WishlistEntry extends ShelfEntry {
   /** From 1, in the owner's order. */
   rank: number;
   consoles: (string | null)[];
+  /** The game's genres' slugs. Absent from an API before genre filters. */
+  genres?: string[];
 }
 
 export interface WishlistPage {
@@ -281,4 +290,6 @@ export interface WishlistPage {
   total: number;
   /** The consoles across the whole wishlist, to filter by. */
   consoles: string[];
+  /** The genres across the whole wishlist, as slugs, to filter by. */
+  genres?: string[];
 }

@@ -35,6 +35,8 @@ import type {
   ServerErrorRow,
   ClientErrorRow,
   AdminCohortRow,
+  AdminReturnRow,
+  AdminStayingRow,
 } from "../../types/database.types.js";
 
 export interface ClientErrorRowWithUser extends ClientErrorRow {
@@ -86,6 +88,8 @@ export interface PrunedRows {
   serverErrors: number;
   clientErrors: number;
   gameEvents: number;
+  emailMessages: number;
+  notifications: number;
 }
 
 export interface AdminRepository {
@@ -96,6 +100,14 @@ export interface AdminRepository {
   progress(): Promise<AdminProgressRow>;
   /** Signup weeks, newest first, the current one included. */
   cohorts(weeks: number): Promise<AdminCohortRow[]>;
+  /** How the people who joined between two days got on. */
+  staying(from: string, to: string): Promise<AdminStayingRow>;
+  /** For each day after joining, up to `days`, how many came back. */
+  returnCurve(
+    from: string,
+    to: string,
+    days: number,
+  ): Promise<AdminReturnRow[]>;
   /** Inclusive dates, YYYY-MM-DD. */
   series(
     from: string,
@@ -246,6 +258,25 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
     const { data, error } = await db.rpc("admin_progress");
     if (error) throw error;
     return data as AdminProgressRow;
+  },
+
+  async staying(from, to) {
+    const { data, error } = await db.rpc("admin_staying", {
+      p_from: from,
+      p_to: to,
+    });
+    if (error) throw error;
+    return ((data ?? []) as AdminStayingRow[])[0]!;
+  },
+
+  async returnCurve(from, to, days) {
+    const { data, error } = await db.rpc("admin_return_curve", {
+      p_from: from,
+      p_to: to,
+      p_days: days,
+    });
+    if (error) throw error;
+    return (data ?? []) as AdminReturnRow[];
   },
 
   async cohorts(weeks) {

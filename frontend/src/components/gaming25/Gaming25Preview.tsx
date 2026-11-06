@@ -80,7 +80,7 @@ const Fan = ({
                 </span>
             )}
             {front?.category === GAMING_25_CENTRE && (
-                <span className="absolute -top-2 left-1/2 grid size-5 -translate-x-1/2 place-items-center rounded-full bg-medal-gold text-surface-raised shadow-plate">
+                <span className="absolute -top-2 left-1/2 grid size-5 -translate-x-1/2 place-items-center rounded-full bg-medal-gold text-surface-raised shadow-solid">
                     <Crown size={11} strokeWidth={2.5} />
                 </span>
             )}

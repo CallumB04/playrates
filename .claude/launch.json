@@ -41,6 +41,17 @@
             ],
             "port": 5173,
             "autoPort": true
+        },
+        {
+            "name": "playrates-local-igdb",
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                "scripts/dev-local.mjs",
+                "--keep",
+                "--igdb"
+            ],
+            "port": 5173,
+            "autoPort": true
         }
     ]
 }

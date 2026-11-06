@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { splitReleaseTitle } from "./releaseTitle";
+import { isMajorRelease, splitReleaseTitle } from "./releaseTitle";
 
 describe("splitReleaseTitle", () => {
     it.each([
@@ -16,5 +16,13 @@ describe("splitReleaseTitle", () => {
         ["vacation mode", { version: null, name: "vacation mode" }],
     ])("splits %s", (title, parts) => {
         expect(splitReleaseTitle(title)).toEqual(parts);
+    });
+});
+
+describe("isMajorRelease", () => {
+    it("tells a release from a patch on one", () => {
+        expect(isMajorRelease("v1.1")).toBe(true);
+        expect(isMajorRelease("v1.1.2")).toBe(false);
+        expect(isMajorRelease(null)).toBe(false);
     });
 });

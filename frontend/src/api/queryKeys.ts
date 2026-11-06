@@ -55,6 +55,8 @@ export const queryKeys = {
             ["gamelogs", "wishlist", username] as const,
         shelfConsoles: (username: string, status: string) =>
             ["gamelogs", "consoles", username, status] as const,
+        shelfGenres: (username: string, status: string) =>
+            ["gamelogs", "genres", username, status] as const,
         mineForGame: (gameId: number) =>
             ["gamelogs", "me", "game", gameId] as const,
         forUserAndGame: (username: string, gameId: number) =>
@@ -156,7 +158,7 @@ export const queryKeys = {
         all: ["admin"] as const,
         overview: (range: string) => ["admin", "overview", range] as const,
         progress: ["admin", "progress"] as const,
-        cohorts: ["admin", "cohorts"] as const,
+        staying: (range: string) => ["admin", "staying", range] as const,
         metric: (metric: string, range: string) =>
             ["admin", "metric", metric, range] as const,
         activityCounts: (scope: Record<string, unknown>) =>
@@ -176,6 +178,8 @@ export const queryKeys = {
         patchNotes: ["admin", "announcements", "patch-notes"] as const,
         emailAudience: ["admin", "email", "audience"] as const,
         emailStats: ["admin", "email", "stats"] as const,
+        emailMessages: (filters: Record<string, unknown>) =>
+            ["admin", "email", "messages", filters] as const,
         health: ["admin", "health"] as const,
         errors: ["admin", "errors"] as const,
         clientErrors: ["admin", "client-errors"] as const,

@@ -65,6 +65,32 @@ export interface NudgeCandidate {
   swaps: (QuestSwap & { period: string })[];
 }
 
+/** A game someone has played, as its share picture shows it. */
+export interface MomentGameRow {
+  title: string;
+  cover: string | null;
+  adult: boolean;
+  playedStatus: string | null;
+  rating: number | null;
+  hours: number | null;
+}
+
+const ENDING_RANK: Record<string, number> = { mastered: 2, finished: 1 };
+
+/** Of someone's logs of one game, on however many consoles, the one to
+ *  show off: mastered over finished over the rest, then the latest. */
+export const bestEnding = <
+  T extends { played_status: string | null; updated_at: string },
+>(
+  logs: T[],
+): T | null =>
+  [...logs].sort(
+    (a, b) =>
+      (ENDING_RANK[b.played_status ?? ""] ?? 0) -
+        (ENDING_RANK[a.played_status ?? ""] ?? 0) ||
+      b.updated_at.localeCompare(a.updated_at),
+  )[0] ?? null;
+
 export interface ProgressRepository {
   profile(userId: string): Promise<ProfileRow | null>;
   profilesByIds(ids: string[]): Promise<ProfileRow[]>;
@@ -126,6 +152,11 @@ export interface ProgressRepository {
   ownedBackgrounds(userId: string): Promise<OwnedBackgroundRow[]>;
   /** Games on a member's favourites shelf. */
   favouriteCount(userId: string): Promise<number>;
+  /** Their best played log of a game (see bestEnding), with the game;
+   *  null if none. */
+  playedGame(userId: string, gameId: number): Promise<MomentGameRow | null>;
+  /** Covers of the games they logged last, newest first, none adult. */
+  recentCovers(userId: string, limit: number): Promise<string[]>;
   /** How many of one item each member holds; none held is left out. */
   holdings(userIds: string[], item: string): Promise<Map<string, number>>;
   /** Throws BuyError when refused. */
@@ -427,6 +458,58 @@ export const createProgressRepository = (db: Db): ProgressRepository => {
         .eq("user_id", userId);
       if (error) throw error;
       return count ?? 0;
+    },
+
+    async playedGame(userId, gameId) {
+      const { data, error } = await db
+        .from("game_logs")
+        .select(
+          "played_status, rating, hours_played, updated_at, games!inner(title, box_art_url, cover_url, has_sexual_content)",
+        )
+        .eq("user_id", userId)
+        .eq("game_id", gameId)
+        .eq("status", "played");
+      if (error) throw error;
+      const rows = data as unknown as {
+        played_status: string | null;
+        rating: number | null;
+        hours_played: number | null;
+        updated_at: string;
+        games: {
+          title: string;
+          box_art_url: string | null;
+          cover_url: string | null;
+          has_sexual_content: boolean;
+        };
+      }[];
+      const row = bestEnding(rows);
+      if (!row) return null;
+      return {
+        title: row.games.title,
+        cover: row.games.box_art_url ?? row.games.cover_url,
+        adult: row.games.has_sexual_content,
+        playedStatus: row.played_status,
+        rating: row.rating,
+        hours: row.hours_played,
+      };
+    },
+
+    async recentCovers(userId, limit) {
+      const { data, error } = await db
+        .from("game_logs")
+        .select("games!inner(box_art_url, cover_url)")
+        .eq("user_id", userId)
+        .eq("games.has_sexual_content", false)
+        .order("created_at", { ascending: false })
+        .limit(limit * 2);
+      if (error) throw error;
+      const covers = (
+        data as unknown as {
+          games: { box_art_url: string | null; cover_url: string | null };
+        }[]
+      ).flatMap(({ games }) => games.box_art_url ?? games.cover_url ?? []);
+      // Two logs of one game, on two consoles, are one cover.
+      return [...new Set(covers)].slice(0, limit);
     },
 
     async holdings(userIds, item) {

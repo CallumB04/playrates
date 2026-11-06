@@ -1,8 +1,6 @@
-import type { ComponentType, SVGProps } from "react";
 import {
     displayStatusFor,
     GAME_STATUSES,
-    PLAYED_STATUSES,
     STATUS_PRESENTATION,
     type DisplayStatus,
     type GameStatus,
@@ -10,7 +8,8 @@ import {
 } from "../../constants/gameStatus";
 import { ChevronDown } from "lucide-react";
 import { cn } from "../../lib/cn";
-import Dropdown, { type DropdownOption } from "../ui/Dropdown";
+import Dropdown from "../ui/Dropdown";
+import { PLAYED_OPTIONS } from "./playedOptions";
 
 /* Selected fills with its own hue and lifts; the fill itself is the status's
    chip. Only the focus ring lives here — complete class strings, because
@@ -58,39 +57,6 @@ const Disc = ({
         </span>
     );
 };
-
-type IconProps = SVGProps<SVGSVGElement> & { size?: number | string };
-
-/** The mark keeps its own hue in the menu, the way it does on a plate. Built
- *  once at module scope: a component rebuilt per render remounts the icon. */
-const tonedMark = (status: DisplayStatus): ComponentType<IconProps> => {
-    const { icon: Icon, markTone } = STATUS_PRESENTATION[status];
-    const Mark = ({ className, ...props }: IconProps) => (
-        <Icon {...props} className={cn(markTone, className)} />
-    );
-    Mark.displayName = `${status}Mark`;
-    return Mark;
-};
-
-const PLAYED_OPTIONS: DropdownOption[] = [
-    {
-        /* Empty rather than a fifth status: played_status stays null, and its
-           CHECK constraint still lists only the four below. Same word as
-           the plate, so choosing it is visibly choosing nothing further. */
-        value: "",
-        label: "Played",
-        icon: tonedMark("played"),
-        /* An answer in its own right, not a gap: "No further detail" read as
-           something left unfinished. */
-        hint: "Just played",
-    },
-    ...PLAYED_STATUSES.map((status) => ({
-        value: status,
-        label: STATUS_PRESENTATION[status].label,
-        icon: tonedMark(status),
-        hint: STATUS_PRESENTATION[status].hint,
-    })),
-];
 
 export const StatusPlates = ({
     value,

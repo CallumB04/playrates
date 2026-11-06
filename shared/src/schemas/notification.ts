@@ -235,14 +235,69 @@ export const NotificationPatchSchema = z
 
 export type NotificationPatch = z.infer<typeof NotificationPatchSchema>;
 
+/** The same change to many at once: a group cleared, Clear all, and the
+ *  Undo that puts them back. */
+export const NotificationBulkPatchSchema = z
+  .object({
+    ids: z.array(z.number().int().positive()).min(1).max(100),
+    read: z.boolean().optional(),
+    archived: z.boolean().optional(),
+  })
+  .strict()
+  .refine((patch) => patch.read !== undefined || patch.archived !== undefined, {
+    message: "Supply read, archived, or both",
+  });
+
+export type NotificationBulkPatch = z.infer<typeof NotificationBulkPatchSchema>;
+
+/** Read-all, or only these: closing the bell reads what it showed, less
+ *  any marked unread while it was open. No body at all, from a client
+ *  older than it, reads everything. */
+export const NotificationReadAllSchema = z
+  .object({
+    ids: z.array(z.number().int().positive()).max(100).optional(),
+  })
+  .strict()
+  .optional();
+
+export type NotificationReadAll = z.infer<typeof NotificationReadAllSchema>;
+
 /** The count is of everything unread, not of the page — a badge that only
  *  counted the first page would stop climbing at 25. */
 export interface NotificationFeed extends Paginated<AppNotification> {
   unread: number;
+  /** Unread and raised since the bell was last opened: what the badge
+   *  counts, so opening it clears it. Absent from an API older than it. */
+  unseen?: number;
+  /** When the bell was last opened, to tell what's new in the list. */
+  seenAt?: string | null;
+  /** Unread as the bell shows them, a group sharing a row counting once:
+   *  what the badge says. Absent from an API older than it. */
+  unreadRows?: number;
   /** Of those, friend requests still waiting on an answer: unread until
    *  answered, so the bulk actions leave them be. */
   awaitingAnswer: number;
 }
+
+/**
+ * Which row of the bell a notification sits in. People doing the same
+ * thing on the same day read as one line: friends accepting, or replies in
+ * one thread. Everything else stands alone. `day` is the date in the
+ * member's own time zone, so the bell and its badge agree on what a day is.
+ */
+export const notificationGroupKey = (
+  n: { id: number; kind: string; threadId?: number | null },
+  day: string,
+): string => {
+  switch (n.kind) {
+    case "friend_accepted":
+      return `accepted:${day}`;
+    case "community_reply":
+      return `reply:${n.threadId}:${day}`;
+    default:
+      return `one:${n.id}`;
+  }
+};
 
 /**
  * A friend request still waiting on an answer is a task, not news: it cannot

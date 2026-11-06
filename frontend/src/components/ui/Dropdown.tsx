@@ -32,6 +32,10 @@ interface DropdownProps {
     onChange: (value: string) => void;
     /** Shown when the value matches no option. */
     placeholder?: string;
+    /** Muted words before the value on the closed control, "Sort by" say:
+     *  the label of a dropdown standing alone, with no label above it. Not
+     *  in the menu, where the options speak for themselves. */
+    lead?: string;
     className?: string;
     /** Width of the popover, at least the trigger's. Defaults to the
      *  trigger's width. */
@@ -66,6 +70,7 @@ const Dropdown = ({
     value,
     onChange,
     placeholder = "Select",
+    lead,
     className,
     menuClassName,
     searchable = false,
@@ -241,6 +246,14 @@ const Dropdown = ({
                     renderTrigger(selected, open)
                 ) : (
                     <>
+                        {lead && (
+                            <span
+                                aria-hidden
+                                className="shrink-0 text-label text-content-muted"
+                            >
+                                {lead}
+                            </span>
+                        )}
                         {SelectedIcon && (
                             <SelectedIcon
                                 size={15}

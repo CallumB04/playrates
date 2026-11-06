@@ -72,8 +72,10 @@ const ProfileNav = ({
     return (
         <nav aria-label="Profile">
             {/* A phone: seven tabs in its width were cramped or scrolled, so
-                one control says where you are and opens the rest. */}
+                one control says where you are and opens the rest. A tablet
+                too: with their counts the tabs ran past the page's edge. */}
             <SwitcherButton
+                until="lg"
                 icon={current.icon}
                 label={current.label}
                 count={currentCount}
@@ -131,7 +133,7 @@ const ProfileNav = ({
                 </SwitcherSheet>
             )}
 
-            <div className="hidden gap-1 border-b border-subtle sm:flex">
+            <div className="hidden gap-1 border-b border-subtle lg:flex">
                 {TABS.map(({ tab, label }) => {
                     const count = countOf(tab);
                     const flagged = tab === "friends" && requestCount > 0;

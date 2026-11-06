@@ -4,6 +4,7 @@ import {
   emailAllowed,
   emailScopeLabel,
   resolveEmailPrefs,
+  type AdminEmailMessagesQuery,
   type EmailScope,
   type EmailStats,
   type UnsubscribeStatus,
@@ -24,7 +25,7 @@ import {
   groupWishlistReleases,
   planReconcile,
 } from "./email.events.js";
-import type { EmailRepository } from "./email.repository.js";
+import type { EmailRepository, NewEmailMessage } from "./email.repository.js";
 import { emailStatsStart, toEmailStats } from "./email.stats.js";
 import {
   RESEND_BATCH_MAX,
@@ -43,6 +44,7 @@ import {
 } from "./email.templates.js";
 import { readUnsubscribeToken, signUnsubscribeToken } from "./email.tokens.js";
 import {
+  deliveryOf,
   verifySvixSignature,
   type ContactEvent,
   type SvixHeaders,
@@ -102,12 +104,23 @@ const RESEND_UNSUBSCRIBE = "{{{RESEND_UNSUBSCRIBE_URL}}}";
 export const digestSunday = (now: Date): string | null =>
   now.getUTCDay() === 0 ? now.toISOString().slice(0, 10) : null;
 
-/** One member's email, waiting to be claimed under `ref`. */
-interface Queued {
-  userId: string;
-  ref: string;
+/** An email, and the member it's for. */
+interface Outgoing {
+  userId: string | null;
   message: EmailMessage;
 }
+
+/** One member's email, waiting to be claimed under `ref`. */
+interface Queued extends Outgoing {
+  userId: string;
+  ref: string;
+}
+
+/** What a log row can say beyond who, what and how it went. */
+type LogExtra = Pick<NewEmailMessage, "resendId" | "broadcastId" | "detail">;
+
+const errorText = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
 
 const byRef = (items: Queued[]): Map<string, Queued[]> => {
   const groups = new Map<string, Queued[]>();
@@ -187,6 +200,30 @@ export const createEmailService = ({
     headers?: Record<string, string>,
   ): EmailMessage => ({ to, ...email, ...(headers ? { headers } : {}) });
 
+  /** Who each email went to. A log that can't be written mustn't stop
+   *  the email, so it only warns. */
+  const logEach = async (
+    kind: string,
+    items: Outgoing[],
+    status: NewEmailMessage["status"],
+    extra: (i: number) => LogExtra = () => ({}),
+  ) => {
+    await repo
+      .logMessages(
+        items.map((item, i) => ({
+          userId: item.userId,
+          to: item.message.to,
+          kind,
+          subject: item.message.subject,
+          status,
+          ...extra(i),
+        })),
+      )
+      .catch((error: unknown) =>
+        logger.warn({ err: error, kind }, "email: recipients not logged"),
+      );
+  };
+
   /**
    * Sends what the day's cap leaves room for of these, in order, and logs
    * it, turned-away ones included. How many went. A null cap is for the
@@ -194,36 +231,38 @@ export const createEmailService = ({
    */
   const sendCounted = async (
     kind: string,
-    messages: EmailMessage[],
+    items: Outgoing[],
     cap: number | null = EMAIL_LIMITS.cap,
   ): Promise<number> => {
-    if (messages.length === 0) return 0;
+    if (items.length === 0) return 0;
     const { id, granted } = await repo.takeSlots({
       kind,
-      count: messages.length,
+      count: items.length,
       cap,
       transactional: true,
     });
-    if (granted < messages.length) {
+    if (granted < items.length) {
       logger.warn(
-        { kind, capped: messages.length - granted },
+        { kind, capped: items.length - granted },
         "email: daily cap reached",
       );
+      await logEach(kind, items.slice(granted), "capped");
     }
     if (granted === 0) return 0;
+    const going = items.slice(0, granted);
+    let ids: (string | null)[];
     try {
-      await sender.send(messages.slice(0, granted));
+      ids = await sender.send(going.map((item) => item.message));
     } catch (error) {
       if (id !== null) {
-        await repo
-          .markFailed(
-            id,
-            error instanceof Error ? error.message : String(error),
-          )
-          .catch(() => undefined);
+        await repo.markFailed(id, errorText(error)).catch(() => undefined);
       }
+      await logEach(kind, going, "failed", () => ({
+        detail: errorText(error),
+      }));
       throw error;
     }
+    await logEach(kind, going, "sent", (i) => ({ resendId: ids[i] ?? null }));
     return granted;
   };
 
@@ -260,10 +299,7 @@ export const createEmailService = ({
       const chunk = queued.slice(i, i + RESEND_BATCH_MAX);
       let went: number;
       try {
-        went = await sendCounted(
-          kind,
-          chunk.map((q) => q.message),
-        );
+        went = await sendCounted(kind, chunk);
       } catch (error) {
         await giveBack(queued.slice(i));
         logger.error({ err: error, kind, sent }, "email: batch send failed");
@@ -296,14 +332,24 @@ export const createEmailService = ({
     );
 
   /** A broadcast doesn't touch the daily allowance, but is logged with
-   *  everything else for the admin. */
-  const logBroadcast = async (kind: string, recipients: number) => {
-    if (recipients === 0) return;
+   *  everything else for the admin, and who it went to with it. */
+  const logBroadcast = async (
+    kind: string,
+    recipients: Outgoing[],
+    broadcastId: string | null,
+  ) => {
+    if (recipients.length === 0) return;
     await repo
-      .takeSlots({ kind, count: recipients, cap: null, transactional: false })
+      .takeSlots({
+        kind,
+        count: recipients.length,
+        cap: null,
+        transactional: false,
+      })
       .catch((error: unknown) =>
         logger.warn({ err: error }, "email: broadcast not logged"),
       );
+    await logEach(kind, recipients, "sent", () => ({ broadcastId }));
   };
 
   const later = (what: string, work: () => Promise<unknown>) =>
@@ -366,7 +412,10 @@ export const createEmailService = ({
       let sent: number;
       try {
         sent = await sendCounted(draft.kind, [
-          message(member.email, email, target.headers),
+          {
+            userId: draft.userId,
+            message: message(member.email, email, target.headers),
+          },
         ]);
       } catch (error) {
         await repo.release(draft.userId, draft.kind, ref);
@@ -389,17 +438,20 @@ export const createEmailService = ({
       let sent: number;
       try {
         sent = await sendCounted("welcome", [
-          message(
-            member.email,
-            welcomeEmail(
-              {
-                username: member.username,
-                firstName: profile?.first_name ?? null,
-              },
-              target.links,
+          {
+            userId,
+            message: message(
+              member.email,
+              welcomeEmail(
+                {
+                  username: member.username,
+                  firstName: profile?.first_name ?? null,
+                },
+                target.links,
+              ),
+              target.headers,
             ),
-            target.headers,
-          ),
+          },
         ]);
       } catch (error) {
         await repo.release(userId, "welcome", "welcome");
@@ -608,27 +660,35 @@ export const createEmailService = ({
           name: email.subject,
           ...email,
         });
-        await logBroadcast(content.kind, (await newsRecipients()).length);
+        await logBroadcast(
+          content.kind,
+          (await newsRecipients()).map((member) => ({
+            userId: member.id,
+            message: { to: member.email, ...email },
+          })),
+          broadcastId,
+        );
         return { emailed: true, broadcastId };
       }
       if (sender.name !== "mailpit") {
         logger.warn("RESEND_SEGMENT_ID is not set: news email not sent");
         return { emailed: false, broadcastId: null };
       }
-      const messages: EmailMessage[] = [];
+      const items: Outgoing[] = [];
       for (const member of await newsRecipients()) {
         const target = addressed(member.id, "news");
         if (!target) return { emailed: false, broadcastId: null };
-        messages.push(
-          message(
+        items.push({
+          userId: member.id,
+          message: message(
             member.email,
             renderNews(content, target.links),
             target.headers,
           ),
-        );
+        });
       }
-      await sender.send(messages);
-      await logBroadcast(content.kind, messages.length);
+      await sender.send(items.map((item) => item.message));
+      await logBroadcast(content.kind, items, null);
       return { emailed: true, broadcastId: null };
     },
 
@@ -646,14 +706,17 @@ export const createEmailService = ({
       await sendCounted(
         "digest_test",
         [
-          message(
-            to,
-            digestEmail(digestContent(row), {
-              site: settings.site,
-              unsubscribe: settingsUrl,
-              settings: settingsUrl,
-            }),
-          ),
+          {
+            userId,
+            message: message(
+              to,
+              digestEmail(digestContent(row), {
+                site: settings.site,
+                unsubscribe: settingsUrl,
+                settings: settingsUrl,
+              }),
+            ),
+          },
         ],
         null,
       );
@@ -662,22 +725,32 @@ export const createEmailService = ({
 
     /** The same news email, to one address only: the admin's proof. Its
      *  way out goes to Settings, as there's no broadcast behind it. */
-    async sendNewsTest(content: NewsContent, to: string): Promise<void> {
+    async sendNewsTest(
+      content: NewsContent,
+      to: string,
+      userId: string | null = null,
+    ): Promise<void> {
       await sendCounted(
         "news_test",
         [
-          message(
-            to,
-            renderNews(content, {
-              site: settings.site,
-              unsubscribe: settingsUrl,
-              settings: settingsUrl,
-            }),
-          ),
+          {
+            userId,
+            message: message(
+              to,
+              renderNews(content, {
+                site: settings.site,
+                unsubscribe: settingsUrl,
+                settings: settingsUrl,
+              }),
+            ),
+          },
         ],
         null,
       );
     },
+
+    /** Who was emailed what, and whether it arrived, for the admin. */
+    messages: (query: AdminEmailMessagesQuery) => repo.messages(query),
 
     /** How email is going, for the admin. Resend not answering only
      *  leaves its own figures out. */
@@ -736,7 +809,9 @@ export const createEmailService = ({
     },
 
     /**
-     * Resend's webhook. Someone who unsubscribes through a broadcast's own
+     * Resend's webhook. An email event moves that email on in the log; one
+     * that isn't PlayRates' own (an account email) changes nothing.
+     * Someone who unsubscribes through a broadcast's own
      * link has their news switch turned off, so Settings says what Resend
      * does. Only when news was on: the contact also updates when we
      * unsubscribe it ourselves, for "all" off, and that mustn't flip news.
@@ -750,6 +825,11 @@ export const createEmailService = ({
       try {
         event = JSON.parse(body.toString("utf8")) as ContactEvent;
       } catch {
+        return true;
+      }
+      const delivery = deliveryOf(event);
+      if (delivery) {
+        await repo.recordEvent(delivery);
         return true;
       }
       const email = event.data?.email;

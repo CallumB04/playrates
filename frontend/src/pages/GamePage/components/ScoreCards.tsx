@@ -5,6 +5,8 @@ import CriticScore from "../../../lib/criticScore";
 import { criticVerdict } from "../../../lib/criticVerdict";
 import { plateClass } from "../../../components/ui/plateClass";
 import Stat from "../../../components/ui/Stat";
+import AchievementRing from "../../../components/gamelog/AchievementRing";
+import { completionTone } from "../../../lib/completionTone";
 
 /** A flat plate titled with what it holds — these sit in a row, and a raised
  *  card each would make them compete with the page's real cards. */
@@ -33,6 +35,20 @@ const ScoreCard = ({
  * somebody else's number and is labelled as theirs; everything beside it is
  * ours.
  */
+/** The figure in its band's colour, with the ring beside it. Nobody having
+ *  recorded achievements is no figure at all, not nought per cent. */
+const AverageCompletion = ({ value }: { value: number | null }) =>
+    value === null ? (
+        <span className="text-content-muted">–</span>
+    ) : (
+        <span className="inline-flex items-center gap-2">
+            <span className={completionTone(value).text}>
+                {formatPercent(value)}
+            </span>
+            <AchievementRing done={value} total={1} size={20} bare />
+        </span>
+    );
+
 const ScoreCards = ({
     game,
     stats,
@@ -90,7 +106,11 @@ const ScoreCards = ({
                     />
                     <Stat
                         icon={Trophy}
-                        value={formatPercent(stats?.avgCompletion ?? 0)}
+                        value={
+                            <AverageCompletion
+                                value={stats?.avgCompletion ?? null}
+                            />
+                        }
                         label="Average completion"
                     />
                 </div>

@@ -7,6 +7,10 @@
  *                            (PORT moves the app, for when 5173 is taken)
  *   npm run db:reset:local   reset only, with the app left running
  *
+ * --keep skips the reset. --igdb keeps backend/.env's IGDB keys, for the
+ * Steam import and IGDB search: real calls to IGDB, the local database
+ * still the only one written to.
+ *
  * Needs Docker. See docs/local-development.md.
  */
 import { spawn, spawnSync } from "node:child_process";
@@ -20,6 +24,7 @@ const resetOnly = process.argv.includes("--reset-only");
 // Runs against the database as it is: for when something worth keeping is
 // in it, or someone else is working in it.
 const keep = process.argv.includes("--keep");
+const igdb = process.argv.includes("--igdb");
 
 const run = (command, args, options = {}) => {
   const result = spawnSync(command, args, {
@@ -114,8 +119,7 @@ const backendEnv = {
   SUPABASE_SERVICE_ROLE_KEY: keys.SERVICE_ROLE_KEY,
   // Empty, not unset: an empty value still wins over backend/.env, and
   // with no IGDB keys search stays on the local catalogue.
-  IGDB_CLIENT_ID: "",
-  IGDB_CLIENT_SECRET: "",
+  ...(igdb ? {} : { IGDB_CLIENT_ID: "", IGDB_CLIENT_SECRET: "" }),
   CRON_SECRET: "",
   // Every email lands in the local mail viewer, never with Resend.
   RESEND_API_KEY: "",

@@ -2,22 +2,49 @@ import { z } from "zod";
 import { isAnnouncementHref } from "../announcementBody.js";
 import type { RichTextDoc } from "./richText.js";
 
-/** What a change is: shown beside it, and picked when writing it. */
+/** What a change is, picked when writing it. In the order a release lists
+ *  them: what's new first, what went last before the odds and ends. */
 export const PATCH_NOTE_KINDS = [
   "feature",
   "improvement",
   "fix",
+  "removed",
   "other",
 ] as const;
 export type PatchNoteKind = (typeof PATCH_NOTE_KINDS)[number];
 
-/** Each kind's name, beside its change and in the picker. */
+/** Each kind's name, in the picker and beside a change in an email. */
 export const PATCH_NOTE_KIND_NAMES: Record<PatchNoteKind, string> = {
   feature: "Feature",
   improvement: "Improvement",
   fix: "Fix",
+  removed: "Removed",
   other: "Other",
 };
+
+/** Each kind as the heading over its changes on the page. */
+export const PATCH_NOTE_GROUP_NAMES: Record<PatchNoteKind, string> = {
+  feature: "New",
+  improvement: "Improved",
+  fix: "Fixed",
+  removed: "Removed",
+  other: "Other",
+};
+
+/** A release's changes by kind, in PATCH_NOTE_KINDS order, each kind's in
+ *  the order written. Kinds with nothing in them are left out. */
+export const groupedItems = <T extends { kind: PatchNoteKind }>(
+  items: T[],
+): { kind: PatchNoteKind; items: T[] }[] =>
+  PATCH_NOTE_KINDS.map((kind) => ({
+    kind,
+    items: items.filter((item) => item.kind === kind),
+  })).filter((group) => group.items.length > 0);
+
+/** The same changes as one list, in that order. */
+export const sortedItems = <T extends { kind: PatchNoteKind }>(
+  items: T[],
+): T[] => groupedItems(items).flatMap((group) => group.items);
 
 /** A page on the site ("/settings") or anywhere else over https. */
 const LinkSchema = z
@@ -42,7 +69,7 @@ export const PatchNoteItemSchema = z.object({
 export type PatchNoteItem = z.infer<typeof PatchNoteItemSchema>;
 
 /** A release: its title, a message above the changes and one below, both
- *  optional, and the changes themselves, in the order written. */
+ *  optional, and the changes themselves, as written; shown by kind. */
 export const PatchNoteSchema = z
   .object({
     title: z.string().trim().min(1).max(80),
@@ -88,7 +115,7 @@ export const patchNoteDoc = (note: PatchNote): RichTextDoc =>
         ? [
             {
               type: "bulletList",
-              content: note.items.map((item) => ({
+              content: sortedItems(note.items).map((item) => ({
                 type: "listItem",
                 content: [
                   {

@@ -7,6 +7,8 @@ export interface ShareMoment {
     /** A path on the site, without the invite. */
     path: string;
     text: string;
+    /** The moment's own picture; without one, the sharer's player card. */
+    image?: string;
 }
 
 let current: ShareMoment | null = null;

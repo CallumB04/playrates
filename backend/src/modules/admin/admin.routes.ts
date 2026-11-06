@@ -3,6 +3,7 @@ import {
   AdminActivityQuerySchema,
   AdminActivityScopeSchema,
   AdminGameEventsQuerySchema,
+  AdminEmailMessagesQuerySchema,
   AdminGameIdParamSchema,
   AdminGamePatchSchema,
   AdminGameSearchQuerySchema,
@@ -44,6 +45,17 @@ export const createAdminRouter = ({
   const router = Router();
 
   // Stats -------------------------------------------------------------------
+
+  router.get(
+    "/stats/staying",
+    validate({ query: AdminRangeQuerySchema }),
+    async (req, res) => {
+      const { range } = req.valid!.query as z.infer<
+        typeof AdminRangeQuerySchema
+      >;
+      res.json(await service.staying(range));
+    },
+  );
 
   router.get(
     "/stats/overview",
@@ -283,6 +295,18 @@ export const createAdminRouter = ({
   router.get("/email/stats", async (_req, res) => {
     res.json(await service.emailStats());
   });
+
+  router.get(
+    "/email/messages",
+    validate({ query: AdminEmailMessagesQuerySchema }),
+    async (req, res) => {
+      res.json(
+        await service.emailMessages(
+          req.valid!.query as z.infer<typeof AdminEmailMessagesQuerySchema>,
+        ),
+      );
+    },
+  );
 
   // Health ------------------------------------------------------------------
 

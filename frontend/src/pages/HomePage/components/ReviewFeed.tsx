@@ -8,23 +8,8 @@ import { SpoilerNote } from "../../../components/ui/SpoilerCover";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import StatusBadge from "../../../components/ui/StatusBadge";
-import {
-    displayStatusFor,
-    isDisplayStatus,
-    type DisplayStatus,
-    type GameStatus,
-    type PlayedStatus,
-} from "../../../constants/gameStatus";
+import { reviewStatus } from "../../../lib/reviewStatus";
 import { formatHours, relativeTime } from "../../../lib/format";
-
-/** The state a review was written in, when its author still has that log. */
-const reviewStatus = (review: ReviewWithAuthor): DisplayStatus | null => {
-    if (!review.status || !isDisplayStatus(review.status)) return null;
-    return displayStatusFor(
-        review.status as GameStatus,
-        review.playedStatus as PlayedStatus | null
-    );
-};
 
 const Row = ({ review }: { review: ReviewWithAuthor }) => {
     const status = reviewStatus(review);

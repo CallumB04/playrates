@@ -13,6 +13,7 @@ import {
   toIgdbUsage,
   toServerError,
   toCohorts,
+  toStaying,
   toUserSummary,
   patchNoteTitle,
   toPatchNote,
@@ -464,5 +465,46 @@ describe("toCohorts", () => {
       gotGoing: 3,
       backWeek: { of: 6, back: 3 },
     });
+  });
+});
+
+describe("toStaying", () => {
+  const row = (n: number) => ({
+    joined: 10 * n,
+    onboarded: 8 * n,
+    logged_three: 4 * n,
+    week_due: 6 * n,
+    back_week: 3 * n,
+    month_due: 2 * n,
+    back_month: n,
+    invited: 2 * n,
+    invited_week_due: n,
+    invited_back_week: n,
+  });
+
+  it("sets the period beside the one before, and keeps the invited apart", () => {
+    const staying = toStaying("90d", row(2), row(1), [
+      { day: 1, due: 20, back: 12, invited_due: 4, invited_back: 3 },
+    ]);
+
+    expect(staying.current).toEqual({
+      joined: 20,
+      onboarded: 16,
+      loggedThree: 8,
+      backWeek: { of: 12, back: 6 },
+      backMonth: { of: 4, back: 2 },
+    });
+    expect(staying.previous.joined).toBe(10);
+    expect(staying.invited).toEqual({
+      joined: 4,
+      backWeek: { of: 2, back: 2 },
+    });
+    expect(staying.curve).toEqual([
+      {
+        day: 1,
+        everyone: { of: 20, back: 12 },
+        invited: { of: 4, back: 3 },
+      },
+    ]);
   });
 });

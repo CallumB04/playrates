@@ -11,6 +11,7 @@ import {
 } from "../../hooks/queries/useProgress";
 import { profilePath } from "../../lib/profilePaths";
 import { useNotify } from "../../contexts/NotificationContext";
+import { OFFER_DWELL_MS } from "../../contexts/notificationQueue";
 import { useNoDialogOpen } from "../../hooks/useNoDialogOpen";
 import {
     closeShareMoment,
@@ -103,6 +104,7 @@ const ProgressMoments = () => {
                 toasts.push(() =>
                     notify(badgeToastText(def, b.metal), "success", undefined, {
                         label: "Share",
+                        dwell: OFFER_DWELL_MS,
                         onClick: () =>
                             shareMoment(
                                 badgeMoment(user.username, def, b.metal)
@@ -186,7 +188,9 @@ const ProgressMoments = () => {
                         user.username
                     )}
                     text={sharing.text}
-                    imageUrl={playerCardUrl(user.username, data.xp)}
+                    imageUrl={
+                        sharing.image ?? playerCardUrl(user.username, data.xp)
+                    }
                     fileName={`${user.username}-playrates.png`}
                     noImage="Only public profiles get a picture."
                     onClose={closeShareMoment}

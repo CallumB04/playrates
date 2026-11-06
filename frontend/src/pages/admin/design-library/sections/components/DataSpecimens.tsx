@@ -258,12 +258,14 @@ const DataSpecimens = () => {
 
             <Specimen
                 title="Achievement ring"
-                notes="Gold, because completion is the one figure a log earns rather than records. It sits beside the log’s facts, not in them."
-                meta="done · total · size"
+                notes="Coloured as every completion figure is: red under a quarter, orange to three quarters, green past that, and gold once every achievement is in. Bare, it sits beside a figure that already says it, as the game page’s average completion does. It sits beside the log’s facts, not in them."
+                meta="done · total · size · bare"
             >
-                <AchievementRing done={46} total={52} />
-                <AchievementRing done={52} total={52} />
-                <AchievementRing done={3} total={52} size={48} />
+                <AchievementRing done={6} total={52} size={48} />
+                <AchievementRing done={26} total={52} size={48} />
+                <AchievementRing done={46} total={52} size={48} />
+                <AchievementRing done={52} total={52} size={48} />
+                <AchievementRing done={26} total={52} size={20} bare />
             </Specimen>
         </>
     );

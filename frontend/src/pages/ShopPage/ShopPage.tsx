@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import {
     SHOP_GROUPS,
     SHOP_KINDS,
+    shopTrail,
     type ShopEntry,
     type ShopKind,
 } from "@playrates/shared";
@@ -67,7 +68,7 @@ const ShopPage = () => {
         <div className="flex flex-col gap-5 lg:gap-6">
             <PageHeader
                 title="Shop"
-                back={{ to: "/progress", label: "Your progress" }}
+                trail={shopTrail()}
                 actions={
                     <span
                         className="inline-flex items-center gap-2 font-mono text-[28px] leading-none font-bold text-content tabular-nums sm:text-[34px]"

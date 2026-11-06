@@ -1,4 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import type { EmailMessageStatus } from "@playrates/shared";
+import type { DeliveryEvent } from "./email.repository.js";
 
 /** Svix's own tolerance, either side of now: an older delivery is a replay. */
 const TOLERANCE_S = 5 * 60;
@@ -40,8 +42,49 @@ export const verifySvixSignature = (
   });
 };
 
-/** The one part of a Resend webhook acted on. */
+/** The parts of a Resend webhook acted on: a contact's, or an email's. */
 export interface ContactEvent {
   type: string;
-  data?: { email?: unknown; unsubscribed?: unknown };
+  data?: {
+    email?: unknown;
+    unsubscribed?: unknown;
+    email_id?: unknown;
+    broadcast_id?: unknown;
+    to?: unknown;
+    bounce?: { message?: unknown };
+    suppressed?: { message?: unknown };
+    failed?: { reason?: unknown };
+  };
 }
+
+/** Resend's email events, as the log's statuses. `email.sent` is left out:
+ *  the log says sent the moment Resend takes it. */
+const DELIVERY_STATUS: Record<string, EmailMessageStatus> = {
+  "email.delivery_delayed": "delayed",
+  "email.delivered": "delivered",
+  "email.bounced": "bounced",
+  "email.suppressed": "suppressed",
+  "email.failed": "failed",
+  "email.complained": "complained",
+};
+
+const text = (value: unknown): string | null =>
+  typeof value === "string" && value.length > 0 ? value : null;
+
+/** An email event, ready for the log; null for anything else. */
+export const deliveryOf = (event: ContactEvent): DeliveryEvent | null => {
+  const status = DELIVERY_STATUS[event.type];
+  const resendId = text(event.data?.email_id);
+  if (!status || !resendId) return null;
+  const to = Array.isArray(event.data?.to) ? text(event.data.to[0]) : null;
+  return {
+    resendId,
+    broadcastId: text(event.data?.broadcast_id),
+    to,
+    status,
+    detail:
+      text(event.data?.bounce?.message) ??
+      text(event.data?.suppressed?.message) ??
+      text(event.data?.failed?.reason),
+  };
+};

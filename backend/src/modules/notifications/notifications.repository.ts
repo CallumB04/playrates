@@ -34,6 +34,19 @@ export interface NotificationsRepository {
     to: number,
   ): Promise<{ rows: NotificationRowWithActor[]; total: number }>;
   countUnread(userId: string): Promise<number>;
+  /** Unread, in the inbox, and raised after `since`: what's new since the
+   *  bell was last opened. Every unread one when it never has been. */
+  countUnseen(userId: string, since: string | null): Promise<number>;
+  /** When they last opened the bell (null if never), and their time zone,
+   *  which decides what counts as one day in it. */
+  bellOwner(
+    userId: string,
+  ): Promise<{ seenAt: string | null; timezone: string | null }>;
+  /** Enough of each unread inbox row to tell which share a row. */
+  unreadForRows(
+    userId: string,
+  ): Promise<{ id: number; kind: string; created_at: string; thread_id: number | null }[]>;
+  markSeen(userId: string): Promise<void>;
   /** Who sent the unread friend requests still in the inbox. */
   unreadRequestActors(userId: string): Promise<string[]>;
   findById(id: number): Promise<NotificationRow | null>;
@@ -41,6 +54,13 @@ export interface NotificationsRepository {
     id: number,
     patch: Partial<NotificationRow>,
   ): Promise<NotificationRowWithActor>;
+  /** These of the caller's, less the requests from `keepRequestsFrom`. */
+  updateMany(
+    userId: string,
+    ids: number[],
+    patch: Partial<NotificationRow>,
+    keepRequestsFrom: string[],
+  ): Promise<void>;
   raise(draft: NotificationDraft): Promise<void>;
   /** Raises each one only if nothing is under its key already, read or
    *  not, so a scheduled job can run twice without nagging. How many were
@@ -48,7 +68,12 @@ export interface NotificationsRepository {
   raiseOnce(drafts: NotificationDraft[]): Promise<NotificationDraft[]>;
   /** Leaves alone the friend requests from `keepRequestsFrom`, which are
    *  still waiting on an answer. */
-  markAllRead(userId: string, keepRequestsFrom: string[]): Promise<void>;
+  markAllRead(
+    userId: string,
+    keepRequestsFrom: string[],
+    /** Only these, where given; the caller's own either way. */
+    ids?: number[],
+  ): Promise<void>;
   /** Files away the inbox's read rows. Unread ones stay, so one that lands
    *  as the button is pressed is not archived unseen; so do the requests
    *  from `keepRequestsFrom`. */
@@ -126,6 +151,67 @@ export const createNotificationsRepository = (
     return count ?? 0;
   },
 
+  async countUnseen(userId, since) {
+    let builder = db
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .is("read_at", null)
+      .is("archived_at", null);
+    if (since) builder = builder.gt("created_at", since);
+    const { count, error } = await builder;
+    if (error) throw error;
+    return count ?? 0;
+  },
+
+  async bellOwner(userId) {
+    const { data, error } = await db
+      .from("profiles")
+      .select("notifications_seen_at, timezone")
+      .eq("id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    const row = data as {
+      notifications_seen_at: string | null;
+      timezone: string | null;
+    } | null;
+    return {
+      seenAt: row?.notifications_seen_at ?? null,
+      timezone: row?.timezone ?? null,
+    };
+  },
+
+  async unreadForRows(userId) {
+    const { data, error } = await db
+      .from("notifications")
+      .select("id, kind, created_at, data")
+      .eq("user_id", userId)
+      .is("read_at", null)
+      .is("archived_at", null);
+    if (error) throw error;
+    return (
+      (data ?? []) as {
+        id: number;
+        kind: string;
+        created_at: string;
+        data: { threadId?: number } | null;
+      }[]
+    ).map((r) => ({
+      id: r.id,
+      kind: r.kind,
+      created_at: r.created_at,
+      thread_id: r.data?.threadId ?? null,
+    }));
+  },
+
+  async markSeen(userId) {
+    const { error } = await db
+      .from("profiles")
+      .update({ notifications_seen_at: new Date().toISOString() })
+      .eq("id", userId);
+    if (error) throw error;
+  },
+
   async findById(id) {
     const { data, error } = await db
       .from("notifications")
@@ -199,13 +285,27 @@ export const createNotificationsRepository = (
     );
   },
 
-  async markAllRead(userId, keepRequestsFrom) {
+  async updateMany(userId, ids, patch, keepRequestsFrom) {
+    let query = db
+      .from("notifications")
+      .update(patch)
+      .eq("user_id", userId)
+      .in("id", ids);
+    if (keepRequestsFrom.length > 0) {
+      query = query.or(exceptRequestsFrom(keepRequestsFrom));
+    }
+    const { error } = await query;
+    if (error) throw error;
+  },
+
+  async markAllRead(userId, keepRequestsFrom, ids) {
     let query = db
       .from("notifications")
       .update({ read_at: new Date().toISOString() })
       .eq("user_id", userId)
       .is("read_at", null)
       .is("archived_at", null);
+    if (ids) query = query.in("id", ids);
     if (keepRequestsFrom.length > 0) {
       query = query.or(exceptRequestsFrom(keepRequestsFrom));
     }

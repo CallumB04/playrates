@@ -825,9 +825,9 @@ describe("structured patch notes", () => {
     expect(response.body.patchNote).toEqual(note);
     const saved = state.communityMessages.at(-1)!;
     expect(saved.thread_id).toBe(2);
-    // The body lists features before fixes, under their headings.
+    // The body lists features before fixes, whatever order they came in.
     expect(JSON.stringify(saved.body)).toMatch(
-      /v1\.1\.2.*A big one.*Fix: .*Fixed the thing.*Feature: .*Import from Steam/,
+      /v1\.1\.2.*A big one.*Feature: .*Import from Steam.*Fix: .*Fixed the thing/,
     );
 
     const summary = await request(app).get("/api/v1/community/patch-notes");

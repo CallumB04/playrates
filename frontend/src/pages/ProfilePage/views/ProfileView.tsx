@@ -1,8 +1,6 @@
 import { Fragment, useState } from "react";
-import type { AboutField, Profile, ProfileVisibility } from "@playrates/shared";
+import type { Profile } from "@playrates/shared";
 import { useAuth } from "../../../contexts/AuthContext";
-import { useNotify } from "../../../contexts/NotificationContext";
-import { useUpdateProfile } from "../../../hooks/queries/useProfiles";
 import { useUserFavourites } from "../../../hooks/queries/useFavourites";
 import AboutCard from "../components/AboutCard";
 import EmptyPlate from "../../../components/ui/EmptyPlate";
@@ -21,7 +19,7 @@ interface ProfileViewProps {
     onEditProfile: () => void;
 }
 
-/** The About card on its own, owner's controls and all. Used past a hidden
+/** The About card on its own, owner's buttons and all. Used past a hidden
  *  profile's card too, since each of its fields has a visibility of its own. */
 export const ProfileAbout = ({
     profile,
@@ -29,28 +27,13 @@ export const ProfileAbout = ({
     onEditProfile,
 }: Omit<ProfileViewProps, "canSee">) => {
     const { user } = useAuth();
-    const notify = useNotify();
-    const update = useUpdateProfile();
-
-    const changeVisibility = (field: AboutField, value: ProfileVisibility) =>
-        update.mutate(
-            { aboutVisibility: { [field]: value } },
-            {
-                onError: () => notify("Couldn’t change who sees that", "error"),
-            }
-        );
 
     return (
         <AboutCard
             profile={profile}
             owner={
                 isOwner && user
-                    ? {
-                          visibility: user.aboutVisibility,
-                          onChangeVisibility: changeVisibility,
-                          onEdit: onEditProfile,
-                          saving: update.isPending,
-                      }
+                    ? { onEdit: onEditProfile, hideOnline: user.hideOnline }
                     : undefined
             }
         />
