@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSteamAvailable } from "../steam/useSteamAvailable";
 import { Check } from "lucide-react";
 import Button from "../ui/Button";
 import { Skeleton } from "../ui/Skeleton";
 import GameCover from "../game/GameCover";
+import { queryKeys, type GameListFilters } from "../../api";
 import { useGames } from "../../hooks/queries/useGames";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { Input } from "../ui/Input";
@@ -14,6 +16,17 @@ import { formatCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 
 const SHOWN = 12;
+
+/** One or two letters match too much to be worth asking about. */
+const searchOf = (typed: string): string | undefined =>
+    typed.length >= 2 ? typed : undefined;
+
+const filtersFor = (typed: string): GameListFilters => ({
+    sort: "logged",
+    limit: SHOWN,
+    count: false,
+    search: searchOf(typed),
+});
 
 interface PlayedGamesStepProps {
     titleId: string;
@@ -35,13 +48,19 @@ const PlayedGamesStep = ({
     /* The most logged to start with; a search for anything else. A pick
        stays picked as the search changes. */
     const [search, setSearch] = useState("");
-    const term = useDebouncedValue(search.trim(), 300);
-    const { data, isLoading } = useGames({
-        sort: "logged",
-        limit: SHOWN,
-        count: false,
-        search: term.length >= 2 ? term : undefined,
-    });
+    const typed = search.trim();
+    const settled = useDebouncedValue(typed, 250);
+    const queryClient = useQueryClient();
+    // A search already made shows at once; only a new one waits for a pause.
+    const made = queryClient.getQueryData(
+        queryKeys.games.list({ ...filtersFor(typed) })
+    );
+    const term = made ? typed : settled;
+    const { data, isLoading, isPlaceholderData } = useGames(filtersFor(term));
+    /* Until what's shown is what was typed, the last search's covers would
+       sit there looking like the answer. */
+    const waiting =
+        isLoading || isPlaceholderData || searchOf(typed) !== searchOf(term);
     const { create } = useLogMutations();
     const steamAvailable = useSteamAvailable();
     const notify = useNotify();
@@ -107,14 +126,17 @@ const PlayedGamesStep = ({
                 </p>
             )}
 
-            {!isLoading && term.length >= 2 && data?.data.length === 0 && (
+            {!waiting && searchOf(term) && data?.data.length === 0 && (
                 <p className="text-body-sm text-content-secondary">
                     Nothing matches “{term}”.
                 </p>
             )}
 
-            <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {isLoading
+            <ul
+                aria-busy={waiting}
+                className="grid grid-cols-3 gap-2 sm:grid-cols-4"
+            >
+                {waiting
                     ? Array.from({ length: SHOWN }, (_, i) => (
                           <li key={i}>
                               <Skeleton className="aspect-3/4 rounded-xs" />
