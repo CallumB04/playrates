@@ -192,9 +192,10 @@ const replaceLinks = async (
     if (error) throw error;
   }
 
-  const links: [string, Record<string, unknown>[]][] = [
+  const links: [string, string, Record<string, unknown>[]][] = [
     [
       "game_platforms",
+      "game_id,platform_slug",
       games.flatMap(({ id, game }) =>
         game.platformSlugs.map((slug) => ({
           game_id: id,
@@ -204,20 +205,26 @@ const replaceLinks = async (
     ],
     [
       "game_systems",
+      "game_id,system_slug",
       games.flatMap(({ id, game }) =>
         game.systemSlugs.map((slug) => ({ game_id: id, system_slug: slug })),
       ),
     ],
     [
       "game_genres",
+      "game_id,genre_slug",
       games.flatMap(({ id, game }) =>
         game.genres.map((genre) => ({ game_id: id, genre_slug: genre.slug })),
       ),
     ],
   ];
-  for (const [table, rows] of links) {
+  /* Two searches can replace the same game's links at once, and the later
+     insert would find the earlier one's rows already there. */
+  for (const [table, onConflict, rows] of links) {
     if (rows.length === 0) continue;
-    const { error } = await db.from(table).insert(rows);
+    const { error } = await db
+      .from(table)
+      .upsert(rows, { onConflict, ignoreDuplicates: true });
     if (error) throw error;
   }
 };

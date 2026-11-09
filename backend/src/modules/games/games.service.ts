@@ -320,10 +320,13 @@ export const createGamesService = (
 
       /* The provider is an enrichment, not the source: an outage upstream
        used to turn every thin search into a 502 over a catalogue we already
-       hold locally. */
+       hold locally. Saving what it found is enrichment too, and two searches
+       writing the same games at once used to answer 409. */
       let external: Awaited<ReturnType<GamesProvider["search"]>> = [];
+      let added: number;
       try {
         external = await provider.search(term, 20);
+        ({ added } = await upsertCounting(external));
       } catch (error) {
         await record({
           kind: "search_pull",
@@ -334,7 +337,6 @@ export const createGamesService = (
         return paginate(local.rows.map(toGame), pagination, local.rows.length);
       }
 
-      const { added } = await upsertCounting(external);
       await record({
         kind: "search_pull",
         source: "search",

@@ -19,6 +19,9 @@ import {
     searchGames,
     type GameListFilters,
 } from "../../api";
+import { useDebouncedValue } from "../useDebouncedValue";
+
+const REACH_PAUSE_MS = 600;
 
 export const useGames = (filters: GameListFilters = {}) =>
     useQuery({
@@ -37,10 +40,14 @@ export const useGames = (filters: GameListFilters = {}) =>
  */
 export const useCatalogueReach = (term: string, enabled: boolean) => {
     const queryClient = useQueryClient();
+    /* Each reach can write twenty games, so only the term someone stopped
+       at goes, not every one they typed through on the way. */
+    const paused = useDebouncedValue(term, REACH_PAUSE_MS);
+    const wanted = enabled && term.length >= 2;
     const { data, isFetching } = useQuery({
         queryKey: queryKeys.games.reach(term),
         queryFn: () => searchGames(term),
-        enabled: enabled && term.length >= 2,
+        enabled: wanted && paused === term,
         staleTime: 5 * 60_000,
     });
 
@@ -55,7 +62,10 @@ export const useCatalogueReach = (term: string, enabled: boolean) => {
         });
     }, [found, term, queryClient]);
 
-    return { reaching: isFetching, found };
+    return {
+        reaching: isFetching || (wanted && !data && paused !== term),
+        found,
+    };
 };
 
 export const useGame = (id: number | undefined) =>

@@ -164,6 +164,39 @@ describe("PlayedGamesStep", () => {
         expect(reached).toEqual(["silksong"]);
     });
 
+    it("looks further only for where typing stopped, not each word on the way", async () => {
+        const reached: (string | null)[] = [];
+        server.use(
+            http.get(`${API_BASE}/games`, () =>
+                HttpResponse.json(paginated([]))
+            ),
+            http.get(`${API_BASE}/games/search`, ({ request }) => {
+                reached.push(new URL(request.url).searchParams.get("q"));
+                return HttpResponse.json(paginated([]));
+            })
+        );
+        renderWithProviders(
+            <PlayedGamesStep titleId="t" preview onDone={vi.fn()} />
+        );
+        const u = userEvent.setup();
+        const field = screen.getByLabelText("Search for a game");
+
+        await u.type(field, "final");
+        await screen.findByText("Looking further for “final”…");
+        await u.type(field, " fantasy");
+
+        expect(
+            await screen.findByText(
+                "Nothing matches “final fantasy”.",
+                undefined,
+                {
+                    timeout: 3000,
+                }
+            )
+        ).toBeInTheDocument();
+        expect(reached).toEqual(["final fantasy"]);
+    });
+
     it("says it’s looking further, then that nothing matches if nothing turns up", async () => {
         let answer!: () => void;
         const answered = new Promise<void>((resolve) => (answer = resolve));

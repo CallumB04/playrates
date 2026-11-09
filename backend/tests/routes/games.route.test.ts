@@ -328,6 +328,21 @@ describe("games", () => {
     expect(response.body.data[0].title).toContain("Witcher");
   });
 
+  it("still answers from the catalogue when saving what the provider found fails", async () => {
+    const provider = stubProvider([externalGame]);
+    const { app, repos } = buildTestApp({ seed: baseSeed(), provider });
+    repos.games.upsertMany = vi.fn(async () => {
+      throw { code: "23505", message: "duplicate key value" };
+    });
+
+    const response = await request(app)
+      .get("/api/v1/games/search?q=witch")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(response.status).toBe(200);
+    expect(response.body.data[0].title).toContain("Witcher");
+  });
+
   it("requires authentication to search", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
 
