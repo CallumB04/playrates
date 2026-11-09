@@ -240,9 +240,32 @@ export const createGamesRepository = (db: Db): GamesRepository => {
     if (error) throw error;
     return count ?? 0;
   };
+  // "Newest" with nothing else chosen counts every released game the same way.
+  const countReleased = (showSexualContent: boolean) => async () => {
+    let builder = db
+      .from("games")
+      .select("id", { count: "exact", head: true })
+      .lte("release_date", today());
+    if (!showSexualContent) builder = builder.eq("has_sexual_content", false);
+    const { count, error } = await builder;
+    if (error) throw error;
+    return count ?? 0;
+  };
   const totals = {
     familySafe: memoFor(10 * 60_000, countAll(false)),
     everything: memoFor(10 * 60_000, countAll(true)),
+    releasedFamilySafe: memoFor(10 * 60_000, countReleased(false)),
+    releasedEverything: memoFor(10 * 60_000, countReleased(true)),
+  };
+
+  const readByIds = async (ids: number[]): Promise<GameRowWithPlatforms[]> => {
+    if (ids.length === 0) return [];
+    const { data, error } = await db
+      .from("games")
+      .select(SELECT_WITH_RELATIONS)
+      .in("id", ids);
+    if (error) throw error;
+    return (data ?? []) as GameRowWithPlatforms[];
   };
 
   return {
@@ -256,15 +279,7 @@ export const createGamesRepository = (db: Db): GamesRepository => {
       return (data as GameRowWithPlatforms | null) ?? null;
     },
 
-    async findByIds(ids) {
-      if (ids.length === 0) return [];
-      const { data, error } = await db
-        .from("games")
-        .select(SELECT_WITH_RELATIONS)
-        .in("id", ids);
-      if (error) throw error;
-      return (data ?? []) as GameRowWithPlatforms[];
-    },
+    findByIds: readByIds,
 
     async findByIgdbId(igdbId) {
       const { data, error } = await db
@@ -280,8 +295,11 @@ export const createGamesRepository = (db: Db): GamesRepository => {
       const run = async (closeIds?: number[]) => {
         /* Genre and platform filter through an aliased inner join. Collecting ids
          and passing them to .in() truncates at PostgREST's 1000-row cap, and
-         filtering the embed directly strips a game's other genres. */
-        const select = [SELECT_WITH_RELATIONS];
+         filtering the embed directly strips a game's other genres.
+         Paged on ids alone, then read in full: PostgREST builds the links of
+         every row it skips past, so page 400 built nearly ten thousand to
+         show twenty-four. */
+        const select = ["id"];
         if (query.genre) {
           select.push("genre_filter:game_genres!inner(genre_slug)");
         }
@@ -290,7 +308,7 @@ export const createGamesRepository = (db: Db): GamesRepository => {
         }
         if (excludeLoggedForUser) select.push("own_logs:game_logs()");
 
-        const unfiltered =
+        const plain =
           !closeIds &&
           !query.search &&
           !query.genre &&
@@ -298,10 +316,11 @@ export const createGamesRepository = (db: Db): GamesRepository => {
           query.trending === undefined &&
           !excludeLoggedForUser &&
           !query.releasedAfter &&
-          !query.releasedBefore &&
-          query.sort !== "released" &&
-        query.sort !== "upcoming";
-        const counted = query.count !== false && !unfiltered;
+          !query.releasedBefore;
+        const unfiltered =
+          plain && query.sort !== "released" && query.sort !== "upcoming";
+        const justReleased = plain && query.sort === "released";
+        const counted = query.count !== false && !unfiltered && !justReleased;
 
         let builder = db
           .from("games")
@@ -397,11 +416,23 @@ export const createGamesRepository = (db: Db): GamesRepository => {
           .range(from, to);
         if (error) throw error;
         // the select string is built at runtime, so supabase-js cannot infer it
-        const rows = (data ?? []) as unknown as GameRowWithPlatforms[];
+        const ids = ((data ?? []) as unknown as { id: number }[]).map(
+          (row) => row.id,
+        );
+        const byId = new Map(
+          (await readByIds(ids)).map((row) => [row.id, row]),
+        );
+        const rows = ids.flatMap((id) => byId.get(id) ?? []);
         if (unfiltered && query.count !== false) {
           const total = await (showSexualContent
             ? totals.everything()
             : totals.familySafe());
+          return { rows, total };
+        }
+        if (justReleased && query.count !== false) {
+          const total = await (showSexualContent
+            ? totals.releasedEverything()
+            : totals.releasedFamilySafe());
           return { rows, total };
         }
         // Uncounted, the total is only what this page reached.
