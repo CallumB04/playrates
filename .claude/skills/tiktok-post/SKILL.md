@@ -69,6 +69,17 @@ post; copy the Stardew page and change everything.
   ember (`.num`, `.num.ember`), the title, and one grey line. Behind it a
   picture of **what the tip is about** (the horse for "get your horse", the
   smithing stones for "upgrade your weapon"), never a generic screenshot.
+- **Full-bleed pictures by default.** Fill the slide with the picture, and
+  move the band rather than covering a face or the thing the tip is about.
+  An item band can sit at the top (`top: 262px`) or lower down (up to about
+  `top: 1060px`, so its copy stays above y 1540), and the hook band can move
+  down too (the RDR2, Elden Ring and Skyrim part 2 hooks sit at `top: 1060px`).
+  The hook is always one full picture with the band on it, never a framed
+  `.photo` or a blurred backdrop. On the tip slides the blurred backdrop with a `.photo`
+  on it (`.bg.soft`) is only for a picture that can't fill a portrait slide well: one or two slides in
+  a post at most, never two in a row (Callum, 2026-11-09). Look at every
+  slide at full size for a covered face or key object before calling it
+  done.
 - **What stays the same** across posts is the hook band (lead and logo) and
   the numbered tip bands. Everything on the pictures can be the post's own:
   try a new small idea when it's funny, but don't overdo it.
