@@ -148,7 +148,12 @@ straight down, sleep the first night" basics. Every tip has to be true and
 checkable: write only what you're sure of, and list anything approximate
 for Callum to check. Skip what the game's tutorial already teaches, and
 anything that spoils the story, an area or a boss a beginner hasn't
-reached (track and file names can spoil too).
+reached (track and file names can spoil too). Before proposing, go through
+every tip asking "would a player learn this in the first few minutes?":
+Callum cut two Silksong tips (Bind heals, Hornet pogos diagonally) as
+first-minute knowledge. Fans of a series like a nod to the earlier games
+where one fits: Shakra's singing next to Cornifer's humming, Andre turning
+up again in Dark Souls III.
 
 Then send Callum the hook, the six tips and the jokes, and build nothing
 until he says go. Once he has, fact-check every tip against sources (a
