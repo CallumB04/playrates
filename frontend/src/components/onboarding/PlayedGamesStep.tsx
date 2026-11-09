@@ -6,8 +6,9 @@ import { Check } from "lucide-react";
 import Button from "../ui/Button";
 import { Skeleton } from "../ui/Skeleton";
 import GameCover from "../game/GameCover";
+import LoadingSpinner from "../LoadingSpinner";
 import { queryKeys, type GameListFilters } from "../../api";
-import { useGames } from "../../hooks/queries/useGames";
+import { useCatalogueReach, useGames } from "../../hooks/queries/useGames";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { Input } from "../ui/Input";
 import { useLogMutations } from "../../hooks/queries/useGameLogs";
@@ -56,11 +57,22 @@ const PlayedGamesStep = ({
         queryKeys.games.list({ ...filtersFor(typed) })
     );
     const term = made ? typed : settled;
-    const { data, isLoading, isPlaceholderData } = useGames(filtersFor(term));
+    const { data, isLoading, isFetching, isPlaceholderData } = useGames(
+        filtersFor(term)
+    );
     /* Until what's shown is what was typed, the last search's covers would
        sit there looking like the answer. */
     const waiting =
         isLoading || isPlaceholderData || searchOf(typed) !== searchOf(term);
+
+    /* The catalogue is checked first. Only nothing, or near misses, look
+       further, as the library does: the game may simply not be here yet. */
+    const answer = !waiting && searchOf(term) ? data : undefined;
+    const none = answer?.data.length === 0;
+    const closest = !!answer?.meta.approximate;
+    const { reaching, found } = useCatalogueReach(term, none || closest);
+    // Until the list has been asked again for what was just added.
+    const lookingFurther = reaching || (found > 0 && isFetching);
     const { create } = useLogMutations();
     const steamAvailable = useSteamAvailable();
     const notify = useNotify();
@@ -126,9 +138,31 @@ const PlayedGamesStep = ({
                 </p>
             )}
 
-            {!waiting && searchOf(term) && data?.data.length === 0 && (
+            {none && lookingFurther && (
+                <p
+                    role="status"
+                    className="flex items-center gap-2 text-body-sm text-content-secondary"
+                >
+                    <LoadingSpinner size="sm" label={null} />
+                    Looking further for “{term}”…
+                </p>
+            )}
+
+            {none && !lookingFurther && (
                 <p className="text-body-sm text-content-secondary">
                     Nothing matches “{term}”.
+                </p>
+            )}
+
+            {closest && (
+                <p
+                    role="status"
+                    className="flex items-center gap-2 text-body-sm text-content-secondary"
+                >
+                    {lookingFurther && (
+                        <LoadingSpinner size="sm" label="Searching" />
+                    )}
+                    Nothing is called “{term}”, so these are the closest titles.
                 </p>
             )}
 
