@@ -29,6 +29,7 @@ import { StatusPlates } from "./gamelog/StatusPlates";
 import Progress from "./ui/Progress";
 import DeleteGameLogPopup from "./gamelog/DeleteGameLogPopup";
 import TodayButton from "./gamelog/TodayButton";
+import ExpandedReview from "./gamelog/ExpandedReview";
 import {
     achievementFraction,
     fieldsFor,
@@ -51,10 +52,12 @@ import {
     takenBy,
     type LogTab,
 } from "./gamelog/logTabs";
-import { ChevronDown, Plus, X } from "lucide-react";
+import { ChevronDown, Maximize2, Plus, X } from "lucide-react";
 import { cn } from "../lib/cn";
 import { formatPercent, formatRating } from "../lib/format";
 import { completionTone } from "../lib/completionTone";
+
+const REVIEW_MAX = 5000;
 
 interface CreateOrEditGameLogPopupProps {
     gameId: number;
@@ -101,6 +104,7 @@ const CreateOrEditGameLogPopup = ({
     const [consoleError, setConsoleError] = useState<string | null>(null);
     const [confirmingDelete, setConfirmingDelete] = useState(false);
     const [detailsOpen, setDetailsOpen] = useState(false);
+    const [reviewExpanded, setReviewExpanded] = useState(false);
 
     useEffect(() => {
         if (hydrated || !bundle) return;
@@ -363,6 +367,34 @@ const CreateOrEditGameLogPopup = ({
         tab.logId !== null &&
         bundle?.logs.find((l) => l.id === tab.logId);
 
+    const setReviewBody = (value: string) =>
+        dispatch({ type: "set", field: "reviewBody", value });
+    const reviewPlaceholder =
+        several && consoleName
+            ? `Your review of the ${consoleName} version`
+            : "Write your review";
+    const reviewControls = (
+        <>
+            <Toggle
+                checked={draft.reviewSpoilers}
+                onChange={(value) =>
+                    dispatch({ type: "set", field: "reviewSpoilers", value })
+                }
+                label="Spoilers"
+            />
+            <Toggle
+                checked={draft.reviewIsPublic}
+                onChange={(value) =>
+                    dispatch({ type: "set", field: "reviewIsPublic", value })
+                }
+                label={draft.reviewIsPublic ? "Public" : "Private"}
+            />
+            <span className="text-label-sm text-content-muted">
+                {draft.reviewBody.length} / {REVIEW_MAX}
+            </span>
+        </>
+    );
+
     return (
         <Modal
             onClose={onClose}
@@ -554,56 +586,27 @@ const CreateOrEditGameLogPopup = ({
                                 Review (optional)
                             </span>
                             <div className="flex flex-wrap items-center gap-3.5">
-                                <Toggle
-                                    checked={draft.reviewSpoilers}
-                                    onChange={(value) =>
-                                        dispatch({
-                                            type: "set",
-                                            field: "reviewSpoilers",
-                                            value,
-                                        })
-                                    }
-                                    label="Spoilers"
-                                />
-                                <Toggle
-                                    checked={draft.reviewIsPublic}
-                                    onChange={(value) =>
-                                        dispatch({
-                                            type: "set",
-                                            field: "reviewIsPublic",
-                                            value,
-                                        })
-                                    }
-                                    label={
-                                        draft.reviewIsPublic
-                                            ? "Public"
-                                            : "Private"
-                                    }
-                                />
-                                <span className="text-label-sm text-content-muted">
-                                    {draft.reviewBody.length} / 5000
-                                </span>
+                                {reviewControls}
+                                <button
+                                    type="button"
+                                    onClick={() => setReviewExpanded(true)}
+                                    aria-label="Expand review"
+                                    title="Expand review"
+                                    className="relative flex size-6 cursor-pointer items-center justify-center rounded-sm text-content-muted lift before:absolute before:-inset-2.5 before:content-[''] hover:bg-surface-hover hover:text-content"
+                                >
+                                    <Maximize2 size={14} aria-hidden />
+                                </button>
                             </div>
                         </div>
                         <Textarea
                             ref={reviewRef}
                             rows={3}
-                            maxLength={5000}
+                            maxLength={REVIEW_MAX}
                             aria-label="Review"
                             value={draft.reviewBody}
-                            onChange={(e) =>
-                                dispatch({
-                                    type: "set",
-                                    field: "reviewBody",
-                                    value: e.target.value,
-                                })
-                            }
+                            onChange={(e) => setReviewBody(e.target.value)}
                             className="min-h-[74px] leading-relaxed"
-                            placeholder={
-                                several && consoleName
-                                    ? `Your review of the ${consoleName} version`
-                                    : "Write your review"
-                            }
+                            placeholder={reviewPlaceholder}
                         />
                     </div>
                 )}
@@ -918,6 +921,18 @@ const CreateOrEditGameLogPopup = ({
                     </Button>
                 </div>
             </footer>
+
+            {reviewExpanded && (
+                <ExpandedReview
+                    gameTitle={game?.title}
+                    value={draft.reviewBody}
+                    onChange={setReviewBody}
+                    maxLength={REVIEW_MAX}
+                    placeholder={reviewPlaceholder}
+                    controls={reviewControls}
+                    onClose={() => setReviewExpanded(false)}
+                />
+            )}
 
             {/* Deleting takes the rating, the hours and the review with it, so
                 it asks first — the same dialog the profile uses. */}
