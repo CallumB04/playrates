@@ -32,6 +32,9 @@ coverage
 .env.*
 !.env.example
 
+# Rendered by npm run emails:preview -w backend
+/.email-previews
+
 # Supabase CLI local state
 supabase/.temp
 supabase/.branches

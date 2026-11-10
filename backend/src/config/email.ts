@@ -38,11 +38,13 @@ type EmailEnv = Pick<
   | "SITE_URL"
   | "PUBLIC_API_URL"
   | "MAILPIT_URL"
+  | "EMAIL_ASSETS_URL"
 >;
 
 export const emailSettingsFrom = (config: EmailEnv): EmailSettings => ({
   site: config.SITE_URL,
   api: config.PUBLIC_API_URL ?? `${config.SITE_URL}/api/v1`,
+  assets: config.EMAIL_ASSETS_URL?.replace(/\/+$/, ""),
   signingSecret: config.EMAIL_SIGNING_SECRET,
   webhookSecret: config.RESEND_WEBHOOK_SECRET,
 });

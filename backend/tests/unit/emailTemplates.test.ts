@@ -1,3 +1,5 @@
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { RichTextDoc } from "@playrates/shared";
 import {
@@ -23,6 +25,7 @@ import {
   richTextToEmailHtml,
   richTextToEmailText,
 } from "../../src/modules/email/email.richText.js";
+import { emailSamples } from "../helpers/emailSamples.js";
 
 const links: EmailLinks = {
   site: "https://playrates.test",
@@ -32,20 +35,46 @@ const links: EmailLinks = {
 
 const EVIL = `<script>alert("x")</script>`;
 
+const TEMPLATES = join(import.meta.dirname, "../../../supabase/templates");
+
 /** Every email, with a member-written value full of markup wherever one
  *  can go. */
 const everyEmail = (): [string, RenderedEmail][] => [
-  ["friend request", friendRequestEmail({ actor: EVIL, actorAvatar: null, recipient: "me" }, links)],
   [
-    "reply",
-    replyEmail(
-      { actor: EVIL, threadId: 3, threadTitle: EVIL, messageId: 9, excerpt: EVIL },
+    "friend request",
+    friendRequestEmail(
+      { actor: EVIL, actorAvatar: null, recipient: "me" },
       links,
     ),
   ],
-  ["gift", giftEmail({ giver: EVIL, giverAvatar: null, item: "frame_neon", recipient: "me" }, links)],
-  ["invite joined", inviteJoinedEmail({ username: EVIL, xp: 300, tokens: 50 }, links)],
-  ["invite active", inviteActiveEmail({ username: EVIL, xp: 250, tokens: 50 }, links)],
+  [
+    "reply",
+    replyEmail(
+      {
+        actor: EVIL,
+        threadId: 3,
+        threadTitle: EVIL,
+        messageId: 9,
+        excerpt: EVIL,
+      },
+      links,
+    ),
+  ],
+  [
+    "gift",
+    giftEmail(
+      { giver: EVIL, giverAvatar: null, item: "frame_neon", recipient: "me" },
+      links,
+    ),
+  ],
+  [
+    "invite joined",
+    inviteJoinedEmail({ username: EVIL, xp: 300, tokens: 50 }, links),
+  ],
+  [
+    "invite active",
+    inviteActiveEmail({ username: EVIL, xp: 250, tokens: 50 }, links),
+  ],
   [
     "wishlist",
     wishlistReleaseEmail(
@@ -54,14 +83,25 @@ const everyEmail = (): [string, RenderedEmail][] => [
     ),
   ],
   ["welcome", welcomeEmail({ username: "me", firstName: EVIL }, links)],
-  ["announcement", announcementEmail({ tone: "update", title: EVIL, body: EVIL, link: null }, links)],
+  [
+    "announcement",
+    announcementEmail(
+      { tone: "update", title: EVIL, body: EVIL, link: null },
+      links,
+    ),
+  ],
   [
     "patch notes",
     patchNotesEmail(
       {
         subject: "New patch notes",
         title: EVIL,
-        doc: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: EVIL }] }] },
+        doc: {
+          type: "doc",
+          content: [
+            { type: "paragraph", content: [{ type: "text", text: EVIL }] },
+          ],
+        },
         link: "/community/thread/7#message-41",
       },
       links,
@@ -70,10 +110,13 @@ const everyEmail = (): [string, RenderedEmail][] => [
 ];
 
 describe("email templates", () => {
-  it.each(everyEmail())("escapes what members wrote in the %s email", (_, email) => {
-    expect(email.html).not.toContain("<script>");
-    expect(email.html).toContain("&lt;script&gt;");
-  });
+  it.each(everyEmail())(
+    "escapes what members wrote in the %s email",
+    (_, email) => {
+      expect(email.html).not.toContain("<script>");
+      expect(email.html).toContain("&lt;script&gt;");
+    },
+  );
 
   it.each(everyEmail())("gives the %s email its ways out", (_, email) => {
     expect(email.html).toContain(links.unsubscribe);
@@ -82,11 +125,16 @@ describe("email templates", () => {
     expect(email.text).toContain(links.settings);
   });
 
-  it.each(everyEmail())("links the %s email only to absolute addresses", (_, email) => {
-    const hrefs = [...email.html.matchAll(/href="([^"]*)"/g)].map((m) => m[1]!);
-    expect(hrefs.length).toBeGreaterThan(0);
-    for (const href of hrefs) expect(href).toMatch(/^(https:|mailto:)/);
-  });
+  it.each(everyEmail())(
+    "links the %s email only to absolute addresses",
+    (_, email) => {
+      const hrefs = [...email.html.matchAll(/href="([^"]*)"/g)].map(
+        (m) => m[1]!,
+      );
+      expect(hrefs.length).toBeGreaterThan(0);
+      for (const href of hrefs) expect(href).toMatch(/^(https:|mailto:)/);
+    },
+  );
 
   it("calls every way out of the welcome email all emails", () => {
     const email = welcomeEmail({ username: "me", firstName: null }, links);
@@ -102,16 +150,26 @@ describe("email templates", () => {
       links,
     );
     expect(email.subject).toBe("ana sent you a friend request");
-    expect(email.html).toContain('href="https://playrates.test/user/bo/friends"');
+    expect(email.html).toContain(
+      'href="https://playrates.test/user/bo/friends"',
+    );
     expect(email.html).toContain('src="https://cdn.test/a.webp"');
   });
 
   it("lands a reply on the message itself", () => {
     const email = replyEmail(
-      { actor: "ana", threadId: 3, threadTitle: "Best RPG", messageId: 9, excerpt: "Agreed" },
+      {
+        actor: "ana",
+        threadId: 3,
+        threadTitle: "Best RPG",
+        messageId: 9,
+        excerpt: "Agreed",
+      },
       links,
     );
-    expect(email.html).toContain("https://playrates.test/community/thread/3#message-9");
+    expect(email.html).toContain(
+      "https://playrates.test/community/thread/3#message-9",
+    );
     expect(email.subject).toBe("ana replied to you in Best RPG");
   });
 
@@ -119,9 +177,15 @@ describe("email templates", () => {
     expect(giftItemName("frame_neon")).toBe("the Neon frame");
     expect(giftItemName("streak_shield")).toBe("a spare streak shield");
     expect(giftItemName("no_such_item")).toBe("something from the shop");
-    expect(giftPath("slot_pinned_review", "bo")).toBe("/user/bo?edit=pinned_reviews");
-    expect(giftPath("slot_showcase", "bo")).toBe("/user/bo/badges?edit=showcase");
-    expect(giftPath("slot_pinned_list", "bo")).toBe("/user/bo?edit=pinned_lists");
+    expect(giftPath("slot_pinned_review", "bo")).toBe(
+      "/user/bo?edit=pinned_reviews",
+    );
+    expect(giftPath("slot_showcase", "bo")).toBe(
+      "/user/bo/badges?edit=showcase",
+    );
+    expect(giftPath("slot_pinned_list", "bo")).toBe(
+      "/user/bo?edit=pinned_lists",
+    );
     expect(giftPath("streak_shield", "bo")).toBe("/progress#streak");
     expect(giftPath("colour_ember", "bo")).toBe("/progress#name");
     expect(giftPath("frame_neon", "bo")).toBe("/progress#frame");
@@ -129,17 +193,25 @@ describe("email templates", () => {
   });
 
   it("says what an invite paid", () => {
-    expect(inviteActiveEmail({ username: "cy", xp: 250, tokens: 50 }, links).text).toContain(
-      "250 XP and 50 tokens",
-    );
-    const joined = inviteJoinedEmail({ username: "cy", xp: 300, tokens: 50 }, links).text;
+    expect(
+      inviteActiveEmail({ username: "cy", xp: 250, tokens: 50 }, links).text,
+    ).toContain("250 XP and 50 tokens");
+    const joined = inviteJoinedEmail(
+      { username: "cy", xp: 300, tokens: 50 },
+      links,
+    ).text;
     expect(joined).toContain("300 XP and 50 tokens");
     expect(joined).not.toContain("games");
   });
 
   it("names a lone release, and counts several", () => {
     const one = wishlistReleaseEmail(
-      { games: [{ id: 4, title: "Hades II", coverUrl: "https://images.test/c.jpg" }], username: "bo" },
+      {
+        games: [
+          { id: 4, title: "Hades II", coverUrl: "https://images.test/c.jpg" },
+        ],
+        username: "bo",
+      },
       links,
     );
     expect(one.subject).toBe("Hades II is out today");
@@ -158,7 +230,9 @@ describe("email templates", () => {
     );
     expect(two.subject).toBe("2 games on your wishlist are out today");
     expect(two.html).toContain("https://playrates.test/game/5");
-    expect(two.html).toContain("https://playrates.test/user/bo/games?type=wishlist");
+    expect(two.html).toContain(
+      "https://playrates.test/user/bo/games?type=wishlist",
+    );
   });
 
   it("makes an announcement's in-app links absolute and leaves others be", () => {
@@ -177,7 +251,9 @@ describe("email templates", () => {
     expect(email.html).toContain('href="https://playrates.test/settings"');
     expect(email.html).toContain("Heads up");
     expect(email.html).toContain("<br>Thanks");
-    expect(email.text).toContain("the notes (https://playrates.test/community)");
+    expect(email.text).toContain(
+      "the notes (https://playrates.test/community)",
+    );
   });
 
   it("leaves the button off an announcement with no link", () => {
@@ -192,19 +268,33 @@ describe("email templates", () => {
     const doc: RichTextDoc = {
       type: "doc",
       content: [
-        { type: "heading", attrs: { level: 1 }, content: [{ type: "text", text: "v1.1 Lists" }] },
-        { type: "paragraph", content: [{ type: "text", text: "Lists are here." }] },
+        {
+          type: "heading",
+          attrs: { level: 1 },
+          content: [{ type: "text", text: "v1.1 Lists" }],
+        },
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Lists are here." }],
+        },
       ],
     };
     const email = patchNotesEmail(
-      { subject: "New patch notes: v1.1 Lists", title: "v1.1 Lists", doc, link: "/community/thread/7#message-41" },
+      {
+        subject: "New patch notes: v1.1 Lists",
+        title: "v1.1 Lists",
+        doc,
+        link: "/community/thread/7#message-41",
+      },
       links,
     );
     expect(email.subject).toBe("New patch notes: v1.1 Lists");
     // The heading is the title, not said twice.
     expect(email.html.match(/v1\.1 Lists/g)).toHaveLength(2); // <title> and <h1>
     expect(email.html).toContain("Lists are here.");
-    expect(email.html).toContain("https://playrates.test/community/thread/7#message-41");
+    expect(email.html).toContain(
+      "https://playrates.test/community/thread/7#message-41",
+    );
   });
 
   it("uses no em dashes anywhere", () => {
@@ -214,27 +304,121 @@ describe("email templates", () => {
   });
 });
 
+describe("every email as a member gets it", () => {
+  const samples = emailSamples(links).map((s) => [s.name, s.email] as const);
+
+  it.each(samples)(
+    "keeps the %s email well under Gmail's clipping size",
+    (_, email) => {
+      // Gmail cuts a message off past 102KB of HTML, ways out and all.
+      expect(Buffer.byteLength(email.html)).toBeLessThan(60_000);
+    },
+  );
+
+  it.each(samples)(
+    "gives the %s email one button, drawn for Outlook too",
+    (_, email) => {
+      expect(email.html.match(/class="pr-btn"/g)).toHaveLength(1);
+      expect(email.html.match(/<v:roundrect/g)).toHaveLength(1);
+    },
+  );
+
+  it.each(samples)(
+    "gives every picture in the %s email a size, words and an https home",
+    (_, email) => {
+      expect(email.html).not.toContain("<svg");
+      for (const [img] of email.html.matchAll(/<img [^>]*>/g)) {
+        expect(img).toMatch(/ alt="[^"]+"/);
+        expect(img).toMatch(/ width="\d+"/);
+        expect(img).toMatch(/ src="https:\/\//);
+      }
+    },
+  );
+
+  it.each(samples)(
+    "opens the %s email with its inbox line and a dark version",
+    (_, email) => {
+      expect(email.html).toMatch(/<div style="display:none;[^"]*">[^<&]{10,}/);
+      expect(email.html).toContain("@media (prefers-color-scheme: dark)");
+    },
+  );
+
+  it.each(samples)("writes the %s email without an em dash", (_, email) => {
+    expect(email.subject + email.html + email.text).not.toContain("—");
+  });
+
+  it("loads the email's own pictures from wherever it's told", () => {
+    const html = friendRequestEmail(
+      { actor: "ana", actorAvatar: null, recipient: "bo" },
+      { ...links, assets: "http://localhost:5173" },
+    ).html;
+    expect(html).toContain(
+      'src="http://localhost:5173/email/lockup-light.png"',
+    );
+    expect(html).toContain(
+      "url(http://localhost:5173/email/fonts/geist.woff2)",
+    );
+  });
+});
+
+describe("the auth emails Supabase sends", () => {
+  const templates = readdirSync(TEMPLATES).filter((f) => f.endsWith(".html"));
+
+  it.each(templates)("keeps %s on the new layout, with no em dash", (file) => {
+    const html = readFileSync(join(TEMPLATES, file), "utf8");
+    expect(html).not.toContain("—");
+    expect(html).toContain("pr-card");
+    expect(html).toMatch(/\{\{ \.\w+ \}\}/);
+  });
+
+  it.each(templates.filter((f) => !f.includes("notification")))(
+    "sends %s's one button to Supabase's own link",
+    (file) => {
+      const html = readFileSync(join(TEMPLATES, file), "utf8");
+      expect(html).toContain('class="pr-btn" href="{{ .ConfirmationURL }}"');
+      expect(html).toContain("works for an hour");
+    },
+  );
+});
+
 describe("rich text in an email", () => {
   const doc: RichTextDoc = {
     type: "doc",
     content: [
-      { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "New" }] },
+      {
+        type: "heading",
+        attrs: { level: 2 },
+        content: [{ type: "text", text: "New" }],
+      },
       {
         type: "paragraph",
         content: [
           { type: "text", text: "Bold", marks: [{ type: "bold" }] },
           { type: "text", text: " and " },
-          { type: "text", text: "slanted", marks: [{ type: "italic" }, { type: "underline" }] },
+          {
+            type: "text",
+            text: "slanted",
+            marks: [{ type: "italic" }, { type: "underline" }],
+          },
           { type: "hardBreak" },
           { type: "text", text: "the end is " },
           { type: "text", text: "a twist", marks: [{ type: "spoiler" }] },
-          { type: "text", text: " really", marks: [{ type: "spoiler" }, { type: "bold" }] },
+          {
+            type: "text",
+            text: " really",
+            marks: [{ type: "spoiler" }, { type: "bold" }],
+          },
         ],
       },
       {
         type: "bulletList",
         content: [
-          { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "One" }] }] },
+          {
+            type: "listItem",
+            content: [
+              { type: "paragraph", content: [{ type: "text", text: "One" }] },
+            ],
+          },
           {
             type: "listItem",
             content: [
@@ -243,14 +427,25 @@ describe("rich text in an email", () => {
                 type: "orderedList",
                 attrs: { start: 3 },
                 content: [
-                  { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Three" }] }] },
+                  {
+                    type: "listItem",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "Three" }],
+                      },
+                    ],
+                  },
                 ],
               },
             ],
           },
         ],
       },
-      { type: "image", attrs: { src: "https://cdn.test/i.webp", alt: "A <b>map</b>" } },
+      {
+        type: "image",
+        attrs: { src: "https://cdn.test/i.webp", alt: "A <b>map</b>" },
+      },
       { type: "image", attrs: { src: "https://cdn.test/j.webp" } },
       { type: "paragraph" },
     ],
@@ -262,7 +457,9 @@ describe("rich text in an email", () => {
     expect(html).toContain("<strong>Bold</strong>");
     expect(html).toContain("<u><em>slanted</em></u>");
     expect(html).toContain("<br>the end is ");
-    expect(html).toMatch(/<ul[^>]*><li[^>]*>One<\/li><li[^>]*>Two<br><ol start="3"/);
+    expect(html).toMatch(
+      /<ul[^>]*><li[^>]*>One<\/li><li[^>]*>Two<br><ol start="3"/,
+    );
   });
 
   it("hides a run of spoiled words behind one placeholder", () => {
@@ -290,7 +487,9 @@ describe("rich text in an email", () => {
   });
 
   it("can leave out the heading that is already the title", () => {
-    expect(richTextToEmailHtml(doc, { skipFirstHeading: true })).not.toContain("<h3");
+    expect(richTextToEmailHtml(doc, { skipFirstHeading: true })).not.toContain(
+      "<h3",
+    );
     expect(richTextToEmailText(doc, { skipFirstHeading: true })[0]).toBe(
       "Bold and slanted\nthe end is [spoiler]",
     );
@@ -301,13 +500,22 @@ describe("reminders", () => {
   it("names the day in the member's own zone", () => {
     // Monday 00:00 in London is still Sunday in New York.
     expect(endDay("2026-11-02T00:00:00.000Z", "Europe/London")).toBe("Monday");
-    expect(endDay("2026-11-02T00:00:00.000Z", "America/New_York")).toBe("Sunday");
+    expect(endDay("2026-11-02T00:00:00.000Z", "America/New_York")).toBe(
+      "Sunday",
+    );
     expect(endDay("2026-11-02T00:00:00.000Z", "Not/AZone")).toBe("Monday");
   });
 
   it("escapes a task's name and says what finishing it pays", () => {
     const email = taskEmail(
-      { label: "Rate <3> games", count: 2, target: 3, xp: 40, tokens: 5, day: "Monday" },
+      {
+        label: "Rate <3> games",
+        count: 2,
+        target: 3,
+        xp: 40,
+        tokens: 5,
+        day: "Monday",
+      },
       links,
     );
     expect(email.subject).toBe("Nearly there: Rate <3> games");
@@ -318,9 +526,14 @@ describe("reminders", () => {
   });
 
   it("says a shield will cover the week when one would", () => {
-    const email = streakEmail({ weeks: 4, shield: false, day: "Monday" }, links);
+    const email = streakEmail(
+      { weeks: 4, shield: false, day: "Monday" },
+      links,
+    );
     expect(email.subject).toBe("Your 4 week streak needs something by Monday");
-    expect(email.text).toContain("Log, rate, review or post anything to keep it.");
+    expect(email.text).toContain(
+      "Log, rate, review or post anything to keep it.",
+    );
   });
 });
 
@@ -329,7 +542,13 @@ describe("digestEmail", () => {
     const email = digestEmail(
       {
         friends: [
-          { username: "a<b", gameId: 1, title: "Hades", status: "playing", rating: null },
+          {
+            username: "a<b",
+            gameId: 1,
+            title: "Hades",
+            status: "playing",
+            rating: null,
+          },
         ],
         releases: [],
         logged: 0,
@@ -340,7 +559,9 @@ describe("digestEmail", () => {
     expect(email.html).toContain("a&lt;b");
     expect(email.text).not.toContain("Out this week");
     expect(email.text).not.toContain("Your week\n");
-    expect(email.text).toContain("You're getting this because you have the weekly digest on.");
+    expect(email.text).toContain(
+      "You're getting this because you have the weekly digest on.",
+    );
   });
 
   it("counts what you logged", () => {
@@ -372,8 +593,8 @@ describe("patchNotesEmail from a note", () => {
     expect(email.html).toContain('href="https://playrates.test/settings"');
     expect(email.html).toContain("Fixed &lt;it&gt;.");
     // By kind, as the page lists them: the feature first, though written second.
-    expect(email.html.indexOf("Feature:")).toBeLessThan(
-      email.html.indexOf("Fix:"),
+    expect(email.html.indexOf(">Feature<")).toBeLessThan(
+      email.html.indexOf(">Fix<"),
     );
     expect(email.text.indexOf("- Feature:")).toBeLessThan(
       email.text.indexOf("- Fix:"),

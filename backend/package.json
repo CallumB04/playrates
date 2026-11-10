@@ -18,6 +18,7 @@
     "migrate:igdb": "tsx scripts/migrateToIgdb.ts",
     "local:snapshot": "tsx scripts/local/snapshot.ts",
     "local:seed": "tsx scripts/local/buildSeed.ts",
+    "emails:preview": "tsx scripts/emailPreviews.ts",
     "backfill:progress": "tsx scripts/backfillProgress.ts"
   },
   "keywords": [],
