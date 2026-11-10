@@ -7,6 +7,9 @@ interface UsePaginationOptions {
      *  the URL and `total` is the server's count. */
     page?: number;
     onPageChange?: (page: number) => void;
+    /** The furthest page the server will hand out, so the last page offered
+     *  is one it will answer. */
+    maxPage?: number;
 }
 
 export interface PaginationState {
@@ -30,11 +33,15 @@ export const usePagination = ({
     perPage,
     page: controlledPage,
     onPageChange,
+    maxPage = Infinity,
 }: UsePaginationOptions): PaginationState => {
     const [internalPage, setInternalPage] = useState(1);
     const isControlled = controlledPage !== undefined;
 
-    const pageCount = Math.max(1, Math.ceil(total / perPage));
+    const pageCount = Math.max(
+        1,
+        Math.min(Math.ceil(total / perPage), maxPage)
+    );
     const rawPage = isControlled ? controlledPage : internalPage;
     const page = Math.min(Math.max(rawPage, 1), pageCount);
 

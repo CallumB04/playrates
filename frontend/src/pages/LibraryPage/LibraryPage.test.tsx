@@ -117,3 +117,36 @@ describe("LibraryPage search past the catalogue", () => {
         expect(searched).not.toHaveBeenCalled();
     });
 });
+
+/* An old link, or a total a few minutes behind, can ask for a page past the
+   end. The server says where the end is; the page goes there. */
+describe("LibraryPage past the last page", () => {
+    beforeEach(() => {
+        user = null;
+        server.use(
+            http.get(`${API}/genres`, () => HttpResponse.json({ data: [] }))
+        );
+    });
+
+    it("moves to the last page rather than showing nothing", async () => {
+        const asked: (string | null)[] = [];
+        const last = buildGame({ id: 9, title: "Zork" });
+        server.use(
+            http.get(`${API}/games`, ({ request }) => {
+                const n = new URL(request.url).searchParams.get("page");
+                asked.push(n);
+                return HttpResponse.json({
+                    data: n === "2" ? [last] : [],
+                    meta: { page: Number(n), limit: 21, total: 30 },
+                });
+            })
+        );
+        renderWithProviders(<LibraryPage />, { route: "/library?page=50" });
+
+        expect(await screen.findByText("Zork")).toBeInTheDocument();
+        expect(asked).toContain("2");
+        expect(
+            screen.queryByText("No titles match those filters")
+        ).not.toBeInTheDocument();
+    });
+});

@@ -441,26 +441,41 @@ export const createGamesRepository = (db: Db): GamesRepository => {
           (await readByIds(ids)).map((row) => [row.id, row]),
         );
         const rows = ids.flatMap((id) => byId.get(id) ?? []);
+        /* A kept total can be minutes behind. A page that comes back short
+         has found the real end, so it says where that is, or the last page
+         in the pagination is past it and shows nothing. */
+        const kept = async (total: Promise<number>) => {
+          if (rows.length > 0 && rows.length < to - from + 1) {
+            return from + rows.length;
+          }
+          // Nothing at all: the end is somewhere before this page.
+          if (rows.length === 0) return Math.min(await total, from);
+          return Math.max(await total, from + rows.length);
+        };
         if (unfiltered && query.count !== false) {
-          const total = await (showSexualContent
-            ? totals.everything()
-            : totals.familySafe());
+          const total = await kept(
+            showSexualContent ? totals.everything() : totals.familySafe(),
+          );
           return { rows, total };
         }
         if (justReleased && query.count !== false) {
-          const total = await (showSexualContent
-            ? totals.releasedEverything()
-            : totals.releasedFamilySafe());
+          const total = await kept(
+            showSexualContent
+              ? totals.releasedEverything()
+              : totals.releasedFamilySafe(),
+          );
           return { rows, total };
         }
         if (justLinked && query.count !== false) {
-          const total = await linkedTotal({
-            p_genre: query.genre ?? null,
-            p_platform: query.platform ?? null,
-            p_include_sexual: !!showSexualContent,
-            ...(query.sort === "released" && { p_released_until: today() }),
-            ...(query.sort === "upcoming" && { p_released_after: today() }),
-          });
+          const total = await kept(
+            linkedTotal({
+              p_genre: query.genre ?? null,
+              p_platform: query.platform ?? null,
+              p_include_sexual: !!showSexualContent,
+              ...(query.sort === "released" && { p_released_until: today() }),
+              ...(query.sort === "upcoming" && { p_released_after: today() }),
+            }),
+          );
           return { rows, total };
         }
         // Uncounted, the total is only what this page reached.

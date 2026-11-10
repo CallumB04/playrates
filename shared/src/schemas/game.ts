@@ -93,9 +93,15 @@ export const GAME_SORTS = [
 export const GameSortSchema = z.enum(GAME_SORTS).default("logged");
 export type GameSort = z.infer<typeof GameSortSchema>;
 
+/** The library's last page is past 1000 for the whole catalogue, at a phone's
+ *  twelve a page about 8000. Each sort's index carries its filters, so even
+ *  past the end a page costs one walk of an index the size of the catalogue. */
+export const GAME_PAGE_MAX = 20_000;
+
 /** Library filters. They run in SQL, so the page never holds the whole
  *  catalogue in memory. */
 export const GameQuerySchema = PaginationSchema.extend({
+  page: z.coerce.number().int().min(1).max(GAME_PAGE_MAX).default(1),
   search: z.string().trim().max(200).optional(),
   platform: z
     .string()

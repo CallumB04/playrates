@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { GAME_PAGE_MAX } from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
 import {
     useCatalogueReach,
@@ -84,7 +85,22 @@ const LibraryPage = () => {
         perPage,
         page: query.page,
         onPageChange: (next) => setQuery({ page: next }),
+        maxPage: GAME_PAGE_MAX,
     });
+
+    /* Past the end, from an old link or a total a few minutes behind: the
+       server says where the end is, so go there rather than show nothing. */
+    const pastTheEnd =
+        !!page &&
+        !isPlaceholderData &&
+        games.length === 0 &&
+        total > 0 &&
+        query.page > pagination.pageCount;
+    useEffect(() => {
+        if (pastTheEnd) {
+            setQuery({ page: pagination.pageCount }, { replace: true });
+        }
+    }, [pastTheEnd, pagination.pageCount, setQuery]);
 
     const { actionsFor, statusFor, logFor } = useTileActions();
 

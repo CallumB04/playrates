@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   BooleanQuerySchema,
   GameLogInputSchema,
+  GAME_PAGE_MAX,
   GameQuerySchema,
   PaginationSchema,
   resolveEmailPrefs,
@@ -45,6 +46,14 @@ describe("pagination", () => {
 
   it("caps the page size so a caller cannot request the whole table", () => {
     expect(() => PaginationSchema.parse({ limit: 500 })).toThrow();
+  });
+
+  /* The library's last page was past the 1000 every other list stops at,
+     so asking for it was refused and the page said nothing matched. */
+  it("lets the library reach its last page, past where other lists stop", () => {
+    expect(() => PaginationSchema.parse({ page: 4064 })).toThrow();
+    expect(GameQuerySchema.parse({ page: 8127, limit: 12 }).page).toBe(8127);
+    expect(() => GameQuerySchema.parse({ page: GAME_PAGE_MAX + 1 })).toThrow();
   });
 
   it("converts a page and limit into an inclusive range", () => {

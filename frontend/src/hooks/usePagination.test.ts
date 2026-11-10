@@ -134,4 +134,13 @@ describe("usePagination — server-driven mode", () => {
         expect(result.current.page).toBe(3);
         expect(result.current.canNext).toBe(false);
     });
+
+    it("offers no page past the furthest the server will answer", () => {
+        const { result } = renderHook(() =>
+            usePagination({ total: 100, perPage: 10, maxPage: 4 })
+        );
+
+        expect(result.current.pageCount).toBe(4);
+        expect(result.current.total).toBe(100);
+    });
 });
