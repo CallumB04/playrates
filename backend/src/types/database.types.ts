@@ -127,6 +127,10 @@ export interface GameRow {
   alt_names: string[];
   /** Their search keys, space apart; kept by a trigger, never written. */
   search_alt?: string;
+  /** Copies of the game's genre and platform links, which the library
+   *  filters on; kept by a trigger, never written. */
+  genre_slugs?: string[];
+  platform_slugs?: string[];
   /** PlayRates logs for this game, maintained by a trigger. */
   log_count: number;
   /** Mean PlayRates rating, also maintained by a trigger. */

@@ -257,6 +257,29 @@ export const createGamesRepository = (db: Db): GamesRepository => {
     releasedFamilySafe: memoFor(10 * 60_000, countReleased(false)),
     releasedEverything: memoFor(10 * 60_000, countReleased(true)),
   };
+  /* A genre or platform with nothing else chosen, kept the same way. Counted
+     through the link tables, which reads indexes alone: through the slug
+     copies it read every match's row, eight seconds for Mac. */
+  const linkedTotals = new Map<string, () => Promise<number>>();
+  const linkedTotal = (args: {
+    p_genre: string | null;
+    p_platform: string | null;
+    p_include_sexual: boolean;
+    p_released_until?: string;
+    p_released_after?: string;
+  }): Promise<number> => {
+    const key = JSON.stringify(args);
+    let total = linkedTotals.get(key);
+    if (!total) {
+      total = memoFor(10 * 60_000, async () => {
+        const { data, error } = await db.rpc("count_linked_games", args);
+        if (error) throw error;
+        return Number(data ?? 0);
+      });
+      linkedTotals.set(key, total);
+    }
+    return total();
+  };
 
   const readByIds = async (ids: number[]): Promise<GameRowWithPlatforms[]> => {
     if (ids.length === 0) return [];
@@ -293,34 +316,27 @@ export const createGamesRepository = (db: Db): GamesRepository => {
 
     async list(query, from, to, excludeLoggedForUser, showSexualContent) {
       const run = async (closeIds?: number[]) => {
-        /* Genre and platform filter through an aliased inner join. Collecting ids
-         and passing them to .in() truncates at PostgREST's 1000-row cap, and
-         filtering the embed directly strips a game's other genres.
-         Paged on ids alone, then read in full: PostgREST builds the links of
+        /* Paged on ids alone, then read in full: PostgREST builds the links of
          every row it skips past, so page 400 built nearly ten thousand to
          show twenty-four. */
         const select = ["id"];
-        if (query.genre) {
-          select.push("genre_filter:game_genres!inner(genre_slug)");
-        }
-        if (query.platform) {
-          select.push("platform_filter:game_platforms!inner(platform_slug)");
-        }
         if (excludeLoggedForUser) select.push("own_logs:game_logs()");
 
-        const plain =
+        const nothingElse =
           !closeIds &&
           !query.search &&
-          !query.genre &&
-          !query.platform &&
           query.trending === undefined &&
           !excludeLoggedForUser &&
           !query.releasedAfter &&
           !query.releasedBefore;
+        const linked = !!query.genre || !!query.platform;
+        const plain = nothingElse && !linked;
         const unfiltered =
           plain && query.sort !== "released" && query.sort !== "upcoming";
         const justReleased = plain && query.sort === "released";
-        const counted = query.count !== false && !unfiltered && !justReleased;
+        const justLinked = nothingElse && linked;
+        const counted =
+          query.count !== false && !unfiltered && !justReleased && !justLinked;
 
         let builder = db
           .from("games")
@@ -335,12 +351,14 @@ export const createGamesRepository = (db: Db): GamesRepository => {
           builder = builder.eq("has_sexual_content", false);
         }
 
+        /* The game's own copies of its links, which an index serves. An
+         inner join on the link tables ran a subquery per game, and a rare
+         pair walked the whole catalogue past the timeout. */
         if (query.genre) {
-          builder = builder.eq("genre_filter.genre_slug", query.genre);
+          builder = builder.contains("genre_slugs", [query.genre]);
         }
-
         if (query.platform) {
-          builder = builder.eq("platform_filter.platform_slug", query.platform);
+          builder = builder.contains("platform_slugs", [query.platform]);
         }
 
         /* "Hide games I have already logged", as an anti-join: games with no
@@ -433,6 +451,16 @@ export const createGamesRepository = (db: Db): GamesRepository => {
           const total = await (showSexualContent
             ? totals.releasedEverything()
             : totals.releasedFamilySafe());
+          return { rows, total };
+        }
+        if (justLinked && query.count !== false) {
+          const total = await linkedTotal({
+            p_genre: query.genre ?? null,
+            p_platform: query.platform ?? null,
+            p_include_sexual: !!showSexualContent,
+            ...(query.sort === "released" && { p_released_until: today() }),
+            ...(query.sort === "upcoming" && { p_released_after: today() }),
+          });
           return { rows, total };
         }
         // Uncounted, the total is only what this page reached.
