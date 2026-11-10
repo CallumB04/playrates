@@ -43,8 +43,7 @@ import XpInfo from "../../components/progress/XpInfo";
 import { nextReward } from "../../components/progress/rewardText";
 import { questPath } from "../../lib/questPath";
 import { InviteCard } from "../../components/progress/Invite";
-import ItemSheet, { ItemSheetFor } from "../../components/shop/ItemSheet";
-import { usePins } from "../ProfilePage/lib/usePinReviews";
+import ItemSheet from "../../components/shop/ItemSheet";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import {
@@ -55,7 +54,6 @@ import {
     useSwapQuest,
     useShop,
 } from "../../hooks/queries/useProgress";
-import { useUserLists } from "../../hooks/queries/useLists";
 import ReactionIcon from "../../components/progress/ReactionIcon";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import { useScrollToHash } from "../../hooks/useScrollToHash";
@@ -788,17 +786,6 @@ const Look = ({ data }: { data: Progress }) => {
     const notify = useNotify();
     const { user } = useAuth();
     const { data: shop } = useShop();
-    const { data: lists } = useUserLists(user?.username ?? "", {
-        sort: "new",
-        page: 1,
-        limit: 50,
-        enabled: !!user,
-    });
-    // Only what everyone can see: a hidden list pinned is an empty card to
-    // anyone else.
-    const pinnable = (lists?.data ?? []).filter(
-        (l) => l.visibility === "everyone"
-    );
     const setStyle = useSetStyle();
     const [open, setOpen] = useState<ShopEntry | null>(null);
     if (!user) return null;
@@ -1122,22 +1109,6 @@ const Look = ({ data }: { data: Progress }) => {
                 </ul>
             </LookSection>
 
-            {pinnable.length > 0 && (
-                <LookSection
-                    id="pinned-lists"
-                    title="Pinned lists"
-                    note={`Up to ${look.pinnedListSlots} on your profile.`}
-                >
-                    <PinToggles
-                        field="pinnedLists"
-                        items={pinnable.map((l) => ({
-                            id: l.id,
-                            name: l.name,
-                        }))}
-                    />
-                </LookSection>
-            )}
-
             {open && (
                 <ItemSheet
                     item={shop?.items.find((i) => i.item === open.item) ?? open}
@@ -1145,46 +1116,6 @@ const Look = ({ data }: { data: Progress }) => {
                 />
             )}
         </Panel>
-    );
-};
-
-/** Pins on your profile, as toggles: lists or reviews, up to the slots
- *  you have, and with none free, the slot to buy here. */
-const PinToggles = ({
-    field,
-    items,
-}: {
-    field: "pinnedLists" | "pinnedReviews";
-    items: { id: number; name: string }[];
-}) => {
-    const pins = usePins(field);
-    return (
-        <>
-            <ul className="flex flex-wrap gap-2">
-                {items.map((l) => {
-                    const on = pins.pinned.includes(l.id);
-                    return (
-                        <li key={l.id}>
-                            <button
-                                type="button"
-                                aria-pressed={on}
-                                onClick={() => pins.toggle(l.id)}
-                                className={cn(
-                                    "inline-flex min-h-11 max-w-60 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-label lift sm:min-h-9",
-                                    on
-                                        ? "border-brand bg-brand-subtle text-brand-text"
-                                        : "border-subtle hover:border-strong"
-                                )}
-                            >
-                                {on && <Check size={12} aria-hidden />}
-                                <span className="truncate">{l.name}</span>
-                            </button>
-                        </li>
-                    );
-                })}
-            </ul>
-            {pins.buying && <ItemSheetFor {...pins.buying} />}
-        </>
     );
 };
 
