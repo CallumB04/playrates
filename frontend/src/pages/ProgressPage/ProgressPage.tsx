@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import {
     Award,
     Check,
@@ -16,7 +16,6 @@ import {
     NAME_COLOURS,
     NAME_FONTS,
     NO_FRAME,
-    REACTIONS,
     type CardThemeKey,
     type FrameKey,
     type LeaderboardPeriod,
@@ -54,7 +53,6 @@ import {
     useSwapQuest,
     useShop,
 } from "../../hooks/queries/useProgress";
-import ReactionIcon from "../../components/progress/ReactionIcon";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import { useScrollToHash } from "../../hooks/useScrollToHash";
 import { formatCount } from "../../lib/format";
@@ -74,9 +72,12 @@ const DAY_MONTH = new Intl.DateTimeFormat("en-GB", {
 const ProgressPage = () => {
     const { user, isLoading: authLoading } = useAuth();
     const { data } = useProgress();
+    const { hash } = useLocation();
     usePageMeta({ title: "Your progress", noindex: true });
     useScrollToHash();
 
+    // Reactions moved to the shop; emails already sent still link here.
+    if (hash === "#reaction") return <Navigate to="/shop#reaction" replace />;
     if (!authLoading && !user) return <Navigate to="/" replace />;
     if (!data || !user) {
         return (
@@ -1057,51 +1058,6 @@ const Look = ({ data }: { data: Progress }) => {
                                         size="thumb"
                                         className="w-14"
                                     />
-                                </LookTile>
-                            </li>
-                        );
-                    })}
-                </ul>
-            </LookSection>
-
-            <LookSection
-                id="reaction"
-                title="Reactions"
-                note="What you can leave on reviews, lists and posts."
-            >
-                <ul className="grid grid-cols-5 gap-1 sm:grid-cols-8">
-                    {REACTIONS.map((r) => {
-                        const unlocked = look.reactions.includes(r.key);
-                        return (
-                            <li key={r.key}>
-                                <LookTile
-                                    label={r.label}
-                                    on={false}
-                                    lock={
-                                        "level" in r && !unlocked
-                                            ? `Level ${r.level}`
-                                            : undefined
-                                    }
-                                    price={
-                                        "item" in r && !unlocked
-                                            ? entry(r.item)?.price
-                                            : undefined
-                                    }
-                                    disabled={unlocked || "level" in r}
-                                    onClick={() =>
-                                        choose(
-                                            "item" in r ? r.item : undefined,
-                                            false,
-                                            () => {}
-                                        )
-                                    }
-                                >
-                                    <span className="grid h-9 place-items-center">
-                                        <ReactionIcon
-                                            reaction={r.key}
-                                            size={26}
-                                        />
-                                    </span>
                                 </LookTile>
                             </li>
                         );

@@ -65,8 +65,9 @@ export const itemName = (item: string): string => {
 };
 
 /** Where a gift is put to use: the place its new owner picks or wears it.
- *  Looks and reactions are on the progress page, each under its own
- *  heading; the profile's pins open their pickers. */
+ *  Looks are on the progress page, each under its own heading; reactions
+ *  are left on things, so they go to the shop's own section; the profile's
+ *  pins open their pickers. */
 export const giftPath = (item: string, username: string): string => {
     if (item === "slot_pinned_review")
         return `${profilePath(username)}?edit=pinned_reviews`;
@@ -78,6 +79,7 @@ export const giftPath = (item: string, username: string): string => {
     if (!group) return "/shop";
     if (group === "shield") return "/progress#streak";
     if (group === "font" || group === "colour") return "/progress#name";
+    if (group === "reaction") return "/shop#reaction";
     return `/progress#${group}`;
 };
 

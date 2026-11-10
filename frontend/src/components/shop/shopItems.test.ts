@@ -2,13 +2,16 @@ import { describe, expect, it } from "vitest";
 import { giftPath, itemName } from "./shopItems";
 
 describe("giftPath", () => {
-    it("takes a look or a reaction to its heading on the progress page", () => {
+    it("takes a look to its heading on the progress page", () => {
         expect(giftPath("frame_neon", "me")).toBe("/progress#frame");
         expect(giftPath("theme_retro", "me")).toBe("/progress#theme");
         expect(giftPath("font_pixel", "me")).toBe("/progress#name");
         expect(giftPath("colour_mint", "me")).toBe("/progress#name");
-        expect(giftPath("react_hype", "me")).toBe("/progress#reaction");
         expect(giftPath("streak_shield", "me")).toBe("/progress#streak");
+    });
+
+    it("takes a reaction to the shop's reactions", () => {
+        expect(giftPath("react_hype", "me")).toBe("/shop#reaction");
     });
 
     it("opens the picker a slot adds to", () => {

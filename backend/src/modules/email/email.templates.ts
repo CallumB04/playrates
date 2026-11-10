@@ -257,6 +257,7 @@ export const giftPath = (item: string, username: string): string => {
   if (!group) return "/shop";
   if (group === "shield") return "/progress#streak";
   if (group === "font" || group === "colour") return "/progress#name";
+  if (group === "reaction") return "/shop#reaction";
   return `/progress#${group}`;
 };
 

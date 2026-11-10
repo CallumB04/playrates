@@ -189,6 +189,7 @@ describe("email templates", () => {
     expect(giftPath("streak_shield", "bo")).toBe("/progress#streak");
     expect(giftPath("colour_ember", "bo")).toBe("/progress#name");
     expect(giftPath("frame_neon", "bo")).toBe("/progress#frame");
+    expect(giftPath("react_hype", "bo")).toBe("/shop#reaction");
     expect(giftPath("no_such_item", "bo")).toBe("/shop");
   });
 

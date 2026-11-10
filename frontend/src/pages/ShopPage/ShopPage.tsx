@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import {
     SHOP_GROUPS,
@@ -34,11 +34,22 @@ import { usePageMeta } from "../../hooks/usePageMeta";
 import { formatCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 
+/** The section a link's hash names: /shop#reaction. */
+const kindIn = (hash: string) => SHOP_KINDS.find((k) => hash === `#${k}`);
+
 /** Where tokens are spent: looks, room on your profile, and the rest. */
 const ShopPage = () => {
     const { user, isLoading } = useAuth();
     const { data: shop } = useShop();
-    const [kind, setKind] = useState<ShopKind>("cosmetic");
+    const { hash } = useLocation();
+    const [kind, setKind] = useState<ShopKind>(
+        () => kindIn(hash) ?? "cosmetic"
+    );
+    // A link followed while already here moves to its section too.
+    useEffect(() => {
+        const linked = kindIn(hash);
+        if (linked) setKind(linked);
+    }, [hash]);
     const [sectionsOpen, setSectionsOpen] = useState(false);
     const [open, setOpen] = useState<ShopEntry | null>(null);
     // `?item=` opens one item, for a page that sends you here for it: out of
