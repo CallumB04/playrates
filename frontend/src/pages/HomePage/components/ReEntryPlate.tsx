@@ -1,18 +1,27 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Gamepad2, Pencil } from "lucide-react";
-import type { UserStats } from "@playrates/shared";
+import { Gamepad2, Pencil } from "lucide-react";
+import { igdbSized, type UserStats } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
-import Button from "../../../components/ui/Button";
-import { cardClass } from "../../../components/ui/cardClass";
 import GameCover from "../../../components/game/GameCover";
+import Button from "../../../components/ui/Button";
+import Progress from "../../../components/ui/Progress";
 import RatingBadge from "../../../components/ui/RatingBadge";
+import { buttonClass } from "../../../components/ui/buttonClass";
+import { cardClass } from "../../../components/ui/cardClass";
 import YearChart from "./YearChart";
 import { usePlayedOn } from "../../../components/gamelog/usePlayedOn";
 import {
     GAME_STATUSES,
     STATUS_PRESENTATION,
 } from "../../../constants/gameStatus";
-import { formatCount, formatHours, relativeTime } from "../../../lib/format";
+import {
+    formatCount,
+    formatHours,
+    formatPercent,
+    relativeTime,
+} from "../../../lib/format";
+import { completionTone } from "../../../lib/completionTone";
 import { cn } from "../../../lib/cn";
 import { shelfPath } from "../../../lib/profilePaths";
 
@@ -22,17 +31,20 @@ interface ReEntryPlateProps {
     displayName: string;
     /** Nothing logged yet, so not "welcome back". */
     isNew: boolean;
-    /** The most recently touched "playing" log, if there is one. */
-    current: GameLogWithGame | undefined;
+    /** The games on the go, most recently touched first. */
+    playing: GameLogWithGame[];
     /** How many games on each shelf, all time. */
     shelves: Record<string, number> | undefined;
     /** This year's played logs, for the chart. */
     yearLogs: GameLogWithGame[];
     yearStats: UserStats | undefined;
-    onUpdateLog: () => void;
+    onUpdateLog: (log: GameLogWithGame) => void;
 }
 
 const EYEBROW = "text-label-sm font-medium tracking-[0.14em] uppercase";
+
+/** Covers in the row under the game on the go, before the rest are counted. */
+const ON_THE_GO_SHOWN = 5;
 
 const today = () =>
     new Intl.DateTimeFormat("en-GB", {
@@ -41,116 +53,325 @@ const today = () =>
         month: "long",
     }).format(new Date());
 
-const NowPlaying = ({
-    current,
-    username,
-    shelves,
-    onUpdateLog,
-}: {
-    current: GameLogWithGame | undefined;
-    username: string;
-    shelves: Record<string, number> | undefined;
-    onUpdateLog: () => void;
-}) => {
-    const game = current?.game;
-    const playedOn = usePlayedOn()(
-        current ?? { system: null, platform: null }
-    ).name;
-    const others = Math.max(0, (shelves?.playing ?? 0) - 1);
-    const backlog = shelves?.backlog ?? 0;
+const completionOf = (log: GameLogWithGame): number | null =>
+    log.achievementsTotal
+        ? Math.min(1, (log.achievementsCompleted ?? 0) / log.achievementsTotal)
+        : null;
 
-    if (!current || !game) {
+const waiting = (backlog: number) =>
+    `${formatCount(backlog)} ${backlog === 1 ? "game" : "games"}`;
+
+/** A run's figures on one line, each in the page's own colour with a word
+ *  saying what it is. Only those it has: a dash would be noise here. */
+const RunFigures = ({ log }: { log: GameLogWithGame }) => {
+    const completion = completionOf(log);
+    if (log.hoursPlayed === null && log.rating === null && completion === null)
         return (
-            <div className="flex items-center gap-4 p-4 sm:gap-5 sm:p-5">
-                <span className="grid aspect-3/4 w-16 shrink-0 place-items-center rounded-sm border border-dashed border-strong text-content-muted sm:w-20">
-                    <Gamepad2 size={22} aria-hidden />
-                </span>
-                <div className="min-w-0">
-                    <p className={cn(EYEBROW, "text-content-muted")}>
-                        Now playing
-                    </p>
-                    <p className="mt-1.5 font-display text-lg text-content sm:text-xl">
-                        Nothing on the go
-                    </p>
-                    <Link
-                        to={
-                            backlog > 0
-                                ? shelfPath(username, "backlog")
-                                : "/library"
-                        }
-                        className="relative mt-1 inline-flex items-center gap-1 text-label text-brand-text before:absolute before:-inset-2.5 before:content-[''] hover:underline sm:before:hidden"
-                    >
-                        {backlog > 0
-                            ? `${formatCount(backlog)} ${backlog === 1 ? "game" : "games"} waiting in your backlog`
-                            : "Find something to play in the library"}
-                        <ArrowRight size={13} aria-hidden />
-                    </Link>
-                </div>
-            </div>
+            <p className="text-body-sm text-content-muted">
+                No hours or rating yet
+            </p>
         );
-    }
-
     return (
-        <div className="flex items-center gap-4 p-4 sm:gap-5 sm:p-5">
-            <Link to={`/game/${game.id}`} className="shrink-0 lift">
-                <GameCover
-                    coverUrl={game.coverUrl}
-                    title={game.title}
-                    className="aspect-3/4 w-16 overflow-hidden rounded-sm shadow-cover sm:w-20 lg:w-24"
-                />
-            </Link>
-            <div className="min-w-0 flex-1">
-                <p
-                    className={cn(
-                        EYEBROW,
-                        STATUS_PRESENTATION.playing.markTone
-                    )}
-                >
-                    Now playing
-                </p>
-                <Link
-                    to={`/game/${game.id}`}
-                    className="mt-1.5 line-clamp-2 font-display text-lg leading-snug text-content hover:text-brand-text sm:text-xl lg:text-2xl"
-                >
-                    {game.title}
-                </Link>
-                <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-label-sm text-content-muted">
-                    {playedOn && <span>on {playedOn}</span>}
-                    {current.hoursPlayed !== null && (
-                        <span className="font-mono">
-                            {formatHours(current.hoursPlayed)}
+        <dl className="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-2 text-label-sm text-content-secondary sm:flex-none">
+            {log.hoursPlayed !== null && (
+                <div className="flex items-baseline gap-1.5">
+                    <dd className="font-mono text-body font-medium text-content">
+                        {formatHours(log.hoursPlayed)}
+                    </dd>
+                    <dt>played</dt>
+                </div>
+            )}
+            {log.rating !== null && (
+                <div className="flex items-baseline gap-1.5">
+                    <dd>
+                        <RatingBadge value={log.rating} size="md" />
+                    </dd>
+                    <dt>your rating</dt>
+                </div>
+            )}
+            {completion !== null && (
+                <div className="flex items-center gap-2">
+                    <dd className="flex items-center gap-2">
+                        <Progress
+                            size="sm"
+                            value={completion}
+                            label="Achievements earned"
+                            fillClassName={completionTone(completion).fill}
+                            className="w-16"
+                        />
+                        <span
+                            className={cn(
+                                "font-mono text-body font-medium",
+                                completionTone(completion).text
+                            )}
+                        >
+                            {formatPercent(completion)}
                         </span>
-                    )}
-                    <span>Updated {relativeTime(current.updatedAt)}</span>
-                    {current.rating !== null && (
-                        <RatingBadge value={current.rating} />
-                    )}
-                </p>
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={onUpdateLog}
-                        className="max-sm:min-h-11"
-                    >
-                        <Pencil size={13} aria-hidden />
-                        Update
-                    </Button>
-                    {others > 0 && (
+                    </dd>
+                    <dt>achievements</dt>
+                </div>
+            )}
+        </dl>
+    );
+};
+
+/** Every game on the go as a small cover, the one shown above ringed: a
+ *  row that never moves, so picking another only moves the ring. */
+const OnTheGo = ({
+    playing,
+    openId,
+    onTheGo,
+    username,
+    onOpen,
+}: {
+    playing: GameLogWithGame[];
+    openId: number;
+    onTheGo: number;
+    username: string;
+    onOpen: (id: number) => void;
+}) => {
+    const overflow = onTheGo > ON_THE_GO_SHOWN;
+    const shown = playing.slice(
+        0,
+        overflow ? ON_THE_GO_SHOWN - 1 : ON_THE_GO_SHOWN
+    );
+    return (
+        <div className="flex flex-col gap-2">
+            <p className="text-label-sm text-content-muted">
+                On the go{" "}
+                <span className="font-mono text-content-secondary">
+                    {formatCount(onTheGo)}
+                </span>
+            </p>
+            <ul className="flex items-center gap-2">
+                {shown.map((log) => {
+                    const open = log.id === openId;
+                    return (
+                        <li key={log.id}>
+                            <button
+                                type="button"
+                                onClick={() => onOpen(log.id)}
+                                aria-pressed={open}
+                                aria-label={log.game?.title ?? "A game"}
+                                className={cn(
+                                    "block aspect-3/4 w-11 cursor-pointer overflow-hidden rounded-xs lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
+                                    open
+                                        ? "ring-2 ring-brand ring-offset-2 ring-offset-surface-raised"
+                                        : "opacity-75 hover:opacity-100"
+                                )}
+                            >
+                                <GameCover
+                                    coverUrl={log.game?.coverUrl ?? null}
+                                    title={log.game?.title ?? ""}
+                                    className="size-full"
+                                />
+                            </button>
+                        </li>
+                    );
+                })}
+                {overflow && (
+                    <li>
                         <Link
                             to={shelfPath(username, "playing")}
-                            className="relative text-label text-content-secondary before:absolute before:-inset-x-1 before:-inset-y-3.5 before:content-[''] hover:text-content"
+                            aria-label={`See all ${formatCount(onTheGo)}`}
+                            className="grid aspect-3/4 w-11 place-items-center rounded-xs border border-subtle bg-surface-sunken font-mono text-label-sm font-semibold text-content-secondary lift hover:border-strong hover:text-content"
                         >
-                            +{formatCount(others)} more on the go
+                            +{formatCount(onTheGo - shown.length)}
                         </Link>
-                    )}
-                </div>
-            </div>
+                    </li>
+                )}
+            </ul>
         </div>
     );
 };
 
-/** The four shelves, each a figure that opens the shelf on your profile. */
+/** Nothing on the go: the one thing to do next, at every width. */
+const NothingOnTheGo = ({
+    username,
+    backlog,
+}: {
+    username: string;
+    backlog: number;
+}) => (
+    <section
+        aria-labelledby="now-playing"
+        className={cardClass(
+            "flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5"
+        )}
+    >
+        <div className="flex min-w-0 flex-1 items-start gap-3.5 sm:items-center sm:gap-5">
+            <span className="grid size-10 shrink-0 place-items-center rounded-md bg-brand-subtle text-brand-text sm:size-12">
+                <Gamepad2 size={20} aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+                <h2
+                    id="now-playing"
+                    className="text-body font-medium text-content"
+                >
+                    Nothing on the go
+                </h2>
+                <p className="mt-1 text-body-sm text-content-secondary">
+                    {backlog > 0
+                        ? `${waiting(backlog)} waiting in your backlog. Pick one to start, or find something new.`
+                        : "Find something to play, and it’ll show here while you play it."}
+                </p>
+            </div>
+        </div>
+        <div className="flex flex-col gap-2 sm:shrink-0 sm:flex-row">
+            {backlog > 0 && (
+                <Link
+                    to={shelfPath(username, "backlog")}
+                    className={buttonClass("primary", "w-full sm:w-auto")}
+                >
+                    Pick from your backlog
+                </Link>
+            )}
+            <Link
+                to="/library"
+                className={buttonClass(
+                    backlog > 0 ? "secondary" : "primary",
+                    "w-full sm:w-auto"
+                )}
+            >
+                Browse the library
+            </Link>
+        </div>
+    </section>
+);
+
+/**
+ * The game you're playing, in full, and the rest of what's on the go as
+ * covers to switch between. The most recently touched leads, as "now"
+ * means; nothing on the go asks for something to start instead.
+ */
+const NowPlaying = ({
+    playing,
+    username,
+    shelves,
+    onUpdateLog,
+}: {
+    playing: GameLogWithGame[];
+    username: string;
+    shelves: Record<string, number> | undefined;
+    onUpdateLog: (log: GameLogWithGame) => void;
+}) => {
+    const [openId, setOpenId] = useState<number | null>(null);
+    const open = playing.find((l) => l.id === openId) ?? playing[0];
+    const playedOn = usePlayedOn()(open ?? { system: null, platform: null });
+    const backlog = shelves?.backlog ?? 0;
+
+    if (!open?.game) {
+        return <NothingOnTheGo username={username} backlog={backlog} />;
+    }
+
+    const game = open.game;
+    const PlatformIcon = playedOn.Icon;
+    const onTheGo = Math.max(shelves?.playing ?? 0, playing.length);
+
+    return (
+        <section
+            aria-labelledby="now-playing"
+            className={cardClass("relative overflow-hidden", {
+                padding: "none",
+            })}
+        >
+            {/* The game's own art, faint and fading out before the words:
+                enough to say which world you're in, never in the way. */}
+            {game.artworkUrl && (
+                // The art at near full strength, so it keeps its colour,
+                // with the card's own surface laid over it where the words
+                // are: solid behind the details, thinning towards the covers
+                // on a wide card; on a phone, strongest around the title.
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                >
+                    <img
+                        key={game.id}
+                        src={igdbSized(game.artworkUrl, "screenshot_big")}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className="size-full animate-fade-up object-cover"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-b from-surface-raised/70 via-surface-raised/88 via-55% to-surface-raised/95 sm:bg-linear-to-r sm:from-surface-raised sm:from-30% sm:via-surface-raised/82 sm:via-60% sm:to-surface-raised/45" />
+                </div>
+            )}
+            <div className="relative flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:gap-8">
+                {/* The figures sit under the title from a phone's width up;
+                    on a phone they take the card's width under the cover. */}
+                <div
+                    key={open.id}
+                    className="grid min-w-0 flex-1 animate-fade-up grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-3 sm:gap-x-5"
+                >
+                    <Link
+                        to={`/game/${game.id}`}
+                        tabIndex={-1}
+                        aria-hidden
+                        className="shrink-0 lift sm:row-span-2"
+                    >
+                        <GameCover
+                            coverUrl={game.coverUrl}
+                            title={game.title}
+                            className="aspect-3/4 w-16 overflow-hidden rounded-sm shadow-cover sm:w-22"
+                        />
+                    </Link>
+                    <div className="min-w-0 self-center sm:self-auto">
+                        <h2
+                            id="now-playing"
+                            className="text-label-sm text-content-muted"
+                        >
+                            Now playing
+                        </h2>
+                        <Link
+                            to={`/game/${game.id}`}
+                            className="mt-0.5 line-clamp-2 font-display text-xl leading-tight text-content hover:text-brand-text sm:text-2xl"
+                        >
+                            {game.title}
+                        </Link>
+                        <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-label-sm text-content-secondary">
+                            {playedOn.name && (
+                                <span className="inline-flex items-center gap-1.5">
+                                    <PlatformIcon size={13} aria-hidden />
+                                    {playedOn.name}
+                                </span>
+                            )}
+                            <span>Updated {relativeTime(open.updatedAt)}</span>
+                        </p>
+                    </div>
+                    <div className="col-span-2 flex items-center justify-between gap-x-4 sm:col-span-1 sm:col-start-2 sm:flex-wrap sm:justify-start sm:gap-x-5 sm:gap-y-3">
+                        <RunFigures log={open} />
+                        {/* Its word from a phone's width up; on a phone, the
+                            pencil alone keeps it on the figures' line. */}
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => onUpdateLog(open)}
+                            className="max-sm:size-11 max-sm:px-0"
+                        >
+                            <Pencil size={14} aria-hidden />
+                            <span className="max-sm:sr-only">Update</span>
+                        </Button>
+                    </div>
+                </div>
+
+                {playing.length > 1 && (
+                    <div className="border-t border-subtle pt-3.5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+                        <OnTheGo
+                            playing={playing}
+                            openId={open.id}
+                            onTheGo={onTheGo}
+                            username={username}
+                            onOpen={setOpenId}
+                        />
+                    </div>
+                )}
+            </div>
+        </section>
+    );
+};
+
+/** The four shelves as one slim row of links, each with its count. */
 const Shelves = ({
     username,
     shelves,
@@ -158,27 +379,24 @@ const Shelves = ({
     username: string;
     shelves: Record<string, number> | undefined;
 }) => (
-    <nav
-        aria-label="Your shelves"
-        className="grid h-full grid-cols-4 divide-x divide-subtle"
-    >
+    <nav aria-label="Your shelves" className="grid grid-cols-4 gap-2">
         {GAME_STATUSES.map((status) => {
             const { label, icon: Icon, markTone } = STATUS_PRESENTATION[status];
             return (
                 <Link
                     key={status}
                     to={shelfPath(username, status)}
-                    className="group flex min-h-11 flex-col items-center justify-center gap-1 px-1 py-3 transition-colors hover:bg-surface-hover/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand lg:items-start lg:justify-center lg:gap-2 lg:px-5 lg:py-5"
+                    className="flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 rounded-md border border-subtle bg-surface-raised px-1 py-2 lift hover:border-strong focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:flex-row sm:justify-between sm:gap-3 sm:px-3.5"
                 >
-                    <span className="flex items-center gap-1.5 text-label-sm text-content-muted group-hover:text-content-secondary lg:text-label">
+                    <span className="flex min-w-0 items-center gap-1.5 text-label-sm text-content-secondary">
                         <Icon
                             size={14}
                             aria-hidden
                             className={cn("shrink-0", markTone)}
                         />
-                        {label}
+                        <span className="truncate">{label}</span>
                     </span>
-                    <span className="font-mono text-lg leading-none font-medium text-content sm:text-xl lg:text-[32px]">
+                    <span className="font-mono text-body-sm font-semibold text-content tabular-nums">
                         {formatCount(shelves?.[status] ?? 0)}
                     </span>
                 </Link>
@@ -224,59 +442,46 @@ const YearGlance = ({
 );
 
 /**
- * The signed-in landing: a greeting, then one panel with the game on the go
- * and the four shelves, laid straight on the page.
+ * The signed-in landing: a greeting, what's on the go, and the four shelves,
+ * laid straight on the page rather than boxed together.
  */
 const ReEntryPlate = ({
     username,
     displayName,
     isNew,
-    current,
+    playing,
     shelves,
     yearLogs,
     yearStats,
     onUpdateLog,
-}: ReEntryPlateProps) => {
-    return (
-        <section
-            aria-labelledby="home-greeting"
-            className="flex flex-col gap-6 lg:gap-8"
-        >
-            <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-5">
-                <div>
-                    <p className={cn(EYEBROW, "text-content-muted")}>
-                        {today()}
-                    </p>
-                    <h1
-                        id="home-greeting"
-                        className="mt-2 font-display text-[28px] leading-[1.05] text-content sm:text-[44px] lg:text-[52px]"
-                    >
-                        {isNew ? "Welcome" : "Welcome back"}, {displayName}
-                    </h1>
-                </div>
-                <div className="hidden lg:block">
-                    <YearGlance yearLogs={yearLogs} yearStats={yearStats} />
-                </div>
+}: ReEntryPlateProps) => (
+    <section
+        aria-labelledby="home-greeting"
+        className="flex flex-col gap-4 lg:gap-5"
+    >
+        <div className="mb-1 flex flex-wrap items-end justify-between gap-x-10 gap-y-5 lg:mb-2">
+            <div>
+                <p className={cn(EYEBROW, "text-content-muted")}>{today()}</p>
+                <h1
+                    id="home-greeting"
+                    className="mt-2 font-display text-[28px] leading-[1.05] text-content sm:text-[44px] lg:text-[52px]"
+                >
+                    {isNew ? "Welcome" : "Welcome back"}, {displayName}
+                </h1>
             </div>
+            <div className="hidden lg:block">
+                <YearGlance yearLogs={yearLogs} yearStats={yearStats} />
+            </div>
+        </div>
 
-            <div
-                className={cardClass(
-                    "overflow-hidden lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)] lg:divide-x lg:divide-subtle",
-                    { padding: "none" }
-                )}
-            >
-                <NowPlaying
-                    current={current}
-                    username={username}
-                    shelves={shelves}
-                    onUpdateLog={onUpdateLog}
-                />
-                <div className="border-t border-subtle lg:border-t-0">
-                    <Shelves username={username} shelves={shelves} />
-                </div>
-            </div>
-        </section>
-    );
-};
+        <NowPlaying
+            playing={playing}
+            username={username}
+            shelves={shelves}
+            onUpdateLog={onUpdateLog}
+        />
+        <Shelves username={username} shelves={shelves} />
+    </section>
+);
 
 export default ReEntryPlate;

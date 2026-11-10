@@ -17,7 +17,7 @@ import {
     useMyShelf,
     useUserStats,
 } from "../../hooks/queries/useGameLogs";
-import { latestRun, logOnShelf } from "../../api";
+import { latestRun, logOnShelf, type GameLogWithGame } from "../../api";
 import { useLogFlow } from "../../components/gamelog/useLogFlow";
 import { useFriendActivity } from "../../hooks/queries/useFriends";
 import { useRecentReviews } from "../../hooks/queries/useReviews";
@@ -87,7 +87,9 @@ const HomePage = () => {
     const communityEmpty =
         !communityLoading && (communityTrending?.length ?? 0) === 0;
 
-    const { data: playing } = useMyShelf("playing", { limit: 1 });
+    // Enough to find the one touched last and a few behind it: the shelf's
+    // own order is by rating, which isn't what "now" means.
+    const { data: playing } = useMyShelf("playing", { limit: 12 });
     // Enough to draw a year without paging. The chart is a shape, not a ledger.
     const { data: played } = useMyShelf("played", { limit: 100 });
     const { data: yearStats } = useUserStats(
@@ -96,7 +98,17 @@ const HomePage = () => {
     );
     const { data: allTime } = useUserStats(user?.username ?? "");
 
-    const current = playing?.data[0] && logOnShelf(playing.data[0], "playing");
+    const onTheGo = useMemo(
+        () =>
+            [...(playing?.data ?? [])]
+                .sort((a, b) =>
+                    b.rollup.updatedAt.localeCompare(a.rollup.updatedAt)
+                )
+                .map((entry) => logOnShelf(entry, "playing"))
+                .filter((log): log is GameLogWithGame => !!log),
+        [playing]
+    );
+
     // A game counts once in the year however many consoles it was played on.
     const yearLogs = useMemo(
         () => (played?.data ?? []).map(latestRun),
@@ -116,13 +128,11 @@ const HomePage = () => {
                         username={user.username}
                         displayName={user.firstName || user.username}
                         isNew={myLogIds?.length === 0}
-                        current={current}
+                        playing={onTheGo}
                         shelves={allTime?.byStatus}
                         yearLogs={yearLogs}
                         yearStats={yearStats}
-                        onUpdateLog={() =>
-                            current && flow.edit(current.gameId, current.id)
-                        }
+                        onUpdateLog={(log) => flow.edit(log.gameId, log.id)}
                     />
                     <YourWeek />
                 </div>
