@@ -13,6 +13,7 @@ import { releaseYear } from "../../../lib/format";
 import type { GameFacts } from "../lib/gameFacts";
 import GameDetails from "./GameDetails";
 import { cn } from "../../../lib/cn";
+import HypeFlames from "../../../components/gamelog/HypeFlames";
 
 interface GameCoverPlateProps {
     game: Game;
@@ -21,7 +22,7 @@ interface GameCoverPlateProps {
     facts: GameFacts | null;
     onPrimary: () => void;
     onViewLog: () => void;
-    /** Your logs in full, once there are two to add up. */
+    /** Your logs in full, once there are two to add up or a backlog log. */
     bundle?: LogBundle;
     /** Whether a console is left to log it on. */
     canAdd: boolean;
@@ -99,6 +100,16 @@ const GameCoverPlate = ({
                         {releaseYear(game.releaseDate)}
                     </span>
                 </div>
+                {/* Beside the backlog stamp's meaning: how soon. With several
+                    logs, each row in My logs shows its own. */}
+                {log?.status === "backlog" &&
+                    log.logs.length === 1 &&
+                    bundle?.rollup?.hype && (
+                        <div className="mt-2 flex items-center justify-between text-label-sm text-content-muted">
+                            <span>Your hype</span>
+                            <HypeFlames hype={bundle.rollup.hype} />
+                        </div>
+                    )}
             </div>
 
             {log && log.logs.length > 1 && bundle?.rollup ? (

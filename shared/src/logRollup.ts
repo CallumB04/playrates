@@ -75,6 +75,8 @@ export interface GameLogRollup {
   /** When the first of its logs was made. A second console logged later
    *  does not make the game newly added. */
   addedAt: string;
+  /** The most hyped of its backlog logs. */
+  hype: number | null;
 }
 
 const completionOf = (log: GameLog): number | null =>
@@ -133,6 +135,13 @@ export const rollupLogs = (logs: readonly GameLog[]): GameLogRollup | null => {
     addedAt: logs.reduce(
       (first, l) => (l.createdAt < first ? l.createdAt : first),
       logs[0]!.createdAt,
+    ),
+    hype: logs.reduce<number | null>(
+      (most, l) =>
+        l.status === "backlog" && l.hype != null && (most === null || l.hype > most)
+          ? l.hype
+          : most,
+      null,
     ),
   };
 };

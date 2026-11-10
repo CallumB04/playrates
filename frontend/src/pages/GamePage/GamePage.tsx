@@ -96,8 +96,11 @@ const GamePage = () => {
     );
 
     const logCount = log?.logs.length ?? 0;
-    // In full only once there are two to add up.
-    const { data: bundle } = useMyLogBundle(gameId, logCount > 1);
+    // In full only once there are two to add up, or a backlog's hype to show.
+    const { data: bundle } = useMyLogBundle(
+        gameId,
+        logCount > 1 || log?.status === "backlog"
+    );
     const canAddPlatform =
         !!log &&
         remainingSystems(

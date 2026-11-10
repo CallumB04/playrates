@@ -26,6 +26,7 @@ import { remainingSystems, systemsForGame } from "../lib/gameSystems";
 import { useLogFlow } from "./gamelog/useLogFlow";
 import { usePlayedOn } from "./gamelog/usePlayedOn";
 import LogRow from "./gamelog/LogRow";
+import HypeFlames from "./gamelog/HypeFlames";
 import RollupFigures from "./gamelog/RollupFigures";
 
 interface LogPopupAction {
@@ -83,22 +84,43 @@ const LogDetails = ({
                         "flex items-stretch gap-5 p-4"
                     )}
                 >
-                    <div className="flex min-w-0 flex-1 flex-col justify-center gap-2.5">
-                        <RatingBadge value={gamelog.rating} size="lg" />
-                        <Progress
-                            size="sm"
-                            value={(gamelog.rating ?? 0) / 10}
-                            label="Rating out of 10"
-                            className="w-full"
-                        />
-                        <span className="text-label-sm text-content-muted">
-                            {gamelog.rating === null
-                                ? "Not rated"
-                                : isMine
-                                  ? "Your rating"
-                                  : "Their rating"}
-                        </span>
-                    </div>
+                    {gamelog.status === "backlog" ? (
+                        // Not played, so not rated: how much it's wanted is
+                        // the figure a backlog game has.
+                        <div className="flex min-w-0 flex-1 flex-col justify-center gap-2.5">
+                            {gamelog.hype ? (
+                                <HypeFlames hype={gamelog.hype} size="lg" />
+                            ) : (
+                                <span className="text-body-sm text-content-muted">
+                                    –
+                                </span>
+                            )}
+                            <span className="text-label-sm text-content-muted">
+                                {gamelog.hype
+                                    ? isMine
+                                        ? "Your hype"
+                                        : "Their hype"
+                                    : "No hype yet"}
+                            </span>
+                        </div>
+                    ) : (
+                        <div className="flex min-w-0 flex-1 flex-col justify-center gap-2.5">
+                            <RatingBadge value={gamelog.rating} size="lg" />
+                            <Progress
+                                size="sm"
+                                value={(gamelog.rating ?? 0) / 10}
+                                label="Rating out of 10"
+                                className="w-full"
+                            />
+                            <span className="text-label-sm text-content-muted">
+                                {gamelog.rating === null
+                                    ? "Not rated"
+                                    : isMine
+                                      ? "Your rating"
+                                      : "Their rating"}
+                            </span>
+                        </div>
+                    )}
 
                     {achievementsTotal > 0 && (
                         <div className="flex shrink-0 flex-col items-center gap-1.5 border-l border-subtle pl-5">

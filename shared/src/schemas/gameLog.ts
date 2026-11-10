@@ -34,6 +34,11 @@ const RatingSchema = z
     message: "Rating must be a multiple of 0.5",
   });
 
+/** How much someone wants to play a game on their backlog, in flames. A
+ *  backlog log's alone: the service clears it as the log moves on. */
+export const HYPE_MAX = 5;
+export const HypeSchema = z.number().int().min(1).max(HYPE_MAX);
+
 const IsoDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected a YYYY-MM-DD date");
@@ -57,6 +62,7 @@ const GameLogFieldsSchema = z
     system: PlatformSlugSchema.nullish(),
     achievementsTotal: z.number().int().min(0).nullish(),
     achievementsCompleted: z.number().int().min(0).nullish(),
+    hype: HypeSchema.nullish(),
   })
   .strict();
 
@@ -128,6 +134,8 @@ export const GAME_LOG_SORTS = [
   "added",
   /** How it ended, best first: the played shelf's alone. */
   "ending",
+  /** How much you want to play it: the backlog shelf's alone. */
+  "hype",
 ] as const;
 
 export const GameLogSortSchema = z.enum(GAME_LOG_SORTS).default("rating");
@@ -198,6 +206,9 @@ export interface GameLog {
   system: string | null;
   achievementsTotal: number | null;
   achievementsCompleted: number | null;
+  /** 1 to 5 on a backlog log, otherwise null. Absent from an API before
+   *  hype. */
+  hype?: number | null;
   createdAt: string;
   updatedAt: string;
 }

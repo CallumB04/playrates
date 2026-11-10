@@ -187,6 +187,8 @@ export interface GameLogRow {
   completion: number | null;
   /** Generated: the later of start and finish, null when neither is set. */
   last_played: string | null;
+  /** 1 to 5 flames on a backlog log, otherwise null (a CHECK holds it). */
+  hype: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -226,6 +228,8 @@ export interface GameLogRollupRow {
   first_added_at: string;
   /** The best played log's ending, mastered 4 down to none 0; null unplayed. */
   ending_rank: number | null;
+  /** The most hyped backlog log's flames; null off the backlog. */
+  hype: number | null;
 }
 
 /** What user_log_stats() returns. */

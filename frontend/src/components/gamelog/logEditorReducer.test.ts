@@ -106,12 +106,14 @@ describe("logReducer", () => {
                 system: null,
                 achievementsTotal: null,
                 achievementsCompleted: null,
+                hype: 3,
                 createdAt: "2026-01-01T00:00:00Z",
                 updatedAt: "2026-01-01T00:00:00Z",
             },
         });
 
         expect(next).toMatchObject({
+            hype: 3,
             status: "backlog",
             playedStatus: null,
             rating: null,
@@ -193,6 +195,26 @@ describe("toGameLogInput", () => {
             achievementsCompleted: null,
             achievementsTotal: null,
         });
+    });
+
+    it("sends hype for a backlog log only", () => {
+        expect(toGameLogInput(draft({ status: "backlog", hype: 4 })).hype).toBe(
+            4
+        );
+        expect(
+            toGameLogInput(draft({ status: "playing", hype: 4 })).hype
+        ).toBeNull();
+    });
+
+    // Moving off the backlog by mistake and back again loses nothing.
+    it("keeps hype in the draft through a change of status", () => {
+        const hyped = logReducer(draft({ status: "backlog" }), {
+            type: "hype",
+            value: 5,
+        });
+        const away = logReducer(hyped, { type: "status", value: "playing" });
+        const back = logReducer(away, { type: "status", value: "backlog" });
+        expect(back.hype).toBe(5);
     });
 
     it("drops a substatus the status cannot carry", () => {
@@ -303,9 +325,13 @@ describe("fieldsFor", () => {
         expect(playing.has("rating")).toBe(true);
     });
 
-    it("asks a wishlist or backlog entry for nothing it can't have", () => {
+    it("asks a wishlist entry for nothing it can't have", () => {
         expect(fieldsFor("wishlist").size).toBe(0);
-        expect(fieldsFor("backlog").size).toBe(0);
+    });
+
+    it("asks a backlog entry how hyped you are, and nothing else", () => {
+        expect([...fieldsFor("backlog")]).toEqual(["hype"]);
+        expect(fieldsFor("played").has("hype")).toBe(false);
     });
 });
 

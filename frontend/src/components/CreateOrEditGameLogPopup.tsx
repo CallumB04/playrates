@@ -20,6 +20,7 @@ import Toggle from "./ui/Toggle";
 import Field from "./ui/Field";
 import { Input, NumberInput, Textarea } from "./ui/Input";
 import RatingMeter from "./ui/RatingMeter";
+import HypeMeter from "./gamelog/HypeMeter";
 import Dropdown from "./ui/Dropdown";
 import { systemOptions } from "../lib/platformIcons";
 import { familyOf, systemsForGame } from "../lib/gameSystems";
@@ -576,6 +577,18 @@ const CreateOrEditGameLogPopup = ({
                                 You gave it {otherRatings.join(", ")}
                             </p>
                         )}
+                    </div>
+                )}
+
+                {fields.has("hype") && (
+                    <div className="rounded-md border border-subtle bg-surface-sunken/50 px-5 py-4">
+                        <HypeMeter
+                            value={draft.hype}
+                            gameTitle={game?.title}
+                            onChange={(value) =>
+                                dispatch({ type: "hype", value })
+                            }
+                        />
                     </div>
                 )}
 

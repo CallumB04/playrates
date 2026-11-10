@@ -22,6 +22,8 @@ export interface LogDraft {
     reviewBody: string;
     reviewIsPublic: boolean;
     reviewSpoilers: boolean;
+    /** 1 to 5 flames, for a backlog log. */
+    hype: number | null;
 }
 
 export const emptyDraft: LogDraft = {
@@ -39,6 +41,7 @@ export const emptyDraft: LogDraft = {
     reviewBody: "",
     reviewIsPublic: true,
     reviewSpoilers: false,
+    hype: null,
 };
 
 export type LogAction =
@@ -47,6 +50,7 @@ export type LogAction =
     | { type: "system"; value: string; platform: string }
     | { type: "playedStatus"; value: PlayedStatus | null }
     | { type: "rating"; value: number | null }
+    | { type: "hype"; value: number | null }
     | {
           type: "hydrate";
           log: GameLog | null;
@@ -86,6 +90,9 @@ export const logReducer = (state: LogDraft, action: LogAction): LogDraft => {
         case "rating":
             return { ...state, rating: action.value };
 
+        case "hype":
+            return { ...state, hype: action.value };
+
         case "set":
             return { ...state, [action.field]: action.value } as LogDraft;
 
@@ -114,6 +121,7 @@ export const logReducer = (state: LogDraft, action: LogAction): LogDraft => {
                 reviewBody: review?.body ?? "",
                 reviewIsPublic: review?.isPublic ?? true,
                 reviewSpoilers: review?.containsSpoilers ?? false,
+                hype: log.hype ?? null,
             };
         }
     }
@@ -153,6 +161,7 @@ export const toGameLogInput = (draft: LogDraft): GameLogInput => ({
     system: draft.system || null,
     achievementsCompleted: toNumber(draft.achievementsCompleted),
     achievementsTotal: toNumber(draft.achievementsTotal),
+    hype: draft.status === "backlog" ? draft.hype : null,
 });
 
 /** Mirrors the database CHECKs, so the form can point at the bad field
@@ -192,7 +201,8 @@ export type LogField =
     | "hoursPlayed"
     | "startDate"
     | "finishDate"
-    | "achievements";
+    | "achievements"
+    | "hype";
 
 const EVERY: LogField[] = [
     "rating",
@@ -215,6 +225,8 @@ export const fieldsFor = (status: GameStatus): ReadonlySet<LogField> => {
             return new Set(EVERY);
         case "playing":
             return new Set(EVERY.filter((field) => field !== "finishDate"));
+        case "backlog":
+            return new Set(["hype"]);
         default:
             return new Set();
     }

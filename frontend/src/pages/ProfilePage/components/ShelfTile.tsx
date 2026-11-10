@@ -26,7 +26,7 @@ const ShelfTile = ({
     actions,
 }: ShelfTileProps) => {
     // The shelf shows whatever it is ordered by.
-    const foot = shelfFoot(entry, sort);
+    const foot = shelfFoot(entry, sort, shelf);
     // The best ending of its played runs.
     const played = headlineOf(entry.logs.filter((l) => l.status === "played"));
     /* The consoles it was logged on, where the logs say; the game's own

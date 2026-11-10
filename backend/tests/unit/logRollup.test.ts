@@ -65,6 +65,22 @@ describe("headlineOf", () => {
   });
 });
 
+describe("rollupLogs' hype", () => {
+  it("goes by the most hyped backlog log, ignoring any other", () => {
+    const rollup = rollupLogs([
+      log({ id: 1, status: "backlog", hype: 2 }),
+      log({ id: 2, status: "backlog", hype: 4, system: "switch" }),
+      // A stale value on a log that moved on doesn't count.
+      log({ id: 3, status: "playing", hype: 5, system: "ps5" }),
+    ]);
+    expect(rollup?.hype).toBe(4);
+  });
+
+  it("is null with nothing hyped, or from an API before hype", () => {
+    expect(rollupLogs([log({ status: "backlog" })])?.hype).toBeNull();
+  });
+});
+
 describe("meanRating", () => {
   it("leaves unrated logs out rather than counting them as zero", () => {
     expect(meanRating([9, null, 8])).toBe(8.5);

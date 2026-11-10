@@ -8,6 +8,7 @@ import {
     type ShelfEntry,
 } from "@playrates/shared";
 import {
+    defaultShelfSort,
     directionLabel,
     shelfFoot,
     shelfSortOptions,
@@ -53,12 +54,14 @@ const log = (overrides: Partial<GameLog> = {}): ShelfEntry => {
 };
 
 describe("shelfSortOptions", () => {
-    it("offers every sort the API accepts", () => {
-        expect(
-            shelfSortOptions(true, "played")
-                .map((s) => s.value)
-                .sort()
-        ).toEqual([...GAME_LOG_SORTS].sort());
+    it("offers every sort the API accepts, across the shelves", () => {
+        const offered = new Set(
+            [
+                ...shelfSortOptions(true, "played"),
+                ...shelfSortOptions(true, "backlog"),
+            ].map((s) => s.value)
+        );
+        expect([...offered].sort()).toEqual([...GAME_LOG_SORTS].sort());
     });
 
     it("words both directions for each, since none of them is 'ascending'", () => {
@@ -92,10 +95,44 @@ describe("sorting by how it ended", () => {
         expect(offers("backlog")).toBe(false);
     });
 
-    it("falls back to the rating on a shelf without endings", () => {
-        expect(sortForShelf("ending", "backlog")).toBe("rating");
+    it("falls back to the shelf's default on a shelf without endings", () => {
+        expect(sortForShelf("ending", "playing")).toBe("rating");
         expect(sortForShelf("ending", "played")).toBe("ending");
         expect(sortForShelf("title", "backlog")).toBe("title");
+    });
+});
+
+describe("sorting by hype", () => {
+    it("is offered on the backlog alone, first, as its default", () => {
+        expect(shelfSortOptions(true, "backlog")[0]!.value).toBe("hype");
+        expect(
+            shelfSortOptions(true, "played").some((s) => s.value === "hype")
+        ).toBe(false);
+        expect(defaultShelfSort("backlog")).toBe("hype");
+        expect(defaultShelfSort("played")).toBe("rating");
+    });
+
+    it("falls back to the shelf's own default off the backlog", () => {
+        expect(sortForShelf("hype", "played")).toBe("rating");
+        expect(sortForShelf("hype", "backlog")).toBe("hype");
+        expect(sortForShelf("ending", "backlog")).toBe("hype");
+    });
+
+    it("shows the flames, or a dash for a game with none", () => {
+        const hyped = log({ status: "backlog", rating: null, hype: 4 });
+        const { getByRole } = render(<>{shelfFoot(hyped, "hype").value}</>);
+        expect(getByRole("img")).toHaveAccessibleName("4 of 5 flames");
+        const none = log({ status: "backlog", rating: null });
+        expect(shelfFoot(none, "hype").value).toBe("–");
+    });
+
+    // A title has nothing of its own to show, so it shows the default.
+    it("shows the flames on a backlog sorted by title", () => {
+        const hyped = log({ status: "backlog", rating: null, hype: 2 });
+        const { getByRole } = render(
+            <>{shelfFoot(hyped, "title", "backlog").value}</>
+        );
+        expect(getByRole("img")).toHaveAccessibleName("2 of 5 flames");
     });
 });
 
@@ -105,6 +142,7 @@ describe("directionLabel", () => {
         expect(directionLabel("rating", "desc")).toBe("Highest first");
         expect(directionLabel("played", "desc")).toBe("Newest first");
         expect(directionLabel("ending", "desc")).toBe("Mastered first");
+        expect(directionLabel("hype", "desc")).toBe("Most hyped first");
     });
 });
 

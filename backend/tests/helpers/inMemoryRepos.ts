@@ -1101,6 +1101,8 @@ export const createInMemoryRepos = (
               return l.created_at;
             case "ending":
               return l.rating;
+            case "hype":
+              return l.hype;
           }
         };
 
@@ -1222,6 +1224,13 @@ export const createInMemoryRepos = (
                 .map((l) => ENDING_RANK[l.played_status ?? ""] ?? 0);
               return ranks.length ? Math.max(...ranks) : null;
             }
+            // The most hyped backlog log's, as hype in the view.
+            case "hype": {
+              const hype = present(
+                logs.filter((l) => l.status === "backlog").map((l) => l.hype),
+              );
+              return hype.length ? Math.max(...hype) : null;
+            }
           }
         };
         const latest = (g: (typeof games)[number]) =>
@@ -1275,6 +1284,7 @@ export const createInMemoryRepos = (
           system_slug: null,
           completion: null,
           last_played: null,
+          hype: null,
           platform_slug: null,
           achievements_total: null,
           achievements_completed: null,

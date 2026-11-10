@@ -100,6 +100,18 @@ describe("game log mapper", () => {
     }
   });
 
+  it("keeps hype on a backlog log, and lets it go as the log moves on", () => {
+    expect(toGameLogRow({ status: "backlog", hype: 4 }).hype).toBe(4);
+    for (const status of ["played", "playing", "wishlist"] as const) {
+      expect(toGameLogRow({ status, hype: 4 }).hype).toBeNull();
+    }
+  });
+
+  // A tab from before hype saves the whole log without it.
+  it("leaves hype alone when a backlog log is saved without it", () => {
+    expect(toGameLogRow({ status: "backlog" })).not.toHaveProperty("hype");
+  });
+
   it("only writes the fields that were provided", () => {
     const row = toGameLogRow({ rating: 5 });
 

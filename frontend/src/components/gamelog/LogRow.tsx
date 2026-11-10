@@ -7,6 +7,7 @@ import { cn } from "../../lib/cn";
 import StatusBadge from "../ui/StatusBadge";
 import RatingBadge from "../ui/RatingBadge";
 import { usePlayedOn } from "./usePlayedOn";
+import HypeFlames from "./HypeFlames";
 
 interface LogRowProps {
     log: GameLog;
@@ -64,7 +65,13 @@ export const LogRow = ({ log, onSelect, aside, className }: LogRowProps) => {
                                 {formatHours(log.hoursPlayed)}
                             </span>
                         )}
-                        <RatingBadge value={log.rating} />
+                        {/* A backlog log has no rating to give: how much
+                            it's wanted stands in its place. */}
+                        {log.status === "backlog" && log.hype ? (
+                            <HypeFlames hype={log.hype} />
+                        ) : (
+                            <RatingBadge value={log.rating} />
+                        )}
                     </>
                 )}
                 <ChevronRight

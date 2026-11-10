@@ -35,6 +35,44 @@ const post = (
   user = USER_A,
 ) => request(app).post("/api/v1/me/logs").set(as(user)).send(body);
 
+describe("hype on a backlog log", () => {
+  it("saves it, and lets it go as the game leaves the backlog", async () => {
+    const { app, state } = buildTestApp({ seed: seed() });
+
+    const created = await post(app, { gameId: 1, status: "backlog", hype: 4 });
+    expect(created.status).toBe(201);
+    expect(created.body.hype).toBe(4);
+
+    const moved = await request(app)
+      .patch(`/api/v1/me/logs/${created.body.id}`)
+      .set(as(USER_A))
+      .send({ status: "playing" });
+    expect(moved.status).toBe(200);
+    expect(moved.body.hype).toBeNull();
+    expect(state.gameLogs[0]!.hype).toBeNull();
+  });
+
+  it("keeps it through an edit that doesn't mention it", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const created = await post(app, { gameId: 1, status: "backlog", hype: 3 });
+
+    const edited = await request(app)
+      .patch(`/api/v1/me/logs/${created.body.id}`)
+      .set(as(USER_A))
+      .send({ hoursToBeat: 30 });
+    expect(edited.body.hype).toBe(3);
+  });
+
+  it("refuses anything but one to five whole flames", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    for (const hype of [0, 6, 2.5]) {
+      const response = await post(app, { gameId: 1, status: "backlog", hype });
+      expect(response.status).toBe(422);
+      expect(response.body.error.details).toHaveProperty("hype");
+    }
+  });
+});
+
 describe("a log per platform", () => {
   it("logs a game a second time on another console", async () => {
     const { app, state } = buildTestApp({ seed: seed() });
@@ -465,6 +503,46 @@ describe("shelves of games", () => {
 
     expect(await order("desc")).toEqual([2, 1]);
     expect(await order("asc")).toEqual([1, 2]);
+  });
+
+  it("sorts the backlog shelf by hype, each game by its most hyped log", async () => {
+    const base = shelfSeed();
+    const { app } = buildTestApp({
+      seed: {
+        ...base,
+        gameLogs: [
+          ...base.gameLogs.map((l) => (l.id === 2 ? { ...l, hype: 2 } : l)),
+          buildGameLog({
+            id: 4,
+            game_id: 2,
+            system_slug: "switch",
+            status: "backlog",
+            played_status: null,
+            hype: 5,
+          }),
+        ],
+      },
+    });
+    const order = async (direction: string) =>
+      (
+        await request(app)
+          .get(
+            `/api/v1/me/shelf?status=backlog&sort=hype&direction=${direction}`,
+          )
+          .set(as(USER_A))
+      ).body.data.map((e: { gameId: number; rollup: { hype: number } }) => [
+        e.gameId,
+        e.rollup.hype,
+      ]);
+
+    expect(await order("desc")).toEqual([
+      [2, 5],
+      [1, 2],
+    ]);
+    expect(await order("asc")).toEqual([
+      [1, 2],
+      [2, 5],
+    ]);
   });
 
   /* The tab counts and the shelf's pages have to agree. */
