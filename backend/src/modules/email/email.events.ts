@@ -69,6 +69,7 @@ export const eventEmail = (
       return replyEmail(
         {
           actor: actor.username,
+          actorAvatar: actor.avatar_url,
           threadId,
           threadTitle,
           messageId,
@@ -203,7 +204,13 @@ const milestoneSubject = (
       const gameTitle = str(data.gameTitle);
       return gameId === null || reviewId === null || !gameTitle
         ? null
-        : { kind: "review", gameId, reviewId, gameTitle };
+        : {
+            kind: "review",
+            gameId,
+            reviewId,
+            gameTitle,
+            coverUrl: str(data.coverUrl),
+          };
     }
     case "list_upvote_milestone": {
       const listId = num(data.listId);

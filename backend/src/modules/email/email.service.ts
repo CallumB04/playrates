@@ -53,6 +53,9 @@ import {
 export interface EmailSettings {
   /** Where links in emails point. */
   site: string;
+  /** Where emails' own pictures and fonts load from; the live site unless
+   *  set, which only a local stack does. */
+  assets?: string;
   /** The API as a mail app reaches it, for one-click unsubscribe. */
   api: string;
   signingSecret?: string;
@@ -161,10 +164,14 @@ export const createEmailService = ({
     );
   };
 
-  const digestContent = (row: WeeklyDigestRow): DigestContent => ({
+  const digestContent = (
+    row: WeeklyDigestRow,
+    sunday: string,
+  ): DigestContent => ({
     friends: row.friends,
     releases: row.releases,
     logged: row.logged,
+    weekEnding: sunday,
   });
 
   /** A member's links and one-click headers for a scope. Null without a
@@ -184,6 +191,7 @@ export const createEmailService = ({
     return {
       links: {
         site: settings.site,
+        assets: settings.assets,
         unsubscribe: `${settings.site}/unsubscribe?t=${token}`,
         settings: settingsUrl,
       },
@@ -527,7 +535,7 @@ export const createEmailService = ({
           ref: sunday,
           message: message(
             member.email,
-            digestEmail(digestContent(row), target.links),
+            digestEmail(digestContent(row, sunday), target.links),
             target.headers,
           ),
         });
@@ -653,6 +661,7 @@ export const createEmailService = ({
       if (audience) {
         const email = renderNews(content, {
           site: settings.site,
+          assets: settings.assets,
           unsubscribe: RESEND_UNSUBSCRIBE,
           settings: settingsUrl,
         });
@@ -700,7 +709,8 @@ export const createEmailService = ({
       to: string,
       now: Date,
     ): Promise<boolean> {
-      const rows = await digestRows(now, now.toISOString().slice(0, 10));
+      const today = now.toISOString().slice(0, 10);
+      const rows = await digestRows(now, today);
       const row = rows.find((r) => r.user_id === userId);
       if (!row) return false;
       await sendCounted(
@@ -710,8 +720,9 @@ export const createEmailService = ({
             userId,
             message: message(
               to,
-              digestEmail(digestContent(row), {
+              digestEmail(digestContent(row, today), {
                 site: settings.site,
+                assets: settings.assets,
                 unsubscribe: settingsUrl,
                 settings: settingsUrl,
               }),
@@ -739,6 +750,7 @@ export const createEmailService = ({
               to,
               renderNews(content, {
                 site: settings.site,
+                assets: settings.assets,
                 unsubscribe: settingsUrl,
                 settings: settingsUrl,
               }),

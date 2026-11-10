@@ -127,6 +127,8 @@ const backendEnv = {
   RESEND_WEBHOOK_SECRET: "",
   MAILPIT_URL: "http://127.0.0.1:55324",
   SITE_URL: `http://localhost:${appPort}`,
+  // The app's public/ has the emails' pictures before the live site does.
+  EMAIL_ASSETS_URL: `http://localhost:${appPort}`,
   PUBLIC_API_URL: "http://localhost:3000/api/v1",
   EMAIL_SIGNING_SECRET: "local-email-secret",
 };

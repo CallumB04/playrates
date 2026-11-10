@@ -1,11 +1,19 @@
 import {
-  EMAIL_COLOURS,
   SHOP_ITEMS,
+  EMAIL_COLOURS,
+  EMAIL_SANS,
+  emailAvatar,
   emailButton,
+  emailGame,
+  emailGameRows,
+  emailHeading,
   emailLayout,
   emailLink,
   emailParagraph,
+  emailPerson,
   emailPlainLink,
+  emailQuote,
+  emailStats,
   emailStrong,
   emailText,
   escapeHtml,
@@ -13,6 +21,7 @@ import {
   paragraphsOf,
   PATCH_NOTE_KIND_NAMES,
   sortedItems,
+  type EmailGame,
   type PatchNote,
   type AnnouncementTone,
   type EmailScope,
@@ -23,6 +32,10 @@ import { richTextToEmailHtml, richTextToEmailText } from "./email.richText.js";
 /**
  * Every email the API sends, one pure function each. Anything a member or
  * an admin wrote is escaped here; links are absolute, built on `site`.
+ *
+ * Each follows the same order: who or what it's about, what happened, the
+ * one thing to do about it, then the footer. One button, so there is never
+ * a choice to make before the click.
  */
 
 export interface RenderedEmail {
@@ -38,11 +51,13 @@ export interface EmailLinks {
    *  provider's own unsubscribe placeholder. */
   unsubscribe: string;
   settings: string;
+  /** Where the email's own pictures and fonts load from, when that isn't
+   *  the live site: a local stack. */
+  assets?: string;
 }
 
 const C = EMAIL_COLOURS;
-const SANS =
-  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+const SANS = EMAIL_SANS;
 
 /** Why each kind of email came, in its footer. */
 export const EMAIL_REASONS: Record<EmailScope, string> = {
@@ -80,6 +95,8 @@ const build = ({
   subject,
   preview,
   title,
+  eyebrow,
+  lead,
   body,
   lines,
 }: {
@@ -89,6 +106,10 @@ const build = ({
   preview: string;
   /** Plain text: escaped here. */
   title: string;
+  /** Plain text: escaped here. */
+  eyebrow?: string;
+  /** Trusted HTML above the title. */
+  lead?: string;
   /** Trusted HTML, built from the pieces in the shared layout. */
   body: string;
   /** The plain-text version of `body`. */
@@ -100,27 +121,33 @@ const build = ({
     html: emailLayout({
       preview: escapeHtml(preview),
       title: escapeHtml(title),
+      eyebrow: eyebrow ? escapeHtml(eyebrow) : undefined,
+      lead,
       body,
       reason: EMAIL_REASONS[scope],
       site: links.site,
+      assets: links.assets,
       links: footer,
     }),
-    text: emailText({ title, lines, reason: EMAIL_REASONS[scope], links: footer }),
+    text: emailText({
+      title,
+      lines,
+      reason: EMAIL_REASONS[scope],
+      links: footer,
+    }),
   };
 };
 
 const url = (links: EmailLinks, path: string) => `${links.site}${path}`;
 
-const avatar = (src: string | null, alt: string) =>
-  src && /^https?:\/\//.test(src)
-    ? `<img src="${escapeHtml(src)}" width="48" height="48" alt="${escapeHtml(alt)}" style="display:block;margin:0 0 16px;border:0;border-radius:24px;">`
-    : "";
+const plural = (n: number, one: string, many: string) =>
+  `${n} ${n === 1 ? one : many}`;
 
-const quote = (text: string) =>
-  emailParagraph(
-    escapeHtml(text),
-    `padding:4px 0 4px 14px;border-left:3px solid ${C.rule};font-style:italic;`,
-  );
+/** What an invite or a task pays, as the figures it adds. */
+const rewardStats = (xp: number, tokens: number) => [
+  { value: `+${xp}`, label: "XP" },
+  { value: `+${tokens}`, label: "Tokens" },
+];
 
 /* ------------------------------------------------------- friend request */
 
@@ -128,27 +155,29 @@ export const friendRequestEmail = (
   data: { actor: string; actorAvatar: string | null; recipient: string },
   links: EmailLinks,
 ): RenderedEmail => {
-  const href = url(links, `/user/${encodeURIComponent(data.recipient)}/friends`);
-  const name = escapeHtml(data.actor);
+  const href = url(
+    links,
+    `/user/${encodeURIComponent(data.recipient)}/friends`,
+  );
+  const line =
+    "Accept it and you’ll see what each other is playing, rating and reviewing.";
   return build({
     scope: "friend_requests",
     links,
     subject: `${data.actor} sent you a friend request`,
-    preview: `${data.actor} wants to be friends on PlayRates.`,
+    preview: line,
+    lead: emailPerson({
+      name: data.actor,
+      avatar: data.actorAvatar,
+      line: "Wants to be friends",
+    }),
     title: `${data.actor} sent you a friend request`,
     body: [
-      avatar(data.actorAvatar, data.actor),
-      emailParagraph(
-        `${emailStrong(name)} wants to be friends on PlayRates. You can accept or decline it from your requests.`,
-      ),
-      emailButton(href, "Open your requests"),
+      emailParagraph(escapeHtml(line)),
+      emailButton(href, "See the request"),
       emailPlainLink(href),
     ].join("\n"),
-    lines: [
-      `${data.actor} wants to be friends on PlayRates. You can accept or decline it from your requests.`,
-      "",
-      `Open your requests: ${href}`,
-    ],
+    lines: [line, "", `See the request: ${href}`],
   });
 };
 
@@ -157,6 +186,7 @@ export const friendRequestEmail = (
 export const replyEmail = (
   data: {
     actor: string;
+    actorAvatar?: string | null;
     threadId: number;
     threadTitle: string;
     messageId: number;
@@ -165,24 +195,31 @@ export const replyEmail = (
   },
   links: EmailLinks,
 ): RenderedEmail => {
-  const href = url(links, `/community/thread/${data.threadId}#message-${data.messageId}`);
+  const href = url(
+    links,
+    `/community/thread/${data.threadId}#message-${data.messageId}`,
+  );
   return build({
     scope: "replies",
     links,
     subject: `${data.actor} replied to you in ${clip(data.threadTitle, 60)}`,
     preview: data.excerpt || `${data.actor} replied to you.`,
+    lead: emailPerson({
+      name: data.actor,
+      avatar: data.actorAvatar ?? null,
+      line: `In ${escapeHtml(data.threadTitle)}`,
+    }),
     title: `${data.actor} replied to you`,
     body: [
-      emailParagraph(`In ${emailStrong(escapeHtml(data.threadTitle))}:`),
-      data.excerpt ? quote(data.excerpt) : "",
-      emailButton(href, "View reply"),
+      data.excerpt ? emailQuote(escapeHtml(data.excerpt)) : "",
+      emailButton(href, "See the reply"),
       emailPlainLink(href),
     ].join("\n"),
     lines: [
       `In ${data.threadTitle}:`,
       ...(data.excerpt ? ["", `"${data.excerpt}"`] : []),
       "",
-      `View reply: ${href}`,
+      `See the reply: ${href}`,
     ],
   });
 };
@@ -224,30 +261,37 @@ export const giftPath = (item: string, username: string): string => {
 };
 
 export const giftEmail = (
-  data: { giver: string; giverAvatar: string | null; item: string; recipient: string },
+  data: {
+    giver: string;
+    giverAvatar: string | null;
+    item: string;
+    recipient: string;
+  },
   links: EmailLinks,
 ): RenderedEmail => {
   const href = url(links, giftPath(data.item, data.recipient));
   const item = giftItemName(data.item);
+  const line = `${data.giver} gifted you ${item}. It’s yours now, ready to use.`;
   return build({
     scope: "gifts_invites",
     links,
     subject: `${data.giver} sent you a gift`,
     preview: `${data.giver} gifted you ${item}.`,
+    lead: emailPerson({
+      name: data.giver,
+      avatar: data.giverAvatar,
+      line: "Sent you a gift",
+    }),
     title: `${data.giver} sent you a gift`,
     body: [
-      avatar(data.giverAvatar, data.giver),
-      emailParagraph(
-        `${emailStrong(escapeHtml(data.giver))} gifted you ${escapeHtml(item)}.`,
+      emailQuote(
+        `<span style="font-size:20px;line-height:28px;font-weight:600;">${escapeHtml(item.charAt(0).toUpperCase() + item.slice(1))}</span>`,
       ),
+      emailParagraph(escapeHtml(line)),
       emailButton(href, "Use your gift"),
       emailPlainLink(href),
     ].join("\n"),
-    lines: [
-      `${data.giver} gifted you ${item}.`,
-      "",
-      `Use your gift: ${href}`,
-    ],
+    lines: [line, "", `Use your gift: ${href}`],
   });
 };
 
@@ -258,26 +302,22 @@ export const inviteJoinedEmail = (
   links: EmailLinks,
 ): RenderedEmail => {
   const href = url(links, `/user/${encodeURIComponent(data.username)}`);
-  const name = escapeHtml(data.username);
   const reward = `${data.xp} XP and ${data.tokens} tokens`;
+  const line = `${data.username} signed up and said you sent them. You’ve earned ${reward}.`;
   return build({
     scope: "gifts_invites",
     links,
     subject: `${data.username} joined PlayRates from your invite`,
-    preview: `You've earned ${reward} for the invite.`,
+    preview: `You’ve earned ${reward} for the invite.`,
+    eyebrow: "Invite reward",
     title: `${data.username} joined from your invite`,
     body: [
-      emailParagraph(
-        `${emailStrong(name)} signed up and said you sent them. You've earned ${emailStrong(reward)}.`,
-      ),
+      emailParagraph(escapeHtml(line)),
+      emailStats(rewardStats(data.xp, data.tokens)),
       emailButton(href, "See their profile"),
       emailPlainLink(href),
     ].join("\n"),
-    lines: [
-      `${data.username} signed up and said you sent them. You've earned ${reward}.`,
-      "",
-      `See their profile: ${href}`,
-    ],
+    lines: [line, "", `See their profile: ${href}`],
   });
 };
 
@@ -287,24 +327,21 @@ export const inviteActiveEmail = (
 ): RenderedEmail => {
   const href = url(links, "/progress");
   const reward = `${data.xp} XP and ${data.tokens} tokens`;
+  const line = `${data.username}, who joined from your invite, has played enough games to count. You’ve earned ${reward}.`;
   return build({
     scope: "gifts_invites",
     links,
     subject: `${data.username} got going on PlayRates`,
-    preview: `You've earned ${reward} for inviting them.`,
+    preview: `You’ve earned ${reward} for inviting them.`,
+    eyebrow: "Invite reward",
     title: `${data.username} got going`,
     body: [
-      emailParagraph(
-        `${emailStrong(escapeHtml(data.username))}, who joined from your invite, has played enough games to count. You've earned ${emailStrong(reward)}.`,
-      ),
+      emailParagraph(escapeHtml(line)),
+      emailStats(rewardStats(data.xp, data.tokens)),
       emailButton(href, "See your progress"),
       emailPlainLink(href),
     ].join("\n"),
-    lines: [
-      `${data.username}, who joined from your invite, has played enough games to count. You've earned ${reward}.`,
-      "",
-      `See your progress: ${href}`,
-    ],
+    lines: [line, "", `See your progress: ${href}`],
   });
 };
 
@@ -316,14 +353,6 @@ export interface ReleasedGame {
   coverUrl: string | null;
 }
 
-const gameRow = (game: ReleasedGame, href: string) => {
-  const cover =
-    game.coverUrl && /^https?:\/\//.test(game.coverUrl)
-      ? `<td width="60" valign="top" style="padding:0 14px 0 0;"><a href="${href}" target="_blank"><img src="${escapeHtml(game.coverUrl)}" width="60" height="80" alt="" style="display:block;border:0;border-radius:6px;object-fit:cover;"></a></td>`
-      : "";
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px;"><tr>${cover}<td valign="middle" style="font-family:${SANS};font-size:16px;line-height:24px;">${emailLink(href, emailStrong(escapeHtml(game.title)))}</td></tr></table>`;
-};
-
 export const wishlistReleaseEmail = (
   data: { games: ReleasedGame[]; username: string },
   links: EmailLinks,
@@ -332,7 +361,10 @@ export const wishlistReleaseEmail = (
   const gameHref = (g: ReleasedGame) => url(links, `/game/${g.id}`);
   const href = single
     ? gameHref(single)
-    : url(links, `/user/${encodeURIComponent(data.username)}/games?type=wishlist`);
+    : url(
+        links,
+        `/user/${encodeURIComponent(data.username)}/games?type=wishlist`,
+      );
   const label = single ? "See the game" : "See your wishlist";
   const title = single
     ? `${single.title} is out today`
@@ -340,15 +372,21 @@ export const wishlistReleaseEmail = (
   const intro = single
     ? "A game on your wishlist comes out today."
     : "Some games on your wishlist come out today.";
+  const game = (g: ReleasedGame): EmailGame => ({
+    href: gameHref(g),
+    title: g.title,
+    cover: g.coverUrl,
+    meta: "Out today, from your wishlist",
+  });
   return build({
     scope: "wishlist_releases",
     links,
     subject: title,
     preview: intro,
+    eyebrow: "Out today",
     title,
     body: [
-      emailParagraph(intro),
-      ...data.games.map((g) => gameRow(g, gameHref(g))),
+      single ? emailGame(game(single)) : emailGameRows(data.games.map(game)),
       emailButton(href, label),
       emailPlainLink(href),
     ].join("\n"),
@@ -370,15 +408,19 @@ export const friendAcceptedEmail = (
 ): RenderedEmail => {
   const href = url(links, `/user/${encodeURIComponent(data.actor)}`);
   const title = `${data.actor} accepted your friend request`;
-  const line = `You and ${data.actor} are friends on PlayRates now.`;
+  const line = `You and ${data.actor} are friends on PlayRates now. See what they’ve been playing.`;
   return build({
     scope: "friend_requests",
     links,
     subject: title,
-    preview: line,
+    preview: `You and ${data.actor} are friends on PlayRates now.`,
+    lead: emailPerson({
+      name: data.actor,
+      avatar: data.actorAvatar,
+      line: "Your friend now",
+    }),
     title,
     body: [
-      avatar(data.actorAvatar, data.actor),
       emailParagraph(escapeHtml(line)),
       emailButton(href, "See their profile"),
       emailPlainLink(href),
@@ -391,8 +433,20 @@ export const friendAcceptedEmail = (
 
 /** What reached a milestone, and where it lives. */
 export type MilestoneSubject =
-  | { kind: "message"; threadId: number; messageId: number; threadTitle: string; excerpt: string }
-  | { kind: "review"; gameId: number; reviewId: number; gameTitle: string }
+  | {
+      kind: "message";
+      threadId: number;
+      messageId: number;
+      threadTitle: string;
+      excerpt: string;
+    }
+  | {
+      kind: "review";
+      gameId: number;
+      reviewId: number;
+      gameTitle: string;
+      coverUrl?: string | null;
+    }
   | { kind: "list"; listId: number; listName: string; username: string }
   | { kind: "gaming25"; username: string };
 
@@ -402,29 +456,33 @@ export const milestoneEmail = (
 ): RenderedEmail => {
   const s = data.subject;
   const n = data.milestone;
-  const { title, href, label } =
+  const { title, href, label, what } =
     s.kind === "message"
       ? {
           title: `${n} reactions on your message in ${s.threadTitle}`,
           href: `/community/thread/${s.threadId}#message-${s.messageId}`,
           label: "See your message",
+          what: "Reactions",
         }
       : s.kind === "review"
         ? {
             title: `${n} reactions on your review of ${s.gameTitle}`,
             href: `/game/${s.gameId}#review-${s.reviewId}`,
             label: "See your review",
+            what: "Reactions",
           }
         : s.kind === "list"
           ? {
               title: `${n} loves on your list ${s.listName}`,
               href: `/user/${encodeURIComponent(s.username)}/lists/${s.listId}`,
               label: "See your list",
+              what: "Loves",
             }
           : {
               title: `${n} loves on your Gaming 25`,
               href: `/user/${encodeURIComponent(s.username)}/gaming-25`,
               label: "See your Gaming 25",
+              what: "Loves",
             };
   const link = url(links, href);
   const excerpt = s.kind === "message" ? s.excerpt : "";
@@ -433,9 +491,18 @@ export const milestoneEmail = (
     links,
     subject: clip(title, 90),
     preview: excerpt || title,
+    eyebrow: "Milestone",
     title,
     body: [
-      excerpt ? quote(excerpt) : "",
+      s.kind === "review"
+        ? emailGame({
+            href: link,
+            title: s.gameTitle,
+            cover: s.coverUrl ?? null,
+            meta: `${plural(n, "reaction", "reactions")} on your review`,
+          })
+        : emailStats([{ value: String(n), label: what }]),
+      excerpt ? emailQuote(escapeHtml(excerpt)) : "",
       emailButton(link, label),
       emailPlainLink(link),
     ].join("\n"),
@@ -475,8 +542,16 @@ export const streakEmail = (
     links,
     subject: title,
     preview: body,
+    eyebrow: "Streak",
     title,
     body: [
+      emailStats([
+        {
+          value: String(data.weeks),
+          label: data.weeks === 1 ? "Week" : "Weeks",
+        },
+        { value: data.day.slice(0, 3), label: "Keep it by" },
+      ]),
       emailParagraph(body),
       emailButton(href, "See your streak"),
       emailPlainLink(href),
@@ -505,10 +580,14 @@ export const taskEmail = (
     links,
     subject: clip(title, 80),
     preview: progress,
+    eyebrow: "Task",
     title,
     body: [
-      emailParagraph(escapeHtml(progress)),
-      emailParagraph(escapeHtml(reward)),
+      emailStats([
+        { value: `${data.count}/${data.target}`, label: "Done" },
+        ...rewardStats(data.xp, data.tokens),
+      ]),
+      emailParagraph(`${escapeHtml(progress)} ${escapeHtml(reward)}`),
       emailButton(href, "See your tasks"),
       emailPlainLink(href),
     ].join("\n"),
@@ -525,9 +604,18 @@ export interface DigestContent {
     title: string;
     status: "played" | "playing" | "backlog";
     rating: number | null;
+    coverUrl?: string | null;
+    avatarUrl?: string | null;
   }[];
-  releases: { gameId: number; title: string; releaseDate: string }[];
+  releases: {
+    gameId: number;
+    title: string;
+    releaseDate: string;
+    coverUrl?: string | null;
+  }[];
   logged: number;
+  /** The Sunday the week ends on, YYYY-MM-DD, to date it by. */
+  weekEnding?: string;
 }
 
 /** The words either side of the game's title. */
@@ -540,6 +628,13 @@ const DID: Record<
   backlog: ["added", " to their backlog"],
 };
 
+/** The same, said of a row whose title is the game's own. */
+const DID_IT: Record<DigestContent["friends"][number]["status"], string> = {
+  played: "played it",
+  playing: "is playing it",
+  backlog: "added it to their backlog",
+};
+
 /** "2026-11-06" as "Thursday 6 Nov": a date, not a moment, so read as UTC. */
 const releaseDay = (date: string) =>
   new Intl.DateTimeFormat("en-GB", {
@@ -549,8 +644,23 @@ const releaseDay = (date: string) =>
     timeZone: "UTC",
   }).format(new Date(`${date}T00:00:00Z`));
 
-const plural = (n: number, one: string, many: string) =>
-  `${n} ${n === 1 ? one : many}`;
+/** The seven days up to a Sunday: "3–9 November", or "27 Oct – 2 Nov"
+ *  across a month's end. */
+export const digestWeek = (sunday: string): string => {
+  const end = new Date(`${sunday}T00:00:00Z`);
+  const start = new Date(end.getTime() - 6 * 86_400_000);
+  const day = (d: Date) => d.getUTCDate();
+  const month = (d: Date, style: "long" | "short") =>
+    new Intl.DateTimeFormat("en-GB", { month: style, timeZone: "UTC" }).format(
+      d,
+    );
+  return start.getUTCMonth() === end.getUTCMonth()
+    ? `${day(start)}–${day(end)} ${month(end, "long")}`
+    : `${day(start)} ${month(start, "short")} – ${day(end)} ${month(end, "short")}`;
+};
+
+/** Releases past this many become a link to the wishlist. */
+const DIGEST_RELEASES = 5;
 
 export const digestEmail = (
   data: DigestContent,
@@ -571,43 +681,68 @@ export const digestEmail = (
     data.logged > 0 && `You logged ${plural(data.logged, "game", "games")}.`,
   ].filter((line): line is string => Boolean(line));
 
-  const html: string[] = [];
+  const html: string[] = [
+    emailStats([
+      {
+        value: String(people),
+        label: people === 1 ? "Friend active" : "Friends active",
+      },
+      { value: String(data.logged), label: "You logged" },
+      { value: String(data.releases.length), label: "Out this week" },
+    ]),
+  ];
   const lines: string[] = [];
   if (data.friends.length > 0) {
-    html.push(emailParagraph(emailStrong("What your friends played")));
+    html.push(
+      emailHeading("What your friends played"),
+      emailGameRows(
+        data.friends.map((f) => ({
+          href: game(f.gameId),
+          title: f.title,
+          cover: f.coverUrl ?? null,
+          meta: `${emailStrong(escapeHtml(f.username))} ${DID_IT[f.status]}${f.rating === null ? "" : ` · <span style="font-family:'Geist Mono', ui-monospace, Menlo, monospace;">${f.rating}/10</span>`}`,
+          avatar: emailAvatar(f.avatarUrl ?? null, f.username, 28),
+        })),
+      ),
+    );
     lines.push("What your friends played");
-    for (const f of data.friends) {
-      html.push(
-        emailParagraph(
-          `${escapeHtml(f.username)} ${DID[f.status][0]} ${emailLink(game(f.gameId), escapeHtml(f.title))}${DID[f.status][1]}${rated(f)}`,
-          "margin:0 0 8px;",
-        ),
-      );
+    for (const f of data.friends)
       lines.push(`- ${friendLine(f)}: ${game(f.gameId)}`);
-    }
     lines.push("");
   }
   if (data.releases.length > 0) {
-    html.push(emailParagraph(emailStrong("Out this week from your wishlist")));
+    const shown = data.releases.slice(0, DIGEST_RELEASES);
+    const more = data.releases.length - shown.length;
+    html.push(
+      emailHeading("Out this week from your wishlist"),
+      emailGameRows(
+        shown.map((r) => ({
+          href: game(r.gameId),
+          title: r.title,
+          cover: r.coverUrl ?? null,
+          meta: escapeHtml(releaseDay(r.releaseDate)),
+        })),
+      ),
+    );
+    if (more > 0) {
+      html.push(
+        `<p class="pr-muted" style="margin:-8px 0 24px;font-family:${SANS};font-size:14px;line-height:22px;color:${C.quiet};">And ${plural(more, "more game", "more games")} on your wishlist.</p>`,
+      );
+    }
     lines.push("Out this week from your wishlist");
     for (const r of data.releases) {
-      html.push(
-        emailParagraph(
-          `${emailLink(game(r.gameId), escapeHtml(r.title))}, ${releaseDay(r.releaseDate)}`,
-          "margin:0 0 8px;",
-        ),
+      lines.push(
+        `- ${r.title}, ${releaseDay(r.releaseDate)}: ${game(r.gameId)}`,
       );
-      lines.push(`- ${r.title}, ${releaseDay(r.releaseDate)}: ${game(r.gameId)}`);
     }
     lines.push("");
   }
   if (data.logged > 0) {
-    html.push(
-      emailParagraph(
-        `${emailStrong("Your week")}<br>You logged ${plural(data.logged, "game", "games")}.`,
-      ),
+    lines.push(
+      "Your week",
+      `You logged ${plural(data.logged, "game", "games")}.`,
+      "",
     );
-    lines.push("Your week", `You logged ${plural(data.logged, "game", "games")}.`, "");
   }
   const home = url(links, "/");
   return build({
@@ -615,6 +750,7 @@ export const digestEmail = (
     links,
     subject: "Your week on PlayRates",
     preview: summary.join(" "),
+    eyebrow: data.weekEnding ? digestWeek(data.weekEnding) : "Your week",
     title: "Your week on PlayRates",
     body: [...html, emailButton(home, "Open PlayRates")].join("\n"),
     lines: [...lines, `Open PlayRates: ${home}`],
@@ -623,19 +759,23 @@ export const digestEmail = (
 
 /* -------------------------------------------------------------- welcome */
 
+/** A numbered step: the number on a disc, its link and a line. */
+const step = (n: number, href: string, title: string, text: string) =>
+  `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px;"><tr><td width="32" valign="top" style="padding:2px 16px 0 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td class="pr-avatar" width="32" height="32" align="center" valign="middle" bgcolor="${C.irisSoft}" style="width:32px;height:32px;border-radius:16px;background-color:${C.irisSoft};font-family:'Geist Mono', ui-monospace, Menlo, monospace;font-size:14px;font-weight:600;line-height:32px;color:${C.iris};">${n}</td></tr></table></td><td valign="top"><p style="margin:0;font-family:${SANS};font-size:16px;line-height:24px;font-weight:600;"><a class="pr-ink" href="${href}" target="_blank" style="color:${C.ink};text-decoration:none;">${escapeHtml(title)}</a></p><p class="pr-muted" style="margin:2px 0 0;font-family:${SANS};font-size:14px;line-height:22px;color:${C.quiet};">${escapeHtml(text)}</p></td></tr></table>`;
+
 export const welcomeEmail = (
   data: { username: string; firstName: string | null },
   links: EmailLinks,
 ): RenderedEmail => {
   const steps = [
     {
-      title: "Log the games you've played",
-      text: "Add what you've played and what you want to play.",
+      title: "Log the games you’ve played",
+      text: "Add what you’ve played and what you want to play.",
       path: "/library",
     },
     {
       title: "Add your friends",
-      text: "Find people you know and see what they're playing.",
+      text: "Find people you know and see what they’re playing.",
       path: "/community",
     },
     {
@@ -650,20 +790,17 @@ export const welcomeEmail = (
     scope: "all",
     links,
     subject: "Welcome to PlayRates",
-    preview: "Your account is ready.",
+    preview: "Your account is ready. Here’s where to start.",
+    eyebrow: "Welcome",
     title: `Welcome to PlayRates, ${name}`,
     body: [
-      emailParagraph("Your account is ready. Try these first:"),
-      ...steps.map((s, i) =>
-        emailParagraph(
-          `${emailStrong(`${i + 1}. ${emailLink(url(links, s.path), escapeHtml(s.title))}`)}<br>${escapeHtml(s.text)}`,
-        ),
-      ),
+      emailParagraph("Your account is ready. Three things to try first:"),
+      ...steps.map((s, i) => step(i + 1, url(links, s.path), s.title, s.text)),
       emailButton(href, "Log your first games"),
       emailPlainLink(href),
     ].join("\n"),
     lines: [
-      "Your account is ready. Try these first:",
+      "Your account is ready. Three things to try first:",
       "",
       ...steps.flatMap((s, i) => [
         `${i + 1}. ${s.title}: ${url(links, s.path)}`,
@@ -682,14 +819,16 @@ const TONE_LABELS: Record<AnnouncementTone, string> = {
   celebration: "Celebration",
 };
 
-const eyebrow = (label: string) =>
-  `<p class="small" style="margin:-4px 0 12px;font-family:${SANS};font-size:12px;line-height:16px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:${C.iris};">${label}</p>`;
-
 const absolute = (links: EmailLinks, href: string) =>
   href.startsWith("/") ? `${links.site}${href}` : href;
 
 export const announcementEmail = (
-  data: { tone: AnnouncementTone; title: string; body: string; link: string | null },
+  data: {
+    tone: AnnouncementTone;
+    title: string;
+    body: string;
+    link: string | null;
+  },
   links: EmailLinks,
 ): RenderedEmail => {
   const parts = parseAnnouncementBody(data.body);
@@ -697,7 +836,9 @@ export const announcementEmail = (
   const html = parts
     .map((p) => {
       const text = escapeHtml(p.text).replace(/\n/g, "<br>");
-      return p.href ? emailLink(escapeHtml(absolute(links, p.href)), text) : text;
+      return p.href
+        ? emailLink(escapeHtml(absolute(links, p.href)), text)
+        : text;
     })
     .join("");
   const text = parts
@@ -708,10 +849,13 @@ export const announcementEmail = (
     scope: "news",
     links,
     subject: data.title,
-    preview: parts.map((p) => p.text).join("").slice(0, 120),
+    preview: parts
+      .map((p) => p.text)
+      .join("")
+      .slice(0, 120),
+    eyebrow: TONE_LABELS[data.tone],
     title: data.title,
     body: [
-      eyebrow(TONE_LABELS[data.tone]),
       emailParagraph(html),
       href ? emailButton(escapeHtml(href), "Open PlayRates") : "",
       href ? emailPlainLink(escapeHtml(href)) : "",
@@ -726,20 +870,20 @@ export const announcementEmail = (
  *  first, each change named by its kind, and linked where it has one. */
 const patchNoteHtml = (note: PatchNote, links: EmailLinks): string => {
   const items = sortedItems(note.items)
-    .map((item) => {
+    .map((item, i) => {
       const text = escapeHtml(item.text);
-      const kind = emailStrong(`${PATCH_NOTE_KIND_NAMES[item.kind]}:`);
-      return `<li style="margin:0 0 6px;">${kind} ${
+      const rule = i === 0 ? "" : `border-top:1px solid ${C.rule};`;
+      return `<tr><td class="pr-rule" style="${rule}padding:12px 0;"><p class="pr-link" style="margin:0 0 2px;font-family:${SANS};font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:${C.iris};">${PATCH_NOTE_KIND_NAMES[item.kind]}</p><p class="pr-body" style="margin:0;font-family:${SANS};font-size:16px;line-height:24px;color:${C.body};">${
         item.link
-          ? emailLink(escapeHtml(absolute(links, item.link)), text)
+          ? `<a class="pr-ink" href="${escapeHtml(absolute(links, item.link))}" target="_blank" style="color:${C.ink};text-decoration:none;">${text}</a> <a class="pr-link" href="${escapeHtml(absolute(links, item.link))}" target="_blank" style="color:${C.iris};text-decoration:none;">&rarr;</a>`
           : text
-      }</li>`;
+      }</p></td></tr>`;
     })
     .join("");
   return [
     ...paragraphsOf(note.intro).map((p) => emailParagraph(escapeHtml(p))),
     items
-      ? `<ul class="text" style="margin:0 0 16px;padding-left:24px;font-family:${SANS};font-size:16px;line-height:26px;color:${C.body};">${items}</ul>`
+      ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 22px;">${items}</table>`
       : "",
     ...paragraphsOf(note.outro).map((p) => emailParagraph(escapeHtml(p))),
   ].join("\n");
@@ -775,10 +919,10 @@ export const patchNotesEmail = (
     scope: "news",
     links,
     subject: data.subject,
-    preview: "The latest changes to PlayRates.",
+    preview: "What’s new and what’s fixed on PlayRates.",
+    eyebrow: "Patch notes",
     title,
     body: [
-      eyebrow("Patch notes"),
       note
         ? patchNoteHtml(note, links)
         : richTextToEmailHtml(data.doc, options),
@@ -826,9 +970,8 @@ export const alertEmail = (
   const html = [
     ...lines.map((line, i) =>
       content.kind === "job" && i > 0 && i <= content.failures.length
-        ? emailParagraph(
+        ? emailQuote(
             `${emailStrong(escapeHtml(content.failures[i - 1]!.part))}: ${escapeHtml(content.failures[i - 1]!.message)}`,
-            `padding:4px 0 4px 14px;border-left:3px solid ${C.rule};`,
           )
         : emailParagraph(escapeHtml(line)),
     ),
@@ -839,6 +982,7 @@ export const alertEmail = (
     subject: `PlayRates alert: ${title.charAt(0).toLowerCase()}${title.slice(1)}`,
     html: emailLayout({
       preview: escapeHtml(lines[0]!),
+      eyebrow: "Alert",
       title: escapeHtml(title),
       body: html,
       reason: ALERT_REASON,

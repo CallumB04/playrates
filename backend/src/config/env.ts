@@ -66,6 +66,10 @@ const EnvSchema = z.object({
     .transform((v) => v?.replace(/\/+$/, "")),
   /** The local stack's mail viewer. Every email goes there instead. */
   MAILPIT_URL: optionalText,
+  /** Where emails load their own pictures and fonts from. The live site
+   *  unless set; the local stack points it at its own, which has them
+   *  before they're deployed. */
+  EMAIL_ASSETS_URL: optionalText,
 
   /** Web Push's key pair (`npx web-push generate-vapid-keys`). Without
    *  both, nothing is pushed and Settings doesn't offer it. */

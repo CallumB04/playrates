@@ -1,5 +1,6 @@
 import {
   EMAIL_COLOURS,
+  EMAIL_SANS,
   SPOILER_PLACEHOLDER,
   emailParagraph,
   escapeHtml,
@@ -9,10 +10,9 @@ import {
 } from "@playrates/shared";
 
 const C = EMAIL_COLOURS;
-const SANS =
-  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+const SANS = EMAIL_SANS;
 
-const HEADING_SIZES = { 1: [20, 28], 2: [18, 26], 3: [16, 24] } as const;
+const HEADING_SIZES = { 1: [21, 28], 2: [18, 25], 3: [16, 24] } as const;
 
 const isList = (
   block: RichTextBlock,
@@ -86,7 +86,7 @@ const listHtml = (
       return `<li style="margin:0 0 6px;">${inner}</li>`;
     })
     .join("");
-  return `<${tag}${start} class="text" style="margin:0 0 16px;padding-left:24px;font-family:${SANS};font-size:16px;line-height:26px;color:${C.body};">${items}</${tag}>`;
+  return `<${tag}${start} class="pr-body" style="margin:0 0 18px;padding-left:22px;font-family:${SANS};font-size:16px;line-height:26px;color:${C.body};">${items}</${tag}>`;
 };
 
 const blockHtml = (block: RichTextBlock): string => {
@@ -98,7 +98,7 @@ const blockHtml = (block: RichTextBlock): string => {
     case "heading": {
       const [size, line] = HEADING_SIZES[block.attrs.level];
       const tag = `h${block.attrs.level + 1}`;
-      return `<${tag} class="strong" style="margin:24px 0 10px;font-family:${SANS};font-size:${size}px;line-height:${line}px;font-weight:700;color:${C.ink};">${inlineHtml(block.content)}</${tag}>`;
+      return `<${tag} class="pr-ink" style="margin:28px 0 10px;font-family:${SANS};font-size:${size}px;line-height:${line}px;font-weight:700;letter-spacing:-0.01em;color:${C.ink};">${inlineHtml(block.content)}</${tag}>`;
     }
     case "image":
       // Pictures are left to the site; the words say what one showed.

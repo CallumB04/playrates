@@ -513,13 +513,21 @@ export interface DigestFriendLog {
   title: string;
   status: "played" | "playing" | "backlog";
   rating: number | null;
+  /** Absent from rows a database before the covers migration returns. */
+  coverUrl?: string | null;
+  avatarUrl?: string | null;
 }
 
 /** One row of weekly_digest(): a member with something to hear about. */
 export interface WeeklyDigestRow {
   user_id: string;
   friends: DigestFriendLog[];
-  releases: { gameId: number; title: string; releaseDate: string }[];
+  releases: {
+    gameId: number;
+    title: string;
+    releaseDate: string;
+    coverUrl?: string | null;
+  }[];
   logged: number;
 }
 
