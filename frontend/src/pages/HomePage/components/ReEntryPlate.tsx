@@ -381,8 +381,9 @@ const SHELF_TINT: Record<(typeof GAME_STATUSES)[number], string> = {
 };
 
 /** The four shelves as one bar of figures, quartered by hairlines, each
- *  quarter a link to its shelf. On a phone the count leads over the mark
- *  and name; with room, the mark sits in its shelf's tint beside them. */
+ *  quarter a link to its shelf. On a phone, a count over its name with a
+ *  dot of the shelf's colour; with room, the mark in the shelf's tint
+ *  beside them. */
 const Shelves = ({
     username,
     shelves,
@@ -398,7 +399,12 @@ const Shelves = ({
         )}
     >
         {GAME_STATUSES.map((status) => {
-            const { label, icon: Icon, markTone } = STATUS_PRESENTATION[status];
+            const {
+                label,
+                icon: Icon,
+                markTone,
+                accent,
+            } = STATUS_PRESENTATION[status];
             const count = formatCount(shelves?.[status] ?? 0);
             return (
                 <Link
@@ -407,26 +413,28 @@ const Shelves = ({
                     // Name first when read aloud, as the figure leads only
                     // for the eye.
                     aria-label={`${label} ${count}`}
-                    className="group flex min-h-11 min-w-0 flex-col items-center gap-1 px-1 py-3 transition-colors hover:bg-surface-hover/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:flex-row sm:gap-3.5 sm:px-4 sm:py-3.5 lg:px-5"
+                    className="group flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 py-2.5 transition-colors hover:bg-surface-hover/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:flex-row sm:justify-start sm:gap-3 sm:px-4 sm:py-3"
                 >
                     <span
                         aria-hidden
                         className={cn(
-                            "hidden size-10 shrink-0 place-items-center rounded-md sm:grid",
+                            "hidden size-8 shrink-0 place-items-center rounded-sm sm:grid",
                             SHELF_TINT[status]
                         )}
                     >
-                        <Icon size={18} className={markTone} />
+                        <Icon size={15} className={markTone} />
                     </span>
-                    <span className="flex min-w-0 flex-col items-center gap-1 sm:items-start">
-                        <span className="font-mono text-xl leading-none font-semibold text-content tabular-nums sm:text-2xl">
+                    <span className="flex min-w-0 flex-col items-center gap-0.5 sm:items-start">
+                        <span className="font-mono text-lg leading-tight font-semibold text-content tabular-nums sm:text-xl">
                             {count}
                         </span>
                         <span className="flex min-w-0 items-center gap-1.5 text-label-sm text-content-secondary group-hover:text-content">
-                            <Icon
-                                size={13}
+                            <span
                                 aria-hidden
-                                className={cn("shrink-0 sm:hidden", markTone)}
+                                className={cn(
+                                    "size-1.5 shrink-0 rounded-full sm:hidden",
+                                    accent
+                                )}
                             />
                             <span className="truncate">{label}</span>
                         </span>
