@@ -1,20 +1,29 @@
 import { igdbSized } from "@playrates/shared";
 import { cn } from "../../lib/cn";
 
-/* Whole class strings, so the stylesheet keeps them. */
+/* How much of the art shows, place by place, as a mask on the art itself:
+   it fades into the card's own surface. Whole class strings, so the
+   stylesheet keeps them. */
 const FADES = {
-    // Solid behind the words on a wide card, thinning to the right; on a
-    // phone, down the card.
-    side: "bg-linear-to-b from-surface-raised/70 via-surface-raised/88 via-55% to-surface-raised/95 sm:bg-linear-to-r sm:from-surface-raised sm:from-30% sm:via-surface-raised/82 sm:via-60% sm:to-surface-raised/45",
+    // Faint behind the words on a wide card, stronger to the right; on a
+    // phone, fading down the card.
+    side: "[mask-image:linear-gradient(to_bottom,rgb(0_0_0/0.3),rgb(0_0_0/0.12)_55%,rgb(0_0_0/0.05))] sm:[mask-image:linear-gradient(to_right,transparent_30%,rgb(0_0_0/0.18)_60%,rgb(0_0_0/0.55))]",
     // Down the card at every width, for one too narrow to give the art a
-    // side of its own.
-    down: "bg-linear-to-b from-surface-raised/70 via-surface-raised/88 via-55% to-surface-raised/95",
+    // side of its own. Gone at the foot, where the figures sit.
+    down: "[mask-image:linear-gradient(to_bottom,rgb(0_0_0/0.3),rgb(0_0_0/0.1)_50%,transparent)]",
+    // A row's right-hand end at every width: a row is too short to fade
+    // down, and its words start at the left.
+    row: "[mask-image:linear-gradient(to_right,transparent_40%,rgb(0_0_0/0.14)_72%,rgb(0_0_0/0.3))]",
 };
 
 /**
- * A game's own art behind a card, as Now playing has it: near full
- * strength, so it keeps its colour, with the card's surface laid over it
- * where the words are.
+ * A game's own art behind a card, as Now playing has it, fading into the
+ * card where the words are. A mask on the art rather than a veil over it:
+ * two layers clipped to the same rounded corner each smooth its edge on
+ * their own, and the art showed round the curve as a light patch.
+ *
+ * It sits under everything else in the card, so the card needs only
+ * `relative isolate overflow-hidden`, and its contents nothing at all.
  */
 const ArtBackdrop = ({
     url,
@@ -24,7 +33,13 @@ const ArtBackdrop = ({
     fade?: keyof typeof FADES;
 }) =>
     url ? (
-        <span aria-hidden className="pointer-events-none absolute inset-0">
+        <span
+            aria-hidden
+            className={cn(
+                "pointer-events-none absolute inset-0 -z-10",
+                FADES[fade]
+            )}
+        >
             <img
                 src={igdbSized(url, "screenshot_big")}
                 alt=""
@@ -32,7 +47,6 @@ const ArtBackdrop = ({
                 decoding="async"
                 className="size-full animate-fade-up object-cover"
             />
-            <span className={cn("absolute inset-0", FADES[fade])} />
         </span>
     ) : null;
 

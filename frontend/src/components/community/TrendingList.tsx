@@ -1,13 +1,13 @@
-import { Link } from "react-router-dom";
 import type { TrendingThread } from "@playrates/shared";
-import GameCover from "../game/GameCover";
-import { cardClass } from "../ui/cardClass";
 import { cn } from "../../lib/cn";
-import ContributorStack from "./ContributorStack";
-import { NewMessageCount, PeopleCount } from "./ThreadStats";
-import { threadPath } from "./paths";
+import TrendingCard from "./TrendingCard";
 
-/** The top few threads by messages this fortnight, ranked. */
+/** Each place's colour, as the community page gives them. */
+const TONE_FOR = ["brand", "info", "success"] as const;
+
+/** The top few threads by messages this fortnight, ranked, each on its
+ *  game's art. Three across only from desktop: on a tablet a third of the
+ *  row was too narrow for a card. */
 const TrendingList = ({
     threads,
     className,
@@ -15,74 +15,12 @@ const TrendingList = ({
     threads: TrendingThread[];
     className?: string;
 }) => (
-    // Three across only from desktop: on a tablet a third of the row left
-    // "new messages" wrapping under its own figure.
     <ol className={cn("grid gap-3 lg:grid-cols-3", className)}>
-        {threads.map((thread) => {
-            const game =
-                thread.subject.kind === "game" ? thread.subject.game : null;
-            return (
-                <li key={thread.id} className="min-w-0">
-                    <Link
-                        to={threadPath(thread.id)}
-                        className={cn(
-                            cardClass("group flex h-full gap-3 p-3 lift", {
-                                padding: "none",
-                            }),
-                            "hover:-translate-y-px hover:shadow-lifted",
-                            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                        )}
-                    >
-                        <span
-                            aria-label={`Number ${thread.rank}`}
-                            className={cn(
-                                "font-display text-figure-lg leading-none",
-                                thread.rank === 1
-                                    ? "text-brand-text"
-                                    : "text-content-muted"
-                            )}
-                        >
-                            {thread.rank}
-                        </span>
-                        {game && (
-                            <GameCover
-                                sizes="44px"
-                                coverUrl={game.coverUrl}
-                                title={game.title}
-                                className="aspect-3/4 w-11 shrink-0 self-start overflow-hidden rounded-xs shadow-cover"
-                            />
-                        )}
-                        <span className="flex min-w-0 flex-1 flex-col gap-1">
-                            {game && (
-                                <span className="truncate text-label-sm text-content-muted">
-                                    {game.title}
-                                </span>
-                            )}
-                            <span className="line-clamp-2 text-body-sm font-semibold text-content group-hover:text-brand-text">
-                                {thread.title}
-                            </span>
-                            <span className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1">
-                                <span className="flex flex-col gap-0.5 text-label-sm whitespace-nowrap text-content-muted">
-                                    <NewMessageCount
-                                        count={thread.recentMessageCount}
-                                    />
-                                    <PeopleCount
-                                        count={thread.contributorCount}
-                                    />
-                                </span>
-                                <ContributorStack
-                                    contributors={thread.contributors.slice(
-                                        0,
-                                        3
-                                    )}
-                                    total={thread.contributorCount}
-                                />
-                            </span>
-                        </span>
-                    </Link>
-                </li>
-            );
-        })}
+        {threads.map((thread, i) => (
+            <li key={thread.id} className="min-w-0">
+                <TrendingCard thread={thread} tone={TONE_FOR[i] ?? "success"} />
+            </li>
+        ))}
     </ol>
 );
 

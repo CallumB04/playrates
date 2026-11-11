@@ -21,7 +21,7 @@ const TrendingHero = ({ thread }: { thread: TrendingThread }) => {
             to={threadPath(thread.id)}
             className={cardClass(
                 cn(
-                    "group relative block overflow-hidden lift hover:-translate-y-px hover:shadow-lifted",
+                    "group relative isolate block overflow-hidden lift hover:-translate-y-px hover:shadow-lifted",
                     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 ),
                 { padding: "none" }

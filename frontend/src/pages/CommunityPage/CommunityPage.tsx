@@ -30,7 +30,7 @@ import Skeleton, { TextSkeleton } from "../../components/ui/Skeleton";
 import ThreadCard from "../../components/community/ThreadCard";
 import TrendingHero from "../../components/community/TrendingHero";
 import SiteLeaderboard from "../../components/community/SiteLeaderboard";
-import TrendingRunnerUp from "../../components/community/TrendingRunnerUp";
+import TrendingCard from "../../components/community/TrendingCard";
 import PatchNotesCard from "../../components/community/PatchNotesCard";
 import CommunityPulse from "../../components/community/CommunityPulse";
 import PopularLists from "../../components/lists/PopularLists";
@@ -208,7 +208,7 @@ const CommunityPage = () => {
                             {runnersUp.length > 0 && (
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     {runnersUp.map((thread, i) => (
-                                        <TrendingRunnerUp
+                                        <TrendingCard
                                             key={thread.id}
                                             thread={thread}
                                             tone={i === 0 ? "info" : "success"}
