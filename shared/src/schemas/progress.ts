@@ -584,7 +584,12 @@ export const SHOP_ITEMS = [
     label: "Big brain",
   },
   { item: "react_sad", kind: "reaction", group: "reaction", label: "Sad" },
-  { item: "slot_showcase", kind: "slot", group: "slot", label: "Showcase" },
+  {
+    item: "slot_showcase",
+    kind: "slot",
+    group: "slot",
+    label: "Badge showcase",
+  },
   {
     item: "slot_pinned_list",
     kind: "slot",
