@@ -15,7 +15,9 @@ const TrendingList = ({
     threads: TrendingThread[];
     className?: string;
 }) => (
-    <ol className={cn("grid gap-3 md:grid-cols-3", className)}>
+    // Three across only from desktop: on a tablet a third of the row left
+    // "new messages" wrapping under its own figure.
+    <ol className={cn("grid gap-3 lg:grid-cols-3", className)}>
         {threads.map((thread) => {
             const game =
                 thread.subject.kind === "game" ? thread.subject.game : null;
@@ -59,8 +61,8 @@ const TrendingList = ({
                             <span className="line-clamp-2 text-body-sm font-semibold text-content group-hover:text-brand-text">
                                 {thread.title}
                             </span>
-                            <span className="mt-auto flex items-center justify-between gap-2 pt-1">
-                                <span className="flex flex-col gap-0.5 text-label-sm text-content-muted">
+                            <span className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1">
+                                <span className="flex flex-col gap-0.5 text-label-sm whitespace-nowrap text-content-muted">
                                     <NewMessageCount
                                         count={thread.recentMessageCount}
                                     />
