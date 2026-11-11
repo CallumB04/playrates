@@ -6,7 +6,7 @@ import PageShell from "./components/layout/PageShell";
 import { cn } from "./lib/cn";
 import Footer from "./components/Footer";
 import ToastStack from "./components/feedback/ToastStack";
-import AccountFormModal from "./components/auth/AccountFormModal";
+import AccountFormHost from "./components/auth/AccountFormHost";
 import ChooseUsername from "./components/onboarding/ChooseUsername";
 import FirstLoginWelcome from "./components/onboarding/FirstLoginWelcome";
 import ProgressMoments from "./components/progress/ProgressMoments";
@@ -264,7 +264,7 @@ function App() {
             </main>
             {!bare && <Footer />}
             {!bare && <TabBar />}
-            <AccountFormModal />
+            <AccountFormHost />
             <ChooseUsername />
             <FirstLoginWelcome />
             <ProgressMoments />

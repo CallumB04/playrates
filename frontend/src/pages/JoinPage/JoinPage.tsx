@@ -5,7 +5,7 @@ import { usePageMeta } from "../../hooks/usePageMeta";
 import SignupForm from "../../components/auth/SignupForm";
 import CheckInbox from "../../components/auth/CheckInbox";
 import SwitchLink from "./components/SwitchLink";
-import StepHeading from "./components/StepHeading";
+import StepHeading from "../../components/auth/StepHeading";
 import { returnTo } from "./lib/returnTo";
 
 /**

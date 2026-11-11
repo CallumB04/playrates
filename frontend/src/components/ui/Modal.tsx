@@ -13,6 +13,8 @@ interface ModalProps {
     /** Set false for the few popups that render their own close control. */
     showCloseButton?: boolean;
     labelledBy?: string;
+    /** The close button sits over art below md, as the log-in's does. */
+    closeOverArt?: boolean;
 }
 
 /**
@@ -50,6 +52,7 @@ const Modal = ({
     className,
     showCloseButton = true,
     labelledBy,
+    closeOverArt = false,
 }: ModalProps) => {
     const panelRef = useRef<HTMLDivElement>(null);
     const { leaving, leave } = useExit(panelRef);
@@ -110,7 +113,9 @@ const Modal = ({
                 onKeyDown={trapTab}
             >
                 {children}
-                {showCloseButton && <ClosePopupIcon onClick={close} />}
+                {showCloseButton && (
+                    <ClosePopupIcon onClick={close} overArt={closeOverArt} />
+                )}
             </div>
         </div>,
         document.body

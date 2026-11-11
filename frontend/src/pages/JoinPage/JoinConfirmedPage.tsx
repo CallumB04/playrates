@@ -13,7 +13,7 @@ import FormField from "../../components/auth/FormField";
 import CheckInbox from "../../components/auth/CheckInbox";
 import { useCaptcha } from "../../components/auth/useCaptcha";
 import SwitchLink from "./components/SwitchLink";
-import StepHeading from "./components/StepHeading";
+import StepHeading from "../../components/auth/StepHeading";
 
 /** A round mark over a step that went wrong. */
 const ProblemMark = ({ children }: { children: ReactNode }) => (

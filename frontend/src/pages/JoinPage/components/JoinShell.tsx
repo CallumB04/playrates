@@ -1,19 +1,16 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
-import { igdbSized, type Game } from "@playrates/shared";
+import type { Game } from "@playrates/shared";
 import GameCover from "../../../components/game/GameCover";
 import Skeleton from "../../../components/ui/Skeleton";
-import {
-    BRAND_MOTTO,
-    BRAND_NAME,
-    BRAND_PITCH_TEXT,
-} from "../../../constants/brand";
+import { BRAND_MOTTO, BRAND_PITCH_TEXT } from "../../../constants/brand";
 import { useGames, useSiteStats } from "../../../hooks/queries/useGames";
 import { formatCount } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 import { returnTo } from "../lib/returnTo";
-import { usePrefersReducedMotion } from "../../../hooks/usePrefersReducedMotion";
+import ArtCycle from "../../../components/auth/ArtCycle";
+import BrandLockup from "../../../components/auth/BrandLockup";
 
 /* Five covers fanned on an arc, the middle one lifted: a shelf held out,
    not a grid. The tilt is on the inner card, so the cards can deal in one
@@ -62,87 +59,6 @@ const CoverDeck = ({ games }: { games: Game[] | undefined }) => (
             );
         })}
     </div>
-);
-
-/** How long each game's art holds before the next takes over. */
-const ART_HOLDS_MS = 7000;
-
-const artProps = (url: string) => ({
-    src: igdbSized(url, "1080p"),
-    srcSet: `${igdbSized(url, "screenshot_big")} 889w, ${igdbSized(url, "720p")} 1280w, ${igdbSized(url, "1080p")} 1920w`,
-    sizes: "(min-width: 1024px) 55vw, 100vw",
-});
-
-/**
- * The trending games' art, one after another: each fades in over the last,
- * drifting slowly as it does. The next is loaded before it's shown, so a
- * change is never a blank; the cycle rests while the tab is hidden, and
- * with reduced motion one picture simply stays.
- */
-const ArtCycle = ({ arts }: { arts: string[] }) => {
-    const still = usePrefersReducedMotion();
-    const [shown, setShown] = useState<{ on: number; under: number | null }>({
-        on: 0,
-        under: null,
-    });
-    const on = useRef(0);
-
-    useEffect(() => {
-        if (still || arts.length < 2) return;
-        let live = true;
-        const id = window.setInterval(() => {
-            if (document.hidden) return;
-            const next = (on.current + 1) % arts.length;
-            const img = new Image();
-            Object.assign(img, artProps(arts[next]!));
-            void img
-                .decode()
-                .catch(() => undefined)
-                .then(() => {
-                    if (!live) return;
-                    setShown({ on: next, under: on.current });
-                    on.current = next;
-                });
-        }, ART_HOLDS_MS);
-        return () => {
-            live = false;
-            window.clearInterval(id);
-        };
-    }, [arts, still]);
-
-    if (arts.length === 0) return null;
-    return (
-        <span aria-hidden className="absolute inset-0 -z-20 opacity-70">
-            {[shown.under, shown.on].map(
-                (i) =>
-                    i !== null &&
-                    arts[i] && (
-                        <img
-                            key={arts[i]}
-                            {...artProps(arts[i])}
-                            alt=""
-                            decoding="async"
-                            className="absolute inset-0 size-full animate-art-in object-cover"
-                        />
-                    )
-            )}
-        </span>
-    );
-};
-
-/** The mark and the name, as the footer has them, in white over the art. */
-const Lockup = () => (
-    <Link
-        to="/"
-        className="inline-flex min-h-11 items-center gap-2.5 rounded-sm lift hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-on-media"
-    >
-        <img
-            src="/favicon.svg"
-            alt=""
-            className="size-8 rounded-[8px] shadow-plate"
-        />
-        <span className="font-display text-xl font-bold">{BRAND_NAME}</span>
-    </Link>
 );
 
 /** Out of the flow, back to wherever you came in from. */
@@ -204,7 +120,7 @@ const JoinShell = ({ children }: { children: ReactNode }) => {
                 />
 
                 <div className="flex items-center justify-between">
-                    <Lockup />
+                    <BrandLockup />
                     <Close className="text-content-on-media hover:bg-content-on-media/10 focus-visible:outline-content-on-media lg:hidden" />
                 </div>
 

@@ -1,99 +1,79 @@
-import { useEffect, useState } from "react";
 import { useAccountForm } from "../../contexts/AccountFormContext";
+import { BRAND_MOTTO } from "../../constants/brand";
+import { useGames } from "../../hooks/queries/useGames";
 import Modal from "../ui/Modal";
-import LoginForm from "./LoginForm";
-import ForgotPasswordForm from "./ForgotPasswordForm";
-import CheckInbox from "./CheckInbox";
+import ArtCycle from "./ArtCycle";
+import BrandLockup from "./BrandLockup";
+import LoginSteps from "./LoginSteps";
 
-/** Logging in, and the forgotten password. Signing up is a page of its own,
- *  /join. Switching mode unmounts one form and mounts the other, which
- *  clears the old fields and errors for free. */
+/** The log-in page's art side, in small: the trending games cycling under
+ *  the mark and the motto. Its own component, so the games are only asked
+ *  for once the popup opens. */
+const LoginArt = () => {
+    const { data: trending } = useGames({
+        trending: true,
+        limit: 6,
+        count: false,
+    });
+    const arts = (trending?.data ?? []).flatMap((game) =>
+        game.artworkUrl ? [game.artworkUrl] : []
+    );
+
+    return (
+        <div
+            // Dark in both themes, as the page's is. The art fades into the
+            // dark itself, at the top and the foot where the words sit:
+            // a veil over it would show a rim round the rounded corners.
+            className="relative isolate flex flex-col justify-between gap-6 overflow-hidden bg-surface-media px-5 pt-3 pb-6 text-content-on-media md:px-8 md:pt-7 md:pb-8"
+        >
+            <ArtCycle
+                arts={arts}
+                className="[mask-image:linear-gradient(to_bottom,rgb(0_0_0/0.35),rgb(0_0_0/0.85)_35%,rgb(0_0_0/0.85)_60%,rgb(0_0_0/0.3))] opacity-75"
+            />
+            <BrandLockup />
+            <p className="max-w-[14ch] font-display text-[24px] leading-[1.06] md:text-[34px]">
+                {BRAND_MOTTO}.
+            </p>
+        </div>
+    );
+};
+
+/**
+ * Logging in without leaving the page: the /login page in small, its art
+ * beside the same steps on a wide screen, and above them as a band on a
+ * phone. Signing up is a page of its own, /join.
+ */
 const AccountFormModal = () => {
-    const { mode, openLogin, openSignup, openReset, close } = useAccountForm();
-    const [emailForReset, setEmailForReset] = useState("");
-    // An email waiting on its confirmation link, in place of the form.
-    const [inbox, setInbox] = useState<{
-        email: string;
-        justSent: boolean;
-    } | null>(null);
-
-    // Closed by anything (a link, Escape), it starts afresh next time.
-    useEffect(() => {
-        if (!mode) setInbox(null);
-    }, [mode]);
-
+    const { mode, openSignup, close } = useAccountForm();
     if (!mode) return null;
-
-    const to = (open: () => void) => () => {
-        setInbox(null);
-        open();
-    };
-
-    const isReset = mode === "reset";
 
     return (
         <Modal
-            onClose={to(close)}
+            onClose={close}
             labelledBy="account-form-title"
-            className="w-full max-w-[440px] p-0! sm:p-0!"
+            closeOverArt
+            className="w-full max-w-[880px] p-0! sm:p-0!"
         >
-            {/* Title only: the sheet has to hold the whole signup form
-                without scrolling, on a phone and a laptop alike. */}
-            <header className="relative overflow-hidden border-b border-subtle px-5 py-4 sm:px-6">
-                <span
-                    aria-hidden
-                    className="pointer-events-none absolute -top-20 -right-16 size-56 rounded-full bg-brand/12 blur-3xl"
-                />
-                <div className="relative">
-                    <h2
-                        id="account-form-title"
-                        className="font-display text-section text-content"
-                    >
-                        {inbox
-                            ? "Check your inbox"
-                            : isReset
-                              ? "Set a new password"
-                              : "Welcome back"}
-                    </h2>
-                </div>
-            </header>
-
-            <div className="px-5 py-5 sm:px-6">
-                {inbox ? (
-                    <CheckInbox
-                        email={inbox.email}
-                        justSent={inbox.justSent}
-                        onStartAgain={to(openSignup)}
-                    />
-                ) : isReset ? (
-                    <ForgotPasswordForm initialEmail={emailForReset} />
-                ) : (
-                    <LoginForm
-                        onUnconfirmed={(email) =>
-                            setInbox({ email, justSent: false })
+            <div className="grid md:min-h-[560px] md:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
+                <LoginArt />
+                <div className="flex flex-col justify-center px-5 pt-6 pb-2 sm:px-6 md:px-10 md:py-10">
+                    <LoginSteps
+                        key={mode}
+                        initialStep={mode === "reset" ? "reset" : "login"}
+                        headingAs="h2"
+                        headingId="account-form-title"
+                        createAccount={
+                            <button
+                                type="button"
+                                onClick={openSignup}
+                                className="relative cursor-pointer font-medium text-brand-text before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:underline"
+                            >
+                                Create an account
+                            </button>
                         }
-                        onForgot={(email) => {
-                            setEmailForReset(email);
-                            openReset();
-                        }}
                     />
-                )}
+                </div>
             </div>
-
-            <footer className="border-t border-subtle bg-surface-sunken/40 px-5 py-3 text-center text-body-sm text-content-secondary sm:px-6 sm:py-4">
-                {inbox
-                    ? "Confirmed it?"
-                    : isReset
-                      ? "Remembered it?"
-                      : "New here?"}{" "}
-                <button
-                    type="button"
-                    onClick={to(inbox || isReset ? openLogin : openSignup)}
-                    className="cursor-pointer font-medium text-brand-text lift hover:text-brand-hover"
-                >
-                    {inbox || isReset ? "Log in" : "Create an account"}
-                </button>
-            </footer>
         </Modal>
     );
 };
