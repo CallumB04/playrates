@@ -222,10 +222,23 @@ export const createProgressRouter = ({
 }: Deps): Router => {
   const router = Router();
   const imageLimiter = perMinute("card-image", 30);
+  const boardLimiter = perMinute("site-leaderboard", 60);
 
   router.get("/rules", async (_req, res) => {
     res.json(await service.rules());
   });
+
+  // Everyone's, so not the CDN's: a profile made private leaves it at once.
+  router.get(
+    "/leaderboard",
+    boardLimiter,
+    optionalAuth,
+    validate({ query: LeaderboardQuerySchema }),
+    async (req, res) => {
+      const { period } = req.valid!.query as { period: LeaderboardPeriod };
+      res.json(await service.siteLeaderboard(req.auth?.userId, period));
+    },
+  );
 
   router.get(
     "/:username/badges",

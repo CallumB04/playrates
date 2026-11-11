@@ -546,6 +546,40 @@ export const createInMemoryProgress = (
       );
     },
 
+    async siteBoard(since, viewerId, top, around) {
+      const earned = (id: string, xp: number) =>
+        since === null
+          ? xp
+          : state.xpEvents
+              .filter(
+                (e) =>
+                  e.user_id === id && e.created_at >= since && !e.data?.launch,
+              )
+              .reduce((n, e) => n + e.xp, 0);
+      const ranked = state.profiles
+        .map((p) => ({
+          id: p.id,
+          username: p.username,
+          xp: earned(p.id, p.xp),
+        }))
+        .filter((p) => p.xp > 0 || p.id === viewerId)
+        .sort((a, b) => b.xp - a.xp || (a.username < b.username ? -1 : 1))
+        .map((p, i) => ({ ...p, rank: i + 1 }));
+      const me = ranked.find((p) => p.id === viewerId)?.rank;
+      return ranked
+        .filter(
+          (p) =>
+            p.rank <= top ||
+            (me !== undefined && Math.abs(p.rank - me) <= around),
+        )
+        .map((p) => ({
+          user_id: p.id,
+          xp: p.xp,
+          rank: p.rank,
+          total: ranked.filter((r) => r.xp > 0).length,
+        }));
+    },
+
     async holders() {
       const counts = new Map<string, Set<string>>();
       for (const b of state.userBadges) {

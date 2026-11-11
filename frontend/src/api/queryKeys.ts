@@ -121,6 +121,9 @@ export const queryKeys = {
         badges: (username: string) => ["progress", "badges", username] as const,
         leaderboard: (period: string) =>
             ["progress", "leaderboard", period] as const,
+        // Per viewer: you're on it only for yourself.
+        siteBoard: (period: string, viewer: string | null) =>
+            ["progress", "site-board", period, viewer] as const,
         shop: ["progress", "shop"] as const,
         backgrounds: ["progress", "backgrounds"] as const,
         giftFriends: (item: string) =>

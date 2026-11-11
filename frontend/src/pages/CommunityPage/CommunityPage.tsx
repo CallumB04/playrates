@@ -29,6 +29,7 @@ import SegmentedChoice from "../../components/ui/SegmentedChoice";
 import Skeleton, { TextSkeleton } from "../../components/ui/Skeleton";
 import ThreadCard from "../../components/community/ThreadCard";
 import TrendingHero from "../../components/community/TrendingHero";
+import SiteLeaderboard from "../../components/community/SiteLeaderboard";
 import TrendingRunnerUp from "../../components/community/TrendingRunnerUp";
 import PatchNotesCard from "../../components/community/PatchNotesCard";
 import CommunityPulse from "../../components/community/CommunityPulse";
@@ -349,6 +350,7 @@ const CommunityPage = () => {
                             className="hidden lg:block"
                         />
                     )}
+                    <SiteLeaderboard />
                     <CommunityPulse
                         games={talkedAbout ?? []}
                         replies={latestReplies ?? []}

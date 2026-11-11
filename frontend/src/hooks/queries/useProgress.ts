@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import type {
     LeaderboardPeriod,
     ShopItemKey,
@@ -11,6 +16,7 @@ import {
     fetchGiftFriends,
     giftItem,
     fetchLeaderboard,
+    fetchSiteLeaderboard,
     fetchPlayerBadges,
     fetchProgress,
     fetchShop,
@@ -89,6 +95,18 @@ export const useLeaderboard = (period: LeaderboardPeriod) => {
         queryKey: queryKeys.progress.leaderboard(period),
         queryFn: () => fetchLeaderboard(period),
         enabled: !!user,
+    });
+};
+
+/** Signed in or out, once it's known which: the board differs. */
+export const useSiteLeaderboard = (period: LeaderboardPeriod) => {
+    const { user, isLoading } = useAuth();
+    return useQuery({
+        queryKey: queryKeys.progress.siteBoard(period, user?.id ?? null),
+        queryFn: () => fetchSiteLeaderboard(period),
+        enabled: !isLoading,
+        // Switching period keeps the old board up until the new one lands.
+        placeholderData: keepPreviousData,
     });
 };
 
