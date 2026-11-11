@@ -55,7 +55,14 @@ describe("AboutCard", () => {
         renderWithProviders(
             <AboutCard profile={{ ...profile, online: true }} />
         );
-        expect(screen.getByText("Online now")).toBeInTheDocument();
+        expect(screen.getByText("Online now")).toHaveClass("text-success");
+    });
+
+    it("leaves a past last seen in the plain text colour", () => {
+        renderWithProviders(<AboutCard profile={profile} />);
+        const seen = screen.getByText("Last seen").nextElementSibling;
+        expect(seen).toHaveClass("text-content");
+        expect(seen).not.toHaveClass("text-success");
     });
 
     it("links out by a readable name, and vouches for nothing", () => {
