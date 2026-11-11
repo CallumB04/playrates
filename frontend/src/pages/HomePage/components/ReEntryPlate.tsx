@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Gamepad2, Pencil } from "lucide-react";
-import { igdbSized, type UserStats } from "@playrates/shared";
+import type { UserStats } from "@playrates/shared";
 import type { GameLogWithGame } from "../../../api";
 import GameCover from "../../../components/game/GameCover";
+import ArtBackdrop from "../../../components/game/ArtBackdrop";
 import Button from "../../../components/ui/Button";
 import Progress from "../../../components/ui/Progress";
 import RatingBadge from "../../../components/ui/RatingBadge";
@@ -304,32 +305,13 @@ const NowPlaying = ({
     return (
         <section
             aria-labelledby="now-playing"
-            className={cardClass("relative overflow-hidden", {
+            className={cardClass("relative isolate overflow-hidden", {
                 padding: "none",
             })}
         >
-            {/* The game's own art, faint and fading out before the words:
-                enough to say which world you're in, never in the way. */}
-            {game.artworkUrl && (
-                // The art at near full strength, so it keeps its colour,
-                // with the card's own surface laid over it where the words
-                // are: solid behind the details, thinning towards the covers
-                // on a wide card; on a phone, strongest around the title.
-                <div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0"
-                >
-                    <img
-                        key={game.id}
-                        src={igdbSized(game.artworkUrl, "screenshot_big")}
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                        className="size-full animate-fade-up object-cover"
-                    />
-                    <div className="absolute inset-0 bg-linear-to-b from-surface-raised/70 via-surface-raised/88 via-55% to-surface-raised/95 sm:bg-linear-to-r sm:from-surface-raised sm:from-30% sm:via-surface-raised/82 sm:via-60% sm:to-surface-raised/45" />
-                </div>
-            )}
+            {/* The game's own art, fading out before the words: enough to
+                say which world you're in, never in the way. */}
+            <ArtBackdrop url={game.artworkUrl} />
             <div className="relative flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:gap-8">
                 {/* The figures sit under the title from a phone's width up;
                     on a phone they take the card's width under the cover. */}

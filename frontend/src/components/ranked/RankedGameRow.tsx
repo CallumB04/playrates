@@ -7,7 +7,7 @@ import {
 import { Link } from "react-router-dom";
 import { EllipsisVertical, GripVertical } from "lucide-react";
 import GameCover from "../game/GameCover";
-import ArtBackdrop from "../community/ArtBackdrop";
+import ArtBackdrop from "../game/ArtBackdrop";
 import type { TileAction } from "../game/GameTile";
 import Button from "../ui/Button";
 import { releaseYear } from "../../lib/format";

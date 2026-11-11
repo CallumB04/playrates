@@ -15,7 +15,7 @@ import {
 import RatingBadge from "../../../components/ui/RatingBadge";
 import { relativeTime } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
-import ArtBackdrop from "../../../components/community/ArtBackdrop";
+import ArtBackdrop from "../../../components/game/ArtBackdrop";
 import { usePlayedOn } from "../../../components/gamelog/usePlayedOn";
 
 /** What the actor did, as a sentence rather than a status word. */

@@ -4,7 +4,7 @@ import type { TrendingThread } from "@playrates/shared";
 import GameCover from "../game/GameCover";
 import { cn } from "../../lib/cn";
 import ActivitySparkline from "./ActivitySparkline";
-import ArtBackdrop from "./ArtBackdrop";
+import ArtBackdrop from "../game/ArtBackdrop";
 import { NewMessageCount, PeopleCount } from "./ThreadStats";
 import { threadPath } from "./paths";
 

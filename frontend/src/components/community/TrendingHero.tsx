@@ -6,7 +6,7 @@ import GameCover from "../game/GameCover";
 import { formatMessageCount } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import ActivitySparkline from "./ActivitySparkline";
-import ArtBackdrop from "./ArtBackdrop";
+import ArtBackdrop from "../game/ArtBackdrop";
 import ContributorStack from "./ContributorStack";
 import { PeopleCount } from "./ThreadStats";
 import { threadPath } from "./paths";

@@ -71,6 +71,10 @@ variant or tone instead of overriding it at the call site.
   menu shows it whole.
 - `ui/EmptyPlate` and `EmptyNote` for empty states, `ui/Skeleton` while
   loading, `components/SignUpPlate` where a page needs an account.
+- A game's art behind a card goes through `game/ArtBackdrop`, on a card
+  that is `relative isolate overflow-hidden`. It fades the art itself; a
+  fading layer laid over the art lets a light rim of it show round the
+  rounded corners, as the two are clipped one at a time.
 
 ## Accessibility
 

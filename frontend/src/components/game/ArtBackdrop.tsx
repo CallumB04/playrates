@@ -41,6 +41,8 @@ const ArtBackdrop = ({
             )}
         >
             <img
+                // A new picture fades in afresh, not swapped in place.
+                key={url}
                 src={igdbSized(url, "screenshot_big")}
                 alt=""
                 loading="lazy"

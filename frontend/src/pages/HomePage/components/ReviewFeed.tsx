@@ -12,7 +12,7 @@ import { reviewStatus } from "../../../lib/reviewStatus";
 import { formatHours, relativeTime } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 import GameCover from "../../../components/game/GameCover";
-import ArtBackdrop from "../../../components/community/ArtBackdrop";
+import ArtBackdrop from "../../../components/game/ArtBackdrop";
 
 /** A review on its game's art: the cover and the verdict up top, the words
  *  under them, and when it was written at the foot. */
