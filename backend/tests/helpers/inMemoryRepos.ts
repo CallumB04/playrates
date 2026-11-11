@@ -1752,6 +1752,7 @@ export const createInMemoryRepos = (
             created_at: n.created_at,
             thread_id:
               (n.data as { threadId?: number } | null)?.threadId ?? null,
+            reason: (n.data as { reason?: string } | null)?.reason ?? null,
           }));
       },
       async markSeen(userId) {

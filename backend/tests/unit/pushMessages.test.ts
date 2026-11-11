@@ -50,6 +50,19 @@ describe("pushMessage", () => {
     expect(push?.body).toMatch(/^ana sent you /);
   });
 
+  it("says why a reply reached you", () => {
+    const reply = (reason?: string) =>
+      pushMessage(
+        "community_reply",
+        { threadId: 3, messageId: 9, reason },
+        "ana",
+        "me",
+      )?.title;
+    expect(reply()).toBe("ana replied to you");
+    expect(reply("thread")).toBe("ana replied in your thread");
+    expect(reply("conversation")).toBe("ana also replied");
+  });
+
   it("pushes nothing it can't say properly", () => {
     expect(pushMessage("friend_request", {}, null, "me")).toBeNull();
     expect(

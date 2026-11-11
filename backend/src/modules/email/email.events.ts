@@ -1,5 +1,6 @@
 import {
   REFERRAL,
+  replyReasonOf,
   emailAllowed,
   resolveEmailPrefs,
   type NotificationKind,
@@ -74,6 +75,7 @@ export const eventEmail = (
           threadTitle,
           messageId,
           excerpt: str(data.excerpt) ?? "",
+          reason: replyReasonOf(data.reason),
         },
         links,
       );

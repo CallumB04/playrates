@@ -1,10 +1,19 @@
-import type { AppNotification } from "@playrates/shared";
+import type { AppNotification, ReplyReason } from "@playrates/shared";
 import { BRAND_NAME } from "../../constants/brand";
 import { formatCount, formatMessageCount } from "../../lib/format";
 import { itemName } from "../shop/shopItems";
 import { namesOf } from "./notificationSections";
 
 const WEEKDAY = new Intl.DateTimeFormat("en-GB", { weekday: "long" });
+
+/** The words between a reply's author and its thread, by why it reached
+ *  you. Before there were reasons, every one was an answer to you. */
+export const replyPhrase = (reason: ReplyReason = "reply"): string =>
+    reason === "thread"
+        ? "replied in your thread"
+        : reason === "conversation"
+          ? "also replied in"
+          : "replied to you in";
 
 const one = (n: AppNotification): string => {
     switch (n.kind) {
@@ -15,7 +24,7 @@ const one = (n: AppNotification): string => {
         case "friend_accepted":
             return `${n.actor.username} accepted your friend request`;
         case "community_reply":
-            return `${n.actor.username} replied to you in ${n.threadTitle}`;
+            return `${n.actor.username} ${replyPhrase(n.reason)} ${n.threadTitle}`;
         case "community_thread_activity":
             return `${formatMessageCount(n.count)} new ${n.count === 1 ? "message" : "messages"} in your thread`;
         case "community_upvote_milestone":
@@ -60,7 +69,7 @@ export const summaryOf = (items: AppNotification[]): string => {
                 )
             ),
         ];
-        return `${namesOf(names)} replied to you in ${first.threadTitle}`;
+        return `${namesOf(names)} ${replyPhrase(first.reason)} ${first.threadTitle}`;
     }
     return one(first);
 };

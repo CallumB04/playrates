@@ -9,6 +9,7 @@ import ProfilePicture from "../ProfilePicture";
 import { usePatchNotification } from "../../hooks/queries/useNotificationActions";
 import { threadPath } from "../community/paths";
 import { namesOf } from "./notificationSections";
+import { replyPhrase } from "./notificationSummary";
 
 const TITLE = "text-body-sm font-medium text-content";
 const BODY = "mt-0.5 text-body-sm text-content-secondary";
@@ -93,7 +94,7 @@ export const ReplyGroupContent = ({
             <p className={TITLE}>
                 <span className="group-hover:underline">{namesOf(names)}</span>{" "}
                 <span className="font-normal text-content-secondary">
-                    replied to you in
+                    {replyPhrase(latest.reason)}
                 </span>{" "}
                 {latest.threadTitle}
             </p>

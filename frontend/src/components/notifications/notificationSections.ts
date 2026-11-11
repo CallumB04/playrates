@@ -36,6 +36,7 @@ const groupKey = (n: AppNotification) =>
             id: n.id,
             kind: n.kind,
             threadId: "threadId" in n ? n.threadId : null,
+            reason: "reason" in n ? n.reason : null,
         },
         new Date(n.createdAt).toDateString()
     );

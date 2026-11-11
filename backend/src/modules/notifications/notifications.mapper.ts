@@ -1,5 +1,6 @@
 import {
   ANNOUNCEMENT_TONES,
+  replyReasonOf,
   type AnnouncementTone,
   type AppNotification,
   type FriendRelation,
@@ -99,6 +100,7 @@ export const toNotification = (
       return {
         ...base,
         kind: "community_reply",
+        reason: replyReasonOf(row.data.reason),
         actor: toFriendUser(row.actor, now),
         threadId,
         threadTitle,

@@ -45,6 +45,7 @@ import { useClamped } from "../../hooks/useClamped";
 import { cn } from "../../lib/cn";
 import { ANNOUNCEMENT_PRESENTATION } from "./announcementTones";
 import type { ContentProps } from "./registry";
+import { replyPhrase } from "./notificationSummary";
 
 const TITLE = "text-body-sm font-medium text-content";
 const BODY = "mt-0.5 text-body-sm text-content-secondary";
@@ -210,7 +211,7 @@ export const CommunityReplyContent = ({
                     {notification.actor.username}
                 </span>{" "}
                 <span className="font-normal text-content-secondary">
-                    replied to you in
+                    {replyPhrase(notification.reason)}
                 </span>{" "}
                 {notification.threadTitle}
             </p>

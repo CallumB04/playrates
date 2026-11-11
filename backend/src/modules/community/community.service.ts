@@ -6,6 +6,7 @@ import type {
   LatestReply,
   PatchNote,
   PatchNotesSummary,
+  ReplyReason,
   TalkedAboutGame,
   RichTextDoc,
   ThreadCard,
@@ -39,7 +40,6 @@ import type { ProfileRow } from "../../types/database.types.js";
 import type { NotificationsRepository } from "../notifications/notifications.repository.js";
 import {
   communityReplyKey,
-  communityThreadKey,
   communityUpvotesKey,
 } from "../notifications/notifications.mapper.js";
 import {
@@ -317,19 +317,35 @@ export const createCommunityService = (
         body: input.body,
       });
 
-      /* Whoever was answered hears about it; the opening message has no
-         Reply of its own, its answers are the thread's activity. The
-         thread's author hears once per thread instead, not once per
-         message, and not twice for a message that answered them. */
-      let notified: string | null = null;
-      if (
-        answered &&
-        !answered.is_opening &&
-        answered.author_id &&
-        answered.author_id !== userId
-      ) {
+      /* Everyone with a stake in it hears, once, with why: whoever was
+         answered; everyone else in the conversation it joined (a message
+         and its replies), so an exchange under one reply reaches all who
+         took part in it and no one outside it; and the thread's author,
+         for anything posted in their thread. */
+      const reasons = new Map<string, ReplyReason>();
+      const hear = (id: string | null, reason: ReplyReason) => {
+        if (id && id !== userId && !reasons.has(id)) reasons.set(id, reason);
+      };
+      if (answered && !answered.is_opening) hear(answered.author_id, "reply");
+      if (parentId !== null) {
+        for (const m of await repo.listMessages(threadId)) {
+          if (
+            (m.id === parentId || m.parent_id === parentId) &&
+            !m.deleted_at
+          ) {
+            hear(m.author_id, "conversation");
+          }
+        }
+      }
+      hear(thread.author_id, "thread");
+
+      const excerpt = toPlainText(input.body, { hideSpoilers: true }).slice(
+        0,
+        140,
+      );
+      for (const [recipient, reason] of reasons) {
         await notifications.raise({
-          userId: answered.author_id,
+          userId: recipient,
           kind: "community_reply",
           actorId: userId,
           dedupeKey: communityReplyKey(row.id),
@@ -337,30 +353,10 @@ export const createCommunityService = (
             threadId,
             threadTitle: thread.title,
             messageId: row.id,
-            excerpt: toPlainText(input.body, { hideSpoilers: true }).slice(
-              0,
-              140,
-            ),
+            excerpt,
+            reason,
           },
         });
-        notified = answered.author_id;
-      }
-      if (
-        thread.subject_kind === "game" &&
-        thread.author_id &&
-        thread.author_id !== userId &&
-        thread.author_id !== notified
-      ) {
-        await notifications.bumpThreadActivity(
-          thread.author_id,
-          communityThreadKey(threadId),
-          {
-            threadId,
-            threadTitle: thread.title,
-            gameTitle: thread.game_title,
-            coverUrl: thread.game_cover_url,
-          },
-        );
       }
 
       return messageFor(userId, row);

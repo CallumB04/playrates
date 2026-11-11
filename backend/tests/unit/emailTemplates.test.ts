@@ -156,6 +156,25 @@ describe("email templates", () => {
     expect(email.html).toContain('src="https://cdn.test/a.webp"');
   });
 
+  it("says why a reply reached them, in the subject and the title", () => {
+    const reply = (reason?: "reply" | "thread" | "conversation") =>
+      replyEmail(
+        {
+          actor: "ana",
+          threadId: 3,
+          threadTitle: "Best RPG",
+          messageId: 9,
+          excerpt: "Agreed",
+          reason,
+        },
+        links,
+      );
+    expect(reply().subject).toBe("ana replied to you in Best RPG");
+    expect(reply("thread").subject).toBe("ana replied in your thread Best RPG");
+    expect(reply("thread").html).toContain("ana replied in your thread</h1>");
+    expect(reply("conversation").subject).toBe("ana also replied in Best RPG");
+  });
+
   it("lands a reply on the message itself", () => {
     const email = replyEmail(
       {

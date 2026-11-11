@@ -106,7 +106,12 @@ export const createNotificationsService = (
         unreadRows: new Set(
           unreadRows.map((n) =>
             notificationGroupKey(
-              { id: n.id, kind: n.kind, threadId: n.thread_id },
+              {
+                id: n.id,
+                kind: n.kind,
+                threadId: n.thread_id,
+                reason: n.reason,
+              },
               dayIn(n.created_at, timezone),
             ),
           ),

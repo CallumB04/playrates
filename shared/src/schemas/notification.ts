@@ -65,9 +65,23 @@ export interface FriendAcceptedNotification extends NotificationBase {
   actor: FriendUser;
 }
 
-/** Someone answered one of your messages directly, with Reply on it. */
+/** Why a reply reached you: it answered you, it's in your thread, or it's
+ *  in a conversation you're part of (a message and its replies). */
+export const REPLY_REASONS = ["reply", "thread", "conversation"] as const;
+export type ReplyReason = (typeof REPLY_REASONS)[number];
+
+/** A stored reason, or "reply" for one raised before there were others. */
+export const replyReasonOf = (value: unknown): ReplyReason =>
+  REPLY_REASONS.includes(value as ReplyReason)
+    ? (value as ReplyReason)
+    : "reply";
+
+/** Someone posted where you'll want to know: an answer to you, your
+ *  thread, or a conversation you're in. */
 export interface CommunityReplyNotification extends NotificationBase {
   kind: "community_reply";
+  /** Absent from rows raised before there was more than one. */
+  reason?: ReplyReason;
   actor: FriendUser;
   threadId: number;
   threadTitle: string;
@@ -286,14 +300,20 @@ export interface NotificationFeed extends Paginated<AppNotification> {
  * member's own time zone, so the bell and its badge agree on what a day is.
  */
 export const notificationGroupKey = (
-  n: { id: number; kind: string; threadId?: number | null },
+  n: {
+    id: number;
+    kind: string;
+    threadId?: number | null;
+    reason?: string | null;
+  },
   day: string,
 ): string => {
   switch (n.kind) {
     case "friend_accepted":
       return `accepted:${day}`;
     case "community_reply":
-      return `reply:${n.threadId}:${day}`;
+      // Grouped only with the same reason, as each words it differently.
+      return `reply:${n.threadId}:${n.reason ?? "reply"}:${day}`;
     default:
       return `one:${n.id}`;
   }
