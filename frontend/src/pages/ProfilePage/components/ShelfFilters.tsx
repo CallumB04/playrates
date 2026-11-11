@@ -310,7 +310,9 @@ const ShelfFilters = ({
                         className={popoverClass(
                             cn(
                                 "absolute top-full z-30 mt-2 w-96 p-4",
-                                opensRight ? "left-0" : "right-0"
+                                opensRight
+                                    ? "left-0 [--pop-origin:top_left]"
+                                    : "right-0 [--pop-origin:top_right]"
                             ),
                             "menu"
                         )}

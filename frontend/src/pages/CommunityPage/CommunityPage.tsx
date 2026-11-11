@@ -319,7 +319,7 @@ const CommunityPage = () => {
                         ) : (
                             <div
                                 className={cardClass(
-                                    "divide-y divide-subtle overflow-hidden p-1",
+                                    "stagger divide-y divide-subtle overflow-hidden p-1",
                                     { padding: "none" }
                                 )}
                             >

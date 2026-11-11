@@ -161,7 +161,7 @@ const SiteLeaderboard = () => {
                     <EmptyNote>{NOBODY[period]}</EmptyNote>
                 </div>
             ) : (
-                <ul>
+                <ul className="stagger">
                     {rows.map((row, i) => (
                         <Fragment
                             key={row.hidden ? `#${row.rank}` : row.username}

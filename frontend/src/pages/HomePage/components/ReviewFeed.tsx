@@ -10,6 +10,7 @@ import RatingBadge from "../../../components/ui/RatingBadge";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import { reviewStatus } from "../../../lib/reviewStatus";
 import { formatHours, relativeTime } from "../../../lib/format";
+import { cn } from "../../../lib/cn";
 
 const Row = ({ review }: { review: ReviewWithAuthor }) => {
     const status = reviewStatus(review);
@@ -86,7 +87,7 @@ const ReviewFeed = ({
             Recent reviews
         </h2>
 
-        <div className="flex flex-col">
+        <div className={cn("flex flex-col", !isLoading && "stagger")}>
             {isLoading ? (
                 <TextSkeleton lines={5} />
             ) : reviews.length === 0 ? (

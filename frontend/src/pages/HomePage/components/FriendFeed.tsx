@@ -124,7 +124,7 @@ const FriendFeed = ({
             </Link>
         </header>
 
-        <div className="flex flex-col gap-0.5">
+        <div className={cn("flex flex-col gap-0.5", !isLoading && "stagger")}>
             {isLoading ? (
                 <TextSkeleton lines={4} />
             ) : items.length === 0 ? (

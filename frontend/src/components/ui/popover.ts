@@ -19,7 +19,7 @@ export const popoverClass = (
     shape: PopoverShape = "list"
 ) =>
     cn(
-        "animate-settle border border-subtle bg-surface-raised shadow-modal",
+        "motion-pop border border-subtle bg-surface-raised shadow-modal",
         SHAPE[shape],
         className
     );

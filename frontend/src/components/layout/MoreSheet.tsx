@@ -211,9 +211,17 @@ const MoreSheet = ({
                 >
                     {theme === "dark" ? "Day mode" : "Night mode"}
                     {theme === "dark" ? (
-                        <Sun size={16} aria-hidden />
+                        <Sun
+                            size={16}
+                            aria-hidden
+                            className="animate-swap-in"
+                        />
                     ) : (
-                        <Moon size={16} aria-hidden />
+                        <Moon
+                            size={16}
+                            aria-hidden
+                            className="animate-swap-in"
+                        />
                     )}
                 </button>
                 {user?.isAdmin && (

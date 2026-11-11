@@ -136,7 +136,9 @@ const Rail = ({
                     "flex snap-x snap-mandatory gap-3.5 overflow-x-auto pb-2 [contain:layout]",
                     // The lift moves tiles up; without room they clip.
                     "-mt-1 pt-1",
-                    "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+                    // In one after another once the real tiles land.
+                    !isLoading && "stagger"
                 )}
             >
                 {(isLoading

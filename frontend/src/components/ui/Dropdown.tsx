@@ -14,6 +14,7 @@ import { cn } from "../../lib/cn";
 import { fieldClass } from "./fieldClass";
 import { useDismiss } from "../../hooks/useDismiss";
 import { menuAcross, popoverClass } from "./popover";
+import { useExit } from "../../hooks/useExit";
 
 type IconProps = SVGProps<SVGSVGElement> & { size?: number | string };
 
@@ -92,6 +93,8 @@ const Dropdown = ({
     const [rect, setRect] = useState<DOMRect | null>(null);
     const wrapRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<HTMLUListElement>(null);
+    const { leaving, leave } = useExit(listRef);
+    const close = () => leave(() => setOpen(false));
     const searchRef = useRef<HTMLInputElement>(null);
     const focused = useRef(false);
     const listId = useId();
@@ -135,7 +138,7 @@ const Dropdown = ({
     /* The menu is portalled out of the trigger, so both count as inside.
        Escape is the keyboard handler's: a document listener would also close
        a modal the dropdown sits in. */
-    useDismiss([wrapRef, listRef], () => setOpen(false), { enabled: open });
+    useDismiss([wrapRef, listRef], close, { enabled: open });
 
     useEffect(() => {
         if (!open) return;
@@ -169,7 +172,7 @@ const Dropdown = ({
         const option = shown[index];
         if (!option) return;
         onChange(option.value);
-        setOpen(false);
+        close();
     };
 
     const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -206,13 +209,19 @@ const Dropdown = ({
                 return commit(active);
             case "Escape":
                 event.preventDefault();
-                return setOpen(false);
+                return close();
             case "Tab":
-                return setOpen(false);
+                return close();
         }
     };
 
     const SelectedIcon = selected?.icon;
+    const across = rect
+        ? menuAcross(rect, window.innerWidth, !!menuClassName)
+        : {};
+    // Flip above the trigger when there is no room below.
+    const above =
+        !!rect && window.innerHeight - rect.bottom < 280 && rect.top > 280;
 
     return (
         <div ref={wrapRef} className={cn("relative", className)}>
@@ -220,7 +229,7 @@ const Dropdown = ({
                 type="button"
                 id={id}
                 disabled={disabled}
-                onClick={() => (open ? setOpen(false) : openMenu())}
+                onClick={() => (open ? close() : openMenu())}
                 onKeyDown={onKeyDown}
                 aria-haspopup="listbox"
                 aria-expanded={open}
@@ -286,6 +295,7 @@ const Dropdown = ({
                 createPortal(
                     <ul
                         ref={listRef}
+                        data-leaving={leaving || undefined}
                         id={listId}
                         role="listbox"
                         aria-activedescendant={`${listId}-${active}`}
@@ -293,16 +303,18 @@ const Dropdown = ({
                            menu and counts it toward its scroll height. */
                         style={{
                             position: "fixed",
-                            ...menuAcross(
-                                rect,
-                                window.innerWidth,
-                                !!menuClassName
-                            ),
-                            // Flip above the trigger when there is no room below.
-                            ...(window.innerHeight - rect.bottom < 280 &&
-                            rect.top > 280
+                            ...across,
+                            ...(above
                                 ? { bottom: window.innerHeight - rect.top + 6 }
                                 : { top: rect.bottom + 6 }),
+                            // Grown from the trigger's edge it hangs off.
+                            ["--pop-origin" as string]: `${above ? "bottom" : "top"} ${
+                                "right" in across
+                                    ? "right"
+                                    : menuClassName
+                                      ? "left"
+                                      : "center"
+                            }`,
                         }}
                         className={cn(
                             popoverClass("z-[60] max-h-72 overflow-y-auto p-1"),

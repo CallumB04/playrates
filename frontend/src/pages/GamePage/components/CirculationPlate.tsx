@@ -140,7 +140,7 @@ const CirculationPlate = ({
                                     <div
                                         role="tooltip"
                                         className={popoverClass(
-                                            "absolute bottom-full left-0 z-20 mb-1 w-52 p-2"
+                                            "absolute bottom-full left-0 z-20 mb-1 w-52 p-2 [--pop-origin:bottom_left]"
                                         )}
                                     >
                                         <p className="px-1 pb-1.5 text-label text-content-muted">

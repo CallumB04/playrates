@@ -383,7 +383,7 @@ const GameTile = ({
                                                     {active && (
                                                         <span
                                                             key={busy.phase}
-                                                            className="min-w-0 animate-settle truncate"
+                                                            className="min-w-0 animate-label-in truncate"
                                                         >
                                                             {done
                                                                 ? (action.doneLabel ??

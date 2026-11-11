@@ -100,111 +100,128 @@ function App() {
                     <InviteBanner />
                     <ErrorBoundary key={pathname}>
                         <Suspense fallback={<PageLoading />}>
-                            <Routes>
-                                <Route path="/" element={<HomePage />} />
-                                <Route
-                                    path="/user/:username/lists/:listId"
-                                    element={<ListPage />}
-                                />
-                                <Route
-                                    path="/user/:username/gaming-25"
-                                    element={<Gaming25Page />}
-                                />
-                                <Route path="/me/*" element={<MyProfile />} />
-                                <Route
-                                    path="/user/:targetUsername?/:view?"
-                                    element={<ProfilePageRoute />}
-                                />
-                                <Route
-                                    path="/library"
-                                    element={<LibraryPage />}
-                                />
-                                <Route
-                                    path="/progress"
-                                    element={<ProgressPage />}
-                                />
-                                <Route path="/shop" element={<ShopPage />} />
-                                {/* The page was briefly called both things. Kept so
+                            {/* Each page fades in once it has loaded. The
+                                shell's own column, so the gap between a
+                                page's parts stays as it was. */}
+                            <div className="flex animate-page-in flex-col gap-6">
+                                <Routes>
+                                    <Route path="/" element={<HomePage />} />
+                                    <Route
+                                        path="/user/:username/lists/:listId"
+                                        element={<ListPage />}
+                                    />
+                                    <Route
+                                        path="/user/:username/gaming-25"
+                                        element={<Gaming25Page />}
+                                    />
+                                    <Route
+                                        path="/me/*"
+                                        element={<MyProfile />}
+                                    />
+                                    <Route
+                                        path="/user/:targetUsername?/:view?"
+                                        element={<ProfilePageRoute />}
+                                    />
+                                    <Route
+                                        path="/library"
+                                        element={<LibraryPage />}
+                                    />
+                                    <Route
+                                        path="/progress"
+                                        element={<ProgressPage />}
+                                    />
+                                    <Route
+                                        path="/shop"
+                                        element={<ShopPage />}
+                                    />
+                                    {/* The page was briefly called both things. Kept so
                             shared links and bookmarks still land. */}
-                                <Route
-                                    path="/catalogue"
-                                    element={<LibraryRedirect />}
-                                />
-                                <Route
-                                    path="/game/:gameID"
-                                    element={<GamePage />}
-                                />
-                                <Route
-                                    path="/game/:gameID/similar"
-                                    element={<HubPage kind="similar" />}
-                                />
-                                <Route
-                                    path="/games/best/:year"
-                                    element={<HubPage kind="year" />}
-                                />
-                                <Route
-                                    path="/games/genre/:slug"
-                                    element={<HubPage kind="genre" />}
-                                />
-                                <Route
-                                    path="/games/platform/:slug"
-                                    element={<HubPage kind="platform" />}
-                                />
-                                <Route
-                                    path="/games/upcoming"
-                                    element={<HubPage kind="upcoming" />}
-                                />
-                                <Route
-                                    path="/review/:reviewId"
-                                    element={<ReviewPage />}
-                                />
-                                <Route
-                                    path="/people"
-                                    element={<PeoplePage />}
-                                />
-                                <Route
-                                    path="/community"
-                                    element={<CommunityPage />}
-                                />
-                                <Route
-                                    path="/community/new"
-                                    element={<NewThreadPage />}
-                                />
-                                <Route
-                                    path="/community/thread/:threadId"
-                                    element={<ThreadPage />}
-                                />
-                                <Route
-                                    path="/settings"
-                                    element={<SettingsPage />}
-                                />
-                                <Route
-                                    path="/reset-password"
-                                    element={<ResetPasswordPage />}
-                                />
-                                <Route
-                                    path="/unsubscribe"
-                                    element={<UnsubscribePage />}
-                                />
+                                    <Route
+                                        path="/catalogue"
+                                        element={<LibraryRedirect />}
+                                    />
+                                    <Route
+                                        path="/game/:gameID"
+                                        element={<GamePage />}
+                                    />
+                                    <Route
+                                        path="/game/:gameID/similar"
+                                        element={<HubPage kind="similar" />}
+                                    />
+                                    <Route
+                                        path="/games/best/:year"
+                                        element={<HubPage kind="year" />}
+                                    />
+                                    <Route
+                                        path="/games/genre/:slug"
+                                        element={<HubPage kind="genre" />}
+                                    />
+                                    <Route
+                                        path="/games/platform/:slug"
+                                        element={<HubPage kind="platform" />}
+                                    />
+                                    <Route
+                                        path="/games/upcoming"
+                                        element={<HubPage kind="upcoming" />}
+                                    />
+                                    <Route
+                                        path="/review/:reviewId"
+                                        element={<ReviewPage />}
+                                    />
+                                    <Route
+                                        path="/people"
+                                        element={<PeoplePage />}
+                                    />
+                                    <Route
+                                        path="/community"
+                                        element={<CommunityPage />}
+                                    />
+                                    <Route
+                                        path="/community/new"
+                                        element={<NewThreadPage />}
+                                    />
+                                    <Route
+                                        path="/community/thread/:threadId"
+                                        element={<ThreadPage />}
+                                    />
+                                    <Route
+                                        path="/settings"
+                                        element={<SettingsPage />}
+                                    />
+                                    <Route
+                                        path="/reset-password"
+                                        element={<ResetPasswordPage />}
+                                    />
+                                    <Route
+                                        path="/unsubscribe"
+                                        element={<UnsubscribePage />}
+                                    />
 
-                                {/* Stubs, so the footer never links into nothing. */}
-                                <Route
-                                    path="/privacy"
-                                    element={<PrivacyPage />}
-                                />
-                                <Route path="/terms" element={<TermsPage />} />
-                                <Route
-                                    path="/contact"
-                                    element={<ContactPage />}
-                                />
+                                    {/* Stubs, so the footer never links into nothing. */}
+                                    <Route
+                                        path="/privacy"
+                                        element={<PrivacyPage />}
+                                    />
+                                    <Route
+                                        path="/terms"
+                                        element={<TermsPage />}
+                                    />
+                                    <Route
+                                        path="/contact"
+                                        element={<ContactPage />}
+                                    />
 
-                                <Route
-                                    path="/admin/*"
-                                    element={<AdminGate />}
-                                />
+                                    <Route
+                                        path="/admin/*"
+                                        element={<AdminGate />}
+                                    />
 
-                                <Route path="*" element={<NotFoundPage />} />
-                            </Routes>
+                                    <Route
+                                        path="*"
+                                        element={<NotFoundPage />}
+                                    />
+                                </Routes>
+                            </div>
                         </Suspense>
                     </ErrorBoundary>
                 </PageShell>
