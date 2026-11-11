@@ -34,7 +34,7 @@ describe("giftPath", () => {
 describe("itemName", () => {
     it("says what an item is, in a sentence", () => {
         expect(itemName("frame_neon")).toBe("the Neon frame");
-        expect(itemName("slot_showcase")).toBe("an extra showcase slot");
+        expect(itemName("slot_showcase")).toBe("an extra badge showcase slot");
         expect(itemName("retired")).toBe("something from the shop");
     });
 });

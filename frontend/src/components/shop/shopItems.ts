@@ -52,7 +52,7 @@ const NOUNS: Partial<Record<ShopGroup, string>> = {
     reaction: "reaction",
 };
 const SINGLES: Record<string, string> = {
-    slot_showcase: "an extra showcase slot",
+    slot_showcase: "an extra badge showcase slot",
     slot_pinned_list: "an extra pinned list slot",
     slot_pinned_review: "an extra pinned review slot",
     streak_shield: "a spare streak shield",
