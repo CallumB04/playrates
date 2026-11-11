@@ -19,6 +19,12 @@ const LoginPage = () => {
 
     return (
         <LoginSteps
+            // Sent here for a new password link, from a phone.
+            initialStep={
+                (state as { step?: unknown } | null)?.step === "reset"
+                    ? "reset"
+                    : "login"
+            }
             createAccount={
                 <SwitchLink to="/join">Create an account</SwitchLink>
             }

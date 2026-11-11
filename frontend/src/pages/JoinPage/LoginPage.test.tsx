@@ -82,6 +82,18 @@ describe("LoginPage", () => {
         expect(screen.getByText("reset for a@b.test")).toBeInTheDocument();
     });
 
+    it("opens on a new password when sent for one", () => {
+        renderWithProviders(
+            <Routes>
+                <Route path="/login" element={<LoginPage />} />
+            </Routes>,
+            { route: { pathname: "/login", state: { step: "reset" } } as never }
+        );
+        expect(
+            screen.getByRole("heading", { name: "Set a new password" })
+        ).toBeInTheDocument();
+    });
+
     it("has nothing for someone already signed in", () => {
         auth.session = {};
         open();

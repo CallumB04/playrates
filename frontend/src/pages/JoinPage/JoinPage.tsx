@@ -7,6 +7,7 @@ import CheckInbox from "../../components/auth/CheckInbox";
 import SwitchLink from "./components/SwitchLink";
 import StepHeading from "../../components/auth/StepHeading";
 import { returnTo } from "./lib/returnTo";
+import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
 
 /**
  * Signing up, on a page of its own: the form, then the inbox to confirm it
@@ -18,6 +19,7 @@ const JoinPage = () => {
     const navigate = useNavigate();
     const { state } = useLocation();
     const [sentTo, setSentTo] = useState<string | null>(null);
+    const wide = useMediaQuery(BREAKPOINT.md);
     const back = returnTo(state);
 
     if (session && !sentTo) return <Navigate to={back} replace />;
@@ -48,6 +50,9 @@ const JoinPage = () => {
                     />
                     <div className="mt-6">
                         <SignupForm
+                            // A phone's keyboard would cover the page the
+                            // moment it opened; there, it waits for a tap.
+                            autoFocus={wide}
                             // Signed straight in, back to where they were;
                             // otherwise the link to confirm is on its way.
                             onSignedUp={(email, signedIn) =>
