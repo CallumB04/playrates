@@ -184,7 +184,7 @@ const JoinShell = ({ children }: { children: ReactNode }) => {
     );
 
     return (
-        <div className="grid min-h-dvh bg-surface lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+        <div className="grid min-h-dvh grid-rows-[auto_1fr] bg-surface lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:grid-rows-1">
             <section
                 aria-label="About PlayRates"
                 // Dark in both themes: it's a picture, and words on a
@@ -247,7 +247,7 @@ const JoinShell = ({ children }: { children: ReactNode }) => {
                 <div className="hidden justify-end px-8 pt-8 lg:flex">
                     <Close className="text-content-secondary hover:bg-surface-hover hover:text-content focus-visible:outline-brand" />
                 </div>
-                <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center px-5 pt-8 pb-10 sm:px-0 lg:py-10">
+                <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col px-5 pt-8 pb-10 sm:px-0 lg:justify-center lg:py-10">
                     {children}
                 </div>
                 <p className="pb-[calc(--spacing(6)+env(safe-area-inset-bottom))] text-center text-label-sm text-content-muted">

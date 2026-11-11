@@ -10,9 +10,6 @@ const auth = vi.hoisted(() => ({
     resendConfirmation: vi.fn(),
 }));
 vi.mock("../../contexts/AuthContext", () => ({ useAuth: () => auth }));
-vi.mock("../../contexts/AccountFormContext", () => ({
-    useAccountForm: () => ({ openLogin: vi.fn() }),
-}));
 
 beforeEach(() => {
     auth.user = null;

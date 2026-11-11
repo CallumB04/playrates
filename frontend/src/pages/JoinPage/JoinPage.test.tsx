@@ -10,10 +10,6 @@ const auth = vi.hoisted(() => ({
     resendConfirmation: vi.fn(),
 }));
 vi.mock("../../contexts/AuthContext", () => ({ useAuth: () => auth }));
-const form = vi.hoisted(() => ({ openLogin: vi.fn() }));
-vi.mock("../../contexts/AccountFormContext", () => ({
-    useAccountForm: () => form,
-}));
 // The form itself is SignupForm's to test; here, what the page does after.
 vi.mock("../../components/auth/SignupForm", () => ({
     default: ({
@@ -34,7 +30,6 @@ vi.mock("../../components/auth/SignupForm", () => ({
 
 beforeEach(() => {
     auth.session = null;
-    form.openLogin.mockClear();
 });
 
 const Where = () => <p data-testid="where">{useLocation().pathname}</p>;
@@ -50,13 +45,15 @@ const open = () =>
     );
 
 describe("JoinPage", () => {
-    it("asks for an account, with log-in a press away", async () => {
+    it("asks for an account, with the log-in page a press away", () => {
         open();
         expect(
             screen.getByRole("heading", { name: "Create your account" })
         ).toBeInTheDocument();
-        await userEvent.click(screen.getByRole("button", { name: "Log in" }));
-        expect(form.openLogin).toHaveBeenCalled();
+        expect(screen.getByRole("link", { name: "Log in" })).toHaveAttribute(
+            "href",
+            "/login"
+        );
     });
 
     it("shows where the confirmation link went, on the same page", async () => {

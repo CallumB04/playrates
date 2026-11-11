@@ -6,7 +6,8 @@ export const returnTo = (state: unknown): string => {
     return typeof from === "string" &&
         from.startsWith("/") &&
         !from.startsWith("//") &&
-        !from.startsWith("/join")
+        !from.startsWith("/join") &&
+        !from.startsWith("/login")
         ? from
         : "/";
 };

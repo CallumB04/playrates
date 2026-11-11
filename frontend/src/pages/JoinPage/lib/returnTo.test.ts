@@ -13,9 +13,10 @@ describe("returnTo", () => {
         expect(returnTo({ from: "//evil.example" })).toBe("/");
     });
 
-    it("goes home with nowhere to go back to, or only the join page itself", () => {
+    it("goes home with nowhere to go back to, or only the join pages themselves", () => {
         expect(returnTo(null)).toBe("/");
         expect(returnTo({ from: 3 })).toBe("/");
         expect(returnTo({ from: "/join" })).toBe("/");
+        expect(returnTo({ from: "/login" })).toBe("/");
     });
 });

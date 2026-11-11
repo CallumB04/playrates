@@ -40,7 +40,9 @@ const LibraryPage = lazy(() => import("./pages/LibraryPage/LibraryPage"));
 const GamePage = lazy(() => import("./pages/GamePage/GamePage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const JoinLayout = lazy(() => import("./pages/JoinPage/JoinLayout"));
 const JoinPage = lazy(() => import("./pages/JoinPage/JoinPage"));
+const LoginPage = lazy(() => import("./pages/JoinPage/LoginPage"));
 const JoinConfirmedPage = lazy(
     () => import("./pages/JoinPage/JoinConfirmedPage")
 );
@@ -73,9 +75,9 @@ function App() {
     // Keyed to the page, so going somewhere else starts afresh.
     const { pathname } = useLocation();
     useScrollMemory();
-    // Signing up stands alone, full screen: no header, footer or tab bar,
-    // nothing to wander off to halfway through.
-    const bare = pathname.startsWith("/join");
+    // Signing up and logging in stand alone, full screen: no header, footer
+    // or tab bar, nothing to wander off to halfway through.
+    const bare = pathname.startsWith("/join") || pathname === "/login";
     const Frame = bare ? Bare : PageShell;
 
     /* A new page takes focus, so a screen reader reads it and Tab starts
@@ -116,7 +118,9 @@ function App() {
             >
                 <Frame>
                     {!bare && <InviteBanner />}
-                    <ErrorBoundary key={pathname}>
+                    {/* One key for the join pages, so moving between them keeps
+                        their shared frame rather than starting it afresh. */}
+                    <ErrorBoundary key={bare ? "join" : pathname}>
                         <Suspense fallback={<PageLoading />}>
                             {/* Each page fades in once it has loaded. The
                                 shell's own column, so the gap between a
@@ -210,14 +214,20 @@ function App() {
                                         path="/reset-password"
                                         element={<ResetPasswordPage />}
                                     />
-                                    <Route
-                                        path="/join"
-                                        element={<JoinPage />}
-                                    />
-                                    <Route
-                                        path="/join/confirmed"
-                                        element={<JoinConfirmedPage />}
-                                    />
+                                    <Route element={<JoinLayout />}>
+                                        <Route
+                                            path="/join"
+                                            element={<JoinPage />}
+                                        />
+                                        <Route
+                                            path="/join/confirmed"
+                                            element={<JoinConfirmedPage />}
+                                        />
+                                        <Route
+                                            path="/login"
+                                            element={<LoginPage />}
+                                        />
+                                    </Route>
                                     <Route
                                         path="/unsubscribe"
                                         element={<UnsubscribePage />}

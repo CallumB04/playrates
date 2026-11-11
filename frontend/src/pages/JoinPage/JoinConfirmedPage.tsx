@@ -3,7 +3,6 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Check, MailWarning } from "lucide-react";
 import type { MyProfile } from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
-import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import Button from "../../components/ui/Button";
@@ -13,7 +12,7 @@ import Skeleton, { TextSkeleton } from "../../components/ui/Skeleton";
 import FormField from "../../components/auth/FormField";
 import CheckInbox from "../../components/auth/CheckInbox";
 import { useCaptcha } from "../../components/auth/useCaptcha";
-import JoinShell from "./components/JoinShell";
+import SwitchLink from "./components/SwitchLink";
 import StepHeading from "./components/StepHeading";
 
 /** A round mark over a step that went wrong. */
@@ -26,24 +25,13 @@ const ProblemMark = ({ children }: { children: ReactNode }) => (
     </span>
 );
 
-const LogIn = () => {
-    const { openLogin } = useAccountForm();
-    return (
-        <button
-            type="button"
-            onClick={openLogin}
-            className="relative cursor-pointer font-medium text-brand-text before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:underline"
-        >
-            Log in
-        </button>
-    );
-};
+const LogIn = () => <SwitchLink to="/login">Log in</SwitchLink>;
 
 /** Confirmed and signed in: who you are now, and one way on. */
 const Confirmed = ({ user }: { user: MyProfile }) => {
     const navigate = useNavigate();
     return (
-        <div className="flex flex-1 flex-col justify-center">
+        <div className="flex flex-col">
             <span className="relative mb-6 self-start">
                 <ProfilePicture
                     variant="review"
@@ -92,7 +80,7 @@ const Problem = ({ expired }: { expired: boolean }) => {
 
     if (sentTo) {
         return (
-            <div className="flex flex-1 flex-col justify-center">
+            <div className="flex flex-col">
                 <StepHeading title="Check your inbox" centred />
                 <div className="mt-6">
                     <CheckInbox
@@ -134,7 +122,7 @@ const Problem = ({ expired }: { expired: boolean }) => {
     };
 
     return (
-        <div className="flex flex-1 flex-col justify-center">
+        <div className="flex flex-col">
             <ProblemMark>
                 <MailWarning size={24} />
             </ProblemMark>
@@ -175,7 +163,7 @@ const Problem = ({ expired }: { expired: boolean }) => {
 
 /** Here without a link, and not signed in. */
 const NothingHere = () => (
-    <div className="flex flex-1 flex-col justify-center">
+    <div className="flex flex-col">
         <StepHeading
             title="Nothing to confirm"
             aside="This is where the link in your confirmation email lands."
@@ -202,11 +190,11 @@ const JoinConfirmedPage = () => {
     const link = params.get("link");
 
     return (
-        <JoinShell>
+        <>
             {link === "expired" || link === "failed" ? (
                 <Problem expired={link === "expired"} />
             ) : isLoading ? (
-                <div aria-busy className="flex flex-1 flex-col justify-center">
+                <div aria-busy className="flex flex-col">
                     <Skeleton round className="mb-5 size-14" />
                     <Skeleton className="h-8 w-3/4" />
                     <div className="mt-3">
@@ -218,7 +206,7 @@ const JoinConfirmedPage = () => {
             ) : (
                 <NothingHere />
             )}
-        </JoinShell>
+        </>
     );
 };
 
