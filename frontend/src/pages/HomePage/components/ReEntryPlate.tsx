@@ -371,7 +371,18 @@ const NowPlaying = ({
     );
 };
 
-/** The four shelves as one slim row of links, each with its count. */
+/** Each shelf's own tint, for the square its mark sits in. Whole class
+ *  names, so the stylesheet keeps them. */
+const SHELF_TINT: Record<(typeof GAME_STATUSES)[number], string> = {
+    played: "bg-status-played-quiet",
+    playing: "bg-status-playing-quiet",
+    backlog: "bg-status-backlog-quiet",
+    wishlist: "bg-status-wishlist-quiet",
+};
+
+/** The four shelves as one bar of figures, quartered by hairlines, each
+ *  quarter a link to its shelf. On a phone the count leads over the mark
+ *  and name; with room, the mark sits in its shelf's tint beside them. */
 const Shelves = ({
     username,
     shelves,
@@ -379,25 +390,46 @@ const Shelves = ({
     username: string;
     shelves: Record<string, number> | undefined;
 }) => (
-    <nav aria-label="Your shelves" className="grid grid-cols-4 gap-2">
+    <nav
+        aria-label="Your shelves"
+        className={cardClass(
+            "grid grid-cols-4 divide-x divide-subtle overflow-hidden",
+            { padding: "none" }
+        )}
+    >
         {GAME_STATUSES.map((status) => {
             const { label, icon: Icon, markTone } = STATUS_PRESENTATION[status];
+            const count = formatCount(shelves?.[status] ?? 0);
             return (
                 <Link
                     key={status}
                     to={shelfPath(username, status)}
-                    className="flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 rounded-md border border-subtle bg-surface-raised px-1 py-2 lift hover:border-strong focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:flex-row sm:justify-between sm:gap-3 sm:px-3.5"
+                    // Name first when read aloud, as the figure leads only
+                    // for the eye.
+                    aria-label={`${label} ${count}`}
+                    className="group flex min-h-11 min-w-0 flex-col items-center gap-1 px-1 py-3 transition-colors hover:bg-surface-hover/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:flex-row sm:gap-3.5 sm:px-4 sm:py-3.5 lg:px-5"
                 >
-                    <span className="flex min-w-0 items-center gap-1.5 text-label-sm text-content-secondary">
-                        <Icon
-                            size={14}
-                            aria-hidden
-                            className={cn("shrink-0", markTone)}
-                        />
-                        <span className="truncate">{label}</span>
+                    <span
+                        aria-hidden
+                        className={cn(
+                            "hidden size-10 shrink-0 place-items-center rounded-md sm:grid",
+                            SHELF_TINT[status]
+                        )}
+                    >
+                        <Icon size={18} className={markTone} />
                     </span>
-                    <span className="font-mono text-body-sm font-semibold text-content tabular-nums">
-                        {formatCount(shelves?.[status] ?? 0)}
+                    <span className="flex min-w-0 flex-col items-center gap-1 sm:items-start">
+                        <span className="font-mono text-xl leading-none font-semibold text-content tabular-nums sm:text-2xl">
+                            {count}
+                        </span>
+                        <span className="flex min-w-0 items-center gap-1.5 text-label-sm text-content-secondary group-hover:text-content">
+                            <Icon
+                                size={13}
+                                aria-hidden
+                                className={cn("shrink-0 sm:hidden", markTone)}
+                            />
+                            <span className="truncate">{label}</span>
+                        </span>
                     </span>
                 </Link>
             );
