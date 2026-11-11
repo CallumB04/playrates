@@ -5,11 +5,11 @@ import {
     useState,
     type ReactNode,
 } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AccountFormContext, type AccountFormMode } from "./AccountFormContext";
 
 /**
- * Owns the signup/login modal. Anything that needs to open it reads this
+ * Owns the log-in modal, and the way to the sign-up page. Anything that needs to open it reads this
  * rather than being handed a callback.
  */
 export const AccountFormProvider = ({ children }: { children: ReactNode }) => {
@@ -17,7 +17,14 @@ export const AccountFormProvider = ({ children }: { children: ReactNode }) => {
     const location = useLocation();
 
     const openLogin = useCallback(() => setMode("login"), []);
-    const openSignup = useCallback(() => setMode("signup"), []);
+    const navigate = useNavigate();
+    // Signing up is a page of its own; it takes you back here after.
+    const here = `${location.pathname}${location.search}`;
+    const openSignup = useCallback(() => {
+        setMode(null);
+        if (!here.startsWith("/join"))
+            navigate("/join", { state: { from: here } });
+    }, [navigate, here]);
     const openReset = useCallback(() => setMode("reset"), []);
     const close = useCallback(() => setMode(null), []);
 

@@ -1,8 +1,9 @@
-import { lazy, Suspense, useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef, type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Header from "./components/layout/Header";
 import TabBar from "./components/layout/TabBar";
 import PageShell from "./components/layout/PageShell";
+import { cn } from "./lib/cn";
 import Footer from "./components/Footer";
 import ToastStack from "./components/feedback/ToastStack";
 import AccountFormModal from "./components/auth/AccountFormModal";
@@ -39,6 +40,10 @@ const LibraryPage = lazy(() => import("./pages/LibraryPage/LibraryPage"));
 const GamePage = lazy(() => import("./pages/GamePage/GamePage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const JoinPage = lazy(() => import("./pages/JoinPage/JoinPage"));
+const JoinConfirmedPage = lazy(
+    () => import("./pages/JoinPage/JoinConfirmedPage")
+);
 const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage"));
 const AdminGate = lazy(() => import("./pages/admin/AdminGate"));
 const HubPage = lazy(() => import("./pages/HubPage/HubPage"));
@@ -59,12 +64,19 @@ const LibraryRedirect = () => {
    long. Empty, and tall enough that the footer doesn't flash up into view. */
 const PageLoading = () => <div aria-busy className="min-h-[60dvh]" />;
 
+/** The frame a standalone page has in place of the shell: none. */
+const Bare = ({ children }: { children: ReactNode }) => <>{children}</>;
+
 function App() {
     useReloadOnNewBuild();
     // A crash on one page shouldn't take the header and the nav with it.
     // Keyed to the page, so going somewhere else starts afresh.
     const { pathname } = useLocation();
     useScrollMemory();
+    // Signing up stands alone, full screen: no header, footer or tab bar,
+    // nothing to wander off to halfway through.
+    const bare = pathname.startsWith("/join");
+    const Frame = bare ? Bare : PageShell;
 
     /* A new page takes focus, so a screen reader reads it and Tab starts
        from its top, as on a site where every link loads a page. Not on the
@@ -79,7 +91,13 @@ function App() {
 
     return (
         // Below lg the page ends above the tab bar, footer included.
-        <div className="flex min-h-dvh flex-col max-lg:pb-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom))]">
+        <div
+            className={cn(
+                "flex min-h-dvh flex-col",
+                !bare &&
+                    "max-lg:pb-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom))]"
+            )}
+        >
             {/* First thing a keyboard reaches: past the header and its menus. */}
             <a
                 href="#main"
@@ -87,7 +105,7 @@ function App() {
             >
                 Skip to content
             </a>
-            <Header />
+            {!bare && <Header />}
             {/* A full screen at least, so a short page (an empty community, a
                 search with no results) doesn't end on the footer. */}
             <main
@@ -96,8 +114,8 @@ function App() {
                 tabIndex={-1}
                 className="min-h-dvh flex-1 outline-none"
             >
-                <PageShell>
-                    <InviteBanner />
+                <Frame>
+                    {!bare && <InviteBanner />}
                     <ErrorBoundary key={pathname}>
                         <Suspense fallback={<PageLoading />}>
                             {/* Each page fades in once it has loaded. The
@@ -193,6 +211,14 @@ function App() {
                                         element={<ResetPasswordPage />}
                                     />
                                     <Route
+                                        path="/join"
+                                        element={<JoinPage />}
+                                    />
+                                    <Route
+                                        path="/join/confirmed"
+                                        element={<JoinConfirmedPage />}
+                                    />
+                                    <Route
                                         path="/unsubscribe"
                                         element={<UnsubscribePage />}
                                     />
@@ -224,10 +250,10 @@ function App() {
                             </div>
                         </Suspense>
                     </ErrorBoundary>
-                </PageShell>
+                </Frame>
             </main>
-            <Footer />
-            <TabBar />
+            {!bare && <Footer />}
+            {!bare && <TabBar />}
             <AccountFormModal />
             <ChooseUsername />
             <FirstLoginWelcome />

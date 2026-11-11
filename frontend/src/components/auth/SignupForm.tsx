@@ -88,7 +88,9 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
                 captchaToken,
                 data.get("news") === "on"
             );
-            notify("Welcome to PlayRates", "success");
+            // A welcome only once you're in: with a link still to follow,
+            // the inbox step says what happens next.
+            if (signedIn) notify("Welcome to PlayRates", "success");
             onSignedUp(email, signedIn);
         } catch (error) {
             captcha.reset();

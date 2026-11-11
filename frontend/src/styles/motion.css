@@ -32,6 +32,11 @@
     --animate-label-in: label-in 200ms cubic-bezier(0.23, 1, 0.32, 1);
     --animate-confirm: confirm 520ms cubic-bezier(0.23, 1, 0.32, 1);
     --animate-toast-in: toast-enter 300ms cubic-bezier(0.23, 1, 0.32, 1);
+    /* A picture taking over from the one under it, then drifting in so
+       slowly it reads as stillness with life in it. */
+    --animate-art-in:
+        art-in 1600ms cubic-bezier(0.23, 1, 0.32, 1) both,
+        art-drift 9s linear both;
 }
 
 :root {
@@ -195,6 +200,18 @@
     }
 }
 
+@keyframes art-in {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes art-drift {
+    from {
+        transform: scale(1.06);
+    }
+}
+
 /* Done: a ring of the control's own colour, gone as it widens. */
 @keyframes confirm {
     from {
@@ -221,6 +238,7 @@
         --animate-label-in: none;
         --animate-confirm: none;
         --animate-toast-in: none;
+        --animate-art-in: none;
         --exit-pop: 0;
         --exit-dialog: 0;
         --exit-sheet: 0;

@@ -162,11 +162,14 @@ const Header = () => {
                                 >
                                     Sign in
                                 </Button>
-                                <span className="hidden sm:contents">
-                                    <Button size="sm" onClick={openSignup}>
-                                        Join PlayRates
-                                    </Button>
-                                </span>
+                                {/* Not on the join pages themselves. */}
+                                {!location.pathname.startsWith("/join") && (
+                                    <span className="hidden sm:contents">
+                                        <Button size="sm" onClick={openSignup}>
+                                            Join PlayRates
+                                        </Button>
+                                    </span>
+                                )}
                             </div>
                         )}
                     </div>

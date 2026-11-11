@@ -1,4 +1,6 @@
 import { lazy, Suspense, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { readAuthLinkResult } from "../../lib/authLinks";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useMarkOnboarded } from "../../hooks/queries/useProfiles";
@@ -18,11 +20,18 @@ const WelcomePopup = lazy(() => import("./WelcomePopup"));
 const FirstLoginWelcome = () => {
     const { user } = useAuth();
     const { mode } = useAccountForm();
+    const { pathname, search, hash } = useLocation();
+    // The join pages say their own welcome first, and a link still on its
+    // way to them is about to leave this page.
+    const joining =
+        pathname.startsWith("/join") ||
+        readAuthLinkResult(search, hash) !== null;
     const markOnboarded = useMarkOnboarded();
     // Closes on the spot rather than waiting for the round trip to say so.
     const [dismissed, setDismissed] = useState(false);
 
-    if (!user || dismissed || !owesWelcome(user, mode !== null)) return null;
+    if (!user || dismissed || joining || !owesWelcome(user, mode !== null))
+        return null;
 
     return (
         <Suspense fallback={null}>
