@@ -504,6 +504,7 @@ const ListGames = ({
                         gameId={entry.game.id}
                         title={entry.game.title}
                         coverUrl={entry.game.coverUrl}
+                        artworkUrl={entry.game.artworkUrl}
                         releaseDate={entry.game.releaseDate}
                         rank={row.rank}
                         handle={row.handle}

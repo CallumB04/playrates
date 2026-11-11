@@ -359,6 +359,25 @@ describe("reviews feed", () => {
     ]);
   });
 
+  it("brings each review's game art, for a card to sit on", async () => {
+    const seed = baseSeed();
+    const { app } = buildTestApp({
+      seed: {
+        ...seed,
+        games: [
+          { ...seed.games[0]!, banner_url: "https://img.test/banner.jpg" },
+        ],
+        reviews: [buildReview()],
+      },
+    });
+
+    const response = await request(app).get("/api/v1/reviews");
+
+    expect(response.body.data[0].game.artworkUrl).toBe(
+      "https://img.test/banner.jpg",
+    );
+  });
+
   /* The feed is public, so a private review must not leak into it even
      though its author can see it on their own profile. */
   it("leaves private reviews out", async () => {

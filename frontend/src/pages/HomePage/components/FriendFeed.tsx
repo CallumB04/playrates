@@ -15,6 +15,7 @@ import {
 import RatingBadge from "../../../components/ui/RatingBadge";
 import { relativeTime } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
+import ArtBackdrop from "../../../components/community/ArtBackdrop";
 import { usePlayedOn } from "../../../components/gamelog/usePlayedOn";
 
 /** What the actor did, as a sentence rather than a status word. */
@@ -46,8 +47,10 @@ const Row = ({ item }: { item: FriendActivity }) => {
     return (
         <Link
             to={`/game/${item.game.id}`}
-            className="flex items-center gap-3 rounded-md px-2 py-2 lift hover:bg-surface-hover"
+            className="relative isolate flex items-center gap-3 overflow-hidden rounded-md px-2 py-2 lift hover:bg-surface-hover"
         >
+            {/* The game's art at the row's far end, behind the rating. */}
+            <ArtBackdrop url={item.game.artworkUrl} fade="row" />
             <GameCover
                 sizes="36px"
                 coverUrl={item.game.coverUrl}

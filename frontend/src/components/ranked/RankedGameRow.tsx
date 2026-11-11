@@ -7,6 +7,7 @@ import {
 import { Link } from "react-router-dom";
 import { EllipsisVertical, GripVertical } from "lucide-react";
 import GameCover from "../game/GameCover";
+import ArtBackdrop from "../community/ArtBackdrop";
 import type { TileAction } from "../game/GameTile";
 import Button from "../ui/Button";
 import { releaseYear } from "../../lib/format";
@@ -21,6 +22,8 @@ export interface RankedGameRowProps extends HTMLAttributes<HTMLLIElement> {
     gameId: number;
     title: string;
     coverUrl: string | null;
+    /** The game's wide art, set at the row's far end. */
+    artworkUrl?: string | null;
     releaseDate?: string | null;
     /** Its place as shown, which moves with a drag before it lands. */
     rank: number;
@@ -46,6 +49,7 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
             gameId,
             title,
             coverUrl,
+            artworkUrl,
             releaseDate,
             rank,
             detail,
@@ -66,7 +70,7 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
             <li
                 ref={ref}
                 className={cn(
-                    "flex items-center gap-2 rounded-sm px-1.5 py-2 sm:gap-3 sm:px-2",
+                    "relative isolate flex items-center gap-2 overflow-hidden rounded-sm px-1.5 py-2 sm:gap-3 sm:px-2",
                     lifted
                         ? "bg-surface-raised shadow-modal ring-1 ring-strong"
                         : "bg-surface-raised",
@@ -77,6 +81,7 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
                 )}
                 {...props}
             >
+                <ArtBackdrop url={artworkUrl} fade="row" />
                 {handle && (
                     <button
                         type="button"

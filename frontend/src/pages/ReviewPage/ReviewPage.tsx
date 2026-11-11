@@ -30,6 +30,10 @@ import NotFoundPage from "../NotFoundPage";
 import AboutGame from "./components/AboutGame";
 import MoreFromAuthor from "./components/MoreFromAuthor";
 import MoreOfGame from "./components/MoreOfGame";
+import { cn } from "../../lib/cn";
+import PageBackdrop, {
+    TALL_BACKDROP_OFFSET,
+} from "../../components/layout/PageBackdrop";
 
 /* One column that may shrink, as on Community: left to size itself, a long
    unbroken word in a review would push the page past a phone's width. */
@@ -96,8 +100,15 @@ const ReviewPage = () => {
     const canReport = !!user && user.id !== author?.id;
 
     return (
-        <div className="flex flex-col gap-6">
-            <header className="flex flex-col gap-4">
+        <div
+            className={cn(
+                "flex flex-col gap-6",
+                review.game.artworkUrl && TALL_BACKDROP_OFFSET
+            )}
+        >
+            {/* The game's own picture behind the page, as on the game's. */}
+            <PageBackdrop url={review.game.artworkUrl ?? null} />
+            <header className="flex flex-col gap-4 on-backdrop">
                 <Breadcrumbs
                     trail={reviewTrail({
                         id: review.id,

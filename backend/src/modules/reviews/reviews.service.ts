@@ -18,6 +18,7 @@ import {
 } from "../../lib/reactions.js";
 import type { NotificationsRepository } from "../notifications/notifications.repository.js";
 import { reviewUpvotesKey } from "../notifications/notifications.mapper.js";
+import { createArtworkLookup } from "../games/artwork.js";
 import { AppError } from "../../lib/AppError.js";
 import { paginate, toRange } from "../../lib/pagination.js";
 import {
@@ -135,19 +136,25 @@ export const createReviewsService = (
     });
 
   /** The page's votes and visible authors, side by side. */
+  const artworkFor = createArtworkLookup(games);
+
   const present = async (
     viewerId: string | undefined,
     rows: ReviewRowJoined[],
   ): Promise<ReviewWithAuthor[]> => {
-    const [stateOf, visible] = await Promise.all([
+    const [stateOf, visible, art] = await Promise.all([
       reactionStates(
         repo.reactions,
         viewerId,
         rows.map((r) => r.id),
       ),
       visibleAuthors(viewerId, rows),
+      artworkFor(rows.map((r) => r.game_id)),
     ]);
-    return withAuthors(rows, stateOf, visible);
+    return withAuthors(rows, stateOf, visible).map((review) => ({
+      ...review,
+      game: { ...review.game, artworkUrl: art.get(review.game.id) ?? null },
+    }));
   };
 
   return {

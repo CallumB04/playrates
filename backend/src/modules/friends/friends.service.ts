@@ -18,6 +18,8 @@ import {
 } from "../notifications/notifications.mapper.js";
 import type { NotificationsRepository } from "../notifications/notifications.repository.js";
 import { toFriendUser } from "./friends.mapper.js";
+import { createArtworkLookup } from "../games/artwork.js";
+import type { GamesRepository } from "../games/games.repository.js";
 import type { ProfileGate } from "../profiles/profileGate.js";
 import type {
   FriendshipWithUsers,
@@ -48,7 +50,9 @@ export const createFriendsService = (
   profiles: ProfilesRepository,
   notifications: NotificationsRepository,
   gate: ProfileGate,
+  games: Pick<GamesRepository, "findByIds">,
 ) => {
+  const artworkFor = createArtworkLookup(games);
   /** Opt-in, so signed out and unknown both mean no. */
   const canSeeExplicit = async (viewerId?: string): Promise<boolean> =>
     viewerId
@@ -90,6 +94,7 @@ export const createFriendsService = (
         to,
         await canSeeExplicit(viewerId),
       );
+      const art = await artworkFor(rows.map((row) => row.game_id));
 
       return paginate(
         rows.map((row) => ({
@@ -106,6 +111,7 @@ export const createFriendsService = (
             id: row.game_id,
             title: row.game_title,
             coverUrl: row.game_cover_url,
+            artworkUrl: art.get(row.game_id) ?? null,
           },
           status: row.status,
           playedStatus: row.played_status,

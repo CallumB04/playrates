@@ -99,6 +99,7 @@ const WishlistList = ({
                     gameId={entry.gameId}
                     title={entry.game?.title ?? "Unknown game"}
                     coverUrl={entry.game?.coverUrl ?? null}
+                    artworkUrl={entry.game?.artworkUrl}
                     releaseDate={entry.game?.releaseDate}
                     rank={row.rank}
                     handle={row.handle}

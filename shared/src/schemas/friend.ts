@@ -63,6 +63,8 @@ export interface FriendActivity {
     id: number;
     title: string;
     coverUrl: string | null;
+    /** Wide art for a card's backdrop. Absent from an API older than it. */
+    artworkUrl?: string | null;
   };
   status: string;
   playedStatus: string | null;

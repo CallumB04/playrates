@@ -244,6 +244,7 @@ export const buildRoutes = ({
     repos.profiles,
     repos.notifications,
     profileGate,
+    repos.games,
   );
   const notifications = createNotificationsService(
     repos.notifications,
