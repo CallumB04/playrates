@@ -44,6 +44,8 @@ const DrawerTabs = ({
                         markTone,
                     } = STATUS_PRESENTATION[status];
                     const isActive = status === active;
+                    const n = counts[status];
+                    const count = n === undefined ? undefined : formatCount(n);
 
                     return (
                         <button
@@ -71,20 +73,24 @@ const DrawerTabs = ({
                                     )}
                                 />
                                 <span className="font-mono tabular-nums sm:hidden">
-                                    {formatCount(counts[status] ?? 0)}
+                                    {/* Blank until known: the well is
+                                        already a skeleton's grey. */}
+                                    {count ?? "\u00a0"}
                                 </span>
                             </span>
                             <span className="truncate">{label}</span>
-                            <span
-                                className={cn(
-                                    "hidden rounded-full px-1.5 font-mono text-label-sm tabular-nums sm:inline",
-                                    isActive
-                                        ? "bg-surface-sunken text-content-secondary"
-                                        : "text-content-muted"
-                                )}
-                            >
-                                {formatCount(counts[status] ?? 0)}
-                            </span>
+                            {count !== undefined && (
+                                <span
+                                    className={cn(
+                                        "hidden rounded-full px-1.5 font-mono text-label-sm tabular-nums sm:inline",
+                                        isActive
+                                            ? "bg-surface-sunken text-content-secondary"
+                                            : "text-content-muted"
+                                    )}
+                                >
+                                    {count}
+                                </span>
+                            )}
                         </button>
                     );
                 })}

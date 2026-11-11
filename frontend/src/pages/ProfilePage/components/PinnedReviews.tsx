@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pin } from "lucide-react";
 import Panel from "../../../components/ui/Panel";
 import Button from "../../../components/ui/Button";
+import { TextSkeleton } from "../../../components/ui/Skeleton";
 import {
     usePinnedReviews,
     useUserReviews,
@@ -22,7 +23,13 @@ interface PinnedReviewsProps {
 const PinnedReviews = ({ username, ids, isOwner }: PinnedReviewsProps) => {
     const { data } = usePinnedReviews(username, ids);
     if (isOwner)
-        return <OwnPinnedReviews username={username} shown={data ?? []} />;
+        return (
+            <OwnPinnedReviews
+                username={username}
+                shown={data ?? []}
+                loading={ids.length > 0 && !data}
+            />
+        );
     if (!data?.length) return null;
     return (
         <Panel
@@ -46,9 +53,12 @@ const Title = ({ count }: { count: number }) => (
 const OwnPinnedReviews = ({
     username,
     shown,
+    loading,
 }: {
     username: string;
     shown: Parameters<typeof ReviewRow>[0]["review"][];
+    /** Pins on their way, so not yet the prompt to add some. */
+    loading: boolean;
 }) => {
     const { slots } = usePinReviews();
     const [asked, doneAsking] = useEditParam("pinned_reviews");
@@ -69,7 +79,11 @@ const OwnPinnedReviews = ({
             }
             bodyClassName="flex flex-col gap-1 p-2"
         >
-            {shown.length > 0 ? (
+            {loading ? (
+                <div aria-busy className="px-2 py-3">
+                    <TextSkeleton lines={2} />
+                </div>
+            ) : shown.length > 0 ? (
                 shown.map((review) => (
                     <ReviewRow key={review.id} review={review} />
                 ))

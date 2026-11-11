@@ -3,7 +3,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { buildGameLog } from "../../../test/msw/handlers";
 import { renderWithProviders } from "../../../test/renderWithProviders";
-import ReEntryPlate from "./ReEntryPlate";
+import ReEntryPlate, { ReEntrySkeleton } from "./ReEntryPlate";
 
 const base = {
     username: "devuser",
@@ -15,6 +15,7 @@ const base = {
 };
 
 const shelves = { played: 12, playing: 3, backlog: 4, wishlist: 0 };
+const none = { played: 0, playing: 0, backlog: 0, wishlist: 0 };
 
 const game = (id: number, title: string) => ({
     ...buildGameLog().game!,
@@ -50,9 +51,7 @@ const covers = () =>
 
 describe("ReEntryPlate", () => {
     it("welcomes a newcomer rather than back, with nothing on the go", () => {
-        renderWithProviders(
-            <ReEntryPlate {...base} isNew shelves={undefined} />
-        );
+        renderWithProviders(<ReEntryPlate {...base} isNew shelves={none} />);
 
         expect(
             screen.getByRole("heading", { name: "Welcome, Kai" })
@@ -207,5 +206,56 @@ describe("ReEntryPlate", () => {
         expect(
             screen.getByRole("link", { name: /Played\s*12/ })
         ).toHaveAttribute("href", "/user/devuser/games?type=played");
+    });
+
+    describe("while loading", () => {
+        it("greets no one until it knows whether they're new", () => {
+            renderWithProviders(
+                <ReEntryPlate {...base} isNew={undefined} shelves={shelves} />
+            );
+            // Empty, as toHaveTextContent("") would pass whatever it said.
+            expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
+                ""
+            );
+        });
+
+        it("holds the card's place rather than saying nothing's on the go", () => {
+            renderWithProviders(
+                <ReEntryPlate
+                    {...base}
+                    isNew={false}
+                    playing={undefined}
+                    shelves={shelves}
+                />
+            );
+            expect(screen.queryByText("Nothing on the go")).toBeNull();
+            expect(screen.queryByText("Now playing")).toBeNull();
+        });
+
+        // What it offers depends on the backlog, so it doesn't guess.
+        it("waits for the shelves before asking for something to start", () => {
+            renderWithProviders(
+                <ReEntryPlate {...base} isNew={false} shelves={undefined} />
+            );
+            expect(screen.queryByText("Nothing on the go")).toBeNull();
+        });
+
+        it("shows no shelf counts before they arrive, rather than zeros", () => {
+            renderWithProviders(
+                <ReEntryPlate {...base} isNew={false} shelves={undefined} />
+            );
+            const played = screen.getByRole("link", { name: "Played" });
+            expect(played).toHaveAttribute(
+                "href",
+                "/user/devuser/games?type=played"
+            );
+            expect(played).not.toHaveTextContent("0");
+        });
+
+        it("draws the outline with nothing to follow before the account loads", () => {
+            renderWithProviders(<ReEntrySkeleton />);
+            expect(screen.queryAllByRole("link")).toHaveLength(0);
+            expect(screen.getByText("Played")).toBeInTheDocument();
+        });
     });
 });

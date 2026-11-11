@@ -24,8 +24,9 @@ import { useRecentReviews } from "../../hooks/queries/useReviews";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useTileActions } from "../../components/game/useTileActions";
 import SignedOutHero from "./components/SignedOutHero";
-import ReEntryPlate from "./components/ReEntryPlate";
+import ReEntryPlate, { ReEntrySkeleton } from "./components/ReEntryPlate";
 import YourWeek from "./components/YourWeek";
+
 import Rail from "../../components/game/GameRail";
 import GenreGrid from "./components/GenreGrid";
 import FriendFeed from "./components/FriendFeed";
@@ -48,13 +49,13 @@ const HomePage = () => {
     /* No name of its own: the homepage keeps the site title. */
     usePageTitle();
 
-    const { user } = useAuth();
+    const { user, session, isLoading: authLoading } = useAuth();
     const { openSignup } = useAccountForm();
     const flow = useLogFlow();
 
     const { data: siteStats } = useSiteStats();
     const { data: platforms } = usePlatforms();
-    const { data: genres } = useGenres();
+    const { data: genres, isLoading: genresLoading } = useGenres();
 
     const window = useMemo(releaseWindow, []);
 
@@ -89,9 +90,13 @@ const HomePage = () => {
 
     // Enough to find the one touched last and a few behind it: the shelf's
     // own order is by rating, which isn't what "now" means.
-    const { data: playing } = useMyShelf("playing", { limit: 12 });
+    const { data: playing, isPending: playingPending } = useMyShelf("playing", {
+        limit: 12,
+    });
     // Enough to draw a year without paging. The chart is a shape, not a ledger.
-    const { data: played } = useMyShelf("played", { limit: 100 });
+    const { data: played, isPending: playedPending } = useMyShelf("played", {
+        limit: 100,
+    });
     const { data: yearStats } = useUserStats(
         user?.username ?? "",
         new Date().getFullYear()
@@ -122,24 +127,37 @@ const HomePage = () => {
 
     return (
         <div className="flex flex-col gap-11">
+            {/* A session restores before its profile arrives: the signed-in
+                outline holds the top until then, not the pitch for strangers. */}
             {user ? (
                 <div className="flex flex-col gap-4 lg:gap-6">
                     <ReEntryPlate
                         username={user.username}
                         displayName={user.firstName || user.username}
-                        isNew={myLogIds?.length === 0}
-                        playing={onTheGo}
+                        isNew={myLogIds && myLogIds.length === 0}
+                        // A failed load falls back to empty rather than
+                        // loading for ever.
+                        playing={playingPending ? undefined : onTheGo}
                         shelves={allTime?.byStatus}
-                        yearLogs={yearLogs}
+                        yearLogs={playedPending ? undefined : yearLogs}
                         yearStats={yearStats}
                         onUpdateLog={(log) => flow.edit(log.gameId, log.id)}
                     />
                     <YourWeek />
                 </div>
+            ) : authLoading ? (
+                session && (
+                    <div className="flex flex-col gap-4 lg:gap-6">
+                        <ReEntrySkeleton />
+                        <YourWeek />
+                    </div>
+                )
             ) : (
                 <SignedOutHero
                     siteStats={siteStats}
-                    covers={trending?.data ?? []}
+                    covers={
+                        trendingLoading ? undefined : (trending?.data ?? [])
+                    }
                     onStart={openSignup}
                 />
             )}
@@ -206,7 +224,7 @@ const HomePage = () => {
                 <CommunityTrending threads={[]} isLoading={false} />
             )}
 
-            <GenreGrid genres={genres ?? []} />
+            <GenreGrid genres={genresLoading ? undefined : (genres ?? [])} />
 
             <Rail
                 title="New releases"

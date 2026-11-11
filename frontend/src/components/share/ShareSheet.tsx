@@ -15,8 +15,9 @@ interface ShareSheetProps {
     url: string;
     /** What a post says before the link. */
     text: string;
-    /** The picture to post, which the sheet shows and hands over. */
-    imageUrl: string;
+    /** The picture to post, which the sheet shows and hands over. Undefined
+     *  while its address is still being worked out: grey until then. */
+    imageUrl: string | undefined;
     fileName: string;
     /** Said in the picture's place when there isn't one to be had. */
     noImage?: string;
@@ -66,12 +67,13 @@ const ShareSheet = ({
         url: string;
         status: "loaded" | "missing";
     } | null>(null);
-    const image = settled?.url === imageUrl ? settled.status : "loading";
+    const image =
+        imageUrl && settled?.url === imageUrl ? settled.status : "loading";
     const setImage = (status: "loaded" | "missing") =>
-        setSettled({ url: imageUrl, status });
+        imageUrl && setSettled({ url: imageUrl, status });
     const hasImage = image !== "missing";
     const [busy, setBusy] = useState(false);
-    const files = hasImage && canShareFiles();
+    const files = hasImage && !!imageUrl && canShareFiles();
 
     const shareNative = async () => {
         setBusy(true);
@@ -79,7 +81,7 @@ const ShareSheet = ({
             await navigator.share(
                 files
                     ? {
-                          files: [await imageFile(imageUrl, fileName)],
+                          files: [await imageFile(imageUrl!, fileName)],
                           text: `${text} ${url}`,
                       }
                     : { title: text, text, url }
@@ -95,6 +97,7 @@ const ShareSheet = ({
     };
 
     const download = async () => {
+        if (!imageUrl) return;
         setBusy(true);
         try {
             /* Fetched first: a download attribute on another origin's link
@@ -138,7 +141,7 @@ const ShareSheet = ({
                     {image === "loading" && (
                         <Skeleton className="absolute inset-0" />
                     )}
-                    {hasImage ? (
+                    {!imageUrl ? null : hasImage ? (
                         <img
                             src={imageUrl}
                             alt=""
@@ -161,7 +164,7 @@ const ShareSheet = ({
                 <Button
                     size="touch"
                     onClick={() => void download()}
-                    disabled={busy}
+                    disabled={busy || !imageUrl}
                     className="mt-4 w-full"
                 >
                     <Download size={16} aria-hidden />

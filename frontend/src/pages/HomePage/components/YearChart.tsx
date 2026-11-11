@@ -30,6 +30,7 @@ const YearChart = ({
     logs,
     barsClassName = "h-20",
     emptyNote,
+    loading = false,
 }: {
     logs: GameLogWithGame[];
     /** The height of the bars. */
@@ -37,6 +38,8 @@ const YearChart = ({
     /** Shown over placeholder bars while the year has nothing in it.
      *  Without one, an empty year draws nothing. */
     emptyNote?: string;
+    /** The placeholder bars pulse, without the note: not empty, not yet. */
+    loading?: boolean;
 }) => {
     const { counts, peak, total } = useMemo(() => {
         const year = new Date().getFullYear();
@@ -58,8 +61,8 @@ const YearChart = ({
         };
     }, [logs]);
 
-    if (total === 0) {
-        if (!emptyNote) return null;
+    if (total === 0 || loading) {
+        if (!emptyNote && !loading) return null;
         return (
             <div>
                 <div
@@ -69,14 +72,28 @@ const YearChart = ({
                     {GHOST.map((height, i) => (
                         <span
                             key={i}
-                            className="flex-1 rounded-xs border border-strong bg-surface-sunken"
+                            className={cn(
+                                "flex-1 rounded-xs bg-surface-sunken",
+                                loading
+                                    ? "animate-pulse"
+                                    : "border border-strong"
+                            )}
                             style={{ height: `${height}%` }}
                         />
                     ))}
                 </div>
-                <p className="mt-2 text-label-sm text-content-muted">
-                    {emptyNote}
-                </p>
+                {/* Its line kept while loading, so nothing moves when the
+                    year arrives empty. */}
+                {emptyNote && (
+                    <p
+                        className={cn(
+                            "mt-2 text-label-sm text-content-muted",
+                            loading && "invisible"
+                        )}
+                    >
+                        {emptyNote}
+                    </p>
+                )}
             </div>
         );
     }

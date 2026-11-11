@@ -26,7 +26,7 @@ import { cardClass } from "../../components/ui/cardClass";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import Pagination from "../../components/ui/Pagination";
 import SegmentedChoice from "../../components/ui/SegmentedChoice";
-import { TextSkeleton } from "../../components/ui/Skeleton";
+import Skeleton, { TextSkeleton } from "../../components/ui/Skeleton";
 import ThreadCard from "../../components/community/ThreadCard";
 import TrendingHero from "../../components/community/TrendingHero";
 import TrendingRunnerUp from "../../components/community/TrendingRunnerUp";
@@ -87,7 +87,8 @@ const CommunityPage = () => {
         limit: PER_PAGE,
     });
     // Three, not one: the same list the home page shows, from the same cache.
-    const { data: trending } = useTrendingThreads(3);
+    const { data: trending, isLoading: trendingLoading } =
+        useTrendingThreads(3);
     const { data: patchNotes } = usePatchNotes();
     const { data: talkedAbout } = useTalkedAboutGames(5);
     const { data: latestReplies } = useLatestReplies(4);
@@ -183,6 +184,24 @@ const CommunityPage = () => {
                 its widest child's width and ran 10px past a 375px screen. */}
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
                 <div className="flex min-w-0 flex-col gap-6">
+                    {/* Its outline while it loads, so the threads below
+                        don't start where it's about to be. */}
+                    {!filtered && trendingLoading && (
+                        <div
+                            aria-busy
+                            className={cardClass("flex gap-4 p-4 sm:p-6", {
+                                tone: "accent",
+                                padding: "none",
+                            })}
+                        >
+                            <Skeleton className="aspect-3/4 w-16 shrink-0 sm:w-20" />
+                            <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+                                <Skeleton round className="h-6 w-28" />
+                                <Skeleton className="h-3 w-24" />
+                                <TextSkeleton lines={2} />
+                            </div>
+                        </div>
+                    )}
                     {top && (
                         <div className="flex flex-col gap-3">
                             <TrendingHero thread={top} />

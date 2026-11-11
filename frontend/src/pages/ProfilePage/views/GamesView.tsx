@@ -274,10 +274,16 @@ const GamesView = ({
             <ShelfPanel
                 active={activeSection}
                 // Every tab's count: the stats endpoint returns the whole breakdown.
+                // Until either arrives, no counts at all rather than zeros.
                 counts={
-                    stats?.byStatus ?? {
-                        [activeSection]: isWishlist ? wishlist.length : total,
-                    }
+                    stats?.byStatus ??
+                    ((isWishlist ? wishlistLoading : isLoading)
+                        ? {}
+                        : {
+                              [activeSection]: isWishlist
+                                  ? wishlist.length
+                                  : total,
+                          })
                 }
                 onSelect={setSection}
                 entries={entries}

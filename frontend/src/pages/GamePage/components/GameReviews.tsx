@@ -9,7 +9,7 @@ import ProfilePicture, {
     PrivateProfilePicture,
 } from "../../../components/ProfilePicture";
 import EmptyPlate from "../../../components/ui/EmptyPlate";
-import { TextSkeleton } from "../../../components/ui/Skeleton";
+import Skeleton, { TextSkeleton } from "../../../components/ui/Skeleton";
 import Dropdown from "../../../components/ui/Dropdown";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import ExpandableText from "./ExpandableText";
@@ -81,10 +81,14 @@ const GameReviews = ({
                     Reviews
                 </h2>
                 <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-label text-content-muted">
-                        {formatCount(total)}{" "}
-                        {total === 1 ? "review" : "reviews"}
-                    </span>
+                    {isLoading ? (
+                        <Skeleton className="inline-block h-3 w-16" />
+                    ) : (
+                        <span className="text-label text-content-muted">
+                            {formatCount(total)}{" "}
+                            {total === 1 ? "review" : "reviews"}
+                        </span>
+                    )}
                     {onWriteReview && (
                         // The empty state carries its own action, so skip it there.
                         <Button

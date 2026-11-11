@@ -56,7 +56,7 @@ const ScoreCards = ({
     game: Game;
     stats: GameStats | undefined;
 }) => {
-    const logCount = stats?.logCount ?? 0;
+    const logCount = stats?.logCount;
 
     return (
         <section className="grid items-stretch gap-3 sm:grid-cols-2">
@@ -91,17 +91,23 @@ const ScoreCards = ({
             <ScoreCard
                 label="On PlayRates"
                 // People, not logs: one player can log it on several consoles.
-                hint={`${logCount} ${logCount === 1 ? "player" : "players"}`}
+                hint={
+                    logCount === undefined
+                        ? undefined
+                        : `${logCount} ${logCount === 1 ? "player" : "players"}`
+                }
             >
                 <div className="grid w-full grid-cols-3 gap-3">
                     <Stat
                         icon={Clock}
                         value={formatHours(stats?.avgHoursPlayed ?? 0)}
+                        loading={!stats}
                         label="Average played"
                     />
                     <Stat
                         icon={Hourglass}
                         value={formatHours(stats?.avgHoursToBeat ?? 0)}
+                        loading={!stats}
                         label="Average to beat"
                     />
                     <Stat
@@ -112,6 +118,7 @@ const ScoreCards = ({
                             />
                         }
                         label="Average completion"
+                        loading={!stats}
                     />
                 </div>
             </ScoreCard>

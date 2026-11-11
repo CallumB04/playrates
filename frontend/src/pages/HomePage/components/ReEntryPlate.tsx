@@ -9,6 +9,7 @@ import Progress from "../../../components/ui/Progress";
 import RatingBadge from "../../../components/ui/RatingBadge";
 import { buttonClass } from "../../../components/ui/buttonClass";
 import { cardClass } from "../../../components/ui/cardClass";
+import Skeleton from "../../../components/ui/Skeleton";
 import YearChart from "./YearChart";
 import { usePlayedOn } from "../../../components/gamelog/usePlayedOn";
 import {
@@ -29,14 +30,16 @@ interface ReEntryPlateProps {
     username: string;
     /** First name where they have set one, username otherwise. */
     displayName: string;
-    /** Nothing logged yet, so not "welcome back". */
-    isNew: boolean;
-    /** The games on the go, most recently touched first. */
-    playing: GameLogWithGame[];
+    /** Nothing logged yet, so not "welcome back". Undefined until their
+     *  logs arrive, and the greeting waits rather than guess. */
+    isNew: boolean | undefined;
+    /** The games on the go, most recently touched first. Undefined while
+     *  loading, and so are the two below. */
+    playing: GameLogWithGame[] | undefined;
     /** How many games on each shelf, all time. */
     shelves: Record<string, number> | undefined;
     /** This year's played logs, for the chart. */
-    yearLogs: GameLogWithGame[];
+    yearLogs: GameLogWithGame[] | undefined;
     yearStats: UserStats | undefined;
     onUpdateLog: (log: GameLogWithGame) => void;
 }
@@ -239,6 +242,29 @@ const NothingOnTheGo = ({
     </section>
 );
 
+/** The card's own outline while what's on the go loads: a cover, a title
+ *  and a line of figures, so nothing reads as empty before it is. */
+const NowPlayingSkeleton = () => (
+    <div
+        aria-busy
+        className={cardClass(
+            "grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-3 p-4 sm:gap-x-5 sm:p-5",
+            { padding: "none" }
+        )}
+    >
+        <Skeleton className="aspect-3/4 w-16 sm:row-span-2 sm:w-22" />
+        <div className="flex min-w-0 flex-col gap-2 self-center sm:self-auto">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-6 w-3/5 sm:h-7" />
+            <Skeleton className="h-3 w-32" />
+        </div>
+        <div className="col-span-2 flex items-center justify-between gap-4 sm:col-span-1 sm:col-start-2 sm:justify-start">
+            <Skeleton className="h-4 w-44" />
+            <Skeleton className="size-11 sm:h-8 sm:w-20" />
+        </div>
+    </div>
+);
+
 /**
  * The game you're playing, in full, and the rest of what's on the go as
  * covers to switch between. The most recently touched leads, as "now"
@@ -250,18 +276,25 @@ const NowPlaying = ({
     shelves,
     onUpdateLog,
 }: {
-    playing: GameLogWithGame[];
+    playing: GameLogWithGame[] | undefined;
     username: string;
     shelves: Record<string, number> | undefined;
     onUpdateLog: (log: GameLogWithGame) => void;
 }) => {
     const [openId, setOpenId] = useState<number | null>(null);
-    const open = playing.find((l) => l.id === openId) ?? playing[0];
+    const open = playing?.find((l) => l.id === openId) ?? playing?.[0];
     const playedOn = usePlayedOn()(open ?? { system: null, platform: null });
-    const backlog = shelves?.backlog ?? 0;
 
+    // With nothing on the go, the call to action also waits for the
+    // shelves: what it offers depends on the backlog.
+    if (!playing || (!open && !shelves)) return <NowPlayingSkeleton />;
     if (!open?.game) {
-        return <NothingOnTheGo username={username} backlog={backlog} />;
+        return (
+            <NothingOnTheGo
+                username={username}
+                backlog={shelves?.backlog ?? 0}
+            />
+        );
     }
 
     const game = open.game;
@@ -388,11 +421,13 @@ const Shelves = ({
     username,
     shelves,
 }: {
-    username: string;
+    /** Undefined before the account is known: the bar, but not yet links. */
+    username?: string;
     shelves: Record<string, number> | undefined;
 }) => (
     <nav
         aria-label="Your shelves"
+        aria-busy={!shelves}
         className={cardClass(
             "grid grid-cols-4 divide-x divide-subtle overflow-hidden",
             { padding: "none" }
@@ -405,16 +440,11 @@ const Shelves = ({
                 markTone,
                 accent,
             } = STATUS_PRESENTATION[status];
-            const count = formatCount(shelves?.[status] ?? 0);
-            return (
-                <Link
-                    key={status}
-                    to={shelfPath(username, status)}
-                    // Name first when read aloud, as the figure leads only
-                    // for the eye.
-                    aria-label={`${label} ${count}`}
-                    className="group flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 py-2.5 transition-colors hover:bg-surface-hover/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:flex-row sm:justify-start sm:gap-3 sm:px-4 sm:py-3"
-                >
+            const count = shelves && formatCount(shelves[status] ?? 0);
+            const cell =
+                "group flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 py-2.5 transition-colors hover:bg-surface-hover/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:flex-row sm:justify-start sm:gap-3 sm:px-4 sm:py-3";
+            const body = (
+                <>
                     <span
                         aria-hidden
                         className={cn(
@@ -425,9 +455,17 @@ const Shelves = ({
                         <Icon size={15} className={markTone} />
                     </span>
                     <span className="flex min-w-0 flex-col items-center gap-0.5 sm:items-start">
-                        <span className="font-mono text-lg leading-tight font-semibold text-content tabular-nums sm:text-xl">
-                            {count}
-                        </span>
+                        {count ? (
+                            <span className="font-mono text-lg leading-tight font-semibold text-content tabular-nums sm:text-xl">
+                                {count}
+                            </span>
+                        ) : (
+                            // The figure's own line height, so nothing
+                            // shifts when it lands.
+                            <span className="flex h-[22.5px] items-center sm:h-[25px]">
+                                <Skeleton className="h-4 w-6 sm:h-5 sm:w-8" />
+                            </span>
+                        )}
                         <span className="flex min-w-0 items-center gap-1.5 text-label-sm text-content-secondary group-hover:text-content">
                             <span
                                 aria-hidden
@@ -439,7 +477,23 @@ const Shelves = ({
                             <span className="truncate">{label}</span>
                         </span>
                     </span>
+                </>
+            );
+            return username ? (
+                <Link
+                    key={status}
+                    to={shelfPath(username, status)}
+                    // Name first when read aloud, as the figure leads only
+                    // for the eye.
+                    aria-label={count ? `${label} ${count}` : label}
+                    className={cell}
+                >
+                    {body}
                 </Link>
+            ) : (
+                <div key={status} className={cell}>
+                    {body}
+                </div>
             );
         })}
     </nav>
@@ -450,34 +504,81 @@ const YearGlance = ({
     yearLogs,
     yearStats,
 }: {
-    yearLogs: GameLogWithGame[];
+    yearLogs: GameLogWithGame[] | undefined;
     yearStats: UserStats | undefined;
 }) => (
-    <div className="w-[320px]">
+    <div className="w-[320px]" aria-busy={!yearStats || !yearLogs}>
         <div className="mb-2.5 flex items-center justify-between gap-4">
             <span className={cn(EYEBROW, "text-content-muted")}>
                 Your {new Date().getFullYear()}
             </span>
-            <span className="flex items-center gap-3 text-label-sm text-content-secondary">
-                <span>
+            {yearStats ? (
+                <span className="flex items-center gap-3 text-label-sm text-content-secondary">
+                    <span>
+                        <span className="font-mono text-content">
+                            {formatCount(yearStats.gameCount)}
+                        </span>{" "}
+                        logged
+                    </span>
                     <span className="font-mono text-content">
-                        {formatCount(yearStats?.gameCount ?? 0)}
-                    </span>{" "}
-                    logged
+                        {formatHours(yearStats.hoursPlayed)}
+                    </span>
+                    {yearStats.averageRating != null && (
+                        <RatingBadge value={yearStats.averageRating} />
+                    )}
                 </span>
-                <span className="font-mono text-content">
-                    {formatHours(yearStats?.hoursPlayed ?? 0)}
-                </span>
-                {yearStats?.averageRating != null && (
-                    <RatingBadge value={yearStats.averageRating} />
-                )}
-            </span>
+            ) : (
+                <Skeleton className="h-3 w-28" />
+            )}
         </div>
         <YearChart
-            logs={yearLogs}
+            logs={yearLogs ?? []}
+            loading={!yearLogs}
             barsClassName="h-10"
             emptyNote="Nothing finished this year yet"
         />
+    </div>
+);
+
+/** Today's date over the greeting, and the year beside them with room.
+ *  Without a greeting yet, a bar of its size holds the place. */
+const Greeting = ({
+    greeting,
+    yearLogs,
+    yearStats,
+}: {
+    greeting: string | undefined;
+    yearLogs: GameLogWithGame[] | undefined;
+    yearStats: UserStats | undefined;
+}) => (
+    <div className="mb-1 flex flex-wrap items-end justify-between gap-x-10 gap-y-5 lg:mb-2">
+        <div>
+            <p className={cn(EYEBROW, "text-content-muted")}>{today()}</p>
+            <h1
+                id="home-greeting"
+                className="mt-2 font-display text-[28px] leading-[1.05] text-content sm:text-[44px] lg:text-[52px]"
+            >
+                {greeting ?? (
+                    <Skeleton className="my-[0.05em] h-[0.95em] w-[11ch] max-w-full" />
+                )}
+            </h1>
+        </div>
+        <div className="hidden lg:block">
+            <YearGlance yearLogs={yearLogs} yearStats={yearStats} />
+        </div>
+    </div>
+);
+
+/** The landing's outline while the account itself is still loading. */
+export const ReEntrySkeleton = () => (
+    <div aria-busy className="flex flex-col gap-4 lg:gap-5">
+        <Greeting
+            greeting={undefined}
+            yearLogs={undefined}
+            yearStats={undefined}
+        />
+        <NowPlayingSkeleton />
+        <Shelves shelves={undefined} />
     </div>
 );
 
@@ -499,20 +600,15 @@ const ReEntryPlate = ({
         aria-labelledby="home-greeting"
         className="flex flex-col gap-4 lg:gap-5"
     >
-        <div className="mb-1 flex flex-wrap items-end justify-between gap-x-10 gap-y-5 lg:mb-2">
-            <div>
-                <p className={cn(EYEBROW, "text-content-muted")}>{today()}</p>
-                <h1
-                    id="home-greeting"
-                    className="mt-2 font-display text-[28px] leading-[1.05] text-content sm:text-[44px] lg:text-[52px]"
-                >
-                    {isNew ? "Welcome" : "Welcome back"}, {displayName}
-                </h1>
-            </div>
-            <div className="hidden lg:block">
-                <YearGlance yearLogs={yearLogs} yearStats={yearStats} />
-            </div>
-        </div>
+        <Greeting
+            greeting={
+                isNew === undefined
+                    ? undefined
+                    : `${isNew ? "Welcome" : "Welcome back"}, ${displayName}`
+            }
+            yearLogs={yearLogs}
+            yearStats={yearStats}
+        />
 
         <NowPlaying
             playing={playing}

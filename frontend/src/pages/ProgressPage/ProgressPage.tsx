@@ -209,7 +209,14 @@ const Header = ({ data }: { data: Progress }) => {
                         <Award size={14} aria-hidden className="text-brand-text" />
                     }
                     label="Badges"
-                    value={badges ? badges.held.length : "…"}
+                    value={
+                        badges ? (
+                            badges.held.length
+                        ) : (
+                            // 1em: as tall as the figure it stands in for.
+                            <Skeleton className="inline-block h-[1em] w-6 align-top" />
+                        )
+                    }
                     to={profilePath(user.username, "badges")}
                 />
                 <Figure

@@ -46,7 +46,7 @@ import ExpandableText from "./components/ExpandableText";
 const GamePage = () => {
     const { gameID } = useParams();
     const gameId = Number(gameID);
-    const { user } = useAuth();
+    const { user, isLoading: authLoading } = useAuth();
     const { openSignup } = useAccountForm();
     const flow = useLogFlow();
     const quickAdd = useQuickAdd();
@@ -60,7 +60,10 @@ const GamePage = () => {
     const { data: platforms } = usePlatforms();
     const { data: genres } = useGenres();
     const { data: systems } = usePlatformSystems();
-    const { data: myLogIds } = useMyGameLogIds();
+    const { data: myLogIds, isPending: logIdsPending } = useMyGameLogIds();
+    // Signed in, the log buttons wait for your logs; a session still
+    // restoring may be signed in yet.
+    const logLoading = authLoading || (!!user && logIdsPending);
     const { data: myLists } = useMyLists(gameId, !!user);
     const { data: reviews, isLoading: reviewsLoading } = useGameReviews(
         gameId,
@@ -162,7 +165,7 @@ const GamePage = () => {
                             : "Join to add"
                 }
                 onPress={openLog}
-                disabled={quickSaving}
+                disabled={quickSaving || logLoading}
             />
             {/* auto then 1fr: when the cover column is the taller, the spare
                 height goes below the description, not between it and the
@@ -172,6 +175,7 @@ const GamePage = () => {
                     <GameCoverPlate
                         game={game}
                         log={log}
+                        logLoading={logLoading}
                         isSignedIn={!!user}
                         facts={facts}
                         onViewLog={() => flow.view(gameId)}

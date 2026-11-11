@@ -13,11 +13,15 @@ import { releaseYear } from "../../../lib/format";
 import type { GameFacts } from "../lib/gameFacts";
 import GameDetails from "./GameDetails";
 import { cn } from "../../../lib/cn";
+import Skeleton from "../../../components/ui/Skeleton";
 import HypeFlames from "../../../components/gamelog/HypeFlames";
 
 interface GameCoverPlateProps {
     game: Game;
     log: GameLogSummary | undefined;
+    /** Not yet known whether there's a log: the buttons wait, rather than
+     *  offer to log a game already logged. */
+    logLoading?: boolean;
     isSignedIn: boolean;
     facts: GameFacts | null;
     onPrimary: () => void;
@@ -53,6 +57,7 @@ const QUICK_TONE: Record<(typeof QUICK)[number], string> = {
 const GameCoverPlate = ({
     game,
     log,
+    logLoading = false,
     isSignedIn,
     facts,
     onPrimary,
@@ -112,7 +117,15 @@ const GameCoverPlate = ({
                     )}
             </div>
 
-            {log && log.logs.length > 1 && bundle?.rollup ? (
+            {logLoading ? (
+                <div aria-busy className="flex flex-col gap-2">
+                    <Skeleton className="h-12" />
+                    <div className="flex gap-2">
+                        <Skeleton className="h-11 flex-1 sm:h-10" />
+                        <Skeleton className="h-11 flex-1 sm:h-10" />
+                    </div>
+                </div>
+            ) : log && log.logs.length > 1 && bundle?.rollup ? (
                 <MyLogsPlate
                     logs={bundle.logs}
                     rollup={bundle.rollup}
@@ -154,7 +167,7 @@ const GameCoverPlate = ({
                 </Button>
             )}
 
-            {isSignedIn && !log && (
+            {isSignedIn && !log && !logLoading && (
                 <div className="flex gap-2">
                     {QUICK.map((status) => {
                         const { label, icon: Icon } =
