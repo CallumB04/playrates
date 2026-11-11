@@ -1402,7 +1402,7 @@ isOneToOne: false
                   ]
                 },"community_thread_cards": {
                   Row: {
-                    "author_accent": string | null,"author_avatar_url": string | null,"author_first_name": string | null,"author_id": string | null,"author_username": string | null,"contributor_count": number | null,"contributors": Json | null,"created_at": string,"game_cover_url": string | null,"game_has_sexual_content": boolean | null,"game_id": number | null,"game_slug": string | null,"game_title": string | null,"id": number,"last_activity_at": string,"message_count": number | null,"recent_message_count": number | null,"subject_kind": string,"title": string
+                    "author_accent": string | null,"author_avatar_url": string | null,"author_first_name": string | null,"author_id": string | null,"author_username": string | null,"contributor_count": number | null,"contributors": Json | null,"created_at": string,"game_banner_url": string | null,"game_cover_url": string | null,"game_has_sexual_content": boolean | null,"game_id": number | null,"game_slug": string | null,"game_title": string | null,"id": number,"last_activity_at": string,"message_count": number | null,"recent_message_count": number | null,"subject_kind": string,"title": string
                   }
                   ComputedFields: never
                   Relationships: [

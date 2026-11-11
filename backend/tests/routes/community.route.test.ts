@@ -591,6 +591,34 @@ describe("trending", () => {
   });
 });
 
+describe("a thread's game", () => {
+  it("brings its wide art for a backdrop, or its cover where it has none", async () => {
+    const seed = communitySeed();
+    const art = async (banner: string | null) => {
+      const { app } = buildTestApp({
+        seed: {
+          ...seed,
+          games: [
+            buildGame({
+              cover_url: "https://img.test/cover.jpg",
+              banner_url: banner,
+            }),
+          ],
+          communityMessages: [buildMessage({ id: 10, created_at: daysAgo(1) })],
+        },
+      });
+      const [thread] = (await request(app).get("/api/v1/community/trending"))
+        .body;
+      return thread.subject.game.artworkUrl;
+    };
+
+    expect(await art("https://img.test/banner.jpg")).toBe(
+      "https://img.test/banner.jpg",
+    );
+    expect(await art(null)).toBe("https://img.test/cover.jpg");
+  });
+});
+
 describe("the thread list filtered to one person", () => {
   it("keeps only threads they started or replied to, with the total", async () => {
     const seed = communitySeed();

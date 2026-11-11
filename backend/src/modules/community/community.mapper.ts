@@ -44,6 +44,7 @@ const toSubject = (row: ThreadCardRow): ThreadSubject =>
           title: row.game_title ?? "Unknown game",
           slug: row.game_slug ?? "",
           coverUrl: row.game_cover_url,
+          artworkUrl: row.game_banner_url ?? row.game_cover_url,
           hasSexualContent: row.game_has_sexual_content,
         },
       }

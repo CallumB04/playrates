@@ -66,6 +66,7 @@ export const createInMemoryCommunity = (
       game_title: game?.title ?? null,
       game_slug: game?.slug ?? null,
       game_cover_url: game ? (game.box_art_url ?? game.cover_url) : null,
+      game_banner_url: game?.banner_url ?? null,
       game_has_sexual_content: game?.has_sexual_content ?? false,
       author_username: author?.username ?? null,
       author_first_name: author?.first_name ?? null,

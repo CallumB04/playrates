@@ -190,12 +190,11 @@ const CommunityPage = () => {
                     {!filtered && trendingLoading && (
                         <div
                             aria-busy
-                            className={cardClass("flex gap-4 p-4 sm:p-6", {
-                                tone: "accent",
+                            className={cardClass("flex gap-4 p-4 sm:p-5", {
                                 padding: "none",
                             })}
                         >
-                            <Skeleton className="aspect-3/4 w-16 shrink-0 sm:w-20" />
+                            <Skeleton className="aspect-3/4 w-16 shrink-0 sm:w-22" />
                             <div className="flex min-w-0 flex-1 flex-col gap-2.5">
                                 <Skeleton round className="h-6 w-28" />
                                 <Skeleton className="h-3 w-24" />
