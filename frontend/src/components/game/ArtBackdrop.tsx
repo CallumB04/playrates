@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef, useState } from "react";
 import { igdbSized } from "@playrates/shared";
 import { cn } from "../../lib/cn";
 
@@ -16,11 +17,49 @@ const FADES = {
     row: "[mask-image:linear-gradient(to_right,transparent_40%,rgb(0_0_0/0.14)_72%,rgb(0_0_0/0.3))]",
 };
 
+/** How long a picture takes to fade in, and so to count as shown. */
+const FADE_MS = 500;
+
+/** One picture, hidden until it has loaded and then faded in, so a slow
+ *  one never shows half drawn or pops in late. */
+const Layer = ({ url, onShown }: { url: string; onShown?: () => void }) => {
+    const [loaded, setLoaded] = useState(false);
+    const img = useRef<HTMLImageElement>(null);
+    // One already in the cache can finish before React is listening.
+    useEffect(() => {
+        if (img.current?.complete) setLoaded(true);
+    }, []);
+    // Timed rather than on transitionend, which never fires with reduced
+    // motion.
+    useEffect(() => {
+        if (!loaded || !onShown) return;
+        const done = setTimeout(onShown, FADE_MS);
+        return () => clearTimeout(done);
+    }, [loaded, onShown]);
+    return (
+        <img
+            ref={img}
+            src={igdbSized(url, "screenshot_big")}
+            alt=""
+            decoding="async"
+            onLoad={() => setLoaded(true)}
+            className={cn(
+                "absolute inset-0 size-full object-cover transition-opacity duration-500 ease-out motion-reduce:transition-none",
+                loaded ? "opacity-100" : "opacity-0"
+            )}
+        />
+    );
+};
+
 /**
  * A game's own art behind a card, as Now playing has it, fading into the
  * card where the words are. A mask on the art rather than a veil over it:
  * two layers clipped to the same rounded corner each smooth its edge on
  * their own, and the art showed round the curve as a light patch.
+ *
+ * A new picture fades in over the last one fully shown, which stays
+ * until it's covered: swapped outright, the card's own surface showed
+ * between the two.
  *
  * It sits under everything else in the card, so the card needs only
  * `relative isolate overflow-hidden`, and its contents nothing at all.
@@ -31,8 +70,11 @@ const ArtBackdrop = ({
 }: {
     url: string | null | undefined;
     fade?: keyof typeof FADES;
-}) =>
-    url ? (
+}) => {
+    const [settled, setSettled] = useState<string | null>(null);
+    const settle = useCallback(() => setSettled(url ?? null), [url]);
+
+    return url ? (
         <span
             aria-hidden
             className={cn(
@@ -40,16 +82,14 @@ const ArtBackdrop = ({
                 FADES[fade]
             )}
         >
-            <img
-                // A new picture fades in afresh, not swapped in place.
-                key={url}
-                src={igdbSized(url, "screenshot_big")}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                className="size-full animate-fade-up object-cover"
-            />
+            {/* Keyed by picture, so the one underneath keeps its state
+                as it moves down and never fades in again. */}
+            {settled && settled !== url && (
+                <Layer key={settled} url={settled} />
+            )}
+            <Layer key={url} url={url} onShown={settle} />
         </span>
     ) : null;
+};
 
 export default ArtBackdrop;

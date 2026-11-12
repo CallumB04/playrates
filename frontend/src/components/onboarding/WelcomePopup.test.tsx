@@ -6,6 +6,7 @@ import { server } from "../../test/msw/server";
 import { buildProfile } from "../../test/msw/handlers";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import WelcomePopup from "./WelcomePopup";
+import { HOLD_MS } from "../../hooks/useLongPress";
 
 const API = "http://localhost:3000/api/v1";
 
@@ -137,6 +138,92 @@ describe("WelcomePopup", () => {
 
         await waitFor(() => expect(onClose).toHaveBeenCalled());
         expect(logged).toHaveBeenCalledWith({ gameId: 2, status: "played" });
+    });
+
+    it("marks a picked game as playing from its own cover", async () => {
+        const logged = vi.fn();
+        server.use(
+            http.post(`${API}/me/logs`, async ({ request }) => {
+                logged(await request.json());
+                return HttpResponse.json({});
+            })
+        );
+        const { onClose } = renderPopup();
+        await userEvent.click(
+            screen.getByRole("button", { name: "Skip for now" })
+        );
+        // Only a picked game asks whether it's on the go.
+        expect(
+            screen.queryByRole("button", { name: "Playing Portal 2 now" })
+        ).toBeNull();
+        await userEvent.click(
+            await screen.findByRole("button", { name: "Portal 2" })
+        );
+        expect(screen.getByText("1 played")).toBeInTheDocument();
+
+        await userEvent.click(
+            screen.getByRole("button", { name: "Playing Portal 2 now" })
+        );
+        expect(
+            screen.getByRole("button", { name: "Playing Portal 2 now" })
+        ).toHaveAttribute("aria-pressed", "true");
+        expect(screen.getByText("1 playing")).toBeInTheDocument();
+
+        await userEvent.click(
+            screen.getByRole("button", { name: "Add 1 game" })
+        );
+        await waitFor(() => expect(onClose).toHaveBeenCalled());
+        expect(logged).toHaveBeenCalledWith({ gameId: 2, status: "playing" });
+    });
+
+    it("on a touch screen, says to hold a game down and marks it playing when held", async () => {
+        const original = window.matchMedia;
+        window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+            matches: query === "(pointer: coarse)",
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+        }));
+        try {
+            renderPopup();
+            await userEvent.click(
+                screen.getByRole("button", { name: "Skip for now" })
+            );
+            expect(screen.getByText("Hold it down")).toBeInTheDocument();
+
+            const cover = await screen.findByRole("button", {
+                name: "Portal 2",
+            });
+            await userEvent.pointer({ keys: "[TouchA>]", target: cover });
+            await new Promise((done) => setTimeout(done, HOLD_MS + 50));
+            await userEvent.pointer({ keys: "[/TouchA]", target: cover });
+
+            // Picked and on the go at once, and the lift didn't unpick it.
+            expect(cover).toHaveAttribute("aria-pressed", "true");
+            expect(
+                screen.getByRole("button", { name: "Playing Portal 2 now" })
+            ).toHaveAttribute("aria-pressed", "true");
+            expect(screen.getByText("1 playing")).toBeInTheDocument();
+        } finally {
+            window.matchMedia = original;
+        }
+    });
+
+    it("forgets a game was on the go once it's unpicked", async () => {
+        renderPopup();
+        await userEvent.click(
+            screen.getByRole("button", { name: "Skip for now" })
+        );
+        const cover = await screen.findByRole("button", { name: "Portal 2" });
+        await userEvent.click(cover);
+        await userEvent.click(
+            screen.getByRole("button", { name: "Playing Portal 2 now" })
+        );
+        await userEvent.click(cover);
+        await userEvent.click(cover);
+        expect(
+            screen.getByRole("button", { name: "Playing Portal 2 now" })
+        ).toHaveAttribute("aria-pressed", "false");
     });
 
     it("stays open when the save fails, keeping what was typed", async () => {

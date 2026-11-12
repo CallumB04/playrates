@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
-import { buildProfile } from "../../test/msw/handlers";
+import { http, HttpResponse } from "msw";
+import { server } from "../../test/msw/server";
+import { buildProfile, buildProgress } from "../../test/msw/handlers";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import JoinConfirmedPage from "./JoinConfirmedPage";
 
@@ -29,6 +31,40 @@ describe("JoinConfirmedPage", () => {
         expect(
             screen.getByRole("button", { name: "Get started" })
         ).toBeInTheDocument();
+        // Into the welcome, not round it.
+        expect(screen.queryByRole("link")).toBeNull();
+    });
+
+    it("tells one of the first 100 members they're a Founding Member", async () => {
+        server.use(
+            http.post("http://localhost:3000/api/v1/me/progress", () =>
+                HttpResponse.json(
+                    buildProgress({
+                        unseen: {
+                            xp: [],
+                            badges: [
+                                {
+                                    badge: "founding_member",
+                                    metal: 4,
+                                    unlockedAt: "",
+                                },
+                            ],
+                            tokens: 0,
+                        },
+                    })
+                )
+            )
+        );
+        auth.user = buildProfile({ firstName: "Kai" });
+        land();
+        expect(await screen.findByText("Founding Member")).toBeInTheDocument();
+    });
+
+    it("says nothing of it to anyone who came later", async () => {
+        auth.user = buildProfile({ firstName: "Kai" });
+        land();
+        await screen.findByRole("heading", { name: "You’re in, Kai" });
+        expect(screen.queryByText("Founding Member")).toBeNull();
     });
 
     it("offers a new link right here when the old one ran out", () => {

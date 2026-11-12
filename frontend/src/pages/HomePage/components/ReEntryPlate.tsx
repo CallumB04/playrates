@@ -1,8 +1,17 @@
-import { useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Gamepad2, Pencil } from "lucide-react";
-import type { UserStats } from "@playrates/shared";
-import type { GameLogWithGame } from "../../../api";
+import type { Game, UserStats } from "@playrates/shared";
+import { logOnShelf, type GameLogWithGame } from "../../../api";
+import HypeFlames from "../../../components/gamelog/HypeFlames";
+import PlayGlyph from "../../../components/ui/PlayGlyph";
+import LoadingSpinner from "../../../components/LoadingSpinner";
+import { useNotify } from "../../../contexts/NotificationContext";
+import {
+    useLogMutations,
+    useMyGameLogIds,
+    useMyShelf,
+} from "../../../hooks/queries/useGameLogs";
 import GameCover from "../../../components/game/GameCover";
 import ArtBackdrop from "../../../components/game/ArtBackdrop";
 import Button from "../../../components/ui/Button";
@@ -22,6 +31,7 @@ import {
     formatHours,
     formatPercent,
     relativeTime,
+    todayIsoDate,
 } from "../../../lib/format";
 import { completionTone } from "../../../lib/completionTone";
 import { cn } from "../../../lib/cn";
@@ -42,6 +52,9 @@ interface ReEntryPlateProps {
     /** This year's played logs, for the chart. */
     yearLogs: GameLogWithGame[] | undefined;
     yearStats: UserStats | undefined;
+    /** This week's trending games, for one to suggest with nothing on the
+     *  go and nothing on the backlog. */
+    trending: Game[] | undefined;
     onUpdateLog: (log: GameLogWithGame) => void;
 }
 
@@ -189,8 +202,8 @@ const OnTheGo = ({
     );
 };
 
-/** Nothing on the go: the one thing to do next, at every width. */
-const NothingOnTheGo = ({
+/** Nothing on the go and nothing to suggest: the one thing to do next. */
+const StartSomething = ({
     username,
     backlog,
 }: {
@@ -243,6 +256,307 @@ const NothingOnTheGo = ({
     </section>
 );
 
+/** A game the card suggests, from the backlog or the catalogue. */
+type Suggested = Pick<Game, "id" | "title" | "coverUrl" | "artworkUrl"> & {
+    hype?: number | null;
+};
+
+/** How many the card offers: four, of which a phone shows three. */
+const PICKS = 4;
+
+const QUIET_LINK =
+    "relative font-medium text-content-secondary before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:text-content";
+
+/** The cover, darkened, under "Start playing": the art itself dims, as a
+ *  veil over it would show a light rim round its rounded corners. */
+const DIMMED = "brightness-[0.35]";
+
+/**
+ * One game to start: its cover, which starts it, and its hype. A mouse
+ * starts it in one click, with what a click does shown on hover; a finger
+ * has no hover, so its first tap shows the same and the second starts it.
+ */
+const PickTile = ({
+    game,
+    flames,
+    busy,
+    starting,
+    armed,
+    onLight,
+    onArm,
+    onStart,
+    className,
+}: {
+    game: Suggested;
+    flames: boolean;
+    busy: boolean;
+    starting: boolean;
+    armed: boolean;
+    onLight: () => void;
+    onArm: (on: boolean) => void;
+    onStart: () => void;
+    className?: string;
+}) => {
+    const touch = useRef(false);
+    const shown = armed || starting;
+    return (
+        <li
+            onMouseEnter={onLight}
+            onFocus={onLight}
+            className={cn("flex min-w-0 flex-col sm:w-20", className)}
+        >
+            <button
+                type="button"
+                aria-label={`Start playing ${game.title}`}
+                title={game.title}
+                disabled={busy}
+                onPointerDown={(event) => {
+                    touch.current = event.pointerType === "touch";
+                }}
+                onClick={() => {
+                    if (touch.current && !armed) onArm(true);
+                    else onStart();
+                }}
+                onBlur={() => onArm(false)}
+                className="group/cover relative block w-full cursor-pointer overflow-hidden rounded-sm shadow-cover lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-default"
+            >
+                <GameCover
+                    coverUrl={game.coverUrl}
+                    title={game.title}
+                    className={cn(
+                        "aspect-3/4 w-full transition-[filter] duration-200",
+                        "group-hover/cover:brightness-[0.35] group-focus-visible/cover:brightness-[0.35]",
+                        shown && DIMMED
+                    )}
+                />
+                <span
+                    aria-hidden
+                    className={cn(
+                        "absolute inset-0 flex flex-col items-center justify-center gap-1.5 px-1 text-center text-content-on-media opacity-0 transition-opacity duration-200",
+                        "group-hover/cover:opacity-100 group-focus-visible/cover:opacity-100",
+                        shown && "opacity-100"
+                    )}
+                >
+                    {starting ? (
+                        <LoadingSpinner size="sm" label={null} />
+                    ) : (
+                        <PlayGlyph
+                            size={22}
+                            className="drop-shadow-[0_2px_6px_rgb(0_0_0/0.5)]"
+                        />
+                    )}
+                    <span className="text-[11px] leading-tight font-semibold [text-shadow:0_1px_4px_rgb(0_0_0/0.6)]">
+                        {starting ? "Starting…" : "Start playing"}
+                    </span>
+                </span>
+            </button>
+            {/* Kept with none while any beside it has one, so the covers
+                stay in a row. */}
+            {flames && (
+                <span className="mt-2 flex h-3.5 items-center">
+                    {game.hype ? <HypeFlames hype={game.hype} /> : null}
+                </span>
+            )}
+        </li>
+    );
+};
+
+/** Nothing on the go, with games to start: the art of the one you're
+ *  looking at behind them, as Now playing has its own. */
+const StartPicks = ({
+    games,
+    title,
+    note,
+    links,
+    onStart,
+}: {
+    games: Suggested[];
+    title: string;
+    note: string;
+    links: ReactNode;
+    onStart: (game: Suggested) => Promise<unknown>;
+}) => {
+    const notify = useNotify();
+    const [litId, setLitId] = useState<number | null>(null);
+    const [startingId, setStartingId] = useState<number | null>(null);
+    const [armedId, setArmedId] = useState<number | null>(null);
+    const lit = games.find((g) => g.id === litId) ?? games[0]!;
+
+    const start = async (game: Suggested) => {
+        setStartingId(game.id);
+        try {
+            await onStart(game);
+            // Left disabled: the card becomes Now playing as the shelf
+            // comes back.
+        } catch {
+            setStartingId(null);
+            notify("Couldn’t start that one. Try again.", "error");
+        }
+    };
+
+    return (
+        <section
+            aria-labelledby="now-playing"
+            className={cardClass("relative isolate overflow-hidden", {
+                padding: "none",
+            })}
+        >
+            <ArtBackdrop url={lit.artworkUrl} />
+            <div className="relative flex animate-fade-up flex-col gap-5 p-4 sm:flex-row sm:items-center sm:gap-8 sm:p-5">
+                <div className="flex min-w-0 flex-1 flex-col">
+                    <h2
+                        id="now-playing"
+                        className="text-label-sm text-content-muted"
+                    >
+                        Nothing on the go
+                    </h2>
+                    <p className="mt-0.5 font-display text-xl leading-tight text-content sm:text-2xl">
+                        {title}
+                    </p>
+                    <p className="mt-1.5 text-body-sm text-content-secondary">
+                        {note}
+                    </p>
+                    <p className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-label">
+                        {links}
+                    </p>
+                </div>
+                <ul className="grid grid-cols-3 gap-3 sm:flex sm:shrink-0 sm:gap-3">
+                    {games.map((game, i) => (
+                        <PickTile
+                            key={game.id}
+                            game={game}
+                            flames={games.some((g) => g.hype)}
+                            busy={startingId !== null}
+                            starting={startingId === game.id}
+                            armed={armedId === game.id}
+                            onLight={() => setLitId(game.id)}
+                            onArm={(on) =>
+                                setArmedId((id) =>
+                                    on ? game.id : id === game.id ? null : id
+                                )
+                            }
+                            onStart={() => void start(game)}
+                            // Three to a phone, so each is big enough to
+                            // tap and to know.
+                            className={i === 3 ? "max-sm:hidden" : undefined}
+                        />
+                    ))}
+                </ul>
+            </div>
+        </section>
+    );
+};
+
+/** The backlog's most wanted, each moved to Playing in one tap. */
+const BacklogPicks = ({
+    username,
+    backlog,
+}: {
+    username: string;
+    backlog: number;
+}) => {
+    const { data, isPending } = useMyShelf("backlog", {
+        limit: PICKS,
+        sort: "hype",
+    });
+    const { patch } = useLogMutations();
+    const logs = (data?.data ?? []).flatMap((entry) => {
+        const log = logOnShelf(entry, "backlog");
+        return log?.game ? [{ log, game: log.game }] : [];
+    });
+
+    if (isPending) return <NowPlayingSkeleton />;
+    if (logs.length === 0)
+        return <StartSomething username={username} backlog={backlog} />;
+
+    const hyped = logs.some(({ log }) => log.hype);
+    return (
+        <StartPicks
+            games={logs.map(({ log, game }) => ({ ...game, hype: log.hype }))}
+            title="Pick one up from your backlog"
+            note={`${waiting(backlog)} waiting${hyped ? ", the ones you want most first" : ""}.`}
+            onStart={(game) => {
+                const { log } = logs.find((l) => l.game.id === game.id)!;
+                return patch.mutateAsync({
+                    logId: log.id,
+                    input: {
+                        status: "playing",
+                        startDate: log.startDate ?? todayIsoDate(),
+                    },
+                });
+            }}
+            links={
+                <>
+                    <Link
+                        to={shelfPath(username, "backlog")}
+                        className={QUIET_LINK}
+                    >
+                        See all {formatCount(backlog)}
+                    </Link>
+                    <Link to="/library" className={QUIET_LINK}>
+                        Browse the library
+                    </Link>
+                </>
+            }
+        />
+    );
+};
+
+/** No backlog either: this week's most talked-about games that aren't on
+ *  a shelf of yours yet. */
+const TrendingPicks = ({
+    username,
+    trending,
+}: {
+    username: string;
+    trending: Suggested[] | undefined;
+}) => {
+    const { data: mine } = useMyGameLogIds();
+    const { create } = useLogMutations();
+    if (!trending || !mine) return <NowPlayingSkeleton />;
+
+    const logged = new Set(mine.map((log) => log.gameId));
+    const games = trending.filter((g) => !logged.has(g.id)).slice(0, PICKS);
+    if (games.length === 0)
+        return <StartSomething username={username} backlog={0} />;
+
+    return (
+        <StartPicks
+            games={games}
+            title="Start something new"
+            note="Nothing on your backlog either, so here’s what’s trending this week."
+            onStart={(game) =>
+                create.mutateAsync({
+                    gameId: game.id,
+                    status: "playing",
+                    startDate: todayIsoDate(),
+                })
+            }
+            links={
+                <Link to="/library" className={QUIET_LINK}>
+                    Browse the library
+                </Link>
+            }
+        />
+    );
+};
+
+/** Nothing on the go: games to start, with their art, at every width. */
+const NothingOnTheGo = ({
+    username,
+    backlog,
+    trending,
+}: {
+    username: string;
+    backlog: number;
+    trending: Suggested[] | undefined;
+}) =>
+    backlog > 0 ? (
+        <BacklogPicks username={username} backlog={backlog} />
+    ) : (
+        <TrendingPicks username={username} trending={trending} />
+    );
+
 /** The card's own outline while what's on the go loads: a cover, a title
  *  and a line of figures, so nothing reads as empty before it is. */
 const NowPlayingSkeleton = () => (
@@ -275,11 +589,13 @@ const NowPlaying = ({
     playing,
     username,
     shelves,
+    trending,
     onUpdateLog,
 }: {
     playing: GameLogWithGame[] | undefined;
     username: string;
     shelves: Record<string, number> | undefined;
+    trending: Suggested[] | undefined;
     onUpdateLog: (log: GameLogWithGame) => void;
 }) => {
     const [openId, setOpenId] = useState<number | null>(null);
@@ -294,6 +610,7 @@ const NowPlaying = ({
             <NothingOnTheGo
                 username={username}
                 backlog={shelves?.backlog ?? 0}
+                trending={trending}
             />
         );
     }
@@ -576,6 +893,7 @@ const ReEntryPlate = ({
     shelves,
     yearLogs,
     yearStats,
+    trending,
     onUpdateLog,
 }: ReEntryPlateProps) => (
     <section
@@ -596,6 +914,7 @@ const ReEntryPlate = ({
             playing={playing}
             username={username}
             shelves={shelves}
+            trending={trending}
             onUpdateLog={onUpdateLog}
         />
         <Shelves username={username} shelves={shelves} />

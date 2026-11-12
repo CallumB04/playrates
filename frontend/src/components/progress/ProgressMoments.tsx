@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { badgeDef, levelFor } from "@playrates/shared";
 import { playerCardUrl } from "../../api";
@@ -9,6 +9,7 @@ import {
     useMarkSeen,
     useProgress,
 } from "../../hooks/queries/useProgress";
+import { FOUNDING_BADGE } from "../../lib/foundingBadge";
 import { profilePath } from "../../lib/profilePaths";
 import { useNotify } from "../../contexts/NotificationContext";
 import { OFFER_DWELL_MS } from "../../contexts/notificationQueue";
@@ -36,6 +37,8 @@ const ShareSheet = lazy(() => import("../share/ShareSheet"));
 const ProgressMoments = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    // The welcome page is the moment itself; the rest waits until after.
+    const joining = useLocation().pathname.startsWith("/join");
     const notify = useNotify();
     const { data } = useProgress();
     const seen = useMarkSeen();
@@ -70,6 +73,22 @@ const ProgressMoments = () => {
 
     useEffect(() => {
         if (!data) return;
+        if (joining) {
+            // Said on the page instead (JoinConfirmedPage).
+            const founding = data.unseen.badges.filter(
+                (b) =>
+                    b.badge === FOUNDING_BADGE &&
+                    !handled.current.has(`badge:${b.badge}:${b.metal}`)
+            );
+            if (founding.length === 0) return;
+            founding.forEach((b) =>
+                handled.current.add(`badge:${b.badge}:${b.metal}`)
+            );
+            seen.mutate({
+                badges: founding.map(({ badge, metal }) => ({ badge, metal })),
+            });
+            return;
+        }
         if (data.reveal) {
             if (!handled.current.has("reveal")) {
                 handled.current.add("reveal");
@@ -136,7 +155,7 @@ const ProgressMoments = () => {
         });
         // `seen` is a fresh object each render; only new data matters here.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [data]);
+    }, [data, joining]);
 
     if (!user || !data) return null;
 

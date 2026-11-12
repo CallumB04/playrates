@@ -127,6 +127,37 @@ describe("ProgressMoments", () => {
         expect(screen.queryByRole("dialog")).toBeNull();
     });
 
+    it("leaves the Founding Member badge to the welcome page and holds the rest until after", async () => {
+        respond(
+            progress({
+                xp: 50,
+                level: levelFor(50),
+                unseen: {
+                    xp: [{ id: 3, source: "rate", xp: 5 }],
+                    badges: [
+                        { badge: "founding_member", metal: 4, unlockedAt: "" },
+                    ],
+                    tokens: 0,
+                },
+            })
+        );
+        renderWithProviders(
+            <>
+                <ProgressMoments />
+                <ToastStack />
+            </>,
+            { route: "/join/confirmed" }
+        );
+
+        await waitFor(() =>
+            expect(seen).toContainEqual({
+                badges: [{ badge: "founding_member", metal: 4 }],
+            })
+        );
+        expect(screen.queryByText(/Founding Member/)).toBeNull();
+        expect(screen.queryByText(/Rated a game/)).toBeNull();
+    });
+
     it("reads the profile again when progress reaches a new level", async () => {
         const invalidate = vi.spyOn(QueryClient.prototype, "invalidateQueries");
         // The profile was fetched at level 1; progress is now at 2.

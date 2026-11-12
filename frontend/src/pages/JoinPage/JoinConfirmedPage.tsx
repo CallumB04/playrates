@@ -1,10 +1,13 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Check, MailWarning } from "lucide-react";
-import type { MyProfile } from "@playrates/shared";
+import { badgeDef, type MyProfile } from "@playrates/shared";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import { usePageMeta } from "../../hooks/usePageMeta";
+import { useProgress } from "../../hooks/queries/useProgress";
+import { FOUNDING_BADGE } from "../../lib/foundingBadge";
+import BadgeMedal from "../../components/progress/BadgeMedal";
 import Button from "../../components/ui/Button";
 import ProfilePicture from "../../components/ProfilePicture";
 import { buttonClass } from "../../components/ui/buttonClass";
@@ -27,7 +30,32 @@ const ProblemMark = ({ children }: { children: ReactNode }) => (
 
 const LogIn = () => <SwitchLink to="/login">Log in</SwitchLink>;
 
-/** Confirmed and signed in: who you are now, and one way on. */
+/** One of the first 100: said here, where it lands, not in a toast over it.
+ *  Kept once seen, as marking it seen drops it from the next fetch. */
+const FoundingMember = () => {
+    const { data } = useProgress();
+    const unlock = data?.unseen.badges.find((b) => b.badge === FOUNDING_BADGE);
+    const [shown, setShown] = useState(unlock);
+    if (unlock && !shown) setShown(unlock);
+    const def = badgeDef(FOUNDING_BADGE);
+    if (!shown || !def) return null;
+
+    return (
+        <div className="mt-6 flex animate-fade-up items-center gap-3.5 rounded-lg border border-subtle bg-surface-raised p-3.5">
+            <BadgeMedal badge={def} metal={shown.metal} />
+            <p className="min-w-0 text-body-sm text-content-secondary">
+                <span className="block font-semibold text-content">
+                    {def.name}
+                </span>
+                You’re one of our first 100 members. It’s on your profile for
+                good.
+            </p>
+        </div>
+    );
+};
+
+/** Confirmed and signed in: who you are now, and one way on, into the
+ *  welcome. No way round it to the library: everyone starts set up. */
 const Confirmed = ({ user }: { user: MyProfile }) => {
     const navigate = useNavigate();
     return (
@@ -51,6 +79,7 @@ const Confirmed = ({ user }: { user: MyProfile }) => {
                 title={`You’re in, ${user.firstName || user.username}`}
                 aside="Your email’s confirmed. Next, add a picture and the games you’ve played, or skip either for now."
             />
+            <FoundingMember />
             <Button
                 size="lg"
                 onClick={() => navigate("/")}
@@ -58,12 +87,6 @@ const Confirmed = ({ user }: { user: MyProfile }) => {
             >
                 Get started
             </Button>
-            <Link
-                to="/library"
-                className="relative mt-4 self-center text-body-sm font-medium text-content-secondary before:absolute before:-inset-x-2 before:-inset-y-3 before:content-[''] hover:text-content"
-            >
-                Browse the library first
-            </Link>
         </div>
     );
 };

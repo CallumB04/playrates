@@ -26,6 +26,7 @@ import { useTileActions } from "../../components/game/useTileActions";
 import SignedOutHero from "./components/SignedOutHero";
 import ReEntryPlate, { ReEntrySkeleton } from "./components/ReEntryPlate";
 import YourWeek from "./components/YourWeek";
+import GetStarted from "./components/GetStarted";
 
 import Rail from "../../components/game/GameRail";
 import GenreGrid from "./components/GenreGrid";
@@ -141,8 +142,10 @@ const HomePage = () => {
                         shelves={allTime?.byStatus}
                         yearLogs={playedPending ? undefined : yearLogs}
                         yearStats={yearStats}
+                        trending={trending?.data}
                         onUpdateLog={(log) => flow.edit(log.gameId, log.id)}
                     />
+                    <GetStarted />
                     <YourWeek />
                 </div>
             ) : authLoading ? (
