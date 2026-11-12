@@ -165,7 +165,7 @@ describe("ChooseUsername", () => {
         await user.keyboard("{Escape}");
         expect(screen.getByRole("dialog")).toBeInTheDocument();
 
-        await user.click(screen.getByRole("button", { name: "Sign out" }));
+        await user.click(screen.getByRole("button", { name: "Log out" }));
         expect(auth.signOut).toHaveBeenCalledOnce();
     });
 });

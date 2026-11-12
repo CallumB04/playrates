@@ -79,7 +79,7 @@ describe("MoreSheet", () => {
         expect(screen.queryByRole("link", { name: "Admin" })).toBeNull();
     });
 
-    /* Open from the start it pushed Sign out below a phone's fold. */
+    /* Open from the start it pushed Log out below a phone's fold. */
     it("folds Get started into one row until asked", async () => {
         sheet({ setup: steps });
         const row = screen.getByRole("button", { name: /Get started/ });
@@ -94,14 +94,14 @@ describe("MoreSheet", () => {
 
     it("signs out, closing first", async () => {
         const on = sheet();
-        await userEvent.click(screen.getByRole("button", { name: "Sign out" }));
+        await userEvent.click(screen.getByRole("button", { name: "Log out" }));
         expect(on.onClose).toHaveBeenCalled();
         expect(on.onSignOut).toHaveBeenCalled();
     });
 
     it("offers joining and signing in to someone signed out", async () => {
         const on = sheet({ user: null });
-        expect(screen.queryByRole("button", { name: "Sign out" })).toBeNull();
+        expect(screen.queryByRole("button", { name: "Log out" })).toBeNull();
         await userEvent.click(
             screen.getByRole("button", { name: "Join PlayRates" })
         );

@@ -365,7 +365,7 @@ const AccountMenu = ({
                             "cursor-pointer text-danger hover:bg-danger-subtle hover:text-danger"
                         )}
                     >
-                        <LogOut size={15} aria-hidden /> Sign out
+                        <LogOut size={15} aria-hidden /> Log out
                     </button>
                 </div>
             )}

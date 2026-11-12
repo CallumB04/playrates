@@ -263,7 +263,7 @@ describe("SettingsPage's password", () => {
 
         expect(
             screen.getByText(
-                "You sign in with Google, so there’s no password to change."
+                "You log in with Google, so there’s no password to change."
             )
         ).toBeInTheDocument();
         expect(
@@ -420,7 +420,7 @@ describe("SettingsPage's data export", () => {
         await u.click(screen.getByRole("button", { name: "Export my data" }));
 
         expect(
-            screen.getByText("Sign in with Google again to export your data.")
+            screen.getByText("Log in with Google again to export your data.")
         ).toBeInTheDocument();
         expect(
             screen.getByRole("button", { name: "Continue with Google" })

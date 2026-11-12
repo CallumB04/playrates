@@ -130,7 +130,7 @@ const ChooseUsernamePopup = () => {
                         {update.isPending ? "Saving…" : "Continue"}
                     </Button>
                     <Button type="button" variant="ghost" onClick={signOut}>
-                        Sign out
+                        Log out
                     </Button>
                 </div>
             </form>

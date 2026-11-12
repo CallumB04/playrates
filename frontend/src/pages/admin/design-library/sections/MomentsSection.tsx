@@ -84,7 +84,7 @@ const MomentsSection = () => {
                     onClick={() => setRevealing(true)}
                     disabled={!asAtLaunch}
                 >
-                    {asAtLaunch ? "Play the reveal" : "Sign in to play it"}
+                    {asAtLaunch ? "Play the reveal" : "Log in to play it"}
                 </Button>
                 {revealing && asAtLaunch && (
                     <LaunchReveal
@@ -175,7 +175,7 @@ const MomentsSection = () => {
 
             <Specimen
                 title="Welcome popup"
-                notes="Shown once, on a new account’s first sign-in: a first name, shown on the profile unless switched off there, and a picture, both optional, and one line pointing to Settings for the rest. Save saves and closes; there is nothing after it. It waits for the signup sheet to close, so the two never stack. Any way out marks it seen, skipping included. The preview walks the real popup against your own account and saves nothing."
+                notes="Shown once, on a new account’s first log-in: a first name, shown on the profile unless switched off there, and a picture, both optional, and one line pointing to Settings for the rest. Save saves and closes; there is nothing after it. It waits for the signup sheet to close, so the two never stack. Any way out marks it seen, skipping included. The preview walks the real popup against your own account and saves nothing."
                 meta="profile · preview · onClose · FirstLoginWelcome gates it on owesWelcome(user, accountFormOpen)"
             >
                 <Button onClick={() => setWelcoming(true)}>

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { createElement, Fragment, type ReactNode } from "react";
 
 export type NotificationType = "success" | "info" | "error";
 
@@ -45,7 +45,13 @@ export interface Toast {
     dwell: number | null;
     /** Playing its exit: still mounted, but no longer holding a slot. */
     leaving: boolean;
+    /** When it was raised, so a follow-up can tell it's still fresh. */
+    at: number;
 }
+
+/** How long a plain success toast takes a follow-up into its own line,
+ *  rather than one more toast stacking over the page. */
+export const JOIN_WINDOW_MS = 5000;
 
 /** Four is a wall of text in the corner of the screen. */
 export const MAX_VISIBLE = 3;
@@ -58,9 +64,22 @@ export type QueueAction =
           type: NotificationType;
           severity?: NotificationSeverity;
           action?: ToastAction;
+          at: number;
+          /** Said after the newest toast instead, if that one is a plain
+           *  success still fresh: "Entry updated · +5 XP". */
+          join?: ReactNode;
       }
     | { kind: "dismiss"; id: number }
     | { kind: "remove"; id: number };
+
+const joined = (first: ReactNode, then: ReactNode): ReactNode =>
+    createElement(
+        Fragment,
+        null,
+        first,
+        createElement("span", { "aria-hidden": true }, " · "),
+        then
+    );
 
 /** Oldest first, so the newest renders at the bottom of the stack. */
 export const notificationQueue = (
@@ -69,6 +88,24 @@ export const notificationQueue = (
 ): Toast[] => {
     switch (action.kind) {
         case "push": {
+            if (action.join !== undefined) {
+                const last = state.filter((toast) => !toast.leaving).at(-1);
+                if (
+                    last &&
+                    last.type === "success" &&
+                    !last.action &&
+                    action.at - last.at < JOIN_WINDOW_MS
+                ) {
+                    return state.map((toast) =>
+                        toast.id === last.id
+                            ? {
+                                  ...toast,
+                                  text: joined(toast.text, action.join),
+                              }
+                            : toast
+                    );
+                }
+            }
             const severity = action.severity ?? DEFAULT_SEVERITY[action.type];
             const next = [
                 ...state,
@@ -85,6 +122,7 @@ export const notificationQueue = (
                         ? (action.action.dwell ?? null)
                         : DWELL_MS[severity],
                     leaving: false,
+                    at: action.at,
                 },
             ];
 

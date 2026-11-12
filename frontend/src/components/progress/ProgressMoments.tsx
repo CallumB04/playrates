@@ -20,7 +20,7 @@ import {
 } from "../../lib/shareMoment";
 import { badgeMoment, levelMoment, shareUrl } from "../share/shareText";
 import { badgeToastText } from "./rewardText";
-import { xpToast } from "./XpToast";
+import { xpJoin, xpToast } from "./XpToast";
 
 // Each shows now and then, so none rides along with every page.
 const LaunchReveal = lazy(() => import("./LaunchReveal"));
@@ -95,7 +95,15 @@ const ProgressMoments = () => {
         const plain = gains.filter((g) => g.source !== "badge");
         if (plain.length > 0) {
             toasts.push(() =>
-                notify(xpToast(plain, data.unseen.tokens), "success", "low")
+                notify(
+                    xpToast(plain, data.unseen.tokens),
+                    "success",
+                    "low",
+                    undefined,
+                    // Straight after the save that earned it, one line,
+                    // not two toasts stacked over the page.
+                    { join: xpJoin(plain, data.unseen.tokens) }
+                )
             );
         }
         for (const b of badges) {

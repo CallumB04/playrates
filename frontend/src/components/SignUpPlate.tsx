@@ -14,7 +14,7 @@ const SignUpPlate = ({ title, body }: { title: string; body: string }) => {
                 <div className="flex flex-wrap justify-center gap-2">
                     <Button onClick={openSignup}>Sign up</Button>
                     <Button variant="secondary" onClick={openLogin}>
-                        Sign in
+                        Log in
                     </Button>
                 </div>
             }

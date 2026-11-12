@@ -86,7 +86,7 @@ const ConfirmItsYouModal = ({
             // Success is the page navigating away, so the button stays busy.
         } catch {
             setBusy(false);
-            setError("Couldn’t reach the sign-in page. Try again.");
+            setError("Couldn’t reach the log-in page. Try again.");
         }
     };
 
@@ -105,7 +105,7 @@ const ConfirmItsYouModal = ({
             {provider ? (
                 <div className="flex flex-col gap-4 pt-4">
                     <p className="text-body-sm text-content-secondary">
-                        Sign in with {provider} again to {DOING[purpose]}.
+                        Log in with {provider} again to {DOING[purpose]}.
                     </p>
                     {error && (
                         <p role="alert" className="text-body-sm text-danger">

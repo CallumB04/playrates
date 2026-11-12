@@ -55,7 +55,7 @@ const OAuthButtons = () => {
         } catch {
             setLeavingFor(null);
             notify(
-                "Couldn’t reach the sign-in page. Please try again.",
+                "Couldn’t reach the log-in page. Please try again.",
                 "error"
             );
         }

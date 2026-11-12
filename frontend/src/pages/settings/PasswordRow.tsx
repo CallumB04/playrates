@@ -29,7 +29,7 @@ const PasswordRow = () => {
     if (provider) {
         return (
             <p className="text-body-sm text-content-secondary">
-                You sign in with {provider}, so there’s no password to change.
+                You log in with {provider}, so there’s no password to change.
             </p>
         );
     }

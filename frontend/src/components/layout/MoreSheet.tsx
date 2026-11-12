@@ -101,7 +101,7 @@ const MoreSheet = ({
             {setup && (
                 <section className="mt-4 rounded-md border border-subtle bg-surface-sunken/50 p-1">
                     {/* One row until asked: the steps opened by default
-                        pushed Sign out below the sheet's fold. */}
+                        pushed Log out below the sheet's fold. */}
                     <button
                         type="button"
                         aria-expanded={stepsOpen}
@@ -242,7 +242,7 @@ const MoreSheet = ({
                             "text-danger hover:bg-danger-subtle hover:text-danger"
                         )}
                     >
-                        Sign out
+                        Log out
                         <LogOut size={16} aria-hidden />
                     </button>
                 )}
@@ -267,7 +267,7 @@ const MoreSheet = ({
                             onSignIn();
                         }}
                     >
-                        Sign in
+                        Log in
                     </Button>
                 </div>
             )}

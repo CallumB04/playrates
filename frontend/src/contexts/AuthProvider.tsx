@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 );
                 notify(
                     redirectError.cancelled
-                        ? "Sign-in cancelled"
+                        ? "Log-in cancelled"
                         : "Couldn’t sign you in. Please try again.",
                     redirectError.cancelled ? "info" : "error"
                 );

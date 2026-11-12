@@ -353,8 +353,8 @@ const SettingsPage = () => {
     if (!user) {
         return (
             <EmptyPlate
-                title="Sign in to change your settings"
-                action={<Button onClick={openLogin}>Sign in</Button>}
+                title="Log in to change your settings"
+                action={<Button onClick={openLogin}>Log in</Button>}
             />
         );
     }

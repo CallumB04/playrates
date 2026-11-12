@@ -7,10 +7,11 @@ import { buildProfile } from "../../test/msw/handlers";
 import TabBar from "./TabBar";
 
 let user: MyProfile | null = null;
+let isLoading = false;
 const openLogin = vi.fn();
 
 vi.mock("../../contexts/AuthContext", () => ({
-    useAuth: () => ({ user, signOut: vi.fn() }),
+    useAuth: () => ({ user, isLoading, signOut: vi.fn() }),
 }));
 vi.mock("../../contexts/AccountFormContext", () => ({
     useAccountForm: () => ({ openLogin, openSignup: vi.fn() }),
@@ -25,6 +26,7 @@ const bar = (route = "/") => {
 
 beforeEach(() => {
     user = buildProfile({ username: "devuser" });
+    isLoading = false;
 });
 afterEach(() => vi.restoreAllMocks());
 
@@ -70,11 +72,11 @@ describe("TabBar", () => {
         ).not.toHaveAttribute("aria-current");
     });
 
-    it("offers Sign in in Profile's place when signed out", async () => {
+    it("offers Log in in Profile's place when signed out", async () => {
         user = null;
         const tabs = bar();
         expect(tabs.queryByRole("link", { name: "Profile" })).toBeNull();
-        await userEvent.click(tabs.getByRole("button", { name: "Sign in" }));
+        await userEvent.click(tabs.getByRole("button", { name: "Log in" }));
         expect(openLogin).toHaveBeenCalled();
     });
 
@@ -86,7 +88,7 @@ describe("TabBar", () => {
             within(sheet).getByRole("link", { name: "Settings" })
         ).toBeInTheDocument();
         expect(
-            within(sheet).getByRole("button", { name: "Sign out" })
+            within(sheet).getByRole("button", { name: "Log out" })
         ).toBeInTheDocument();
     });
 
@@ -98,5 +100,15 @@ describe("TabBar", () => {
             bar("/library").getByRole("link", { name: "Library" })
         );
         expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+    });
+
+    // Just logged in, the profile a moment behind: offering Log in again
+    // looked as if it hadn't worked.
+    it("holds the profile's place, not Log in, while the profile loads", () => {
+        user = null;
+        isLoading = true;
+        const tabs = bar();
+        expect(tabs.queryByRole("button", { name: "Log in" })).toBeNull();
+        expect(tabs.getByText("Profile")).toBeInTheDocument();
     });
 });

@@ -30,7 +30,7 @@ const MyProfile = () => {
     ) : (
         <SignUpPlate
             title="Sign up to get your own profile"
-            body="This link goes to your profile. Sign in and it takes you there."
+            body="This link goes to your profile. Log in and it takes you there."
         />
     );
 };

@@ -174,7 +174,7 @@ for (const [from, to] of [
 
 /* ------------------------------------------------------------ emails */
 
-const IF_NOT_YOU = `If it wasn’t you, reset your password straight away with Forgot password on the sign-in screen, and email us at <a href="mailto:${CONTACT}" style="color:${IRIS};text-decoration:underline;">${CONTACT}</a>.`;
+const IF_NOT_YOU = `If it wasn’t you, reset your password straight away with Forgot password on the log-in screen, and email us at <a href="mailto:${CONTACT}" style="color:${IRIS};text-decoration:underline;">${CONTACT}</a>.`;
 
 // Supabase's otp_expiry (supabase/config.toml, and the live project's own
 // setting): a link stops working an hour after it's sent.

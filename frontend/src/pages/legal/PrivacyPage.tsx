@@ -45,10 +45,10 @@ const PrivacyPage = () => (
                 hash by Supabase, so I never see it.
             </li>
             <li>
-                If you sign in with Google or Discord instead, no password. That
+                If you log in with Google or Discord instead, no password. That
                 service tells me your email address and your account ID there.
                 It also sends your name and profile picture, which Supabase
-                keeps with your sign-in record, but PlayRates doesn’t use them:
+                keeps with your log-in record, but PlayRates doesn’t use them:
                 your username and picture are the ones you choose here.
             </li>
             <li>
@@ -181,7 +181,7 @@ const PrivacyPage = () => (
         </p>
         <ul>
             <li>
-                <strong>Supabase</strong> hosts the database, sign-in and
+                <strong>Supabase</strong> hosts the database, log-in and
                 uploaded pictures. Your data is stored in Frankfurt, Germany.
             </li>
             <li>
@@ -211,7 +211,7 @@ const PrivacyPage = () => (
         <ul>
             <li>
                 <strong>Google</strong> and <strong>Discord</strong>, if you
-                sign in with one of them. They know you signed in to PlayRates,
+                log in with one of them. They know you logged in to PlayRates,
                 under their own privacy policies.
             </li>
             <li>
@@ -227,7 +227,7 @@ const PrivacyPage = () => (
             </li>
             <li>
                 <strong>Cloudflare Turnstile</strong> checks the sign-up and
-                sign-in forms aren’t being filled in by a bot. It runs in your
+                log-in forms aren’t being filled in by a bot. It runs in your
                 browser, so Cloudflare sees your IP address and details about
                 your browser, under its own privacy policy.
             </li>
@@ -291,7 +291,7 @@ const PrivacyPage = () => (
             off, or when your browser’s push service says the browser is gone.
         </p>
         <p>
-            Vercel’s request logs and Supabase’s sign-in logs are kept for a
+            Vercel’s request logs and Supabase’s log-in logs are kept for a
             short time by them and then deleted automatically.
         </p>
 
@@ -341,7 +341,7 @@ const PrivacyPage = () => (
                 <code>playrates-theme</code>, whether you chose light or dark.
             </li>
             <li>
-                <code>sb-…-auth-token</code>, your sign-in session, so you stay
+                <code>sb-…-auth-token</code>, your log-in session, so you stay
                 logged in.
             </li>
             <li>
