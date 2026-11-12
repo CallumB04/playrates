@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSteamAvailable } from "../steam/useSteamAvailable";
@@ -13,7 +13,7 @@ import LoadingSpinner from "../LoadingSpinner";
 import { queryKeys, type GameListFilters } from "../../api";
 import { useCatalogueReach, useGames } from "../../hooks/queries/useGames";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
-import { useLongPress } from "../../hooks/useLongPress";
+import { useDismiss } from "../../hooks/useDismiss";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { Input } from "../ui/Input";
 import { useLogMutations } from "../../hooks/queries/useGameLogs";
@@ -27,35 +27,57 @@ const SHOWN = 12;
  *  cover too small to hit well. */
 const TOUCH = "(pointer: coarse)";
 
+type Shelf = "played" | "playing";
+
+// The choices on a cover by finger. Whole class names, so the stylesheet
+// keeps them; dark in both themes, over the dimmed art.
+const OPTION =
+    "flex h-7 w-full cursor-pointer items-center justify-center gap-1 rounded-xs border bg-surface-media/80 text-[11px] leading-none font-semibold transition-colors";
+const CHOSEN: Record<Shelf, string> = {
+    played: cn("border-brand", STATUS_PRESENTATION.played.onMediaTone),
+    playing: cn(
+        "border-status-playing",
+        STATUS_PRESENTATION.playing.onMediaTone
+    ),
+};
+
 /**
  * A cover to tap, ringed and ticked once picked. Whether it's on the go is
  * asked of the games picked, where they were picked: with a mouse, by a
- * Playing switch at the foot of the cover; by a finger, by holding the
- * cover down. The switch stays for a screen reader on a touch screen.
+ * Playing switch at the foot of the cover; by a finger, tapping a picked
+ * cover again opens its choices on the cover itself, as the switch is too
+ * small to hit and a hold too easy to miss.
  */
 const CoverPick = ({
     game,
     on,
     playing,
     touch,
+    choosing,
     onTap,
     onPlaying,
-    onHold,
+    onChoose,
+    onClose,
 }: {
     game: Game;
     on: boolean;
     playing: boolean;
     touch: boolean;
+    choosing: boolean;
     onTap: () => void;
     onPlaying: () => void;
-    onHold: () => void;
+    onChoose: (shelf: Shelf | null) => void;
+    onClose: () => void;
 }) => {
-    const hold = useLongPress(onHold);
+    const box = useRef<HTMLDivElement>(null);
+    useDismiss([box], onClose, { enabled: choosing, escape: true });
+    const shelf: Shelf = playing ? "playing" : "played";
+
     return (
         <div
+            ref={box}
             className={cn(
-                "relative rounded-sm transition-transform duration-150 lift",
-                hold.pressing && "scale-[0.96]",
+                "relative rounded-sm lift",
                 on &&
                     cn(
                         "ring-2 ring-offset-2 ring-offset-surface-raised",
@@ -66,59 +88,109 @@ const CoverPick = ({
             <button
                 type="button"
                 aria-pressed={on}
+                aria-expanded={touch && on ? choosing : undefined}
                 aria-label={game.title}
-                onClick={() => {
-                    if (!hold.consumeHold()) onTap();
-                }}
-                {...hold.handlers}
-                className="block w-full cursor-pointer touch-manipulation rounded-sm select-none [-webkit-touch-callout:none] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                onClick={choosing ? onClose : onTap}
+                className="block w-full cursor-pointer rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
                 <GameCover
                     coverUrl={game.coverUrl}
                     title={game.title}
-                    className="pointer-events-none aspect-3/4 w-full overflow-hidden rounded-sm"
+                    className={cn(
+                        "aspect-3/4 w-full overflow-hidden rounded-sm transition-[filter] duration-200",
+                        choosing && "brightness-[0.35]"
+                    )}
                 />
             </button>
-            {on && (
-                <>
-                    <span
-                        aria-hidden
-                        className={cn(
-                            "pointer-events-none absolute top-1.5 right-1.5 grid size-6 animate-stamp place-items-center rounded-xs text-content-on-solid shadow-solid",
-                            playing ? "bg-status-playing" : "bg-brand"
-                        )}
-                    >
-                        {playing ? (
-                            <PlayGlyph size={12} />
-                        ) : (
-                            <Check size={14} strokeWidth={3} />
-                        )}
-                    </span>
+            {choosing ? (
+                <div
+                    role="group"
+                    aria-label={`Where ${game.title} goes`}
+                    className="absolute inset-0 flex animate-fade-up flex-col justify-center gap-1 p-1.5"
+                >
+                    {(["played", "playing"] as const).map((option) => (
+                        <button
+                            key={option}
+                            type="button"
+                            aria-pressed={shelf === option}
+                            onClick={() => onChoose(option)}
+                            className={cn(
+                                OPTION,
+                                shelf === option
+                                    ? CHOSEN[option]
+                                    : "border-transparent text-content-on-media"
+                            )}
+                        >
+                            {option === "playing" ? (
+                                <PlayGlyph size={10} />
+                            ) : (
+                                <Check size={11} strokeWidth={3} />
+                            )}
+                            {option === "playing" ? "Playing" : "Played"}
+                        </button>
+                    ))}
                     <button
                         type="button"
-                        aria-pressed={playing}
-                        aria-label={`Playing ${game.title} now`}
-                        onClick={onPlaying}
+                        onClick={() => onChoose(null)}
                         className={cn(
-                            // Small to see, with room round it to hit.
-                            "absolute inset-x-1.5 bottom-1.5 flex h-6 animate-fade-up cursor-pointer items-center justify-center gap-1 rounded-xs border bg-surface-media/85 text-[11px] leading-none font-semibold backdrop-blur-sm transition-colors before:absolute before:-inset-x-1.5 before:-inset-y-2.5 before:content-['']",
-                            playing
-                                ? cn(
-                                      "border-status-playing",
-                                      STATUS_PRESENTATION.playing.onMediaTone
-                                  )
-                                : "border-transparent text-content-on-media hover:bg-surface-media",
-                            // By finger it's held, not hit: shown only as
-                            // the label once playing, and a tap on it is a
-                            // tap on the cover.
-                            touch &&
-                                (playing ? "pointer-events-none" : "sr-only")
+                            OPTION,
+                            "border-transparent bg-transparent text-content-on-media/75"
                         )}
                     >
-                        <PlayGlyph size={10} />
-                        {playing ? "Playing" : "Playing?"}
+                        Remove
                     </button>
-                </>
+                </div>
+            ) : (
+                on && (
+                    <>
+                        <span
+                            aria-hidden
+                            className={cn(
+                                "pointer-events-none absolute top-1.5 right-1.5 grid size-6 animate-stamp place-items-center rounded-xs text-content-on-solid shadow-solid",
+                                playing ? "bg-status-playing" : "bg-brand"
+                            )}
+                        >
+                            {playing ? (
+                                <PlayGlyph size={12} />
+                            ) : (
+                                <Check size={14} strokeWidth={3} />
+                            )}
+                        </span>
+                        {touch ? (
+                            playing && (
+                                // The label alone: a tap on it is a tap on
+                                // the cover, which opens the choices.
+                                <span
+                                    aria-hidden
+                                    className={cn(
+                                        "pointer-events-none absolute inset-x-1.5 bottom-1.5 flex h-6 items-center justify-center gap-1 rounded-xs border bg-surface-media/85 text-[11px] leading-none font-semibold",
+                                        CHOSEN.playing
+                                    )}
+                                >
+                                    <PlayGlyph size={10} />
+                                    Playing
+                                </span>
+                            )
+                        ) : (
+                            <button
+                                type="button"
+                                aria-pressed={playing}
+                                aria-label={`Playing ${game.title} now`}
+                                onClick={onPlaying}
+                                className={cn(
+                                    // Small to see, with room round it to hit.
+                                    "absolute inset-x-1.5 bottom-1.5 flex h-6 animate-fade-up cursor-pointer items-center justify-center gap-1 rounded-xs border bg-surface-media/85 text-[11px] leading-none font-semibold backdrop-blur-sm transition-colors before:absolute before:-inset-x-1.5 before:-inset-y-2.5 before:content-['']",
+                                    playing
+                                        ? CHOSEN.playing
+                                        : "border-transparent text-content-on-media hover:bg-surface-media"
+                                )}
+                            >
+                                <PlayGlyph size={10} />
+                                {playing ? "Playing" : "Playing?"}
+                            </button>
+                        )}
+                    </>
+                )
             )}
         </div>
     );
@@ -216,10 +288,16 @@ const PlayedGamesStep = ({
             setPlaying((p) => p.filter((id) => id !== game.id));
         } else setPicked((p) => [...p, game]);
     };
-    // Held: picked if it wasn't, and on the go, or back to played.
-    const holdPlaying = (game: Game) => {
-        if (!has(game.id)) setPicked((p) => [...p, game]);
-        tapPlaying(game.id);
+    // The cover whose choices are open, by finger: one at a time.
+    const [choosing, setChoosing] = useState<number | null>(null);
+    const choose = (game: Game, shelf: Shelf | null) => {
+        setChoosing(null);
+        if (shelf === null) return tapPlayed(game);
+        setPlaying((p) =>
+            shelf === "playing"
+                ? [...p.filter((id) => id !== game.id), game.id]
+                : p.filter((id) => id !== game.id)
+        );
     };
     const tapPlaying = (id: number) =>
         setPlaying((p) =>
@@ -249,8 +327,11 @@ const PlayedGamesStep = ({
 
     const games = `${formatCount(picked.length)} ${picked.length === 1 ? "game" : "games"}`;
 
+    /* Held to the popup's height, so only the covers scroll: the heading,
+       the search and the way on stay in view. The popup's own padding and
+       border come off the height it's allowed. */
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex max-h-[calc(88dvh-2rem-1px)] flex-col gap-4 sm:max-h-[calc(90dvh-3rem-2px)]">
             <div className="pr-11 sm:pr-8">
                 <h2
                     id={titleId}
@@ -265,8 +346,8 @@ const PlayedGamesStep = ({
                 </p>
             </div>
 
-            {/* A hold can't be seen, so it's said, with the mark a held
-                cover gets. */}
+            {/* Said once, with the mark a cover on the go gets, as a
+                second tap does something a first one doesn't. */}
             {touch && (
                 <p className="-mt-1 flex items-center gap-2.5 rounded-sm border border-subtle bg-surface-sunken/60 px-3 py-2.5 text-body-sm text-content-secondary">
                     <span
@@ -276,9 +357,8 @@ const PlayedGamesStep = ({
                         <PlayGlyph size={12} />
                     </span>
                     <span>
-                        Still playing one?{" "}
                         <strong className="font-semibold text-content">
-                            Hold it down
+                            Tap a game again
                         </strong>{" "}
                         to mark it as Playing.
                     </span>
@@ -334,7 +414,12 @@ const PlayedGamesStep = ({
                 </p>
             )}
 
-            <ul aria-busy={waiting} className="grid grid-cols-4 gap-2.5">
+            <ul
+                aria-busy={waiting}
+                // Room round the edge for a picked cover's ring, which the
+                // scroll would otherwise clip.
+                className="-mx-1 grid min-h-0 flex-1 grid-cols-3 gap-2.5 overflow-y-auto overscroll-contain p-1 sm:grid-cols-4"
+            >
                 {waiting
                     ? Array.from({ length: SHOWN }, (_, i) => (
                           <li key={i}>
@@ -347,10 +432,16 @@ const PlayedGamesStep = ({
                                   game={game}
                                   on={has(game.id)}
                                   playing={playing.includes(game.id)}
-                                  onTap={() => tapPlayed(game)}
+                                  onTap={() =>
+                                      touch && has(game.id)
+                                          ? setChoosing(game.id)
+                                          : tapPlayed(game)
+                                  }
                                   touch={touch}
                                   onPlaying={() => tapPlaying(game.id)}
-                                  onHold={() => holdPlaying(game)}
+                                  choosing={choosing === game.id}
+                                  onChoose={(shelf) => choose(game, shelf)}
+                                  onClose={() => setChoosing(null)}
                               />
                           </li>
                       ))}

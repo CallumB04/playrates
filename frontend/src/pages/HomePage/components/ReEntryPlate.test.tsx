@@ -12,6 +12,7 @@ import {
 } from "../../../test/msw/handlers";
 import { renderWithProviders } from "../../../test/renderWithProviders";
 import ReEntryPlate, { ReEntrySkeleton } from "./ReEntryPlate";
+import ToastStack from "../../../components/feedback/ToastStack";
 
 vi.mock("../../../contexts/AuthContext", () => ({
     useAuth: () => ({ user: buildProfile() }),
@@ -74,7 +75,11 @@ beforeEach(() => {
             HttpResponse.json({ data: logged })
         ),
         http.patch(`${API}/me/logs/:id`, record),
-        http.post(`${API}/me/logs`, record)
+        http.post(`${API}/me/logs`, record),
+        http.delete(`${API}/me/logs/:id`, ({ request }) => {
+            sent.push({ method: "DELETE", url: request.url, body: null });
+            return new HttpResponse(null, { status: 204 });
+        })
     );
 });
 
@@ -176,6 +181,59 @@ describe("ReEntryPlate", () => {
         await tap();
         await waitFor(() => expect(sent).toHaveLength(1));
         expect(sent[0]).toMatchObject({ url: `${API}/me/logs/22` });
+    });
+
+    it("puts a game started by mistake back on the backlog as it was", async () => {
+        renderWithProviders(
+            <>
+                <ReEntryPlate {...base} isNew={false} shelves={shelves} />
+                <ToastStack />
+            </>
+        );
+        await userEvent.click(
+            await screen.findByRole("button", {
+                name: "Start playing The Witcher 3: Wild Hunt",
+            })
+        );
+        expect(
+            await screen.findByText("Started The Witcher 3: Wild Hunt")
+        ).toBeInTheDocument();
+        await userEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+        await waitFor(() => expect(sent).toHaveLength(2));
+        expect(sent[1]).toMatchObject({
+            method: "PATCH",
+            url: `${API}/me/logs/21`,
+            body: { status: "backlog", hype: 4, startDate: null },
+        });
+    });
+
+    it("takes a trending game started by mistake off the shelves again", async () => {
+        renderWithProviders(
+            <>
+                <ReEntryPlate
+                    {...base}
+                    isNew={false}
+                    shelves={{ ...shelves, backlog: 0 }}
+                    trending={[buildGame({ id: 2, title: "Hades II" })]}
+                />
+                <ToastStack />
+            </>
+        );
+        await userEvent.click(
+            await screen.findByRole("button", {
+                name: "Start playing Hades II",
+            })
+        );
+        await userEvent.click(
+            await screen.findByRole("button", { name: "Undo" })
+        );
+        await waitFor(() => expect(sent).toHaveLength(2));
+        // The log the start made, by the id it came back with.
+        expect(sent[1]).toMatchObject({
+            method: "DELETE",
+            url: `${API}/me/logs/10`,
+        });
     });
 
     it("says so, and lets them try again, when starting fails", async () => {

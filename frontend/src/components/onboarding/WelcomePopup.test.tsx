@@ -1,12 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { server } from "../../test/msw/server";
 import { buildProfile } from "../../test/msw/handlers";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import WelcomePopup from "./WelcomePopup";
-import { HOLD_MS } from "../../hooks/useLongPress";
 
 const API = "http://localhost:3000/api/v1";
 
@@ -176,7 +175,7 @@ describe("WelcomePopup", () => {
         expect(logged).toHaveBeenCalledWith({ gameId: 2, status: "playing" });
     });
 
-    it("on a touch screen, says to hold a game down and marks it playing when held", async () => {
+    it("on a touch screen, opens a picked cover's choices on a second tap", async () => {
         const original = window.matchMedia;
         window.matchMedia = vi.fn().mockImplementation((query: string) => ({
             matches: query === "(pointer: coarse)",
@@ -189,21 +188,32 @@ describe("WelcomePopup", () => {
             await userEvent.click(
                 screen.getByRole("button", { name: "Skip for now" })
             );
-            expect(screen.getByText("Hold it down")).toBeInTheDocument();
+            expect(screen.getByText("Tap a game again")).toBeInTheDocument();
 
             const cover = await screen.findByRole("button", {
                 name: "Portal 2",
             });
-            await userEvent.pointer({ keys: "[TouchA>]", target: cover });
-            await new Promise((done) => setTimeout(done, HOLD_MS + 50));
-            await userEvent.pointer({ keys: "[/TouchA]", target: cover });
-
-            // Picked and on the go at once, and the lift didn't unpick it.
+            await userEvent.click(cover);
             expect(cover).toHaveAttribute("aria-pressed", "true");
-            expect(
-                screen.getByRole("button", { name: "Playing Portal 2 now" })
-            ).toHaveAttribute("aria-pressed", "true");
+            expect(screen.getByText("1 played")).toBeInTheDocument();
+
+            await userEvent.click(cover);
+            const choices = screen.getByRole("group", {
+                name: "Where Portal 2 goes",
+            });
+            await userEvent.click(
+                within(choices).getByRole("button", { name: "Playing" })
+            );
             expect(screen.getByText("1 playing")).toBeInTheDocument();
+            expect(screen.queryByRole("group")).toBeNull();
+
+            // And taken off from the same place.
+            await userEvent.click(cover);
+            await userEvent.click(
+                screen.getByRole("button", { name: "Remove" })
+            );
+            expect(cover).toHaveAttribute("aria-pressed", "false");
+            expect(screen.getByText("Nothing picked yet")).toBeInTheDocument();
         } finally {
             window.matchMedia = original;
         }

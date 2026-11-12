@@ -34,8 +34,8 @@ describe("GetStarted", () => {
 
         const row = await screen.findByRole("link", { name: /Get started/ });
         expect(row).toHaveAttribute("href", "/user/kai?edit=profile");
-        expect(row).toHaveTextContent("Next: Write a bio");
-        expect(row).toHaveTextContent("2/8 steps done");
+        expect(row).toHaveTextContent("Write a bio");
+        expect(row).toHaveTextContent("2/8 steps done. Next:");
     });
 
     it("goes once every step is done", async () => {
