@@ -12,10 +12,12 @@ interface DismissOptions {
  * Closes a popover when the pointer goes down anywhere outside it. Takes
  * several refs because a portalled menu is not inside its trigger in the DOM.
  *
- * mousedown rather than click, so the menu is gone before a click lands on
- * whatever was underneath it. In the capture phase, because Modal stops
- * mousedown at its panel: listening as it bubbled, a dropdown in a popup
- * never heard a press anywhere else in that popup.
+ * A pointer going down rather than a click, so the menu is gone before a
+ * click lands on whatever was underneath it. pointerdown, not mousedown:
+ * iOS Safari fires no mousedown for a tap on anything not clickable, so a
+ * menu stayed open however much of the page was tapped. In the capture
+ * phase, because Modal stops mousedown at its panel: listening as it
+ * bubbled, a dropdown in a popup never heard a press anywhere else in it.
  */
 export const useDismiss = (
     refs: RefObject<HTMLElement | null>[],
@@ -31,7 +33,7 @@ export const useDismiss = (
     useEffect(() => {
         if (!enabled) return;
 
-        const onPointerDown = (event: MouseEvent) => {
+        const onPointerDown = (event: Event) => {
             const target = event.target as Node;
             if (!targets.current.some((ref) => ref.current?.contains(target))) {
                 dismiss.current();
@@ -41,10 +43,10 @@ export const useDismiss = (
             if (event.key === "Escape") dismiss.current();
         };
 
-        document.addEventListener("mousedown", onPointerDown, true);
+        document.addEventListener("pointerdown", onPointerDown, true);
         if (escape) document.addEventListener("keydown", onKeyDown);
         return () => {
-            document.removeEventListener("mousedown", onPointerDown, true);
+            document.removeEventListener("pointerdown", onPointerDown, true);
             document.removeEventListener("keydown", onKeyDown);
         };
     }, [enabled, escape]);
