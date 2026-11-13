@@ -1,6 +1,6 @@
 import { useId, useState, type ReactNode } from "react";
 import { Download } from "lucide-react";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import Button from "../ui/Button";
 import { Skeleton } from "../ui/Skeleton";
 import { useNotify } from "../../contexts/NotificationContext";
@@ -117,26 +117,16 @@ const ShareSheet = ({
     };
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full max-w-[420px]"
+            titleId={titleId}
+            width="w-full sm:max-w-[420px]"
+            title={title}
+            blurb={lede}
         >
-            <h2
-                id={titleId}
-                className="pr-10 font-display text-section text-content"
-            >
-                {title}
-            </h2>
-            {lede && (
-                <p className="mt-1 text-body-sm text-content-secondary">
-                    {lede}
-                </p>
-            )}
-
             {/* The picture on a stage of its own, so it reads as the thing
                 being shared rather than one more box in the popup. */}
-            <div className="mt-4 grid place-items-center rounded-lg bg-linear-to-b from-brand-subtle to-surface-sunken/60 px-4 py-5">
+            <div className="grid place-items-center rounded-lg bg-linear-to-b from-brand-subtle to-surface-sunken/60 px-4 py-5">
                 <div className="relative aspect-4/5 w-48 overflow-hidden rounded-md bg-surface-sunken shadow-lifted sm:w-56">
                     {image === "loading" && (
                         <Skeleton className="absolute inset-0" />
@@ -180,9 +170,9 @@ const ShareSheet = ({
                 onNative={() => void shareNative()}
                 nativeLabel={files ? "Share the picture" : "Share"}
                 busy={busy}
-                className="mt-4 border-t border-subtle pt-4 pb-3 sm:pb-0"
+                className="mt-4 border-t border-subtle pt-4"
             />
-        </Modal>
+        </Popup>
     );
 };
 

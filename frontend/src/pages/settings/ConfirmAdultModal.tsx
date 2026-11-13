@@ -1,4 +1,4 @@
-import Modal from "../../components/ui/Modal";
+import Popup from "../../components/ui/Popup";
 import Button from "../../components/ui/Button";
 
 /** Asked once, before sexually explicit games first show: accounts are
@@ -10,22 +10,18 @@ const ConfirmAdultModal = ({
     onConfirm: () => void;
     onCancel: () => void;
 }) => (
-    <Modal
+    <Popup
         onClose={onCancel}
-        labelledBy="confirm-adult-title"
-        className="w-full max-w-md"
-    >
-        <h2
-            id="confirm-adult-title"
-            className="border-b border-subtle pb-3 font-display text-section text-content"
-        >
-            Are you 18 or over?
-        </h2>
-        <div className="flex flex-col gap-4 pt-4">
-            <p className="text-body-sm text-content-secondary">
+        titleId="confirm-adult-title"
+        width="w-full sm:max-w-md"
+        title="Are you 18 or over?"
+        blurb={
+            <p>
                 Sexually explicit games are for adults only. Confirm you’re 18
                 or over to show them.
             </p>
+        }
+        footer={
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Button
                     variant="secondary"
@@ -38,8 +34,8 @@ const ConfirmAdultModal = ({
                     I’m 18 or over
                 </Button>
             </div>
-        </div>
-    </Modal>
+        }
+    />
 );
 
 export default ConfirmAdultModal;

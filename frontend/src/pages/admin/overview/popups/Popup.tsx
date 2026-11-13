@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from "react";
-import Modal from "../../../../components/ui/Modal";
+import Frame from "../../../../components/ui/Popup";
 import { figureClass } from "../../../../components/ui/figureClass";
 
 /** Every overview popup opens the same way: what it is, the figure the card
@@ -19,35 +19,26 @@ const Popup = ({
 }) => {
     const titleId = useId();
     return (
-        <Modal
+        <Frame
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full sm:max-w-2xl"
-        >
-            <div className="flex flex-col gap-7">
-                <header className="pr-10">
-                    <h2
-                        id={titleId}
-                        className="text-label text-content-secondary"
-                    >
-                        {title}
-                    </h2>
-                    {value !== undefined && (
-                        <p className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                            <span className={figureClass("display")}>
-                                {value}
+            titleId={titleId}
+            width="w-full sm:max-w-2xl"
+            title={title}
+            blurb={
+                value !== undefined && (
+                    <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span className={figureClass("display")}>{value}</span>
+                        {note && (
+                            <span className="text-label text-content-muted">
+                                {note}
                             </span>
-                            {note && (
-                                <span className="text-label text-content-muted">
-                                    {note}
-                                </span>
-                            )}
-                        </p>
-                    )}
-                </header>
-                {children}
-            </div>
-        </Modal>
+                        )}
+                    </p>
+                )
+            }
+        >
+            <div className="flex flex-col gap-7">{children}</div>
+        </Frame>
     );
 };
 

@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { isAuthError } from "@supabase/auth-js";
-import Modal from "../../components/ui/Modal";
+import Popup from "../../components/ui/Popup";
 import Button from "../../components/ui/Button";
 import PasswordField from "../../components/auth/PasswordField";
 import { useCaptcha } from "../../components/auth/useCaptcha";
@@ -42,6 +42,7 @@ const ConfirmItsYouModal = ({
     const captcha = useCaptcha();
     const [error, setError] = useState<string>();
     const [busy, setBusy] = useState(false);
+    const formId = useId();
     const provider = passwordlessProvider(session?.user);
 
     const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -91,36 +92,29 @@ const ConfirmItsYouModal = ({
     };
 
     return (
-        <Modal
+        <Popup
             onClose={onCancel}
-            labelledBy="confirm-its-you-title"
-            className="w-full max-w-md"
-        >
-            <h2
-                id="confirm-its-you-title"
-                className="border-b border-subtle pb-3 font-display text-section text-content"
-            >
-                Confirm it’s you
-            </h2>
-            {provider ? (
-                <div className="flex flex-col gap-4 pt-4">
-                    <p className="text-body-sm text-content-secondary">
-                        Log in with {provider} again to {DOING[purpose]}.
-                    </p>
-                    {error && (
-                        <p role="alert" className="text-body-sm text-danger">
-                            {error}
-                        </p>
-                    )}
-                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                        <Button
-                            variant="secondary"
-                            className="w-full sm:w-auto"
-                            onClick={onCancel}
-                            disabled={busy}
-                        >
-                            Cancel
-                        </Button>
+            titleId="confirm-its-you-title"
+            width="w-full sm:max-w-md"
+            title="Confirm it’s you"
+            blurb={
+                <p>
+                    {provider
+                        ? `Log in with ${provider} again to ${DOING[purpose]}.`
+                        : `Enter your password to ${DOING[purpose]}.`}
+                </p>
+            }
+            footer={
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <Button
+                        variant="secondary"
+                        className="w-full sm:w-auto"
+                        onClick={onCancel}
+                        disabled={busy}
+                    >
+                        Cancel
+                    </Button>
+                    {provider ? (
                         <Button
                             className="w-full sm:w-auto"
                             onClick={() => void leave()}
@@ -128,17 +122,32 @@ const ConfirmItsYouModal = ({
                         >
                             Continue with {provider}
                         </Button>
-                    </div>
+                    ) : (
+                        <Button
+                            type="submit"
+                            form={formId}
+                            className="w-full sm:w-auto"
+                            disabled={busy}
+                        >
+                            {busy ? "Checking…" : "Confirm"}
+                        </Button>
+                    )}
                 </div>
+            }
+        >
+            {provider ? (
+                error && (
+                    <p role="alert" className="text-body-sm text-danger">
+                        {error}
+                    </p>
+                )
             ) : (
                 <form
+                    id={formId}
                     noValidate
                     onSubmit={(event) => void submit(event)}
-                    className="flex flex-col gap-4 pt-4"
+                    className="flex flex-col gap-4"
                 >
-                    <p className="text-body-sm text-content-secondary">
-                        Enter your password to {DOING[purpose]}.
-                    </p>
                     {/* Tells a password manager which login this is. */}
                     <input
                         type="email"
@@ -156,26 +165,9 @@ const ConfirmItsYouModal = ({
                         error={error}
                     />
                     {captcha.field}
-                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                        <Button
-                            variant="secondary"
-                            className="w-full sm:w-auto"
-                            onClick={onCancel}
-                            disabled={busy}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            className="w-full sm:w-auto"
-                            disabled={busy}
-                        >
-                            {busy ? "Checking…" : "Confirm"}
-                        </Button>
-                    </div>
                 </form>
             )}
-        </Modal>
+        </Popup>
     );
 };
 

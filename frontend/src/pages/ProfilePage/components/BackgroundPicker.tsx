@@ -8,7 +8,7 @@ import {
     type Profile,
 } from "@playrates/shared";
 import { ApiError } from "../../../api";
-import Modal from "../../../components/ui/Modal";
+import Popup from "../../../components/ui/Popup";
 import Button from "../../../components/ui/Button";
 import { buttonClass } from "../../../components/ui/buttonClass";
 import { Input } from "../../../components/ui/Input";
@@ -168,93 +168,150 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
 
     if (owned && !owned.unlocked) {
         return (
-            <Modal
+            <Popup
                 onClose={onClose}
-                labelledBy="background-picker-title"
-                className="w-full max-w-md"
-            >
-                <div className="flex flex-col items-center py-4 text-center">
-                    <span className="grid size-14 place-items-center rounded-md bg-surface-sunken text-content-muted">
+                titleId="background-picker-title"
+                width="w-full sm:max-w-md"
+                eyebrow={
+                    <span className="mb-3 grid size-14 place-items-center rounded-md bg-surface-sunken text-content-muted">
                         <Lock size={24} aria-hidden />
                     </span>
-                    <h2
-                        id="background-picker-title"
-                        className="mt-4 font-display text-section text-content"
-                    >
-                        Backgrounds open at level {BACKGROUND_LEVEL}
-                    </h2>
-                    <p className="mt-1 max-w-xs text-body-sm text-content-secondary">
+                }
+                title={`Backgrounds open at level ${BACKGROUND_LEVEL}`}
+                blurb={
+                    <p>
                         You’re level {profile.level}. Your first picture is free
                         when you get there.
                     </p>
-                    <Link
-                        to="/progress"
-                        onClick={onClose}
-                        className={buttonClass(
-                            "secondary",
-                            "mt-5 w-full sm:w-auto",
-                            "touch"
-                        )}
-                    >
-                        See how to level up
-                    </Link>
-                </div>
-            </Modal>
+                }
+                footer={
+                    <div className="flex sm:justify-end">
+                        <Link
+                            to="/progress"
+                            onClick={onClose}
+                            className={buttonClass(
+                                "secondary",
+                                "w-full sm:w-auto",
+                                "touch"
+                            )}
+                        >
+                            See how to level up
+                        </Link>
+                    </div>
+                }
+            />
         );
     }
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy="background-picker-title"
-            className="w-full max-w-2xl"
-        >
-            <div className="flex min-h-11 items-center gap-2 pr-10">
-                {game && (
-                    <button
-                        type="button"
-                        onClick={() =>
-                            cropping ? setCropping(false) : setGame(null)
-                        }
-                        aria-label={
-                            cropping
-                                ? "Back to the pictures"
-                                : "Back to your games"
-                        }
-                        className="relative -ml-1.5 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-sm text-content-secondary lift before:absolute before:-inset-1.5 before:content-[''] hover:bg-surface-hover hover:text-content focus-visible:outline-2 focus-visible:outline-brand"
-                    >
-                        <ChevronLeft size={18} aria-hidden />
-                    </button>
-                )}
-                <h2
-                    id="background-picker-title"
-                    className="min-w-0 flex-1 truncate font-display text-section text-content"
-                >
-                    {game ? game.title : "Profile background"}
-                </h2>
-                {owned && (
-                    <span className="inline-flex shrink-0 items-center gap-1.5 font-mono text-label-sm text-content-secondary tabular-nums">
-                        {free ? (
-                            "1 free picture"
-                        ) : (
-                            <>
-                                <TokenCoin className="size-3.5" />
-                                {formatCount(tokens)}
-                            </>
+            titleId="background-picker-title"
+            width="w-full sm:max-w-2xl"
+            eyebrow={
+                (game || owned) && (
+                    <span className="flex min-h-8 items-center gap-2">
+                        {game && (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    cropping
+                                        ? setCropping(false)
+                                        : setGame(null)
+                                }
+                                aria-label={
+                                    cropping
+                                        ? "Back to the pictures"
+                                        : "Back to your games"
+                                }
+                                className="relative -ml-1.5 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-sm text-content-secondary lift before:absolute before:-inset-1.5 before:content-[''] hover:bg-surface-hover hover:text-content focus-visible:outline-2 focus-visible:outline-brand"
+                            >
+                                <ChevronLeft size={18} aria-hidden />
+                            </button>
+                        )}
+                        {owned && (
+                            <span className="ml-auto inline-flex shrink-0 items-center gap-1.5 font-mono text-label-sm text-content-secondary tabular-nums">
+                                {free ? (
+                                    "1 free picture"
+                                ) : (
+                                    <>
+                                        <TokenCoin className="size-3.5" />
+                                        {formatCount(tokens)}
+                                    </>
+                                )}
+                            </span>
                         )}
                     </span>
-                )}
-            </div>
-            <p className="mt-1 text-body-sm text-content-secondary">
-                {!game
-                    ? shownTab === "yours"
-                        ? "Your pictures, by game."
-                        : "Choose from a game you’ve logged."
-                    : cropping
-                      ? "Move the outline over the part to show on your profile."
-                      : "Pick a picture to put across the top of your profile."}
-            </p>
-
+                )
+            }
+            title={game ? game.title : "Profile background"}
+            blurb={
+                <p>
+                    {!game
+                        ? shownTab === "yours"
+                            ? "Your pictures, by game."
+                            : "Choose from a game you’ve logged."
+                        : cropping
+                          ? "Move the outline over the part to show on your profile."
+                          : "Pick a picture to put across the top of your profile."}
+                </p>
+            }
+            footer={
+                (profile.background || cropping) && (
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        {profile.background ? (
+                            <Button
+                                variant="ghost"
+                                onClick={() => void onRemove()}
+                                disabled={busy}
+                                className="w-full sm:w-auto"
+                            >
+                                Remove background
+                            </Button>
+                        ) : (
+                            <span />
+                        )}
+                        {buying && (
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                                {!free && (
+                                    <span className="text-center font-mono text-label-sm text-content-muted tabular-nums sm:text-right">
+                                        {tokens >= price
+                                            ? `${formatCount(tokens - price)} left after`
+                                            : `${formatCount(price - tokens)} more tokens needed`}
+                                    </span>
+                                )}
+                                <Button
+                                    onClick={() => void onBuy()}
+                                    disabled={busy || (!free && tokens < price)}
+                                    className="w-full sm:w-auto"
+                                >
+                                    {free ? (
+                                        "Use your free picture"
+                                    ) : (
+                                        <>
+                                            Buy for
+                                            <TokenCoin className="size-4" />
+                                            {price}
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        )}
+                        {cropping && !buying && (
+                            <Button
+                                onClick={() => void onSave()}
+                                disabled={busy}
+                                className="w-full sm:w-auto"
+                            >
+                                {save.isPending
+                                    ? "Saving…"
+                                    : "Use this picture"}
+                            </Button>
+                        )}
+                    </div>
+                )
+            }
+        >
             {!game && (
                 <SegmentedChoice
                     label="Which pictures"
@@ -265,11 +322,11 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                     value={shownTab}
                     onChange={setTab}
                     fill
-                    className="mt-4 sm:max-w-xs"
+                    className="sm:max-w-xs"
                 />
             )}
 
-            <div className="mt-4">
+            <div className={cn(!game && "mt-4")}>
                 {game && cropping && chosen ? (
                     <BackgroundCrop
                         url={chosen}
@@ -459,57 +516,7 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
                     </>
                 )}
             </div>
-
-            <div className="mt-5 flex flex-col-reverse gap-2 border-t border-subtle pt-4 sm:flex-row sm:items-center sm:justify-between">
-                {profile.background ? (
-                    <Button
-                        variant="ghost"
-                        onClick={() => void onRemove()}
-                        disabled={busy}
-                        className="w-full sm:w-auto"
-                    >
-                        Remove background
-                    </Button>
-                ) : (
-                    <span />
-                )}
-                {buying && (
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                        {!free && (
-                            <span className="text-center font-mono text-label-sm text-content-muted tabular-nums sm:text-right">
-                                {tokens >= price
-                                    ? `${formatCount(tokens - price)} left after`
-                                    : `${formatCount(price - tokens)} more tokens needed`}
-                            </span>
-                        )}
-                        <Button
-                            onClick={() => void onBuy()}
-                            disabled={busy || (!free && tokens < price)}
-                            className="w-full sm:w-auto"
-                        >
-                            {free ? (
-                                "Use your free picture"
-                            ) : (
-                                <>
-                                    Buy for
-                                    <TokenCoin className="size-4" />
-                                    {price}
-                                </>
-                            )}
-                        </Button>
-                    </div>
-                )}
-                {cropping && !buying && (
-                    <Button
-                        onClick={() => void onSave()}
-                        disabled={busy}
-                        className="w-full sm:w-auto"
-                    >
-                        {save.isPending ? "Saving…" : "Use this picture"}
-                    </Button>
-                )}
-            </div>
-        </Modal>
+        </Popup>
     );
 };
 

@@ -1,8 +1,8 @@
 import { useId } from "react";
 import { Link } from "react-router-dom";
-import Modal from "../../../components/ui/Modal";
+import Popup from "../../../components/ui/Popup";
 import Stat from "../../../components/ui/Stat";
-import { TextSkeleton } from "../../../components/ui/Skeleton";
+import { Skeleton, TextSkeleton } from "../../../components/ui/Skeleton";
 import ProfilePicture from "../../../components/ProfilePicture";
 import PresenceDot from "../../../components/ui/PresenceDot";
 import { buttonClass } from "../../../components/ui/buttonClass";
@@ -37,17 +37,15 @@ const UserModal = ({
     const days = user ? fillDays(from, today, new Set(user.activeDays)) : [];
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full sm:max-w-2xl"
-        >
-            {isPending || !user ? (
-                <TextSkeleton lines={6} />
-            ) : (
-                <div className="flex flex-col gap-6">
-                    <header className="flex items-center gap-4 pr-10">
-                        <span className="relative shrink-0">
+            titleId={titleId}
+            width="w-full sm:max-w-2xl"
+            title={
+                user ? (
+                    <span className="flex items-center gap-4">
+                        {/* The name beside it says who this is. */}
+                        <span aria-hidden className="relative shrink-0">
                             <ProfilePicture
                                 variant="review"
                                 file={user.avatarUrl ?? ""}
@@ -57,25 +55,41 @@ const UserModal = ({
                             />
                             <PresenceDot online={user.online} size="lg" />
                         </span>
-                        <div className="min-w-0">
-                            <h2
-                                id={titleId}
-                                className="truncate font-display text-section text-content"
-                            >
-                                {user.username}
-                            </h2>
-                            <p className="mt-1 text-label text-content-muted">
-                                {user.online
-                                    ? "Here now"
-                                    : `Last here ${relativeTime(user.lastSeenAt)}`}{" "}
-                                · joined {formatMonthYear(user.createdAt)}
-                                {!user.onboardedAt &&
-                                    " · hasn’t finished the welcome"}
-                            </p>
-                        </div>
-                    </header>
-
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-subtle pt-4 sm:grid-cols-4">
+                        <span className="min-w-0 truncate">
+                            {user.username}
+                        </span>
+                    </span>
+                ) : (
+                    <Skeleton className="h-7 w-40" />
+                )
+            }
+            blurb={
+                user && (
+                    <p className="text-label text-content-muted">
+                        {user.online
+                            ? "Here now"
+                            : `Last here ${relativeTime(user.lastSeenAt)}`}{" "}
+                        · joined {formatMonthYear(user.createdAt)}
+                        {!user.onboardedAt && " · hasn’t finished the welcome"}
+                    </p>
+                )
+            }
+            footer={
+                user && (
+                    <Link
+                        to={`/user/${user.username}`}
+                        className={buttonClass("secondary", "w-full sm:w-auto")}
+                    >
+                        Open their profile
+                    </Link>
+                )
+            }
+        >
+            {isPending || !user ? (
+                <TextSkeleton lines={6} />
+            ) : (
+                <div className="flex flex-col gap-6">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
                         <Stat
                             label="Games logged"
                             value={formatCount(user.logCount)}
@@ -136,19 +150,9 @@ const UserModal = ({
                         </h3>
                         <MemberEmails userId={user.id} />
                     </section>
-
-                    <Link
-                        to={`/user/${user.username}`}
-                        className={buttonClass(
-                            "secondary",
-                            "w-full sm:w-auto sm:self-start"
-                        )}
-                    >
-                        Open their profile
-                    </Link>
                 </div>
             )}
-        </Modal>
+        </Popup>
     );
 };
 

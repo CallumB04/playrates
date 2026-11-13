@@ -412,6 +412,23 @@ describe("SettingsPage's data export", () => {
         expect(screen.queryByText("Confirm it’s you")).not.toBeInTheDocument();
     });
 
+    // Cancel used to be the form's first submit button, so Enter pressed it.
+    // jsdom has no implicit submission through a `form=` button; a real
+    // browser sends the password.
+    it("doesn't cancel when Enter is pressed in the password field", async () => {
+        auth.accessToken = signedIn(3600);
+        const u = open("/settings?section=account-closure");
+
+        await u.click(screen.getByRole("button", { name: "Export my data" }));
+        await u.type(
+            screen.getByLabelText("Password"),
+            "right-password{Enter}"
+        );
+
+        expect(screen.getByText("Confirm it’s you")).toBeInTheDocument();
+        expect(screen.getByLabelText("Password")).toHaveValue("right-password");
+    });
+
     it("sends someone who signs in with Google back to Google", async () => {
         auth.providers = ["google"];
         auth.accessToken = signedIn(3600);

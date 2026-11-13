@@ -4,7 +4,7 @@ import type { SteamPreview } from "@playrates/shared";
 import { ApiError, previewSteamLibrary } from "../../api";
 import Button from "../ui/Button";
 import { Input } from "../ui/Input";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import SteamReview from "./SteamReview";
 
 const failure = (error: unknown): string => {
@@ -34,6 +34,7 @@ const SteamImportModal = ({
     onClose: () => void;
 }) => {
     const titleId = useId();
+    const formId = useId();
     const [profile, setProfile] = useState(initialProfile);
     const [preview, setPreview] = useState<SteamPreview | null>(null);
 
@@ -43,31 +44,54 @@ const SteamImportModal = ({
     });
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full max-w-2xl"
+            titleId={titleId}
+            width="w-full sm:max-w-2xl"
+            title="Import from Steam"
+            blurb={
+                !preview && (
+                    <p>
+                        Paste your Steam profile link, or your custom profile
+                        name. Your game details need to be public on Steam.
+                        You’ll see everything before anything is added.
+                    </p>
+                )
+            }
+            footer={
+                !preview && (
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={onClose}
+                            className="w-full sm:w-auto"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            form={formId}
+                            disabled={
+                                profile.trim().length < 2 || find.isPending
+                            }
+                            className="w-full sm:w-auto"
+                        >
+                            {find.isPending ? "Looking…" : "Find my games"}
+                        </Button>
+                    </div>
+                )
+            }
         >
-            <h2
-                id={titleId}
-                className="border-b border-subtle pb-3 font-display text-section text-content"
-            >
-                Import from Steam
-            </h2>
-
             {!preview ? (
                 <form
-                    className="flex flex-col gap-4 pt-4"
+                    id={formId}
+                    className="flex flex-col gap-4"
                     onSubmit={(event) => {
                         event.preventDefault();
                         find.mutate();
                     }}
                 >
-                    <p className="text-body-sm text-content-secondary">
-                        Paste your Steam profile link, or your custom profile
-                        name. Your game details need to be public on Steam.
-                        You’ll see everything before anything is added.
-                    </p>
                     <label className="flex flex-col gap-2">
                         <span className="text-label text-content-secondary">
                             Steam profile
@@ -86,30 +110,11 @@ const SteamImportModal = ({
                             {failure(find.error)}
                         </p>
                     )}
-                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={onClose}
-                            className="w-full sm:w-auto"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="submit"
-                            disabled={
-                                profile.trim().length < 2 || find.isPending
-                            }
-                            className="w-full sm:w-auto"
-                        >
-                            {find.isPending ? "Looking…" : "Find my games"}
-                        </Button>
-                    </div>
                 </form>
             ) : (
                 <SteamReview preview={preview} onClose={onClose} />
             )}
-        </Modal>
+        </Popup>
     );
 };
 

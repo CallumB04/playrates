@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import { Check, Lock, Plus, Users } from "lucide-react";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import Button from "../ui/Button";
 import { Skeleton } from "../ui/Skeleton";
 import { ApiError } from "../../api";
@@ -40,25 +40,31 @@ const AddToListPopup = ({ gameId, onClose }: AddToListPopupProps) => {
     }
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full max-w-md"
+            titleId={titleId}
+            width="w-full sm:max-w-md"
+            // Opened to add and to manage alike.
+            title="Your lists"
+            blurb={game && <p className="truncate">{game.title}</p>}
+            art={game?.artworkUrl}
+            footer={
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+                    <Button
+                        variant="secondary"
+                        onClick={() => setCreating(true)}
+                        className="w-full sm:w-auto"
+                    >
+                        <Plus size={15} aria-hidden />
+                        New list
+                    </Button>
+                    <Button onClick={onClose} className="w-full sm:w-auto">
+                        Done
+                    </Button>
+                </div>
+            }
         >
-            <h2
-                id={titleId}
-                className="pr-10 font-display text-section text-content"
-            >
-                {/* Opened to add and to manage alike. */}
-                Your lists
-            </h2>
-            {game && (
-                <p className="mt-1 truncate text-body-sm text-content-muted">
-                    {game.title}
-                </p>
-            )}
-
-            <div className="mt-4">
+            <div>
                 {isLoading ? (
                     <div className="flex flex-col gap-1.5">
                         {Array.from({ length: 3 }, (_, i) => (
@@ -177,21 +183,7 @@ const AddToListPopup = ({ gameId, onClose }: AddToListPopupProps) => {
                     </ul>
                 )}
             </div>
-
-            <div className="mt-4 flex flex-col-reverse gap-2 border-t border-subtle pt-4 sm:flex-row sm:justify-between">
-                <Button
-                    variant="secondary"
-                    onClick={() => setCreating(true)}
-                    className="w-full sm:w-auto"
-                >
-                    <Plus size={15} aria-hidden />
-                    New list
-                </Button>
-                <Button onClick={onClose} className="w-full sm:w-auto">
-                    Done
-                </Button>
-            </div>
-        </Modal>
+        </Popup>
     );
 };
 

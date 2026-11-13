@@ -15,7 +15,7 @@ import { Link } from "react-router-dom";
 import RatingBadge from "./ui/RatingBadge";
 import AchievementRing from "./gamelog/AchievementRing";
 import { formatDate, formatHours } from "../lib/format";
-import Modal from "./ui/Modal";
+import Popup from "./ui/Popup";
 import Button from "./ui/Button";
 import { buttonClass } from "./ui/buttonClass";
 import SpoilerCover from "./ui/SpoilerCover";
@@ -75,7 +75,7 @@ const LogDetails = ({
 
     return (
         <>
-            <div className="px-5 py-5">
+            <div>
                 {/* The two figures worth crossing the room for. */}
                 <div
                     className={plateClass(
@@ -213,7 +213,7 @@ const LogDetails = ({
             </div>
 
             {review && (
-                <div className="border-t border-subtle px-5 py-4">
+                <div className="mt-5 border-t border-subtle pt-4">
                     <div className="flex items-baseline justify-between gap-3">
                         <h3 className="text-label text-content-muted">
                             Review
@@ -314,23 +314,20 @@ const ViewGameLogPopup = ({
     const MetaIcon = meta?.Icon;
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy="view-log-title"
-            className="w-full max-w-[560px] p-0! sm:p-0!"
-        >
-            <header className="border-b border-subtle px-5 pt-4 pr-12">
-                <h2
-                    id="view-log-title"
-                    className="font-display text-section leading-tight text-content"
-                >
-                    {game?.title ?? "…"}
-                </h2>
-                {/* A meta line, not chips: the status carries its own hue and
-                    mark, and a hairline is enough to part it from the machine
-                    it was played on. */}
-                {selected && !several && (
-                    <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label-sm text-content-muted">
+            titleId="view-log-title"
+            width="w-full sm:max-w-[560px]"
+            title={game?.title ?? "…"}
+            art={game?.artworkUrl}
+            cover={game?.coverUrl}
+            blurb={
+                /* A meta line, not chips: the status carries its own hue and
+                   mark, and a hairline is enough to part it from the machine
+                   it was played on. */
+                selected &&
+                !several && (
+                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label-sm text-content-muted">
                         <StatusBadge
                             status={displayStatusFor(
                                 selected.status,
@@ -350,14 +347,16 @@ const ViewGameLogPopup = ({
                             </>
                         )}
                     </div>
-                )}
-                {several ? (
+                )
+            }
+            tabs={
+                several && (
                     /* Scrolls inside itself on a phone rather than pushing
                        the page sideways. */
                     <div
                         role="tablist"
                         aria-label="Platforms"
-                        className="-mx-5 mt-3 flex gap-1 overflow-x-auto px-5 pb-px"
+                        className="-mx-5 flex gap-1 overflow-x-auto px-5 pb-px sm:-mx-7 sm:px-7"
                     >
                         {[null, ...logs].map((log) => {
                             const active = log ? tab === log.id : tab === "all";
@@ -383,59 +382,59 @@ const ViewGameLogPopup = ({
                             );
                         })}
                     </div>
-                ) : (
-                    <div className="pb-4" />
-                )}
-            </header>
-
-            {!bundle ? (
-                <div className="px-5 py-5">
+                )
+            }
+            footer={
+                <div className="flex flex-wrap gap-3">
+                    {action && (
+                        <Button className="flex-1" onClick={action.onSelect}>
+                            {action.label}
+                        </Button>
+                    )}
+                    <button
+                        type="button"
+                        className={buttonClass(
+                            "secondary",
+                            action ? "flex-1" : "w-full"
+                        )}
+                        onClick={onClose}
+                    >
+                        Close
+                    </button>
+                </div>
+            }
+        >
+            {/* The frame leaves the body flush under its tabs. */}
+            <div className={cn(several && "pt-5")}>
+                {!bundle ? (
                     <TextSkeleton lines={4} />
-                </div>
-            ) : selected ? (
-                <LogDetails
-                    gamelog={selected}
-                    isMine={isMine}
-                    onClose={onClose}
-                />
-            ) : (
-                <div className="px-5 py-5">
-                    {bundle.rollup && (
-                        <RollupFigures
-                            rollup={bundle.rollup}
-                            whose={isMine ? "Your" : "Their"}
-                        />
-                    )}
-                    <div className="-mx-3 mt-5 flex flex-col border-t border-subtle pt-2">
-                        {logs.map((log) => (
-                            <LogRow
-                                key={log.id}
-                                log={log}
-                                onSelect={() => setTab(log.id)}
+                ) : selected ? (
+                    <LogDetails
+                        gamelog={selected}
+                        isMine={isMine}
+                        onClose={onClose}
+                    />
+                ) : (
+                    <div>
+                        {bundle.rollup && (
+                            <RollupFigures
+                                rollup={bundle.rollup}
+                                whose={isMine ? "Your" : "Their"}
                             />
-                        ))}
+                        )}
+                        <div className="-mx-3 mt-5 flex flex-col border-t border-subtle pt-2">
+                            {logs.map((log) => (
+                                <LogRow
+                                    key={log.id}
+                                    log={log}
+                                    onSelect={() => setTab(log.id)}
+                                />
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
-
-            <footer className="flex flex-wrap gap-3 border-t border-subtle px-5 py-4">
-                {action && (
-                    <Button className="flex-1" onClick={action.onSelect}>
-                        {action.label}
-                    </Button>
                 )}
-                <button
-                    type="button"
-                    className={buttonClass(
-                        "secondary",
-                        action ? "flex-1" : "w-full"
-                    )}
-                    onClick={onClose}
-                >
-                    Close
-                </button>
-            </footer>
-        </Modal>
+            </div>
+        </Popup>
     );
 };
 

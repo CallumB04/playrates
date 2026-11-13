@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 import { Check, Plus } from "lucide-react";
 import { ItemSheetFor } from "../../../components/shop/ItemSheet";
 import Button from "../../../components/ui/Button";
-import Modal from "../../../components/ui/Modal";
+import Popup from "../../../components/ui/Popup";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { cn } from "../../../lib/cn";
 
@@ -50,19 +50,48 @@ const ChoosePins = ({
         );
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full sm:max-w-lg"
+            titleId={titleId}
+            width="w-full sm:max-w-lg"
+            title={title}
+            blurb={
+                <p>
+                    Tap up to {slots}, in the order you want them.{" "}
+                    {picked.length} of {slots}.
+                </p>
+            }
+            footer={
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    {full && (
+                        <Button
+                            variant="ghost"
+                            onClick={() => setBuying(true)}
+                            className="w-full sm:mr-auto sm:w-auto"
+                        >
+                            <Plus size={15} aria-hidden />
+                            Get another slot
+                        </Button>
+                    )}
+                    <Button
+                        variant="secondary"
+                        onClick={onClose}
+                        className="w-full sm:w-auto"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        disabled={saving}
+                        onClick={() => onSave(picked)}
+                        className="w-full sm:w-auto"
+                    >
+                        <Check size={15} aria-hidden />
+                        Save
+                    </Button>
+                </div>
+            }
         >
-            <h2 id={titleId} className="font-display text-section text-content">
-                {title}
-            </h2>
-            <p className="mt-1 text-body-sm text-content-secondary">
-                Tap up to {slots}, in the order you want them. {picked.length}{" "}
-                of {slots}.
-            </p>
-            <ul className="mt-4 flex max-h-96 flex-col gap-1 overflow-y-auto">
+            <ul className="flex max-h-96 flex-col gap-1 overflow-y-auto">
                 {loading
                     ? [0, 1, 2].map((i) => (
                           <Skeleton key={i} className="h-12 rounded-md" />
@@ -108,40 +137,13 @@ const ChoosePins = ({
                           );
                       })}
             </ul>
-            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                {full && (
-                    <Button
-                        variant="ghost"
-                        onClick={() => setBuying(true)}
-                        className="w-full sm:mr-auto sm:w-auto"
-                    >
-                        <Plus size={15} aria-hidden />
-                        Get another slot
-                    </Button>
-                )}
-                <Button
-                    variant="secondary"
-                    onClick={onClose}
-                    className="w-full sm:w-auto"
-                >
-                    Cancel
-                </Button>
-                <Button
-                    disabled={saving}
-                    onClick={() => onSave(picked)}
-                    className="w-full sm:w-auto"
-                >
-                    <Check size={15} aria-hidden />
-                    Save
-                </Button>
-            </div>
             {buying && (
                 <ItemSheetFor
                     item={slotItem}
                     onClose={() => setBuying(false)}
                 />
             )}
-        </Modal>
+        </Popup>
     );
 };
 

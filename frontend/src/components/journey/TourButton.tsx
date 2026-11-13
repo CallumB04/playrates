@@ -1,7 +1,7 @@
 import { useId, useState } from "react";
 import { Compass } from "lucide-react";
 import Button from "../ui/Button";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import { useProgress } from "../../hooks/queries/useProgress";
 import { cn } from "../../lib/cn";
 import TourCards from "./TourCards";
@@ -32,33 +32,32 @@ const TourButton = ({ className }: { className?: string }) => {
                 How PlayRates works
             </button>
             {open && (
-                <Modal
+                <Popup
                     onClose={() => setOpen(false)}
-                    labelledBy={titleId}
-                    className={ONBOARDING_POPUP}
+                    titleId={titleId}
+                    width={ONBOARDING_POPUP}
+                    title="How PlayRates works"
+                    footer={
+                        <div className="flex flex-col">
+                            <Button
+                                onClick={() =>
+                                    index < 2
+                                        ? setIndex(index + 1)
+                                        : setOpen(false)
+                                }
+                                className="w-full sm:w-auto sm:self-end"
+                            >
+                                {index < 2 ? "Next" : "Done"}
+                            </Button>
+                        </div>
+                    }
                 >
-                    <div className="flex flex-col gap-4">
-                        <h2
-                            id={titleId}
-                            className="pr-10 font-display text-section text-content"
-                        >
-                            How PlayRates works
-                        </h2>
-                        <TourCards
-                            progress={progress}
-                            index={index}
-                            onIndex={setIndex}
-                        />
-                        <Button
-                            onClick={() =>
-                                index < 2 ? setIndex(index + 1) : setOpen(false)
-                            }
-                            className="w-full sm:w-auto sm:self-end"
-                        >
-                            {index < 2 ? "Next" : "Done"}
-                        </Button>
-                    </div>
-                </Modal>
+                    <TourCards
+                        progress={progress}
+                        index={index}
+                        onIndex={setIndex}
+                    />
+                </Popup>
             )}
         </>
     );

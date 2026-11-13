@@ -17,7 +17,7 @@ import type {
 import ProfilePicture from "../ProfilePicture";
 import ReactionBar from "../ui/ReactionBar";
 import Button from "../ui/Button";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import { whyCannotVote } from "../../lib/voting";
 import { relativeTime } from "../../lib/format";
 import { cn } from "../../lib/cn";
@@ -326,18 +326,13 @@ const MessageItem = ({
                 {children}
             </div>
             {moreOpen && (
-                <Modal
+                <Popup
                     onClose={() => setMoreOpen(false)}
-                    labelledBy={`message-${message.id}-actions`}
-                    className="w-full sm:max-w-xs"
+                    titleId={`message-${message.id}-actions`}
+                    width="w-full sm:max-w-xs"
+                    title="Message"
                 >
-                    <h2
-                        id={`message-${message.id}-actions`}
-                        className="pr-10 font-display text-section text-content"
-                    >
-                        Message
-                    </h2>
-                    <div className="mt-3 flex flex-col gap-1">
+                    <div className="flex flex-col gap-1">
                         {secondary.map((action) => (
                             <Button
                                 key={action.label}
@@ -357,7 +352,7 @@ const MessageItem = ({
                             </Button>
                         ))}
                     </div>
-                </Modal>
+                </Popup>
             )}
         </article>
     );

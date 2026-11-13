@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { MAX_FAVOURITE_GAMES, type Game } from "@playrates/shared";
-import Modal from "../../../components/ui/Modal";
+import Popup from "../../../components/ui/Popup";
 import Button from "../../../components/ui/Button";
 import GameCover from "../../../components/game/GameCover";
 import GamePicker, {
@@ -53,23 +53,33 @@ const FavouritesEditor = ({ current, onClose }: FavouritesEditorProps) => {
     };
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy="favourites-title"
-            className="w-full max-w-lg"
+            titleId="favourites-title"
+            width="w-full sm:max-w-lg"
+            title="Favourite games"
+            blurb={<p>Up to six, shown in this order on your profile.</p>}
+            footer={
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <Button
+                        variant="secondary"
+                        onClick={onClose}
+                        className="w-full sm:w-auto"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={() => void onSave()}
+                        disabled={save.isPending}
+                        className="w-full sm:w-auto"
+                    >
+                        {save.isPending ? "Saving…" : "Save favourites"}
+                    </Button>
+                </div>
+            }
         >
-            <h2
-                id="favourites-title"
-                className="font-display text-section text-content"
-            >
-                Favourite games
-            </h2>
-            <p className="mt-1 text-body-sm text-content-secondary">
-                Up to six, shown in this order on your profile.
-            </p>
-
             {games.length > 0 && (
-                <ol className="mt-4 flex flex-col gap-1">
+                <ol className="mb-4 flex flex-col gap-1">
                     {games.map((game, i) => (
                         <li
                             key={game.id}
@@ -131,7 +141,7 @@ const FavouritesEditor = ({ current, onClose }: FavouritesEditorProps) => {
                 </ol>
             )}
 
-            <div className="mt-4">
+            <div>
                 {full ? (
                     <p className="text-label text-content-muted">
                         That’s six. Remove one to add another.
@@ -140,24 +150,7 @@ const FavouritesEditor = ({ current, onClose }: FavouritesEditorProps) => {
                     <GamePicker value={null} onChange={add} inlineResults />
                 )}
             </div>
-
-            <div className="mt-5 flex flex-col-reverse gap-2 border-t border-subtle pt-4 sm:flex-row sm:justify-end">
-                <Button
-                    variant="secondary"
-                    onClick={onClose}
-                    className="w-full sm:w-auto"
-                >
-                    Cancel
-                </Button>
-                <Button
-                    onClick={() => void onSave()}
-                    disabled={save.isPending}
-                    className="w-full sm:w-auto"
-                >
-                    {save.isPending ? "Saving…" : "Save favourites"}
-                </Button>
-            </div>
-        </Modal>
+        </Popup>
     );
 };
 

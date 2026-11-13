@@ -6,7 +6,7 @@ import Dropdown from "../../../components/ui/Dropdown";
 import Field from "../../../components/ui/Field";
 import { fieldClass } from "../../../components/ui/fieldClass";
 import { SearchInput } from "../../../components/ui/Input";
-import Modal from "../../../components/ui/Modal";
+import Popup from "../../../components/ui/Popup";
 import Toggle from "../../../components/ui/Toggle";
 import { popoverClass } from "../../../components/ui/popover";
 import {
@@ -280,29 +280,32 @@ const ShelfFilters = ({
 
             {open &&
                 (phone ? (
-                    <Modal onClose={() => setOpen(false)} labelledBy={titleId}>
-                        <h2
-                            id={titleId}
-                            className="border-b border-subtle pb-3 font-display text-section text-content"
-                        >
-                            Filters
-                        </h2>
-                        <div className="pt-4">{body}</div>
-                        <div className="mt-6 flex flex-col gap-2">
-                            <Button size="touch" onClick={() => setOpen(false)}>
-                                Done
-                            </Button>
-                            {active > 0 && (
+                    <Popup
+                        onClose={() => setOpen(false)}
+                        titleId={titleId}
+                        title="Filters"
+                        footer={
+                            <div className="flex flex-col gap-2">
                                 <Button
-                                    variant="ghost"
                                     size="touch"
-                                    onClick={onClear}
+                                    onClick={() => setOpen(false)}
                                 >
-                                    Clear filters
+                                    Done
                                 </Button>
-                            )}
-                        </div>
-                    </Modal>
+                                {active > 0 && (
+                                    <Button
+                                        variant="ghost"
+                                        size="touch"
+                                        onClick={onClear}
+                                    >
+                                        Clear filters
+                                    </Button>
+                                )}
+                            </div>
+                        }
+                    >
+                        {body}
+                    </Popup>
                 ) : (
                     <div
                         role="dialog"

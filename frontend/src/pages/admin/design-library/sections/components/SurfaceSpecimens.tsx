@@ -3,7 +3,7 @@ import Panel, { PanelCount } from "../../../../../components/ui/Panel";
 import Plate from "../../../../../components/ui/Plate";
 import Card, { CardHeader } from "../../../../../components/ui/Card";
 import { popoverClass } from "../../../../../components/ui/popover";
-import Modal from "../../../../../components/ui/Modal";
+import Popup from "../../../../../components/ui/Popup";
 import ConfirmPopup from "../../../../../components/ui/ConfirmPopup";
 import Button from "../../../../../components/ui/Button";
 import LedgerRow, { LedgerList } from "../../../../../components/ui/LedgerRow";
@@ -219,32 +219,31 @@ const SurfaceSpecimens = () => {
             <Specimen
                 title="Modal"
                 notes="A bottom sheet below sm, the centred dialog from there up. Lifts in on a spring over a blurred scrim, with the deepest shadow in the system. Escape and a backdrop mousedown both close; focus moves in and is restored on the way out."
-                meta="onClose · labelledBy · showCloseButton · className"
+                meta="onClose · titleId · title · blurb · art · footer"
             >
                 <Button onClick={() => setModalOpen(true)}>Open modal</Button>
                 {modalOpen && (
-                    <Modal
+                    <Popup
                         onClose={() => setModalOpen(false)}
-                        labelledBy="demo-modal-title"
-                        className="w-full sm:max-w-[440px]"
-                    >
-                        <h2
-                            id="demo-modal-title"
-                            className="pr-11 font-display text-section text-content sm:pr-8"
-                        >
-                            Lanternfall
-                        </h2>
-                        <p className="py-4 text-body-sm text-content-secondary">
-                            Any content goes in a modal. For a question with a
-                            yes and a no, reach for the confirm popup instead.
-                        </p>
-                        <Button
-                            onClick={() => setModalOpen(false)}
-                            className="w-full sm:w-auto"
-                        >
-                            Done
-                        </Button>
-                    </Modal>
+                        titleId="demo-modal-title"
+                        width="w-full sm:max-w-[440px]"
+                        title="Lanternfall"
+                        blurb={
+                            <p>
+                                Any content goes in a modal. For a question with
+                                a yes and a no, reach for the confirm popup
+                                instead.
+                            </p>
+                        }
+                        footer={
+                            <Button
+                                onClick={() => setModalOpen(false)}
+                                className="w-full sm:w-auto"
+                            >
+                                Done
+                            </Button>
+                        }
+                    />
                 )}
             </Specimen>
 

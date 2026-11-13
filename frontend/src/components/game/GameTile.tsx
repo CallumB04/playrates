@@ -17,7 +17,7 @@ import { usePrefetchGame } from "../../hooks/queries/useGames";
 import PlatformMarks from "./PlatformMarks";
 import StatusBadge from "../ui/StatusBadge";
 import RatingBadge from "../ui/RatingBadge";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import Button from "../ui/Button";
 
 export interface TileAction {
@@ -460,18 +460,14 @@ const GameTile = ({
             {/* Outside the link: a click in a portal still bubbles through
                 its React parents, and inside it would open the game. */}
             {sheetOpen && (
-                <Modal
+                <Popup
                     onClose={() => setSheetOpen(false)}
-                    labelledBy={sheetTitleId}
-                    className="w-full max-w-sm"
+                    titleId={sheetTitleId}
+                    width="w-full sm:max-w-sm"
+                    title={title}
+                    cover={coverUrl}
                 >
-                    <h2
-                        id={sheetTitleId}
-                        className="pr-10 font-display text-section text-content"
-                    >
-                        {title}
-                    </h2>
-                    <div className="mt-4 flex flex-col gap-2">
+                    <div className="flex flex-col gap-2">
                         {actions.map((action) => {
                             const Icon = action.icon ?? action.standing;
                             return (
@@ -495,7 +491,7 @@ const GameTile = ({
                             );
                         })}
                     </div>
-                </Modal>
+                </Popup>
             )}
         </div>
     );

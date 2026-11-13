@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import Button from "../ui/Button";
 import { Textarea } from "../ui/Input";
 
@@ -40,33 +40,39 @@ const ExpandedReview = ({
     }, []);
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy="expanded-review-title"
-            className="flex h-[88dvh] w-full max-w-[960px] flex-col gap-4 sm:h-[90dvh]"
+            titleId="expanded-review-title"
+            width="w-full sm:max-w-[960px]"
+            title={gameTitle ?? "Your review"}
+            footer={
+                <div className="flex">
+                    <Button
+                        onClick={onClose}
+                        className="w-full sm:ml-auto sm:w-auto"
+                    >
+                        Done
+                    </Button>
+                </div>
+            }
         >
-            <h2
-                id="expanded-review-title"
-                className="pr-10 font-display text-[22px] leading-tight text-content sm:text-[28px]"
-            >
-                {gameTitle ?? "Your review"}
-            </h2>
-            <div className="flex flex-wrap items-center gap-3.5">
-                {controls}
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-center gap-3.5">
+                    {controls}
+                </div>
+                {/* Sized to the screen rather than stretched to fill the
+                    panel: the frame's body doesn't grow. */}
+                <Textarea
+                    ref={fieldRef}
+                    maxLength={maxLength}
+                    aria-label="Review"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder={placeholder}
+                    className="h-[50dvh] leading-relaxed sm:h-[60dvh]"
+                />
             </div>
-            <Textarea
-                ref={fieldRef}
-                maxLength={maxLength}
-                aria-label="Review"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                placeholder={placeholder}
-                className="min-h-0 flex-1 leading-relaxed"
-            />
-            <Button onClick={onClose} className="w-full sm:ml-auto sm:w-auto">
-                Done
-            </Button>
-        </Modal>
+        </Popup>
     );
 };
 
