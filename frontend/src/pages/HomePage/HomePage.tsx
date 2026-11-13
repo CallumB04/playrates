@@ -46,6 +46,10 @@ const releaseWindow = () => {
     return { releasedAfter: iso(from), releasedBefore: iso(now) };
 };
 
+const DAY_MS = 86_400_000;
+const joinedToday = (createdAt: string): boolean =>
+    Date.now() - Date.parse(createdAt) < DAY_MS;
+
 const HomePage = () => {
     /* No name of its own: the homepage keeps the site title. */
     usePageTitle();
@@ -135,7 +139,13 @@ const HomePage = () => {
                     <ReEntryPlate
                         username={user.username}
                         displayName={user.firstName || user.username}
-                        isNew={myLogIds && myLogIds.length === 0}
+                        // Their first day is a welcome, games logged in
+                        // the welcome or not.
+                        isNew={
+                            myLogIds &&
+                            (myLogIds.length === 0 ||
+                                joinedToday(user.createdAt))
+                        }
                         // A failed load falls back to empty rather than
                         // loading for ever.
                         playing={playingPending ? undefined : onTheGo}

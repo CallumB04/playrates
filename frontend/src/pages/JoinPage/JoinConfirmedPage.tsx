@@ -17,6 +17,11 @@ import CheckInbox from "../../components/auth/CheckInbox";
 import { useCaptcha } from "../../components/auth/useCaptcha";
 import SwitchLink from "./components/SwitchLink";
 import StepHeading from "../../components/auth/StepHeading";
+import StepBar from "../../components/journey/StepBar";
+import {
+    TRACK_ICONS,
+    TRACK_LABELS,
+} from "../../components/onboarding/welcome/steps";
 
 /** A round mark over a step that went wrong. */
 const ProblemMark = ({ children }: { children: ReactNode }) => (
@@ -80,10 +85,19 @@ const Confirmed = ({ user }: { user: MyProfile }) => {
                 aside="Your email’s confirmed. Next, add a picture and the games you’ve played, or skip either for now."
             />
             <FoundingMember />
+            {/* The welcome's bar, the first step already filled: signing up
+                was it, so what's left looks shorter than it did. */}
+            <StepBar
+                label="Your welcome"
+                steps={TRACK_LABELS}
+                icons={TRACK_ICONS}
+                done={1}
+                className="mt-8"
+            />
             <Button
                 size="lg"
                 onClick={() => navigate("/")}
-                className="mt-8 w-full"
+                className="mt-6 w-full"
             >
                 Get started
             </Button>

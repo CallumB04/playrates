@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Panel from "../../../components/ui/Panel";
 import { panelButtonClass } from "../../../components/ui/panelButtonClass";
 import GameTile from "../../../components/game/GameTile";
+import HiddenGameTile from "../../../components/game/HiddenGame";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { buttonClass } from "../../../components/ui/buttonClass";
 import { usePlatforms } from "../../../hooks/queries/useGames";
@@ -71,19 +72,27 @@ const WishlistTop = ({ username, isMyAccount, canSee }: WishlistTopProps) => {
                                 className={podiumOnPhone(entry.rank)}
                             >
                                 <Rank place={entry.rank} />
-                                <GameTile
-                                    gameId={entry.gameId}
-                                    title={entry.game?.title ?? "Unknown game"}
-                                    coverUrl={entry.game?.coverUrl ?? null}
-                                    platformSlugs={entry.game?.platforms ?? []}
-                                    platforms={platforms ?? []}
-                                    footValue={releaseYear(
-                                        entry.game?.releaseDate
-                                    )}
-                                    actions={buildTileActions(entry)}
-                                    narrowFoot
-                                    shortTitle
-                                />
+                                {entry.hidden ? (
+                                    <HiddenGameTile />
+                                ) : (
+                                    <GameTile
+                                        gameId={entry.gameId}
+                                        title={
+                                            entry.game?.title ?? "Unknown game"
+                                        }
+                                        coverUrl={entry.game?.coverUrl ?? null}
+                                        platformSlugs={
+                                            entry.game?.platforms ?? []
+                                        }
+                                        platforms={platforms ?? []}
+                                        footValue={releaseYear(
+                                            entry.game?.releaseDate
+                                        )}
+                                        actions={buildTileActions(entry)}
+                                        narrowFoot
+                                        shortTitle
+                                    />
+                                )}
                             </li>
                         ))}
                     </ol>

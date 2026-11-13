@@ -9,7 +9,8 @@ import ProfilePicture from "../ProfilePicture";
 import { usePatchNotification } from "../../hooks/queries/useNotificationActions";
 import { threadPath } from "../community/paths";
 import { namesOf } from "./notificationSections";
-import { replyPhrase } from "./notificationSummary";
+import { replyPhrase, replyTarget } from "./notificationSummary";
+import { RowLink } from "./NotificationContents";
 
 const TITLE = "text-body-sm font-medium text-content";
 const BODY = "mt-0.5 text-body-sm text-content-secondary";
@@ -86,21 +87,21 @@ export const ReplyGroupContent = ({
     // Each name once, however many times they replied.
     const names = [...new Set(items.map((n) => n.actor.username))];
     return (
-        <Link
+        <RowLink
+            hidden={latest.hidden}
             to={`${threadPath(latest.threadId)}#message-${latest.messageId}`}
             onClick={open}
-            className="group block"
         >
             <p className={TITLE}>
                 <span className="group-hover:underline">{namesOf(names)}</span>{" "}
                 <span className="font-normal text-content-secondary">
                     {replyPhrase(latest.reason)}
-                </span>{" "}
-                {latest.threadTitle}
+                </span>
+                {replyTarget(latest)}
             </p>
             {latest.excerpt && (
                 <p className={`${BODY} line-clamp-2`}>“{latest.excerpt}”</p>
             )}
-        </Link>
+        </RowLink>
     );
 };

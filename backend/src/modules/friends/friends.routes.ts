@@ -40,6 +40,10 @@ export const createMyFriendsRouter = ({
     res.json({ data: await service.tasteMatches(callerId(req)) });
   });
 
+  router.get("/shared", async (req, res) => {
+    res.json({ data: await service.sharedPlayers(callerId(req)) });
+  });
+
   // Before "/requests", to match the ordering rule the rest of the file follows.
   router.get(
     "/activity",

@@ -1,25 +1,29 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSteamAvailable } from "../steam/useSteamAvailable";
-import { Check } from "lucide-react";
-import PlayGlyph from "../ui/PlayGlyph";
-import { STATUS_PRESENTATION } from "../../constants/gameStatus";
+import { useSteamAvailable } from "../../steam/useSteamAvailable";
+import { Check, Play } from "lucide-react";
+import Note from "../../ui/Note";
+import PlayGlyph from "../../ui/PlayGlyph";
+import { STATUS_PRESENTATION } from "../../../constants/gameStatus";
 import type { Game } from "@playrates/shared";
-import Button from "../ui/Button";
-import { Skeleton } from "../ui/Skeleton";
-import GameCover from "../game/GameCover";
-import LoadingSpinner from "../LoadingSpinner";
-import { queryKeys, type GameListFilters } from "../../api";
-import { useCatalogueReach, useGames } from "../../hooks/queries/useGames";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
-import { useDismiss } from "../../hooks/useDismiss";
-import { useMediaQuery } from "../../hooks/useMediaQuery";
-import { Input } from "../ui/Input";
-import { useLogMutations } from "../../hooks/queries/useGameLogs";
-import { useNotify } from "../../contexts/NotificationContext";
-import { formatCount } from "../../lib/format";
-import { cn } from "../../lib/cn";
+import Button from "../../ui/Button";
+import { Skeleton } from "../../ui/Skeleton";
+import GameCover from "../../game/GameCover";
+import LoadingSpinner from "../../LoadingSpinner";
+import { queryKeys, type GameListFilters } from "../../../api";
+import { useCatalogueReach, useGames } from "../../../hooks/queries/useGames";
+import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
+import { useDismiss } from "../../../hooks/useDismiss";
+import { useMediaQuery } from "../../../hooks/useMediaQuery";
+import { Input } from "../../ui/Input";
+import { useLogMutations } from "../../../hooks/queries/useGameLogs";
+import { useNotify } from "../../../contexts/NotificationContext";
+import { useXpRules } from "../../../hooks/queries/useProgress";
+import StepFrame from "./StepFrame";
+import { xpFor, type StepProps } from "./stepProps";
+import { formatCount } from "../../../lib/format";
+import { cn } from "../../../lib/cn";
 
 const SHOWN = 12;
 
@@ -172,22 +176,49 @@ const CoverPick = ({
                                 </span>
                             )
                         ) : (
-                            <button
-                                type="button"
-                                aria-pressed={playing}
-                                aria-label={`Playing ${game.title} now`}
-                                onClick={onPlaying}
-                                className={cn(
-                                    // Small to see, with room round it to hit.
-                                    "absolute inset-x-1.5 bottom-1.5 flex h-6 animate-fade-up cursor-pointer items-center justify-center gap-1 rounded-xs border bg-surface-media/85 text-[11px] leading-none font-semibold backdrop-blur-sm transition-colors before:absolute before:-inset-x-1.5 before:-inset-y-2.5 before:content-['']",
-                                    playing
-                                        ? CHOSEN.playing
-                                        : "border-transparent text-content-on-media hover:bg-surface-media"
-                                )}
+                            // Which shelf, as a switch of two: plainer than
+                            // a question, and both answers in sight.
+                            <div
+                                role="group"
+                                aria-label={`${game.title}: played or playing`}
+                                className="absolute inset-x-1.5 bottom-1.5 flex animate-fade-up gap-0.5 rounded-sm bg-surface-media/80 p-0.5 backdrop-blur-sm"
                             >
-                                <PlayGlyph size={10} />
-                                {playing ? "Playing" : "Playing?"}
-                            </button>
+                                {(["played", "playing"] as const).map(
+                                    (option) => {
+                                        const chosen =
+                                            (option === "playing") === playing;
+                                        return (
+                                            <button
+                                                key={option}
+                                                type="button"
+                                                aria-pressed={chosen}
+                                                aria-label={
+                                                    option === "playing"
+                                                        ? `Playing ${game.title} now`
+                                                        : `Played ${game.title}`
+                                                }
+                                                onClick={
+                                                    chosen
+                                                        ? undefined
+                                                        : onPlaying
+                                                }
+                                                className={cn(
+                                                    "flex h-6 flex-1 cursor-pointer items-center justify-center rounded-xs text-[11px] leading-none font-semibold transition-colors",
+                                                    chosen
+                                                        ? option === "playing"
+                                                            ? "bg-status-playing text-content-on-solid"
+                                                            : "bg-brand text-content-on-solid"
+                                                        : "text-content-on-media/70 hover:bg-content-on-media/10 hover:text-content-on-media"
+                                                )}
+                                            >
+                                                {option === "playing"
+                                                    ? "Playing"
+                                                    : "Played"}
+                                            </button>
+                                        );
+                                    }
+                                )}
+                            </div>
                         )}
                     </>
                 )
@@ -195,28 +226,6 @@ const CoverPick = ({
         </div>
     );
 };
-
-/** Held at the foot as the covers scroll, with what's picked so far beside
- *  the way on. */
-const Footer = ({
-    summary,
-    children,
-}: {
-    summary: string;
-    children: ReactNode;
-}) => (
-    <div className="sticky bottom-0 -mx-4 -mb-4 flex flex-col gap-2 border-t border-subtle bg-surface-raised px-4 py-3 sm:-mx-6 sm:-mb-6 sm:flex-row sm:items-center sm:px-6 sm:py-4">
-        <p
-            aria-live="polite"
-            className="text-label-sm text-content-muted max-sm:text-center sm:mr-auto"
-        >
-            {summary}
-        </p>
-        <div className="flex flex-col-reverse gap-2 sm:flex-row">
-            {children}
-        </div>
-    </div>
-);
 
 /** One or two letters match too much to be worth asking about. */
 const searchOf = (typed: string): string | undefined =>
@@ -229,23 +238,12 @@ const filtersFor = (typed: string): GameListFilters => ({
     search: searchOf(typed),
 });
 
-interface PlayedGamesStepProps {
-    titleId: string;
-    /** Walks it without logging a thing, for the admin preview. */
-    preview?: boolean;
-    onDone: () => void;
-}
-
 /**
- * The welcome's second step: the games most logged here, to tap the ones
- * already played, and mark any still on the go. An empty shelf is the hardest place to start, and these
- * are the likeliest to have been played.
+ * The games step of the welcome: the games most logged here, to tap the
+ * ones already played and mark any still on the go. An empty shelf is the
+ * hardest place to start, and these are the likeliest to have been played.
  */
-const PlayedGamesStep = ({
-    titleId,
-    preview = false,
-    onDone,
-}: PlayedGamesStepProps) => {
+const GamesStep = ({ titleId, preview, onNext, onLeave }: StepProps) => {
     /* The most logged to start with; a search for anything else. A pick
        stays picked as the search changes. */
     const [search, setSearch] = useState("");
@@ -281,6 +279,7 @@ const PlayedGamesStep = ({
     const [playing, setPlaying] = useState<number[]>([]);
     const [saving, setSaving] = useState(false);
     const has = (id: number) => picked.some((game) => game.id === id);
+    const playXp = xpFor(useXpRules().data, "play");
 
     const tapPlayed = (game: Game) => {
         if (has(game.id)) {
@@ -305,7 +304,7 @@ const PlayedGamesStep = ({
         );
 
     const add = async () => {
-        if (preview) return onDone();
+        if (preview) return onNext();
         setSaving(true);
         const results = await Promise.allSettled(
             picked.map((game) =>
@@ -322,70 +321,74 @@ const PlayedGamesStep = ({
                 `${formatCount(failed)} of those didn’t save. Add them from their pages.`,
                 "error"
             );
-        onDone();
+        onNext();
     };
 
     const games = `${formatCount(picked.length)} ${picked.length === 1 ? "game" : "games"}`;
 
-    /* Held to the popup's height, so only the covers scroll: the heading,
-       the search and the way on stay in view. The popup's own padding and
-       border come off the height it's allowed. */
     return (
-        <div className="flex max-h-[calc(88dvh-2rem-1px)] flex-col gap-4 sm:max-h-[calc(90dvh-3rem-2px)]">
-            <div className="pr-11 sm:pr-8">
-                <h2
-                    id={titleId}
-                    className="font-display text-section text-content"
+        <StepFrame
+            titleId={titleId}
+            title="Games you’ve played"
+            lead="Tap the ones you’ve played."
+            reward={
+                playXp
+                    ? picked.length > 0
+                        ? `+${formatCount(picked.length * playXp)} XP`
+                        : `+${playXp} XP a game`
+                    : undefined
+            }
+            pinned={
+                <>
+                    {/* A second tap does what a first doesn't, so it's
+                        said once, up front. */}
+                    {touch && (
+                        <Note icon={Play}>
+                            <strong className="font-semibold text-content">
+                                Tap a game again
+                            </strong>{" "}
+                            to mark it as Playing.
+                        </Note>
+                    )}
+
+                    <Input
+                        type="search"
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        placeholder="Search for a game"
+                        aria-label="Search for a game"
+                    />
+
+                    {steamAvailable && !preview && (
+                        <p className="text-body-sm text-content-secondary">
+                            Got a Steam library?{" "}
+                            <Link
+                                to="/settings?section=content&import=steam"
+                                // Off to Settings for good, so the welcome is done.
+                                onClick={onLeave}
+                                className="relative font-medium text-brand-text underline-offset-2 before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:underline"
+                            >
+                                Import it instead
+                            </Link>
+                        </p>
+                    )}
+                </>
+            }
+            onSkip={onNext}
+            busy={saving}
+            primary={
+                <Button
+                    onClick={() => void add()}
+                    disabled={picked.length === 0 || saving}
                 >
-                    Games you’ve played
-                </h2>
-                <p className="mt-1.5 text-body-sm text-content-secondary">
-                    {touch
-                        ? "Tap the ones you’ve played."
-                        : "Tap the ones you’ve played. Still on one? Mark it as Playing."}
-                </p>
-            </div>
-
-            {/* Said once, with the mark a cover on the go gets, as a
-                second tap does something a first one doesn't. */}
-            {touch && (
-                <p className="-mt-1 flex items-center gap-2.5 rounded-sm border border-subtle bg-surface-sunken/60 px-3 py-2.5 text-body-sm text-content-secondary">
-                    <span
-                        aria-hidden
-                        className="grid size-6 shrink-0 place-items-center rounded-xs bg-status-playing text-content-on-solid"
-                    >
-                        <PlayGlyph size={12} />
-                    </span>
-                    <span>
-                        <strong className="font-semibold text-content">
-                            Tap a game again
-                        </strong>{" "}
-                        to mark it as Playing.
-                    </span>
-                </p>
-            )}
-
-            <Input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search for a game"
-                aria-label="Search for a game"
-            />
-
-            {steamAvailable && !preview && (
-                <p className="text-body-sm text-content-secondary">
-                    Got a Steam library?{" "}
-                    <Link
-                        to="/settings?section=content&import=steam"
-                        onClick={onDone}
-                        className="relative font-medium text-brand-text underline-offset-2 before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:underline"
-                    >
-                        Import it instead
-                    </Link>
-                </p>
-            )}
-
+                    {saving
+                        ? "Adding…"
+                        : picked.length === 0
+                          ? "Continue"
+                          : `Add ${games}`}
+                </Button>
+            }
+        >
             {none && lookingFurther && (
                 <p
                     role="status"
@@ -416,9 +419,7 @@ const PlayedGamesStep = ({
 
             <ul
                 aria-busy={waiting}
-                // Room round the edge for a picked cover's ring, which the
-                // scroll would otherwise clip.
-                className="-mx-1 grid min-h-0 flex-1 grid-cols-3 gap-2.5 overflow-y-auto overscroll-contain p-1 sm:grid-cols-4"
+                className="grid grid-cols-3 gap-2.5 sm:grid-cols-4"
             >
                 {waiting
                     ? Array.from({ length: SHOWN }, (_, i) => (
@@ -447,40 +448,21 @@ const PlayedGamesStep = ({
                       ))}
             </ul>
 
-            <Footer
-                summary={
-                    picked.length === 0
-                        ? "Nothing picked yet"
-                        : [
-                              `${formatCount(picked.length - playing.length)} played`,
-                              `${formatCount(playing.length)} playing`,
-                          ]
-                              .filter((part) => !part.startsWith("0 "))
-                              .join(" · ")
-                }
+            <p
+                aria-live="polite"
+                className="-mt-2 text-label-sm text-content-muted"
             >
-                <Button
-                    variant="ghost"
-                    onClick={onDone}
-                    disabled={saving}
-                    className="w-full sm:w-auto"
-                >
-                    Skip for now
-                </Button>
-                <Button
-                    onClick={() => void add()}
-                    disabled={picked.length === 0 || saving}
-                    className="w-full sm:w-auto"
-                >
-                    {saving
-                        ? "Adding…"
-                        : picked.length === 0
-                          ? "Add to my shelves"
-                          : `Add ${games}`}
-                </Button>
-            </Footer>
-        </div>
+                {picked.length === 0
+                    ? "Nothing picked yet"
+                    : [
+                          `${formatCount(picked.length - playing.length)} played`,
+                          `${formatCount(playing.length)} playing`,
+                      ]
+                          .filter((part) => !part.startsWith("0 "))
+                          .join(" · ")}
+            </p>
+        </StepFrame>
     );
 };
 
-export default PlayedGamesStep;
+export default GamesStep;

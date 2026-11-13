@@ -302,3 +302,30 @@ export const toNotification = (
       return { ...base, kind: "unknown" };
   }
 };
+
+/** Where a notification about an adult game had a title, read as the end
+ *  of its sentence ("replied to you in a thread about an adult game"). */
+const HIDDEN_THREAD = "a thread about an adult game";
+const HIDDEN_GAME = "an adult game";
+
+/** A notification about an adult game, for someone who hasn't chosen to
+ *  see them: still there, with what would name it left out. */
+export const hideAdult = (n: AppNotification): AppNotification => {
+  switch (n.kind) {
+    case "community_reply":
+    case "community_upvote_milestone":
+      return { ...n, threadTitle: HIDDEN_THREAD, excerpt: "", hidden: true };
+    case "community_thread_activity":
+      return {
+        ...n,
+        threadTitle: HIDDEN_THREAD,
+        gameTitle: null,
+        coverUrl: null,
+        hidden: true,
+      };
+    case "review_upvote_milestone":
+      return { ...n, gameTitle: HIDDEN_GAME, coverUrl: null, hidden: true };
+    default:
+      return n;
+  }
+};

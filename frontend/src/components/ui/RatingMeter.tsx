@@ -17,6 +17,12 @@ interface RatingMeterProps {
     /** Labels the control for assistive tech, e.g. "Your rating". */
     label: string;
     disabled?: boolean;
+    /** Says how to clear it under the track. Off where a page says it
+     *  once for several. */
+    hint?: boolean;
+    /** The label as the row's title, not a quiet caption: a game's name
+     *  in a list of them. */
+    titled?: boolean;
     className?: string;
 }
 
@@ -29,6 +35,8 @@ const RatingMeter = ({
     onChange,
     label,
     disabled = false,
+    hint = true,
+    titled = false,
     className,
 }: RatingMeterProps) => {
     const [hover, setHover] = useState<number | null>(null);
@@ -110,7 +118,15 @@ const RatingMeter = ({
     return (
         <div className={cn("flex flex-col gap-2.5", className)}>
             <div className="flex items-baseline justify-between gap-4">
-                <span className="text-label text-content-muted">{label}</span>
+                <span
+                    className={
+                        titled
+                            ? "min-w-0 truncate text-body-sm font-medium text-content"
+                            : "text-label text-content-muted"
+                    }
+                >
+                    {label}
+                </span>
                 <RatingBadge
                     value={hover ?? value}
                     size="md"
@@ -173,15 +189,17 @@ const RatingMeter = ({
                 })}
             </div>
 
-            <p className="text-label-sm text-content-muted">
-                <span className="sm:hidden">
-                    Slide to change, and land on the same value again to clear
-                    your rating.
-                </span>
-                <span className="hidden sm:inline">
-                    Press the same segment again to clear your rating.
-                </span>
-            </p>
+            {hint && (
+                <p className="text-label-sm text-content-muted">
+                    <span className="sm:hidden">
+                        Slide to change, and land on the same value again to
+                        clear your rating.
+                    </span>
+                    <span className="hidden sm:inline">
+                        Press the same segment again to clear your rating.
+                    </span>
+                </p>
+            )}
         </div>
     );
 };

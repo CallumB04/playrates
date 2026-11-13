@@ -1,4 +1,8 @@
-import type { AppNotification, ReplyReason } from "@playrates/shared";
+import type {
+    AppNotification,
+    CommunityReplyNotification,
+    ReplyReason,
+} from "@playrates/shared";
 import { BRAND_NAME } from "../../constants/brand";
 import { formatCount, formatMessageCount } from "../../lib/format";
 import { itemName } from "../shop/shopItems";
@@ -15,6 +19,11 @@ export const replyPhrase = (reason: ReplyReason = "reply"): string =>
           ? "also replied in"
           : "replied to you in";
 
+/** What a reply's line ends on. Hidden, "a thread about an adult game"
+ *  says no more than "your thread" already has. */
+export const replyTarget = (n: CommunityReplyNotification): string =>
+    n.hidden && n.reason === "thread" ? "" : ` ${n.threadTitle}`;
+
 const one = (n: AppNotification): string => {
     switch (n.kind) {
         case "welcome":
@@ -24,7 +33,7 @@ const one = (n: AppNotification): string => {
         case "friend_accepted":
             return `${n.actor.username} accepted your friend request`;
         case "community_reply":
-            return `${n.actor.username} ${replyPhrase(n.reason)} ${n.threadTitle}`;
+            return `${n.actor.username} ${replyPhrase(n.reason)}${replyTarget(n)}`;
         case "community_thread_activity":
             return `${formatMessageCount(n.count)} new ${n.count === 1 ? "message" : "messages"} in your thread`;
         case "community_upvote_milestone":
@@ -69,7 +78,7 @@ export const summaryOf = (items: AppNotification[]): string => {
                 )
             ),
         ];
-        return `${namesOf(names)} ${replyPhrase(first.reason)} ${first.threadTitle}`;
+        return `${namesOf(names)} ${replyPhrase(first.reason)}${replyTarget(first)}`;
     }
     return one(first);
 };

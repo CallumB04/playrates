@@ -39,6 +39,7 @@ import PlayerCardMock from "../../components/progress/PlayerCardMock";
 import { TokenCoin } from "../../components/progress/TokenAmount";
 import XpBar from "../../components/progress/XpBar";
 import XpInfo from "../../components/progress/XpInfo";
+import TourButton from "../../components/journey/TourButton";
 import { nextReward } from "../../components/progress/rewardText";
 import { questPath } from "../../lib/questPath";
 import { InviteCard } from "../../components/progress/Invite";
@@ -167,6 +168,7 @@ const Header = ({ data }: { data: Progress }) => {
                                 Level {reward.level} unlocks {reward.phrase}
                             </p>
                         )}
+                        <TourButton className="mt-3" />
                     </div>
                 </div>
 

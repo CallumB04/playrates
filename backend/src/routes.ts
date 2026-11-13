@@ -228,6 +228,11 @@ export const buildRoutes = ({
     repos.games,
     repos.reviews,
     profileGate,
+    async (viewerId) =>
+      viewerId
+        ? ((await repos.profiles.findById(viewerId))?.show_sexual_content ??
+          false)
+        : false,
   );
   const reviews = createReviewsService(
     repos.reviews,
@@ -249,6 +254,22 @@ export const buildRoutes = ({
   const notifications = createNotificationsService(
     repos.notifications,
     repos.friends,
+    {
+      canSee: async (userId) =>
+        (await repos.profiles.findById(userId))?.show_sexual_content ?? false,
+      threads: async (ids) =>
+        new Set(
+          (await Promise.all(ids.map((id) => repos.community.findThread(id))))
+            .filter((t) => t?.game_has_sexual_content)
+            .map((t) => t!.id),
+        ),
+      games: async (ids) =>
+        new Set(
+          (await repos.games.findByIds(ids))
+            .filter((g) => g.has_sexual_content)
+            .map((g) => g.id),
+        ),
+    },
   );
 
   const community = createCommunityService(
@@ -440,7 +461,12 @@ export const buildRoutes = ({
   );
   router.use(
     "/lists",
-    createListsRouter({ service: lists, profiles: repos.profiles, requireAuth, optionalAuth }),
+    createListsRouter({
+      service: lists,
+      profiles: repos.profiles,
+      requireAuth,
+      optionalAuth,
+    }),
   );
 
   router.use(

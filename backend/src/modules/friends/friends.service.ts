@@ -3,6 +3,7 @@ import {
   type FriendActivity,
   type FriendEdge,
   type GameFan,
+  type SharedPlayer,
   type TasteMatch,
   type FriendRelation,
   type Paginated,
@@ -44,6 +45,7 @@ const toEdge = (
 
 const TASTE_MATCHES_SHOWN = 12;
 const GAME_FANS_SHOWN = 8;
+const SHARED_PLAYERS_SHOWN = 6;
 
 export const createFriendsService = (
   repo: FriendsRepository,
@@ -132,6 +134,25 @@ export const createFriendsService = (
         user: toFriendUser(row),
         shared: row.shared,
         agreement: row.agreement,
+      }));
+    },
+
+    async sharedPlayers(callerId: string): Promise<SharedPlayer[]> {
+      const rows = await repo.sharedPlayers(callerId, SHARED_PLAYERS_SHOWN);
+      const byId = new Map(
+        (
+          await games.findByIds([...new Set(rows.flatMap((r) => r.game_ids))])
+        ).map((g) => [g.id, g]),
+      );
+      return rows.map((row) => ({
+        user: toFriendUser(row),
+        shared: row.shared,
+        games: row.game_ids.flatMap((id) => {
+          const game = byId.get(id);
+          return game
+            ? [{ id: game.id, title: game.title, coverUrl: game.cover_url }]
+            : [];
+        }),
       }));
     },
 

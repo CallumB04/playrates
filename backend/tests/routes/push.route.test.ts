@@ -8,7 +8,14 @@ import {
   USER_A,
   USER_B,
 } from "../helpers/buildTestApp.js";
-import { baseSeed, buildProfile } from "../helpers/fixtures.js";
+import {
+  baseSeed,
+  buildGame,
+  buildMessage,
+  buildProfile,
+  buildThread,
+  doc,
+} from "../helpers/fixtures.js";
 
 const device = (endpoint = "https://push.example/device-1") => ({
   endpoint,
@@ -115,6 +122,36 @@ describe("push", () => {
   it("takes no subscriptions while push isn't set up", async () => {
     const { app } = buildTestApp({ seed: baseSeed() });
     expect((await subscribe(app, USER_A)).status).toBe(404);
+  });
+
+  it("pushes a reply about an adult game only to someone who chose to see them", async () => {
+    const replyFor = async (optedIn: boolean) => {
+      const recorder = createPushRecorder();
+      const base = baseSeed();
+      const { app, email } = buildTestApp({
+        seed: {
+          ...base,
+          games: [buildGame({ id: 1, has_sexual_content: true })],
+          communityThreads: [buildThread()],
+          communityMessages: [buildMessage({ id: 1, is_opening: true })],
+          profiles: base.profiles.map((p) => ({
+            ...p,
+            show_sexual_content: p.id === USER_B || optedIn,
+          })),
+        },
+        push: recorder.sender,
+      });
+      await subscribe(app, USER_A);
+      await request(app)
+        .post("/api/v1/community/threads/1/messages")
+        .set("Authorization", authHeader(USER_B))
+        .send({ body: doc("Hello") });
+      await email.flush();
+      return recorder.sent;
+    };
+
+    expect(await replyFor(false)).toEqual([]);
+    expect(await replyFor(true)).toHaveLength(1);
   });
 
   describe("a new member, to the admins", () => {

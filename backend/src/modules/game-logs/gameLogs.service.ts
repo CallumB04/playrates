@@ -45,6 +45,8 @@ export const createGameLogsService = (
   games: GamesRepository,
   reviews: ReviewsRepository,
   gate: ProfileGate,
+  /** Whether this viewer has chosen to see adult games. */
+  canSeeExplicit: (viewerId?: string) => Promise<boolean>,
 ) => {
   const visibleProfileId = async (
     username: string,
@@ -100,16 +102,23 @@ export const createGameLogsService = (
     userId: string,
     query: ShelfQuery,
     pagination: Pagination,
+    explicit = true,
   ): Promise<Paginated<ShelfEntry>> => {
     const { from, to } = toRange(pagination);
     const { gameIds, total } = await repo.shelfByUser(userId, query, from, to);
-    return paginate(await entriesFor(userId, gameIds), pagination, total);
+    return paginate(
+      await entriesFor(userId, gameIds, explicit),
+      pagination,
+      total,
+    );
   };
 
-  /** One entry a game, all its logs gathered, in the order of the ids. */
+  /** One entry a game, all its logs gathered, in the order of the ids. An
+   *  adult game keeps its place without `explicit`, but not its name. */
   const entriesFor = async (
     userId: string,
     gameIds: number[],
+    explicit = true,
   ): Promise<ShelfEntry[]> => {
     const rows = await repo.listByUserAndGames(userId, gameIds);
     return gameIds.flatMap((gameId): ShelfEntry[] => {
@@ -118,6 +127,9 @@ export const createGameLogsService = (
       const logs = mine.map(toGameLog);
       const rollup = rollupLogs(logs);
       if (!first || !rollup) return [];
+      if (!explicit && first.game?.has_sexual_content) {
+        return [{ gameId, game: null, logs, rollup, hidden: true }];
+      }
       return [{ gameId, game: toGameLogWithGame(first).game, logs, rollup }];
     });
   };
@@ -150,20 +162,20 @@ export const createGameLogsService = (
       const userId = await visibleProfileId(username, viewerId);
       const ids = await repo.wishlistGameIds(userId);
       const genresOf = await repo.genresOf(ids);
-      const entries: WishlistEntry[] = (await entriesFor(userId, ids)).map(
-        (entry, i) => ({
-          ...entry,
-          rank: i + 1,
-          genres: genresOf.get(entry.gameId) ?? [],
-          consoles: [
-            ...new Set(
-              entry.logs
-                .filter((log) => log.status === "wishlist")
-                .map((log) => log.system),
-            ),
-          ],
-        }),
-      );
+      const entries: WishlistEntry[] = (
+        await entriesFor(userId, ids, await canSeeExplicit(viewerId))
+      ).map((entry, i) => ({
+        ...entry,
+        rank: i + 1,
+        genres: entry.hidden ? [] : (genresOf.get(entry.gameId) ?? []),
+        consoles: [
+          ...new Set(
+            entry.logs
+              .filter((log) => log.status === "wishlist")
+              .map((log) => log.system),
+          ),
+        ],
+      }));
       const consoles = [
         ...new Set(
           entries.flatMap((e) => e.consoles).filter((c): c is string => !!c),
@@ -227,11 +239,27 @@ export const createGameLogsService = (
       pagination: Pagination,
       viewerId: string | undefined,
     ): Promise<Paginated<GameLogWithGame>> {
-      return this.listForUser(
+      const page = await this.listForUser(
         await visibleProfileId(username, viewerId),
         query,
         pagination,
       );
+      if (await canSeeExplicit(viewerId)) return page;
+      const adult = new Set(
+        (
+          await games.findByIds([
+            ...new Set(page.data.flatMap((l) => (l.game ? [l.gameId] : []))),
+          ])
+        )
+          .filter((g) => g.has_sexual_content)
+          .map((g) => g.id),
+      );
+      return {
+        ...page,
+        data: page.data.map((log) =>
+          adult.has(log.gameId) ? { ...log, game: null } : log,
+        ),
+      };
     },
 
     async listForUser(
@@ -267,6 +295,7 @@ export const createGameLogsService = (
           ? { ...query, common: { viewerId } }
           : query,
         pagination,
+        await canSeeExplicit(viewerId),
       );
     },
 
@@ -282,6 +311,12 @@ export const createGameLogsService = (
       viewerId: string | undefined,
     ): Promise<LogBundle> {
       const userId = await visibleProfileId(username, viewerId);
+      // An adult game is missing to anyone who hasn't chosen to see it,
+      // and so is anyone's review of it.
+      const game = await games.findById(gameId);
+      if (game?.has_sexual_content && !(await canSeeExplicit(viewerId))) {
+        throw AppError.notFound("Game");
+      }
       return bundleFor(userId, gameId, userId !== viewerId);
     },
 

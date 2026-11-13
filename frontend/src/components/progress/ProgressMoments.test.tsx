@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { QueryClient } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import { buildProfile, buildProgress } from "../../test/msw/handlers";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import ProgressMoments from "./ProgressMoments";
 import ToastStack from "../feedback/ToastStack";
+import { setWelcomeOpen } from "../../lib/welcomeOpen";
 
 vi.mock("../../contexts/AuthContext", () => ({
     useAuth: () => ({ user: buildProfile() }),
@@ -156,6 +157,38 @@ describe("ProgressMoments", () => {
         );
         expect(screen.queryByText(/Founding Member/)).toBeNull();
         expect(screen.queryByText(/Rated a game/)).toBeNull();
+    });
+
+    it("says no XP over the welcome, and holds a badge until it closes", async () => {
+        setWelcomeOpen(true);
+        respond(
+            progress({
+                xp: 50,
+                level: levelFor(50),
+                unseen: {
+                    xp: [{ id: 4, source: "play", xp: 10 }],
+                    badges: [{ badge: "collector", metal: 1, unlockedAt: "" }],
+                    tokens: 0,
+                },
+            })
+        );
+        renderWithProviders(
+            <>
+                <ProgressMoments />
+                <ToastStack />
+            </>
+        );
+
+        await waitFor(() =>
+            expect(seen).toContainEqual({ xpEventId: 4, badges: [] })
+        );
+        expect(screen.queryByText(/XP/)).toBeNull();
+        expect(screen.queryByText(/New badge/)).toBeNull();
+
+        act(() => setWelcomeOpen(false));
+        expect(
+            await screen.findByText("New badge: Collector, Bronze")
+        ).toBeInTheDocument();
     });
 
     it("reads the profile again when progress reaches a new level", async () => {

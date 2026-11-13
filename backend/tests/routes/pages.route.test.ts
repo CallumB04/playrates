@@ -125,16 +125,18 @@ describe("rendered pages", () => {
     }
   });
 
-  it("asks search engines to leave out a thread about an adult game", async () => {
+  it("isn't a page for a thread about an adult game", async () => {
     const { app } = buildTestApp({
       seed: {
         ...baseSeed(),
         games: [buildGame({ id: 1, has_sexual_content: true })],
-        communityThreads: [buildThread({ game_id: 1 })],
+        communityThreads: [buildThread({ game_id: 1, title: "Secret plans" })],
       },
     });
     const response = await request(app).get("/community/thread/1");
-    expect(response.text).toContain('<meta name="robots" content="noindex" />');
+    expect(response.status).toBe(404);
+    expect(response.text).not.toContain("Secret plans");
+    expect(response.text).toContain('<div id="root"></div>');
   });
 
   it("describes a thread by its opening message, escaped", async () => {
@@ -816,6 +818,18 @@ describe("review pages", () => {
     const response = await request(app).get("/review/5");
     expect(response.text).not.toContain("The twist is that");
     expect(response.text).toContain("It contains spoilers.");
+  });
+
+  it("isn't a page when the game is adult", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...seed(),
+        games: [buildGame({ id: 1, has_sexual_content: true })],
+      },
+    });
+    const response = await request(app).get("/review/5");
+    expect(response.status).toBe(404);
+    expect(response.text).not.toContain("Held up far better");
   });
 
   it("isn't a page at all when private", async () => {

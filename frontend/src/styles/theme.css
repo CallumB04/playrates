@@ -858,6 +858,13 @@
 }
 
 @layer base {
+    /* A field that can't be used says so before it's clicked. */
+    input:disabled,
+    textarea:disabled,
+    select:disabled {
+        cursor: not-allowed;
+    }
+
     /* v4 defaults borders to currentColor; we want a real colour when only
        a width is set. */
     *,

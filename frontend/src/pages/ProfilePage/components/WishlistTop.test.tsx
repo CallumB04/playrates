@@ -18,9 +18,12 @@ const API = "http://localhost:3000/api/v1";
 
 let wished: number[];
 let asked: string | null;
+/** Wished-for games the viewer hasn't chosen to see. */
+let adult: number[] = [];
 
 beforeEach(() => {
     asked = null;
+    adult = [];
     server.use(
         http.get(`${API}/users/:username/wishlist`, ({ request }) => {
             asked = new URL(request.url).searchParams.get("limit");
@@ -35,6 +38,7 @@ beforeEach(() => {
                             game: buildGame({ id, title: `Game ${id}` }),
                         }),
                     ]),
+                    ...(adult.includes(id) ? { game: null, hidden: true } : {}),
                     rank: i + 1,
                     consoles: [null],
                 })),
@@ -64,6 +68,21 @@ describe("WishlistTop", () => {
         expect(
             screen.getAllByText(/^#\d$/).map((el) => el.textContent)
         ).toEqual(["#1", "#2", "#3", "#4", "#5", "#6"]);
+    });
+
+    it("keeps a hidden adult game's place, with nothing of it and no link", async () => {
+        wished = [7, 3];
+        adult = [3];
+        render(false);
+
+        expect(await screen.findByText("Adult game")).toBeInTheDocument();
+        expect(screen.getByText("#2")).toBeInTheDocument();
+        expect(screen.queryByText("Game 3")).toBeNull();
+        expect(
+            screen
+                .getAllByRole("link")
+                .some((a) => a.getAttribute("href") === "/game/3")
+        ).toBe(false);
     });
 
     it("says nothing on someone else's profile with nothing wished for", async () => {

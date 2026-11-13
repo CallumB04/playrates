@@ -161,7 +161,8 @@ const BackgroundPicker = ({ profile, onClose }: BackgroundPickerProps) => {
         }
     };
 
-    const entries = shelf?.data ?? [];
+    // A hidden game has no pictures to offer.
+    const entries = (shelf?.data ?? []).filter((e) => !e.hidden);
     const busy = save.isPending || clear.isPending || buy.isPending;
     const buying = !!chosen && cropping && !ownedUrls.has(chosen);
 

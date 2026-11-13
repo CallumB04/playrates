@@ -89,6 +89,9 @@ export interface CommunityReplyNotification extends NotificationBase {
   messageId: number;
   /** The start of the reply, as plain text. */
   excerpt: string;
+  /** About an adult game, for someone who hasn't chosen to see them:
+   *  still there, with its titles and words left out. */
+  hidden?: boolean;
 }
 
 /** New messages in a thread you started. One per thread: it counts up while
@@ -100,6 +103,7 @@ export interface CommunityThreadActivityNotification extends NotificationBase {
   gameTitle: string | null;
   coverUrl: string | null;
   count: number;
+  hidden?: boolean;
 }
 
 /** A community message of yours reached an upvote milestone. */
@@ -110,6 +114,7 @@ export interface CommunityUpvoteMilestoneNotification extends NotificationBase {
   messageId: number;
   excerpt: string;
   milestone: number;
+  hidden?: boolean;
 }
 
 /** A review of yours reached an upvote milestone. */
@@ -120,6 +125,7 @@ export interface ReviewUpvoteMilestoneNotification extends NotificationBase {
   gameTitle: string;
   coverUrl: string | null;
   milestone: number;
+  hidden?: boolean;
 }
 
 /** A list of yours reached an upvote milestone. */

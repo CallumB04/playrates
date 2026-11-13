@@ -1829,6 +1829,11 @@ isOneToOne: false
 "set_wishlist_order":
 { Args: { "p_game_ids": (number)[],"p_user_id": string }; Returns: undefined
                            },
+"shared_players":
+{ Args: { "p_limit"?: number,"p_user": string }; Returns: {
+              "accent": string,"avatar_url": string,"bio": string,"game_ids": (number)[],"id": string,"last_seen_at": string,"shared": number,"username": string
+            }[]
+                           },
 "site_leaderboard":
 { Args: { "p_around": number,"p_since": string,"p_top": number,"p_viewer": string }; Returns: {
               "rank": number,"total": number,"user_id": string,"xp": number

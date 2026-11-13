@@ -397,6 +397,14 @@ export const createEmailService = ({
       }
       const target = addressed(draft.userId, category);
       if (!target) return false;
+      // Not a word about an adult game to someone who hasn't chosen them;
+      // the bell keeps its place.
+      if (
+        draft.data?.adult === true &&
+        !(await profiles.findById(draft.userId))?.show_sexual_content
+      ) {
+        return false;
+      }
 
       const actor = draft.actorId
         ? await profiles.findById(draft.actorId)

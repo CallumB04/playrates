@@ -70,6 +70,28 @@ describe("summaryOf", () => {
         );
     });
 
+    it("doesn't name a hidden thread twice when it's yours", () => {
+        const reply = (reason: "reply" | "thread") =>
+            ({
+                ...base,
+                id: 1,
+                kind: "community_reply",
+                reason,
+                actor: actor("halcyon"),
+                threadId: 4,
+                threadTitle: "a thread about an adult game",
+                messageId: 1,
+                excerpt: "",
+                hidden: true,
+            }) as AppNotification;
+        expect(summaryOf([reply("thread")])).toBe(
+            "halcyon replied in your thread"
+        );
+        expect(summaryOf([reply("reply")])).toBe(
+            "halcyon replied to you in a thread about an adult game"
+        );
+    });
+
     it("names a group as its row does, each person once", () => {
         const reply = (id: number, username: string) =>
             ({

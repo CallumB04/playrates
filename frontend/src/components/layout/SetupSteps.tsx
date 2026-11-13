@@ -1,10 +1,10 @@
-import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import { SETUP_REWARD } from "@playrates/shared";
 import Progress from "../ui/Progress";
 import { TokenCoin } from "../progress/TokenAmount";
 import { cn } from "../../lib/cn";
 import type { SetupStep } from "../../lib/setupChecklist";
+import { openSetupStep } from "../../lib/setupSheet";
 
 export const MENU_ITEM =
     "flex min-h-11 w-full items-center gap-2.5 rounded-sm px-2.5 py-2.5 text-left text-body-sm leading-none text-content-secondary transition-colors hover:bg-surface-hover hover:text-content sm:min-h-0";
@@ -99,18 +99,25 @@ export const SetupSteps = ({
                             <span className="sr-only">(done)</span>
                         </span>
                     ) : (
-                        <Link
-                            to={step.to}
-                            onClick={onNavigate}
+                        // Done where you are, in its own sheet.
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onNavigate();
+                                openSetupStep(step.key);
+                            }}
                             role={itemRole}
-                            className={cn(MENU_ITEM, "sm:min-h-8 sm:py-1.5")}
+                            className={cn(
+                                MENU_ITEM,
+                                "cursor-pointer sm:min-h-8 sm:py-1.5"
+                            )}
                         >
                             <span
                                 aria-hidden
                                 className="size-[15px] shrink-0 rounded-full border-[1.5px] border-strong"
                             />
                             {step.label}
-                        </Link>
+                        </button>
                     )}
                 </li>
             ))}

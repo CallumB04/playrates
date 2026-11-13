@@ -645,3 +645,68 @@ describe("game-addressed routes, with a log per platform", () => {
     expect(state.gameLogs).toHaveLength(2);
   });
 });
+
+describe("an adult game on someone's shelf", () => {
+  const adultSeed = (optedIn = false) => {
+    const base = seed();
+    return {
+      ...base,
+      games: [
+        buildGame(),
+        buildGame({ id: 2, title: "Adult game", has_sexual_content: true }),
+      ],
+      profiles: base.profiles.map((p) =>
+        p.id === USER_B ? { ...p, show_sexual_content: optedIn } : p,
+      ),
+      gameLogs: [
+        buildGameLog({ id: 1, game_id: 1, status: "wishlist" }),
+        buildGameLog({ id: 2, game_id: 2, status: "wishlist" }),
+      ],
+      wishlistRanks: [1, 2].map((id) => ({
+        user_id: USER_A,
+        game_id: id,
+        position: id,
+      })),
+    };
+  };
+  const shelf = (app: Parameters<typeof request>[0], path: string) =>
+    request(app).get(`/api/v1/users/devuser/${path}`).set(as(USER_B));
+
+  it("keeps its place, and the count, with nothing of the game", async () => {
+    const { app } = buildTestApp({ seed: adultSeed() });
+
+    for (const path of ["shelf?status=wishlist", "wishlist"]) {
+      const response = await shelf(app, path);
+      expect(response.body.total ?? response.body.meta.total).toBe(2);
+      const hidden = response.body.data.find(
+        (e: { gameId: number }) => e.gameId === 2,
+      );
+      expect(hidden).toMatchObject({ hidden: true, game: null });
+      expect(JSON.stringify(response.body)).not.toContain("Adult game");
+    }
+    const logs = await shelf(app, "game-logs?status=wishlist");
+    expect(JSON.stringify(logs.body)).not.toContain("Adult game");
+    expect(logs.body.data).toHaveLength(2);
+  });
+
+  it("is hidden signed out too", async () => {
+    const { app } = buildTestApp({ seed: adultSeed() });
+    const response = await request(app).get(
+      "/api/v1/users/devuser/shelf?status=wishlist",
+    );
+    expect(JSON.stringify(response.body)).not.toContain("Adult game");
+  });
+
+  it("is shown whole to someone who chose to see them", async () => {
+    const { app } = buildTestApp({ seed: adultSeed(true) });
+    for (const path of [
+      "shelf?status=wishlist",
+      "wishlist",
+      "game-logs?status=wishlist",
+    ]) {
+      expect(JSON.stringify((await shelf(app, path)).body)).toContain(
+        "Adult game",
+      );
+    }
+  });
+});

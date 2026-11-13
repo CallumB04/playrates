@@ -10,6 +10,7 @@ import {
     useProgress,
 } from "../../hooks/queries/useProgress";
 import { FOUNDING_BADGE } from "../../lib/foundingBadge";
+import { useWelcomeOpen } from "../../lib/welcomeOpen";
 import { profilePath } from "../../lib/profilePaths";
 import { useNotify } from "../../contexts/NotificationContext";
 import { OFFER_DWELL_MS } from "../../contexts/notificationQueue";
@@ -38,7 +39,11 @@ const ProgressMoments = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     // The welcome page is the moment itself; the rest waits until after.
-    const joining = useLocation().pathname.startsWith("/join");
+    const { pathname } = useLocation();
+    const joining = pathname.startsWith("/join");
+    /* Nothing over the welcome: on a phone the corner sits on its buttons.
+       Its XP goes unsaid; a badge or a new level waits for it to close. */
+    const welcoming = useWelcomeOpen();
     const notify = useNotify();
     const { data } = useProgress();
     const seen = useMarkSeen();
@@ -100,7 +105,7 @@ const ProgressMoments = () => {
         const gains = data.unseen.xp.filter(
             (g) => !handled.current.has(`xp:${g.id}`)
         );
-        const badges = data.unseen.badges.filter(
+        const badges = (welcoming ? [] : data.unseen.badges).filter(
             (b) => !handled.current.has(`badge:${b.badge}:${b.metal}`)
         );
         if (gains.length === 0 && badges.length === 0) return;
@@ -112,7 +117,7 @@ const ProgressMoments = () => {
         const toasts: (() => void)[] = [];
         // A badge's own XP is said with the badge.
         const plain = gains.filter((g) => g.source !== "badge");
-        if (plain.length > 0) {
+        if (plain.length > 0 && !welcoming) {
             toasts.push(() =>
                 notify(
                     xpToast(plain, data.unseen.tokens),
@@ -155,7 +160,7 @@ const ProgressMoments = () => {
         });
         // `seen` is a fresh object each render; only new data matters here.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [data, joining]);
+    }, [data, joining, welcoming]);
 
     if (!user || !data) return null;
 
@@ -195,7 +200,7 @@ const ProgressMoments = () => {
                     }}
                 />
             )}
-            {!revealing && level !== undefined && turn && (
+            {!revealing && level !== undefined && turn && !welcoming && (
                 <LevelUpMoment
                     level={level.to}
                     from={level.from}

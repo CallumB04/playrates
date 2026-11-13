@@ -183,7 +183,13 @@ export const createReviewsService = (
       sort?: ReviewSort,
     ): Promise<Paginated<ReviewWithAuthor>> {
       const game = await games.findById(gameId);
-      if (!game) throw AppError.notFound("Game");
+      // Missing, as the game is, to anyone who hasn't chosen to see it.
+      if (
+        !game ||
+        (game.has_sexual_content && !(await canSeeExplicit(viewerId)))
+      ) {
+        throw AppError.notFound("Game");
+      }
 
       const { from, to } = toRange(pagination);
       const { rows, total } = await repo.listByGame(
@@ -209,17 +215,20 @@ export const createReviewsService = (
         viewerId,
         from,
         to,
+        await canSeeExplicit(viewerId),
       );
       return paginate(await present(viewerId, rows), pagination, total);
     },
 
     /** The reviews a member pinned to their profile, in their order. One
-     *  since deleted, or made private to this viewer, is left out. */
+     *  since deleted, made private to this viewer, or of an adult game the
+     *  viewer hasn't chosen to see, is left out. */
     async pinnedFor(
       username: string,
       viewerId: string | undefined,
     ): Promise<ReviewWithAuthor[]> {
       const profile = await gate(username, viewerId);
+      const explicit = await canSeeExplicit(viewerId);
       const rows = (
         await Promise.all(
           (profile.pinned_reviews ?? []).map((id) => repo.findById(Number(id))),
@@ -228,7 +237,8 @@ export const createReviewsService = (
         (r): r is ReviewRowJoined =>
           !!r &&
           r.user_id === profile.id &&
-          (r.is_public || viewerId === profile.id),
+          (r.is_public || viewerId === profile.id) &&
+          (explicit || !r.game_has_sexual_content),
       );
       return present(viewerId, rows);
     },
@@ -255,7 +265,13 @@ export const createReviewsService = (
       reaction?: string,
     ): Promise<ReactionState> {
       const review = await repo.findById(reviewId);
-      if (!review) throw AppError.notFound("Review");
+      // As missing to vote on as it is to read.
+      if (
+        !review ||
+        (review.game_has_sexual_content && !(await canSeeExplicit(userId)))
+      ) {
+        throw AppError.notFound("Review");
+      }
       // A vote says someone else found it useful; the author always does.
       if (review.user_id === userId) {
         throw AppError.forbidden("You cannot react to your own review");
@@ -281,6 +297,7 @@ export const createReviewsService = (
             gameId: review.game_id,
             gameTitle: review.game_title,
             coverUrl: review.game_cover_url,
+            ...(review.game_has_sexual_content ? { adult: true } : {}),
           },
         );
       }

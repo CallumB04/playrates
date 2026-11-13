@@ -10,8 +10,15 @@ import {
 import { AppError } from "../../lib/AppError.js";
 import { toRange } from "../../lib/pagination.js";
 import type { FriendsRepository } from "../friends/friends.repository.js";
-import { toNotification, type RelationLookup } from "./notifications.mapper.js";
-import type { NotificationsRepository } from "./notifications.repository.js";
+import {
+  hideAdult,
+  toNotification,
+  type RelationLookup,
+} from "./notifications.mapper.js";
+import type {
+  NotificationRowWithActor,
+  NotificationsRepository,
+} from "./notifications.repository.js";
 
 /** A patch as columns. Filing something reads it; an explicit `read`
  *  still wins. */
@@ -37,10 +44,73 @@ const dayIn = (iso: string, timezone: string | null): string => {
   }
 };
 
+/** What it takes to tell a notification about an adult game. */
+export interface AdultLookup {
+  canSee(userId: string): Promise<boolean>;
+  /** Which of these threads are about an adult game. */
+  threads(ids: number[]): Promise<Set<number>>;
+  /** Which of these games are adult. */
+  games(ids: number[]): Promise<Set<number>>;
+}
+
+const THREAD_KINDS = new Set([
+  "community_reply",
+  "community_thread_activity",
+  "community_upvote_milestone",
+]);
+
+const idIn = (value: unknown): number | null =>
+  typeof value === "number" ? value : null;
+
 export const createNotificationsService = (
   repo: NotificationsRepository,
   friends: FriendsRepository,
+  adult: AdultLookup,
 ) => {
+  /* Looked up as they're read rather than marked when raised: a game can
+     be found adult after the fact, and older rows weren't marked. */
+  const adultRows = async (
+    userId: string,
+    rows: NotificationRowWithActor[],
+  ): Promise<Set<number>> => {
+    const threadOf = (r: NotificationRowWithActor) =>
+      THREAD_KINDS.has(r.kind) ? idIn(r.data.threadId) : null;
+    const gameOf = (r: NotificationRowWithActor) =>
+      r.kind === "review_upvote_milestone" ? idIn(r.data.gameId) : null;
+    const threadIds = rows.map(threadOf).filter((id) => id !== null);
+    const gameIds = rows.map(gameOf).filter((id) => id !== null);
+    if (threadIds.length === 0 && gameIds.length === 0) return new Set();
+    if (await adult.canSee(userId)) return new Set();
+    const [threads, games] = await Promise.all([
+      threadIds.length > 0 ? adult.threads([...new Set(threadIds)]) : null,
+      gameIds.length > 0 ? adult.games([...new Set(gameIds)]) : null,
+    ]);
+    return new Set(
+      rows
+        .filter((r) => {
+          const thread = threadOf(r);
+          const game = gameOf(r);
+          return (
+            (thread !== null && !!threads?.has(thread)) ||
+            (game !== null && !!games?.has(game))
+          );
+        })
+        .map((r) => r.id),
+    );
+  };
+
+  const present = async (
+    userId: string,
+    rows: NotificationRowWithActor[],
+    relationOf: RelationLookup,
+  ) => {
+    const hidden = await adultRows(userId, rows);
+    return rows.map((row) => {
+      const n = toNotification(row, relationOf);
+      return hidden.has(row.id) ? hideAdult(n) : n;
+    });
+  };
+
   /** Friendships are read once per page rather than once per row, and only
    *  when something on the page actually depends on them. */
   const relationLookup = async (
@@ -98,7 +168,7 @@ export const createNotificationsService = (
       );
 
       return {
-        data: rows.map((row) => toNotification(row, relationOf)),
+        data: await present(userId, rows, relationOf),
         meta: { page: pagination.page, limit: pagination.limit, total },
         unread,
         unseen: await repo.countUnseen(userId, seenAt),
@@ -142,7 +212,7 @@ export const createNotificationsService = (
         callerId,
         row.kind === "friend_request",
       );
-      return toNotification(row, relationOf);
+      return (await present(callerId, [row], relationOf))[0]!;
     },
 
     /** One change to many of the caller's at once. A request waiting on

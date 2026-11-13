@@ -258,6 +258,9 @@ export interface ShelfEntry {
   game: ShelfGame | null;
   logs: GameLog[];
   rollup: GameLogRollup;
+  /** An adult game, to a viewer who hasn't chosen to see them: it keeps
+   *  its place, so the count is right, with nothing of the game shown. */
+  hidden?: boolean;
 }
 
 /** Everything one person has logged of one game. */

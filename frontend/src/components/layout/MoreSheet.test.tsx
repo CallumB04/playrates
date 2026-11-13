@@ -88,7 +88,7 @@ describe("MoreSheet", () => {
 
         await userEvent.click(row);
         expect(
-            screen.getByRole("link", { name: "Add a profile picture" })
+            screen.getByRole("button", { name: "Add a profile picture" })
         ).toBeInTheDocument();
     });
 

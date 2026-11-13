@@ -12,6 +12,8 @@ interface MessageComposerProps {
     placeholder?: string;
     initial?: RichTextDoc | null;
     onCancel?: () => void;
+    /** What the way out says, where Cancel isn't quite it. */
+    cancelLabel?: string;
     autoFocus?: boolean;
     /** Above the editor: who is being answered, say. */
     note?: string;
@@ -25,6 +27,7 @@ const MessageComposer = ({
     placeholder,
     initial = null,
     onCancel,
+    cancelLabel = "Cancel",
     autoFocus = false,
     note,
 }: MessageComposerProps) => {
@@ -78,7 +81,7 @@ const MessageComposer = ({
                         onClick={onCancel}
                         disabled={pending}
                     >
-                        Cancel
+                        {cancelLabel}
                     </Button>
                 )}
                 <Button

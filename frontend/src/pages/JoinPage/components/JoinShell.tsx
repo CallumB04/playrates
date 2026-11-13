@@ -100,7 +100,7 @@ const JoinShell = ({ children }: { children: ReactNode }) => {
     );
 
     return (
-        <div className="grid min-h-dvh grid-rows-[auto_1fr] bg-surface lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:grid-rows-1">
+        <div className="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_1fr] bg-surface lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:grid-rows-1">
             <section
                 aria-label="About PlayRates"
                 // Dark in both themes: it's a picture, and words on a

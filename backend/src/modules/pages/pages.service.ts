@@ -202,11 +202,13 @@ export const createPagesService = (repos: Repos) => {
         lead: "This profile is private.",
       };
     }
+    // As a signed-out visitor sees them: no adult games.
     const reviews = await repos.reviews.listByUser(
       row.id,
       undefined,
       0,
       REVIEWS_IN_BODY - 1,
+      false,
     );
     return {
       heading: row.username,
@@ -219,9 +221,7 @@ export const createPagesService = (repos: Repos) => {
       sections: [
         {
           heading: "Recent reviews",
-          items: reviews.rows
-            .filter((r) => !r.game_has_sexual_content)
-            .map((r) => reviewItem(r, true)),
+          items: reviews.rows.map((r) => reviewItem(r, true)),
         },
       ],
     };
@@ -550,15 +550,16 @@ export const createPagesService = (repos: Repos) => {
 
     async thread(id: number): Promise<HeadMeta | null> {
       const thread = await repos.community.findThread(id);
-      if (!thread) return null;
+      // An adult game's thread is missing to anyone who hasn't chosen to see
+      // it, and a page here is everyone's: its title and opening stay out
+      // of the preview. Someone who has chosen still gets it from the app.
+      if (!thread || thread.game_has_sexual_content) return null;
       const [messages, game] = await Promise.all([
         repos.community.listMessages(id),
         thread.game_id ? repos.games.findById(thread.game_id) : null,
       ]);
-      // The game's own art, as its page shows; nothing from an adult game.
-      const art = thread.game_has_sexual_content
-        ? null
-        : (game?.cover_url ?? game?.box_art_url ?? null);
+      // The game's own art, as its page shows.
+      const art = game?.cover_url ?? game?.box_art_url ?? null;
       const opening = messages.find((m) => m.is_opening);
       const text = opening?.body
         ? toPlainText(opening.body as RichTextDoc, { hideSpoilers: true })
@@ -570,55 +571,46 @@ export const createPagesService = (repos: Repos) => {
         image: art ?? DEFAULT_IMAGE,
         card: "summary_large_image",
         type: "article",
-        // As with the game itself, a thread about an adult game says no more
-        // and asks not to be listed.
-        noindex: thread.game_has_sexual_content,
         breadcrumbs: threadTrail(thread),
-        jsonLd: thread.game_has_sexual_content
-          ? undefined
-          : {
-              "@context": "https://schema.org",
-              "@type": "DiscussionForumPosting",
-              headline: thread.title,
-              url: `${SITE_ORIGIN}/community/thread/${thread.id}`,
-              datePublished: thread.created_at,
-              ...(text ? { text: truncateDescription(text, 500) } : {}),
-              ...(thread.author_username
-                ? {
-                    author: {
-                      "@type": "Person",
-                      name: thread.author_username,
-                      url: `${SITE_ORIGIN}/user/${thread.author_username}`,
-                    },
-                  }
-                : {}),
-              commentCount: messages.filter(
-                (m) => !m.is_opening && !m.deleted_at,
-              ).length,
-              ...(thread.game_title && thread.game_id
-                ? {
-                    about: {
-                      "@type": "VideoGame",
-                      name: thread.game_title,
-                      url: `${SITE_ORIGIN}/game/${thread.game_id}`,
-                    },
-                  }
-                : {}),
-            },
-        body: thread.game_has_sexual_content
-          ? undefined
-          : threadBody(thread, messages),
+        jsonLd: {
+          "@context": "https://schema.org",
+          "@type": "DiscussionForumPosting",
+          headline: thread.title,
+          url: `${SITE_ORIGIN}/community/thread/${thread.id}`,
+          datePublished: thread.created_at,
+          ...(text ? { text: truncateDescription(text, 500) } : {}),
+          ...(thread.author_username
+            ? {
+                author: {
+                  "@type": "Person",
+                  name: thread.author_username,
+                  url: `${SITE_ORIGIN}/user/${thread.author_username}`,
+                },
+              }
+            : {}),
+          commentCount: messages.filter((m) => !m.is_opening && !m.deleted_at)
+            .length,
+          ...(thread.game_title && thread.game_id
+            ? {
+                about: {
+                  "@type": "VideoGame",
+                  name: thread.game_title,
+                  url: `${SITE_ORIGIN}/game/${thread.game_id}`,
+                },
+              }
+            : {}),
+        },
+        body: threadBody(thread, messages),
       };
     },
 
-    /** A review on its own page. A private one isn't a page at all; one
-     *  of an adult game, or by someone whose profile isn't open to all,
+    /** A review on its own page. A private one, or one of an adult game,
+     *  isn't a page at all; one by someone whose profile isn't open to all
      *  asks not to be listed and names no one. */
     async review(id: number): Promise<HeadMeta | null> {
       const row = await repos.reviews.findById(id);
-      if (!row || !row.is_public) return null;
+      if (!row || !row.is_public || row.game_has_sexual_content) return null;
       const hidden =
-        row.game_has_sexual_content ||
         (row.author_profile_visibility ?? "everyone") !== "everyone";
       const author = hidden ? null : row.author_username;
       const game = row.game_title;
@@ -635,9 +627,7 @@ export const createPagesService = (repos: Repos) => {
           ? truncateDescription(text)
           : `${heading}. It contains spoilers.`,
         path: `/review/${row.id}`,
-        image: row.game_has_sexual_content
-          ? DEFAULT_IMAGE
-          : (row.game_cover_url ?? DEFAULT_IMAGE),
+        image: row.game_cover_url ?? DEFAULT_IMAGE,
         card: "summary_large_image",
         type: "article",
         noindex: hidden,

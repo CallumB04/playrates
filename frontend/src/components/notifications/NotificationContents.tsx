@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Gift, UserPlus } from "lucide-react";
 import type {
@@ -34,6 +34,7 @@ import { questPath } from "../../lib/questPath";
 import { useFriendRelation } from "../../hooks/queries/useFriends";
 import { usePatchNotification } from "../../hooks/queries/useNotificationActions";
 import GameCover from "../game/GameCover";
+import { HiddenCover } from "../game/HiddenGame";
 import { threadPath } from "../community/paths";
 import { gaming25Path } from "../../lib/profilePaths";
 import { formatCount, formatMessageCount } from "../../lib/format";
@@ -45,10 +46,36 @@ import { useClamped } from "../../hooks/useClamped";
 import { cn } from "../../lib/cn";
 import { ANNOUNCEMENT_PRESENTATION } from "./announcementTones";
 import type { ContentProps } from "./registry";
-import { replyPhrase } from "./notificationSummary";
+import { replyPhrase, replyTarget } from "./notificationSummary";
 
 const TITLE = "text-body-sm font-medium text-content";
 const BODY = "mt-0.5 text-body-sm text-content-secondary";
+
+/** The row's link, or none for one about an adult game the reader hasn't
+ *  chosen to see: the page it would open is missing to them. */
+export const RowLink = ({
+    hidden,
+    to,
+    onClick,
+    children,
+}: {
+    hidden?: boolean;
+    to: string;
+    onClick: () => void;
+    children: ReactNode;
+}) =>
+    hidden ? (
+        <div>
+            {children}
+            <p className={`${BODY} text-content-muted`}>
+                Hidden by your settings.
+            </p>
+        </div>
+    ) : (
+        <Link to={to} onClick={onClick} className="group block">
+            {children}
+        </Link>
+    );
 
 /** The homepage's own pitch, so the first thing a new account reads here says
  *  what the front page said. */
@@ -201,10 +228,10 @@ export const CommunityReplyContent = ({
 }: ContentProps<CommunityReplyNotification>) => {
     const open = useOpen(notification, onNavigate);
     return (
-        <Link
+        <RowLink
+            hidden={notification.hidden}
             to={`${threadPath(notification.threadId)}#message-${notification.messageId}`}
             onClick={open}
-            className="group block"
         >
             <p className={TITLE}>
                 <span className="group-hover:underline">
@@ -212,15 +239,15 @@ export const CommunityReplyContent = ({
                 </span>{" "}
                 <span className="font-normal text-content-secondary">
                     {replyPhrase(notification.reason)}
-                </span>{" "}
-                {notification.threadTitle}
+                </span>
+                {replyTarget(notification)}
             </p>
             {notification.excerpt && (
                 <p className={`${BODY} line-clamp-2`}>
                     “{notification.excerpt}”
                 </p>
             )}
-        </Link>
+        </RowLink>
     );
 };
 
@@ -231,10 +258,10 @@ export const CommunityActivityContent = ({
     const open = useOpen(notification, onNavigate);
     const { count } = notification;
     return (
-        <Link
+        <RowLink
+            hidden={notification.hidden}
             to={threadPath(notification.threadId)}
             onClick={open}
-            className="group block"
         >
             <p className={TITLE}>
                 <span className="group-hover:underline">
@@ -245,8 +272,12 @@ export const CommunityActivityContent = ({
                     in your thread
                 </span>
             </p>
-            <p className={`${BODY} line-clamp-2`}>{notification.threadTitle}</p>
-        </Link>
+            {!notification.hidden && (
+                <p className={`${BODY} line-clamp-2`}>
+                    {notification.threadTitle}
+                </p>
+            )}
+        </RowLink>
     );
 };
 
@@ -335,10 +366,10 @@ export const MessageMilestoneContent = ({
 }: ContentProps<CommunityUpvoteMilestoneNotification>) => {
     const open = useOpen(notification, onNavigate);
     return (
-        <Link
+        <RowLink
+            hidden={notification.hidden}
             to={`${threadPath(notification.threadId)}#message-${notification.messageId}`}
             onClick={open}
-            className="group block"
         >
             <p className={TITLE}>
                 <Upvotes count={notification.milestone} />{" "}
@@ -352,7 +383,7 @@ export const MessageMilestoneContent = ({
                     “{notification.excerpt}”
                 </p>
             )}
-        </Link>
+        </RowLink>
     );
 };
 
@@ -362,10 +393,10 @@ export const ReviewMilestoneContent = ({
 }: ContentProps<ReviewUpvoteMilestoneNotification>) => {
     const open = useOpen(notification, onNavigate);
     return (
-        <Link
+        <RowLink
+            hidden={notification.hidden}
             to={`/game/${notification.gameId}#review-${notification.reviewId}`}
             onClick={open}
-            className="group block"
         >
             <p className={TITLE}>
                 <Upvotes count={notification.milestone} />{" "}
@@ -374,7 +405,7 @@ export const ReviewMilestoneContent = ({
                 </span>{" "}
                 {notification.gameTitle}
             </p>
-        </Link>
+        </RowLink>
     );
 };
 
@@ -591,15 +622,22 @@ export const TaskNearlyDoneContent = ({
 export const CoverLeading = ({
     notification,
 }: {
-    notification: { coverUrl: string | null; gameTitle: string | null };
-}) => (
-    <GameCover
-        sizes="40px"
-        coverUrl={notification.coverUrl}
-        title={notification.gameTitle ?? ""}
-        className="aspect-3/4 w-10 shrink-0 self-start overflow-hidden rounded-xs"
-    />
-);
+    notification: {
+        coverUrl: string | null;
+        gameTitle: string | null;
+        hidden?: boolean;
+    };
+}) =>
+    notification.hidden ? (
+        <HiddenCover className="aspect-3/4 w-10 shrink-0 self-start" />
+    ) : (
+        <GameCover
+            sizes="40px"
+            coverUrl={notification.coverUrl}
+            title={notification.gameTitle ?? ""}
+            className="aspect-3/4 w-10 shrink-0 self-start overflow-hidden rounded-xs"
+        />
+    );
 
 export const UnknownContent = () => (
     <>

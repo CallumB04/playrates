@@ -8,7 +8,8 @@ import Footer from "./components/Footer";
 import ToastStack from "./components/feedback/ToastStack";
 import AccountFormHost from "./components/auth/AccountFormHost";
 import ChooseUsername from "./components/onboarding/ChooseUsername";
-import FirstLoginWelcome from "./components/onboarding/FirstLoginWelcome";
+import WelcomeGate from "./components/onboarding/WelcomeGate";
+import SetupSheetHost from "./components/journey/SetupSheetHost";
 import ProgressMoments from "./components/progress/ProgressMoments";
 import ReferralCapture from "./components/progress/ReferralCapture";
 import AuthLinkResult from "./components/auth/AuthLinkResult";
@@ -266,7 +267,8 @@ function App() {
             {!bare && <TabBar />}
             <AccountFormHost />
             <ChooseUsername />
-            <FirstLoginWelcome />
+            <WelcomeGate />
+            <SetupSheetHost />
             <ProgressMoments />
             <ReferralCapture />
             <AuthLinkResult />

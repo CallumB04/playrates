@@ -12,6 +12,7 @@ import {
   baseSeed,
   buildGame,
   buildMessage,
+  buildNotification,
   buildProfile,
   buildThread,
   doc,
@@ -583,5 +584,89 @@ describe("spoilers", () => {
     expect(message.body.content[0].content[1].marks).toEqual([
       { type: "spoiler" },
     ]);
+  });
+});
+
+describe("a notification about an adult game", () => {
+  /** Thread 1 is about an adult game; C, who has chosen to see them,
+   *  answers A's thread. */
+  const adultSeed = (optedIn: boolean) => {
+    const base = seed();
+    return {
+      ...base,
+      games: [buildGame({ id: 1, has_sexual_content: true })],
+      communityThreads: [buildThread({ title: "Secret plans" })],
+      profiles: base.profiles.map((p) =>
+        p.id === USER_C
+          ? { ...p, show_sexual_content: true }
+          : p.id === USER_A
+            ? { ...p, show_sexual_content: optedIn }
+            : p,
+      ),
+    };
+  };
+  const bell = async (app: Express) =>
+    (
+      await request(app)
+        .get("/api/v1/me/notifications")
+        .set("Authorization", authHeader(USER_A))
+    ).body.data.filter((n: { kind: string }) => n.kind === "community_reply");
+
+  it("stays in the bell, with nothing of the thread, for someone who hasn't chosen them", async () => {
+    const { app, email } = buildTestApp({ seed: adultSeed(false) });
+    await post(app, USER_C, { body: doc("A spicy answer") });
+    await email.flush();
+
+    const [reply] = await bell(app);
+    expect(reply).toMatchObject({
+      hidden: true,
+      threadTitle: "a thread about an adult game",
+      excerpt: "",
+    });
+    expect(JSON.stringify(reply)).not.toContain("Secret plans");
+    expect(email.sent).toHaveLength(0);
+  });
+
+  it("is whole, and emailed, for someone who has", async () => {
+    const { app, email } = buildTestApp({ seed: adultSeed(true) });
+    await post(app, USER_C, { body: doc("A spicy answer") });
+    await email.flush();
+
+    const [reply] = await bell(app);
+    expect(reply.hidden).toBeUndefined();
+    expect(reply.threadTitle).toBe("Secret plans");
+    expect(reply.excerpt).toBe("A spicy answer");
+    expect(email.sent.length).toBeGreaterThan(0);
+  });
+
+  it("is found by the thread's game, so older ones are hidden too", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...adultSeed(false),
+        notifications: [
+          buildNotification({
+            kind: "review_upvote_milestone",
+            dedupe_key: "review_upvotes:9",
+            data: {
+              reviewId: 9,
+              gameId: 1,
+              gameTitle: "Adult game",
+              coverUrl: "https://example.test/cover.jpg",
+              milestone: 5,
+            },
+          }),
+        ],
+      },
+    });
+    const response = await request(app)
+      .get("/api/v1/me/notifications")
+      .set("Authorization", authHeader(USER_A));
+    expect(response.body.data[0]).toMatchObject({
+      kind: "review_upvote_milestone",
+      hidden: true,
+      gameTitle: "an adult game",
+      coverUrl: null,
+      milestone: 5,
+    });
   });
 });
