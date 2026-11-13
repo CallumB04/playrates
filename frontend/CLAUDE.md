@@ -8,7 +8,7 @@ pieces in `src/components`, primitives in `src/components/ui`.
 Every feature has to _work_ on a phone, not merely reflow onto one. Build the
 mobile behaviour alongside the desktop one, in the same change.
 
-- **Overlays are bottom sheets below `sm`.** `ui/Modal` already does this;
+- **Overlays are bottom sheets below `sm`.** `ui/Popup` already does this;
   reach for it rather than hand-rolling a dialog.
 - **Nothing important sits behind hover.** A touch screen cannot hover, and
   there are no `@media (hover)` queries here. Anything revealed on hover needs
@@ -62,9 +62,17 @@ variant or tone instead of overriding it at the call site.
 - `ui/Card` / `cardClass` with its tones, `Panel` and `AsideCard`; the rules
   for which surface fits what are in `Card.tsx`. A page's own header never
   sits in a card, and a page has one `feature` card at most.
-- `ui/Modal` for every overlay, `ui/ConfirmPopup` for every "are you sure",
-  `ui/Dropdown` for every select, `ui/SegmentedChoice` for a short fixed set
-  of options, `ui/Toggle` for on and off.
+- `ui/Popup` for every popup, so they all read as one thing: the frame
+  draws the heading, the close and the footer. Give it a `title`, an
+  `eyebrow` or `blurb` if it has one, and its actions as `footer`. Only a
+  popup about one game, or a Get started step, gets `art` (and the game's
+  `cover`); the rest have a light in their `tone` instead, red for what
+  can't be undone. `ui/Modal` sits underneath, used directly only by the
+  four with designs of their own: logging in, the welcome, a level up and
+  the bell's phone sheet.
+- `ui/ConfirmPopup` for every "are you sure", `ui/Dropdown` for every
+  select, `ui/SegmentedChoice` for a short fixed set of options,
+  `ui/Toggle` for on and off.
 - Every dropdown has a visible label, one of two ways. In a form, a sheet or
   a popover, a `Field` label above it, as in the shelf's Filters. Standing
   alone in a toolbar, its `lead` inside it, before the value ("Sort by",
@@ -87,8 +95,9 @@ variant or tone instead of overriding it at the call site.
 - Icon-only controls have an `aria-label`; decorative icons are
   `aria-hidden`. Where colour carries meaning, words or `sr-only` text carry
   it too.
-- Current place in a nav is `aria-current`. Dialogs come from `Modal`, which
-  labels itself, traps Tab, closes on Escape and hands focus back.
+- Current place in a nav is `aria-current`. Dialogs come from `Popup` (on
+  `Modal`), which labels itself, traps Tab, closes on Escape and hands focus
+  back.
 - Pictures members upload get a description (the editor asks for one);
   covers use the game's title.
 - New animations are `--animate-*` tokens added to the reduced-motion list in
