@@ -78,6 +78,10 @@ export const createPushService = ({
       ) {
         return 0;
       }
+      // As for an email: the bell keeps its place, nothing is sent.
+      if (draft.data?.adult === true && !recipient.show_sexual_content) {
+        return 0;
+      }
       const actor = draft.actorId
         ? await profiles.findById(draft.actorId)
         : null;

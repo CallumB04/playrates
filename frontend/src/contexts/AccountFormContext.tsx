@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 
-export type AccountFormMode = "login" | "signup" | "reset";
+export type AccountFormMode = "login" | "reset";
 
 export interface AccountFormContextValue {
     mode: AccountFormMode | null;

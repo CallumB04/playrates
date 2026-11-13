@@ -547,14 +547,14 @@ isOneToOne: false
                   ]
                 },"game_logs": {
                   Row: {
-                    "achievements_completed": number | null,"achievements_total": number | null,"completion": number | null,"created_at": string,"finish_date": string | null,"game_id": number,"hours_played": number | null,"hours_to_beat": number | null,"id": number,"last_played": string | null,"platform_slug": string | null,"played_status": string | null,"rating": number | null,"start_date": string | null,"status": string,"system_slug": string | null,"updated_at": string,"user_id": string
+                    "achievements_completed": number | null,"achievements_total": number | null,"completion": number | null,"created_at": string,"finish_date": string | null,"game_id": number,"hours_played": number | null,"hours_to_beat": number | null,"hype": number | null,"id": number,"last_played": string | null,"platform_slug": string | null,"played_status": string | null,"rating": number | null,"start_date": string | null,"status": string,"system_slug": string | null,"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "achievements_completed"?: number | null,"achievements_total"?: number | null,"completion"?: never,"created_at"?: string,"finish_date"?: string | null,"game_id": number,"hours_played"?: number | null,"hours_to_beat"?: number | null,"id"?: never,"last_played"?: never,"platform_slug"?: string | null,"played_status"?: string | null,"rating"?: number | null,"start_date"?: string | null,"status": string,"system_slug"?: string | null,"updated_at"?: string,"user_id": string
+                    "achievements_completed"?: number | null,"achievements_total"?: number | null,"completion"?: never,"created_at"?: string,"finish_date"?: string | null,"game_id": number,"hours_played"?: number | null,"hours_to_beat"?: number | null,"hype"?: number | null,"id"?: never,"last_played"?: never,"platform_slug"?: string | null,"played_status"?: string | null,"rating"?: number | null,"start_date"?: string | null,"status": string,"system_slug"?: string | null,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "achievements_completed"?: number | null,"achievements_total"?: number | null,"completion"?: never,"created_at"?: string,"finish_date"?: string | null,"game_id"?: number,"hours_played"?: number | null,"hours_to_beat"?: number | null,"id"?: never,"last_played"?: never,"platform_slug"?: string | null,"played_status"?: string | null,"rating"?: number | null,"start_date"?: string | null,"status"?: string,"system_slug"?: string | null,"updated_at"?: string,"user_id"?: string
+                    "achievements_completed"?: number | null,"achievements_total"?: number | null,"completion"?: never,"created_at"?: string,"finish_date"?: string | null,"game_id"?: number,"hours_played"?: number | null,"hours_to_beat"?: number | null,"hype"?: number | null,"id"?: never,"last_played"?: never,"platform_slug"?: string | null,"played_status"?: string | null,"rating"?: number | null,"start_date"?: string | null,"status"?: string,"system_slug"?: string | null,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -1402,7 +1402,7 @@ isOneToOne: false
                   ]
                 },"community_thread_cards": {
                   Row: {
-                    "author_accent": string | null,"author_avatar_url": string | null,"author_first_name": string | null,"author_id": string | null,"author_username": string | null,"contributor_count": number | null,"contributors": Json | null,"created_at": string,"game_cover_url": string | null,"game_has_sexual_content": boolean | null,"game_id": number | null,"game_slug": string | null,"game_title": string | null,"id": number,"last_activity_at": string,"message_count": number | null,"recent_message_count": number | null,"subject_kind": string,"title": string
+                    "author_accent": string | null,"author_avatar_url": string | null,"author_first_name": string | null,"author_id": string | null,"author_username": string | null,"contributor_count": number | null,"contributors": Json | null,"created_at": string,"game_banner_url": string | null,"game_cover_url": string | null,"game_has_sexual_content": boolean | null,"game_id": number | null,"game_slug": string | null,"game_title": string | null,"id": number,"last_activity_at": string,"message_count": number | null,"recent_message_count": number | null,"subject_kind": string,"title": string
                   }
                   ComputedFields: never
                   Relationships: [
@@ -1488,7 +1488,7 @@ isOneToOne: false
                   ]
                 },"game_log_rollups": {
                   Row: {
-                    "completion": number | null,"ending_rank": number | null,"first_added_at": string | null,"game_avg_rating": number | null,"game_critic_score": number | null,"game_id": number,"game_release_date": string | null,"game_title": string,"hours_played": number | null,"hours_to_beat": number | null,"last_played": string | null,"latest_log_id": number | null,"log_count": number | null,"played_endings": (string)[] | null,"rating": number | null,"statuses": (string)[] | null,"updated_at": string | null,"user_id": string
+                    "completion": number | null,"ending_rank": number | null,"first_added_at": string | null,"game_avg_rating": number | null,"game_critic_score": number | null,"game_id": number,"game_release_date": string | null,"game_title": string,"hours_played": number | null,"hours_to_beat": number | null,"hype": number | null,"last_played": string | null,"latest_log_id": number | null,"log_count": number | null,"played_endings": (string)[] | null,"rating": number | null,"statuses": (string)[] | null,"updated_at": string | null,"user_id": string
                   }
                   ComputedFields: never
                   Relationships: [
@@ -1828,6 +1828,16 @@ isOneToOne: false
                            },
 "set_wishlist_order":
 { Args: { "p_game_ids": (number)[],"p_user_id": string }; Returns: undefined
+                           },
+"shared_players":
+{ Args: { "p_limit"?: number,"p_user": string }; Returns: {
+              "accent": string,"avatar_url": string,"bio": string,"game_ids": (number)[],"id": string,"last_seen_at": string,"shared": number,"username": string
+            }[]
+                           },
+"site_leaderboard":
+{ Args: { "p_around": number,"p_since": string,"p_top": number,"p_viewer": string }; Returns: {
+              "rank": number,"total": number,"user_id": string,"xp": number
+            }[]
                            },
 "sitemap_games":
 { Args: { "p_limit": number,"p_offset": number }; Returns: Json

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./motion.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -787,7 +788,11 @@
         border-color 240ms var(--ease-glide),
         color 240ms var(--ease-glide),
         opacity 240ms var(--ease-glide),
-        transform 320ms var(--ease-glide);
+        transform 320ms var(--ease-glide),
+        /* Tailwind's translate and scale are properties of their own, not
+           the transform: without them the rise jumped instead of gliding. */
+        translate 320ms var(--ease-glide),
+        scale 160ms var(--ease-out-strong);
 }
 
 /* Something is on its way: a band of light crossing the control. Drawn from
@@ -853,6 +858,13 @@
 }
 
 @layer base {
+    /* A field that can't be used says so before it's clicked. */
+    input:disabled,
+    textarea:disabled,
+    select:disabled {
+        cursor: not-allowed;
+    }
+
     /* v4 defaults borders to currentColor; we want a real colour when only
        a width is set. */
     *,

@@ -13,15 +13,20 @@ import { releaseYear } from "../../../lib/format";
 import type { GameFacts } from "../lib/gameFacts";
 import GameDetails from "./GameDetails";
 import { cn } from "../../../lib/cn";
+import Skeleton from "../../../components/ui/Skeleton";
+import HypeFlames from "../../../components/gamelog/HypeFlames";
 
 interface GameCoverPlateProps {
     game: Game;
     log: GameLogSummary | undefined;
+    /** Not yet known whether there's a log: the buttons wait, rather than
+     *  offer to log a game already logged. */
+    logLoading?: boolean;
     isSignedIn: boolean;
     facts: GameFacts | null;
     onPrimary: () => void;
     onViewLog: () => void;
-    /** Your logs in full, once there are two to add up. */
+    /** Your logs in full, once there are two to add up or a backlog log. */
     bundle?: LogBundle;
     /** Whether a console is left to log it on. */
     canAdd: boolean;
@@ -52,6 +57,7 @@ const QUICK_TONE: Record<(typeof QUICK)[number], string> = {
 const GameCoverPlate = ({
     game,
     log,
+    logLoading = false,
     isSignedIn,
     facts,
     onPrimary,
@@ -99,9 +105,27 @@ const GameCoverPlate = ({
                         {releaseYear(game.releaseDate)}
                     </span>
                 </div>
+                {/* Beside the backlog stamp's meaning: how soon. With several
+                    logs, each row in My logs shows its own. */}
+                {log?.status === "backlog" &&
+                    log.logs.length === 1 &&
+                    bundle?.rollup?.hype && (
+                        <div className="mt-2 flex items-center justify-between text-label-sm text-content-muted">
+                            <span>Your hype</span>
+                            <HypeFlames hype={bundle.rollup.hype} />
+                        </div>
+                    )}
             </div>
 
-            {log && log.logs.length > 1 && bundle?.rollup ? (
+            {logLoading ? (
+                <div aria-busy className="flex flex-col gap-2">
+                    <Skeleton className="h-12" />
+                    <div className="flex gap-2">
+                        <Skeleton className="h-11 flex-1 sm:h-10" />
+                        <Skeleton className="h-11 flex-1 sm:h-10" />
+                    </div>
+                </div>
+            ) : log && log.logs.length > 1 && bundle?.rollup ? (
                 <MyLogsPlate
                     logs={bundle.logs}
                     rollup={bundle.rollup}
@@ -143,7 +167,7 @@ const GameCoverPlate = ({
                 </Button>
             )}
 
-            {isSignedIn && !log && (
+            {isSignedIn && !log && !logLoading && (
                 <div className="flex gap-2">
                     {QUICK.map((status) => {
                         const { label, icon: Icon } =

@@ -13,17 +13,18 @@ import { useCaptcha } from "./useCaptcha";
 
 interface SignupFormProps {
     onSignedUp: (email: string, signedIn: boolean) => void;
+    /** Off where the keyboard would cover the page as it opens: a phone. */
+    autoFocus?: boolean;
 }
 
 interface FieldErrors {
     username?: string;
     email?: string;
     password?: string;
-    confirmPassword?: string;
     agree?: string;
 }
 
-const SignupForm = ({ onSignedUp }: SignupFormProps) => {
+const SignupForm = ({ onSignedUp, autoFocus = true }: SignupFormProps) => {
     const { signUp } = useAuth();
     const notify = useNotify();
     const captcha = useCaptcha();
@@ -39,7 +40,6 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
         const username = String(data.get("username") ?? "");
         const email = String(data.get("email") ?? "").toLowerCase();
         const password = String(data.get("password") ?? "");
-        const confirmPassword = String(data.get("confirmPassword") ?? "");
         const agreed = data.get("agree") === "on";
 
         // the same schemas the backend validates with, so the rules cannot drift
@@ -53,8 +53,6 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
         const passwordResult = PasswordSchema.safeParse(password);
         if (!passwordResult.success) {
             next.password = passwordResult.error.issues[0]?.message;
-        } else if (confirmPassword !== password) {
-            next.confirmPassword = "The passwords don’t match.";
         }
 
         if (!agreed) {
@@ -88,7 +86,9 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
                 captchaToken,
                 data.get("news") === "on"
             );
-            notify("Welcome to PlayRates", "success");
+            // A welcome only once you're in: with a link still to follow,
+            // the inbox step says what happens next.
+            if (signedIn) notify("Welcome to PlayRates", "success");
             onSignedUp(email, signedIn);
         } catch (error) {
             captcha.reset();
@@ -114,7 +114,7 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
                 placeholder="yourname"
                 autoComplete="username"
                 required
-                autoFocus
+                autoFocus={autoFocus}
                 error={errors.username}
             />
             <FormField
@@ -130,12 +130,6 @@ const SignupForm = ({ onSignedUp }: SignupFormProps) => {
                 autoComplete="new-password"
                 placeholder="At least 8 characters"
                 error={errors.password}
-            />
-            <PasswordField
-                label="Confirm password"
-                name="confirmPassword"
-                autoComplete="new-password"
-                error={errors.confirmPassword}
             />
 
             <AgreeToTerms name="agree" error={errors.agree} />

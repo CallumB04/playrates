@@ -245,7 +245,11 @@ const PatchNotesSection = ({ reach }: { reach: number | undefined }) => {
             )}
 
             {all.open && (
-                <SeeAllModal title="Every patch notes entry" onClose={all.hide}>
+                <SeeAllModal
+                    title="Every patch notes entry"
+                    onClose={all.hide}
+                    wide
+                >
                     <ul className="flex flex-col">
                         {list.map((note) => (
                             <PatchNoteRow

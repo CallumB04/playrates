@@ -235,7 +235,7 @@ const AccountMenu = ({
                     role="menu"
                     className={popoverClass(
                         cn(
-                            "absolute top-[calc(100%+0.6rem)] right-0 z-40 w-60 p-1.5",
+                            "absolute top-[calc(100%+0.6rem)] right-0 z-40 w-60 p-1.5 [--pop-origin:top_right]",
                             /* In the sticky header the page cannot scroll to
                                a tall menu, so on a phone it scrolls itself.
                                Not from sm, where scrolling would clip the
@@ -329,9 +329,17 @@ const AccountMenu = ({
                         className={cn(ITEM, "cursor-pointer")}
                     >
                         {theme === "dark" ? (
-                            <Sun size={15} aria-hidden />
+                            <Sun
+                                size={15}
+                                aria-hidden
+                                className="animate-swap-in"
+                            />
                         ) : (
-                            <Moon size={15} aria-hidden />
+                            <Moon
+                                size={15}
+                                aria-hidden
+                                className="animate-swap-in"
+                            />
                         )}
                         {theme === "dark" ? "Day mode" : "Night mode"}
                     </button>
@@ -357,7 +365,7 @@ const AccountMenu = ({
                             "cursor-pointer text-danger hover:bg-danger-subtle hover:text-danger"
                         )}
                     >
-                        <LogOut size={15} aria-hidden /> Sign out
+                        <LogOut size={15} aria-hidden /> Log out
                     </button>
                 </div>
             )}

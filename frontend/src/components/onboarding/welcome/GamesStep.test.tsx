@@ -2,12 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { server } from "../../test/msw/server";
-import { API_BASE, buildGame, paginated } from "../../test/msw/handlers";
-import { renderWithProviders } from "../../test/renderWithProviders";
-import PlayedGamesStep from "./PlayedGamesStep";
+import { server } from "../../../test/msw/server";
+import { API_BASE, buildGame, paginated } from "../../../test/msw/handlers";
+import { renderWithProviders } from "../../../test/renderWithProviders";
+import GamesStep from "./GamesStep";
 
-describe("PlayedGamesStep", () => {
+describe("GamesStep", () => {
     it("searches past the most logged for a game someone has played", async () => {
         const searched: (string | null)[] = [];
         server.use(
@@ -24,7 +24,13 @@ describe("PlayedGamesStep", () => {
             })
         );
         renderWithProviders(
-            <PlayedGamesStep titleId="t" preview onDone={vi.fn()} />
+            <GamesStep
+                titleId="t"
+                preview
+                onNext={vi.fn()}
+                onPass={vi.fn()}
+                onLeave={vi.fn()}
+            />
         );
         const u = userEvent.setup();
 
@@ -48,7 +54,13 @@ describe("PlayedGamesStep", () => {
             })
         );
         renderWithProviders(
-            <PlayedGamesStep titleId="t" preview onDone={vi.fn()} />
+            <GamesStep
+                titleId="t"
+                preview
+                onNext={vi.fn()}
+                onPass={vi.fn()}
+                onLeave={vi.fn()}
+            />
         );
         // No pause between letters, so only the last one can settle.
         const u = userEvent.setup({ delay: null });
@@ -77,7 +89,13 @@ describe("PlayedGamesStep", () => {
             )
         );
         renderWithProviders(
-            <PlayedGamesStep titleId="t" preview onDone={vi.fn()} />
+            <GamesStep
+                titleId="t"
+                preview
+                onNext={vi.fn()}
+                onPass={vi.fn()}
+                onLeave={vi.fn()}
+            />
         );
         const u = userEvent.setup();
 
@@ -112,7 +130,13 @@ describe("PlayedGamesStep", () => {
             })
         );
         renderWithProviders(
-            <PlayedGamesStep titleId="t" preview onDone={vi.fn()} />
+            <GamesStep
+                titleId="t"
+                preview
+                onNext={vi.fn()}
+                onPass={vi.fn()}
+                onLeave={vi.fn()}
+            />
         );
         const u = userEvent.setup({ delay: null });
         const field = screen.getByLabelText("Search for a game");
@@ -150,7 +174,13 @@ describe("PlayedGamesStep", () => {
             })
         );
         renderWithProviders(
-            <PlayedGamesStep titleId="t" preview onDone={vi.fn()} />
+            <GamesStep
+                titleId="t"
+                preview
+                onNext={vi.fn()}
+                onPass={vi.fn()}
+                onLeave={vi.fn()}
+            />
         );
         const u = userEvent.setup();
 
@@ -176,7 +206,13 @@ describe("PlayedGamesStep", () => {
             })
         );
         renderWithProviders(
-            <PlayedGamesStep titleId="t" preview onDone={vi.fn()} />
+            <GamesStep
+                titleId="t"
+                preview
+                onNext={vi.fn()}
+                onPass={vi.fn()}
+                onLeave={vi.fn()}
+            />
         );
         const u = userEvent.setup();
         const field = screen.getByLabelText("Search for a game");
@@ -210,7 +246,13 @@ describe("PlayedGamesStep", () => {
             })
         );
         renderWithProviders(
-            <PlayedGamesStep titleId="t" preview onDone={vi.fn()} />
+            <GamesStep
+                titleId="t"
+                preview
+                onNext={vi.fn()}
+                onPass={vi.fn()}
+                onLeave={vi.fn()}
+            />
         );
         const u = userEvent.setup();
 
@@ -247,7 +289,13 @@ describe("PlayedGamesStep", () => {
             })
         );
         renderWithProviders(
-            <PlayedGamesStep titleId="t" preview onDone={vi.fn()} />
+            <GamesStep
+                titleId="t"
+                preview
+                onNext={vi.fn()}
+                onPass={vi.fn()}
+                onLeave={vi.fn()}
+            />
         );
         const u = userEvent.setup();
 
@@ -280,7 +328,13 @@ describe("PlayedGamesStep", () => {
             })
         );
         renderWithProviders(
-            <PlayedGamesStep titleId="t" preview onDone={vi.fn()} />
+            <GamesStep
+                titleId="t"
+                preview
+                onNext={vi.fn()}
+                onPass={vi.fn()}
+                onLeave={vi.fn()}
+            />
         );
         const u = userEvent.setup();
 

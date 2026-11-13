@@ -44,6 +44,8 @@ export interface ReviewsRepository {
     viewerId: string | undefined,
     from: number,
     to: number,
+    /** Whether the viewer has chosen to see adult games. */
+    showSexualContent: boolean,
   ): Promise<{ rows: ReviewRowJoined[]; total: number }>;
   /** Public reviews across every game, newest first. */
   listRecent(
@@ -102,13 +104,16 @@ export const createReviewsRepository = (db: Db): ReviewsRepository => ({
     return { rows: (data ?? []) as ReviewRowJoined[], total: count ?? 0 };
   },
 
-  async listByUser(userId, viewerId, from, to) {
+  async listByUser(userId, viewerId, from, to, showSexualContent) {
     let builder = db
       .from(CARDS)
       .select("*", { count: "exact" })
       .eq("user_id", userId);
 
     if (viewerId !== userId) builder = builder.eq("is_public", true);
+    if (!showSexualContent) {
+      builder = builder.eq("game_has_sexual_content", false);
+    }
 
     const { data, error, count } = await builder
       .order("created_at", { ascending: false })

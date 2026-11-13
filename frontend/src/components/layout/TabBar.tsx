@@ -9,6 +9,7 @@ import {
     type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import Skeleton from "../ui/Skeleton";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import { useSetupSteps } from "../../hooks/useSetupSteps";
 import { useSignOut } from "../../hooks/useSignOut";
@@ -85,7 +86,7 @@ const NavTab = ({
  * showing; the rest of what the old menu held is behind More.
  */
 const TabBar = () => {
-    const { user } = useAuth();
+    const { user, isLoading } = useAuth();
     const { openLogin, openSignup } = useAccountForm();
     const signOut = useSignOut();
     const setup = unfinished(useSetupSteps());
@@ -173,6 +174,15 @@ const TabBar = () => {
                             </Mark>
                             Profile
                         </Link>
+                    ) : isLoading ? (
+                        // The profile still on its way: the tab it will be,
+                        // not Log in for someone who just did.
+                        <span aria-hidden className={cn(TAB, tone(false))}>
+                            <Mark active={false}>
+                                <Skeleton round className="size-6" />
+                            </Mark>
+                            Profile
+                        </span>
                     ) : (
                         <button
                             type="button"
@@ -186,7 +196,7 @@ const TabBar = () => {
                                     aria-hidden
                                 />
                             </Mark>
-                            Sign in
+                            Log in
                         </button>
                     )}
 

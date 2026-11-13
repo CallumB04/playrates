@@ -48,6 +48,45 @@ describe("ShopPage", () => {
         expect(screen.queryByRole("dialog")).toBeNull();
     });
 
+    // Where a reaction's "use it" and its gift email send you.
+    it("opens on the section a link's hash names", async () => {
+        server.use(
+            http.get(`${API}/shop`, () =>
+                HttpResponse.json({
+                    ...shop,
+                    items: [
+                        ...shop.items,
+                        {
+                            item: "frame_neon",
+                            kind: "cosmetic",
+                            group: "frame",
+                            label: "Neon",
+                            price: 150,
+                            owned: 0,
+                            maxOwned: 1,
+                            affordable: true,
+                        },
+                        {
+                            item: "react_hype",
+                            kind: "reaction",
+                            group: "reaction",
+                            label: "Hype",
+                            price: 75,
+                            owned: 1,
+                            maxOwned: 1,
+                            affordable: true,
+                        },
+                    ],
+                })
+            )
+        );
+        renderWithProviders(<ShopPage />, { route: "/shop#reaction" });
+        expect(
+            await screen.findByRole("heading", { name: "Reactions" })
+        ).toBeInTheDocument();
+        expect(screen.queryByRole("heading", { name: "Frames" })).toBeNull();
+    });
+
     it("asks someone signed out to sign up, rather than sending them away", () => {
         auth.user = null;
         renderWithProviders(<ShopPage />, { route: "/shop" });

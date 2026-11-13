@@ -71,10 +71,20 @@ export const CopyLink = ({
                 variant="secondary"
                 size="sm"
                 onClick={() => void copy()}
-                className="min-h-11 shrink-0 sm:min-h-10"
+                // A ring to say it took, and the tick and word blurring in.
+                className={cn(
+                    "min-h-11 shrink-0 sm:min-h-10",
+                    copied && "animate-confirm"
+                )}
             >
-                {copied && <Check size={14} aria-hidden />}
-                {copied ? "Copied" : "Copy"}
+                {copied && (
+                    <Check size={14} aria-hidden className="animate-swap-in" />
+                )}
+                {copied ? (
+                    <span className="animate-label-in">Copied</span>
+                ) : (
+                    "Copy"
+                )}
             </Button>
         </div>
     );

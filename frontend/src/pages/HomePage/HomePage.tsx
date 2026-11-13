@@ -17,15 +17,17 @@ import {
     useMyShelf,
     useUserStats,
 } from "../../hooks/queries/useGameLogs";
-import { latestRun, logOnShelf } from "../../api";
+import { latestRun, logOnShelf, type GameLogWithGame } from "../../api";
 import { useLogFlow } from "../../components/gamelog/useLogFlow";
 import { useFriendActivity } from "../../hooks/queries/useFriends";
 import { useRecentReviews } from "../../hooks/queries/useReviews";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { useTileActions } from "../../components/game/useTileActions";
 import SignedOutHero from "./components/SignedOutHero";
-import ReEntryPlate from "./components/ReEntryPlate";
+import ReEntryPlate, { ReEntrySkeleton } from "./components/ReEntryPlate";
 import YourWeek from "./components/YourWeek";
+import GetStarted from "./components/GetStarted";
+
 import Rail from "../../components/game/GameRail";
 import GenreGrid from "./components/GenreGrid";
 import FriendFeed from "./components/FriendFeed";
@@ -44,17 +46,21 @@ const releaseWindow = () => {
     return { releasedAfter: iso(from), releasedBefore: iso(now) };
 };
 
+const DAY_MS = 86_400_000;
+const joinedToday = (createdAt: string): boolean =>
+    Date.now() - Date.parse(createdAt) < DAY_MS;
+
 const HomePage = () => {
     /* No name of its own: the homepage keeps the site title. */
     usePageTitle();
 
-    const { user } = useAuth();
+    const { user, session, isLoading: authLoading } = useAuth();
     const { openSignup } = useAccountForm();
     const flow = useLogFlow();
 
     const { data: siteStats } = useSiteStats();
     const { data: platforms } = usePlatforms();
-    const { data: genres } = useGenres();
+    const { data: genres, isLoading: genresLoading } = useGenres();
 
     const window = useMemo(releaseWindow, []);
 
@@ -87,16 +93,32 @@ const HomePage = () => {
     const communityEmpty =
         !communityLoading && (communityTrending?.length ?? 0) === 0;
 
-    const { data: playing } = useMyShelf("playing", { limit: 1 });
+    // Enough to find the one touched last and a few behind it: the shelf's
+    // own order is by rating, which isn't what "now" means.
+    const { data: playing, isPending: playingPending } = useMyShelf("playing", {
+        limit: 12,
+    });
     // Enough to draw a year without paging. The chart is a shape, not a ledger.
-    const { data: played } = useMyShelf("played", { limit: 100 });
+    const { data: played, isPending: playedPending } = useMyShelf("played", {
+        limit: 100,
+    });
     const { data: yearStats } = useUserStats(
         user?.username ?? "",
         new Date().getFullYear()
     );
     const { data: allTime } = useUserStats(user?.username ?? "");
 
-    const current = playing?.data[0] && logOnShelf(playing.data[0], "playing");
+    const onTheGo = useMemo(
+        () =>
+            [...(playing?.data ?? [])]
+                .sort((a, b) =>
+                    b.rollup.updatedAt.localeCompare(a.rollup.updatedAt)
+                )
+                .map((entry) => logOnShelf(entry, "playing"))
+                .filter((log): log is GameLogWithGame => !!log),
+        [playing]
+    );
+
     // A game counts once in the year however many consoles it was played on.
     const yearLogs = useMemo(
         () => (played?.data ?? []).map(latestRun),
@@ -110,26 +132,45 @@ const HomePage = () => {
 
     return (
         <div className="flex flex-col gap-11">
+            {/* A session restores before its profile arrives: the signed-in
+                outline holds the top until then, not the pitch for strangers. */}
             {user ? (
                 <div className="flex flex-col gap-4 lg:gap-6">
                     <ReEntryPlate
                         username={user.username}
                         displayName={user.firstName || user.username}
-                        isNew={myLogIds?.length === 0}
-                        current={current}
-                        shelves={allTime?.byStatus}
-                        yearLogs={yearLogs}
-                        yearStats={yearStats}
-                        onUpdateLog={() =>
-                            current && flow.edit(current.gameId, current.id)
+                        // Their first day is a welcome, games logged in
+                        // the welcome or not.
+                        isNew={
+                            myLogIds &&
+                            (myLogIds.length === 0 ||
+                                joinedToday(user.createdAt))
                         }
+                        // A failed load falls back to empty rather than
+                        // loading for ever.
+                        playing={playingPending ? undefined : onTheGo}
+                        shelves={allTime?.byStatus}
+                        yearLogs={playedPending ? undefined : yearLogs}
+                        yearStats={yearStats}
+                        trending={trending?.data}
+                        onUpdateLog={(log) => flow.edit(log.gameId, log.id)}
                     />
+                    <GetStarted />
                     <YourWeek />
                 </div>
+            ) : authLoading ? (
+                session && (
+                    <div className="flex flex-col gap-4 lg:gap-6">
+                        <ReEntrySkeleton />
+                        <YourWeek />
+                    </div>
+                )
             ) : (
                 <SignedOutHero
                     siteStats={siteStats}
-                    covers={trending?.data ?? []}
+                    covers={
+                        trendingLoading ? undefined : (trending?.data ?? [])
+                    }
                     onStart={openSignup}
                 />
             )}
@@ -196,7 +237,7 @@ const HomePage = () => {
                 <CommunityTrending threads={[]} isLoading={false} />
             )}
 
-            <GenreGrid genres={genres ?? []} />
+            <GenreGrid genres={genresLoading ? undefined : (genres ?? [])} />
 
             <Rail
                 title="New releases"

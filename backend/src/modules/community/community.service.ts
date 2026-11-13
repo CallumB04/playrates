@@ -6,6 +6,7 @@ import type {
   LatestReply,
   PatchNote,
   PatchNotesSummary,
+  ReplyReason,
   TalkedAboutGame,
   RichTextDoc,
   ThreadCard,
@@ -39,7 +40,6 @@ import type { ProfileRow } from "../../types/database.types.js";
 import type { NotificationsRepository } from "../notifications/notifications.repository.js";
 import {
   communityReplyKey,
-  communityThreadKey,
   communityUpvotesKey,
 } from "../notifications/notifications.mapper.js";
 import {
@@ -93,6 +93,24 @@ export const createCommunityService = (
   const requireThread = async (threadId: number): Promise<ThreadCardRow> => {
     const thread = await repo.findThread(threadId);
     if (!thread) throw AppError.notFound("Thread");
+    return thread;
+  };
+
+  /** Opt-in, so signed out and unknown both mean no. */
+  const canSeeExplicit = async (viewerId: string | undefined) =>
+    (await viewerProfile(viewerId))?.show_sexual_content ?? false;
+
+  /** A thread about an adult game is missing to anyone who hasn't chosen
+   *  to see them: to read, to answer, to react to. Editing and deleting
+   *  what's already theirs is left alone. */
+  const requireVisibleThread = async (
+    threadId: number,
+    viewerId: string | undefined,
+  ): Promise<ThreadCardRow> => {
+    const thread = await requireThread(threadId);
+    if (thread.game_has_sexual_content && !(await canSeeExplicit(viewerId))) {
+      throw AppError.notFound("Thread");
+    }
     return thread;
   };
 
@@ -162,8 +180,13 @@ export const createCommunityService = (
       { gameId, participant, q, sort, ...pagination }: ThreadListQuery,
       viewerId?: string,
     ): Promise<Paginated<ThreadCard>> {
-      if (gameId !== undefined && !(await games.findById(gameId))) {
-        throw AppError.notFound("Game");
+      const explicit = await canSeeExplicit(viewerId);
+      // An adult game's threads are missing as the game is.
+      if (gameId !== undefined) {
+        const game = await games.findById(gameId);
+        if (!game || (game.has_sexual_content && !explicit)) {
+          throw AppError.notFound("Game");
+        }
       }
       // One person's threads are part of their profile, so theirs to hide.
       const participantProfile = participant
@@ -177,13 +200,9 @@ export const createCommunityService = (
         sort,
         from,
         to,
-        /* Someone looking at one game's threads, or one person's, went
-           looking for them; the community front page is shown to people
-           who went looking for neither, as a profile's own list is not. */
-        showSexualContent:
-          gameId !== undefined ||
-          !!participantProfile ||
-          ((await viewerProfile(viewerId))?.show_sexual_content ?? false),
+        // Hidden from anyone who hasn't chosen to see them, wherever the
+        // list is: a game's, a person's or the front page.
+        showSexualContent: explicit,
       });
       return paginate(rows.map(toThreadCard), pagination, total);
     },
@@ -251,7 +270,7 @@ export const createCommunityService = (
       threadId: number,
       viewerId?: string,
     ): Promise<ThreadDetail> {
-      const thread = await requireThread(threadId);
+      const thread = await requireVisibleThread(threadId, viewerId);
       const rows = await repo.listMessages(threadId);
       const viewer = await viewerFor(viewerId, thread, rows);
       return {
@@ -267,7 +286,12 @@ export const createCommunityService = (
       input: CreateThreadInput,
     ): Promise<ThreadDetail> {
       const game = await games.findById(input.subject.gameId);
-      if (!game) throw AppError.notFound("Game");
+      if (
+        !game ||
+        (game.has_sexual_content && !(await canSeeExplicit(userId)))
+      ) {
+        throw AppError.notFound("Game");
+      }
       assertOwnImages(input.body, [userId]);
 
       const threadId = await repo.createThread({
@@ -284,7 +308,7 @@ export const createCommunityService = (
       threadId: number,
       input: CreateMessageInput,
     ): Promise<CommunityMessage> {
-      const thread = await requireThread(threadId);
+      const thread = await requireVisibleThread(threadId, userId);
 
       if (thread.subject_kind === "patch_notes") {
         assertAdmin(await profiles.findById(userId));
@@ -317,19 +341,35 @@ export const createCommunityService = (
         body: input.body,
       });
 
-      /* Whoever was answered hears about it; the opening message has no
-         Reply of its own, its answers are the thread's activity. The
-         thread's author hears once per thread instead, not once per
-         message, and not twice for a message that answered them. */
-      let notified: string | null = null;
-      if (
-        answered &&
-        !answered.is_opening &&
-        answered.author_id &&
-        answered.author_id !== userId
-      ) {
+      /* Everyone with a stake in it hears, once, with why: whoever was
+         answered; everyone else in the conversation it joined (a message
+         and its replies), so an exchange under one reply reaches all who
+         took part in it and no one outside it; and the thread's author,
+         for anything posted in their thread. */
+      const reasons = new Map<string, ReplyReason>();
+      const hear = (id: string | null, reason: ReplyReason) => {
+        if (id && id !== userId && !reasons.has(id)) reasons.set(id, reason);
+      };
+      if (answered && !answered.is_opening) hear(answered.author_id, "reply");
+      if (parentId !== null) {
+        for (const m of await repo.listMessages(threadId)) {
+          if (
+            (m.id === parentId || m.parent_id === parentId) &&
+            !m.deleted_at
+          ) {
+            hear(m.author_id, "conversation");
+          }
+        }
+      }
+      hear(thread.author_id, "thread");
+
+      const excerpt = toPlainText(input.body, { hideSpoilers: true }).slice(
+        0,
+        140,
+      );
+      for (const [recipient, reason] of reasons) {
         await notifications.raise({
-          userId: answered.author_id,
+          userId: recipient,
           kind: "community_reply",
           actorId: userId,
           dedupeKey: communityReplyKey(row.id),
@@ -337,30 +377,13 @@ export const createCommunityService = (
             threadId,
             threadTitle: thread.title,
             messageId: row.id,
-            excerpt: toPlainText(input.body, { hideSpoilers: true }).slice(
-              0,
-              140,
-            ),
+            excerpt,
+            reason,
+            // So a push or an email can stay quiet for anyone who hasn't
+            // chosen to see adult games.
+            ...(thread.game_has_sexual_content ? { adult: true } : {}),
           },
         });
-        notified = answered.author_id;
-      }
-      if (
-        thread.subject_kind === "game" &&
-        thread.author_id &&
-        thread.author_id !== userId &&
-        thread.author_id !== notified
-      ) {
-        await notifications.bumpThreadActivity(
-          thread.author_id,
-          communityThreadKey(threadId),
-          {
-            threadId,
-            threadTitle: thread.title,
-            gameTitle: thread.game_title,
-            coverUrl: thread.game_cover_url,
-          },
-        );
       }
 
       return messageFor(userId, row);
@@ -483,6 +506,7 @@ export const createCommunityService = (
       reaction?: string,
     ): Promise<VoteResult> {
       const message = await requireMessage(messageId);
+      await requireVisibleThread(message.thread_id, userId);
       if (message.author_id === userId) {
         throw AppError.forbidden("You cannot react to your own message");
       }
@@ -510,6 +534,7 @@ export const createCommunityService = (
             excerpt: toPlainText(message.body as RichTextDoc, {
               hideSpoilers: true,
             }).slice(0, 140),
+            ...(thread.game_has_sexual_content ? { adult: true } : {}),
           },
         );
       }

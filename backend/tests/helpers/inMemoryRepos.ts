@@ -1101,6 +1101,8 @@ export const createInMemoryRepos = (
               return l.created_at;
             case "ending":
               return l.rating;
+            case "hype":
+              return l.hype;
           }
         };
 
@@ -1222,6 +1224,13 @@ export const createInMemoryRepos = (
                 .map((l) => ENDING_RANK[l.played_status ?? ""] ?? 0);
               return ranks.length ? Math.max(...ranks) : null;
             }
+            // The most hyped backlog log's, as hype in the view.
+            case "hype": {
+              const hype = present(
+                logs.filter((l) => l.status === "backlog").map((l) => l.hype),
+              );
+              return hype.length ? Math.max(...hype) : null;
+            }
           }
         };
         const latest = (g: (typeof games)[number]) =>
@@ -1275,6 +1284,7 @@ export const createInMemoryRepos = (
           system_slug: null,
           completion: null,
           last_played: null,
+          hype: null,
           platform_slug: null,
           achievements_total: null,
           achievements_completed: null,
@@ -1487,9 +1497,15 @@ export const createInMemoryRepos = (
           total: rows.length,
         };
       },
-      async listByUser(userId, viewerId, from, to) {
+      async listByUser(userId, viewerId, from, to, showSexualContent) {
+        const explicit = new Set(
+          state.games.filter((g) => g.has_sexual_content).map((g) => g.id),
+        );
         const rows = state.reviews.filter(
-          (r) => r.user_id === userId && (viewerId === userId || r.is_public),
+          (r) =>
+            r.user_id === userId &&
+            (viewerId === userId || r.is_public) &&
+            (showSexualContent || !explicit.has(r.game_id)),
         );
         return {
           rows: rows.slice(from, to + 1).map(withAuthor),
@@ -1632,6 +1648,46 @@ export const createInMemoryRepos = (
           })
           .slice(0, limit);
       },
+      // As the SQL: played or playing, adult games left out.
+      async sharedPlayers(userId, limit) {
+        const plays = (id: string) =>
+          new Set(
+            state.gameLogs
+              .filter(
+                (l) =>
+                  l.user_id === id &&
+                  (l.status === "played" || l.status === "playing") &&
+                  !state.games.find((g) => g.id === l.game_id)
+                    ?.has_sexual_content,
+              )
+              .map((l) => l.game_id),
+          );
+        const mine = plays(userId);
+        const friendIds = new Set(
+          state.friendships
+            .filter(
+              (f) =>
+                f.status === "accepted" &&
+                (f.user_a_id === userId || f.user_b_id === userId),
+            )
+            .map((f) => (f.user_a_id === userId ? f.user_b_id : f.user_a_id)),
+        );
+        return state.profiles
+          .filter(
+            (p) =>
+              p.id !== userId &&
+              !friendIds.has(p.id) &&
+              p.profile_visibility === "everyone",
+          )
+          .flatMap((p) => {
+            const both = [...plays(p.id)].filter((g) => mine.has(g));
+            return both.length
+              ? [{ ...p, shared: both.length, game_ids: both.slice(0, 3) }]
+              : [];
+          })
+          .sort((a, b) => b.shared - a.shared)
+          .slice(0, limit);
+      },
       async gameFans(gameId, limit) {
         return state.gameLogs
           .filter(
@@ -1742,6 +1798,7 @@ export const createInMemoryRepos = (
             created_at: n.created_at,
             thread_id:
               (n.data as { threadId?: number } | null)?.threadId ?? null,
+            reason: (n.data as { reason?: string } | null)?.reason ?? null,
           }));
       },
       async markSeen(userId) {

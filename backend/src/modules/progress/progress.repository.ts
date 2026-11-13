@@ -91,6 +91,14 @@ export const bestEnding = <
       b.updated_at.localeCompare(a.updated_at),
   )[0] ?? null;
 
+/** One place on the site's board, its bigints read into numbers. */
+export interface SiteBoardRow {
+  user_id: string;
+  xp: number;
+  rank: number;
+  total: number;
+}
+
 export interface ProgressRepository {
   profile(userId: string): Promise<ProfileRow | null>;
   profilesByIds(ids: string[]): Promise<ProfileRow[]>;
@@ -178,6 +186,14 @@ export interface ProgressRepository {
   nudgeCandidates(since: string, now: string): Promise<NudgeCandidate[]>;
   rules(): Promise<RuleRow[]>;
   xpSince(userIds: string[], since: string): Promise<Map<string, number>>;
+  /** Public profiles by XP since a moment (or ever, with null), the viewer
+   *  among them: the top `top`, then the viewer with `around` either side. */
+  siteBoard(
+    since: string | null,
+    viewerId: string | null,
+    top: number,
+    around: number,
+  ): Promise<SiteBoardRow[]>;
   holders(): Promise<{ badge: string; metal: number; holders: number }[]>;
   memberCount(): Promise<number>;
   updateProfile(userId: string, patch: Partial<ProfileRow>): Promise<void>;
@@ -640,6 +656,21 @@ export const createProgressRepository = (db: Db): ProgressRepository => {
         p_since: since,
       });
       return new Map((rows ?? []).map((r) => [r.user_id, Number(r.xp)]));
+    },
+
+    async siteBoard(since, viewerId, top, around) {
+      const rows = await rpc<SiteBoardRow[]>("site_leaderboard", {
+        p_since: since,
+        p_viewer: viewerId,
+        p_top: top,
+        p_around: around,
+      });
+      return (rows ?? []).map((r) => ({
+        user_id: r.user_id,
+        xp: Number(r.xp),
+        rank: Number(r.rank),
+        total: Number(r.total),
+      }));
     },
 
     async holders() {

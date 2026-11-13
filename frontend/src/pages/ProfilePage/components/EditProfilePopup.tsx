@@ -18,7 +18,7 @@ import { useNotify } from "../../../contexts/NotificationContext";
 import { useProgress, useSetStyle } from "../../../hooks/queries/useProgress";
 import LookFields, { type LookChoice } from "./LookFields";
 import { ApiError } from "../../../api/client";
-import Modal from "../../../components/ui/Modal";
+import Popup from "../../../components/ui/Popup";
 import Button from "../../../components/ui/Button";
 import Field from "../../../components/ui/Field";
 import { Input, Textarea } from "../../../components/ui/Input";
@@ -258,18 +258,31 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
     };
 
     return (
-        <Modal
+        <Popup
             onClose={closePopup}
-            labelledBy="edit-profile-title"
-            className="w-full max-w-[520px]"
+            titleId="edit-profile-title"
+            width="w-full sm:max-w-[520px]"
+            long
+            title="Edit profile"
+            footer={
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <Button
+                        variant="secondary"
+                        className="w-full sm:w-auto"
+                        onClick={closePopup}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        className="w-full sm:w-auto"
+                        onClick={() => void save()}
+                        disabled={!dirty || !sameLetters || aboutInvalid || saving}
+                    >
+                        {saving ? "Saving…" : "Save changes"}
+                    </Button>
+                </div>
+            }
         >
-            <h2
-                id="edit-profile-title"
-                className="border-b border-subtle pb-3 font-display text-section text-content"
-            >
-                Edit profile
-            </h2>
-
             <SegmentedChoice
                 label="Edit profile views"
                 segments={[
@@ -290,7 +303,6 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                 onChange={setView}
                 panelId={panelId}
                 fill
-                className="mt-3"
             />
 
             {/* Stacked in one cell, so the popup is as tall as its tallest
@@ -414,26 +426,7 @@ const EditProfilePopup: React.FC<EditProfilePopupProps> = ({
                     ) : null}
                 </Panel>
             </div>
-
-            {/* Kept in view on a phone, where the sheet is as tall as its
-                tallest view and Save fell below the fold. */}
-            <div className="mt-4 flex flex-col-reverse gap-2 border-t border-subtle bg-surface-raised pt-4 max-sm:sticky max-sm:-bottom-4 max-sm:pb-2 sm:flex-row sm:justify-end">
-                <Button
-                    variant="secondary"
-                    className="w-full sm:w-auto"
-                    onClick={closePopup}
-                >
-                    Cancel
-                </Button>
-                <Button
-                    className="w-full sm:w-auto"
-                    onClick={() => void save()}
-                    disabled={!dirty || !sameLetters || aboutInvalid || saving}
-                >
-                    {saving ? "Saving…" : "Save changes"}
-                </Button>
-            </div>
-        </Modal>
+        </Popup>
     );
 };
 

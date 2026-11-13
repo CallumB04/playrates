@@ -194,18 +194,81 @@ describe("community threads", () => {
 
     expect(response.body.data.map((t: { id: number }) => t.id)).toEqual([3]);
   });
+});
 
-  it("keeps explicit games off the front page but not off their own page", async () => {
+describe("threads about an adult game", () => {
+  /** Thread 1 is about game 1, made adult; USER_B can be opted in. */
+  const adultSeed = (optedIn = false) => {
     const seed = communitySeed();
-    const { app } = buildTestApp({
-      seed: { ...seed, games: [buildGame({ has_sexual_content: true })] },
-    });
+    return {
+      ...seed,
+      games: [buildGame({ has_sexual_content: true })],
+      profiles: seed.profiles.map((p) =>
+        p.id === USER_B ? { ...p, show_sexual_content: optedIn } : p,
+      ),
+    };
+  };
 
+  it("keeps them off every list, a game's and a person's included", async () => {
+    const { app } = buildTestApp({ seed: adultSeed() });
     const front = await request(app).get("/api/v1/community/threads");
+    const profile = await request(app).get(
+      "/api/v1/community/threads?participant=devuser",
+    );
     const own = await request(app).get("/api/v1/community/threads?gameId=1");
 
     expect(front.body.data).toHaveLength(0);
-    expect(own.body.data).toHaveLength(1);
+    expect(profile.body.data).toHaveLength(0);
+    // The game itself is missing to them, so its threads are too.
+    expect(own.status).toBe(404);
+  });
+
+  it("can't be opened, answered or reacted to without choosing to see them", async () => {
+    const { app } = buildTestApp({ seed: adultSeed() });
+    const signedOut = await request(app).get("/api/v1/community/threads/1");
+    const signedIn = await request(app)
+      .get("/api/v1/community/threads/1")
+      .set("Authorization", authHeader(USER_B));
+    const reply = await request(app)
+      .post("/api/v1/community/threads/1/messages")
+      .set("Authorization", authHeader(USER_B))
+      .send({ body: doc("Hello") });
+    const vote = await request(app)
+      .post("/api/v1/community/messages/1/vote")
+      .set("Authorization", authHeader(USER_B));
+    const start = await request(app)
+      .post("/api/v1/community/threads")
+      .set("Authorization", authHeader(USER_B))
+      .send({
+        subject: { kind: "game", gameId: 1 },
+        title: "A new one",
+        body: doc("Hello"),
+      });
+
+    for (const response of [signedOut, signedIn, reply, vote, start])
+      expect(response.status).toBe(404);
+  });
+
+  it("opens them to someone who has chosen to see them", async () => {
+    const { app } = buildTestApp({ seed: adultSeed(true) });
+    const as = (req: request.Test) =>
+      req.set("Authorization", authHeader(USER_B));
+    expect(
+      (await as(request(app).get("/api/v1/community/threads/1"))).status,
+    ).toBe(200);
+    expect(
+      (await as(request(app).get("/api/v1/community/threads?gameId=1"))).body
+        .data,
+    ).toHaveLength(1);
+    expect(
+      (
+        await as(
+          request(app)
+            .post("/api/v1/community/threads/1/messages")
+            .send({ body: doc("Hello") }),
+        )
+      ).status,
+    ).toBe(201);
   });
 });
 
@@ -588,6 +651,34 @@ describe("trending", () => {
     expect(
       response.body[0].activity.reduce((a: number, b: number) => a + b, 0),
     ).toBe(2);
+  });
+});
+
+describe("a thread's game", () => {
+  it("brings its wide art for a backdrop, or its cover where it has none", async () => {
+    const seed = communitySeed();
+    const art = async (banner: string | null) => {
+      const { app } = buildTestApp({
+        seed: {
+          ...seed,
+          games: [
+            buildGame({
+              cover_url: "https://img.test/cover.jpg",
+              banner_url: banner,
+            }),
+          ],
+          communityMessages: [buildMessage({ id: 10, created_at: daysAgo(1) })],
+        },
+      });
+      const [thread] = (await request(app).get("/api/v1/community/trending"))
+        .body;
+      return thread.subject.game.artworkUrl;
+    };
+
+    expect(await art("https://img.test/banner.jpg")).toBe(
+      "https://img.test/banner.jpg",
+    );
+    expect(await art(null)).toBe("https://img.test/cover.jpg");
   });
 });
 

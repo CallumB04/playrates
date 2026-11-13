@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { screen } from "@testing-library/react";
+import { act, renderHook, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../test/renderWithProviders";
 import { buildProfile } from "../../test/msw/handlers";
 import AccountMenu from "./AccountMenu";
 import { setupSteps } from "../../lib/setupChecklist";
+import { closeSetupStep, useSetupSheet } from "../../lib/setupSheet";
 
 const open = async (isAdmin: boolean) => {
     renderWithProviders(
@@ -86,16 +87,19 @@ describe("AccountMenu", () => {
             ).not.toBeInTheDocument();
         });
 
-        it("opens on a tap on a phone, as places to go", async () => {
+        it("opens on a tap on a phone, each step opening its own sheet", async () => {
+            const sheet = renderHook(() => useSetupSheet());
             await openWith(setup);
             await userEvent.click(row());
             expect(screen.getByText("25%")).toBeInTheDocument();
             expect(
                 screen.getByRole("menuitem", { name: /add a profile picture/i })
-            ).toHaveAttribute("href", "/user/devuser?edit=profile");
-            expect(
+            ).toBeInTheDocument();
+            await userEvent.click(
                 screen.getByRole("menuitem", { name: /add a friend/i })
-            ).toHaveAttribute("href", "/community");
+            );
+            expect(sheet.result.current).toBe("friend");
+            act(() => closeSetupStep());
             // Done steps stay on the list, but are not somewhere to go.
             expect(
                 screen.queryByRole("menuitem", { name: /write a bio/i })

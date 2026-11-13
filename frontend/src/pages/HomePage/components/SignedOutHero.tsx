@@ -5,6 +5,7 @@ import { buttonClass } from "../../../components/ui/buttonClass";
 import GameCover from "../../../components/game/GameCover";
 import type { SiteStats } from "../../../api";
 import { formatCount } from "../../../lib/format";
+import Skeleton from "../../../components/ui/Skeleton";
 import {
     BRAND_MOTTO,
     BRAND_NAME,
@@ -13,8 +14,8 @@ import {
 
 interface SignedOutHeroProps {
     siteStats: SiteStats | undefined;
-    /** Real box art, used as the hero image. */
-    covers: Game[];
+    /** Real box art, used as the hero image. Undefined while loading. */
+    covers: Game[] | undefined;
     onStart: () => void;
 }
 
@@ -69,16 +70,23 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
 
             {/* One sentence, not a dashboard. Three figures in a definition
                 list is a stats widget; this is a claim about the place. */}
-            <p className="mt-6 text-body-sm text-content-muted">
-                <span className="font-mono text-content">
-                    {formatCount(siteStats?.gameCount ?? 0)}
-                </span>{" "}
-                games in the library, and{" "}
-                <span className="font-mono text-content">
-                    {formatCount(siteStats?.logCount ?? 0)}
-                </span>{" "}
-                {siteStats?.logCount === 1 ? "log" : "logs"} so far.
-            </p>
+            {siteStats ? (
+                <p className="mt-6 text-body-sm text-content-muted">
+                    <span className="font-mono text-content">
+                        {formatCount(siteStats.gameCount)}
+                    </span>{" "}
+                    games in the library, and{" "}
+                    <span className="font-mono text-content">
+                        {formatCount(siteStats.logCount)}
+                    </span>{" "}
+                    {siteStats.logCount === 1 ? "log" : "logs"} so far.
+                </p>
+            ) : (
+                // The sentence's height, so the centred column doesn't shift.
+                <div className="mt-6 flex h-5 items-center">
+                    <Skeleton className="h-3 w-72 max-w-full" />
+                </div>
+            )}
         </div>
 
         {/* Leads on a phone, where the alternative is the brand name twice
@@ -88,23 +96,31 @@ const SignedOutHero = ({ siteStats, covers, onStart }: SignedOutHeroProps) => (
             aria-hidden
             className="relative isolate order-first h-[170px] [--cover:84px] sm:h-[230px] sm:[--cover:116px] lg:order-none lg:h-[260px] lg:[--cover:126px] xl:h-[290px] xl:[--cover:140px]"
         >
-            {covers.slice(0, 6).map((game, i) => (
-                <span
-                    key={game.id}
-                    className="absolute top-1/2 w-(--cover)"
-                    style={{
-                        left: `calc((100% - var(--cover)) / 5 * ${i})`,
-                        zIndex: i,
-                        transform: `translateY(calc(-50% + ${FAN[i]!.drop}px)) rotate(${FAN[i]!.rotate}deg)`,
-                    }}
-                >
-                    <GameCover
-                        coverUrl={game.coverUrl}
-                        title={game.title}
-                        className="aspect-3/4 w-full overflow-hidden rounded-md shadow-lifted"
-                    />
-                </span>
-            ))}
+            {/* Grey cards in the fan's own places until the art arrives. */}
+            {FAN.slice(0, covers?.length ?? FAN.length).map((place, i) => {
+                const game = covers?.[i];
+                return (
+                    <span
+                        key={game?.id ?? i}
+                        className="absolute top-1/2 w-(--cover)"
+                        style={{
+                            left: `calc((100% - var(--cover)) / 5 * ${i})`,
+                            zIndex: i,
+                            transform: `translateY(calc(-50% + ${place.drop}px)) rotate(${place.rotate}deg)`,
+                        }}
+                    >
+                        {game ? (
+                            <GameCover
+                                coverUrl={game.coverUrl}
+                                title={game.title}
+                                className="aspect-3/4 w-full overflow-hidden rounded-md shadow-lifted"
+                            />
+                        ) : (
+                            <Skeleton className="aspect-3/4 w-full rounded-md border border-subtle shadow-lifted" />
+                        )}
+                    </span>
+                );
+            })}
         </div>
     </div>
 );

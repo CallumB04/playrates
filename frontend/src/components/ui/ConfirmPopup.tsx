@@ -1,7 +1,6 @@
-import type { ReactNode } from "react";
-import Modal from "./Modal";
+import { useId, type ReactNode } from "react";
+import Popup from "./Popup";
 import Button from "./Button";
-import { cn } from "../../lib/cn";
 
 interface ConfirmPopupProps {
     title: string;
@@ -16,8 +15,8 @@ interface ConfirmPopupProps {
     children?: ReactNode;
 }
 
-/** One confirmation dialog for every "are you sure?" in the app. Same heading
- *  and rule as the other popups. */
+/** One confirmation dialog for every "are you sure?" in the app, in the
+ *  frame every popup shares. */
 const ConfirmPopup = ({
     title,
     body,
@@ -27,41 +26,38 @@ const ConfirmPopup = ({
     onConfirm,
     onClose,
     children,
-}: ConfirmPopupProps) => (
-    <Modal
-        onClose={onClose}
-        labelledBy="confirm-title"
-        className="w-full max-w-md"
-    >
-        <h2
-            id="confirm-title"
-            className={cn(
-                "border-b border-subtle pb-3 font-display text-section",
-                tone === "danger" ? "text-danger" : "text-content"
-            )}
+}: ConfirmPopupProps) => {
+    const titleId = useId();
+    return (
+        <Popup
+            onClose={onClose}
+            titleId={titleId}
+            width="w-full sm:max-w-md"
+            title={title}
+            blurb={<p className="leading-relaxed">{body}</p>}
+            tone={tone === "danger" ? "danger" : "brand"}
+            footer={
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <Button
+                        variant="secondary"
+                        onClick={onClose}
+                        disabled={isPending}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        variant={tone === "danger" ? "danger" : "primary"}
+                        onClick={onConfirm}
+                        disabled={isPending}
+                    >
+                        {confirmLabel}
+                    </Button>
+                </div>
+            }
         >
-            {title}
-        </h2>
-
-        <p className="pt-4 text-body-sm leading-relaxed text-content-secondary">
-            {body}
-        </p>
-
-        {children && <div className="pt-4">{children}</div>}
-
-        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button variant="secondary" onClick={onClose} disabled={isPending}>
-                Cancel
-            </Button>
-            <Button
-                variant={tone === "danger" ? "danger" : "primary"}
-                onClick={onConfirm}
-                disabled={isPending}
-            >
-                {confirmLabel}
-            </Button>
-        </div>
-    </Modal>
-);
+            {children}
+        </Popup>
+    );
+};
 
 export default ConfirmPopup;

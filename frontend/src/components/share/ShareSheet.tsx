@@ -1,6 +1,6 @@
 import { useId, useState, type ReactNode } from "react";
 import { Download } from "lucide-react";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import Button from "../ui/Button";
 import { Skeleton } from "../ui/Skeleton";
 import { useNotify } from "../../contexts/NotificationContext";
@@ -15,8 +15,9 @@ interface ShareSheetProps {
     url: string;
     /** What a post says before the link. */
     text: string;
-    /** The picture to post, which the sheet shows and hands over. */
-    imageUrl: string;
+    /** The picture to post, which the sheet shows and hands over. Undefined
+     *  while its address is still being worked out: grey until then. */
+    imageUrl: string | undefined;
     fileName: string;
     /** Said in the picture's place when there isn't one to be had. */
     noImage?: string;
@@ -66,12 +67,13 @@ const ShareSheet = ({
         url: string;
         status: "loaded" | "missing";
     } | null>(null);
-    const image = settled?.url === imageUrl ? settled.status : "loading";
+    const image =
+        imageUrl && settled?.url === imageUrl ? settled.status : "loading";
     const setImage = (status: "loaded" | "missing") =>
-        setSettled({ url: imageUrl, status });
+        imageUrl && setSettled({ url: imageUrl, status });
     const hasImage = image !== "missing";
     const [busy, setBusy] = useState(false);
-    const files = hasImage && canShareFiles();
+    const files = hasImage && !!imageUrl && canShareFiles();
 
     const shareNative = async () => {
         setBusy(true);
@@ -79,7 +81,7 @@ const ShareSheet = ({
             await navigator.share(
                 files
                     ? {
-                          files: [await imageFile(imageUrl, fileName)],
+                          files: [await imageFile(imageUrl!, fileName)],
                           text: `${text} ${url}`,
                       }
                     : { title: text, text, url }
@@ -95,6 +97,7 @@ const ShareSheet = ({
     };
 
     const download = async () => {
+        if (!imageUrl) return;
         setBusy(true);
         try {
             /* Fetched first: a download attribute on another origin's link
@@ -114,31 +117,21 @@ const ShareSheet = ({
     };
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full max-w-[420px]"
+            titleId={titleId}
+            width="w-full sm:max-w-[420px]"
+            title={title}
+            blurb={lede}
         >
-            <h2
-                id={titleId}
-                className="pr-10 font-display text-section text-content"
-            >
-                {title}
-            </h2>
-            {lede && (
-                <p className="mt-1 text-body-sm text-content-secondary">
-                    {lede}
-                </p>
-            )}
-
             {/* The picture on a stage of its own, so it reads as the thing
                 being shared rather than one more box in the popup. */}
-            <div className="mt-4 grid place-items-center rounded-lg bg-linear-to-b from-brand-subtle to-surface-sunken/60 px-4 py-5">
+            <div className="grid place-items-center rounded-lg bg-linear-to-b from-brand-subtle to-surface-sunken/60 px-4 py-5">
                 <div className="relative aspect-4/5 w-48 overflow-hidden rounded-md bg-surface-sunken shadow-lifted sm:w-56">
                     {image === "loading" && (
                         <Skeleton className="absolute inset-0" />
                     )}
-                    {hasImage ? (
+                    {!imageUrl ? null : hasImage ? (
                         <img
                             src={imageUrl}
                             alt=""
@@ -161,7 +154,7 @@ const ShareSheet = ({
                 <Button
                     size="touch"
                     onClick={() => void download()}
-                    disabled={busy}
+                    disabled={busy || !imageUrl}
                     className="mt-4 w-full"
                 >
                     <Download size={16} aria-hidden />
@@ -177,9 +170,9 @@ const ShareSheet = ({
                 onNative={() => void shareNative()}
                 nativeLabel={files ? "Share the picture" : "Share"}
                 busy={busy}
-                className="mt-4 border-t border-subtle pt-4 pb-3 sm:pb-0"
+                className="mt-4 border-t border-subtle pt-4"
             />
-        </Modal>
+        </Popup>
     );
 };
 

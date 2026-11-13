@@ -1,44 +1,66 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
-import { buildProfile } from "../../test/msw/handlers";
+import { useLocation } from "react-router-dom";
 import { renderWithProviders } from "../../test/renderWithProviders";
-import ToastStack from "../feedback/ToastStack";
 import AuthLinkResult from "./AuthLinkResult";
 
-const auth = vi.hoisted(() => ({ user: null as unknown }));
+const auth = vi.hoisted(() => ({
+    session: null as unknown,
+    isLoading: false,
+}));
 vi.mock("../../contexts/AuthContext", () => ({ useAuth: () => auth }));
 
 beforeEach(() => {
-    auth.user = null;
+    auth.session = null;
+    auth.isLoading = false;
 });
+
+const Where = () => {
+    const { pathname, search } = useLocation();
+    return <p data-testid="where">{`${pathname}${search}`}</p>;
+};
 
 const land = (route: string) =>
     renderWithProviders(
         <>
             <AuthLinkResult />
-            <ToastStack />
+            <Where />
         </>,
         { route }
     );
 
+const where = () => screen.getByTestId("where").textContent;
+
 describe("AuthLinkResult", () => {
-    it("says the email is confirmed once the member is signed in", async () => {
-        auth.user = buildProfile();
+    it("takes a confirmed link to the page that welcomes you", async () => {
+        auth.session = {};
         land("/?confirmed=1");
-        expect(
-            await screen.findByText("Email confirmed. Welcome to PlayRates")
-        ).toBeInTheDocument();
+        await vi.waitFor(() => expect(where()).toBe("/join/confirmed"));
     });
 
-    it("says nothing until the sign-in has landed", () => {
+    // Supabase reads the link's code from the address; leaving sooner loses it.
+    it("waits for the sign-in to settle before leaving", () => {
+        auth.isLoading = true;
         land("/?confirmed=1");
-        expect(screen.queryByText(/Email confirmed/)).toBeNull();
+        expect(where()).toBe("/?confirmed=1");
+    });
+
+    it("says the link failed when it signed nobody in", async () => {
+        land("/?confirmed=1");
+        await vi.waitFor(() =>
+            expect(where()).toBe("/join/confirmed?link=failed")
+        );
     });
 
     it("says a used or old link ran out", async () => {
         land("/#error=access_denied&error_code=otp_expired");
-        expect(
-            await screen.findByText(/That link has run out/)
-        ).toBeInTheDocument();
+        await vi.waitFor(() =>
+            expect(where()).toBe("/join/confirmed?link=expired")
+        );
+    });
+
+    it("leaves an ordinary page alone", () => {
+        land("/library");
+        expect(where()).toBe("/library");
     });
 });

@@ -32,7 +32,7 @@ import {
     type WishlistSort,
 } from "../lib/wishlist";
 import { getProfileGamesPerPage } from "../lib/friendRelation";
-import { sortForShelf } from "../lib/shelfSort";
+import { defaultShelfSort, sortForShelf } from "../lib/shelfSort";
 import { usePageParam } from "../lib/usePageParam";
 import { useShelfTileActions } from "../lib/useShelfTileActions";
 
@@ -70,7 +70,7 @@ const GamesView = ({
     const sort: GameLogSort = sortForShelf(
         GAME_LOG_SORTS.includes(rawSort as GameLogSort)
             ? (rawSort as GameLogSort)
-            : "rating",
+            : defaultShelfSort(activeSection),
         activeSection
     );
     const direction: SortDirection =
@@ -264,6 +264,8 @@ const GamesView = ({
             updated.delete("ending");
             if (sort === "ending") updated.delete("sort");
         }
+        // Nor hype off the backlog, whose default it is.
+        if (status !== "backlog" && sort === "hype") updated.delete("sort");
         setParams(updated);
     };
 
@@ -272,10 +274,16 @@ const GamesView = ({
             <ShelfPanel
                 active={activeSection}
                 // Every tab's count: the stats endpoint returns the whole breakdown.
+                // Until either arrives, no counts at all rather than zeros.
                 counts={
-                    stats?.byStatus ?? {
-                        [activeSection]: isWishlist ? wishlist.length : total,
-                    }
+                    stats?.byStatus ??
+                    ((isWishlist ? wishlistLoading : isLoading)
+                        ? {}
+                        : {
+                              [activeSection]: isWishlist
+                                  ? wishlist.length
+                                  : total,
+                          })
                 }
                 onSelect={setSection}
                 entries={entries}

@@ -14,7 +14,10 @@ export interface NotificationContextValue {
         text: ReactNode,
         type: NotificationType,
         severity?: NotificationSeverity,
-        action?: ToastAction
+        action?: ToastAction,
+        /** `join`: said after the newest toast instead, while that one is
+         *  a plain success still on screen, rather than stacking another. */
+        options?: { join?: ReactNode }
     ) => void;
     /** Starts the exit; the toast asks to be removed once it has played. */
     dismiss: (id: number) => void;

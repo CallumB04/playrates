@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { UserStats } from "@playrates/shared";
-import Modal from "../../components/ui/Modal";
+import Popup from "../../components/ui/Popup";
 import Button from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import Field from "../../components/ui/Field";
@@ -37,20 +37,14 @@ const DeleteAccountModal = ({
     ].filter((row) => row.value > 0);
 
     return (
-        <Modal
+        <Popup
             onClose={onCancel}
-            labelledBy="delete-account-title"
-            className="w-full max-w-md"
-        >
-            <h2
-                id="delete-account-title"
-                className="border-b border-subtle pb-3 font-display text-section text-danger"
-            >
-                Delete your account
-            </h2>
-
-            <div className="flex flex-col gap-4 pt-4">
-                <p className="text-body-sm text-content-secondary">
+            titleId="delete-account-title"
+            width="w-full sm:max-w-md"
+            title="Delete your account"
+            tone="danger"
+            blurb={
+                <p>
                     {losing.length > 0 ? (
                         <>
                             This permanently deletes your{" "}
@@ -72,22 +66,8 @@ const DeleteAccountModal = ({
                         "This permanently deletes your account. It cannot be undone."
                     )}
                 </p>
-
-                <Field
-                    label={`Type ${username} to confirm`}
-                    help="Case sensitive."
-                >
-                    {(a11y) => (
-                        <Input
-                            value={typed}
-                            onChange={(e) => setTyped(e.target.value)}
-                            autoComplete="off"
-                            spellCheck={false}
-                            {...a11y}
-                        />
-                    )}
-                </Field>
-
+            }
+            footer={
                 <div className="flex justify-end gap-2.5">
                     <Button
                         variant="secondary"
@@ -104,8 +84,20 @@ const DeleteAccountModal = ({
                         {isDeleting ? "Deleting…" : "Delete forever"}
                     </Button>
                 </div>
-            </div>
-        </Modal>
+            }
+        >
+            <Field label={`Type ${username} to confirm`} help="Case sensitive.">
+                {(a11y) => (
+                    <Input
+                        value={typed}
+                        onChange={(e) => setTyped(e.target.value)}
+                        autoComplete="off"
+                        spellCheck={false}
+                        {...a11y}
+                    />
+                )}
+            </Field>
+        </Popup>
     );
 };
 

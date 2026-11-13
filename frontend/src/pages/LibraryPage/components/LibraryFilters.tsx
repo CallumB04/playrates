@@ -2,7 +2,7 @@ import { useState } from "react";
 import { cardClass } from "../../../components/ui/cardClass";
 import { ListFilter, Search } from "lucide-react";
 import Button from "../../../components/ui/Button";
-import Modal from "../../../components/ui/Modal";
+import Popup from "../../../components/ui/Popup";
 import type { Genre, Platform } from "@playrates/shared";
 import { SearchInput } from "../../../components/ui/Input";
 import Dropdown, { type DropdownOption } from "../../../components/ui/Dropdown";
@@ -157,28 +157,26 @@ const LibraryFilters = ({
             </div>
 
             {sheetOpen && (
-                <Modal
+                <Popup
                     onClose={() => setSheetOpen(false)}
-                    labelledBy="library-filters-title"
-                    className="w-full max-w-md"
-                >
-                    <h2
-                        id="library-filters-title"
-                        className="border-b border-subtle pb-3 font-display text-section text-content"
-                    >
-                        Filters
-                    </h2>
-                    <div className="flex flex-col gap-4 pt-4">
-                        {inSheet}
-                        {toggles}
+                    titleId="library-filters-title"
+                    width="w-full sm:max-w-md"
+                    title="Filters"
+                    footer={
                         <Button
                             onClick={() => setSheetOpen(false)}
                             size="touch"
+                            className="w-full"
                         >
                             Show results
                         </Button>
+                    }
+                >
+                    <div className="flex flex-col gap-4">
+                        {inSheet}
+                        {toggles}
                     </div>
-                </Modal>
+                </Popup>
             )}
         </>
     );

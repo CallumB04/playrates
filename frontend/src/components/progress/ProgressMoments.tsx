@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { badgeDef, levelFor } from "@playrates/shared";
 import { playerCardUrl } from "../../api";
@@ -9,6 +9,8 @@ import {
     useMarkSeen,
     useProgress,
 } from "../../hooks/queries/useProgress";
+import { FOUNDING_BADGE } from "../../lib/foundingBadge";
+import { useWelcomeOpen } from "../../lib/welcomeOpen";
 import { profilePath } from "../../lib/profilePaths";
 import { useNotify } from "../../contexts/NotificationContext";
 import { OFFER_DWELL_MS } from "../../contexts/notificationQueue";
@@ -20,7 +22,7 @@ import {
 } from "../../lib/shareMoment";
 import { badgeMoment, levelMoment, shareUrl } from "../share/shareText";
 import { badgeToastText } from "./rewardText";
-import { xpToast } from "./XpToast";
+import { xpJoin, xpToast } from "./XpToast";
 
 // Each shows now and then, so none rides along with every page.
 const LaunchReveal = lazy(() => import("./LaunchReveal"));
@@ -36,6 +38,12 @@ const ShareSheet = lazy(() => import("../share/ShareSheet"));
 const ProgressMoments = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    // The welcome page is the moment itself; the rest waits until after.
+    const { pathname } = useLocation();
+    const joining = pathname.startsWith("/join");
+    /* Nothing over the welcome: on a phone the corner sits on its buttons.
+       Its XP goes unsaid; a badge or a new level waits for it to close. */
+    const welcoming = useWelcomeOpen();
     const notify = useNotify();
     const { data } = useProgress();
     const seen = useMarkSeen();
@@ -70,6 +78,22 @@ const ProgressMoments = () => {
 
     useEffect(() => {
         if (!data) return;
+        if (joining) {
+            // Said on the page instead (JoinConfirmedPage).
+            const founding = data.unseen.badges.filter(
+                (b) =>
+                    b.badge === FOUNDING_BADGE &&
+                    !handled.current.has(`badge:${b.badge}:${b.metal}`)
+            );
+            if (founding.length === 0) return;
+            founding.forEach((b) =>
+                handled.current.add(`badge:${b.badge}:${b.metal}`)
+            );
+            seen.mutate({
+                badges: founding.map(({ badge, metal }) => ({ badge, metal })),
+            });
+            return;
+        }
         if (data.reveal) {
             if (!handled.current.has("reveal")) {
                 handled.current.add("reveal");
@@ -81,7 +105,7 @@ const ProgressMoments = () => {
         const gains = data.unseen.xp.filter(
             (g) => !handled.current.has(`xp:${g.id}`)
         );
-        const badges = data.unseen.badges.filter(
+        const badges = (welcoming ? [] : data.unseen.badges).filter(
             (b) => !handled.current.has(`badge:${b.badge}:${b.metal}`)
         );
         if (gains.length === 0 && badges.length === 0) return;
@@ -93,9 +117,17 @@ const ProgressMoments = () => {
         const toasts: (() => void)[] = [];
         // A badge's own XP is said with the badge.
         const plain = gains.filter((g) => g.source !== "badge");
-        if (plain.length > 0) {
+        if (plain.length > 0 && !welcoming) {
             toasts.push(() =>
-                notify(xpToast(plain, data.unseen.tokens), "success", "low")
+                notify(
+                    xpToast(plain, data.unseen.tokens),
+                    "success",
+                    "low",
+                    undefined,
+                    // Straight after the save that earned it, one line,
+                    // not two toasts stacked over the page.
+                    { join: xpJoin(plain, data.unseen.tokens) }
+                )
             );
         }
         for (const b of badges) {
@@ -128,7 +160,7 @@ const ProgressMoments = () => {
         });
         // `seen` is a fresh object each render; only new data matters here.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [data]);
+    }, [data, joining, welcoming]);
 
     if (!user || !data) return null;
 
@@ -168,7 +200,7 @@ const ProgressMoments = () => {
                     }}
                 />
             )}
-            {!revealing && level !== undefined && turn && (
+            {!revealing && level !== undefined && turn && !welcoming && (
                 <LevelUpMoment
                     level={level.to}
                     from={level.from}

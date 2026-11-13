@@ -33,7 +33,9 @@ const ShareCardButton = ({ username }: { username: string }) => {
                     lede="Post it anywhere. Anyone who joins from its link counts as your invite."
                     url={`${window.location.origin}${profilePath(username)}?ref=${encodeURIComponent(username)}`}
                     text="My games on PlayRates"
-                    imageUrl={playerCardUrl(username, data?.xp ?? 0)}
+                    // Not with 0 XP meanwhile: that's another picture, drawn
+                    // and then thrown away when the real figure arrives.
+                    imageUrl={data && playerCardUrl(username, data.xp)}
                     fileName={`${username}-playrates.png`}
                     noImage="Only public profiles get a picture."
                     onClose={() => setOpen(false)}

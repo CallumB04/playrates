@@ -584,7 +584,12 @@ export const SHOP_ITEMS = [
     label: "Big brain",
   },
   { item: "react_sad", kind: "reaction", group: "reaction", label: "Sad" },
-  { item: "slot_showcase", kind: "slot", group: "slot", label: "Showcase" },
+  {
+    item: "slot_showcase",
+    kind: "slot",
+    group: "slot",
+    label: "Badge showcase",
+  },
   {
     item: "slot_pinned_list",
     kind: "slot",
@@ -1204,6 +1209,32 @@ export interface LeaderboardRow {
   xp: number;
   rank: number;
   isYou: boolean;
+}
+
+/** The site's board shows its top few, then you with one either side. */
+export const SITE_BOARD_TOP = 5;
+export const SITE_BOARD_AROUND = 1;
+
+/** Someone whose profile you can't see: their place and XP, and nothing
+ *  that says who they are. */
+export interface HiddenLeaderboardRow {
+  hidden: true;
+  rank: number;
+  xp: number;
+  isYou: false;
+}
+
+export type SiteLeaderboardRow =
+  (LeaderboardRow & { hidden?: false }) | HiddenLeaderboardRow;
+
+/** Everyone with XP, ranked; those whose profiles you can't see keep their
+ *  place but not their name. A gap in the ranks is where the top ends and
+ *  your stretch begins. */
+export interface SiteLeaderboard {
+  rows: SiteLeaderboardRow[];
+  /** Everyone who earned XP in the period: you on nought have a place
+   *  but aren't counted. */
+  total: number;
 }
 
 export interface XpRule {

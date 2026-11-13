@@ -23,6 +23,9 @@ import ReportDialog from "../../components/ReportDialog";
 import EmptyPlate, { EmptyNote } from "../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../components/ui/Skeleton";
 import GameCover from "../../components/game/GameCover";
+import PageBackdrop, {
+    TALL_BACKDROP_OFFSET,
+} from "../../components/layout/PageBackdrop";
 import MessageItem, {
     type MessageActions,
 } from "../../components/community/MessageItem";
@@ -192,15 +195,24 @@ const ThreadPage = () => {
         }
     };
 
+    // The game's own picture behind the page, as on the game's.
+    const subject = data.thread.subject;
+    const art =
+        subject.kind === "game" ? (subject.game.artworkUrl ?? null) : null;
+
     return (
         <div
             className={cn(
                 "mx-auto flex w-full max-w-3xl flex-col gap-5",
                 // Room for the patch notes' rail of releases beside them.
-                isPatchNotes && "lg:max-w-5xl"
+                isPatchNotes && "lg:max-w-5xl",
+                art && TALL_BACKDROP_OFFSET
             )}
         >
-            <Breadcrumbs trail={threadTrail(data.thread)} />
+            <Breadcrumbs
+                trail={threadTrail(data.thread)}
+                className="on-backdrop"
+            />
 
             {isPatchNotes ? (
                 <PatchNotesThread
@@ -212,6 +224,7 @@ const ThreadPage = () => {
                 />
             ) : (
                 <>
+                    <PageBackdrop url={art} />
                     <ThreadHeader detail={data} />
 
                     {data.messages.map((message) =>
@@ -407,7 +420,7 @@ const ThreadHeader = ({ detail }: { detail: ThreadDetail }) => {
     const game = thread.subject.kind === "game" ? thread.subject.game : null;
 
     return (
-        <header className="flex flex-col gap-3">
+        <header className="flex flex-col gap-3 on-backdrop">
             {game && (
                 <Link
                     to={`/game/${game.id}`}

@@ -115,6 +115,9 @@ export const FIXED_PAGES: Record<string, FixedPageMeta> = {
   "/shop": { title: "Shop", noindex: true },
   "/settings": { title: "Settings", noindex: true },
   "/reset-password": { title: "Set a new password", noindex: true },
+  "/join": { title: "Create your account", noindex: true },
+  "/join/confirmed": { title: "Email confirmed", noindex: true },
+  "/login": { title: "Log in", noindex: true },
   "/unsubscribe": { title: "Unsubscribe", noindex: true },
   // Your own profile, by no name: the app sends you to it.
   "/user": { title: null, noindex: true },

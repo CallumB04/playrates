@@ -34,6 +34,11 @@ import {
   type CardThemeKey,
   type LeaderboardPeriod,
   type LeaderboardRow,
+  type SiteLeaderboard,
+  type SiteLeaderboardRow,
+  canSeeProfile,
+  SITE_BOARD_AROUND,
+  SITE_BOARD_TOP,
   type Metal,
   type Metric,
   type Period,
@@ -120,6 +125,27 @@ export const nameStyleOf = (row: ProfileRow) => ({
   nameFont: (row.name_font as NameFontKey | null) ?? "default",
   nameColour: (row.name_colour as NameColourKey | null) ?? "default",
 });
+
+/** One member's line on a board, the friends' or the site's. */
+const boardRow = (
+  p: ProfileRow,
+  xp: number,
+  rank: number,
+  isYou: boolean,
+): LeaderboardRow => {
+  const level = levelFor(p.xp).level;
+  return {
+    username: p.username,
+    avatarUrl: p.avatar_url,
+    accent: toAccent(p.accent),
+    level,
+    frame: wornFrame(p.frame, level),
+    ...nameStyleOf(p),
+    xp,
+    rank,
+    isYou,
+  };
+};
 
 export const createProgressService = (
   repo: ProgressRepository,
@@ -1154,20 +1180,65 @@ export const createProgressService = (
       return people
         .map((p) => ({ p, xp: xp.get(p.id) ?? 0 }))
         .sort((a, b) => b.xp - a.xp || a.p.username.localeCompare(b.p.username))
-        .map(({ p, xp }, i) => {
-          const level = levelFor(p.xp).level;
-          return {
-            username: p.username,
-            avatarUrl: p.avatar_url,
-            accent: toAccent(p.accent),
-            level,
-            frame: wornFrame(p.frame, level),
-            ...nameStyleOf(p),
-            xp,
-            rank: i + 1,
-            isYou: p.id === userId,
-          };
-        });
+        .map(({ p, xp }, i) => boardRow(p, xp, i + 1, p.id === userId));
+    },
+
+    /**
+     * Everyone with XP, by XP: the top few, then you with one either side.
+     * Someone whose profile you couldn't open keeps their place and XP but
+     * not their name, by the profile gate's own rule. The week and the
+     * month start where yours do; signed out, where UTC's do.
+     */
+    async siteLeaderboard(
+      viewerId: string | undefined,
+      kind: LeaderboardPeriod,
+    ): Promise<SiteLeaderboard> {
+      const viewer = viewerId ? await repo.profile(viewerId) : null;
+      const since =
+        kind === "all"
+          ? null
+          : periodsFor(new Date(), viewer ? zoneOf(viewer) : "UTC")[kind].start;
+      const ranked = await repo.siteBoard(
+        since,
+        viewer?.id ?? null,
+        SITE_BOARD_TOP,
+        SITE_BOARD_AROUND,
+      );
+      const people = new Map(
+        (await repo.profilesByIds(ranked.map((r) => r.user_id))).map((p) => [
+          p.id,
+          p,
+        ]),
+      );
+      const friendIds = new Set(
+        viewer
+          ? (await friends.listForUser(viewer.id))
+              .filter((f) => f.status === "accepted")
+              .map((f) =>
+                f.user_a_id === viewer.id ? f.user_b_id : f.user_a_id,
+              )
+          : [],
+      );
+      return {
+        rows: ranked.flatMap((r): SiteLeaderboardRow[] => {
+          const p = people.get(r.user_id);
+          if (!p) return [];
+          const isYou = p.id === viewer?.id;
+          const seen = canSeeProfile(
+            toProfileVisibility(p.profile_visibility),
+            {
+              isOwner: isYou,
+              isFriend: friendIds.has(p.id),
+            },
+          );
+          return [
+            seen
+              ? boardRow(p, r.xp, r.rank, isYou)
+              : { hidden: true, rank: r.rank, xp: r.xp, isYou: false },
+          ];
+        }),
+        total: ranked[0]?.total ?? 0,
+      };
     },
 
     /**

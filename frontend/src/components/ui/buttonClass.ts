@@ -4,7 +4,9 @@ const BASE =
     "lift inline-flex items-center justify-center gap-2 rounded-sm border text-center " +
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand " +
     "disabled:cursor-not-allowed aria-disabled:cursor-not-allowed hover:cursor-pointer " +
-    "disabled:hover:translate-y-0 aria-disabled:hover:translate-y-0";
+    "disabled:hover:translate-y-0 aria-disabled:hover:translate-y-0 " +
+    // Gives a little under the finger, as a real button would.
+    "active:scale-[0.97] disabled:active:scale-100 aria-disabled:active:scale-100";
 
 const SIZES = {
     sm: "min-h-9 px-3 text-[12.5px]",

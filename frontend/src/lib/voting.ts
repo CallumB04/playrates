@@ -19,7 +19,7 @@ export const whyCannotLove = (
     viewer: string | undefined,
     owner: string | undefined
 ): string | null => {
-    if (!viewer) return "Sign in to love it";
+    if (!viewer) return "Log in to love it";
     if (viewer === owner) return "You can’t love your own";
     return null;
 };

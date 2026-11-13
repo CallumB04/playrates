@@ -39,6 +39,9 @@ interface GamePickerProps {
     /** Results in the flow rather than over what's below, for a popup that
      *  would otherwise have to keep empty room for them. */
     inlineResults?: boolean;
+    /** Games to leave out of the results: ones already chosen, say. */
+    exclude?: readonly number[];
+    disabled?: boolean;
 }
 
 const RESULTS = 6;
@@ -59,6 +62,8 @@ const GamePicker = ({
     markFor,
     autoFocus,
     inlineResults = false,
+    exclude,
+    disabled = false,
     ...a11y
 }: GamePickerProps) => {
     const listId = useId();
@@ -78,7 +83,9 @@ const GamePicker = ({
         enabled: hasTerm && !value,
         staleTime: 30_000,
     });
-    const found = hasTerm ? (data?.data ?? []) : [];
+    const found = (hasTerm ? (data?.data ?? []) : []).filter(
+        (game) => !exclude?.includes(game.id)
+    );
     const results = markFor
         ? [
               ...found.filter((game) => markFor(game.id)),
@@ -147,7 +154,7 @@ const GamePicker = ({
         }
     };
 
-    const showList = open && hasTerm;
+    const showList = open && hasTerm && !disabled;
 
     return (
         <div ref={wrapRef} className="relative">
@@ -173,6 +180,7 @@ const GamePicker = ({
                             : undefined
                     }
                     autoComplete="off"
+                    disabled={disabled}
                     placeholder={placeholder}
                     value={term}
                     onChange={(event) => {

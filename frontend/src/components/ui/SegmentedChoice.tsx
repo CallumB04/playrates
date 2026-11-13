@@ -1,6 +1,7 @@
 import { useRef, type KeyboardEvent } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "../../lib/cn";
+import { useSlidingIndicator } from "./useSlidingIndicator";
 
 export interface Segment<T extends string> {
     value: T;
@@ -38,6 +39,10 @@ const SegmentedChoice = <T extends string>({
 }: SegmentedChoiceProps<T>) => {
     const tabs = !!panelId;
     const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+    const track = useRef<HTMLDivElement>(null);
+    const pill = useRef<HTMLSpanElement>(null);
+    const chosen = segments.findIndex((segment) => segment.value === value);
+    useSlidingIndicator(track, pill, () => buttons.current[chosen]);
 
     // Tabs are one stop for Tab; the arrows move between them.
     const onKeyDown = (event: KeyboardEvent, index: number) => {
@@ -53,14 +58,21 @@ const SegmentedChoice = <T extends string>({
 
     return (
         <div
+            ref={track}
             role={tabs ? "tablist" : "radiogroup"}
             aria-label={label}
             className={cn(
-                "gap-1 rounded-md border border-subtle bg-surface-sunken p-1",
+                "relative gap-1 rounded-md border border-subtle bg-surface-sunken p-1",
                 fill ? "flex w-full" : "inline-flex",
                 className
             )}
         >
+            {/* The chosen segment's plate, sliding between them. */}
+            <span
+                ref={pill}
+                aria-hidden
+                className="pointer-events-none absolute top-0 left-0 rounded-sm bg-surface-raised data-ready:transition-[transform,width,height] data-ready:duration-300 data-ready:ease-in-out-strong"
+            />
             {segments.map(
                 ({ value: option, label: text, icon: Icon, flagged }, i) => {
                     const isActive = option === value;
@@ -83,14 +95,14 @@ const SegmentedChoice = <T extends string>({
                             onClick={() => onChange(option)}
                             onKeyDown={(event) => onKeyDown(event, i)}
                             className={cn(
-                                "flex min-h-11 cursor-pointer items-center gap-2 rounded-sm px-3 py-1.5 text-body-sm lift sm:min-h-0",
+                                "relative flex min-h-11 cursor-pointer items-center gap-2 rounded-sm px-3 py-1.5 text-body-sm lift sm:min-h-0",
                                 fill && "flex-1 justify-center",
                                 "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
+                                /* Its plate is the sliding one above: flat,
+                                   no inset rim, as a highlight along the top
+                                   edge alone shrinks it against the track. */
                                 isActive
-                                    ? /* Flat, no inset rim: a highlight along
-                                       the top edge alone shrinks the pill
-                                       against the sunken track it sits in. */
-                                      "bg-surface-raised font-medium text-content"
+                                    ? "font-medium text-content"
                                     : "text-content-secondary hover:text-content"
                             )}
                         >

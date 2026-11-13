@@ -112,3 +112,69 @@ describe("a game's fans", () => {
     expect((await request(app).get("/api/v1/games/x/fans")).status).toBe(422);
   });
 });
+
+const shared = (app: Parameters<typeof request>[0], as = USER_A) =>
+  request(app)
+    .get("/api/v1/me/friends/shared")
+    .set("Authorization", authHeader(as));
+
+describe("people who play what you play", () => {
+  it("finds those who logged the same games, most in common first, naming a few", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    const response = await shared(app);
+    expect(response.status).toBe(200);
+    expect(
+      response.body.data.map((m: { user: { id: string } }) => m.user.id),
+    ).toEqual([USER_B, USER_C]);
+    expect(response.body.data[0]).toMatchObject({
+      shared: 3,
+      games: expect.arrayContaining([
+        expect.objectContaining({ id: 1, title: "Game 1" }),
+      ]),
+    });
+  });
+
+  it("leaves out profiles not open to everyone", async () => {
+    const s = seed();
+    s.profiles.find((p) => p.id === USER_B)!.profile_visibility = "private";
+    const { app } = buildTestApp({ seed: s });
+    const ids = (await shared(app)).body.data.map(
+      (m: { user: { id: string } }) => m.user.id,
+    );
+    expect(ids).not.toContain(USER_B);
+  });
+
+  it("leaves out friends, who are found already", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...seed(),
+        friendships: [buildFriendship({ status: "accepted" })],
+      },
+    });
+    const ids = (await shared(app)).body.data.map(
+      (m: { user: { id: string } }) => m.user.id,
+    );
+    expect(ids).toEqual([USER_C]);
+  });
+
+  it("doesn't match on, or name, an adult game", async () => {
+    const s = seed();
+    s.games = s.games.map((g) =>
+      g.id === 1 ? { ...g, has_sexual_content: true } : g,
+    );
+    const { app } = buildTestApp({ seed: s });
+    const data = (await shared(app)).body.data;
+    expect(data.map((m: { user: { id: string } }) => m.user.id)).toEqual([
+      USER_B,
+    ]);
+    expect(data[0].shared).toBe(2);
+    expect(JSON.stringify(data)).not.toContain("Game 1");
+  });
+
+  it("needs signing in", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    expect((await request(app).get("/api/v1/me/friends/shared")).status).toBe(
+      401,
+    );
+  });
+});

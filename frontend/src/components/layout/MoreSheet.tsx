@@ -18,7 +18,7 @@ import type { SetupStep } from "../../lib/setupChecklist";
 import { useProgressQuery } from "../../hooks/queries/useProgress";
 import { cn } from "../../lib/cn";
 import { shelfPath } from "../../lib/profilePaths";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import Button from "../ui/Button";
 import TokenAmount from "../progress/TokenAmount";
 import XpBar from "../progress/XpBar";
@@ -61,24 +61,43 @@ const MoreSheet = ({
     const { data: progress } = useProgressQuery(!!user);
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full max-w-md"
+            titleId={titleId}
+            width="w-full sm:max-w-md"
+            title="More"
+            footer={
+                !user && (
+                    <div className="flex flex-col gap-2.5">
+                        <Button
+                            size="touch"
+                            onClick={() => {
+                                onClose();
+                                onSignUp();
+                            }}
+                        >
+                            Join PlayRates
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            size="touch"
+                            onClick={() => {
+                                onClose();
+                                onSignIn();
+                            }}
+                        >
+                            Log in
+                        </Button>
+                    </div>
+                )
+            }
         >
-            <h2
-                id={titleId}
-                className="pr-10 font-display text-section text-content"
-            >
-                More
-            </h2>
-
             {/* The account menu's level row, so a phone sees it too. */}
             {user && progress && (
                 <Link
                     to="/progress"
                     onClick={onClose}
-                    className="mt-4 block rounded-md border border-subtle bg-surface-sunken/50 px-3 py-2.5 transition-colors hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-brand"
+                    className="mt-4 block rounded-md border border-subtle bg-surface-sunken/50 px-3 py-2.5 transition-colors first:mt-0 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-brand"
                 >
                     <span className="flex items-center justify-between gap-2">
                         <span className="text-body-sm font-semibold text-content">
@@ -99,9 +118,9 @@ const MoreSheet = ({
             )}
 
             {setup && (
-                <section className="mt-4 rounded-md border border-subtle bg-surface-sunken/50 p-1">
+                <section className="mt-4 rounded-md border border-subtle bg-surface-sunken/50 p-1 first:mt-0">
                     {/* One row until asked: the steps opened by default
-                        pushed Sign out below the sheet's fold. */}
+                        pushed Log out below the sheet's fold. */}
                     <button
                         type="button"
                         aria-expanded={stepsOpen}
@@ -140,7 +159,7 @@ const MoreSheet = ({
             )}
 
             {user && (
-                <section className="mt-4">
+                <section className="mt-4 first:mt-0">
                     <p className="px-3 pb-1 text-label text-content-muted">
                         Your shelves
                     </p>
@@ -173,7 +192,7 @@ const MoreSheet = ({
                 </section>
             )}
 
-            <div className="mt-3 border-t border-subtle pt-3">
+            <div className="mt-3 border-t border-subtle pt-3 first:mt-0">
                 {user && (
                     <Link to="/shop" onClick={onClose} className={ACCOUNT_ROW}>
                         Shop
@@ -211,9 +230,17 @@ const MoreSheet = ({
                 >
                     {theme === "dark" ? "Day mode" : "Night mode"}
                     {theme === "dark" ? (
-                        <Sun size={16} aria-hidden />
+                        <Sun
+                            size={16}
+                            aria-hidden
+                            className="animate-swap-in"
+                        />
                     ) : (
-                        <Moon size={16} aria-hidden />
+                        <Moon
+                            size={16}
+                            aria-hidden
+                            className="animate-swap-in"
+                        />
                     )}
                 </button>
                 {user?.isAdmin && (
@@ -234,36 +261,12 @@ const MoreSheet = ({
                             "text-danger hover:bg-danger-subtle hover:text-danger"
                         )}
                     >
-                        Sign out
+                        Log out
                         <LogOut size={16} aria-hidden />
                     </button>
                 )}
             </div>
-
-            {!user && (
-                <div className="mt-4 flex flex-col gap-2.5">
-                    <Button
-                        size="touch"
-                        onClick={() => {
-                            onClose();
-                            onSignUp();
-                        }}
-                    >
-                        Join PlayRates
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        size="touch"
-                        onClick={() => {
-                            onClose();
-                            onSignIn();
-                        }}
-                    >
-                        Sign in
-                    </Button>
-                </div>
-            )}
-        </Modal>
+        </Popup>
     );
 };
 

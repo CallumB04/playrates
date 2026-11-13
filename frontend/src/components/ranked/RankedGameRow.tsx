@@ -7,6 +7,8 @@ import {
 import { Link } from "react-router-dom";
 import { EllipsisVertical, GripVertical } from "lucide-react";
 import GameCover from "../game/GameCover";
+import { HiddenCover } from "../game/HiddenGame";
+import ArtBackdrop from "../game/ArtBackdrop";
 import type { TileAction } from "../game/GameTile";
 import Button from "../ui/Button";
 import { releaseYear } from "../../lib/format";
@@ -21,6 +23,8 @@ export interface RankedGameRowProps extends HTMLAttributes<HTMLLIElement> {
     gameId: number;
     title: string;
     coverUrl: string | null;
+    /** The game's wide art, set at the row's far end. */
+    artworkUrl?: string | null;
     releaseDate?: string | null;
     /** Its place as shown, which moves with a drag before it lands. */
     rank: number;
@@ -37,6 +41,9 @@ export interface RankedGameRowProps extends HTMLAttributes<HTMLLIElement> {
     /** The real row while its copy is lifted. */
     ghost?: boolean;
     style?: CSSProperties;
+    /** An adult game, to someone who hasn't chosen to see them: its place
+     *  and nothing else, and no way to its missing page. */
+    adultHidden?: boolean;
 }
 
 /** One game at its place in someone's order: a wishlist, a ranked list. */
@@ -46,6 +53,7 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
             gameId,
             title,
             coverUrl,
+            artworkUrl,
             releaseDate,
             rank,
             detail,
@@ -55,6 +63,7 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
             handle,
             lifted = false,
             ghost = false,
+            adultHidden = false,
             className,
             ...props
         },
@@ -66,7 +75,7 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
             <li
                 ref={ref}
                 className={cn(
-                    "flex items-center gap-2 rounded-sm px-1.5 py-2 sm:gap-3 sm:px-2",
+                    "relative isolate flex items-center gap-2 overflow-hidden rounded-sm px-1.5 py-2 sm:gap-3 sm:px-2",
                     lifted
                         ? "bg-surface-raised shadow-modal ring-1 ring-strong"
                         : "bg-surface-raised",
@@ -77,6 +86,7 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
                 )}
                 {...props}
             >
+                <ArtBackdrop url={artworkUrl} fade="row" />
                 {handle && (
                     <button
                         type="button"
@@ -105,36 +115,57 @@ const RankedGameRow = forwardRef<HTMLLIElement, RankedGameRowProps>(
                     #{rank}
                 </span>
 
-                <Link
-                    to={`/game/${gameId}`}
-                    tabIndex={-1}
-                    aria-hidden
-                    className="shrink-0"
-                >
-                    <GameCover
-                        sizes="48px"
-                        coverUrl={coverUrl}
-                        title={title}
-                        className="aspect-3/4 w-10 rounded-xs sm:w-12"
-                    />
-                </Link>
-
-                <div className="min-w-0 flex-1">
+                {adultHidden ? (
+                    <HiddenCover className="aspect-3/4 w-10 shrink-0 sm:w-12" />
+                ) : (
                     <Link
                         to={`/game/${gameId}`}
-                        className="line-clamp-2 text-body-sm font-medium text-content hover:text-brand-text sm:line-clamp-1 sm:text-body"
+                        tabIndex={-1}
+                        aria-hidden
+                        className="shrink-0"
                     >
-                        <span
-                            className={cn(
-                                "font-mono font-semibold tabular-nums sm:sr-only",
-                                rankTone(rank)
-                            )}
-                        >
-                            #{rank}{" "}
-                        </span>
-                        {title}
+                        <GameCover
+                            sizes="48px"
+                            coverUrl={coverUrl}
+                            title={title}
+                            className="aspect-3/4 w-10 rounded-xs sm:w-12"
+                        />
                     </Link>
-                    {(year || detail) && (
+                )}
+
+                <div className="min-w-0 flex-1">
+                    {adultHidden ? (
+                        <p className="text-body-sm font-medium text-content-secondary sm:text-body">
+                            <span
+                                className={cn(
+                                    "font-mono font-semibold tabular-nums sm:sr-only",
+                                    rankTone(rank)
+                                )}
+                            >
+                                #{rank}{" "}
+                            </span>
+                            {title}
+                            <span className="ml-2 text-label font-normal text-content-muted">
+                                Hidden
+                            </span>
+                        </p>
+                    ) : (
+                        <Link
+                            to={`/game/${gameId}`}
+                            className="line-clamp-2 text-body-sm font-medium text-content hover:text-brand-text sm:line-clamp-1 sm:text-body"
+                        >
+                            <span
+                                className={cn(
+                                    "font-mono font-semibold tabular-nums sm:sr-only",
+                                    rankTone(rank)
+                                )}
+                            >
+                                #{rank}{" "}
+                            </span>
+                            {title}
+                        </Link>
+                    )}
+                    {!adultHidden && (year || detail) && (
                         // Wrapping, so chips too long to sit beside the year
                         // go under it rather than out past the row.
                         <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">

@@ -1,4 +1,4 @@
-import type { NotificationKind } from "@playrates/shared";
+import { replyReasonOf, type NotificationKind } from "@playrates/shared";
 import type { PushPayload } from "../../config/push.js";
 import { endDay, giftItemName, giftPath } from "../email/email.templates.js";
 
@@ -55,8 +55,14 @@ export const pushMessage = (
       const threadId = num(data.threadId);
       const messageId = num(data.messageId);
       if (!actor || threadId === null || messageId === null) return null;
+      const reason = replyReasonOf(data.reason);
       return {
-        title: `${actor} replied to you`,
+        title:
+          reason === "thread"
+            ? `${actor} replied in your thread`
+            : reason === "conversation"
+              ? `${actor} also replied`
+              : `${actor} replied to you`,
         body: str(data.excerpt) ?? str(data.threadTitle) ?? "",
         url: `/community/thread/${threadId}#message-${messageId}`,
         tag: `reply:${messageId}`,

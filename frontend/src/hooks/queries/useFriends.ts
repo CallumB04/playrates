@@ -6,6 +6,7 @@ import {
     fetchFriendActivity,
     fetchGameFans,
     fetchTasteMatches,
+    fetchSharedPlayers,
     fetchMyFriends,
     fetchUserFriends,
     queryKeys,
@@ -30,6 +31,17 @@ export const useFriendActivity = (limit: number) => {
         queryFn: () => fetchFriendActivity(limit),
         enabled: !!user,
         staleTime: 60_000,
+    });
+};
+
+/** Who plays what you play: games logged in common. */
+export const useSharedPlayers = () => {
+    const { user } = useAuth();
+    return useQuery({
+        queryKey: queryKeys.friends.shared,
+        queryFn: fetchSharedPlayers,
+        enabled: !!user,
+        staleTime: 5 * 60_000,
     });
 };
 

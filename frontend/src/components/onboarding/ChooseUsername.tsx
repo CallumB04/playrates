@@ -4,7 +4,7 @@ import { useUpdateProfile } from "../../hooks/queries/useProfiles";
 import { useUsernameAvailability } from "../../hooks/useUsernameAvailability";
 import { useSignOut } from "../../hooks/useSignOut";
 import { ApiError } from "../../api/client";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import Button from "../ui/Button";
 import FormField from "../auth/FormField";
 import AgreeToTerms from "../auth/AgreeToTerms";
@@ -27,6 +27,7 @@ const ChooseUsername = () => {
 
 const ChooseUsernamePopup = () => {
     const titleId = useId();
+    const formId = useId();
     const update = useUpdateProfile();
     const signOut = useSignOut();
 
@@ -64,26 +65,39 @@ const ChooseUsernamePopup = () => {
     };
 
     return (
-        <Modal
+        <Popup
             onClose={() => {}}
-            showCloseButton={false}
-            labelledBy={titleId}
-            className="w-full sm:max-w-md"
-        >
-            <form onSubmit={submit} className="flex flex-col gap-5">
-                <div>
-                    <h2
-                        id={titleId}
-                        className="font-display text-section text-content"
+            closable={false}
+            titleId={titleId}
+            width="w-full sm:max-w-md"
+            title="Pick your username"
+            blurb={
+                <p>
+                    It’s how people find you on {BRAND_NAME}. You can change it
+                    later in Settings.
+                </p>
+            }
+            footer={
+                <div className="flex flex-col gap-2">
+                    <Button
+                        type="submit"
+                        form={formId}
+                        size="lg"
+                        disabled={
+                            availability.state !== "free" ||
+                            !agreed ||
+                            update.isPending
+                        }
                     >
-                        Pick your username
-                    </h2>
-                    <p className="mt-1.5 text-body-sm text-content-secondary">
-                        It’s how people find you on {BRAND_NAME}. You can change
-                        it later in Settings.
-                    </p>
+                        {update.isPending ? "Saving…" : "Continue"}
+                    </Button>
+                    <Button type="button" variant="ghost" onClick={signOut}>
+                        Log out
+                    </Button>
                 </div>
-
+            }
+        >
+            <form id={formId} onSubmit={submit} className="flex flex-col gap-5">
                 <FormField
                     label="Username"
                     value={value}
@@ -116,25 +130,8 @@ const ChooseUsernamePopup = () => {
                         onChange={(e) => setNews(e.target.checked)}
                     />
                 </div>
-
-                <div className="flex flex-col gap-2">
-                    <Button
-                        type="submit"
-                        size="lg"
-                        disabled={
-                            availability.state !== "free" ||
-                            !agreed ||
-                            update.isPending
-                        }
-                    >
-                        {update.isPending ? "Saving…" : "Continue"}
-                    </Button>
-                    <Button type="button" variant="ghost" onClick={signOut}>
-                        Sign out
-                    </Button>
-                </div>
             </form>
-        </Modal>
+        </Popup>
     );
 };
 

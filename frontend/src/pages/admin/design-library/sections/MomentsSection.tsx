@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import {
     badgeDef,
     type BadgeDef,
@@ -6,7 +6,6 @@ import {
     type Progress,
 } from "@playrates/shared";
 import Button from "../../../../components/ui/Button";
-import WelcomePopup from "../../../../components/onboarding/WelcomePopup";
 import LaunchReveal from "../../../../components/progress/LaunchReveal";
 import LevelUpMoment from "../../../../components/progress/LevelUpMoment";
 import { badgeToastText } from "../../../../components/progress/rewardText";
@@ -19,13 +18,10 @@ import {
 } from "../../../../hooks/queries/useProgress";
 import Specimen from "../../components/Specimen";
 
-/** Stands in for the viewer when the library is opened signed out. */
-const STAND_IN = {
-    username: "newplayer",
-    firstName: null,
-    avatarUrl: null,
-    accent: "indigo" as const,
-};
+// Only for whoever opens the preview.
+const WelcomeFlow = lazy(
+    () => import("../../../../components/onboarding/welcome/WelcomeFlow")
+);
 
 const LEVELS: { level: number; from?: number; note: string }[] = [
     { level: 2, note: "Nothing unlocked" },
@@ -84,7 +80,7 @@ const MomentsSection = () => {
                     onClick={() => setRevealing(true)}
                     disabled={!asAtLaunch}
                 >
-                    {asAtLaunch ? "Play the reveal" : "Sign in to play it"}
+                    {asAtLaunch ? "Play the reveal" : "Log in to play it"}
                 </Button>
                 {revealing && asAtLaunch && (
                     <LaunchReveal
@@ -174,19 +170,20 @@ const MomentsSection = () => {
             </Specimen>
 
             <Specimen
-                title="Welcome popup"
-                notes="Shown once, on a new account’s first sign-in: a first name, shown on the profile unless switched off there, and a picture, both optional, and one line pointing to Settings for the rest. Save saves and closes; there is nothing after it. It waits for the signup sheet to close, so the two never stack. Any way out marks it seen, skipping included. The preview walks the real popup against your own account and saves nothing."
-                meta="profile · preview · onClose · FirstLoginWelcome gates it on owesWelcome(user, accountFormOpen)"
+                title="The welcome"
+                notes="A new account’s first stop after signing up, in one popup that keeps its size from step to step: a bar that starts with signing up already filled, then You (a name and a picture), the games played (with Playing), ratings for them (passed over with nothing to rate), how PlayRates works, and You’re set, with a head start on setup to try in place. Every step can wait with Skip for now; any way out or reaching the end marks it seen, and what’s left carries on in Get started on home. The preview walks the real popup and saves nothing."
+                meta="WelcomeGate opens it once, gated on owesWelcome(user, accountFormOpen) · same width as every setup sheet (ONBOARDING_POPUP)"
             >
                 <Button onClick={() => setWelcoming(true)}>
                     Preview the welcome
                 </Button>
                 {welcoming && (
-                    <WelcomePopup
-                        profile={user ?? STAND_IN}
-                        preview
-                        onClose={() => setWelcoming(false)}
-                    />
+                    <Suspense fallback={null}>
+                        <WelcomeFlow
+                            preview
+                            onClose={() => setWelcoming(false)}
+                        />
+                    </Suspense>
                 )}
             </Specimen>
         </div>

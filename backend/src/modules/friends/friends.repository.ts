@@ -51,6 +51,11 @@ export interface TasteMatchRow extends FriendProfileRow {
   agreement: number;
 }
 
+export interface SharedPlayerRow extends FriendProfileRow {
+  shared: number;
+  game_ids: number[];
+}
+
 export interface GameFanRow extends FriendProfileRow {
   rating: number;
 }
@@ -60,6 +65,8 @@ export interface FriendsRepository {
   tasteMatches(userId: string, limit: number): Promise<TasteMatchRow[]>;
   /** Highest rating first. */
   gameFans(gameId: number, limit: number): Promise<GameFanRow[]>;
+  /** Most games in common first; friends and private profiles left out. */
+  sharedPlayers(userId: string, limit: number): Promise<SharedPlayerRow[]>;
   listForUser(userId: string): Promise<FriendshipWithUsers[]>;
   /** Recent logs from everyone the viewer is friends with. */
   activityFor(
@@ -82,6 +89,15 @@ export const createFriendsRepository = (db: Db): FriendsRepository => ({
     });
     if (error) throw error;
     return (data ?? []) as TasteMatchRow[];
+  },
+
+  async sharedPlayers(userId, limit) {
+    const { data, error } = await db.rpc("shared_players", {
+      p_user: userId,
+      p_limit: limit,
+    });
+    if (error) throw error;
+    return (data ?? []) as SharedPlayerRow[];
   },
 
   async gameFans(gameId, limit) {

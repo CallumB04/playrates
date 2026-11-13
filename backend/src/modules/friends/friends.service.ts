@@ -3,6 +3,7 @@ import {
   type FriendActivity,
   type FriendEdge,
   type GameFan,
+  type SharedPlayer,
   type TasteMatch,
   type FriendRelation,
   type Paginated,
@@ -18,6 +19,8 @@ import {
 } from "../notifications/notifications.mapper.js";
 import type { NotificationsRepository } from "../notifications/notifications.repository.js";
 import { toFriendUser } from "./friends.mapper.js";
+import { createArtworkLookup } from "../games/artwork.js";
+import type { GamesRepository } from "../games/games.repository.js";
 import type { ProfileGate } from "../profiles/profileGate.js";
 import type {
   FriendshipWithUsers,
@@ -42,13 +45,16 @@ const toEdge = (
 
 const TASTE_MATCHES_SHOWN = 12;
 const GAME_FANS_SHOWN = 8;
+const SHARED_PLAYERS_SHOWN = 6;
 
 export const createFriendsService = (
   repo: FriendsRepository,
   profiles: ProfilesRepository,
   notifications: NotificationsRepository,
   gate: ProfileGate,
+  games: Pick<GamesRepository, "findByIds">,
 ) => {
+  const artworkFor = createArtworkLookup(games);
   /** Opt-in, so signed out and unknown both mean no. */
   const canSeeExplicit = async (viewerId?: string): Promise<boolean> =>
     viewerId
@@ -90,6 +96,7 @@ export const createFriendsService = (
         to,
         await canSeeExplicit(viewerId),
       );
+      const art = await artworkFor(rows.map((row) => row.game_id));
 
       return paginate(
         rows.map((row) => ({
@@ -106,6 +113,7 @@ export const createFriendsService = (
             id: row.game_id,
             title: row.game_title,
             coverUrl: row.game_cover_url,
+            artworkUrl: art.get(row.game_id) ?? null,
           },
           status: row.status,
           playedStatus: row.played_status,
@@ -126,6 +134,25 @@ export const createFriendsService = (
         user: toFriendUser(row),
         shared: row.shared,
         agreement: row.agreement,
+      }));
+    },
+
+    async sharedPlayers(callerId: string): Promise<SharedPlayer[]> {
+      const rows = await repo.sharedPlayers(callerId, SHARED_PLAYERS_SHOWN);
+      const byId = new Map(
+        (
+          await games.findByIds([...new Set(rows.flatMap((r) => r.game_ids))])
+        ).map((g) => [g.id, g]),
+      );
+      return rows.map((row) => ({
+        user: toFriendUser(row),
+        shared: row.shared,
+        games: row.game_ids.flatMap((id) => {
+          const game = byId.get(id);
+          return game
+            ? [{ id: game.id, title: game.title, coverUrl: game.cover_url }]
+            : [];
+        }),
       }));
     },
 

@@ -26,6 +26,9 @@ mobile behaviour alongside the desktop one, in the same change.
 - **`dvh`, not `vh`**, for anything sized to the viewport. `vh` measures
   against the viewport with the browser chrome retracted.
 - Primary actions go full width on a phone: `w-full sm:w-auto`.
+- Game covers go three to a row at most on a phone (`grid-cols-3`, more
+  from `sm:`); four were too small to know or to tap. Gaming 25 is the one
+  exception: a 5×5 whose shape is the point.
 - Sections a phone can't fit in a row switch through `ui/SectionSwitcher`,
   as the profile, Settings, Admin and the Shop do.
 - Check 375px before calling it done. Watch for horizontal overflow: `html`
@@ -71,6 +74,10 @@ variant or tone instead of overriding it at the call site.
   menu shows it whole.
 - `ui/EmptyPlate` and `EmptyNote` for empty states, `ui/Skeleton` while
   loading, `components/SignUpPlate` where a page needs an account.
+- A game's art behind a card goes through `game/ArtBackdrop`, on a card
+  that is `relative isolate overflow-hidden`. It fades the art itself; a
+  fading layer laid over the art lets a light rim of it show round the
+  rounded corners, as the two are clipped one at a time.
 
 ## Accessibility
 

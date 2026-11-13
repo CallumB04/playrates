@@ -3,11 +3,12 @@ import { ChevronRight } from "lucide-react";
 import { genreIcon } from "../../../lib/genreIcons";
 import type { Genre } from "@playrates/shared";
 import { cn } from "../../../lib/cn";
+import Skeleton from "../../../components/ui/Skeleton";
 
 /** The rails answer "what's popular". This answers "what am I in the mood
  *  for", which is the other half of picking a game. */
-const GenreGrid = ({ genres }: { genres: Genre[] }) => {
-    if (genres.length === 0) return null;
+const GenreGrid = ({ genres }: { genres: Genre[] | undefined }) => {
+    if (genres?.length === 0) return null;
 
     return (
         <section>
@@ -15,8 +16,25 @@ const GenreGrid = ({ genres }: { genres: Genre[] }) => {
                 Browse by genre
             </h2>
 
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-                {genres.slice(0, 15).map((genre) => {
+            <div
+                aria-busy={!genres}
+                className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5"
+            >
+                {/* Undefined while loading: tiles of their size, so the
+                    rails below don't jump when the names arrive. */}
+                {!genres &&
+                    Array.from({ length: 15 }, (_, i) => (
+                        <div
+                            key={i}
+                            className="flex items-center gap-2.5 rounded-md border border-subtle bg-surface-raised px-3.5 py-3"
+                        >
+                            <Skeleton className="size-7 shrink-0" />
+                            <Skeleton
+                                className={cn("h-3", i % 3 ? "w-2/5" : "w-3/5")}
+                            />
+                        </div>
+                    ))}
+                {genres?.slice(0, 15).map((genre) => {
                     const Icon = genreIcon(genre.slug);
                     return (
                         <Link

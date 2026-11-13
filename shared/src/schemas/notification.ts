@@ -65,9 +65,23 @@ export interface FriendAcceptedNotification extends NotificationBase {
   actor: FriendUser;
 }
 
-/** Someone answered one of your messages directly, with Reply on it. */
+/** Why a reply reached you: it answered you, it's in your thread, or it's
+ *  in a conversation you're part of (a message and its replies). */
+export const REPLY_REASONS = ["reply", "thread", "conversation"] as const;
+export type ReplyReason = (typeof REPLY_REASONS)[number];
+
+/** A stored reason, or "reply" for one raised before there were others. */
+export const replyReasonOf = (value: unknown): ReplyReason =>
+  REPLY_REASONS.includes(value as ReplyReason)
+    ? (value as ReplyReason)
+    : "reply";
+
+/** Someone posted where you'll want to know: an answer to you, your
+ *  thread, or a conversation you're in. */
 export interface CommunityReplyNotification extends NotificationBase {
   kind: "community_reply";
+  /** Absent from rows raised before there was more than one. */
+  reason?: ReplyReason;
   actor: FriendUser;
   threadId: number;
   threadTitle: string;
@@ -75,6 +89,9 @@ export interface CommunityReplyNotification extends NotificationBase {
   messageId: number;
   /** The start of the reply, as plain text. */
   excerpt: string;
+  /** About an adult game, for someone who hasn't chosen to see them:
+   *  still there, with its titles and words left out. */
+  hidden?: boolean;
 }
 
 /** New messages in a thread you started. One per thread: it counts up while
@@ -86,6 +103,7 @@ export interface CommunityThreadActivityNotification extends NotificationBase {
   gameTitle: string | null;
   coverUrl: string | null;
   count: number;
+  hidden?: boolean;
 }
 
 /** A community message of yours reached an upvote milestone. */
@@ -96,6 +114,7 @@ export interface CommunityUpvoteMilestoneNotification extends NotificationBase {
   messageId: number;
   excerpt: string;
   milestone: number;
+  hidden?: boolean;
 }
 
 /** A review of yours reached an upvote milestone. */
@@ -106,6 +125,7 @@ export interface ReviewUpvoteMilestoneNotification extends NotificationBase {
   gameTitle: string;
   coverUrl: string | null;
   milestone: number;
+  hidden?: boolean;
 }
 
 /** A list of yours reached an upvote milestone. */
@@ -286,14 +306,20 @@ export interface NotificationFeed extends Paginated<AppNotification> {
  * member's own time zone, so the bell and its badge agree on what a day is.
  */
 export const notificationGroupKey = (
-  n: { id: number; kind: string; threadId?: number | null },
+  n: {
+    id: number;
+    kind: string;
+    threadId?: number | null;
+    reason?: string | null;
+  },
   day: string,
 ): string => {
   switch (n.kind) {
     case "friend_accepted":
       return `accepted:${day}`;
     case "community_reply":
-      return `reply:${n.threadId}:${day}`;
+      // Grouped only with the same reason, as each words it differently.
+      return `reply:${n.threadId}:${n.reason ?? "reply"}:${day}`;
     default:
       return `one:${n.id}`;
   }

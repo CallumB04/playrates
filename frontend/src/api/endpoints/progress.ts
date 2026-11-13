@@ -4,6 +4,7 @@ import type {
     CardThemeKey,
     LeaderboardPeriod,
     LeaderboardRow,
+    SiteLeaderboard,
     Metal,
     PlayerBadges,
     Progress,
@@ -47,6 +48,16 @@ export const fetchLeaderboard = async (
     period: LeaderboardPeriod
 ): Promise<LeaderboardRow[]> => {
     const { data } = await api.get<LeaderboardRow[]>("/me/leaderboard", {
+        params: { period },
+    });
+    return data;
+};
+
+/** Everyone public by XP: the top few, then you with a few either side. */
+export const fetchSiteLeaderboard = async (
+    period: LeaderboardPeriod
+): Promise<SiteLeaderboard> => {
+    const { data } = await api.get<SiteLeaderboard>("/progress/leaderboard", {
         params: { period },
     });
     return data;

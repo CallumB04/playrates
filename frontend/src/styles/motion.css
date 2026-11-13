@@ -1,0 +1,246 @@
+/*
+ * Motion, the everyday kind. Things ease out and never bounce: a menu, a
+ * dialog or a toast is furniture, and furniture doesn't wobble. The spring
+ * in theme.css stays for the moments meant to feel like an event (a level
+ * up, a medal, a heart).
+ *
+ * Every surface enters from what opened it and leaves about a fifth quicker
+ * than it came, since by then you've already moved on. A surface that
+ * leaves says how long for in --exit-ms, so the code waits exactly that
+ * long before taking it away; nought with reduced motion, or in a test,
+ * where there is no stylesheet to say otherwise.
+ */
+
+@theme {
+    --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+
+    --animate-pop-in: pop-in 180ms cubic-bezier(0.23, 1, 0.32, 1);
+    --animate-pop-out: pop-out 145ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    --animate-dialog-in: dialog-in 220ms cubic-bezier(0.23, 1, 0.32, 1);
+    --animate-dialog-out: dialog-out 175ms cubic-bezier(0.23, 1, 0.32, 1)
+        forwards;
+    --animate-sheet-in: sheet-rise 320ms cubic-bezier(0.23, 1, 0.32, 1);
+    --animate-sheet-out: sheet-out 255ms cubic-bezier(0.23, 1, 0.32, 1)
+        forwards;
+    --animate-veil-in: veil 220ms cubic-bezier(0.23, 1, 0.32, 1);
+    --animate-veil-out: veil 175ms cubic-bezier(0.23, 1, 0.32, 1) reverse
+        forwards;
+    --animate-list-in: list-in 360ms cubic-bezier(0.23, 1, 0.32, 1) both;
+    --animate-page-in: page-in 220ms cubic-bezier(0.23, 1, 0.32, 1) both;
+    --animate-swap-in: swap-in 220ms cubic-bezier(0.23, 1, 0.32, 1);
+    --animate-label-in: label-in 200ms cubic-bezier(0.23, 1, 0.32, 1);
+    --animate-confirm: confirm 520ms cubic-bezier(0.23, 1, 0.32, 1);
+    --animate-toast-in: toast-enter 300ms cubic-bezier(0.23, 1, 0.32, 1);
+    /* A picture taking over from the one under it, then drifting in so
+       slowly it reads as stillness with life in it. */
+    --animate-art-in:
+        art-in 1600ms cubic-bezier(0.23, 1, 0.32, 1) both,
+        art-drift 9s linear both;
+}
+
+:root {
+    --exit-pop: 145;
+    --exit-dialog: 175;
+    --exit-sheet: 255;
+}
+
+/* A menu or a popover, grown from its trigger. Where it hangs from is
+   --pop-origin, set by whoever places it; the top, if nobody says. */
+@utility motion-pop {
+    transform-origin: var(--pop-origin, top);
+    animation: var(--animate-pop-in);
+    --exit-ms: var(--exit-pop);
+
+    &[data-leaving] {
+        animation: var(--animate-pop-out);
+        pointer-events: none;
+    }
+}
+
+/* A dialog: a sheet sliding up on a phone, from the centre with room. */
+@utility motion-dialog {
+    animation: var(--animate-sheet-in);
+    --exit-ms: var(--exit-sheet);
+
+    &[data-leaving] {
+        animation: var(--animate-sheet-out);
+    }
+
+    @variant sm {
+        animation: var(--animate-dialog-in);
+        --exit-ms: var(--exit-dialog);
+
+        &[data-leaving] {
+            animation: var(--animate-dialog-out);
+        }
+    }
+}
+
+/* The dimmed page behind a dialog. */
+@utility motion-veil {
+    animation: var(--animate-veil-in);
+
+    &[data-leaving] {
+        animation: var(--animate-veil-out);
+        pointer-events: none;
+    }
+}
+
+/* A list's rows arriving one after another, 30ms apart. Past the tenth
+   they come together: a long list shouldn't keep you waiting for its end. */
+@utility stagger {
+    & > * {
+        animation: var(--animate-list-in);
+    }
+    & > :nth-child(2) {
+        animation-delay: 30ms;
+    }
+    & > :nth-child(3) {
+        animation-delay: 60ms;
+    }
+    & > :nth-child(4) {
+        animation-delay: 90ms;
+    }
+    & > :nth-child(5) {
+        animation-delay: 120ms;
+    }
+    & > :nth-child(6) {
+        animation-delay: 150ms;
+    }
+    & > :nth-child(7) {
+        animation-delay: 180ms;
+    }
+    & > :nth-child(8) {
+        animation-delay: 210ms;
+    }
+    & > :nth-child(9) {
+        animation-delay: 240ms;
+    }
+    & > :nth-child(10) {
+        animation-delay: 270ms;
+    }
+    & > :nth-child(n + 11) {
+        animation-delay: 300ms;
+    }
+}
+
+@keyframes pop-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+/* Smaller than it came in: leaving is a fade with a nod, not a reversal. */
+@keyframes pop-out {
+    to {
+        opacity: 0;
+        transform: scale(0.97);
+    }
+}
+
+@keyframes dialog-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+    }
+}
+
+@keyframes dialog-out {
+    to {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+}
+
+@keyframes sheet-out {
+    to {
+        transform: translateY(100%);
+    }
+}
+
+@keyframes veil {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes list-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+}
+
+/* Opacity alone: a transform on the page would pull anything fixed inside
+   it (the game page's log bar) along with it while it ran. */
+@keyframes page-in {
+    from {
+        opacity: 0;
+    }
+}
+
+/* One icon giving way to another: in from a blur, small to full size. */
+@keyframes swap-in {
+    from {
+        opacity: 0;
+        filter: blur(4px);
+        transform: scale(0.6);
+    }
+}
+
+/* Words giving way to others: the same blur, without the shrink, which
+   would make text look as if it were the thing moving. */
+@keyframes label-in {
+    from {
+        opacity: 0;
+        filter: blur(3px);
+        transform: translateY(2px);
+    }
+}
+
+@keyframes art-in {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes art-drift {
+    from {
+        transform: scale(1.06);
+    }
+}
+
+/* Done: a ring of the control's own colour, gone as it widens. */
+@keyframes confirm {
+    from {
+        box-shadow: 0 0 0 0 color-mix(in oklab, currentColor 45%, transparent);
+    }
+    to {
+        box-shadow: 0 0 0 8px transparent;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --animate-pop-in: none;
+        --animate-pop-out: none;
+        --animate-dialog-in: none;
+        --animate-dialog-out: none;
+        --animate-sheet-in: none;
+        --animate-sheet-out: none;
+        --animate-veil-in: none;
+        --animate-veil-out: none;
+        --animate-list-in: none;
+        --animate-page-in: none;
+        --animate-swap-in: none;
+        --animate-label-in: none;
+        --animate-confirm: none;
+        --animate-toast-in: none;
+        --animate-art-in: none;
+        --exit-pop: 0;
+        --exit-dialog: 0;
+        --exit-sheet: 0;
+    }
+}

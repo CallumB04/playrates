@@ -44,6 +44,9 @@ export interface ReviewGame {
   id: number;
   title: string;
   coverUrl: string | null;
+  /** Wide art for a card's backdrop, the cover where it has none. Absent
+   *  from an API older than it. */
+  artworkUrl?: string | null;
 }
 
 /** A review with its author, and the rating from that author's log. */

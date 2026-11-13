@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
-import Modal from "../../../components/ui/Modal";
+import Popup from "../../../components/ui/Popup";
 import { cn } from "../../../lib/cn";
 
 /** A link-weight "see all" that opens the full list in a popup, so the page
@@ -42,18 +42,13 @@ export const SeeAllModal = ({
 }) => {
     const titleId = useId();
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className={cn("w-full", wide ? "sm:max-w-3xl" : "sm:max-w-2xl")}
+            titleId={titleId}
+            width={cn("w-full", wide ? "sm:max-w-3xl" : "sm:max-w-2xl")}
+            title={title}
         >
-            <h2
-                id={titleId}
-                className="mb-5 pr-10 font-display text-section text-content"
-            >
-                {title}
-            </h2>
             {children}
-        </Modal>
+        </Popup>
     );
 };

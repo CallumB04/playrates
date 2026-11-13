@@ -46,6 +46,52 @@ describe("summaryOf", () => {
         ).toBe("Down for a moment");
     });
 
+    it("says why a reply reached you", () => {
+        const reply = (reason?: "reply" | "thread" | "conversation") =>
+            ({
+                ...base,
+                id: 1,
+                kind: "community_reply",
+                reason,
+                actor: actor("halcyon"),
+                threadId: 4,
+                threadTitle: "Best route?",
+                messageId: 1,
+                excerpt: "",
+            }) as AppNotification;
+        expect(summaryOf([reply()])).toBe(
+            "halcyon replied to you in Best route?"
+        );
+        expect(summaryOf([reply("thread")])).toBe(
+            "halcyon replied in your thread Best route?"
+        );
+        expect(summaryOf([reply("conversation")])).toBe(
+            "halcyon also replied in Best route?"
+        );
+    });
+
+    it("doesn't name a hidden thread twice when it's yours", () => {
+        const reply = (reason: "reply" | "thread") =>
+            ({
+                ...base,
+                id: 1,
+                kind: "community_reply",
+                reason,
+                actor: actor("halcyon"),
+                threadId: 4,
+                threadTitle: "a thread about an adult game",
+                messageId: 1,
+                excerpt: "",
+                hidden: true,
+            }) as AppNotification;
+        expect(summaryOf([reply("thread")])).toBe(
+            "halcyon replied in your thread"
+        );
+        expect(summaryOf([reply("reply")])).toBe(
+            "halcyon replied to you in a thread about an adult game"
+        );
+    });
+
     it("names a group as its row does, each person once", () => {
         const reply = (id: number, username: string) =>
             ({

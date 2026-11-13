@@ -291,6 +291,16 @@ export const handlers = [
         })
     ),
 
+    // The XP the steps of the welcome promise, as the server has them.
+    http.get(`${API}/progress/rules`, () =>
+        HttpResponse.json([
+            { source: "avatar", xp: 20, dailyCap: null },
+            { source: "play", xp: 10, dailyCap: 150 },
+            { source: "rate", xp: 5, dailyCap: 75 },
+            { source: "review_short", xp: 15, dailyCap: 150 },
+        ])
+    ),
+
     http.get(`${API}/games`, () =>
         HttpResponse.json(
             paginated([

@@ -5,6 +5,7 @@ import { useCallback, useSyncExternalStore } from "react";
  *  defaults. */
 export const BREAKPOINT = {
     sm: "(min-width: 40rem)",
+    md: "(min-width: 48rem)",
     lg: "(min-width: 64rem)",
     xl: "(min-width: 80rem)",
 } as const;

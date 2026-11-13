@@ -12,7 +12,7 @@ import {
     TASK_TOKENS,
     type QuestDef,
 } from "@playrates/shared";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import { TokenCoin } from "./TokenAmount";
 import { useXpRules } from "../../hooks/queries/useProgress";
 import { formatCount } from "../../lib/format";
@@ -156,22 +156,19 @@ const XpInfoSheet = ({ onClose }: { onClose: () => void }) => {
     const { data: rules } = useXpRules();
     const rule = new Map(rules?.map((r) => [r.source, r]));
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full sm:max-w-3xl"
+            titleId={titleId}
+            width="w-full sm:max-w-3xl"
+            title="How XP works"
+            blurb={
+                <p className="max-w-prose">
+                    You get XP once for each thing. Delete it and you lose the
+                    XP. Some things have a daily limit.
+                </p>
+            }
         >
-            <h2
-                id={titleId}
-                className="font-display text-section font-semibold text-content"
-            >
-                How XP works
-            </h2>
-            <p className="mt-1 max-w-prose text-body-sm text-content-secondary">
-                You get XP once for each thing. Delete it and you lose the XP.
-                Some things have a daily limit.
-            </p>
-            <div className="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2">
+            <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
                 {GROUPS.map((g) => (
                     <Group key={g.title} title={g.title}>
                         {g.rows.map(([source, label]) => {
@@ -204,7 +201,7 @@ const XpInfoSheet = ({ onClose }: { onClose: () => void }) => {
                     </ul>
                 </section>
             </div>
-        </Modal>
+        </Popup>
     );
 };
 

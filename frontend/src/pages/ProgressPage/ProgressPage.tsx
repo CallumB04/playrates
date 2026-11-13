@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import {
     Award,
     Check,
@@ -16,7 +16,6 @@ import {
     NAME_COLOURS,
     NAME_FONTS,
     NO_FRAME,
-    REACTIONS,
     type CardThemeKey,
     type FrameKey,
     type LeaderboardPeriod,
@@ -40,11 +39,11 @@ import PlayerCardMock from "../../components/progress/PlayerCardMock";
 import { TokenCoin } from "../../components/progress/TokenAmount";
 import XpBar from "../../components/progress/XpBar";
 import XpInfo from "../../components/progress/XpInfo";
+import TourButton from "../../components/journey/TourButton";
 import { nextReward } from "../../components/progress/rewardText";
 import { questPath } from "../../lib/questPath";
 import { InviteCard } from "../../components/progress/Invite";
-import ItemSheet, { ItemSheetFor } from "../../components/shop/ItemSheet";
-import { usePins } from "../ProfilePage/lib/usePinReviews";
+import ItemSheet from "../../components/shop/ItemSheet";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotify } from "../../contexts/NotificationContext";
 import {
@@ -55,8 +54,6 @@ import {
     useSwapQuest,
     useShop,
 } from "../../hooks/queries/useProgress";
-import { useUserLists } from "../../hooks/queries/useLists";
-import ReactionIcon from "../../components/progress/ReactionIcon";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import { useScrollToHash } from "../../hooks/useScrollToHash";
 import { formatCount } from "../../lib/format";
@@ -76,9 +73,12 @@ const DAY_MONTH = new Intl.DateTimeFormat("en-GB", {
 const ProgressPage = () => {
     const { user, isLoading: authLoading } = useAuth();
     const { data } = useProgress();
+    const { hash } = useLocation();
     usePageMeta({ title: "Your progress", noindex: true });
     useScrollToHash();
 
+    // Reactions moved to the shop; emails already sent still link here.
+    if (hash === "#reaction") return <Navigate to="/shop#reaction" replace />;
     if (!authLoading && !user) return <Navigate to="/" replace />;
     if (!data || !user) {
         return (
@@ -168,6 +168,7 @@ const Header = ({ data }: { data: Progress }) => {
                                 Level {reward.level} unlocks {reward.phrase}
                             </p>
                         )}
+                        <TourButton className="mt-3" />
                     </div>
                 </div>
 
@@ -210,7 +211,14 @@ const Header = ({ data }: { data: Progress }) => {
                         <Award size={14} aria-hidden className="text-brand-text" />
                     }
                     label="Badges"
-                    value={badges ? badges.held.length : "…"}
+                    value={
+                        badges ? (
+                            badges.held.length
+                        ) : (
+                            // 1em: as tall as the figure it stands in for.
+                            <Skeleton className="inline-block h-[1em] w-6 align-top" />
+                        )
+                    }
                     to={profilePath(user.username, "badges")}
                 />
                 <Figure
@@ -788,17 +796,6 @@ const Look = ({ data }: { data: Progress }) => {
     const notify = useNotify();
     const { user } = useAuth();
     const { data: shop } = useShop();
-    const { data: lists } = useUserLists(user?.username ?? "", {
-        sort: "new",
-        page: 1,
-        limit: 50,
-        enabled: !!user,
-    });
-    // Only what everyone can see: a hidden list pinned is an empty card to
-    // anyone else.
-    const pinnable = (lists?.data ?? []).filter(
-        (l) => l.visibility === "everyone"
-    );
     const setStyle = useSetStyle();
     const [open, setOpen] = useState<ShopEntry | null>(null);
     if (!user) return null;
@@ -1077,67 +1074,6 @@ const Look = ({ data }: { data: Progress }) => {
                 </ul>
             </LookSection>
 
-            <LookSection
-                id="reaction"
-                title="Reactions"
-                note="What you can leave on reviews, lists and posts."
-            >
-                <ul className="grid grid-cols-5 gap-1 sm:grid-cols-8">
-                    {REACTIONS.map((r) => {
-                        const unlocked = look.reactions.includes(r.key);
-                        return (
-                            <li key={r.key}>
-                                <LookTile
-                                    label={r.label}
-                                    on={false}
-                                    lock={
-                                        "level" in r && !unlocked
-                                            ? `Level ${r.level}`
-                                            : undefined
-                                    }
-                                    price={
-                                        "item" in r && !unlocked
-                                            ? entry(r.item)?.price
-                                            : undefined
-                                    }
-                                    disabled={unlocked || "level" in r}
-                                    onClick={() =>
-                                        choose(
-                                            "item" in r ? r.item : undefined,
-                                            false,
-                                            () => {}
-                                        )
-                                    }
-                                >
-                                    <span className="grid h-9 place-items-center">
-                                        <ReactionIcon
-                                            reaction={r.key}
-                                            size={26}
-                                        />
-                                    </span>
-                                </LookTile>
-                            </li>
-                        );
-                    })}
-                </ul>
-            </LookSection>
-
-            {pinnable.length > 0 && (
-                <LookSection
-                    id="pinned-lists"
-                    title="Pinned lists"
-                    note={`Up to ${look.pinnedListSlots} on your profile.`}
-                >
-                    <PinToggles
-                        field="pinnedLists"
-                        items={pinnable.map((l) => ({
-                            id: l.id,
-                            name: l.name,
-                        }))}
-                    />
-                </LookSection>
-            )}
-
             {open && (
                 <ItemSheet
                     item={shop?.items.find((i) => i.item === open.item) ?? open}
@@ -1145,46 +1081,6 @@ const Look = ({ data }: { data: Progress }) => {
                 />
             )}
         </Panel>
-    );
-};
-
-/** Pins on your profile, as toggles: lists or reviews, up to the slots
- *  you have, and with none free, the slot to buy here. */
-const PinToggles = ({
-    field,
-    items,
-}: {
-    field: "pinnedLists" | "pinnedReviews";
-    items: { id: number; name: string }[];
-}) => {
-    const pins = usePins(field);
-    return (
-        <>
-            <ul className="flex flex-wrap gap-2">
-                {items.map((l) => {
-                    const on = pins.pinned.includes(l.id);
-                    return (
-                        <li key={l.id}>
-                            <button
-                                type="button"
-                                aria-pressed={on}
-                                onClick={() => pins.toggle(l.id)}
-                                className={cn(
-                                    "inline-flex min-h-11 max-w-60 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-label lift sm:min-h-9",
-                                    on
-                                        ? "border-brand bg-brand-subtle text-brand-text"
-                                        : "border-subtle hover:border-strong"
-                                )}
-                            >
-                                {on && <Check size={12} aria-hidden />}
-                                <span className="truncate">{l.name}</span>
-                            </button>
-                        </li>
-                    );
-                })}
-            </ul>
-            {pins.buying && <ItemSheetFor {...pins.buying} />}
-        </>
     );
 };
 

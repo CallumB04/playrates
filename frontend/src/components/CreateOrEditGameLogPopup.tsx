@@ -14,12 +14,13 @@ import { finishedMoment, shelfMoment } from "./share/shareText";
 import { readLastSystem, writeLastSystem } from "../lib/drafts";
 import { useNotify } from "../contexts/NotificationContext";
 import { OFFER_DWELL_MS } from "../contexts/notificationQueue";
-import Modal from "./ui/Modal";
+import Popup from "./ui/Popup";
 import Button from "./ui/Button";
 import Toggle from "./ui/Toggle";
 import Field from "./ui/Field";
 import { Input, NumberInput, Textarea } from "./ui/Input";
 import RatingMeter from "./ui/RatingMeter";
+import HypeMeter from "./gamelog/HypeMeter";
 import Dropdown from "./ui/Dropdown";
 import { systemOptions } from "../lib/platformIcons";
 import { familyOf, systemsForGame } from "../lib/gameSystems";
@@ -29,6 +30,7 @@ import { StatusPlates } from "./gamelog/StatusPlates";
 import Progress from "./ui/Progress";
 import DeleteGameLogPopup from "./gamelog/DeleteGameLogPopup";
 import TodayButton from "./gamelog/TodayButton";
+import ExpandedReview from "./gamelog/ExpandedReview";
 import {
     achievementFraction,
     fieldsFor,
@@ -51,10 +53,12 @@ import {
     takenBy,
     type LogTab,
 } from "./gamelog/logTabs";
-import { ChevronDown, Plus, X } from "lucide-react";
+import { ChevronDown, Maximize2, Plus, X } from "lucide-react";
 import { cn } from "../lib/cn";
-import { formatPercent, formatRating } from "../lib/format";
+import { formatPercent, formatRating, releaseYear } from "../lib/format";
 import { completionTone } from "../lib/completionTone";
+
+const REVIEW_MAX = 5000;
 
 interface CreateOrEditGameLogPopupProps {
     gameId: number;
@@ -101,6 +105,7 @@ const CreateOrEditGameLogPopup = ({
     const [consoleError, setConsoleError] = useState<string | null>(null);
     const [confirmingDelete, setConfirmingDelete] = useState(false);
     const [detailsOpen, setDetailsOpen] = useState(false);
+    const [reviewExpanded, setReviewExpanded] = useState(false);
 
     useEffect(() => {
         if (hydrated || !bundle) return;
@@ -363,41 +368,51 @@ const CreateOrEditGameLogPopup = ({
         tab.logId !== null &&
         bundle?.logs.find((l) => l.id === tab.logId);
 
+    const setReviewBody = (value: string) =>
+        dispatch({ type: "set", field: "reviewBody", value });
+    const reviewPlaceholder =
+        several && consoleName
+            ? `Your review of the ${consoleName} version`
+            : "Write your review";
+    const reviewControls = (
+        <>
+            <Toggle
+                checked={draft.reviewSpoilers}
+                onChange={(value) =>
+                    dispatch({ type: "set", field: "reviewSpoilers", value })
+                }
+                label="Spoilers"
+            />
+            <Toggle
+                checked={draft.reviewIsPublic}
+                onChange={(value) =>
+                    dispatch({ type: "set", field: "reviewIsPublic", value })
+                }
+                label={draft.reviewIsPublic ? "Public" : "Private"}
+            />
+            <span className="text-label-sm text-content-muted">
+                {draft.reviewBody.length} / {REVIEW_MAX}
+            </span>
+        </>
+    );
+
+    const year = game?.releaseDate ? releaseYear(game.releaseDate) : null;
+
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy="log-editor-title"
-            showCloseButton={false}
-            className="w-full max-w-[880px] p-0! sm:p-0!"
-        >
-            {/* Header and footer stay put while the form scrolls between
-                them, so Save is never a scroll away from the field just set. */}
-            <header
-                className={cn(
-                    "sticky top-0 z-10 border-b border-subtle bg-surface-raised px-5 pt-4 sm:px-6",
-                    savedCount > 0 ? "pb-0" : "pb-4"
-                )}
-            >
-                <div className="flex items-center gap-4">
-                    <h2
-                        id="log-editor-title"
-                        className="min-w-0 flex-1 font-display text-[22px] leading-tight text-content sm:text-[28px]"
-                    >
-                        {game?.title ?? "…"}
-                    </h2>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        aria-label="Close"
-                        className="flex size-11 shrink-0 items-center justify-center rounded-sm text-content-muted lift hover:bg-surface-hover hover:text-content sm:size-auto sm:p-2"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-                {savedCount > 0 && (
+            titleId="log-editor-title"
+            width="w-full sm:max-w-[880px]"
+            long
+            title={game?.title ?? "…"}
+            eyebrow={year}
+            art={game?.artworkUrl}
+            cover={game?.coverUrl}
+            tabs={
+                savedCount > 0 && (
                     /* A tab per console, like the shelves on a game page:
-                       scrolls inside itself on a phone rather than pushing
-                       the page sideways. */
+                           scrolls inside itself on a phone rather than pushing
+                           the page sideways. */
                     <div className="-mx-5 mt-3 -mb-px flex items-end gap-1 overflow-x-auto px-5 sm:-mx-6 sm:px-6">
                         <div
                             role="tablist"
@@ -468,7 +483,7 @@ const CreateOrEditGameLogPopup = ({
                             })}
                         </div>
                         {/* Greyed out, not hidden, once every console is
-                            logged: it says why there is nothing to add. */}
+                                logged: it says why there is nothing to add. */}
                         <button
                             type="button"
                             onClick={addTab}
@@ -487,10 +502,47 @@ const CreateOrEditGameLogPopup = ({
                             <Plus size={16} aria-hidden />
                         </button>
                     </div>
-                )}
-            </header>
-
-            <div className="flex flex-col gap-5 px-5 py-5 sm:px-6">
+                )
+            }
+            footer={
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    {deletable && (
+                        <button
+                            type="button"
+                            onClick={() => setConfirmingDelete(true)}
+                            disabled={busy}
+                            className="min-h-11 text-label text-danger lift hover:underline disabled:opacity-60 sm:min-h-0"
+                        >
+                            {several && consoleName
+                                ? `Delete ${consoleName} log`
+                                : "Delete this log"}
+                        </button>
+                    )}
+                    <div className="flex w-full gap-2.5 sm:ml-auto sm:w-auto">
+                        <Button
+                            variant="secondary"
+                            onClick={onClose}
+                            disabled={busy}
+                            className="flex-1 sm:flex-none"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={() => void handleSave()}
+                            disabled={busy}
+                            className="flex-1 sm:flex-none"
+                        >
+                            {busy
+                                ? "Saving…"
+                                : tabs.filter(isDirty).length > 1
+                                  ? "Save all"
+                                  : "Save entry"}
+                        </Button>
+                    </div>
+                </div>
+            }
+        >
+            <div className="flex flex-col gap-5">
                 {tab?.logId === null && savedCount > 0 && (
                     <div>
                         <span
@@ -547,6 +599,18 @@ const CreateOrEditGameLogPopup = ({
                     </div>
                 )}
 
+                {fields.has("hype") && (
+                    <div className="rounded-md border border-subtle bg-surface-sunken/50 px-5 py-4">
+                        <HypeMeter
+                            value={draft.hype}
+                            gameTitle={game?.title}
+                            onChange={(value) =>
+                                dispatch({ type: "hype", value })
+                            }
+                        />
+                    </div>
+                )}
+
                 {(fields.has("review") || focusReview) && (
                     <div>
                         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-3">
@@ -554,56 +618,27 @@ const CreateOrEditGameLogPopup = ({
                                 Review (optional)
                             </span>
                             <div className="flex flex-wrap items-center gap-3.5">
-                                <Toggle
-                                    checked={draft.reviewSpoilers}
-                                    onChange={(value) =>
-                                        dispatch({
-                                            type: "set",
-                                            field: "reviewSpoilers",
-                                            value,
-                                        })
-                                    }
-                                    label="Spoilers"
-                                />
-                                <Toggle
-                                    checked={draft.reviewIsPublic}
-                                    onChange={(value) =>
-                                        dispatch({
-                                            type: "set",
-                                            field: "reviewIsPublic",
-                                            value,
-                                        })
-                                    }
-                                    label={
-                                        draft.reviewIsPublic
-                                            ? "Public"
-                                            : "Private"
-                                    }
-                                />
-                                <span className="text-label-sm text-content-muted">
-                                    {draft.reviewBody.length} / 5000
-                                </span>
+                                {reviewControls}
+                                <button
+                                    type="button"
+                                    onClick={() => setReviewExpanded(true)}
+                                    aria-label="Expand review"
+                                    title="Expand review"
+                                    className="relative flex size-6 cursor-pointer items-center justify-center rounded-sm text-content-muted lift before:absolute before:-inset-2.5 before:content-[''] hover:bg-surface-hover hover:text-content"
+                                >
+                                    <Maximize2 size={14} aria-hidden />
+                                </button>
                             </div>
                         </div>
                         <Textarea
                             ref={reviewRef}
                             rows={3}
-                            maxLength={5000}
+                            maxLength={REVIEW_MAX}
                             aria-label="Review"
                             value={draft.reviewBody}
-                            onChange={(e) =>
-                                dispatch({
-                                    type: "set",
-                                    field: "reviewBody",
-                                    value: e.target.value,
-                                })
-                            }
+                            onChange={(e) => setReviewBody(e.target.value)}
                             className="min-h-[74px] leading-relaxed"
-                            placeholder={
-                                several && consoleName
-                                    ? `Your review of the ${consoleName} version`
-                                    : "Write your review"
-                            }
+                            placeholder={reviewPlaceholder}
                         />
                     </div>
                 )}
@@ -883,41 +918,17 @@ const CreateOrEditGameLogPopup = ({
                 )}
             </div>
 
-            <footer className="sticky bottom-0 z-10 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-subtle bg-surface-raised px-5 pt-3 pb-[calc(--spacing(3)+env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
-                {deletable && (
-                    <button
-                        type="button"
-                        onClick={() => setConfirmingDelete(true)}
-                        disabled={busy}
-                        className="min-h-11 text-label text-danger lift hover:underline disabled:opacity-60 sm:min-h-0"
-                    >
-                        {several && consoleName
-                            ? `Delete ${consoleName} log`
-                            : "Delete this log"}
-                    </button>
-                )}
-                <div className="flex w-full gap-2.5 sm:ml-auto sm:w-auto">
-                    <Button
-                        variant="secondary"
-                        onClick={onClose}
-                        disabled={busy}
-                        className="flex-1 sm:flex-none"
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={() => void handleSave()}
-                        disabled={busy}
-                        className="flex-1 sm:flex-none"
-                    >
-                        {busy
-                            ? "Saving…"
-                            : tabs.filter(isDirty).length > 1
-                              ? "Save all"
-                              : "Save entry"}
-                    </Button>
-                </div>
-            </footer>
+            {reviewExpanded && (
+                <ExpandedReview
+                    gameTitle={game?.title}
+                    value={draft.reviewBody}
+                    onChange={setReviewBody}
+                    maxLength={REVIEW_MAX}
+                    placeholder={reviewPlaceholder}
+                    controls={reviewControls}
+                    onClose={() => setReviewExpanded(false)}
+                />
+            )}
 
             {/* Deleting takes the rating, the hours and the review with it, so
                 it asks first — the same dialog the profile uses. */}
@@ -936,7 +947,7 @@ const CreateOrEditGameLogPopup = ({
                     }}
                 />
             )}
-        </Modal>
+        </Popup>
     );
 };
 

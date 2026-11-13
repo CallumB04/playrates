@@ -4,7 +4,7 @@ import type { ThreadCard as ThreadCardData } from "@playrates/shared";
 import Button from "../../../components/ui/Button";
 import { buttonClass } from "../../../components/ui/buttonClass";
 import { EmptyNote } from "../../../components/ui/EmptyPlate";
-import { TextSkeleton } from "../../../components/ui/Skeleton";
+import Skeleton, { TextSkeleton } from "../../../components/ui/Skeleton";
 import ThreadCard from "../../../components/community/ThreadCard";
 import { formatCount } from "../../../lib/format";
 
@@ -31,9 +31,14 @@ const GameThreads = ({
                 Community
             </h2>
             <div className="flex flex-wrap items-center gap-3">
-                <span className="text-label text-content-muted">
-                    {formatCount(total)} {total === 1 ? "thread" : "threads"}
-                </span>
+                {isLoading ? (
+                    <Skeleton className="inline-block h-3 w-16" />
+                ) : (
+                    <span className="text-label text-content-muted">
+                        {formatCount(total)}{" "}
+                        {total === 1 ? "thread" : "threads"}
+                    </span>
+                )}
                 <Button
                     variant="secondary"
                     size="sm"

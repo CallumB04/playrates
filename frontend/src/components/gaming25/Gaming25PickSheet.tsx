@@ -6,7 +6,7 @@ import {
     type Gaming25,
     type Gaming25Category,
 } from "@playrates/shared";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import Button from "../ui/Button";
 import StatusBadge from "../ui/StatusBadge";
 import GameCover from "../game/GameCover";
@@ -72,22 +72,34 @@ const Gaming25PickSheet = ({
     const skip = nextEmpty(filled, current);
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full max-w-md"
+            titleId={titleId}
+            width="w-full sm:max-w-md"
+            title={gaming25Label(current)}
+            eyebrow={
+                <span className="font-mono">
+                    {filled.size} of {GAMING_25_SIZE} picked
+                </span>
+            }
+            footer={
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    {skip && skip !== current && (
+                        <Button
+                            variant="secondary"
+                            onClick={() => setCurrent(skip)}
+                            className="w-full sm:w-auto"
+                        >
+                            Skip to {gaming25Label(skip)}
+                        </Button>
+                    )}
+                    <Button onClick={onClose} className="w-full sm:w-auto">
+                        Done
+                    </Button>
+                </div>
+            }
         >
-            <p className="pr-10 font-mono text-label-sm text-content-muted">
-                {filled.size} of {GAMING_25_SIZE} picked
-            </p>
-            <h2
-                id={titleId}
-                className="mt-0.5 pr-10 font-display text-section text-content"
-            >
-                {gaming25Label(current)}
-            </h2>
-
-            <div className="mt-4 flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
                 {picked && (
                     <div className="flex items-center gap-3 rounded-sm bg-surface-sunken p-2">
                         <GameCover
@@ -142,22 +154,7 @@ const Gaming25PickSheet = ({
                     onChange={choose}
                 />
             </div>
-
-            <div className="mt-4 flex flex-col-reverse gap-2 border-t border-subtle pt-4 sm:flex-row sm:justify-end">
-                {skip && skip !== current && (
-                    <Button
-                        variant="secondary"
-                        onClick={() => setCurrent(skip)}
-                        className="w-full sm:w-auto"
-                    >
-                        Skip to {gaming25Label(skip)}
-                    </Button>
-                )}
-                <Button onClick={onClose} className="w-full sm:w-auto">
-                    Done
-                </Button>
-            </div>
-        </Modal>
+        </Popup>
     );
 };
 

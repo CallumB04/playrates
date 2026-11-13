@@ -12,6 +12,7 @@ import {
   baseSeed,
   buildGame,
   buildMessage,
+  buildNotification,
   buildProfile,
   buildThread,
   doc,
@@ -50,8 +51,41 @@ const post = (app: Express, as: string, body: object) =>
     .set("Authorization", authHeader(as))
     .send(body);
 
-describe("reply notifications", () => {
-  it("tells the author of the message that was answered", async () => {
+describe("who hears about a new message", () => {
+  const USER_D = "66666666-6666-4666-8666-666666666666";
+  const replies = (state: ReturnType<typeof buildTestApp>["state"]) =>
+    state.notifications
+      .filter((n) => n.kind === "community_reply")
+      .map((n) => ({
+        to: n.user_id,
+        from: n.actor_id,
+        reason: n.data.reason,
+        messageId: n.data.messageId,
+      }));
+  const withD = () => ({
+    ...seed(),
+    profiles: [
+      ...seed().profiles,
+      buildProfile({ id: USER_D, username: "fourthuser" }),
+    ],
+  });
+
+  it("tells the thread's author about any message in their thread", async () => {
+    const { app, state } = buildTestApp({ seed: seed() });
+
+    const reply = await post(app, USER_C, { body: doc("Great question") });
+
+    expect(replies(state)).toEqual([
+      {
+        to: USER_A,
+        from: USER_C,
+        reason: "thread",
+        messageId: reply.body.id,
+      },
+    ]);
+  });
+
+  it("tells the author of the message that was answered, and the thread's", async () => {
     const { app, state } = buildTestApp({ seed: seed() });
 
     const reply = await post(app, USER_C, {
@@ -59,110 +93,58 @@ describe("reply notifications", () => {
       parentId: 2,
     });
 
-    const [note] = state.notifications.filter(
-      (n) => n.kind === "community_reply",
-    );
-    expect(note).toMatchObject({
-      user_id: USER_B,
-      actor_id: USER_C,
-      data: {
-        threadId: 1,
-        threadTitle: "Best side quest?",
-        messageId: reply.body.id,
-        excerpt: "Hard disagree, and here is why.",
-      },
-    });
-  });
-
-  it("says nothing when you answer yourself", async () => {
-    const { app, state } = buildTestApp({ seed: seed() });
-
-    await post(app, USER_B, { body: doc("Also,"), parentId: 2 });
-
+    expect(replies(state)).toEqual([
+      { to: USER_B, from: USER_C, reason: "reply", messageId: reply.body.id },
+      { to: USER_A, from: USER_C, reason: "thread", messageId: reply.body.id },
+    ]);
     expect(
-      state.notifications.filter((n) => n.kind === "community_reply"),
-    ).toHaveLength(0);
-  });
-
-  it("goes when the reply is deleted", async () => {
-    const { app, state } = buildTestApp({ seed: seed() });
-    const reply = await post(app, USER_C, { body: doc("Oops"), parentId: 2 });
-
-    await request(app)
-      .delete(`/api/v1/community/messages/${reply.body.id}`)
-      .set("Authorization", authHeader(USER_C));
-
-    expect(
-      state.notifications.filter((n) => n.kind === "community_reply"),
-    ).toHaveLength(0);
-  });
-
-  it("reads back as a notification with the replier", async () => {
-    const { app } = buildTestApp({ seed: seed() });
-    await post(app, USER_C, { body: doc("Hello"), parentId: 2 });
-
-    const inbox = await request(app)
-      .get("/api/v1/me/notifications")
-      .set("Authorization", authHeader(USER_B));
-
-    expect(inbox.body.data[0]).toMatchObject({
-      kind: "community_reply",
-      actor: { username: "thirduser" },
-      threadTitle: "Best side quest?",
-    });
-  });
-});
-
-describe("thread activity notifications", () => {
-  const activity = (state: ReturnType<typeof buildTestApp>["state"]) =>
-    state.notifications.filter(
-      (n) => n.kind === "community_thread_activity" && n.user_id === USER_A,
-    );
-
-  it("counts new messages up in one notification while it is unread", async () => {
-    const { app, state } = buildTestApp({ seed: seed() });
-
-    await post(app, USER_B, { body: doc("One") });
-    await post(app, USER_C, { body: doc("Two") });
-    await post(app, USER_C, { body: doc("Three"), parentId: 2 });
-
-    expect(activity(state)).toHaveLength(1);
-    expect(activity(state)[0]!.data).toMatchObject({
+      state.notifications.find((n) => n.user_id === USER_B)!.data,
+    ).toMatchObject({
       threadId: 1,
       threadTitle: "Best side quest?",
-      gameTitle: "The Witcher 3: Wild Hunt",
-      count: 3,
+      excerpt: "Hard disagree, and here is why.",
     });
   });
 
-  it("starts a fresh count once the last one has been read", async () => {
-    const { app, state } = buildTestApp({ seed: seed() });
-    await post(app, USER_B, { body: doc("One") });
-    await post(app, USER_B, { body: doc("Two") });
+  /* A opens the thread and B answers it (2). A answers B, then C answers
+     A in the same conversation: B hears of both, being part of it. D then
+     answers the thread itself, and only A hears of that. */
+  it("tells everyone in a conversation, and no one outside it", async () => {
+    const { app, state } = buildTestApp({ seed: withD() });
 
-    const [note] = activity(state);
-    await request(app)
-      .patch(`/api/v1/me/notifications/${note!.id}`)
-      .set("Authorization", authHeader(USER_A))
-      .send({ read: true });
-    await post(app, USER_C, { body: doc("Three") });
+    const mine = await post(app, USER_A, { body: doc("Why?"), parentId: 2 });
+    expect(replies(state)).toEqual([
+      { to: USER_B, from: USER_A, reason: "reply", messageId: mine.body.id },
+    ]);
 
-    expect(activity(state)).toHaveLength(1);
-    expect(activity(state)[0]).toMatchObject({
-      read_at: null,
-      data: { count: 1 },
+    const jims = await post(app, USER_C, {
+      body: doc("Because"),
+      parentId: mine.body.id,
     });
+    expect(replies(state).filter((r) => r.messageId === jims.body.id)).toEqual([
+      { to: USER_A, from: USER_C, reason: "reply", messageId: jims.body.id },
+      {
+        to: USER_B,
+        from: USER_C,
+        reason: "conversation",
+        messageId: jims.body.id,
+      },
+    ]);
+
+    const gregs = await post(app, USER_D, { body: doc("Something else") });
+    expect(replies(state).filter((r) => r.messageId === gregs.body.id)).toEqual(
+      [
+        {
+          to: USER_A,
+          from: USER_D,
+          reason: "thread",
+          messageId: gregs.body.id,
+        },
+      ],
+    );
   });
 
-  it("is not raised for the author's own messages", async () => {
-    const { app, state } = buildTestApp({ seed: seed() });
-
-    await post(app, USER_A, { body: doc("Bump") });
-
-    expect(activity(state)).toHaveLength(0);
-  });
-
-  it("does not double up on a reply that already told the author", async () => {
+  it("tells each person once, for the closest reason", async () => {
     const { app, state } = buildTestApp({
       seed: {
         ...seed(),
@@ -175,12 +157,52 @@ describe("thread activity notifications", () => {
 
     await post(app, USER_B, { body: doc("To you"), parentId: 3 });
 
-    expect(activity(state)).toHaveLength(0);
-    expect(
-      state.notifications.filter(
-        (n) => n.kind === "community_reply" && n.user_id === USER_A,
-      ),
-    ).toHaveLength(1);
+    expect(replies(state)).toEqual([
+      {
+        to: USER_A,
+        from: USER_B,
+        reason: "reply",
+        messageId: expect.any(Number),
+      },
+    ]);
+  });
+
+  it("tells no one of their own message", async () => {
+    const { app, state } = buildTestApp({ seed: seed() });
+
+    await post(app, USER_B, { body: doc("Also,"), parentId: 2 });
+    await post(app, USER_A, { body: doc("Bump") });
+
+    expect(replies(state).map((r) => [r.to, r.from])).toEqual([
+      [USER_A, USER_B],
+    ]);
+  });
+
+  it("goes when the reply is deleted", async () => {
+    const { app, state } = buildTestApp({ seed: seed() });
+    const reply = await post(app, USER_C, { body: doc("Oops"), parentId: 2 });
+
+    await request(app)
+      .delete(`/api/v1/community/messages/${reply.body.id}`)
+      .set("Authorization", authHeader(USER_C));
+
+    expect(replies(state)).toHaveLength(0);
+  });
+
+  it("reads back as a notification with the replier and why", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    await post(app, USER_C, { body: doc("Hello"), parentId: 2 });
+
+    const inbox = await request(app)
+      .get("/api/v1/me/notifications")
+      .set("Authorization", authHeader(USER_A));
+
+    expect(inbox.body.data[0]).toMatchObject({
+      kind: "community_reply",
+      reason: "thread",
+      actor: { username: "thirduser" },
+      threadTitle: "Best side quest?",
+    });
   });
 
   it("goes with the thread", async () => {
@@ -532,10 +554,13 @@ describe("spoilers", () => {
 
     await post(app, USER_C, { body: spoiled, parentId: 2 });
 
-    const [note] = state.notifications.filter(
+    const notes = state.notifications.filter(
       (n) => n.kind === "community_reply",
     );
-    expect(note!.data.excerpt).toBe("The ending: [spoiler]");
+    expect(notes.length).toBeGreaterThan(0);
+    for (const note of notes) {
+      expect(note.data.excerpt).toBe("The ending: [spoiler]");
+    }
   });
 
   it("keeps a spoiler out of the latest replies", async () => {
@@ -559,5 +584,89 @@ describe("spoilers", () => {
     expect(message.body.content[0].content[1].marks).toEqual([
       { type: "spoiler" },
     ]);
+  });
+});
+
+describe("a notification about an adult game", () => {
+  /** Thread 1 is about an adult game; C, who has chosen to see them,
+   *  answers A's thread. */
+  const adultSeed = (optedIn: boolean) => {
+    const base = seed();
+    return {
+      ...base,
+      games: [buildGame({ id: 1, has_sexual_content: true })],
+      communityThreads: [buildThread({ title: "Secret plans" })],
+      profiles: base.profiles.map((p) =>
+        p.id === USER_C
+          ? { ...p, show_sexual_content: true }
+          : p.id === USER_A
+            ? { ...p, show_sexual_content: optedIn }
+            : p,
+      ),
+    };
+  };
+  const bell = async (app: Express) =>
+    (
+      await request(app)
+        .get("/api/v1/me/notifications")
+        .set("Authorization", authHeader(USER_A))
+    ).body.data.filter((n: { kind: string }) => n.kind === "community_reply");
+
+  it("stays in the bell, with nothing of the thread, for someone who hasn't chosen them", async () => {
+    const { app, email } = buildTestApp({ seed: adultSeed(false) });
+    await post(app, USER_C, { body: doc("A spicy answer") });
+    await email.flush();
+
+    const [reply] = await bell(app);
+    expect(reply).toMatchObject({
+      hidden: true,
+      threadTitle: "a thread about an adult game",
+      excerpt: "",
+    });
+    expect(JSON.stringify(reply)).not.toContain("Secret plans");
+    expect(email.sent).toHaveLength(0);
+  });
+
+  it("is whole, and emailed, for someone who has", async () => {
+    const { app, email } = buildTestApp({ seed: adultSeed(true) });
+    await post(app, USER_C, { body: doc("A spicy answer") });
+    await email.flush();
+
+    const [reply] = await bell(app);
+    expect(reply.hidden).toBeUndefined();
+    expect(reply.threadTitle).toBe("Secret plans");
+    expect(reply.excerpt).toBe("A spicy answer");
+    expect(email.sent.length).toBeGreaterThan(0);
+  });
+
+  it("is found by the thread's game, so older ones are hidden too", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...adultSeed(false),
+        notifications: [
+          buildNotification({
+            kind: "review_upvote_milestone",
+            dedupe_key: "review_upvotes:9",
+            data: {
+              reviewId: 9,
+              gameId: 1,
+              gameTitle: "Adult game",
+              coverUrl: "https://example.test/cover.jpg",
+              milestone: 5,
+            },
+          }),
+        ],
+      },
+    });
+    const response = await request(app)
+      .get("/api/v1/me/notifications")
+      .set("Authorization", authHeader(USER_A));
+    expect(response.body.data[0]).toMatchObject({
+      kind: "review_upvote_milestone",
+      hidden: true,
+      gameTitle: "an adult game",
+      coverUrl: null,
+      milestone: 5,
+    });
   });
 });

@@ -88,7 +88,7 @@ const BadgeTip = ({
                     id={tipId}
                     role="tooltip"
                     className={popoverClass(
-                        "absolute bottom-[calc(100%+0.5rem)] left-0 z-30 block w-60 p-3 text-left"
+                        "absolute bottom-[calc(100%+0.5rem)] left-0 z-30 block w-60 p-3 text-left [--pop-origin:bottom_left]"
                     )}
                 >
                     <span className="flex items-center gap-2.5">

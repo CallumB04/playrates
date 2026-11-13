@@ -1,13 +1,15 @@
-import { lazy, Suspense, useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef, type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Header from "./components/layout/Header";
 import TabBar from "./components/layout/TabBar";
 import PageShell from "./components/layout/PageShell";
+import { cn } from "./lib/cn";
 import Footer from "./components/Footer";
 import ToastStack from "./components/feedback/ToastStack";
-import AccountFormModal from "./components/auth/AccountFormModal";
+import AccountFormHost from "./components/auth/AccountFormHost";
 import ChooseUsername from "./components/onboarding/ChooseUsername";
-import FirstLoginWelcome from "./components/onboarding/FirstLoginWelcome";
+import WelcomeGate from "./components/onboarding/WelcomeGate";
+import SetupSheetHost from "./components/journey/SetupSheetHost";
 import ProgressMoments from "./components/progress/ProgressMoments";
 import ReferralCapture from "./components/progress/ReferralCapture";
 import AuthLinkResult from "./components/auth/AuthLinkResult";
@@ -39,6 +41,12 @@ const LibraryPage = lazy(() => import("./pages/LibraryPage/LibraryPage"));
 const GamePage = lazy(() => import("./pages/GamePage/GamePage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const JoinLayout = lazy(() => import("./pages/JoinPage/JoinLayout"));
+const JoinPage = lazy(() => import("./pages/JoinPage/JoinPage"));
+const LoginPage = lazy(() => import("./pages/JoinPage/LoginPage"));
+const JoinConfirmedPage = lazy(
+    () => import("./pages/JoinPage/JoinConfirmedPage")
+);
 const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage"));
 const AdminGate = lazy(() => import("./pages/admin/AdminGate"));
 const HubPage = lazy(() => import("./pages/HubPage/HubPage"));
@@ -59,12 +67,19 @@ const LibraryRedirect = () => {
    long. Empty, and tall enough that the footer doesn't flash up into view. */
 const PageLoading = () => <div aria-busy className="min-h-[60dvh]" />;
 
+/** The frame a standalone page has in place of the shell: none. */
+const Bare = ({ children }: { children: ReactNode }) => <>{children}</>;
+
 function App() {
     useReloadOnNewBuild();
     // A crash on one page shouldn't take the header and the nav with it.
     // Keyed to the page, so going somewhere else starts afresh.
     const { pathname } = useLocation();
     useScrollMemory();
+    // Signing up and logging in stand alone, full screen: no header, footer
+    // or tab bar, nothing to wander off to halfway through.
+    const bare = pathname.startsWith("/join") || pathname === "/login";
+    const Frame = bare ? Bare : PageShell;
 
     /* A new page takes focus, so a screen reader reads it and Tab starts
        from its top, as on a site where every link loads a page. Not on the
@@ -79,7 +94,13 @@ function App() {
 
     return (
         // Below lg the page ends above the tab bar, footer included.
-        <div className="flex min-h-dvh flex-col max-lg:pb-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom))]">
+        <div
+            className={cn(
+                "flex min-h-dvh flex-col",
+                !bare &&
+                    "max-lg:pb-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom))]"
+            )}
+        >
             {/* First thing a keyboard reaches: past the header and its menus. */}
             <a
                 href="#main"
@@ -87,7 +108,7 @@ function App() {
             >
                 Skip to content
             </a>
-            <Header />
+            {!bare && <Header />}
             {/* A full screen at least, so a short page (an empty community, a
                 search with no results) doesn't end on the footer. */}
             <main
@@ -96,124 +117,158 @@ function App() {
                 tabIndex={-1}
                 className="min-h-dvh flex-1 outline-none"
             >
-                <PageShell>
-                    <InviteBanner />
-                    <ErrorBoundary key={pathname}>
+                <Frame>
+                    {!bare && <InviteBanner />}
+                    {/* One key for the join pages, so moving between them keeps
+                        their shared frame rather than starting it afresh. */}
+                    <ErrorBoundary key={bare ? "join" : pathname}>
                         <Suspense fallback={<PageLoading />}>
-                            <Routes>
-                                <Route path="/" element={<HomePage />} />
-                                <Route
-                                    path="/user/:username/lists/:listId"
-                                    element={<ListPage />}
-                                />
-                                <Route
-                                    path="/user/:username/gaming-25"
-                                    element={<Gaming25Page />}
-                                />
-                                <Route path="/me/*" element={<MyProfile />} />
-                                <Route
-                                    path="/user/:targetUsername?/:view?"
-                                    element={<ProfilePageRoute />}
-                                />
-                                <Route
-                                    path="/library"
-                                    element={<LibraryPage />}
-                                />
-                                <Route
-                                    path="/progress"
-                                    element={<ProgressPage />}
-                                />
-                                <Route path="/shop" element={<ShopPage />} />
-                                {/* The page was briefly called both things. Kept so
+                            {/* Each page fades in once it has loaded. The
+                                shell's own column, so the gap between a
+                                page's parts stays as it was. */}
+                            <div className="flex animate-page-in flex-col gap-6">
+                                <Routes>
+                                    <Route path="/" element={<HomePage />} />
+                                    <Route
+                                        path="/user/:username/lists/:listId"
+                                        element={<ListPage />}
+                                    />
+                                    <Route
+                                        path="/user/:username/gaming-25"
+                                        element={<Gaming25Page />}
+                                    />
+                                    <Route
+                                        path="/me/*"
+                                        element={<MyProfile />}
+                                    />
+                                    <Route
+                                        path="/user/:targetUsername?/:view?"
+                                        element={<ProfilePageRoute />}
+                                    />
+                                    <Route
+                                        path="/library"
+                                        element={<LibraryPage />}
+                                    />
+                                    <Route
+                                        path="/progress"
+                                        element={<ProgressPage />}
+                                    />
+                                    <Route
+                                        path="/shop"
+                                        element={<ShopPage />}
+                                    />
+                                    {/* The page was briefly called both things. Kept so
                             shared links and bookmarks still land. */}
-                                <Route
-                                    path="/catalogue"
-                                    element={<LibraryRedirect />}
-                                />
-                                <Route
-                                    path="/game/:gameID"
-                                    element={<GamePage />}
-                                />
-                                <Route
-                                    path="/game/:gameID/similar"
-                                    element={<HubPage kind="similar" />}
-                                />
-                                <Route
-                                    path="/games/best/:year"
-                                    element={<HubPage kind="year" />}
-                                />
-                                <Route
-                                    path="/games/genre/:slug"
-                                    element={<HubPage kind="genre" />}
-                                />
-                                <Route
-                                    path="/games/platform/:slug"
-                                    element={<HubPage kind="platform" />}
-                                />
-                                <Route
-                                    path="/games/upcoming"
-                                    element={<HubPage kind="upcoming" />}
-                                />
-                                <Route
-                                    path="/review/:reviewId"
-                                    element={<ReviewPage />}
-                                />
-                                <Route
-                                    path="/people"
-                                    element={<PeoplePage />}
-                                />
-                                <Route
-                                    path="/community"
-                                    element={<CommunityPage />}
-                                />
-                                <Route
-                                    path="/community/new"
-                                    element={<NewThreadPage />}
-                                />
-                                <Route
-                                    path="/community/thread/:threadId"
-                                    element={<ThreadPage />}
-                                />
-                                <Route
-                                    path="/settings"
-                                    element={<SettingsPage />}
-                                />
-                                <Route
-                                    path="/reset-password"
-                                    element={<ResetPasswordPage />}
-                                />
-                                <Route
-                                    path="/unsubscribe"
-                                    element={<UnsubscribePage />}
-                                />
+                                    <Route
+                                        path="/catalogue"
+                                        element={<LibraryRedirect />}
+                                    />
+                                    <Route
+                                        path="/game/:gameID"
+                                        element={<GamePage />}
+                                    />
+                                    <Route
+                                        path="/game/:gameID/similar"
+                                        element={<HubPage kind="similar" />}
+                                    />
+                                    <Route
+                                        path="/games/best/:year"
+                                        element={<HubPage kind="year" />}
+                                    />
+                                    <Route
+                                        path="/games/genre/:slug"
+                                        element={<HubPage kind="genre" />}
+                                    />
+                                    <Route
+                                        path="/games/platform/:slug"
+                                        element={<HubPage kind="platform" />}
+                                    />
+                                    <Route
+                                        path="/games/upcoming"
+                                        element={<HubPage kind="upcoming" />}
+                                    />
+                                    <Route
+                                        path="/review/:reviewId"
+                                        element={<ReviewPage />}
+                                    />
+                                    <Route
+                                        path="/people"
+                                        element={<PeoplePage />}
+                                    />
+                                    <Route
+                                        path="/community"
+                                        element={<CommunityPage />}
+                                    />
+                                    <Route
+                                        path="/community/new"
+                                        element={<NewThreadPage />}
+                                    />
+                                    <Route
+                                        path="/community/thread/:threadId"
+                                        element={<ThreadPage />}
+                                    />
+                                    <Route
+                                        path="/settings"
+                                        element={<SettingsPage />}
+                                    />
+                                    <Route
+                                        path="/reset-password"
+                                        element={<ResetPasswordPage />}
+                                    />
+                                    <Route element={<JoinLayout />}>
+                                        <Route
+                                            path="/join"
+                                            element={<JoinPage />}
+                                        />
+                                        <Route
+                                            path="/join/confirmed"
+                                            element={<JoinConfirmedPage />}
+                                        />
+                                        <Route
+                                            path="/login"
+                                            element={<LoginPage />}
+                                        />
+                                    </Route>
+                                    <Route
+                                        path="/unsubscribe"
+                                        element={<UnsubscribePage />}
+                                    />
 
-                                {/* Stubs, so the footer never links into nothing. */}
-                                <Route
-                                    path="/privacy"
-                                    element={<PrivacyPage />}
-                                />
-                                <Route path="/terms" element={<TermsPage />} />
-                                <Route
-                                    path="/contact"
-                                    element={<ContactPage />}
-                                />
+                                    {/* Stubs, so the footer never links into nothing. */}
+                                    <Route
+                                        path="/privacy"
+                                        element={<PrivacyPage />}
+                                    />
+                                    <Route
+                                        path="/terms"
+                                        element={<TermsPage />}
+                                    />
+                                    <Route
+                                        path="/contact"
+                                        element={<ContactPage />}
+                                    />
 
-                                <Route
-                                    path="/admin/*"
-                                    element={<AdminGate />}
-                                />
+                                    <Route
+                                        path="/admin/*"
+                                        element={<AdminGate />}
+                                    />
 
-                                <Route path="*" element={<NotFoundPage />} />
-                            </Routes>
+                                    <Route
+                                        path="*"
+                                        element={<NotFoundPage />}
+                                    />
+                                </Routes>
+                            </div>
                         </Suspense>
                     </ErrorBoundary>
-                </PageShell>
+                </Frame>
             </main>
-            <Footer />
-            <TabBar />
-            <AccountFormModal />
+            {!bare && <Footer />}
+            {!bare && <TabBar />}
+            <AccountFormHost />
             <ChooseUsername />
-            <FirstLoginWelcome />
+            <WelcomeGate />
+            <SetupSheetHost />
             <ProgressMoments />
             <ReferralCapture />
             <AuthLinkResult />

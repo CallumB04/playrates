@@ -2,7 +2,7 @@ import { useState } from "react";
 import { BellRing, Check } from "lucide-react";
 import { patchNoteAnnouncement, type AdminPatchNote } from "@playrates/shared";
 import Button from "../ui/Button";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import SegmentedChoice from "../ui/SegmentedChoice";
 import Toggle from "../ui/Toggle";
 import { useNotify } from "../../contexts/NotificationContext";
@@ -101,18 +101,29 @@ const PatchNoteNotify = ({ note }: { note: AdminPatchNote }) => {
                 Send notification
             </ActionButton>
             {open && (
-                <Modal
+                <Popup
                     onClose={close}
-                    labelledBy={titleId}
-                    className="w-full max-w-md"
+                    titleId={titleId}
+                    width="w-full sm:max-w-md"
+                    title="Send these patch notes"
+                    footer={
+                        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <Button
+                                variant="secondary"
+                                onClick={close}
+                                disabled={pending}
+                            >
+                                Cancel
+                            </Button>
+                            <Button onClick={submit} disabled={pending}>
+                                {audience === "me"
+                                    ? "Send to me"
+                                    : "Send to everyone"}
+                            </Button>
+                        </div>
+                    }
                 >
-                    <h2
-                        id={titleId}
-                        className="border-b border-subtle pb-3 font-display text-section text-content"
-                    >
-                        Send these patch notes
-                    </h2>
-                    <div className="flex flex-col gap-4 pt-4">
+                    <div className="flex flex-col gap-4">
                         <SegmentedChoice
                             segments={AUDIENCES}
                             value={audience}
@@ -130,21 +141,7 @@ const PatchNoteNotify = ({ note }: { note: AdminPatchNote }) => {
                             {explained}
                         </p>
                     </div>
-                    <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                        <Button
-                            variant="secondary"
-                            onClick={close}
-                            disabled={pending}
-                        >
-                            Cancel
-                        </Button>
-                        <Button onClick={submit} disabled={pending}>
-                            {audience === "me"
-                                ? "Send to me"
-                                : "Send to everyone"}
-                        </Button>
-                    </div>
-                </Modal>
+                </Popup>
             )}
         </>
     );

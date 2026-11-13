@@ -353,8 +353,8 @@ const SettingsPage = () => {
     if (!user) {
         return (
             <EmptyPlate
-                title="Sign in to change your settings"
-                action={<Button onClick={openLogin}>Sign in</Button>}
+                title="Log in to change your settings"
+                action={<Button onClick={openLogin}>Log in</Button>}
             />
         );
     }
@@ -656,7 +656,9 @@ const SettingsPage = () => {
             <Card padding="none" tone="danger" className="overflow-hidden">
                 <div className="flex flex-wrap items-center gap-5 px-5 py-5">
                     <p className="max-w-[60ch] flex-1 text-body-sm text-content-secondary">
-                        Your {formatCount(stats?.logCount ?? 0)} logs and
+                        {/* Without the count until it's known: "Your 0
+                            logs" would undersell what goes. */}
+                        Your{stats && ` ${formatCount(stats.logCount)}`} logs and
                         everything attached to them will be deleted. This cannot
                         be undone.
                     </p>

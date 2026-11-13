@@ -12,6 +12,7 @@ export interface ThreadCardRow extends CommunityThreadRow {
   game_title: string | null;
   game_slug: string | null;
   game_cover_url: string | null;
+  game_banner_url: string | null;
   game_has_sexual_content: boolean;
   author_username: string | null;
   author_first_name: string | null;

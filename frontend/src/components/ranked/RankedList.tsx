@@ -37,10 +37,10 @@ import {
     ArrowUp,
     ArrowUpToLine,
 } from "lucide-react";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import Button from "../ui/Button";
 import { NumberInput } from "../ui/Input";
-import GameCover from "../game/GameCover";
+import { cn } from "../../lib/cn";
 import { moveTo } from "../../pages/ProfilePage/lib/wishlist";
 import type { RankedRowHandle } from "./RankedGameRow";
 
@@ -354,30 +354,17 @@ const RowSheet = ({
     };
 
     return (
-        <Modal onClose={onClose} labelledBy={titleId} className="sm:w-md">
-            <div className="flex items-center gap-3 pr-10">
-                <GameCover
-                    sizes="40px"
-                    coverUrl={coverUrl}
-                    title={title}
-                    className="aspect-3/4 w-10 shrink-0 rounded-xs"
-                />
-                <div className="min-w-0">
-                    <h2
-                        id={titleId}
-                        className="truncate font-display text-base font-semibold text-content"
-                    >
-                        {title}
-                    </h2>
-                    <p className="text-label text-content-muted">
-                        {describe(rank, total)}
-                    </p>
-                </div>
-            </div>
-
+        <Popup
+            onClose={onClose}
+            titleId={titleId}
+            width="sm:w-md"
+            title={title}
+            cover={coverUrl}
+            blurb={describe(rank, total)}
+        >
             {canReorder && (
                 <>
-                    <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                         <Button
                             variant="secondary"
                             size="touch"
@@ -450,11 +437,18 @@ const RowSheet = ({
             )}
 
             {hint && (
-                <p className="mt-4 text-body-sm text-content-muted">{hint}</p>
+                <p
+                    className={cn(
+                        "text-body-sm text-content-muted",
+                        canReorder && "mt-4"
+                    )}
+                >
+                    {hint}
+                </p>
             )}
 
             {children}
-        </Modal>
+        </Popup>
     );
 };
 

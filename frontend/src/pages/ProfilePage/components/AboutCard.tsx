@@ -31,6 +31,8 @@ interface Line {
     value: string | null;
     /** Said in place of a value the owner can't set from here. */
     note?: string;
+    /** Online now: in the status's own colour, as the header shows it. */
+    live?: boolean;
 }
 
 const LINK_ROWS = ABOUT_ROWS.filter((row) => row.group === "socials");
@@ -114,6 +116,7 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
                       : facts.lastSeen
                         ? lastSeenText(facts.lastSeen, profile.online)
                         : null,
+            live: fact === "lastSeen" && !!facts.lastSeen && profile.online,
             note:
                 fact === "lastSeen" && owner?.hideOnline
                     ? "Hidden with your online status"
@@ -169,7 +172,7 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
 
             {lines.length > 0 && (
                 <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-5 gap-y-1.5 text-body-sm">
-                    {lines.map(({ key, label, value, note }) => (
+                    {lines.map(({ key, label, value, note, live }) => (
                         /* `contents` so each line's cells sit in the one grid:
                            the labels share a column however long they run. */
                         <div
@@ -183,9 +186,11 @@ const AboutCard = ({ profile, owner }: AboutCardProps) => {
                             <dd
                                 className={cn(
                                     "min-w-0 break-words",
-                                    value
-                                        ? "text-content"
-                                        : "text-content-muted"
+                                    live
+                                        ? "text-success"
+                                        : value
+                                          ? "text-content"
+                                          : "text-content-muted"
                                 )}
                             >
                                 {value ?? note ?? "Not set"}

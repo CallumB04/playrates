@@ -5,6 +5,7 @@ import { unfinished } from "../../lib/setupChecklist";
 import { Link, useLocation } from "react-router-dom";
 import { Database, Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import Skeleton from "../ui/Skeleton";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import Button from "../ui/Button";
 import AccountMenu from "./AccountMenu";
@@ -20,7 +21,7 @@ import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
  *  (a game's art, say) carry up behind it. */
 const Header = () => {
     const setup = unfinished(useSetupSteps());
-    const { user } = useAuth();
+    const { user, isLoading } = useAuth();
     const handleSignOut = useSignOut();
     const { openLogin, openSignup } = useAccountForm();
     const location = useLocation();
@@ -147,6 +148,11 @@ const Header = () => {
                                     />
                                 </span>
                             </>
+                        ) : isLoading ? (
+                            // Signed in but the profile still on its way: a
+                            // place for the avatar, not the log-in buttons
+                            // of someone who just logged in.
+                            <Skeleton round className="size-9" />
                         ) : (
                             <div className="flex items-center gap-3">
                                 {/* On a phone too: someone coming back looks
@@ -160,13 +166,16 @@ const Header = () => {
                                     onClick={openLogin}
                                     className="max-sm:min-h-11 max-sm:px-3"
                                 >
-                                    Sign in
+                                    Log in
                                 </Button>
-                                <span className="hidden sm:contents">
-                                    <Button size="sm" onClick={openSignup}>
-                                        Join PlayRates
-                                    </Button>
-                                </span>
+                                {/* Not on the join pages themselves. */}
+                                {!location.pathname.startsWith("/join") && (
+                                    <span className="hidden sm:contents">
+                                        <Button size="sm" onClick={openSignup}>
+                                            Join PlayRates
+                                        </Button>
+                                    </span>
+                                )}
                             </div>
                         )}
                     </div>

@@ -374,6 +374,26 @@ describe("NotificationItem", () => {
             );
         });
 
+        it("goes nowhere, and says why, when it's about a hidden adult game", () => {
+            renderItem({
+                ...welcome(),
+                kind: "community_reply",
+                actor,
+                threadId: 4,
+                threadTitle: "a thread about an adult game",
+                messageId: 9,
+                excerpt: "",
+                hidden: true,
+            } as AppNotification);
+
+            expect(
+                screen.queryByRole("link", { name: /replied to you/ })
+            ).toBeNull();
+            expect(
+                screen.getByText("Hidden by your settings.")
+            ).toBeInTheDocument();
+        });
+
         it("stops counting a thread's new messages at 99+", () => {
             renderItem({
                 ...welcome(),

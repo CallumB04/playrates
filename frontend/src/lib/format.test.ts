@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
     capitalise,
     formatCount,
+    formatOrdinal,
     formatMessageCount,
     formatDate,
     formatFraction,
@@ -176,6 +177,26 @@ describe("formatLogCount", () => {
         expect(formatLogCount(1)).toBe("1 log");
         expect(formatLogCount(3)).toBe("3 logs");
         expect(formatLogCount(1284)).toBe("1,284 logs");
+    });
+});
+
+describe("formatOrdinal", () => {
+    it("gives each place its suffix, the teens included", () => {
+        expect(
+            [1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101].map(formatOrdinal)
+        ).toEqual([
+            "1st",
+            "2nd",
+            "3rd",
+            "4th",
+            "11th",
+            "12th",
+            "13th",
+            "21st",
+            "22nd",
+            "23rd",
+            "101st",
+        ]);
     });
 });
 

@@ -247,13 +247,14 @@ describe("useDismiss", () => {
         return { inside, outside, onDismiss, cleanup };
     };
 
+    // A pointer, not a mouse: iOS sends no mousedown for a tap on text.
     it("dismisses on a press outside, and not on one inside", () => {
         const { inside, outside, onDismiss, cleanup } = setup(true);
 
-        inside.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+        inside.dispatchEvent(new Event("pointerdown", { bubbles: true }));
         expect(onDismiss).not.toHaveBeenCalled();
 
-        outside.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+        outside.dispatchEvent(new Event("pointerdown", { bubbles: true }));
         expect(onDismiss).toHaveBeenCalledTimes(1);
         cleanup();
     });
@@ -262,9 +263,9 @@ describe("useDismiss", () => {
        stayed open while another status was chosen beside it. */
     it("still hears a press whose bubbling something stopped", () => {
         const { outside, onDismiss, cleanup } = setup(true);
-        outside.addEventListener("mousedown", (e) => e.stopPropagation());
+        outside.addEventListener("pointerdown", (e) => e.stopPropagation());
 
-        outside.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+        outside.dispatchEvent(new Event("pointerdown", { bubbles: true }));
         expect(onDismiss).toHaveBeenCalledTimes(1);
         cleanup();
     });
@@ -272,7 +273,7 @@ describe("useDismiss", () => {
     it("does nothing while disabled", () => {
         const { outside, onDismiss, cleanup } = setup(false);
 
-        outside.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+        outside.dispatchEvent(new Event("pointerdown", { bubbles: true }));
         expect(onDismiss).not.toHaveBeenCalled();
         cleanup();
     });

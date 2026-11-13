@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { REFERRAL } from "@playrates/shared";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import { CopyLink, ShareTargets } from "../share/ShareParts";
 import { TokenCoin } from "./TokenAmount";
 import { cn } from "../../lib/cn";
@@ -55,22 +55,14 @@ const InviteSheet = ({
     const url = inviteUrl(username, publicProfile);
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full max-w-[440px]"
+            titleId={titleId}
+            width="w-full sm:max-w-[440px]"
+            title="Invite friends"
+            blurb="Every friend who joins with your link earns you both:"
         >
-            <h2
-                id={titleId}
-                className="pr-10 font-display text-section text-content"
-            >
-                Invite friends
-            </h2>
-            <p className="mt-1 text-body-sm text-content-secondary">
-                Every friend who joins with your link earns you both:
-            </p>
-
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2">
                 <Reward
                     who="You get"
                     tone="you"
@@ -92,9 +84,9 @@ const InviteSheet = ({
             <ShareTargets
                 url={url}
                 text="Track your games with me on PlayRates"
-                className="mt-4 border-t border-subtle pt-4 pb-3 sm:pb-0"
+                className="mt-4 border-t border-subtle pt-4"
             />
-        </Modal>
+        </Popup>
     );
 };
 

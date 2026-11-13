@@ -29,7 +29,7 @@ describe("whyCannotLove", () => {
     });
 
     it("asks a signed-out viewer to sign in, and stops you loving your own", () => {
-        expect(whyCannotLove(undefined, "owner")).toBe("Sign in to love it");
+        expect(whyCannotLove(undefined, "owner")).toBe("Log in to love it");
         expect(whyCannotLove("owner", "owner")).toBe("You can’t love your own");
     });
 });

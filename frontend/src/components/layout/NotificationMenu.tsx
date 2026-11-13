@@ -122,7 +122,7 @@ const NotificationMenu = () => {
                         role="dialog"
                         aria-labelledby={titleId}
                         className={popoverClass(
-                            "absolute top-[calc(100%+0.6rem)] right-0 z-40 w-[24rem] p-3",
+                            "absolute top-[calc(100%+0.6rem)] right-0 z-40 w-[24rem] p-3 [--pop-origin:top_right]",
                             "menu"
                         )}
                     >

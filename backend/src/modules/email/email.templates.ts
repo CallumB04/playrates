@@ -23,6 +23,7 @@ import {
   sortedItems,
   type EmailGame,
   type PatchNote,
+  type ReplyReason,
   type AnnouncementTone,
   type EmailScope,
   type RichTextDoc,
@@ -192,6 +193,8 @@ export const replyEmail = (
     messageId: number;
     /** Spoilers already hidden, as the in-app notification has it. */
     excerpt: string;
+    /** Why it reached them: as the bell says it. */
+    reason?: ReplyReason;
   },
   links: EmailLinks,
 ): RenderedEmail => {
@@ -199,17 +202,30 @@ export const replyEmail = (
     links,
     `/community/thread/${data.threadId}#message-${data.messageId}`,
   );
+  const reason = data.reason ?? "reply";
+  const did =
+    reason === "thread"
+      ? "replied in your thread"
+      : reason === "conversation"
+        ? "also replied in"
+        : "replied to you in";
+  const title =
+    reason === "thread"
+      ? `${data.actor} replied in your thread`
+      : reason === "conversation"
+        ? `${data.actor} also replied`
+        : `${data.actor} replied to you`;
   return build({
     scope: "replies",
     links,
-    subject: `${data.actor} replied to you in ${clip(data.threadTitle, 60)}`,
-    preview: data.excerpt || `${data.actor} replied to you.`,
+    subject: `${data.actor} ${did} ${clip(data.threadTitle, 60)}`,
+    preview: data.excerpt || `${title}.`,
     lead: emailPerson({
       name: data.actor,
       avatar: data.actorAvatar ?? null,
       line: `In ${escapeHtml(data.threadTitle)}`,
     }),
-    title: `${data.actor} replied to you`,
+    title,
     body: [
       data.excerpt ? emailQuote(escapeHtml(data.excerpt)) : "",
       emailButton(href, "See the reply"),
@@ -234,7 +250,7 @@ const NOUNS: Record<string, string> = {
   reaction: "reaction",
 };
 const SINGLES: Record<string, string> = {
-  slot_showcase: "an extra showcase slot",
+  slot_showcase: "an extra badge showcase slot",
   slot_pinned_list: "an extra pinned list slot",
   slot_pinned_review: "an extra pinned review slot",
   streak_shield: "a spare streak shield",
@@ -257,6 +273,7 @@ export const giftPath = (item: string, username: string): string => {
   if (!group) return "/shop";
   if (group === "shield") return "/progress#streak";
   if (group === "font" || group === "colour") return "/progress#name";
+  if (group === "reaction") return "/shop#reaction";
   return `/progress#${group}`;
 };
 

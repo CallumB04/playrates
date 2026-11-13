@@ -27,7 +27,7 @@ export const PrivateProfile = ({
     }
 
     const body = !signedIn
-        ? "Sign in and add them as a friend to see their games, reviews and friends."
+        ? "Log in and add them as a friend to see their games, reviews and friends."
         : relation === "request-sent"
           ? "You’ve sent a friend request. Their profile opens up once they accept."
           : relation === "request-received"

@@ -16,7 +16,7 @@ const MobileSearch = ({ onClose }: MobileSearchProps) => {
             role="dialog"
             aria-modal="true"
             aria-label="Search"
-            className="fixed inset-0 z-50 flex h-dvh animate-settle flex-col bg-surface px-5 pt-6 pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] sm:px-8 xl:hidden"
+            className="fixed inset-0 z-50 flex h-dvh animate-dialog-in flex-col bg-surface px-5 pt-6 pb-[calc(--spacing(4)+env(safe-area-inset-bottom))] sm:px-8 xl:hidden"
         >
             <div className="mb-4 flex items-center justify-between gap-4">
                 <span className="font-display text-xl font-bold text-content sm:text-2xl">

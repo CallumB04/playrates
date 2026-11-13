@@ -110,6 +110,13 @@ export const formatRatingOutOfTen = (
 export const formatCount = (value: number | null | undefined): string =>
     value === null || value === undefined ? "–" : value.toLocaleString("en-GB");
 
+const ORDINAL = new Intl.PluralRules("en-GB", { type: "ordinal" });
+const SUFFIX: Record<string, string> = { one: "st", two: "nd", few: "rd" };
+
+/** A place in a ranking: "1st", "2nd", "11th", "23rd". */
+export const formatOrdinal = (value: number): string =>
+    `${formatCount(value)}${SUFFIX[ORDINAL.select(value)] ?? "th"}`;
+
 /** "1 log", "1,284 logs": a bare figure reads as a rating or a year. */
 export const formatLogCount = (value: number): string =>
     `${formatCount(value)} ${value === 1 ? "log" : "logs"}`;

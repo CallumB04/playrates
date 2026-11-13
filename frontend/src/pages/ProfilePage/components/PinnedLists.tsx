@@ -4,6 +4,7 @@ import { Pin } from "lucide-react";
 import type { GameListSummary } from "@playrates/shared";
 import Panel from "../../../components/ui/Panel";
 import Button from "../../../components/ui/Button";
+import { TextSkeleton } from "../../../components/ui/Skeleton";
 import ListCard from "../../../components/lists/ListCard";
 import { fetchList } from "../../../api/endpoints/lists";
 import { queryKeys } from "../../../api/queryKeys";
@@ -30,7 +31,14 @@ const PinnedLists = ({ username, ids, isOwner }: PinnedListsProps) => {
         })),
     });
     const shown = lists.flatMap((q) => (q.data ? [q.data] : []));
-    if (isOwner) return <OwnPinnedLists username={username} shown={shown} />;
+    if (isOwner)
+        return (
+            <OwnPinnedLists
+                username={username}
+                shown={shown}
+                loading={lists.some((q) => q.isPending)}
+            />
+        );
     if (shown.length === 0) return null;
     return (
         <Panel title={<Title />}>
@@ -69,9 +77,12 @@ const usePinnableLists = (username: string) => {
 const OwnPinnedLists = ({
     username,
     shown,
+    loading,
 }: {
     username: string;
     shown: GameListSummary[];
+    /** Pins on their way, so not yet the prompt to add some. */
+    loading: boolean;
 }) => {
     const { slots } = usePins("pinnedLists");
     const { lists } = usePinnableLists(username);
@@ -94,7 +105,11 @@ const OwnPinnedLists = ({
                 </Button>
             }
         >
-            {shown.length > 0 ? (
+            {loading ? (
+                <div aria-busy className="py-1">
+                    <TextSkeleton lines={2} />
+                </div>
+            ) : shown.length > 0 ? (
                 <Lists lists={shown} />
             ) : (
                 <p className="py-1 text-body-sm text-content-muted">

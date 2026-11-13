@@ -19,7 +19,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
             text: ReactNode,
             type: NotificationType,
             severity?: NotificationSeverity,
-            action?: ToastAction
+            action?: ToastAction,
+            options?: { join?: ReactNode }
         ) =>
             dispatch({
                 kind: "push",
@@ -28,6 +29,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
                 type,
                 severity,
                 action,
+                at: Date.now(),
+                join: options?.join,
             }),
         []
     );

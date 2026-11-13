@@ -45,7 +45,15 @@ export interface NotificationsRepository {
   /** Enough of each unread inbox row to tell which share a row. */
   unreadForRows(
     userId: string,
-  ): Promise<{ id: number; kind: string; created_at: string; thread_id: number | null }[]>;
+  ): Promise<
+    {
+      id: number;
+      kind: string;
+      created_at: string;
+      thread_id: number | null;
+      reason: string | null;
+    }[]
+  >;
   markSeen(userId: string): Promise<void>;
   /** Who sent the unread friend requests still in the inbox. */
   unreadRequestActors(userId: string): Promise<string[]>;
@@ -194,13 +202,14 @@ export const createNotificationsRepository = (
         id: number;
         kind: string;
         created_at: string;
-        data: { threadId?: number } | null;
+        data: { threadId?: number; reason?: string } | null;
       }[]
     ).map((r) => ({
       id: r.id,
       kind: r.kind,
       created_at: r.created_at,
       thread_id: r.data?.threadId ?? null,
+      reason: r.data?.reason ?? null,
     }));
   },
 

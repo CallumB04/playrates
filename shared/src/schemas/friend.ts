@@ -41,6 +41,15 @@ export interface TasteMatch {
   agreement: number;
 }
 
+/** Someone who plays what you play: games you've both logged, a few
+ *  named. Public profiles only, adult games never among them. */
+export interface SharedPlayer {
+  user: FriendUser;
+  /** Games you have both played or are playing. */
+  shared: number;
+  games: { id: number; title: string; coverUrl: string | null }[];
+}
+
 /** Someone who rated a game highly, with what they gave it. */
 export interface GameFan {
   user: FriendUser;
@@ -63,6 +72,8 @@ export interface FriendActivity {
     id: number;
     title: string;
     coverUrl: string | null;
+    /** Wide art for a card's backdrop. Absent from an API older than it. */
+    artworkUrl?: string | null;
   };
   status: string;
   playedStatus: string | null;

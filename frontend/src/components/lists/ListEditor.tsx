@@ -9,7 +9,7 @@ import {
     type ProfileVisibility,
     type UpdateListInput,
 } from "@playrates/shared";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import Button from "../ui/Button";
 import Field from "../ui/Field";
 import { Input, Textarea } from "../ui/Input";
@@ -131,18 +131,31 @@ const ListEditor = ({
     };
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full max-w-[520px]"
+            titleId={titleId}
+            width="w-full sm:max-w-[520px]"
+            title={list ? "Edit list" : "New list"}
+            footer={
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <Button
+                        variant="secondary"
+                        onClick={onClose}
+                        className="w-full sm:w-auto"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={() => void save()}
+                        disabled={saving || nameMissing}
+                        className="w-full sm:w-auto"
+                    >
+                        <Check size={15} aria-hidden />
+                        {saving ? "Saving…" : list ? "Save" : "Create list"}
+                    </Button>
+                </div>
+            }
         >
-            <h2
-                id={titleId}
-                className="border-b border-subtle pb-3 font-display text-section text-content"
-            >
-                {list ? "Edit list" : "New list"}
-            </h2>
-
             <SegmentedChoice
                 label="List editor views"
                 segments={[
@@ -157,7 +170,6 @@ const ListEditor = ({
                 onChange={setView}
                 panelId={panelId}
                 fill
-                className="mt-3"
             />
 
             {/* Stacked in one cell, so the popup holds the height of the
@@ -340,25 +352,7 @@ const ListEditor = ({
                     </div>
                 </div>
             </div>
-
-            <div className="mt-4 flex flex-col-reverse gap-2 border-t border-subtle pt-4 sm:flex-row sm:justify-end">
-                <Button
-                    variant="secondary"
-                    onClick={onClose}
-                    className="w-full sm:w-auto"
-                >
-                    Cancel
-                </Button>
-                <Button
-                    onClick={() => void save()}
-                    disabled={saving || nameMissing}
-                    className="w-full sm:w-auto"
-                >
-                    <Check size={15} aria-hidden />
-                    {saving ? "Saving…" : list ? "Save" : "Create list"}
-                </Button>
-            </div>
-        </Modal>
+        </Popup>
     );
 };
 

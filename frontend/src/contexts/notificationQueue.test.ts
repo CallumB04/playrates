@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     DWELL_MS,
+    JOIN_WINDOW_MS,
     MAX_VISIBLE,
     notificationQueue,
     type QueueAction,
@@ -11,7 +12,14 @@ const push = (
     id: number,
     type: Toast["type"] = "success",
     severity?: Toast["severity"]
-): QueueAction => ({ kind: "push", id, text: `toast ${id}`, type, severity });
+): QueueAction => ({
+    kind: "push",
+    id,
+    text: `toast ${id}`,
+    type,
+    severity,
+    at: id * 1000,
+});
 
 const run = (actions: QueueAction[]): Toast[] =>
     actions.reduce(notificationQueue, [] as Toast[]);
@@ -48,6 +56,7 @@ describe("notificationQueue", () => {
                 text: "New badge",
                 type: "success",
                 action: { label: "Share", onClick: () => {} },
+                at: 0,
             },
         ])[0]!;
         const undo = run([
@@ -57,6 +66,7 @@ describe("notificationQueue", () => {
                 text: "Cleared",
                 type: "info",
                 action: { label: "Undo", onClick: () => {}, dwell: 10_000 },
+                at: 0,
             },
         ])[0]!;
         expect(share.dwell).toBeNull();
@@ -134,5 +144,44 @@ describe("notificationQueue", () => {
         });
 
         expect(ids(state)).toEqual([2]);
+    });
+
+    describe("a follow-up that joins", () => {
+        const follow = (at: number): QueueAction => ({
+            kind: "push",
+            id: 99,
+            text: "+5 XP: Rated a game",
+            type: "success",
+            at,
+            join: "+5 XP",
+        });
+
+        it("goes on the end of a fresh success rather than stacking", () => {
+            const toasts = run([push(1), follow(1000 + 800)]);
+            expect(ids(toasts)).toEqual([1]);
+            expect(toasts[0]!.text).not.toBe("toast 1");
+        });
+
+        it("stands alone once the one before has gone stale", () => {
+            const toasts = run([push(1), follow(1000 + JOIN_WINDOW_MS + 1)]);
+            expect(ids(toasts)).toEqual([1, 99]);
+        });
+
+        it("never joins an error, or one waiting on a button", () => {
+            expect(ids(run([push(1, "error"), follow(1500)]))).toEqual([1, 99]);
+            const offer: QueueAction = {
+                kind: "push",
+                id: 2,
+                text: "New badge",
+                type: "success",
+                action: { label: "Share", onClick: () => {} },
+                at: 1000,
+            };
+            expect(ids(run([offer, follow(1500)]))).toEqual([2, 99]);
+        });
+
+        it("stands alone with nothing to join", () => {
+            expect(ids(run([follow(0)]))).toEqual([99]);
+        });
     });
 });

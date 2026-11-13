@@ -155,7 +155,7 @@ const ShelfPanel = ({
                 ) : list ? (
                     list
                 ) : (
-                    <div className="grid grid-cols-2 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
+                    <div className="grid stagger grid-cols-2 gap-x-3.5 gap-y-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
                         {entries.map((entry) => (
                             <ShelfTile
                                 key={entry.gameId}

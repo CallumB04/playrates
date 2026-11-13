@@ -359,6 +359,25 @@ describe("reviews feed", () => {
     ]);
   });
 
+  it("brings each review's game art, for a card to sit on", async () => {
+    const seed = baseSeed();
+    const { app } = buildTestApp({
+      seed: {
+        ...seed,
+        games: [
+          { ...seed.games[0]!, banner_url: "https://img.test/banner.jpg" },
+        ],
+        reviews: [buildReview()],
+      },
+    });
+
+    const response = await request(app).get("/api/v1/reviews");
+
+    expect(response.body.data[0].game.artworkUrl).toBe(
+      "https://img.test/banner.jpg",
+    );
+  });
+
   /* The feed is public, so a private review must not leak into it even
      though its author can see it on their own profile. */
   it("leaves private reviews out", async () => {
@@ -437,5 +456,64 @@ describe("upvoting a review", () => {
     const response = await request(app).post("/api/v1/reviews/1/vote");
 
     expect(response.status).toBe(401);
+  });
+});
+
+describe("reviews of an adult game", () => {
+  /** devuser (USER_A) reviewed game 1, made adult, and pinned it; USER_B
+   *  can be opted in. */
+  const adultSeed = (optedIn = false) => {
+    const seed = baseSeed();
+    return {
+      ...seed,
+      games: seed.games.map((g) => ({ ...g, has_sexual_content: true })),
+      profiles: seed.profiles.map((p) =>
+        p.id === USER_A
+          ? { ...p, pinned_reviews: [1] }
+          : { ...p, show_sexual_content: optedIn },
+      ),
+      gameLogs: [buildGameLog()],
+      reviews: [buildReview()],
+    };
+  };
+  const as = (req: request.Test) =>
+    req.set("Authorization", authHeader(USER_B));
+
+  it("keeps them off a person's reviews and their pinned ones", async () => {
+    const { app } = buildTestApp({ seed: adultSeed() });
+    const listed = await as(request(app).get("/api/v1/users/devuser/reviews"));
+    const pinned = await as(
+      request(app).get("/api/v1/users/devuser/reviews/pinned"),
+    );
+    expect(listed.body.data).toEqual([]);
+    expect(listed.body.meta.total).toBe(0);
+    expect(pinned.body).toEqual([]);
+  });
+
+  it("can't be read, reached through the game or the log, or reacted to", async () => {
+    const { app } = buildTestApp({ seed: adultSeed() });
+    for (const response of [
+      await request(app).get("/api/v1/reviews/1"),
+      await as(request(app).get("/api/v1/games/1/reviews")),
+      await as(request(app).get("/api/v1/users/devuser/logs?gameId=1")),
+      await as(request(app).post("/api/v1/reviews/1/vote")),
+    ])
+      expect(response.status).toBe(404);
+  });
+
+  it("shows them to someone who has chosen to see them", async () => {
+    const { app } = buildTestApp({ seed: adultSeed(true) });
+    const listed = await as(request(app).get("/api/v1/users/devuser/reviews"));
+    expect(listed.body.data).toHaveLength(1);
+    expect(
+      (await as(request(app).get("/api/v1/games/1/reviews"))).body.data,
+    ).toHaveLength(1);
+    expect(
+      (await as(request(app).get("/api/v1/users/devuser/logs?gameId=1")))
+        .status,
+    ).toBe(200);
+    expect(
+      (await as(request(app).get("/api/v1/users/devuser/reviews/pinned"))).body,
+    ).toHaveLength(1);
   });
 });

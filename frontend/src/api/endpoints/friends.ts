@@ -4,6 +4,7 @@ import type {
     FriendRelation,
     GameFan,
     TasteMatch,
+    SharedPlayer,
     Paginated,
 } from "@playrates/shared";
 import { api } from "../client";
@@ -41,6 +42,9 @@ export const fetchUserFriends = async (
 
 export const fetchTasteMatches = async (): Promise<TasteMatch[]> =>
     (await api.get<{ data: TasteMatch[] }>("/me/friends/matches")).data.data;
+
+export const fetchSharedPlayers = async (): Promise<SharedPlayer[]> =>
+    (await api.get<{ data: SharedPlayer[] }>("/me/friends/shared")).data.data;
 
 /** The same for everyone, so sent without the token for the CDN. */
 export const fetchGameFans = async (gameId: number): Promise<GameFan[]> =>

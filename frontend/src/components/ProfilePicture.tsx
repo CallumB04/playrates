@@ -126,7 +126,8 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({
             {body}
         </Link>
     ) : (
-        <div className={className}>{body}</div>
+        // A span, so it can sit in a heading, as the admin's user popup has.
+        <span className={className}>{body}</span>
     );
 };
 

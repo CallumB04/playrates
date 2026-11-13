@@ -16,6 +16,15 @@ describe("YearChart", () => {
         expect(container).toBeEmptyDOMElement();
     });
 
+    // Not yet known is not empty: the note waits, its line held.
+    it("pulses its placeholder bars without the note while loading", () => {
+        const { container } = render(
+            <YearChart logs={[]} emptyNote={NOTE} loading />
+        );
+        expect(screen.getByText(NOTE)).toHaveClass("invisible");
+        expect(container.querySelector(".animate-pulse")).not.toBeNull();
+    });
+
     it("charts a year with something in it instead of the note", () => {
         const finished = buildGameLog({
             status: "played",

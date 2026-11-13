@@ -2,11 +2,20 @@ import { cn } from "../../lib/cn";
 
 /** Still, not shimmering. Aria-hidden throughout — the region that owns the
  *  placeholder carries the live status. */
-export const Skeleton = ({ className }: { className?: string }) => (
+export const Skeleton = ({
+    className,
+    round = false,
+}: {
+    className?: string;
+    /** A circle or a pill, for an avatar or a tag: as a class beside the
+     *  default rounding, either could win. */
+    round?: boolean;
+}) => (
     <span
         aria-hidden="true"
         className={cn(
-            "block animate-pulse rounded-sm bg-surface-sunken",
+            "block animate-pulse bg-surface-sunken",
+            round ? "rounded-full" : "rounded-sm",
             className
         )}
     />

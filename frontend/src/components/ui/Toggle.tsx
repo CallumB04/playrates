@@ -28,14 +28,19 @@ const Toggle = ({
             className={cn(
                 "flex h-[20px] w-[36px] shrink-0 items-center rounded-full border p-[2px] lift",
                 checked
-                    ? "justify-end border-brand-deep bg-brand"
-                    : "justify-start border-strong bg-surface-sunken"
+                    ? "border-brand-deep bg-brand"
+                    : "border-strong bg-surface-sunken"
             )}
         >
+            {/* Slides across rather than jumping, and under a press reaches
+                an eighth further toward where it's going, as a thumb pushing
+                it would. */}
             <span
                 className={cn(
-                    "size-3.5 rounded-full",
-                    checked ? "bg-content-on-solid" : "bg-content-muted"
+                    "h-3.5 w-3.5 rounded-full transition-[translate,width,background-color] duration-200 ease-in-out-strong group-active:w-4",
+                    checked
+                        ? "translate-x-4 bg-content-on-solid group-active:translate-x-3.5"
+                        : "bg-content-muted"
                 )}
             />
         </span>
@@ -50,7 +55,7 @@ const Toggle = ({
             disabled={disabled}
             onClick={() => onChange(!checked)}
             className={cn(
-                "inline-flex min-h-12 items-center gap-2.5 sm:min-h-0",
+                "group inline-flex min-h-12 items-center gap-2.5 sm:min-h-0",
                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
                 disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
                 className

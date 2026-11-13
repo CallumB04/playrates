@@ -5,7 +5,7 @@ import { renderWithProviders } from "../../test/renderWithProviders";
 import AccountFormModal from "./AccountFormModal";
 
 const form = vi.hoisted(() => ({
-    mode: "signup" as const,
+    mode: "login" as "login" | "reset" | null,
     openLogin: vi.fn(),
     openSignup: vi.fn(),
     openReset: vi.fn(),
@@ -18,50 +18,45 @@ vi.mock("../../contexts/AuthContext", () => ({
     useAuth: () => ({ resendConfirmation: vi.fn() }),
 }));
 
-// The form itself is SignupForm's to test; here, only what follows it.
-vi.mock("./SignupForm", () => ({
+// The form itself is LoginForm's to test; here, only what follows it.
+vi.mock("./LoginForm", () => ({
     default: ({
-        onSignedUp,
+        onUnconfirmed,
     }: {
-        onSignedUp: (email: string, signedIn: boolean) => void;
+        onUnconfirmed: (email: string) => void;
     }) => (
-        <>
-            <button onClick={() => onSignedUp("a@b.test", true)}>
-                Signed in
-            </button>
-            <button onClick={() => onSignedUp("a@b.test", false)}>
-                To confirm
-            </button>
-        </>
+        <button onClick={() => onUnconfirmed("a@b.test")}>Unconfirmed</button>
     ),
 }));
 
 beforeEach(() => {
-    form.close.mockClear();
-    form.openLogin.mockClear();
+    form.mode = "login";
+    form.openSignup.mockClear();
 });
 
 describe("AccountFormModal", () => {
-    // It used to open log-in over the new account, which also kept the
-    // welcome from showing.
-    it("closes once sign-up has signed you in", async () => {
+    it("sends someone new to the sign-up page", async () => {
         renderWithProviders(<AccountFormModal />);
         await userEvent.click(
-            screen.getByRole("button", { name: "Signed in" })
+            screen.getByRole("button", { name: "Create an account" })
         );
-        expect(form.close).toHaveBeenCalled();
-        expect(form.openLogin).not.toHaveBeenCalled();
+        expect(form.openSignup).toHaveBeenCalled();
     });
 
-    it("asks for the email to be confirmed when it has to be", async () => {
+    it("asks for the email to be confirmed when logging in needs it", async () => {
         renderWithProviders(<AccountFormModal />);
         await userEvent.click(
-            screen.getByRole("button", { name: "To confirm" })
+            screen.getByRole("button", { name: "Unconfirmed" })
         );
         expect(
             screen.getByRole("heading", { name: "Check your inbox" })
         ).toBeInTheDocument();
         expect(screen.getByText("a@b.test")).toBeInTheDocument();
-        expect(form.close).not.toHaveBeenCalled();
+    });
+
+    it("draws nothing while it's closed", () => {
+        form.mode = null;
+        const { container } = renderWithProviders(<AccountFormModal />);
+        expect(container).toBeEmptyDOMElement();
     });
 });

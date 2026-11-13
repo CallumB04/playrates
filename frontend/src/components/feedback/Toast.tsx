@@ -81,7 +81,7 @@ const Toast = ({ toast, onDismiss, onRemove }: ToastProps) => {
         <li
             className={cn(
                 "grid grid-rows-[1fr] pt-2.5",
-                leaving ? "animate-toast-leave" : "animate-toast-enter"
+                leaving ? "animate-toast-leave" : "animate-toast-in"
             )}
         >
             <div className="min-h-0 overflow-hidden">

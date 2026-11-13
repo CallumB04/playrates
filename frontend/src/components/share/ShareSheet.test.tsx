@@ -41,6 +41,17 @@ describe("ShareSheet", () => {
         expect(screen.getAllByRole("link")).toHaveLength(6);
     });
 
+    it("stays grey, with nothing to download, until it knows which picture", () => {
+        const { container } = renderWithProviders(
+            <ShareSheet {...props} imageUrl={undefined} />
+        );
+        expect(container.ownerDocument.querySelector("img")).toBeNull();
+        expect(
+            container.ownerDocument.querySelector(".animate-pulse")
+        ).not.toBeNull();
+        expect(screen.getByRole("button", { name: "Download" })).toBeDisabled();
+    });
+
     it("hands the picture itself to a share sheet that takes files", async () => {
         const share = vi.fn(async () => undefined);
         Object.assign(navigator, { share, canShare: () => true });

@@ -78,7 +78,11 @@ const WishlistList = ({
             items={shown}
             idOf={idOf}
             rankOf={(entry) => entry.rank}
-            titleOf={(entry) => entry.game?.title ?? "Unknown game"}
+            titleOf={(entry) =>
+                entry.hidden
+                    ? "Adult game"
+                    : (entry.game?.title ?? "Unknown game")
+            }
             coverOf={(entry) => entry.game?.coverUrl ?? null}
             total={wishlist.length}
             canReorder={canReorder}
@@ -97,8 +101,13 @@ const WishlistList = ({
                     ref={row.ref}
                     style={row.style}
                     gameId={entry.gameId}
-                    title={entry.game?.title ?? "Unknown game"}
+                    title={
+                        entry.hidden
+                            ? "Adult game"
+                            : (entry.game?.title ?? "Unknown game")
+                    }
                     coverUrl={entry.game?.coverUrl ?? null}
+                    artworkUrl={entry.game?.artworkUrl}
                     releaseDate={entry.game?.releaseDate}
                     rank={row.rank}
                     handle={row.handle}
@@ -117,8 +126,12 @@ const WishlistList = ({
                             />
                         )
                     }
-                    actions={buildTileActions(entry)}
-                    onMore={row.onMore}
+                    actions={entry.hidden ? [] : buildTileActions(entry)}
+                    adultHidden={entry.hidden}
+                    // A visitor's sheet would hold nothing for a hidden one.
+                    onMore={
+                        entry.hidden && !isMyAccount ? undefined : row.onMore
+                    }
                     // A visitor's sheet only holds what the row shows from sm up.
                     moreOnPhoneOnly={!isMyAccount}
                 />

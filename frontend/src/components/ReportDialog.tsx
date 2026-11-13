@@ -10,7 +10,7 @@ import {
 } from "@playrates/shared";
 import { ApiError, createReport } from "../api";
 import { useNotify } from "../contexts/NotificationContext";
-import Modal from "./ui/Modal";
+import Popup from "./ui/Popup";
 import Button from "./ui/Button";
 import Field from "./ui/Field";
 import { Textarea } from "./ui/Input";
@@ -32,6 +32,7 @@ interface ReportDialogProps {
 
 const ReportDialog = ({ targetType, targetId, onClose }: ReportDialogProps) => {
     const titleId = useId();
+    const formId = useId();
     const notify = useNotify();
     const [reason, setReason] = useState<ReportReason | null>(null);
     const [details, setDetails] = useState("");
@@ -64,20 +65,34 @@ const ReportDialog = ({ targetType, targetId, onClose }: ReportDialogProps) => {
     });
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full max-w-md"
+            titleId={titleId}
+            width="w-full sm:max-w-md"
+            title={`Report this ${NOUNS[targetType]}`}
+            footer={
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={onClose}
+                        disabled={send.isPending}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        form={formId}
+                        disabled={!reason || send.isPending}
+                    >
+                        {send.isPending ? "Sending…" : "Send report"}
+                    </Button>
+                </div>
+            }
         >
-            <h2
-                id={titleId}
-                className="border-b border-subtle pb-3 font-display text-section text-content"
-            >
-                Report this {NOUNS[targetType]}
-            </h2>
-
             <form
-                className="flex flex-col gap-4 pt-4"
+                id={formId}
+                className="flex flex-col gap-4"
                 onSubmit={(event) => {
                     event.preventDefault();
                     if (reason) send.mutate();
@@ -141,22 +156,8 @@ const ReportDialog = ({ targetType, targetId, onClose }: ReportDialogProps) => {
                     </Link>
                     .
                 </p>
-
-                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={onClose}
-                        disabled={send.isPending}
-                    >
-                        Cancel
-                    </Button>
-                    <Button type="submit" disabled={!reason || send.isPending}>
-                        {send.isPending ? "Sending…" : "Send report"}
-                    </Button>
-                </div>
             </form>
-        </Modal>
+        </Popup>
     );
 };
 

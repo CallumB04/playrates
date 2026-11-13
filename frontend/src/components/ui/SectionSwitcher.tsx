@@ -3,7 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { formatCount } from "../../lib/format";
 import type { IconComponent } from "../../lib/icons";
 import { cn } from "../../lib/cn";
-import Modal from "./Modal";
+import Popup from "./Popup";
 
 /* A phone's way around a page with more sections than its width: one
    control that says where you are, and a sheet of the rest. The profile
@@ -80,15 +80,14 @@ export const SwitcherSheet = ({
     onClose: () => void;
     children: ReactNode;
 }) => (
-    <Modal onClose={onClose} labelledBy={titleId} className="w-full max-w-sm">
-        <h2
-            id={titleId}
-            className="pr-10 font-display text-section text-content"
-        >
-            {title}
-        </h2>
-        <ul className="mt-4 grid grid-cols-2 gap-2">{children}</ul>
-    </Modal>
+    <Popup
+        onClose={onClose}
+        titleId={titleId}
+        width="w-full sm:max-w-sm"
+        title={title}
+    >
+        <ul className="grid grid-cols-2 gap-2">{children}</ul>
+    </Popup>
 );
 
 /** What goes inside a tile: the icon and count above, the name below. */

@@ -1,6 +1,7 @@
 import { headlineOf, type ShelfEntry } from "@playrates/shared";
 import type { GameLogSort, Platform } from "@playrates/shared";
 import GameTile, { type TileAction } from "../../../components/game/GameTile";
+import HiddenGameTile from "../../../components/game/HiddenGame";
 import {
     displayStatusFor,
     type GameStatus,
@@ -25,8 +26,9 @@ const ShelfTile = ({
     platforms,
     actions,
 }: ShelfTileProps) => {
+    if (entry.hidden) return <HiddenGameTile />;
     // The shelf shows whatever it is ordered by.
-    const foot = shelfFoot(entry, sort);
+    const foot = shelfFoot(entry, sort, shelf);
     // The best ending of its played runs.
     const played = headlineOf(entry.logs.filter((l) => l.status === "played"));
     /* The consoles it was logged on, where the logs say; the game's own

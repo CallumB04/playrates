@@ -3,7 +3,7 @@ import { Check, ChevronLeft, Gift } from "lucide-react";
 import type { GiftFriend, ShopEntry, ShopGroup } from "@playrates/shared";
 import { ApiError } from "../../api";
 import Button from "../ui/Button";
-import Modal from "../ui/Modal";
+import Popup from "../ui/Popup";
 import { Skeleton } from "../ui/Skeleton";
 import ProfilePicture from "../ProfilePicture";
 import { TokenCoin } from "../progress/TokenAmount";
@@ -145,95 +145,85 @@ const ItemSheet = ({
     }
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full sm:max-w-md"
+            titleId={titleId}
+            width="w-full sm:max-w-md"
+            eyebrow={KIND_OF[item.group]}
+            title={item.label}
+            blurb={<p>{DESCRIPTIONS[item.item]}</p>}
+            footer={
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    {justBought ? (
+                        <Done
+                            text={`Owned. ${formatCount(left ?? 0)} tokens left.`}
+                        />
+                    ) : owned ? (
+                        <Done text="Owned" stamp={false} />
+                    ) : full ? (
+                        <p className="text-body-sm text-content-secondary">
+                            You hold {item.maxOwned}, the most you can.
+                        </p>
+                    ) : (
+                        <span />
+                    )}
+
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                        <Button
+                            size="touch"
+                            variant="secondary"
+                            onClick={() => setGiving(true)}
+                            className="w-full sm:w-auto"
+                        >
+                            <Gift size={16} aria-hidden />
+                            Gift
+                        </Button>
+                        {(owned || justBought) && worn !== null ? (
+                            <Button
+                                size="touch"
+                                disabled={worn || pending}
+                                variant={worn ? "secondary" : "primary"}
+                                onClick={() => wear(item.item, onClose)}
+                                className="w-full sm:w-auto"
+                            >
+                                {worn ? "Active" : "Use it"}
+                            </Button>
+                        ) : !owned && !full && !justBought ? (
+                            <Button
+                                size="touch"
+                                disabled={tokens < item.price || buy.isPending}
+                                onClick={() =>
+                                    buy.mutate(item.item, {
+                                        onSuccess: (result) => {
+                                            setLeft(result.tokens);
+                                            onBought?.();
+                                        },
+                                        onError: (error) =>
+                                            notify(
+                                                error instanceof ApiError
+                                                    ? error.message
+                                                    : "Couldn’t buy that",
+                                                "error"
+                                            ),
+                                    })
+                                }
+                                className="w-full sm:w-auto"
+                            >
+                                Buy
+                            </Button>
+                        ) : null}
+                    </div>
+                </div>
+            }
         >
-            {/* Clear of the close button: a wide preview, as a slot's is,
-                otherwise runs up under it. */}
-            <div className="-mx-4 -mt-4 mb-5 bg-surface-sunken/60 px-4 pt-12 pb-6 sm:-mx-6 sm:-mt-6 sm:px-6">
+            <div className="rounded-lg bg-surface-sunken/60 px-4 py-6">
                 <ItemStage item={item} />
             </div>
-            <p className="text-label-sm text-content-muted">
-                {KIND_OF[item.group]}
-            </p>
-            <h2
-                id={titleId}
-                className="font-display text-section font-semibold text-content"
-            >
-                {item.label}
-            </h2>
-            <p className="mt-1 text-body-sm text-content-secondary">
-                {DESCRIPTIONS[item.item]}
-            </p>
 
             {!owned && !full && !justBought && (
                 <Ledger tokens={tokens} price={item.price} />
             )}
-
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                {justBought ? (
-                    <Done
-                        text={`Owned. ${formatCount(left ?? 0)} tokens left.`}
-                    />
-                ) : owned ? (
-                    <Done text="Owned" stamp={false} />
-                ) : full ? (
-                    <p className="text-body-sm text-content-secondary">
-                        You hold {item.maxOwned}, the most you can.
-                    </p>
-                ) : (
-                    <span />
-                )}
-
-                <div className="flex flex-col-reverse gap-2 sm:flex-row">
-                    <Button
-                        size="touch"
-                        variant="secondary"
-                        onClick={() => setGiving(true)}
-                        className="w-full sm:w-auto"
-                    >
-                        <Gift size={16} aria-hidden />
-                        Gift
-                    </Button>
-                    {(owned || justBought) && worn !== null ? (
-                        <Button
-                            size="touch"
-                            disabled={worn || pending}
-                            variant={worn ? "secondary" : "primary"}
-                            onClick={() => wear(item.item, onClose)}
-                            className="w-full sm:w-auto"
-                        >
-                            {worn ? "Active" : "Use it"}
-                        </Button>
-                    ) : !owned && !full && !justBought ? (
-                        <Button
-                            size="touch"
-                            disabled={tokens < item.price || buy.isPending}
-                            onClick={() =>
-                                buy.mutate(item.item, {
-                                    onSuccess: (result) => {
-                                        setLeft(result.tokens);
-                                        onBought?.();
-                                    },
-                                    onError: (error) =>
-                                        notify(
-                                            error instanceof ApiError
-                                                ? error.message
-                                                : "Couldn’t buy that",
-                                            "error"
-                                        ),
-                                })
-                            }
-                            className="w-full sm:w-auto"
-                        >
-                            Buy
-                        </Button>
-                    ) : null}
-                </div>
-            </div>
-        </Modal>
+        </Popup>
     );
 };
 
@@ -277,12 +267,11 @@ const GiftSheet = ({
     const [sent, setSent] = useState<{ to: string; left: number } | null>(null);
 
     return (
-        <Modal
+        <Popup
             onClose={onClose}
-            labelledBy={titleId}
-            className="w-full sm:max-w-md"
-        >
-            <div className="flex min-h-11 items-center gap-2 pr-10">
+            titleId={titleId}
+            width="w-full sm:max-w-md"
+            eyebrow={
                 <button
                     type="button"
                     onClick={onBack}
@@ -291,25 +280,72 @@ const GiftSheet = ({
                 >
                     <ChevronLeft size={18} aria-hidden />
                 </button>
-                <h2
-                    id={titleId}
-                    className="min-w-0 truncate font-display text-section text-content"
-                >
-                    Gift {item.label}
-                </h2>
-            </div>
-            <p className="mt-1 text-body-sm text-content-secondary">
-                Pick a friend. It comes out of your tokens.
-            </p>
-
+            }
+            title={`Gift ${item.label}`}
+            blurb={<p>Pick a friend. It comes out of your tokens.</p>}
+            footer={
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    {sent ? (
+                        <Done
+                            text={`Sent to ${sent.to}. ${formatCount(sent.left)} tokens left.`}
+                        />
+                    ) : (
+                        <span />
+                    )}
+                    {sent ? (
+                        <Button
+                            size="touch"
+                            variant="secondary"
+                            onClick={onClose}
+                            className="w-full sm:w-auto"
+                        >
+                            Done
+                        </Button>
+                    ) : (
+                        <Button
+                            size="touch"
+                            disabled={
+                                !to ||
+                                tokens < (to?.price ?? 0) ||
+                                gift.isPending
+                            }
+                            onClick={() =>
+                                to &&
+                                gift.mutate(
+                                    { item: item.item, username: to.username },
+                                    {
+                                        onSuccess: (result) =>
+                                            setSent({
+                                                to: to.username,
+                                                left: result.tokens,
+                                            }),
+                                        onError: (error) =>
+                                            notify(
+                                                error instanceof ApiError
+                                                    ? error.message
+                                                    : "Couldn’t send that gift",
+                                                "error"
+                                            ),
+                                    }
+                                )
+                            }
+                            className="w-full sm:w-auto"
+                        >
+                            <Gift size={16} aria-hidden />
+                            Send gift
+                        </Button>
+                    )}
+                </div>
+            }
+        >
             {isLoading ? (
-                <div className="mt-4 flex flex-col gap-2">
+                <div className="flex flex-col gap-2">
                     {[0, 1, 2].map((i) => (
                         <Skeleton key={i} className="h-12 rounded-md" />
                     ))}
                 </div>
             ) : !friends?.length ? (
-                <p className="mt-6 mb-2 text-center text-body-sm text-content-muted">
+                <p className="py-2 text-center text-body-sm text-content-muted">
                     Add friends to send them gifts.
                 </p>
             ) : (
@@ -318,7 +354,7 @@ const GiftSheet = ({
                     aria-label="Friends"
                     // Room inside the scroll for the picked friend's ring,
                     // which the edge would otherwise cut off.
-                    className="-mx-1 mt-3 flex max-h-72 flex-col gap-1 overflow-y-auto p-1"
+                    className="-mx-1 flex max-h-72 flex-col gap-1 overflow-y-auto p-1"
                 >
                     {friends.map((f) => {
                         const on = to?.username === f.username;
@@ -361,58 +397,7 @@ const GiftSheet = ({
             )}
 
             {to && !sent && <Ledger tokens={tokens} price={to.price} />}
-
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                {sent ? (
-                    <Done
-                        text={`Sent to ${sent.to}. ${formatCount(sent.left)} tokens left.`}
-                    />
-                ) : (
-                    <span />
-                )}
-                {sent ? (
-                    <Button
-                        size="touch"
-                        variant="secondary"
-                        onClick={onClose}
-                        className="w-full sm:w-auto"
-                    >
-                        Done
-                    </Button>
-                ) : (
-                    <Button
-                        size="touch"
-                        disabled={
-                            !to || tokens < (to?.price ?? 0) || gift.isPending
-                        }
-                        onClick={() =>
-                            to &&
-                            gift.mutate(
-                                { item: item.item, username: to.username },
-                                {
-                                    onSuccess: (result) =>
-                                        setSent({
-                                            to: to.username,
-                                            left: result.tokens,
-                                        }),
-                                    onError: (error) =>
-                                        notify(
-                                            error instanceof ApiError
-                                                ? error.message
-                                                : "Couldn’t send that gift",
-                                            "error"
-                                        ),
-                                }
-                            )
-                        }
-                        className="w-full sm:w-auto"
-                    >
-                        <Gift size={16} aria-hidden />
-                        Send gift
-                    </Button>
-                )}
-            </div>
-        </Modal>
+        </Popup>
     );
 };
 

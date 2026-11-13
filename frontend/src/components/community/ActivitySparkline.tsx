@@ -30,7 +30,9 @@ const ActivitySparkline = ({
         <div
             role="img"
             aria-label={`${formatMessageCount(total)} messages over the last ${TRENDING_WINDOW_DAYS} days`}
-            className={cn("flex h-12 items-end gap-[3px]", className)}
+            // A height passed in replaces the default rather than sitting
+            // beside it, where the stylesheet's order would pick.
+            className={cn("flex items-end gap-[3px]", className ?? "h-12")}
         >
             {activity.map((count, i) => (
                 <span

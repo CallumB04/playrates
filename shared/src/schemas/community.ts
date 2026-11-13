@@ -97,6 +97,9 @@ export type ThreadSubject =
         title: string;
         slug: string;
         coverUrl: string | null;
+        /** Wide art for a card's backdrop, the cover where it has none.
+         *  Absent from an API older than it. */
+        artworkUrl?: string | null;
         /** Its page asks search engines not to list it, as the game's does. */
         hasSexualContent: boolean;
       };

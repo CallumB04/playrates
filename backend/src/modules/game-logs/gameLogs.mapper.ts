@@ -44,6 +44,7 @@ export const toGameLog = (row: GameLogRow): GameLog => ({
   system: row.system_slug,
   achievementsTotal: row.achievements_total,
   achievementsCompleted: row.achievements_completed,
+  hype: row.hype ?? null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -101,6 +102,15 @@ export const toGameLogRow = (
   if (input.playedStatus !== undefined || input.status !== undefined) {
     row.played_status =
       input.status === "played" ? (input.playedStatus ?? null) : null;
+  }
+
+  // Hype is the backlog's alone, and goes as the log moves on. Unlike an
+  // ending it's left as it is when not sent: a tab from before hype saves
+  // the whole log without it.
+  if (input.status !== undefined && input.status !== "backlog") {
+    row.hype = null;
+  } else if (input.hype !== undefined) {
+    row.hype = input.hype ?? null;
   }
 
   return row;
