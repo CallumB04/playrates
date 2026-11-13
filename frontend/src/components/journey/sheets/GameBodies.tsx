@@ -168,8 +168,9 @@ export const ReviewBody = ({ onDone, onSkip }: SheetBodyProps) => {
                 role="radiogroup"
                 aria-label="Which game"
                 // Room round it for the chosen one's ring, which the scroll
-                // would otherwise clip.
-                className="-m-1.5 flex [scrollbar-width:none] gap-2 overflow-x-auto p-1.5"
+                // would otherwise clip; relative, so the popup's heading
+                // doesn't paint over the top of it.
+                className="relative -m-1.5 flex [scrollbar-width:none] gap-2 overflow-x-auto p-1.5"
             >
                 {logs.slice(0, 8).map((l) => (
                     <button

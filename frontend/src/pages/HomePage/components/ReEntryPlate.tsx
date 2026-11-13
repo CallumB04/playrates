@@ -728,7 +728,7 @@ const NowPlaying = ({
                 </div>
 
                 {playing.length > 1 && (
-                    <div className="border-t border-subtle pt-3.5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+                    <div className="border-t border-subtle pt-3.5 lg:border-t-0 lg:pt-0 lg:pl-8">
                         <OnTheGo
                             playing={playing}
                             openId={open.id}
