@@ -241,7 +241,7 @@ const NavMenus = () => {
                             ref={content}
                             key={shown}
                             className={cn(
-                                "absolute top-0 left-0 w-max p-2",
+                                "absolute top-0 left-0 w-max py-2 pr-4 pl-2",
                                 slide === "right" && "animate-fade-in-left",
                                 slide === "left" && "animate-fade-in-right"
                             )}

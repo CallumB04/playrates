@@ -155,7 +155,7 @@ const Art = ({ url }: { url: string | null | undefined }) =>
 /** A strip along the foot of a menu, for the one thing that runs across
  *  it. */
 const Foot = ({ children }: { children: ReactNode }) => (
-    <div className="-mx-2 mt-2 -mb-2 flex items-center gap-x-4 gap-y-1 border-t border-subtle px-5 py-3 text-body-sm">
+    <div className="mt-2 -mr-4 -mb-2 -ml-2 flex items-center gap-x-4 gap-y-1 border-t border-subtle px-5 py-3 text-body-sm">
         {children}
     </div>
 );
@@ -163,7 +163,14 @@ const Foot = ({ children }: { children: ReactNode }) => (
 const LibraryPanel = ({ onNavigate }: PanelProps) => {
     const [year, lastYear] = bestOfYears();
     const best = { kind: "year", year } as const;
-    const { data } = useGames({ ...hubFilters(best), page: 1, limit: 6 });
+    // Its picture is the year's most logged rather than the page's own
+    // order: a top score from a handful of reviews is a game few know.
+    const { data } = useGames({
+        ...hubFilters(best),
+        sort: "logged",
+        page: 1,
+        limit: 6,
+    });
     const banners = (data?.data ?? []).filter((g) => g.artworkUrl).slice(0, 3);
     return (
         <>
@@ -172,13 +179,16 @@ const LibraryPanel = ({ onNavigate }: PanelProps) => {
                     to={hubPath(best)}
                     onNavigate={onNavigate}
                     media={
-                        // The year's best as a stack of their art, each
-                        // game a band of its own down the frame.
-                        <div className="flex size-full flex-col gap-0.5">
-                            {banners.map((game) => (
+                        // The year's games people know best: the first
+                        // across the top, the next two side by side.
+                        <div className="grid size-full grid-cols-2 grid-rows-[3fr_2fr] gap-0.5">
+                            {banners.map((game, i) => (
                                 <span
                                     key={game.id}
-                                    className="relative min-h-0 flex-1 overflow-hidden"
+                                    className={cn(
+                                        "relative min-h-0 overflow-hidden",
+                                        i === 0 && "col-span-2"
+                                    )}
                                 >
                                     <Art url={game.artworkUrl} />
                                 </span>
