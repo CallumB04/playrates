@@ -165,10 +165,7 @@ const LibraryPanel = ({ onNavigate }: PanelProps) => {
     const [year, lastYear] = bestOfYears();
     const best = { kind: "year", year } as const;
     const { data } = useGames(popularOfYear(year));
-    const games = data?.data ?? [];
-    const top = games.filter((g) => g.coverUrl).slice(0, 3);
-    // On a podium: the first in the middle and forward, the next either side.
-    const podium = [top[1], top[0], top[2]];
+    const banners = (data?.data ?? []).filter((g) => g.artworkUrl).slice(0, 3);
     return (
         <>
             <div className="flex gap-3">
@@ -176,35 +173,21 @@ const LibraryPanel = ({ onNavigate }: PanelProps) => {
                     to={hubPath(best)}
                     onNavigate={onNavigate}
                     media={
-                        <>
-                            <span className="absolute inset-0 opacity-40">
-                                <Art url={games[0]?.artworkUrl} />
-                            </span>
-                            <div className="relative flex size-full items-center justify-center gap-2 px-3">
-                                {podium.map((game, i) =>
-                                    game?.coverUrl ? (
-                                        // Not GameCover: its lazy loading
-                                        // waits for a menu that's already
-                                        // open to scroll into view.
-                                        <img
-                                            key={game.id}
-                                            src={igdbSized(
-                                                game.coverUrl,
-                                                "cover_big"
-                                            )}
-                                            alt=""
-                                            decoding="async"
-                                            className={cn(
-                                                "aspect-3/4 shrink-0 rounded-sm object-cover shadow-lifted ring-1 ring-strong transition-transform duration-300 ease-[var(--ease-glide)]",
-                                                i === 1
-                                                    ? "z-10 w-20 group-hover/feature:-translate-y-1"
-                                                    : "w-16 translate-y-2"
-                                            )}
-                                        />
-                                    ) : null
-                                )}
-                            </div>
-                        </>
+                        // The year's games people know best: the first
+                        // across the top, the next two side by side.
+                        <div className="grid size-full grid-cols-2 grid-rows-[3fr_2fr] gap-0.5">
+                            {banners.map((game, i) => (
+                                <span
+                                    key={game.id}
+                                    className={cn(
+                                        "relative min-h-0 overflow-hidden",
+                                        i === 0 && "col-span-2"
+                                    )}
+                                >
+                                    <Art url={game.artworkUrl} />
+                                </span>
+                            ))}
+                        </div>
                     }
                 >
                     <FeatureTitle>Best of {year}</FeatureTitle>
