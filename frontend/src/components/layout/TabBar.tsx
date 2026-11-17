@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
+    CalendarDays,
     Ellipsis,
     Gamepad2,
     House,
@@ -23,9 +24,9 @@ import MoreSheet from "./MoreSheet";
 import { useInviteFor } from "../progress/useInviteFor";
 
 const TAB =
-    "group relative flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-1 text-[11px] leading-none font-medium transition-colors";
+    "group relative flex min-w-0 flex-1 cursor-pointer items-center justify-center transition-colors";
 
-/** The pill behind the icon that marks where you are. */
+/** The tile behind the icon that marks where you are. */
 const Mark = ({
     active,
     children,
@@ -35,10 +36,8 @@ const Mark = ({
 }) => (
     <span
         className={cn(
-            "grid h-7 w-14 place-items-center rounded-full transition-colors",
-            active
-                ? "bg-brand-subtle text-brand-text"
-                : "group-hover:bg-surface-hover"
+            "grid size-11 place-items-center rounded-xl transition-colors duration-200",
+            active ? "bg-surface-active" : "group-hover:bg-surface-hover"
         )}
     >
         {children}
@@ -74,16 +73,17 @@ const NavTab = ({
         className={cn(TAB, tone(active))}
     >
         <Mark active={active}>
-            <Icon size={20} strokeWidth={active ? 2.25 : 1.9} aria-hidden />
+            <Icon size={22} strokeWidth={active ? 2.25 : 1.9} aria-hidden />
         </Mark>
-        {label}
+        <span className="sr-only">{label}</span>
     </Link>
 );
 
 /**
  * The phone and tablet's main navigation, below `lg` where the header has no
- * room for its links. Destinations, not actions, with their words always
- * showing; the rest of what the old menu held is behind More.
+ * room for its links. Destinations, not actions, as icons alone: six fit a
+ * small phone at well over a thumb's width each, and their names are read
+ * out. The rest of what the old menu held is behind More.
  */
 const TabBar = () => {
     const { user, isLoading } = useAuth();
@@ -113,8 +113,7 @@ const TabBar = () => {
         here("/settings") ||
         here("/admin") ||
         here("/progress") ||
-        here("/shop") ||
-        here("/events");
+        here("/shop");
 
     return (
         <>
@@ -140,6 +139,12 @@ const TabBar = () => {
                         label="Community"
                         icon={MessageSquare}
                         active={here("/community")}
+                    />
+                    <NavTab
+                        to="/events"
+                        label="Events"
+                        icon={CalendarDays}
+                        active={here("/events")}
                     />
 
                     {user ? (
@@ -173,7 +178,7 @@ const TabBar = () => {
                                     </AvatarFrame>
                                 </span>
                             </Mark>
-                            Profile
+                            <span className="sr-only">Profile</span>
                         </Link>
                     ) : isLoading ? (
                         // The profile still on its way: the tab it will be,
@@ -182,7 +187,7 @@ const TabBar = () => {
                             <Mark active={false}>
                                 <Skeleton round className="size-6" />
                             </Mark>
-                            Profile
+                            <span className="sr-only">Profile</span>
                         </span>
                     ) : (
                         <button
@@ -192,12 +197,12 @@ const TabBar = () => {
                         >
                             <Mark active={false}>
                                 <LogIn
-                                    size={20}
+                                    size={22}
                                     strokeWidth={1.9}
                                     aria-hidden
                                 />
                             </Mark>
-                            Log in
+                            <span className="sr-only">Log in</span>
                         </button>
                     )}
 
@@ -210,7 +215,7 @@ const TabBar = () => {
                     >
                         <Mark active={onMore || moreOpen}>
                             <span className="relative">
-                                <Ellipsis size={20} aria-hidden />
+                                <Ellipsis size={22} aria-hidden />
                                 {/* Setup lives in here on a phone; an open
                                     list only pulls if it can be seen. */}
                                 {setup && (
@@ -221,7 +226,7 @@ const TabBar = () => {
                                 )}
                             </span>
                         </Mark>
-                        More
+                        <span className="sr-only">More</span>
                         {setup && (
                             <span className="sr-only">
                                 , profile setup unfinished

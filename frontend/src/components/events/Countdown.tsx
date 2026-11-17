@@ -85,7 +85,7 @@ const Countdown = ({
                 <span
                     key={unit.label}
                     aria-hidden
-                    className="flex min-w-12 flex-1 basis-0 flex-col items-center px-2 py-2 sm:min-w-16 sm:px-3"
+                    className="flex min-w-12 flex-1 basis-0 flex-col items-center px-2.5 py-2 sm:min-w-16 sm:px-3.5"
                 >
                     <span
                         className={cn(

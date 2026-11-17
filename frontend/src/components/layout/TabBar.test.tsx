@@ -42,6 +42,17 @@ describe("TabBar", () => {
         );
     });
 
+    it("has a tab of its own for events, lit on an event's page", () => {
+        const tabs = bar("/events/the-game-awards-2026");
+        expect(tabs.getByRole("link", { name: "Events" })).toHaveAttribute(
+            "aria-current",
+            "page"
+        );
+        expect(tabs.getByRole("button", { name: /^More/ })).toHaveClass(
+            "text-content-muted"
+        );
+    });
+
     // Only More leads to these, so it's the tab that says where you are.
     it.each(["/progress", "/shop", "/settings"])(
         "lights More on %s",

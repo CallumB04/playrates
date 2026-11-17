@@ -1,7 +1,6 @@
 import { useId, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-    CalendarDays,
     ChevronDown,
     ListChecks,
     LogOut,
@@ -193,18 +192,12 @@ const MoreSheet = ({
                 </section>
             )}
 
-            <div className="mt-3 border-t border-subtle pt-3 first:mt-0">
-                <Link to="/events" onClick={onClose} className={ACCOUNT_ROW}>
-                    Events
-                    <CalendarDays size={16} aria-hidden />
-                </Link>
-                {user && (
+            {user && (
+                <div className="mt-3 border-t border-subtle pt-3 first:mt-0">
                     <Link to="/shop" onClick={onClose} className={ACCOUNT_ROW}>
                         Shop
                         <Store size={16} aria-hidden />
                     </Link>
-                )}
-                {user && (
                     <button
                         type="button"
                         onClick={() => {
@@ -216,8 +209,23 @@ const MoreSheet = ({
                         Invite friends
                         <UserPlus size={16} aria-hidden />
                     </button>
-                )}
-                {user && (
+                    {user.isAdmin && (
+                        <Link
+                            to="/admin"
+                            onClick={onClose}
+                            className={ACCOUNT_ROW}
+                        >
+                            Admin
+                            <Shield size={16} aria-hidden />
+                        </Link>
+                    )}
+                </div>
+            )}
+
+            {/* The account's own settings, apart at the foot, where a long
+                list made them hard to find. */}
+            {user && (
+                <div className="mt-3 border-t border-subtle pt-3">
                     <Link
                         to="/settings"
                         onClick={onClose}
@@ -226,10 +234,9 @@ const MoreSheet = ({
                         Settings
                         <Settings size={16} aria-hidden />
                     </Link>
-                )}
-                {/* Stays open, so the change is seen to have taken. Only
-                    signed in: signed out, the site is always dark. */}
-                {user && (
+                    {/* Stays open, so the change is seen to have taken.
+                        Only signed in: signed out, the site is always
+                        dark. */}
                     <button
                         type="button"
                         onClick={toggleTheme}
@@ -250,14 +257,6 @@ const MoreSheet = ({
                             />
                         )}
                     </button>
-                )}
-                {user?.isAdmin && (
-                    <Link to="/admin" onClick={onClose} className={ACCOUNT_ROW}>
-                        Admin
-                        <Shield size={16} aria-hidden />
-                    </Link>
-                )}
-                {user && (
                     <button
                         type="button"
                         onClick={() => {
@@ -272,8 +271,8 @@ const MoreSheet = ({
                         Log out
                         <LogOut size={16} aria-hidden />
                     </button>
-                )}
-            </div>
+                </div>
+            )}
         </Popup>
     );
 };
