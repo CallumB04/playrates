@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
     announceHref,
-    fromLocalInput,
+    fromZonedInput,
     moved,
     slugify,
     statusLabel,
-    toLocalInput,
+    toZonedInput,
+    zoneLabel,
 } from "./eventAdmin";
 
 describe("slugify", () => {
@@ -22,15 +23,41 @@ describe("slugify", () => {
     });
 });
 
-describe("local datetime fields", () => {
-    it("round-trips a moment through the field", () => {
-        const iso = "2026-12-11T03:30:00.000Z";
-        expect(fromLocalInput(toLocalInput(iso))).toBe(iso);
+describe("datetime fields on a chosen zone's clocks", () => {
+    it("reads a time typed in Los Angeles as the moment it means", () => {
+        expect(fromZonedInput("2026-12-10T16:30", "America/Los_Angeles")).toBe(
+            "2026-12-11T00:30:00.000Z"
+        );
+    });
+
+    it("shows a moment on the zone's clocks, summer time included", () => {
+        expect(toZonedInput("2026-12-11T00:30:00.000Z", "Europe/London")).toBe(
+            "2026-12-11T00:30"
+        );
+        expect(toZonedInput("2026-07-01T11:00:00.000Z", "Europe/London")).toBe(
+            "2026-07-01T12:00"
+        );
+        expect(fromZonedInput("2026-07-01T12:00", "Europe/London")).toBe(
+            "2026-07-01T11:00:00.000Z"
+        );
+    });
+
+    it("round-trips a moment through the field in any zone", () => {
+        const iso = "2026-12-11T00:30:00.000Z";
+        for (const zone of ["Asia/Tokyo", "America/New_York", "UTC"]) {
+            expect(fromZonedInput(toZonedInput(iso, zone), zone)).toBe(iso);
+        }
     });
 
     it("has no moment for an empty or broken field", () => {
-        expect(fromLocalInput("")).toBeNull();
-        expect(fromLocalInput("2026-13-45T99:99")).toBeNull();
+        expect(fromZonedInput("", "Europe/London")).toBeNull();
+        expect(fromZonedInput("2026-12-1", "Europe/London")).toBeNull();
+    });
+
+    it("names a zone with its offset at the time", () => {
+        expect(
+            zoneLabel("America/Los_Angeles", Date.parse("2026-12-10T00:00Z"))
+        ).toBe("America/Los Angeles (GMT-8)");
     });
 });
 

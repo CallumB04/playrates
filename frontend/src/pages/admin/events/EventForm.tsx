@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import {
     AdminEventInputSchema,
     EVENT_KIND_LABELS,
@@ -13,7 +13,17 @@ import Button from "../../../components/ui/Button";
 import Dropdown from "../../../components/ui/Dropdown";
 import Field from "../../../components/ui/Field";
 import { Input, Textarea } from "../../../components/ui/Input";
-import { fromLocalInput, slugify, toLocalInput } from "./lib/eventAdmin";
+import {
+    displayTimeZone,
+    formatWeekdayTime,
+    timeZones,
+} from "../../../lib/format";
+import {
+    fromZonedInput,
+    slugify,
+    toZonedInput,
+    zoneLabel,
+} from "./lib/eventAdmin";
 
 const KIND_OPTIONS = EVENT_KINDS.map((value) => ({
     value,
@@ -50,17 +60,29 @@ const EventForm = ({
     const [organiserUrl, setOrganiserUrl] = useState(event?.organiserUrl ?? "");
     const [watchUrl, setWatchUrl] = useState(event?.watchUrl ?? "");
     const [logo, setLogo] = useState<string>(event?.logo ?? NO_LOGO);
+    // The zone the times are typed in: yours to start with, and said, so a
+    // device set elsewhere can't quietly shift a show by hours.
+    const mine = displayTimeZone();
+    const [zone, setZone] = useState(mine);
+    const zones = useMemo(() => {
+        const names = new Set(timeZones());
+        names.add(mine);
+        return [...names].sort().map((name) => ({
+            value: name,
+            label: zoneLabel(name),
+        }));
+    }, [mine]);
     const [startsAt, setStartsAt] = useState(
-        event ? toLocalInput(event.startsAt) : ""
+        event ? toZonedInput(event.startsAt, mine) : ""
     );
     const [endsAt, setEndsAt] = useState(
-        event?.endsAt ? toLocalInput(event.endsAt) : ""
+        event?.endsAt ? toZonedInput(event.endsAt, mine) : ""
     );
     const [closeAt, setCloseAt] = useState(
-        event?.awards ? toLocalInput(event.awards.picksCloseAt) : ""
+        event?.awards ? toZonedInput(event.awards.picksCloseAt, mine) : ""
     );
 
-    const start = fromLocalInput(startsAt);
+    const start = fromZonedInput(startsAt, zone);
     const parsed = AdminEventInputSchema.safeParse({
         kind,
         name: name.trim(),
@@ -72,11 +94,11 @@ const EventForm = ({
         watchUrl: watchUrl.trim() || null,
         logo: logo === NO_LOGO ? null : (logo as EventLogoKey),
         startsAt: start,
-        endsAt: fromLocalInput(endsAt),
+        endsAt: fromZonedInput(endsAt, zone),
         // Picks close as the show starts unless told otherwise.
         awards:
             kind === "awards"
-                ? { picksCloseAt: fromLocalInput(closeAt) ?? start }
+                ? { picksCloseAt: fromZonedInput(closeAt, zone) ?? start }
                 : null,
     });
 
@@ -161,6 +183,27 @@ const EventForm = ({
                         onChange={(e) => setAbout(e.target.value)}
                         rows={4}
                         maxLength={2000}
+                    />
+                )}
+            </Field>
+            <Field
+                label="Time zone"
+                help={
+                    zone === mine
+                        ? "Yours. The times below are on its clocks."
+                        : start
+                          ? `The times below are on its clocks. That start is ${formatWeekdayTime(start)} for you, in ${zoneLabel(mine)}.`
+                          : `The times below are on its clocks. Yours is ${zoneLabel(mine)}.`
+                }
+            >
+                {(a11y) => (
+                    <Dropdown
+                        searchable
+                        options={zones}
+                        value={zone}
+                        onChange={setZone}
+                        id={a11y.id}
+                        aria-label="Time zone"
                     />
                 )}
             </Field>

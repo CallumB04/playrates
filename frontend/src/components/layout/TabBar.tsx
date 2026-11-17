@@ -6,7 +6,7 @@ import {
     Gamepad2,
     House,
     LogIn,
-    MessageSquare,
+    UserGroup,
     type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -36,7 +36,7 @@ const Mark = ({
 }) => (
     <span
         className={cn(
-            "grid size-11 place-items-center rounded-xl transition-colors duration-200",
+            "grid size-11 place-items-center rounded-md transition-colors duration-200",
             active ? "bg-surface-active" : "group-hover:bg-surface-hover"
         )}
     >
@@ -137,7 +137,7 @@ const TabBar = () => {
                     <NavTab
                         to="/community"
                         label="Community"
-                        icon={MessageSquare}
+                        icon={UserGroup}
                         active={here("/community")}
                     />
                     <NavTab

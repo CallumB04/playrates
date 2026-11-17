@@ -12,19 +12,65 @@ export const slugify = (text: string): string =>
         .slice(0, 80)
         .replace(/-+$/, "");
 
-const pad = (n: number) => String(n).padStart(2, "0");
-
-/** A moment as a datetime-local field shows it: in the admin's own zone. */
-export const toLocalInput = (iso: string): string => {
-    const d = new Date(iso);
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+/** A moment's wall clock in one zone, to the minute. */
+const wallClock = (ms: number, zone: string) => {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: zone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+    }).formatToParts(new Date(ms));
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+        parts.find((p) => p.type === type)?.value ?? "00";
+    return {
+        year: part("year"),
+        month: part("month"),
+        day: part("day"),
+        hour: part("hour"),
+        minute: part("minute"),
+    };
 };
 
-/** What a datetime-local field holds, as the moment it means. Null while
- *  it's empty or half typed. */
-export const fromLocalInput = (value: string): string | null => {
-    const d = new Date(value);
-    return value && !Number.isNaN(d.getTime()) ? d.toISOString() : null;
+/** How far ahead of UTC a zone's clocks are at a moment, in ms. */
+const offsetAt = (ms: number, zone: string): number => {
+    const c = wallClock(ms, zone);
+    const asUtc = Date.UTC(+c.year, +c.month - 1, +c.day, +c.hour, +c.minute);
+    return asUtc - (ms - (ms % 60_000));
+};
+
+/** A moment as a datetime-local field shows it, on the clocks of the zone
+ *  chosen beside it rather than whatever the device is set to. */
+export const toZonedInput = (iso: string, zone: string): string => {
+    const c = wallClock(Date.parse(iso), zone);
+    return `${c.year}-${c.month}-${c.day}T${c.hour}:${c.minute}`;
+};
+
+/** What a datetime-local field holds, read on that zone's clocks, as the
+ *  moment it means. Null while it's empty or half typed. */
+export const fromZonedInput = (value: string, zone: string): string | null => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+    if (!m) return null;
+    const asUtc = Date.UTC(+m[1]!, +m[2]! - 1, +m[3]!, +m[4]!, +m[5]!);
+    // The offset is the zone's at the moment meant, which across a clock
+    // change differs from its offset at the first guess.
+    const first = asUtc - offsetAt(asUtc, zone);
+    return new Date(asUtc - offsetAt(first, zone)).toISOString();
+};
+
+/** A zone as the form names it: "Europe/London (GMT+1)", its offset as it
+ *  stands at the moment given. */
+export const zoneLabel = (zone: string, at: number = Date.now()): string => {
+    const offset =
+        new Intl.DateTimeFormat("en-GB", {
+            timeZone: zone,
+            timeZoneName: "shortOffset",
+        })
+            .formatToParts(new Date(at))
+            .find((p) => p.type === "timeZoneName")?.value ?? "";
+    return `${zone.replace(/_/g, " ")}${offset ? ` (${offset})` : ""}`;
 };
 
 /** The ids with one moved up or down a place; the same list at either end. */
