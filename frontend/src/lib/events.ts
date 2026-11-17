@@ -8,13 +8,23 @@ import type {
 } from "@playrates/shared";
 import { formatDayTime } from "./format";
 
+/** An awards night that's out before its nominees: its categories are
+ *  set, with nobody in them to pick yet. */
+export const awaitingNominees = (awards: {
+    phase: AwardsPhase;
+    nomineeCount?: number;
+}): boolean => awards.phase === "open" && awards.nomineeCount === 0;
+
 /** What a card about an event asks you to do: its kind's own ask, where it
  *  has one. */
 export const eventAction = (event: {
-    awards: { phase: AwardsPhase } | null;
+    awards: { phase: AwardsPhase; nomineeCount?: number } | null;
     showcase?: unknown;
 }): string => {
     if (event.showcase) return "See every reveal";
+    if (event.awards && awaitingNominees(event.awards)) {
+        return "See the categories";
+    }
     switch (event.awards?.phase) {
         case "open":
             return "Make your picks";
@@ -50,7 +60,9 @@ export const countdownParts = (
 export const awardsLine = (awards: {
     phase: AwardsPhase;
     picksCloseAt: string;
+    nomineeCount?: number;
 }): string => {
+    if (awaitingNominees(awards)) return "Nominees coming soon";
     switch (awards.phase) {
         case "results":
             return "The winners are in";
@@ -218,12 +230,14 @@ export interface CategoryGroup {
 /**
  * The categories as the page shows them: the headline award first on its
  * own, then each section's together, in the order its first category
- * comes. Ones with nothing to pick are left out.
+ * comes. Ones with nothing to pick are left out, unless every one is
+ * waiting for its nominees.
  */
 export const groupCategories = (
-    categories: AwardCategory[]
+    categories: AwardCategory[],
+    { includeEmpty = false }: { includeEmpty?: boolean } = {}
 ): CategoryGroup[] => {
-    const shown = pickable(categories);
+    const shown = includeEmpty ? categories : pickable(categories);
     const headline = headlineOf(shown);
     const groups: CategoryGroup[] = headline
         ? [{ section: "", lead: true, categories: [headline] }]

@@ -87,7 +87,7 @@ describe("eventWords", () => {
     });
     expect(
       eventWords({ ...named, tagline: "", awards: null }).description,
-    ).toMatch(/^What’s on in gaming/);
+    ).toMatch(/^What’s happening/);
   });
 
   it("puts an event under Events in its trail", () => {

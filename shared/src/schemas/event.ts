@@ -298,7 +298,7 @@ export const RevealParamSchema = EventSlugParamSchema.extend({
 
 export const EVENTS_WORDS = {
   title: "Events",
-  description: "What’s on in gaming, and what’s coming up.",
+  description: "What’s happening, and what’s next.",
 };
 
 /** What an event's page is called, by the server and the app alike. */

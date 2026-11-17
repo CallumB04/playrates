@@ -23,6 +23,7 @@ import { cardClass } from "../../../components/ui/cardClass";
 import { cn } from "../../../lib/cn";
 import { formatCount, formatOrdinal } from "../../../lib/format";
 import {
+    awaitingNominees,
     awardsLine,
     categoryAnchor,
     groupCategories,
@@ -37,6 +38,7 @@ import {
 import NomineeCard from "./NomineeCard";
 import AwardsNav from "./AwardsNav";
 import LeaderboardPopup from "./LeaderboardPopup";
+import AwaitingNominees from "./AwaitingNominees";
 import { goToCategory, useActiveCategory } from "./useActiveCategory";
 
 const GRID =
@@ -316,6 +318,7 @@ const AwardsSection = ({
     const order = groups.flatMap((g) => g.categories);
     const active = useActiveCategory(order.map(categoryAnchor));
 
+    if (awaitingNominees(awards)) return <AwaitingNominees awards={awards} />;
     if (order.length === 0) return null;
     return (
         <section aria-label="The awards" className="flex flex-col gap-6">

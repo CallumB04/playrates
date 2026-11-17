@@ -7,6 +7,7 @@ import type {
 } from "@playrates/shared";
 import { setDisplayTimeZone } from "./format";
 import {
+    awaitingNominees,
     awardsLine,
     categoryAnchor,
     countdownParts,
@@ -374,5 +375,54 @@ describe("tierNames", () => {
                 false
             )
         ).toBe("3 players");
+    });
+});
+
+describe("awaitingNominees", () => {
+    const awards = (
+        phase: "open" | "locked" | "results",
+        nomineeCount: number
+    ) => ({
+        phase,
+        picksCloseAt: "2026-12-11T03:30:00Z",
+        nomineeCount,
+    });
+
+    it("holds an open night with no nominees yet as waiting for them", () => {
+        expect(awaitingNominees(awards("open", 0))).toBe(true);
+        expect(awardsLine(awards("open", 0))).toBe("Nominees coming soon");
+        expect(eventAction({ awards: awards("open", 0), showcase: null })).toBe(
+            "See the categories"
+        );
+    });
+
+    it("opens picks once a nominee is in", () => {
+        expect(awaitingNominees(awards("open", 1))).toBe(false);
+        expect(eventAction({ awards: awards("open", 1), showcase: null })).toBe(
+            "Make your picks"
+        );
+    });
+
+    it("isn't waiting once picks have closed", () => {
+        expect(awaitingNominees(awards("locked", 0))).toBe(false);
+    });
+});
+
+describe("groupCategories with every category", () => {
+    it("keeps categories with no nominees when asked to", () => {
+        const empty = [
+            category(10, [], { headline: true }),
+            category(11, [], { section: "Craft" }),
+        ];
+        expect(groupCategories(empty)).toEqual([]);
+        expect(
+            groupCategories(empty, { includeEmpty: true }).map((g) => [
+                g.section,
+                g.categories.length,
+            ])
+        ).toEqual([
+            ["", 1],
+            ["Craft", 1],
+        ]);
     });
 });

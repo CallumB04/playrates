@@ -40,8 +40,8 @@ const EventsPage = () => {
                 <TextSkeleton lines={4} />
             ) : (events ?? []).length === 0 ? (
                 <EmptyPlate
-                    title="Nothing on yet"
-                    body="When something big is happening in gaming, it’ll be here."
+                    title="Nothing on right now"
+                    body="When something’s happening, you’ll find it here."
                 />
             ) : (
                 <>
