@@ -216,7 +216,10 @@ const AnnouncementsPage = () => {
             createdAt: new Date().toISOString(),
             readAt: null,
             archivedAt: null,
-            tone,
+            // As the bell will get it: an event one as an update, marked.
+            ...(tone === "event"
+                ? { tone: "update" as const, event: true as const }
+                : { tone }),
             title: title.trim() || "Your title",
             body: body.trim() || "The sentence everyone reads under it.",
             link: draft.link,

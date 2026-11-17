@@ -327,6 +327,30 @@ describe("notification mapper", () => {
     ).toMatchObject({ kind: "gift_received", actor: null });
   });
 
+  it("hands an event announcement over as an update marked as an event, for tabs that predate it", () => {
+    const data = {
+      tone: "event",
+      title: "The Game Awards 2026: the nominees are in",
+      body: "Make your picks.",
+      link: "/events/the-game-awards-2026",
+    };
+    expect(
+      toNotification(
+        buildNotification({ kind: "announcement", data }),
+        () => null,
+      ),
+    ).toMatchObject({ kind: "announcement", tone: "update", event: true });
+    expect(
+      toNotification(
+        buildNotification({
+          kind: "announcement",
+          data: { ...data, tone: "warning" },
+        }),
+        () => null,
+      ),
+    ).not.toHaveProperty("event");
+  });
+
   it("embeds the friend who got going, while they have an account", () => {
     const data = { username: "devuser", xp: 250, tokens: 50 };
     expect(

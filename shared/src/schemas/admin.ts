@@ -510,6 +510,7 @@ export const ANNOUNCEMENT_TONES = [
   "update",
   "warning",
   "celebration",
+  "event",
 ] as const;
 export type AnnouncementTone = (typeof ANNOUNCEMENT_TONES)[number];
 

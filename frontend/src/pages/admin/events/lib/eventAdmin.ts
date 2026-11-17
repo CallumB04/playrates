@@ -112,7 +112,7 @@ export const announceHref = (event: {
 }): string => {
     const results = event.awards?.phase === "results";
     const params = new URLSearchParams({
-        tone: "celebration",
+        tone: "event",
         title: !event.awards
             ? event.name
             : results

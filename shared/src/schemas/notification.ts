@@ -199,7 +199,11 @@ export interface GiftReceivedNotification extends NotificationBase {
 /** A message from PlayRates to everyone, sent from the admin dashboard. */
 export interface AnnouncementNotification extends NotificationBase {
   kind: "announcement";
-  tone: AnnouncementTone;
+  /** One every client knows: an event announcement says "update" here, so a
+   *  tab from before events still draws it, and `event` below instead. */
+  tone: Exclude<AnnouncementTone, "event">;
+  /** About an event: drawn with the event look by a client that knows it. */
+  event?: true;
   title: string;
   body: string;
   /** An in-app path, never another site. */

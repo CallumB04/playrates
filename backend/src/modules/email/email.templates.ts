@@ -834,6 +834,7 @@ const TONE_LABELS: Record<AnnouncementTone, string> = {
   info: "Info",
   warning: "Heads up",
   celebration: "Celebration",
+  event: "Event",
 };
 
 const absolute = (links: EmailLinks, href: string) =>

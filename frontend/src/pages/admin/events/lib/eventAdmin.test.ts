@@ -88,7 +88,7 @@ describe("announceHref", () => {
         );
         expect(params.get("title")).toBe("TGA: the nominees are in");
         expect(params.get("link")).toBe("/events/tga");
-        expect(params.get("tone")).toBe("celebration");
+        expect(params.get("tone")).toBe("event");
     });
 
     it("announces the winners once they're in", () => {

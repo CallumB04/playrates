@@ -285,11 +285,23 @@ export const toNotification = (
       const body = str(row.data.body);
       if (!title || !body) return { ...base, kind: "unknown" };
       const tone = str(row.data.tone);
+      if (tone === "event") {
+        return {
+          ...base,
+          kind: "announcement",
+          tone: "update",
+          event: true,
+          title,
+          body,
+          link: str(row.data.link),
+          isTest: row.data.test === true,
+        };
+      }
       return {
         ...base,
         kind: "announcement",
         tone: (ANNOUNCEMENT_TONES as readonly string[]).includes(tone ?? "")
-          ? (tone as AnnouncementTone)
+          ? (tone as Exclude<AnnouncementTone, "event">)
           : "info",
         title,
         body,

@@ -14,7 +14,7 @@ import {
 import { relativeTime } from "../../lib/format";
 import { cn } from "../../lib/cn";
 import { NOTIFICATION_RENDERERS, type ContentProps } from "./registry";
-import { ANNOUNCEMENT_PRESENTATION } from "./announcementTones";
+import { announcementLook } from "./announcementTones";
 import { NOTIFICATION_TONES } from "./notificationTones";
 import {
     AcceptedGroupContent,
@@ -82,7 +82,7 @@ const NotificationItem = ({
     const tone =
         NOTIFICATION_TONES[
             notification.kind === "announcement"
-                ? ANNOUNCEMENT_PRESENTATION[notification.tone].tone
+                ? announcementLook(notification).tone
                 : renderer.tone
         ];
 

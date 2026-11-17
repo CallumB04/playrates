@@ -44,7 +44,7 @@ import AnnouncementBody from "./AnnouncementBody";
 import ShowMoreToggle from "../ui/ShowMoreToggle";
 import { useClamped } from "../../hooks/useClamped";
 import { cn } from "../../lib/cn";
-import { ANNOUNCEMENT_PRESENTATION } from "./announcementTones";
+import { announcementLook } from "./announcementTones";
 import type { ContentProps } from "./registry";
 import { replyPhrase, replyTarget } from "./notificationSummary";
 
@@ -287,7 +287,7 @@ export const AnnouncementMark = ({
 }: {
     notification: AnnouncementNotification;
 }) => {
-    const { icon, tone } = ANNOUNCEMENT_PRESENTATION[notification.tone];
+    const { icon, tone } = announcementLook(notification);
     return <IconMark icon={icon} tone={tone} />;
 };
 
