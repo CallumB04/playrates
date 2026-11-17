@@ -119,6 +119,26 @@ describe("toExternalGame", () => {
     expect(game.platformSlugs).toEqual(["nintendo-switch"]);
   });
 
+  /* A headset-only game used to come in with no platforms at all. */
+  it("puts a VR game on Quest, and every other headset on its machine", () => {
+    const game = toExternalGame({
+      ...witcher,
+      platforms: [386, 471, 390, 163, 385],
+    });
+    expect(game.systemSlugs).toEqual([
+      "meta-quest",
+      "playstation5",
+      "steam",
+      "other-pc",
+    ]);
+    expect(game.platformSlugs).toEqual([
+      "meta-quest",
+      "playstation",
+      "steam",
+      "other-pc",
+    ]);
+  });
+
   it("counts a PC game not on Steam as plain PC", () => {
     const game = toExternalGame({
       ...witcher,

@@ -63,6 +63,19 @@ export const IGDB_SYSTEMS: Record<number, string> = {
   59: "atari-2600",
   65: "atari-8-bit",
   63: "atari-st",
+  // VR: Quest is a machine of its own; every other headset plays what the
+  // machine it plugs into does.
+  384: "meta-quest",
+  386: "meta-quest",
+  471: "meta-quest",
+  387: "meta-quest",
+  388: "meta-quest",
+  390: "playstation5",
+  165: "playstation4",
+  163: "steam",
+  162: "other-pc",
+  385: "other-pc",
+  161: "other-pc",
   // Others with a family of their own
   16: "commodore-amiga",
   15: "commodore-amiga",
@@ -87,6 +100,7 @@ export const SYSTEM_FAMILY: Record<string, string> = {
   xbox360: "xbox",
   "xbox-old": "xbox",
   "nintendo-switch": "nintendo-switch",
+  "meta-quest": "meta-quest",
   "nintendo-switch-2": "nintendo-switch",
   "wii-u": "nintendo",
   wii: "nintendo",
