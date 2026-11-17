@@ -139,8 +139,7 @@ export const queryKeys = {
         picks: (slug: string) => ["events", "picks", slug] as const,
         forGame: (gameId: number) => ["events", "game", gameId] as const,
         hype: (slug: string) => ["events", "hype", slug] as const,
-        badges: (slug: string) => ["events", "badges", slug] as const,
-        held: (username: string) => ["events", "held", username] as const,
+        leaderboard: (slug: string) => ["events", "leaderboard", slug] as const,
     },
 
     gaming25: {

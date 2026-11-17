@@ -15,7 +15,6 @@ import NotFoundPage from "../NotFoundPage";
 import EventHero from "./components/EventHero";
 import AwardsSection from "./awards/AwardsSection";
 import ShowcaseSection from "./showcase/ShowcaseSection";
-import EventBadges from "./components/EventBadges";
 
 /**
  * An event's page: the frame every event shares, with its kind's own part
@@ -74,7 +73,6 @@ const EventPage = () => {
             {event.showcase && (
                 <ShowcaseSection event={event} showcase={event.showcase} />
             )}
-            <EventBadges event={event} />
             {event.about && (
                 <section
                     aria-labelledby="event-about"

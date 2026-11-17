@@ -66,6 +66,14 @@ const READ = "2026-01-02T00:00:00.000Z";
  *  tick after; let that land before listening for this test's own. */
 const lastTestsReads = () => new Promise((resolve) => setTimeout(resolve, 50));
 
+/* What a test's own notifications were sent to read-all with. Each test
+   that counts reads uses ids of its own: a read the last test left in
+   flight can land late under load, and must not count as this one's. */
+const readsOf = (readAll: ReturnType<typeof vi.fn>, ids: number[]) =>
+    readAll.mock.calls.filter(([body]) =>
+        (body as { ids: number[] }).ids.some((id) => ids.includes(id))
+    );
+
 describe("NotificationPanel", () => {
     it("offers to mark everything read while anything is unread", async () => {
         inbox([welcome(), welcome({ id: 2, readAt: READ })]);
@@ -216,14 +224,14 @@ describe("NotificationPanel", () => {
                 }
             )
         );
-        inbox([welcome(), welcome({ id: 2 })]);
+        inbox([welcome({ id: 201 }), welcome({ id: 202 })]);
         const { unmount } = panel();
         await screen.findAllByText("Welcome to PlayRates");
-        expect(readAll).not.toHaveBeenCalled();
+        expect(readsOf(readAll, [201, 202])).toEqual([]);
 
         unmount();
         await waitFor(() =>
-            expect(readAll).toHaveBeenCalledWith({ ids: [1, 2] })
+            expect(readAll).toHaveBeenCalledWith({ ids: [201, 202] })
         );
     });
 
@@ -256,17 +264,20 @@ describe("NotificationPanel", () => {
         await lastTestsReads();
         const readAll = vi.fn();
         server.use(
-            http.post(`${API}/me/notifications/read-all`, () => {
-                readAll();
-                return new HttpResponse(null, { status: 204 });
-            })
+            http.post(
+                `${API}/me/notifications/read-all`,
+                async ({ request }) => {
+                    readAll(await request.json());
+                    return new HttpResponse(null, { status: 204 });
+                }
+            )
         );
-        inbox([welcome({ readAt: READ })]);
+        inbox([welcome({ id: 221, readAt: READ })]);
         const { unmount } = panel();
         await screen.findByText("Welcome to PlayRates");
         unmount();
         await new Promise((resolve) => setTimeout(resolve, 20));
-        expect(readAll).not.toHaveBeenCalled();
+        expect(readsOf(readAll, [221])).toEqual([]);
     });
 
     it("has no archive to switch to", async () => {

@@ -98,11 +98,10 @@ import {
   createAdminEventsRouter,
   createEventsRouter,
   createGameEventsRouter,
-  createMyEventsRouter,
-  createUserEventBadgesRouter,
 } from "./modules/events/events.routes.js";
 import {
   createAdminAwardsRouter,
+  createAwardsBoardRouter,
   createMyAwardsRouter,
 } from "./modules/events/awards/awards.routes.js";
 import {
@@ -438,7 +437,6 @@ export const buildRoutes = ({
   );
   router.use(
     "/me/events",
-    createMyEventsRouter({ service: events, requireAuth }),
     createMyAwardsRouter({ awards, requireAuth }),
     createMyShowcaseRouter({ showcase, requireAuth }),
   );
@@ -530,14 +528,10 @@ export const buildRoutes = ({
     createReviewsFeedRouter({ service: reviews, requireAuth, optionalAuth }),
   );
 
-  router.use("/events", createEventsRouter({ service: events }));
   router.use(
-    "/users/:username/event-badges",
-    createUserEventBadgesRouter({
-      service: events,
-      gate: profileGate,
-      optionalAuth,
-    }),
+    "/events",
+    createEventsRouter({ service: events }),
+    createAwardsBoardRouter({ awards, optionalAuth }),
   );
 
   router.use(

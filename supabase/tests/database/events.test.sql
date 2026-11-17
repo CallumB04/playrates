@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(22);
+select plan(21);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values ('e1000000-0000-4000-8000-000000000001', 'e1@test.test', '{"username":"event_one"}'),
@@ -132,34 +132,28 @@ select throws_ok(
     null,
     'a category needs its awards night set up first');
 
--- Results badges: mark Event Game A the winner of Game of the Year.
+-- The leaderboard: mark Event Game A the winner of Game of the Year.
 update public.award_nominees n set won = true
 from public.games g where g.id = n.game_id and g.slug = 'event-game-a'
   and n.category_id = (select id from public.award_categories where slug = 'goty');
-select public.refresh_award_result_badges((select id from public.events where slug = 'test-awards'));
-select is(
-    (select count(*)::int from public.event_badges
-     where badge = 'called-it' and user_id = 'e1000000-0000-4000-8000-000000000001'),
-    1,
-    'calling the headline award earns its badge');
-select is(
-    (select count(*)::int from public.event_badges where badge = 'sharp-eye'
-     and event_id = (select id from public.events where slug = 'test-awards')),
-    0,
-    'half the winners counts from three decided, not one');
+select results_eq(
+    $$select called, players, voters from public.award_leaderboard(
+        (select id from public.events where slug = 'test-awards'), 5, 4)$$,
+    $$values (1, 1, 1)$$,
+    'the leaderboard puts each score on one line, with how many reached it');
+select results_eq(
+    $$select called, rank, voters from public.award_standing(
+        (select id from public.events where slug = 'test-awards'),
+        'e1000000-0000-4000-8000-000000000001')$$,
+    $$values (1, 1, 1)$$,
+    'a member''s standing is their score and place');
 update public.award_nominees set won = false
 where category_id = (select id from public.award_categories where slug = 'goty');
-select public.refresh_award_result_badges((select id from public.events where slug = 'test-awards'));
-select is(
-    (select count(*)::int from public.event_badges
-     where event_id = (select id from public.events where slug = 'test-awards')),
-    0,
-    'a winner taken back takes its badges with it');
-select is(
-    (select earned from public.event_badge_counts(
-        (select id from public.events where slug = 'test-awards'))),
-    null,
-    'nobody has a badge to count');
+select results_eq(
+    $$select called from public.award_leaderboard(
+        (select id from public.events where slug = 'test-awards'), 5, 4)$$,
+    $$values (0)$$,
+    'a winner taken back comes off the board');
 
 -- A showcase: its reveals, and hype for them.
 insert into public.events (slug, kind, name, starts_at)
@@ -193,15 +187,16 @@ select throws_ok(
     'a reveal belongs to a showcase, not an awards night');
 
 select ok(
-    not has_function_privilege('authenticated', 'public.refresh_award_result_badges(bigint)', 'execute')
-    and not has_function_privilege('authenticated', 'public.showcase_hype_counts(bigint)', 'execute')
-    and not has_function_privilege('authenticated', 'public.event_badge_counts(bigint)', 'execute'),
+    not has_function_privilege('authenticated', 'public.award_leaderboard(bigint, integer, integer)', 'execute')
+    and not has_function_privilege('anon', 'public.award_leaderboard(bigint, integer, integer)', 'execute')
+    and not has_function_privilege('authenticated', 'public.award_standing(bigint, uuid)', 'execute')
+    and not has_function_privilege('authenticated', 'public.award_scores(bigint)', 'execute')
+    and not has_function_privilege('authenticated', 'public.showcase_hype_counts(bigint)', 'execute'),
     'none of the event functions is callable from the browser');
 
 select ok(
-    not has_table_privilege('authenticated', 'public.event_badges', 'select')
-    and not has_table_privilege('authenticated', 'public.showcase_hype', 'select'),
-    'badges and hype are not readable from the browser');
+    not has_table_privilege('authenticated', 'public.showcase_hype', 'select'),
+    'hype is not readable from the browser');
 
 select * from finish();
 rollback;

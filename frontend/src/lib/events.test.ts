@@ -22,6 +22,7 @@ import {
     picksWith,
     score,
     showsShares,
+    tierNames,
     withPick,
 } from "./events";
 
@@ -74,7 +75,6 @@ const event = (categories: AwardCategory[] | null): EventDetail => ({
     artworkUrl: null,
     artworks: [],
     showcase: null,
-    badges: [],
     awards: categories && {
         phase: "open",
         picksCloseAt: "2026-12-11T03:30:00Z",
@@ -317,5 +317,62 @@ describe("countdownParts", () => {
     it("is nothing once the moment has come", () => {
         expect(countdownParts("2026-12-01T00:00:00Z", at)).toBeNull();
         expect(countdownParts("2026-11-30T00:00:00Z", at)).toBeNull();
+    });
+});
+
+describe("tierNames", () => {
+    const person = (username: string, isYou = false) => ({
+        username,
+        avatarUrl: null,
+        accent: "violet",
+        isYou,
+    });
+
+    it("names everyone on a short line", () => {
+        expect(
+            tierNames(
+                {
+                    called: 5,
+                    players: 2,
+                    people: [person("amber"), person("bryn")],
+                },
+                false
+            )
+        ).toBe("amber and bryn");
+    });
+
+    it("names two and counts the rest on a long line", () => {
+        expect(
+            tierNames(
+                {
+                    called: 4,
+                    players: 9,
+                    people: [person("amber"), person("bryn"), person("cas")],
+                },
+                false
+            )
+        ).toBe("amber, bryn and 7 others");
+    });
+
+    it("puts you first, as You, on your own score", () => {
+        expect(
+            tierNames(
+                {
+                    called: 3,
+                    players: 14,
+                    people: [person("amber"), person("me", true)],
+                },
+                true
+            )
+        ).toBe("You, amber and 12 others");
+    });
+
+    it("counts a line of private players without naming any", () => {
+        expect(
+            tierNames(
+                { called: 2, players: 3, people: [{ hidden: true }] },
+                false
+            )
+        ).toBe("3 players");
     });
 });

@@ -28,7 +28,7 @@ import {
   type PatchNote,
 } from "@playrates/shared";
 import { seedGame } from "./catalogueRows.js";
-import { eventBadgesSql, eventRows } from "./events.js";
+import { eventRows } from "./events.js";
 import {
   COMMUNITY,
   OPENING_POSTS,
@@ -1738,7 +1738,6 @@ from auth.users;`,
     insert("showcase_reveals", awards.reveals, true),
     setval("showcase_reveals"),
     insert("showcase_hype", awards.hype),
-    eventBadgesSql,
     profileDetails,
     insert("email_messages", emailRows),
     // An announcement in each tone, sent to everyone; most have read them,

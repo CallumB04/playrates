@@ -31,7 +31,6 @@ import {
 import { formatCount } from "../../../lib/format";
 import { cn } from "../../../lib/cn";
 import { useEditParam } from "../lib/useEditParam";
-import EventBadgeShelf from "../components/EventBadgeShelf";
 
 const CATEGORY_LABELS: Record<BadgeCategory, string> = {
     collection: "Collection",
@@ -337,7 +336,6 @@ const BadgesView = ({ username, isOwner }: BadgesViewProps) => {
                             </section>
                         );
                     })}
-                    <EventBadgeShelf username={username} />
                 </div>
             </section>
         </div>

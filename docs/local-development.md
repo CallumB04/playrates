@@ -106,13 +106,13 @@ Every account's password is **`playrates-local`**, and every email is
 - **Events.** Three, of two kinds:
   - An awards night in the shape of The Game Awards 2026, a few weeks off
     with picks open: 30 categories in six sections, the community's picks
-    in, the tester part way through theirs, and four members with a Full
-    ballot.
-  - Last year's, past, with its winners out and the tester's picks scored,
-    and the results badges given.
+    in, the tester part way through theirs, and four members with every
+    category picked.
+  - Last year's, past, with its winners out and everyone's picks scored,
+    so its leaderboard has something on it.
   - The Winter Showcase, a made-up showcase on now over a weekend: ten
-    reveals in running order, members' hype for each, the tester hyped for
-    some, and its badges given.
+    reveals in running order, members' hype for each, and the tester hyped
+    for some.
 
   The nominees and reveals are real games from the catalogue, chosen for the
   local stack; the people, creators, teams and the showcase are made up.

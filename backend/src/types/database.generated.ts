@@ -431,38 +431,6 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
-                },"event_badges": {
-                  Row: {
-                    "badge": string,"earned_at": string,"event_id": number,"user_id": string
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "badge": string,"earned_at"?: string,"event_id": number,"user_id": string
-                  }
-                  Update: {
-                    "badge"?: string,"earned_at"?: string,"event_id"?: number,"user_id"?: string
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "event_badges_event_id_fkey"
-      columns: ["event_id"]
-isOneToOne: false
-      referencedRelation: "events"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "event_badges_user_id_fkey"
-      columns: ["user_id"]
-isOneToOne: false
-      referencedRelation: "admin_user_directory"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "event_badges_user_id_fkey"
-      columns: ["user_id"]
-isOneToOne: false
-      referencedRelation: "profiles"
-      referencedColumns: ["id"]
-    }
-                  ]
                 },"events": {
                   Row: {
                     "about": string,"created_at": string,"ends_at": string | null,"id": number,"kind": string,"logo": string | null,"name": string,"organiser": string,"organiser_url": string | null,"published_at": string | null,"slug": string,"starts_at": string,"tagline": string,"updated_at": string,"watch_url": string | null
@@ -1873,9 +1841,24 @@ isOneToOne: false
 "admin_totals":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"award_leaderboard":
+{ Args: { "p_event": number,"p_per_tier": number,"p_tiers": number }; Returns: {
+              "called": number,"players": number,"user_id": string,"voters": number
+            }[]
+                           },
 "award_pick_counts":
 { Args: { "p_event": number }; Returns: {
               "nominee_id": number,"picks": number
+            }[]
+                           },
+"award_scores":
+{ Args: { "p_event": number }; Returns: {
+              "called": number,"user_id": string
+            }[]
+                           },
+"award_standing":
+{ Args: { "p_event": number,"p_user": string }; Returns: {
+              "called": number,"rank": number,"voters": number
             }[]
                            },
 "award_tokens":
@@ -1938,11 +1921,6 @@ isOneToOne: false
                            },
 "erase_account_traces":
 { Args: { "p_id": string }; Returns: undefined
-                           },
-"event_badge_counts":
-{ Args: { "p_event": number }; Returns: {
-              "badge": string,"earned": number
-            }[]
                            },
 "game_fans":
 { Args: { "p_game": number,"p_limit"?: number }; Returns: {
@@ -2022,9 +2000,6 @@ isOneToOne: false
                            },
 "record_email_event":
 { Args: { "p_broadcast_id": string,"p_detail": string,"p_resend_id": string,"p_status": string,"p_to": string }; Returns: number
-                           },
-"refresh_award_result_badges":
-{ Args: { "p_event": number }; Returns: undefined
                            },
 "revoke_xp":
 { Args: { "p_key": string,"p_user": string }; Returns: undefined

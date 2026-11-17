@@ -61,9 +61,10 @@ describe("bestOfYears", () => {
 
 describe("menuEvents", () => {
     const now = new Date("2026-11-16T12:00:00Z");
+    const slugs = (list: EventSummary[]) => list.map((e) => e.slug);
 
-    it("puts what's on first, then what's next soonest, then the latest past", () => {
-        const shown = menuEvents(
+    it("leads with what's on, then splits the rest into coming up and past", () => {
+        const { lead, upcoming, past } = menuEvents(
             [
                 event("old", "2025-12-11T03:30:00Z"),
                 event("later", "2026-12-20T18:00:00Z"),
@@ -71,25 +72,41 @@ describe("menuEvents", () => {
                 event("on", "2026-11-15T12:00:00Z", "2026-11-18T12:00:00Z"),
                 event("next", "2026-12-11T03:30:00Z"),
             ],
-            now,
-            5
+            now
         );
-        expect(shown.map((e) => e.slug)).toEqual([
-            "on",
-            "next",
-            "later",
-            "old",
-            "older",
-        ]);
+        expect(lead?.slug).toBe("on");
+        expect(slugs(upcoming)).toEqual(["next", "later"]);
+        expect(slugs(past)).toEqual(["old", "older"]);
     });
 
-    it("keeps to three", () => {
-        const shown = menuEvents(
-            ["a", "b", "c", "d"].map((slug, i) =>
+    it("leads with what's next when nothing's on, and with the latest past when nothing's to come", () => {
+        expect(
+            menuEvents(
+                [
+                    event("next", "2026-12-11T03:30:00Z"),
+                    event("old", "2025-12-11T03:30:00Z"),
+                ],
+                now
+            ).lead?.slug
+        ).toBe("next");
+        const onlyPast = menuEvents(
+            [
+                event("old", "2025-12-11T03:30:00Z"),
+                event("older", "2024-12-11T03:30:00Z"),
+            ],
+            now
+        );
+        expect(onlyPast.lead?.slug).toBe("old");
+        expect(slugs(onlyPast.past)).toEqual(["older"]);
+    });
+
+    it("keeps to two of each", () => {
+        const { upcoming } = menuEvents(
+            ["a", "b", "c", "d", "e"].map((slug, i) =>
                 event(slug, `2026-12-0${i + 1}T00:00:00Z`)
             ),
             now
         );
-        expect(shown).toHaveLength(3);
+        expect(upcoming).toHaveLength(2);
     });
 });

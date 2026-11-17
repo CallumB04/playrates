@@ -1,12 +1,10 @@
 import {
-  EVENT_BADGES,
   eventTiming,
   isCurrentEvent,
   type AdminEventInput,
   type EventDetail,
   type EventSummary,
   type GameEventEntry,
-  type HeldEventBadge,
 } from "@playrates/shared";
 import { AppError } from "../../lib/AppError.js";
 import type { EventRow, EventsRepository } from "./events.repository.js";
@@ -66,18 +64,10 @@ export const createEventsService = ({
 
   const detail = async (row: EventRow): Promise<EventDetail> => {
     const at = now();
-    const [part, counts] = await Promise.all([
-      kinds[row.kind].detail(row, at),
-      repo.badgeCounts(row.id),
-    ]);
     return {
       ...frame(row, at),
       about: row.about,
-      ...part,
-      badges: EVENT_BADGES[row.kind].map((badge) => ({
-        ...badge,
-        earned: counts.find((c) => c.badge === badge.key)?.earned ?? 0,
-      })),
+      ...(await kinds[row.kind].detail(row, at)),
     };
   };
 
@@ -140,44 +130,6 @@ export const createEventsService = ({
 
     async bySlug(slug: string): Promise<EventDetail> {
       return detail(await published(slug));
-    },
-
-    /** Your badges from an event, by key. */
-    async badgesOf(userId: string, slug: string): Promise<string[]> {
-      return repo.badgesOf(userId, (await published(slug)).id);
-    },
-
-    /** Every event badge someone holds, newest first. Only from events
-     *  still published: one taken down takes its badges off show too. */
-    async heldBy(userId: string): Promise<HeldEventBadge[]> {
-      const rows = await repo.badgesOfUser(userId);
-      if (rows.length === 0) return [];
-      const events = new Map(
-        (await repo.findByIds([...new Set(rows.map((r) => r.event_id))]))
-          .filter((event) => event.published_at)
-          .map((event) => [event.id, event]),
-      );
-      return rows
-        .flatMap((row) => {
-          const event = events.get(row.event_id);
-          const def = event
-            ? EVENT_BADGES[event.kind].find((b) => b.key === row.badge)
-            : undefined;
-          if (!event || !def) return [];
-          return [
-            {
-              ...def,
-              earnedAt: row.earned_at,
-              event: {
-                slug: event.slug,
-                name: event.name,
-                startsAt: event.starts_at,
-                logo: event.logo as HeldEventBadge["event"]["logo"],
-              },
-            },
-          ];
-        })
-        .sort((a, b) => Date.parse(b.earnedAt) - Date.parse(a.earnedAt));
     },
 
     /** Everywhere a game has turned up, whatever the kind of event: those

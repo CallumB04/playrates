@@ -7,8 +7,7 @@ import {
     fetchEvent,
     fetchEvents,
     fetchGameEvents,
-    fetchHeldEventBadges,
-    fetchMyEventBadges,
+    fetchAwardLeaderboard,
     fetchMyHype,
     fetchMyPicks,
     queryKeys,
@@ -48,19 +47,18 @@ export const useGameEvents = (gameId: number) =>
         staleTime: FIVE_MINUTES,
     });
 
-/** Someone's event badges, for their profile. */
-export const useHeldEventBadges = (username: string) =>
+/** Who called the most winners. Asked again every minute while the show
+ *  is on, as the winners come in. */
+export const useAwardLeaderboard = (
+    slug: string,
+    enabled: boolean,
+    live: boolean
+) =>
     useQuery({
-        queryKey: queryKeys.events.held(username),
-        queryFn: () => fetchHeldEventBadges(username),
-        enabled: !!username,
-    });
-
-export const useMyEventBadges = (slug: string, signedIn: boolean) =>
-    useQuery({
-        queryKey: queryKeys.events.badges(slug),
-        queryFn: () => fetchMyEventBadges(slug),
-        enabled: !!slug && signedIn,
+        queryKey: queryKeys.events.leaderboard(slug),
+        queryFn: () => fetchAwardLeaderboard(slug),
+        enabled: !!slug && enabled,
+        refetchInterval: live ? 60_000 : false,
     });
 
 export const useMyHype = (slug: string, signedIn: boolean) =>
@@ -71,7 +69,7 @@ export const useMyHype = (slug: string, signedIn: boolean) =>
     });
 
 /** Hype shows straight away, the count moving with it, and is put back if
- *  it fails. A badge it earns is fetched after. */
+ *  it fails. */
 export const useSetHype = (slug: string) => {
     const client = useQueryClient();
     const hypeKey = queryKeys.events.hype(slug);
@@ -101,9 +99,6 @@ export const useSetHype = (slug: string) => {
         },
         onSuccess: (hype) => {
             client.setQueryData(hypeKey, hype);
-            void client.invalidateQueries({
-                queryKey: queryKeys.events.badges(slug),
-            });
         },
     });
 };
@@ -152,9 +147,6 @@ export const useSetPick = (slug: string) => {
         },
         onSuccess: (picks) => {
             client.setQueryData(picksKey, picks);
-            void client.invalidateQueries({
-                queryKey: queryKeys.events.badges(slug),
-            });
         },
     });
 };

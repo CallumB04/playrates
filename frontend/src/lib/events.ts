@@ -1,4 +1,5 @@
 import type {
+    AwardBoardTier,
     AwardCategory,
     AwardNominee,
     AwardPicks,
@@ -246,3 +247,26 @@ export const groupCategories = (
 /** Where a category's section on the page is, for links to it. */
 export const categoryAnchor = (category: { slug: string }) =>
     `award-${category.slug}`;
+
+/**
+ * Who's on one line of an awards leaderboard, in words: everyone named
+ * when that's all of them, otherwise the first two and how many more. You
+ * come first, and as "You", when it's your score.
+ */
+export const tierNames = (tier: AwardBoardTier, yours: boolean): string => {
+    const names = tier.people.flatMap((p) =>
+        p.hidden || p.isYou ? [] : [p.username]
+    );
+    const listed = yours ? ["You", ...names] : names;
+    if (listed.length === 0) {
+        return tier.players === 1 ? "1 player" : `${tier.players} players`;
+    }
+    if (listed.length === tier.players && listed.length <= 3) {
+        return listed.length === 1
+            ? listed[0]!
+            : `${listed.slice(0, -1).join(", ")} and ${listed.at(-1)}`;
+    }
+    const shown = listed.slice(0, 2);
+    const more = tier.players - shown.length;
+    return `${shown.join(", ")} and ${more} ${more === 1 ? "other" : "others"}`;
+};

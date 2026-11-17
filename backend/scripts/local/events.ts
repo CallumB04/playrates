@@ -612,7 +612,7 @@ export const eventRows = ({
     [
       // The tester part way through, as someone halfway down the page is.
       { user: tester, share: 0.35 },
-      ...// A few already all the way through, for a Full ballot to count.
+      ...// A few already all the way through.
       members.map((user, i) => ({
         user,
         share: i < 4 ? 1 : 0.4 + r() * 0.5,
@@ -689,28 +689,3 @@ export const eventRows = ({
     hype,
   };
 };
-
-/**
- * Badges as the site would have given them: a full ballot to whoever picked
- * in every category, the results badges worked out from last year's
- * winners, and the showcase's to whoever hyped while it's been on.
- */
-export const eventBadgesSql = `insert into public.event_badges (user_id, event_id, badge)
-select p.user_id, c.event_id, 'full-ballot'
-from public.award_picks p
-join public.award_categories c on c.id = p.category_id
-group by p.user_id, c.event_id
-having count(*) = (
-    select count(*) from public.award_categories c2
-    where c2.event_id = c.event_id
-      and exists (select 1 from public.award_nominees n where n.category_id = c2.id)
-);
-select public.refresh_award_result_badges(id) from public.events where kind = 'awards';
-insert into public.event_badges (user_id, event_id, badge)
-select distinct h.user_id, r.event_id, 'front-row'
-from public.showcase_hype h join public.showcase_reveals r on r.id = h.reveal_id;
-insert into public.event_badges (user_id, event_id, badge)
-select h.user_id, r.event_id, 'hype-train'
-from public.showcase_hype h join public.showcase_reveals r on r.id = h.reveal_id
-group by h.user_id, r.event_id
-having count(*) >= 5;`;

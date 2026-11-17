@@ -59,23 +59,30 @@ export const MENU_PLATFORMS = [
     { slug: "steam", name: "Steam" },
 ] as const;
 
-/** The events worth a line in the menu: what's on, then what's next,
- *  soonest first, then the latest to finish. */
+/** The events menu: its lead (what's on, else what's next, else the
+ *  latest to finish), then what's coming up, soonest first, and what's
+ *  past, latest first, a couple of each. */
 export const menuEvents = (
     events: EventSummary[],
     now: Date = new Date(),
-    limit = 3
-): EventSummary[] => {
-    const rank = (event: EventSummary) => {
-        const timing = eventTiming(event, now);
-        return timing === "live" ? 0 : timing === "upcoming" ? 1 : 2;
+    limit = 2
+): {
+    lead: EventSummary | null;
+    upcoming: EventSummary[];
+    past: EventSummary[];
+} => {
+    const at = (e: EventSummary) => Date.parse(e.startsAt);
+    const timed = (timing: string) =>
+        events.filter((e) => eventTiming(e, now) === timing);
+    const live = timed("live").sort((a, b) => at(a) - at(b));
+    const upcoming = timed("upcoming").sort((a, b) => at(a) - at(b));
+    const past = timed("past").sort((a, b) => at(b) - at(a));
+    const lead = live[0] ?? upcoming[0] ?? past[0] ?? null;
+    const rest = (list: EventSummary[]) =>
+        list.filter((e) => e !== lead).slice(0, limit);
+    return {
+        lead,
+        upcoming: rest([...live, ...upcoming]),
+        past: rest(past),
     };
-    return [...events]
-        .sort((a, b) => {
-            const byTiming = rank(a) - rank(b);
-            if (byTiming !== 0) return byTiming;
-            const gap = Date.parse(a.startsAt) - Date.parse(b.startsAt);
-            return rank(a) === 2 ? -gap : gap;
-        })
-        .slice(0, limit);
 };

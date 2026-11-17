@@ -19,12 +19,27 @@ export interface AwardPickState {
   nominee_id: number;
 }
 
-export interface EventBadgeState {
-  user_id: string;
-  event_id: number;
-  badge: string;
-  earned_at?: string;
-}
+/** What award_scores does: winners called by everyone who picked. */
+const awardScores = (state: InMemoryState, eventId: number) => {
+  const categories = new Set(
+    state.awardCategories
+      .filter((c) => c.event_id === eventId)
+      .map((c) => c.id),
+  );
+  const won = (id: number) =>
+    state.awardNominees.find((n) => n.id === id)?.won ?? false;
+  const scores = new Map<string, number>();
+  for (const p of state.awardPicks) {
+    if (!categories.has(p.category_id)) continue;
+    scores.set(
+      p.user_id,
+      (scores.get(p.user_id) ?? 0) + (won(p.nominee_id) ? 1 : 0),
+    );
+  }
+  return [...scores]
+    .filter(([id]) => state.profiles.some((p) => p.id === id))
+    .map(([user_id, called]) => ({ user_id, called }));
+};
 
 /** A unique or foreign key refusing, as Postgres says it. */
 const pgError = (code: string) => Object.assign(new Error(code), { code });
@@ -67,48 +82,6 @@ export const createInMemoryEvents = (
     if (!row) return null;
     Object.assign(row, patch);
     return row;
-  },
-  async badgesOf(userId, eventId) {
-    return state.eventBadges
-      .filter((b) => b.user_id === userId && b.event_id === eventId)
-      .map((b) => b.badge);
-  },
-  async grantBadge(userId, eventId, badge) {
-    if (
-      !state.eventBadges.some(
-        (b) =>
-          b.user_id === userId && b.event_id === eventId && b.badge === badge,
-      )
-    ) {
-      state.eventBadges.push({
-        user_id: userId,
-        event_id: eventId,
-        badge,
-        earned_at: new Date().toISOString(),
-      });
-    }
-  },
-  async revokeBadge(userId, eventId, badge) {
-    state.eventBadges = state.eventBadges.filter(
-      (b) =>
-        !(b.user_id === userId && b.event_id === eventId && b.badge === badge),
-    );
-  },
-  async badgesOfUser(userId) {
-    return state.eventBadges
-      .filter((b) => b.user_id === userId)
-      .map((b) => ({
-        event_id: b.event_id,
-        badge: b.badge,
-        earned_at: b.earned_at ?? "2026-01-01T00:00:00.000Z",
-      }));
-  },
-  async badgeCounts(eventId) {
-    const counts = new Map<string, number>();
-    for (const b of state.eventBadges.filter((b) => b.event_id === eventId)) {
-      counts.set(b.badge, (counts.get(b.badge) ?? 0) + 1);
-    }
-    return [...counts].map(([badge, earned]) => ({ badge, earned }));
   },
 });
 
@@ -252,53 +225,37 @@ export const createInMemoryAwards = (
         (p) => !(p.user_id === userId && p.category_id === categoryId),
       );
     },
-    /** What refresh_award_result_badges does. */
-    async refreshResultBadges(eventId) {
-      state.eventBadges = state.eventBadges.filter(
-        (b) =>
-          !(
-            b.event_id === eventId &&
-            ["called-it", "sharp-eye"].includes(b.badge)
-          ),
-      );
-      const categories = state.awardCategories
-        .filter((c) => c.event_id === eventId)
-        .sort(
-          (a, b) =>
-            Number(b.headline) - Number(a.headline) ||
-            a.position - b.position ||
-            a.id - b.id,
-        );
-      const won = (nomineeId: number) =>
-        state.awardNominees.find((n) => n.id === nomineeId)?.won ?? false;
-      const picks = state.awardPicks.filter((p) =>
-        categories.some((c) => c.id === p.category_id),
-      );
-      for (const p of picks) {
-        if (p.category_id === categories[0]?.id && won(p.nominee_id)) {
-          state.eventBadges.push({
-            user_id: p.user_id,
-            event_id: eventId,
-            badge: "called-it",
-          });
-        }
-      }
-      const decided = categories.filter((c) =>
-        state.awardNominees.some((n) => n.category_id === c.id && n.won),
-      ).length;
-      if (decided < 3) return;
-      for (const user of new Set(picks.map((p) => p.user_id))) {
-        const called = picks.filter(
-          (p) => p.user_id === user && won(p.nominee_id),
-        ).length;
-        if (called * 2 >= decided) {
-          state.eventBadges.push({
-            user_id: user,
-            event_id: eventId,
-            badge: "sharp-eye",
-          });
-        }
-      }
+    /** What award_leaderboard does: the top scores, how many reached
+     *  each, and a few of them in name order. */
+    async leaderboard(eventId, tiers, perTier) {
+      const scores = awardScores(state, eventId);
+      const name = (id: string) =>
+        state.profiles.find((p) => p.id === id)?.username ?? "";
+      const top = [...new Set(scores.map((s) => s.called))]
+        .sort((a, b) => b - a)
+        .slice(0, tiers);
+      return top.flatMap((called) => {
+        const here = scores
+          .filter((s) => s.called === called)
+          .sort((a, b) => name(a.user_id).localeCompare(name(b.user_id)));
+        return here.slice(0, perTier).map((s) => ({
+          called,
+          players: here.length,
+          voters: scores.length,
+          user_id: s.user_id,
+        }));
+      });
+    },
+    /** What award_standing does. */
+    async standing(eventId, userId) {
+      const scores = awardScores(state, eventId);
+      const mine = scores.find((s) => s.user_id === userId);
+      if (!mine) return null;
+      return {
+        called: mine.called,
+        rank: scores.filter((s) => s.called > mine.called).length + 1,
+        voters: scores.length,
+      };
     },
   };
 };

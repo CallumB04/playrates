@@ -67,6 +67,8 @@ type Repos = Pick<
   | "events"
   | "awards"
   | "showcase"
+  | "progress"
+  | "friends"
 >;
 
 /** What a hub page names in its HTML. */

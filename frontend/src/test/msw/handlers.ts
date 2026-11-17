@@ -353,10 +353,16 @@ export const handlers = [
     http.get(`${API}/community/trending`, () => HttpResponse.json([])),
     http.get(`${API}/events`, () => HttpResponse.json([])),
     http.get(`${API}/events/current`, () => HttpResponse.json(null)),
-    http.get(`${API}/games/:id/events`, () => HttpResponse.json([])),
-    http.get(`${API}/users/:username/event-badges`, () =>
-        HttpResponse.json([])
+    http.get(`${API}/events/:slug/leaderboard`, () =>
+        HttpResponse.json({
+            tiers: [],
+            total: 0,
+            decided: 0,
+            categories: 0,
+            you: null,
+        })
     ),
+    http.get(`${API}/games/:id/events`, () => HttpResponse.json([])),
     http.get(`${API}/community/games`, () => HttpResponse.json([])),
     http.get(`${API}/community/latest`, () => HttpResponse.json([])),
 

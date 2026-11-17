@@ -30,6 +30,32 @@ const callerId = (req: Parameters<RequestHandler>[0]): string => {
 type SlugParams = z.infer<typeof EventSlugParamSchema>;
 type CategoryParams = z.infer<typeof AwardCategoryParamSchema>;
 
+/** Mounted at /events: an awards night's leaderboard, which names you
+ *  to yourself and those you may see to you. */
+export const createAwardsBoardRouter = ({
+  awards,
+  optionalAuth,
+}: {
+  awards: AwardsService;
+  optionalAuth: RequestHandler;
+}): Router => {
+  const router = Router();
+  const limiter = perMinute("award-board", 60);
+
+  router.get(
+    "/:slug/leaderboard",
+    limiter,
+    optionalAuth,
+    validate({ params: EventSlugParamSchema }),
+    async (req, res) => {
+      const { slug } = req.valid!.params as SlugParams;
+      res.json(await awards.leaderboard(slug, req.auth?.userId));
+    },
+  );
+
+  return router;
+};
+
 /** Mounted at /me/events: your own picks at an awards night. */
 export const createMyAwardsRouter = ({
   awards,

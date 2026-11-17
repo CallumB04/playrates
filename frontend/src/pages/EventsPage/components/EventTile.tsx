@@ -46,9 +46,13 @@ const EventTile = ({ event }: { event: EventSummary }) => (
                         </p>
                     )}
                 </div>
-                <span className="col-span-2 inline-flex items-center gap-1 text-body-sm font-semibold whitespace-nowrap text-brand-text group-hover:underline sm:col-span-1">
+                <span className="col-span-2 inline-flex items-center gap-1 text-body-sm font-semibold whitespace-nowrap text-brand-text sm:col-span-1">
                     {eventAction(event)}
-                    <ArrowRight size={14} aria-hidden />
+                    <ArrowRight
+                        size={14}
+                        aria-hidden
+                        className="transition-transform duration-200 ease-[var(--ease-glide)] group-hover:translate-x-1 motion-reduce:transition-none"
+                    />
                 </span>
             </div>
         </Link>

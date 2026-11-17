@@ -1,5 +1,10 @@
 import {
+  AWARD_BOARD_PEOPLE,
+  AWARD_BOARD_TIERS,
   awardsPhase,
+  canSeeProfile,
+  type AwardBoardPerson,
+  type AwardLeaderboard,
   type AdminCategoryInput,
   type AdminNomineeInput,
   type AwardCategory,
@@ -8,6 +13,11 @@ import {
 import { AppError } from "../../../lib/AppError.js";
 import type { GamesRepository } from "../../games/games.repository.js";
 import { toGame } from "../../games/games.mapper.js";
+import {
+  toAccent,
+  toProfileVisibility,
+} from "../../profiles/profiles.mapper.js";
+import type { ProfileRow } from "../../../types/database.types.js";
 import type { EventRow, EventsRepository } from "../events.repository.js";
 import type { EventKindPart, KindCard, KindGameEntry } from "../kinds.js";
 import type {
@@ -20,11 +30,13 @@ import { awardsArt, toAwardsSummary, toCategory } from "./awards.mapper.js";
 
 interface Deps {
   repo: AwardsRepository;
-  events: Pick<
-    EventsRepository,
-    "findBySlug" | "findById" | "findByIds" | "grantBadge" | "revokeBadge"
-  >;
+  events: Pick<EventsRepository, "findBySlug" | "findById" | "findByIds">;
   games: Pick<GamesRepository, "findByIds" | "findById">;
+  /** Who's on a leaderboard, and whose profiles a viewer may see. */
+  people: {
+    byIds(ids: string[]): Promise<ProfileRow[]>;
+    friendIds(userId: string): Promise<string[]>;
+  };
   now?: () => Date;
 }
 
@@ -43,6 +55,7 @@ export const createAwardsService = ({
   repo,
   events,
   games,
+  people,
   now = () => new Date(),
 }: Deps) => {
   /** Each night's categories with their nominees and games filled in. */
@@ -218,6 +231,75 @@ export const createAwardsService = ({
   return {
     part,
 
+    /**
+     * How the picks did, once any winner is in: the top scores, each with
+     * how many reached it and a few of them by name, and where you stand.
+     * A tie is one line. Those whose profiles you can't see are counted but
+     * not named, as on the site's board.
+     */
+    async leaderboard(
+      slug: string,
+      viewerId: string | undefined,
+    ): Promise<AwardLeaderboard> {
+      const { event } = await publishedShow(slug);
+      const categories = await repo.listCategories([event.id]);
+      const nominees = await repo.listNominees(categories.map((c) => c.id));
+      const decided = new Set(
+        nominees.filter((n) => n.won).map((n) => n.category_id),
+      ).size;
+      const board: AwardLeaderboard = {
+        tiers: [],
+        total: 0,
+        decided,
+        categories: categories.length,
+        you: null,
+      };
+      if (decided === 0) return board;
+
+      const [rows, standing] = await Promise.all([
+        repo.leaderboard(event.id, AWARD_BOARD_TIERS, AWARD_BOARD_PEOPLE),
+        viewerId ? repo.standing(event.id, viewerId) : Promise.resolve(null),
+      ]);
+      const ids = rows.flatMap((r) => (r.user_id ? [r.user_id] : []));
+      const [profiles, friends] = await Promise.all([
+        people.byIds(ids),
+        viewerId ? people.friendIds(viewerId) : Promise.resolve([]),
+      ]);
+      const byId = new Map(profiles.map((p) => [p.id, p]));
+      const friendIds = new Set(friends);
+      const person = (id: string): AwardBoardPerson | null => {
+        const p = byId.get(id);
+        if (!p) return null;
+        const isYou = p.id === viewerId;
+        const seen = canSeeProfile(toProfileVisibility(p.profile_visibility), {
+          isOwner: isYou,
+          isFriend: friendIds.has(p.id),
+        });
+        return seen
+          ? {
+              username: p.username,
+              avatarUrl: p.avatar_url,
+              accent: toAccent(p.accent),
+              isYou,
+            }
+          : { hidden: true };
+      };
+      for (const row of rows) {
+        let tier = board.tiers.find((t) => t.called === row.called);
+        if (!tier) {
+          tier = { called: row.called, players: row.players, people: [] };
+          board.tiers.push(tier);
+        }
+        const someone = row.user_id ? person(row.user_id) : null;
+        if (someone) tier.people.push(someone);
+      }
+      board.total = rows[0]?.voters ?? 0;
+      board.you = standing
+        ? { called: standing.called, rank: standing.rank }
+        : null;
+      return board;
+    },
+
     picksOf,
 
     async pick(
@@ -243,20 +325,7 @@ export const createAwardsService = ({
         }
         await repo.setPick(userId, categoryId, nomineeId);
       }
-      // A full ballot is earned with the last pick and lost with any taken
-      // back, while picks are open; it stands as it was when they close.
-      const categories = await repo.listCategories([event.id]);
-      const withNominees = new Set(
-        (await repo.listNominees(categories.map((c) => c.id))).map(
-          (n) => n.category_id,
-        ),
-      );
-      const picks = await picksOf(userId, slug);
-      const full = [...withNominees].every((id) => picks[id] !== undefined);
-      await (full
-        ? events.grantBadge(userId, event.id, "full-ballot")
-        : events.revokeBadge(userId, event.id, "full-ballot"));
-      return picks;
+      return picksOf(userId, slug);
     },
 
     /* ------------------------------------------------------------ admin */
@@ -374,7 +443,6 @@ export const createAwardsService = ({
           results_at: anyWon ? now().toISOString() : null,
         });
       }
-      await repo.refreshResultBadges(show.event_id);
       return show.event_id;
     },
   };

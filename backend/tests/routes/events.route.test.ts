@@ -394,10 +394,7 @@ describe("picks", () => {
     expect(exported.body.awardPicks).toEqual([
       { user_id: USER_A, category_id: 10, nominee_id: 100 },
     ]);
-    expect(exported.body).toMatchObject({
-      showcaseHype: [],
-      eventBadges: [],
-    });
+    expect(exported.body).toMatchObject({ showcaseHype: [] });
 
     const deleted = await request(app)
       .delete("/api/v1/profiles/me")
@@ -407,109 +404,123 @@ describe("picks", () => {
   });
 });
 
-describe("event badges", () => {
-  const badgesOf = async (app: ReturnType<typeof setup>["app"]) =>
-    (
-      await request(app)
-        .get(`/api/v1/me/events/${SLUG}/badges`)
-        .set("Authorization", authHeader(USER_A))
-    ).body;
+describe("an awards night's leaderboard", () => {
+  const board = (app: ReturnType<typeof setup>["app"], as?: string) => {
+    const call = request(app).get(`/api/v1/events/${SLUG}/leaderboard`);
+    return as ? call.set("Authorization", authHeader(as)) : call;
+  };
+  const winners = [
+    buildAwardNominee({ id: 100, won: true }),
+    buildAwardNominee({ id: 101, game_id: 2, position: 1 }),
+  ];
 
-  it("lists an event's badges with how many have each", async () => {
+  it("is empty until a winner is in", async () => {
     const { app } = setup({
-      eventBadges: [{ user_id: USER_B, event_id: 1, badge: "full-ballot" }],
+      awardPicks: [{ user_id: USER_A, category_id: 10, nominee_id: 100 }],
     });
 
-    const response = await request(app).get(`/api/v1/events/${SLUG}`);
+    const response = await board(app, USER_A);
 
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ tiers: [], decided: 0, you: null });
+  });
+
+  it("puts everyone on the same score on one line, best first, and says where you stand", async () => {
+    const { app } = setup({
+      awardNominees: winners,
+      awardPicks: [
+        { user_id: USER_A, category_id: 10, nominee_id: 101 },
+        { user_id: USER_B, category_id: 10, nominee_id: 100 },
+        { user_id: ADMIN, category_id: 10, nominee_id: 100 },
+      ],
+    });
+
+    const response = await board(app, USER_A);
+
+    expect(response.body).toMatchObject({
+      total: 3,
+      decided: 1,
+      you: { called: 0, rank: 3 },
+    });
     expect(
-      response.body.badges.map((b: { key: string; earned: number }) => [
-        b.key,
-        b.earned,
-      ]),
+      response.body.tiers.map(
+        (t: {
+          called: number;
+          players: number;
+          people: { username: string }[];
+        }) => [t.called, t.players, t.people.map((p) => p.username)],
+      ),
     ).toEqual([
-      ["full-ballot", 1],
-      ["called-it", 0],
-      ["sharp-eye", 0],
+      [1, 2, ["calbgyn", "frienduser"]],
+      [0, 1, ["devuser"]],
     ]);
   });
 
-  it("gives a full ballot with the last pick, and takes it back with one cleared", async () => {
-    const { app } = setup();
-
-    await pick(app, 10, 100);
-    expect(await badgesOf(app)).toEqual([]);
-    await pick(app, 11, 110);
-    expect(await badgesOf(app)).toEqual(["full-ballot"]);
-
-    await request(app)
-      .delete(`/api/v1/me/events/${SLUG}/picks/11`)
-      .set("Authorization", authHeader(USER_A));
-    expect(await badgesOf(app)).toEqual([]);
-  });
-
-  it("gives Called it to whoever picked the top award's winner, and takes it back with the win", async () => {
-    const { app, state } = setup({
-      awardPicks: [
-        { user_id: USER_A, category_id: 10, nominee_id: 100 },
-        { user_id: USER_B, category_id: 10, nominee_id: 101 },
-      ],
-    });
-    const asAdmin = (path: string, won: boolean) =>
-      request(app)
-        .put(admin(path))
-        .set("Authorization", authHeader(ADMIN))
-        .send({ won });
-
-    await asAdmin("/nominees/100/won", true);
-    expect(state.eventBadges).toEqual([
-      { user_id: USER_A, event_id: 1, badge: "called-it" },
-    ]);
-
-    await asAdmin("/nominees/100/won", false);
-    expect(state.eventBadges).toEqual([]);
-  });
-
-  it("gives Sharp eye for half the winners, from three decided", async () => {
-    const { app, state } = setup({
-      awardCategories: [
-        buildAwardCategory(),
-        buildAwardCategory({ id: 11, slug: "b", headline: false, position: 1 }),
-        buildAwardCategory({ id: 12, slug: "c", headline: false, position: 2 }),
-      ],
-      awardNominees: [
-        buildAwardNominee({ id: 100, category_id: 10, won: true }),
-        buildAwardNominee({ id: 110, category_id: 11, game_id: 2, won: true }),
-        buildAwardNominee({ id: 120, category_id: 12, game_id: 3 }),
-        buildAwardNominee({ id: 121, category_id: 12, game_id: 2 }),
-      ],
-      awardPicks: [
-        { user_id: USER_A, category_id: 10, nominee_id: 100 },
-        { user_id: USER_A, category_id: 11, nominee_id: 110 },
-        { user_id: USER_A, category_id: 12, nominee_id: 120 },
-        { user_id: USER_B, category_id: 12, nominee_id: 121 },
-      ],
-    });
-
-    await request(app)
-      .put(admin("/nominees/121/won"))
-      .set("Authorization", authHeader(ADMIN))
-      .send({ won: true });
-
-    expect(state.eventBadges.filter((b) => b.badge === "sharp-eye")).toEqual([
-      { user_id: USER_A, event_id: 1, badge: "sharp-eye" },
-    ]);
-  });
-
-  it("keeps your badges to you, and refuses a signed-out visitor", async () => {
+  it("gives a tie the same place", async () => {
     const { app } = setup({
-      eventBadges: [{ user_id: USER_B, event_id: 1, badge: "full-ballot" }],
+      awardNominees: winners,
+      awardPicks: [
+        { user_id: USER_A, category_id: 10, nominee_id: 100 },
+        { user_id: USER_B, category_id: 10, nominee_id: 100 },
+      ],
     });
 
-    expect(await badgesOf(app)).toEqual([]);
-    expect(
-      (await request(app).get(`/api/v1/me/events/${SLUG}/badges`)).status,
-    ).toBe(401);
+    const { you } = (await board(app, USER_B)).body;
+
+    expect(you).toEqual({ called: 1, rank: 1 });
+  });
+
+  it("counts a private profile without naming it, except to its owner", async () => {
+    const base = seed({
+      awardNominees: winners,
+      awardPicks: [{ user_id: USER_A, category_id: 10, nominee_id: 100 }],
+    });
+    const profiles = base.profiles.map((p) =>
+      p.id === USER_A ? { ...p, profile_visibility: "private" } : p,
+    );
+    const { app } = buildTestApp({ seed: { ...base, profiles } });
+
+    const visitor = (await board(app)).body.tiers[0];
+    expect(visitor).toEqual({
+      called: 1,
+      players: 1,
+      people: [{ hidden: true }],
+    });
+
+    const stranger = (await board(app, USER_B)).body.tiers[0];
+    expect(stranger.people).toEqual([{ hidden: true }]);
+
+    const owner = (await board(app, USER_A)).body.tiers[0];
+    expect(owner.people[0]).toMatchObject({ username: "devuser", isYou: true });
+  });
+
+  it("names only a few at each score, and keeps to the top five scores", async () => {
+    const people = Array.from({ length: 12 }, (_, i) =>
+      buildProfile({
+        id: `00000000-0000-0000-0000-${String(i).padStart(12, "0")}`,
+        username: `player${String(i).padStart(2, "0")}`,
+      }),
+    );
+    const base = seed({ awardNominees: winners });
+    const awardPicks = people.map((p) => ({
+      user_id: p.id,
+      category_id: 10,
+      nominee_id: 100,
+    }));
+    const { app } = buildTestApp({
+      seed: { ...base, profiles: [...base.profiles, ...people], awardPicks },
+    });
+
+    const [tier] = (await board(app)).body.tiers;
+
+    expect(tier.players).toBe(12);
+    expect(tier.people).toHaveLength(4);
+  });
+
+  it("answers 404 for an event that isn't published", async () => {
+    const { app } = setup({ events: [buildEvent({ published_at: null })] });
+
+    expect((await board(app)).status).toBe(404);
   });
 });
 
@@ -584,14 +595,10 @@ describe("a showcase", () => {
         ],
       },
     });
-    expect(response.body.badges.map((b: { key: string }) => b.key)).toEqual([
-      "front-row",
-      "hype-train",
-    ]);
   });
 
-  it("counts hype, and gives Front row for hyping while it's on", async () => {
-    const { app, state } = setup(showcaseSeed());
+  it("counts hype", async () => {
+    const { app } = setup(showcaseSeed());
 
     expect((await hype(app, 500)).body).toEqual([500]);
     expect((await hype(app, 501)).body).toEqual([500, 501]);
@@ -601,36 +608,6 @@ describe("a showcase", () => {
     expect(
       shown.body.showcase.reveals.map((r: { hype: number }) => r.hype),
     ).toEqual([0, 1]);
-    expect(state.eventBadges).toEqual([
-      {
-        user_id: USER_A,
-        event_id: 2,
-        badge: "front-row",
-        earned_at: expect.any(String),
-      },
-    ]);
-  });
-
-  it("gives a Hype train for five while it's current, and no Front row once it's over", async () => {
-    const reveals = Array.from({ length: 5 }, (_, i) => ({
-      id: 600 + i,
-      event_id: 2,
-      game_id: null,
-      label: `Reveal ${i}`,
-      tag: "trailer" as const,
-      position: i,
-    }));
-    const { app, state } = setup({
-      ...showcaseSeed({
-        starts_at: new Date(Date.now() - 2 * 86_400_000).toISOString(),
-        ends_at: new Date(Date.now() - 86_400_000).toISOString(),
-      }),
-      showcaseReveals: reveals,
-    });
-
-    for (const reveal of reveals) await hype(app, reveal.id);
-
-    expect(state.eventBadges.map((b) => b.badge)).toEqual(["hype-train"]);
   });
 
   it("puts a game's showing on its page, beside its nominations", async () => {
@@ -1046,90 +1023,5 @@ describe("running events from admin", () => {
         })
       ).status,
     ).toBe(404);
-  });
-});
-
-describe("GET /users/:username/event-badges", () => {
-  const held = (extra: object = {}) =>
-    seed({
-      events: [
-        buildEvent(),
-        buildEvent({
-          id: 2,
-          slug: "draft-show",
-          kind: "showcase",
-          published_at: null,
-        }),
-      ],
-      eventBadges: [
-        {
-          user_id: USER_A,
-          event_id: 1,
-          badge: "full-ballot",
-          earned_at: "2026-11-18T10:00:00.000Z",
-        },
-        {
-          user_id: USER_A,
-          event_id: 1,
-          badge: "called-it",
-          earned_at: "2026-12-11T06:00:00.000Z",
-        },
-        { user_id: USER_A, event_id: 2, badge: "front-row" },
-        { user_id: USER_B, event_id: 1, badge: "full-ballot" },
-      ],
-      ...extra,
-    });
-
-  it("lists someone's event badges, newest first, with the event each is from", async () => {
-    const { app } = buildTestApp({ seed: held() });
-    const res = await request(app).get("/api/v1/users/devuser/event-badges");
-    expect(res.status).toBe(200);
-    expect(res.body.map((b: { key: string }) => b.key)).toEqual([
-      "called-it",
-      "full-ballot",
-    ]);
-    expect(res.body[0]).toMatchObject({
-      name: "Called it",
-      earnedAt: "2026-12-11T06:00:00.000Z",
-      event: { slug: SLUG, name: "The Game Awards 2026" },
-    });
-  });
-
-  it("leaves out badges from an event that isn't published", async () => {
-    const { app } = buildTestApp({ seed: held() });
-    const res = await request(app).get("/api/v1/users/devuser/event-badges");
-    expect(res.body.some((b: { key: string }) => b.key === "front-row")).toBe(
-      false,
-    );
-  });
-
-  it("refuses a private profile's badges to anyone but its owner", async () => {
-    const base = held();
-    const profiles = base.profiles.map((p) =>
-      p.id === USER_A ? { ...p, profile_visibility: "private" } : p,
-    );
-    const { app } = buildTestApp({ seed: { ...base, profiles } });
-
-    const visitor = await request(app).get(
-      "/api/v1/users/devuser/event-badges",
-    );
-    expect(visitor.status).toBe(403);
-
-    const stranger = await request(app)
-      .get("/api/v1/users/devuser/event-badges")
-      .set("Authorization", authHeader(USER_B));
-    expect(stranger.status).toBe(403);
-
-    const owner = await request(app)
-      .get("/api/v1/users/devuser/event-badges")
-      .set("Authorization", authHeader(USER_A));
-    expect(owner.status).toBe(200);
-    expect(owner.body).toHaveLength(2);
-  });
-
-  it("answers 404 for nobody by that name", async () => {
-    const { app } = buildTestApp({ seed: held() });
-    const res = await request(app).get("/api/v1/users/nobody/event-badges");
-    expect(res.status).toBe(404);
   });
 });

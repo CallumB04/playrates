@@ -1,14 +1,19 @@
-import { useMemo } from "react";
-import { ArrowDown } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowDown, Trophy } from "lucide-react";
 import type {
     AwardCategory,
+    AwardLeaderboard,
     AwardPicks,
     AwardsDetail,
     EventDetail,
 } from "@playrates/shared";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useAccountForm } from "../../../contexts/AccountFormContext";
-import { useMyPicks, useSetPick } from "../../../hooks/queries/useEvents";
+import {
+    useAwardLeaderboard,
+    useMyPicks,
+    useSetPick,
+} from "../../../hooks/queries/useEvents";
 import { usePlatforms } from "../../../hooks/queries/useGames";
 import { useMyGameLogIds } from "../../../hooks/queries/useGameLogs";
 import { useTileActions } from "../../../components/game/useTileActions";
@@ -16,6 +21,7 @@ import Button from "../../../components/ui/Button";
 import ShareBar from "../../../components/events/ShareBar";
 import { cardClass } from "../../../components/ui/cardClass";
 import { cn } from "../../../lib/cn";
+import { formatCount, formatOrdinal } from "../../../lib/format";
 import {
     awardsLine,
     categoryAnchor,
@@ -30,6 +36,7 @@ import {
 } from "../../../lib/events";
 import NomineeCard from "./NomineeCard";
 import AwardsNav from "./AwardsNav";
+import LeaderboardPopup from "./LeaderboardPopup";
 import { goToCategory, useActiveCategory } from "./useActiveCategory";
 
 const GRID =
@@ -141,12 +148,31 @@ const Standing = ({
     awards,
     picks,
     signedIn,
+    board,
 }: {
     awards: AwardsDetail;
     picks: AwardPicks;
     signedIn: boolean;
+    /** Once winners are in: everyone's scores, behind a button. */
+    board: AwardLeaderboard | undefined;
 }) => {
     const { openSignup } = useAccountForm();
+    const [boardOpen, setBoardOpen] = useState(false);
+    const hasBoard = !!board && board.tiers.length > 0;
+    const boardButton = hasBoard && (
+        <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setBoardOpen(true)}
+            className="shrink-0 self-start sm:self-auto"
+        >
+            <Trophy size={14} aria-hidden />
+            Leaderboard
+        </Button>
+    );
+    const boardPopup = boardOpen && board && (
+        <LeaderboardPopup board={board} onClose={() => setBoardOpen(false)} />
+    );
     const { data: logIds } = useMyGameLogIds();
     const logged = useMemo(
         () => new Set((logIds ?? []).map((log) => log.gameId)),
@@ -171,11 +197,15 @@ const Standing = ({
                             : "Log the nominees you’ve played, and see how everyone called it."}
                     </p>
                 </div>
-                <Button className="w-full sm:w-auto" onClick={openSignup}>
-                    {awards.phase === "open"
-                        ? "Join to make your picks"
-                        : "Join PlayRates"}
-                </Button>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    {boardButton}
+                    <Button className="w-full sm:w-auto" onClick={openSignup}>
+                        {awards.phase === "open"
+                            ? "Join to make your picks"
+                            : "Join PlayRates"}
+                    </Button>
+                </div>
+                {boardPopup}
             </div>
         );
     }
@@ -195,6 +225,11 @@ const Standing = ({
             label: results ? "You called" : "Your picks",
             part: results ? result.called : made.picked,
             whole: results ? result.decided : made.total,
+            // Where that puts you among everyone who picked.
+            place:
+                results && board?.you
+                    ? `${formatOrdinal(board.you.rank)} of ${formatCount(board.total)}`
+                    : undefined,
         },
         ...(headline && headlineGames.total > 0
             ? [
@@ -218,9 +253,12 @@ const Standing = ({
 
     return (
         <div className={cardClass("flex flex-col gap-4")}>
-            <p className="text-body-sm font-semibold text-content">
-                {awardsLine(awards)}
-            </p>
+            <div className="flex items-center justify-between gap-3">
+                <p className="text-body-sm font-semibold text-content">
+                    {awardsLine(awards)}
+                </p>
+                {boardButton}
+            </div>
             <dl className="grid gap-4 sm:grid-cols-3">
                 {figures.map((figure) => (
                     <div key={figure.label} className="flex flex-col gap-1.5">
@@ -228,11 +266,18 @@ const Standing = ({
                             {figure.label}
                         </dt>
                         <dd className="flex flex-col gap-2">
-                            <span className="font-mono text-figure-sm text-content tabular-nums">
-                                {figure.part}
-                                <span className="text-content-muted">
-                                    /{figure.whole}
+                            <span className="flex items-baseline gap-2">
+                                <span className="font-mono text-figure-sm text-content tabular-nums">
+                                    {figure.part}
+                                    <span className="text-content-muted">
+                                        /{figure.whole}
+                                    </span>
                                 </span>
+                                {"place" in figure && figure.place && (
+                                    <span className="text-label-sm text-content-secondary">
+                                        {figure.place}
+                                    </span>
+                                )}
                             </span>
                             <ShareBar
                                 value={
@@ -246,6 +291,7 @@ const Standing = ({
                     </div>
                 ))}
             </dl>
+            {boardPopup}
         </div>
     );
 };
@@ -260,6 +306,11 @@ const AwardsSection = ({
 }) => {
     const { user } = useAuth();
     const { data: myPicks } = useMyPicks(event.slug, !!user);
+    const { data: board } = useAwardLeaderboard(
+        event.slug,
+        awards.phase !== "open",
+        event.timing === "live"
+    );
     const picks = myPicks ?? {};
     const groups = groupCategories(awards.categories);
     const order = groups.flatMap((g) => g.categories);
@@ -268,7 +319,12 @@ const AwardsSection = ({
     if (order.length === 0) return null;
     return (
         <section aria-label="The awards" className="flex flex-col gap-6">
-            <Standing awards={awards} picks={picks} signedIn={!!user} />
+            <Standing
+                awards={awards}
+                picks={picks}
+                signedIn={!!user}
+                board={board}
+            />
             <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-10">
                 <AwardsNav
                     groups={groups}

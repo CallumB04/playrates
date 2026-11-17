@@ -1,7 +1,4 @@
 import {
-  eventTiming,
-  HYPE_TRAIN_AT,
-  isCurrentEvent,
   type AdminRevealInput,
   type Game,
   type ShowcaseHype,
@@ -16,9 +13,8 @@ import type { RevealRow, ShowcaseRepository } from "./showcase.repository.js";
 
 interface Deps {
   repo: ShowcaseRepository;
-  events: Pick<EventsRepository, "findBySlug" | "grantBadge" | "revokeBadge">;
+  events: Pick<EventsRepository, "findBySlug">;
   games: Pick<GamesRepository, "findByIds" | "findById">;
-  now?: () => Date;
 }
 
 /** Reveals whose game has gone, or is hidden, drop out rather than show as
@@ -53,23 +49,12 @@ const showcaseArt = (reveals: ShowcaseReveal[]) => {
   };
 };
 
-const timesOf = (event: EventRow) => ({
-  startsAt: event.starts_at,
-  endsAt: event.ends_at,
-  publishedAt: event.published_at,
-});
-
 /**
  * Showcases: the kind's part of an event (the games it showed, in running
  * order, and the crowd's hype for each), each member's own hype, and the
  * admin's editing. Nothing here knows about awards, nor they about it.
  */
-export const createShowcaseService = ({
-  repo,
-  events,
-  games,
-  now = () => new Date(),
-}: Deps) => {
+export const createShowcaseService = ({ repo, events, games }: Deps) => {
   const revealsOf = async (
     eventIds: number[],
     withHype: boolean,
@@ -178,10 +163,7 @@ export const createShowcaseService = ({
 
     hypeOf,
 
-    /**
-     * Hype for a reveal, or taken back. Open any time; the badges for it
-     * only while the show is on (Front row) or still current (Hype train).
-     */
+    /** Hype for a reveal, or taken back. Open any time. */
     async setHype(
       userId: string,
       slug: string,
@@ -194,18 +176,7 @@ export const createShowcaseService = ({
         throw AppError.notFound("Reveal");
       }
       await (on ? repo.hype(userId, revealId) : repo.unhype(userId, revealId));
-      const hyped = await hypeOf(userId, slug);
-      const at = now();
-      const times = timesOf(event);
-      if (on && eventTiming(times, at) === "live") {
-        await events.grantBadge(userId, event.id, "front-row");
-      }
-      if (isCurrentEvent(times, at)) {
-        await (hyped.length >= HYPE_TRAIN_AT
-          ? events.grantBadge(userId, event.id, "hype-train")
-          : events.revokeBadge(userId, event.id, "hype-train"));
-      }
-      return hyped;
+      return hypeOf(userId, slug);
     },
 
     /* ------------------------------------------------------------ admin */

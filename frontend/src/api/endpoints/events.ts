@@ -3,11 +3,11 @@ import type {
     AdminEventInput,
     AdminNomineeInput,
     AdminRevealInput,
+    AwardLeaderboard,
     AwardPicks,
     EventDetail,
     EventSummary,
     GameEventEntry,
-    HeldEventBadge,
     ShowcaseHype,
 } from "@playrates/shared";
 import { api } from "../client";
@@ -46,18 +46,13 @@ export const fetchGameEvents = async (
     return data;
 };
 
-/** Your badges from an event, by key. */
-export const fetchHeldEventBadges = async (
-    username: string
-): Promise<HeldEventBadge[]> => {
-    const { data } = await api.get<HeldEventBadge[]>(
-        `/users/${encodeURIComponent(username)}/event-badges`
+/** An awards night's leaderboard, naming whoever the viewer may see. */
+export const fetchAwardLeaderboard = async (
+    slug: string
+): Promise<AwardLeaderboard> => {
+    const { data } = await api.get<AwardLeaderboard>(
+        `/events/${slug}/leaderboard`
     );
-    return data;
-};
-
-export const fetchMyEventBadges = async (slug: string): Promise<string[]> => {
-    const { data } = await api.get<string[]>(`/me/events/${slug}/badges`);
     return data;
 };
 

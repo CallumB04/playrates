@@ -1,17 +1,14 @@
-import { Router, type RequestHandler } from "express";
+import { Router } from "express";
 import {
   AdminEventIdParamSchema,
   AdminEventInputSchema,
   AdminEventPublishSchema,
   EventSlugParamSchema,
   GameIdParamSchema,
-  UsernameParamSchema,
   type AdminEventInput,
 } from "@playrates/shared";
 import type { z } from "zod";
-import { AppError } from "../../lib/AppError.js";
 import { validate } from "../../middleware/validate.js";
-import type { ProfileGate } from "../profiles/profileGate.js";
 import type { EventsService } from "./events.service.js";
 
 type EventParams = z.infer<typeof AdminEventIdParamSchema>;
@@ -58,60 +55,6 @@ export const createGameEventsRouter = ({
     const { gameId } = req.valid!.params as { gameId: number };
     res.json(await service.forGame(gameId));
   });
-
-  return router;
-};
-
-/** Mounted at /users/:username/event-badges: the event badges someone
- *  holds, through the profile gate like the rest of their profile. */
-export const createUserEventBadgesRouter = ({
-  service,
-  gate,
-  optionalAuth,
-}: {
-  service: EventsService;
-  gate: ProfileGate;
-  optionalAuth: RequestHandler;
-}): Router => {
-  const router = Router({ mergeParams: true });
-
-  router.get(
-    "/",
-    optionalAuth,
-    validate({ params: UsernameParamSchema }),
-    async (req, res) => {
-      const { username } = req.valid!.params as { username: string };
-      const profile = await gate(username, req.auth?.userId);
-      res.json(await service.heldBy(profile.id));
-    },
-  );
-
-  return router;
-};
-
-/** Mounted at /me/events: your own badges from an event. */
-export const createMyEventsRouter = ({
-  service,
-  requireAuth,
-}: {
-  service: EventsService;
-  requireAuth: RequestHandler;
-}): Router => {
-  const router = Router();
-
-  router.get(
-    "/:slug/badges",
-    requireAuth,
-    validate({ params: EventSlugParamSchema }),
-    async (req, res) => {
-      const { slug } = req.valid!.params as z.infer<
-        typeof EventSlugParamSchema
-      >;
-      const userId = req.auth?.userId;
-      if (!userId) throw AppError.unauthorized();
-      res.json(await service.badgesOf(userId, slug));
-    },
-  );
 
   return router;
 };

@@ -6,7 +6,8 @@ import type { Game } from "./game.js";
  * it is, who runs it, where to watch) and is of a kind, which adds a part of
  * its own. An awards night adds categories, nominees and members' picks; a
  * showcase adds the games it revealed and members' hype for each. A new
- * kind gets its key here, its part's types, and its badges below.
+ * kind gets its key here and its part's types, and keeps any scoring of
+ * its own: badges are the site's, not an event's.
  */
 
 export const EVENT_KINDS = ["awards", "showcase"] as const;
@@ -139,6 +140,44 @@ export interface AwardsDetail extends AwardsSummary {
 /** One member's picks at an awards night: nominee id by category id. */
 export type AwardPicks = Record<number, number>;
 
+/** Someone on an awards night's leaderboard; one whose profile you can't
+ *  see is there, but not named. */
+export type AwardBoardPerson =
+  | {
+      hidden?: false;
+      username: string;
+      avatarUrl: string | null;
+      accent: string;
+      isYou: boolean;
+    }
+  | { hidden: true };
+
+/** Everyone who called the same number of winners: one line, however
+ *  many tied. */
+export interface AwardBoardTier {
+  called: number;
+  players: number;
+  /** A few of them, in name order. */
+  people: AwardBoardPerson[];
+}
+
+/** The leaderboard shows its top few scores, and a few names at each. */
+export const AWARD_BOARD_TIERS = 5;
+export const AWARD_BOARD_PEOPLE = 4;
+
+/** How an awards night's picks did, once any winner is in: the top scores
+ *  and who reached them, and where you stand. */
+export interface AwardLeaderboard {
+  tiers: AwardBoardTier[];
+  /** Everyone who made a pick. */
+  total: number;
+  /** Awards with a winner so far, out of every award. */
+  decided: number;
+  categories: number;
+  /** Your score and place, ties sharing it; null without picks. */
+  you: { called: number; rank: number } | null;
+}
+
 /* ------------------------------------------------------------- showcase */
 
 export const REVEAL_TAGS = [
@@ -183,78 +222,6 @@ export interface ShowcaseDetail extends ShowcaseSummary {
 /** The reveals one member is hyped for, by id. */
 export type ShowcaseHype = number[];
 
-/* --------------------------------------------------------------- badges */
-
-export type EventBadgeIcon = "ballot" | "trophy" | "target" | "eye" | "flame";
-
-export interface EventBadgeDef {
-  key: string;
-  name: string;
-  description: string;
-  icon: EventBadgeIcon;
-}
-
-/**
- * Each kind's badges, a few at most. Every one can only be earned while its
- * event is on, so holding one means you were there.
- */
-export const EVENT_BADGES: Record<EventKind, readonly EventBadgeDef[]> = {
-  awards: [
-    {
-      key: "full-ballot",
-      name: "Full ballot",
-      description: "Made a pick in every category before the show.",
-      icon: "ballot",
-    },
-    {
-      key: "called-it",
-      name: "Called it",
-      description: "Picked the winner of the night’s top award.",
-      icon: "trophy",
-    },
-    {
-      key: "sharp-eye",
-      name: "Sharp eye",
-      description: "Called at least half of the winners.",
-      icon: "target",
-    },
-  ],
-  showcase: [
-    {
-      key: "front-row",
-      name: "Front row",
-      description: "Hyped a reveal while the show was on.",
-      icon: "eye",
-    },
-    {
-      key: "hype-train",
-      name: "Hype train",
-      description: "Hyped five or more of its reveals.",
-      icon: "flame",
-    },
-  ],
-};
-
-/** How many hyped reveals make a hype train. */
-export const HYPE_TRAIN_AT = 5;
-
-export interface EventBadge extends EventBadgeDef {
-  /** How many members have it. */
-  earned: number;
-}
-
-/** An event badge someone holds, for their profile: what it is, the event
- *  it's from and when it was earned. */
-export interface HeldEventBadge extends EventBadgeDef {
-  event: {
-    slug: string;
-    name: string;
-    startsAt: string;
-    logo: EventLogoKey | null;
-  };
-  earnedAt: string;
-}
-
 /* -------------------------------------------------------------- events */
 
 export interface EventSummary {
@@ -290,8 +257,6 @@ export interface EventDetail extends Omit<EventSummary, "awards" | "showcase"> {
   about: string;
   awards: AwardsDetail | null;
   showcase: ShowcaseDetail | null;
-  /** Its kind's badges, and how many have each. */
-  badges: EventBadge[];
 }
 
 /** What a game did at an event, for the game's own page: nominated or won

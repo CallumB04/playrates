@@ -5,12 +5,22 @@ import { createEventsService } from "./events.service.js";
 
 /** Events with every kind's part plugged in: one place to add a kind. */
 export const buildEvents = (
-  repos: Pick<Repositories, "events" | "awards" | "showcase" | "games">,
+  repos: Pick<
+    Repositories,
+    "events" | "awards" | "showcase" | "games" | "progress" | "friends"
+  >,
 ) => {
   const awards = createAwardsService({
     repo: repos.awards,
     events: repos.events,
     games: repos.games,
+    people: {
+      byIds: (ids) => repos.progress.profilesByIds(ids),
+      friendIds: async (userId) =>
+        (await repos.friends.listForUser(userId))
+          .filter((f) => f.status === "accepted")
+          .map((f) => (f.user_a_id === userId ? f.user_b_id : f.user_a_id)),
+    },
   });
   const showcase = createShowcaseService({
     repo: repos.showcase,

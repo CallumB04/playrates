@@ -15,7 +15,13 @@ import {
     Users,
     type LucideIcon,
 } from "lucide-react";
-import { eventPath, hubFilters, hubPath, igdbSized } from "@playrates/shared";
+import {
+    eventPath,
+    hubFilters,
+    hubPath,
+    igdbSized,
+    type EventSummary,
+} from "@playrates/shared";
 import {
     usePatchNotes,
     useTrendingThreads,
@@ -378,9 +384,47 @@ const CommunityPanel = ({ onNavigate }: PanelProps) => {
     );
 };
 
+/** A column of events in the menu, each with its date. */
+const EventColumn = ({
+    title,
+    events,
+    onNavigate,
+}: {
+    title: string;
+    events: EventSummary[];
+    onNavigate: () => void;
+}) => (
+    <div className="flex flex-col">
+        <p className={HEADING}>{title}</p>
+        <ul className="flex flex-col gap-0.5">
+            {events.map((event) => (
+                <li key={event.slug}>
+                    <Link
+                        to={eventPath(event.slug)}
+                        onClick={onNavigate}
+                        className={cn(
+                            "flex items-center gap-3 rounded-md px-2.5 py-2 transition-colors hover:bg-surface-hover",
+                            FOCUS
+                        )}
+                    >
+                        <EventDate
+                            iso={event.startsAt}
+                            past={event.timing === "past"}
+                            size="sm"
+                        />
+                        <span className="line-clamp-2 min-w-0 text-body-sm font-medium text-content">
+                            {event.name}
+                        </span>
+                    </Link>
+                </li>
+            ))}
+        </ul>
+    </div>
+);
+
 const EventsPanel = ({ onNavigate }: PanelProps) => {
     const { data: events, isPending } = useEvents();
-    const [lead, ...rest] = menuEvents(events ?? []);
+    const { lead, upcoming, past } = menuEvents(events ?? []);
     return (
         <>
             <div className="flex gap-3">
@@ -418,32 +462,25 @@ const EventsPanel = ({ onNavigate }: PanelProps) => {
                         </Feature>
                     )
                 )}
-                <div className="flex w-72 flex-col">
-                    <p className={HEADING}>More events</p>
-                    <ul className="flex flex-col gap-0.5">
-                        {rest.map((event) => (
-                            <li key={event.slug}>
-                                <Link
-                                    to={eventPath(event.slug)}
-                                    onClick={onNavigate}
-                                    className={cn(
-                                        "flex items-center gap-3 rounded-md px-2.5 py-2 transition-colors hover:bg-surface-hover",
-                                        FOCUS
-                                    )}
-                                >
-                                    <EventDate
-                                        iso={event.startsAt}
-                                        past={event.timing === "past"}
-                                        size="sm"
-                                    />
-                                    <span className="line-clamp-2 min-w-0 text-body-sm font-medium text-content">
-                                        {event.name}
-                                    </span>
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+                {/* Coming up over past, one column beside the lead. */}
+                {(upcoming.length > 0 || past.length > 0) && (
+                    <div className="flex w-64 flex-col gap-3">
+                        {upcoming.length > 0 && (
+                            <EventColumn
+                                title="Coming up"
+                                events={upcoming}
+                                onNavigate={onNavigate}
+                            />
+                        )}
+                        {past.length > 0 && (
+                            <EventColumn
+                                title="Past"
+                                events={past}
+                                onNavigate={onNavigate}
+                            />
+                        )}
+                    </div>
+                )}
             </div>
             <Foot>
                 <Link

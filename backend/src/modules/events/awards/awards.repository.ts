@@ -32,6 +32,21 @@ export interface AwardPickRow {
   nominee_id: number;
 }
 
+/** A line of award_leaderboard: a score, how many reached it, and one of
+ *  them (null for a score nobody is listed under). */
+export interface AwardBoardRow {
+  called: number;
+  players: number;
+  voters: number;
+  user_id: string | null;
+}
+
+export interface AwardStandingRow {
+  called: number;
+  rank: number;
+  voters: number;
+}
+
 export type NewCategory = Omit<AwardCategoryRow, "id">;
 export type CategoryPatch = Partial<
   Pick<
@@ -75,10 +90,16 @@ export interface AwardsRepository {
   /** Picks per nominee across a night; a nominee nobody picked is absent. */
   pickCounts(eventId: number): Promise<{ nominee_id: number; picks: number }[]>;
   picks(userId: string, categoryIds: number[]): Promise<AwardPickRow[]>;
+  /** A night's top scores, with a few of those who reached each. */
+  leaderboard(
+    eventId: number,
+    tiers: number,
+    perTier: number,
+  ): Promise<AwardBoardRow[]>;
+  /** One member's score and place; null without picks. */
+  standing(eventId: number, userId: string): Promise<AwardStandingRow | null>;
   setPick(userId: string, categoryId: number, nomineeId: number): Promise<void>;
   clearPick(userId: string, categoryId: number): Promise<void>;
-  /** Works out again who called the winners marked so far, as badges. */
-  refreshResultBadges(eventId: number): Promise<void>;
 }
 
 const CATEGORY = "id, event_id, slug, name, blurb, section, position, headline";
@@ -214,6 +235,25 @@ export const createAwardsRepository = (db: Db): AwardsRepository => {
       return many(db.rpc("award_pick_counts", { p_event: eventId }));
     },
 
+    leaderboard(eventId, tiers, perTier) {
+      return many(
+        db.rpc("award_leaderboard", {
+          p_event: eventId,
+          p_tiers: tiers,
+          p_per_tier: perTier,
+        }),
+      );
+    },
+
+    async standing(eventId, userId) {
+      const { data, error } = await db.rpc("award_standing", {
+        p_event: eventId,
+        p_user: userId,
+      });
+      if (error) throw error;
+      return ((data ?? []) as AwardStandingRow[])[0] ?? null;
+    },
+
     picks(userId, categoryIds) {
       if (categoryIds.length === 0) return Promise.resolve([]);
       return many(
@@ -235,13 +275,6 @@ export const createAwardsRepository = (db: Db): AwardsRepository => {
         },
         { onConflict: "user_id,category_id" },
       );
-      if (error) throw error;
-    },
-
-    async refreshResultBadges(eventId) {
-      const { error } = await db.rpc("refresh_award_result_badges", {
-        p_event: eventId,
-      });
       if (error) throw error;
     },
 
