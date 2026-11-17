@@ -177,10 +177,12 @@ const NomineeCard = ({
                 )}
             </div>
             {named && (
-                <div className="min-h-11 min-w-0">
+                // Room for the longest name and a line of detail on every
+                // card, so a row's pick buttons stay level.
+                <div className="min-h-19 min-w-0 sm:min-h-16">
                     {nominee.label && nominee.game && (
                         <>
-                            <p className="truncate text-body font-semibold text-content">
+                            <p className="line-clamp-3 text-body-sm font-semibold text-content sm:line-clamp-2 sm:text-body">
                                 {nominee.label}
                             </p>
                             {nominee.detail && (
