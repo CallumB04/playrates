@@ -165,7 +165,7 @@ const LibraryPanel = ({ onNavigate }: PanelProps) => {
     const [year, lastYear] = bestOfYears();
     const best = { kind: "year", year } as const;
     const { data } = useGames(popularOfYear(year));
-    const banners = (data?.data ?? []).filter((g) => g.artworkUrl).slice(0, 3);
+    const covers = (data?.data ?? []).filter((g) => g.coverUrl).slice(0, 4);
     return (
         <>
             <div className="flex gap-3">
@@ -173,20 +173,27 @@ const LibraryPanel = ({ onNavigate }: PanelProps) => {
                     to={hubPath(best)}
                     onNavigate={onNavigate}
                     media={
-                        // The year's games people know best: the first
-                        // across the top, the next two side by side.
-                        <div className="grid size-full grid-cols-2 grid-rows-[3fr_2fr] gap-0.5">
-                            {banners.map((game, i) => (
-                                <span
-                                    key={game.id}
-                                    className={cn(
-                                        "relative min-h-0 overflow-hidden",
-                                        i === 0 && "col-span-2"
-                                    )}
-                                >
-                                    <Art url={game.artworkUrl} />
-                                </span>
-                            ))}
+                        // The year's four games people know best, whole: the
+                        // grid takes the box's height and the covers' shape,
+                        // so none is cropped whatever the menu's height.
+                        <div className="flex size-full items-center justify-center p-2">
+                            <div className="grid aspect-3/4 h-full max-w-full grid-cols-2 grid-rows-2 gap-1.5">
+                                {covers.map((game) => (
+                                    // Not GameCover: its lazy loading waits
+                                    // for a menu that's already open to
+                                    // scroll into view.
+                                    <img
+                                        key={game.id}
+                                        src={igdbSized(
+                                            game.coverUrl!,
+                                            "cover_big"
+                                        )}
+                                        alt=""
+                                        decoding="async"
+                                        className="size-full min-h-0 rounded-xs object-cover ring-1 ring-subtle transition-transform duration-500 ease-[var(--ease-glide)] group-hover/feature:scale-[1.02]"
+                                    />
+                                ))}
+                            </div>
                         </div>
                     }
                 >
