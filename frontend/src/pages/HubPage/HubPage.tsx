@@ -26,7 +26,12 @@ import Pagination from "../../components/ui/Pagination";
 import { TileSkeleton } from "../../components/ui/Skeleton";
 import EmptyPlate from "../../components/ui/EmptyPlate";
 import { buttonClass } from "../../components/ui/buttonClass";
+import PageBackdrop, {
+    TALL_BACKDROP_OFFSET,
+} from "../../components/layout/PageBackdrop";
 import NotFoundPage from "../NotFoundPage";
+import { popularOfYear } from "../../lib/popularOfYear";
+import { cn } from "../../lib/cn";
 import { getLibraryGamesPerPage } from "../LibraryPage/lib/gamesPerPage";
 import { libraryFoot } from "../LibraryPage/lib/libraryFoot";
 import { logMeta } from "../LibraryPage/lib/logMeta";
@@ -198,6 +203,14 @@ const SimilarGames = ({ gameId }: { gameId: number }) => {
     return <Grid games={data.similar} sort="logged" />;
 };
 
+/** A year's page behind the art of its most played game, the one most
+ *  will know it by. */
+const YearBackdrop = ({ year }: { year: number }) => {
+    const { data } = useGames(popularOfYear(year));
+    const art = data?.data.find((game) => game.artworkUrl)?.artworkUrl;
+    return <PageBackdrop url={art ?? null} />;
+};
+
 /**
  * A page of games chosen one way: a year's best, a genre, a platform,
  * what's coming, games like one game. The words come from shared, so the
@@ -214,7 +227,13 @@ const HubPage = ({ kind }: { kind: Kind }) => {
     if (hub === null) return <NotFoundPage />;
 
     return (
-        <section className="flex flex-col gap-6">
+        <section
+            className={cn(
+                "flex flex-col gap-6",
+                hub?.kind === "year" && TALL_BACKDROP_OFFSET
+            )}
+        >
+            {hub?.kind === "year" && <YearBackdrop year={hub.year} />}
             <PageHeader
                 title={words?.heading ?? ""}
                 note={words?.lead}

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
     ArrowRight,
+    Flame,
     Award,
     BarChart3,
     CalendarClock,
@@ -17,7 +18,6 @@ import {
 } from "lucide-react";
 import {
     eventPath,
-    hubFilters,
     hubPath,
     igdbSized,
     type EventSummary,
@@ -28,6 +28,7 @@ import {
 } from "../../../hooks/queries/useCommunity";
 import { useEvents } from "../../../hooks/queries/useEvents";
 import { useGames } from "../../../hooks/queries/useGames";
+import { popularOfYear } from "../../../lib/popularOfYear";
 import { threadPath, newThreadPath } from "../../community/paths";
 import EventDate from "../../events/EventDate";
 import EventLogo from "../../events/EventLogo";
@@ -163,15 +164,11 @@ const Foot = ({ children }: { children: ReactNode }) => (
 const LibraryPanel = ({ onNavigate }: PanelProps) => {
     const [year, lastYear] = bestOfYears();
     const best = { kind: "year", year } as const;
-    // Its picture is the year's most logged rather than the page's own
-    // order: a top score from a handful of reviews is a game few know.
-    const { data } = useGames({
-        ...hubFilters(best),
-        sort: "logged",
-        page: 1,
-        limit: 6,
-    });
-    const banners = (data?.data ?? []).filter((g) => g.artworkUrl).slice(0, 3);
+    const { data } = useGames(popularOfYear(year));
+    const games = data?.data ?? [];
+    const top = games.filter((g) => g.coverUrl).slice(0, 3);
+    // On a podium: the first in the middle and forward, the next either side.
+    const podium = [top[1], top[0], top[2]];
     return (
         <>
             <div className="flex gap-3">
@@ -179,21 +176,35 @@ const LibraryPanel = ({ onNavigate }: PanelProps) => {
                     to={hubPath(best)}
                     onNavigate={onNavigate}
                     media={
-                        // The year's games people know best: the first
-                        // across the top, the next two side by side.
-                        <div className="grid size-full grid-cols-2 grid-rows-[3fr_2fr] gap-0.5">
-                            {banners.map((game, i) => (
-                                <span
-                                    key={game.id}
-                                    className={cn(
-                                        "relative min-h-0 overflow-hidden",
-                                        i === 0 && "col-span-2"
-                                    )}
-                                >
-                                    <Art url={game.artworkUrl} />
-                                </span>
-                            ))}
-                        </div>
+                        <>
+                            <span className="absolute inset-0 opacity-40">
+                                <Art url={games[0]?.artworkUrl} />
+                            </span>
+                            <div className="relative flex size-full items-center justify-center gap-2 px-3">
+                                {podium.map((game, i) =>
+                                    game?.coverUrl ? (
+                                        // Not GameCover: its lazy loading
+                                        // waits for a menu that's already
+                                        // open to scroll into view.
+                                        <img
+                                            key={game.id}
+                                            src={igdbSized(
+                                                game.coverUrl,
+                                                "cover_big"
+                                            )}
+                                            alt=""
+                                            decoding="async"
+                                            className={cn(
+                                                "aspect-3/4 shrink-0 rounded-sm object-cover shadow-lifted ring-1 ring-strong transition-transform duration-300 ease-[var(--ease-glide)]",
+                                                i === 1
+                                                    ? "z-10 w-20 group-hover/feature:-translate-y-1"
+                                                    : "w-16 translate-y-2"
+                                            )}
+                                        />
+                                    ) : null
+                                )}
+                            </div>
+                        </>
                     }
                 >
                     <FeatureTitle>Best of {year}</FeatureTitle>
@@ -274,6 +285,17 @@ const LibraryPanel = ({ onNavigate }: PanelProps) => {
     );
 };
 
+/** A trending thread's place, as the community page marks it. */
+const TrendRank = ({ rank }: { rank: number }) => (
+    <p className="flex items-center gap-1 text-label-sm">
+        <Flame size={12} aria-hidden className="text-brand-text" />
+        <span className="font-semibold text-brand-text tabular-nums">
+            #{rank}
+        </span>
+        <span className="text-content-muted">Trending</span>
+    </p>
+);
+
 const CommunityPanel = ({ onNavigate }: PanelProps) => {
     const { data: trending, isPending } = useTrendingThreads(3);
     const { data: patchNotes } = usePatchNotes();
@@ -290,17 +312,35 @@ const CommunityPanel = ({ onNavigate }: PanelProps) => {
                             to={threadPath(top.id)}
                             onNavigate={onNavigate}
                             media={
-                                <Art
-                                    url={
-                                        topGame?.artworkUrl ?? topGame?.coverUrl
-                                    }
-                                />
+                                <>
+                                    <Art
+                                        url={
+                                            topGame?.artworkUrl ??
+                                            topGame?.coverUrl
+                                        }
+                                    />
+                                    {/* The game it's about, on its art. */}
+                                    {topGame?.coverUrl && (
+                                        <img
+                                            src={igdbSized(
+                                                topGame.coverUrl,
+                                                "cover_big"
+                                            )}
+                                            alt=""
+                                            decoding="async"
+                                            className="absolute bottom-2 left-2 aspect-3/4 w-11 rounded-xs object-cover shadow-lifted ring-1 ring-strong"
+                                        />
+                                    )}
+                                </>
                             }
                         >
-                            <p className="text-label-sm font-semibold text-brand-text">
-                                Most talked about
-                            </p>
+                            <TrendRank rank={top.rank} />
                             <FeatureTitle>{top.title}</FeatureTitle>
+                            {topGame && (
+                                <p className="truncate text-label-sm text-content-muted">
+                                    {topGame.title}
+                                </p>
+                            )}
                         </Feature>
                     )
                 )}
@@ -344,10 +384,8 @@ const CommunityPanel = ({ onNavigate }: PanelProps) => {
                                             FOCUS
                                         )}
                                     >
-                                        <span className="w-3 shrink-0 font-display text-body-sm text-content-muted tabular-nums group-hover/item:text-brand-text">
-                                            {thread.rank}
-                                        </span>
-                                        <span className="flex min-w-0 flex-col">
+                                        <span className="flex min-w-0 flex-col gap-0.5">
+                                            <TrendRank rank={thread.rank} />
                                             <span className="line-clamp-2 text-body-sm font-medium text-content">
                                                 {thread.title}
                                             </span>
