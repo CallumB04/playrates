@@ -9,12 +9,10 @@ import { relativeTime } from "../../../../lib/format";
 import {
     useAdminHealth,
     useAdminMetric,
-    useIgdbUsage,
     useServerErrors,
 } from "../../../../hooks/queries/useAdmin";
 import RankBars from "../../components/RankBars";
 import { RANGE_LABELS } from "../../lib/adminFormat";
-import { UsageDays, UsageFigure } from "../../games/IgdbUsage";
 import HealthSystems from "../../health/HealthSystems";
 import { ErrorList } from "../../health/ErrorRow";
 import { headline, systemStates } from "../../health/healthState";
@@ -97,33 +95,6 @@ export const MostLoggedPopup = ({ range, onClose }: RangeProps) => {
                         ),
                     }))}
                 />
-            )}
-        </Popup>
-    );
-};
-
-export const IgdbPopup = ({ onClose }: { onClose: () => void }) => {
-    const { data: usage } = useIgdbUsage();
-    return (
-        <Popup title="IGDB requests today" onClose={onClose}>
-            {!usage ? (
-                <TextSkeleton lines={5} />
-            ) : (
-                <>
-                    <UsageFigure usage={usage} />
-                    <PopupSection title="Requests each day · last 30 days">
-                        <UsageDays usage={usage} height={140} />
-                    </PopupSection>
-                    <Link
-                        to="/admin/games"
-                        className={buttonClass(
-                            "secondary",
-                            "w-full sm:w-auto sm:self-start"
-                        )}
-                    >
-                        Pull new games or look after one
-                    </Link>
-                </>
             )}
         </Popup>
     );

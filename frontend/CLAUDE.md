@@ -59,6 +59,13 @@ variant or tone instead of overriding it at the call site.
 - `ui/Button` / `buttonClass` (on a `Link`): variants `primary`, `secondary`,
   `outline`, `ghost`, `danger`; sizes up to `touch` (48px). Pressed actions
   are rounded rectangles; pills are toggles or counts.
+- **No new pills.** A label, tag or status (a kind, a stage, "Winner", a
+  countdown) is `ui/Tag`: a rectangle with 6px corners (`rounded-xs`), never
+  `rounded-full`, and not `rounded-sm` either, whose 10px makes anything
+  under about 30px tall a pill. A
+  circle is only for something round: an avatar, a medal, a tick, a dot. A
+  thing to mark on a cover (a winner, a favourite) is a medal on its top
+  edge, as Gaming 25 crowns its favourite.
 - `ui/Card` / `cardClass` with its tones, `Panel` and `AsideCard`; the rules
   for which surface fits what are in `Card.tsx`. A page's own header never
   sits in a card, and a page has one `feature` card at most.

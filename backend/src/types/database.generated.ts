@@ -89,6 +89,110 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"award_categories": {
+                  Row: {
+                    "blurb": string,"created_at": string,"event_id": number,"headline": boolean,"id": number,"name": string,"position": number,"section": string,"slug": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "blurb"?: string,"created_at"?: string,"event_id": number,"headline"?: boolean,"id"?: never,"name": string,"position"?: number,"section"?: string,"slug": string
+                  }
+                  Update: {
+                    "blurb"?: string,"created_at"?: string,"event_id"?: number,"headline"?: boolean,"id"?: never,"name"?: string,"position"?: number,"section"?: string,"slug"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "award_categories_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "award_shows"
+      referencedColumns: ["event_id"]
+    }
+                  ]
+                },"award_nominees": {
+                  Row: {
+                    "category_id": number,"created_at": string,"detail": string | null,"game_id": number | null,"id": number,"label": string | null,"position": number,"won": boolean
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category_id": number,"created_at"?: string,"detail"?: string | null,"game_id"?: number | null,"id"?: never,"label"?: string | null,"position"?: number,"won"?: boolean
+                  }
+                  Update: {
+                    "category_id"?: number,"created_at"?: string,"detail"?: string | null,"game_id"?: number | null,"id"?: never,"label"?: string | null,"position"?: number,"won"?: boolean
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "award_nominees_category_id_fkey"
+      columns: ["category_id"]
+isOneToOne: false
+      referencedRelation: "award_categories"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "award_nominees_game_id_fkey"
+      columns: ["game_id"]
+isOneToOne: false
+      referencedRelation: "games"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"award_picks": {
+                  Row: {
+                    "category_id": number,"created_at": string,"nominee_id": number,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category_id": number,"created_at"?: string,"nominee_id": number,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "category_id"?: number,"created_at"?: string,"nominee_id"?: number,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "award_picks_category_id_fkey"
+      columns: ["category_id"]
+isOneToOne: false
+      referencedRelation: "award_categories"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "award_picks_nominee_id_category_id_fkey"
+      columns: ["nominee_id","category_id"]
+isOneToOne: false
+      referencedRelation: "award_nominees"
+      referencedColumns: ["id","category_id"]
+    },{
+      foreignKeyName: "award_picks_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "admin_user_directory"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "award_picks_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"award_shows": {
+                  Row: {
+                    "event_id": number,"picks_close_at": string,"results_at": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "event_id": number,"picks_close_at": string,"results_at"?: string | null
+                  }
+                  Update: {
+                    "event_id"?: number,"picks_close_at"?: string,"results_at"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "award_shows_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: true
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"client_errors": {
                   Row: {
                     "build": string | null,"created_at": string,"id": number,"message": string,"path": string,"stack": string | null,"user_agent": string | null,"user_id": string | null
@@ -323,6 +427,20 @@ isOneToOne: false
                   }
                   Update: {
                     "error"?: string | null,"id"?: never,"kind"?: string,"recipients"?: number,"sent_at"?: string,"status"?: string,"transactional"?: boolean
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"events": {
+                  Row: {
+                    "about": string,"created_at": string,"ends_at": string | null,"id": number,"kind": string,"logo": string | null,"name": string,"organiser": string,"organiser_url": string | null,"published_at": string | null,"slug": string,"starts_at": string,"tagline": string,"updated_at": string,"watch_url": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "about"?: string,"created_at"?: string,"ends_at"?: string | null,"id"?: never,"kind": string,"logo"?: string | null,"name": string,"organiser"?: string,"organiser_url"?: string | null,"published_at"?: string | null,"slug": string,"starts_at": string,"tagline"?: string,"updated_at"?: string,"watch_url"?: string | null
+                  }
+                  Update: {
+                    "about"?: string,"created_at"?: string,"ends_at"?: string | null,"id"?: never,"kind"?: string,"logo"?: string | null,"name"?: string,"organiser"?: string,"organiser_url"?: string | null,"published_at"?: string | null,"slug"?: string,"starts_at"?: string,"tagline"?: string,"updated_at"?: string,"watch_url"?: string | null
                   }
                   Relationships: [
                     
@@ -1019,6 +1137,84 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"showcase_events": {
+                  Row: {
+                    "event_id": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "event_id": number
+                  }
+                  Update: {
+                    "event_id"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "showcase_events_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: true
+      referencedRelation: "events"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"showcase_hype": {
+                  Row: {
+                    "created_at": string,"reveal_id": number,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"reveal_id": number,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"reveal_id"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "showcase_hype_reveal_id_fkey"
+      columns: ["reveal_id"]
+isOneToOne: false
+      referencedRelation: "showcase_reveals"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "showcase_hype_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "admin_user_directory"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "showcase_hype_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"showcase_reveals": {
+                  Row: {
+                    "created_at": string,"event_id": number,"game_id": number | null,"id": number,"label": string | null,"position": number,"tag": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"event_id": number,"game_id"?: number | null,"id"?: never,"label"?: string | null,"position"?: number,"tag": string
+                  }
+                  Update: {
+                    "created_at"?: string,"event_id"?: number,"game_id"?: number | null,"id"?: never,"label"?: string | null,"position"?: number,"tag"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "showcase_reveals_event_id_fkey"
+      columns: ["event_id"]
+isOneToOne: false
+      referencedRelation: "showcase_events"
+      referencedColumns: ["event_id"]
+    },{
+      foreignKeyName: "showcase_reveals_game_id_fkey"
+      columns: ["game_id"]
+isOneToOne: false
+      referencedRelation: "games"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"streak_shields_used": {
                   Row: {
                     "user_id": string,"week": string
@@ -1645,6 +1841,26 @@ isOneToOne: false
 "admin_totals":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"award_leaderboard":
+{ Args: { "p_event": number,"p_per_tier": number,"p_tiers": number }; Returns: {
+              "called": number,"players": number,"user_id": string,"voters": number
+            }[]
+                           },
+"award_pick_counts":
+{ Args: { "p_event": number }; Returns: {
+              "nominee_id": number,"picks": number
+            }[]
+                           },
+"award_scores":
+{ Args: { "p_event": number }; Returns: {
+              "called": number,"user_id": string
+            }[]
+                           },
+"award_standing":
+{ Args: { "p_event": number,"p_user": string }; Returns: {
+              "called": number,"rank": number,"voters": number
+            }[]
+                           },
 "award_tokens":
 { Args: { "p_amount": number,"p_key": string,"p_source": string,"p_user": string }; Returns: undefined
                            },
@@ -1832,6 +2048,11 @@ isOneToOne: false
 "shared_players":
 { Args: { "p_limit"?: number,"p_user": string }; Returns: {
               "accent": string,"avatar_url": string,"bio": string,"game_ids": (number)[],"id": string,"last_seen_at": string,"shared": number,"username": string
+            }[]
+                           },
+"showcase_hype_counts":
+{ Args: { "p_event": number }; Returns: {
+              "hype": number,"reveal_id": number
             }[]
                            },
 "site_leaderboard":

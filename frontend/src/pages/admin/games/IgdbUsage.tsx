@@ -1,10 +1,11 @@
 import type { IgdbUsage as Usage } from "@playrates/shared";
-import { cardClass } from "../../../components/ui/cardClass";
+import Button from "../../../components/ui/Button";
 import { figureClass } from "../../../components/ui/figureClass";
-import { Skeleton } from "../../../components/ui/Skeleton";
 import { formatCount, relativeTime } from "../../../lib/format";
 import { useIgdbUsage } from "../../../hooks/queries/useAdmin";
 import BarPlot from "../components/BarPlot";
+import { SeeAllModal } from "../components/SeeAll";
+import { useSeeAll } from "../components/useSeeAll";
 import { bucketLabel } from "../lib/adminFormat";
 
 /** "8 Oct". The days are UTC, read as such. */
@@ -98,31 +99,41 @@ export const UsageDays = ({
 );
 
 /**
- * How much the site is asking of IGDB. There is no allowance to run down,
- * only a rate, so this is for spotting failures rather than budgeting.
+ * Today's requests to IGDB on a button, the last thirty days behind it.
+ * There is no allowance to run down, only a rate, so this is for spotting
+ * failures rather than budgeting.
  */
 const IgdbUsage = () => {
     const { data: usage } = useIgdbUsage();
-    if (!usage) return <Skeleton className="h-56 rounded-lg" />;
-
+    const days = useSeeAll();
     return (
-        <section
-            aria-label="IGDB requests"
-            className={cardClass(
-                "grid gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]",
-                { padding: "none" }
+        <>
+            <Button
+                variant="secondary"
+                onClick={days.show}
+                aria-haspopup="dialog"
+                disabled={!usage}
+                className="w-full sm:w-auto"
+            >
+                IGDB today:{" "}
+                <span className="font-mono">
+                    {usage ? formatCount(usage.todayRequests) : "…"}
+                </span>
+                {usage && usage.todayFailures > 0 && (
+                    <span className="text-danger">
+                        , {formatCount(usage.todayFailures)} failed
+                    </span>
+                )}
+            </Button>
+            {days.open && usage && (
+                <SeeAllModal title="IGDB requests" onClose={days.hide}>
+                    <div className="flex flex-col gap-6">
+                        <UsageFigure usage={usage} />
+                        <UsageDays usage={usage} height={140} />
+                    </div>
+                </SeeAllModal>
             )}
-        >
-            <div className="flex flex-col gap-3 border-b border-subtle px-5 py-5 lg:border-r lg:border-b-0 lg:pr-6">
-                <h2 className="text-label text-content-muted">
-                    IGDB requests today
-                </h2>
-                <UsageFigure usage={usage} />
-            </div>
-            <div className="min-w-0 px-5 pb-5 lg:py-5 lg:pr-6 lg:pl-0">
-                <UsageDays usage={usage} />
-            </div>
-        </section>
+        </>
     );
 };
 

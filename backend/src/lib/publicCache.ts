@@ -1,6 +1,10 @@
 import type { RequestHandler } from "express";
 
 const MINUTE = "public, max-age=0, s-maxage=60, stale-while-revalidate=600";
+/* Picks and winners move by the minute on the night, and a browser holding
+   a stale copy would show someone their own pick at 0%: the CDN keeps it
+   briefly, and the browser always asks again. */
+const LIVE = "public, max-age=0, s-maxage=30";
 const DAY =
   "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400";
 
@@ -10,6 +14,7 @@ const DAY =
    it. */
 const RULES: [RegExp, string][] = [
   [/^\/(genres|platforms)(\/|$)/, DAY],
+  [/^\/(events(\/|$)|games\/\d+\/events$)/, LIVE],
   [
     /^\/(games|stats|reviews|lists|community\/(threads|trending|patch-notes)|gaming-25\/most-loved)(\/|$)/,
     MINUTE,

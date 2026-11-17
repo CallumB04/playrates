@@ -24,6 +24,8 @@ export interface AccountData {
   gaming25: unknown[];
   gaming25Picks: unknown[];
   gaming25Loves: unknown[];
+  awardPicks: unknown[];
+  showcaseHype: unknown[];
   xpEvents: unknown[];
   tokenEvents: unknown[];
   badges: unknown[];
@@ -97,6 +99,8 @@ export const createAccountExportRepository = (
         gaming25,
         gaming25Picks,
         gaming25Loves,
+        awardPicks,
+        showcaseHype,
         xpEvents,
         tokenEvents,
         badges,
@@ -125,6 +129,8 @@ export const createAccountExportRepository = (
         everything("gaming_25s", "user_id", own("user_id")),
         everything("gaming_25_picks", "category", own("user_id")),
         everything("gaming_25_loves", "owner_id", own("user_id")),
+        everything("award_picks", "category_id", own("user_id")),
+        everything("showcase_hype", "reveal_id", own("user_id")),
         everything("xp_events", "id", own("user_id")),
         everything("token_events", "id", own("user_id")),
         everything("user_badges", "unlocked_at", own("user_id")),
@@ -172,6 +178,8 @@ export const createAccountExportRepository = (
         gaming25,
         gaming25Picks,
         gaming25Loves,
+        awardPicks,
+        showcaseHype,
         xpEvents,
         tokenEvents,
         badges,

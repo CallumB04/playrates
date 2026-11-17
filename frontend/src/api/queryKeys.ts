@@ -131,6 +131,17 @@ export const queryKeys = {
         rules: ["progress", "rules"] as const,
     },
 
+    events: {
+        all: ["events"] as const,
+        list: ["events", "list"] as const,
+        current: ["events", "current"] as const,
+        bySlug: (slug: string) => ["events", "event", slug] as const,
+        picks: (slug: string) => ["events", "picks", slug] as const,
+        forGame: (gameId: number) => ["events", "game", gameId] as const,
+        hype: (slug: string) => ["events", "hype", slug] as const,
+        leaderboard: (slug: string) => ["events", "leaderboard", slug] as const,
+    },
+
     gaming25: {
         all: ["gaming25"] as const,
         byUsername: (username: string) => ["gaming25", username] as const,
@@ -177,6 +188,8 @@ export const queryKeys = {
         gameSearch: (q: string) => ["admin", "games", "search", q] as const,
         igdbUsage: ["admin", "games", "igdb-usage"] as const,
         announcements: ["admin", "announcements"] as const,
+        events: ["admin", "events"] as const,
+        event: (id: number) => ["admin", "events", id] as const,
         /* Under announcements, so anything that refreshes the history —
            taking one back above all — refreshes which entries went out. */
         patchNotes: ["admin", "announcements", "patch-notes"] as const,
@@ -184,6 +197,7 @@ export const queryKeys = {
         emailStats: ["admin", "email", "stats"] as const,
         emailMessages: (filters: Record<string, unknown>) =>
             ["admin", "email", "messages", filters] as const,
+        attention: ["admin", "attention"] as const,
         health: ["admin", "health"] as const,
         errors: ["admin", "errors"] as const,
         clientErrors: ["admin", "client-errors"] as const,

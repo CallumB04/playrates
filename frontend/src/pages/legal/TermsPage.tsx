@@ -5,7 +5,7 @@ import ProsePage from "./ProsePage";
 const Email = () => <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>;
 
 /* When the substance of this page changes, move the date. */
-const UPDATED = "2026-10-06";
+const UPDATED = "2026-11-17";
 
 const TermsPage = () => (
     <ProsePage
@@ -115,6 +115,11 @@ const TermsPage = () => (
             Game details and artwork come from IGDB. Game names, logos and art
             belong to their publishers and developers. PlayRates isn’t connected
             with or endorsed by any of them.
+        </p>
+        <p>
+            Events here, like awards nights, are named so you can follow them
+            and make your picks. PlayRates isn’t connected with or endorsed by
+            the people who run them, and its picks aren’t votes in them.
         </p>
 
         <h2>The code</h2>

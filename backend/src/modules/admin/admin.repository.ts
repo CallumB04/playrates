@@ -150,6 +150,8 @@ export interface AdminRepository {
   ): Promise<{ count: number; lastAt: string | null }>;
   /** Errors of a kind kept since `since`. */
   errorCount(kind: "server" | "client", since: string): Promise<number>;
+  /** Reports still waiting to be handled. */
+  openReportCount(): Promise<number>;
   /** Who gets the alerts. */
   adminIds(): Promise<string[]>;
   recordClientError(
@@ -424,6 +426,15 @@ export const createAdminRepository = (db: Db): AdminRepository => ({
       .from(kind === "server" ? "server_errors" : "client_errors")
       .select("id", { head: true, count: "exact" })
       .gte("created_at", since);
+    if (error) throw error;
+    return count ?? 0;
+  },
+
+  async openReportCount() {
+    const { count, error } = await db
+      .from("content_reports")
+      .select("id", { head: true, count: "exact" })
+      .eq("status", "open");
     if (error) throw error;
     return count ?? 0;
   },

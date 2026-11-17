@@ -8,7 +8,9 @@ import {
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import {
     applyTheme,
+    hasStoredSession,
     readStoredPreference,
+    resolveTheme,
     SYSTEM_QUERY,
     ThemeContext,
     THEME_STORAGE_KEY,
@@ -23,8 +25,11 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     /* Live, since the OS can flip at sunset with the tab already open. With
        nothing to ask it reads false, which lands on the dark default. */
     const system: Theme = useMediaQuery(SYSTEM_QUERY) ? "light" : "dark";
+    // From storage until the session says, so the first paint agrees with
+    // theme-init.js.
+    const [signedIn, setSignedIn] = useState(hasStoredSession);
 
-    const theme = preference === "system" ? system : preference;
+    const theme = resolveTheme(preference, system, signedIn);
 
     useEffect(() => {
         applyTheme(theme);
@@ -48,7 +53,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     );
 
     const value = useMemo(
-        () => ({ theme, preference, setPreference, toggleTheme }),
+        () => ({ theme, preference, setPreference, toggleTheme, setSignedIn }),
         [theme, preference, setPreference, toggleTheme]
     );
 

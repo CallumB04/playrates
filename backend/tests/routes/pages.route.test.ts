@@ -5,6 +5,10 @@ import request from "supertest";
 import { buildTestApp, USER_A, USER_B } from "../helpers/buildTestApp.js";
 import {
   baseSeed,
+  buildAwardCategory,
+  buildAwardNominee,
+  buildAwardShow,
+  buildEvent,
   buildGame,
   buildMessage,
   buildGameLog,
@@ -522,6 +526,8 @@ describe("every other page", () => {
         communityThreads: [buildThread({ id: 1 })],
         gameLogs: [buildGameLog({ id: 1 })],
         reviews: [buildReview({ id: 1 })],
+        events: [buildEvent()],
+        awardShows: [buildAwardShow()],
       },
     });
 
@@ -536,6 +542,7 @@ describe("every other page", () => {
         .replace(":year", "2024")
         .replace("/genre/:slug", "/genre/indie")
         .replace("/platform/:slug", `/platform/${buildPlatform().slug}`)
+        .replace("/events/:slug", `/events/${buildEvent().slug}`)
         .replace("/*", "/anything");
 
     const checked = paths.filter(
@@ -853,5 +860,137 @@ describe("review pages", () => {
     const { app } = buildTestApp({ seed: seed() });
     const response = await request(app).get("/api/v1/reviews/5");
     expect(response.body).toMatchObject({ id: 5, rating: 9, author: { username: "devuser" } });
+  });
+});
+
+describe("event pages", () => {
+  const seed = (
+    event: Parameters<typeof buildEvent>[0] = {},
+    show: Parameters<typeof buildAwardShow>[0] = {},
+  ) => ({
+    ...baseSeed(),
+    games: [
+      buildGame({ id: 1, title: "Game One" }),
+      buildGame({ id: 2, title: "Game Two" }),
+    ],
+    events: [buildEvent(event)],
+    awardShows: [buildAwardShow(show)],
+    awardCategories: [
+      buildAwardCategory(),
+      buildAwardCategory({
+        id: 11,
+        slug: "best-performance",
+        name: "Best Performance",
+        headline: false,
+        position: 1,
+      }),
+    ],
+    awardNominees: [
+      buildAwardNominee(),
+      buildAwardNominee({ id: 101, game_id: 2, won: true, position: 1 }),
+      buildAwardNominee({
+        id: 110,
+        category_id: 11,
+        game_id: 2,
+        label: "An Actor",
+        detail: "as the lead",
+      }),
+    ],
+  });
+
+  it("names an event's nominees for readers that never run the app", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+
+    const response = await request(app).get("/events/the-game-awards-2026");
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain(
+      "<title>The Game Awards 2026: nominees and picks / PlayRates</title>",
+    );
+    expect(response.text).toContain('"@type":"Event"');
+    expect(response.text).toContain('"startDate":"2099-12-11T03:30:00.000Z"');
+    expect(response.text).toContain("Gaming’s biggest night.");
+    expect(response.text).toContain("Game of the Year");
+    expect(response.text).toContain("Game One");
+    expect(response.text).toContain("An Actor");
+    expect(response.text).toContain("Game Two · as the lead");
+    expect(response.text).not.toContain('content="noindex"');
+  });
+
+  it("names the winners once the results are out", async () => {
+    const { app } = buildTestApp({
+      seed: seed({}, { results_at: "2026-12-11T04:00:00.000Z" }),
+    });
+
+    const response = await request(app).get("/events/the-game-awards-2026");
+
+    expect(response.text).toContain(
+      "<title>The Game Awards 2026: the winners / PlayRates</title>",
+    );
+    expect(response.text).toContain("Winner");
+  });
+
+  it("answers 404 for a draft", async () => {
+    const { app } = buildTestApp({ seed: seed({ published_at: null }) });
+
+    expect(
+      (await request(app).get("/events/the-game-awards-2026")).status,
+    ).toBe(404);
+  });
+
+  it("names a showcase's reveals, as a different kind of event", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...seed(),
+        events: [
+          buildEvent({
+            kind: "showcase",
+            slug: "winter-showcase",
+            name: "Winter Showcase",
+            logo: null,
+          }),
+        ],
+        awardShows: [],
+        showcaseEvents: [1],
+        showcaseReveals: [
+          {
+            id: 1,
+            event_id: 1,
+            game_id: 2,
+            label: null,
+            tag: "premiere" as const,
+            position: 0,
+          },
+        ],
+      },
+    });
+
+    const response = await request(app).get("/events/winter-showcase");
+
+    expect(response.text).toContain(
+      "<title>Winter Showcase: every reveal / PlayRates</title>",
+    );
+    expect(response.text).toContain("Every reveal");
+    expect(response.text).toContain("World premiere");
+  });
+
+  it("lists published events, and puts them in their own sitemap", async () => {
+    const { app } = buildTestApp({ seed: seed(), production: true });
+
+    const index = await request(app).get("/events");
+    expect(index.status).toBe(200);
+    expect(index.text).toContain("<title>Events / PlayRates</title>");
+    expect(index.text).toContain(
+      "https://playrates.app/events/the-game-awards-2026",
+    );
+
+    const map = (await request(app).get("/sitemaps/events.xml")).text;
+    expect(map).toContain("<loc>https://playrates.app/events</loc>");
+    expect(map).toContain(
+      "<loc>https://playrates.app/events/the-game-awards-2026</loc>",
+    );
+    expect((await request(app).get("/sitemap.xml")).text).toContain(
+      "/sitemaps/events.xml",
+    );
   });
 });

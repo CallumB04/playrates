@@ -25,12 +25,19 @@ import {
   listTrail,
   reviewTrail,
   threadTrail,
+  EVENTS_CRUMB,
+  EVENTS_WORDS,
+  eventPath,
+  eventTrail,
+  eventWords,
+  REVEAL_TAG_LABELS,
 } from "@playrates/shared";
 import type { Repositories } from "../../repositories.js";
 import type { GenreRow } from "../../types/database.types.js";
 import type { ReviewRowJoined } from "../reviews/reviews.repository.js";
 import { memoFor } from "../../lib/memo.js";
 import { inGridOrder } from "../gaming25/gaming25.mapper.js";
+import { buildEvents } from "../events/buildEvents.js";
 import {
   aboutVisibilityOf,
   toProfileVisibility,
@@ -57,6 +64,11 @@ type Repos = Pick<
   | "reviews"
   | "lists"
   | "gaming25"
+  | "events"
+  | "awards"
+  | "showcase"
+  | "progress"
+  | "friends"
 >;
 
 /** What a hub page names in its HTML. */
@@ -118,6 +130,7 @@ const organisations = (names: string[]) =>
   names.map((name) => ({ "@type": "Organization", name }));
 
 export const createPagesService = (repos: Repos) => {
+  const { events } = buildEvents(repos);
   // Every game page names its platforms and genres, and they hardly change.
   const platformList = memoFor(10 * 60_000, () => repos.platforms.list());
   const genreList = memoFor(10 * 60_000, () => repos.genres.list());
@@ -770,6 +783,126 @@ export const createPagesService = (repos: Repos) => {
           links: [{ href: "/library", label: "Browse the library" }],
         },
       };
+    },
+
+    /** Every published event, the latest to start first. */
+    async events(): Promise<HeadMeta> {
+      const rows = await repos.events.list(true);
+      return {
+        title: pageTitle(EVENTS_WORDS.title),
+        description: EVENTS_WORDS.description,
+        path: EVENTS_CRUMB.path,
+        image: DEFAULT_IMAGE,
+        card: "summary",
+        jsonLd: {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: EVENTS_WORDS.title,
+          itemListElement: rows.map((e, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            name: e.name,
+            url: `${SITE_ORIGIN}${eventPath(e.slug)}`,
+          })),
+        },
+        body: {
+          heading: EVENTS_WORDS.title,
+          lead: EVENTS_WORDS.description,
+          sections: [
+            {
+              heading: "Events",
+              items: rows.map((e) => ({
+                title: e.name,
+                meta: formatDay(e.starts_at),
+                text: e.tagline || undefined,
+              })),
+            },
+          ],
+        },
+      };
+    },
+
+    /** An event, and whatever its kind adds: an awards night's nominees.
+     *  Null for a draft or no such event. */
+    async event(slug: string): Promise<HeadMeta | null> {
+      const event = await events.findPublished(slug);
+      if (!event) return null;
+      const words = eventWords(event);
+      return {
+        title: pageTitle(words.title),
+        description: truncateDescription(words.description),
+        path: eventPath(event.slug),
+        image: DEFAULT_IMAGE,
+        card: "summary",
+        breadcrumbs: eventTrail(event),
+        jsonLd: {
+          "@context": "https://schema.org",
+          "@type": "Event",
+          name: event.name,
+          description: words.description,
+          startDate: event.startsAt,
+          ...(event.endsAt ? { endDate: event.endsAt } : {}),
+          eventStatus: "https://schema.org/EventScheduled",
+          eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
+          location: {
+            "@type": "VirtualLocation",
+            url:
+              event.watchUrl ??
+              event.organiserUrl ??
+              `${SITE_ORIGIN}${eventPath(event.slug)}`,
+          },
+          ...(event.organiser
+            ? {
+                organizer: {
+                  "@type": "Organization",
+                  name: event.organiser,
+                  ...(event.organiserUrl ? { url: event.organiserUrl } : {}),
+                },
+              }
+            : {}),
+        },
+        body: {
+          heading: event.name,
+          lead: words.description,
+          facts: [{ label: "When", value: formatDay(event.startsAt) }],
+          text: event.about ? toParagraphs(event.about) : undefined,
+          sections: [
+            ...(event.showcase && event.showcase.reveals.length > 0
+              ? [
+                  {
+                    heading: "Every reveal",
+                    items: event.showcase.reveals.map((r) => ({
+                      title: r.game?.title ?? r.label ?? "",
+                      meta: REVEAL_TAG_LABELS[r.tag],
+                    })),
+                  },
+                ]
+              : []),
+            ...(event.awards?.categories ?? []).map((category) => ({
+              heading: category.name,
+              items: category.nominees.map((n) => ({
+                title: n.label ?? n.game?.title ?? "",
+                meta:
+                  [
+                    n.label ? n.game?.title : null,
+                    n.detail,
+                    n.won ? "Winner" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || undefined,
+              })),
+            })),
+          ],
+          links: [{ href: EVENTS_CRUMB.path, label: "Every event" }],
+        },
+      };
+    },
+
+    async eventPaths(): Promise<{ path: string; lastmod: string }[]> {
+      return (await repos.events.list(true)).map((e) => ({
+        path: eventPath(e.slug),
+        lastmod: e.updated_at,
+      }));
     },
 
     /** Every hub worth a search engine's visit: each year's best, each

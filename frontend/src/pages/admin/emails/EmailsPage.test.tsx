@@ -79,7 +79,25 @@ describe("EmailsPage", () => {
         expect(
             screen.getByText(/2 bounced · 1 marked as spam/)
         ).toBeInTheDocument();
-        expect(screen.getByText("Friend requests")).toBeInTheDocument();
+    });
+
+    it("keeps the month's sends and kinds behind a toggle", async () => {
+        open(stats());
+
+        const toggle = await screen.findByRole("button", {
+            name: "The last 30 days",
+        });
+        expect(
+            screen.queryByRole("region", { name: "What went out" })
+        ).not.toBeInTheDocument();
+
+        await userEvent.click(toggle);
+        expect(
+            within(
+                screen.getByRole("region", { name: "What went out" })
+            ).getByText("Friend requests")
+        ).toBeInTheDocument();
+        expect(screen.getByText(/80 sent, of/)).toBeInTheDocument();
     });
 
     it("counts by the log alone when Resend can't be asked", async () => {
@@ -120,7 +138,7 @@ describe("EmailsPage", () => {
             </>
         );
         const button = await screen.findByRole("button", {
-            name: "Send test to me",
+            name: "Send me a test digest",
         });
 
         await userEvent.click(button);

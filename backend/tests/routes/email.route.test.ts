@@ -99,7 +99,7 @@ describe("unsubscribe links", () => {
     const response = await request(app)
       .post("/api/v1/email/resubscribe")
       .send({ token: token("news") });
-    expect(response.body).toEqual({ scope: "news", label: "News and patch notes", on: true });
+    expect(response.body).toEqual({ scope: "news", label: "News, events and patch notes", on: true });
     expect(state.profiles[0]!.email_prefs).toEqual({ news: true });
   });
 

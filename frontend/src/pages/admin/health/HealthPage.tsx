@@ -4,8 +4,9 @@ import { cardClass } from "../../../components/ui/cardClass";
 import EmptyPlate, { EmptyNote } from "../../../components/ui/EmptyPlate";
 import { TextSkeleton } from "../../../components/ui/Skeleton";
 import { cn } from "../../../lib/cn";
-import { relativeTime } from "../../../lib/format";
+import { formatCount, relativeTime } from "../../../lib/format";
 import {
+    useAdminAttention,
     useAdminHealth,
     useClientErrors,
     useServerErrors,
@@ -48,10 +49,13 @@ const AllErrors = ({ useErrors }: { useErrors: () => ErrorsQuery }) => {
 const Errors = ({
     title,
     empty,
+    lastDay,
     useErrors,
 }: {
     title: string;
     empty: string;
+    /** How many came in the last day, once that's known. */
+    lastDay: number | undefined;
     useErrors: () => ErrorsQuery;
 }) => {
     const errors = useErrors();
@@ -61,6 +65,11 @@ const Errors = ({
         <section>
             <SectionHeader
                 title={title}
+                note={
+                    lastDay !== undefined &&
+                    entries.length > 0 &&
+                    `${formatCount(lastDay)} in the last day`
+                }
                 trailing={
                     entries.length > 0 && <SeeAllButton onClick={all.show} />
                 }
@@ -94,6 +103,7 @@ const GLOW: Record<SystemState, string> = {
  */
 const HealthPage = () => {
     const health = useAdminHealth();
+    const { data: attention } = useAdminAttention();
     const h = health.data;
 
     const body = (health: AdminHealth, checkedAt: number) => {
@@ -162,11 +172,13 @@ const HealthPage = () => {
 
                 <Errors
                     title="Failed requests"
+                    lastDay={attention?.serverErrors}
                     empty="None. Every request the API fails is kept here, with its stack."
                     useErrors={useServerErrors}
                 />
                 <Errors
                     title="Browser errors"
+                    lastDay={attention?.clientErrors}
                     empty="None. Every crash in someone’s browser is kept here, with its stack."
                     useErrors={useClientErrors}
                 />

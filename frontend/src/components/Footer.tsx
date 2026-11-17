@@ -19,6 +19,7 @@ const COLUMNS: { heading: string; links: FooterLink[] }[] = [
         links: [
             { to: "/library", label: "Library" },
             { to: "/community", label: "Community" },
+            { to: "/events", label: "Events" },
             { to: "/games/upcoming", label: "Upcoming games" },
             {
                 to: `/games/best/${new Date().getFullYear()}`,

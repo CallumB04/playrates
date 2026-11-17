@@ -197,7 +197,7 @@ const PatchNotesSection = ({ reach }: { reach: number | undefined }) => {
     const unsent = list.filter((n) => !n.announcement).length;
 
     return (
-        <section className="mt-10">
+        <section>
             <SectionHeader
                 title="Patch notes"
                 trailing={

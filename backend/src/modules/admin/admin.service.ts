@@ -9,6 +9,7 @@ import type {
   AdminActivityCounts,
   AdminActivityQuery,
   AdminActivityScope,
+  AdminAttention,
   AdminGameEventsQuery,
   AdminHealth,
   AdminImportResult,
@@ -52,6 +53,7 @@ import {
   toUserSummary,
   toEmailMessage,
   toAdminProgress,
+  waitingPatchNotes,
 } from "./admin.mapper.js";
 
 /** When this instance started, for "up since" on the health view. */
@@ -455,6 +457,27 @@ export const createAdminService = (deps: {
           lastError: usage?.lastError ?? null,
         },
         errors: { last24h: errors.count, lastAt: errors.lastAt },
+      };
+    },
+
+    async attention(): Promise<AdminAttention> {
+      const since = new Date(now().getTime() - DAY_MS).toISOString();
+      const [reports, serverErrors, clientErrors, entries, sent] =
+        await Promise.all([
+          repo.openReportCount(),
+          repo.errorCount("server", since),
+          repo.errorCount("client", since),
+          repo.listPatchNoteEntries(),
+          repo.standingPatchNoteAnnouncements(),
+        ]);
+      return {
+        reports,
+        serverErrors,
+        clientErrors,
+        patchNotes: waitingPatchNotes(
+          entries,
+          new Set(sent.flatMap((a) => a.patch_note_message_id ?? [])),
+        ),
       };
     },
 

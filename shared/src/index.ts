@@ -23,6 +23,7 @@ export * from "./schemas/patchNotes.js";
 export * from "./schemas/report.js";
 export * from "./schemas/list.js";
 export * from "./schemas/gaming25.js";
+export * from "./schemas/event.js";
 export * from "./schemas/progress.js";
 export * from "./schemas/reactions.js";
 export * from "./constants/site.js";

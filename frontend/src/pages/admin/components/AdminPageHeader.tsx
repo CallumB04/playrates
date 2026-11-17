@@ -14,8 +14,9 @@ const AdminPageHeader = ({
     actions?: ReactNode;
 }) => {
     usePageMeta({ title: `${title} · Admin`, noindex: true });
+    if (!description && !actions) return <h2 className="sr-only">{title}</h2>;
     return (
-        <div className="mb-5 flex flex-col gap-4 empty:hidden sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <h2 className="sr-only">{title}</h2>
             {description && (
                 <p className="max-w-[60ch] text-body text-content-secondary">

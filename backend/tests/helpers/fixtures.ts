@@ -12,6 +12,12 @@ import type {
   ReviewRow,
 } from "../../src/types/database.types.js";
 import type { ExternalGame } from "../../src/providers/games/GamesProvider.js";
+import type { EventRow } from "../../src/modules/events/events.repository.js";
+import type {
+  AwardCategoryRow,
+  AwardNomineeRow,
+  AwardShowRow,
+} from "../../src/modules/events/awards/awards.repository.js";
 import { USER_A, USER_B } from "./buildTestApp.js";
 
 const NOW = new Date().toISOString();
@@ -268,4 +274,61 @@ export const buildExternalGame = (id: number, title = `Game ${id}`): ExternalGam
   series: null,
   altCovers: [],
   altNames: [],
+});
+
+/** An awards night, published, with picks open until well after any test
+ *  runs. */
+export const buildEvent = (overrides: Partial<EventRow> = {}): EventRow => ({
+  id: 1,
+  slug: "the-game-awards-2026",
+  kind: "awards",
+  name: "The Game Awards 2026",
+  tagline: "Gaming’s biggest night.",
+  about: "",
+  starts_at: "2099-12-11T03:30:00.000Z",
+  ends_at: null,
+  organiser: "The Game Awards",
+  organiser_url: "https://thegameawards.com",
+  watch_url: "https://thegameawards.com",
+  logo: "the-game-awards",
+  published_at: LONG_AGO,
+  created_at: LONG_AGO,
+  updated_at: LONG_AGO,
+  ...overrides,
+});
+
+export const buildAwardShow = (
+  overrides: Partial<AwardShowRow> = {},
+): AwardShowRow => ({
+  event_id: 1,
+  picks_close_at: "2099-12-11T03:30:00.000Z",
+  results_at: null,
+  ...overrides,
+});
+
+export const buildAwardCategory = (
+  overrides: Partial<AwardCategoryRow> = {},
+): AwardCategoryRow => ({
+  id: 10,
+  event_id: 1,
+  slug: "game-of-the-year",
+  name: "Game of the Year",
+  blurb: "",
+  section: "",
+  position: 0,
+  headline: true,
+  ...overrides,
+});
+
+export const buildAwardNominee = (
+  overrides: Partial<AwardNomineeRow> = {},
+): AwardNomineeRow => ({
+  id: 100,
+  category_id: 10,
+  game_id: 1,
+  label: null,
+  detail: null,
+  position: 0,
+  won: false,
+  ...overrides,
 });

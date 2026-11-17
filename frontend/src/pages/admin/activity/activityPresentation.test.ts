@@ -327,7 +327,7 @@ describe("activitySummary, for what v1.1 added", () => {
                 game: null,
                 data: { off: ["news"], on: [] },
             })
-        ).toBe("bee turned off news and patch notes emails");
+        ).toBe("bee turned off news, events and patch notes emails");
         expect(
             says({
                 kind: "email_prefs_changed",

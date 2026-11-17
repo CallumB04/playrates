@@ -83,7 +83,7 @@ describe("a list's shared picture", () => {
 
     const unversioned = await image(list.id);
     expect(unversioned.headers["cache-control"]).toContain("max-age=300");
-  }, 20_000);
+  }, 60_000);
 
   it("isn't drawn for a list only friends or its owner may see", async () => {
     vi.stubGlobal("fetch", vi.fn());

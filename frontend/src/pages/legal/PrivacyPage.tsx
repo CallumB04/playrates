@@ -11,7 +11,7 @@ const External = ({ href, children }: { href: string; children: string }) => (
 );
 
 /* When the substance of this page changes, move the date. */
-const UPDATED = "2026-11-06";
+const UPDATED = "2026-11-17";
 
 const PrivacyPage = () => (
     <ProsePage
@@ -95,6 +95,10 @@ const PrivacyPage = () => (
                 you upload with them.
             </li>
             <li>Reports you send about other people’s posts.</li>
+            <li>
+                Your picks for who wins at events like awards nights. Only the
+                total for each nominee is shown to anyone else.
+            </li>
             <li>
                 If you turn on push notifications, the address your browser
                 gives for them, the keys that encrypt them and which browser it

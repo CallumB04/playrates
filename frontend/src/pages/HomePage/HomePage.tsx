@@ -25,7 +25,7 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import { useTileActions } from "../../components/game/useTileActions";
 import SignedOutHero from "./components/SignedOutHero";
 import ReEntryPlate, { ReEntrySkeleton } from "./components/ReEntryPlate";
-import YourWeek from "./components/YourWeek";
+import EventCard from "./components/EventCard";
 import GetStarted from "./components/GetStarted";
 
 import Rail from "../../components/game/GameRail";
@@ -156,23 +156,21 @@ const HomePage = () => {
                         onUpdateLog={(log) => flow.edit(log.gameId, log.id)}
                     />
                     <GetStarted />
-                    <YourWeek />
+                    <EventCard />
                 </div>
             ) : authLoading ? (
-                session && (
-                    <div className="flex flex-col gap-4 lg:gap-6">
-                        <ReEntrySkeleton />
-                        <YourWeek />
-                    </div>
-                )
+                session && <ReEntrySkeleton />
             ) : (
-                <SignedOutHero
-                    siteStats={siteStats}
-                    covers={
-                        trendingLoading ? undefined : (trending?.data ?? [])
-                    }
-                    onStart={openSignup}
-                />
+                <div className="flex flex-col gap-4 lg:gap-6">
+                    <SignedOutHero
+                        siteStats={siteStats}
+                        covers={
+                            trendingLoading ? undefined : (trending?.data ?? [])
+                        }
+                        onStart={openSignup}
+                    />
+                    <EventCard />
+                </div>
             )}
 
             <Rail

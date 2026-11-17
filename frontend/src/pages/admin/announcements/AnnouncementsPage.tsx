@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
     ANNOUNCEMENT_BODY_MAX,
     ANNOUNCEMENT_TITLE_MAX,
@@ -14,6 +15,7 @@ import { cardClass } from "../../../components/ui/cardClass";
 import Button from "../../../components/ui/Button";
 import Field from "../../../components/ui/Field";
 import Dropdown from "../../../components/ui/Dropdown";
+import SegmentedChoice from "../../../components/ui/SegmentedChoice";
 import Toggle from "../../../components/ui/Toggle";
 import ConfirmPopup from "../../../components/ui/ConfirmPopup";
 import { EmptyNote } from "../../../components/ui/EmptyPlate";
@@ -29,6 +31,7 @@ import { cn } from "../../../lib/cn";
 import { formatCount, formatDate } from "../../../lib/format";
 import { share } from "../lib/adminFormat";
 import {
+    useAdminAttention,
     useAdminOverview,
     useAnnouncements,
     useEmailAudience,
@@ -148,6 +151,23 @@ const HistoryRow = ({ announcement }: { announcement: Announcement }) => {
     );
 };
 
+const toneOr = (
+    value: string | null,
+    fallback: AnnouncementTone
+): AnnouncementTone =>
+    (ANNOUNCEMENT_TONES as readonly string[]).includes(value ?? "")
+        ? (value as AnnouncementTone)
+        : fallback;
+
+type View = "write" | "patch-notes" | "sent";
+
+/** A draft handed over opens on the form; otherwise the view asked for. */
+const viewOf = (params: URLSearchParams): View => {
+    const asked = params.get("view");
+    if (params.has("title") || params.has("body")) return "write";
+    return asked === "patch-notes" || asked === "sent" ? asked : "write";
+};
+
 const TONE_OPTIONS = ANNOUNCEMENT_TONES.map((value) => ({
     value,
     label: ANNOUNCEMENT_PRESENTATION[value].label,
@@ -156,10 +176,14 @@ const TONE_OPTIONS = ANNOUNCEMENT_TONES.map((value) => ({
 }));
 
 const AnnouncementsPage = () => {
-    const [tone, setTone] = useState<AnnouncementTone>("update");
-    const [title, setTitle] = useState("");
-    const [body, setBody] = useState("");
-    const [link, setLink] = useState("");
+    // Another admin page can hand over a draft, as Events does to announce one.
+    const [params] = useSearchParams();
+    const [tone, setTone] = useState<AnnouncementTone>(() =>
+        toneOr(params.get("tone"), "update")
+    );
+    const [title, setTitle] = useState(() => params.get("title") ?? "");
+    const [body, setBody] = useState(() => params.get("body") ?? "");
+    const [link, setLink] = useState(() => params.get("link") ?? "");
     const [email, setEmail] = useState(false);
     const [confirming, setConfirming] = useState(false);
 
@@ -235,12 +259,44 @@ const AnnouncementsPage = () => {
 
     const reach = overview?.totals.users;
     const all = useSeeAll();
+    const [view, setView] = useState<View>(() => viewOf(params));
+    const { data: attention } = useAdminAttention();
+    const ids = useId();
+    const panelId = (of: View) => `${ids}-${of}`;
+    const panel = (of: View) => ({
+        id: panelId(of),
+        role: "tabpanel",
+        "aria-labelledby": `${panelId(of)}-tab`,
+        hidden: view !== of,
+    });
 
     return (
         <>
-            <AdminPageHeader title="Announcements" />
+            <AdminPageHeader
+                title="Announcements"
+                actions={
+                    <SegmentedChoice
+                        label="Announcements"
+                        value={view}
+                        onChange={setView}
+                        panelId={panelId}
+                        segments={[
+                            { value: "write", label: "Write one" },
+                            {
+                                value: "patch-notes",
+                                label: "Patch notes",
+                                flagged: (attention?.patchNotes ?? 0) > 0,
+                            },
+                            { value: "sent", label: "Sent" },
+                        ]}
+                    />
+                }
+            />
 
-            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
+            <div
+                {...panel("write")}
+                className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]"
+            >
                 <section
                     aria-labelledby="compose-heading"
                     className={cardClass("flex flex-col gap-4")}
@@ -402,9 +458,11 @@ const AnnouncementsPage = () => {
                 </div>
             </div>
 
-            <PatchNotesSection reach={reach} />
+            <div {...panel("patch-notes")}>
+                <PatchNotesSection reach={reach} />
+            </div>
 
-            <section className="mt-10">
+            <section {...panel("sent")}>
                 <SectionHeader
                     title="Sent"
                     trailing={

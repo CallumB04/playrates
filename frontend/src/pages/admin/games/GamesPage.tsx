@@ -14,20 +14,22 @@ const GamesPage = () => {
             <AdminPageHeader
                 title="Games"
                 actions={
-                    <Button
-                        variant="secondary"
-                        onClick={() => setCatalogue(true)}
-                        className="w-full sm:w-auto"
-                    >
-                        How complete the catalogue is
-                    </Button>
+                    <>
+                        <IgdbUsage />
+                        <Button
+                            variant="secondary"
+                            onClick={() => setCatalogue(true)}
+                            className="w-full sm:w-auto"
+                        >
+                            How complete the catalogue is
+                        </Button>
+                    </>
                 }
             />
-            <div className="flex flex-col gap-8">
-                <IgdbUsage />
-                <div className="grid items-start gap-6 lg:grid-cols-2">
-                    <PullPanel />
+            <div className="flex flex-col gap-10">
+                <div className="grid items-start gap-4 lg:grid-cols-2">
                     <GameControls />
+                    <PullPanel />
                 </div>
                 <GameEventFeed />
             </div>

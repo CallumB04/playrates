@@ -17,6 +17,9 @@ import {
     relativeTime,
     releaseYear,
     setDisplayTimeZone,
+    formatDayTime,
+    formatWeekdayTime,
+    dateParts,
     timeZones,
     todayIsoDate,
 } from "./format";
@@ -247,6 +250,36 @@ describe("formatDate", () => {
 
     it("renders an em dash when there is no date", () => {
         expect(formatDate(undefined)).toBe("–");
+    });
+});
+
+describe("formatDayTime", () => {
+    it("gives the day and the time in the viewer's zone", () => {
+        expect(formatDayTime("2026-12-11T03:30:00Z")).toBe("11 Dec, 03:30");
+        setDisplayTimeZone("America/Los_Angeles");
+        expect(formatDayTime("2026-12-11T03:30:00Z")).toBe("10 Dec, 19:30");
+    });
+});
+
+describe("formatWeekdayTime", () => {
+    it("gives the weekday, the day and the time in the viewer's zone", () => {
+        setDisplayTimeZone("America/Los_Angeles");
+        expect(formatWeekdayTime("2026-12-11T03:30:00Z")).toBe(
+            "Thu 10 Dec, 19:30"
+        );
+    });
+});
+
+describe("dateParts", () => {
+    it("splits a moment the way a calendar shows it, in the viewer's zone", () => {
+        setDisplayTimeZone("America/Los_Angeles");
+        expect(dateParts("2026-12-11T03:30:00Z")).toEqual({
+            month: "Dec",
+            day: "10",
+            year: "2026",
+            weekday: "Thu",
+            time: "19:30",
+        });
     });
 });
 

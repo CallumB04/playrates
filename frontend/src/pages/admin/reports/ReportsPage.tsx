@@ -8,6 +8,7 @@ import {
 import { cardClass } from "../../../components/ui/cardClass";
 import Button from "../../../components/ui/Button";
 import SegmentedChoice from "../../../components/ui/SegmentedChoice";
+import Tag from "../../../components/ui/Tag";
 import Pagination, {
     PaginationSummary,
 } from "../../../components/ui/Pagination";
@@ -72,9 +73,7 @@ const ReportRow = ({
             <span aria-hidden>·</span>
             <span>{relativeTime(report.createdAt)}</span>
             {report.otherReports > 0 && (
-                <span className="rounded-full bg-warning-subtle px-2 py-0.5 text-label-sm text-warning-content">
-                    {report.otherReports} more open
-                </span>
+                <Tag tone="brand">{report.otherReports} more open</Tag>
             )}
         </div>
 
@@ -105,31 +104,23 @@ const ReportRow = ({
         )}
 
         {report.status === "open" && (
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            // Two to a row on a phone, so a report's actions don't stand
+            // taller than the report.
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                 {report.target && (
                     <Button
                         variant="danger"
                         onClick={onRemove}
                         disabled={busy}
-                        className="w-full sm:w-auto"
+                        className="col-span-2 sm:w-auto"
                     >
                         {REMOVE_LABELS[report.targetType]}
                     </Button>
                 )}
-                <Button
-                    variant="secondary"
-                    onClick={onResolve}
-                    disabled={busy}
-                    className="w-full sm:w-auto"
-                >
+                <Button variant="secondary" onClick={onResolve} disabled={busy}>
                     Mark handled
                 </Button>
-                <Button
-                    variant="ghost"
-                    onClick={onDismiss}
-                    disabled={busy}
-                    className="w-full sm:w-auto"
-                >
+                <Button variant="ghost" onClick={onDismiss} disabled={busy}>
                     Dismiss
                 </Button>
             </div>

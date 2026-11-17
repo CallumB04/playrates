@@ -15,6 +15,12 @@ const FADES = {
     // A row's right-hand end at every width: a row is too short to fade
     // down, and its words start at the left.
     row: "[mask-image:linear-gradient(to_right,transparent_40%,rgb(0_0_0/0.14)_72%,rgb(0_0_0/0.3))]",
+    // Home's event band: gone under the name, strong at the far end,
+    // behind the countdown and button, which stand on their own surfaces.
+    banner: "[mask-image:linear-gradient(to_bottom,rgb(0_0_0/0.4),rgb(0_0_0/0.1)_55%,transparent)] md:[mask-image:linear-gradient(to_right,transparent_30%,rgb(0_0_0/0.35)_60%,rgb(0_0_0/0.75))]",
+    // A tile's picture panel: a header fading down on a phone, a panel of
+    // its own beside the words from sm, where it can show more.
+    panel: "[mask-image:linear-gradient(to_bottom,rgb(0_0_0/0.6),rgb(0_0_0/0.25)_60%,transparent)] sm:[mask-image:linear-gradient(to_right,rgb(0_0_0/0.5),rgb(0_0_0/0.2))]",
 };
 
 /** How long a picture takes to fade in, and so to count as shown. */

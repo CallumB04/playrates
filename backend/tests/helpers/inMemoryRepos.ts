@@ -81,6 +81,19 @@ import {
   createInMemoryAdmin,
   createInMemoryGameEvents,
 } from "./inMemoryAdmin.js";
+import {
+  createInMemoryAwards,
+  createInMemoryEvents,
+  createInMemoryShowcase,
+  type AwardPickState,
+} from "./inMemoryEvents.js";
+import type { RevealRow } from "../../src/modules/events/showcase/showcase.repository.js";
+import type { EventRow } from "../../src/modules/events/events.repository.js";
+import type {
+  AwardCategoryRow,
+  AwardNomineeRow,
+  AwardShowRow,
+} from "../../src/modules/events/awards/awards.repository.js";
 
 /**
  * Behaviour-equivalent in-memory repositories.
@@ -129,6 +142,14 @@ export interface SeedData {
   gaming25s?: Gaming25Row[];
   gaming25Picks?: Gaming25PickState[];
   gaming25Loves?: Gaming25Love[];
+  events?: EventRow[];
+  awardShows?: AwardShowRow[];
+  awardCategories?: AwardCategoryRow[];
+  awardNominees?: AwardNomineeRow[];
+  awardPicks?: AwardPickState[];
+  showcaseEvents?: number[];
+  showcaseReveals?: RevealRow[];
+  showcaseHype?: { user_id: string; reveal_id: number }[];
 }
 
 export interface InMemoryState {
@@ -182,6 +203,14 @@ export interface InMemoryState {
   gaming25s: Gaming25Row[];
   gaming25Picks: Gaming25PickState[];
   gaming25Loves: Gaming25Love[];
+  events: EventRow[];
+  awardShows: AwardShowRow[];
+  awardCategories: AwardCategoryRow[];
+  awardNominees: AwardNomineeRow[];
+  awardPicks: AwardPickState[];
+  showcaseEvents: number[];
+  showcaseReveals: RevealRow[];
+  showcaseHype: { user_id: string; reveal_id: number }[];
   xpEvents: XpEventState[];
   tokenEvents: TokenEventState[];
   userBadges: {
@@ -291,6 +320,14 @@ export const createInMemoryRepos = (
     gaming25s: (seed.gaming25s ?? []).map((g) => ({ ...g })),
     gaming25Picks: [...(seed.gaming25Picks ?? [])],
     gaming25Loves: [...(seed.gaming25Loves ?? [])],
+    events: (seed.events ?? []).map((e) => ({ ...e })),
+    awardShows: (seed.awardShows ?? []).map((a) => ({ ...a })),
+    awardCategories: (seed.awardCategories ?? []).map((c) => ({ ...c })),
+    awardNominees: (seed.awardNominees ?? []).map((n) => ({ ...n })),
+    awardPicks: [...(seed.awardPicks ?? [])],
+    showcaseEvents: [...(seed.showcaseEvents ?? [])],
+    showcaseReveals: (seed.showcaseReveals ?? []).map((r) => ({ ...r })),
+    showcaseHype: [...(seed.showcaseHype ?? [])],
     xpEvents: [],
     tokenEvents: [],
     userBadges: [],
@@ -517,9 +554,13 @@ export const createInMemoryRepos = (
                 !r.contains_spoilers &&
                 listed.has(r.user_id) &&
                 r.body.trim().length >= 200 &&
-                !state.games.find((g) => g.id === r.game_id)?.has_sexual_content,
+                !state.games.find((g) => g.id === r.game_id)
+                  ?.has_sexual_content,
             )
-            .map((r) => ({ path: `/review/${r.id}`, lastmod: day(r.updated_at) })),
+            .map((r) => ({
+              path: `/review/${r.id}`,
+              lastmod: day(r.updated_at),
+            })),
         ];
       },
       async threads() {
@@ -637,6 +678,8 @@ export const createInMemoryRepos = (
           gaming25Loves: state.gaming25Loves.filter(
             (l) => l.user_id === userId,
           ),
+          awardPicks: state.awardPicks.filter((p) => p.user_id === userId),
+          showcaseHype: state.showcaseHype.filter((h) => h.user_id === userId),
           xpEvents: state.xpEvents.filter((e) => e.user_id === userId),
           tokenEvents: state.tokenEvents.filter((e) => e.user_id === userId),
           badges: state.userBadges.filter((b) => b.user_id === userId),
@@ -654,7 +697,15 @@ export const createInMemoryRepos = (
           emailDeliveries: state.emailMessages
             .filter((m) => m.user_id === userId)
             .map(
-              ({ to_address, kind, subject, status, detail, sent_at, updated_at }) => ({
+              ({
+                to_address,
+                kind,
+                subject,
+                status,
+                detail,
+                sent_at,
+                updated_at,
+              }) => ({
                 to_address,
                 kind,
                 subject,
@@ -1372,7 +1423,10 @@ export const createInMemoryRepos = (
         const byGame = new Map<number, string[]>();
         for (const g of state.gameGenres) {
           if (!gameIds.includes(g.game_id)) continue;
-          byGame.set(g.game_id, [...(byGame.get(g.game_id) ?? []), g.genre_slug]);
+          byGame.set(g.game_id, [
+            ...(byGame.get(g.game_id) ?? []),
+            g.genre_slug,
+          ]);
         }
         return byGame;
       },
@@ -2006,6 +2060,9 @@ export const createInMemoryRepos = (
     community: createInMemoryCommunity(state),
     lists: createInMemoryLists(state),
     gaming25: createInMemoryGaming25(state),
+    events: createInMemoryEvents(state),
+    awards: createInMemoryAwards(state),
+    showcase: createInMemoryShowcase(state),
     progress: createInMemoryProgress(state),
     email: createInMemoryEmailRepo(state),
     push: {
@@ -2113,6 +2170,10 @@ export const createInMemoryRepos = (
       );
       state.gaming25Loves = state.gaming25Loves.filter(
         (l) => l.user_id !== userId && l.owner_id !== userId,
+      );
+      state.awardPicks = state.awardPicks.filter((p) => p.user_id !== userId);
+      state.showcaseHype = state.showcaseHype.filter(
+        (h) => h.user_id !== userId,
       );
       // Their ledgers, badges and what they bought go with them.
       state.xpEvents = state.xpEvents.filter((e) => e.user_id !== userId);

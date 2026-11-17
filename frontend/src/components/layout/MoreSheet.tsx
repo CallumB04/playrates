@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+    CalendarDays,
     ChevronDown,
     ListChecks,
     LogOut,
@@ -193,6 +194,10 @@ const MoreSheet = ({
             )}
 
             <div className="mt-3 border-t border-subtle pt-3 first:mt-0">
+                <Link to="/events" onClick={onClose} className={ACCOUNT_ROW}>
+                    Events
+                    <CalendarDays size={16} aria-hidden />
+                </Link>
                 {user && (
                     <Link to="/shop" onClick={onClose} className={ACCOUNT_ROW}>
                         Shop
@@ -222,27 +227,30 @@ const MoreSheet = ({
                         <Settings size={16} aria-hidden />
                     </Link>
                 )}
-                {/* Stays open, so the change is seen to have taken. */}
-                <button
-                    type="button"
-                    onClick={toggleTheme}
-                    className={ACCOUNT_ROW}
-                >
-                    {theme === "dark" ? "Day mode" : "Night mode"}
-                    {theme === "dark" ? (
-                        <Sun
-                            size={16}
-                            aria-hidden
-                            className="animate-swap-in"
-                        />
-                    ) : (
-                        <Moon
-                            size={16}
-                            aria-hidden
-                            className="animate-swap-in"
-                        />
-                    )}
-                </button>
+                {/* Stays open, so the change is seen to have taken. Only
+                    signed in: signed out, the site is always dark. */}
+                {user && (
+                    <button
+                        type="button"
+                        onClick={toggleTheme}
+                        className={ACCOUNT_ROW}
+                    >
+                        {theme === "dark" ? "Day mode" : "Night mode"}
+                        {theme === "dark" ? (
+                            <Sun
+                                size={16}
+                                aria-hidden
+                                className="animate-swap-in"
+                            />
+                        ) : (
+                            <Moon
+                                size={16}
+                                aria-hidden
+                                className="animate-swap-in"
+                            />
+                        )}
+                    </button>
+                )}
                 {user?.isAdmin && (
                     <Link to="/admin" onClick={onClose} className={ACCOUNT_ROW}>
                         Admin
