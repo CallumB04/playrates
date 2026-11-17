@@ -18,6 +18,8 @@ export interface ThemeContextValue {
     preference: ThemePreference;
     setPreference: (preference: ThemePreference) => void;
     toggleTheme: () => void;
+    /** Told by the session: signed out, the site is always dark. */
+    setSignedIn: (signedIn: boolean) => void;
 }
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -33,6 +35,30 @@ export const readStoredPreference = (): ThemePreference => {
         return DEFAULT_THEME;
     }
 };
+
+/** Whether a signed-in session is kept in this browser: Supabase's own
+ *  key, whatever the project. public/theme-init.js asks the same before
+ *  the first paint. */
+export const hasStoredSession = (): boolean => {
+    try {
+        return Object.keys(window.localStorage).some((key) =>
+            /^sb-.+-auth-token$/.test(key)
+        );
+    } catch {
+        return false;
+    }
+};
+
+/**
+ * The theme on the page. Signed out it's always the dark the site is made
+ * for; a choice is a member's, kept for when they're back.
+ */
+export const resolveTheme = (
+    preference: ThemePreference,
+    system: Theme,
+    signedIn: boolean
+): Theme =>
+    !signedIn ? DEFAULT_THEME : preference === "system" ? system : preference;
 
 export const applyTheme = (theme: Theme): void => {
     const root = document.documentElement;

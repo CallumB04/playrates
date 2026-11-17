@@ -11,7 +11,7 @@ values ('e1000000-0000-4000-8000-000000000001', 'e1@test.test', '{}'),
        ('e3000000-0000-4000-8000-000000000003', 'e3@test.test', '{}'),
        ('e4000000-0000-4000-8000-000000000004', 'e4@test.test', '{}');
 insert into public.games (slug, title)
-select 'people-' || n, 'People ' || n from generate_series(1, 3) n;
+select 'people-test-' || n, 'People ' || n from generate_series(1, 3) n;
 
 -- Everyone rates the same three games alike; 3 is private, 4 a friend.
 insert into public.game_logs (user_id, game_id, status, rating)
@@ -21,7 +21,7 @@ from (values ('e1000000-0000-4000-8000-000000000001'::uuid),
              ('e3000000-0000-4000-8000-000000000003'),
              ('e4000000-0000-4000-8000-000000000004')) u(id),
      public.games g
-where g.slug like 'people-%';
+where g.slug like 'people-test-%';
 update public.profiles set profile_visibility = 'private'
 where id = 'e3000000-0000-4000-8000-000000000003';
 insert into public.friendships (user_a_id, user_b_id, status, requested_by)
@@ -36,7 +36,7 @@ select results_eq(
     'a match leaves out the private profile and the friend');
 
 select results_eq(
-    $$select id from game_fans((select id from games where slug = 'people-1'), 50)
+    $$select id from game_fans((select id from games where slug = 'people-test-1'), 50)
       where id::text like 'e%' order by id$$,
     $$values ('e1000000-0000-4000-8000-000000000001'::uuid),
              ('e2000000-0000-4000-8000-000000000002'::uuid),
@@ -46,7 +46,7 @@ select results_eq(
 update public.game_logs set rating = 7
 where user_id = 'e2000000-0000-4000-8000-000000000002';
 select is(
-    (select count(*)::int from game_fans((select id from games where slug = 'people-1'), 50)
+    (select count(*)::int from game_fans((select id from games where slug = 'people-test-1'), 50)
      where id = 'e2000000-0000-4000-8000-000000000002'),
     0, 'a 7 is not rated highly');
 

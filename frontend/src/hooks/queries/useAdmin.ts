@@ -18,6 +18,7 @@ import type {
 import {
     fetchAdminActivity,
     fetchAdminActivityCounts,
+    fetchAdminAttention,
     fetchAdminGameEvents,
     fetchAdminEmailMessages,
     fetchAdminHealth,
@@ -263,6 +264,9 @@ export const useAnnouncePatchNote = () => {
                 queryKey: queryKeys.admin.announcements,
             });
             queryClient.invalidateQueries({
+                queryKey: queryKeys.admin.attention,
+            });
+            queryClient.invalidateQueries({
                 queryKey: queryKeys.notifications.all,
             });
         },
@@ -289,11 +293,22 @@ export const useRetractAnnouncement = () => {
                 queryKey: queryKeys.admin.announcements,
             });
             queryClient.invalidateQueries({
+                queryKey: queryKeys.admin.attention,
+            });
+            queryClient.invalidateQueries({
                 queryKey: queryKeys.notifications.all,
             });
         },
     });
 };
+
+/** The nav's counts. Each page that clears one invalidates it too. */
+export const useAdminAttention = () =>
+    useQuery({
+        queryKey: queryKeys.admin.attention,
+        queryFn: fetchAdminAttention,
+        refetchInterval: 60_000,
+    });
 
 export const useAdminHealth = () =>
     useQuery({
@@ -337,8 +352,12 @@ export const useResolveReport = () => {
             id: number;
             input: ResolveReportInput;
         }) => resolveReport(id, input),
-        onSuccess: () =>
-            queryClient.invalidateQueries({ queryKey: ["admin", "reports"] }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["admin", "reports"] });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.admin.attention,
+            });
+        },
     });
 };
 

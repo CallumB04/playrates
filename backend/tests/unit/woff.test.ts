@@ -116,7 +116,10 @@ describe("the pictures' text", () => {
       );
     const [a, b] = await Promise.all([draw("A"), draw("B")]);
     expect(a.equals(b)).toBe(false);
-  });
+    // The first drawing starts satori and resvg's WebAssembly, which runs
+    // well past 5s with the whole suite at once, as the other drawn
+    // pictures' tests allow for.
+  }, 20_000);
 });
 
 describe("pictures on the cards", () => {

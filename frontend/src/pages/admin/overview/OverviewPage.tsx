@@ -6,6 +6,7 @@ import type {
 } from "@playrates/shared";
 import SegmentedChoice from "../../../components/ui/SegmentedChoice";
 import EmptyPlate from "../../../components/ui/EmptyPlate";
+import ShowMoreToggle from "../../../components/ui/ShowMoreToggle";
 import { Skeleton, TextSkeleton } from "../../../components/ui/Skeleton";
 import GameCover from "../../../components/game/GameCover";
 import ProfilePicture from "../../../components/ProfilePicture";
@@ -13,28 +14,24 @@ import { cn } from "../../../lib/cn";
 import { BREAKPOINT, useMediaQuery } from "../../../hooks/useMediaQuery";
 import { formatCount } from "../../../lib/format";
 import {
-    useAdminHealth,
     useAdminMetric,
     useAdminOverview,
-    useIgdbUsage,
 } from "../../../hooks/queries/useAdmin";
 import AdminPageHeader from "../components/AdminPageHeader";
 import BarPlot from "../components/BarPlot";
 import LinePlot from "../components/LinePlot";
 import SectionHeader from "../components/SectionHeader";
-import { UsageDays } from "../games/IgdbUsage";
-import { headline, STATE, systemStates } from "../health/healthState";
 import { bucketLabel, RANGE_LABELS } from "../lib/adminFormat";
 import { addedIn, runningTotal } from "../lib/plot";
 import { Change } from "./Change";
 import InsightCard from "./InsightCard";
+import NeedsYou from "./NeedsYou";
 import Staying from "./Staying";
 import { LogsPopup, RepliesPopup, ReviewsPopup } from "./popups/ActivityPopups";
 import {
     HealthPopup,
     MostActivePopup,
     MostLoggedPopup,
-    IgdbPopup,
 } from "./popups/OtherPopups";
 import {
     ActiveUsersPopup,
@@ -58,7 +55,6 @@ type Open =
     | "replies"
     | "mostActive"
     | "mostLogged"
-    | "igdb"
     | "health";
 
 const axisOf = (data: AdminOverview) => ({
@@ -368,87 +364,6 @@ const Leaders = ({
     );
 };
 
-const Running = ({ open }: { open: (o: Open) => void }) => {
-    const { data: usage } = useIgdbUsage();
-    const health = useAdminHealth();
-    const h = health.data;
-    const states = h ? systemStates(h) : null;
-    const lead = h && states ? headline(states, h.errors.last24h) : null;
-
-    return (
-        <div className="grid gap-4 md:grid-cols-2">
-            <InsightCard
-                label="IGDB requests today"
-                value={usage ? formatCount(usage.todayRequests) : "…"}
-                note={
-                    usage?.todayFailures
-                        ? `${formatCount(usage.todayFailures)} failed`
-                        : undefined
-                }
-                onOpen={() => open("igdb")}
-            >
-                {usage ? (
-                    <UsageDays usage={usage} height={56} />
-                ) : (
-                    <Skeleton className="h-14" />
-                )}
-            </InsightCard>
-            <InsightCard label="Health" onOpen={() => open("health")}>
-                {!lead || !states ? (
-                    health.isPending ? (
-                        <TextSkeleton lines={2} />
-                    ) : (
-                        <span className="flex items-start gap-2.5 text-body-sm font-medium text-content">
-                            <span
-                                aria-hidden
-                                className="mt-1.5 size-2 shrink-0 rounded-full bg-danger"
-                            />
-                            The API isn’t answering.
-                        </span>
-                    )
-                ) : (
-                    <span className="flex flex-col gap-4">
-                        <span className="flex items-start gap-2.5 text-body font-medium text-content">
-                            <span
-                                aria-hidden
-                                className={cn(
-                                    "mt-2 size-2 shrink-0 rounded-full",
-                                    STATE[lead.state].dot
-                                )}
-                            />
-                            {lead.text}
-                        </span>
-                        <span className="flex flex-wrap gap-x-5 gap-y-2 border-t border-subtle pt-3">
-                            {(
-                                [
-                                    ["API", states.api],
-                                    ["Database", states.database],
-                                    ["IGDB", states.igdb],
-                                    ["Requests", states.errors],
-                                ] as const
-                            ).map(([name, state]) => (
-                                <span
-                                    key={name}
-                                    className="flex items-center gap-1.5 text-label text-content-secondary"
-                                >
-                                    <span
-                                        aria-hidden
-                                        className={cn(
-                                            "size-1.5 rounded-full",
-                                            STATE[state].dot
-                                        )}
-                                    />
-                                    {name}
-                                </span>
-                            ))}
-                        </span>
-                    </span>
-                )}
-            </InsightCard>
-        </div>
-    );
-};
-
 const Loading = () => (
     <div className="flex flex-col gap-4" aria-busy="true">
         <div className="grid gap-4 lg:grid-cols-3">
@@ -465,67 +380,70 @@ const Loading = () => (
 );
 
 /**
- * The three figures that say how PlayRates is doing sit on top, equal, each
- * with its chart. Everything else follows in the order it's reached for, and
- * every card opens into the same data at full size.
+ * What needs the admin comes first, then the three figures that say how
+ * PlayRates is doing and what people did. The rest waits behind More
+ * numbers, and every card opens into the same data at full size.
  */
 const OverviewPage = () => {
     const [range, setRange] = useState<AdminRange>("30d");
     const [open, setOpen] = useState<Open | null>(null);
+    const [more, setMore] = useState(false);
     const { data, isPending, isError, isPlaceholderData } =
         useAdminOverview(range);
     const close = () => setOpen(null);
 
     return (
         <>
-            <AdminPageHeader
-                title="Overview"
-                actions={
-                    <SegmentedChoice
-                        label="Period"
-                        value={range}
-                        onChange={setRange}
-                        segments={RANGES}
+            <AdminPageHeader title="Overview" />
+
+            <div className="flex flex-col gap-10">
+                <NeedsYou onHealth={() => setOpen("health")} />
+
+                <section aria-labelledby="how-its-going">
+                    <SectionHeader
+                        id="how-its-going"
+                        title="How it’s going"
+                        trailing={
+                            <SegmentedChoice
+                                label="Period"
+                                value={range}
+                                onChange={setRange}
+                                segments={RANGES}
+                            />
+                        }
                     />
-                }
-            />
-
-            {isError ? (
-                <EmptyPlate
-                    title="The numbers didn’t load"
-                    body="The API or the database isn’t answering. Health says which."
-                />
-            ) : isPending || !data ? (
-                <Loading />
-            ) : (
-                <div
-                    className={cn(
-                        "flex flex-col gap-10 transition-opacity",
-                        isPlaceholderData && "opacity-60"
+                    {isError ? (
+                        <EmptyPlate
+                            title="The numbers didn’t load"
+                            body="The API or the database isn’t answering. Health says which."
+                        />
+                    ) : isPending || !data ? (
+                        <Loading />
+                    ) : (
+                        <div
+                            className={cn(
+                                "flex flex-col gap-4 transition-opacity",
+                                isPlaceholderData && "opacity-60"
+                            )}
+                        >
+                            <KeyRow data={data} open={setOpen} />
+                            <ActivityRow data={data} open={setOpen} />
+                            <ShowMoreToggle
+                                open={more}
+                                onToggle={() => setMore((was) => !was)}
+                                moreLabel="More numbers"
+                                className="self-start"
+                            />
+                            {more && (
+                                <div className="flex flex-col gap-10 pt-2">
+                                    <Leaders range={range} open={setOpen} />
+                                    <Staying range={range} />
+                                </div>
+                            )}
+                        </div>
                     )}
-                >
-                    <KeyRow data={data} open={setOpen} />
-
-                    <section className="flex flex-col gap-4">
-                        <SectionHeader
-                            title="What people did"
-                            className="mb-0"
-                        />
-                        <ActivityRow data={data} open={setOpen} />
-                        <Leaders range={range} open={setOpen} />
-                    </section>
-
-                    <Staying range={range} />
-
-                    <section className="flex flex-col gap-4">
-                        <SectionHeader
-                            title="Keeping it running"
-                            className="mb-0"
-                        />
-                        <Running open={setOpen} />
-                    </section>
-                </div>
-            )}
+                </section>
+            </div>
 
             {data && open === "total" && (
                 <TotalUsersPopup data={data} onClose={close} />
@@ -551,7 +469,6 @@ const OverviewPage = () => {
             {open === "mostLogged" && (
                 <MostLoggedPopup range={range} onClose={close} />
             )}
-            {open === "igdb" && <IgdbPopup onClose={close} />}
             {open === "health" && <HealthPopup onClose={close} />}
         </>
     );

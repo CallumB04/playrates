@@ -314,7 +314,7 @@ describe("SettingsPage's emails", () => {
             expect(patched).toHaveBeenCalledWith({ emailPrefs: { all: false } })
         );
         const news = screen.getByRole("switch", {
-            name: "News and patch notes",
+            name: "News, events and patch notes",
         });
         await waitFor(() => expect(news).toBeDisabled());
         expect(news).not.toBeChecked();

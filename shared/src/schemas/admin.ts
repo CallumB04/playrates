@@ -756,6 +756,18 @@ export interface AdminHealth {
   };
 }
 
+/** What is waiting for the admin, counted cheaply enough to sit in the
+ *  admin nav. */
+export interface AdminAttention {
+  /** Reports still open. */
+  reports: number;
+  /** Errors kept in the last 24 hours. */
+  serverErrors: number;
+  clientErrors: number;
+  /** Patch notes entries posted since the newest one that went out. */
+  patchNotes: number;
+}
+
 /** Of those a window has closed for, how many came back in it. */
 export interface AdminReturn {
   of: number;

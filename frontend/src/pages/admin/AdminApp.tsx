@@ -6,6 +6,7 @@ import UsersPage from "./users/UsersPage";
 import ReportsPage from "./reports/ReportsPage";
 import GamesPage from "./games/GamesPage";
 import AnnouncementsPage from "./announcements/AnnouncementsPage";
+import EventsAdminPage from "./events/EventsAdminPage";
 import EmailsPage from "./emails/EmailsPage";
 import HealthPage from "./health/HealthPage";
 import ProgressAdminPage from "./progress/ProgressAdminPage";
@@ -21,6 +22,7 @@ const AdminApp = () => (
             <Route path="users" element={<UsersPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="games" element={<GamesPage />} />
+            <Route path="events" element={<EventsAdminPage />} />
             <Route path="announcements" element={<AnnouncementsPage />} />
             <Route path="emails" element={<EmailsPage />} />
             <Route path="health" element={<HealthPage />} />

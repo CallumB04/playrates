@@ -184,6 +184,15 @@ export const createPagesRouter = ({
   );
 
   router.get(
+    "/events",
+    render(() => service.events()),
+  );
+  router.get(
+    "/events/:slug",
+    render((req) => service.event(String(req.params.slug))),
+  );
+
+  router.get(
     "/review/:id",
     render(async (req) => {
       const id = numericParam(req.params.id);
@@ -272,6 +281,7 @@ export const createPagesRouter = ({
         "/sitemaps/threads.xml",
         "/sitemaps/people.xml",
         "/sitemaps/hubs.xml",
+        "/sitemaps/events.xml",
         ...gamePages(games),
       ]),
     );
@@ -279,6 +289,10 @@ export const createPagesRouter = ({
 
   router.get("/sitemaps/hubs.xml", async (_req, res) => {
     xml(res, urlSet(await service.hubPaths()));
+  });
+
+  router.get("/sitemaps/events.xml", async (_req, res) => {
+    xml(res, urlSet([{ path: "/events" }, ...(await service.eventPaths())]));
   });
 
   router.get("/sitemaps/people.xml", async (_req, res) => {

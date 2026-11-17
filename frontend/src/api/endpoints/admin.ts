@@ -4,6 +4,7 @@ import type {
     ActivityPeriod,
     AdminActivityCounts,
     AdminActivityEvent,
+    AdminAttention,
     AdminStaying,
     AdminGameEvent,
     AdminEmailMessage,
@@ -222,6 +223,9 @@ export const sendTestDigest = async (): Promise<{ sent: boolean }> =>
 
 export const retractAnnouncement = async (id: number): Promise<Announcement> =>
     (await api.post<Announcement>(`/admin/announcements/${id}/retract`)).data;
+
+export const fetchAdminAttention = async (): Promise<AdminAttention> =>
+    (await api.get<AdminAttention>("/admin/attention")).data;
 
 export const fetchAdminHealth = async (): Promise<AdminHealth> =>
     (await api.get<AdminHealth>("/admin/health")).data;

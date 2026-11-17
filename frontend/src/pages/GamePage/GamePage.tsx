@@ -6,6 +6,7 @@ import { useAccountForm } from "../../contexts/AccountFormContext";
 import {
     useGame,
     useGameStats,
+    useGameBackdrops,
     useGenres,
     usePlatformSystems,
     usePlatforms,
@@ -40,6 +41,10 @@ import PageBackdrop, {
 import StickyLogBar from "./components/StickyLogBar";
 import { cn } from "../../lib/cn";
 import ScoreCards from "./components/ScoreCards";
+import EventSpotlight from "./components/EventSpotlight";
+import PastEvents from "./components/PastEvents";
+import { artForEntries, splitEntries } from "./lib/gameEvents";
+import { useGameEvents } from "../../hooks/queries/useEvents";
 import RelatedGames from "./components/RelatedGames";
 import ExpandableText from "./components/ExpandableText";
 
@@ -57,6 +62,18 @@ const GamePage = () => {
 
     const { data: game, isLoading, isError } = useGame(gameId);
     const { data: stats } = useGameStats(gameId);
+    const { data: gameEvents } = useGameEvents(gameId);
+    const { ahead, past } = splitEntries(gameEvents ?? []);
+    // The game's other pictures, only for a game at an event, so a card
+    // for one never repeats the picture behind the page.
+    const { data: backdrops } = useGameBackdrops(
+        gameEvents && gameEvents.length > 0 ? gameId : undefined
+    );
+    const eventArt = artForEntries(
+        [...ahead, ...past],
+        (backdrops ?? []).map((b) => b.url),
+        game?.artworkUrl ?? null
+    );
     const { data: platforms } = usePlatforms();
     const { data: genres } = useGenres();
     const { data: systems } = usePlatformSystems();
@@ -210,6 +227,15 @@ const GamePage = () => {
                             No description for this game yet.
                         </p>
                     )}
+                    {/* An event it's part of now comes straight after the
+                        game's own words, before the numbers. */}
+                    {ahead.map((entry) => (
+                        <EventSpotlight
+                            key={entry.event.slug}
+                            entry={entry}
+                            art={eventArt.get(entry.event.slug) ?? null}
+                        />
+                    ))}
 
                     <ScoreCards game={game} stats={stats} />
 
@@ -229,6 +255,10 @@ const GamePage = () => {
                             byPlayedStatus={stats.byPlayedStatus}
                             logCount={stats.logCount}
                         />
+                    )}
+
+                    {past.length > 0 && (
+                        <PastEvents entries={past} art={eventArt} />
                     )}
 
                     <GameReviews

@@ -57,9 +57,9 @@ export const EMAIL_CATEGORIES = [
   },
   {
     key: "news",
-    label: "News and patch notes",
+    label: "News, events and patch notes",
     description:
-      "Announcements and what's new in PlayRates. A few a month at most.",
+      "Announcements, events like awards nights, and what’s new in PlayRates. A few a month at most.",
     // Off at sign-up unless ticked there; the box writes it either way.
     defaultOn: true,
   },

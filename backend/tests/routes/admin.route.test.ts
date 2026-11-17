@@ -136,6 +136,7 @@ const ENDPOINTS: { method: "get" | "post" | "patch" | "put"; path: string; body?
   { method: "get", path: "/api/v1/admin/email/stats" },
   { method: "get", path: "/api/v1/admin/email/messages" },
   { method: "get", path: "/api/v1/admin/health" },
+  { method: "get", path: "/api/v1/admin/attention" },
   { method: "get", path: "/api/v1/admin/progress" },
   { method: "get", path: "/api/v1/admin/errors" },
   { method: "get", path: "/api/v1/admin/client-errors" },
@@ -744,6 +745,83 @@ describe("admin feeds", () => {
     expect(response.status).toBe(200);
     expect(response.body.database.ok).toBe(true);
     expect(response.body.igdb.configured).toBe(false);
+  });
+});
+
+describe("what needs the admin", () => {
+  const hoursAgo = (h: number) => new Date(Date.now() - h * 3_600_000).toISOString();
+  const report = (id: number, status: string) => ({
+    id,
+    reporter_id: USER_A,
+    target_type: "message",
+    target_id: "1",
+    reason: "spam",
+    details: null,
+    status,
+    created_at: hoursAgo(2),
+    resolved_at: null,
+    resolved_by: null,
+  });
+  const serverError = (id: number, at: string) => ({
+    id,
+    status: 500,
+    code: "internal",
+    method: "GET",
+    path: "/api/v1/games",
+    message: "boom",
+    request_id: null,
+    user_id: null,
+    stack: null,
+    created_at: at,
+  });
+  const attention = (app: Parameters<typeof request>[0]) =>
+    request(app).get("/api/v1/admin/attention").set("Authorization", authHeader(ADMIN));
+
+  it("counts open reports and the last day's errors", async () => {
+    const { app } = buildTestApp({
+      seed: {
+        ...seed(),
+        contentReports: [report(1, "open"), report(2, "open"), report(3, "resolved"), report(4, "dismissed")],
+        serverErrors: [serverError(1, hoursAgo(30)), serverError(2, hoursAgo(1))],
+        clientErrors: [
+          {
+            id: 1,
+            message: "Chunk failed",
+            stack: null,
+            path: "/",
+            user_agent: null,
+            build: null,
+            user_id: null,
+            created_at: hoursAgo(3),
+          },
+        ],
+      },
+    });
+
+    const response = await attention(app);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ reports: 2, serverErrors: 1, clientErrors: 1 });
+  });
+
+  it("counts only the patch notes posted since the newest one that went out", async () => {
+    const { app } = buildTestApp({ seed: seed() });
+    expect((await attention(app)).body.patchNotes).toBe(2);
+
+    await request(app)
+      .post("/api/v1/admin/patch-notes/40/announce")
+      .set("Authorization", authHeader(ADMIN));
+    expect((await attention(app)).body.patchNotes).toBe(1);
+
+    await request(app)
+      .post("/api/v1/admin/patch-notes/41/announce")
+      .set("Authorization", authHeader(ADMIN));
+    expect((await attention(app)).body).toEqual({
+      reports: 0,
+      serverErrors: 0,
+      clientErrors: 0,
+      patchNotes: 0,
+    });
   });
 });
 

@@ -113,7 +113,8 @@ const TabBar = () => {
         here("/settings") ||
         here("/admin") ||
         here("/progress") ||
-        here("/shop");
+        here("/shop") ||
+        here("/events");
 
     return (
         <>

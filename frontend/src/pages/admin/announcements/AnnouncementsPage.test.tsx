@@ -259,8 +259,45 @@ describe("AnnouncementsPage", () => {
             )
         );
         renderWithProviders(<AnnouncementsPage />);
+        await userEvent.click(screen.getByRole("tab", { name: "Sent" }));
 
         const row = (await screen.findByText("Lists are here")).closest("li")!;
+        expect(row).toBeVisible();
         expect(row).toHaveTextContent("· emailed");
+    });
+
+    it("opens on the patch notes when asked, and flags them when one waits", async () => {
+        server.use(
+            http.get(`${API}/admin/attention`, () =>
+                HttpResponse.json({
+                    reports: 0,
+                    serverErrors: 0,
+                    clientErrors: 0,
+                    patchNotes: 1,
+                })
+            )
+        );
+        renderWithProviders(<AnnouncementsPage />, {
+            route: "/admin/announcements?view=patch-notes",
+        });
+
+        expect(
+            screen.getByRole("tab", { name: "Patch notes" })
+        ).toHaveAttribute("aria-selected", "true");
+        expect(screen.getByLabelText("Title")).not.toBeVisible();
+        expect(
+            await screen.findByRole("tab", {
+                name: "Patch notes (needs a look)",
+            })
+        ).toBeInTheDocument();
+    });
+
+    it("opens on the form when another page hands over a draft", () => {
+        renderWithProviders(<AnnouncementsPage />, {
+            route: "/admin/announcements?view=sent&title=Awards%20night",
+        });
+
+        expect(screen.getByLabelText("Title")).toBeVisible();
+        expect(screen.getByLabelText("Title")).toHaveValue("Awards night");
     });
 });

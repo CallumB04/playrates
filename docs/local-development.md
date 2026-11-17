@@ -103,6 +103,19 @@ Every account's password is **`playrates-local`**, and every email is
 - **Profile.** Six favourite games, a pinned review, and every About field
   filled in: location for friends, Discord private, the rest for everyone.
   A slot bought for each kind of pin.
+- **Events.** Three, of two kinds:
+  - An awards night in the shape of The Game Awards 2026, a few weeks off
+    with picks open: 30 categories in six sections, the community's picks
+    in, the tester part way through theirs, and four members with a Full
+    ballot.
+  - Last year's, past, with its winners out and the tester's picks scored,
+    and the results badges given.
+  - The Winter Showcase, a made-up showcase on now over a weekend: ten
+    reveals in running order, members' hype for each, the tester hyped for
+    some, and its badges given.
+
+  The nominees and reveals are real games from the catalogue, chosen for the
+  local stack; the people, creators, teams and the showcase are made up.
 - **Admin.** The tester is an admin. There are reports waiting (three open,
   one resolved), a few months of activity for the dashboard's charts, and an
   email log with a message in every state: delivered, sent, delayed, bounced,

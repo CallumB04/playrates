@@ -178,6 +178,67 @@ export const formatDate = (iso: string | null | undefined): string =>
           ).format(new Date(iso))
         : "–";
 
+/** "11 Dec, 03:30", in the viewer's zone: when something happens on a day. */
+export const formatDayTime = (iso: string): string =>
+    formatter(
+        {
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+            hourCycle: "h23",
+        },
+        displayZone
+    ).format(new Date(iso));
+
+/** "Thu 10 Dec, 19:30", in the viewer's zone: when an event starts. */
+export const formatWeekdayTime = (iso: string): string =>
+    formatter(
+        {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+            hourCycle: "h23",
+        },
+        displayZone
+    ).format(new Date(iso));
+
+/** A moment as a calendar shows it, in the viewer's zone: "Dec", "10",
+ *  "Thu", "19:30". */
+export const dateParts = (
+    iso: string
+): {
+    month: string;
+    day: string;
+    year: string;
+    weekday: string;
+    time: string;
+} => {
+    const parts = formatter(
+        {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            weekday: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+            hourCycle: "h23",
+        },
+        displayZone
+    ).formatToParts(new Date(iso));
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+        parts.find((p) => p.type === type)?.value ?? "";
+    return {
+        month: part("month"),
+        day: part("day"),
+        year: part("year"),
+        weekday: part("weekday"),
+        time: `${part("hour")}:${part("minute")}`,
+    };
+};
+
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;

@@ -6,6 +6,7 @@ import { NotificationProvider } from "../contexts/NotificationProvider";
 import { AuthProvider } from "../contexts/AuthProvider";
 import { AccountFormProvider } from "../contexts/AccountFormProvider";
 import { ThemeProvider } from "../contexts/ThemeProvider";
+import { ThemeForSession } from "../contexts/ThemeForSession";
 import ErrorBoundary from "../components/feedback/ErrorBoundary";
 import { LogFlowProvider } from "../components/gamelog/LogFlow";
 
@@ -19,6 +20,7 @@ export const AppProviders = ({ children }: { children: ReactNode }) => (
                 <NotificationProvider>
                     <BrowserRouter>
                         <AuthProvider>
+                            <ThemeForSession />
                             <AccountFormProvider>
                                 <LogFlowProvider>{children}</LogFlowProvider>
                             </AccountFormProvider>

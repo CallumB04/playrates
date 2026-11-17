@@ -93,6 +93,22 @@ import type { Alerts } from "./modules/admin/alerts.js";
 import { createEmailService } from "./modules/email/email.service.js";
 import { createEmailRouter } from "./modules/email/email.routes.js";
 import { withEmails } from "./modules/email/withEmails.js";
+import { buildEvents } from "./modules/events/buildEvents.js";
+import {
+  createAdminEventsRouter,
+  createEventsRouter,
+  createGameEventsRouter,
+  createMyEventsRouter,
+  createUserEventBadgesRouter,
+} from "./modules/events/events.routes.js";
+import {
+  createAdminAwardsRouter,
+  createMyAwardsRouter,
+} from "./modules/events/awards/awards.routes.js";
+import {
+  createAdminShowcaseRouter,
+  createMyShowcaseRouter,
+} from "./modules/events/showcase/showcase.routes.js";
 
 interface Deps {
   repos: Repositories;
@@ -303,6 +319,8 @@ export const buildRoutes = ({
     logger,
   });
 
+  const { events, awards, showcase } = buildEvents(repos);
+
   // Under /api so the host's rewrites reach it; the root one does not.
   router.get("/health", (_req, res) => {
     res.json({ status: "ok" });
@@ -315,6 +333,12 @@ export const buildRoutes = ({
     requireAuth,
     requireAdmin(repos.profiles),
     Router().use("/reports", createAdminReportsRouter({ service: reports })),
+    Router().use(
+      "/events",
+      createAdminEventsRouter({ service: events }),
+      createAdminAwardsRouter({ awards, events }),
+      createAdminShowcaseRouter({ showcase, events }),
+    ),
     createAdminRouter({ service: admin }),
   );
 
@@ -413,6 +437,12 @@ export const buildRoutes = ({
     createMyFriendsRouter({ service: friends, requireAuth, optionalAuth }),
   );
   router.use(
+    "/me/events",
+    createMyEventsRouter({ service: events, requireAuth }),
+    createMyAwardsRouter({ awards, requireAuth }),
+    createMyShowcaseRouter({ showcase, requireAuth }),
+  );
+  router.use(
     "/me/notifications",
     createMyNotificationsRouter({ service: notifications, requireAuth }),
   );
@@ -500,6 +530,20 @@ export const buildRoutes = ({
     createReviewsFeedRouter({ service: reviews, requireAuth, optionalAuth }),
   );
 
+  router.use("/events", createEventsRouter({ service: events }));
+  router.use(
+    "/users/:username/event-badges",
+    createUserEventBadgesRouter({
+      service: events,
+      gate: profileGate,
+      optionalAuth,
+    }),
+  );
+
+  router.use(
+    "/games/:gameId/events",
+    createGameEventsRouter({ service: events }),
+  );
   router.use(
     "/games/:gameId/lists",
     createGameListsRouter({ service: lists, requireAuth, optionalAuth }),

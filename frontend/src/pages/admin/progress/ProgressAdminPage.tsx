@@ -36,11 +36,13 @@ const Stat = ({
     value: ReactNode;
     note?: ReactNode;
 }) => (
-    <section className={cardClass("flex min-w-0 flex-col")}>
-        <h2 className="text-label text-content-secondary">{label}</h2>
-        <p className={figureClass("lg", "mt-2")}>{value}</p>
-        {note && <p className="mt-1 text-label text-content-muted">{note}</p>}
-    </section>
+    <li className="flex min-w-0 flex-col">
+        <span className="text-label text-content-secondary">{label}</span>
+        <span className={figureClass("lg", "mt-2")}>{value}</span>
+        {note && (
+            <span className="mt-1 text-label text-content-muted">{note}</span>
+        )}
+    </li>
 );
 
 const Panel = ({
@@ -103,7 +105,7 @@ const Badges = ({ badges }: { badges: AdminProgress["badges"] }) => {
                                             : "py-2 text-right"
                                     )}
                                 >
-                                    {n === 0 ? "-" : formatCount(n)}
+                                    {n === 0 ? "–" : formatCount(n)}
                                 </td>
                             ))}
                         </tr>
@@ -116,7 +118,11 @@ const Badges = ({ badges }: { badges: AdminProgress["badges"] }) => {
 
 const Body = ({ p }: { p: AdminProgress }) => (
     <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <ol
+            className={cardClass(
+                "grid grid-cols-2 gap-x-4 gap-y-6 lg:grid-cols-4"
+            )}
+        >
             <Stat
                 label="XP earned"
                 value={formatCount(p.xp.total)}
@@ -162,7 +168,7 @@ const Body = ({ p }: { p: AdminProgress }) => (
                 value={formatCount(p.revealWaiting)}
                 note="Not back since launch"
             />
-        </div>
+        </ol>
 
         <div className="grid gap-4 lg:grid-cols-2">
             <Panel title="Top players">

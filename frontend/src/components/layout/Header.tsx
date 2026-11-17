@@ -1,19 +1,18 @@
 import { useEffect, useState } from "react";
-import { env } from "../../lib/env";
 import { useSetupSteps } from "../../hooks/useSetupSteps";
 import { unfinished } from "../../lib/setupChecklist";
 import { Link, useLocation } from "react-router-dom";
-import { Database, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import Skeleton from "../ui/Skeleton";
 import { useAccountForm } from "../../contexts/AccountFormContext";
 import Button from "../ui/Button";
 import AccountMenu from "./AccountMenu";
+import NavMenus from "./navMenu/NavMenus";
 import NotificationMenu from "./NotificationMenu";
 import GlobalSearch from "./GlobalSearch";
 import MobileSearch from "./MobileSearch";
 import { cn } from "../../lib/cn";
-import { isCurrent } from "../../lib/navMatch";
 import { useSignOut } from "../../hooks/useSignOut";
 import { BREAKPOINT, useMediaQuery } from "../../hooks/useMediaQuery";
 
@@ -39,76 +38,18 @@ const Header = () => {
         if (pastXl) setSearchOpen(false);
     }, [pastXl]);
 
-    const links = [
-        { to: "/", label: "Home", exact: true },
-        { to: "/library", label: "Library", exact: false },
-        { to: "/community", label: "Community", exact: false },
-    ].map(({ to, label, exact }) => ({
-        to,
-        label,
-        active: isCurrent(to, exact, location.pathname, location.search),
-    }));
-
     return (
         <>
             <header className="sticky top-0 z-40 w-full border-b border-subtle bg-surface/75 backdrop-blur-lg">
                 <div className="mx-auto flex h-navbar w-full max-w-[1240px] items-center justify-between gap-3 px-5 sm:gap-6 sm:px-8 lg:px-12">
-                    <div className="flex items-center gap-2 sm:gap-4 lg:gap-8">
+                    <div className="flex items-center gap-2 self-stretch sm:gap-4 lg:gap-6">
                         <Link
                             to="/"
                             className="font-display text-xl font-bold text-content sm:text-2xl"
                         >
                             PlayRates
                         </Link>
-                        {/* So a test run is never mistaken for the live site.
-                            An icon on a phone: the word pushed a signed-in
-                            header 33px past a 375px screen. */}
-                        {env.localData && (
-                            <span
-                                title="Running against the local database. Nothing here touches live."
-                                className="flex items-center rounded-sm border border-dashed border-warning-border px-1 py-0.5 text-[10px] font-semibold tracking-wide text-warning-content uppercase sm:px-1.5"
-                            >
-                                <Database
-                                    size={12}
-                                    aria-hidden
-                                    className="sm:hidden"
-                                />
-                                <span className="max-sm:sr-only">Local</span>
-                            </span>
-                        )}
-
-                        <nav className="hidden items-center gap-6 lg:flex">
-                            {links.map((link) => (
-                                <Link
-                                    key={link.to}
-                                    to={link.to}
-                                    aria-current={
-                                        link.active ? "page" : undefined
-                                    }
-                                    /* The rule is drawn, not padded: a bottom
-                                       border plus its padding sat inside the
-                                       box, which pushed the word off the
-                                       centre line the wordmark sits on. */
-                                    className={cn(
-                                        "group relative py-1 text-label transition-colors lift",
-                                        link.active
-                                            ? "text-content"
-                                            : "text-content-secondary hover:text-content"
-                                    )}
-                                >
-                                    {link.label}
-                                    <span
-                                        aria-hidden
-                                        className={cn(
-                                            "pointer-events-none absolute inset-x-0 -bottom-0.5 h-0.5 origin-center rounded-full transition-transform duration-200 ease-[var(--ease-glide)]",
-                                            link.active
-                                                ? "scale-x-100 bg-brand"
-                                                : "scale-x-0 bg-strong group-hover:scale-x-100"
-                                        )}
-                                    />
-                                </Link>
-                            ))}
-                        </nav>
+                        <NavMenus />
                     </div>
 
                     {/* Spaced by what is drawn, not by the boxes: each glyph

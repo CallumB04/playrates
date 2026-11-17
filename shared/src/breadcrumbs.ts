@@ -74,6 +74,13 @@ export const hubTrail = (hub: Hub): Crumb[] => {
     : [LIBRARY, here];
 };
 
+export const EVENTS_CRUMB: Crumb = { name: "Events", path: "/events" };
+
+export const eventTrail = (event: { slug: string; name: string }): Crumb[] => [
+  EVENTS_CRUMB,
+  { name: event.name, path: `/events/${event.slug}` },
+];
+
 export const shopTrail = (): Crumb[] => [
   { name: "Your progress", path: "/progress" },
   { name: "Shop", path: "/shop" },

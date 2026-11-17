@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { EmailStats } from "@playrates/shared";
 import { cardClass } from "../../../components/ui/cardClass";
 import { figureClass } from "../../../components/ui/figureClass";
+import ShowMoreToggle from "../../../components/ui/ShowMoreToggle";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { formatCount } from "../../../lib/format";
 import Button from "../../../components/ui/Button";
@@ -222,72 +223,71 @@ const Kinds = ({ stats }: { stats: EmailStats }) => (
     </section>
 );
 
-/**
- * How close email is to Resend's free plan. The daily allowance is the
- * one that bites: PlayRates' own emails stop at the cap, so sign-up
- * confirmations and password resets always have the rest.
- */
-/** The weekly digest, sent to the admin alone to see it as members will. */
-const Digest = () => {
+/** The weekly digest, which goes out on Sunday evenings to members with
+ *  something in theirs, sent to the admin alone to see it as they will. */
+const DigestTest = () => {
     const test = useSendTestDigest();
     const notify = useNotify();
     return (
-        <section
-            aria-label="Weekly digest"
-            className={cardClass(
-                "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-            )}
+        <Button
+            variant="secondary"
+            disabled={test.isPending}
+            onClick={() =>
+                test.mutate(undefined, {
+                    onSuccess: ({ sent }) =>
+                        sent
+                            ? notify(
+                                  "Your digest is in your email, and nobody else’s",
+                                  "success"
+                              )
+                            : notify(
+                                  "Yours is empty this week, so Sunday wouldn’t send it",
+                                  "info"
+                              ),
+                    onError: () => notify("The test didn’t send", "error"),
+                })
+            }
+            className="w-full sm:w-auto"
         >
-            <div className="min-w-0">
-                <h2 className="text-body-sm font-medium text-content">
-                    Weekly digest
-                </h2>
-                <p className="mt-0.5 text-body-sm text-content-secondary">
-                    Goes out on Sunday evenings to members with something in
-                    theirs.
-                </p>
-            </div>
-            <Button
-                variant="secondary"
-                disabled={test.isPending}
-                onClick={() =>
-                    test.mutate(undefined, {
-                        onSuccess: ({ sent }) =>
-                            sent
-                                ? notify(
-                                      "Your digest is in your email, and nobody else’s",
-                                      "success"
-                                  )
-                                : notify(
-                                      "Yours is empty this week, so Sunday wouldn’t send it",
-                                      "info"
-                                  ),
-                        onError: () => notify("The test didn’t send", "error"),
-                    })
-                }
-                className="w-full shrink-0 sm:w-auto"
-            >
-                Send test to me
-            </Button>
-        </section>
+            Send me a test digest
+        </Button>
     );
 };
 
+/**
+ * How close email is to Resend's free plan, and who got what. The daily
+ * allowance is the one that bites: PlayRates' own emails stop at the cap,
+ * so sign-up confirmations and password resets always have the rest. The
+ * month behind it waits under a toggle.
+ */
 const EmailsPage = () => {
     const { data: stats } = useEmailStats();
+    const [month, setMonth] = useState(false);
     return (
         <>
             <AdminPageHeader
                 title="Emails"
                 description="What PlayRates has emailed, and how close it is to the limits of Resend’s free plan."
+                actions={<DigestTest />}
             />
             {stats ? (
-                <div className="flex flex-col gap-8">
-                    <Digest />
+                <div className="flex flex-col gap-10">
                     <Today stats={stats} />
                     <EmailLog />
-                    <Days stats={stats} />
-                    <Kinds stats={stats} />
+                    <div className="flex flex-col gap-8">
+                        <ShowMoreToggle
+                            open={month}
+                            onToggle={() => setMonth((was) => !was)}
+                            moreLabel="The last 30 days"
+                            className="self-start"
+                        />
+                        {month && (
+                            <>
+                                <Days stats={stats} />
+                                <Kinds stats={stats} />
+                            </>
+                        )}
+                    </div>
                 </div>
             ) : (
                 <Skeleton className="h-56 rounded-lg" />

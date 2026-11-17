@@ -17,6 +17,7 @@ import {
   toUserSummary,
   patchNoteTitle,
   toPatchNote,
+  waitingPatchNotes,
 } from "../../src/modules/admin/admin.mapper.js";
 import {
   ANNOUNCEMENT_TITLE_MAX,
@@ -506,5 +507,22 @@ describe("toStaying", () => {
         invited: { of: 4, back: 3 },
       },
     ]);
+  });
+});
+
+describe("waitingPatchNotes", () => {
+  const entries = [{ id: 5 }, { id: 4 }, { id: 3 }, { id: 2 }];
+
+  it("counts every entry while none has gone out", () => {
+    expect(waitingPatchNotes(entries, new Set())).toBe(4);
+  });
+
+  it("counts the entries newer than the newest one sent, passing over older gaps", () => {
+    expect(waitingPatchNotes(entries, new Set([3]))).toBe(2);
+    expect(waitingPatchNotes(entries, new Set([5, 2]))).toBe(0);
+  });
+
+  it("has nothing waiting with no entries", () => {
+    expect(waitingPatchNotes([], new Set([1]))).toBe(0);
   });
 });

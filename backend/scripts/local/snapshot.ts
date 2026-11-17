@@ -4,9 +4,10 @@
  *   npm run local:snapshot
  *
  * Read-only against live: selects, never writes. Takes the most widely known
- * games (and whatever is trending), with their platforms, consoles and
- * genres, and writes them to supabase/seed/catalogue.json. No people: every
- * account, log and review locally is made up by buildSeed.ts.
+ * games, the best known of the last year's releases, what's coming that
+ * members are waiting on, and whatever is trending, with their platforms,
+ * consoles and genres, and writes them to supabase/seed/catalogue.json. No
+ * people: every account, log and review locally is made up by buildSeed.ts.
  *
  * The local stack resets from this file every time it starts, so it only
  * needs taking again for newer games.
@@ -18,6 +19,11 @@ import { fileURLToPath } from "node:url";
 import { supabase } from "../../src/config/supabase.js";
 
 const GAMES = 3000;
+/* An awards season's worth: the all-time list is mostly older games, and
+   the local events need this year's. */
+const RECENT = 600;
+const UPCOMING = 150;
+const DAY_MS = 24 * 60 * 60 * 1000;
 // PostgREST stops at 1000 rows a request.
 const PAGE = 1000;
 
@@ -60,6 +66,19 @@ const inBatches = async (table: string, ids: number[]): Promise<Row[]> => {
   return rows;
 };
 
+const byId = async (ids: unknown[]): Promise<Row[]> => {
+  const rows: Row[] = [];
+  for (let i = 0; i < ids.length; i += 100) {
+    const { data, error } = await db
+      .from("games")
+      .select("*")
+      .in("id", ids.slice(i, i + 100));
+    if (error) throw error;
+    rows.push(...(data ?? []));
+  }
+  return rows;
+};
+
 const main = async () => {
   const known = await pages(
     (from, to) =>
@@ -81,8 +100,42 @@ const main = async () => {
       .range(from, to),
   );
 
+  const today = new Date();
+  const isoDay = (offset: number) =>
+    new Date(today.getTime() + offset * DAY_MS).toISOString().slice(0, 10);
+  const recentIds = await pages(
+    (from, to) =>
+      db
+        .from("games")
+        .select("id")
+        .gte("release_date", isoDay(-400))
+        .lte("release_date", isoDay(0))
+        .not("igdb_rating_count", "is", null)
+        .order("igdb_rating_count", { ascending: false })
+        .order("id")
+        .range(from, to),
+    RECENT,
+  );
+  // Nothing's rated before it's out; what members have wished for stands in.
+  const upcomingIds = await pages(
+    (from, to) =>
+      db
+        .from("games")
+        .select("id")
+        .gt("release_date", isoDay(0))
+        .lte("release_date", isoDay(500))
+        .order("log_count", { ascending: false })
+        .order("id")
+        .range(from, to),
+    UPCOMING,
+  );
+  // Ids first, then the rows: sorting a range of whole rows times out.
+  const fresh = await byId([...recentIds, ...upcomingIds].map((g) => g.id));
+
   const games = [
-    ...new Map([...known, ...trending].map((g) => [g.id, g])).values(),
+    ...new Map(
+      [...known, ...fresh, ...trending].map((g) => [g.id, g]),
+    ).values(),
   ];
   const ids = games.map((g) => g.id as number);
 

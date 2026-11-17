@@ -39,13 +39,13 @@ await step("a game page opens from the library", async () => {
 });
 await step("signing in works", async () => {
   await page.goto(origin);
-  await page.getByRole("button", { name: "Sign in" }).first().click();
-  const dialog = page.getByRole("dialog");
-  await dialog
-    .getByPlaceholder("you@example.com")
-    .fill("tester@playrates.test");
-  await dialog.locator('input[type="password"]').fill("playrates-local");
-  await dialog.getByRole("button", { name: "Log in" }).click();
+  // On a phone the tab bar's Log in is a page of its own, not a popup.
+  await page.getByRole("button", { name: "Log in" }).first().click();
+  await page.waitForURL(/\/login$/);
+  const form = page.locator("form");
+  await form.getByPlaceholder("you@example.com").fill("tester@playrates.test");
+  await form.locator('input[type="password"]').fill("playrates-local");
+  await form.getByRole("button", { name: "Log in" }).click();
   // The saved session: the account menu is a tab on a phone.
   await page.waitForFunction(() =>
     Object.keys(localStorage).some((key) => key.startsWith("sb-")),
@@ -59,7 +59,7 @@ await step("the log editor opens on a game", async () => {
     // Whichever the game offers: tester has logged some games and not
     // others, and a game logged already offers another platform.
     .getByRole("button", {
-      name: /^(Create log|Edit your log|Add a platform)$/,
+      name: /^(Log this game|Edit your log|Add a platform)$/,
     })
     .first()
     .click();

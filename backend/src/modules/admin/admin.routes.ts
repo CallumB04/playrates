@@ -318,6 +318,10 @@ export const createAdminRouter = ({
     res.json(await service.cohorts());
   });
 
+  router.get("/attention", async (_req, res) => {
+    res.json(await service.attention());
+  });
+
   router.get("/health", async (_req, res) => {
     res.json(await service.health());
   });

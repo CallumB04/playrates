@@ -351,8 +351,24 @@ export const handlers = [
         HttpResponse.json(paginated([]))
     ),
     http.get(`${API}/community/trending`, () => HttpResponse.json([])),
+    http.get(`${API}/events`, () => HttpResponse.json([])),
+    http.get(`${API}/events/current`, () => HttpResponse.json(null)),
+    http.get(`${API}/games/:id/events`, () => HttpResponse.json([])),
+    http.get(`${API}/users/:username/event-badges`, () =>
+        HttpResponse.json([])
+    ),
     http.get(`${API}/community/games`, () => HttpResponse.json([])),
     http.get(`${API}/community/latest`, () => HttpResponse.json([])),
+
+    // Nothing waiting, so an admin view renders without asking for it.
+    http.get(`${API}/admin/attention`, () =>
+        HttpResponse.json({
+            reports: 0,
+            serverErrors: 0,
+            clientErrors: 0,
+            patchNotes: 0,
+        })
+    ),
 
     http.get(`${API}/me/friends`, () =>
         HttpResponse.json({ data: [buildFriendEdge()] })

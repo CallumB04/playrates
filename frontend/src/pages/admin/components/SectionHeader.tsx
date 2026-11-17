@@ -4,12 +4,15 @@ import { cn } from "../../../lib/cn";
 /** The home page's rail header: a title, a quiet note beside it, and
  *  whatever controls the section has on the right. */
 const SectionHeader = ({
+    id,
     title,
     note,
     trailing,
     rule = false,
     className,
 }: {
+    /** For a section labelled by its header. */
+    id?: string;
     title: string;
     note?: ReactNode;
     trailing?: ReactNode;
@@ -25,7 +28,9 @@ const SectionHeader = ({
         )}
     >
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
-            <h2 className="font-display text-section text-content">{title}</h2>
+            <h2 id={id} className="font-display text-section text-content">
+                {title}
+            </h2>
             {note && (
                 <span className="text-label text-content-muted">{note}</span>
             )}

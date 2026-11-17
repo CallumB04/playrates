@@ -50,6 +50,8 @@ const JoinConfirmedPage = lazy(
 const UnsubscribePage = lazy(() => import("./pages/UnsubscribePage"));
 const AdminGate = lazy(() => import("./pages/admin/AdminGate"));
 const HubPage = lazy(() => import("./pages/HubPage/HubPage"));
+const EventsPage = lazy(() => import("./pages/EventsPage/EventsPage"));
+const EventPage = lazy(() => import("./pages/EventPage/EventPage"));
 const PeoplePage = lazy(() => import("./pages/PeoplePage/PeoplePage"));
 const ReviewPage = lazy(() => import("./pages/ReviewPage/ReviewPage"));
 const MyProfile = lazy(() => import("./pages/ProfilePage/MyProfile"));
@@ -186,6 +188,14 @@ function App() {
                                     <Route
                                         path="/games/upcoming"
                                         element={<HubPage kind="upcoming" />}
+                                    />
+                                    <Route
+                                        path="/events"
+                                        element={<EventsPage />}
+                                    />
+                                    <Route
+                                        path="/events/:slug"
+                                        element={<EventPage />}
                                     />
                                     <Route
                                         path="/review/:reviewId"

@@ -49,6 +49,13 @@ describe("MoreSheet", () => {
         ).toBeNull();
     });
 
+    it("offers no Day mode signed out, where the site is always dark", () => {
+        sheet({ user: null });
+        expect(
+            screen.queryByRole("button", { name: /Day mode|Night mode/ })
+        ).toBeNull();
+    });
+
     it("keeps everything the menus held: shelves, settings, admin", () => {
         sheet({ user: buildProfile({ username: "devuser", isAdmin: true }) });
         expect(screen.getByRole("link", { name: /Backlog/ })).toHaveAttribute(

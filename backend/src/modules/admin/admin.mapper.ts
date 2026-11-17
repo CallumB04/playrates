@@ -363,6 +363,16 @@ export const toPatchNote = (
   announcement: announcement ? toAnnouncement(announcement) : null,
 });
 
+/** Entries posted since the newest one that went out, so an entry passed
+ *  over long ago doesn't keep asking. Entries come newest first. */
+export const waitingPatchNotes = (
+  entries: Pick<PatchNoteEntryRow, "id">[],
+  sentIds: ReadonlySet<number>,
+): number => {
+  const newestSent = entries.findIndex((e) => sentIds.has(e.id));
+  return newestSent === -1 ? entries.length : newestSent;
+};
+
 export const toServerError = (row: ServerErrorRowWithUser): ServerErrorEntry => ({
   id: row.id,
   status: row.status,

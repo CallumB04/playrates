@@ -319,6 +319,10 @@ export const createInMemoryAdmin = (state: InMemoryState): AdminRepository => {
       return rows.filter((e) => e.created_at >= since).length;
     },
 
+    async openReportCount() {
+      return state.contentReports.filter((r) => r.status === "open").length;
+    },
+
     // The SQL is tested against Postgres; these only give the route rows.
     async staying() {
       return {

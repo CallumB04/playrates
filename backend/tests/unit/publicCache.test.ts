@@ -11,6 +11,8 @@ const app = () => {
   a.use("/api/v1", publicCache);
   a.get("/api/v1/games", (_req, res) => res.json({}));
   a.get("/api/v1/genres", (_req, res) => res.json({}));
+  a.get("/api/v1/events/:slug", (_req, res) => res.json({}));
+  a.get("/api/v1/games/:id/events", (_req, res) => res.json([]));
   a.get("/api/v1/users/x/stats", (_req, res) => res.json({}));
   a.get("/api/v1/games/missing", () => {
     throw AppError.notFound("Game");
@@ -25,6 +27,15 @@ describe("publicCache", () => {
     expect(res.headers["cache-control"]).toContain("s-maxage=60");
     const genres = await request(app()).get("/api/v1/genres");
     expect(genres.headers["cache-control"]).toContain("s-maxage=86400");
+  });
+
+  it("never lets a browser show a stale event, where picks move live", async () => {
+    for (const path of ["/api/v1/events/tga", "/api/v1/games/1/events"]) {
+      const res = await request(app()).get(path);
+      expect(res.headers["cache-control"]).toBe(
+        "public, max-age=0, s-maxage=30",
+      );
+    }
   });
 
   it("keeps nothing a signed-in request gets back", async () => {

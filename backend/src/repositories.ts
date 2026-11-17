@@ -76,6 +76,18 @@ import {
   type PushRepository,
 } from "./modules/push/push.repository.js";
 import {
+  createEventsRepository,
+  type EventsRepository,
+} from "./modules/events/events.repository.js";
+import {
+  createAwardsRepository,
+  type AwardsRepository,
+} from "./modules/events/awards/awards.repository.js";
+import {
+  createShowcaseRepository,
+  type ShowcaseRepository,
+} from "./modules/events/showcase/showcase.repository.js";
+import {
   createCommunityRepository,
   type CommunityRepository,
 } from "./modules/community/community.repository.js";
@@ -103,6 +115,9 @@ export interface Repositories {
   progress: ProgressRepository;
   email: EmailRepository;
   push: PushRepository;
+  events: EventsRepository;
+  awards: AwardsRepository;
+  showcase: ShowcaseRepository;
 }
 
 export const createRepositories = (db: Db): Repositories => ({
@@ -126,4 +141,7 @@ export const createRepositories = (db: Db): Repositories => ({
   progress: createProgressRepository(db),
   email: createEmailRepository(db),
   push: createPushRepository(db),
+  events: createEventsRepository(db),
+  awards: createAwardsRepository(db),
+  showcase: createShowcaseRepository(db),
 });
