@@ -195,11 +195,14 @@ export const pickedCount = (
     };
 };
 
-/** The distinct games among some categories' nominees. */
+/** The distinct games nominated in some categories. A named nominee's game
+ *  isn't one: the mod or the team is up for the award, not the game. */
 export const nomineeGameIds = (categories: AwardCategory[]): number[] => [
     ...new Set(
         categories.flatMap((c) =>
-            c.nominees.flatMap((n) => (n.game ? [n.game.id] : []))
+            c.nominees.flatMap((n) =>
+                n.game && n.label === null ? [n.game.id] : []
+            )
         )
     ),
 ];

@@ -215,10 +215,11 @@ describe("nominee games", () => {
         category(2, [
             nominee(10),
             nominee(40, { game: null, label: "A Composer" }),
+            nominee(50, { label: "A Mod" }),
         ]),
     ];
 
-    it("lists each game once, and not the named nominees", () => {
+    it("lists each game once, and not the named nominees or their games", () => {
         expect(nomineeGameIds(categories)).toEqual([10, 11]);
     });
 

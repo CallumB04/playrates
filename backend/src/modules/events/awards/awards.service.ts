@@ -189,7 +189,11 @@ export const createAwardsService = ({
     },
 
     async forGame(gameId, at) {
-      const nominees = await repo.nomineesForGame(gameId);
+      // A named nominee only plays the game: the mod or the team is up for
+      // the award, and the game isn't.
+      const nominees = (await repo.nomineesForGame(gameId)).filter(
+        (n) => n.label === null,
+      );
       const entries = new Map<number, KindGameEntry>();
       if (nominees.length === 0) return entries;
       const categories = await repo.findCategories(

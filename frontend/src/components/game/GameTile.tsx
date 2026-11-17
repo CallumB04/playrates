@@ -85,6 +85,9 @@ interface GameTileProps {
      *  the hover buttons no room. */
     shortTitle?: boolean;
     ring?: TileRing;
+    /** Set in the middle of the cover: what the tile stands for when that
+     *  isn't the game itself, a mod in it or a team that plays it. */
+    emblem?: ReactNode;
 }
 
 const ACTION_TONE = {
@@ -112,6 +115,7 @@ const GameTile = ({
     narrowFoot = false,
     shortTitle = false,
     ring,
+    emblem,
 }: GameTileProps) => {
     const rows = actions.filter((a) => !a.icon);
     const [busy, setBusy] = useState<Busy | null>(null);
@@ -179,6 +183,15 @@ const GameTile = ({
                     title={title}
                     className="size-full"
                 />
+                {/* Stood aside while the tile's own buttons are up. */}
+                {emblem && (
+                    <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-x-0 top-1/2 grid -translate-y-1/2 place-items-center transition-opacity duration-300 group-focus-within/tile:opacity-0 group-hover/tile:opacity-0"
+                    >
+                        {emblem}
+                    </span>
+                )}
 
                 {/* A wash on hover, so buttons read against pale box art. */}
                 {actions.length > 0 && (

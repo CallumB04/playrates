@@ -31,6 +31,17 @@ interface NomineeCardProps {
     status: DisplayStatus | null;
 }
 
+/** Says what kind of nominee this is: a person, a team, a mod. On a game's
+ *  cover it says the game isn't the one up for the award. */
+const NomineeMark = ({ categorySlug }: { categorySlug: string }) => {
+    const Mark = markFor(categorySlug);
+    return (
+        <span className="grid size-9 place-items-center rounded-full bg-surface text-content-muted shadow-plate ring-1 ring-subtle sm:size-14">
+            <Mark className="size-4 sm:size-6" strokeWidth={1.75} />
+        </span>
+    );
+};
+
 /**
  * A nominee that isn't a game: a person, a team, a show, a mod. The shape of
  * a cover, so a row of them sits level with games: its category's mark, on
@@ -50,7 +61,6 @@ const NamePlate = ({
     categorySlug: string;
     ring?: TileRing;
 }) => {
-    const Mark = markFor(categorySlug);
     return (
         <div
             className={cn(
@@ -77,15 +87,11 @@ const NamePlate = ({
                     />
                 </>
             )}
-            {/* On a picture too: a mod's card shows its host game's cover,
-                and the mark says it's the mod in the running, not the game. */}
             <span
                 aria-hidden
                 className="grid min-h-0 flex-1 place-items-center"
             >
-                <span className="grid size-10 place-items-center rounded-full bg-surface text-content-muted shadow-plate ring-1 ring-subtle sm:size-14">
-                    <Mark className="size-4.5 sm:size-6" strokeWidth={1.75} />
-                </span>
+                <NomineeMark categorySlug={categorySlug} />
             </span>
             <p
                 className={cn(
@@ -154,6 +160,11 @@ const NomineeCard = ({
                         narrowFoot
                         shortTitle
                         ring={ring}
+                        emblem={
+                            nominee.label && (
+                                <NomineeMark categorySlug={categorySlug} />
+                            )
+                        }
                     />
                 ) : (
                     <NamePlate
@@ -166,10 +177,10 @@ const NomineeCard = ({
                 )}
             </div>
             {named && (
-                <div className="min-h-10 min-w-0">
+                <div className="min-h-11 min-w-0">
                     {nominee.label && nominee.game && (
                         <>
-                            <p className="truncate text-body-sm font-medium text-content">
+                            <p className="truncate text-body font-semibold text-content">
                                 {nominee.label}
                             </p>
                             {nominee.detail && (

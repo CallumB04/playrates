@@ -240,6 +240,17 @@ describe("a game's events", () => {
     });
   });
 
+  it("leaves out an award a mod or a team is up for, as the game isn't", async () => {
+    const { app } = setup({
+      awardNominees: [
+        buildAwardNominee({ id: 101, game_id: 3, label: "A Mod" }),
+      ],
+    });
+    expect((await request(app).get("/api/v1/games/3/events")).body).toEqual(
+      [],
+    );
+  });
+
   it("puts the events still to come before the ones gone", async () => {
     const { app } = setup({
       events: [

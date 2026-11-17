@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(22);
+select plan(23);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values ('e1000000-0000-4000-8000-000000000001', 'e1@test.test', '{"username":"event_one"}'),
@@ -44,6 +44,17 @@ select throws_ok(
     '23505',
     null,
     'the same game can''t be nominated twice in one category');
+
+select lives_ok(
+    $$with g as (
+          insert into public.games (slug, title)
+          values ('event-game-c', 'Event Game C') returning id
+      )
+      insert into public.award_nominees (category_id, game_id, label)
+      select c.id, g.id, team from public.award_categories c, g,
+          (values ('Team One'), ('Team Two')) t(team)
+      where c.slug = 'score'$$,
+    'two named nominees can share a game, as two teams can play one');
 
 insert into public.award_picks (user_id, category_id, nominee_id)
 select 'e1000000-0000-4000-8000-000000000001', n.category_id, n.id
