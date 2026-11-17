@@ -232,7 +232,7 @@ const Standing = ({
         ...(allGames.total > headlineGames.total
             ? [
                   {
-                      label: "Every nominated game logged",
+                      label: "Nominated games logged",
                       part: allGames.logged,
                       whole: allGames.total,
                   },
