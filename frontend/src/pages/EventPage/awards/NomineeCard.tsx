@@ -11,6 +11,7 @@ import ShareBar from "../../../components/events/ShareBar";
 import { buttonClass } from "../../../components/ui/buttonClass";
 import { cn } from "../../../lib/cn";
 import { markFor } from "./nomineeMarks";
+import { TILE_RING, type TileRing } from "../../../components/game/tileRing";
 
 interface NomineeCardProps {
     nominee: AwardNominee;
@@ -32,25 +33,32 @@ interface NomineeCardProps {
 
 /**
  * A nominee that isn't a game: a person, a team, a show, a mod. The shape of
- * a cover, so a row of them sits level with games: its picture where it has
- * one, its category's mark where it doesn't, and its name and what it's
- * there for across the foot, where a game tile has its title.
+ * a cover, so a row of them sits level with games: its category's mark, on
+ * its picture where it has one, and its name and what it's there for across
+ * the foot, where a game tile has its title.
  */
 const NamePlate = ({
     label,
     detail,
     imageUrl,
     categorySlug,
+    ring,
 }: {
     label: string;
     detail: string | null;
     imageUrl: string | null;
     categorySlug: string;
+    ring?: TileRing;
 }) => {
     const Mark = markFor(categorySlug);
     return (
-        <div className="relative isolate flex aspect-3/4 flex-col justify-end overflow-hidden rounded-md border border-subtle bg-surface-sunken p-2.5 sm:p-3">
-            {imageUrl ? (
+        <div
+            className={cn(
+                "relative isolate flex aspect-3/4 flex-col justify-end overflow-hidden rounded-md border border-subtle bg-surface-sunken p-2.5 sm:p-3",
+                ring && TILE_RING[ring]
+            )}
+        >
+            {imageUrl && (
                 <>
                     <img
                         src={
@@ -68,19 +76,17 @@ const NamePlate = ({
                         className="absolute inset-x-0 bottom-0 -z-10 h-2/3 bg-linear-to-t from-media-scrim-strong to-transparent"
                     />
                 </>
-            ) : (
-                <span
-                    aria-hidden
-                    className="grid min-h-0 flex-1 place-items-center"
-                >
-                    <span className="grid size-10 place-items-center rounded-full bg-surface text-content-muted shadow-plate ring-1 ring-subtle sm:size-14">
-                        <Mark
-                            className="size-4.5 sm:size-6"
-                            strokeWidth={1.75}
-                        />
-                    </span>
-                </span>
             )}
+            {/* On a picture too: a mod's card shows its host game's cover,
+                and the mark says it's the mod in the running, not the game. */}
+            <span
+                aria-hidden
+                className="grid min-h-0 flex-1 place-items-center"
+            >
+                <span className="grid size-10 place-items-center rounded-full bg-surface text-content-muted shadow-plate ring-1 ring-subtle sm:size-14">
+                    <Mark className="size-4.5 sm:size-6" strokeWidth={1.75} />
+                </span>
+            </span>
             <p
                 className={cn(
                     "line-clamp-2 text-body-sm leading-snug font-semibold",
@@ -123,17 +129,10 @@ const NomineeCard = ({
     status,
 }: NomineeCardProps) => {
     const name = nominee.label ?? nominee.game?.title ?? "";
+    const ring = nominee.won ? "strong" : picked ? "soft" : undefined;
     return (
         <li className="flex min-w-0 flex-col gap-2.5">
-            <div
-                className={cn(
-                    "relative rounded-lg",
-                    nominee.won
-                        ? "ring-2 ring-brand ring-offset-2 ring-offset-surface"
-                        : picked &&
-                              "ring-2 ring-brand/50 ring-offset-2 ring-offset-surface"
-                )}
-            >
+            <div className="relative">
                 {/* The winner's medal sits on the cover's top edge, clear of
                     the tile's own corners, as Gaming 25 crowns its
                     favourite. */}
@@ -154,6 +153,7 @@ const NomineeCard = ({
                         actions={actions}
                         narrowFoot
                         shortTitle
+                        ring={ring}
                     />
                 ) : (
                     <NamePlate
@@ -161,6 +161,7 @@ const NomineeCard = ({
                         detail={nominee.detail}
                         imageUrl={nominee.imageUrl}
                         categorySlug={categorySlug}
+                        ring={ring}
                     />
                 )}
             </div>

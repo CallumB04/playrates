@@ -40,11 +40,6 @@ const EventTile = ({ event }: { event: EventSummary }) => (
                     <h3 className="font-display text-[16px] font-semibold text-content sm:text-[19px]">
                         {event.name}
                     </h3>
-                    {event.tagline && (
-                        <p className="text-[13px] text-content-secondary">
-                            {event.tagline}
-                        </p>
-                    )}
                 </div>
                 <span className="col-span-2 inline-flex items-center gap-1 text-body-sm font-semibold whitespace-nowrap text-brand-text sm:col-span-1">
                     {eventAction(event)}

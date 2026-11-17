@@ -232,7 +232,7 @@ export interface EventSummary {
   slug: string;
   kind: EventKind;
   name: string;
-  /** One line on what it is: also the page's description. */
+  /** No longer shown or written; kept while deployed tabs still read it. */
   tagline: string;
   startsAt: string;
   endsAt: string | null;
@@ -304,10 +304,14 @@ export const EVENTS_WORDS = {
   description: "What’s happening, and what’s next.",
 };
 
+/** The first paragraph of an event's About, which says what it is. */
+export const eventLead = (about: string): string =>
+  about.split(/\n\s*\n/)[0]?.trim() ?? "";
+
 /** What an event's page is called, by the server and the app alike. */
 export const eventWords = (event: {
   name: string;
-  tagline: string;
+  about: string;
   awards: { phase: AwardsPhase } | null;
   showcase?: unknown;
 }) => ({
@@ -318,7 +322,7 @@ export const eventWords = (event: {
     : event.showcase
       ? `${event.name}: every reveal`
       : event.name,
-  description: event.tagline || EVENTS_WORDS.description,
+  description: eventLead(event.about) || EVENTS_WORDS.description,
 });
 
 /* ----------------------------------------------------------------- admin */
@@ -337,7 +341,8 @@ export const AdminEventInputSchema = z
     kind: z.enum(EVENT_KINDS),
     slug: SlugSchema,
     name: z.string().trim().min(1).max(120),
-    tagline: z.string().trim().min(1).max(160),
+    // Optional so an admin tab from before it was dropped still saves.
+    tagline: z.string().trim().max(160).default(""),
     about: z.string().trim().max(2000).default(""),
     organiser: z.string().trim().max(120).default(""),
     organiserUrl: z.url().max(300).nullable().default(null),

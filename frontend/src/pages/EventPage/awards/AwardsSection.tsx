@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowDown, Trophy } from "lucide-react";
+import { ArrowUp, Trophy } from "lucide-react";
 import type {
     AwardCategory,
     AwardLeaderboard,
@@ -39,7 +39,7 @@ import NomineeCard from "./NomineeCard";
 import AwardsNav from "./AwardsNav";
 import LeaderboardPopup from "./LeaderboardPopup";
 import AwaitingNominees from "./AwaitingNominees";
-import { goToCategory, useActiveCategory } from "./useActiveCategory";
+import { goToTop, useActiveCategory } from "./useActiveCategory";
 
 const GRID =
     "grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6";
@@ -51,7 +51,6 @@ const Category = ({
     picks,
     signedIn,
     lead,
-    next,
 }: {
     category: AwardCategory;
     slug: string;
@@ -59,7 +58,6 @@ const Category = ({
     picks: AwardPicks;
     signedIn: boolean;
     lead: boolean;
-    next: AwardCategory | undefined;
 }) => {
     const { data: platforms } = usePlatforms();
     const { actionsFor, statusFor } = useTileActions();
@@ -121,18 +119,6 @@ const Category = ({
                     />
                 ))}
             </ul>
-            {/* Once you've picked, on to the next, without hunting for it. */}
-            {open && mine !== undefined && next && (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => goToCategory(categoryAnchor(next))}
-                    className="self-start"
-                >
-                    Next: {next.name}
-                    <ArrowDown size={14} aria-hidden />
-                </Button>
-            )}
         </section>
     );
 };
@@ -355,11 +341,18 @@ const AwardsSection = ({
                                     picks={picks}
                                     signedIn={!!user}
                                     lead={group.lead}
-                                    next={order[order.indexOf(category) + 1]}
                                 />
                             ))}
                         </div>
                     ))}
+                    <Button
+                        variant="secondary"
+                        onClick={goToTop}
+                        className="w-full sm:w-auto sm:self-start"
+                    >
+                        <ArrowUp size={16} aria-hidden />
+                        Back to the top
+                    </Button>
                 </div>
             </div>
         </section>

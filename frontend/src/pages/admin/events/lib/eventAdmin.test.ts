@@ -82,7 +82,7 @@ describe("announceHref", () => {
             announceHref({
                 name: "TGA",
                 slug: "tga",
-                tagline: "",
+                about: "",
                 awards: { phase: "open" },
             })
         );
@@ -97,19 +97,19 @@ describe("announceHref", () => {
                 announceHref({
                     name: "TGA",
                     slug: "tga",
-                    tagline: "",
+                    about: "",
                     awards: { phase: "results" },
                 })
             ).get("title")
         ).toBe("TGA: the winners are in");
     });
 
-    it("announces any other kind by its name and tagline", () => {
+    it("announces any other kind by its name and its About's first paragraph", () => {
         const params = read(
             announceHref({
                 name: "A Showcase",
                 slug: "showcase",
-                tagline: "New games, live.",
+                about: "New games, live.\n\nWatch along here.",
                 awards: null,
             })
         );

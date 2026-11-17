@@ -1,4 +1,8 @@
-import type { AwardsPhase, EventTiming } from "@playrates/shared";
+import {
+    eventLead,
+    type AwardsPhase,
+    type EventTiming,
+} from "@playrates/shared";
 
 /** A name as an address: "Best Score and Music" is best-score-and-music. */
 export const slugify = (text: string): string =>
@@ -107,7 +111,7 @@ export const statusLabel = (event: {
 export const announceHref = (event: {
     name: string;
     slug: string;
-    tagline: string;
+    about: string;
     awards: { phase: AwardsPhase } | null;
 }): string => {
     const results = event.awards?.phase === "results";
@@ -119,7 +123,7 @@ export const announceHref = (event: {
               ? `${event.name}: the winners are in`
               : `${event.name}: the nominees are in`,
         body: !event.awards
-            ? event.tagline
+            ? eventLead(event.about)
             : results
               ? "See who won, and how many you called."
               : "Pick who you think wins each award, and log the nominees as you go.",

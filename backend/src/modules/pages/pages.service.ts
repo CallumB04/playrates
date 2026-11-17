@@ -29,6 +29,7 @@ import {
   EVENTS_WORDS,
   eventPath,
   eventTrail,
+  eventLead,
   eventWords,
   REVEAL_TAG_LABELS,
 } from "@playrates/shared";
@@ -814,7 +815,7 @@ export const createPagesService = (repos: Repos) => {
               items: rows.map((e) => ({
                 title: e.name,
                 meta: formatDay(e.starts_at),
-                text: e.tagline || undefined,
+                text: eventLead(e.about) || undefined,
               })),
             },
           ],

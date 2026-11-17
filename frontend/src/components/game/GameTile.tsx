@@ -10,6 +10,7 @@ import {
 } from "react";
 import { Check, EllipsisVertical, Plus } from "lucide-react";
 import { cn } from "../../lib/cn";
+import { TILE_RING, type TileRing } from "./tileRing";
 import type { DisplayStatus } from "../../constants/gameStatus";
 import type { Platform } from "@playrates/shared";
 import GameCover from "./GameCover";
@@ -83,6 +84,7 @@ interface GameTileProps {
     /** Two lines of title at most, for a rail of six where a third left
      *  the hover buttons no room. */
     shortTitle?: boolean;
+    ring?: TileRing;
 }
 
 const ACTION_TONE = {
@@ -109,6 +111,7 @@ const GameTile = ({
     actions = [],
     narrowFoot = false,
     shortTitle = false,
+    ring,
 }: GameTileProps) => {
     const rows = actions.filter((a) => !a.icon);
     const [busy, setBusy] = useState<Busy | null>(null);
@@ -166,7 +169,10 @@ const GameTile = ({
                 onMouseLeave={cancelPrefetch}
                 onFocus={prefetchSoon}
                 onTouchStart={() => void prefetchGame(gameId)}
-                className="relative block aspect-3/4 overflow-hidden rounded-md bg-surface-media shadow-cover transition-shadow duration-500 ease-[var(--ease-glide)] group-hover/tile:shadow-cover-hover"
+                className={cn(
+                    "relative block aspect-3/4 overflow-hidden rounded-md bg-surface-media shadow-cover transition-shadow duration-500 ease-[var(--ease-glide)] group-hover/tile:shadow-cover-hover",
+                    ring && TILE_RING[ring]
+                )}
             >
                 <GameCover
                     coverUrl={coverUrl}
@@ -419,7 +425,9 @@ const GameTile = ({
             </Link>
 
             {(platformSlugs || rating !== undefined || footValue) && (
-                <div className="mt-2 flex items-center gap-1">
+                // Held at the marks' height without any, so a game with no
+                // platforms yet sits level with the rest of its row.
+                <div className="mt-2 flex min-h-[13px] items-center gap-1">
                     {/* Three, not four: the figure beside them is the
                         reason the tile is in this rail, so it gets the room.
                         Two in a narrow grid, where three and a "+n" ran

@@ -47,11 +47,6 @@ const FeaturedEvent = ({ event }: { event: EventSummary }) => (
                 >
                     {event.name}
                 </h2>
-                {event.tagline && (
-                    <p className="text-body text-content-secondary">
-                        {event.tagline}
-                    </p>
-                )}
             </div>
             <div className="flex items-center gap-4 sm:gap-6">
                 <EventDate

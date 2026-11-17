@@ -50,11 +50,6 @@ const EventHero = ({ event }: { event: EventDetail }) => {
                 <h1 className="font-display text-display text-content on-backdrop">
                     {event.name}
                 </h1>
-                {event.tagline && (
-                    <p className="max-w-[56ch] text-body text-content-secondary on-backdrop">
-                        {event.tagline}
-                    </p>
-                )}
             </div>
             <div className="flex items-center gap-4 sm:gap-6">
                 <EventDate iso={event.startsAt} past={past} size="lg" />

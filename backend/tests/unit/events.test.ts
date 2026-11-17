@@ -69,7 +69,10 @@ describe("awardsPhase", () => {
 });
 
 describe("eventWords", () => {
-  const named = { name: "The Game Awards 2026", tagline: "The big night." };
+  const named = {
+    name: "The Game Awards 2026",
+    about: "The big night.\n\nPick a winner in every category.",
+  };
 
   it("speaks of nominees until the results, then of winners", () => {
     expect(eventWords({ ...named, awards: { phase: "open" } }).title).toBe(
@@ -80,13 +83,13 @@ describe("eventWords", () => {
     );
   });
 
-  it("is just the name for any other kind, described by its tagline", () => {
+  it("is just the name for any other kind, described by its About's first paragraph", () => {
     expect(eventWords({ ...named, awards: null })).toEqual({
       title: "The Game Awards 2026",
       description: "The big night.",
     });
     expect(
-      eventWords({ ...named, tagline: "", awards: null }).description,
+      eventWords({ ...named, about: "", awards: null }).description,
     ).toMatch(/^What’s happening/);
   });
 
@@ -146,6 +149,12 @@ describe("event schemas", () => {
         logo: "https://example.com/logo.svg",
       }).success,
     ).toBe(false);
+  });
+
+  it("saves an event without a tagline, and still takes one from an older tab", () => {
+    const { tagline: _, ...withoutTagline } = base;
+    expect(AdminEventInputSchema.parse(withoutTagline).tagline).toBe("");
+    expect(AdminEventInputSchema.parse(base).tagline).toBe("The big night.");
   });
 
   it("wants an awards night's picks to close, and an end after the start", () => {

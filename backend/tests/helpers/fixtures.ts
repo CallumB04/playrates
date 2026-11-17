@@ -284,7 +284,7 @@ export const buildEvent = (overrides: Partial<EventRow> = {}): EventRow => ({
   kind: "awards",
   name: "The Game Awards 2026",
   tagline: "Gaming’s biggest night.",
-  about: "",
+  about: "Gaming’s biggest night.\n\nPick a winner in every category.",
   starts_at: "2099-12-11T03:30:00.000Z",
   ends_at: null,
   organiser: "The Game Awards",

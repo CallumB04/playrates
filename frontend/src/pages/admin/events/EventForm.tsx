@@ -54,7 +54,6 @@ const EventForm = ({
     const [kind, setKind] = useState<EventKind>(event?.kind ?? "awards");
     const [name, setName] = useState(event?.name ?? "");
     const [slug, setSlug] = useState(event?.slug ?? "");
-    const [tagline, setTagline] = useState(event?.tagline ?? "");
     const [about, setAbout] = useState(event?.about ?? "");
     const [organiser, setOrganiser] = useState(event?.organiser ?? "");
     const [organiserUrl, setOrganiserUrl] = useState(event?.organiserUrl ?? "");
@@ -87,7 +86,6 @@ const EventForm = ({
         kind,
         name: name.trim(),
         slug: slug || slugify(name),
-        tagline: tagline.trim(),
         about: about.trim(),
         organiser: organiser.trim(),
         organiserUrl: organiserUrl.trim() || null,
@@ -159,19 +157,6 @@ const EventForm = ({
                     )}
                 </Field>
             </div>
-            <Field
-                label="Tagline"
-                help="A few words, said the way you’d say it. Shown on its card, and to search engines."
-            >
-                {(a11y) => (
-                    <Input
-                        {...a11y}
-                        value={tagline}
-                        onChange={(e) => setTagline(e.target.value)}
-                        maxLength={160}
-                    />
-                )}
-            </Field>
             <Field
                 label="About"
                 help="Optional. A blank line starts a new paragraph."

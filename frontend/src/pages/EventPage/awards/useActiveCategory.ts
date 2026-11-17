@@ -36,6 +36,15 @@ export const useActiveCategory = (ids: string[]): string | null => {
     return active;
 };
 
+const scrollBehaviour = (): ScrollBehavior =>
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth";
+
+/** Back to the top of the page, from the bottom of the awards. */
+export const goToTop = () =>
+    window.scrollTo({ top: 0, behavior: scrollBehaviour() });
+
 /** Brings a category into view, under the sticky header and bar. By the
  *  window's own scroll, which html's overflow-x leaves working where
  *  scrollIntoView stood still. */
@@ -43,11 +52,8 @@ export const goToCategory = (id: string) => {
     const section = document.getElementById(id);
     if (!section) return;
     const margin = parseFloat(getComputedStyle(section).scrollMarginTop) || 0;
-    const reduce = window.matchMedia?.(
-        "(prefers-reduced-motion: reduce)"
-    ).matches;
     window.scrollTo({
         top: section.getBoundingClientRect().top + window.scrollY - margin,
-        behavior: reduce ? "auto" : "smooth",
+        behavior: scrollBehaviour(),
     });
 };
