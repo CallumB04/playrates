@@ -170,7 +170,12 @@ export const createInMemoryAwards = (
       ) {
         throw pgError("23505");
       }
-      const row: AwardNomineeRow = { id: nextId++, won: false, ...nominee };
+      const row: AwardNomineeRow = {
+        id: nextId++,
+        won: false,
+        image_url: null,
+        ...nominee,
+      };
       state.awardNominees.push(row);
       return row;
     },

@@ -1,4 +1,6 @@
 import {
+  AVATAR_MAX_BYTES,
+  AVATAR_PIXELS,
   AWARD_BOARD_PEOPLE,
   AWARD_BOARD_TIERS,
   awardsPhase,
@@ -11,6 +13,8 @@ import {
   type AwardPicks,
 } from "@playrates/shared";
 import { AppError } from "../../../lib/AppError.js";
+import { cleanUpload } from "../../../lib/cleanUpload.js";
+import type { EventImageStore } from "../../../config/eventImageStore.js";
 import type { GamesRepository } from "../../games/games.repository.js";
 import { toGame } from "../../games/games.mapper.js";
 import {
@@ -32,6 +36,8 @@ interface Deps {
   repo: AwardsRepository;
   events: Pick<EventsRepository, "findBySlug" | "findById" | "findByIds">;
   games: Pick<GamesRepository, "findByIds" | "findById">;
+  /** Where pictures of nominees that aren't games go. */
+  images?: EventImageStore;
   /** Who's on a leaderboard, and whose profiles a viewer may see. */
   people: {
     byIds(ids: string[]): Promise<ProfileRow[]>;
@@ -55,6 +61,7 @@ export const createAwardsService = ({
   repo,
   events,
   games,
+  images,
   people,
   now = () => new Date(),
 }: Deps) => {
@@ -403,6 +410,39 @@ export const createAwardsService = ({
       const category = await categoryOf(nominee.category_id);
       await repo.deleteNominee(id);
       return category.event_id;
+    },
+
+    /** A picture for a nominee that isn't a game, cleaned and stored as
+     *  WebP as a profile picture is. A game shows its own cover. */
+    async setNomineeImage(id: number, bytes: Buffer): Promise<number> {
+      const nominee = await nomineeOf(id);
+      if (nominee.game_id !== null) {
+        throw AppError.validation("A game shows its own cover");
+      }
+      if (!images) throw new Error("No store for event pictures");
+      if (bytes.length === 0) {
+        throw AppError.badRequest("No image was uploaded");
+      }
+      if (bytes.length > AVATAR_MAX_BYTES) {
+        throw AppError.badRequest("That picture is too large");
+      }
+      const clean = await cleanUpload(bytes, {
+        maxEdge: AVATAR_PIXELS,
+        maxBytes: AVATAR_MAX_BYTES,
+      });
+      await repo.updateNominee(id, { image_url: await images.put(id, clean) });
+      return (await categoryOf(nominee.category_id)).event_id;
+    },
+
+    async clearNomineeImage(id: number): Promise<number> {
+      const nominee = await nomineeOf(id);
+      // Only an uploaded one is ours to delete; a game's cover set by hand
+      // lives at IGDB.
+      if (images && nominee.image_url?.includes("/event-images/")) {
+        await images.remove(id);
+      }
+      await repo.updateNominee(id, { image_url: null });
+      return (await categoryOf(nominee.category_id)).event_id;
     },
 
     async reorderNominees(categoryId: number, ids: number[]): Promise<number> {

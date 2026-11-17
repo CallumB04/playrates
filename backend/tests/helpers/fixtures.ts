@@ -330,5 +330,6 @@ export const buildAwardNominee = (
   detail: null,
   position: 0,
   won: false,
+  image_url: null,
   ...overrides,
 });

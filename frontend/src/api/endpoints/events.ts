@@ -197,6 +197,28 @@ export const deleteAdminNominee = async (
     return data;
 };
 
+/** A picture for a nominee that isn't a game, already compressed. */
+export const uploadAdminNomineeImage = async (
+    nomineeId: number,
+    image: Blob
+): Promise<EventDetail> => {
+    const { data } = await api.post<EventDetail>(
+        `/admin/events/nominees/${nomineeId}/image`,
+        image,
+        { headers: { "Content-Type": image.type } }
+    );
+    return data;
+};
+
+export const deleteAdminNomineeImage = async (
+    nomineeId: number
+): Promise<EventDetail> => {
+    const { data } = await api.delete<EventDetail>(
+        `/admin/events/nominees/${nomineeId}/image`
+    );
+    return data;
+};
+
 export const reorderAdminNominees = async (
     categoryId: number,
     ids: number[]

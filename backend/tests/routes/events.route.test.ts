@@ -15,6 +15,7 @@ import {
   buildGame,
   buildProfile,
 } from "../helpers/fixtures.js";
+import { realWebp } from "../helpers/webp.js";
 
 const ADMIN = "33333333-3333-3333-3333-333333333333";
 const SLUG = "the-game-awards-2026";
@@ -1023,5 +1024,89 @@ describe("running events from admin", () => {
         })
       ).status,
     ).toBe(404);
+  });
+});
+
+describe("a nominee's picture", () => {
+  const named = seed({
+    awardNominees: [
+      buildAwardNominee(),
+      buildAwardNominee({
+        id: 120,
+        category_id: 11,
+        game_id: null,
+        label: "IShowSpeed",
+      }),
+    ],
+  });
+  const upload = (
+    app: ReturnType<typeof buildTestApp>["app"],
+    id: number,
+    bytes: Buffer,
+    as = ADMIN,
+  ) =>
+    request(app)
+      .post(`/api/v1/admin/events/nominees/${id}/image`)
+      .set("Authorization", authHeader(as))
+      .set("Content-Type", "image/webp")
+      .send(bytes);
+  const pictureOf = (body: {
+    awards: {
+      categories: { nominees: { id: number; imageUrl: string | null }[] }[];
+    };
+  }) =>
+    body.awards.categories.flatMap((c) => c.nominees).find((n) => n.id === 120)
+      ?.imageUrl;
+
+  it("stores one cleaned as WebP for a nominee that isn't a game, and shows it", async () => {
+    const { app, state } = buildTestApp({ seed: named });
+
+    const response = await upload(app, 120, await realWebp());
+
+    expect(response.status).toBe(200);
+    expect(pictureOf(response.body)).toMatch(
+      /event-images\/nominees\/120\.webp/,
+    );
+    expect(state.eventImages.has(120)).toBe(true);
+    const page = await request(app).get(`/api/v1/events/${SLUG}`);
+    expect(pictureOf(page.body)).toMatch(/event-images/);
+  });
+
+  it("takes it away again", async () => {
+    const { app, state } = buildTestApp({ seed: named });
+    await upload(app, 120, await realWebp());
+
+    const response = await request(app)
+      .delete("/api/v1/admin/events/nominees/120/image")
+      .set("Authorization", authHeader(ADMIN));
+
+    expect(response.status).toBe(200);
+    expect(pictureOf(response.body)).toBeNull();
+    expect(state.eventImages.has(120)).toBe(false);
+  });
+
+  it("refuses one for a game, which shows its own cover", async () => {
+    const { app } = buildTestApp({ seed: named });
+
+    const response = await upload(app, 100, await realWebp());
+
+    expect(response.status).toBe(422);
+  });
+
+  it("refuses something that isn't a picture", async () => {
+    const { app } = buildTestApp({ seed: named });
+
+    const response = await upload(app, 120, Buffer.from("not a picture"));
+
+    expect(response.status).toBe(400);
+  });
+
+  it("is refused to anyone who isn't an admin", async () => {
+    const { app, state } = buildTestApp({ seed: named });
+
+    const response = await upload(app, 120, await realWebp(), USER_A);
+
+    expect(response.status).toBe(404);
+    expect(state.eventImages.size).toBe(0);
   });
 });

@@ -25,6 +25,8 @@ export interface AwardNomineeRow {
   detail: string | null;
   position: number;
   won: boolean;
+  /** A picture for a nominee that isn't a game. */
+  image_url: string | null;
 }
 
 export interface AwardPickRow {
@@ -55,8 +57,10 @@ export type CategoryPatch = Partial<
   >
 >;
 
-export type NewNominee = Omit<AwardNomineeRow, "id" | "won">;
-export type NomineePatch = Partial<Pick<AwardNomineeRow, "won" | "position">>;
+export type NewNominee = Omit<AwardNomineeRow, "id" | "won" | "image_url">;
+export type NomineePatch = Partial<
+  Pick<AwardNomineeRow, "won" | "position" | "image_url">
+>;
 
 /** An awards night's own tables, beside the event it belongs to. */
 export interface AwardsRepository {
@@ -103,7 +107,7 @@ export interface AwardsRepository {
 }
 
 const CATEGORY = "id, event_id, slug, name, blurb, section, position, headline";
-const NOMINEE = "id, category_id, game_id, label, detail, position, won";
+const NOMINEE = "id, category_id, game_id, label, detail, position, won, image_url";
 
 export const createAwardsRepository = (db: Db): AwardsRepository => {
   const one = async <T>(

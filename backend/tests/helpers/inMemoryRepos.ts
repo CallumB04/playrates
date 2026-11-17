@@ -9,6 +9,7 @@ import { AppError } from "../../src/lib/AppError.js";
 import { logRank, type GameStatus, type PlayedStatus } from "@playrates/shared";
 import type { Repositories } from "../../src/repositories.js";
 import type { AuthAdmin } from "../../src/config/authAdmin.js";
+import type { EventImageStore } from "../../src/config/eventImageStore.js";
 import type { AvatarStore } from "../../src/config/avatarStore.js";
 import {
   storedImageOwner,
@@ -179,6 +180,7 @@ export interface InMemoryState {
   }[];
   /** Pictures uploaded to messages, by URL. */
   communityImages: Map<string, { bytes: Buffer; createdAt: string }>;
+  eventImages: Map<number, Buffer>;
   pushSubscriptions: {
     userId: string;
     endpoint: string;
@@ -284,6 +286,7 @@ export const createInMemoryRepos = (
   authAdmin: AuthAdmin;
   avatars: AvatarStore;
   communityImages: CommunityImageStore;
+  eventImages: EventImageStore;
 } => {
   const state: InMemoryState = {
     profiles: [...(seed.profiles ?? [])],
@@ -304,6 +307,7 @@ export const createInMemoryRepos = (
     communityMessages: [...(seed.communityMessages ?? [])],
     communityVotes: [...(seed.communityVotes ?? [])],
     communityImages: new Map(),
+    eventImages: new Map(),
     pushSubscriptions: [],
     activityEvents: [...(seed.activityEvents ?? [])],
     gameEvents: [...(seed.gameEvents ?? [])],
@@ -2223,5 +2227,15 @@ export const createInMemoryRepos = (
     },
   };
 
-  return { repos, state, authAdmin, avatars, communityImages };
+  const eventImages: EventImageStore = {
+    async put(nomineeId, bytes) {
+      state.eventImages.set(nomineeId, bytes);
+      return `https://test.supabase.co/storage/v1/object/public/event-images/nominees/${nomineeId}.webp?v=1`;
+    },
+    async remove(nomineeId) {
+      state.eventImages.delete(nomineeId);
+    },
+  };
+
+  return { repos, state, authAdmin, avatars, communityImages, eventImages };
 };

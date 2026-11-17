@@ -2,6 +2,7 @@ import { Router, type RequestHandler } from "express";
 import type { Repositories } from "./repositories.js";
 import type { AuthAdmin } from "./config/authAdmin.js";
 import type { AvatarStore } from "./config/avatarStore.js";
+import type { EventImageStore } from "./config/eventImageStore.js";
 import type { CommunityImageStore } from "./config/communityImageStore.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
 import { createFavouritesService } from "./modules/favourites/favourites.service.js";
@@ -116,6 +117,7 @@ interface Deps {
   authAdmin: AuthAdmin;
   avatars: AvatarStore;
   communityImages: CommunityImageStore;
+  eventImages: EventImageStore;
   email: EmailDeps;
   push: PushSender | null;
   steam: SteamClient | null;
@@ -131,6 +133,7 @@ export const buildRoutes = ({
   authAdmin,
   avatars,
   communityImages,
+  eventImages,
   email,
   push: pushSender,
   steam,
@@ -318,7 +321,7 @@ export const buildRoutes = ({
     logger,
   });
 
-  const { events, awards, showcase } = buildEvents(repos);
+  const { events, awards, showcase } = buildEvents(repos, eventImages);
 
   // Under /api so the host's rewrites reach it; the root one does not.
   router.get("/health", (_req, res) => {

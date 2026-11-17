@@ -18,6 +18,7 @@ import type { Repositories } from "./repositories.js";
 import type { AuthAdmin } from "./config/authAdmin.js";
 import type { AvatarStore } from "./config/avatarStore.js";
 import type { CommunityImageStore } from "./config/communityImageStore.js";
+import type { EventImageStore } from "./config/eventImageStore.js";
 import type { GamesProvider } from "./providers/games/GamesProvider.js";
 import type { EmailDeps } from "./config/email.js";
 import type { PushSender } from "./config/push.js";
@@ -35,6 +36,7 @@ export interface AppDeps {
   authAdmin: AuthAdmin;
   avatars: AvatarStore;
   communityImages: CommunityImageStore;
+  eventImages: EventImageStore;
   /** Where email goes, and the news audience; fakes in tests. */
   email: EmailDeps;
   /** Injected so tests can authenticate without signing real JWTs. */
@@ -59,6 +61,7 @@ export const buildApp = ({
   authAdmin,
   avatars,
   communityImages,
+  eventImages,
   email,
   push = null,
   steam = null,
@@ -138,6 +141,7 @@ export const buildApp = ({
       authAdmin,
       avatars,
       communityImages,
+      eventImages,
       email,
       push,
       steam,

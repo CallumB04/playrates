@@ -111,14 +111,14 @@ isOneToOne: false
                   ]
                 },"award_nominees": {
                   Row: {
-                    "category_id": number,"created_at": string,"detail": string | null,"game_id": number | null,"id": number,"label": string | null,"position": number,"won": boolean
+                    "category_id": number,"created_at": string,"detail": string | null,"game_id": number | null,"id": number,"image_url": string | null,"label": string | null,"position": number,"won": boolean
                   }
                   ComputedFields: never
                   Insert: {
-                    "category_id": number,"created_at"?: string,"detail"?: string | null,"game_id"?: number | null,"id"?: never,"label"?: string | null,"position"?: number,"won"?: boolean
+                    "category_id": number,"created_at"?: string,"detail"?: string | null,"game_id"?: number | null,"id"?: never,"image_url"?: string | null,"label"?: string | null,"position"?: number,"won"?: boolean
                   }
                   Update: {
-                    "category_id"?: number,"created_at"?: string,"detail"?: string | null,"game_id"?: number | null,"id"?: never,"label"?: string | null,"position"?: number,"won"?: boolean
+                    "category_id"?: number,"created_at"?: string,"detail"?: string | null,"game_id"?: number | null,"id"?: never,"image_url"?: string | null,"label"?: string | null,"position"?: number,"won"?: boolean
                   }
                   Relationships: [
                     {

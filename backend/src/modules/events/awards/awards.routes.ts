@@ -1,5 +1,7 @@
-import { Router, type RequestHandler } from "express";
+import express, { Router, type RequestHandler } from "express";
 import {
+  AVATAR_MAX_BYTES,
+  UPLOAD_IMAGE_MIMES,
   AdminCategoryIdParamSchema,
   AdminCategoryInputSchema,
   AdminEventIdParamSchema,
@@ -103,6 +105,13 @@ export const createMyAwardsRouter = ({
   return router;
 };
 
+/* A picture comes as raw bytes, already compressed by the browser, as a
+   profile picture does; the limit is the service's own. */
+const imageBody = express.raw({
+  type: [...UPLOAD_IMAGE_MIMES],
+  limit: AVATAR_MAX_BYTES,
+});
+
 /** Mounted at /admin/events beside the events' own routes. Every change
  *  answers with the whole event, read back through the events service. */
 export const createAdminAwardsRouter = ({
@@ -115,6 +124,7 @@ export const createAdminAwardsRouter = ({
   const router = Router();
   const whole = async (eventId: Promise<number>) =>
     events.adminGet(await eventId);
+  const imageLimiter = perMinute("nominee-images", 30);
 
   type EventParams = z.infer<typeof AdminEventIdParamSchema>;
   type CategoryIdParams = z.infer<typeof AdminCategoryIdParamSchema>;
@@ -192,6 +202,28 @@ export const createAdminAwardsRouter = ({
             awards.addNominee(categoryId, req.valid!.body as AdminNomineeInput),
           ),
         );
+    },
+  );
+
+  router.post(
+    "/nominees/:nomineeId/image",
+    imageLimiter,
+    imageBody,
+    validate({ params: AdminNomineeIdParamSchema }),
+    async (req, res) => {
+      const { nomineeId } = req.valid!.params as NomineeParams;
+      // express.raw leaves an empty object where the type did not match.
+      const body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+      res.json(await whole(awards.setNomineeImage(nomineeId, body)));
+    },
+  );
+
+  router.delete(
+    "/nominees/:nomineeId/image",
+    validate({ params: AdminNomineeIdParamSchema }),
+    async (req, res) => {
+      const { nomineeId } = req.valid!.params as NomineeParams;
+      res.json(await whole(awards.clearNomineeImage(nomineeId)));
     },
   );
 

@@ -37,6 +37,7 @@ const nominee = (
     game: { id, title: `Game ${id}` } as Game,
     label: null,
     detail: null,
+    imageUrl: null,
     won: false,
     picks: 0,
     ...extra,

@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(21);
+select plan(22);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values ('e1000000-0000-4000-8000-000000000001', 'e1@test.test', '{"username":"event_one"}'),
@@ -154,6 +154,13 @@ select results_eq(
         (select id from public.events where slug = 'test-awards'), 5, 4)$$,
     $$values (0)$$,
     'a winner taken back comes off the board');
+
+select throws_ok(
+    $$update public.award_nominees set image_url = 'javascript:alert(1)'
+      where id = (select min(id) from public.award_nominees)$$,
+    '23514',
+    null,
+    'a nominee''s picture is an https address and nothing else');
 
 -- A showcase: its reveals, and hype for them.
 insert into public.events (slug, kind, name, starts_at)

@@ -33,6 +33,7 @@ export const toCategory = (
         game,
         label: n.label,
         detail: n.detail,
+        imageUrl: n.image_url ?? null,
         won: n.won,
         picks: counts.get(n.id) ?? 0,
       },

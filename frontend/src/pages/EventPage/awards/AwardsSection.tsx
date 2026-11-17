@@ -69,7 +69,7 @@ const Category = ({
     const open = awards.phase === "open";
     const shares = showsShares(awards.phase, mine !== undefined);
     const Heading = lead ? "h2" : "h3";
-    const named = category.nominees.some((n) => n.label !== null);
+    const named = category.nominees.some((n) => n.label !== null && n.game);
 
     return (
         <section
@@ -103,6 +103,7 @@ const Category = ({
                         share={shares ? pickShare(nominee, category) : null}
                         canPick={open}
                         named={named}
+                        categorySlug={category.slug}
                         onPick={() =>
                             signedIn
                                 ? setPick.mutate({

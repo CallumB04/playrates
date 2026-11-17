@@ -1,10 +1,16 @@
 import { Check, Trophy } from "lucide-react";
-import type { AwardNominee, Platform } from "@playrates/shared";
+import {
+    igdbSized,
+    isIgdbImage,
+    type AwardNominee,
+    type Platform,
+} from "@playrates/shared";
 import GameTile, { type TileAction } from "../../../components/game/GameTile";
 import type { DisplayStatus } from "../../../constants/gameStatus";
 import ShareBar from "../../../components/events/ShareBar";
 import { buttonClass } from "../../../components/ui/buttonClass";
 import { cn } from "../../../lib/cn";
+import { markFor } from "./nomineeMarks";
 
 interface NomineeCardProps {
     nominee: AwardNominee;
@@ -14,35 +20,90 @@ interface NomineeCardProps {
     share: number | null;
     /** Whether a pick can be made or changed now. */
     canPick: boolean;
-    /** Whether any nominee in its category names a person, so every card
-     *  in the row keeps room for the name and stays level. */
+    /** Whether any nominee in its category names a person beside a game,
+     *  so every card in the row keeps room for the name and stays level. */
     named: boolean;
+    /** Its category's address, for the mark of a nominee that isn't a game. */
+    categorySlug: string;
     onPick: () => void;
     actions: TileAction[];
     status: DisplayStatus | null;
 }
 
-/** A named nominee with no game has no cover; its initials stand in. */
+/**
+ * A nominee that isn't a game: a person, a team, a show, a mod. The shape of
+ * a cover, so a row of them sits level with games: its picture where it has
+ * one, its category's mark where it doesn't, and its name and what it's
+ * there for across the foot, where a game tile has its title.
+ */
 const NamePlate = ({
     label,
     detail,
+    imageUrl,
+    categorySlug,
 }: {
     label: string;
     detail: string | null;
-}) => (
-    <div className="flex aspect-3/4 flex-col items-center justify-center gap-2 rounded-md border border-subtle bg-surface-sunken px-3 text-center">
-        <span className="font-display text-title text-content-secondary">
-            {label
-                .split(/\s+/)
-                .slice(0, 2)
-                .map((word) => word[0])
-                .join("")}
-        </span>
-        {detail && (
-            <span className="text-label-sm text-content-muted">{detail}</span>
-        )}
-    </div>
-);
+    imageUrl: string | null;
+    categorySlug: string;
+}) => {
+    const Mark = markFor(categorySlug);
+    return (
+        <div className="relative isolate flex aspect-3/4 flex-col justify-end overflow-hidden rounded-md border border-subtle bg-surface-sunken p-2.5 sm:p-3">
+            {imageUrl ? (
+                <>
+                    <img
+                        src={
+                            isIgdbImage(imageUrl)
+                                ? igdbSized(imageUrl, "cover_big")
+                                : imageUrl
+                        }
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className="absolute inset-0 -z-10 size-full object-cover"
+                    />
+                    <span
+                        aria-hidden
+                        className="absolute inset-x-0 bottom-0 -z-10 h-2/3 bg-linear-to-t from-media-scrim-strong to-transparent"
+                    />
+                </>
+            ) : (
+                <span
+                    aria-hidden
+                    className="grid min-h-0 flex-1 place-items-center"
+                >
+                    <span className="grid size-10 place-items-center rounded-full bg-surface text-content-muted shadow-plate ring-1 ring-subtle sm:size-14">
+                        <Mark
+                            className="size-4.5 sm:size-6"
+                            strokeWidth={1.75}
+                        />
+                    </span>
+                </span>
+            )}
+            <p
+                className={cn(
+                    "line-clamp-2 text-body-sm leading-snug font-semibold",
+                    imageUrl ? "text-content-on-media" : "text-content"
+                )}
+            >
+                {label}
+            </p>
+            {detail && (
+                <p
+                    className={cn(
+                        "truncate text-label-sm",
+                        imageUrl
+                            ? "text-content-on-media/80"
+                            : "text-content-muted"
+                    )}
+                >
+                    {detail}
+                </p>
+            )}
+        </div>
+    );
+};
 
 /**
  * One nominee: its game, which can be logged from here like any cover, and
@@ -56,6 +117,7 @@ const NomineeCard = ({
     share,
     canPick,
     named,
+    categorySlug,
     onPick,
     actions,
     status,
@@ -94,7 +156,12 @@ const NomineeCard = ({
                         shortTitle
                     />
                 ) : (
-                    <NamePlate label={name} detail={nominee.detail} />
+                    <NamePlate
+                        label={name}
+                        detail={nominee.detail}
+                        imageUrl={nominee.imageUrl}
+                        categorySlug={categorySlug}
+                    />
                 )}
             </div>
             {named && (
@@ -110,11 +177,6 @@ const NomineeCard = ({
                                 </p>
                             )}
                         </>
-                    )}
-                    {nominee.label && !nominee.game && (
-                        <p className="line-clamp-2 text-body-sm font-medium text-content">
-                            {nominee.label}
-                        </p>
                     )}
                 </div>
             )}

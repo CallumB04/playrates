@@ -116,6 +116,9 @@ export interface AwardNominee {
   label: string | null;
   /** What a named nominee is there for: a role, a game, a studio. */
   detail: string | null;
+  /** A picture of a named nominee, uploaded in admin or a game's cover; a
+   *  card without one draws its category's mark. */
+  imageUrl: string | null;
   won: boolean;
   /** How many members picked it. */
   picks: number;

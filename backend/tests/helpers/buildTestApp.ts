@@ -99,7 +99,7 @@ export const buildTestApp = (
 } => {
   setTestEnv();
 
-  const { repos, state, authAdmin, avatars, communityImages } =
+  const { repos, state, authAdmin, avatars, communityImages, eventImages } =
     createInMemoryRepos(options.seed);
   const resolved = options.repos ?? repos;
   const email = createEmailFakes();
@@ -110,6 +110,7 @@ export const buildTestApp = (
     authAdmin,
     avatars,
     communityImages,
+    eventImages,
     email: email.deps,
     push: options.push ?? null,
     steam: options.steam ?? null,

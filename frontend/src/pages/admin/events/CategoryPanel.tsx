@@ -23,6 +23,7 @@ import Toggle from "../../../components/ui/Toggle";
 import { cardClass } from "../../../components/ui/cardClass";
 import { cn } from "../../../lib/cn";
 import { moved, slugify } from "./lib/eventAdmin";
+import NomineePicture from "./NomineePicture";
 
 const ICON_BUTTON =
     "inline-flex size-11 shrink-0 items-center justify-center rounded-sm text-content-muted transition-colors hover:bg-surface-hover hover:text-content disabled:opacity-40 sm:size-9";
@@ -292,12 +293,16 @@ const CategoryPanel = ({
                             key={nominee.id}
                             className="flex items-center gap-3 py-2"
                         >
-                            <GameCover
-                                coverUrl={nominee.game?.coverUrl ?? null}
-                                title=""
-                                sizes="40px"
-                                className="aspect-3/4 w-10 shrink-0 rounded-sm"
-                            />
+                            {nominee.game ? (
+                                <GameCover
+                                    coverUrl={nominee.game.coverUrl}
+                                    title=""
+                                    sizes="40px"
+                                    className="aspect-3/4 w-10 shrink-0 rounded-sm"
+                                />
+                            ) : (
+                                <NomineePicture nominee={nominee} />
+                            )}
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-body-sm font-medium text-content">
                                     {nominee.label ?? nominee.game?.title}

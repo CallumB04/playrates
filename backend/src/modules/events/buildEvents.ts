@@ -1,4 +1,5 @@
 import type { Repositories } from "../../repositories.js";
+import type { EventImageStore } from "../../config/eventImageStore.js";
 import { createAwardsService } from "./awards/awards.service.js";
 import { createShowcaseService } from "./showcase/showcase.service.js";
 import { createEventsService } from "./events.service.js";
@@ -9,11 +10,14 @@ export const buildEvents = (
     Repositories,
     "events" | "awards" | "showcase" | "games" | "progress" | "friends"
   >,
+  /** Only where pictures are uploaded; reading needs none. */
+  images?: EventImageStore,
 ) => {
   const awards = createAwardsService({
     repo: repos.awards,
     events: repos.events,
     games: repos.games,
+    images,
     people: {
       byIds: (ids) => repos.progress.profilesByIds(ids),
       friendIds: async (userId) =>
