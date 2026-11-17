@@ -463,9 +463,12 @@ const EventColumn = ({
 const EventsPanel = ({ onNavigate }: PanelProps) => {
     const { data: events, isPending } = useEvents();
     const { lead, upcoming, past } = menuEvents(events ?? []);
+    const columns = upcoming.length > 0 || past.length > 0;
     return (
         <>
-            <div className="flex gap-3">
+            {/* The menu keeps extra room on its right for a column's lines;
+                the lead alone gets the same edge on both sides. */}
+            <div className={cn("flex gap-3", !columns && "-mr-1.5")}>
                 {isPending ? (
                     <Skeleton className="h-52 w-60 shrink-0 rounded-md" />
                 ) : (
@@ -501,7 +504,7 @@ const EventsPanel = ({ onNavigate }: PanelProps) => {
                     )
                 )}
                 {/* Coming up over past, one column beside the lead. */}
-                {(upcoming.length > 0 || past.length > 0) && (
+                {columns && (
                     <div className="flex w-64 flex-col gap-3">
                         {upcoming.length > 0 && (
                             <EventColumn
