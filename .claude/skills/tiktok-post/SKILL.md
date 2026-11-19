@@ -106,6 +106,33 @@ post; copy the Stardew page and change everything.
   aside inside the band ("(pretty please!!!)"), and the mark with two
   sparks under the band.
 
+### A post about PlayRates itself
+
+`posts/playrates-why` (2026-11-23, "5 reasons to track your games on
+PlayRates") is the template, after three rounds with Callum:
+
+- **Cover**: the hook band with the PlayRates lockup
+  (`marketing/brand/lockup-on-light.png`), over the signed-out home page
+  pasted in as a desktop screenshot with the phone version beside it in a
+  dark bezel (`.photo.phone`). Not a pile of game covers.
+- **Behind every slide, game art**, dimmed (`.bg.art { filter:
+  brightness(0.6) }`), never a flat colour. Each tip slide pastes one
+  screenshot on it as a `.photo`, and each slide shows a different kind of
+  thing: a shelf close-up, the hype-sorted backlog, the whole Gaming 25
+  page with its heading, an events page, the Player card. Desktop reads
+  better than phone for grids.
+- **Sell it to someone who's never heard of it**: pick what's distinctive
+  (hype flames, Gaming 25, events, levels and badges) and screens dense
+  enough to show it.
+- **Only what anyone can see.** Shoot the live site signed out, from
+  Callum's public profile (`calbgyn`), never the About card (name,
+  location, links) and nothing from other members. His Player card is
+  public by design: `https://playrates.app/api/v1/progress/calbgyn/card.png`.
+- **Last slide**: plain. "It's free. Start yours at playrates.app", the
+  mark and sparks, no covers.
+- Screenshots are full of text, so this post's bands are nearly opaque
+  (`rgb(255 255 255 / 0.95)`).
+
 ## 0. Check the account first
 
 Every run starts here. Open `https://www.tiktok.com/tiktokstudio/content`
@@ -141,12 +168,27 @@ free day and a random time in the window. Use that time unless Callum
 gives one.
 
 Read the whole history first: never repeat a hook, vary the game and genre,
-and keep any one game from turning up post after post. Vary the kind of
+and never post the same game two days running (Callum, 2026-11-19). Vary the kind of
 tips too. Lean on the calendar (horror at Halloween, a big release day). Aim
 at games with huge audiences (Minecraft, Elden Ring, GTA, Fortnite,
 Pokémon, Skyrim, Stardew) as well as lists that start arguments in the
 comments. Before settling on one, sketch each slide's picture and its joke;
 if three slides have neither, pick another topic.
+
+What has worked, by Studio's numbers (re-check them each run): "N tips for
+beginners in [big RPG or Souls game]" and "N mistakes everyone makes in
+[game]" break out (Elden Ring 31K, Witcher 3 mistakes 27K, Skyrim part 2
+19K); part 2s of a hit can beat part 1. Boss guides, hidden-things lists and
+cosy games stall around 1K. Callum leans souls, fantasy and medieval.
+
+A big release changes the plan on the day. Launch logistics (storage,
+pre-load, bonuses) stop mattering once it's out: on 2026-11-19 Callum had
+the GTA 6 launch post unscheduled for tips built from what reviewers and
+day-one guides were saying, then a secrets post a few days later. Fresh
+coverage is thin and full of fakes (pre-launch "secrets" listicles, other
+games' easter eggs passed off as new), so mark each claim solid or thin,
+hedge the thin ones ("may"), keep spoilers out of a game that's only just
+out, and re-check before building a post planned days ahead.
 
 Five to eight tips (not always six), each a short `title` (four or five
 words) and one `line` the viewer can act on. A good five beats a forced
@@ -165,6 +207,13 @@ Callum cut two Silksong tips (Bind heals, Hornet pogos diagonally) as
 first-minute knowledge. Fans of a series like a nod to the earlier games
 where one fits: Shakra's singing next to Cornifer's humming, Andre turning
 up again in Dark Souls III.
+
+When Callum asks for a batch researched first ("iterate until you're
+happy"), send research agents out per post for about eight candidates each,
+checked against two sources and against what's already been posted, then
+pick the best and bring him finished drafts. Check against the game's
+current version: The Witcher 3's Remastered update (2026-09-29) rebuilt the
+skill tree, and a KCD2 patch changed stolen items.
 
 Then send Callum the hook, the six tips and the jokes, and build nothing
 until he says go. Once he has, fact-check every tip against sources (a
@@ -246,6 +295,12 @@ Every picture goes in `posts/<name>/img/`. Where to find them:
   gives their URLs. Stickers need real transparency
   (`magick identify -format '%[opaque]'`); item sprites usually have it.
 
+Research agents can gather a post's pictures in parallel: give them the
+files needed, the band positions, and the rule to look at every candidate.
+Check what comes back yourself: a body in the background of a cooking
+shot, a boss from late in the game, a picture too small to fill a slide
+(frame it as a `.photo` instead, within the soft-backdrop limit).
+
 Look at every candidate before choosing (`magick a b c -resize x300 +append`
 and read the result; `montage` errors on fonts without `-label ''`).
 Pixel art scales crisp with `.px`. A portrait slide shows only the middle
@@ -259,6 +314,12 @@ above y 1540 and left of x 940, clear of TikTok's caption and rail.
 ```bash
 npm run tiktok -- marketing/tiktok/posts/<name>.json
 ```
+
+The session scratchpad is wiped between days, so keep any script that lays
+out slides in `posts/_build/` (gitignored with the rest of `posts/`).
+`shoot.mjs` (phone) and `desk.mjs` (desktop, full page) there take
+screenshots of live pages with the repo's Playwright; run them from the repo
+root so `playwright` resolves.
 
 A clean run prints **no warnings**. Then look at the slides themselves,
 not only the contact sheet: a caption on a light patch, an aside sitting
@@ -278,13 +339,16 @@ Callum opens TikTok in the browser pane; the upload page is
   asked for in one sitting. Leave 15 minutes between one post's Schedule
   and the next upload.
 - **Uploading is Callum's job**: the pane can't hand files to TikTok. Open
-  the upload page, then ask with AskUserQuestion (one option: "Files are
-  uploaded") naming `out/<name>/slides`: Select photos, open the folder,
-  Ctrl+A, Open. His click is the go-ahead; don't end the turn to wait.
-  Check every slide is in, in order.
+  the upload page, then tell him in chat to upload `out/<name>/slides`
+  (Select photos, open the folder, Ctrl+A, Open) and end the turn; he
+  replies "Files are uploaded". AskUserQuestion refuses a question with one
+  option. Check every slide is in, in order.
 - **Title** in "Add a catchy title"; **description** in the box under it.
-  Type the description once, then read the box from the page (a screenshot
-  can lag) before typing more. Retyping doubles it.
+  Read `document.activeElement` before typing each: a click that missed
+  sends the description into the title. After a navigation, take a
+  screenshot before clicking by coordinates. Type the description once,
+  then read the box from the page (a screenshot can lag) before typing
+  more. Retyping doubles it.
 - **Hashtags**: type each one and pick TikTok's exact-match suggestion so it
   becomes a real tag. The suggestions are `.hashtag-suggestion-item`
   elements: pick the one whose first line is exactly the tag and fire
@@ -303,11 +367,15 @@ Callum opens TikTok in the browser pane; the upload page is
   same composer counts), the closest cover of the game track where there
   isn't. You can't hear audio, so Callum chooses: open the picker on your
   search, list the rows with your recommendation first, and ask him to
-  preview them (each row has a play button) before you click Use.
+  preview them (each row has a play button) before you click Use. Leave out
+  rows named after late bosses (Morgott, Gael, Friede): a track name is a
+  spoiler too. If a row's Use won't apply, search the track's exact name and
+  use that row (Silver For Monsters, 2026-11-19).
 - **Schedule** at the post's `time`, Estonian time (the picker's time
   zone), on its day. Pick the Schedule radio, then the date: open the
-  date field and click the day's cell at its real coordinates (a scripted
-  click on `span.day.valid` didn't take on 2026-10-30). Then the time:
+  date field and fire the five events below on the day's `span.day.valid`
+  (it has worked every time since 2026-11-09; a single scripted `click()`
+  didn't on 2026-10-30). Then the time:
   scroll the page down first so the list has room to open below the field.
   The hour and minute columns
   (`.tiktok-timepicker-time-scroll-container`, 32px rows, minutes in fives)
