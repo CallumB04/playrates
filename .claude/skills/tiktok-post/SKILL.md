@@ -333,18 +333,31 @@ and get his go-ahead before going to TikTok.
 Callum opens TikTok in the browser pane; the upload page is
 `https://www.tiktok.com/tiktokstudio/upload`, **Photos** tab.
 
+The scripted steps below live in `studio.js` beside this skill: `pickTag`,
+`_rows` and `_pick` for the sound, `_sched(day, h, m, nextMonth)`, and
+`_check()`, which reads everything back before Schedule. A navigation wipes
+them, so `cat` the file and run it through `javascript_tool` after every
+page load. Don't rewrite them from memory: on 2026-11-25 they had to be dug
+out of an old transcript.
+
 - **One post at a time, at a person's pace.** The 21 October collapse
   followed fourteen scripted uploads in two hours. Type at normal speed,
   don't hurry between steps, and never queue more than the days Callum has
   asked for in one sitting. Leave 15 minutes between one post's Schedule
-  and the next upload.
+  and the next upload: start `sleep 900` as a background command and open
+  the next upload when it reports back.
 - **Uploading is Callum's job**: the pane can't hand files to TikTok. Open
-  the upload page, then tell him in chat to upload `out/<name>/slides`
-  (Select photos, open the folder, Ctrl+A, Open) and end the turn; he
-  replies "Files are uploaded". AskUserQuestion refuses a question with one
-  option. Check every slide is in, in order.
+  the upload page, then ask with AskUserQuestion naming `out/<name>/slides`
+  (Select photos, open the folder, Ctrl+A, Open), with two options, "Files
+  are uploaded" and "Skip this one" (it refuses a single option). Check
+  every slide is in, in order. Right after an upload a screenshot can show
+  a blank page with the loading dots while the form is already there: read
+  the `1/<n>` slide counter from the page text, then screenshot again a few
+  seconds later to see the order.
 - **Title** in "Add a catchy title"; **description** in the box under it.
-  Read `document.activeElement` before typing each: a click that missed
+  Click the title through `find("Add a catchy title")` and its ref, not by
+  coordinates (a coordinate click missed it on 2026-11-25). Read
+  `document.activeElement` before typing each: a click that missed
   sends the description into the title. After a navigation, take a
   screenshot before clicking by coordinates. Type the description once,
   then read the box from the page (a screenshot can lag) before typing
@@ -361,8 +374,11 @@ Callum opens TikTok in the browser pane; the upload page is
   it: put the caret after it with a Selection range and press Backspace
   over it before typing on.
 - **Sound**: Add sound under the description, search, then the row's
-  **Use** (a real click; it can take a few seconds to apply; when a real click
-  doesn't take, `.click()` on the row's Use button from a script does). Pick the
+  **Use**. Neither kind of click always takes: on 2026-11-25 the scripted
+  `.click()` failed and a real click worked for one post, and the reverse
+  happened for the next. After either, wait five seconds and read `_sound()`
+  (the screenshot lags and can still show the picker open): if it still
+  says "Add sound", try the other kind of click. Pick the
   original artist's version where there is one (another arrangement by the
   same composer counts), the closest cover of the game track where there
   isn't. You can't hear audio, so Callum chooses: open the picker on your
@@ -387,7 +403,8 @@ Callum opens TikTok in the browser pane; the upload page is
 - **All of this works by script, even with the pane hidden** (2026-10-30):
   `input[value=schedule]`.click(); open a picker by firing
   pointerdown/mousedown/pointerup/mouseup/click on the field's
-  `.TUXInputBox`; the date's `span.arrow` (second is next month) and
+  `.TUXInputBox`; the date's `span.arrow` (the last is next month, needed
+  for any day past the end of this month) and
   `span.day.valid` take the same five events; step the time with a
   `WheelEvent` of `deltaY` ±20 per row, reading the `input` values after
   each; then click the `button` whose text is "Schedule".
