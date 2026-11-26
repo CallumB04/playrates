@@ -64,7 +64,7 @@ const AboutGame = ({ game: { id, title } }: { game: ReviewGame }) => {
                 to={`/game/${id}`}
                 className={buttonClass("secondary", "w-full")}
             >
-                Go to {title}
+                <span className="truncate">Go to {title}</span>
             </Link>
         </AsideCard>
     );
