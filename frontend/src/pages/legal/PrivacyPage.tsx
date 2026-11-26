@@ -69,8 +69,8 @@ const PrivacyPage = () => (
                 Which emails you want. Account emails, like password resets,
                 always send. The others, about friend requests, replies,
                 reactions and loves, gifts and invites, wishlist release days,
-                the weekly digest, streak and task reminders and news, you can
-                turn on or off one by one in{" "}
+                streak and task reminders and news, you can turn on or off one
+                by one in{" "}
                 <Link to="/settings?section=emails">Settings</Link> or with the
                 link at the bottom of any email. Reminders are off unless you
                 turn them on, and news is off unless you ticked the box when you
