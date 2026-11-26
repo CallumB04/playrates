@@ -37,7 +37,7 @@ import { signedInRecently } from "../lib/recentSignIn";
 import { saveFile } from "../lib/saveFile";
 import {
     DEFAULT_ABOUT_VISIBILITY,
-    EMAIL_CATEGORIES,
+    OFFERED_EMAIL_CATEGORIES,
     resolveEmailPrefs,
     type AboutVisibility,
     type EmailPrefs,
@@ -521,7 +521,7 @@ const SettingsPage = () => {
                     </Setting>
                 </Group>
                 <Group>
-                    {EMAIL_CATEGORIES.map((category) => (
+                    {OFFERED_EMAIL_CATEGORIES.map((category) => (
                         <Setting
                             key={category.key}
                             label={category.label}

@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { EMAIL_LIMITS } from "@playrates/shared";
 import {
   createEmailService,
-  digestSunday,
 } from "../../src/modules/email/email.service.js";
 import {
   groupWishlistReleases,
@@ -620,99 +619,5 @@ describe("Resend's webhook", () => {
         Buffer.from("{}"),
       ),
     ).toBe(false);
-  });
-});
-
-describe("weekly digest", () => {
-  it("is for a Sunday's run, and nothing else", () => {
-    expect(digestSunday(new Date("2026-11-01T17:00:00Z"))).toBe("2026-11-01");
-    expect(digestSunday(new Date("2026-11-02T17:00:00Z"))).toBeNull();
-    expect(digestSunday(new Date("2026-11-03T17:00:00Z"))).toBeNull();
-    expect(digestSunday(new Date("2026-10-31T17:00:00Z"))).toBeNull();
-  });
-
-  const SUNDAY = new Date("2026-11-01T17:00:00Z");
-  const withFriend = (prefs: Record<string, boolean> = {}) => {
-    const built = setup([
-      buildProfile({ email_prefs: prefs }),
-      buildProfile({ id: USER_B, username: "ana" }),
-    ]);
-    built.state.friendships.push({
-      user_a_id: USER_A < USER_B ? USER_A : USER_B,
-      user_b_id: USER_A < USER_B ? USER_B : USER_A,
-      status: "accepted",
-      requested_by: USER_A,
-      created_at: "2026-01-01T00:00:00Z",
-      updated_at: "2026-01-01T00:00:00Z",
-    });
-    built.state.gameLogs.push(
-      buildGameLog({
-        id: 50,
-        user_id: USER_B,
-        game_id: 1,
-        status: "played",
-        rating: 9,
-        updated_at: "2026-10-30T12:00:00Z",
-      }),
-      buildGameLog({
-        id: 51,
-        user_id: USER_A,
-        game_id: 1,
-        status: "wishlist",
-        updated_at: "2026-10-01T12:00:00Z",
-        created_at: "2026-10-01T12:00:00Z",
-      }),
-    );
-    return built;
-  };
-
-  it("tells each member what friends played and what comes out, once", async () => {
-    const { service, email } = withFriend();
-
-    expect(await service.sendDigest(SUNDAY)).toEqual({ sent: 1 });
-    expect(await service.sendDigest(SUNDAY)).toEqual({ sent: 0 });
-
-    expect(email.sent).toHaveLength(1);
-    const [digest] = email.sent;
-    expect(digest!.to).toBe(emailOf(USER_A));
-    expect(digest!.subject).toBe("Your week on PlayRates");
-    expect(digest!.text).toContain("ana played Hades II, rated 9/10");
-    expect(digest!.text).toContain("Hades II, Thursday 5 Nov");
-    expect(digest!.headers!["List-Unsubscribe"]).toBeDefined();
-  });
-
-  it("goes to nobody who turned it off", async () => {
-    const { service, email } = withFriend({ digest: false });
-    await service.sendDigest(SUNDAY);
-    expect(email.sent).toEqual([]);
-  });
-
-  it("sends an admin their own as a test, on any day, to the address given", async () => {
-    const { service, email } = withFriend();
-    const monday = new Date("2026-11-02T17:00:00Z");
-
-    expect(await service.sendDigestTest(USER_A, "me@playrates.test", monday)).toBe(
-      true,
-    );
-    expect(email.sent).toHaveLength(1);
-    expect(email.sent[0]!.to).toBe("me@playrates.test");
-    expect(email.sent[0]!.text).toContain("ana played Hades II, rated 9/10");
-    // A test isn't Sunday's: it doesn't stop the real one going out.
-    expect(await service.sendDigest(SUNDAY)).toEqual({ sent: 1 });
-  });
-
-  it("sends no test when there's nothing in yours", async () => {
-    const { service, email } = withFriend();
-    expect(
-      await service.sendDigestTest(USER_B, "ana@playrates.test", SUNDAY),
-    ).toBe(false);
-    expect(email.sent).toEqual([]);
-  });
-
-  it("does nothing on any other day, Monday included", async () => {
-    const { service, email } = withFriend();
-    expect(await service.sendDigest(new Date("2026-11-02T17:00:00Z"))).toBeNull();
-    expect(await service.sendDigest(new Date("2026-11-04T17:00:00Z"))).toBeNull();
-    expect(email.sent).toEqual([]);
   });
 });

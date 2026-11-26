@@ -35,7 +35,6 @@ import {
     fetchEmailAudience,
     fetchEmailStats,
     announcePatchNote,
-    sendTestDigest,
     sendTestPatchNote,
     fetchIgdbUsage,
     fetchServerErrors,
@@ -361,5 +360,3 @@ export const useResolveReport = () => {
     });
 };
 
-export const useSendTestDigest = () =>
-    useMutation({ mutationFn: sendTestDigest });

@@ -54,6 +54,9 @@ export const EMAIL_CATEGORIES = [
     description:
       "On Sunday evenings: what your friends played, and wishlist games out that week.",
     defaultOn: true,
+    // No longer sent. Still a scope, for the switches already stored, the
+    // unsubscribe links in digests already sent and Settings in old tabs.
+    retired: true,
   },
   {
     key: "news",
@@ -66,6 +69,11 @@ export const EMAIL_CATEGORIES = [
 ] as const;
 
 export type EmailCategory = (typeof EMAIL_CATEGORIES)[number]["key"];
+
+/** The switches Settings offers: every category still sent. */
+export const OFFERED_EMAIL_CATEGORIES = EMAIL_CATEGORIES.filter(
+  (c) => !("retired" in c),
+);
 export const EMAIL_CATEGORY_KEYS = EMAIL_CATEGORIES.map((c) => c.key) as [
   EmailCategory,
   ...EmailCategory[],

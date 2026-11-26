@@ -12,10 +12,7 @@ import {
 import { AppError } from "../../lib/AppError.js";
 import type { Defer } from "../../lib/afterResponse.js";
 import type { Logger } from "../../lib/logger.js";
-import type {
-  MemberEmailRow,
-  WeeklyDigestRow,
-} from "../../types/database.types.js";
+import type { MemberEmailRow } from "../../types/database.types.js";
 import type { NotificationDraft } from "../notifications/notifications.repository.js";
 import type { ProfilesRepository } from "../profiles/profiles.repository.js";
 import type { SendActivity } from "./email.activity.js";
@@ -37,10 +34,8 @@ import {
   patchNotesEmail,
   welcomeEmail,
   wishlistReleaseEmail,
-  digestEmail,
   type EmailLinks,
   type RenderedEmail,
-  type DigestContent,
 } from "./email.templates.js";
 import { readUnsubscribeToken, signUnsubscribeToken } from "./email.tokens.js";
 import {
@@ -100,13 +95,6 @@ const EVENT_WINDOW_MS = DAY_MS;
 /** Resend's placeholder for its own unsubscribe link in a broadcast. */
 const RESEND_UNSUBSCRIBE = "{{{RESEND_UNSUBSCRIBE_URL}}}";
 
-/** The Sunday a run's digest is for, as YYYY-MM-DD: today on a Sunday,
- *  and none on any other day. In UTC, as the cron runs. The digest is a
- *  Sunday evening's email or nothing: a member the day's cap turned away
- *  waits for the next one rather than getting it on a Monday. */
-export const digestSunday = (now: Date): string | null =>
-  now.getUTCDay() === 0 ? now.toISOString().slice(0, 10) : null;
-
 /** An email, and the member it's for. */
 interface Outgoing {
   userId: string | null;
@@ -149,30 +137,6 @@ export const createEmailService = ({
   defer,
 }: EmailServiceDeps) => {
   const settingsUrl = `${settings.site}/settings?section=emails`;
-
-  /** Everyone's digest for the week up to `sunday`: friends' logs since a
-   *  week before `now`, and wishlist releases in the seven days after. */
-  const digestRows = (now: Date, sunday: string) => {
-    const day = (offset: number) =>
-      new Date(Date.parse(`${sunday}T00:00:00Z`) + offset * DAY_MS)
-        .toISOString()
-        .slice(0, 10);
-    return repo.weeklyDigest(
-      new Date(now.getTime() - 7 * DAY_MS).toISOString(),
-      day(1),
-      day(7),
-    );
-  };
-
-  const digestContent = (
-    row: WeeklyDigestRow,
-    sunday: string,
-  ): DigestContent => ({
-    friends: row.friends,
-    releases: row.releases,
-    logged: row.logged,
-    weekEnding: sunday,
-  });
 
   /** A member's links and one-click headers for a scope. Null without a
    *  signing secret: nothing goes out that can't be stopped. */
@@ -517,40 +481,6 @@ export const createEmailService = ({
       return { sent };
     },
 
-    /**
-     * The weekly digest, on Sunday's run only. A second run the same
-     * Sunday sends nobody a second one.
-     */
-    async sendDigest(now: Date): Promise<{ sent: number } | null> {
-      const sunday = digestSunday(now);
-      if (!sunday) return null;
-      const rows = await digestRows(now, sunday);
-      if (rows.length === 0) return { sent: 0 };
-      const members = await repo.memberEmails(rows.map((r) => r.user_id));
-      const byId = new Map(rows.map((r) => [r.user_id, r]));
-
-      const items: Queued[] = [];
-      for (const member of members) {
-        const row = byId.get(member.id);
-        if (!row) continue;
-        if (!emailAllowed(resolveEmailPrefs(member.email_prefs), "digest")) {
-          continue;
-        }
-        const target = addressed(member.id, "digest");
-        if (!target) return { sent: 0 };
-        items.push({
-          userId: member.id,
-          ref: sunday,
-          message: message(
-            member.email,
-            digestEmail(digestContent(row, sunday), target.links),
-            target.headers,
-          ),
-        });
-      }
-      return { sent: await sendOnce("weekly_digest", items) };
-    },
-
     /** The reminders the nudge job just put in the bell, to those who
      *  asked for them by email. Each goes once per member and period, so
      *  the daily run can pass them all again. */
@@ -707,39 +637,6 @@ export const createEmailService = ({
       await sender.send(items.map((item) => item.message));
       await logBroadcast(content.kind, items, null);
       return { emailed: true, broadcastId: null };
-    },
-
-    /** One member's digest as Sunday would send it, were today Sunday, to
-     *  one address: the admin's proof. False when theirs would be empty,
-     *  as then Sunday sends them nothing. */
-    async sendDigestTest(
-      userId: string,
-      to: string,
-      now: Date,
-    ): Promise<boolean> {
-      const today = now.toISOString().slice(0, 10);
-      const rows = await digestRows(now, today);
-      const row = rows.find((r) => r.user_id === userId);
-      if (!row) return false;
-      await sendCounted(
-        "digest_test",
-        [
-          {
-            userId,
-            message: message(
-              to,
-              digestEmail(digestContent(row, today), {
-                site: settings.site,
-                assets: settings.assets,
-                unsubscribe: settingsUrl,
-                settings: settingsUrl,
-              }),
-            ),
-          },
-        ],
-        null,
-      );
-      return true;
     },
 
     /** The same news email, to one address only: the admin's proof. Its

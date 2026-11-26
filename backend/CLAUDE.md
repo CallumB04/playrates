@@ -121,8 +121,7 @@ finishes signing up. Without VAPID keys nothing is pushed or offered.
 Vercel's plan allows two crons: `trending` (05:00 UTC) and `nudges` (17:00
 UTC) in `modules/games/cron.routes.ts`. New daily work becomes another part
 of one of them, through `partOf`, so one part failing doesn't stop the rest
-and the admins are emailed about it. The weekly digest runs on Sunday's
-`nudges` and no other day. The routes answer 404 without the right
+and the admins are emailed about it. The routes answer 404 without the right
 `CRON_SECRET`, compared in constant time.
 
 ## When something goes wrong

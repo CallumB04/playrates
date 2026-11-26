@@ -87,7 +87,6 @@ export const createAdminService = (deps: {
     EmailService,
     | "broadcastNews"
     | "sendNewsTest"
-    | "sendDigestTest"
     | "newsRecipientCount"
     | "stats"
     | "messages"
@@ -331,16 +330,6 @@ export const createAdminService = (deps: {
 
     async emailMessages(query: AdminEmailMessagesQuery) {
       return toCursorPage(await emails.messages(query), query.limit, toEmailMessage);
-    },
-
-    /** The admin's own weekly digest, as Sunday would send it today. */
-    async sendTestDigest(actorId: string, actorEmail?: string) {
-      const sent = await emails.sendDigestTest(
-        actorId,
-        await testAddress(actorId, actorEmail),
-        now(),
-      );
-      return { sent };
     },
 
     async listPatchNotes() {

@@ -3,7 +3,9 @@ import {
   BooleanQuerySchema,
   GameLogInputSchema,
   GAME_PAGE_MAX,
+  EmailPrefsPatchSchema,
   GameQuerySchema,
+  OFFERED_EMAIL_CATEGORIES,
   PaginationSchema,
   resolveEmailPrefs,
   ReviewInputSchema,
@@ -203,5 +205,17 @@ describe("resolveEmailPrefs", () => {
       reminders: false,
       news: true,
     });
+  });
+});
+
+describe("the retired weekly digest", () => {
+  it("is no longer offered as a switch", () => {
+    expect(OFFERED_EMAIL_CATEGORIES.map((c) => c.key)).not.toContain("digest");
+  });
+
+  it("is still accepted from an old Settings tab", () => {
+    expect(EmailPrefsPatchSchema.safeParse({ digest: false }).success).toBe(
+      true,
+    );
   });
 });

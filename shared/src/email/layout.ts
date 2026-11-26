@@ -79,10 +79,6 @@ export const emailStrong = (html: string) =>
 export const emailLink = (href: string, html: string) =>
   `<a class="pr-link" href="${href}" target="_blank" style="color:${C.iris};text-decoration:underline;">${html}</a>`;
 
-/** A small heading inside the body, for an email with sections. */
-export const emailHeading = (html: string) =>
-  `<h2 class="pr-ink" style="margin:32px 0 14px;font-family:${SANS};font-size:13px;line-height:18px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:${C.ink};">${html}</h2>`;
-
 /** The one thing to do. Classic Outlook draws the VML twin, which keeps the
  *  rounded corners and the padding its Word engine would otherwise drop. */
 export const emailButton = (href: string, label: string) => {

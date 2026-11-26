@@ -5,12 +5,7 @@ import { figureClass } from "../../../components/ui/figureClass";
 import ShowMoreToggle from "../../../components/ui/ShowMoreToggle";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { formatCount } from "../../../lib/format";
-import Button from "../../../components/ui/Button";
-import { useNotify } from "../../../contexts/NotificationContext";
-import {
-    useEmailStats,
-    useSendTestDigest,
-} from "../../../hooks/queries/useAdmin";
+import { useEmailStats } from "../../../hooks/queries/useAdmin";
 import AdminPageHeader from "../components/AdminPageHeader";
 import BarPlot from "../components/BarPlot";
 import Meter from "../components/Meter";
@@ -223,37 +218,6 @@ const Kinds = ({ stats }: { stats: EmailStats }) => (
     </section>
 );
 
-/** The weekly digest, which goes out on Sunday evenings to members with
- *  something in theirs, sent to the admin alone to see it as they will. */
-const DigestTest = () => {
-    const test = useSendTestDigest();
-    const notify = useNotify();
-    return (
-        <Button
-            variant="secondary"
-            disabled={test.isPending}
-            onClick={() =>
-                test.mutate(undefined, {
-                    onSuccess: ({ sent }) =>
-                        sent
-                            ? notify(
-                                  "Your digest is in your email, and nobody else’s",
-                                  "success"
-                              )
-                            : notify(
-                                  "Yours is empty this week, so Sunday wouldn’t send it",
-                                  "info"
-                              ),
-                    onError: () => notify("The test didn’t send", "error"),
-                })
-            }
-            className="w-full sm:w-auto"
-        >
-            Send me a test digest
-        </Button>
-    );
-};
-
 /**
  * How close email is to Resend's free plan, and who got what. The daily
  * allowance is the one that bites: PlayRates' own emails stop at the cap,
@@ -268,7 +232,6 @@ const EmailsPage = () => {
             <AdminPageHeader
                 title="Emails"
                 description="What PlayRates has emailed, and how close it is to the limits of Resend’s free plan."
-                actions={<DigestTest />}
             />
             {stats ? (
                 <div className="flex flex-col gap-10">

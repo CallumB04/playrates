@@ -1,7 +1,6 @@
 import {
   alertEmail,
   announcementEmail,
-  digestEmail,
   friendAcceptedEmail,
   friendRequestEmail,
   giftEmail,
@@ -233,70 +232,6 @@ export const emailSamples = (links: EmailLinks): EmailSample[] => [
     ),
   },
   {
-    key: "digest",
-    name: "Weekly digest",
-    trigger: "Sunday evening, when there’s something to say",
-    email: digestEmail(
-      {
-        friends: [
-          {
-            username: "halcyon",
-            gameId: G.silksong.id,
-            title: G.silksong.title,
-            status: "played",
-            rating: 9,
-            coverUrl: G.silksong.coverUrl,
-            avatarUrl: null,
-          },
-          {
-            username: "marlowe",
-            gameId: G.clair.id,
-            title: G.clair.title,
-            status: "playing",
-            rating: null,
-            coverUrl: G.clair.coverUrl,
-            avatarUrl: null,
-          },
-          {
-            username: "juniper",
-            gameId: G.balatro.id,
-            title: G.balatro.title,
-            status: "played",
-            rating: 8,
-            coverUrl: G.balatro.coverUrl,
-            avatarUrl: null,
-          },
-          {
-            username: "halcyon",
-            gameId: G.astroBot.id,
-            title: G.astroBot.title,
-            status: "backlog",
-            rating: null,
-            coverUrl: G.astroBot.coverUrl,
-            avatarUrl: null,
-          },
-        ],
-        releases: [
-          {
-            gameId: G.hades2.id,
-            title: G.hades2.title,
-            releaseDate: "2026-11-12",
-            coverUrl: G.hades2.coverUrl,
-          },
-          {
-            gameId: G.mhWilds.id,
-            title: G.mhWilds.title,
-            releaseDate: "2026-11-14",
-            coverUrl: G.mhWilds.coverUrl,
-          },
-        ],
-        logged: 3,
-        weekEnding: "2026-11-09",
-      },
-      links,
-    ),
-  },
-  {
     key: "welcome",
     name: "Welcome",
     trigger: "You finish signing up",
@@ -363,7 +298,10 @@ export const emailSamples = (links: EmailLinks): EmailSample[] => [
         kind: "job",
         job: "Nudges",
         failures: [
-          { part: "digest", message: "weekly_digest timed out after 8s" },
+          {
+            part: "Tidying old logs",
+            message: "prune_old_rows timed out after 8s",
+          },
         ],
       },
       links.site,
